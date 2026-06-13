@@ -1,22 +1,22 @@
 @extends('layouts.app')
-@section('title', 'Drug History — ' . $drug->name)
+@section('title', __('pharmacy.drug_history_title', ['name' => $drug->name]))
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">
-            <a aria-label="Back" title="Back" href="{{ route('admin.pharmacy.drugs.index') }}" class="text-muted me-2"><i class="ti ti-arrow-left"></i></a>
+            <a aria-label="{{ __('pharmacy.back') }}" title="{{ __('pharmacy.back') }}" href="{{ route('admin.pharmacy.drugs.index') }}" class="text-muted me-2"><i class="ti ti-arrow-left"></i></a>
             <i class="ti ti-pill me-1"></i>{{ $drug->name }}
             @if($drug->strength)
                 <span class="text-muted fw-normal fs-5">— {{ $drug->strength }}</span>
             @endif
         </h4>
-        <small class="text-muted">{{ $drug->category->name ?? 'Uncategorised' }} &middot; {{ $drug->dosage_form }}</small>
+        <small class="text-muted">{{ $drug->category->name ?? __('pharmacy.uncategorised') }} &middot; {{ $drug->dosage_form }}</small>
     </div>
     <div class="d-flex gap-2">
         <span class="badge bg-{{ $drug->is_active ? 'success' : 'secondary' }} fs-14 px-3 py-2">
-            {{ $drug->is_active ? 'Active' : 'Inactive' }}
+            {{ $drug->is_active ? __('common.active') : __('common.inactive') }}
         </span>
     </div>
 </div>
@@ -26,46 +26,46 @@
     <!-- Drug Info -->
     <div class="col-md-4">
         <div class="card h-100">
-            <div class="card-header"><h6 class="fw-bold mb-0"><i class="ti ti-info-circle me-1"></i>Drug Details</h6></div>
+            <div class="card-header"><h6 class="fw-bold mb-0"><i class="ti ti-info-circle me-1"></i>{{ __('pharmacy.drug_details') }}</h6></div>
             <div class="card-body">
                 <dl class="row mb-0 g-1" style="font-size:0.9rem">
-                    <dt class="col-5 text-muted">Name</dt>
+                    <dt class="col-5 text-muted">{{ __('common.name') }}</dt>
                     <dd class="col-7">{{ $drug->name }}</dd>
 
                     @if($drug->generic_name)
-                    <dt class="col-5 text-muted">Generic</dt>
+                    <dt class="col-5 text-muted">{{ __('pharmacy.generic') }}</dt>
                     <dd class="col-7">{{ $drug->generic_name }}</dd>
                     @endif
 
                     @if($drug->brand_name)
-                    <dt class="col-5 text-muted">Brand</dt>
+                    <dt class="col-5 text-muted">{{ __('pharmacy.brand') }}</dt>
                     <dd class="col-7">{{ $drug->brand_name }}</dd>
                     @endif
 
-                    <dt class="col-5 text-muted">Category</dt>
+                    <dt class="col-5 text-muted">{{ __('common.category') }}</dt>
                     <dd class="col-7">{{ $drug->category->name ?? '—' }}</dd>
 
-                    <dt class="col-5 text-muted">Form</dt>
+                    <dt class="col-5 text-muted">{{ __('pharmacy.form') }}</dt>
                     <dd class="col-7">{{ $drug->dosage_form }}</dd>
 
-                    <dt class="col-5 text-muted">Strength</dt>
+                    <dt class="col-5 text-muted">{{ __('pharmacy.strength') }}</dt>
                     <dd class="col-7">{{ $drug->strength ?? '—' }}</dd>
 
-                    <dt class="col-5 text-muted">Unit</dt>
+                    <dt class="col-5 text-muted">{{ __('pharmacy.col_unit') }}</dt>
                     <dd class="col-7">{{ $drug->unit }}</dd>
 
-                    <dt class="col-5 text-muted">Price</dt>
+                    <dt class="col-5 text-muted">{{ __('common.price') }}</dt>
                     <dd class="col-7 fw-medium text-primary">GHS {{ number_format($drug->price, 2) }}</dd>
 
-                    <dt class="col-5 text-muted">Rx Required</dt>
+                    <dt class="col-5 text-muted">{{ __('pharmacy.rx_required') }}</dt>
                     <dd class="col-7">
                         <span class="badge bg-{{ $drug->requires_prescription ? 'warning' : 'secondary' }}">
-                            {{ $drug->requires_prescription ? 'Yes' : 'No' }}
+                            {{ $drug->requires_prescription ? __('common.yes') : __('common.no') }}
                         </span>
                     </dd>
 
                     @if($drug->description)
-                    <dt class="col-5 text-muted">Notes</dt>
+                    <dt class="col-5 text-muted">{{ __('common.notes') }}</dt>
                     <dd class="col-7">{{ $drug->description }}</dd>
                     @endif
                 </dl>
@@ -81,7 +81,7 @@
                     <div class="card-body py-3">
                         <i class="ti ti-packages fs-2 text-primary mb-1"></i>
                         <h3 class="mb-0 fw-bold">{{ $stats['total_batches'] }}</h3>
-                        <small class="text-muted">Batches</small>
+                        <small class="text-muted">{{ __('pharmacy.batches') }}</small>
                     </div>
                 </div>
             </div>
@@ -90,7 +90,7 @@
                     <div class="card-body py-3">
                         <i class="ti ti-arrow-down-circle fs-2 text-success mb-1"></i>
                         <h3 class="mb-0 fw-bold">{{ number_format($stats['total_received']) }}</h3>
-                        <small class="text-muted">Total Received</small>
+                        <small class="text-muted">{{ __('pharmacy.total_received') }}</small>
                     </div>
                 </div>
             </div>
@@ -99,7 +99,7 @@
                     <div class="card-body py-3">
                         <i class="ti ti-arrow-up-circle fs-2 text-warning mb-1"></i>
                         <h3 class="mb-0 fw-bold">{{ number_format($stats['total_dispensed']) }}</h3>
-                        <small class="text-muted">Total Dispensed</small>
+                        <small class="text-muted">{{ __('pharmacy.total_dispensed') }}</small>
                     </div>
                 </div>
             </div>
@@ -108,7 +108,7 @@
                     <div class="card-body py-3">
                         <i class="ti ti-stack fs-2 text-info mb-1"></i>
                         <h3 class="mb-0 fw-bold">{{ number_format($stats['current_stock']) }}</h3>
-                        <small class="text-muted">In Stock</small>
+                        <small class="text-muted">{{ __('pharmacy.in_stock') }}</small>
                     </div>
                 </div>
             </div>
@@ -119,11 +119,11 @@
             <div class="card-body py-3 d-flex align-items-center gap-3">
                 <i class="ti ti-cash fs-2 text-success"></i>
                 <div>
-                    <div class="text-muted small">Total Revenue Generated</div>
+                    <div class="text-muted small">{{ __('pharmacy.total_revenue_generated') }}</div>
                     <div class="fw-bold fs-5 text-success">GHS {{ number_format($stats['revenue'], 2) }}</div>
                 </div>
                 <div class="ms-auto text-end">
-                    <div class="text-muted small">Dispensing Events</div>
+                    <div class="text-muted small">{{ __('pharmacy.dispensing_events') }}</div>
                     <div class="fw-bold">{{ $dispensingRecords->count() }}</div>
                 </div>
             </div>
@@ -134,8 +134,8 @@
 <!-- Current Stock by Location -->
 <div class="card mb-4">
     <div class="card-header d-flex align-items-center justify-content-between">
-        <h6 class="fw-bold mb-0"><i class="ti ti-packages me-1"></i>Current Stock by Location</h6>
-        <span class="badge bg-soft-primary">{{ $stockBalances->count() }} location(s)</span>
+        <h6 class="fw-bold mb-0"><i class="ti ti-packages me-1"></i>{{ __('pharmacy.current_stock_by_location') }}</h6>
+        <span class="badge bg-soft-primary">{{ __('pharmacy.locations_count', ['count' => $stockBalances->count()]) }}</span>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -143,10 +143,10 @@
                 <thead class="table-light">
                     <tr>
                         <th>#</th>
-                        <th>Location</th>
-                        <th>Type</th>
-                        <th class="text-end">Qty on Hand</th>
-                        <th>Last Updated</th>
+                        <th>{{ __('pharmacy.location') }}</th>
+                        <th>{{ __('common.type') }}</th>
+                        <th class="text-end">{{ __('pharmacy.qty_on_hand') }}</th>
+                        <th>{{ __('pharmacy.last_updated') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -162,14 +162,14 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5"><x-empty-state message="No stock recorded for this drug yet." /></td>
+                        <td colspan="5"><x-empty-state :message="__('pharmacy.no_stock_recorded')" /></td>
                     </tr>
                     @endforelse
                 </tbody>
                 @if($stockBalances->count() > 0)
                 <tfoot class="table-light fw-bold">
                     <tr>
-                        <td colspan="3" class="text-end">Total</td>
+                        <td colspan="3" class="text-end">{{ __('common.total') }}</td>
                         <td class="text-end text-primary">{{ number_format($stats['current_stock']) }}</td>
                         <td></td>
                     </tr>
@@ -183,23 +183,23 @@
 <!-- Stock Receipt History -->
 <div class="card mb-4">
     <div class="card-header d-flex align-items-center justify-content-between">
-        <h6 class="fw-bold mb-0"><i class="ti ti-truck-delivery me-1"></i>Stock Receipt History</h6>
-        <span class="badge bg-soft-info">{{ $stockReceipts->count() }} record(s)</span>
+        <h6 class="fw-bold mb-0"><i class="ti ti-truck-delivery me-1"></i>{{ __('pharmacy.stock_receipt_history') }}</h6>
+        <span class="badge bg-soft-info">{{ __('pharmacy.records_count', ['count' => $stockReceipts->count()]) }}</span>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0" style="font-size:0.88rem">
                 <thead class="table-light">
                     <tr>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th>Location</th>
-                        <th>Batch No.</th>
-                        <th>Expiry</th>
-                        <th>Unit Cost</th>
-                        <th class="text-end">Qty Received</th>
-                        <th>Received By</th>
-                        <th>Notes</th>
+                        <th>{{ __('common.date') }}</th>
+                        <th>{{ __('common.type') }}</th>
+                        <th>{{ __('pharmacy.location') }}</th>
+                        <th>{{ __('pharmacy.batch_no') }}</th>
+                        <th>{{ __('pharmacy.expiry') }}</th>
+                        <th>{{ __('pharmacy.unit_cost') }}</th>
+                        <th class="text-end">{{ __('pharmacy.qty_received') }}</th>
+                        <th>{{ __('pharmacy.received_by') }}</th>
+                        <th>{{ __('common.notes') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -217,9 +217,9 @@
                             @if($receipt->expiry_date)
                                 {{ $receipt->expiry_date->format('d M Y') }}
                                 @if($isExpired)
-                                    <span class="badge bg-danger ms-1">Expired</span>
+                                    <span class="badge bg-danger ms-1">{{ __('pharmacy.expired') }}</span>
                                 @elseif($isExpiringSoon)
-                                    <span class="badge bg-warning ms-1">Soon</span>
+                                    <span class="badge bg-warning ms-1">{{ __('pharmacy.soon') }}</span>
                                 @endif
                             @else —
                             @endif
@@ -231,14 +231,14 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9"><x-empty-state message="No stock receipt records found." /></td>
+                        <td colspan="9"><x-empty-state :message="__('pharmacy.no_stock_receipt')" /></td>
                     </tr>
                     @endforelse
                 </tbody>
                 @if($stockReceipts->count() > 0)
                 <tfoot class="table-light fw-bold">
                     <tr>
-                        <td colspan="6" class="text-end">Total Received</td>
+                        <td colspan="6" class="text-end">{{ __('pharmacy.total_received') }}</td>
                         <td class="text-end text-success">{{ number_format($stats['total_received']) }}</td>
                         <td colspan="2"></td>
                     </tr>
@@ -250,8 +250,8 @@
 </div>
 <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between">
-        <h6 class="fw-bold mb-0"><i class="ti ti-history me-1"></i>Dispensing History</h6>
-        <span class="badge bg-soft-warning">{{ $dispensingRecords->count() }} records</span>
+        <h6 class="fw-bold mb-0"><i class="ti ti-history me-1"></i>{{ __('pharmacy.dispensing_history') }}</h6>
+        <span class="badge bg-soft-warning">{{ $dispensingRecords->count() }} {{ __('pharmacy.records_word') }}</span>
     </div>
 
     @if($dispensingRecords->count() > 0)
@@ -261,15 +261,15 @@
             <table class="table table-hover mb-0" style="font-size:0.88rem">
                 <thead class="table-light">
                     <tr>
-                        <th>Date &amp; Time</th>
-                        <th>Patient</th>
-                        <th>Prescription</th>
-                        <th>Batch</th>
-                        <th class="text-end">Qty Dispensed</th>
-                        <th class="text-end">Unit Price</th>
-                        <th class="text-end">Line Total</th>
-                        <th>Dispensed By</th>
-                        <th>Notes</th>
+                        <th>{{ __('pharmacy.date_time') }}</th>
+                        <th>{{ __('common.patient') }}</th>
+                        <th>{{ __('pharmacy.prescription') }}</th>
+                        <th>{{ __('pharmacy.batch') }}</th>
+                        <th class="text-end">{{ __('pharmacy.col_qty_dispensed') }}</th>
+                        <th class="text-end">{{ __('pharmacy.unit_price') }}</th>
+                        <th class="text-end">{{ __('pharmacy.line_total') }}</th>
+                        <th>{{ __('pharmacy.dispensed_by') }}</th>
+                        <th>{{ __('common.notes') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -319,7 +319,7 @@
                 </tbody>
                 <tfoot class="table-light fw-bold">
                     <tr>
-                        <td colspan="4" class="text-end">Total</td>
+                        <td colspan="4" class="text-end">{{ __('common.total') }}</td>
                         <td class="text-end">{{ number_format($stats['total_dispensed']) }}</td>
                         <td></td>
                         <td class="text-end text-success">GHS {{ number_format($stats['revenue'], 2) }}</td>
@@ -332,7 +332,7 @@
     @else
     <div class="card-body text-center text-muted py-5">
         <i class="ti ti-history fs-1 mb-2 d-block"></i>
-        No dispensing records for this drug yet.
+        {{ __('pharmacy.no_dispensing_records_drug') }}
     </div>
     @endif
 </div>

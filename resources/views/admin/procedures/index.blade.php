@@ -1,19 +1,19 @@
 @extends('layouts.app')
-@section('title', 'Procedure Catalog')
+@section('title', __('procedures.procedure_catalog'))
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"><i class="ti ti-stethoscope me-2"></i>Procedure Catalog</h4>
+        <h4 class="fw-bold mb-0"><i class="ti ti-stethoscope me-2"></i>{{ __('procedures.procedure_catalog') }}</h4>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('admin.procedures.schedule') }}" class="btn btn-outline-primary btn-md">
-            <i class="ti ti-calendar me-1"></i>Scheduled Procedures
+            <i class="ti ti-calendar me-1"></i>{{ __('procedures.scheduled_procedures') }}
         </a>
         @can('procedures.create')
         <button class="btn btn-primary btn-md" data-bs-toggle="modal" data-bs-target="#addProcedureModal">
-            <i class="ti ti-plus me-1"></i>Add Procedure
+            <i class="ti ti-plus me-1"></i>{{ __('procedures.add_procedure') }}
         </button>
         @endcan
     </div>
@@ -41,7 +41,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="fs-5 fw-bold">{{ $stats['total_procedures'] }}</div>
-                        <small>Active Procedures</small>
+                        <small>{{ __('procedures.active_procedures') }}</small>
                     </div>
                     <i class="ti ti-stethoscope fs-1 opacity-50"></i>
                 </div>
@@ -54,7 +54,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="fs-5 fw-bold">{{ $stats['scheduled_today'] }}</div>
-                        <small>Scheduled Today</small>
+                        <small>{{ __('procedures.scheduled_today') }}</small>
                     </div>
                     <i class="ti ti-calendar fs-1 opacity-50"></i>
                 </div>
@@ -67,7 +67,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="fs-5 fw-bold">{{ $stats['completed_today'] }}</div>
-                        <small>Completed Today</small>
+                        <small>{{ __('procedures.completed_today') }}</small>
                     </div>
                     <i class="ti ti-check fs-1 opacity-50"></i>
                 </div>
@@ -80,7 +80,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="fs-5 fw-bold">{{ $stats['total_icd_codes'] }}</div>
-                        <small>ICD-10 Codes</small>
+                        <small>{{ __('procedures.icd10_codes') }}</small>
                     </div>
                     <i class="ti ti-medical-cross fs-1 opacity-50"></i>
                 </div>
@@ -94,11 +94,11 @@
     <div class="card-body py-2">
         <form method="GET" action="{{ route('admin.procedures.index') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
-                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search procedure..." value="{{ request('search') }}">
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="{{ __('procedures.search_procedure') }}" value="{{ request('search') }}">
             </div>
             <div class="col-md-2">
                 <select name="category" class="form-select form-select-sm">
-                    <option value="">All Categories</option>
+                    <option value="">{{ __('procedures.all_categories') }}</option>
                     @foreach($categories as $cat)
                     <option value="{{ $cat }}" {{ request('category') === $cat ? 'selected' : '' }}>{{ ucfirst($cat) }}</option>
                     @endforeach
@@ -106,7 +106,7 @@
             </div>
             <div class="col-md-3">
                 <select name="department_id" class="form-select form-select-sm">
-                    <option value="">All Departments</option>
+                    <option value="">{{ __('common.all_departments') }}</option>
                     @foreach($departments as $id => $name)
                     <option value="{{ $id }}" {{ request('department_id') == $id ? 'selected' : '' }}>{{ $name }}</option>
                     @endforeach
@@ -114,14 +114,14 @@
             </div>
             <div class="col-md-2">
                 <select name="is_active" class="form-select form-select-sm">
-                    <option value="">All Status</option>
-                    <option value="1" {{ request('is_active') === '1' ? 'selected' : '' }}>Active</option>
-                    <option value="0" {{ request('is_active') === '0' ? 'selected' : '' }}>Inactive</option>
+                    <option value="">{{ __('common.all_statuses') }}</option>
+                    <option value="1" {{ request('is_active') === '1' ? 'selected' : '' }}>{{ __('common.active') }}</option>
+                    <option value="0" {{ request('is_active') === '0' ? 'selected' : '' }}>{{ __('common.inactive') }}</option>
                 </select>
             </div>
             <div class="col-md-2 d-flex gap-1">
-                <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-filter me-1"></i>Filter</button>
-                <a aria-label="Close" title="Close" href="{{ route('admin.procedures.index') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-x"></i></a>
+                <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-filter me-1"></i>{{ __('common.filter') }}</button>
+                <a aria-label="{{ __('common.close') }}" title="{{ __('common.close') }}" href="{{ route('admin.procedures.index') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-x"></i></a>
             </div>
         </form>
     </div>
@@ -134,15 +134,15 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Name</th>
-                        <th>Code</th>
-                        <th>Category</th>
-                        <th>Department</th>
-                        <th class="text-end">Price (₵)</th>
-                        <th class="text-end">Insurance (₵)</th>
-                        <th class="text-center">Consent</th>
-                        <th class="text-center">Status</th>
-                        <th style="width:120px">Actions</th>
+                        <th>{{ __('common.name') }}</th>
+                        <th>{{ __('common.code') }}</th>
+                        <th>{{ __('common.category') }}</th>
+                        <th>{{ __('common.department') }}</th>
+                        <th class="text-end">{{ __('procedures.price_cedis') }}</th>
+                        <th class="text-end">{{ __('procedures.insurance_cedis') }}</th>
+                        <th class="text-center">{{ __('procedures.consent') }}</th>
+                        <th class="text-center">{{ __('common.status') }}</th>
+                        <th style="width:120px">{{ __('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -160,22 +160,22 @@
                         <td class="text-end">{{ $procedure->formatted_nhis_price ?? '—' }}</td>
                         <td class="text-center">
                             @if($procedure->requires_consent)
-                            <i class="ti ti-alert-triangle text-warning" title="Requires consent"></i>
+                            <i class="ti ti-alert-triangle text-warning" title="{{ __('procedures.requires_consent_title') }}"></i>
                             @else
                             <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td class="text-center">
-                            <span class="badge bg-{{ $procedure->is_active ? 'success' : 'secondary' }}">{{ $procedure->is_active ? 'Active' : 'Inactive' }}</span>
+                            <span class="badge bg-{{ $procedure->is_active ? 'success' : 'secondary' }}">{{ $procedure->is_active ? __('common.active') : __('common.inactive') }}</span>
                         </td>
                         <td>
                             @can('procedures.edit')
-                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProcedureModal{{ $procedure->id }}" aria-label="Edit" title="Edit">
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProcedureModal{{ $procedure->id }}" aria-label="{{ __('common.edit') }}" title="{{ __('common.edit') }}">
                                 <i class="ti ti-edit"></i>
                             </button>
                             <form method="POST" action="{{ route('admin.procedures.toggle', $procedure) }}" class="d-inline">
                                 @csrf @method('PATCH')
-                                <button class="btn btn-sm btn-outline-{{ $procedure->is_active ? 'warning' : 'success' }}" title="{{ $procedure->is_active ? 'Deactivate' : 'Activate' }}">
+                                <button class="btn btn-sm btn-outline-{{ $procedure->is_active ? 'warning' : 'success' }}" title="{{ $procedure->is_active ? __('common.deactivate') : __('common.activate') }}">
                                     <i class="ti ti-{{ $procedure->is_active ? 'ban' : 'check' }}"></i>
                                 </button>
                             </form>
@@ -190,21 +190,21 @@
                                 <form method="POST" action="{{ route('admin.procedures.update', $procedure) }}">
                                     @csrf @method('PUT')
                                     <div class="modal-header">
-                                        <h5 class="modal-title">Edit Procedure</h5>
+                                        <h5 class="modal-title">{{ __('procedures.edit_procedure') }}</h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <div class="modal-body">
                                         <div class="row g-3">
                                             <div class="col-md-8">
-                                                <label class="form-label">Name <span class="text-danger">*</span></label>
+                                                <label class="form-label">{{ __('common.name') }} <span class="text-danger">*</span></label>
                                                 <input type="text" name="name" class="form-control" value="{{ $procedure->name }}" required>
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label">Code</label>
+                                                <label class="form-label">{{ __('common.code') }}</label>
                                                 <input type="text" name="code" class="form-control" value="{{ $procedure->code }}">
                                             </div>
                                             <div class="col-md-6">
-                                                <label class="form-label">Category <span class="text-danger">*</span></label>
+                                                <label class="form-label">{{ __('common.category') }} <span class="text-danger">*</span></label>
                                                 <select name="category" class="form-select" required>
                                                     @foreach($categories as $cat)
                                                     <option value="{{ $cat }}" {{ $procedure->category === $cat ? 'selected' : '' }}>{{ ucfirst($cat) }}</option>
@@ -212,38 +212,38 @@
                                                 </select>
                                             </div>
                                             <div class="col-md-6">
-                                                <label class="form-label">Department</label>
+                                                <label class="form-label">{{ __('common.department') }}</label>
                                                 <select name="department_id" class="form-select">
-                                                    <option value="">None</option>
+                                                    <option value="">{{ __('procedures.none') }}</option>
                                                     @foreach($departments as $id => $name)
                                                     <option value="{{ $id }}" {{ $procedure->department_id == $id ? 'selected' : '' }}>{{ $name }}</option>
                                                     @endforeach
                                                 </select>
                                             </div>
                                             <div class="col-12">
-                                                <label class="form-label">Description</label>
+                                                <label class="form-label">{{ __('common.description') }}</label>
                                                 <textarea name="description" class="form-control" rows="2">{{ $procedure->description }}</textarea>
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label">Default Price (₵) <span class="text-danger">*</span></label>
+                                                <label class="form-label">{{ __('procedures.default_price_cedis') }} <span class="text-danger">*</span></label>
                                                 <input type="number" name="default_price" class="form-control" step="0.01" value="{{ $procedure->default_price }}" required>
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label">Insurance Price (₵)</label>
+                                                <label class="form-label">{{ __('procedures.insurance_price_cedis') }}</label>
                                                 <input type="number" name="nhis_price" class="form-control" step="0.01" value="{{ $procedure->nhis_price }}">
                                             </div>
                                             <div class="col-md-4 d-flex align-items-end">
                                                 <div class="form-check">
                                                     <input type="hidden" name="requires_consent" value="0">
                                                     <input class="form-check-input" type="checkbox" name="requires_consent" value="1" id="editConsent{{ $procedure->id }}" {{ $procedure->requires_consent ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="editConsent{{ $procedure->id }}">Requires Consent</label>
+                                                    <label class="form-check-label" for="editConsent{{ $procedure->id }}">{{ __('procedures.requires_consent') }}</label>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <button type="submit" class="btn btn-primary">Update</button>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                                        <button type="submit" class="btn btn-primary">{{ __('common.update') }}</button>
                                     </div>
                                 </form>
                             </div>
@@ -253,7 +253,7 @@
                     <tr>
                         <td colspan="9" class="text-center text-muted py-4">
                             <i class="ti ti-stethoscope fs-1 d-block mb-2"></i>
-                            No procedures found.
+                            {{ __('procedures.no_procedures_found') }}
                         </td>
                     </tr>
                     @endforelse
@@ -275,21 +275,21 @@
             <form method="POST" action="{{ route('admin.procedures.store') }}">
                 @csrf
                 <div class="modal-header">
-                    <h5 class="modal-title">Add Procedure</h5>
+                    <h5 class="modal-title">{{ __('procedures.add_procedure') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-8">
-                            <label class="form-label">Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" placeholder="e.g., Appendectomy" required>
+                            <label class="form-label">{{ __('common.name') }} <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" placeholder="{{ __('procedures.name_placeholder') }}" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Code</label>
-                            <input type="text" name="code" class="form-control" placeholder="e.g., PROC-001">
+                            <label class="form-label">{{ __('common.code') }}</label>
+                            <input type="text" name="code" class="form-control" placeholder="{{ __('procedures.code_placeholder') }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Category <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('common.category') }} <span class="text-danger">*</span></label>
                             <select name="category" class="form-select" required>
                                 @foreach($categories as $cat)
                                 <option value="{{ $cat }}">{{ ucfirst($cat) }}</option>
@@ -297,38 +297,38 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Department</label>
+                            <label class="form-label">{{ __('common.department') }}</label>
                             <select name="department_id" class="form-select">
-                                <option value="">None</option>
+                                <option value="">{{ __('procedures.none') }}</option>
                                 @foreach($departments as $id => $name)
                                 <option value="{{ $id }}">{{ $name }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Description</label>
-                            <textarea name="description" class="form-control" rows="2" placeholder="Procedure description..."></textarea>
+                            <label class="form-label">{{ __('common.description') }}</label>
+                            <textarea name="description" class="form-control" rows="2" placeholder="{{ __('procedures.description_placeholder') }}"></textarea>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Default Price (₵) <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('procedures.default_price_cedis') }} <span class="text-danger">*</span></label>
                             <input type="number" name="default_price" class="form-control" step="0.01" value="0" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Insurance Price (₵)</label>
+                            <label class="form-label">{{ __('procedures.insurance_price_cedis') }}</label>
                             <input type="number" name="nhis_price" class="form-control" step="0.01">
                         </div>
                         <div class="col-md-4 d-flex align-items-end">
                             <div class="form-check">
                                 <input type="hidden" name="requires_consent" value="0">
                                 <input class="form-check-input" type="checkbox" name="requires_consent" value="1" id="addConsent">
-                                <label class="form-check-label" for="addConsent">Requires Consent</label>
+                                <label class="form-check-label" for="addConsent">{{ __('procedures.requires_consent') }}</label>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Procedure</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('procedures.add_procedure') }}</button>
                 </div>
             </form>
         </div>

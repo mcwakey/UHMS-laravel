@@ -5,204 +5,193 @@ There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
 Do not try to read it.
 Follow this prompt directly.
 
-We are not ready for dashboards or the Full Test Suite yet.
+Localisation is still not complete.
 
-The latest localisation audit still shows active untranslated runtime pages. Phase 15 reduced the active runtime candidates, but 519 active runtime candidates remain. The user has also manually confirmed that consultation pages, auth pages, and several other critical pages still show English text in French mode.
+Phase 15C reduced active runtime candidates from 437 to 370, but the report clearly says it was a partial pass. Do not move to dashboards. Do not move to the Full Test Suite. Do not claim localisation is complete.
 
-Treat this as a release blocker.
-
-# UHMS Localisation Phase 15B — Critical Runtime Pages Completion Pass
+# UHMS Localisation Phase 15D — Runtime Burn-Down Continuation
 
 ## Goal
 
-Complete localisation of the remaining active runtime pages that are still visible to real users.
+Continue the localisation burn-down from the Phase 15C exit state.
 
-Do not work on dormant demo/template views unless they are actually reachable through live routes, controllers, layouts, shared components, or Blade dependencies.
+Starting point:
 
-Focus on real active runtime pages.
+```text
+Active runtime candidates: 370
+```
+
+Target:
+
+```text
+Active runtime candidates: below 150 if possible
+```
+
+Preferred target:
+
+```text
+Active runtime candidates: below 100
+```
+
+Do not touch dormant demo/template pages unless they are route-linked or included by active layouts/components.
 
 ---
 
-# 1. Required Input Reports
+# 1. Required Reports To Read First
 
-Use these existing reports as your starting point:
+Read:
 
 ```text
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
-docs/LOCALISATION_PHASE_15_ACTIVE_RUNTIME_CANDIDATE_BURNDOWN_REPORT.md
+docs/LOCALISATION_PHASE_15C_REMAINING_RUNTIME_BURNDOWN_REPORT.md
 ```
 
-If these docs exist, read them first.
+Use the active runtime worklist in `LOCALISATION_COVERAGE_AUDIT_REPORT.md` as the source of truth.
 
-Do not ignore the active runtime worklist.
-
-Do not claim localisation is complete until the active runtime candidate count is significantly reduced and all manually confirmed critical pages are fixed.
+Do not repeat files already completed in Phase 15C unless the scanner still reports them.
 
 ---
 
-# 2. Immediate Critical Pages To Fix First
+# 2. Current Known Status
 
-The user has manually confirmed that these are still untranslated:
-
-```text
-Consultation pages
-Auth pages
-```
-
-Therefore start with these areas before touching lower-priority modules.
-
-## 2.1 Consultation Pages
-
-Audit and translate all consultation-related active views and dependencies, including but not limited to:
+Phase 15C completed:
 
 ```text
-resources/views/consultations/**/*.blade.php
-resources/views/prescriptions/**/*.blade.php
-resources/views/partials/patient-card.blade.php
-resources/views/partials/patient-visit-header.blade.php
-resources/views/claims/partials/clinical-mirror.blade.php
-resources/views/vitals/**/*.blade.php
-resources/views/lab/**/*.blade.php
-resources/views/investigations/**/*.blade.php
-```
-
-Also audit related JS inside these Blade files.
-
-Fix:
-
-* consultation page title
-* patient summary labels
-* visit summary labels
-* complaints
-* history of presenting complaints
-* physical examination
-* diagnosis
-* investigations
-* prescriptions
-* treatment plan
-* follow-up
-* save/update buttons
-* clinical task labels
-* empty states
-* loading text
-* confirmation dialogs
-* modal titles
-* table headers
-* badges/statuses
-* tabs
-* validation field names
-* JavaScript messages
-
-Use existing `lang/en/consultations.php` and `lang/fr/consultations.php` where possible.
-Add missing keys with EN/FR parity.
-
-Do not translate patient-entered clinical notes.
-Do not translate diagnosis text typed by clinicians.
-Do not translate medicine names.
-Do not translate lab test names entered as catalogue data unless system-defined labels are hardcoded.
-
----
-
-## 2.2 Auth Pages
-
-Audit and translate all auth-related pages:
-
-```text
-resources/views/auth/**/*.blade.php
-resources/views/profile/**/*.blade.php
-resources/views/settings/profile.blade.php
-resources/views/layout/partials/**/*.blade.php
-resources/views/components/**/*.blade.php
-```
-
-Fix:
-
-* login page
-* register page if enabled
-* forgot password page
-* reset password page
-* verify email page if present
-* confirm password page if present
-* profile page
-* account settings page
-* logout labels
-* remember me
-* email/password labels
-* placeholders
-* validation labels
-* submit buttons
-* auth error messages
-* session messages
-* browser title
-* layout auth header/footer text
-
-Expand:
-
-```text
-lang/en/auth.php
-lang/fr/auth.php
-```
-
-Do not leave auth with only a few keys if more auth pages exist.
-
----
-
-# 3. Next High-Priority Runtime Modules
-
-After consultations and auth, process the remaining active runtime worklist in this order:
-
-```text
-1. Pharmacy
-2. Laboratory / Analyzers / Investigation catalogue
-3. Theatre / Procedures
-4. Wards / Beds
-5. Stock / Store / Product stock
-6. Prescriptions
-7. Emergency remaining candidates
-8. Billing / Invoices remaining candidates
-9. Accounting / Payables / Settings
-10. Notifications
-11. Queue
-12. HR
-13. Blood bank
-14. Settings
-15. Dashboards
-```
-
-Do not skip route-linked files.
-
-Use the active runtime worklist from the audit report as the source of truth.
-
----
-
-# 4. Required Files From Current Audit To Prioritise
-
-At minimum, fix these files from the active runtime worklist if they still contain candidates:
-
-```text
-resources/views/consultations/show.blade.php
-resources/views/consultations/history.blade.php
-resources/views/auth/**/*.blade.php
-resources/views/pharmacy/dispense.blade.php
 resources/views/pharmacy/drug-history.blade.php
 resources/views/pharmacy/history.blade.php
-resources/views/admin/analyzers/diagnostics.blade.php
-resources/views/admin/analyzers/index.blade.php
-resources/views/admin/analyzers/show.blade.php
 resources/views/theatre/rooms/index.blade.php
 resources/views/admin/procedures/index.blade.php
+resources/views/admin/procedure-catalogue/show.blade.php
+```
+
+Phase 15C created:
+
+```text
+lang/en/procedures.php
+lang/fr/procedures.php
+```
+
+Phase 15C extended:
+
+```text
+lang/en/pharmacy.php
+lang/fr/pharmacy.php
+lang/en/theatre.php
+lang/fr/theatre.php
+```
+
+Remaining active runtime candidates after Phase 15C:
+
+```text
+370
+```
+
+---
+
+# 3. Batch 2 Remainder — Finish Theatre / Procedures
+
+First complete the remaining Batch 2 files:
+
+```text
 resources/views/admin/procedures/schedule.blade.php
-resources/views/prescriptions/show.blade.php
-resources/views/prescriptions/index.blade.php
+resources/views/theatre/show.blade.php
+resources/views/admin/procedure-catalogue/index.blade.php
+resources/views/theatre/partials/schedule-form.blade.php
+resources/views/theatre/rooms/partials/form.blade.php
+```
+
+Translate:
+
+* procedure schedule labels
+* theatre case labels
+* theatre status badges
+* room form labels
+* schedule form labels
+* filters
+* table headers
+* action buttons
+* modal titles
+* empty states
+* confirmation messages
+* placeholders
+* helper text
+* JavaScript strings if present
+
+Use or extend:
+
+```text
+lang/en/theatre.php
+lang/fr/theatre.php
+lang/en/procedures.php
+lang/fr/procedures.php
+```
+
+Do not change theatre workflow.
+Do not change scheduling logic.
+Do not expose restricted clinical data.
+
+Manual-review partials must be checked carefully because they may be shared.
+
+If safe, translate them.
+If not safe, document exactly why.
+
+---
+
+# 4. Batch 3 — Wards and Beds
+
+Fix:
+
+```text
 resources/views/wards/index.blade.php
 resources/views/wards/beds.blade.php
 resources/views/wards/bed-map.blade.php
+resources/views/settings/ward.blade.php
+```
+
+Create or extend:
+
+```text
+lang/en/wards.php
+lang/fr/wards.php
+```
+
+Translate:
+
+* ward labels
+* bed labels
+* occupancy labels
+* bed status labels
+* admission labels
+* patient labels
+* room labels
+* availability labels
+* filters
+* cards
+* table headers
+* action buttons
+* modal titles
+* empty states
+* helper text
+* JavaScript messages if present
+
+Do not translate patient names or ward names entered by users.
+Do not change bed allocation logic.
+Do not expose restricted admission data.
+
+---
+
+# 5. Batch 4 — Product Stock / Store / Suppliers / Procurement
+
+Fix:
+
+```text
 resources/views/admin/product-stock/ledger.blade.php
 resources/views/admin/product-stock/balances.blade.php
 resources/views/admin/product-stock/receive.blade.php
 resources/views/admin/product-stock/transfer.blade.php
 resources/views/admin/product-stock/adjust.blade.php
 resources/views/admin/product-stock/return.blade.php
+resources/views/admin/stock-locations/index.blade.php
 resources/views/store/purchase-orders/index.blade.php
 resources/views/store/purchase-orders/create.blade.php
 resources/views/store/purchase-orders/show.blade.php
@@ -211,19 +200,228 @@ resources/views/store/purchase-returns/create.blade.php
 resources/views/store/purchase-returns/show.blade.php
 resources/views/store/supplier-ledger.blade.php
 resources/views/store/suppliers.blade.php
-resources/views/billing/invoices/show.blade.php
-resources/views/accounting/payable/payables.blade.php
-resources/views/accounting/settings/index.blade.php
-resources/views/notifications/index.blade.php
-resources/views/queue/manage.blade.php
-resources/views/queue/board.blade.php
+resources/views/store/stock-requisitions/index.blade.php
+resources/views/department-consumables/index.blade.php
 ```
 
-If some files do not exist, document them as not found.
+Use or extend:
+
+```text
+lang/en/stock.php
+lang/fr/stock.php
+lang/en/store.php
+lang/fr/store.php
+```
+
+Create `store.php` if it does not exist and if store/procurement vocabulary does not fit cleanly inside `stock.php`.
+
+Translate:
+
+* stock ledger labels
+* stock balance labels
+* receive/transfer/adjust/return labels
+* purchase order labels
+* purchase return labels
+* supplier labels
+* supplier ledger labels
+* requisition labels
+* department consumable labels
+* filters
+* table headers
+* buttons
+* modal titles
+* empty states
+* confirmation messages
+* print labels if present
+
+Important UHMS rule:
+
+```text
+Products = physical stock items.
+Services = billable activities.
+```
+
+Do not mix products and services.
+
+Protect stock cost visibility.
+
+Do not remove or weaken:
+
+```text
+@can
+@cannot
+Gate
+policy checks
+stock-cost visibility checks
+financial visibility checks
+```
 
 ---
 
-# 5. Translation Rules
+# 6. Batch 5 — Prescriptions / Investigations / Vitals / Lab
+
+Fix:
+
+```text
+resources/views/prescriptions/show.blade.php
+resources/views/prescriptions/index.blade.php
+resources/views/investigations/items/index.blade.php
+resources/views/admin/investigation-catalogue/index.blade.php
+resources/views/admin/investigation-catalogue/show.blade.php
+resources/views/vitals/record.blade.php
+resources/views/lab/results.blade.php
+resources/views/lab/tests.blade.php
+```
+
+Use or extend:
+
+```text
+lang/en/prescriptions.php
+lang/fr/prescriptions.php
+lang/en/investigations.php
+lang/fr/investigations.php
+lang/en/lab.php
+lang/fr/lab.php
+```
+
+Translate:
+
+* prescription labels
+* medication order labels
+* dosage labels
+* investigation item labels
+* catalogue labels
+* lab result labels
+* vital sign labels
+* status badges
+* patient/visit labels
+* filters
+* table headers
+* action buttons
+* modal titles
+* empty states
+* JavaScript messages if present
+
+Do not translate:
+
+* medicine names from database
+* lab test names from database
+* clinician-entered notes
+* diagnosis text
+* patient names
+* clinical units like mmHg, bpm, kg, cm, °C, %, SpO2
+
+Do not change clinical workflow.
+
+---
+
+# 7. Batch 6 — Emergency Remaining Candidates
+
+Fix:
+
+```text
+resources/views/emergency/show.blade.php
+```
+
+Use or extend:
+
+```text
+lang/en/emergency.php
+lang/fr/emergency.php
+```
+
+Translate remaining active candidates only.
+
+Do not change emergency workflows.
+Do not change emergency billing/session logic.
+Do not expose restricted clinical or financial data.
+
+---
+
+# 8. Run Scanner After Every Batch
+
+After each batch, run:
+
+```bash
+php scripts/localisation-audit.php
+```
+
+Record before/after counts for:
+
+```text
+Batch 2 remainder
+Batch 3
+Batch 4
+Batch 5
+Batch 6
+```
+
+If a batch creates parse errors, stop and fix before continuing.
+
+---
+
+# 9. JavaScript Manual Review
+
+Review but do not necessarily complete unless safe:
+
+```text
+resources/js/script.js
+resources/js/doctors.js
+```
+
+If strings are active at runtime, wire them through the existing `window.UHMS_I18N` bridge.
+
+Do not introduce:
+
+```text
+i18next
+Vue
+React
+new frontend localisation package
+new localisation framework
+```
+
+If strings are dormant template/demo examples, document them as false positives with evidence.
+
+---
+
+# 10. Class-A Service Candidates
+
+Do not rush these in this phase unless they are simple and clearly user-facing.
+
+Review the 67 class-A service candidates and translate only confirmed user-facing output labels.
+
+Examples:
+
+```text
+ConsultationNextPatientService.php
+FinancialReportService.php
+PatientMergePreviewService.php
+ProcedureReportService.php
+StatisticsService.php
+```
+
+Safe examples:
+
+```php
+'label' => __('accounting.revenue')
+```
+
+Unsafe examples:
+
+```text
+stored historical event titles
+audit descriptions
+journal descriptions
+SQL expressions
+canonical workflow event names
+```
+
+Leave unsafe items unchanged and document them.
+
+---
+
+# 11. Translation Rules
 
 Use Laravel localisation only.
 
@@ -242,7 +440,7 @@ or:
 For placeholders:
 
 ```php
-__('consultations.saved_for_patient', ['patient' => $patient->name])
+__('stock.remaining_quantity', ['qty' => $qty])
 ```
 
 Do not concatenate translated fragments.
@@ -250,295 +448,188 @@ Do not concatenate translated fragments.
 Bad:
 
 ```php
-'Consultation for ' . $patient->name
+'Remaining: ' . $qty
 ```
 
 Good:
 
 ```php
-__('consultations.consultation_for_patient', ['patient' => $patient->name])
+__('stock.remaining_quantity', ['qty' => $qty])
 ```
 
 ---
 
-# 6. JavaScript Translation
+# 12. Language File Rules
 
-For inline Blade JavaScript, use page-level JSON maps:
+Use appropriate namespaces.
 
-```blade
-@php
-$consultationI18n = [
-    'loading' => __('common.loading'),
-    'save_success' => __('consultations.save_success'),
-    'confirm_delete' => __('consultations.confirm_delete'),
-];
-@endphp
-
-<script>
-    window.UHMS_CONSULTATION_I18N = @json($consultationI18n);
-</script>
-```
-
-Then use the translated values in JavaScript.
-
-For global JS, use the existing `window.UHMS_I18N` mechanism if already present.
-Do not create a second localisation framework.
-Do not introduce i18next, Vue, React, or any new frontend package.
-
----
-
-# 7. Dynamic Labels
-
-Audit visible calls like:
-
-```php
-label()
-typeLabel()
-statusLabel()
-paymentStatusLabel()
-visitTypeLabel()
-consultationModeLabel()
-priorityLabel()
-```
-
-If they return hardcoded English and are displayed in active pages, add or use translated methods such as:
-
-```php
-translatedLabel()
-translatedStatusLabel()
-translatedTypeLabel()
-```
-
-Only convert displays after confirming the method is for UI output.
-Do not change stored canonical values or database enum values.
-
----
-
-# 8. Auth Validation Attributes
-
-Update validation attributes for auth/profile fields in:
+Generic UI words go in:
 
 ```text
-lang/en/validation.php
-lang/fr/validation.php
+common.php
 ```
 
-Add field labels for:
+Only for:
 
 ```text
-name
-first_name
-last_name
-email
-password
-password_confirmation
-current_password
-new_password
-remember
-locale
-phone
-avatar
-profile_photo
+save
+cancel
+close
+search
+filter
+clear
+actions
+status
+active
+inactive
+view
+edit
+delete
+yes
+no
+loading
+error
+success
 ```
 
-Make sure French validation errors show French field names.
+Domain words go in domain files:
+
+```text
+theatre.php
+procedures.php
+wards.php
+stock.php
+store.php
+prescriptions.php
+investigations.php
+lab.php
+emergency.php
+```
+
+Every English key must exist in French.
+Every French key must exist in English.
 
 ---
 
-# 9. Consultation Validation Attributes
-
-Also add/verify validation attributes for consultation fields:
-
-```text
-complaint
-complaints
-history
-history_of_presenting_complaint
-physical_examination
-diagnosis
-diagnoses
-investigations
-prescriptions
-treatment
-treatment_plan
-follow_up_date
-clinical_notes
-vitals
-temperature
-blood_pressure
-pulse
-respiratory_rate
-spo2
-weight
-height
-bmi
-```
-
----
-
-# 10. Do Not Translate These
+# 13. Do Not Translate These
 
 Do not translate:
 
 * patient names
-* doctor names
 * staff names
+* doctor names
+* supplier names
+* medicine names from database
+* product names from database
+* service names from database unless they are system-defined hardcoded labels
 * diagnosis text typed by clinicians
 * clinical notes typed by clinicians
-* medicine/product names from database
-* service names from database unless they are system-defined hardcoded labels
-* lab test names from database unless hardcoded
-* supplier names
+* lab test names from catalogue/database
 * insurance provider names
 * sponsor names
-* permission names
+* permission slugs
+* role slugs
 * route names
 * database column names
 * internal enum values
 * CSS classes
 * JS selectors
 * data attributes
-* clinical units: mmHg, bpm, kg, cm, °C, %, SpO2
+* clinical units such as mmHg, bpm, kg, cm, °C, %, SpO2
 * currency symbols
 * UHMS acronym
 
 ---
 
-# 11. Permissions Must Stay Intact
+# 14. Security Rules
 
-While translating, do not weaken security.
+Do not weaken permissions.
 
 Preserve:
 
-* `@can`
-* `@cannot`
-* `Gate`
-* policies
-* middleware
-* role checks
-* permission checks
-* financial visibility checks
-* stock-cost visibility checks
-* clinical confidentiality checks
-
-Do not expose restricted clinical, financial, accounting, insurance, sponsor, or stock-cost data.
-
----
-
-# 12. Scanner And Burn-Down
-
-Run the localisation scanner after changes:
-
-```bash
-php scripts/localisation-audit.php
+```text
+@can
+@cannot
+Gate
+policies
+middleware
+role checks
+permission checks
+financial visibility checks
+stock-cost visibility checks
+clinical confidentiality checks
 ```
 
-or if available:
+Do not expose:
 
-```bash
-php artisan uhms:localisation-audit
+```text
+restricted clinical data
+financial data
+accounting data
+stock cost
+insurance financial details
+sponsor financial details
+audit logs
+user permissions
 ```
 
-Compare before/after active runtime candidates.
-
-The goal of this phase is to burn down the remaining 519 active runtime candidates, starting with consultation and auth.
-
-Document:
-
-* before count
-* after count
-* files fixed
-* keys added
-* files deferred
-* reason for each deferred file
+No business logic should be moved into Blade.
 
 ---
 
-# 13. Language File Parity
+# 15. Responsiveness
 
-After all changes, verify recursive EN/FR parity.
+While touching these pages, fix obvious responsiveness problems only where directly encountered:
 
-Every key added in English must exist in French.
-Every key added in French must exist in English.
+* wrap large tables in `.table-responsive`
+* ensure action buttons wrap on small screens
+* ensure filters stack on mobile
+* ensure modals are usable on mobile
+* do not break print views
 
-Run PHP lint:
-
-```bash
-for f in lang/en/*.php lang/fr/*.php; do php -l "$f"; done
-```
-
----
-
-# 14. Required Manual Verification
-
-Manually switch to French and verify:
-
-## Auth
-
-* login
-* forgot password
-* reset password
-* profile
-* account/settings
-* logout menu/session messages
-
-## Consultations
-
-* consultation list/history
-* consultation show page
-* new consultation flow if present
-* complaints
-* history
-* examination
-* diagnosis
-* investigations
-* prescriptions
-* treatment
-* follow-up
-* modals
-* JavaScript buttons/messages
-* validation errors
-
-## Remaining Modules
-
-Verify every file fixed from the active runtime list.
-
-Do not declare complete based only on automated checks.
+Use Bootstrap 5 and Tabler Icons only.
+Do not introduce Tailwind.
 
 ---
 
-# 15. Required Documentation
+# 16. Required Documentation
 
 Create:
 
 ```text
-docs/LOCALISATION_PHASE_15B_CRITICAL_RUNTIME_COMPLETION_REPORT.md
+docs/LOCALISATION_PHASE_15D_RUNTIME_BURNDOWN_CONTINUATION_REPORT.md
 ```
 
 Include:
 
 * summary
-* manually confirmed problem pages
-* active runtime candidate count before
-* active runtime candidate count after
-* consultation pages fixed
-* auth pages fixed
-* other modules fixed
-* files changed
+* starting active runtime candidate count: 370
+* ending active runtime candidate count
+* per-batch before/after counts
+* Batch 2 remainder files fixed/deferred
+* Batch 3 files fixed/deferred
+* Batch 4 files fixed/deferred
+* Batch 5 files fixed/deferred
+* Batch 6 files fixed/deferred
 * language files changed
+* namespaces created
 * keys added
+* JavaScript files reviewed
+* class-A service candidates reviewed
 * dynamic labels converted
-* validation attributes added
+* permissions/security confirmation
+* EN/FR parity result
+* PHP lint result
+* view cache result
 * scanner result
-* parity result
 * manual French verification checklist
-* remaining candidates, if any
-* reason for every deferred candidate
-* recommendation for next phase
+* next recommendation if candidates remain
+
+Do not claim “all pages translated” unless the scanner and manual French checks support it.
 
 ---
 
-# 16. Verification Commands
+# 17. Verification Commands
 
 Run:
 
@@ -570,27 +661,88 @@ Run:
 git diff --check
 ```
 
-If project tests are stable, run relevant localisation or feature tests.
-Do not run the full test suite yet if there are still active runtime localisation candidates.
+If compiled Blade cache exists, lint compiled views:
+
+```bash
+find storage/framework/views -type f -name "*.php" -print0 | xargs -0 -n1 php -l
+```
 
 ---
 
-# 17. Acceptance Criteria
+# 18. Manual French Verification
 
-This phase is complete only when:
+Switch the app to French and manually verify every fixed batch:
 
-* consultation pages no longer show English in French mode
-* auth pages no longer show English in French mode
-* active runtime candidate count is reduced from the current 519
-* all high-priority route-linked clinical pages are translated or documented
-* all added language keys have EN/FR parity
-* validation attributes for auth and consultations are translated
-* inline JS strings for fixed pages are translated
-* dynamic visible labels are translated where safe
+```text
+procedure schedule
+theatre show
+procedure catalogue index
+theatre schedule form
+theatre room form
+wards index
+wards beds
+wards bed map
+ward settings
+product stock ledger
+product stock balances
+product stock receive
+product stock transfer
+product stock adjust
+product stock return
+stock locations
+purchase orders index/create/show
+purchase returns index/create/show
+supplier ledger
+suppliers
+stock requisitions
+department consumables
+prescriptions index/show
+investigation items
+investigation catalogue index/show
+vitals record
+lab results/tests
+emergency show
+```
+
+Check:
+
+* page title
+* breadcrumbs
+* headings
+* cards
+* filters
+* form labels
+* placeholders
+* helper text
+* buttons
+* tables
+* badges
+* modals
+* empty states
+* alerts
+* print/PDF labels if present
+* JavaScript messages
+* validation errors
+
+---
+
+# 19. Acceptance Criteria
+
+Phase 15D is complete only when:
+
+* Batch 2 remainder is finished or clearly documented
+* Batches 3–6 are finished or clearly documented
+* active runtime candidates are reduced from 370
+* target below 150 is attempted
+* all added keys have EN/FR parity
+* PHP lint passes
+* view cache compiles
+* localisation scanner runs
 * permissions are unchanged
-* no new localisation framework is introduced
 * no business logic is moved into Blade
+* no new localisation framework is introduced
+* no new frontend package is introduced
 * documentation report is created
-* manual French verification confirms the fixed pages
+* manual French verification checklist is updated
 
-Proceed with UHMS Localisation Phase 15B now.
+Proceed with UHMS Localisation Phase 15D now.

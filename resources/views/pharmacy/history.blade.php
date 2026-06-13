@@ -1,15 +1,15 @@
 @extends('layouts.app')
-@section('title', 'Dispensing History')
+@section('title', __('pharmacy.dispensing_history'))
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"><i class="ti ti-history me-2"></i>Dispensing History</h4>
+        <h4 class="fw-bold mb-0"><i class="ti ti-history me-2"></i>{{ __('pharmacy.dispensing_history') }}</h4>
     </div>
     <div>
         <a href="{{ route('admin.pharmacy.dispensing.index') }}" class="btn btn-outline-primary btn-md">
-            <i class="ti ti-arrow-left me-1"></i>Back to Queue
+            <i class="ti ti-arrow-left me-1"></i>{{ __('pharmacy.back_to_queue') }}
         </a>
     </div>
 </div>
@@ -19,17 +19,17 @@
     <div class="card-body py-2">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-md-3">
-                <input type="text" name="search" class="form-control" placeholder="Search patient, Rx #..." value="{{ request('search') }}">
+                <input type="text" name="search" class="form-control" placeholder="{{ __('pharmacy.search_placeholder') }}" value="{{ request('search') }}">
             </div>
             <div class="col-md-2">
-                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}" placeholder="From">
+                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}" placeholder="{{ __('common.from') }}">
             </div>
             <div class="col-md-2">
-                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}" placeholder="To">
+                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}" placeholder="{{ __('common.to') }}">
             </div>
             <div class="col-auto">
-                <button type="submit" class="btn btn-primary btn-md"><i class="ti ti-search me-1"></i>Filter</button>
-                <a href="{{ route('admin.pharmacy.history') }}" class="btn btn-outline-secondary btn-md">Clear</a>
+                <button type="submit" class="btn btn-primary btn-md"><i class="ti ti-search me-1"></i>{{ __('common.filter') }}</button>
+                <a href="{{ route('admin.pharmacy.history') }}" class="btn btn-outline-secondary btn-md">{{ __('common.clear') }}</a>
             </div>
         </form>
     </div>
@@ -42,14 +42,14 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Rx #</th>
-                        <th>Patient</th>
-                        <th>Drug</th>
-                        <th>Batch</th>
-                        <th>Qty Dispensed</th>
-                        <th>Dispensed By</th>
-                        <th>Dispensed At</th>
-                        <th>Notes</th>
+                        <th>{{ __('pharmacy.rx_number_short') }}</th>
+                        <th>{{ __('common.patient') }}</th>
+                        <th>{{ __('common.drug') }}</th>
+                        <th>{{ __('pharmacy.batch') }}</th>
+                        <th>{{ __('pharmacy.col_qty_dispensed') }}</th>
+                        <th>{{ __('pharmacy.dispensed_by') }}</th>
+                        <th>{{ __('pharmacy.dispensed_at') }}</th>
+                        <th>{{ __('common.notes') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -92,7 +92,7 @@
                     <tr>
                         <td colspan="8" class="text-center text-muted py-4">
                             <i class="ti ti-history fs-1 d-block mb-2"></i>
-                            No dispensing records found.
+                            {{ __('pharmacy.no_dispensing_records_found') }}
                         </td>
                     </tr>
                     @endforelse
