@@ -38,6 +38,7 @@ return [
     'date_of_death_label'       => 'Date of Death',
     'cause_of_death'            => 'Cause of Death',
     'additional_notes'          => 'Additional Notes',
+    'additional_notes_placeholder' => 'Any additional notes...',
     'confirm_mark_deceased'     => 'Confirm — Mark as Deceased',
     'mark_deceased_modal_title' => 'Mark Patient as Deceased',
 
@@ -204,6 +205,20 @@ return [
     'loading_tiers'             => 'Loading tiers...',
     'no_tiers'                  => 'No tiers available',
     'select_tier'               => 'Select Tier',
+    'select_provider_first'     => 'Select provider first',
+    'no_providers_for_type'     => 'No providers for selected type',
+    'failed_load_providers'     => 'Failed to load providers',
+    'failed_load_tiers'         => 'Failed to load tiers',
+    'coverage_suffix'           => ':percentage% coverage',
+    'relationship_options'      => [
+        'Spouse' => 'Spouse',
+        'Parent' => 'Parent',
+        'Child' => 'Child',
+        'Sibling' => 'Sibling',
+        'Relative' => 'Relative',
+        'Friend' => 'Friend',
+        'Other' => 'Other',
+    ],
 
     // Patient search select
     'search_patient'            => 'Search Patient',

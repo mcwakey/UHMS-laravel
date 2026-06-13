@@ -38,6 +38,7 @@ return [
     'date_of_death_label'       => 'Date du décès',
     'cause_of_death'            => 'Cause du décès',
     'additional_notes'          => 'Notes supplémentaires',
+    'additional_notes_placeholder' => 'Toute note supplémentaire...',
     'confirm_mark_deceased'     => 'Confirmer — Marquer comme décédé',
     'mark_deceased_modal_title' => 'Marquer le patient comme décédé',
 
@@ -204,6 +205,20 @@ return [
     'loading_tiers'             => 'Chargement des niveaux...',
     'no_tiers'                  => 'Aucun niveau disponible',
     'select_tier'               => 'Sélectionner le niveau',
+    'select_provider_first'     => 'Sélectionnez d\'abord le prestataire',
+    'no_providers_for_type'     => 'Aucun prestataire pour le type sélectionné',
+    'failed_load_providers'     => 'Impossible de charger les prestataires',
+    'failed_load_tiers'         => 'Impossible de charger les niveaux',
+    'coverage_suffix'           => 'couverture :percentage %',
+    'relationship_options'      => [
+        'Spouse' => 'Conjoint(e)',
+        'Parent' => 'Parent',
+        'Child' => 'Enfant',
+        'Sibling' => 'Frère ou sœur',
+        'Relative' => 'Proche',
+        'Friend' => 'Ami(e)',
+        'Other' => 'Autre',
+    ],
 
     // Patient search select
     'search_patient'            => 'Rechercher un patient',

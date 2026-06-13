@@ -25,7 +25,7 @@
         substr($patient->last_name  ?? '',  0, 1)
     ) : '';
 
-    $gender = $patient?->gender?->label() ?? '—';
+    $gender = $patient?->gender?->translatedLabel() ?? '—';
     $age    = $patient?->age ?? '—';
 @endphp
 

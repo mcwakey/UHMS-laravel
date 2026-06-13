@@ -29,6 +29,95 @@ $skipParts = [
 $extensions = ['blade.php', 'php', 'js'];
 $files = [];
 
+function blade_path_for_view(string $root, string $view): ?string
+{
+    $relative = 'resources/views/'.str_replace('.', '/', $view).'.blade.php';
+
+    return is_file($root.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $relative))
+        ? $relative
+        : null;
+}
+
+function discover_active_blade_views(string $root): array
+{
+    $sourceFiles = [];
+    $controllerRoot = $root.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'Http'.DIRECTORY_SEPARATOR.'Controllers';
+    $routeRoot = $root.DIRECTORY_SEPARATOR.'routes';
+    $componentRoot = $root.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'View'.DIRECTORY_SEPARATOR.'Components';
+
+    foreach ([$controllerRoot, $routeRoot, $componentRoot] as $sourceRoot) {
+        if (! is_dir($sourceRoot)) {
+            continue;
+        }
+
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($sourceRoot, FilesystemIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $file) {
+            if ($file->isFile() && str_ends_with($file->getFilename(), '.php')) {
+                $sourceFiles[] = $file->getPathname();
+            }
+        }
+    }
+
+    $direct = [];
+    foreach ($sourceFiles as $sourceFile) {
+        $contents = file_get_contents($sourceFile);
+        if ($contents === false) {
+            continue;
+        }
+
+        preg_match_all('/(?:view|View::make|Inertia::render)\(\s*[\'"]([^\'"]+)[\'"]/', $contents, $matches);
+        foreach ($matches[1] ?? [] as $view) {
+            $bladePath = blade_path_for_view($root, $view);
+            if ($bladePath !== null) {
+                $direct[$bladePath] = true;
+            }
+        }
+    }
+
+    $active = $direct;
+    $queue = array_keys($active);
+
+    while ($queue !== []) {
+        $relative = array_shift($queue);
+        $fullPath = $root.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $relative);
+        $contents = file_get_contents($fullPath);
+        if ($contents === false) {
+            continue;
+        }
+
+        $dependencies = [];
+        preg_match_all('/@(?:extends|include|includeIf|includeWhen|component)\(\s*[\'"]([^\'"]+)[\'"]/', $contents, $bladeMatches);
+        array_push($dependencies, ...($bladeMatches[1] ?? []));
+
+        preg_match_all('/<x-([a-zA-Z0-9_.:-]+)/', $contents, $componentMatches);
+        foreach ($componentMatches[1] ?? [] as $component) {
+            $dependencies[] = 'components.'.str_replace([':', '-'], ['.', '-'], $component);
+        }
+
+        foreach (array_unique($dependencies) as $dependency) {
+            $bladePath = blade_path_for_view($root, $dependency);
+            if ($bladePath === null || isset($active[$bladePath])) {
+                continue;
+            }
+
+            $active[$bladePath] = true;
+            $queue[] = $bladePath;
+        }
+    }
+
+    return [
+        'direct' => $direct,
+        'active' => $active,
+    ];
+}
+
+$bladeInventory = discover_active_blade_views($root);
+$directBladePaths = $bladeInventory['direct'];
+$activeBladePaths = $bladeInventory['active'];
+
 foreach ($scanRoots as $scanRoot) {
     $path = $root.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $scanRoot);
     if (! is_dir($path)) {
@@ -195,7 +284,12 @@ function suggested_key(string $relative, string $text): string
     return "lang/{en,fr}/{$file}.php :: {$base}";
 }
 
-function audit_bucket(string $relative, string $text, string $context): string
+function audit_bucket(
+    string $relative,
+    string $text,
+    string $context,
+    array $activeBladePaths
+): string
 {
     $normalized = normalize_text($text);
     $lowerPath = strtolower($relative);
@@ -219,6 +313,14 @@ function audit_bucket(string $relative, string $text, string $context): string
         || str_contains($lowerPath, '/sample')
         || str_contains($lowerPath, 'resources/views/patterns/')
         || str_contains($lowerPath, 'resources/views/vendor/')
+    ) {
+        return 'demo_template_candidates';
+    }
+
+    if (
+        str_starts_with($relative, 'resources/views/')
+        && str_ends_with($relative, '.blade.php')
+        && ! isset($activeBladePaths[$relative])
     ) {
         return 'demo_template_candidates';
     }
@@ -260,6 +362,64 @@ function phase14_status(string $bucket): string
     };
 }
 
+function service_review_class(string $relative, string $text, string $context): ?string
+{
+    if (! str_starts_with($relative, 'app/Services/')) {
+        return null;
+    }
+
+    $lowerPath = strtolower($relative);
+    $lowerContext = strtolower($context);
+
+    if (
+        str_contains($relative, 'SidebarMenuBuilder.php')
+        || str_contains($lowerContext, '__(')
+        || str_contains($lowerContext, 'lang::has')
+        || str_contains($lowerContext, 'trans(')
+    ) {
+        return 'E';
+    }
+
+    if (
+        str_contains($lowerContext, 'selectraw(')
+        || str_contains($lowerContext, 'db::raw(')
+        || str_contains($lowerContext, '->raw(')
+        || str_contains($lowerContext, 'statement(')
+        || str_contains($lowerContext, 'expression(')
+        || str_contains($lowerContext, 'orderbyraw(')
+    ) {
+        return 'D';
+    }
+
+    if (
+        str_contains($lowerContext, "'title' =>")
+        || str_contains($lowerContext, '"title" =>')
+        || str_contains($lowerContext, "'event' =>")
+        || str_contains($lowerContext, '"event" =>')
+        || str_contains($lowerContext, "'action' =>")
+        || str_contains($lowerContext, '"action" =>')
+    ) {
+        return 'C';
+    }
+
+    if (
+        str_contains($lowerPath, 'report')
+        || str_contains($lowerPath, 'statement')
+        || str_contains($lowerPath, 'invoice')
+        || str_contains($lowerPath, 'receipt')
+        || str_contains($lowerPath, 'print')
+        || str_contains($lowerPath, 'export')
+        || str_contains($lowerContext, "'label' =>")
+        || str_contains($lowerContext, '"label" =>')
+        || str_contains($lowerContext, "'message' =>")
+        || str_contains($lowerContext, '"message" =>')
+    ) {
+        return 'A';
+    }
+
+    return 'B';
+}
+
 $findings = [];
 $scanned = 0;
 
@@ -271,7 +431,38 @@ foreach ($files as $file) {
     }
     $scanned++;
 
+    $inBladeComment = false;
+    $inHtmlComment = false;
+
     foreach ($contents as $lineNumber => $line) {
+        if ($inBladeComment) {
+            if (str_contains($line, '--}}')) {
+                $inBladeComment = false;
+            }
+            continue;
+        }
+
+        if ($inHtmlComment) {
+            if (str_contains($line, '-->')) {
+                $inHtmlComment = false;
+            }
+            continue;
+        }
+
+        if (str_contains($line, '{{--')) {
+            if (! str_contains($line, '--}}')) {
+                $inBladeComment = true;
+            }
+            continue;
+        }
+
+        if (str_contains($line, '<!--')) {
+            if (! str_contains($line, '-->')) {
+                $inHtmlComment = true;
+            }
+            continue;
+        }
+
         if (str_contains($line, '__(') || str_contains($line, '@lang') || str_contains($line, 'trans(')) {
             continue;
         }
@@ -287,7 +478,8 @@ foreach ($files as $file) {
                     continue;
                 }
 
-                $bucket = audit_bucket($relative, $text, trim($line));
+                $bucket = audit_bucket($relative, $text, trim($line), $activeBladePaths);
+                $serviceReviewClass = service_review_class($relative, $text, trim($line));
                 $findings[] = [
                     'file' => $relative,
                     'line' => $lineNumber + 1,
@@ -300,6 +492,12 @@ foreach ($files as $file) {
                     'suggested_key' => suggested_key($relative, $text),
                     'bucket' => $bucket,
                     'phase14_status' => phase14_status($bucket),
+                    'service_review_class' => $serviceReviewClass,
+                    'route_linked' => isset($directBladePaths[$relative]),
+                    'shared_component' => str_starts_with($relative, 'resources/views/components/')
+                        || str_starts_with($relative, 'resources/views/partials/')
+                        || str_starts_with($relative, 'resources/views/layouts/')
+                        || str_starts_with($relative, 'resources/views/layout/'),
                 ];
             }
         }
@@ -333,6 +531,41 @@ foreach ($findings as $finding) {
     $bucketCounts[$finding['bucket']] = ($bucketCounts[$finding['bucket']] ?? 0) + 1;
 }
 
+$serviceReviewLabels = [
+    'A' => 'User-facing service output',
+    'B' => 'Internal audit/event text',
+    'C' => 'Stored canonical event/title',
+    'D' => 'SQL/internal expression',
+    'E' => 'Translated downstream',
+];
+$serviceReviewCounts = array_fill_keys(array_keys($serviceReviewLabels), 0);
+foreach ($findings as $finding) {
+    if ($finding['service_review_class'] !== null) {
+        $serviceReviewCounts[$finding['service_review_class']]++;
+    }
+}
+
+$activeWorklist = [];
+foreach ($findings as $finding) {
+    if ($finding['bucket'] !== 'active_runtime_candidates') {
+        continue;
+    }
+
+    $file = $finding['file'];
+    $activeWorklist[$file] ??= [
+        'module' => $finding['module'],
+        'count' => 0,
+        'route_linked' => $finding['route_linked'],
+        'shared_component' => $finding['shared_component'],
+        'high' => 0,
+        'medium' => 0,
+    ];
+    $activeWorklist[$file]['count']++;
+    $activeWorklist[$file][$finding['priority']]++;
+}
+
+uasort($activeWorklist, fn (array $left, array $right) => $right['count'] <=> $left['count']);
+
 $highFiles = [];
 $mediumFiles = [];
 foreach ($byFile as $file => $items) {
@@ -358,11 +591,19 @@ $report[] = '- Total files scanned: '.$scanned;
 $report[] = '- Total files with possible hardcoded strings: '.count($byFile);
 $report[] = '- Total hardcoded candidates found: '.count($findings);
 $report[] = '- Modules affected: '.count($modules);
+$report[] = '- Direct active route/controller Blade views: '.count($directBladePaths);
+$report[] = '- Active Blade views including resolved dependencies: '.count($activeBladePaths);
 $report[] = '';
 $report[] = '### Candidate Classification';
 $report[] = '';
 foreach ($bucketLabels as $bucket => $label) {
     $report[] = "- {$label}: ".($bucketCounts[$bucket] ?? 0);
+}
+$report[] = '';
+$report[] = '### Service Candidate Review Classes';
+$report[] = '';
+foreach ($serviceReviewLabels as $class => $label) {
+    $report[] = "- {$class} - {$label}: ".($serviceReviewCounts[$class] ?? 0);
 }
 $report[] = '';
 $report[] = '### Modules Affected';
@@ -389,6 +630,31 @@ $report[] = '- Template/demo assets under vendor-published views or plugin-like 
 $report[] = '- Enum/model labels may be intentional canonical display names until each enum is wired to `statuses.php`.';
 $report[] = '- Table cells containing fallback text from source data should be checked manually before translation.';
 $report[] = '';
+$report[] = '## Active Runtime Candidate Worklist';
+$report[] = '';
+$report[] = '| Module | File | Candidate count | Active route-linked? | Shared component? | Priority | User-facing confidence | Risk | Recommended action |';
+$report[] = '|---|---|---:|:---:|:---:|---|---|---|---|';
+foreach ($activeWorklist as $file => $item) {
+    $priority = $item['high'] > 0 ? 'high' : 'medium';
+    $confidence = $item['high'] >= $item['medium'] ? 'high' : 'medium';
+    $risk = preg_match('#/(consultations|visits|patients|emergency|admissions|billing|accounting|claims|payroll|stock)/#', $file)
+        ? 'high'
+        : 'medium';
+    $action = $item['route_linked'] || $item['shared_component'] ? 'fix' : 'manual-review';
+    $report[] = sprintf(
+        '| %s | `%s` | %d | %s | %s | %s | %s | %s | %s |',
+        $item['module'],
+        $file,
+        $item['count'],
+        $item['route_linked'] ? 'yes' : 'no',
+        $item['shared_component'] ? 'yes' : 'no',
+        $priority,
+        $confidence,
+        $risk,
+        $action,
+    );
+}
+$report[] = '';
 $report[] = '## Detailed Findings';
 $report[] = '';
 foreach ($byFile as $file => $items) {
@@ -400,6 +666,9 @@ foreach ($byFile as $file => $items) {
         $report[] = '  - Context: `'.$context.'`';
         $report[] = '  - Recommendation: '.$item['recommendation'];
         $report[] = '  - Status after Phase 14: '.$item['phase14_status'];
+        if ($item['service_review_class'] !== null) {
+            $report[] = '  - Service review class: '.$item['service_review_class'].' - '.$serviceReviewLabels[$item['service_review_class']];
+        }
         $report[] = '  - Suggested key: `'.$item['suggested_key'].'`';
     }
     $report[] = '';

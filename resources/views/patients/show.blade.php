@@ -123,7 +123,7 @@
                             <span class="avatar rounded-circle bg-light text-dark flex-shrink-0 me-2"><i class="ti ti-droplet fs-16"></i></span>
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">{{ __('patients.blood_group') }}</h6>
-                                <p class="mb-0">{{ $patient->blood_group?->label() ?? '—' }}</p>
+                                <p class="mb-0">{{ $patient->blood_group?->translatedLabel() ?? '—' }}</p>
                             </div>
                         </div>
                     </div>
@@ -132,7 +132,7 @@
                             <span class="avatar rounded-circle bg-light text-dark flex-shrink-0 me-2"><i class="ti ti-gender-male fs-16"></i></span>
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">{{ __('patients.gender') }}</h6>
-                                <p class="mb-0">{{ $patient->gender?->label() ?? '—' }}</p>
+                                <p class="mb-0">{{ $patient->gender?->translatedLabel() ?? '—' }}</p>
                             </div>
                         </div>
                     </div>
@@ -141,7 +141,7 @@
                             <span class="avatar rounded-circle bg-light text-dark flex-shrink-0 me-2"><i class="ti ti-heart fs-16"></i></span>
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">{{ __('patients.marital_status') }}</h6>
-                                <p class="mb-0">{{ $patient->marital_status?->label() ?? '—' }}</p>
+                                <p class="mb-0">{{ $patient->marital_status?->translatedLabel() ?? '—' }}</p>
                             </div>
                         </div>
                     </div>
@@ -349,7 +349,7 @@
                                 </td>
                                 <td>{{ $appointment->doctor?->full_name ? 'Dr. '.$appointment->doctor->full_name : '-' }}</td>
                                 <td>{{ Str::limit($appointment->reason ?: $appointment->notes ?: '-', 80) }}</td>
-                                <td><span class="badge bg-{{ $appointment->status?->color() ?? 'secondary' }}">{{ $appointment->status?->label() ?? '-' }}</span></td>
+                                <td><span class="badge bg-{{ $appointment->status?->color() ?? 'secondary' }}">{{ $appointment->status?->translatedLabel() ?? '-' }}</span></td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -384,7 +384,7 @@
                                 <td>{{ $uv->start_time ? \Carbon\Carbon::parse($uv->start_time)->format('h:i A') : '—' }}</td>
                                 <td>{{ $uv->currentDepartment?->name ?? '—' }}</td>
                                 <td>{{ $uv->currentConsultationDoctor()?->full_name ?? '—' }}</td>
-                                <td><span class="badge" style="background-color: {{ $uv->status->color() }}">{{ $uv->status->label() }}</span></td>
+                                <td><span class="badge" style="background-color: {{ $uv->status->color() }}">{{ $uv->status->translatedLabel() }}</span></td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -422,7 +422,7 @@
                             <tr>
                                 <td><a href="{{ route('admin.visits.show', $visit) }}" class="fw-medium">{{ $visit->visit_number }}</a></td>
                                 <td>{{ $visit->visit_date->format('d M Y') }}</td>
-                                <td>{{ $visit->visit_type?->label() ?? '—' }}</td>
+                                <td>{{ $visit->visit_type?->translatedLabel() ?? '—' }}</td>
                                 <td>—</td>
                                 <td>{{ $visit->currentConsultationDoctor()?->full_name ?? '—' }}</td>
                                 <td><x-status-badge :status="$visit->status" /></td>
@@ -436,7 +436,7 @@
             @else
             <div class="card-body text-center py-4 text-muted">
                 <i class="ti ti-calendar-off fs-1 d-block mb-2"></i>
-                <p class="mb-0">No visits recorded yet.</p>
+                <p class="mb-0">{{ __('patients.no_visits') }}</p>
             </div>
             @endif
         </div>
@@ -446,9 +446,9 @@
     <div class="tab-pane" id="insurance">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Patient Insurance Plans</h6>
+                <h6 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>{{ __('patients.insurance_plans') }}</h6>
                 @can('patients.edit')
-                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addInsuranceModal"><i class="ti ti-plus me-1"></i>Add Insurance</button>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addInsuranceModal"><i class="ti ti-plus me-1"></i>{{ __('patients.add_insurance') }}</button>
                 @endcan
             </div>
             <div class="card-body p-0">
@@ -457,16 +457,16 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Provider</th>
-                                <th>Type</th>
-                                <th>Tier</th>
-                                <th>Member</th>
-                                <th>Membership #</th>
-                                <th>Expiry</th>
-                                <th>Coverage</th>
-                                <th>Status</th>
-                                <th>Primary</th>
-                                <th>Actions</th>
+                                <th>{{ __('patients.col_provider') }}</th>
+                                <th>{{ __('common.type') }}</th>
+                                <th>{{ __('patients.col_tier') }}</th>
+                                <th>{{ __('patients.col_member') }}</th>
+                                <th>{{ __('patients.col_membership_no') }}</th>
+                                <th>{{ __('patients.col_expiry') }}</th>
+                                <th>{{ __('patients.col_coverage') }}</th>
+                                <th>{{ __('common.status') }}</th>
+                                <th>{{ __('patients.col_primary') }}</th>
+                                <th>{{ __('common.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -481,7 +481,7 @@
                                 <td class="fw-medium">{{ $ins->insuranceProvider->name }}</td>
                                 <td>
                                     <span class="badge bg-{{ $ins->insuranceProvider->type instanceof \BackedEnum ? $ins->insuranceProvider->type->color() : 'secondary' }}">
-                                        {{ $ins->insuranceProvider->type instanceof \BackedEnum ? $ins->insuranceProvider->type->label() : ucfirst($ins->insuranceProvider->type) }}
+                                        {{ $ins->insuranceProvider->type instanceof \BackedEnum ? $ins->insuranceProvider->type->translatedLabel() : ucfirst($ins->insuranceProvider->type) }}
                                     </span>
                                 </td>
                                 <td>
@@ -493,9 +493,9 @@
                                 </td>
                                 <td>
                                     @if($insMemberType === 'beneficiary')
-                                        <span class="badge bg-warning text-dark">Beneficiary</span>
+                                        <span class="badge bg-warning text-dark">{{ __('patients.beneficiary') }}</span>
                                     @else
-                                        <span class="badge bg-info">Card Holder</span>
+                                        <span class="badge bg-info">{{ __('patients.card_holder') }}</span>
                                     @endif
                                 </td>
                                 <td>{{ $ins->membership_number ?? '—' }}
@@ -507,27 +507,27 @@
                                     @if($ins->expiry_date)
                                         <span class="{{ $ins->is_expired ? 'text-danger' : '' }}">{{ $ins->expiry_date->format('d M Y') }}</span>
                                     @else
-                                        <span class="text-muted">No expiry</span>
+                                        <span class="text-muted">{{ __('patients.no_expiry') }}</span>
                                     @endif
                                 </td>
                                 <td>{{ $insCoverage !== null ? $insCoverage . '%' : '—' }}</td>
                                 <td>
                                     @if($ins->is_active && !$ins->is_expired)
-                                        <span class="badge badge-soft-success">Active</span>
+                                        <span class="badge badge-soft-success">{{ __('statuses.default.active') }}</span>
                                     @elseif($ins->is_expired)
-                                        <span class="badge badge-soft-danger">Expired</span>
+                                        <span class="badge badge-soft-danger">{{ __('statuses.default.expired') }}</span>
                                     @else
-                                        <span class="badge badge-soft-warning">Inactive</span>
+                                        <span class="badge badge-soft-warning">{{ __('statuses.default.inactive') }}</span>
                                     @endif
                                 </td>
                                 <td>
                                     @if($ins->is_primary)
-                                        <span class="badge bg-primary">Primary</span>
+                                        <span class="badge bg-primary">{{ __('patients.col_primary') }}</span>
                                     @else
                                         @can('patients.edit')
                                         <form method="POST" action="{{ route('admin.patients.insurances.set-primary', [$patient, $ins]) }}" class="d-inline">
                                             @csrf @method('PATCH')
-                                            <button type="submit" class="btn btn-sm btn-outline-primary">Set Primary</button>
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">{{ __('patients.set_primary') }}</button>
                                         </form>
                                         @endcan
                                     @endif
@@ -548,12 +548,12 @@
                                         data-ccc-code="{{ $ins->ccc_code }}"
                                         data-expiry="{{ $ins->expiry_date?->format('Y-m-d') }}"
                                         data-active="{{ $ins->is_active }}"
-                                        data-bs-toggle="modal" data-bs-target="#editInsuranceModal" aria-label="Edit" title="Edit">
+                                        data-bs-toggle="modal" data-bs-target="#editInsuranceModal" aria-label="{{ __('common.edit') }}" title="{{ __('common.edit') }}">
                                         <i class="ti ti-edit"></i>
                                     </button>
                                     <x-confirm-form :action="route('admin.patients.insurances.destroy', [$patient, $ins])" method="DELETE"
                                         button-label="" button-class="btn btn-sm btn-outline-danger" icon="ti-trash"
-                                        confirm-title="Remove this insurance?" confirm-text="The insurance membership will be removed from this patient." confirm-button="Yes, remove" />
+                                        :confirm-title="__('patients.remove_insurance')" :confirm-text="__('patients.remove_insurance_text')" :confirm-button="__('patients.yes_remove')" />
                                     @endif
                                     @endcan
                                 </td>
@@ -565,8 +565,8 @@
                 @else
                 <div class="text-center py-4 text-muted">
                     <i class="ti ti-shield-off fs-1 d-block mb-2"></i>
-                    <p class="mb-1">No insurance plans added yet.</p>
-                    <small>Cash & Carry will be used by default for all visits.</small>
+                    <p class="mb-1">{{ __('patients.no_insurance') }}</p>
+                    <small>{{ __('patients.cash_and_carry_default') }}</small>
                 </div>
                 @endif
             </div>
@@ -577,9 +577,9 @@
     <div class="tab-pane" id="emergency-contacts">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="fw-bold mb-0"><i class="ti ti-urgent me-1"></i>Emergency Contacts</h6>
+                <h6 class="fw-bold mb-0"><i class="ti ti-urgent me-1"></i>{{ __('patients.emergency_contacts') }}</h6>
                 @can('patients.edit')
-                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addEmergencyContactModal"><i class="ti ti-plus me-1"></i>Add Contact</button>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addEmergencyContactModal"><i class="ti ti-plus me-1"></i>{{ __('patients.add_contact') }}</button>
                 @endcan
             </div>
             <div class="card-body p-0">
@@ -588,12 +588,12 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Name</th>
-                                <th>Phone</th>
-                                <th>Secondary Phone</th>
-                                <th>Relationship</th>
-                                <th>Primary</th>
-                                <th>Actions</th>
+                                <th>{{ __('common.name') }}</th>
+                                <th>{{ __('common.phone') }}</th>
+                                <th>{{ __('patients.secondary_phone') }}</th>
+                                <th>{{ __('patients.relationship') }}</th>
+                                <th>{{ __('patients.col_primary') }}</th>
+                                <th>{{ __('common.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -605,7 +605,7 @@
                                 <td>{{ $ec->relationship ?? '—' }}</td>
                                 <td>
                                     @if($ec->is_primary)
-                                        <span class="badge bg-primary">Primary</span>
+                                        <span class="badge bg-primary">{{ __('patients.col_primary') }}</span>
                                     @endif
                                 </td>
                                 <td>
@@ -617,12 +617,12 @@
                                         data-phone-secondary="{{ $ec->phone_secondary }}"
                                         data-relationship="{{ $ec->relationship }}"
                                         data-primary="{{ $ec->is_primary }}"
-                                        data-bs-toggle="modal" data-bs-target="#editEmergencyContactModal" aria-label="Edit" title="Edit">
+                                        data-bs-toggle="modal" data-bs-target="#editEmergencyContactModal" aria-label="{{ __('common.edit') }}" title="{{ __('common.edit') }}">
                                         <i class="ti ti-edit"></i>
                                     </button>
                                     <x-confirm-form :action="route('admin.patients.emergency-contacts.destroy', [$patient, $ec])" method="DELETE"
                                         button-label="" button-class="btn btn-sm btn-outline-danger" icon="ti-trash"
-                                        confirm-title="Remove this contact?" confirm-text="The emergency contact will be removed." confirm-button="Yes, remove" />
+                                        :confirm-title="__('patients.remove_contact')" :confirm-text="__('patients.remove_contact_text')" :confirm-button="__('patients.yes_remove')" />
                                     @endcan
                                 </td>
                             </tr>
@@ -633,7 +633,7 @@
                 @else
                 <div class="text-center py-4 text-muted">
                     <i class="ti ti-address-book-off fs-1 d-block mb-2"></i>
-                    <p class="mb-0">No emergency contacts added yet.</p>
+                    <p class="mb-0">{{ __('patients.no_emergency_contacts') }}</p>
                 </div>
                 @endif
             </div>
@@ -645,7 +645,7 @@
     <div class="tab-pane" id="billing">
         <div class="card">
             <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-receipt me-1"></i>Billing Summary</h6>
+                <h6 class="fw-bold mb-0"><i class="ti ti-receipt me-1"></i>{{ __('patients.billing_summary') }}</h6>
             </div>
             <div class="card-body">
                 @php
@@ -666,19 +666,19 @@
                 <div class="row mb-4">
                     <div class="col-md-4">
                         <div class="border rounded p-3 text-center">
-                            <h6 class="text-muted mb-1">Total Billed</h6>
+                            <h6 class="text-muted mb-1">{{ __('patients.total_billed') }}</h6>
                             <h4 class="fw-bold mb-0">&#8373;{{ number_format($totalBilled, 2) }}</h4>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="border rounded p-3 text-center">
-                            <h6 class="text-muted mb-1">Total Paid</h6>
+                            <h6 class="text-muted mb-1">{{ __('patients.total_paid') }}</h6>
                             <h4 class="fw-bold text-success mb-0">&#8373;{{ number_format($totalPaid, 2) }}</h4>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="border rounded p-3 text-center">
-                            <h6 class="text-muted mb-1">Outstanding</h6>
+                            <h6 class="text-muted mb-1">{{ __('patients.outstanding') }}</h6>
                             <h4 class="fw-bold {{ $totalOutstanding > 0 ? 'text-danger' : 'text-success' }} mb-0">&#8373;{{ number_format($totalOutstanding, 2) }}</h4>
                         </div>
                     </div>
@@ -686,18 +686,18 @@
 
                 @if($unbilledVisitServices->isNotEmpty())
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <h6 class="fw-bold mb-0">Uninvoiced Visit Services</h6>
-                    <span class="badge bg-warning text-dark">{{ $unbilledVisitServices->count() }} pending</span>
+                    <h6 class="fw-bold mb-0">{{ __('patients.uninvoiced_services') }}</h6>
+                    <span class="badge bg-warning text-dark">{{ $unbilledVisitServices->count() }} {{ __('patients.pending') }}</span>
                 </div>
                 <div class="table-responsive mb-4">
                     <table class="table table-sm table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Visit</th>
-                                <th>Service</th>
-                                <th>Department</th>
-                                <th class="text-end">Amount</th>
-                                <th class="text-end">Action</th>
+                                <th>{{ __('patients.col_visit') }}</th>
+                                <th>{{ __('patients.col_service') }}</th>
+                                <th>{{ __('patients.col_department') }}</th>
+                                <th class="text-end">{{ __('patients.col_amount') }}</th>
+                                <th class="text-end">{{ __('patients.col_action') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -710,7 +710,7 @@
                                 <td class="text-end">
                                     @can('invoices.create')
                                     <a href="{{ route('admin.billing.invoices.create', ['visit_id' => $row['visit']->id]) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="ti ti-file-invoice me-1"></i>Create Invoice
+                                        <i class="ti ti-file-invoice me-1"></i>{{ __('patients.create_invoice') }}
                                     </a>
                                     @endcan
                                 </td>
@@ -722,17 +722,17 @@
                 @endif
 
                 @if($allInvoices->isNotEmpty())
-                <h6 class="fw-bold mb-2">Recent Invoices</h6>
+                <h6 class="fw-bold mb-2">{{ __('patients.recent_invoices') }}</h6>
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Invoice #</th>
-                                <th>Visit</th>
-                                <th>Date</th>
-                                <th>Amount</th>
-                                <th>Paid</th>
-                                <th>Status</th>
+                                <th>{{ __('patients.col_invoice_no') }}</th>
+                                <th>{{ __('patients.col_visit') }}</th>
+                                <th>{{ __('patients.col_date') }}</th>
+                                <th>{{ __('patients.col_amount') }}</th>
+                                <th>{{ __('patients.total_paid') }}</th>
+                                <th>{{ __('common.status') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -743,7 +743,7 @@
                                 <td>{{ $inv->created_at->format('d M Y') }}</td>
                                 <td>&#8373;{{ number_format($inv->total_amount, 2) }}</td>
                                 <td>&#8373;{{ number_format($inv->amount_paid, 2) }}</td>
-                                <td><span class="badge badge-soft-{{ ($inv->status instanceof \BackedEnum ? $inv->status->value : $inv->status) === 'paid' ? 'success' : (($inv->status instanceof \BackedEnum ? $inv->status->value : $inv->status) === 'partial' ? 'warning' : 'danger') }}">{{ ucfirst($inv->status instanceof \BackedEnum ? $inv->status->value : $inv->status) }}</span></td>
+                                <td><span class="badge badge-soft-{{ ($inv->status instanceof \BackedEnum ? $inv->status->value : $inv->status) === 'paid' ? 'success' : (($inv->status instanceof \BackedEnum ? $inv->status->value : $inv->status) === 'partial' ? 'warning' : 'danger') }}">{{ $inv->status instanceof \BackedEnum ? $inv->status->translatedLabel() : ucfirst($inv->status) }}</span></td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -751,7 +751,7 @@
                 </div>
                 @else
                 <div class="text-center py-3 text-muted">
-                    <p class="mb-0">No billing records yet.</p>
+                    <p class="mb-0">{{ __('patients.no_billing') }}</p>
                 </div>
                 @endif
             </div>
@@ -768,15 +768,15 @@
                         <p>{{ $patient->patient_number }}</p>
                     </div> --}}
                     <div class="col-md-4 mb-3">
-                        <h6 class="fw-bold fs-13">Registered By</h6>
+                        <h6 class="fw-bold fs-13">{{ __('patients.registered_by') }}</h6>
                         <p>{{ $patient->registeredBy?->full_name ?? 'System' }}</p>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <h6 class="fw-bold fs-13">Registration Date</h6>
+                        <h6 class="fw-bold fs-13">{{ __('patients.registration_date') }}</h6>
                         <p>{{ $patient->created_at->format('d M Y, h:i A') }}</p>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <h6 class="fw-bold fs-13">Last Updated</h6>
+                        <h6 class="fw-bold fs-13">{{ __('patients.last_updated') }}</h6>
                         <p>{{ $patient->updated_at->format('d M Y, h:i A') }}</p>
                     </div>
                     {{-- <div class="col-md-4 mb-3">
@@ -796,7 +796,7 @@
     <div class="tab-pane" id="activity-log">
         <div class="card">
             <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-history me-1"></i>Patient Activity Log</h6>
+                <h6 class="fw-bold mb-0"><i class="ti ti-history me-1"></i>{{ __('patients.patient_activity_log') }}</h6>
             </div>
             @if($activityLogs->isNotEmpty())
             <div class="card-body p-0">
@@ -804,11 +804,11 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Date &amp; Time</th>
-                                <th>Event</th>
-                                <th>Description</th>
-                                <th>Changed By</th>
-                                <th>Fields Changed</th>
+                                <th>{{ __('patients.col_datetime') }}</th>
+                                <th>{{ __('patients.col_event') }}</th>
+                                <th>{{ __('patients.col_description') }}</th>
+                                <th>{{ __('patients.col_changed_by') }}</th>
+                                <th>{{ __('patients.col_fields_changed') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -922,8 +922,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update Insurance</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('patients.update_insurance') }}</button>
                 </div>
             </form>
         </div>
@@ -938,39 +938,39 @@
             <form method="POST" action="{{ route('admin.patients.emergency-contacts.store', $patient) }}">
                 @csrf
                 <div class="modal-header">
-                    <h5 class="modal-title">Add Emergency Contact</h5>
+                    <h5 class="modal-title">{{ __('patients.add_emergency_contact') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Contact Name <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('patients.contact_name') }} <span class="text-danger">*</span></label>
                         <input type="text" name="name" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Phone <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('common.phone') }} <span class="text-danger">*</span></label>
                         <input type="tel" name="phone" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Secondary Phone</label>
+                        <label class="form-label">{{ __('patients.secondary_phone') }}</label>
                         <input type="tel" name="phone_secondary" class="form-control">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Relationship</label>
+                        <label class="form-label">{{ __('patients.relationship') }}</label>
                         <select name="relationship" class="form-select">
-                            <option value="">Select</option>
+                            <option value="">{{ __('patients.select') }}</option>
                             @foreach(['Spouse', 'Parent', 'Child', 'Sibling', 'Relative', 'Friend', 'Other'] as $rel)
-                                <option value="{{ $rel }}">{{ $rel }}</option>
+                                <option value="{{ $rel }}">{{ __('patients.relationship_options.'.$rel) }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="form-check">
                         <input type="checkbox" name="is_primary" value="1" class="form-check-input" id="addEcPrimary">
-                        <label class="form-check-label" for="addEcPrimary">Set as primary contact</label>
+                        <label class="form-check-label" for="addEcPrimary">{{ __('patients.primary_contact') }}</label>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Contact</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('patients.add_contact') }}</button>
                 </div>
             </form>
         </div>
@@ -984,39 +984,39 @@
             <form method="POST" id="editEcForm">
                 @csrf @method('PUT')
                 <div class="modal-header">
-                    <h5 class="modal-title">Edit Emergency Contact</h5>
+                    <h5 class="modal-title">{{ __('patients.edit_emergency_contact') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Contact Name <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('patients.contact_name') }} <span class="text-danger">*</span></label>
                         <input type="text" name="name" class="form-control" id="editEcName" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Phone <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('common.phone') }} <span class="text-danger">*</span></label>
                         <input type="tel" name="phone" class="form-control" id="editEcPhone" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Secondary Phone</label>
+                        <label class="form-label">{{ __('patients.secondary_phone') }}</label>
                         <input type="tel" name="phone_secondary" class="form-control" id="editEcPhoneSecondary">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Relationship</label>
+                        <label class="form-label">{{ __('patients.relationship') }}</label>
                         <select name="relationship" class="form-select" id="editEcRelationship">
-                            <option value="">Select</option>
+                            <option value="">{{ __('patients.select') }}</option>
                             @foreach(['Spouse', 'Parent', 'Child', 'Sibling', 'Relative', 'Friend', 'Other'] as $rel)
-                                <option value="{{ $rel }}">{{ $rel }}</option>
+                                <option value="{{ $rel }}">{{ __('patients.relationship_options.'.$rel) }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="form-check">
                         <input type="checkbox" name="is_primary" value="1" class="form-check-input" id="editEcPrimary">
-                        <label class="form-check-label" for="editEcPrimary">Set as primary contact</label>
+                        <label class="form-check-label" for="editEcPrimary">{{ __('patients.primary_contact') }}</label>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update Contact</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('patients.update_contact') }}</button>
                 </div>
             </form>
         </div>
@@ -1064,7 +1064,7 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Additional Notes <span class="text-muted fw-normal">(optional)</span></label>
                         <textarea name="deceased_notes" class="form-control @error('deceased_notes') is-invalid @enderror"
-                            rows="3" placeholder="Any additional notes...">{{ old('deceased_notes') }}</textarea>
+                            rows="3" placeholder="{{ __('patients.additional_notes_placeholder') }}">{{ old('deceased_notes') }}</textarea>
                         @error('deceased_notes')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -1087,6 +1087,19 @@
 @include('patients.partials.insurance-edit-modal-scripts')
 <script>
 (function () {
+    const patientI18n = @json([
+        'selectTypeFirst' => __('patients.select_type_first'),
+        'selectProviderFirst' => __('patients.select_provider_first'),
+        'loadingProviders' => __('patients.loading_providers'),
+        'noProvidersForType' => __('patients.no_providers_for_type'),
+        'selectProvider' => __('patients.select_provider'),
+        'failedLoadProviders' => __('patients.failed_load_providers'),
+        'loadingTiers' => __('patients.loading_tiers'),
+        'noTiers' => __('patients.no_tiers'),
+        'selectTier' => __('patients.select_tier'),
+        'failedLoadTiers' => __('patients.failed_load_tiers'),
+        'coverageSuffix' => __('patients.coverage_suffix', ['percentage' => ':percentage']),
+    ]);
     // ── Auto-open Mark as Deceased modal on validation error ─────────────────
     @if($errors->any() && old('deceased_at'))
     var deceasedModal = document.getElementById('markDeceasedModal');
@@ -1126,12 +1139,12 @@
     const tierSelect = document.getElementById('addInsTier');
     const tierInfo = document.getElementById('addInsTierInfo');
 
-    function resetProviderSelect(message = 'Select type first') {
+    function resetProviderSelect(message = patientI18n.selectTypeFirst) {
         providerSelect.innerHTML = '<option value="">' + message + '</option>';
         providerSelect.disabled = true;
     }
 
-    function resetTierSelect(message = 'Select provider first') {
+    function resetTierSelect(message = patientI18n.selectProviderFirst) {
         tierSelect.innerHTML = '<option value="">' + message + '</option>';
         tierSelect.disabled = true;
         if (tierInfo) tierInfo.textContent = '';
@@ -1140,7 +1153,7 @@
     // ── Add Insurance: Type → Provider cascade ──────────────────────────────
     typeSelect.addEventListener('change', function() {
         const type = this.value;
-        resetProviderSelect(type ? 'Loading providers…' : 'Select type first');
+        resetProviderSelect(type ? patientI18n.loadingProviders : patientI18n.selectTypeFirst);
         resetTierSelect();
 
         if (!type) return;
@@ -1151,11 +1164,11 @@
         .then(r => r.json())
         .then(providers => {
             if (!providers.length) {
-                resetProviderSelect('No providers for selected type');
+                resetProviderSelect(patientI18n.noProvidersForType);
                 return;
             }
 
-            providerSelect.innerHTML = '<option value="">Select Provider</option>';
+            providerSelect.innerHTML = '<option value="">' + patientI18n.selectProvider + '</option>';
             providers.forEach(provider => {
                 const opt = document.createElement('option');
                 opt.value = provider.id;
@@ -1165,7 +1178,7 @@
             providerSelect.disabled = false;
         })
         .catch(() => {
-            resetProviderSelect('Failed to load providers');
+            resetProviderSelect(patientI18n.failedLoadProviders);
         });
     });
 
@@ -1178,7 +1191,7 @@
             return;
         }
 
-        tierSelect.innerHTML = '<option value="">Loading…</option>';
+        tierSelect.innerHTML = '<option value="">' + patientI18n.loadingTiers + '</option>';
         tierSelect.disabled = true;
 
         fetch(tiersForProviderUrl.replace(':pid', providerId), {
@@ -1187,14 +1200,14 @@
         .then(r => r.json())
         .then(tiers => {
             if (!tiers.length) {
-                tierSelect.innerHTML = '<option value="">No tiers available</option>';
+                tierSelect.innerHTML = '<option value="">' + patientI18n.noTiers + '</option>';
                 return;
             }
-            tierSelect.innerHTML = '<option value="">Select Tier</option>';
+            tierSelect.innerHTML = '<option value="">' + patientI18n.selectTier + '</option>';
             tiers.forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t.id;
-                opt.textContent = t.name + (t.coverage_percentage ? ' (' + t.coverage_percentage + '% coverage)' : '');
+                opt.textContent = t.name + (t.coverage_percentage ? ' (' + patientI18n.coverageSuffix.replace(':percentage', t.coverage_percentage) + ')' : '');
                 if (t.is_default) opt.selected = true;
                 tierSelect.appendChild(opt);
             });
@@ -1202,7 +1215,7 @@
             updateTierInfo();
         })
         .catch(() => {
-            tierSelect.innerHTML = '<option value="">Failed to load tiers</option>';
+            tierSelect.innerHTML = '<option value="">' + patientI18n.failedLoadTiers + '</option>';
         });
     });
 

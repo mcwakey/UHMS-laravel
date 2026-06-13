@@ -57,12 +57,12 @@
     <div class="vr d-none d-sm-block"></div>
     <div>
         <span class="text-muted small">{{ __('visits.type_header') }}</span><br>
-        <strong>{{ $visit->visit_type?->label() ?? '—' }}</strong>
+        <strong>{{ $visit->visit_type?->translatedLabel() ?? '—' }}</strong>
     </div>
     <div class="vr d-none d-sm-block"></div>
     <div>
         <span class="text-muted small">{{ __('visits.status_header') }}</span><br>
-        <strong>{{ $visit->status?->label() ?? '—' }}</strong>
+        <strong>{{ $visit->status?->translatedLabel() ?? '—' }}</strong>
     </div>
     <div class="vr d-none d-sm-block"></div>
     <div>

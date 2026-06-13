@@ -1,565 +1,507 @@
 You are working on UHMS — Ultimate Hospital Management System.
 
-We completed several localisation phases, but there are still critical pages showing untranslated English text. Treat this as a release blocker.
+Important:
+There is currently no docs/UHMS_IMPLEMENTATION_SKILL.md file in this project.
+Do not try to read it.
+Follow the instructions in this prompt directly.
 
-# UHMS Localisation Phase 6 — Critical Page Translation Audit & Fix Pass
+We completed a Critical Page Translation Audit & Fix Pass after Phase 14.
+
+That pass fixed critical appointment and product localisation blockers:
+
+* appointment create/edit/index/show pages
+* product index/show/edit modal/pricing modal
+* inline JavaScript-generated labels
+* feedback messages
+* confirmations
+* accessibility labels
+* validation attributes
+
+Verification passed:
+
+* route:list passed with 714 routes
+* view:clear passed
+* config:clear passed
+* cache:clear passed
+* view:cache passed
+* all EN/FR lang PHP lint passed
+* recursive EN/FR parity passed
+* git diff --check passed
+* localisation audit passed
+
+Latest audit result:
+
+* files with candidates: 496
+* total candidates: 18,440
+* active runtime candidates: 4,302
+* known false positives: 13,403
+* service-title manual-review candidates: 394
+
+Important:
+This is not yet full localisation completion.
+Do not proceed to Full Test Suite yet.
+The next goal is to burn down the remaining 4,302 active-runtime candidates.
+
+Now proceed with:
+
+# UHMS Localisation Phase 15 — Active Runtime Candidate Burn-Down
 
 ## Goal
 
-Find and fix all remaining untranslated user-facing text across critical UHMS pages.
+Use the classified localisation audit to systematically reduce the remaining active runtime candidates.
 
-Do not assume previous localisation reports are complete.
-Do not rely only on EN/FR key parity.
-Do not rely only on the presence of `__()` calls.
-A page can still be partially untranslated even when language files have parity.
+This phase must focus only on:
 
-This phase must produce a real audit of remaining untranslated pages and then fix them.
+1. Active runtime candidates
+2. Confirmed user-facing strings
+3. Critical active modules still carrying untranslated text
+4. Remaining JavaScript/frontend strings
+5. Remaining shared component strings
+6. Remaining route-linked Blade strings
 
----
+Do not chase:
 
-# 1. Critical Rule
-
-Before editing, audit the whole project.
-
-Search all user-facing UI areas:
-
-```text
-resources/views/**/*.blade.php
-resources/js/**/*.js
-resources/views/emails/**/*.blade.php
-app/Models/**/*.php
-app/Http/Controllers/**/*.php
-app/Services/**/*.php
-app/View/Components/**/*.php
-app/Support/**/*.php
-```
-
-Look for visible English strings in:
-
-* page titles
-* headings
-* cards
-* tabs
-* buttons
-* badges
-* labels
-* placeholders
-* helper text
-* empty states
-* alerts
-* modals
-* confirmation messages
-* table headers
-* filter labels
-* dropdown options
-* print/PDF templates
-* email templates
-* JavaScript messages
-* chart labels
-* toast messages
-* validation attribute names
-* model label methods
-* enum/status display methods
-* sidebar/menu labels
-* breadcrumbs
-* dashboard widgets
-* action links
-* tooltip text
-
----
-
-# 2. Critical Pages to Verify Manually
-
-At minimum, verify these areas in both English and French:
-
-```text
-Dashboard / role dashboards
-Department-type dashboards
-Patients
-Visits
-Appointments
-Products
-Services
-Pharmacy
-Stock / inventory
-Store
-Procurement
-Suppliers
-Billing
-Invoices
-Payments
-Counter sale
-Credit notes
-Write-offs
-Refunds
-Sponsors
-Insurance providers
-Claims
-AR aging
-AP aging
-Accounting
-Chart of accounts
-Journal entries
-Trial balance
-General ledger
-Cashbook
-Profit & loss
-Balance sheet
-Emergency
-Triage
-Admissions
-Wards
-Beds
-Theatre / procedures
-Consultations
-Prescriptions
-Investigations
-Laboratory
-Reports
-Print pages
-PDF pages
-Settings
-Users
-Roles
-Permissions
-Activity logs
-Notifications
-Email templates
-Profile page
-Login / auth pages
-Error pages
-```
-
-If a route/page exists, it must be checked.
-
----
-
-# 3. Do Not Translate These
-
-Do not translate:
-
-* patient names
-* staff names
-* supplier names
-* product names entered by users
-* service names entered by users unless system-defined
-* diagnosis/free clinical notes
-* medicine names
-* company/hospital names
-* route names
-* permission names
-* database codes
-* audit event codes
-* internal enum values unless displayed through a translated label method
+* known false positives
+* demo/template views
+* backup-only views
+* language files themselves
+* commented-out code
+* CSS classes
+* JavaScript selectors
+* SQL expressions
+* clinical units
 * currency symbols
-* clinical units such as `mmHg`, `bpm`, `kg`, `°C`, `%`
-* technical selectors/classes/data attributes
-* example format hints like `GHA-XXXXXXXXX-X`, unless the surrounding label is untranslated
+* UHMS brand text
+* user-entered database content
+
+Do not change business logic.
+Do not change workflow logic.
+Do not change permission logic.
+Do not expose restricted clinical, financial, payroll, stock-cost, or accounting data.
+Do not introduce new packages.
+Do not introduce Tailwind.
+Do not create a new localisation system.
 
 ---
 
-# 4. Translation Method
-
-Use the existing Laravel localisation system.
+# 1. Source Reports
 
 Use:
 
-```php
-__('module.key')
+```text id="4n4ws1"
+docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
+docs/LOCALISATION_PHASE_6_CRITICAL_PAGE_AUDIT_REPORT.md
+docs/LOCALISATION_PHASE_13_ACTIVE_PAGES_BATCH_6_REPORT.md
+docs/LOCALISATION_PHASE_12_ACTIVE_PAGES_BATCH_5_REPORT.md
+docs/LOCALISATION_PHASE_11_ACTIVE_PAGES_BATCH_4_REPORT.md
+docs/LOCALISATION_PHASE_9_ACTIVE_PAGES_BATCH_2_REPORT.md
+docs/LOCALISATION_PHASE_8_ACTIVE_PAGES_BATCH_1_REPORT.md
+docs/LOCALISATION_PHASE_7_COMPLETE_ACTIVE_PAGE_TRANSLATION_REPORT.md
 ```
 
-or:
+The latest `docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md` is the main source of truth.
 
-```blade
-{{ __('module.key') }}
+---
+
+# 2. Build Active Runtime Candidate Worklist
+
+From the latest audit, extract all candidates classified as:
+
+```text id="06mnix"
+active runtime candidates
 ```
 
-For placeholders:
+Group them by:
 
-```php
-__('patients.created_successfully', ['number' => $patient->patient_number])
+```text id="64ogog"
+module
+file path
+route-linked status
+user-facing confidence
+risk level
+recommended action
 ```
 
-Do not concatenate translated strings with dynamic values.
+Create a worklist table with columns:
 
-Bad:
-
-```php
-'Patient ' . $patient->name . ' created successfully'
+```text id="as39kz"
+module
+file
+candidate count
+active route-linked? yes/no
+shared component? yes/no
+priority
+action: fix / defer / false-positive / manual-review
 ```
 
-Good:
+Prioritise high-impact active modules first.
 
-```php
-__('patients.created_successfully_for', ['name' => $patient->name])
+---
+
+# 3. Priority Order
+
+Process remaining active runtime candidates in this order:
+
+## Priority 1 — Active Patient/Clinical Flow Pages
+
+```text id="jmdfbu"
+consultations
+visits
+appointments residuals
+patients residuals
+triage
+queue
+emergency
+admissions
+wards
+medication administration
+lab/investigations
+theatre/procedures
+blood bank
+```
+
+## Priority 2 — Active Financial Flow Pages
+
+```text id="xbeb96"
+billing
+invoices
+payments
+cashier
+claims
+insurance
+sponsors
+accounting
+accounts
+reports
+```
+
+## Priority 3 — Active Operational/Admin Pages
+
+```text id="n4m220"
+store
+stock
+procurement
+suppliers
+purchase orders
+HR
+employees
+attendance
+leave
+payroll
+settings
+users
+roles
+departments
+modules
+```
+
+## Priority 4 — Shared Runtime Surfaces
+
+```text id="xk7q7f"
+components
+partials
+layouts
+layout partials
+shared modals
+shared alerts
+shared empty states
+shared action menus
+shared print layouts
+frontend components
 ```
 
 ---
 
-# 5. JavaScript Localisation
+# 4. Fix Rules
 
-For inline Blade JavaScript, use the existing i18n bridge pattern:
+For each confirmed user-facing hardcoded string:
 
-```blade
-@php
-$i18n = [
-    'loading' => __('common.loading'),
-    'no_results' => __('common.no_results'),
-];
-@endphp
+* replace with `__('...')`
+* add EN and FR keys together
+* use existing module language files where possible
+* create paired EN/FR files only where necessary
+* keep key names grouped and meaningful
+* preserve all dynamic placeholders
+* preserve existing data display behavior
+* preserve existing permissions
 
-<script>
-    const moduleI18n = @json($i18n);
-</script>
+Examples:
+
+```blade id="x30gci"
+{{ __('visits.create.title') }}
+{{ __('billing.invoice.status_paid') }}
+{{ __('common.actions.delete') }}
 ```
 
-For `resources/js/**/*.js`, do not hardcode English text.
+For dynamic strings, use placeholders:
 
-If the JS file cannot access Laravel translations directly, expose a safe global object from the layout or page:
-
-```blade
-<script>
-window.UHMS_I18N = {
-    common: {
-        loading: @json(__('common.loading')),
-        noResults: @json(__('common.no_results')),
-        error: @json(__('common.error')),
-        success: @json(__('common.success')),
-        confirm: @json(__('common.confirm')),
-    }
-};
-</script>
+```php id="vmsh2w"
+__('messages.queue.patient_waiting_for_consultation', ['name' => $patientName])
 ```
 
-Then reference:
-
-```javascript
-window.UHMS_I18N.common.loading
-```
-
-Do not introduce Vue, React, i18next, or any new frontend i18n package.
+Do not concatenate translated fragments if a full sentence is better.
 
 ---
 
-# 6. Dynamic Labels / Enum Labels
+# 5. JavaScript / Frontend Strings
 
-Audit model methods like:
+Search active frontend and Blade inline JavaScript for visible strings:
 
-```php
-label()
-statusLabel()
-typeLabel()
-paymentStatusLabel()
-visitTypeLabel()
+```text id="lsczhf"
+resources/js/
+resources/js/Pages/
+resources/js/Components/
+resources/js/components/
+public/js/
+inline <script> blocks in active Blade views
 ```
 
-If they return hardcoded English, add translated equivalents without breaking existing callers.
+Translate:
 
-Preferred pattern:
+* alerts
+* confirmations
+* loading labels
+* empty states
+* placeholders
+* Select2 labels
+* DataTables labels
+* chart labels
+* calendar labels
+* modal labels
+* button labels
+* AJAX success/error text
 
-```php
-public function translatedStatusLabel(): string
-{
-    return __('statuses.invoice.' . $this->status);
-}
+Use existing patterns only:
+
+```text id="3ysxz8"
+window.UHMS_I18N
+useTrans()
+module-level Blade i18n map
 ```
 
-If safe, update UI views to use translated label methods.
+Do not introduce a new frontend i18n package.
 
-Do not break existing business logic.
+Document frontend strings that cannot be safely localised yet.
 
 ---
 
-# 7. Validation Attribute Names
+# 6. Shared Components
 
-Update:
+Review active shared components with many active-runtime candidates:
 
-```text
-lang/en/validation.php
-lang/fr/validation.php
+```text id="ag2rtk"
+resources/views/components/
+resources/views/partials/
+resources/views/layouts/
+resources/views/layout/
 ```
 
-Add or complete the `attributes` array for critical forms:
+Be careful with:
 
-* patients
-* visits
-* appointments
-* products
-* services
-* billing
-* invoices
-* payments
-* insurance
-* sponsors
-* claims
-* emergency
-* triage
-* admissions
-* pharmacy
-* stock
-* suppliers
-* procurement
-* accounting
-* users
-* settings
+* slot content
+* props
+* reusable labels
+* global modals
+* global alerts
+* status badges
+* print layouts
+* empty state components
 
-Validation messages must show translated field names in French.
+Do not translate inactive template/demo components.
+
+If a component is used only by demo/template pages, classify it as demo/template noise.
 
 ---
 
-# 8. Appointments and Products Are Critical
+# 7. SidebarMenuBuilder Handling
 
-Specifically audit and fix:
+For `app/Services/SidebarMenuBuilder.php`:
 
-```text
-resources/views/appointments/**/*.blade.php
-resources/views/products/**/*.blade.php
-resources/views/pharmacy/products/**/*.blade.php
-resources/views/stock/**/*.blade.php
-resources/views/store/**/*.blade.php
-resources/views/inventory/**/*.blade.php
-```
+1. Confirm whether labels are translated downstream through `translateLabel()`.
+2. If yes, keep as false positive and document.
+3. If any active menu label bypasses translation, fix it using `menu.php`.
 
-If products are implemented under another path, find the correct path and translate it.
+Do not break:
 
-Remember UHMS rule:
-
-```text
-Products = physical stock items.
-Services = billable activities.
-```
-
-Do not mix the two.
-
----
-
-# 9. Print / PDF / Email Pages
-
-Audit and translate:
-
-```text
-resources/views/**/*print*.blade.php
-resources/views/**/*pdf*.blade.php
-resources/views/emails/**/*.blade.php
-```
-
-Print/PDF/email labels must be translated.
-
-Do not translate patient names, product names, service names, free text, or clinical notes.
-
----
-
-# 10. Scanner Scripts
-
-Create or update a localisation scanner command or script.
-
-Preferred:
-
-```text
-php artisan uhms:localisation-audit
-```
-
-If an Artisan command is too heavy, create:
-
-```text
-scripts/localisation-audit.php
-```
-
-The scanner should report likely hardcoded user-facing strings in:
-
-```text
-resources/views
-resources/js
-resources/views/emails
-app/Http/Controllers
-app/Models
-app/Services
-app/View/Components
-```
-
-The scanner should ignore obvious non-user-facing items:
-
-* class names
+* menu hierarchy
+* module visibility
+* permissions
 * route names
-* permission names
-* CSS classes
-* JS selectors
-* array keys
-* database column names
-* HTML attributes like `id`, `class`, `data-*`
-* translation keys
-* clinical units
-* currency symbols
-
-The scanner does not need to be perfect, but it must help find remaining untranslated text.
+* icon names
+* active patterns
 
 ---
 
-# 11. Language File Parity
+# 8. Service Title Manual Review
 
-After adding keys, verify EN/FR parity for every language file.
+The audit still reports:
 
-All keys in `lang/en/*.php` must exist in `lang/fr/*.php`.
-All keys in `lang/fr/*.php` must exist in `lang/en/*.php`.
+```text id="zj3e3m"
+394 service-title manual-review candidates
+```
 
-Add a parity checker if not already present.
+Do not blindly translate all.
 
----
+For each candidate classify:
 
-# 12. Permissions and Security
+```text id="7cmu73"
+A. User-facing timeline/notification/report/API label — translate
+B. Internal audit/event code — leave as-is
+C. Stored canonical event title — defer with reason
+D. SQL/internal expression — false positive
+E. Already translated downstream — false positive
+```
 
-Do not expose unauthorized data while translating.
+Translate only high-confidence user-facing strings.
 
-Maintain all existing permission checks.
+Document the rest.
 
-Especially protect:
-
-* clinical sensitive data
-* financial values
-* accounting data
-* sponsor/insurance financial details
-* stock cost
-* audit logs
-* user/role/permission management
-
-Do not remove `@can`, `Gate`, policy, middleware, or service permission checks.
+Do not change stored event semantics, audit semantics, workflow status, or accounting semantics.
 
 ---
 
-# 13. Responsiveness Must Not Regress
+# 9. Dynamic Label Final Sweep
 
-While touching critical pages, fix obvious responsiveness issues only when directly encountered:
+Search active runtime files for:
 
-* tables must be wrapped in `.table-responsive`
-* forms must stack properly on mobile
-* action buttons must wrap on small screens
-* modals must be usable on mobile
-* filter bars must not overflow
-* print pages must remain print-safe
+```php id="x5fii4"
+->label()
+->statusLabel()
+->typeLabel()
+getLabelAttribute()
+displayName()
+humanName()
+ucfirst(
+ucwords(
+str_replace('_', ' ',
+```
 
-Use Bootstrap 5 only.
-Do not introduce Tailwind.
-Do not introduce a new UI library.
+Where displayed to users and safe, replace with:
+
+* `translatedLabel()`
+* existing status badge component
+* explicit translation keys
+
+Do not change stored enum values.
+Do not change enum constants.
+Do not change workflow transitions.
 
 ---
 
-# 14. Required Documentation
+# 10. Audit Re-run And Candidate Reduction
+
+After fixes, rerun:
+
+```bash id="0ygdlv"
+php scripts/localisation-audit.php
+```
+
+The report must show:
+
+```text id="zvztwo"
+active runtime candidates before
+active runtime candidates after
+fixed candidates count
+deferred candidates count
+false-positive candidates count
+manual-review candidates count
+top remaining active files
+```
+
+The raw candidate count may remain high because of known false positives, but active runtime candidates should decrease or be fully classified.
+
+---
+
+# 11. Verification
+
+Run:
+
+```bash id="y3j47w"
+php artisan view:clear
+php artisan config:clear
+php artisan cache:clear
+php artisan route:list
+php artisan view:cache
+php artisan view:clear
+```
+
+Run language lint:
+
+```bash id="wtznki"
+for f in lang/en/*.php lang/fr/*.php; do php -l "$f"; done
+```
+
+Run recursive EN/FR parity check.
+
+Run:
+
+```bash id="f6b7w3"
+git diff --check
+```
+
+Required:
+
+* route list works
+* view cache works
+* EN/FR parity passes
+* language lint passes
+* git diff --check passes
+* localisation audit runs successfully
+
+---
+
+# 12. Documentation
 
 Create:
 
-```text
-docs/LOCALISATION_PHASE_6_CRITICAL_PAGE_AUDIT_REPORT.md
+```text id="nrlh7c"
+docs/LOCALISATION_PHASE_15_ACTIVE_RUNTIME_CANDIDATE_BURNDOWN_REPORT.md
 ```
 
 Include:
 
-* audit method used
-* scanner command/script added
-* pages/routes audited
-* files changed
-* language keys added
-* critical pages fixed
-* remaining untranslated items, if any
-* intentionally untranslated categories
-* EN/FR parity result
-* manual verification result
-* screenshots checklist if possible
-* known limitations
-
-Do not claim “zero untranslated strings” unless the scanner and manual audit support it.
+```text id="deklb0"
+active runtime candidates before/after
+files/modules fixed
+files/modules deferred
+false positives confirmed
+service-title review summary
+frontend strings fixed/deferred
+shared components fixed/deferred
+dynamic label sweep result
+language files changed
+EN/FR parity result
+PHP lint result
+route/cache/view-cache result
+git diff --check result
+localisation audit result
+remaining active runtime candidates
+recommendation: ready for Full Test Suite / needs Phase 15B
+```
 
 ---
 
-# 15. Verification Commands
+# 13. Acceptance Criteria
 
-Run:
+This phase is complete when:
 
-```bash
-php artisan route:list
-php artisan view:clear
-php artisan config:clear
-php artisan cache:clear
-```
+* remaining active runtime candidates are grouped by module and route-linked status
+* high-confidence active user-facing strings are translated
+* frontend strings are checked and translated or documented
+* shared runtime components are checked and translated or documented
+* service-title manual-review candidates are classified
+* dynamic label final sweep is complete
+* active runtime candidates are reduced or fully classified
+* EN/FR parity remains clean
+* touched files pass lint
+* route list works
+* view cache works
+* git diff --check passes
+* localisation audit runs successfully
+* no business logic changed
+* no workflow logic changed
+* no permission logic changed
+* no duplicate localisation system created
+* no new packages introduced
 
-Run syntax checks:
-
-```bash
-for f in lang/en/*.php lang/fr/*.php; do php -l "$f"; done
-```
-
-Run Blade/PHP syntax checks where practical.
-
-Run the localisation scanner:
-
-```bash
-php artisan uhms:localisation-audit
-```
-
-or:
-
-```bash
-php scripts/localisation-audit.php
-```
-
-Verify French mode manually:
-
-1. Switch to French.
-2. Open every critical page listed above.
-3. Confirm no page title/header/card/button/table/filter/modal/empty state still shows English.
-4. Submit validation errors on key forms.
-5. Confirm validation field names are translated.
-6. Trigger success/error flash messages.
-7. Confirm flash messages are translated.
-8. Open print/PDF pages.
-9. Confirm print/PDF labels are translated.
-10. Open pages using JavaScript interactions.
-11. Confirm JavaScript messages are translated.
-12. Confirm unauthorized users still cannot see restricted clinical/financial/stock-cost data.
-
----
-
-# 16. Acceptance Criteria
-
-This phase is complete only when:
-
-* all critical pages have been audited
-* appointments pages are translated
-* products/stock/product-related pages are translated
-* remaining dashboard pages are translated
-* remaining billing/accounting/claims pages are translated
-* remaining print/PDF/email templates are translated
-* JavaScript user-facing strings are translated
-* validation attribute names are translated
-* dynamic enum/model labels are translated where displayed
-* EN/FR language files have full parity
-* scanner output is clean or documented with justified exceptions
-* manual French verification is documented
-* no permissions are weakened
-* no business logic is moved into Blade
-* no parallel localisation system is created
-* no new UI/i18n package is introduced
-* documentation is created
-
----
-
-# 17. Important UHMS Rules
-
-Do not introduce Tailwind.
-Do not introduce Vue/React/i18next.
-Do not create a parallel localisation system.
-Do not duplicate language files unnecessarily.
-Do not remove existing routes.
-Do not break existing workflows.
-Do not hardcode NHIS.
-Do not hardcode sponsors.
-Do not hardcode insurance providers.
-Do not hardcode emergency services.
-Do not expose unauthorized clinical data.
-Do not expose unauthorized financial data.
-Do not expose stock cost to unauthorized users.
-Do not move business logic into Blade.
-Do not bypass existing services.
-Do not bypass ActivityLogService.
-Use Bootstrap 5 and Tabler Icons only.
-
-Proceed with UHMS Localisation Phase 6 — Critical Page Translation Audit & Fix Pass now.
+Proceed with UHMS Localisation Phase 15 — Active Runtime Candidate Burn-Down now.

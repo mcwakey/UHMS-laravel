@@ -316,13 +316,16 @@
 @include('partials.date-range-filter-scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const i18n = @json([
-        'working' => __('appointments.working'),
-        'unableCompleteAction' => __('appointments.unable_complete_action'),
-        'updatedSuccessfully' => __('appointments.updated_successfully'),
-        'networkErrorAction' => __('appointments.network_error_action'),
-        'open' => __('appointments.open'),
-    ]);
+    @php
+        $appointmentIndexI18nData = [
+            'working' => __('appointments.working'),
+            'unableCompleteAction' => __('appointments.unable_complete_action'),
+            'updatedSuccessfully' => __('appointments.updated_successfully'),
+            'networkErrorAction' => __('appointments.network_error_action'),
+            'open' => __('appointments.open'),
+        ];
+    @endphp
+    const i18n = @json($appointmentIndexI18nData);
     const filterForm = document.querySelector('[data-auto-filter-form="appointments-index"]');
     if (filterForm) {
         let filterTimer = null;

@@ -59,7 +59,7 @@
                                 @endif
                             </small>
                         </div>
-                        <span class="ms-auto badge bg-{{ $visit->status->color() }} fs-7">{{ $visit->status->label() }}</span>
+                        <span class="ms-auto badge bg-{{ $visit->status->color() }} fs-7">{{ $visit->status->translatedLabel() }}</span>
                     </div>
                 </div>
             </div>
@@ -111,7 +111,7 @@
                             <label class="form-label">{{ __('visits.visit_type_label') }} <span class="text-danger">*</span></label>
                             <select name="visit_type" class="form-select @error('visit_type') is-invalid @enderror" required>
                                 @foreach(\App\Enums\VisitType::cases() as $type)
-                                    <option value="{{ $type->value }}" {{ old('visit_type', $visit->visit_type->value) == $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
+                                    <option value="{{ $type->value }}" {{ old('visit_type', $visit->visit_type->value) == $type->value ? 'selected' : '' }}>{{ $type->translatedLabel() }}</option>
                                 @endforeach
                             </select>
                             @error('visit_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -120,7 +120,7 @@
                             <label class="form-label">{{ __('visits.priority_label') }} <span class="text-danger">*</span></label>
                             <select name="priority" class="form-select @error('priority') is-invalid @enderror" required>
                                 @foreach(\App\Enums\Priority::cases() as $priority)
-                                    <option value="{{ $priority->value }}" {{ old('priority', $visit->priority->value) == $priority->value ? 'selected' : '' }}>{{ $priority->label() }}</option>
+                                    <option value="{{ $priority->value }}" {{ old('priority', $visit->priority->value) == $priority->value ? 'selected' : '' }}>{{ $priority->translatedLabel() }}</option>
                                 @endforeach
                             </select>
                             @error('priority')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -152,7 +152,7 @@
                             <label class="form-label">{{ __('visits.consultation_mode_label') }}</label>
                             <select name="consultation_mode" class="form-select @error('consultation_mode') is-invalid @enderror">
                                 @foreach(\App\Enums\ConsultationMode::cases() as $mode)
-                                    <option value="{{ $mode->value }}" {{ old('consultation_mode', $visit->consultation_mode?->value ?? 'in_person') == $mode->value ? 'selected' : '' }}>{{ $mode->label() }}</option>
+                                    <option value="{{ $mode->value }}" {{ old('consultation_mode', $visit->consultation_mode?->value ?? 'in_person') == $mode->value ? 'selected' : '' }}>{{ $mode->translatedLabel() }}</option>
                                 @endforeach
                             </select>
                             @error('consultation_mode')<div class="invalid-feedback">{{ $message }}</div>@enderror

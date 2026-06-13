@@ -274,12 +274,15 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const productI18n = @json([
-        'type' => __('products.type'),
-        'provider' => __('products.provider'),
-        'price' => __('common.price'),
-        'delete' => __('products.delete'),
-    ]);
+    @php
+        $productI18nData = [
+            'type' => __('products.type'),
+            'provider' => __('products.provider'),
+            'price' => __('common.price'),
+            'delete' => __('products.delete'),
+        ];
+    @endphp
+    const productI18n = @json($productI18nData);
     // Auto-open Pricing tab if #tab-pricing hash in URL
     const hash = window.location.hash;
     if (hash) {

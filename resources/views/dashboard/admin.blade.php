@@ -300,8 +300,8 @@
                                     </a>
                                 </td>
                                 <td class="small">{{ $appt->doctor->full_name ?? '—' }}</td>
-                                <td><span class="badge bg-light text-dark">{{ $appt->type?->label() ?? '—' }}</span></td>
-                                <td><span class="badge bg-{{ $appt->status?->color() ?? 'secondary' }}">{{ $appt->status?->label() ?? '—' }}</span></td>
+                                <td><span class="badge bg-light text-dark">{{ $appt->visit_type?->translatedLabel() ?? '—' }}</span></td>
+                                <td><span class="badge bg-{{ $appt->status?->color() ?? 'secondary' }}">{{ $appt->status?->translatedLabel() ?? '—' }}</span></td>
                             </tr>
                             @empty
                             <tr><td colspan="5"><x-empty-state :message="__('dashboards.no_appointments_today')" /></td></tr>
@@ -373,7 +373,7 @@
                             <tr>
                                 <td><a href="{{ route('admin.visits.show', $visit) }}" class="text-primary fw-medium">{{ $visit->visit_number }}</a></td>
                                 <td>{{ $visit->patient->full_name }}</td>
-                                <td><span class="badge bg-light text-dark">{{ $visit->visit_type->label() }}</span></td>
+                                <td><span class="badge bg-light text-dark">{{ $visit->visit_type->translatedLabel() }}</span></td>
                                 <td><x-status-badge :status="$visit->priority" /></td>
                                 <td>{{ $visit->currentConsultationDoctor()?->full_name ?? '—' }}</td>
                                 <td><x-status-badge :status="$visit->status" /></td>

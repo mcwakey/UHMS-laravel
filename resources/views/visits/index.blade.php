@@ -83,7 +83,7 @@
                     <select name="visit_type" class="form-select">
                         <option value="">{{ __('visits.all_types') }}</option>
                         @foreach(\App\Enums\VisitType::cases() as $type)
-                            <option value="{{ $type->value }}" {{ ($filters['visit_type'] ?? '') == $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
+                            <option value="{{ $type->value }}" {{ ($filters['visit_type'] ?? '') == $type->value ? 'selected' : '' }}>{{ $type->translatedLabel() }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -172,7 +172,7 @@
                         <td>{{ $visit->patient_age ?? $visit->patient->age }}y</td>
                         <td>
                             <span class="badge bg-{{ $visit->visit_type === \App\Enums\VisitType::EMERGENCY ? 'danger' : ($visit->visit_type === \App\Enums\VisitType::INPATIENT ? 'info' : 'light text-dark') }}">
-                                {{ $visit->visit_type->label() }}
+                                {{ $visit->visit_type->translatedLabel() }}
                             </span>
                         </td>
                         <td>
@@ -209,7 +209,7 @@
                                                 @method('PATCH')
                                                 <input type="hidden" name="status" value="{{ $nextStatus->value }}">
                                                 <button type="submit" class="dropdown-item">
-                                                    <i class="ti ti-arrow-right me-2"></i>{{ $nextStatus->label() }}
+                                                    <i class="ti ti-arrow-right me-2"></i>{{ $nextStatus->translatedLabel() }}
                                                 </button>
                                             </form>
                                         </li>

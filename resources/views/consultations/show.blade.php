@@ -613,7 +613,7 @@
                             @csrf @method('PATCH')
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
                             <button type="submit" class="btn btn-warning btn-sm w-100"
-                                    onclick="return confirm('Mark patient for admission and go to the admission form?')">
+                                    onclick="return confirm(@js(__('consultations.confirm_admit_patient')))">
                                 <i class="ti ti-bed me-1"></i>Admit Patient
                             </button>
                         </form>
@@ -623,7 +623,7 @@
                             @csrf @method('PATCH')
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
                             <button type="submit" class="btn btn-success btn-sm w-100"
-                                    onclick="return confirm('Mark this consultation as completed?')">
+                                    onclick="return confirm(@js(__('consultations.confirm_complete')))">
                                 <i class="ti ti-check me-1"></i>Complete Consultation
                             </button>
                         </form>
@@ -633,7 +633,7 @@
                             @csrf @method('PATCH')
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
                             <button type="submit" class="btn btn-danger btn-sm w-100"
-                                    onclick="return confirm('Cancel this consultation? This action cannot be undone.')">
+                                    onclick="return confirm(@js(__('consultations.confirm_cancel')))">
                                 <i class="ti ti-trash me-1"></i>Cancel Consultation
                             </button>
                         </form>
@@ -703,22 +703,22 @@
                                             <label class="form-label small">Duration Unit</label>
                                             <select name="duration_unit" class="form-select">
                                                 <option value="">-- Select --</option>
-                                                <option value="minutes">Minutes</option>
-                                                <option value="hours">Hours</option>
-                                                <option value="days">Days</option>
-                                                <option value="weeks">Weeks</option>
-                                                <option value="months">Months</option>
-                                                <option value="years">Years</option>
+                                                <option value="minutes">{{ __('consultations.duration_units.minutes') }}</option>
+                                                <option value="hours">{{ __('consultations.duration_units.hours') }}</option>
+                                                <option value="days">{{ __('consultations.duration_units.days') }}</option>
+                                                <option value="weeks">{{ __('consultations.duration_units.weeks') }}</option>
+                                                <option value="months">{{ __('consultations.duration_units.months') }}</option>
+                                                <option value="years">{{ __('consultations.duration_units.years') }}</option>
                                             </select>
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label small">Severity</label>
                                             <select name="severity" class="form-select">
                                                 <option value="">-- Select --</option>
-                                                <option value="mild">Mild</option>
-                                                <option value="moderate">Moderate</option>
-                                                <option value="severe">Severe</option>
-                                                <option value="critical">Critical</option>
+                                                <option value="mild">{{ __('consultations.severity.mild') }}</option>
+                                                <option value="moderate">{{ __('consultations.severity.moderate') }}</option>
+                                                <option value="severe">{{ __('consultations.severity.severe') }}</option>
+                                                <option value="critical">{{ __('consultations.severity.critical') }}</option>
                                             </select>
                                         </div>
                                         <div class="col-12">
@@ -787,7 +787,7 @@
                                                     data-url="{{ route('admin.consultations.complaints.destroy', $complaint) }}"
                                                     data-target="#complaint-{{ $complaint->id }}"
                                                     data-badge="badge-complaints"
-                                                    data-confirm="Remove this complaint?" aria-label="Delete" title="Delete">
+                                                    data-confirm="{{ __('consultations.remove_complaint') }}" aria-label="{{ __('common.delete') }}" title="{{ __('common.delete') }}">
                                                 <i class="ti ti-trash"></i>
                                             </button>
                                             @endif
@@ -827,7 +827,7 @@
                                         <div class="col-12">
                                             <label class="form-label small">Link to Complaint <small class="text-muted">(optional)</small></label>
                                             <select name="complaint_id" class="form-select form-select-sm">
-                                                <option value="">General narrative</option>
+                                                <option value="">{{ __('consultations.general_narrative') }}</option>
                                                 @foreach($record?->complaints ?? [] as $complaint)
                                                     <option value="{{ $complaint->id }}">{{ Str::limit($complaint->description, 80) }}</option>
                                                 @endforeach
@@ -894,7 +894,7 @@
                                                     data-url="{{ route('admin.consultations.hopc.destroy', $hopc) }}"
                                                     data-target="#hopc-{{ $hopc->id }}"
                                                     data-badge="badge-hopc"
-                                                    data-confirm="Remove this history entry?" aria-label="Delete" title="Delete">
+                                                    data-confirm="{{ __('consultations.remove_history') }}" aria-label="{{ __('common.delete') }}" title="{{ __('common.delete') }}">
                                                 <i class="ti ti-trash"></i>
                                             </button>
                                             @endif
@@ -990,7 +990,7 @@
                                                     data-url="{{ route('admin.consultations.examinations.destroy', $exam) }}"
                                                     data-target="#examination-{{ $exam->id }}"
                                                     data-badge="badge-examination"
-                                                    data-confirm="Remove this examination entry?" aria-label="Delete" title="Delete">
+                                                    data-confirm="{{ __('consultations.remove_examination') }}" aria-label="{{ __('common.delete') }}" title="{{ __('common.delete') }}">
                                                 <i class="ti ti-trash"></i>
                                             </button>
                                             @endif
@@ -1031,7 +1031,7 @@
                                             <label class="form-label small">ICD-10 <small class="text-muted">(optional search)</small></label>
                                             <input type="hidden" name="icd_code_id" id="icd_code_id">
                                             <select id="icd_code_select" class="form-select" style="width:100%">
-                                                <option value="">Type to search ICD-10 codes...</option>
+                                                <option value="">{{ __('consultations.search_icd10') }}</option>
                                             </select>
                                         </div>
                                         <div class="col-12">
@@ -1046,8 +1046,8 @@
                                         <div class="col-6">
                                             <label class="form-label small">Type</label>
                                             <select name="type" class="form-select">
-                                                <option value="provisional">Provisional</option>
-                                                <option value="final">Final</option>
+                                                <option value="provisional">{{ __('consultations.diagnosis_type.provisional') }}</option>
+                                                <option value="final">{{ __('consultations.diagnosis_type.final') }}</option>
                                             </select>
                                         </div>
                                         <div class="col-12">
@@ -1114,7 +1114,7 @@
                                                 <i class="ti ti-switch-2 me-1"></i><span class="toggle-type-label">{{ $diagnosis->type === 'provisional' ? 'Final' : 'Provisional' }}</span>
                                             </button>
                                             <button type="button" class="btn btn-xs btn-outline-warning set-primary-btn {{ $diagnosis->is_primary ? 'd-none' : '' }}"
-                                                    title="Set as Primary diagnosis"
+                                                    title="{{ __('consultations.set_primary_diagnosis') }}"
                                                     id="set-primary-{{ $diagnosis->id }}"
                                                     data-id="{{ $diagnosis->id }}"
                                                     data-url="{{ route('admin.consultations.diagnoses.primary', $diagnosis) }}">
@@ -1125,7 +1125,7 @@
                                                     data-url="{{ route('admin.consultations.diagnoses.destroy', $diagnosis) }}"
                                                     data-target="#diagnosis-{{ $diagnosis->id }}"
                                                     data-badge="badge-diagnoses"
-                                                    data-confirm="Remove this diagnosis?" aria-label="Delete" title="Delete">
+                                                    data-confirm="{{ __('consultations.remove_diagnosis') }}" aria-label="{{ __('common.delete') }}" title="{{ __('common.delete') }}">
                                                 <i class="ti ti-trash"></i>
                                             </button>
                                             @endif
@@ -1181,9 +1181,9 @@
                                         <div class="col-md-6">
                                             <label class="form-label small">Urgency</label>
                                             <select name="urgency" class="form-select">
-                                                <option value="routine">Routine</option>
-                                                <option value="urgent">Urgent</option>
-                                                <option value="emergency">Emergency</option>
+                                                <option value="routine">{{ __('consultations.urgency.routine') }}</option>
+                                                <option value="urgent">{{ __('consultations.urgency.urgent') }}</option>
+                                                <option value="emergency">{{ __('consultations.urgency.emergency') }}</option>
                                             </select>
                                         </div>
                                         @if($investigationDepts->isNotEmpty())
@@ -1299,8 +1299,8 @@
                                                                     data-url="{{ route('admin.consultations.investigation-items.destroy', $item) }}"
                                                                     data-method="DELETE"
                                                                     data-target="#lab-item-{{ $item->id }}"
-                                                                    data-confirm="Remove this investigation item?"
-                                                                    title="Delete"><i class="ti ti-trash"></i></button>
+                                                                    data-confirm="{{ __('consultations.remove_investigation_item') }}"
+                                                                    title="{{ __('common.delete') }}"><i class="ti ti-trash"></i></button>
                                                             @endif
                                                             @endcan
                                                         </div>
@@ -1344,10 +1344,10 @@
                                             <label class="form-label small">Type <span class="text-danger">*</span></label>
                                             <select name="type" class="form-select" required>
                                                 <option value="">-- Select --</option>
-                                                <option value="medication">Medication</option>
-                                                <option value="procedure">Procedure</option>
-                                                <option value="referral">Referral</option>
-                                                <option value="advice">Advice</option>
+                                                <option value="medication">{{ __('consultations.treatment_type.medication') }}</option>
+                                                <option value="procedure">{{ __('consultations.treatment_type.procedure') }}</option>
+                                                <option value="referral">{{ __('consultations.treatment_type.referral') }}</option>
+                                                <option value="advice">{{ __('consultations.treatment_type.advice') }}</option>
                                             </select>
                                         </div>
                                         <div class="col-md-8">
@@ -1404,7 +1404,7 @@
                                                     data-url="{{ route('admin.consultations.treatments.destroy', $treatment) }}"
                                                     data-target="#treatment-{{ $treatment->id }}"
                                                     data-badge="badge-treatments"
-                                                    data-confirm="Remove this treatment?" aria-label="Delete" title="Delete">
+                                                    data-confirm="{{ __('consultations.remove_treatment') }}" aria-label="{{ __('common.delete') }}" title="{{ __('common.delete') }}">
                                                 <i class="ti ti-trash"></i>
                                             </button>
                                             @endif
@@ -1483,12 +1483,12 @@
                                                 <div class="col-md-3">
                                                     <label class="form-label small">Route</label>
                                                     <select name="items[0][route]" class="form-select form-select-sm">
-                                                        <option value="oral">Oral</option>
+                                                        <option value="oral">{{ __('consultations.medicine_route.oral') }}</option>
                                                         <option value="IV">IV</option>
                                                         <option value="IM">IM</option>
                                                         <option value="SC">SC</option>
-                                                        <option value="topical">Topical</option>
-                                                        <option value="inhaled">Inhaled</option>
+                                                        <option value="topical">{{ __('consultations.medicine_route.topical') }}</option>
+                                                        <option value="inhaled">{{ __('consultations.medicine_route.inhaled') }}</option>
                                                     </select>
                                                 </div>
                                                 <div class="col-md-9">
@@ -1551,7 +1551,7 @@
                                             @endif
                                             @if($canDeleteEntry($prescription) && in_array($prescription->status->value, ['pending', 'active']))
                                             <form method="POST" action="{{ route('admin.consultations.prescriptions.destroy', $prescription) }}"
-                                                  onsubmit="return confirm('Cancel &amp; delete this prescription?') &amp;&amp; saveTabBeforeSubmit('prescriptions-section')">
+                                                  onsubmit="return confirm(@js(__('consultations.cancel_delete_prescription'))) &amp;&amp; saveTabBeforeSubmit('prescriptions-section')">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="btn btn-xs btn-outline-danger" title="Delete prescription">
                                                     <i class="ti ti-trash"></i>
@@ -1621,15 +1621,15 @@
                                         <div class="col-md-6">
                                             <label class="form-label small">Service <span class="text-danger">*</span></label>
                                             <select name="service_catalog_id" id="procedureServiceSelect" class="form-select form-select-sm" required disabled>
-                                                <option value="">Select department first</option>
+                                                <option value="">{{ __('consultations.select_department_first') }}</option>
                                             </select>
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label small">Priority <span class="text-danger">*</span></label>
                                             <select name="priority" class="form-select form-select-sm" required>
-                                                <option value="routine">Routine</option>
-                                                <option value="urgent">Urgent</option>
-                                                <option value="emergency">Emergency</option>
+                                                <option value="routine">{{ __('consultations.urgency.routine') }}</option>
+                                                <option value="urgent">{{ __('consultations.urgency.urgent') }}</option>
+                                                <option value="emergency">{{ __('consultations.urgency.emergency') }}</option>
                                             </select>
                                         </div>
                                         <div class="col-md-8">
@@ -1689,7 +1689,7 @@
                                                         <small class="text-muted">· {{ $pr->request_number }}</small>
                                                     </p>
                                                     <small class="text-muted">
-                                                        {{ ucfirst($pr->priority) }} ·
+                                                        {{ __('consultations.urgency.'.strtolower($pr->priority)) }} ·
                                                         Requested {{ optional($pr->requested_at)->format('d M Y H:i') }}
                                                         @if($pr->preferred_datetime) · Preferred {{ optional($pr->preferred_datetime)->format('d M Y H:i') }} @endif
                                                         @if($pr->schedule)
@@ -1698,7 +1698,7 @@
                                                         @endif
                                                     </small>
                                                     @if($pr->indication)
-                                                        <div><small><strong>Indication:</strong> {{ $pr->indication }}</small></div>
+                                                        <div><small><strong>{{ __('consultations.indication') }}</strong> {{ $pr->indication }}</small></div>
                                                     @endif
                                                     @if($pr->notes)
                                                         <div><small class="text-muted"><strong>Notes:</strong> {{ $pr->notes }}</small></div>
@@ -1843,7 +1843,7 @@
                         @else
                             <div class="text-center text-muted py-4">
                                 <i class="ti ti-template fs-1 d-block mb-2"></i>No patterns available yet.
-                                <br><a href="{{ route('admin.patterns.create') }}">Create your first pattern</a>
+                                <br><a href="{{ route('admin.patterns.create') }}">{{ __('consultations.create_first_pattern') }}</a>
                             </div>
                         @endif
                     </div>
@@ -1949,7 +1949,7 @@
                         </div>
                         <div class="modal-body">
                         @if(! $selectedRoute)
-                            <x-empty-state icon="ti-route-off" title="No active consultation session" message="Select a consultation session before setting a follow-up appointment." />
+                            <x-empty-state icon="ti-route-off" :title="__('consultations.no_active_session')" message="Select a consultation session before setting a follow-up appointment." />
                         @else
                             @php
                                 $followUpDepartmentId = (string) old('department_id', $followUpAppointment?->department_id ?? $selectedRoute?->department_id);
@@ -1991,12 +1991,12 @@
                                                 button-label="Cancel Follow-up"
                                                 button-class="btn btn-outline-danger btn-sm"
                                                 icon="ti-x"
-                                                confirm-title="Cancel this follow-up appointment?"
+                                                :confirm-title="__('consultations.cancel_follow_up')"
                                                 confirm-text="A cancellation reason is required and will be recorded in the patient timeline."
                                                 confirm-button="Yes, cancel"
                                                 :require-reason="true"
                                                 reason-name="reason"
-                                                reason-placeholder="Reason for cancelling this follow-up"
+                                                :reason-placeholder="__('consultations.follow_up_cancel_reason')"
                                             />
                                         </div>
                                     @endcan
@@ -2042,7 +2042,7 @@
                                         <div class="col-md-4">
                                             <label class="form-label">Service</label>
                                             <select name="service_id" id="followUpServiceSelect" class="form-select @error('service_id') is-invalid @enderror">
-                                                <option value="">No specific service</option>
+                                                <option value="">{{ __('consultations.no_specific_service') }}</option>
                                                 @foreach($consultationServices as $service)
                                                     <option value="{{ $service->id }}" data-department-id="{{ $service->department_id }}" @selected($followUpServiceId === (string) $service->id)>
                                                         {{ $service->name }}{{ $service->department?->name ? ' - '.$service->department->name : '' }}
@@ -2054,7 +2054,7 @@
                                         <div class="col-md-4">
                                             <label class="form-label">Doctor</label>
                                             <select name="doctor_id" class="form-select @error('doctor_id') is-invalid @enderror">
-                                                <option value="">Unassigned</option>
+                                                <option value="">{{ __('consultations.unassigned') }}</option>
                                                 @foreach($doctors as $doc)
                                                     <option value="{{ $doc->id }}" @selected($followUpDoctorId === (string) $doc->id)>Dr. {{ $doc->full_name }}</option>
                                                 @endforeach
@@ -2168,7 +2168,7 @@
                                 button-label="Complete & Open Next"
                                 button-class="btn btn-success btn-sm w-100"
                                 icon="ti-check"
-                                confirm-title="Complete this consultation and open next patient?"
+                                :confirm-title="__('consultations.complete_open_next_confirm')"
                                 confirm-text="The current consultation session will be completed before the next patient is opened."
                                 confirm-button="Complete and open"
                                 :disabled="! $nextPatientInLine['payment_allowed']"
@@ -2177,7 +2177,7 @@
                         </div>
                     @endcan
                 @else
-                    <x-empty-state icon="ti-users-off" title="No patient waiting" message="No patient is currently waiting in this consultation queue." />
+                    <x-empty-state icon="ti-users-off" :title="__('consultations.no_patient_waiting')" message="No patient is currently waiting in this consultation queue." />
                 @endif
             </div>
         </div>
@@ -2214,7 +2214,7 @@
                                 </small>
                             </div>
                             <button type="button" class="btn btn-xs btn-outline-primary flex-shrink-0"
-                                    onclick="window.location='{{ route('admin.consultations.history', $pastRecord->visit) }}'" aria-label="View" title="View">
+                                    onclick="window.location='{{ route('admin.consultations.history', $pastRecord->visit) }}'" aria-label="{{ __('common.view') }}" title="{{ __('common.view') }}">
                                 <i class="ti ti-eye"></i>
                             </button>
                         </div>
@@ -2230,7 +2230,7 @@
                 @else
                     <div class="text-center text-muted py-3">
                         <i class="ti ti-clock fs-3 d-block mb-1"></i>
-                        <small>No previous visits</small>
+                        <small>{{ __('consultations.no_previous_visits') }}</small>
                     </div>
                 @endif
             </div>
@@ -2253,12 +2253,12 @@
             <table class="table table-sm mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Department</th>
-                        <th>Linked Services</th>
-                        <th>Doctor</th>
-                        <th>Status</th>
-                        <th>Started</th>
-                        <th>Actions</th>
+                        <th>{{ __('common.department') }}</th>
+                        <th>{{ __('consultations.linked_services') }}</th>
+                        <th>{{ __('common.doctor') }}</th>
+                        <th>{{ __('common.status') }}</th>
+                        <th>{{ __('consultations.started') }}</th>
+                        <th>{{ __('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -2374,9 +2374,9 @@
                         <div class="col-6 mb-3">
                             <label class="form-label">Priority</label>
                             <select name="priority" class="form-select">
-                                <option value="low">Low</option>
-                                <option value="medium" selected>Medium</option>
-                                <option value="high">High</option>
+                                <option value="low">{{ __('consultations.priority.low') }}</option>
+                                <option value="medium" selected>{{ __('consultations.priority.medium') }}</option>
+                                <option value="high">{{ __('consultations.priority.high') }}</option>
                             </select>
                         </div>
                         <div class="col-6 mb-3">
@@ -2387,7 +2387,7 @@
                     <div class="mb-3">
                         <label class="form-label">Assign To</label>
                         <select name="assigned_to" class="form-select">
-                            <option value="">Unassigned</option>
+                            <option value="">{{ __('consultations.unassigned') }}</option>
                             @if(isset($doctors))
                                 @foreach($doctors as $doc)
                                     <option value="{{ $doc->id }}">Dr. {{ $doc->full_name }}</option>
@@ -2458,8 +2458,8 @@
                     <div class="mb-3">
                         <label class="form-label">Scope</label>
                         <select name="scope" class="form-select">
-                            <option value="personal">Personal (Only me)</option>
-                            <option value="system">System-Wide (All doctors)</option>
+                            <option value="personal">{{ __('consultations.pattern_scope_personal') }}</option>
+                            <option value="system">{{ __('consultations.pattern_scope_system') }}</option>
                         </select>
                     </div>
                 </div>
@@ -2523,14 +2523,14 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Services to add / bill <small class="text-muted">(optional)</small></label>
                         <select name="service_ids[]" class="form-select" id="sendSessionServiceSelect" disabled multiple size="4">
-                            <option value="" disabled>Select department first</option>
+                            <option value="" disabled>{{ __('consultations.select_department_first') }}</option>
                         </select>
                         <small class="text-muted">Services are linked under the target department session and billed once.</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Doctor optional</label>
                         <select name="doctor_id" class="form-select" id="sendSessionDoctorSelect" disabled>
-                            <option value="">Select department first</option>
+                            <option value="">{{ __('consultations.select_department_first') }}</option>
                         </select>
                         <small class="text-muted">Doctors are loaded from specialties linked to the selected department.</small>
                     </div>
@@ -2610,16 +2610,16 @@
                                     </select>
                                     @else
                                     <div class="alert alert-warning py-2 mb-0">
-                                        <small>No investigation departments configured. Please add departments with a result type set.</small>
+                                        <small>{{ __('consultations.no_investigation_departments') }}</small>
                                     </div>
                                     @endif
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Urgency</label>
                                     <select name="urgency" class="form-select">
-                                        <option value="routine">Routine</option>
-                                        <option value="urgent">Urgent</option>
-                                        <option value="emergency">Emergency</option>
+                                        <option value="routine">{{ __('consultations.urgency.routine') }}</option>
+                                        <option value="urgent">{{ __('consultations.urgency.urgent') }}</option>
+                                        <option value="emergency">{{ __('consultations.urgency.emergency') }}</option>
                                     </select>
                                 </div>
                                 <div class="col-12">
@@ -2737,6 +2737,21 @@ $visitHistoryJson = $history['records']->map(function($r) {
 
 @push('scripts')
 <script>
+@php
+    $consultationI18nData = [
+        'selectDepartmentFirst' => __('consultations.select_department_first'),
+        'loadingServices' => __('consultations.loading_services'),
+        'loadingDoctors' => __('consultations.loading_doctors'),
+        'unableLoadServices' => __('consultations.unable_load_services'),
+        'unableLoadDoctors' => __('consultations.unable_load_doctors'),
+        'deleteFailed' => __('consultations.delete_failed'),
+        'updateTypeFailed' => __('consultations.update_type_failed'),
+        'setPrimaryFailed' => __('consultations.set_primary_failed'),
+        'loading' => __('consultations.loading'),
+        'noProcedureServices' => __('consultations.no_procedure_services'),
+    ];
+@endphp
+const consultationI18n = @json($consultationI18nData);
 /* ================================================================
    PAGE GLOBALS
    The Inertia legacy bridge re-injects scripts from the pushed
@@ -2914,15 +2929,15 @@ function initSendSessionPicker() {
         if (!this.value) {
             svcSel.disabled = true;
             doctorSel.disabled = true;
-            svcSel.innerHTML = '<option value="">Select department first</option>';
-            doctorSel.innerHTML = '<option value="">Select department first</option>';
+            svcSel.innerHTML = '<option value="">' + consultationI18n.selectDepartmentFirst + '</option>';
+            doctorSel.innerHTML = '<option value="">' + consultationI18n.selectDepartmentFirst + '</option>';
             return;
         }
         const fallbackServices = preloadedServicesFor(this.value);
         svcSel.disabled = true;
         doctorSel.disabled = true;
-        svcSel.innerHTML = '<option value="">Loading services...</option>';
-        doctorSel.innerHTML = '<option value="">Loading doctors...</option>';
+        svcSel.innerHTML = '<option value="">' + consultationI18n.loadingServices + '</option>';
+        doctorSel.innerHTML = '<option value="">' + consultationI18n.loadingDoctors + '</option>';
         if (fallbackServices.length) {
             showServices(fallbackServices);
         }
@@ -2944,11 +2959,11 @@ function initSendSessionPicker() {
         } catch (error) {
             showServices(fallbackServices);
             doctorSel.disabled = true;
-            svcSel.innerHTML = '<option value="">Unable to load services</option>';
+            svcSel.innerHTML = '<option value="">' + consultationI18n.unableLoadServices + '</option>';
             if (fallbackServices.length) {
                 showServices(fallbackServices);
             }
-            doctorSel.innerHTML = '<option value="">Unable to load doctors</option>';
+            doctorSel.innerHTML = '<option value="">' + consultationI18n.unableLoadDoctors + '</option>';
         }
     });
 }
@@ -3386,7 +3401,7 @@ function bindDeleteButtons() {
                     refreshConsultationSummary();
                 }
             })
-            .catch(function () { alert('Delete failed. Please try again.'); self.disabled = false; });
+            .catch(function () { alert(consultationI18n.deleteFailed); self.disabled = false; });
         });
     });
 }
@@ -3488,7 +3503,7 @@ function bindDiagnosisButtons() {
                     showToast('Type set to ' + capFirst(newType) + '.');
                 }
             })
-            .catch(function () { alert('Failed to update type.'); })
+            .catch(function () { alert(consultationI18n.updateTypeFailed); })
             .finally(function () { self.disabled = false; });
         });
     });
@@ -3524,7 +3539,7 @@ function bindDiagnosisButtons() {
                     showToast('Primary diagnosis updated.');
                 }
             })
-            .catch(function () { alert('Failed to set primary diagnosis.'); })
+            .catch(function () { alert(consultationI18n.setPrimaryFailed); })
             .finally(function () { self.disabled = false; });
         });
     });
@@ -3567,11 +3582,11 @@ function loadProcedureServices(deptId) {
     var svc = document.getElementById('procedureServiceSelect');
     if (!svc) return;
     if (!deptId) {
-        svc.innerHTML = '<option value="">Select department first</option>';
+        svc.innerHTML = '<option value="">' + consultationI18n.selectDepartmentFirst + '</option>';
         svc.disabled = true;
         return;
     }
-    svc.innerHTML = '<option value="">Loading…</option>';
+    svc.innerHTML = '<option value="">' + consultationI18n.loading + '</option>';
     svc.disabled = true;
 
     fetch(procedureDeptServicesBase + '/' + deptId + '/services', {
@@ -3583,7 +3598,7 @@ function loadProcedureServices(deptId) {
     })
     .then(function (items) {
         if (!items || items.length === 0) {
-            svc.innerHTML = '<option value="">No procedure services found for this department</option>';
+            svc.innerHTML = '<option value="">' + consultationI18n.noProcedureServices + '</option>';
             svc.disabled = true;
             return;
         }

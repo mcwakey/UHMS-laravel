@@ -86,7 +86,7 @@
                         @endphp
                         <span class="badge rounded-pill {{ $stepClass }} px-2 py-1 small">
                             @if($isVisited && !$isCurrent)<i class="ti ti-check me-1"></i>@endif
-                            {{ $flowStatus->label() }}
+                            {{ $flowStatus->translatedLabel() }}
                         </span>
                         @if(!$loop->last)
                             <i class="ti ti-chevron-right text-muted small"></i>
@@ -166,7 +166,7 @@
                         <label class="text-muted small mb-1">{{ __('visits.visit_type_label') }}</label>
                         <div>
                             <span class="badge bg-{{ $visit->visit_type === \App\Enums\VisitType::EMERGENCY ? 'danger' : ($visit->visit_type === \App\Enums\VisitType::INPATIENT ? 'info' : 'light text-dark') }}">
-                                {{ $visit->visit_type->label() }}
+                                {{ $visit->visit_type->translatedLabel() }}
                             </span>
                         </div>
                     </div>
@@ -437,8 +437,8 @@
                             @method('PATCH')
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
                             <button type="submit" class="btn btn-{{ $nextStatus->color() }} btn-sm"
-                                    onclick="return confirm('{{ __('visits.move_to_confirm', ['status' => $nextStatus->label()]) }}')">
-                                <i class="ti ti-arrow-right me-1"></i>{{ $nextStatus->label() }}
+                                    onclick="return confirm('{{ __('visits.move_to_confirm', ['status' => $nextStatus->translatedLabel()]) }}')">
+                                <i class="ti ti-arrow-right me-1"></i>{{ $nextStatus->translatedLabel() }}
                             </button>
                         </form>
                     @endforeach
@@ -494,8 +494,8 @@
                             @method('PATCH')
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
                             <button type="submit" class="btn btn-{{ $nextStatus->color() }} btn-sm"
-                                    onclick="return confirm('{{ __('visits.move_to_confirm', ['status' => $nextStatus->label()]) }}')">
-                                <i class="ti ti-arrow-right me-1"></i>{{ $nextStatus->label() }}
+                                    onclick="return confirm('{{ __('visits.move_to_confirm', ['status' => $nextStatus->translatedLabel()]) }}')">
+                                <i class="ti ti-arrow-right me-1"></i>{{ $nextStatus->translatedLabel() }}
                             </button>
                         </form>
                     @endforeach
@@ -755,7 +755,7 @@
                                 @endif
                             </div>
                             <span class="badge bg-{{ $activeInsuranceProvider->type?->color() ?? 'secondary' }} mt-1">
-                                {{ $activeInsuranceProvider->type?->label() ?? ucfirst((string) $activeInsuranceProvider->type) }}
+                                {{ $activeInsuranceProvider->type?->translatedLabel() ?? ucfirst((string) $activeInsuranceProvider->type) }}
                             </span>
                         @else
                             <div class="small text-muted">New billed items use cash pricing.</div>
@@ -784,7 +784,7 @@
 
                 <div class="d-flex justify-content-center gap-2 mb-3">
                     @if($visit->patient->blood_group)
-                        <span class="badge bg-danger">{{ $visit->patient->blood_group->label() }}</span>
+                        <span class="badge bg-danger">{{ $visit->patient->blood_group->translatedLabel() }}</span>
                     @endif
                 </div>
 
@@ -795,7 +795,7 @@
                     </div>
                     <div class="d-flex justify-content-between py-2 border-bottom">
                         <span class="text-muted">Gender</span>
-                        <span class="fw-medium">{{ $visit->patient->gender?->label() ?? '—' }}</span>
+                        <span class="fw-medium">{{ $visit->patient->gender?->translatedLabel() ?? '—' }}</span>
                     </div>
                     <div class="d-flex justify-content-between py-2 border-bottom">
                         <span class="text-muted">Phone</span>
@@ -833,7 +833,7 @@
                         <label class="text-muted small mb-1">Provider</label>
                         <div class="fw-medium small">{{ $insuranceInfo['provider']?->name ?? 'Cash & Carry' }}</div>
                         @if($insuranceInfo['provider'])
-                        <span class="badge bg-{{ $insuranceInfo['provider']->type->color() }} mt-1">{{ $insuranceInfo['provider']->type->label() }}</span>
+                        <span class="badge bg-{{ $insuranceInfo['provider']->type->color() }} mt-1">{{ $insuranceInfo['provider']->type->translatedLabel() }}</span>
                         @endif
                     </div>
                     <div class="col-6 mb-2">
@@ -996,10 +996,10 @@
                             <div class="d-flex align-items-center justify-content-between">
                                 <div>
                                     @if($log->from_status)
-                                        <span class="badge bg-light text-dark">{{ \App\Enums\VisitStatus::from($log->from_status)->label() }}</span>
+                                        <span class="badge bg-light text-dark">{{ \App\Enums\VisitStatus::from($log->from_status)->translatedLabel() }}</span>
                                         <i class="ti ti-arrow-right text-muted mx-1"></i>
                                     @endif
-                                    <span class="badge bg-{{ \App\Enums\VisitStatus::from($log->to_status)->color() }}">{{ \App\Enums\VisitStatus::from($log->to_status)->label() }}</span>
+                                    <span class="badge bg-{{ \App\Enums\VisitStatus::from($log->to_status)->color() }}">{{ \App\Enums\VisitStatus::from($log->to_status)->translatedLabel() }}</span>
                                 </div>
                                 <small class="text-muted">{{ $log->timestamp->format('h:i A') }}</small>
                             </div>

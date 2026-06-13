@@ -1,9 +1,11 @@
 @props([
-    'label' => 'Actions',
+    'label' => null,
     'icon' => 'ti-dots-vertical',
     'align' => 'end',
     'size' => 'sm',
 ])
+
+@php $label ??= __('common.actions'); @endphp
 
 {{--
     Standard row-action dropdown. Put `dropdown-item` links/buttons (and

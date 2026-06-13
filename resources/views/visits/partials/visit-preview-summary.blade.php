@@ -55,10 +55,10 @@
                 <small class="text-muted">{{ $visit->visit_date?->format('d M Y') ?? '—' }}</small>
                 <div class="mt-2">
                     @if($visit->visit_type)
-                        <span class="badge bg-light text-dark border">{{ $visit->visit_type->label() }}</span>
+                        <span class="badge bg-light text-dark border">{{ $visit->visit_type->translatedLabel() }}</span>
                     @endif
                     @if($visit->status)
-                        <span class="badge bg-secondary ms-1">{{ $visit->status->label() }}</span>
+                        <span class="badge bg-secondary ms-1">{{ $visit->status->translatedLabel() }}</span>
                     @endif
                 </div>
             </div>

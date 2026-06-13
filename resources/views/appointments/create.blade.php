@@ -295,27 +295,30 @@ document.addEventListener('DOMContentLoaded', function() {
     let availableServices = [];
     let selectedServices = [];
     let allDoctors = @json($doctors->map(fn($d) => ['id' => $d->id, 'name' => 'Dr. ' . $d->full_name]));
-    const i18n = @json([
-        'noPatientsFound' => __('appointments.no_patients_found'),
-        'noPhone' => __('appointments.no_phone'),
-        'loading' => __('appointments.loading'),
-        'noInsurancesCash' => __('appointments.no_insurances_cash'),
-        'member' => __('appointments.member_label'),
-        'expires' => __('appointments.expires_label'),
-        'noExpiry' => __('appointments.no_expiry'),
-        'valid' => __('appointments.valid_status'),
-        'expired' => __('appointments.expired_status'),
-        'inactive' => __('appointments.inactive_status'),
-        'coverage' => __('appointments.coverage'),
-        'unlimited' => __('appointments.unlimited'),
-        'failedLoadInsurances' => __('appointments.failed_load_insurances'),
-        'noServicesFound' => __('appointments.no_services_found'),
-        'selectServices' => __('appointments.select_dept_or_doctor_services'),
-        'loadingServices' => __('appointments.loading_services'),
-        'add' => __('common.add'),
-        'delete' => __('common.delete'),
-        'selectDoctorOptional' => __('appointments.select_doctor_optional'),
-    ]);
+    @php
+        $appointmentCreateI18nData = [
+            'noPatientsFound' => __('appointments.no_patients_found'),
+            'noPhone' => __('appointments.no_phone'),
+            'loading' => __('appointments.loading'),
+            'noInsurancesCash' => __('appointments.no_insurances_cash'),
+            'member' => __('appointments.member_label'),
+            'expires' => __('appointments.expires_label'),
+            'noExpiry' => __('appointments.no_expiry'),
+            'valid' => __('appointments.valid_status'),
+            'expired' => __('appointments.expired_status'),
+            'inactive' => __('appointments.inactive_status'),
+            'coverage' => __('appointments.coverage'),
+            'unlimited' => __('appointments.unlimited'),
+            'failedLoadInsurances' => __('appointments.failed_load_insurances'),
+            'noServicesFound' => __('appointments.no_services_found'),
+            'selectServices' => __('appointments.select_dept_or_doctor_services'),
+            'loadingServices' => __('appointments.loading_services'),
+            'add' => __('common.add'),
+            'delete' => __('common.delete'),
+            'selectDoctorOptional' => __('appointments.select_doctor_optional'),
+        ];
+    @endphp
+    const i18n = @json($appointmentCreateI18nData);
 
     searchInput.addEventListener('input', function() {
         clearTimeout(debounceTimer);

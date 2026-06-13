@@ -98,7 +98,7 @@
                                         <br><small class="text-muted">{{ $visit->patient->patient_number }}</small>
                                     </div>
                                 </td>
-                                <td><span class="badge bg-light text-dark">{{ $visit->visit_type->label() }}</span></td>
+                                <td><span class="badge bg-light text-dark">{{ $visit->visit_type->translatedLabel() }}</span></td>
                                 <td><x-status-badge :status="$visit->priority" /></td>
                                 <td>—</td>
                                 <td><x-status-badge :status="$visit->status" /></td>
@@ -150,7 +150,7 @@
                             <tr>
                                 <td>{{ $visit->visit_date->translatedFormat('D, d M') }}</td>
                                 <td>{{ $visit->patient->full_name }}</td>
-                                <td><span class="badge bg-light text-dark">{{ $visit->visit_type->label() }}</span></td>
+                                <td><span class="badge bg-light text-dark">{{ $visit->visit_type->translatedLabel() }}</span></td>
                             </tr>
                             @empty
                             <tr>
