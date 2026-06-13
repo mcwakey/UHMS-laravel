@@ -65,7 +65,7 @@
                             <i class="ti ti-skull fs-18 flex-shrink-0"></i>
                             <span><strong>{{ __('visits.patient_deceased_warning') }}</strong></span>
                         </div>
-                        @php($selectedActiveAdmission = $selectedPatient?->activeAdmission)
+                        @php $selectedActiveAdmission = $selectedPatient?->activeAdmission; @endphp
                         <div id="activeAdmissionWarning" class="alert alert-warning mb-2 {{ $selectedActiveAdmission ? '' : 'd-none' }}">
                             <div class="d-flex align-items-start gap-2">
                                 <i class="ti ti-bed fs-18 flex-shrink-0"></i>
@@ -455,6 +455,7 @@
 @endcan
 @endsection
 
+@push('scripts')
 @php
 $visitI18nData = [
     'search_patient_placeholder' => __('visits.search_patient_placeholder'),
@@ -520,7 +521,6 @@ $visitI18nData = [
 ];
 @endphp
 <script>const visitI18n = @json($visitI18nData);</script>
-@push('scripts')
 @include('patients.partials.insurance-add-modal-scripts')
 @include('patients.partials.insurance-edit-modal-scripts')
 <script>
