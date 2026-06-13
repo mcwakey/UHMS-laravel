@@ -56,7 +56,7 @@
                     <select name="gender" class="form-select @error('gender') is-invalid @enderror">
                         <option value="">{{ __('users.select_gender') }}</option>
                         @foreach(\App\Enums\Gender::cases() as $gender)
-                            <option value="{{ $gender->value }}" {{ old('gender') == $gender->value ? 'selected' : '' }}>{{ ucfirst($gender->value) }}</option>
+                            <option value="{{ $gender->value }}" {{ old('gender') == $gender->value ? 'selected' : '' }}>{{ $gender->translatedLabel() }}</option>
                         @endforeach
                     </select>
                     @error('gender')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -70,7 +70,7 @@
 
                 <div class="col-md-6 mb-3">
                     <label class="form-label">{{ __('users.employee_id') }}</label>
-                    <input type="text" name="employee_id" class="form-control @error('employee_id') is-invalid @enderror" value="{{ old('employee_id') }}" placeholder="Leave blank to auto-generate">
+                    <input type="text" name="employee_id" class="form-control @error('employee_id') is-invalid @enderror" value="{{ old('employee_id') }}" placeholder="{{ __('users.employee_id_auto_placeholder') }}">
                     @error('employee_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 

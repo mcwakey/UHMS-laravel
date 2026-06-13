@@ -19,33 +19,33 @@
 
 <div class="row g-3 mb-3">
     <div class="col-md-3">
-        <label class="form-label">Journal Date <span class="text-danger">*</span></label>
+        <label class="form-label">{{ __('accounting.journal_date') }} <span class="text-danger">*</span></label>
         <input type="date" name="entry_date" class="form-control" value="{{ old('entry_date', isset($journal) ? $journal->entry_date->toDateString() : now()->toDateString()) }}" required>
     </div>
     <div class="col-md-3">
-        <label class="form-label">Reference Number</label>
+        <label class="form-label">{{ __('accounting.reference_number') }}</label>
         <input type="text" name="reference_number" class="form-control" value="{{ old('reference_number', $journal->reference_number ?? '') }}">
     </div>
     <div class="col-md-6">
-        <label class="form-label">Description <span class="text-danger">*</span></label>
+        <label class="form-label">{{ __('accounting.description') }} <span class="text-danger">*</span></label>
         <input type="text" name="description" class="form-control" value="{{ old('description', $journal->description ?? '') }}" required>
     </div>
 </div>
 
 <div class="card border mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0">Journal Lines</h5>
-        <button type="button" class="btn btn-sm btn-outline-primary" id="addJournalLine"><i class="ti ti-plus me-1"></i>Add Line</button>
+        <h5 class="card-title mb-0">{{ __('accounting.journal_lines') }}</h5>
+        <button type="button" class="btn btn-sm btn-outline-primary" id="addJournalLine"><i class="ti ti-plus me-1"></i>{{ __('accounting.add_line') }}</button>
     </div>
     <div class="table-responsive">
         <table class="table align-middle mb-0" id="journalLinesTable">
             <thead class="table-light">
                 <tr>
-                    <th style="min-width: 260px;">Account</th>
-                    <th style="min-width: 220px;">Line Description</th>
-                    <th style="min-width: 150px;">Department</th>
-                    <th class="text-end" style="width: 140px;">Debit</th>
-                    <th class="text-end" style="width: 140px;">Credit</th>
+                    <th style="min-width: 260px;">{{ __('accounting.account') }}</th>
+                    <th style="min-width: 220px;">{{ __('accounting.line_description') }}</th>
+                    <th style="min-width: 150px;">{{ __('accounting.department') }}</th>
+                    <th class="text-end" style="width: 140px;">{{ __('accounting.debit') }}</th>
+                    <th class="text-end" style="width: 140px;">{{ __('accounting.credit') }}</th>
                     <th style="width: 48px;"></th>
                 </tr>
             </thead>
@@ -56,13 +56,13 @@
             </tbody>
             <tfoot class="table-light">
                 <tr>
-                    <th colspan="3" class="text-end">Totals</th>
+                    <th colspan="3" class="text-end">{{ __('accounting.totals') }}</th>
                     <th class="text-end" id="totalDebit">0.00</th>
                     <th class="text-end" id="totalCredit">0.00</th>
                     <th></th>
                 </tr>
                 <tr>
-                    <th colspan="3" class="text-end">Difference</th>
+                    <th colspan="3" class="text-end">{{ __('accounting.difference') }}</th>
                     <th colspan="2" class="text-end" id="journalDifference">0.00</th>
                     <th></th>
                 </tr>

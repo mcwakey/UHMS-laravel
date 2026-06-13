@@ -247,6 +247,19 @@ function audit_bucket(string $relative, string $text, string $context): string
     return 'active_runtime_candidates';
 }
 
+function phase14_status(string $bucket): string
+{
+    return match ($bucket) {
+        'active_runtime_candidates' => 'deferred',
+        'service_title_manual_review_candidates' => 'manual review',
+        'known_false_positive_candidates',
+        'language_file_candidates',
+        'demo_template_candidates',
+        'backup_only_candidates' => 'false positive',
+        default => 'deferred',
+    };
+}
+
 $findings = [];
 $scanned = 0;
 
@@ -274,6 +287,7 @@ foreach ($files as $file) {
                     continue;
                 }
 
+                $bucket = audit_bucket($relative, $text, trim($line));
                 $findings[] = [
                     'file' => $relative,
                     'line' => $lineNumber + 1,
@@ -284,7 +298,8 @@ foreach ($files as $file) {
                     'context' => trim($line),
                     'recommendation' => 'Wrap in __() and add matching EN/FR keys if this is visible UI text.',
                     'suggested_key' => suggested_key($relative, $text),
-                    'bucket' => audit_bucket($relative, $text, trim($line)),
+                    'bucket' => $bucket,
+                    'phase14_status' => phase14_status($bucket),
                 ];
             }
         }
@@ -384,6 +399,7 @@ foreach ($byFile as $file => $items) {
         $report[] = '- Line '.$item['line'].' ['.$item['priority'].', '.$item['bucket'].']: `'.$item['string'].'`';
         $report[] = '  - Context: `'.$context.'`';
         $report[] = '  - Recommendation: '.$item['recommendation'];
+        $report[] = '  - Status after Phase 14: '.$item['phase14_status'];
         $report[] = '  - Suggested key: `'.$item['suggested_key'].'`';
     }
     $report[] = '';

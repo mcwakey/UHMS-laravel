@@ -125,6 +125,7 @@ resources/js/Components/
 Translate visible strings in active frontend/Inertia surfaces:
 
 * billing dashboard
+* consultations
 * sponsors
 * credit notes
 * write-offs

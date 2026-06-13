@@ -50,6 +50,7 @@ return [
     'password'              => 'Password',
     'password_keep_blank'   => 'leave blank to keep current',
     'select_gender'         => 'Select Gender',
+    'employee_id_auto_placeholder' => 'Leave blank to auto-generate',
     'select_role'           => 'Select Role',
     'select_department'     => 'Select Department',
     'specialties'           => 'Specialties',

@@ -448,17 +448,17 @@ Template Name: Preclinic - Bootstrap Admin Template
 	}
 
 		// Datatable
+	var _i18n = window.UHMS_I18N || {};
 	if($('.datatable').length > 0) {
 		$('.datatable').DataTable({
 			"bFilter": true,
-			"sDom": 'fBtlpi',  
+			"sDom": 'fBtlpi',
 			"ordering": false,
 			"language": {
 				search: ' ',
 				sLengthMenu: '_MENU_',
-				searchPlaceholder: "Search",
-				sLengthMenu: 'Row Per Page _MENU_ Entries',
-				info: "_START_ - _END_ of _TOTAL_ items",
+				searchPlaceholder: _i18n.dt_search_placeholder || "Search",
+				info: _i18n.dt_info || "_START_ - _END_ of _TOTAL_ items",
 				paginate: {
 					next: '<i class="ti ti-arrow-right"></i>',
 					previous: '<i class="ti ti-arrow-left text-body"></i> '
@@ -510,17 +510,18 @@ Template Name: Preclinic - Bootstrap Admin Template
 		function report_range(start, end) {
 			$("#reportrange span").html(start.format("D MMM YY") + " - " + end.format("D MMM YY"))
 		}
+		var _rng = window.UHMS_I18N || {};
+		var _ranges = {};
+		_ranges[_rng.today || 'Today'] = [moment(), moment()];
+		_ranges[_rng.yesterday || 'Yesterday'] = [moment().subtract(1, "days"), moment().subtract(1, "days")];
+		_ranges[_rng.last_7_days || 'Last 7 Days'] = [moment().subtract(6, "days"), moment()];
+		_ranges[_rng.last_30_days || 'Last 30 Days'] = [moment().subtract(29, "days"), moment()];
+		_ranges[_rng.this_month || 'This Month'] = [moment().startOf("month"), moment().endOf("month")];
+		_ranges[_rng.last_month || 'Last Month'] = [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")];
 		$("#reportrange").daterangepicker({
 			startDate: start,
 			endDate: end,
-			ranges: {
-				'Today': [moment(), moment()],
-				'Yesterday': [moment().subtract(1, "days"), moment().subtract(1, "days")],
-				"Last 7 Days": [moment().subtract(6, "days"), moment()],
-				"Last 30 Days": [moment().subtract(29, "days"), moment()],
-				"This Month": [moment().startOf("month"), moment().endOf("month")],
-				"Last Month": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
-			}
+			ranges: _ranges
 		}, report_range), report_range(end, end);
 	}
 
@@ -532,17 +533,17 @@ Template Name: Preclinic - Bootstrap Admin Template
 			function report_range(start, end) {
 				$(".reportrange span").html(start.format("D MMM YY") + " - " + end.format("D MMM YY"))
 			}
+			var _rr = window.UHMS_I18N || {}, _rRanges = {};
+			_rRanges[_rr.today || 'Today'] = [moment(), moment()];
+			_rRanges[_rr.yesterday || 'Yesterday'] = [moment().subtract(1, "days"), moment().subtract(1, "days")];
+			_rRanges[_rr.last_7_days || 'Last 7 Days'] = [moment().subtract(6, "days"), moment()];
+			_rRanges[_rr.last_30_days || 'Last 30 Days'] = [moment().subtract(29, "days"), moment()];
+			_rRanges[_rr.this_month || 'This Month'] = [moment().startOf("month"), moment().endOf("month")];
+			_rRanges[_rr.last_month || 'Last Month'] = [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")];
 			$(".reportrange").daterangepicker({
 				startDate: start,
 				endDate: end,
-				ranges: {
-					'Today': [moment(), moment()],
-					'Yesterday': [moment().subtract(1, "days"), moment().subtract(1, "days")],
-					"Last 7 Days": [moment().subtract(6, "days"), moment()],
-					"Last 30 Days": [moment().subtract(29, "days"), moment()],
-					"This Month": [moment().startOf("month"), moment().endOf("month")],
-					"Last Month": [moment().subtract(1, "month").startOf("month"), moment().subtract(1, "month").endOf("month")]
-				}
+				ranges: _rRanges
 			}, report_range), report_range(end, end);
 		}
 
@@ -553,35 +554,35 @@ Template Name: Preclinic - Bootstrap Admin Template
 			$('.bookingrange span').html(start.format('D MMM YY') + ' - ' + end.format('D MMM YY'));
 		}
 
+		var _br = window.UHMS_I18N || {}, _bRanges = {};
+		_bRanges[_br.today || 'Today'] = [moment(), moment()];
+		_bRanges[_br.yesterday || 'Yesterday'] = [moment().subtract(1, 'days'), moment().subtract(1, 'days')];
+		_bRanges[_br.last_7_days || 'Last 7 Days'] = [moment().subtract(6, 'days'), moment()];
+		_bRanges[_br.last_30_days || 'Last 30 Days'] = [moment().subtract(29, 'days'), moment()];
+		_bRanges[_br.this_year || 'This Year'] = [moment().startOf('year'), moment().endOf('year')];
+		_bRanges[_br.last_year || 'Last Year'] = [moment().subtract(1, 'year').startOf('year'), moment().subtract(1, 'year').endOf('year')];
 		$('.bookingrange').daterangepicker({
 			startDate: start,
 			endDate: end,
-			ranges: {
-				'Today': [moment(), moment()],
-				'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-				'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-				'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-				'This Year': [moment().startOf('year'), moment().endOf('year')],
-				'Last Year': [moment().subtract(1, 'year').startOf('year'), moment().subtract(1, 'year').endOf('year')]
-			}
+			ranges: _bRanges
 		}, booking_range);
 		booking_range(start, end);
 	}
 
 
 	if($('.daterange').length > 0) {
+		var _dr = window.UHMS_I18N || {}, _dRanges = {};
+		_dRanges[_dr.today || 'Today'] = [moment(), moment()];
+		_dRanges[_dr.yesterday || 'Yesterday'] = [moment().subtract(1, 'days'), moment().subtract(1, 'days')];
+		_dRanges[_dr.last_7_days || 'Last 7 Days'] = [moment().subtract(6, 'days'), moment()];
+		_dRanges[_dr.last_30_days || 'Last 30 Days'] = [moment().subtract(29, 'days'), moment()];
+		_dRanges[_dr.this_year || 'This Year'] = [moment().startOf('year'), moment().endOf('year')];
+		_dRanges[_dr.next_year || 'Next Year'] = [moment().add(1, 'year').startOf('year'), moment().add(1, 'year').endOf('year')];
 		$('.daterange').daterangepicker({
 			autoUpdateInput: false,  // Prevents immediate update of input field
-			ranges: {
-				'Today': [moment(), moment()],
-				'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-				'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-				'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-				'This Year': [moment().startOf('year'), moment().endOf('year')],
-				'Next Year': [moment().add(1, 'year').startOf('year'), moment().add(1, 'year').endOf('year')]
-			},
+			ranges: _dRanges,
 			locale: {
-				cancelLabel: 'Clear'
+				cancelLabel: _dr.clear || 'Clear'
 			}
 		});
 		$('#daterange').on('input', function() {

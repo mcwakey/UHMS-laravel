@@ -1,7 +1,7 @@
 <tr>
     <td>
         <select name="lines[{{ $index }}][account_id]" class="form-select form-select-sm" required>
-            <option value="">Select account</option>
+            <option value="">{{ __('accounting.select_account') }}</option>
             @foreach($accounts as $account)
                 <option value="{{ $account->id }}" @selected((string) ($line['account_id'] ?? '') === (string) $account->id)>{{ $account->display_name }}</option>
             @endforeach
@@ -12,7 +12,7 @@
     </td>
     <td>
         <select name="lines[{{ $index }}][department_id]" class="form-select form-select-sm">
-            <option value="">None</option>
+            <option value="">{{ __('accounting.none') }}</option>
             @foreach($departments as $department)
                 <option value="{{ $department->id }}" @selected((string) ($line['department_id'] ?? '') === (string) $department->id)>{{ $department->name }}</option>
             @endforeach
@@ -25,6 +25,6 @@
         <input type="number" step="0.01" min="0" name="lines[{{ $index }}][credit]" class="form-control form-control-sm text-end line-credit" value="{{ $line['credit'] ?? '' }}">
     </td>
     <td class="text-center">
-        <button type="button" class="btn btn-sm btn-outline-danger" data-remove-line aria-label="Remove line" title="Remove line"><i class="ti ti-trash"></i></button>
+        <button type="button" class="btn btn-sm btn-outline-danger" data-remove-line aria-label="{{ __('accounting.remove_line') }}" title="{{ __('accounting.remove_line') }}"><i class="ti ti-trash"></i></button>
     </td>
 </tr>

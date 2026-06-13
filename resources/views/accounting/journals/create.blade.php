@@ -1,10 +1,10 @@
 @extends('layouts.app')
-@section('title', 'New Journal Entry')
+@section('title', __('accounting.new_journal_entry'))
 
 @section('content')
-<x-page-header title="New Journal Entry" icon="ti-file-plus">
+<x-page-header :title="__('accounting.new_journal_entry')" icon="ti-file-plus">
     <x-slot:actions>
-        <a href="{{ route('admin.accounting.journals.index') }}" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>Back</a>
+        <a href="{{ route('admin.accounting.journals.index') }}" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>{{ __('common.back') }}</a>
     </x-slot:actions>
 </x-page-header>
 
@@ -15,6 +15,6 @@
 <form method="POST" action="{{ route('admin.accounting.journals.store') }}">
     @csrf
     @include('accounting.journals._form')
-    <button class="btn btn-primary" type="submit"><i class="ti ti-device-floppy me-1"></i>Save Draft</button>
+    <button class="btn btn-primary" type="submit"><i class="ti ti-device-floppy me-1"></i>{{ __('accounting.save_draft') }}</button>
 </form>
 @endsection

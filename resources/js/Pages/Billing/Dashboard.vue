@@ -6,6 +6,9 @@
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '../../Layouts/AppLayout.vue';
+import { useTrans } from '../../Composables/useTrans';
+
+const { t } = useTrans();
 
 const props = defineProps({
     metrics: { type: Object, required: true },
@@ -24,20 +27,20 @@ const trendMax = computed(() => {
 </script>
 
 <template>
-    <AppLayout title="Billing Dashboard">
+    <AppLayout :title="t('billing.dashboard')">
         <div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
             <div class="flex-grow-1">
-                <h4 class="fw-bold mb-0"><i class="ti ti-chart-bar me-2"></i>Billing Dashboard</h4>
+                <h4 class="fw-bold mb-0"><i class="ti ti-chart-bar me-2"></i>{{ t('billing.dashboard') }}</h4>
             </div>
             <div class="d-flex gap-2">
                 <Link v-if="routes.counterSale" :href="routes.counterSale" class="btn btn-outline-primary btn-md">
-                    <i class="ti ti-cash-register me-1"></i>Counter Sale
+                    <i class="ti ti-cash-register me-1"></i>{{ t('billing.counter_sale') }}
                 </Link>
                 <Link :href="routes.receive" class="btn btn-primary btn-md">
-                    <i class="ti ti-cash me-1"></i>Receive Payment
+                    <i class="ti ti-cash me-1"></i>{{ t('billing.receive_payment') }}
                 </Link>
                 <Link :href="routes.aging" class="btn btn-outline-secondary btn-md">
-                    <i class="ti ti-clock-dollar me-1"></i>AR Aging
+                    <i class="ti ti-clock-dollar me-1"></i>{{ t('billing.ar_aging') }}
                 </Link>
             </div>
         </div>
@@ -53,7 +56,7 @@ const trendMax = computed(() => {
                             </div>
                             <div>
                                 <h3 class="fw-bold mb-0">{{ formatMoney(metrics.collected_today) }}</h3>
-                                <p class="text-muted mb-0">Collected Today</p>
+                                <p class="text-muted mb-0">{{ t('billing.collected_today') }}</p>
                             </div>
                         </div>
                     </div>
@@ -68,7 +71,7 @@ const trendMax = computed(() => {
                             </div>
                             <div>
                                 <h3 class="fw-bold mb-0">{{ formatMoney(metrics.collected_month) }}</h3>
-                                <p class="text-muted mb-0">Collected (Month)</p>
+                                <p class="text-muted mb-0">{{ t('billing.collected_month') }}</p>
                             </div>
                         </div>
                     </div>
@@ -83,7 +86,7 @@ const trendMax = computed(() => {
                             </div>
                             <div>
                                 <h3 class="fw-bold mb-0">{{ formatMoney(metrics.billed_month) }}</h3>
-                                <p class="text-muted mb-0">Billed (Month)</p>
+                                <p class="text-muted mb-0">{{ t('billing.billed_month') }}</p>
                             </div>
                         </div>
                     </div>
@@ -98,7 +101,7 @@ const trendMax = computed(() => {
                             </div>
                             <div>
                                 <h3 class="fw-bold mb-0">{{ formatMoney(metrics.outstanding) }}</h3>
-                                <p class="text-muted mb-0">Outstanding</p>
+                                <p class="text-muted mb-0">{{ t('billing.outstanding') }}</p>
                             </div>
                         </div>
                     </div>
@@ -111,7 +114,7 @@ const trendMax = computed(() => {
             <div class="col-lg-8">
                 <div class="card h-100">
                     <div class="card-header bg-white">
-                        <h6 class="mb-0 fw-bold"><i class="ti ti-trending-up me-1"></i>Collection Trend (14 days)</h6>
+                        <h6 class="mb-0 fw-bold"><i class="ti ti-trending-up me-1"></i>{{ t('billing.collection_trend_14_days') }}</h6>
                     </div>
                     <div class="card-body">
                         <div class="d-flex align-items-end gap-2" style="height: 200px;">
@@ -131,7 +134,7 @@ const trendMax = computed(() => {
             <div class="col-lg-4">
                 <div class="card h-100">
                     <div class="card-header bg-white">
-                        <h6 class="mb-0 fw-bold"><i class="ti ti-chart-pie me-1"></i>Invoices by Status</h6>
+                        <h6 class="mb-0 fw-bold"><i class="ti ti-chart-pie me-1"></i>{{ t('billing.invoices_by_status') }}</h6>
                     </div>
                     <div class="card-body p-0">
                         <ul class="list-group list-group-flush">
@@ -141,7 +144,7 @@ const trendMax = computed(() => {
                                 <span class="fw-medium">{{ formatMoney(s.balance) }}</span>
                             </li>
                             <li v-if="!metrics.status_counts.length" class="list-group-item text-center text-muted">
-                                No data.
+                                {{ t('billing.no_data') }}
                             </li>
                         </ul>
                     </div>
@@ -152,18 +155,18 @@ const trendMax = computed(() => {
             <div class="col-lg-7">
                 <div class="card">
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0 fw-bold"><i class="ti ti-receipt me-1"></i>Recent Payments</h6>
+                        <h6 class="mb-0 fw-bold"><i class="ti ti-receipt me-1"></i>{{ t('billing.recent_payments') }}</h6>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-hover table-nowrap mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Payment #</th>
-                                        <th>Patient</th>
-                                        <th>Method</th>
-                                        <th class="text-end">Amount</th>
-                                        <th>Date</th>
+                                        <th>{{ t('billing.payment_number') }}</th>
+                                        <th>{{ t('billing.patient') }}</th>
+                                        <th>{{ t('billing.method') }}</th>
+                                        <th class="text-end">{{ t('billing.amount') }}</th>
+                                        <th>{{ t('billing.date') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -177,7 +180,7 @@ const trendMax = computed(() => {
                                         <td><small class="text-muted">{{ p.paid_at }}</small></td>
                                     </tr>
                                     <tr v-if="!metrics.recent_payments.length">
-                                        <td colspan="5" class="text-center py-3 text-muted">No payments yet.</td>
+                                        <td colspan="5" class="text-center py-3 text-muted">{{ t('billing.no_payments_yet') }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -190,16 +193,16 @@ const trendMax = computed(() => {
             <div class="col-lg-5">
                 <div class="card">
                     <div class="card-header bg-white">
-                        <h6 class="mb-0 fw-bold"><i class="ti ti-user-dollar me-1"></i>Top Outstanding Patients</h6>
+                        <h6 class="mb-0 fw-bold"><i class="ti ti-user-dollar me-1"></i>{{ t('billing.top_outstanding_patients') }}</h6>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-hover table-nowrap mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Patient</th>
-                                        <th class="text-center">Invoices</th>
-                                        <th class="text-end">Balance</th>
+                                        <th>{{ t('billing.patient') }}</th>
+                                        <th class="text-center">{{ t('billing.invoices_count') }}</th>
+                                        <th class="text-end">{{ t('billing.balance') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -212,7 +215,7 @@ const trendMax = computed(() => {
                                         <td class="text-end text-danger fw-bold">{{ formatMoney(d.balance) }}</td>
                                     </tr>
                                     <tr v-if="!metrics.top_debtors.length">
-                                        <td colspan="3" class="text-center py-3 text-muted">No outstanding balances.</td>
+                                        <td colspan="3" class="text-center py-3 text-muted">{{ t('billing.no_outstanding_balances') }}</td>
                                     </tr>
                                 </tbody>
                             </table>

@@ -50,6 +50,7 @@ return [
     'password'              => 'Mot de passe',
     'password_keep_blank'   => 'laisser vide pour conserver l\'actuel',
     'select_gender'         => 'Sélectionner le sexe',
+    'employee_id_auto_placeholder' => 'Laisser vide pour generation automatique',
     'select_role'           => 'Sélectionner le rôle',
     'select_department'     => 'Sélectionner le département',
     'specialties'           => 'Spécialités',
