@@ -230,6 +230,14 @@ return [
         'start_time'            => 'heure de début',
         'end_time'              => 'heure de fin',
         'visit_date'            => 'date de visite',
+        'appointment_date'      => 'date du rendez-vous',
+        'cancellation_reason'   => 'motif d\'annulation',
+        'product_type'          => 'type de produit',
+        'code'                  => 'code',
+        'unit'                  => 'unité',
+        'reorder_level'         => 'seuil de réapprovisionnement',
+        'default_cost'          => 'coût par défaut',
+        'base_price'            => 'prix de base',
     ],
 
 ];

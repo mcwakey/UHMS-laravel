@@ -202,7 +202,7 @@
                             </td>
                             <td class="text-end">
                                 <div class="dropdown">
-                                    <button aria-label="Actions" title="Actions" type="button" class="btn btn-sm btn-light" data-bs-toggle="dropdown">
+                                    <button aria-label="{{ __('common.actions') }}" title="{{ __('common.actions') }}" type="button" class="btn btn-sm btn-light" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -237,7 +237,7 @@
                                                 <form method="POST" action="{{ route('admin.appointments.check-in', $appointment) }}" class="js-appointment-action-form" data-follow-up="visit">
                                                 @csrf
                                                 <button type="submit" class="dropdown-item">
-                                                    <i class="ti ti-login me-2"></i>Check In
+                                                    <i class="ti ti-login me-2"></i>{{ __('appointments.check_in_patient') }}
                                                 </button>
                                             </form>
                                         </li>
@@ -246,7 +246,7 @@
                                             <form method="POST" action="{{ route('admin.appointments.no-show', $appointment) }}">
                                                 @csrf
                                                 <button type="submit" class="dropdown-item">
-                                                    <i class="ti ti-user-off me-2"></i>No Show
+                                                    <i class="ti ti-user-off me-2"></i>{{ __('appointments.no_show_action') }}
                                                 </button>
                                             </form>
                                         </li>
@@ -255,7 +255,7 @@
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
                                             <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#cancelModal{{ $appointment->id }}">
-                                                <i class="ti ti-x me-2"></i>Cancel
+                                                <i class="ti ti-x me-2"></i>{{ __('appointments.cancel_action') }}
                                             </button>
                                         </li>
                                         @endif
@@ -270,19 +270,19 @@
                                             <form method="POST" action="{{ route('admin.appointments.cancel', $appointment) }}">
                                                 @csrf
                                                 <div class="modal-header">
-                                                    <h5 class="modal-title">Cancel Appointment</h5>
+                                                    <h5 class="modal-title">{{ __('appointments.cancel_appointment') }}</h5>
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                 </div>
                                                 <div class="modal-body">
-                                                    <p>Are you sure you want to cancel appointment <strong>{{ $appointment->appointment_number }}</strong>?</p>
+                                                    <p>{{ __('appointments.cancel_appointment_question', ['number' => $appointment->appointment_number]) }}</p>
                                                     <div class="mb-3">
-                                                        <label class="form-label">Cancellation Reason</label>
-                                                        <textarea name="cancellation_reason" class="form-control" rows="3" placeholder="Optional reason for cancellation..."></textarea>
+                                                        <label class="form-label">{{ __('appointments.cancellation_reason') }}</label>
+                                                        <textarea name="cancellation_reason" class="form-control" rows="3" placeholder="{{ __('appointments.cancellation_reason_placeholder') }}"></textarea>
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                    <button type="submit" class="btn btn-danger">Cancel Appointment</button>
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('common.close') }}</button>
+                                                    <button type="submit" class="btn btn-danger">{{ __('appointments.cancel_appointment') }}</button>
                                                 </div>
                                             </form>
                                         </div>
@@ -295,7 +295,7 @@
                         <tr>
                             <td colspan="7" class="text-center py-4 text-muted">
                                 <i class="ti ti-calendar-off fs-1 d-block mb-2"></i>
-                                No appointments found.
+                                {{ __('appointments.no_appointments_found') }}
                             </td>
                         </tr>
                         @endforelse
@@ -316,6 +316,13 @@
 @include('partials.date-range-filter-scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const i18n = @json([
+        'working' => __('appointments.working'),
+        'unableCompleteAction' => __('appointments.unable_complete_action'),
+        'updatedSuccessfully' => __('appointments.updated_successfully'),
+        'networkErrorAction' => __('appointments.network_error_action'),
+        'open' => __('appointments.open'),
+    ]);
     const filterForm = document.querySelector('[data-auto-filter-form="appointments-index"]');
     if (filterForm) {
         let filterTimer = null;
@@ -388,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (submitButton) {
                 submitButton.disabled = true;
-                submitButton.innerHTML = '<i class="ti ti-loader me-1"></i>Working...';
+                submitButton.innerHTML = '<i class="ti ti-loader me-1"></i>' + i18n.working;
             }
 
             try {
@@ -406,7 +413,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     : {};
 
                 if (!response.ok) {
-                    showFeedback('danger', payload.message || 'Unable to complete appointment action.');
+                    showFeedback('danger', payload.message || i18n.unableCompleteAction);
                     return;
                 }
 
@@ -419,12 +426,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 showFeedback(
                     'success',
                     '<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">'
-                        + '<div><strong>' + (payload.message || 'Appointment updated successfully.') + '</strong></div>'
-                        + (followUp ? '<div><a href="' + followUp + '" class="btn btn-sm btn-success">Open</a></div>' : '')
+                        + '<div><strong>' + (payload.message || i18n.updatedSuccessfully) + '</strong></div>'
+                        + (followUp ? '<div><a href="' + followUp + '" class="btn btn-sm btn-success">' + i18n.open + '</a></div>' : '')
                         + '</div>'
                 );
             } catch (error) {
-                showFeedback('danger', 'Network error while processing the appointment action.');
+                showFeedback('danger', i18n.networkErrorAction);
             } finally {
                 if (submitButton) {
                     submitButton.disabled = false;

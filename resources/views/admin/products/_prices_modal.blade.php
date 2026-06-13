@@ -14,7 +14,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title fw-bold">
-                    <i class="ti ti-tag me-1"></i>Insurance Prices — {{ $product->name }}
+                    <i class="ti ti-tag me-1"></i>{{ __('products.insurance_prices_for', ['name' => $product->name]) }}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>

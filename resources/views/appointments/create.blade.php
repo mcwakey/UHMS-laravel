@@ -76,7 +76,7 @@
             <div class="card d-none" id="insuranceCard">
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>{{ __('appointments.insurance') }}</h5>
-                    <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">Default expired — using Cash &amp; Carry</span>
+                    <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">{{ __('appointments.insurance_fallback_badge') }}</span>
                 </div>
                 <div class="card-body">
                     <div id="insuranceList" class="mb-3">

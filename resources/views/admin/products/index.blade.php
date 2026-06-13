@@ -105,10 +105,10 @@
                                 <span class="badge bg-light text-dark border">{{ __('products.base') }}</span>
                             @endif
                             @if($typeCount > 0)
-                                <span class="badge bg-primary-subtle text-primary">{{ $typeCount }} type</span>
+                                <span class="badge bg-primary-subtle text-primary">{{ trans_choice('products.type_price_count', $typeCount, ['count' => $typeCount]) }}</span>
                             @endif
                             @if($providerCount > 0)
-                                <span class="badge bg-purple-subtle text-purple">{{ $providerCount }} provider</span>
+                                <span class="badge bg-purple-subtle text-purple">{{ trans_choice('products.provider_price_count', $providerCount, ['count' => $providerCount]) }}</span>
                             @endif
                             @if($product->base_price === null && $typeCount === 0 && $providerCount === 0)
                                 <span class="text-muted">{{ __('common.none') }}</span>
@@ -120,14 +120,14 @@
                         </td>
                         <td class="text-end">
                             <a href="{{ route('admin.products.show', $product) }}" class="btn btn-sm btn-outline-info" title="{{ __('products.view_stock') }}"><i class="ti ti-eye"></i></a>
-                            <button class="btn btn-sm btn-soft-info border" title="Insurance Prices"
+                            <button class="btn btn-sm btn-soft-info border" title="{{ __('products.insurance_prices') }}"
                                 data-bs-toggle="modal" data-bs-target="#productPricesModal-{{ $product->id }}">
                                 <i class="ti ti-tag"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProductModal-{{ $product->id }}" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProductModal-{{ $product->id }}" aria-label="{{ __('products.edit') }}" title="{{ __('products.edit') }}"><i class="ti ti-edit"></i></button>
                             <form method="POST" action="{{ route('admin.products.toggle', $product) }}" class="d-inline">
                                 @csrf @method('PATCH')
-                                <button aria-label="Power" title="Power" class="btn btn-sm btn-outline-secondary"><i class="ti ti-power"></i></button>
+                                <button aria-label="{{ __('products.power') }}" title="{{ __('products.power') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-power"></i></button>
                             </form>
                         </td>
                     </tr>
@@ -161,8 +161,8 @@
                 @include('admin.products._form_fields', ['product' => null, 'departments' => $departments, 'types' => $types])
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ __('products.cancel') }}</button>
+                <button type="submit" class="btn btn-primary btn-sm">{{ __('products.save') }}</button>
             </div>
         </form>
     </div>
@@ -172,6 +172,12 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const productI18n = @json([
+        'type' => __('products.type'),
+        'provider' => __('products.provider'),
+        'price' => __('common.price'),
+        'delete' => __('products.delete'),
+    ]);
     document.querySelectorAll('.add-provider-row').forEach(function (btn) {
         const targetIdInit = btn.dataset.target;
         const containerInit = document.getElementById(targetIdInit);
@@ -191,22 +197,22 @@ document.addEventListener('DOMContentLoaded', function () {
             row.className = 'row g-2 align-items-end mb-2 provider-price-row';
             row.innerHTML = `
                 <div class="col-md-4">
-                    <label class="form-label small">Type</label>
+                    <label class="form-label small">${escH(productI18n.type)}</label>
                     <select name="provider_prices[${idx}][insurance_type]" class="form-select form-select-sm type-select" required>${typeOptions}</select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label small">Provider</label>
+                    <label class="form-label small">${escH(productI18n.provider)}</label>
                     <select name="provider_prices[${idx}][insurance_provider_id]" class="form-select form-select-sm provider-select" required>${provOptions}</select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small">Price (&#8373;)</label>
+                    <label class="form-label small">${escH(productI18n.price)} (&#8373;)</label>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text">&#8373;</span>
                         <input type="number" name="provider_prices[${idx}][price]" class="form-control" step="0.01" min="0" required>
                     </div>
                 </div>
                 <div class="col-md-1 d-flex align-items-end pb-1">
-                    <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
+                    <button aria-label="${escH(productI18n.delete)}" title="${escH(productI18n.delete)}" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
                 </div>`;
             container.appendChild(row);
             row.querySelector('.remove-row').addEventListener('click', () => row.remove());

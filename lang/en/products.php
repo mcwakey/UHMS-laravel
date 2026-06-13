@@ -67,4 +67,13 @@ return [
     'non_chargeable_supplies_help' => 'Uncheck for non-chargeable supplies.',
     'update_base_price' => 'Update Base Price',
     'default_prices_modal_help' => 'Applied to all patients with that insurance type (overrides base price). Leave blank to use base price (:price).',
+    'edit' => 'Edit',
+    'power' => 'Activate or deactivate',
+    'save' => 'Save',
+    'cancel' => 'Cancel',
+    'delete' => 'Delete',
+    'type' => 'Type',
+    'price' => 'Price (:currency)',
+    'type_price_count' => ':count type price|:count type prices',
+    'provider_price_count' => ':count provider price|:count provider prices',
 ];

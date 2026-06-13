@@ -112,4 +112,10 @@ return [
     'updated_successfully' => 'Rendez-vous mis à jour avec succès.',
     'network_error_action' => 'Erreur réseau pendant le traitement de l\'action du rendez-vous.',
     'open' => 'Ouvrir',
+    'cancel_action' => 'Annuler',
+    'cancel_appointment' => 'Annuler le rendez-vous',
+    'cancel_appointment_question' => 'Voulez-vous vraiment annuler le rendez-vous :number ?',
+    'cancellation_reason' => 'Motif d\'annulation',
+    'cancellation_reason_placeholder' => 'Motif d\'annulation facultatif...',
+    'no_appointments_found' => 'Aucun rendez-vous trouvé.',
 ];

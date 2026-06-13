@@ -67,4 +67,13 @@ return [
     'non_chargeable_supplies_help' => 'Décochez pour les fournitures non facturables.',
     'update_base_price' => 'Mettre à jour le prix de base',
     'default_prices_modal_help' => 'Appliqué à tous les patients avec ce type d\'assurance (remplace le prix de base). Laisser vide pour utiliser le prix de base (:price).',
+    'edit' => 'Modifier',
+    'power' => 'Activer ou désactiver',
+    'save' => 'Enregistrer',
+    'cancel' => 'Annuler',
+    'delete' => 'Supprimer',
+    'type' => 'Type',
+    'price' => 'Prix (:currency)',
+    'type_price_count' => ':count tarif par type|:count tarifs par type',
+    'provider_price_count' => ':count tarif fournisseur|:count tarifs fournisseur',
 ];

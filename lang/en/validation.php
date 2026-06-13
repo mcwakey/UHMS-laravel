@@ -245,6 +245,14 @@ return [
         'start_time'            => 'start time',
         'end_time'              => 'end time',
         'visit_date'            => 'visit date',
+        'appointment_date'      => 'appointment date',
+        'cancellation_reason'   => 'cancellation reason',
+        'product_type'          => 'product type',
+        'code'                  => 'code',
+        'unit'                  => 'unit',
+        'reorder_level'         => 'reorder level',
+        'default_cost'          => 'default cost',
+        'base_price'            => 'base price',
     ],
 
 ];

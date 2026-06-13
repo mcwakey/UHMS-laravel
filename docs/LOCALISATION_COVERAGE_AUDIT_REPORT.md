@@ -1,27 +1,27 @@
 # UHMS Localisation Coverage Audit Report
 
-Date: 2026-06-13 03:47:31 +02:00
+Date: 2026-06-13 13:06:42 +02:00
 
 ## Summary
 
 - Total files scanned: 1268
-- Total files with possible hardcoded strings: 501
-- Total hardcoded candidates found: 18480
-- Modules affected: 309
+- Total files with possible hardcoded strings: 496
+- Total hardcoded candidates found: 18440
+- Modules affected: 308
 
 ### Candidate Classification
 
-- Active runtime candidates: 4305
+- Active runtime candidates: 4302
 - Demo/template candidates: 208
 - Backup-only candidates: 0
 - Language-file candidates: 133
-- Known false positives: 13440
+- Known false positives: 13403
 - Service-title manual-review candidates: 394
 
 ### Modules Affected
 
 - components: 1909
-- admin: 538
+- admin: 514
 - layout: 406
 - app: 394
 - widgets.blade.php: 390
@@ -6891,132 +6891,6 @@ Date: 2026-06-13 03:47:31 +02:00
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: cancel`
 
-### `resources/views/admin/products/index.blade.php`
-
-- Line 123 [high, known_false_positive_candidates]: `Insurance Prices`
-  - Context: `<button class="btn btn-sm btn-soft-info border" title="Insurance Prices"`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: insurance_prices`
-- Line 127 [high, known_false_positive_candidates]: `Edit`
-  - Context: `<button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProductModal-{{ $product->id }}" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: edit`
-- Line 127 [high, known_false_positive_candidates]: `Edit`
-  - Context: `<button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProductModal-{{ $product->id }}" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: edit`
-- Line 130 [high, known_false_positive_candidates]: `Power`
-  - Context: `<button aria-label="Power" title="Power" class="btn btn-sm btn-outline-secondary"><i class="ti ti-power"></i></button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: power`
-- Line 130 [high, known_false_positive_candidates]: `Power`
-  - Context: `<button aria-label="Power" title="Power" class="btn btn-sm btn-outline-secondary"><i class="ti ti-power"></i></button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: power`
-- Line 164 [high, known_false_positive_candidates]: `Cancel`
-  - Context: `<button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: cancel`
-- Line 165 [high, known_false_positive_candidates]: `Save`
-  - Context: `<button type="submit" class="btn btn-primary btn-sm">Save</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: save`
-- Line 194 [high, known_false_positive_candidates]: `Type`
-  - Context: `<label class="form-label small">Type</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: type`
-- Line 198 [high, known_false_positive_candidates]: `Provider`
-  - Context: `<label class="form-label small">Provider</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: provider`
-- Line 202 [high, known_false_positive_candidates]: `Price (₵)`
-  - Context: `<label class="form-label small">Price (&#8373;)</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: price`
-- Line 209 [high, known_false_positive_candidates]: `Delete`
-  - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: delete`
-- Line 209 [high, known_false_positive_candidates]: `Delete`
-  - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: delete`
-
-### `resources/views/admin/products/show.blade.php`
-
-- Line 64 [high, known_false_positive_candidates]: `Yes — can appear on invoices`
-  - Context: `<span class="badge bg-success-subtle text-success">Yes — can appear on invoices</span>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: yes_can_appear_on_invoices`
-- Line 66 [high, known_false_positive_candidates]: `No — stock use only`
-  - Context: `<span class="badge bg-secondary-subtle text-secondary">No — stock use only</span>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: no_stock_use_only`
-- Line 232 [medium, active_runtime_candidates]: `Remove this price?`
-  - Context: `onclick="event.preventDefault(); if(confirm('Remove this price?')){ document.getElementById('delPrice-{{ $product->id }}-{{ $pp->id }}').submit(); }"`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: remove_this_price`
-- Line 233 [high, known_false_positive_candidates]: `Delete`
-  - Context: `class="btn btn-sm btn-outline-danger" aria-label="Delete" title="Delete">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: delete`
-- Line 233 [high, known_false_positive_candidates]: `Delete`
-  - Context: `class="btn btn-sm btn-outline-danger" aria-label="Delete" title="Delete">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: delete`
-- Line 254 [high, active_runtime_candidates]: `Billing resolution order:`
-  - Context: `<strong>Billing resolution order:</strong>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: billing_resolution_order`
-- Line 257 [high, active_runtime_candidates]: `Note:`
-  - Context: `<strong>Note:</strong> <code>insurance_covered</code> = (base_price − insurance_price) × qty.`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: note`
-- Line 307 [high, known_false_positive_candidates]: `Type`
-  - Context: `<label class="form-label small">Type</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: type`
-- Line 311 [high, known_false_positive_candidates]: `Provider`
-  - Context: `<label class="form-label small">Provider</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: provider`
-- Line 315 [high, known_false_positive_candidates]: `Price (₵)`
-  - Context: `<label class="form-label small">Price (&#8373;)</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: price`
-- Line 322 [high, known_false_positive_candidates]: `Delete`
-  - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: delete`
-- Line 322 [high, known_false_positive_candidates]: `Delete`
-  - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: delete`
-
 ### `resources/views/admin/services/index.blade.php`
 
 - Line 49 [high, known_false_positive_candidates]: `Close`
@@ -9982,95 +9856,6 @@ Date: 2026-06-13 03:47:31 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/appointments.blade.php.php :: delete`
-
-### `resources/views/appointments/create.blade.php`
-
-- Line 79 [high, known_false_positive_candidates]: `Default expired — using Cash & Carry`
-  - Context: `<span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">Default expired — using Cash &amp; Carry</span>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/appointments.php :: default_expired_using_cash_carry`
-
-### `resources/views/appointments/edit.blade.php`
-
-- Line 69 [high, known_false_positive_candidates]: `Default expired — using Cash & Carry`
-  - Context: `<span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">Default expired — using Cash &amp; Carry</span>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/appointments.php :: default_expired_using_cash_carry`
-- Line 307 [high, known_false_positive_candidates]: `No insurances found. Defaulting to Cash & Carry.`
-  - Context: `html = '<div class="text-muted text-center py-2">No insurances found. Defaulting to Cash &amp; Carry.</div>';`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/appointments.php :: no_insurances_found_defaulting_to_cash_carry`
-- Line 339 [high, known_false_positive_candidates]: `Failed to load insurances.`
-  - Context: `'<div class="text-danger text-center py-2">Failed to load insurances.</div>';`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/appointments.php :: failed_to_load_insurances`
-- Line 420 [high, known_false_positive_candidates]: `Add`
-  - Context: `<button aria-label="Add" title="Add" type="button" class="btn btn-sm btn-outline-primary add-service-btn" data-id="${svc.id}" data-name="${escapeHtml(svc.name)}">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/appointments.php :: add`
-- Line 420 [high, known_false_positive_candidates]: `Add`
-  - Context: `<button aria-label="Add" title="Add" type="button" class="btn btn-sm btn-outline-primary add-service-btn" data-id="${svc.id}" data-name="${escapeHtml(svc.name)}">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/appointments.php :: add`
-- Line 490 [high, known_false_positive_candidates]: `Delete`
-  - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="${idx}">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/appointments.php :: delete`
-- Line 490 [high, known_false_positive_candidates]: `Delete`
-  - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="${idx}">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/appointments.php :: delete`
-
-### `resources/views/appointments/index.blade.php`
-
-- Line 205 [high, known_false_positive_candidates]: `Actions`
-  - Context: `<button aria-label="Actions" title="Actions" type="button" class="btn btn-sm btn-light" data-bs-toggle="dropdown">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/appointments.php :: actions`
-- Line 205 [high, known_false_positive_candidates]: `Actions`
-  - Context: `<button aria-label="Actions" title="Actions" type="button" class="btn btn-sm btn-light" data-bs-toggle="dropdown">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/appointments.php :: actions`
-- Line 273 [high, known_false_positive_candidates]: `Cancel Appointment`
-  - Context: `<h5 class="modal-title">Cancel Appointment</h5>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/appointments.php :: cancel_appointment`
-- Line 279 [high, known_false_positive_candidates]: `Cancellation Reason`
-  - Context: `<label class="form-label">Cancellation Reason</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/appointments.php :: cancellation_reason`
-- Line 280 [high, known_false_positive_candidates]: `Optional reason for cancellation...`
-  - Context: `<textarea name="cancellation_reason" class="form-control" rows="3" placeholder="Optional reason for cancellation..."></textarea>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/appointments.php :: optional_reason_for_cancellation`
-- Line 284 [high, known_false_positive_candidates]: `Close`
-  - Context: `<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/appointments.php :: close`
-- Line 285 [high, known_false_positive_candidates]: `Cancel Appointment`
-  - Context: `<button type="submit" class="btn btn-danger">Cancel Appointment</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/appointments.php :: cancel_appointment`
-- Line 423 [high, known_false_positive_candidates]: `Open`
-  - Context: `+ (followUp ? '<div><a href="' + followUp + '" class="btn btn-sm btn-success">Open</a></div>' : '')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/appointments.php :: open`
 
 ### `resources/views/assets.blade.php`
 

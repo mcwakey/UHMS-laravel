@@ -112,4 +112,10 @@ return [
     'updated_successfully' => 'Appointment updated successfully.',
     'network_error_action' => 'Network error while processing the appointment action.',
     'open' => 'Open',
+    'cancel_action' => 'Cancel',
+    'cancel_appointment' => 'Cancel Appointment',
+    'cancel_appointment_question' => 'Are you sure you want to cancel appointment :number?',
+    'cancellation_reason' => 'Cancellation Reason',
+    'cancellation_reason_placeholder' => 'Optional reason for cancellation...',
+    'no_appointments_found' => 'No appointments found.',
 ];

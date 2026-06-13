@@ -66,7 +66,7 @@
             <div class="card" id="insuranceCard">
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>{{ __('appointments.insurance') }}</h5>
-                    <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">Default expired — using Cash &amp; Carry</span>
+                    <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">{{ __('appointments.insurance_fallback_badge') }}</span>
                 </div>
                 <div class="card-body">
                     <div id="insuranceList" class="mb-3">
@@ -276,6 +276,20 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const i18n = @json([
+        'noInsurancesCash' => __('appointments.no_insurances_cash'),
+        'member' => __('appointments.member_label'),
+        'expires' => __('appointments.expires_label'),
+        'noExpiry' => __('appointments.no_expiry'),
+        'valid' => __('appointments.valid_status'),
+        'expired' => __('appointments.expired_status'),
+        'inactive' => __('appointments.inactive_status'),
+        'coverage' => __('appointments.coverage'),
+        'failedLoadInsurances' => __('appointments.failed_load_insurances'),
+        'unlimited' => __('appointments.unlimited'),
+        'add' => __('common.add'),
+        'delete' => __('common.delete'),
+    ]);
     const departmentSelect = document.getElementById('departmentSelect');
     const doctorSelect    = document.getElementById('doctorSelect');
 
@@ -304,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let html = '';
             if (patientInsurances.length === 0) {
-                html = '<div class="text-muted text-center py-2">No insurances found. Defaulting to Cash &amp; Carry.</div>';
+                html = '<div class="text-muted text-center py-2">' + escapeHtml(i18n.noInsurancesCash) + '</div>';
             } else {
                 html = '<div class="list-group">';
                 patientInsurances.forEach(ins => {
@@ -319,11 +333,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="fw-medium">${escapeHtml(ins.provider_name)}
                                     <span class="badge bg-${ins.type_color} ms-1">${escapeHtml(ins.type_label)}</span>
                                 </div>
-                                <small class="text-muted">${ins.membership_number ? 'Member: ' + escapeHtml(ins.membership_number) + ' &bull; ' : ''}${ins.expiry_date ? 'Expires: ' + ins.expiry_date : 'No expiry'}</small>
+                                <small class="text-muted">${ins.membership_number ? escapeHtml(i18n.member) + ' ' + escapeHtml(ins.membership_number) + ' &bull; ' : ''}${ins.expiry_date ? escapeHtml(i18n.expires) + ' ' + ins.expiry_date : escapeHtml(i18n.noExpiry)}</small>
                              </div>`;
                     html += `<div class="text-end">
-                                <span class="badge ${badgeClass}">${ins.is_valid ? 'Valid' : (ins.is_expired ? 'Expired' : 'Inactive')}</span>
-                                ${ins.coverage_percentage != null ? `<div class="small text-muted mt-1">${ins.coverage_percentage}% coverage</div>` : ''}
+                                <span class="badge ${badgeClass}">${ins.is_valid ? escapeHtml(i18n.valid) : (ins.is_expired ? escapeHtml(i18n.expired) : escapeHtml(i18n.inactive))}</span>
+                                ${ins.coverage_percentage != null ? `<div class="small text-muted mt-1">${ins.coverage_percentage}% ${escapeHtml(i18n.coverage)}</div>` : ''}
                              </div></label>`;
                 });
                 html += '</div>';
@@ -336,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(() => {
             document.getElementById('insuranceList').innerHTML =
-                '<div class="text-danger text-center py-2">Failed to load insurances.</div>';
+                '<div class="text-danger text-center py-2">' + escapeHtml(i18n.failedLoadInsurances) + '</div>';
         });
     }
 
@@ -351,7 +365,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('insInfoCoverage').textContent  = (selectedInsurance.coverage_percentage || 0) + '%';
             const rem = selectedInsurance.remaining_annual_limit;
             document.getElementById('insInfoBilled').textContent    = rem != null ? '₵' + formatNumber((selectedInsurance.annual_limit || 0) - rem) : '—';
-            document.getElementById('insInfoRemaining').textContent = rem != null ? '₵' + formatNumber(rem) : 'Unlimited';
+            document.getElementById('insInfoRemaining').textContent = rem != null ? '₵' + formatNumber(rem) : i18n.unlimited;
         } else {
             panel.classList.add('d-none');
         }
@@ -417,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += `<div><span class="fw-medium">${escapeHtml(svc.name)}</span> <span class="badge bg-light text-dark ms-1">${escapeHtml(svc.code)}</span><div class="small text-muted">${escapeHtml(svc.category)}</div></div>`;
             html += `<div class="d-flex align-items-center gap-2">
                         <span class="fw-bold text-success svc-price-display" data-svc-id="${svc.id}">₵${formatNumber(resolveServicePrice(svc))}</span>
-                        <button aria-label="Add" title="Add" type="button" class="btn btn-sm btn-outline-primary add-service-btn" data-id="${svc.id}" data-name="${escapeHtml(svc.name)}">
+                        <button aria-label="${escapeHtml(i18n.add)}" title="${escapeHtml(i18n.add)}" type="button" class="btn btn-sm btn-outline-primary add-service-btn" data-id="${svc.id}" data-name="${escapeHtml(svc.name)}">
                             <i class="ti ti-plus"></i>
                         </button></div></div>`;
         });
@@ -487,7 +501,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td class="text-end text-muted">₵${formatNumber(svc.price)}</td>
                 <td class="text-end fw-medium">₵${formatNumber(svc.price * svc.quantity)}</td>
                 <td class="text-center">
-                    <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="${idx}">
+                    <button aria-label="${escapeHtml(i18n.delete)}" title="${escapeHtml(i18n.delete)}" type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="${idx}">
                         <i class="ti ti-trash"></i>
                     </button>
                 </td>

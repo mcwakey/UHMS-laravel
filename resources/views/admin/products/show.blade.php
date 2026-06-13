@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', $product->name . ' — Product Detail')
+@section('title', $product->name . ' - ' . __('products.detail_title'))
 
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
@@ -61,9 +61,9 @@
                             <dt class="col-sm-5 text-muted">{{ __('products.billable') }}</dt>
                             <dd class="col-sm-7">
                                 @if($product->is_billable)
-                                    <span class="badge bg-success-subtle text-success">Yes — can appear on invoices</span>
+                                    <span class="badge bg-success-subtle text-success">{{ __('products.yes_can_invoice') }}</span>
                                 @else
-                                    <span class="badge bg-secondary-subtle text-secondary">No — stock use only</span>
+                                    <span class="badge bg-secondary-subtle text-secondary">{{ __('products.no_stock_only') }}</span>
                                 @endif
                             </dd>
                             <dt class="col-sm-5 text-muted">{{ __('products.base_price_cash') }}</dt>
@@ -229,8 +229,8 @@
                                 </div>
                                 <div class="col-md-1 d-flex align-items-end pb-1">
                                     <a href="#"
-                                       onclick="event.preventDefault(); if(confirm('Remove this price?')){ document.getElementById('delPrice-{{ $product->id }}-{{ $pp->id }}').submit(); }"
-                                       class="btn btn-sm btn-outline-danger" aria-label="Delete" title="Delete">
+                                       onclick="event.preventDefault(); if(confirm(@js(__('products.remove_price_confirm')))){ document.getElementById('delPrice-{{ $product->id }}-{{ $pp->id }}').submit(); }"
+                                       class="btn btn-sm btn-outline-danger" aria-label="{{ __('products.delete') }}" title="{{ __('products.delete') }}">
                                         <i class="ti ti-trash"></i>
                                     </a>
                                 </div>
@@ -251,11 +251,10 @@
         <div class="card bg-light border-0">
             <div class="card-body py-2 small text-muted">
                 <i class="ti ti-info-circle me-1"></i>
-                <strong>Billing resolution order:</strong>
-                Provider-specific price → Insurance type default → Base price (cash fallback).
+                <strong>{{ __('products.billing_resolution_order') }}</strong>
+                {{ __('products.billing_resolution_help') }}
                 <br>
-                <strong>Note:</strong> <code>insurance_covered</code> = (base_price − insurance_price) × qty.
-                This is displayed for reference only and does not reduce what the patient pays.
+                <strong>{{ __('products.billing_note_label') }}</strong> {{ __('products.billing_note_help') }}
             </div>
         </div>
 
@@ -275,6 +274,12 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const productI18n = @json([
+        'type' => __('products.type'),
+        'provider' => __('products.provider'),
+        'price' => __('common.price'),
+        'delete' => __('products.delete'),
+    ]);
     // Auto-open Pricing tab if #tab-pricing hash in URL
     const hash = window.location.hash;
     if (hash) {
@@ -304,22 +309,22 @@ document.addEventListener('DOMContentLoaded', function () {
             row.className = 'row g-2 align-items-end mb-2 provider-price-row';
             row.innerHTML = `
                 <div class="col-md-4">
-                    <label class="form-label small">Type</label>
+                    <label class="form-label small">${escH(productI18n.type)}</label>
                     <select name="provider_prices[${idx}][insurance_type]" class="form-select form-select-sm type-select" required>${typeOptions}</select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label small">Provider</label>
+                    <label class="form-label small">${escH(productI18n.provider)}</label>
                     <select name="provider_prices[${idx}][insurance_provider_id]" class="form-select form-select-sm provider-select" required>${provOptions}</select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small">Price (&#8373;)</label>
+                    <label class="form-label small">${escH(productI18n.price)} (&#8373;)</label>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text">&#8373;</span>
                         <input type="number" name="provider_prices[${idx}][price]" class="form-control" step="0.01" min="0" required>
                     </div>
                 </div>
                 <div class="col-md-1 d-flex align-items-end pb-1">
-                    <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
+                    <button aria-label="${escH(productI18n.delete)}" title="${escH(productI18n.delete)}" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
                 </div>`;
             container.appendChild(row);
             row.querySelector('.remove-row').addEventListener('click', () => row.remove());
