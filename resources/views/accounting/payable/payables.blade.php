@@ -28,7 +28,7 @@
         </div>
         <div class="col-md-3">
             <select name="status" class="form-select"><option value="">Outstanding</option>
-                @foreach($statuses as $st)<option value="{{ $st }}" @selected(request('status')===$st)>{{ ucwords(str_replace('_',' ',$st)) }}</option>@endforeach
+                @foreach($statuses as $st)<option value="{{ $st }}" @selected(request('status')===$st)>{{ __('statuses.default.' . $st) }}</option>@endforeach
             </select>
         </div>
         <div class="col-md-1"><button class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button></div>
@@ -52,8 +52,8 @@
                 <td class="text-end">{{ number_format((float)$p->return_amount + (float)$p->credit_note_amount + (float)$p->adjustment_amount, 2) }}</td>
                 <td class="text-end fw-semibold">{{ number_format($p->balance, 2) }}</td>
                 <td><small>{{ optional($p->due_date)->format('d M Y') ?? '—' }}</small></td>
-                <td><span class="badge bg-{{ $variant($p->status) }}-subtle text-{{ $variant($p->status) }}">{{ ucwords(str_replace('_',' ',$p->status)) }}</span></td>
-                <td><span class="badge bg-{{ $acctVariant($p->accounting_status) }}-subtle text-{{ $acctVariant($p->accounting_status) }}">{{ ucfirst($p->accounting_status ?? 'pending') }}</span></td>
+                <td><span class="badge bg-{{ $variant($p->status) }}-subtle text-{{ $variant($p->status) }}">{{ __('statuses.default.' . $p->status) }}</span></td>
+                <td><span class="badge bg-{{ $acctVariant($p->accounting_status) }}-subtle text-{{ $acctVariant($p->accounting_status) }}">{{ __('statuses.default.' . ($p->accounting_status ?? 'pending')) }}</span></td>
             </tr>
         @empty
             <tr><td colspan="9"><x-empty-state icon="ti-file-dollar" title="No payables" message="No outstanding supplier payables." /></td></tr>

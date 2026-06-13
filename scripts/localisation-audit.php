@@ -195,6 +195,58 @@ function suggested_key(string $relative, string $text): string
     return "lang/{en,fr}/{$file}.php :: {$base}";
 }
 
+function audit_bucket(string $relative, string $text, string $context): string
+{
+    $normalized = normalize_text($text);
+    $lowerPath = strtolower($relative);
+    $lowerContext = strtolower($context);
+
+    if (str_contains($lowerPath, '.bak') || str_contains($lowerPath, '/backup') || str_contains($lowerPath, '/backups')) {
+        return 'backup_only_candidates';
+    }
+
+    if (
+        str_starts_with($relative, 'lang/')
+        || str_starts_with($relative, 'resources/lang/')
+        || str_contains($lowerPath, '/lang/')
+    ) {
+        return 'language_file_candidates';
+    }
+
+    if (
+        str_contains($lowerPath, '/demo')
+        || str_contains($lowerPath, '/template')
+        || str_contains($lowerPath, '/sample')
+        || str_contains($lowerPath, 'resources/views/patterns/')
+        || str_contains($lowerPath, 'resources/views/vendor/')
+    ) {
+        return 'demo_template_candidates';
+    }
+
+    if (str_starts_with($relative, 'app/Services/')) {
+        return 'service_title_manual_review_candidates';
+    }
+
+    if (
+        str_contains($relative, 'SidebarMenuBuilder.php')
+        || str_contains($lowerContext, 'selectraw(')
+        || str_contains($lowerContext, 'db::raw(')
+        || str_contains($lowerContext, '->raw(')
+        || str_contains($lowerContext, 'class=')
+        || str_contains($lowerContext, 'queryselector')
+        || str_contains($lowerContext, 'addeventlistener')
+        || str_contains($lowerContext, '//')
+        || str_starts_with(trim($context), '*')
+        || in_array($normalized, ['UHMS', 'N/A', 'GHS', 'GH₵', 'GHâ‚µ'], true)
+        || preg_match('/^(A|B|AB|O)[+-]$/', $normalized)
+        || preg_match('/^(mg|ml|kg|bpm|mmHg|cm|L|%)$/i', $normalized)
+    ) {
+        return 'known_false_positive_candidates';
+    }
+
+    return 'active_runtime_candidates';
+}
+
 $findings = [];
 $scanned = 0;
 
@@ -232,6 +284,7 @@ foreach ($files as $file) {
                     'context' => trim($line),
                     'recommendation' => 'Wrap in __() and add matching EN/FR keys if this is visible UI text.',
                     'suggested_key' => suggested_key($relative, $text),
+                    'bucket' => audit_bucket($relative, $text, trim($line)),
                 ];
             }
         }
@@ -250,6 +303,20 @@ foreach ($findings as $finding) {
     $modules[$finding['module']] = ($modules[$finding['module']] ?? 0) + 1;
 }
 arsort($modules);
+
+$bucketLabels = [
+    'active_runtime_candidates' => 'Active runtime candidates',
+    'demo_template_candidates' => 'Demo/template candidates',
+    'backup_only_candidates' => 'Backup-only candidates',
+    'language_file_candidates' => 'Language-file candidates',
+    'known_false_positive_candidates' => 'Known false positives',
+    'service_title_manual_review_candidates' => 'Service-title manual-review candidates',
+];
+
+$bucketCounts = array_fill_keys(array_keys($bucketLabels), 0);
+foreach ($findings as $finding) {
+    $bucketCounts[$finding['bucket']] = ($bucketCounts[$finding['bucket']] ?? 0) + 1;
+}
 
 $highFiles = [];
 $mediumFiles = [];
@@ -276,6 +343,12 @@ $report[] = '- Total files scanned: '.$scanned;
 $report[] = '- Total files with possible hardcoded strings: '.count($byFile);
 $report[] = '- Total hardcoded candidates found: '.count($findings);
 $report[] = '- Modules affected: '.count($modules);
+$report[] = '';
+$report[] = '### Candidate Classification';
+$report[] = '';
+foreach ($bucketLabels as $bucket => $label) {
+    $report[] = "- {$label}: ".($bucketCounts[$bucket] ?? 0);
+}
 $report[] = '';
 $report[] = '### Modules Affected';
 $report[] = '';
@@ -308,7 +381,7 @@ foreach ($byFile as $file => $items) {
     $report[] = '';
     foreach ($items as $item) {
         $context = str_replace('|', '\|', $item['context']);
-        $report[] = '- Line '.$item['line'].' ['.$item['priority'].']: `'.$item['string'].'`';
+        $report[] = '- Line '.$item['line'].' ['.$item['priority'].', '.$item['bucket'].']: `'.$item['string'].'`';
         $report[] = '  - Context: `'.$context.'`';
         $report[] = '  - Recommendation: '.$item['recommendation'];
         $report[] = '  - Suggested key: `'.$item['suggested_key'].'`';
@@ -326,6 +399,7 @@ $report[] = '- Email coverage: inspect `resources/views/emails` and `resources/v
 $report[] = '- JavaScript coverage: inspect `resources/js` and `public/js` findings.';
 $report[] = '- Controller flash message coverage: inspect `controller_flash` findings.';
 $report[] = '- Dynamic enum/model label coverage: inspect `php_return_label` and `php_label_array` findings under `app/Enums` and `app/Models`.';
+$report[] = '- Service title coverage: inspect `service_title_manual_review_candidates` and classify as user-facing, canonical stored title, internal code, SQL/internal expression, or translated downstream.';
 $report[] = '';
 $report[] = '## Cleanup Notes';
 $report[] = '';
@@ -339,4 +413,6 @@ echo 'Report written: docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md'.PHP_EOL;
 echo 'Files scanned: '.$scanned.PHP_EOL;
 echo 'Files with candidates: '.count($byFile).PHP_EOL;
 echo 'Candidates: '.count($findings).PHP_EOL;
-
+foreach ($bucketLabels as $bucket => $label) {
+    echo $label.': '.($bucketCounts[$bucket] ?? 0).PHP_EOL;
+}

@@ -5,39 +5,65 @@ There is currently no docs/UHMS_IMPLEMENTATION_SKILL.md file in this project.
 Do not try to read it.
 Follow the instructions in this prompt directly.
 
-We have been completing UHMS localisation in active route/page batches.
+We completed UHMS Localisation Phase 12 — Active Pages Translation Batch 5.
 
-Previous active-page batches covered:
+Phase 12 completed a high-value pass across:
 
-* appointments, products, service renderings, visit Inertia index
-* consultations, theatre/procedures, lab/investigations, medication administration, blood bank
-* store/stock/procurement/suppliers and HR/payroll/attendance/leave
+* billing invoices
+* payments
+* receipts
+* statements
+* aging print/PDF surfaces
+* claims list/create/detail/review enum and form-label cleanup
+* insurance provider enum labels and verification driver labels
+* cash/account entry list/create dynamic labels
+* queue and ward/bed management enum labels
+
+Phase 12 verification passed:
+
+* route list: 714 routes
+* view cache passed
+* language file lint passed
+* EN/FR nested parity passed with PARITY_OK
+* localisation audit passed
+
+Audit result after Phase 12:
+
+* files scanned: 1268
+* files with candidates: 518
+* hardcoded candidates: 18,751
+
+Phase 12 deferred these active residual areas:
+
+* deeper claim show/review visible copy
+* remaining insurance provider form/help text
+* cashier handover full-page copy
+* accounts daily collection/reconciliation remaining table and modal literals
+* accounting report pages, journals, fiscal years, periods, accounts payable, and accounting settings
+* billing Inertia pages for sponsors, credit notes, dashboard, statements, aging, and discounts
+* reports hub and operational/report print pages
+* settings/users/roles/departments/modules pages
+* wider shared layout/component audit allowlist cleanup
 
 Now proceed with:
 
-# UHMS Localisation Phase 12 — Active Pages Translation Batch 5
+# UHMS Localisation Phase 13 — Active Pages Translation Batch 6
 
 ## Goal
 
-Complete the next active localisation batch for the remaining financial, administrative, workflow, reporting, and shared UI surfaces.
+Complete the next active localisation cleanup batch for the residual financial, reporting, accounting, admin, settings, and shared UI surfaces deferred from Phase 12.
 
 This batch focuses on:
 
-1. Billing
-2. Invoices
-3. Payments
-4. Cashier / counter-sale / shifts
-5. Claims
-6. Sponsors / insurance / corporate receivables
-7. Accounting
-8. Reports
-9. Settings
-10. Queues
-11. Wards / bed management
-12. Shared workflow components and layouts
-13. Inertia/frontend leftovers
-14. Service event titles/messages that are confirmed user-facing
-15. Localisation audit allowlist cleanup
+1. Claims deeper show/review copy
+2. Insurance provider forms/help text
+3. Cashier handover and cash office pages
+4. Accounts daily collection/reconciliation remaining literals
+5. Accounting journals, reports, periods, fiscal years, AP, settings
+6. Billing Inertia pages
+7. Reports hub and operational/report print pages
+8. Settings, users, roles, departments, modules
+9. Shared layouts/components and audit allowlist cleanup
 
 Do not translate demo/template/sample pages.
 Do not translate backup-route-only pages.
@@ -56,76 +82,116 @@ Do not introduce Tailwind.
 
 # 1. Source Reports
 
-Use:
+Use these reports:
 
-```text
+```text id="dsqosz"
 docs/LOCALISATION_PHASE_7_COMPLETE_ACTIVE_PAGE_TRANSLATION_REPORT.md
 docs/LOCALISATION_PHASE_8_ACTIVE_PAGES_BATCH_1_REPORT.md
 docs/LOCALISATION_PHASE_9_ACTIVE_PAGES_BATCH_2_REPORT.md
 docs/LOCALISATION_PHASE_11_ACTIVE_PAGES_BATCH_4_REPORT.md
+docs/LOCALISATION_PHASE_12_ACTIVE_PAGES_BATCH_5_REPORT.md
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
 
-Continue from the active backlog.
+Continue from the Phase 12 deferred list.
 
-Do not restart the full localisation project from scratch.
+Do not restart localisation from scratch.
 
 ---
 
-# 2. Target Area A — Billing / Invoices / Payments / Cashier
+# 2. Target Area A — Claims / Insurance Deeper Copy
 
-Check active route-linked views and partials under actual project paths, including:
+Check active route-linked views and partials:
 
-```text
+```text id="6hy2nn"
+resources/views/claims/
+resources/views/insurance/
 resources/views/billing/
-resources/views/invoices/
-resources/views/payments/
-resources/views/cashier/
-resources/views/counter-sale/
-resources/js/Pages/Billing/
-resources/js/Pages/Invoices/
-resources/js/Pages/Payments/
 ```
 
-depending on actual active route/controller/frontend usage.
+Translate remaining visible copy in:
 
-Translate visible UI text in:
-
-* invoice list
-* invoice create/edit/show
-* invoice item sections
-* invoice print/PDF labels
-* receipt pages
-* payment receive screens
-* payment history
-* payment method labels
-* cashier shift pages
-* cashier handover pages
-* counter-sale pages
-* patient statement pages
-* sponsor/insurance/corporate billing panels
-* refund/credit note/write-off labels
-* AR aging labels
-* table headers
-* filter labels
-* modal labels
+* claim show page
+* claim review page
+* claim status panels
+* claim reconciliation sections
+* claim submission/appeal/payment panels
+* claim item details
+* insurance provider create/edit/show forms
+* verification provider help text
+* verification config labels
+* insurance coverage labels
+* insurance tier labels
 * action buttons
+* modal labels
 * empty states
-* print/export labels
 * inline JavaScript strings
-* Inertia/frontend strings
 
 Use or extend:
 
-```text
+```text id="xkht2v"
+lang/en/claims.php
+lang/fr/claims.php
 lang/en/billing.php
 lang/fr/billing.php
-lang/en/invoices.php
-lang/fr/invoices.php
+lang/en/common.php
+lang/fr/common.php
+lang/en/statuses.php
+lang/fr/statuses.php
+lang/en/messages.php
+lang/fr/messages.php
+```
+
+Rules:
+
+* NHIS is just one insurance provider.
+* Do not create hardcoded NHIS-only strings.
+* Do not hardcode sponsors.
+* Do not hardcode insurance providers.
+* Do not change claims workflow.
+* Do not change claim submission/review/payment logic.
+* Do not expose financial values without permission.
+
+---
+
+# 3. Target Area B — Cashier / Cash Office / Daily Collection / Reconciliation
+
+Check active route-linked views:
+
+```text id="r0oec0"
+resources/views/accounts/
+resources/views/cashier/
+resources/views/billing/
+resources/views/payments/
+```
+
+Translate remaining visible copy in:
+
+* cashier handover pages
+* cashier shift pages
+* daily collection page
+* reconciliation page
+* payment reconciliation modals
+* cash/account entry tables
+* approval panels
+* collection summaries
+* deposit/bank reconciliation labels
+* filters
+* table headers
+* modal labels
+* action buttons
+* print/export labels
+* inline JavaScript strings
+
+Use or extend:
+
+```text id="c3efva"
+lang/en/accounting.php
+lang/fr/accounting.php
 lang/en/payments.php
 lang/fr/payments.php
-lang/en/reports.php
-lang/fr/reports.php
+lang/en/billing.php
+lang/fr/billing.php
 lang/en/common.php
 lang/fr/common.php
 lang/en/statuses.php
@@ -138,107 +204,43 @@ Rules:
 
 * Payment is not revenue.
 * Revenue comes from invoice/billing posting.
-* Credit note, write-off, discount, and refund must remain separate concepts.
-* Do not hardcode NHIS.
-* Do not hardcode sponsors.
-* Do not hardcode insurance providers.
-* Do not expose financial values without permission.
-* Do not move billing/accounting logic into Blade.
+* Do not change reconciliation logic.
+* Do not change cashier logic.
+* Do not expose restricted financial values without permission.
+* Do not calculate financial totals in Blade.
 
 ---
 
-# 3. Target Area B — Claims / Sponsors / Insurance / Receivables
+# 4. Target Area C — Accounting Reports / Journals / Periods / AP / Settings
 
-Check active route-linked views and partials for:
+Check active route-linked views and frontend files:
 
-```text
-resources/views/claims/
-resources/views/sponsors/
-resources/views/insurance/
-resources/views/billing/
-resources/views/reports/
-```
-
-depending on actual active route/controller usage.
-
-Translate visible UI text in:
-
-* claims list
-* claim creation/preparation pages
-* claim item labels
-* claim status labels
-* claim submission labels
-* claim reconciliation labels
-* sponsor billing screens
-* insurance billing screens
-* corporate billing screens
-* receivables screens
-* AR aging screens
-* payer-type labels
-* filters
-* table headers
-* action buttons
-* modal labels
-* empty states
-* print/export labels
-* inline JavaScript strings
-
-Use or extend:
-
-```text
-lang/en/claims.php
-lang/fr/claims.php
-lang/en/billing.php
-lang/fr/billing.php
-lang/en/reports.php
-lang/fr/reports.php
-lang/en/common.php
-lang/fr/common.php
-lang/en/statuses.php
-lang/fr/statuses.php
-lang/en/messages.php
-lang/fr/messages.php
-```
-
-Create `claims.php` only if active claims text is large enough to justify it.
-
-Rules:
-
-* NHIS is just one insurance provider.
-* Do not create hardcoded NHIS-only localisation.
-* Do not hardcode insurance providers.
-* Do not hardcode sponsors.
-* Do not change claims workflow logic.
-* Do not expose financial values without permission.
-
----
-
-# 4. Target Area C — Accounting
-
-Check active accounting views and frontend files:
-
-```text
+```text id="yuylr8"
 resources/views/accounting/
+resources/views/accounts/
 resources/views/accounting/reports/
 resources/views/reports/
 resources/js/Pages/Accounting/
 ```
 
-Translate visible UI text in:
+Translate remaining visible copy in:
 
 * chart of accounts
-* journal entries
-* journal entry show/create pages
+* account categories
+* journal entry index/create/show
+* journal posting/reversal screens
 * trial balance
 * general ledger
-* cashbook
 * profit and loss
 * balance sheet
-* department accounting reports
-* failed accounting postings
-* posting status labels
-* reversal labels
-* accounting filters
+* cashbook
+* accounts payable pages
+* AP aging pages
+* fiscal years
+* accounting periods
+* accounting settings
+* failed postings
+* report filters
 * table headers
 * print/export labels
 * modal labels
@@ -247,7 +249,7 @@ Translate visible UI text in:
 
 Use or extend:
 
-```text
+```text id="3o4qt1"
 lang/en/accounting.php
 lang/fr/accounting.php
 lang/en/reports.php
@@ -263,7 +265,6 @@ lang/fr/messages.php
 Rules:
 
 * Official accounting reports must use posted journal entries only.
-* Draft/unposted entries must not appear in official reports unless explicitly filtered.
 * Do not change accounting calculations.
 * Do not change posting/reversal logic.
 * Do not expose restricted accounting data without permission.
@@ -271,20 +272,72 @@ Rules:
 
 ---
 
-# 5. Target Area D — Reports
+# 5. Target Area D — Billing Inertia / Frontend Pages
 
-Check active report views, print templates, export controls, and report frontend strings:
+Check active frontend/Inertia files:
 
-```text
+```text id="cdzslt"
+resources/js/Pages/Billing/
+resources/js/Pages/Invoices/
+resources/js/Pages/Payments/
+resources/js/Pages/Sponsors/
+resources/js/Pages/CreditNotes/
+resources/js/Pages/Statements/
+resources/js/Pages/Aging/
+resources/js/Pages/Discounts/
+resources/js/pages/
+resources/js/components/
+resources/js/Components/
+```
+
+Translate visible strings in active frontend pages for:
+
+* billing dashboard
+* sponsors
+* credit notes
+* statements
+* aging
+* discounts
+* invoice/payment frontend widgets
+* dashboard filters
+* chart labels
+* table headers
+* action buttons
+* modals
+* empty states
+* alert/confirm/loading strings
+
+Use existing localisation approach:
+
+```text id="h7vpp3"
+window.UHMS_I18N
+useTrans()
+module-level Blade i18n bridge
+```
+
+Do not introduce a new frontend i18n package.
+
+If a frontend string cannot be safely localised yet, document it clearly with file path and reason.
+
+---
+
+# 6. Target Area E — Reports Hub / Operational Reports / Print Templates
+
+Check active report views and print templates:
+
+```text id="cuvy5q"
 resources/views/reports/
 resources/views/accounting/reports/
 resources/views/billing/reports/
-resources/js/Pages/Reports/
+resources/views/claims/
+resources/views/stock/reports/
+resources/views/hr/reports/
 ```
 
-Translate visible UI text in:
+Translate remaining visible copy in:
 
-* report hub
+* reports hub
+* report cards
 * management reports
 * operational reports
 * clinical reports
@@ -294,21 +347,22 @@ Translate visible UI text in:
 * stock reports
 * HR/payroll reports
 * audit reports
-* report filters
+* filter labels
 * chart labels
 * KPI labels
 * table headers
 * empty states
-* print pages
+* print templates
 * PDF templates
-* CSV/export labels
+* export labels
 * generated by/generated at labels
 * permission warning labels
+* redaction labels
 * inline JavaScript strings
 
 Use or extend:
 
-```text
+```text id="bn033e"
 lang/en/reports.php
 lang/fr/reports.php
 lang/en/common.php
@@ -323,15 +377,15 @@ Rules:
 * Export and print must respect permissions.
 * Restricted columns must remain redacted.
 * Do not introduce a new chart/export package.
-* Do not duplicate report services in Blade.
+* Do not duplicate report logic in Blade.
 
 ---
 
-# 6. Target Area E — Settings / Admin / Users / Roles / Departments
+# 7. Target Area F — Settings / Users / Roles / Departments / Modules
 
-Check active views:
+Check active route-linked views:
 
-```text
+```text id="i7tk54"
 resources/views/settings/
 resources/views/users/
 resources/views/roles/
@@ -340,21 +394,21 @@ resources/views/departments/
 resources/views/modules/
 ```
 
-Translate visible UI text in:
+Translate remaining visible copy in:
 
 * organization settings
 * invoice settings
 * ward settings
 * payment method settings
-* notification settings
+* notification preferences
 * profile settings
 * activity log settings
-* log retention settings
-* users list/create/edit
-* roles/permissions screens
+* log retention
+* users index/create/edit/show
+* roles and permissions
 * departments
 * modules
-* service/catalog admin pages not already completed
+* service catalog admin leftovers
 * table headers
 * form labels
 * help text
@@ -365,7 +419,7 @@ Translate visible UI text in:
 
 Use or extend:
 
-```text
+```text id="g00fgf"
 lang/en/settings.php
 lang/fr/settings.php
 lang/en/users.php
@@ -382,145 +436,55 @@ Rules:
 
 * Do not change permission logic.
 * Do not change module enable/disable logic.
-* Do not expose restricted admin controls to unauthorized users.
+* Do not expose restricted controls to unauthorized users.
 
 ---
 
-# 7. Target Area F — Queues / Wards / Bed Management / Shared Workflow Components
+# 8. Target Area G — Shared Layouts / Components / Partials
 
-Check active views:
+Check active shared files:
 
-```text
-resources/views/queue/
-resources/views/queues/
-resources/views/wards/
-resources/views/beds/
-resources/views/admissions/
-resources/views/emergency/
+```text id="e070xy"
 resources/views/components/
 resources/views/partials/
 resources/views/layouts/
 resources/views/layout/
 ```
 
-Translate visible UI text in:
+Translate remaining active shared UI text:
 
-* queue board
-* queue management
-* visit queue/session panels
-* ward list
-* ward show
-* bed map
-* bed management
-* admission request panels
-* emergency/ward shared components
-* shared status cards
-* shared action buttons
-* shared empty states
-* shared modals
-* shared alerts
-* layout/header/footer/sidebar text not already handled
+* header
+* footer
+* breadcrumb labels
+* global modals
+* global alerts
+* action dropdowns
+* status components
+* empty-state components
+* pagination wrappers if custom
+* shared buttons
+* sidebar if any active label bypasses translation
 
-Use or extend:
+Be careful:
 
-```text
-lang/en/common.php
-lang/fr/common.php
-lang/en/menu.php
-lang/fr/menu.php
-lang/en/admissions.php
-lang/fr/admissions.php
-lang/en/emergency.php
-lang/fr/emergency.php
-lang/en/visits.php
-lang/fr/visits.php
-lang/en/statuses.php
-lang/fr/statuses.php
-```
-
-Rules:
-
-* SidebarMenuBuilder may intentionally store raw labels before downstream translation.
-* If it already translates through `translateLabel()`, document it as audit false positive.
-* Do not break permissions, module visibility, route names, or menu hierarchy.
+* `SidebarMenuBuilder.php` may store raw labels but translate them downstream.
+* If already translated through `translateLabel()`, document as false positive.
+* Do not translate demo/template components unless active.
+* Do not break slots, props, or reusable components.
 
 ---
 
-# 8. Target Area G — Inertia / Frontend Leftovers
+# 9. Target Area H — Service Event Titles / Messages Final Classification
 
-Check frontend files:
+Review remaining service strings in:
 
-```text
-resources/js/Pages/
-resources/js/pages/
-resources/js/components/
-resources/js/Components/
-resources/js/views/
-resources/js/
-public/js/
+```text id="irpfwx"
+app/Services/
 ```
 
-Translate visible strings in active frontend pages:
+Classify each audit finding as:
 
-* billing Inertia pages
-* visit Inertia pages
-* report frontend pages
-* shared Vue/React/Inertia components
-* DataTables strings
-* Select2 placeholders
-* date range labels
-* modal strings
-* chart labels
-* alert/confirm/loading/empty-state strings
-
-Use existing localisation bridge:
-
-```text
-window.UHMS_I18N
-useTrans()
-module-level Blade i18n bridge
-```
-
-Do not introduce a new frontend i18n package unless explicitly approved.
-
-Document frontend strings that cannot be safely localised yet.
-
----
-
-# 9. Target Area H — Service Event Titles / Messages
-
-Review remaining audit findings in services such as:
-
-```text
-app/Services/AdmissionBedBillingService.php
-app/Services/AdmissionService.php
-app/Services/BloodCrossmatchService.php
-app/Services/BloodDonationService.php
-app/Services/BloodIssueService.php
-app/Services/ClinicalTaskService.php
-app/Services/ConsultationNextPatientService.php
-app/Services/EmergencyBedBillingService.php
-app/Services/EmergencyCaseService.php
-app/Services/EmergencyDispositionService.php
-app/Services/EmergencyTriageService.php
-app/Services/FinancialReportService.php
-app/Services/InvestigationRequestService.php
-app/Services/JournalEntryService.php
-app/Services/LabService.php
-app/Services/OutpatientSessionAutoCloseService.php
-app/Services/PharmacyBillingSelectionService.php
-app/Services/PharmacyService.php
-app/Services/ProcedureReportService.php
-app/Services/ProcedureRequestService.php
-app/Services/ProcedureScheduleService.php
-app/Services/ProcedureWorkflowService.php
-app/Services/QueueService.php
-app/Services/ServiceRenderingService.php
-```
-
-Classify each string as:
-
-```text
+```text id="ba4cye"
 A. User-facing timeline/notification/report/API label — translate now
 B. Internal audit/event code — do not translate
 C. Stored canonical event title — risky, document
@@ -528,21 +492,33 @@ D. SQL/internal expression — false positive
 E. Already translated downstream — false positive
 ```
 
-Translate only high-confidence user-facing strings.
+Translate high-confidence user-facing strings only.
+
+Examples likely needing review:
+
+* admission billing event titles
+* emergency billing event titles
+* blood bank workflow titles
+* lab workflow titles
+* pharmacy billing titles
+* procedure workflow titles
+* queue service titles
+* journal reversal descriptions
+* service rendering titles
 
 Use named placeholders for dynamic values.
 
-Do not change stored business values, workflow status, accounting semantics, or audit semantics.
+Do not change stored values, accounting semantics, workflow status, or audit semantics.
 
 ---
 
-# 10. Localisation Audit Allowlist Cleanup
+# 10. Localisation Audit Allowlist Improvement
 
-Improve the localisation audit report usefulness.
+Improve the audit scanner/report to separate real active debt from noise.
 
-Add or update an allowlist for:
+Add or refine allowlist rules for:
 
-```text
+```text id="o85iyq"
 demo/template views
 routes/web.php.bak-only views
 language files themselves
@@ -557,11 +533,21 @@ clinical units
 currency symbols
 blood group codes
 commented-out code
+backup files
+```
+
+The report should include separate counts for:
+
+```text id="nk8reu"
+active runtime candidates
+demo/template candidates
+backup-only candidates
+language-file candidates
+known false positives
+service-title manual-review candidates
 ```
 
 Do not hide real active runtime strings.
-
-The goal is to make future audit reports actionable by reducing noise.
 
 ---
 
@@ -569,26 +555,19 @@ The goal is to make future audit reports actionable by reducing noise.
 
 Search target files for:
 
-```php
+```php id="ea93kg"
 ->label()
 ->statusLabel()
 ->typeLabel()
 getLabelAttribute()
 displayName()
 humanName()
+ucfirst(
+ucwords(
+str_replace('_', ' ',
 ```
 
-Where displayed to users and safe, replace with:
-
-```php
-->translatedLabel()
-```
-
-or an existing shared component:
-
-```blade
-<x-status-badge>
-```
+Where displayed to users and safe, replace with translation helpers or explicit lang keys.
 
 Do not change stored enum values.
 Do not change enum constants.
@@ -600,7 +579,7 @@ Do not change workflow/status transitions.
 
 Fix obvious responsive issues while touching these pages:
 
-```text
+```text id="c87j9t"
 table overflow
 filter wrapping
 action button overflow
@@ -619,7 +598,7 @@ Do not introduce Tailwind.
 
 Run:
 
-```bash
+```bash id="we11nc"
 php artisan view:clear
 php artisan config:clear
 php artisan cache:clear
@@ -630,7 +609,7 @@ php artisan view:clear
 
 Run language lint:
 
-```bash
+```bash id="2tjepb"
 for f in lang/en/*.php lang/fr/*.php; do php -l "$f"; done
 ```
 
@@ -638,26 +617,11 @@ Run nested EN/FR parity verification.
 
 Run localisation audit again:
 
-```bash
+```bash id="mrg69d"
 php scripts/localisation-audit.php
 ```
 
-The raw candidate count may remain high if demo/template files are still included.
-
-But the report must specifically state:
-
-```text
-billing/invoice/payment/cashier pages cleaned
-claims/sponsors/insurance/receivables pages cleaned
-accounting pages cleaned
-reports pages cleaned
-settings/admin pages cleaned
-queues/wards/shared workflow components cleaned
-Inertia/frontend leftovers checked
-service event titles/messages classified
-audit allowlist improved
-remaining active pages after this batch
-```
+The raw candidate count may remain high if demo/template files are still included, but the new audit report must separate noise from active runtime candidates.
 
 ---
 
@@ -665,33 +629,31 @@ remaining active pages after this batch
 
 Create:
 
-```text
-docs/LOCALISATION_PHASE_12_ACTIVE_PAGES_BATCH_5_REPORT.md
+```text id="eytir3"
+docs/LOCALISATION_PHASE_13_ACTIVE_PAGES_BATCH_6_REPORT.md
 ```
 
 Include:
 
-```text
-active routes/views checked in this batch
-billing/invoice/payment/cashier files translated
-claims/sponsors/insurance files translated
-accounting files translated
-reports files translated
-settings/admin files translated
-queues/wards/shared component files translated
-frontend/Inertia files translated or deferred
-service event strings translated/classified
-audit allowlist changes
-language files added/updated
-JavaScript strings translated
-dynamic labels updated
-responsive fixes made
-EN/FR parity result
-PHP lint result
-cache/route/view-cache verification result
-localisation audit result
-remaining active untranslated pages
-```
+* active routes/views checked in this batch
+* claims/insurance files translated
+* cashier/accounts/reconciliation files translated
+* accounting reports/journals/AP/settings files translated
+* billing Inertia/frontend files translated or deferred
+* reports/print/export files translated
+* settings/users/roles/departments/modules files translated
+* shared component/layout files translated
+* service event strings translated/classified
+* audit allowlist changes
+* language files added/updated
+* JavaScript/frontend strings translated
+* dynamic labels updated
+* responsive fixes made
+* EN/FR parity result
+* PHP lint result
+* cache/route/view-cache verification result
+* localisation audit result with separated active-vs-noise counts
+* remaining active untranslated pages
 
 ---
 
@@ -699,15 +661,15 @@ remaining active untranslated pages
 
 This phase is complete when:
 
-* active billing/invoice/payment/cashier pages are checked and translated or documented
-* active claims/sponsors/insurance/receivables pages are checked and translated or documented
-* active accounting pages are checked and translated or documented
-* active report pages are checked and translated or documented
-* active settings/admin pages are checked and translated or documented
-* active queues/wards/shared workflow components are checked and translated or documented
-* active frontend/Inertia strings are checked and translated or documented
+* deeper claims/insurance pages are checked and translated or documented
+* cashier/accounts/reconciliation pages are checked and translated or documented
+* accounting reports/journals/AP/settings pages are checked and translated or documented
+* billing Inertia/frontend pages are checked and translated or documented
+* reports hub/operational/print/export pages are checked and translated or documented
+* settings/users/roles/departments/modules pages are checked and translated or documented
+* active shared components/layouts are checked and translated or documented
 * service event titles/messages are translated or classified
-* audit allowlist is improved without hiding real active strings
+* audit allowlist separates active runtime debt from false positives/noise
 * EN/FR parity remains clean
 * touched files pass lint
 * caches clear
@@ -718,4 +680,4 @@ This phase is complete when:
 * no duplicate localisation system created
 * no new packages introduced
 
-Proceed with UHMS Localisation Phase 12 — Active Pages Translation Batch 5 now.
+Proceed with UHMS Localisation Phase 13 — Active Pages Translation Batch 6 now.

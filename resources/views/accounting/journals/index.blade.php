@@ -22,7 +22,7 @@
                 <select name="status" class="form-select">
                     <option value="">{{ __('common.all') }}</option>
                     @foreach($statuses as $status)
-                        <option value="{{ $status->value }}" @selected(request('status') === $status->value)>{{ $status->label() }}</option>
+                        <option value="{{ $status->value }}" @selected(request('status') === $status->value)>{{ $status->translatedLabel() }}</option>
                     @endforeach
                 </select>
             </div>
@@ -64,7 +64,7 @@
                     <td>{{ $entry->entry_date?->format('d M Y') }}</td>
                     <td>{{ \Illuminate\Support\Str::limit($entry->description, 55) }}</td>
                     <td>{{ $entry->reference_number ?? '-' }}</td>
-                    <td><span class="badge bg-{{ $entry->status->color() }}">{{ $entry->status->label() }}</span></td>
+                    <td><span class="badge bg-{{ $entry->status->color() }}">{{ $entry->status->translatedLabel() }}</span></td>
                     <td class="text-end">GH₵ {{ number_format($entry->total_debit, 2) }}</td>
                     <td>{{ $entry->createdBy?->name ?? '-' }}</td>
                     <td class="text-end">

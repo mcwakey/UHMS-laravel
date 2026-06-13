@@ -55,7 +55,7 @@
                     <td>{{ $year->start_date->format('d M Y') }}</td>
                     <td>{{ $year->end_date->format('d M Y') }}</td>
                     <td>{{ number_format($year->periods_count) }}</td>
-                    <td><span class="badge bg-{{ $year->status->color() }}">{{ $year->status->label() }}</span></td>
+                    <td><span class="badge bg-{{ $year->status->color() }}">{{ $year->status->translatedLabel() }}</span></td>
                     <td>{{ $year->closed_at?->format('d M Y H:i') ?? '-' }}</td>
                     <td class="text-end">
                         @if($year->status->value === 'open')

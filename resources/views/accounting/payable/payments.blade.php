@@ -39,8 +39,8 @@
                 <td><a href="{{ route('admin.accounts-payable.statement', $p->supplier_id) }}" class="text-primary">{{ $p->supplier?->name ?? '—' }}</a></td>
                 <td><small>{{ optional($p->payment_date)->format('d M Y') }}</small></td>
                 <td class="text-end fw-semibold">{{ number_format($p->amount, 2) }}</td>
-                <td><span class="badge bg-light text-dark border">{{ ucwords(str_replace('_',' ',$p->payment_method)) }}</span></td>
-                <td><span class="badge bg-{{ $acctVariant($p->accounting_status) }}-subtle text-{{ $acctVariant($p->accounting_status) }}">{{ ucfirst($p->accounting_status ?? 'pending') }}</span>@if($p->isReversed())<span class="badge bg-secondary ms-1">Reversed</span>@endif</td>
+                <td><span class="badge bg-light text-dark border">{{ __('statuses.default.' . $p->payment_method) }}</span></td>
+                <td><span class="badge bg-{{ $acctVariant($p->accounting_status) }}-subtle text-{{ $acctVariant($p->accounting_status) }}">{{ __('statuses.default.' . ($p->accounting_status ?? 'pending')) }}</span>@if($p->isReversed())<span class="badge bg-secondary ms-1">{{ __('statuses.default.reversed') }}</span>@endif</td>
                 <td><small>{{ trim(($p->createdByUser?->first_name ?? '').' '.($p->createdByUser?->last_name ?? '')) ?: '—' }}</small></td>
                 <td class="text-end">
                     @can('supplier_payments.reverse')

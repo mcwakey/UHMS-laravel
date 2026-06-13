@@ -29,7 +29,7 @@
                 <select name="account_type" class="form-select">
                     <option value="">{{ __('common.all') }}</option>
                     @foreach($types as $type)
-                        <option value="{{ $type->value }}" @selected(request('account_type') === $type->value)>{{ $type->label() }}</option>
+                        <option value="{{ $type->value }}" @selected(request('account_type') === $type->value)>{{ $type->translatedLabel() }}</option>
                     @endforeach
                 </select>
             </div>

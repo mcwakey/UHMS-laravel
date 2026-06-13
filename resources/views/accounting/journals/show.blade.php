@@ -29,7 +29,7 @@
 
 <div class="row g-3 mb-3">
     <div class="col-md-3"><div class="card"><div class="card-body py-3"><div class="text-muted small">{{ __('common.date') }}</div><div class="fw-semibold">{{ $journal->entry_date?->format('d M Y') }}</div></div></div></div>
-    <div class="col-md-3"><div class="card"><div class="card-body py-3"><div class="text-muted small">{{ __('common.status') }}</div><span class="badge bg-{{ $journal->status->color() }}">{{ $journal->status->label() }}</span></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body py-3"><div class="text-muted small">{{ __('common.status') }}</div><span class="badge bg-{{ $journal->status->color() }}">{{ $journal->status->translatedLabel() }}</span></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body py-3"><div class="text-muted small">{{ __('accounting.period') }}</div><div class="fw-semibold">{{ $journal->accountingPeriod?->name ?? '-' }}</div></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body py-3"><div class="text-muted small">{{ __('accounting.source') }}</div><div class="fw-semibold">{{ $journal->source_module ?: 'MANUAL' }}</div></div></div></div>
 </div>

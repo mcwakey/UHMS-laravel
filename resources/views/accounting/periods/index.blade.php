@@ -84,7 +84,7 @@
                     <td>{{ $period->fiscalYear?->name }}</td>
                     <td>{{ $period->start_date->format('d M Y') }}</td>
                     <td>{{ $period->end_date->format('d M Y') }}</td>
-                    <td><span class="badge bg-{{ $period->status->color() }}">{{ $period->status->label() }}</span></td>
+                    <td><span class="badge bg-{{ $period->status->color() }}">{{ $period->status->translatedLabel() }}</span></td>
                     <td>{{ $period->closed_at?->format('d M Y H:i') ?? '-' }}</td>
                     <td class="text-end">
                         @if($period->status->value === 'open')

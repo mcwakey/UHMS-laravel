@@ -1,13 +1,13 @@
 @extends('layouts.app')
-@section('title', 'Financial Reconciliation')
+@section('title', __('accounting.financial_reconciliation'))
 
 @section('content')
-<x-page-header title="Financial Reconciliation" icon="ti-scale">
+<x-page-header :title="__('accounting.financial_reconciliation')" icon="ti-scale">
     <x-slot:actions>
         <form method="GET" action="{{ route('admin.accounts.reconciliation') }}" class="d-flex gap-2">
-            <input type="date" name="from" class="form-control" value="{{ $from }}" placeholder="From">
-            <input type="date" name="to" class="form-control" value="{{ $to }}" placeholder="To">
-            <button type="submit" class="btn btn-primary text-nowrap"><i class="ti ti-filter me-1"></i>Filter</button>
+            <input type="date" name="from" class="form-control" value="{{ $from }}" placeholder="{{ __('accounting.from') }}">
+            <input type="date" name="to" class="form-control" value="{{ $to }}" placeholder="{{ __('accounting.to') }}">
+            <button type="submit" class="btn btn-primary text-nowrap"><i class="ti ti-filter me-1"></i>{{ __('accounting.filter') }}</button>
         </form>
     </x-slot:actions>
 </x-page-header>
@@ -23,7 +23,7 @@
                     </div>
                     <div>
                         <h4 class="mb-0">GH₵ {{ number_format($stats['period_income'], 2) }}</h4>
-                        <small class="text-muted">Total Income</small>
+                        <small class="text-muted">{{ __('accounting.total_income') }}</small>
                     </div>
                 </div>
             </div>
@@ -38,7 +38,7 @@
                     </div>
                     <div>
                         <h4 class="mb-0">GH₵ {{ number_format($stats['period_expense'], 2) }}</h4>
-                        <small class="text-muted">Total Expenses</small>
+                        <small class="text-muted">{{ __('accounting.total_expenses') }}</small>
                     </div>
                 </div>
             </div>
@@ -53,7 +53,7 @@
                     </div>
                     <div>
                         <h4 class="mb-0">GH₵ {{ number_format($stats['period_revenue'], 2) }}</h4>
-                        <small class="text-muted">Patient Revenue</small>
+                        <small class="text-muted">{{ __('accounting.patient_revenue') }}</small>
                     </div>
                 </div>
             </div>
@@ -68,7 +68,7 @@
                     </div>
                     <div>
                         <h4 class="mb-0">GH₵ {{ number_format($stats['period_net'], 2) }}</h4>
-                        <small class="text-muted">Net Position</small>
+                        <small class="text-muted">{{ __('accounting.net_position') }}</small>
                     </div>
                 </div>
             </div>
@@ -81,16 +81,16 @@
     <div class="col-lg-6">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0"><i class="ti ti-category me-1 text-success"></i>Income by Category</h5>
+                <h5 class="card-title mb-0"><i class="ti ti-category me-1 text-success"></i>{{ __('accounting.income_by_category') }}</h5>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-sm mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Category</th>
-                                <th class="text-center">Entries</th>
-                                <th class="text-end">Total</th>
+                                <th>{{ __('accounting.category') }}</th>
+                                <th class="text-center">{{ __('accounting.entries') }}</th>
+                                <th class="text-end">{{ __('accounting.total') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -102,13 +102,13 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3"><x-empty-state message="No income records" /></td>
+                                <td colspan="3"><x-empty-state :message="__('accounting.no_income_records')" /></td>
                             </tr>
                             @endforelse
                         </tbody>
                         <tfoot class="table-light">
                             <tr class="fw-bold">
-                                <td colspan="2" class="text-end">Total:</td>
+                                <td colspan="2" class="text-end">{{ __('accounting.total') }}:</td>
                                 <td class="text-end text-success">GH₵ {{ number_format($data['totals']['income'], 2) }}</td>
                             </tr>
                         </tfoot>
@@ -122,16 +122,16 @@
     <div class="col-lg-6">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0"><i class="ti ti-category me-1 text-danger"></i>Expense by Category</h5>
+                <h5 class="card-title mb-0"><i class="ti ti-category me-1 text-danger"></i>{{ __('accounting.expense_by_category') }}</h5>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-sm mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Category</th>
-                                <th class="text-center">Entries</th>
-                                <th class="text-end">Total</th>
+                                <th>{{ __('accounting.category') }}</th>
+                                <th class="text-center">{{ __('accounting.entries') }}</th>
+                                <th class="text-end">{{ __('accounting.total') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -143,13 +143,13 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3"><x-empty-state message="No expense records" /></td>
+                                <td colspan="3"><x-empty-state :message="__('accounting.no_expense_records')" /></td>
                             </tr>
                             @endforelse
                         </tbody>
                         <tfoot class="table-light">
                             <tr class="fw-bold">
-                                <td colspan="2" class="text-end">Total:</td>
+                                <td colspan="2" class="text-end">{{ __('accounting.total') }}:</td>
                                 <td class="text-end text-danger">GH₵ {{ number_format($data['totals']['expense'], 2) }}</td>
                             </tr>
                         </tfoot>
@@ -163,17 +163,17 @@
 <!-- Revenue by Payment Method -->
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title mb-0"><i class="ti ti-wallet me-1"></i>Patient Revenue by Payment Method</h5>
+        <h5 class="card-title mb-0"><i class="ti ti-wallet me-1"></i>{{ __('accounting.patient_revenue_by_method') }}</h5>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-sm mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Payment Method</th>
-                        <th class="text-center">Transactions</th>
-                        <th class="text-end">Amount</th>
-                        <th class="text-end">% of Total</th>
+                        <th>{{ __('accounting.payment_method') }}</th>
+                        <th class="text-center">{{ __('accounting.transactions') }}</th>
+                        <th class="text-end">{{ __('accounting.amount') }}</th>
+                        <th class="text-end">{{ __('accounting.percent_of_total') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -187,13 +187,13 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="4"><x-empty-state message="No revenue records" /></td>
+                        <td colspan="4"><x-empty-state :message="__('accounting.no_revenue_records')" /></td>
                     </tr>
                     @endforelse
                 </tbody>
                 <tfoot class="table-light">
                     <tr class="fw-bold">
-                        <td colspan="2" class="text-end">Total Revenue:</td>
+                        <td colspan="2" class="text-end">{{ __('accounting.total_revenue') }}:</td>
                         <td class="text-end">GH₵ {{ number_format($data['totals']['revenue'], 2) }}</td>
                         <td></td>
                     </tr>
@@ -207,18 +207,18 @@
 @if(count($data['daily_trend']) > 0)
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title mb-0"><i class="ti ti-chart-line me-1"></i>Daily Trend</h5>
+        <h5 class="card-title mb-0"><i class="ti ti-chart-line me-1"></i>{{ __('accounting.daily_trend') }}</h5>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-sm mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Date</th>
-                        <th class="text-end text-success">Income</th>
-                        <th class="text-end text-danger">Expense</th>
-                        <th class="text-end text-info">Revenue</th>
-                        <th class="text-end">Net</th>
+                        <th>{{ __('accounting.date') }}</th>
+                        <th class="text-end text-success">{{ __('accounting.income') }}</th>
+                        <th class="text-end text-danger">{{ __('accounting.expense') }}</th>
+                        <th class="text-end text-info">{{ __('accounting.revenue') }}</th>
+                        <th class="text-end">{{ __('accounting.net') }}</th>
                     </tr>
                 </thead>
                 <tbody>

@@ -1,18 +1,18 @@
 @extends('layouts.app')
-@section('title', 'Daily Collection')
+@section('title', __('accounting.daily_collection'))
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Daily Collection Report</h4>
+        <h4 class="fw-bold mb-0">{{ __('accounting.daily_collection_report') }}</h4>
     </div>
     <div>
         <form method="GET" action="{{ route('admin.accounts.daily-collection') }}" class="d-flex gap-2">
             <input type="date" name="date" class="form-control" value="{{ $date }}" onchange="this.form.submit()">
             @can('invoices.create')
             <a href="{{ route('admin.billing.invoices.create') }}" class="btn btn-primary text-nowrap">
-                <i class="ti ti-file-invoice me-1"></i>Create Invoice
+                <i class="ti ti-file-invoice me-1"></i>{{ __('accounting.create_invoice') }}
             </a>
             @endcan
         </form>
@@ -30,7 +30,7 @@
                     </div>
                     <div>
                         <h4 class="mb-0">GH₵ {{ number_format($collection['payments_total'], 2) }}</h4>
-                        <small class="text-muted">Patient Payments</small>
+                        <small class="text-muted">{{ __('accounting.patient_payments') }}</small>
                     </div>
                 </div>
             </div>
@@ -45,7 +45,7 @@
                     </div>
                     <div>
                         <h4 class="mb-0">GH₵ {{ number_format($collection['income_total'], 2) }}</h4>
-                        <small class="text-muted">Other Income</small>
+                        <small class="text-muted">{{ __('accounting.other_income') }}</small>
                     </div>
                 </div>
             </div>
@@ -60,7 +60,7 @@
                     </div>
                     <div>
                         <h4 class="mb-0">GH₵ {{ number_format($collection['grand_total'], 2) }}</h4>
-                        <small class="text-muted">Grand Total Collection</small>
+                        <small class="text-muted">{{ __('accounting.grand_total_collection') }}</small>
                     </div>
                 </div>
             </div>
@@ -73,16 +73,16 @@
     <div class="col-lg-6">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0"><i class="ti ti-cash me-1"></i>Patient Payments by Method</h5>
+                <h5 class="card-title mb-0"><i class="ti ti-cash me-1"></i>{{ __('accounting.patient_payments_by_method') }}</h5>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-sm mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Payment Method</th>
-                                <th class="text-center">Count</th>
-                                <th class="text-end">Total</th>
+                                <th>{{ __('accounting.payment_method') }}</th>
+                                <th class="text-center">{{ __('accounting.count') }}</th>
+                                <th class="text-end">{{ __('accounting.total') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -94,13 +94,13 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3"><x-empty-state message="No payments recorded" /></td>
+                                <td colspan="3"><x-empty-state :message="__('accounting.no_payments_recorded')" /></td>
                             </tr>
                             @endforelse
                         </tbody>
                         <tfoot class="table-light">
                             <tr class="fw-bold">
-                                <td colspan="2" class="text-end">Total:</td>
+                                <td colspan="2" class="text-end">{{ __('accounting.total') }}:</td>
                                 <td class="text-end">GH₵ {{ number_format($collection['payments_total'], 2) }}</td>
                             </tr>
                         </tfoot>
@@ -114,17 +114,17 @@
     <div class="col-lg-6">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0"><i class="ti ti-trending-up me-1"></i>Other Income</h5>
+                <h5 class="card-title mb-0"><i class="ti ti-trending-up me-1"></i>{{ __('accounting.other_income') }}</h5>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-sm mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Entry #</th>
-                                <th>Category</th>
-                                <th>Description</th>
-                                <th class="text-end">Amount</th>
+                                <th>{{ __('accounting.entry_number') }}</th>
+                                <th>{{ __('accounting.category') }}</th>
+                                <th>{{ __('accounting.description') }}</th>
+                                <th class="text-end">{{ __('accounting.amount') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -137,13 +137,13 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4"><x-empty-state message="No income entries" /></td>
+                                <td colspan="4"><x-empty-state :message="__('accounting.no_income_entries')" /></td>
                             </tr>
                             @endforelse
                         </tbody>
                         <tfoot class="table-light">
                             <tr class="fw-bold">
-                                <td colspan="3" class="text-end">Total:</td>
+                                <td colspan="3" class="text-end">{{ __('accounting.total') }}:</td>
                                 <td class="text-end">GH₵ {{ number_format($collection['income_total'], 2) }}</td>
                             </tr>
                         </tfoot>
@@ -158,18 +158,18 @@
 @if($collection['expense_entries']->count() > 0)
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title mb-0"><i class="ti ti-trending-down me-1 text-danger"></i>Expenses</h5>
+        <h5 class="card-title mb-0"><i class="ti ti-trending-down me-1 text-danger"></i>{{ __('accounting.expenses') }}</h5>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-sm mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Entry #</th>
-                        <th>Category</th>
-                        <th>Description</th>
-                        <th>Method</th>
-                        <th class="text-end">Amount</th>
+                        <th>{{ __('accounting.entry_number') }}</th>
+                        <th>{{ __('accounting.category') }}</th>
+                        <th>{{ __('accounting.description') }}</th>
+                        <th>{{ __('accounting.method') }}</th>
+                        <th class="text-end">{{ __('accounting.amount') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -185,7 +185,7 @@
                 </tbody>
                 <tfoot class="table-light">
                     <tr class="fw-bold">
-                        <td colspan="4" class="text-end">Total Expenses:</td>
+                        <td colspan="4" class="text-end">{{ __('accounting.total_expenses') }}:</td>
                         <td class="text-end text-danger">GH₵ {{ number_format($collection['expense_total'], 2) }}</td>
                     </tr>
                 </tfoot>

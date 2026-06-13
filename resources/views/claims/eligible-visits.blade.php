@@ -1,18 +1,18 @@
 @extends('layouts.app')
-@section('title', $selectedTypeCode === 'NHIA' ? 'NHIA Eligible Visits' : 'Eligible Claim Visits')
+@section('title', $selectedTypeCode === 'NHIA' ? __('claims.nhia_eligible_visits') : __('claims.eligible_claim_visits'))
 
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">
-            {{ $selectedTypeCode === 'NHIA' ? 'NHIA Eligible Visits' : 'Eligible Claim Visits' }}
-            <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">Total: {{ $visits->total() }}</span>
+            {{ $selectedTypeCode === 'NHIA' ? __('claims.nhia_eligible_visits') : __('claims.eligible_claim_visits') }}
+            <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">{{ __('claims.total') }}: {{ $visits->total() }}</span>
         </h4>
-        <small class="text-muted">Visits shown here have claimable invoice item snapshots and an insurance provider with claim submission enabled.</small>
+        <small class="text-muted">{{ __('claims.eligible_visits_help') }}</small>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('admin.claims.index') }}" class="btn btn-outline-secondary btn-md fs-13">
-            <i class="ti ti-arrow-left me-1"></i>Claims
+            <i class="ti ti-arrow-left me-1"></i>{{ __('claims.claims') }}
         </a>
     </div>
 </div>
@@ -28,9 +28,9 @@
     <div class="card-body py-2">
         <form method="GET" action="{{ route('admin.claims.eligible-visits') }}" class="row g-2 align-items-end">
             <div class="col-md-4">
-                <label class="form-label mb-1">Insurance Type</label>
+                <label class="form-label mb-1">{{ __('claims.insurance_type') }}</label>
                 <select name="type" class="form-select">
-                    <option value="">All claim workflows</option>
+                    <option value="">{{ __('claims.all_claim_workflows') }}</option>
                     @foreach($insuranceTypes as $type)
                         <option value="{{ $type->code }}" {{ $selectedTypeCode === $type->code ? 'selected' : '' }}>
                             {{ $type->name }} ({{ $type->code }})
@@ -39,11 +39,11 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <button type="submit" class="btn btn-outline-primary w-100"><i class="ti ti-filter me-1"></i>Filter</button>
+                <button type="submit" class="btn btn-outline-primary w-100"><i class="ti ti-filter me-1"></i>{{ __('claims.filter') }}</button>
             </div>
             @if($selectedTypeCode)
             <div class="col-md-2">
-                <a href="{{ route('admin.claims.eligible-visits') }}" class="btn btn-outline-secondary w-100">Clear</a>
+                <a href="{{ route('admin.claims.eligible-visits') }}" class="btn btn-outline-secondary w-100">{{ __('claims.clear') }}</a>
             </div>
             @endif
         </form>
@@ -56,13 +56,13 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Visit</th>
-                        <th>Patient</th>
-                        <th>Provider</th>
-                        <th>Claim Type</th>
-                        <th>Invoice</th>
-                        <th class="text-end">Claimable</th>
-                        <th class="text-end">Action</th>
+                        <th>{{ __('claims.visit') }}</th>
+                        <th>{{ __('claims.patient') }}</th>
+                        <th>{{ __('claims.provider') }}</th>
+                        <th>{{ __('claims.claim_type') }}</th>
+                        <th>{{ __('claims.invoice') }}</th>
+                        <th class="text-end">{{ __('claims.claimable') }}</th>
+                        <th class="text-end">{{ __('claims.action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -91,7 +91,7 @@
                             @if($invoice)
                                 <a href="{{ route('admin.billing.invoices.show', $invoice) }}">{{ $invoice->invoice_number }}</a>
                             @else
-                                <span class="text-muted">No invoice</span>
+                                <span class="text-muted">{{ __('claims.no_invoice') }}</span>
                             @endif
                         </td>
                         <td class="text-end fw-semibold">GHS {{ number_format($claimable, 2) }}</td>
@@ -100,7 +100,7 @@
                             <form method="POST" action="{{ $type?->code === 'NHIA' ? route('admin.claims.nhia.prepare-from-visit', $visit) : route('admin.claims.prepare-from-visit', $visit) }}">
                                 @csrf
                                 <button type="submit" class="btn btn-sm btn-primary">
-                                    <i class="ti ti-file-plus me-1"></i>Prepare Claim
+                                    <i class="ti ti-file-plus me-1"></i>{{ __('claims.prepare_claim') }}
                                 </button>
                             </form>
                             @endcan
@@ -110,7 +110,7 @@
                     <tr>
                         <td colspan="7" class="text-center text-muted py-4">
                             <i class="ti ti-file-off fs-2 d-block mb-2"></i>
-                            No eligible visits found
+                            {{ __('claims.no_eligible_visits') }}
                         </td>
                     </tr>
                     @endforelse

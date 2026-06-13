@@ -34,7 +34,7 @@
         @forelse($statement['rows'] as $r)
             <tr>
                 <td><small>{{ $r['date'] }}</small></td>
-                <td><span class="badge bg-light text-dark border">{{ ucwords(str_replace('_',' ',strtolower($r['type']))) }}</span></td>
+                <td><span class="badge bg-light text-dark border">{{ __('statuses.default.' . strtolower($r['type'])) }}</span></td>
                 <td>{{ $r['description'] }}</td>
                 <td class="text-end">{{ $r['debit'] > 0 ? number_format($r['debit'], 2) : '' }}</td>
                 <td class="text-end">{{ $r['credit'] > 0 ? number_format($r['credit'], 2) : '' }}</td>

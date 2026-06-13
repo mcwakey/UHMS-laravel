@@ -1,22 +1,22 @@
 @extends('layouts.app')
-@section('title', 'Review Claim ' . $claim->claim_number)
+@section('title', __('claims.review_claim') . ' ' . $claim->claim_number)
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">
-            Review Claim {{ $claim->claim_number }}
+            {{ __('claims.review_claim') }} {{ $claim->claim_number }}
             <x-status-badge :status="$claim->status" class="ms-2" />
         </h4>
         <small class="text-muted">
-            Patient: {{ $claim->patient->first_name }} {{ $claim->patient->last_name }} |
-            Provider: {{ $claim->insuranceProvider->name }}
+            {{ __('claims.patient') }}: {{ $claim->patient->first_name }} {{ $claim->patient->last_name }} |
+            {{ __('claims.provider') }}: {{ $claim->insuranceProvider->name }}
         </small>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('admin.claims.show', $claim) }}" class="btn btn-outline-secondary btn-md fs-13">
-            <i class="ti ti-arrow-left me-1"></i>Back to Claim
+            <i class="ti ti-arrow-left me-1"></i>{{ __('claims.back_to_claim') }}
         </a>
     </div>
 </div>
@@ -29,7 +29,7 @@
 @endif
 @if(($validation ?? null) && (!$validation->valid || $validation->warnings))
 <div class="alert {{ $validation->valid ? 'alert-warning' : 'alert-danger' }}">
-    <div class="fw-semibold mb-1">Claim Validation</div>
+    <div class="fw-semibold mb-1">{{ __('claims.claim_validation') }}</div>
     @foreach($validation->errors as $error)
         <div>{{ $error }}</div>
     @endforeach
@@ -53,7 +53,7 @@
     <div class="col-md-3">
         <div class="card border-start border-4 border-warning">
             <div class="card-body py-2">
-                <small class="text-muted">Pending</small>
+                <small class="text-muted">{{ __('claims.pending') }}</small>
                 <h5 class="mb-0">{{ $pendingCount }} / {{ $totalItems }}</h5>
             </div>
         </div>
@@ -61,7 +61,7 @@
     <div class="col-md-3">
         <div class="card border-start border-4 border-success">
             <div class="card-body py-2">
-                <small class="text-muted">Approved</small>
+                <small class="text-muted">{{ __('claims.approved') }}</small>
                 <h5 class="mb-0">{{ $approvedCount }} / {{ $totalItems }}</h5>
             </div>
         </div>
@@ -69,7 +69,7 @@
     <div class="col-md-3">
         <div class="card border-start border-4 border-danger">
             <div class="card-body py-2">
-                <small class="text-muted">Rejected</small>
+                <small class="text-muted">{{ __('claims.rejected') }}</small>
                 <h5 class="mb-0">{{ $rejectedCount }} / {{ $totalItems }}</h5>
             </div>
         </div>
@@ -77,7 +77,7 @@
     <div class="col-md-3">
         <div class="card border-start border-4 border-primary">
             <div class="card-body py-2">
-                <small class="text-muted">Claim Total</small>
+                <small class="text-muted">{{ __('claims.claim_total') }}</small>
                 <h5 class="mb-0">GH₵ {{ number_format($claim->total_amount, 2) }}</h5>
             </div>
         </div>
@@ -86,29 +86,29 @@
 
 <div class="card mb-3">
     <div class="card-header">
-        <h5 class="card-title mb-0">Claim Identity</h5>
+        <h5 class="card-title mb-0">{{ __('claims.claim_identity') }}</h5>
     </div>
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-3">
-                <small class="text-muted d-block">Claim Type</small>
+                <small class="text-muted d-block">{{ __('claims.claim_type') }}</small>
                 <span class="badge bg-primary-subtle text-primary">{{ $claim->claim_type_code ?: $claim->insuranceType?->code ?: 'GENERIC' }}</span>
             </div>
             <div class="col-md-3">
-                <small class="text-muted d-block">Provider</small>
+                <small class="text-muted d-block">{{ __('claims.provider') }}</small>
                 <span class="fw-semibold">{{ $claim->insuranceProvider?->name }}</span>
             </div>
             <div class="col-md-3">
-                <small class="text-muted d-block">Membership Number</small>
+                <small class="text-muted d-block">{{ __('claims.membership_number') }}</small>
                 <span class="fw-semibold">{{ $claim->membership_number ?: 'N/A' }}</span>
             </div>
             <div class="col-md-3">
                 <form method="POST" action="{{ route('admin.claims.verification-code', $claim) }}">
                     @csrf
-                    <label class="form-label mb-1">{{ $claim->insuranceProvider?->verificationCodeLabel() ?? 'Verification Code' }}</label>
+                    <label class="form-label mb-1">{{ $claim->insuranceProvider?->verificationCodeLabel() ?? __('claims.verification_code') }}</label>
                     <div class="input-group input-group-sm">
                         <input type="text" name="verification_code" class="form-control" value="{{ old('verification_code', $claim->verification_code) }}">
-                        <button type="submit" class="btn btn-outline-primary">Update</button>
+                        <button type="submit" class="btn btn-outline-primary">{{ __('claims.update') }}</button>
                     </div>
                 </form>
             </div>
@@ -119,7 +119,7 @@
 <!-- Items Review -->
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title mb-0">Review Items</h5>
+        <h5 class="card-title mb-0">{{ __('claims.review_items') }}</h5>
     </div>
     <div class="card-body p-0">
         @foreach($claim->items as $item)
@@ -129,14 +129,14 @@
                     <h6 class="mb-1">{{ $item->service_name }}</h6>
                     <small class="text-muted">
                         {{ $item->service_type->translatedLabel() }} |
-                        Qty: {{ $item->quantity }} × GH₵ {{ number_format($item->unit_price, 2) }} =
+                        {{ __('claims.quantity_short') }}: {{ $item->quantity }} × GH₵ {{ number_format($item->unit_price, 2) }} =
                         <strong>GH₵ {{ number_format($item->total_price, 2) }}</strong>
                     </small>
                 </div>
                 <div class="col-md-2 text-center">
                     <x-status-badge :status="$item->status" class="py-1 px-2" />
                     @if($item->approved_amount !== null)
-                        <div class="mt-1"><small class="text-success fw-medium">Approved: GH₵ {{ number_format($item->approved_amount, 2) }}</small></div>
+                        <div class="mt-1"><small class="text-success fw-medium">{{ __('claims.approved_amount_with_currency', ['amount' => 'GH₵ ' . number_format($item->approved_amount, 2)]) }}</small></div>
                     @endif
                     @if($item->rejection_reason)
                         <div class="mt-1"><small class="text-danger">{{ $item->rejection_reason }}</small></div>
@@ -150,9 +150,9 @@
                             @csrf
                             <input type="hidden" name="action" value="approve">
                             <input type="number" name="approved_amount" class="form-control form-control-sm" style="width: 140px;"
-                                placeholder="Approved amt" step="0.01" min="0" value="{{ $item->total_price }}">
+                                placeholder="{{ __('claims.approved_amount_placeholder') }}" step="0.01" min="0" value="{{ $item->total_price }}">
                             <button type="submit" class="btn btn-sm btn-success">
-                                <i class="ti ti-check me-1"></i>Approve
+                                <i class="ti ti-check me-1"></i>{{ __('claims.approve') }}
                             </button>
                         </form>
                         <!-- Reject Form -->
@@ -160,9 +160,9 @@
                             @csrf
                             <input type="hidden" name="action" value="reject">
                             <input type="text" name="rejection_reason" class="form-control form-control-sm"
-                                placeholder="Reason for rejection...">
+                                placeholder="{{ __('claims.reason_for_rejection') }}">
                             <button type="submit" class="btn btn-sm btn-danger">
-                                <i class="ti ti-x me-1"></i>Reject
+                                <i class="ti ti-x me-1"></i>{{ __('claims.reject') }}
                             </button>
                         </form>
                     </div>
@@ -178,17 +178,17 @@
 @if($pendingCount === 0 && $totalItems > 0)
 <div class="card">
     <div class="card-header bg-success bg-opacity-10">
-        <h5 class="card-title mb-0 text-success"><i class="ti ti-check me-1"></i>All Items Reviewed — Complete Review</h5>
+        <h5 class="card-title mb-0 text-success"><i class="ti ti-check me-1"></i>{{ __('claims.all_items_reviewed') }}</h5>
     </div>
     <div class="card-body">
         <form method="POST" action="{{ route('admin.claims.complete-review', $claim) }}">
             @csrf
             <div class="mb-3">
-                <label class="form-label">Reviewer Notes (Optional)</label>
-                <textarea name="reviewer_notes" class="form-control" rows="3" placeholder="Add any notes about this review..."></textarea>
+                <label class="form-label">{{ __('claims.reviewer_notes_optional') }}</label>
+                <textarea name="reviewer_notes" class="form-control" rows="3" placeholder="{{ __('claims.review_notes_placeholder') }}"></textarea>
             </div>
-            <button type="submit" class="btn btn-success" onclick="return confirm('Complete the review for this claim?')">
-                <i class="ti ti-check-double me-1"></i>Complete Review
+            <button type="submit" class="btn btn-success" onclick="return confirm(@json(__('claims.complete_review_confirm')))">
+                <i class="ti ti-check-double me-1"></i>{{ __('claims.complete_review') }}
             </button>
         </form>
     </div>
@@ -196,7 +196,7 @@
 @elseif($pendingCount > 0)
 <div class="alert alert-warning">
     <i class="ti ti-alert-circle me-1"></i>
-    {{ $pendingCount }} item(s) still pending review. Please review all items before completing the review.
+    {{ __('claims.pending_review_notice', ['count' => $pendingCount]) }}
 </div>
 @endif
 @endsection

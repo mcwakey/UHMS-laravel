@@ -22,7 +22,7 @@
                 <select name="type" class="form-select">
                     <option value="">{{ __('common.all') }}</option>
                     @foreach($types as $type)
-                        <option value="{{ $type->value }}" @selected(request('type') === $type->value)>{{ $type->label() }}</option>
+                        <option value="{{ $type->value }}" @selected(request('type') === $type->value)>{{ $type->translatedLabel() }}</option>
                     @endforeach
                 </select>
             </div>
@@ -67,9 +67,9 @@
                             @if($account->is_cash_account)<span class="badge bg-success ms-1">{{ __('accounting.cash') }}</span>@endif
                             @if($account->is_bank_account)<span class="badge bg-info ms-1">{{ __('accounting.bank') }}</span>@endif
                         </td>
-                        <td>{{ $account->type->label() }}</td>
+                        <td>{{ $account->type->translatedLabel() }}</td>
                         <td>{{ $account->parent?->display_name ?? '-' }}</td>
-                        <td>{{ $account->normal_balance->label() }}</td>
+                        <td>{{ $account->normal_balance->translatedLabel() }}</td>
                         <td class="text-end">GH₵ {{ number_format((float) $account->opening_balance, 2) }}</td>
                         <td><span class="badge bg-{{ $account->is_active ? 'success' : 'secondary' }}">{{ $account->is_active ? __('common.active') : __('common.inactive') }}</span></td>
                         <td class="text-end">

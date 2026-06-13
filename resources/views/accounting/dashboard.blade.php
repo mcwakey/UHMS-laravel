@@ -71,7 +71,7 @@
                             <td><a href="{{ route('admin.accounting.journals.show', $entry) }}" class="fw-semibold">{{ $entry->journal_number }}</a></td>
                             <td>{{ $entry->entry_date?->format('d M Y') }}</td>
                             <td>{{ \Illuminate\Support\Str::limit($entry->description, 55) }}</td>
-                            <td><span class="badge bg-{{ $entry->status->color() }}">{{ $entry->status->label() }}</span></td>
+                            <td><span class="badge bg-{{ $entry->status->color() }}">{{ $entry->status->translatedLabel() }}</span></td>
                             <td class="text-end">GH₵ {{ number_format($entry->total_debit, 2) }}</td>
                         </tr>
                     @empty

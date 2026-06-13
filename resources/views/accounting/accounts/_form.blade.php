@@ -13,7 +13,7 @@
         <select name="type" class="form-select" required>
             <option value="">{{ __('accounting.select_type') }}</option>
             @foreach($types as $type)
-                <option value="{{ $type->value }}" @selected(old('type', isset($account) ? $account->type->value : '') === $type->value)>{{ $type->label() }}</option>
+                <option value="{{ $type->value }}" @selected(old('type', isset($account) ? $account->type->value : '') === $type->value)>{{ $type->translatedLabel() }}</option>
             @endforeach
         </select>
     </div>
@@ -35,7 +35,7 @@
         <select name="normal_balance" class="form-select">
             <option value="">{{ __('accounting.use_type_default') }}</option>
             @foreach($normalBalances as $balance)
-                <option value="{{ $balance->value }}" @selected(old('normal_balance', isset($account) ? $account->normal_balance->value : '') === $balance->value)>{{ $balance->label() }}</option>
+                <option value="{{ $balance->value }}" @selected(old('normal_balance', isset($account) ? $account->normal_balance->value : '') === $balance->value)>{{ $balance->translatedLabel() }}</option>
             @endforeach
         </select>
     </div>
