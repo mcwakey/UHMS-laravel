@@ -1,15 +1,15 @@
 @extends('layouts.app')
-@section('title', 'Scheduled Procedures')
+@section('title', __('procedures.scheduled_procedures'))
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"><i class="ti ti-calendar-event me-2"></i>Scheduled Procedures</h4>
+        <h4 class="fw-bold mb-0"><i class="ti ti-calendar-event me-2"></i>{{ __('procedures.scheduled_procedures') }}</h4>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('admin.procedures.index') }}" class="btn btn-outline-secondary btn-md">
-            <i class="ti ti-arrow-left me-1"></i>Procedure Catalog
+            <i class="ti ti-arrow-left me-1"></i>{{ __('procedures.procedure_catalog') }}
         </a>
     </div>
 </div>
@@ -33,26 +33,26 @@
     <div class="card-body py-2">
         <form method="GET" action="{{ route('admin.procedures.schedule') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
-                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search patient or procedure..." value="{{ request('search') }}">
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="{{ __('procedures.search_patient_procedure') }}" value="{{ request('search') }}">
             </div>
             <div class="col-md-2">
                 <select name="status" class="form-select form-select-sm">
-                    <option value="">All Status</option>
-                    <option value="scheduled" {{ request('status') === 'scheduled' ? 'selected' : '' }}>Scheduled</option>
-                    <option value="in_progress" {{ request('status') === 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                    <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completed</option>
-                    <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                    <option value="">{{ __('common.all_statuses') }}</option>
+                    <option value="scheduled" {{ request('status') === 'scheduled' ? 'selected' : '' }}>{{ __('procedures.status_scheduled') }}</option>
+                    <option value="in_progress" {{ request('status') === 'in_progress' ? 'selected' : '' }}>{{ __('procedures.status_in_progress') }}</option>
+                    <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>{{ __('procedures.status_completed') }}</option>
+                    <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>{{ __('procedures.status_cancelled') }}</option>
                 </select>
             </div>
             <div class="col-md-2">
-                <input type="date" name="date_from" class="form-control form-control-sm" value="{{ request('date_from') }}" placeholder="From date">
+                <input type="date" name="date_from" class="form-control form-control-sm" value="{{ request('date_from') }}" placeholder="{{ __('procedures.from_date') }}">
             </div>
             <div class="col-md-2">
-                <input type="date" name="date_to" class="form-control form-control-sm" value="{{ request('date_to') }}" placeholder="To date">
+                <input type="date" name="date_to" class="form-control form-control-sm" value="{{ request('date_to') }}" placeholder="{{ __('procedures.to_date') }}">
             </div>
             <div class="col-md-2 d-flex gap-1">
-                <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-filter me-1"></i>Filter</button>
-                <a aria-label="Close" title="Close" href="{{ route('admin.procedures.schedule') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-x"></i></a>
+                <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-filter me-1"></i>{{ __('common.filter') }}</button>
+                <a aria-label="{{ __('common.close') }}" title="{{ __('common.close') }}" href="{{ route('admin.procedures.schedule') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-x"></i></a>
             </div>
         </form>
     </div>
@@ -65,14 +65,14 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Patient</th>
-                        <th>Procedure</th>
-                        <th>Department</th>
-                        <th>Scheduled Date</th>
-                        <th>Performed By</th>
-                        <th class="text-center">Consent</th>
-                        <th class="text-center">Status</th>
-                        <th style="width:180px">Actions</th>
+                        <th>{{ __('common.patient') }}</th>
+                        <th>{{ __('procedures.procedure_col') }}</th>
+                        <th>{{ __('common.department') }}</th>
+                        <th>{{ __('procedures.scheduled_date') }}</th>
+                        <th>{{ __('procedures.performed_by') }}</th>
+                        <th class="text-center">{{ __('procedures.consent') }}</th>
+                        <th class="text-center">{{ __('common.status') }}</th>
+                        <th style="width:180px">{{ __('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -92,7 +92,7 @@
                         <td>
                             {{ $pp->scheduled_date->format('M d, Y H:i') }}
                             @if($pp->performed_date)
-                            <div class="small text-success">Done: {{ $pp->performed_date->format('M d, Y H:i') }}</div>
+                            <div class="small text-success">{{ __('procedures.done_prefix') }}: {{ $pp->performed_date->format('M d, Y H:i') }}</div>
                             @endif
                         </td>
                         <td>{{ $pp->performedByUser->name ?? '—' }}</td>
@@ -110,19 +110,19 @@
                             @if($pp->status === 'scheduled')
                             <form method="POST" action="{{ route('admin.procedures.start', $pp) }}" class="d-inline">
                                 @csrf @method('PATCH')
-                                <button class="btn btn-sm btn-outline-primary" title="Start"><i class="ti ti-player-play me-1"></i>Start</button>
+                                <button class="btn btn-sm btn-outline-primary" title="{{ __('procedures.start') }}"><i class="ti ti-player-play me-1"></i>{{ __('procedures.start') }}</button>
                             </form>
                             <x-confirm-form :action="route('admin.procedures.cancel', $pp)" method="PATCH"
                                 button-label="" button-class="btn btn-sm btn-outline-danger" icon="ti-x"
-                                confirm-title="Cancel this procedure?" confirm-text="The scheduled procedure will be cancelled." confirm-button="Yes, cancel" require-reason reason-placeholder="Reason for cancellation" />
+                                :confirm-title="__('procedures.cancel_procedure_title')" :confirm-text="__('procedures.cancel_procedure_text')" :confirm-button="__('procedures.yes_cancel')" require-reason :reason-placeholder="__('procedures.reason_for_cancellation')" />
                             @elseif($pp->status === 'in_progress')
                             <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#completeModal{{ $pp->id }}">
-                                <i class="ti ti-check me-1"></i>Complete
+                                <i class="ti ti-check me-1"></i>{{ __('procedures.complete') }}
                             </button>
                             @endif
 
                             @if($pp->notes || $pp->outcome)
-                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#detailModal{{ $pp->id }}" title="Details">
+                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#detailModal{{ $pp->id }}" title="{{ __('common.details') }}">
                                 <i class="ti ti-eye"></i>
                             </button>
                             @endif
@@ -137,23 +137,23 @@
                                 <form method="POST" action="{{ route('admin.procedures.complete', $pp) }}">
                                     @csrf @method('PATCH')
                                     <div class="modal-header">
-                                        <h5 class="modal-title">Complete Procedure</h5>
+                                        <h5 class="modal-title">{{ __('procedures.complete_procedure') }}</h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <div class="modal-body">
-                                        <p class="text-muted">{{ $pp->procedure->name }} for {{ $pp->patient->full_name ?? 'patient' }}</p>
+                                        <p class="text-muted">{{ __('procedures.procedure_for', ['procedure' => $pp->procedure->name, 'patient' => $pp->patient->full_name ?? __('common.patient')]) }}</p>
                                         <div class="mb-3">
-                                            <label class="form-label">Outcome</label>
-                                            <textarea name="outcome" class="form-control" rows="3" placeholder="Procedure outcome / findings..."></textarea>
+                                            <label class="form-label">{{ __('procedures.outcome') }}</label>
+                                            <textarea name="outcome" class="form-control" rows="3" placeholder="{{ __('procedures.outcome_placeholder') }}"></textarea>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Notes</label>
-                                            <textarea name="notes" class="form-control" rows="2" placeholder="Additional notes...">{{ $pp->notes }}</textarea>
+                                            <label class="form-label">{{ __('common.notes') }}</label>
+                                            <textarea name="notes" class="form-control" rows="2" placeholder="{{ __('procedures.additional_notes_placeholder') }}">{{ $pp->notes }}</textarea>
                                         </div>
                                     </div>
                                     <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <button type="submit" class="btn btn-success">Mark Complete</button>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                                        <button type="submit" class="btn btn-success">{{ __('procedures.mark_complete') }}</button>
                                     </div>
                                 </form>
                             </div>
@@ -167,16 +167,16 @@
                         <div class="modal-dialog">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Procedure Details</h5>
+                                    <h5 class="modal-title">{{ __('procedures.procedure_details') }}</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body">
                                     @if($pp->notes)
-                                    <h6>Notes</h6>
+                                    <h6>{{ __('common.notes') }}</h6>
                                     <p>{{ $pp->notes }}</p>
                                     @endif
                                     @if($pp->outcome)
-                                    <h6>Outcome</h6>
+                                    <h6>{{ __('procedures.outcome') }}</h6>
                                     <p>{{ $pp->outcome }}</p>
                                     @endif
                                 </div>
@@ -188,7 +188,7 @@
                     <tr>
                         <td colspan="8" class="text-center text-muted py-4">
                             <i class="ti ti-calendar-off fs-1 d-block mb-2"></i>
-                            No scheduled procedures found.
+                            {{ __('procedures.no_scheduled_procedures') }}
                         </td>
                     </tr>
                     @endforelse

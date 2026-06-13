@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Bed Map')
+@section('title', __('wards.bed_map'))
 
 @push('styles')
 <style>
@@ -18,20 +18,20 @@
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Bed Availability Map</h4>
+        <h4 class="fw-bold mb-0">{{ __('wards.bed_availability_map') }}</h4>
     </div>
     <div class="text-end d-flex gap-2">
-        <a href="{{ route('admin.wards.index') }}" class="btn btn-outline-secondary btn-md fs-13"><i class="ti ti-building-hospital me-1"></i>Wards</a>
-        <a href="{{ route('admin.wards.beds') }}" class="btn btn-outline-info btn-md fs-13"><i class="ti ti-bed me-1"></i>Manage Beds</a>
+        <a href="{{ route('admin.wards.index') }}" class="btn btn-outline-secondary btn-md fs-13"><i class="ti ti-building-hospital me-1"></i>{{ __('wards.wards') }}</a>
+        <a href="{{ route('admin.wards.beds') }}" class="btn btn-outline-info btn-md fs-13"><i class="ti ti-bed me-1"></i>{{ __('wards.manage_beds') }}</a>
     </div>
 </div>
 
 <!-- Legend -->
 <div class="d-flex flex-wrap gap-3 mb-3 align-items-center">
-    <span><i class="ti ti-square-filled text-success"></i> Available @can('ward.admit')<small class="text-muted">(click to admit)</small>@endcan</span>
-    <span><i class="ti ti-square-filled text-danger"></i> Occupied</span>
-    <span><i class="ti ti-square-filled text-warning"></i> Maintenance</span>
-    <span><i class="ti ti-square-filled text-info"></i> Reserved</span>
+    <span><i class="ti ti-square-filled text-success"></i> {{ __('wards.available') }} @can('ward.admit')<small class="text-muted">{{ __('wards.click_to_admit') }}</small>@endcan</span>
+    <span><i class="ti ti-square-filled text-danger"></i> {{ __('wards.occupied') }}</span>
+    <span><i class="ti ti-square-filled text-warning"></i> {{ __('wards.maintenance') }}</span>
+    <span><i class="ti ti-square-filled text-info"></i> {{ __('wards.reserved') }}</span>
 </div>
 
 @forelse($wards as $ward)
@@ -40,13 +40,13 @@
         <div>
             <h5 class="mb-0">{{ $ward->name }} <span class="text-muted fs-13">({{ $ward->code }})</span></h5>
             @if($ward->floor)
-                <small class="text-muted">Floor: {{ $ward->floor }}</small>
+                <small class="text-muted">{{ __('wards.floor') }}: {{ $ward->floor }}</small>
             @endif
         </div>
         <div class="text-end">
-            <span class="badge badge-soft-success me-1">{{ $ward->available_beds_count }} Available</span>
-            <span class="badge badge-soft-danger me-1">{{ $ward->occupied_beds_count }} Occupied</span>
-            <span class="badge badge-soft-secondary">{{ $ward->beds_count }} Total</span>
+            <span class="badge badge-soft-success me-1">{{ $ward->available_beds_count }} {{ __('wards.available') }}</span>
+            <span class="badge badge-soft-danger me-1">{{ $ward->occupied_beds_count }} {{ __('wards.occupied') }}</span>
+            <span class="badge badge-soft-secondary">{{ $ward->beds_count }} {{ __('wards.total') }}</span>
         </div>
     </div>
     <div class="card-body">
@@ -66,12 +66,12 @@
                 @if($isAvailable)
                 <a href="{{ route('admin.admissions.create', ['bed_id' => $bed->id]) }}"
                    class="d-block text-decoration-none text-reset border rounded p-2 text-center {{ $colorClass }} bed-tile bed-available"
-                   title="Admit patient to {{ $bed->bed_number }}">
+                   title="{{ __('wards.admit_patient_to', ['bed' => $bed->bed_number]) }}">
                     <i class="ti ti-bed fs-4 d-block mb-1 text-{{ $bed->status->color() }}"></i>
                     <div class="fw-medium fs-13">{{ $bed->bed_number }}</div>
                     <small class="text-muted">{{ $bed->bed_type->translatedLabel() }}</small>
                     <div class="mt-1">
-                        <small class="text-success fw-semibold"><i class="ti ti-plus-circle fs-11"></i> Admit</small>
+                        <small class="text-success fw-semibold"><i class="ti ti-plus-circle fs-11"></i> {{ __('wards.admit') }}</small>
                     </div>
                 </a>
                 @else
@@ -106,7 +106,7 @@
             @endforeach
         </div>
         @else
-        <p class="text-muted text-center mb-0">No beds configured for this ward.</p>
+        <p class="text-muted text-center mb-0">{{ __('wards.no_beds_configured') }}</p>
         @endif
     </div>
 </div>
@@ -114,7 +114,7 @@
 <div class="card">
     <div class="card-body text-center py-5 text-muted">
         <i class="ti ti-building-hospital fs-1 d-block mb-2"></i>
-        No active wards found. Create wards and add beds to see the bed map.
+        {{ __('wards.no_active_wards_map') }}
     </div>
 </div>
 @endforelse

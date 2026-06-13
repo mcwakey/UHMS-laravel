@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Procedure ' . $procedure->request_number)
+@section('title', __('theatre.procedure_title', ['number' => $procedure->request_number]))
 
 @php
     use App\Enums\ProcedureStatus;
@@ -31,10 +31,10 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h3 class="mb-1">Procedure {{ $procedure->request_number }}</h3>
+            <h3 class="mb-1">{{ __('theatre.procedure_title', ['number' => $procedure->request_number]) }}</h3>
             <div class="text-muted">
                 {{ $procedure->patient?->first_name }} {{ $procedure->patient?->last_name }}
-                · Visit {{ $procedure->visit?->visit_number }}
+                · {{ __('theatre.visit_label') }} {{ $procedure->visit?->visit_number }}
                 · {{ $procedure->service?->name }}
             </div>
         </div>
@@ -43,9 +43,9 @@
                 {{ $status->translatedLabel() }}
             </span>
             @if ($status === ProcedureStatus::COMPLETED)
-                <a data-no-inertia class="btn btn-outline-secondary btn-sm ms-2" href="{{ route('admin.theatre.report', $procedure) }}" target="_blank">View Full Report</a>
+                <a data-no-inertia class="btn btn-outline-secondary btn-sm ms-2" href="{{ route('admin.theatre.report', $procedure) }}" target="_blank">{{ __('theatre.view_full_report') }}</a>
             @endif
-            <a class="btn btn-outline-primary btn-sm ms-1" href="{{ route('admin.consultations.show', $procedure->visit_id) }}">Back to Visit</a>
+            <a class="btn btn-outline-primary btn-sm ms-1" href="{{ route('admin.consultations.show', $procedure->visit_id) }}">{{ __('theatre.back_to_visit') }}</a>
         </div>
     </div>
 
@@ -54,23 +54,23 @@
         {{-- LEFT: Timeline + Summary --}}
         <div class="col-lg-5">
             <div class="card shadow-sm mb-3">
-                <div class="card-header"><strong>Procedure Summary</strong></div>
+                <div class="card-header"><strong>{{ __('theatre.procedure_summary') }}</strong></div>
                 <div class="card-body">
                     <dl class="row mb-0 small">
-                        <dt class="col-5">Department</dt><dd class="col-7">{{ $procedure->department?->name }}</dd>
-                        <dt class="col-5">Service</dt><dd class="col-7">{{ $procedure->service?->name }}</dd>
-                        <dt class="col-5">Priority</dt><dd class="col-7">{{ ucfirst($procedure->priority) }}</dd>
-                        <dt class="col-5">Requested By</dt><dd class="col-7">{{ $procedure->requestingDoctor?->name }}</dd>
-                        <dt class="col-5">Requested At</dt><dd class="col-7">{{ optional($procedure->requested_at)->format('d M Y H:i') }}</dd>
-                        <dt class="col-5">Indication</dt><dd class="col-7">{{ $procedure->indication }}</dd>
+                        <dt class="col-5">{{ __('theatre.department') }}</dt><dd class="col-7">{{ $procedure->department?->name }}</dd>
+                        <dt class="col-5">{{ __('theatre.service') }}</dt><dd class="col-7">{{ $procedure->service?->name }}</dd>
+                        <dt class="col-5">{{ __('theatre.priority') }}</dt><dd class="col-7">{{ ucfirst($procedure->priority) }}</dd>
+                        <dt class="col-5">{{ __('theatre.requested_by') }}</dt><dd class="col-7">{{ $procedure->requestingDoctor?->name }}</dd>
+                        <dt class="col-5">{{ __('theatre.requested_at') }}</dt><dd class="col-7">{{ optional($procedure->requested_at)->format('d M Y H:i') }}</dd>
+                        <dt class="col-5">{{ __('theatre.indication') }}</dt><dd class="col-7">{{ $procedure->indication }}</dd>
                         @if ($procedure->notes)
-                            <dt class="col-5">Notes</dt><dd class="col-7">{{ $procedure->notes }}</dd>
+                            <dt class="col-5">{{ __('theatre.notes') }}</dt><dd class="col-7">{{ $procedure->notes }}</dd>
                         @endif
                         @if ($procedure->billing_item_id)
-                            <dt class="col-5">Billing</dt>
+                            <dt class="col-5">{{ __('theatre.billing') }}</dt>
                             <dd class="col-7">
-                                Invoice {{ $procedure->billingItem?->invoice?->invoice_number ?? '—' }}
-                                · Item #{{ $procedure->billing_item_id }}
+                                {{ __('theatre.invoice') }} {{ $procedure->billingItem?->invoice?->invoice_number ?? '—' }}
+                                · {{ __('theatre.item_hash') }}{{ $procedure->billing_item_id }}
                             </dd>
                         @endif
                     </dl>
@@ -78,7 +78,7 @@
             </div>
 
             <div class="card shadow-sm">
-                <div class="card-header"><strong>Timeline</strong></div>
+                <div class="card-header"><strong>{{ __('theatre.timeline') }}</strong></div>
                 <div class="card-body">
                     @include('theatre.partials.timeline', ['timeline' => $timeline])
                 </div>
@@ -91,14 +91,14 @@
             <ul class="nav nav-tabs mb-3" id="procedureSegments" role="tablist">
                 <li class="nav-item">
                     <button class="nav-link {{ $showOperationFirst ? '' : 'active' }}" data-bs-toggle="tab" data-bs-target="#segRequest" type="button" role="tab">
-                        <i class="ti ti-clipboard-check me-1"></i>Request
-                        <span class="d-block small text-muted">Accept · Bill · Schedule</span>
+                        <i class="ti ti-clipboard-check me-1"></i>{{ __('theatre.tab_request') }}
+                        <span class="d-block small text-muted">{{ __('theatre.tab_request_hint') }}</span>
                     </button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link {{ $showOperationFirst ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#segOperation" type="button" role="tab">
-                        <i class="ti ti-stethoscope me-1"></i>Operation
-                        <span class="d-block small text-muted">Pre-op → Complete</span>
+                        <i class="ti ti-stethoscope me-1"></i>{{ __('theatre.tab_operation') }}
+                        <span class="d-block small text-muted">{{ __('theatre.tab_operation_hint') }}</span>
                     </button>
                 </li>
             </ul>
@@ -111,22 +111,22 @@
             {{-- ACCEPT / REJECT --}}
             @if ($status === ProcedureStatus::REQUESTED)
                 <div class="card shadow-sm mb-3">
-                    <div class="card-header"><strong>Acceptance Decision</strong></div>
+                    <div class="card-header"><strong>{{ __('theatre.acceptance_decision') }}</strong></div>
                     <div class="card-body">
                         @if ($can('procedure.accept'))
                             <form method="POST" action="{{ route('admin.theatre.accept', $procedure) }}" class="mb-3">
                                 @csrf
-                                <label class="form-label">Acceptance notes (optional)</label>
+                                <label class="form-label">{{ __('theatre.acceptance_notes_optional') }}</label>
                                 <textarea name="notes" class="form-control mb-2" rows="2"></textarea>
-                                <button class="btn btn-success">Accept Procedure</button>
+                                <button class="btn btn-success">{{ __('theatre.accept_procedure') }}</button>
                             </form>
                         @endif
                         @if ($can('procedure.reject'))
                             <form method="POST" action="{{ route('admin.theatre.reject', $procedure) }}">
                                 @csrf
-                                <label class="form-label">Rejection reason <span class="text-danger">*</span></label>
+                                <label class="form-label">{{ __('theatre.rejection_reason') }} <span class="text-danger">*</span></label>
                                 <textarea name="reason" class="form-control mb-2" rows="2" required></textarea>
-                                <button class="btn btn-outline-danger">Reject</button>
+                                <button class="btn btn-outline-danger">{{ __('common.reject') }}</button>
                             </form>
                         @endif
                     </div>
@@ -136,12 +136,12 @@
             {{-- BILL --}}
             @if ($status === ProcedureStatus::ACCEPTED && $can('procedure.bill'))
                 <div class="card shadow-sm mb-3">
-                    <div class="card-header"><strong>Generate Billing</strong></div>
+                    <div class="card-header"><strong>{{ __('theatre.generate_billing') }}</strong></div>
                     <div class="card-body">
-                        <p class="text-muted small">Adds <strong>{{ $procedure->service?->name }}</strong> to the visit invoice. Procedure cannot be scheduled until billed.</p>
+                        <p class="text-muted small">{!! __('theatre.billing_hint', ['service' => '<strong>'.e($procedure->service?->name).'</strong>']) !!}</p>
                         <form method="POST" action="{{ route('admin.theatre.bill', $procedure) }}">
                             @csrf
-                            <button class="btn btn-primary">Add to Visit Invoice</button>
+                            <button class="btn btn-primary">{{ __('theatre.add_to_visit_invoice') }}</button>
                         </form>
                     </div>
                 </div>
@@ -158,7 +158,7 @@
             @endif
 
             @if (in_array($status, [ProcedureStatus::REQUESTED, ProcedureStatus::ACCEPTED, ProcedureStatus::BILLED, ProcedureStatus::RESCHEDULED, ProcedureStatus::SCHEDULED], true) === false)
-                <p class="text-muted small mb-0"><i class="ti ti-info-circle me-1"></i>This procedure has moved past the request phase.</p>
+                <p class="text-muted small mb-0"><i class="ti ti-info-circle me-1"></i>{{ __('theatre.moved_past_request') }}</p>
             @endif
 
             </div>{{-- /segRequest --}}
@@ -167,13 +167,13 @@
             <div class="tab-pane fade {{ $showOperationFirst ? 'show active' : '' }}" id="segOperation" role="tabpanel">
 
             @if (! $showOperationFirst)
-                <p class="text-muted small"><i class="ti ti-info-circle me-1"></i>The operation phase opens once the procedure is scheduled.</p>
+                <p class="text-muted small"><i class="ti ti-info-circle me-1"></i>{{ __('theatre.operation_opens_when_scheduled') }}</p>
             @endif
 
             {{-- PRE-OP --}}
             @if ($status === ProcedureStatus::SCHEDULED && $can('procedure.record_preop'))
                 <div class="card shadow-sm mb-3">
-                    <div class="card-header"><strong>Pre-op Vitals &amp; Checklist</strong></div>
+                    <div class="card-header"><strong>{{ __('theatre.preop_vitals_checklist') }}</strong></div>
                     <div class="card-body">
                         <form method="POST" action="{{ route('admin.theatre.preop', $procedure) }}">
                             @csrf
@@ -210,7 +210,7 @@
                             </div>
                             @include('theatre.partials._template_fields', ['stage' => 'PRE_OP'])
                             @include('theatre.partials._consumables', ['stage' => 'PRE_OP'])
-                            <button class="btn btn-primary mt-3">Save Pre-op</button>
+                            <button class="btn btn-primary mt-3">{{ __('theatre.save_preop') }}</button>
                         </form>
                     </div>
                 </div>
@@ -219,7 +219,7 @@
             {{-- ANAESTHESIA --}}
             @if ($status === ProcedureStatus::PRE_OP && $can('procedure.record_anaesthesia'))
                 <div class="card shadow-sm mb-3">
-                    <div class="card-header"><strong>Anaesthesia Note</strong></div>
+                    <div class="card-header"><strong>{{ __('theatre.anaesthesia_note') }}</strong></div>
                     <div class="card-body">
                         <form method="POST" action="{{ route('admin.theatre.anaesthesia', $procedure) }}">
                             @csrf
@@ -227,7 +227,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label small">Anaesthetist</label>
                                     <select name="anaesthetist_id" class="form-select form-select-sm">
-                                        <option value="">Select…</option>
+                                        <option value="">{{ __('theatre.select_placeholder') }}</option>
                                         @foreach ($clinicians as $u)<option value="{{ $u->id }}" @selected($procedure->schedule?->anaesthetist_id==$u->id)>{{ $u->name }}</option>@endforeach
                                     </select>
                                 </div>
@@ -251,7 +251,7 @@
                             <div class="mt-2"><label class="form-label small">Notes</label><textarea name="notes" class="form-control form-control-sm" rows="2"></textarea></div>
                             @include('theatre.partials._template_fields', ['stage' => 'ANAESTHESIA'])
                             @include('theatre.partials._consumables', ['stage' => 'ANAESTHESIA'])
-                            <button class="btn btn-primary mt-3">Save Anaesthesia Note</button>
+                            <button class="btn btn-primary mt-3">{{ __('theatre.save_anaesthesia_note') }}</button>
                         </form>
                     </div>
                 </div>
@@ -260,11 +260,11 @@
             {{-- START SURGERY --}}
             @if ($status === ProcedureStatus::ANAESTHESIA && $can('procedure.record_surgery'))
                 <div class="card shadow-sm mb-3">
-                    <div class="card-header"><strong>Start Surgery</strong></div>
+                    <div class="card-header"><strong>{{ __('theatre.start_surgery') }}</strong></div>
                     <div class="card-body">
                         <form method="POST" action="{{ route('admin.theatre.start-surgery', $procedure) }}">
                             @csrf
-                            <button class="btn btn-danger">Mark Surgery Started</button>
+                            <button class="btn btn-danger">{{ __('theatre.mark_surgery_started') }}</button>
                         </form>
                     </div>
                 </div>
@@ -273,7 +273,7 @@
             {{-- OPERATIVE NOTE --}}
             @if (in_array($status, [ProcedureStatus::ANAESTHESIA, ProcedureStatus::IN_SURGERY]) && $can('procedure.record_surgery'))
                 <div class="card shadow-sm mb-3">
-                    <div class="card-header"><strong>Operative Note</strong></div>
+                    <div class="card-header"><strong>{{ __('theatre.operative_note') }}</strong></div>
                     <div class="card-body">
                         <form method="POST" action="{{ route('admin.theatre.operative-note', $procedure) }}">
                             @csrf
@@ -281,14 +281,14 @@
                                 <div class="col-md-6">
                                     <label class="form-label small">Surgeon</label>
                                     <select name="surgeon_id" class="form-select form-select-sm">
-                                        <option value="">Select…</option>
+                                        <option value="">{{ __('theatre.select_placeholder') }}</option>
                                         @foreach ($clinicians as $u)<option value="{{ $u->id }}" @selected($procedure->schedule?->surgeon_id==$u->id)>{{ $u->name }}</option>@endforeach
                                     </select>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small">Assistant</label>
                                     <select name="assistant_surgeon_id" class="form-select form-select-sm">
-                                        <option value="">Select…</option>
+                                        <option value="">{{ __('theatre.select_placeholder') }}</option>
                                         @foreach ($clinicians as $u)<option value="{{ $u->id }}">{{ $u->name }}</option>@endforeach
                                     </select>
                                 </div>
@@ -314,7 +314,7 @@
                             </div>
                             @include('theatre.partials._template_fields', ['stage' => 'OPERATIVE_NOTE'])
                             @include('theatre.partials._consumables', ['stage' => 'OPERATIVE_NOTE'])
-                            <button class="btn btn-primary mt-3">Save Operative Note</button>
+                            <button class="btn btn-primary mt-3">{{ __('theatre.save_operative_note') }}</button>
                         </form>
                     </div>
                 </div>
@@ -324,10 +324,10 @@
             @if ($status === ProcedureStatus::IN_SURGERY && $procedure->operativeNote && $can('procedure.record_surgery'))
                 <div class="card shadow-sm mb-3">
                     <div class="card-body d-flex justify-content-between align-items-center">
-                        <span>Operative note recorded. Mark surgery as completed?</span>
+                        <span>{{ __('theatre.operative_note_recorded') }}</span>
                         <form method="POST" action="{{ route('admin.theatre.complete-surgery', $procedure) }}">
                             @csrf
-                            <button class="btn btn-success btn-sm">Surgery Done</button>
+                            <button class="btn btn-success btn-sm">{{ __('theatre.surgery_done') }}</button>
                         </form>
                     </div>
                 </div>
@@ -336,7 +336,7 @@
             {{-- POST-OP --}}
             @if ($status === ProcedureStatus::SURGERY_DONE && $can('procedure.record_postop'))
                 <div class="card shadow-sm mb-3">
-                    <div class="card-header"><strong>Post-op Note</strong></div>
+                    <div class="card-header"><strong>{{ __('theatre.post_op_note') }}</strong></div>
                     <div class="card-body">
                         <form method="POST" action="{{ route('admin.theatre.postop', $procedure) }}">
                             @csrf
@@ -369,7 +369,7 @@
                             </div>
                             @include('theatre.partials._template_fields', ['stage' => 'POST_OP'])
                             @include('theatre.partials._consumables', ['stage' => 'POST_OP'])
-                            <button class="btn btn-primary mt-3">Save Post-op</button>
+                            <button class="btn btn-primary mt-3">{{ __('theatre.save_postop') }}</button>
                         </form>
                     </div>
                 </div>
@@ -378,12 +378,12 @@
             {{-- COMPLETE --}}
             @if ($status === ProcedureStatus::POST_OP && $can('procedure.complete'))
                 <div class="card shadow-sm mb-3">
-                    <div class="card-header"><strong>Complete Procedure</strong></div>
+                    <div class="card-header"><strong>{{ __('theatre.complete_procedure') }}</strong></div>
                     <div class="card-body">
-                        <p class="text-muted small">All three notes (anaesthesia, operative, post-op) are recorded. Mark this procedure complete to close the workflow.</p>
+                        <p class="text-muted small">{{ __('theatre.complete_procedure_hint') }}</p>
                         <form method="POST" action="{{ route('admin.theatre.complete', $procedure) }}">
                             @csrf
-                            <button class="btn btn-success">Mark Procedure Completed</button>
+                            <button class="btn btn-success">{{ __('theatre.mark_procedure_completed') }}</button>
                         </form>
                     </div>
                 </div>
@@ -395,13 +395,13 @@
             {{-- CANCEL (available while open) — stays outside the segments --}}
             @if (! in_array($status, [ProcedureStatus::COMPLETED, ProcedureStatus::CANCELLED, ProcedureStatus::REJECTED]) && $can('procedure.cancel'))
                 <div class="card shadow-sm mb-3 border-danger">
-                    <div class="card-header bg-light"><strong class="text-danger">Cancel Procedure</strong></div>
+                    <div class="card-header bg-light"><strong class="text-danger">{{ __('theatre.cancel_procedure') }}</strong></div>
                     <div class="card-body">
                         <form method="POST" action="{{ route('admin.theatre.cancel', $procedure) }}">
                             @csrf
-                            <label class="form-label small">Reason <span class="text-danger">*</span></label>
+                            <label class="form-label small">{{ __('common.reason') }} <span class="text-danger">*</span></label>
                             <textarea name="reason" class="form-control form-control-sm mb-2" rows="2" required></textarea>
-                            <button class="btn btn-outline-danger btn-sm" onclick="return confirm('Cancel this procedure? Any billed item will be voided.')">Cancel Procedure</button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="return confirm('{{ __('theatre.cancel_procedure_confirm') }}')">{{ __('theatre.cancel_procedure') }}</button>
                         </form>
                     </div>
                 </div>

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Ward & Admissions Settings')
+@section('title', __('settings.ward_breadcrumb'))
 
 @section('content')
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
