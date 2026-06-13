@@ -180,25 +180,25 @@
 
     {{-- Patient information --}}
     <div class="doc-section">
-        <h2>Patient Information</h2>
+        <h2>{{ __('consultations.patient_information') }}</h2>
         <div class="info-grid">
-            <div><span class="lbl">Name:</span> <strong>{{ $patient->full_name }}</strong></div>
-            <div><span class="lbl">Patient No.:</span> {{ $patient->patient_number }}</div>
-            <div><span class="lbl">Age / Gender:</span> {{ $patient->age }}y &middot; {{ $patient->gender?->value ?? '-' }}</div>
-            <div><span class="lbl">Phone:</span> {{ $patient->phone ?? '-' }}</div>
-            <div><span class="lbl">Blood Group:</span> {{ $patient->blood_group?->value ?? 'N/A' }}</div>
-            <div><span class="lbl">Ghana Card:</span> {{ $patient->ghana_card_number ?? '-' }}</div>
-            @if($patient->occupation)<div><span class="lbl">Occupation:</span> {{ $patient->occupation }}</div>@endif
-            @if($patient->marital_status)<div><span class="lbl">Marital Status:</span> {{ is_object($patient->marital_status) ? $patient->marital_status->value : $patient->marital_status }}</div>@endif
-            @if($patient->religion)<div><span class="lbl">Religion:</span> {{ $patient->religion }}</div>@endif
+            <div><span class="lbl">{{ __('common.name') }}:</span> <strong>{{ $patient->full_name }}</strong></div>
+            <div><span class="lbl">{{ __('consultations.label_patient_no') }}:</span> {{ $patient->patient_number }}</div>
+            <div><span class="lbl">{{ __('consultations.label_age_gender') }}:</span> {{ $patient->age }}y &middot; {{ $patient->gender?->value ?? '-' }}</div>
+            <div><span class="lbl">{{ __('common.phone') }}:</span> {{ $patient->phone ?? '-' }}</div>
+            <div><span class="lbl">{{ __('common.blood_group') }}:</span> {{ $patient->blood_group?->value ?? 'N/A' }}</div>
+            <div><span class="lbl">{{ __('consultations.label_ghana_card') }}:</span> {{ $patient->ghana_card_number ?? '-' }}</div>
+            @if($patient->occupation)<div><span class="lbl">{{ __('consultations.label_occupation') }}:</span> {{ $patient->occupation }}</div>@endif
+            @if($patient->marital_status)<div><span class="lbl">{{ __('consultations.label_marital_status') }}:</span> {{ is_object($patient->marital_status) ? $patient->marital_status->value : $patient->marital_status }}</div>@endif
+            @if($patient->religion)<div><span class="lbl">{{ __('consultations.label_religion') }}:</span> {{ $patient->religion }}</div>@endif
             <div style="grid-column: 1 / -1;">
-                <span class="lbl">Insurance:</span>
+                <span class="lbl">{{ __('consultations.label_insurance') }}:</span>
                 @if($insurance)
-                    {{ $insurance->insuranceProvider?->name ?? 'Insurance' }}
-                    @if($insurance->member_number) &middot; Member {{ $insurance->member_number }} @endif
+                    {{ $insurance->insuranceProvider?->name ?? __('consultations.label_insurance') }}
+                    @if($insurance->member_number) &middot; {{ __('consultations.member_short') }} {{ $insurance->member_number }} @endif
                     @if($insurance->insuranceTier) &middot; {{ $insurance->insuranceTier->name }} @endif
                 @else
-                    Cash / Self-Pay
+                    {{ __('consultations.cash_self_pay') }}
                 @endif
             </div>
         </div>
@@ -206,18 +206,18 @@
 
     {{-- Visit information --}}
     <div class="doc-section">
-        <h2>Visit Information</h2>
+        <h2>{{ __('consultations.visit_information') }}</h2>
         <div class="info-grid">
-            <div><span class="lbl">Visit No.:</span> {{ $visit->visit_number }}</div>
-            <div><span class="lbl">Visit Type:</span> {{ is_object($visit->visit_type) ? $visit->visit_type->value : ($visit->visit_type ?? '-') }}</div>
-            <div><span class="lbl">Status:</span> {{ is_object($visit->status) ? $visit->status->value : ($visit->status ?? '-') }}</div>
-            <div><span class="lbl">Visit Date:</span> {{ $visit->visit_date?->format('d M Y H:i') ?? $visit->created_at?->format('d M Y H:i') }}</div>
-            <div><span class="lbl">Department:</span> {{ $visit->department?->name ?? '-' }}</div>
-            <div><span class="lbl">Sessions:</span> {{ $sessions->count() ?: 1 }}</div>
+            <div><span class="lbl">{{ __('consultations.label_visit_no') }}:</span> {{ $visit->visit_number }}</div>
+            <div><span class="lbl">{{ __('consultations.visit_type') }}:</span> {{ is_object($visit->visit_type) ? $visit->visit_type->value : ($visit->visit_type ?? '-') }}</div>
+            <div><span class="lbl">{{ __('common.status') }}:</span> {{ is_object($visit->status) ? $visit->status->value : ($visit->status ?? '-') }}</div>
+            <div><span class="lbl">{{ __('common.visit_date') }}:</span> {{ $visit->visit_date?->format('d M Y H:i') ?? $visit->created_at?->format('d M Y H:i') }}</div>
+            <div><span class="lbl">{{ __('common.department') }}:</span> {{ $visit->department?->name ?? '-' }}</div>
+            <div><span class="lbl">{{ __('consultations.label_sessions') }}:</span> {{ $sessions->count() ?: 1 }}</div>
         </div>
 
         @if($latestVitals)
-        <h3 class="mt-3">Latest Vitals</h3>
+        <h3 class="mt-3">{{ __('consultations.latest_vitals') }}</h3>
         <div class="info-grid">
             <div><span class="lbl">BP:</span> {{ $latestVitals->blood_pressure ?? '-' }} mmHg</div>
             <div><span class="lbl">Pulse:</span> {{ $latestVitals->heart_rate ?? '-' }} bpm</div>
@@ -234,9 +234,9 @@
 
     {{-- Care team and contributors --}}
     <div class="doc-section">
-        <h2>Care Team &amp; Contributors</h2>
+        <h2>{{ __('consultations.care_team_contributors') }}</h2>
         @if(empty($contributors))
-            <div class="empty-state">No clinicians have recorded entries for this visit yet.</div>
+            <div class="empty-state">{{ __('consultations.no_clinicians_recorded') }}</div>
         @else
             @foreach($contributors as $c)
                 <span class="contributor-pill {{ $c['role_label'] === 'Main Doctor' ? 'main' : '' }}">
@@ -277,11 +277,11 @@
                 </h3>
                 <div class="doc-meta">
                     @if($session?->doctor || $session?->mainDoctor)
-                        <strong>Main Doctor:</strong> Dr. {{ $session->doctor?->full_name ?? $session->mainDoctor?->full_name }}
+                        <strong>{{ __('consultations.main_doctor_label') }}:</strong> Dr. {{ $session->doctor?->full_name ?? $session->mainDoctor?->full_name }}
                     @elseif($summary['main_doctor'])
-                        <strong>Main Doctor:</strong> Dr. {{ $summary['main_doctor'] }}
+                        <strong>{{ __('consultations.main_doctor_label') }}:</strong> Dr. {{ $summary['main_doctor'] }}
                     @else
-                        <span class="empty-state">Unassigned</span>
+                        <span class="empty-state">{{ __('consultations.unassigned') }}</span>
                     @endif
                     @if($session?->started_at) &middot; Started {{ $session->started_at->format('d M Y, h:i A') }} @endif
                     @if($session?->completed_at) &middot; Completed {{ $session->completed_at->format('d M Y, h:i A') }} @endif
@@ -361,7 +361,7 @@
 
     {{-- Investigations (Department then Owner) --}}
     <div class="doc-section">
-        <h2>Investigations</h2>
+        <h2>{{ __('consultations.investigations_heading') }}</h2>
         @php
             $labGrouped = $labRequests->groupBy(function($r) {
             if ($r->targetDepartment?->name) return $r->targetDepartment->name;
@@ -372,7 +372,7 @@
         });
         @endphp
         @if($labGrouped->isEmpty())
-            <div class="empty-state">No investigations requested for this visit.</div>
+            <div class="empty-state">{{ __('consultations.no_investigations_requested') }}</div>
         @else
             @foreach($labGrouped as $deptName => $reqs)
                 <div class="dept-group">
@@ -392,7 +392,7 @@
                             <div class="owner-head">
                                 <div>
                                     <strong>{{ $ownerName === 'Unknown user' ? $ownerName : 'Dr. '.$ownerName }}</strong>
-                                    <span class="badge bg-secondary-subtle text-secondary ms-1">Requesting Clinician</span>
+                                    <span class="badge bg-secondary-subtle text-secondary ms-1">{{ __('consultations.requesting_clinician') }}</span>
                                 </div>
                                 <span class="text-muted small">{{ $ownerReqs->sum(fn($r) => $r->items?->count() ?? 0) }} test(s)</span>
                             </div>
@@ -403,15 +403,15 @@
                                             {{ $item->display_name ?? $item->name ?? ($item->labTest?->name ?? 'Test') }}
                                             <span class="badge bg-{{ $item->status_color ?? 'secondary' }} ms-1">{{ ucfirst($item->status ?? '') }}</span>
                                             @if($item->result?->is_verified)
-                                                <span class="badge bg-success ms-1">Verified</span>
+                                                <span class="badge bg-success ms-1">{{ __('consultations.verified') }}</span>
                                             @elseif($item->result)
-                                                <span class="badge bg-warning ms-1">Result Pending Verification</span>
+                                                <span class="badge bg-warning ms-1">{{ __('consultations.result_pending_verification') }}</span>
                                             @endif
                                         </div>
                                         <div class="meta">
                                             Req #{{ $req->request_number }} &middot; Requested {{ $req->created_at?->format('d M Y H:i') }}
                                             @if($item->result?->result_value)
-                                                &middot; <strong>Result:</strong> {{ \Illuminate\Support\Str::limit($item->result->result_value, 120) }}
+                                                &middot; <strong>{{ __('consultations.result_label') }}:</strong> {{ \Illuminate\Support\Str::limit($item->result->result_value, 120) }}
                                             @endif
                                             @if($item->result?->verifiedBy)
                                                 &middot; Verified by Dr. {{ $item->result->verifiedBy->full_name }}
@@ -429,12 +429,12 @@
 
     {{-- Procedures (Department then Owner) --}}
     <div class="doc-section">
-        <h2>Procedures</h2>
+        <h2>{{ __('consultations.procedures_heading') }}</h2>
         @php
             $procGrouped = $procedureRequests->groupBy(fn($p) => $p->department?->name ?? 'Other');
         @endphp
         @if($procGrouped->isEmpty())
-            <div class="empty-state">No procedures requested for this visit.</div>
+            <div class="empty-state">{{ __('consultations.no_procedures_requested') }}</div>
         @else
             @foreach($procGrouped as $deptName => $procs)
                 <div class="dept-group">
@@ -454,7 +454,7 @@
                             <div class="owner-head">
                                 <div>
                                     <strong>{{ $ownerName === 'Unknown user' ? $ownerName : 'Dr. '.$ownerName }}</strong>
-                                    <span class="badge bg-secondary-subtle text-secondary ms-1">Requesting Clinician</span>
+                                    <span class="badge bg-secondary-subtle text-secondary ms-1">{{ __('consultations.requesting_clinician') }}</span>
                                 </div>
                                 <span class="text-muted small">{{ $ownerProcs->count() }} procedure(s)</span>
                             </div>

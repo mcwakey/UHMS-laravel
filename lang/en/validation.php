@@ -253,6 +253,37 @@ return [
         'reorder_level'         => 'reorder level',
         'default_cost'          => 'default cost',
         'base_price'            => 'base price',
+
+        // Auth / profile
+        'password_confirmation' => 'password confirmation',
+        'current_password'      => 'current password',
+        'new_password'          => 'new password',
+        'remember'              => 'remember me',
+        'avatar'                => 'avatar',
+        'profile_photo'         => 'profile photo',
+
+        // Consultation
+        'complaint'             => 'complaint',
+        'complaints'            => 'complaints',
+        'history'               => 'history',
+        'history_of_presenting_complaint' => 'history of presenting complaint',
+        'physical_examination'  => 'physical examination',
+        'diagnoses'             => 'diagnoses',
+        'investigations'        => 'investigations',
+        'prescriptions'         => 'prescriptions',
+        'treatment'             => 'treatment',
+        'treatment_plan'        => 'treatment plan',
+        'follow_up_date'        => 'follow-up date',
+        'clinical_notes'        => 'clinical notes',
+        'vitals'                => 'vitals',
+        'temperature'           => 'temperature',
+        'blood_pressure'        => 'blood pressure',
+        'pulse'                 => 'pulse',
+        'respiratory_rate'      => 'respiratory rate',
+        'spo2'                  => 'SpO2',
+        'weight'                => 'weight',
+        'height'                => 'height',
+        'bmi'                   => 'BMI',
     ],
 
 ];

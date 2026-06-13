@@ -276,20 +276,23 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const i18n = @json([
-        'noInsurancesCash' => __('appointments.no_insurances_cash'),
-        'member' => __('appointments.member_label'),
-        'expires' => __('appointments.expires_label'),
-        'noExpiry' => __('appointments.no_expiry'),
-        'valid' => __('appointments.valid_status'),
-        'expired' => __('appointments.expired_status'),
-        'inactive' => __('appointments.inactive_status'),
-        'coverage' => __('appointments.coverage'),
-        'failedLoadInsurances' => __('appointments.failed_load_insurances'),
-        'unlimited' => __('appointments.unlimited'),
-        'add' => __('common.add'),
-        'delete' => __('common.delete'),
-    ]);
+    @php
+        $appointmentEditI18nData = [
+            'noInsurancesCash' => __('appointments.no_insurances_cash'),
+            'member' => __('appointments.member_label'),
+            'expires' => __('appointments.expires_label'),
+            'noExpiry' => __('appointments.no_expiry'),
+            'valid' => __('appointments.valid_status'),
+            'expired' => __('appointments.expired_status'),
+            'inactive' => __('appointments.inactive_status'),
+            'coverage' => __('appointments.coverage'),
+            'failedLoadInsurances' => __('appointments.failed_load_insurances'),
+            'unlimited' => __('appointments.unlimited'),
+            'add' => __('common.add'),
+            'delete' => __('common.delete'),
+        ];
+    @endphp
+    const i18n = @json($appointmentEditI18nData);
     const departmentSelect = document.getElementById('departmentSelect');
     const doctorSelect    = document.getElementById('doctorSelect');
 

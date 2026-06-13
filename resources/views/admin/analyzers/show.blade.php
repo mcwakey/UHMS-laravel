@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', $analyzer->name . ' — Analyzer Detail')
+@section('title', __('analyzers.analyzer_detail_title', ['name' => $analyzer->name]))
 
 @section('content')
 <!-- Page Header -->
@@ -7,7 +7,7 @@
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">
             <a href="{{ route('admin.analyzers.index') }}" class="text-muted text-decoration-none">
-                <i class="ti ti-device-analytics me-1"></i>Analyzers
+                <i class="ti ti-device-analytics me-1"></i>{{ __('analyzers.analyzers') }}
             </a>
             <i class="ti ti-chevron-right mx-1 fs-6 text-muted"></i>
             {{ $analyzer->name }}
@@ -18,7 +18,7 @@
     </div>
     <div class="d-flex gap-2">
         <span class="badge bg-{{ $analyzer->status_color }} fs-6 px-3 py-2">
-            {{ $analyzer->is_active ? 'Active' : 'Inactive' }}
+            {{ $analyzer->is_active ? __('common.active') : __('common.inactive') }}
         </span>
         <span class="badge bg-{{ $analyzer->protocol === 'hl7' ? 'info' : 'warning' }} fs-6 px-3 py-2">
             {{ $analyzer->protocol_label }}
@@ -45,33 +45,33 @@
     <div class="col-md-4">
         <div class="card">
             <div class="card-header">
-                <h6 class="mb-0"><i class="ti ti-info-circle me-2"></i>Device Information</h6>
+                <h6 class="mb-0"><i class="ti ti-info-circle me-2"></i>{{ __('analyzers.device_information') }}</h6>
             </div>
             <div class="card-body">
                 <div class="table-responsive"><table class="table table-sm mb-0">
-                    <tr><th class="w-50">Name</th><td>{{ $analyzer->name }}</td></tr>
-                    <tr><th>Manufacturer</th><td>{{ $analyzer->manufacturer ?: '—' }}</td></tr>
-                    <tr><th>Model</th><td>{{ $analyzer->model ?: '—' }}</td></tr>
-                    <tr><th>Protocol</th><td>{{ $analyzer->protocol_label }}</td></tr>
+                    <tr><th class="w-50">{{ __('common.name') }}</th><td>{{ $analyzer->name }}</td></tr>
+                    <tr><th>{{ __('analyzers.manufacturer') }}</th><td>{{ $analyzer->manufacturer ?: '—' }}</td></tr>
+                    <tr><th>{{ __('analyzers.model') }}</th><td>{{ $analyzer->model ?: '—' }}</td></tr>
+                    <tr><th>{{ __('analyzers.protocol') }}</th><td>{{ $analyzer->protocol_label }}</td></tr>
                     <tr>
-                        <th>Connection</th>
+                        <th>{{ __('analyzers.connection') }}</th>
                         <td>
                             <i class="ti ti-{{ $analyzer->connection_type === 'tcp' ? 'network' : 'usb' }} me-1"></i>
                             {{ $analyzer->connection_info }}
                         </td>
                     </tr>
                     <tr>
-                        <th>Last Connected</th>
+                        <th>{{ __('analyzers.last_connected') }}</th>
                         <td>
                             @if($analyzer->last_connected_at)
                             {{ $analyzer->last_connected_at->format('d M Y H:i') }}
                             <br><small class="text-muted">{{ $analyzer->last_connected_at->diffForHumans() }}</small>
                             @else
-                            <span class="text-muted">Never</span>
+                            <span class="text-muted">{{ __('analyzers.never') }}</span>
                             @endif
                         </td>
                     </tr>
-                    <tr><th>Created</th><td>{{ $analyzer->created_at->format('d M Y') }}</td></tr>
+                    <tr><th>{{ __('analyzers.created') }}</th><td>{{ $analyzer->created_at->format('d M Y') }}</td></tr>
                 </table></div>
             </div>
         </div>
@@ -79,14 +79,14 @@
         <!-- Connection Hint -->
         <div class="card mt-3">
             <div class="card-header">
-                <h6 class="mb-0"><i class="ti ti-terminal me-2"></i>Listener Command</h6>
+                <h6 class="mb-0"><i class="ti ti-terminal me-2"></i>{{ __('analyzers.listener_command') }}</h6>
             </div>
             <div class="card-body">
-                <p class="small text-muted mb-2">Start the TCP listener for this analyzer:</p>
+                <p class="small text-muted mb-2">{{ __('analyzers.start_tcp_listener') }}</p>
                 <code class="d-block bg-light p-2 rounded small">
                     php artisan analyzer:listen --analyzer={{ $analyzer->id }}
                 </code>
-                <p class="small text-muted mt-2 mb-0">Or listen on all active analyzers:</p>
+                <p class="small text-muted mt-2 mb-0">{{ __('analyzers.or_listen_all') }}</p>
                 <code class="d-block bg-light p-2 rounded small mt-1">
                     php artisan analyzer:listen
                 </code>
@@ -98,10 +98,10 @@
     <div class="col-md-8">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0"><i class="ti ti-arrows-exchange me-2"></i>Test Code Mappings ({{ $mappings->count() }})</h6>
+                <h6 class="mb-0"><i class="ti ti-arrows-exchange me-2"></i>{{ __('analyzers.test_code_mappings') }} ({{ $mappings->count() }})</h6>
                 @can('analyzer.manage')
                 <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addMappingModal">
-                    <i class="ti ti-plus me-1"></i>Add Mapping
+                    <i class="ti ti-plus me-1"></i>{{ __('analyzers.add_mapping') }}
                 </button>
                 @endcan
             </div>
@@ -109,11 +109,11 @@
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Analyzer Code</th>
-                            <th>Lab Test</th>
-                            <th>Test Code</th>
-                            <th>Conversion Factor</th>
-                            <th class="text-end">Actions</th>
+                            <th>{{ __('analyzers.analyzer_code') }}</th>
+                            <th>{{ __('analyzers.lab_test') }}</th>
+                            <th>{{ __('analyzers.test_code') }}</th>
+                            <th>{{ __('analyzers.conversion_factor') }}</th>
+                            <th class="text-end">{{ __('common.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -136,20 +136,20 @@
                                     data-analyzer_test_code="{{ $mapping->analyzer_test_code }}"
                                     data-lab_test_id="{{ $mapping->lab_test_id }}"
                                     data-unit_conversion_factor="{{ $mapping->unit_conversion_factor }}"
-                                    title="Edit">
+                                    title="{{ __('common.edit') }}">
                                     <i class="ti ti-edit"></i>
                                 </button>
                                 <form action="{{ route('admin.analyzers.mappings.destroy', $mapping) }}" method="POST" class="d-inline"
-                                      onsubmit="return confirm('Remove this mapping?')">
+                                      onsubmit="return confirm('{{ __('analyzers.remove_mapping_confirm') }}')">
                                     @csrf @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="ti ti-trash"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger" title="{{ __('common.delete') }}"><i class="ti ti-trash"></i></button>
                                 </form>
                                 @endcan
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5"><x-empty-state message="No test mappings configured. Add mappings to enable auto-result matching." /></td>
+                            <td colspan="5"><x-empty-state :message="__('analyzers.no_mappings')" /></td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -160,9 +160,9 @@
         <!-- Recent Messages -->
         <div class="card mt-3">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0"><i class="ti ti-message-dots me-2"></i>Recent Messages</h6>
+                <h6 class="mb-0"><i class="ti ti-message-dots me-2"></i>{{ __('analyzers.recent_messages') }}</h6>
                 <a href="{{ route('admin.analyzers.diagnostics', ['analyzer_id' => $analyzer->id]) }}" class="btn btn-sm btn-outline-info">
-                    View All
+                    {{ __('common.view_all') }}
                 </a>
             </div>
             <div class="table-responsive">
@@ -170,11 +170,11 @@
                     <thead class="table-light">
                         <tr>
                             <th>#</th>
-                            <th>Protocol</th>
-                            <th>Sample ID</th>
-                            <th>Status</th>
-                            <th>Received</th>
-                            <th>Size</th>
+                            <th>{{ __('analyzers.protocol') }}</th>
+                            <th>{{ __('analyzers.sample_id') }}</th>
+                            <th>{{ __('common.status') }}</th>
+                            <th>{{ __('analyzers.received') }}</th>
+                            <th>{{ __('analyzers.size') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -189,7 +189,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6"><x-empty-state message="No messages received yet." /></td>
+                            <td colspan="6"><x-empty-state :message="__('analyzers.no_messages_received')" /></td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -206,35 +206,35 @@
             @csrf
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="ti ti-plus me-2"></i>Add Test Mapping</h5>
+                    <h5 class="modal-title"><i class="ti ti-plus me-2"></i>{{ __('analyzers.add_test_mapping') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Analyzer Test Code <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('analyzers.analyzer_test_code') }} <span class="text-danger">*</span></label>
                         <input type="text" name="analyzer_test_code" class="form-control" required
-                               placeholder="Code sent by analyzer (e.g. WBC, HGB, PLT)">
-                        <small class="text-muted">The test code as it appears in the analyzer's output message.</small>
+                               placeholder="{{ __('analyzers.analyzer_test_code_placeholder') }}">
+                        <small class="text-muted">{{ __('analyzers.analyzer_test_code_hint') }}</small>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Map to Lab Test <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('analyzers.map_to_lab_test') }} <span class="text-danger">*</span></label>
                         <select name="lab_test_id" class="form-select" required>
-                            <option value="">— Select Lab Test —</option>
+                            <option value="">{{ __('analyzers.select_lab_test') }}</option>
                             @foreach($labTests as $test)
                             <option value="{{ $test->id }}">{{ $test->name }} ({{ $test->code }})</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Unit Conversion Factor</label>
+                        <label class="form-label">{{ __('analyzers.unit_conversion_factor') }}</label>
                         <input type="number" name="unit_conversion_factor" class="form-control" step="0.0001" value="1.0000"
                                placeholder="1.0000">
-                        <small class="text-muted">Multiply the analyzer value by this factor. Leave as 1.0 if units match.</small>
+                        <small class="text-muted">{{ __('analyzers.unit_conversion_hint') }}</small>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Mapping</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('analyzers.add_mapping') }}</button>
                 </div>
             </div>
         </form>
@@ -248,31 +248,31 @@
             @csrf @method('PUT')
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="ti ti-edit me-2"></i>Edit Test Mapping</h5>
+                    <h5 class="modal-title"><i class="ti ti-edit me-2"></i>{{ __('analyzers.edit_test_mapping') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Analyzer Test Code <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('analyzers.analyzer_test_code') }} <span class="text-danger">*</span></label>
                         <input type="text" name="analyzer_test_code" id="edit_mapping_code" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Map to Lab Test <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('analyzers.map_to_lab_test') }} <span class="text-danger">*</span></label>
                         <select name="lab_test_id" id="edit_mapping_test" class="form-select" required>
-                            <option value="">— Select Lab Test —</option>
+                            <option value="">{{ __('analyzers.select_lab_test') }}</option>
                             @foreach($labTests as $test)
                             <option value="{{ $test->id }}">{{ $test->name }} ({{ $test->code }})</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Unit Conversion Factor</label>
+                        <label class="form-label">{{ __('analyzers.unit_conversion_factor') }}</label>
                         <input type="number" name="unit_conversion_factor" id="edit_mapping_factor" class="form-control" step="0.0001">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update Mapping</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('analyzers.update_mapping') }}</button>
                 </div>
             </div>
         </form>

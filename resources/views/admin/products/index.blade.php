@@ -172,12 +172,15 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const productI18n = @json([
-        'type' => __('products.type'),
-        'provider' => __('products.provider'),
-        'price' => __('common.price'),
-        'delete' => __('products.delete'),
-    ]);
+    @php
+        $productIndexI18nData = [
+            'type' => __('products.type'),
+            'provider' => __('products.provider'),
+            'price' => __('common.price'),
+            'delete' => __('products.delete'),
+        ];
+    @endphp
+    const productI18n = @json($productIndexI18nData);
     document.querySelectorAll('.add-provider-row').forEach(function (btn) {
         const targetIdInit = btn.dataset.target;
         const containerInit = document.getElementById(targetIdInit);

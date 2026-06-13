@@ -1,422 +1,548 @@
 You are working on UHMS — Ultimate Hospital Management System.
 
 Important:
-There is currently no docs/UHMS_IMPLEMENTATION_SKILL.md file in this project.
+There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
 Do not try to read it.
-Follow the instructions in this prompt directly.
+Follow this prompt directly.
 
-We completed a Critical Page Translation Audit & Fix Pass after Phase 14.
+We are not ready for dashboards or the Full Test Suite yet.
 
-That pass fixed critical appointment and product localisation blockers:
+The latest localisation audit still shows active untranslated runtime pages. Phase 15 reduced the active runtime candidates, but 519 active runtime candidates remain. The user has also manually confirmed that consultation pages, auth pages, and several other critical pages still show English text in French mode.
 
-* appointment create/edit/index/show pages
-* product index/show/edit modal/pricing modal
-* inline JavaScript-generated labels
-* feedback messages
-* confirmations
-* accessibility labels
-* validation attributes
+Treat this as a release blocker.
 
-Verification passed:
-
-* route:list passed with 714 routes
-* view:clear passed
-* config:clear passed
-* cache:clear passed
-* view:cache passed
-* all EN/FR lang PHP lint passed
-* recursive EN/FR parity passed
-* git diff --check passed
-* localisation audit passed
-
-Latest audit result:
-
-* files with candidates: 496
-* total candidates: 18,440
-* active runtime candidates: 4,302
-* known false positives: 13,403
-* service-title manual-review candidates: 394
-
-Important:
-This is not yet full localisation completion.
-Do not proceed to Full Test Suite yet.
-The next goal is to burn down the remaining 4,302 active-runtime candidates.
-
-Now proceed with:
-
-# UHMS Localisation Phase 15 — Active Runtime Candidate Burn-Down
+# UHMS Localisation Phase 15B — Critical Runtime Pages Completion Pass
 
 ## Goal
 
-Use the classified localisation audit to systematically reduce the remaining active runtime candidates.
+Complete localisation of the remaining active runtime pages that are still visible to real users.
 
-This phase must focus only on:
+Do not work on dormant demo/template views unless they are actually reachable through live routes, controllers, layouts, shared components, or Blade dependencies.
 
-1. Active runtime candidates
-2. Confirmed user-facing strings
-3. Critical active modules still carrying untranslated text
-4. Remaining JavaScript/frontend strings
-5. Remaining shared component strings
-6. Remaining route-linked Blade strings
-
-Do not chase:
-
-* known false positives
-* demo/template views
-* backup-only views
-* language files themselves
-* commented-out code
-* CSS classes
-* JavaScript selectors
-* SQL expressions
-* clinical units
-* currency symbols
-* UHMS brand text
-* user-entered database content
-
-Do not change business logic.
-Do not change workflow logic.
-Do not change permission logic.
-Do not expose restricted clinical, financial, payroll, stock-cost, or accounting data.
-Do not introduce new packages.
-Do not introduce Tailwind.
-Do not create a new localisation system.
+Focus on real active runtime pages.
 
 ---
 
-# 1. Source Reports
+# 1. Required Input Reports
+
+Use these existing reports as your starting point:
+
+```text
+docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
+docs/LOCALISATION_PHASE_15_ACTIVE_RUNTIME_CANDIDATE_BURNDOWN_REPORT.md
+```
+
+If these docs exist, read them first.
+
+Do not ignore the active runtime worklist.
+
+Do not claim localisation is complete until the active runtime candidate count is significantly reduced and all manually confirmed critical pages are fixed.
+
+---
+
+# 2. Immediate Critical Pages To Fix First
+
+The user has manually confirmed that these are still untranslated:
+
+```text
+Consultation pages
+Auth pages
+```
+
+Therefore start with these areas before touching lower-priority modules.
+
+## 2.1 Consultation Pages
+
+Audit and translate all consultation-related active views and dependencies, including but not limited to:
+
+```text
+resources/views/consultations/**/*.blade.php
+resources/views/prescriptions/**/*.blade.php
+resources/views/partials/patient-card.blade.php
+resources/views/partials/patient-visit-header.blade.php
+resources/views/claims/partials/clinical-mirror.blade.php
+resources/views/vitals/**/*.blade.php
+resources/views/lab/**/*.blade.php
+resources/views/investigations/**/*.blade.php
+```
+
+Also audit related JS inside these Blade files.
+
+Fix:
+
+* consultation page title
+* patient summary labels
+* visit summary labels
+* complaints
+* history of presenting complaints
+* physical examination
+* diagnosis
+* investigations
+* prescriptions
+* treatment plan
+* follow-up
+* save/update buttons
+* clinical task labels
+* empty states
+* loading text
+* confirmation dialogs
+* modal titles
+* table headers
+* badges/statuses
+* tabs
+* validation field names
+* JavaScript messages
+
+Use existing `lang/en/consultations.php` and `lang/fr/consultations.php` where possible.
+Add missing keys with EN/FR parity.
+
+Do not translate patient-entered clinical notes.
+Do not translate diagnosis text typed by clinicians.
+Do not translate medicine names.
+Do not translate lab test names entered as catalogue data unless system-defined labels are hardcoded.
+
+---
+
+## 2.2 Auth Pages
+
+Audit and translate all auth-related pages:
+
+```text
+resources/views/auth/**/*.blade.php
+resources/views/profile/**/*.blade.php
+resources/views/settings/profile.blade.php
+resources/views/layout/partials/**/*.blade.php
+resources/views/components/**/*.blade.php
+```
+
+Fix:
+
+* login page
+* register page if enabled
+* forgot password page
+* reset password page
+* verify email page if present
+* confirm password page if present
+* profile page
+* account settings page
+* logout labels
+* remember me
+* email/password labels
+* placeholders
+* validation labels
+* submit buttons
+* auth error messages
+* session messages
+* browser title
+* layout auth header/footer text
+
+Expand:
+
+```text
+lang/en/auth.php
+lang/fr/auth.php
+```
+
+Do not leave auth with only a few keys if more auth pages exist.
+
+---
+
+# 3. Next High-Priority Runtime Modules
+
+After consultations and auth, process the remaining active runtime worklist in this order:
+
+```text
+1. Pharmacy
+2. Laboratory / Analyzers / Investigation catalogue
+3. Theatre / Procedures
+4. Wards / Beds
+5. Stock / Store / Product stock
+6. Prescriptions
+7. Emergency remaining candidates
+8. Billing / Invoices remaining candidates
+9. Accounting / Payables / Settings
+10. Notifications
+11. Queue
+12. HR
+13. Blood bank
+14. Settings
+15. Dashboards
+```
+
+Do not skip route-linked files.
+
+Use the active runtime worklist from the audit report as the source of truth.
+
+---
+
+# 4. Required Files From Current Audit To Prioritise
+
+At minimum, fix these files from the active runtime worklist if they still contain candidates:
+
+```text
+resources/views/consultations/show.blade.php
+resources/views/consultations/history.blade.php
+resources/views/auth/**/*.blade.php
+resources/views/pharmacy/dispense.blade.php
+resources/views/pharmacy/drug-history.blade.php
+resources/views/pharmacy/history.blade.php
+resources/views/admin/analyzers/diagnostics.blade.php
+resources/views/admin/analyzers/index.blade.php
+resources/views/admin/analyzers/show.blade.php
+resources/views/theatre/rooms/index.blade.php
+resources/views/admin/procedures/index.blade.php
+resources/views/admin/procedures/schedule.blade.php
+resources/views/prescriptions/show.blade.php
+resources/views/prescriptions/index.blade.php
+resources/views/wards/index.blade.php
+resources/views/wards/beds.blade.php
+resources/views/wards/bed-map.blade.php
+resources/views/admin/product-stock/ledger.blade.php
+resources/views/admin/product-stock/balances.blade.php
+resources/views/admin/product-stock/receive.blade.php
+resources/views/admin/product-stock/transfer.blade.php
+resources/views/admin/product-stock/adjust.blade.php
+resources/views/admin/product-stock/return.blade.php
+resources/views/store/purchase-orders/index.blade.php
+resources/views/store/purchase-orders/create.blade.php
+resources/views/store/purchase-orders/show.blade.php
+resources/views/store/purchase-returns/index.blade.php
+resources/views/store/purchase-returns/create.blade.php
+resources/views/store/purchase-returns/show.blade.php
+resources/views/store/supplier-ledger.blade.php
+resources/views/store/suppliers.blade.php
+resources/views/billing/invoices/show.blade.php
+resources/views/accounting/payable/payables.blade.php
+resources/views/accounting/settings/index.blade.php
+resources/views/notifications/index.blade.php
+resources/views/queue/manage.blade.php
+resources/views/queue/board.blade.php
+```
+
+If some files do not exist, document them as not found.
+
+---
+
+# 5. Translation Rules
+
+Use Laravel localisation only.
 
 Use:
 
-```text id="4n4ws1"
-docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
-docs/LOCALISATION_PHASE_6_CRITICAL_PAGE_AUDIT_REPORT.md
-docs/LOCALISATION_PHASE_13_ACTIVE_PAGES_BATCH_6_REPORT.md
-docs/LOCALISATION_PHASE_12_ACTIVE_PAGES_BATCH_5_REPORT.md
-docs/LOCALISATION_PHASE_11_ACTIVE_PAGES_BATCH_4_REPORT.md
-docs/LOCALISATION_PHASE_9_ACTIVE_PAGES_BATCH_2_REPORT.md
-docs/LOCALISATION_PHASE_8_ACTIVE_PAGES_BATCH_1_REPORT.md
-docs/LOCALISATION_PHASE_7_COMPLETE_ACTIVE_PAGE_TRANSLATION_REPORT.md
+```php
+__('module.key')
 ```
 
-The latest `docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md` is the main source of truth.
+or:
 
----
-
-# 2. Build Active Runtime Candidate Worklist
-
-From the latest audit, extract all candidates classified as:
-
-```text id="06mnix"
-active runtime candidates
+```blade
+{{ __('module.key') }}
 ```
 
-Group them by:
+For placeholders:
 
-```text id="64ogog"
-module
-file path
-route-linked status
-user-facing confidence
-risk level
-recommended action
+```php
+__('consultations.saved_for_patient', ['patient' => $patient->name])
 ```
 
-Create a worklist table with columns:
+Do not concatenate translated fragments.
 
-```text id="as39kz"
-module
-file
-candidate count
-active route-linked? yes/no
-shared component? yes/no
-priority
-action: fix / defer / false-positive / manual-review
+Bad:
+
+```php
+'Consultation for ' . $patient->name
 ```
 
-Prioritise high-impact active modules first.
+Good:
 
----
-
-# 3. Priority Order
-
-Process remaining active runtime candidates in this order:
-
-## Priority 1 — Active Patient/Clinical Flow Pages
-
-```text id="jmdfbu"
-consultations
-visits
-appointments residuals
-patients residuals
-triage
-queue
-emergency
-admissions
-wards
-medication administration
-lab/investigations
-theatre/procedures
-blood bank
-```
-
-## Priority 2 — Active Financial Flow Pages
-
-```text id="xbeb96"
-billing
-invoices
-payments
-cashier
-claims
-insurance
-sponsors
-accounting
-accounts
-reports
-```
-
-## Priority 3 — Active Operational/Admin Pages
-
-```text id="n4m220"
-store
-stock
-procurement
-suppliers
-purchase orders
-HR
-employees
-attendance
-leave
-payroll
-settings
-users
-roles
-departments
-modules
-```
-
-## Priority 4 — Shared Runtime Surfaces
-
-```text id="xk7q7f"
-components
-partials
-layouts
-layout partials
-shared modals
-shared alerts
-shared empty states
-shared action menus
-shared print layouts
-frontend components
+```php
+__('consultations.consultation_for_patient', ['patient' => $patient->name])
 ```
 
 ---
 
-# 4. Fix Rules
+# 6. JavaScript Translation
 
-For each confirmed user-facing hardcoded string:
+For inline Blade JavaScript, use page-level JSON maps:
 
-* replace with `__('...')`
-* add EN and FR keys together
-* use existing module language files where possible
-* create paired EN/FR files only where necessary
-* keep key names grouped and meaningful
-* preserve all dynamic placeholders
-* preserve existing data display behavior
-* preserve existing permissions
+```blade
+@php
+$consultationI18n = [
+    'loading' => __('common.loading'),
+    'save_success' => __('consultations.save_success'),
+    'confirm_delete' => __('consultations.confirm_delete'),
+];
+@endphp
 
-Examples:
-
-```blade id="x30gci"
-{{ __('visits.create.title') }}
-{{ __('billing.invoice.status_paid') }}
-{{ __('common.actions.delete') }}
+<script>
+    window.UHMS_CONSULTATION_I18N = @json($consultationI18n);
+</script>
 ```
 
-For dynamic strings, use placeholders:
+Then use the translated values in JavaScript.
 
-```php id="vmsh2w"
-__('messages.queue.patient_waiting_for_consultation', ['name' => $patientName])
-```
-
-Do not concatenate translated fragments if a full sentence is better.
+For global JS, use the existing `window.UHMS_I18N` mechanism if already present.
+Do not create a second localisation framework.
+Do not introduce i18next, Vue, React, or any new frontend package.
 
 ---
 
-# 5. JavaScript / Frontend Strings
+# 7. Dynamic Labels
 
-Search active frontend and Blade inline JavaScript for visible strings:
+Audit visible calls like:
 
-```text id="lsczhf"
-resources/js/
-resources/js/Pages/
-resources/js/Components/
-resources/js/components/
-public/js/
-inline <script> blocks in active Blade views
+```php
+label()
+typeLabel()
+statusLabel()
+paymentStatusLabel()
+visitTypeLabel()
+consultationModeLabel()
+priorityLabel()
 ```
 
-Translate:
+If they return hardcoded English and are displayed in active pages, add or use translated methods such as:
 
-* alerts
-* confirmations
-* loading labels
-* empty states
-* placeholders
-* Select2 labels
-* DataTables labels
-* chart labels
-* calendar labels
-* modal labels
-* button labels
-* AJAX success/error text
-
-Use existing patterns only:
-
-```text id="3ysxz8"
-window.UHMS_I18N
-useTrans()
-module-level Blade i18n map
+```php
+translatedLabel()
+translatedStatusLabel()
+translatedTypeLabel()
 ```
 
-Do not introduce a new frontend i18n package.
-
-Document frontend strings that cannot be safely localised yet.
+Only convert displays after confirming the method is for UI output.
+Do not change stored canonical values or database enum values.
 
 ---
 
-# 6. Shared Components
+# 8. Auth Validation Attributes
 
-Review active shared components with many active-runtime candidates:
+Update validation attributes for auth/profile fields in:
 
-```text id="ag2rtk"
-resources/views/components/
-resources/views/partials/
-resources/views/layouts/
-resources/views/layout/
+```text
+lang/en/validation.php
+lang/fr/validation.php
 ```
 
-Be careful with:
+Add field labels for:
 
-* slot content
-* props
-* reusable labels
-* global modals
-* global alerts
-* status badges
-* print layouts
-* empty state components
+```text
+name
+first_name
+last_name
+email
+password
+password_confirmation
+current_password
+new_password
+remember
+locale
+phone
+avatar
+profile_photo
+```
 
-Do not translate inactive template/demo components.
-
-If a component is used only by demo/template pages, classify it as demo/template noise.
+Make sure French validation errors show French field names.
 
 ---
 
-# 7. SidebarMenuBuilder Handling
+# 9. Consultation Validation Attributes
 
-For `app/Services/SidebarMenuBuilder.php`:
+Also add/verify validation attributes for consultation fields:
 
-1. Confirm whether labels are translated downstream through `translateLabel()`.
-2. If yes, keep as false positive and document.
-3. If any active menu label bypasses translation, fix it using `menu.php`.
+```text
+complaint
+complaints
+history
+history_of_presenting_complaint
+physical_examination
+diagnosis
+diagnoses
+investigations
+prescriptions
+treatment
+treatment_plan
+follow_up_date
+clinical_notes
+vitals
+temperature
+blood_pressure
+pulse
+respiratory_rate
+spo2
+weight
+height
+bmi
+```
 
-Do not break:
+---
 
-* menu hierarchy
-* module visibility
-* permissions
+# 10. Do Not Translate These
+
+Do not translate:
+
+* patient names
+* doctor names
+* staff names
+* diagnosis text typed by clinicians
+* clinical notes typed by clinicians
+* medicine/product names from database
+* service names from database unless they are system-defined hardcoded labels
+* lab test names from database unless hardcoded
+* supplier names
+* insurance provider names
+* sponsor names
+* permission names
 * route names
-* icon names
-* active patterns
+* database column names
+* internal enum values
+* CSS classes
+* JS selectors
+* data attributes
+* clinical units: mmHg, bpm, kg, cm, °C, %, SpO2
+* currency symbols
+* UHMS acronym
 
 ---
 
-# 8. Service Title Manual Review
+# 11. Permissions Must Stay Intact
 
-The audit still reports:
+While translating, do not weaken security.
 
-```text id="zj3e3m"
-394 service-title manual-review candidates
-```
+Preserve:
 
-Do not blindly translate all.
+* `@can`
+* `@cannot`
+* `Gate`
+* policies
+* middleware
+* role checks
+* permission checks
+* financial visibility checks
+* stock-cost visibility checks
+* clinical confidentiality checks
 
-For each candidate classify:
-
-```text id="7cmu73"
-A. User-facing timeline/notification/report/API label — translate
-B. Internal audit/event code — leave as-is
-C. Stored canonical event title — defer with reason
-D. SQL/internal expression — false positive
-E. Already translated downstream — false positive
-```
-
-Translate only high-confidence user-facing strings.
-
-Document the rest.
-
-Do not change stored event semantics, audit semantics, workflow status, or accounting semantics.
+Do not expose restricted clinical, financial, accounting, insurance, sponsor, or stock-cost data.
 
 ---
 
-# 9. Dynamic Label Final Sweep
+# 12. Scanner And Burn-Down
 
-Search active runtime files for:
+Run the localisation scanner after changes:
 
-```php id="x5fii4"
-->label()
-->statusLabel()
-->typeLabel()
-getLabelAttribute()
-displayName()
-humanName()
-ucfirst(
-ucwords(
-str_replace('_', ' ',
-```
-
-Where displayed to users and safe, replace with:
-
-* `translatedLabel()`
-* existing status badge component
-* explicit translation keys
-
-Do not change stored enum values.
-Do not change enum constants.
-Do not change workflow transitions.
-
----
-
-# 10. Audit Re-run And Candidate Reduction
-
-After fixes, rerun:
-
-```bash id="0ygdlv"
+```bash
 php scripts/localisation-audit.php
 ```
 
-The report must show:
+or if available:
 
-```text id="zvztwo"
-active runtime candidates before
-active runtime candidates after
-fixed candidates count
-deferred candidates count
-false-positive candidates count
-manual-review candidates count
-top remaining active files
+```bash
+php artisan uhms:localisation-audit
 ```
 
-The raw candidate count may remain high because of known false positives, but active runtime candidates should decrease or be fully classified.
+Compare before/after active runtime candidates.
+
+The goal of this phase is to burn down the remaining 519 active runtime candidates, starting with consultation and auth.
+
+Document:
+
+* before count
+* after count
+* files fixed
+* keys added
+* files deferred
+* reason for each deferred file
 
 ---
 
-# 11. Verification
+# 13. Language File Parity
+
+After all changes, verify recursive EN/FR parity.
+
+Every key added in English must exist in French.
+Every key added in French must exist in English.
+
+Run PHP lint:
+
+```bash
+for f in lang/en/*.php lang/fr/*.php; do php -l "$f"; done
+```
+
+---
+
+# 14. Required Manual Verification
+
+Manually switch to French and verify:
+
+## Auth
+
+* login
+* forgot password
+* reset password
+* profile
+* account/settings
+* logout menu/session messages
+
+## Consultations
+
+* consultation list/history
+* consultation show page
+* new consultation flow if present
+* complaints
+* history
+* examination
+* diagnosis
+* investigations
+* prescriptions
+* treatment
+* follow-up
+* modals
+* JavaScript buttons/messages
+* validation errors
+
+## Remaining Modules
+
+Verify every file fixed from the active runtime list.
+
+Do not declare complete based only on automated checks.
+
+---
+
+# 15. Required Documentation
+
+Create:
+
+```text
+docs/LOCALISATION_PHASE_15B_CRITICAL_RUNTIME_COMPLETION_REPORT.md
+```
+
+Include:
+
+* summary
+* manually confirmed problem pages
+* active runtime candidate count before
+* active runtime candidate count after
+* consultation pages fixed
+* auth pages fixed
+* other modules fixed
+* files changed
+* language files changed
+* keys added
+* dynamic labels converted
+* validation attributes added
+* scanner result
+* parity result
+* manual French verification checklist
+* remaining candidates, if any
+* reason for every deferred candidate
+* recommendation for next phase
+
+---
+
+# 16. Verification Commands
 
 Run:
 
-```bash id="y3j47w"
+```bash
 php artisan view:clear
 php artisan config:clear
 php artisan cache:clear
@@ -425,83 +551,46 @@ php artisan view:cache
 php artisan view:clear
 ```
 
-Run language lint:
+Run:
 
-```bash id="wtznki"
+```bash
 for f in lang/en/*.php lang/fr/*.php; do php -l "$f"; done
 ```
 
-Run recursive EN/FR parity check.
+Run:
+
+```bash
+php -l scripts/localisation-audit.php
+php scripts/localisation-audit.php
+```
 
 Run:
 
-```bash id="f6b7w3"
+```bash
 git diff --check
 ```
 
-Required:
-
-* route list works
-* view cache works
-* EN/FR parity passes
-* language lint passes
-* git diff --check passes
-* localisation audit runs successfully
+If project tests are stable, run relevant localisation or feature tests.
+Do not run the full test suite yet if there are still active runtime localisation candidates.
 
 ---
 
-# 12. Documentation
+# 17. Acceptance Criteria
 
-Create:
+This phase is complete only when:
 
-```text id="nrlh7c"
-docs/LOCALISATION_PHASE_15_ACTIVE_RUNTIME_CANDIDATE_BURNDOWN_REPORT.md
-```
+* consultation pages no longer show English in French mode
+* auth pages no longer show English in French mode
+* active runtime candidate count is reduced from the current 519
+* all high-priority route-linked clinical pages are translated or documented
+* all added language keys have EN/FR parity
+* validation attributes for auth and consultations are translated
+* inline JS strings for fixed pages are translated
+* dynamic visible labels are translated where safe
+* permissions are unchanged
+* no new localisation framework is introduced
+* no business logic is moved into Blade
+* documentation report is created
+* manual French verification confirms the fixed pages
 
-Include:
-
-```text id="deklb0"
-active runtime candidates before/after
-files/modules fixed
-files/modules deferred
-false positives confirmed
-service-title review summary
-frontend strings fixed/deferred
-shared components fixed/deferred
-dynamic label sweep result
-language files changed
-EN/FR parity result
-PHP lint result
-route/cache/view-cache result
-git diff --check result
-localisation audit result
-remaining active runtime candidates
-recommendation: ready for Full Test Suite / needs Phase 15B
-```
-
----
-
-# 13. Acceptance Criteria
-
-This phase is complete when:
-
-* remaining active runtime candidates are grouped by module and route-linked status
-* high-confidence active user-facing strings are translated
-* frontend strings are checked and translated or documented
-* shared runtime components are checked and translated or documented
-* service-title manual-review candidates are classified
-* dynamic label final sweep is complete
-* active runtime candidates are reduced or fully classified
-* EN/FR parity remains clean
-* touched files pass lint
-* route list works
-* view cache works
-* git diff --check passes
-* localisation audit runs successfully
-* no business logic changed
-* no workflow logic changed
-* no permission logic changed
-* no duplicate localisation system created
-* no new packages introduced
-
-Proceed with UHMS Localisation Phase 15 — Active Runtime Candidate Burn-Down now.
+Proceed with UHMS Localisation Phase 15B now.

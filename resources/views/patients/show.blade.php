@@ -1087,19 +1087,22 @@
 @include('patients.partials.insurance-edit-modal-scripts')
 <script>
 (function () {
-    const patientI18n = @json([
-        'selectTypeFirst' => __('patients.select_type_first'),
-        'selectProviderFirst' => __('patients.select_provider_first'),
-        'loadingProviders' => __('patients.loading_providers'),
-        'noProvidersForType' => __('patients.no_providers_for_type'),
-        'selectProvider' => __('patients.select_provider'),
-        'failedLoadProviders' => __('patients.failed_load_providers'),
-        'loadingTiers' => __('patients.loading_tiers'),
-        'noTiers' => __('patients.no_tiers'),
-        'selectTier' => __('patients.select_tier'),
-        'failedLoadTiers' => __('patients.failed_load_tiers'),
-        'coverageSuffix' => __('patients.coverage_suffix', ['percentage' => ':percentage']),
-    ]);
+    @php
+        $patientShowI18nData = [
+            'selectTypeFirst' => __('patients.select_type_first'),
+            'selectProviderFirst' => __('patients.select_provider_first'),
+            'loadingProviders' => __('patients.loading_providers'),
+            'noProvidersForType' => __('patients.no_providers_for_type'),
+            'selectProvider' => __('patients.select_provider'),
+            'failedLoadProviders' => __('patients.failed_load_providers'),
+            'loadingTiers' => __('patients.loading_tiers'),
+            'noTiers' => __('patients.no_tiers'),
+            'selectTier' => __('patients.select_tier'),
+            'failedLoadTiers' => __('patients.failed_load_tiers'),
+            'coverageSuffix' => __('patients.coverage_suffix', ['percentage' => ':percentage']),
+        ];
+    @endphp
+    const patientI18n = @json($patientShowI18nData);
     // ── Auto-open Mark as Deceased modal on validation error ─────────────────
     @if($errors->any() && old('deceased_at'))
     var deceasedModal = document.getElementById('markDeceasedModal');

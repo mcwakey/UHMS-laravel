@@ -238,6 +238,37 @@ return [
         'reorder_level'         => 'seuil de réapprovisionnement',
         'default_cost'          => 'coût par défaut',
         'base_price'            => 'prix de base',
+
+        // Auth / profil
+        'password_confirmation' => 'confirmation du mot de passe',
+        'current_password'      => 'mot de passe actuel',
+        'new_password'          => 'nouveau mot de passe',
+        'remember'              => 'se souvenir de moi',
+        'avatar'                => 'avatar',
+        'profile_photo'         => 'photo de profil',
+
+        // Consultation
+        'complaint'             => 'motif de consultation',
+        'complaints'            => 'motifs de consultation',
+        'history'               => 'antécédents',
+        'history_of_presenting_complaint' => 'histoire de la maladie',
+        'physical_examination'  => 'examen physique',
+        'diagnoses'             => 'diagnostics',
+        'investigations'        => 'examens complémentaires',
+        'prescriptions'         => 'ordonnances',
+        'treatment'             => 'traitement',
+        'treatment_plan'        => 'plan de traitement',
+        'follow_up_date'        => 'date de suivi',
+        'clinical_notes'        => 'notes cliniques',
+        'vitals'                => 'signes vitaux',
+        'temperature'           => 'température',
+        'blood_pressure'        => 'tension artérielle',
+        'pulse'                 => 'pouls',
+        'respiratory_rate'      => 'fréquence respiratoire',
+        'spo2'                  => 'SpO2',
+        'weight'                => 'poids',
+        'height'                => 'taille',
+        'bmi'                   => 'IMC',
     ],
 
 ];

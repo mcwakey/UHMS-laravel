@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Dispense - ' . $prescription->prescription_number)
+@section('title', __('pharmacy.dispense_title', ['number' => $prescription->prescription_number]))
 
 @section('content')
 @php
@@ -14,8 +14,8 @@
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">
-            <a aria-label="Back" title="Back" href="{{ route('admin.pharmacy.dispensing.index') }}" class="text-muted me-2"><i class="ti ti-arrow-left"></i></a>
-            Dispense: {{ $prescription->prescription_number }}
+            <a aria-label="{{ __('pharmacy.back') }}" title="{{ __('pharmacy.back') }}" href="{{ route('admin.pharmacy.dispensing.index') }}" class="text-muted me-2"><i class="ti ti-arrow-left"></i></a>
+            {{ __('pharmacy.dispense') }}: {{ $prescription->prescription_number }}
         </h4>
     </div>
     <div>
@@ -41,26 +41,26 @@
     <div class="col-md-8">
         <div class="card">
             <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-info-circle me-1"></i>Prescription Details</h6>
+                <h6 class="fw-bold mb-0"><i class="ti ti-info-circle me-1"></i>{{ __('pharmacy.prescription_details') }}</h6>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <small class="text-muted d-block">Patient</small>
+                        <small class="text-muted d-block">{{ __('common.patient') }}</small>
                         <span class="fw-medium">{{ $prescription->patient->full_name }}</span>
                         <small class="text-muted d-block">{{ $prescription->patient->patient_number }} &middot; {{ $prescription->patient->age }}y &middot; {{ $prescription->patient->gender->value }}</small>
                     </div>
                     <div class="col-md-3">
-                        <small class="text-muted d-block">Prescribing Doctor</small>
+                        <small class="text-muted d-block">{{ __('pharmacy.prescribing_doctor') }}</small>
                         <span>{{ $prescription->doctor->name ?? '-' }}</span>
                     </div>
                     <div class="col-md-3">
-                        <small class="text-muted d-block">Date</small>
+                        <small class="text-muted d-block">{{ __('common.date') }}</small>
                         <span>{{ $prescription->created_at->format('d M Y H:i') }}</span>
                     </div>
                     @if($prescription->notes)
                     <div class="col-12">
-                        <small class="text-muted d-block">Notes</small>
+                        <small class="text-muted d-block">{{ __('common.notes') }}</small>
                         <p class="mb-0">{{ $prescription->notes }}</p>
                     </div>
                     @endif
@@ -71,7 +71,7 @@
     <div class="col-md-4">
         <div class="card">
             <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-chart-bar me-1"></i>Progress</h6>
+                <h6 class="fw-bold mb-0"><i class="ti ti-chart-bar me-1"></i>{{ __('pharmacy.progress') }}</h6>
             </div>
             <div class="card-body text-center">
                 @php
@@ -84,7 +84,7 @@
                 <div class="progress mb-2" style="height: 10px;">
                     <div class="progress-bar bg-success" style="width: {{ $pct }}%"></div>
                 </div>
-                <small class="text-muted">{{ $formatQty($billed) }} billed, {{ $formatQty($dispensed) }} dispensed of {{ $formatQty($total) }}</small>
+                <small class="text-muted">{{ __('pharmacy.billed_dispensed_of', ['billed' => $formatQty($billed), 'dispensed' => $formatQty($dispensed), 'total' => $formatQty($total)]) }}</small>
             </div>
         </div>
     </div>
@@ -93,8 +93,8 @@
 <!-- Billing moved to the prescription page -->
 @if($billableItems->count() > 0)
 <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2">
-    <div><i class="ti ti-receipt me-1"></i><strong>{{ $billableItems->count() }} item(s)</strong> still need billing. Pharmacy billing now happens on the prescription page, and items can only be dispensed after the bill is settled.</div>
-    <a href="{{ route('admin.prescriptions.show', $prescription) }}" class="btn btn-sm btn-primary"><i class="ti ti-external-link me-1"></i>Bill on Prescription</a>
+    <div><i class="ti ti-receipt me-1"></i><strong>{{ __('pharmacy.items_count', ['count' => $billableItems->count()]) }}</strong> {{ __('pharmacy.still_need_billing') }}</div>
+    <a href="{{ route('admin.prescriptions.show', $prescription) }}" class="btn btn-sm btn-primary"><i class="ti ti-external-link me-1"></i>{{ __('pharmacy.bill_on_prescription') }}</a>
 </div>
 @endif
 
@@ -102,9 +102,9 @@
 @if($dispensableItems->count() > 0)
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h6 class="fw-bold mb-0"><i class="ti ti-pill me-1"></i>Dispense Items</h6>
+        <h6 class="fw-bold mb-0"><i class="ti ti-pill me-1"></i>{{ __('pharmacy.dispense_items') }}</h6>
         <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#batchDispenseForm">
-            <i class="ti ti-edit me-1"></i>Batch Dispense
+            <i class="ti ti-edit me-1"></i>{{ __('pharmacy.batch_dispense') }}
         </button>
     </div>
     <div class="card-body">
@@ -116,14 +116,14 @@
                         <table class="table table-sm mb-0">
                             <thead>
                                 <tr>
-                                    <th>Drug</th>
-                                    <th>Dosage</th>
-                                    <th>Billed Qty</th>
-                                    <th>Already Dispensed</th>
-                                    <th>Remaining Billed</th>
-                                    <th>Pharmacy / Main Stock</th>
-                                    <th>Qty to Dispense</th>
-                                    <th>Notes</th>
+                                    <th>{{ __('common.drug') }}</th>
+                                    <th>{{ __('pharmacy.dosage') }}</th>
+                                    <th>{{ __('pharmacy.billed_qty') }}</th>
+                                    <th>{{ __('pharmacy.already_dispensed') }}</th>
+                                    <th>{{ __('pharmacy.remaining_billed') }}</th>
+                                    <th>{{ __('pharmacy.pharmacy_main_stock') }}</th>
+                                    <th>{{ __('pharmacy.qty_to_dispense') }}</th>
+                                    <th>{{ __('common.notes') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -144,8 +144,8 @@
                                             $pharmacyStatus = $item->pharmacy_stock_status ?? ['label' => 'OUT', 'class' => 'danger'];
                                             $mainStatus = $item->main_stock_status ?? ['label' => 'OUT', 'class' => 'danger'];
                                         @endphp
-                                        <small class="d-block">Pharmacy: {{ $formatQty($item->pharmacy_available_quantity ?? 0) }} <span class="badge bg-{{ $pharmacyStatus['class'] }}">{{ $pharmacyStatus['label'] }}</span></small>
-                                        <small class="d-block text-muted">Main: {{ $formatQty($item->main_store_quantity ?? 0) }} <span class="badge bg-{{ $mainStatus['class'] }}">{{ $mainStatus['label'] }}</span></small>
+                                        <small class="d-block">{{ __('pharmacy.pharmacy_label') }}: {{ $formatQty($item->pharmacy_available_quantity ?? 0) }} <span class="badge bg-{{ $pharmacyStatus['class'] }}">{{ $pharmacyStatus['label'] }}</span></small>
+                                        <small class="d-block text-muted">{{ __('pharmacy.main_label') }}: {{ $formatQty($item->main_store_quantity ?? 0) }} <span class="badge bg-{{ $mainStatus['class'] }}">{{ $mainStatus['label'] }}</span></small>
                                     </td>
                                     <td style="width: 100px;">
                                         <input type="number" name="items[{{ $item->id }}][quantity]"
@@ -155,7 +155,7 @@
                                     </td>
                                     <td style="width: 150px;">
                                         <input type="text" name="items[{{ $item->id }}][notes]"
-                                            class="form-control form-control-sm" placeholder="Optional">
+                                            class="form-control form-control-sm" placeholder="{{ __('common.optional') }}">
                                     </td>
                                 </tr>
                                 @endforeach
@@ -163,7 +163,7 @@
                         </table>
                     </div>
                     <div class="mt-2">
-                        <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-check me-1"></i>Dispense Selected</button>
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-check me-1"></i>{{ __('pharmacy.dispense_selected') }}</button>
                     </div>
                 </form>
             </div>
@@ -175,15 +175,15 @@
                 <thead class="table-light">
                     <tr>
                         <th>#</th>
-                        <th>Drug</th>
-                        <th>Dosage</th>
-                        <th>Frequency</th>
-                        <th>Duration</th>
-                        <th>Route</th>
-                        <th>Billed Qty</th>
-                        <th>Dispensed</th>
-                        <th>Status</th>
-                        <th class="text-end">Actions</th>
+                        <th>{{ __('common.drug') }}</th>
+                        <th>{{ __('pharmacy.dosage') }}</th>
+                        <th>{{ __('pharmacy.frequency') }}</th>
+                        <th>{{ __('pharmacy.duration') }}</th>
+                        <th>{{ __('pharmacy.route') }}</th>
+                        <th>{{ __('pharmacy.billed_qty') }}</th>
+                        <th>{{ __('pharmacy.dispensed') }}</th>
+                        <th>{{ __('common.status') }}</th>
+                        <th class="text-end">{{ __('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -210,7 +210,7 @@
                                 <br>
                                 @foreach($item->dispensingRecords as $dr)
                                 <small class="text-muted d-block">
-                                    {{ $dr->quantity_dispensed }} dispensed
+                                    {{ __('pharmacy.qty_dispensed', ['qty' => $dr->quantity_dispensed]) }}
                                     ({{ $dr->dispensed_at->format('d M H:i') }})
                                 </small>
                                 @endforeach
@@ -218,17 +218,17 @@
                         </td>
                         <td>
                             @if($item->is_settled ?? false)
-                                <span class="badge bg-primary">Ready</span>
-                                <small class="d-block text-muted">Remaining {{ $formatQty($item->remaining_billed_to_dispense ?? 0) }}</small>
+                                <span class="badge bg-primary">{{ __('pharmacy.ready') }}</span>
+                                <small class="d-block text-muted">{{ __('pharmacy.remaining_qty', ['qty' => $formatQty($item->remaining_billed_to_dispense ?? 0)]) }}</small>
                             @else
-                                <span class="badge bg-warning text-dark"><i class="ti ti-clock-dollar me-1"></i>Awaiting payment</span>
-                                <small class="d-block text-muted">Dispense after the bill is settled</small>
+                                <span class="badge bg-warning text-dark"><i class="ti ti-clock-dollar me-1"></i>{{ __('pharmacy.awaiting_payment') }}</span>
+                                <small class="d-block text-muted">{{ __('pharmacy.dispense_after_settled') }}</small>
                             @endif
                         </td>
                         <td class="text-end">
                             @if($item->drug && ($item->is_settled ?? false))
                             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dispenseModal-{{ $item->id }}">
-                                <i class="ti ti-pill me-1"></i>Dispense
+                                <i class="ti ti-pill me-1"></i>{{ __('pharmacy.dispense') }}
                             </button>
                             @else
                             <span class="text-muted small">—</span>
@@ -245,8 +245,8 @@
 <div class="card">
     <div class="card-body text-center py-5">
         <i class="ti ti-receipt-off fs-1 text-muted d-block mb-2"></i>
-        <h5 class="text-muted">No billed items are ready to dispense.</h5>
-        <p class="text-muted mb-0">Bill selected prescription items first, then return here to dispense the billed quantities.</p>
+        <h5 class="text-muted">{{ __('pharmacy.no_billed_items_ready') }}</h5>
+        <p class="text-muted mb-0">{{ __('pharmacy.bill_items_first') }}</p>
     </div>
 </div>
 @endif
@@ -260,32 +260,32 @@
             <form method="POST" action="{{ route('admin.pharmacy.dispensing.dispense-item', $item) }}">
                 @csrf
                 <div class="modal-header">
-                    <h5 class="modal-title">Dispense: {{ $item->drug_name }}</h5>
+                    <h5 class="modal-title">{{ __('pharmacy.dispense') }}: {{ $item->drug_name }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info py-2">
                         <small>
-                            <strong>Billed:</strong> {{ $formatQty($item->billed_quantity ?? 0) }} {{ $item->drug->unit ?? '' }} &middot;
-                            <strong>Already dispensed:</strong> {{ $formatQty($item->dispensed_billed_quantity ?? 0) }} &middot;
-                            <strong>Remaining billed:</strong> {{ $formatQty($item->remaining_billed_to_dispense ?? 0) }} &middot;
-                            <strong>Pharmacy stock:</strong> {{ $formatQty($item->pharmacy_available_quantity ?? 0) }}
+                            <strong>{{ __('pharmacy.billed') }}:</strong> {{ $formatQty($item->billed_quantity ?? 0) }} {{ $item->drug->unit ?? '' }} &middot;
+                            <strong>{{ __('pharmacy.already_dispensed_label') }}:</strong> {{ $formatQty($item->dispensed_billed_quantity ?? 0) }} &middot;
+                            <strong>{{ __('pharmacy.remaining_billed_label') }}:</strong> {{ $formatQty($item->remaining_billed_to_dispense ?? 0) }} &middot;
+                            <strong>{{ __('pharmacy.pharmacy_stock') }}:</strong> {{ $formatQty($item->pharmacy_available_quantity ?? 0) }}
                         </small>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Quantity to Dispense <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('pharmacy.quantity_to_dispense') }} <span class="text-danger">*</span></label>
                         <input type="number" name="quantity" class="form-control"
                             value="{{ $formatQty(min((float) ($item->remaining_billed_to_dispense ?? 0), (float) ($item->pharmacy_available_quantity ?? 0))) }}"
                             min="1" max="{{ $formatQty(min((float) ($item->remaining_billed_to_dispense ?? 0), (float) ($item->pharmacy_available_quantity ?? 0))) }}" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Notes</label>
-                        <textarea name="notes" class="form-control" rows="2" placeholder="Optional dispensing notes..."></textarea>
+                        <label class="form-label">{{ __('common.notes') }}</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="{{ __('pharmacy.optional_dispensing_notes') }}"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Dispense</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('pharmacy.dispense') }}</button>
                 </div>
             </form>
         </div>
