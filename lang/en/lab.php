@@ -85,6 +85,7 @@ return [
     'items_files'               => 'Investigation Items & Files',
     'file_col'                  => 'File',
     'upload_button'             => 'Upload',
+    'current_file'              => 'Current file',
     'image_file'                => 'Image File',
     'document_file'             => 'Document File',
     'image_hint'                => 'JPEG, PNG, GIF — Max 20MB',

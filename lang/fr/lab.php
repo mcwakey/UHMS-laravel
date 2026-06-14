@@ -85,6 +85,7 @@ return [
     'items_files'               => 'Articles et fichiers d\'examens',
     'file_col'                  => 'Fichier',
     'upload_button'             => 'Téléverser',
+    'current_file'              => 'Fichier actuel',
     'image_file'                => 'Fichier image',
     'document_file'             => 'Fichier document',
     'image_hint'                => 'JPEG, PNG, GIF — Max 20 Mo',

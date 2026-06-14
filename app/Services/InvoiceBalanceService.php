@@ -56,6 +56,8 @@ class InvoiceBalanceService
             'discountEvents.journalEntry',
             'discountEvents.reversalJournalEntry',
             'creditNotes.issuedBy',
+            'creditNotes.originalCreditNote',
+            'creditNotes.reversal',
             'creditNotes.cancelledBy',
             'creditNotes.journalEntry',
             'creditNotes.reversalJournalEntry',
@@ -88,6 +90,11 @@ class InvoiceBalanceService
             'accounting_error' => $payment->accounting_error,
             'retry_source_type' => 'payment',
             'retry_source_id' => $payment->id,
+            'can_reverse' => $payment->can_reverse,
+            'reversal_kind' => 'payment',
+            'reverse_url' => $payment->can_reverse
+                ? route('admin.billing.payments.reverse', $payment)
+                : null,
             'badge' => $isRefund ? 'danger' : 'success',
         ];
     }
@@ -112,6 +119,9 @@ class InvoiceBalanceService
             'accounting_error' => $discount->accounting_error,
             'retry_source_type' => 'discount',
             'retry_source_id' => $discount->id,
+            'can_reverse' => false,
+            'reversal_kind' => null,
+            'reverse_url' => null,
             'badge' => $isReversal ? 'warning' : ($discount->is_override ? 'danger' : 'warning'),
         ];
     }
@@ -119,24 +129,34 @@ class InvoiceBalanceService
     protected function creditNoteRow(CreditNote $creditNote): array
     {
         $isWriteOff = $creditNote->type === CreditNoteType::WRITE_OFF;
-        $isCancelled = $creditNote->status === 'cancelled';
+        $isReversal = $creditNote->is_reversal;
+        $isReversed = $creditNote->status === 'reversed';
 
         return [
             'date' => $creditNote->created_at,
             'date_sort' => optional($creditNote->created_at)->timestamp ?? 0,
-            'type' => $isWriteOff ? 'Write-off' : 'Credit Note',
+            'type' => $isReversal
+                ? ($isWriteOff ? 'Write-off Reversal' : 'Credit Note Reversal')
+                : ($isWriteOff ? 'Write-off' : 'Credit Note'),
             'reference' => $creditNote->credit_note_number,
             'amount' => (float) $creditNote->amount,
-            'reason' => $isCancelled ? ($creditNote->cancellation_reason ?: $creditNote->reason) : $creditNote->reason,
-            'status' => $isCancelled ? 'Reversed' : ucfirst($creditNote->status),
-            'actor' => $isCancelled ? $creditNote->cancelledBy?->name : $creditNote->issuedBy?->name,
+            'reason' => $isReversal
+                ? ($creditNote->notes ?: $creditNote->reason)
+                : ($isReversed ? ($creditNote->reversal_reason ?: $creditNote->reason) : $creditNote->reason),
+            'status' => $isReversal ? 'Reversal' : ucfirst($creditNote->status),
+            'actor' => $creditNote->issuedBy?->name,
             'journal' => $creditNote->journalEntry,
             'reversal_journal' => $creditNote->reversalJournalEntry,
             'accounting_status' => $creditNote->accounting_status ?: 'pending',
             'accounting_error' => $creditNote->accounting_error,
             'retry_source_type' => 'credit_note',
             'retry_source_id' => $creditNote->id,
-            'badge' => $isWriteOff ? 'dark' : 'info',
+            'can_reverse' => ! $isReversal && ! $isReversed && $creditNote->status === 'issued',
+            'reversal_kind' => $isWriteOff ? 'write_off' : 'credit_note',
+            'reverse_url' => ! $isReversal && ! $isReversed && $creditNote->status === 'issued'
+                ? route('admin.billing.credit-notes.reverse', $creditNote)
+                : null,
+            'badge' => $isReversal ? 'warning' : ($isWriteOff ? 'dark' : 'info'),
         ];
     }
 }

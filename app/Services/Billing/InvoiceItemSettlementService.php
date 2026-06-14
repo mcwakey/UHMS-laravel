@@ -23,6 +23,7 @@ class InvoiceItemSettlementService
     public const PAID = 'PAID';
     public const COVERED_BY_INSURANCE = 'COVERED_BY_INSURANCE';
     public const WAIVED = 'WAIVED';
+    public const ADJUSTED = 'ADJUSTED';
     public const CANCELLED = 'CANCELLED';
 
     public function settlementStatus(InvoiceItem $item): string
@@ -50,6 +51,19 @@ class InvoiceItemSettlementService
             }
 
             return self::PAID;
+        }
+
+        // Credit notes and write-offs are invoice-level adjustments in UHMS.
+        // When they settle the entire invoice, every remaining line can proceed.
+        // A partial adjustment does not identify a settled line, so it stays blocked.
+        $invoice = $item->relationLoaded('invoice')
+            ? $item->invoice
+            : $item->invoice()->first(['id', 'balance', 'adjustment_amount']);
+
+        if ($invoice
+            && (float) $invoice->adjustment_amount > self::EPS
+            && (float) $invoice->balance <= self::EPS) {
+            return self::ADJUSTED;
         }
 
         // Nothing left for the patient to pay because insurance covers it all.
@@ -94,6 +108,7 @@ class InvoiceItemSettlementService
             self::PAID,
             self::COVERED_BY_INSURANCE,
             self::WAIVED,
+            self::ADJUSTED,
         ], true);
     }
 

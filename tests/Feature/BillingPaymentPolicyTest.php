@@ -136,6 +136,44 @@ class BillingPaymentPolicyTest extends TestCase
         $this->assertTrue($gate->canRenderInvoiceItem($this->billItem($visit, ['payment_status' => 'waived']), $this->user));
     }
 
+    public function test_fully_adjusted_invoice_allows_unpaid_item_to_proceed(): void
+    {
+        $item = $this->billItem($this->makeVisit(VisitType::OUTPATIENT));
+        $item->invoice->forceFill([
+            'adjustment_amount' => 100,
+            'balance' => 0,
+            'status' => InvoiceStatus::PAID,
+        ])->save();
+
+        $settlement = app(InvoiceItemSettlementService::class);
+
+        $this->assertSame(
+            InvoiceItemSettlementService::ADJUSTED,
+            $settlement->settlementStatus($item->fresh())
+        );
+        $this->assertTrue($settlement->canProceedWithoutCashPayment($item->fresh()));
+        $this->assertTrue($this->gate()->canRenderInvoiceItem($item->fresh(), $this->user));
+    }
+
+    public function test_partially_adjusted_invoice_does_not_unlock_unpaid_item(): void
+    {
+        $item = $this->billItem($this->makeVisit(VisitType::OUTPATIENT));
+        $item->invoice->forceFill([
+            'adjustment_amount' => 40,
+            'balance' => 60,
+            'status' => InvoiceStatus::PARTIALLY_PAID,
+        ])->save();
+
+        $settlement = app(InvoiceItemSettlementService::class);
+
+        $this->assertSame(
+            InvoiceItemSettlementService::BILLED_UNPAID,
+            $settlement->settlementStatus($item->fresh())
+        );
+        $this->assertFalse($settlement->canProceedWithoutCashPayment($item->fresh()));
+        $this->assertFalse($this->gate()->canRenderInvoiceItem($item->fresh(), $this->user));
+    }
+
     public function test_opd_partial_payment_is_blocked_by_default(): void
     {
         $item = $this->billItem($this->makeVisit(VisitType::OUTPATIENT), ['paid_amount' => 40, 'balance' => 60]);

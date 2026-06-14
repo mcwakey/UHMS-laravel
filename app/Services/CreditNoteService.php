@@ -118,30 +118,56 @@ class CreditNoteService
      * @throws AuthorizationException
      * @throws \RuntimeException
      */
-    public function cancel(CreditNote $creditNote, string $reason, ?User $user = null): CreditNote
+    public function reverse(CreditNote $creditNote, string $reason, ?User $user = null): CreditNote
     {
         $user ??= Auth::user();
         $permissions = $creditNote->type === CreditNoteType::WRITE_OFF
             ? ['credit_notes.write_off', 'billing.write_off.reverse']
             : ['credit_notes.create', 'billing.credit_note.reverse'];
         if ($user && method_exists($user, 'can') && ! $this->canAny($user, $permissions)) {
-            throw new AuthorizationException('Not authorized to cancel credit notes.');
+            throw new AuthorizationException('Not authorized to reverse this adjustment.');
         }
 
         if ($creditNote->status !== 'issued') {
-            throw new \RuntimeException('Only an issued credit note can be cancelled.');
+            throw new \RuntimeException('Only an issued credit note or write-off can be reversed.');
         }
         $reason = trim($reason);
         if ($reason === '') {
-            throw new \RuntimeException('A cancellation reason is required.');
+            throw new \RuntimeException('A reversal reason is required.');
         }
 
-        $creditNote = DB::transaction(function () use ($creditNote, $reason) {
+        $reversal = DB::transaction(function () use ($creditNote, $reason, $user) {
+            $creditNote = CreditNote::lockForUpdate()->findOrFail($creditNote->id);
+
+            if ($creditNote->is_reversal) {
+                throw new \RuntimeException('A reversal record cannot itself be reversed.');
+            }
+            if ($creditNote->status !== 'issued') {
+                throw new \RuntimeException('This adjustment has already been reversed.');
+            }
+            if ($creditNote->reversal()->exists()) {
+                throw new \RuntimeException('A reversal record already exists for this adjustment.');
+            }
+
+            $reversal = CreditNote::create([
+                'credit_note_number' => CreditNote::generateNumber('REV', 'credit_notes', 'credit_note_number'),
+                'invoice_id' => $creditNote->invoice_id,
+                'patient_id' => $creditNote->patient_id,
+                'type' => $creditNote->type->value,
+                'status' => 'reversal',
+                'is_reversal' => true,
+                'reverses_credit_note_id' => $creditNote->id,
+                'amount' => $creditNote->amount,
+                'reason' => "Reversal of {$creditNote->credit_note_number}",
+                'notes' => $reason,
+                'issued_by' => Auth::id(),
+            ]);
+
             $creditNote->forceFill([
-                'status' => 'cancelled',
-                'cancelled_at' => now(),
-                'cancelled_by' => Auth::id(),
-                'cancellation_reason' => $reason,
+                'status' => 'reversed',
+                'reversed_at' => now(),
+                'reversed_by' => Auth::id(),
+                'reversal_reason' => $reason,
             ])->save();
 
             $invoice = Invoice::with('items')->find($creditNote->invoice_id);
@@ -155,16 +181,37 @@ class CreditNoteService
                 'severity' => LogSeverity::WARNING,
                 'metadata' => [
                     'credit_note_number' => $creditNote->credit_note_number,
+                    'reversal_number' => $reversal->credit_note_number,
+                    'reversal_id' => $reversal->id,
                     'reason' => $reason,
                 ],
-            ], $creditNote, 'Credit note cancelled');
+            ], $reversal, ucfirst(str_replace('_', ' ', $creditNote->type->value)) . ' reversed');
 
-            return $creditNote->fresh();
+            return $reversal->fresh(['originalCreditNote']);
         });
 
-        app(BillingAccountingPostingService::class)->reverseCreditNote($creditNote, $reason);
+        $original = $reversal->originalCreditNote;
+        app(BillingAccountingPostingService::class)->reverseCreditNote($original, $reason);
 
-        return $creditNote->refresh();
+        $original->refresh();
+        if ($original->reversal_journal_entry_id) {
+            $reversal->forceFill([
+                'journal_entry_id' => $original->reversal_journal_entry_id,
+                'accounting_posted_at' => now(),
+                'accounting_status' => BillingAccountingPostingService::STATUS_POSTED,
+                'accounting_error' => null,
+            ])->save();
+        }
+
+        return $reversal->refresh(['originalCreditNote', 'journalEntry']);
+    }
+
+    /**
+     * Backwards-compatible method name for existing callers and route names.
+     */
+    public function cancel(CreditNote $creditNote, string $reason, ?User $user = null): CreditNote
+    {
+        return $this->reverse($creditNote, $reason, $user);
     }
 
     /**

@@ -205,7 +205,7 @@
                             @if($item->result && $item->result->is_verified)
                             <a data-no-inertia href="{{ route('admin.lab.results.print', $item) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="{{ __('lab.print_button') }}"><i class="ti ti-printer"></i></a>
                             @endif
-                            @if(in_array($request->status, ['processing']) && in_array($item->status, ['accepted','processing']) && !$item->result)
+                            @if($request->status !== 'cancelled' && ! $item->result?->is_verified)
                             @can('lab.results.create')
                             @if($resultBlocked($item))
                             <span class="badge bg-warning text-dark" title="Bill not settled"><i class="ti ti-clock-dollar me-1"></i>{{ __('lab.awaiting_payment_badge') }}</span>
@@ -225,7 +225,7 @@
 
 {{-- Per-item modals (parameters) --}}
 @foreach($request->items as $item)
-@if(in_array($request->status, ['processing']) && in_array($item->status, ['accepted','processing']) && !$item->result && !$resultBlocked($item))
+@if($request->status !== 'cancelled' && ! $item->result?->is_verified && !$resultBlocked($item))
 <div class="modal fade" id="resultModal-{{ $item->id }}" tabindex="-1">
     <div class="modal-dialog">
         <form method="POST" action="{{ route('admin.lab.results.store', $item) }}" enctype="multipart/form-data" class="modal-content">
@@ -280,15 +280,17 @@
                 <div class="mb-3">
                     <div class="form-check">
                         <input type="hidden" name="is_abnormal" value="0">
-                        <input type="checkbox" name="is_abnormal" value="1" class="form-check-input" id="abnormal-{{ $item->id }}">
+                        <input type="checkbox" name="is_abnormal" value="1" class="form-check-input" id="abnormal-{{ $item->id }}" @checked($item->result?->is_abnormal)>
                         <label class="form-check-label" for="abnormal-{{ $item->id }}">{{ __('lab.mark_as_abnormal') }}</label>
                     </div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">{{ __('lab.remarks_col') }}</label>
-                    <textarea name="remarks" class="form-control" rows="2" placeholder="{{ __('lab.optional_remarks') }}"></textarea>
+                    <textarea name="remarks" class="form-control" rows="2" placeholder="{{ __('lab.optional_remarks') }}">{{ old('remarks', $item->result?->remarks) }}</textarea>
                 </div>
-                @include('lab._consumables', ['item' => $item])
+                @if(! $item->result)
+                    @include('lab._consumables', ['item' => $item])
+                @endif
                 <hr class="my-3">
                 <div class="mb-2">
                     <label class="form-label small fw-medium"><i class="ti ti-paperclip me-1"></i>{{ __('lab.attach_file_label') }} <span class="text-muted">(optional)</span></label>
@@ -352,7 +354,7 @@
                             </form>
                             @endcan
                             @endif
-                            @if($request->status === 'processing' && $item->status !== 'completed')
+                            @if($request->status !== 'cancelled' && ! $item->result?->is_verified)
                             @can('lab.results.create')
                             @if($resultBlocked($item))
                             <span class="badge bg-warning text-dark"><i class="ti ti-clock-dollar me-1"></i>{{ __('lab.awaiting_payment_badge') }}</span>
@@ -373,7 +375,7 @@
 </div>
 
 @foreach($request->items as $item)
-@if($request->status === 'processing' && $item->status !== 'completed' && !$resultBlocked($item))
+@if($request->status !== 'cancelled' && ! $item->result?->is_verified && !$resultBlocked($item))
 <div class="modal fade" id="richtextModal-{{ $item->id }}" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <form method="POST" action="{{ route('admin.lab.results.store', $item) }}" enctype="multipart/form-data" class="modal-content">
@@ -464,7 +466,7 @@
                             </form>
                             @endcan
                             @endif
-                            @if($request->status === 'processing' && $item->status !== 'completed')
+                            @if($request->status !== 'cancelled' && ! $item->result?->is_verified)
                             @can('lab.results.create')
                             @if($resultBlocked($item))
                             <span class="badge bg-warning text-dark"><i class="ti ti-clock-dollar me-1"></i>{{ __('lab.awaiting_payment_badge') }}</span>
@@ -485,7 +487,7 @@
 </div>
 
 @foreach($request->items as $item)
-@if($request->status === 'processing' && $item->status !== 'completed' && !$resultBlocked($item))
+@if($request->status !== 'cancelled' && ! $item->result?->is_verified && !$resultBlocked($item))
 <div class="modal fade" id="fileModal-{{ $item->id }}" tabindex="-1">
     <div class="modal-dialog">
         <form method="POST" action="{{ route('admin.lab.results.store', $item) }}" enctype="multipart/form-data" class="modal-content">
@@ -501,8 +503,11 @@
                         @if($resultType === \App\Enums\ResultType::IMAGE) {{ __('lab.image_file') }} @else {{ __('lab.document_file') }} @endif
                         <span class="text-danger">*</span>
                     </label>
-                    <input type="file" name="result_file" class="form-control" required
+                    <input type="file" name="result_file" class="form-control" @required(! $item->result)
                         accept="{{ $resultType === \App\Enums\ResultType::IMAGE ? 'image/*' : '.pdf,.doc,.docx' }}">
+                    @if($item->result?->result_file_name)
+                        <div class="form-text">{{ __('lab.current_file') }}: {{ $item->result->result_file_name }}</div>
+                    @endif
                     <div class="form-text">
                         @if($resultType === \App\Enums\ResultType::IMAGE) {{ __('lab.image_hint') }}
                         @else {{ __('lab.document_hint') }} @endif
@@ -511,13 +516,13 @@
                 <div class="mb-2">
                     <div class="form-check">
                         <input type="hidden" name="is_abnormal" value="0">
-                        <input type="checkbox" name="is_abnormal" value="1" class="form-check-input" id="abn-f-{{ $item->id }}">
+                        <input type="checkbox" name="is_abnormal" value="1" class="form-check-input" id="abn-f-{{ $item->id }}" @checked($item->result?->is_abnormal)>
                         <label class="form-check-label text-danger" for="abn-f-{{ $item->id }}">{{ __('lab.abnormal_finding') }}</label>
                     </div>
                 </div>
                 <div class="mt-2">
                     <label class="form-label">{{ __('lab.remarks_col') }}</label>
-                    <input type="text" name="remarks" class="form-control" placeholder="{{ __('lab.optional_remark') }}">
+                    <input type="text" name="remarks" class="form-control" placeholder="{{ __('lab.optional_remark') }}" value="{{ old('remarks', $item->result?->remarks) }}">
                 </div>
             </div>
             <div class="modal-footer">

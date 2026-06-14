@@ -134,7 +134,8 @@ return [
 
     'billing' => [
         'credit_note_issued'     => ':type :number issued.',
-        'credit_note_cancelled'  => 'Credit note :number cancelled.',
+        'credit_note_cancelled'  => 'Credit note :number reversed.',
+        'credit_note_reversed'   => 'Adjustment :number reversed with trace record :reversal.',
         'receivable_reallocated' => 'Payer responsibility reallocated successfully.',
         'sponsor_created'        => 'Sponsor :name created.',
         'sponsor_updated'        => 'Sponsor :name updated.',

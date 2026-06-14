@@ -124,6 +124,7 @@ return [
     'consultation_statistics' => 'Statistiques des consultations',
     'pharmacy_statistics' => 'Statistiques de la pharmacie',
     'investigation_statistics' => 'Statistiques des examens',
+    'investigation_results_statistics' => 'Statistiques des résultats d’examens',
     'procedure_theatre' => 'Procédures / Bloc opératoire',
     'emergency_statistics' => 'Statistiques des urgences',
     'admission_statistics' => 'Statistiques des admissions',

@@ -327,6 +327,11 @@ class LabService
 
     public function enterResult(LabRequestItem $item, array $data): LabResult
     {
+        $existingResult = $item->result()->first();
+        if ($existingResult?->is_verified) {
+            throw new \RuntimeException('Verified investigation results cannot be edited.');
+        }
+
         // Pay-before-results: an outpatient/walk-in must settle the bill before
         // results are entered. Emergency/inpatient run on a post-paid bill.
         $labRequest = $item->labRequest;
@@ -392,7 +397,7 @@ class LabService
             // Auto-update request status
             $this->updateRequestStatus($item->labRequest);
 
-            if ($item->labRequest?->visit) {
+            if ($result->wasRecentlyCreated && $item->labRequest?->visit) {
                 app(VisitPathwayService::class)->record($item->labRequest->visit, 'INVESTIGATION_RESULT_READY', [
                     'source' => $result,
                     'department_id' => $item->labRequest->target_department_id ?? $item->labRequest->department_id,

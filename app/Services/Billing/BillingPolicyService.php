@@ -161,6 +161,10 @@ class BillingPolicyService
             return BillingPolicyDecision::allow(self::MODE_WAIVED, 'ITEM_WAIVED',
                 'This item has been waived.', $extra);
         }
+        if ($settlementStatus === InvoiceItemSettlementService::ADJUSTED) {
+            return BillingPolicyDecision::allow(self::MODE_WAIVED, 'INVOICE_ADJUSTED',
+                'This invoice has been fully settled by an adjustment.', $extra);
+        }
         if ($settlementStatus === InvoiceItemSettlementService::CANCELLED) {
             return BillingPolicyDecision::allow(self::MODE_STRICT_PAY_BEFORE_SERVICE, 'ITEM_CANCELLED',
                 'This item is cancelled.', $extra);

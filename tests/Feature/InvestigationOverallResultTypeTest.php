@@ -152,6 +152,103 @@ class InvestigationOverallResultTypeTest extends TestCase
         $this->assertSame('5.6 mmol/L', $result->overallResultDisplay($service));
     }
 
+    public function test_result_can_be_saved_when_the_optional_consumable_row_is_blank(): void
+    {
+        $service = $this->makeService(['overall_result_type' => 'free_text']);
+        $item = $this->makeAcceptedItem($service);
+
+        $this->actingAs($this->manager)
+            ->post(route('admin.lab.results.store', $item), [
+                'result_type' => 'parameters',
+                'overall_result_type' => 'free_text',
+                'result_value' => 'Normal',
+                'consumables' => [[
+                    'product_id' => '',
+                    'quantity' => '',
+                    'notes' => '',
+                ]],
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertNotNull($item->fresh()->result);
+        $this->assertSame('Normal', $item->fresh()->result->result_value);
+    }
+
+    public function test_partially_entered_consumable_still_requires_quantity(): void
+    {
+        $service = $this->makeService(['overall_result_type' => 'free_text']);
+        $item = $this->makeAcceptedItem($service);
+
+        $this->actingAs($this->manager)
+            ->post(route('admin.lab.results.store', $item), [
+                'result_type' => 'parameters',
+                'overall_result_type' => 'free_text',
+                'result_value' => 'Normal',
+                'consumables' => [[
+                    'product_id' => '1',
+                    'quantity' => '',
+                ]],
+            ])
+            ->assertSessionHasErrors('consumables.0.quantity');
+
+        $this->assertNull($item->fresh()->result);
+    }
+
+    public function test_unverified_result_can_be_edited(): void
+    {
+        $service = $this->makeService(['overall_result_type' => 'free_text']);
+        $item = $this->makeAcceptedItem($service);
+
+        $this->actingAs($this->manager)->post(route('admin.lab.results.store', $item), [
+            'result_type' => 'parameters',
+            'overall_result_type' => 'free_text',
+            'result_value' => 'Initial result',
+            'remarks' => 'Initial remarks',
+        ])->assertRedirect();
+
+        $resultId = $item->fresh()->result->id;
+
+        $this->actingAs($this->manager)->post(route('admin.lab.results.store', $item), [
+            'result_type' => 'parameters',
+            'overall_result_type' => 'free_text',
+            'result_value' => 'Corrected result',
+            'remarks' => 'Corrected before verification',
+            'is_abnormal' => '1',
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $result = $item->fresh()->result;
+        $this->assertSame($resultId, $result->id);
+        $this->assertSame('Corrected result', $result->result_value);
+        $this->assertSame('Corrected before verification', $result->remarks);
+        $this->assertTrue($result->is_abnormal);
+    }
+
+    public function test_verified_result_cannot_be_edited(): void
+    {
+        $service = $this->makeService(['overall_result_type' => 'free_text']);
+        $item = $this->makeAcceptedItem($service);
+
+        $this->actingAs($this->manager)->post(route('admin.lab.results.store', $item), [
+            'result_type' => 'parameters',
+            'overall_result_type' => 'free_text',
+            'result_value' => 'Verified result',
+        ])->assertRedirect();
+
+        $item->fresh()->result->update([
+            'verified_by' => $this->manager->id,
+            'verified_at' => now(),
+        ]);
+
+        $this->actingAs($this->manager)->post(route('admin.lab.results.store', $item), [
+            'result_type' => 'parameters',
+            'overall_result_type' => 'free_text',
+            'result_value' => 'Unauthorized correction',
+        ])->assertRedirect()->assertSessionHas('error');
+
+        $this->assertSame('Verified result', $item->fresh()->result->result_value);
+    }
+
     public function test_boolean_result_stores_canonical_value_and_displays_translated_label(): void
     {
         $service = $this->makeService(['overall_result_type' => 'boolean', 'overall_result_true_label' => 'Consented']);

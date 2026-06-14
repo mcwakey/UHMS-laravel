@@ -131,6 +131,9 @@ return [
     'remove_discount_reason'=> 'Reason for removing this discount',
     'retry'                 => 'Retry',
     'reversal'              => 'Reversal',
+    'reverse_entry'         => 'Reverse',
+    'confirm_reversal'      => 'Create Reversal',
+    'reverse_entry_warning' => 'The original entry will remain in the audit trail. A new linked reversal record will be created and the invoice balance recalculated.',
 
     // create.blade.php labels
     'new_invoice_title'     => 'New Invoice',

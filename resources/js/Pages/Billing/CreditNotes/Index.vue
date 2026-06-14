@@ -1,7 +1,7 @@
 <script setup>
 /**
  * Billing → Credit Notes & Write-offs (Inertia). Lists issued credit notes
- * and write-offs, with a cancel action (requires a reason).
+ * and write-offs, with an append-only reversal action (requires a reason).
  */
 import { reactive, ref } from 'vue';
 import { Link, router, useForm } from '@inertiajs/vue3';
@@ -37,7 +37,7 @@ function formatMoney(value) {
     return '\u20B5' + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// --- Cancel modal ---
+// --- Reversal modal ---
 const cancelTarget = ref(null);
 const cancelForm = useForm({ reason: '' });
 
@@ -51,7 +51,7 @@ function closeCancel() {
 }
 function submitCancel() {
     if (!cancelTarget.value) return;
-    cancelForm.patch(cancelTarget.value.cancel_url, {
+    cancelForm.post(cancelTarget.value.reverse_url, {
         preserveScroll: true,
         onSuccess: () => closeCancel(),
     });
@@ -140,7 +140,8 @@ function submitCancel() {
                         <select v-model="form.status" class="form-select form-select-sm" @change="applyFilters">
                             <option value="">All Statuses</option>
                             <option value="issued">Issued</option>
-                            <option value="cancelled">Cancelled</option>
+                            <option value="reversed">Reversed originals</option>
+                            <option value="reversal">Reversal records</option>
                         </select>
                     </div>
                     <div class="col-md-2 d-flex gap-1">
@@ -185,15 +186,17 @@ function submitCancel() {
                                 <td class="text-end fw-medium">{{ formatMoney(cn.amount) }}</td>
                                 <td><small>{{ cn.reason }}</small></td>
                                 <td>
-                                    <span class="badge" :class="cn.status === 'issued' ? 'bg-success' : 'bg-secondary'">
-                                        {{ cn.status === 'issued' ? 'Issued' : 'Cancelled' }}
+                                    <span class="badge" :class="cn.status === 'issued' ? 'bg-success' : (cn.status === 'reversal' ? 'bg-warning text-dark' : 'bg-secondary')">
+                                        {{ cn.status === 'issued' ? 'Issued' : (cn.status === 'reversal' ? 'Reversal' : 'Reversed') }}
                                     </span>
+                                    <small v-if="cn.original_number" class="text-muted d-block">Reverses {{ cn.original_number }}</small>
+                                    <small v-if="cn.reversal_number" class="text-muted d-block">Trace {{ cn.reversal_number }}</small>
                                 </td>
                                 <td><small>{{ cn.issued_by ?? '—' }}</small></td>
                                 <td>{{ cn.created_at_display }}</td>
                                 <td class="text-center">
-                                    <button v-if="cn.can_cancel" type="button" class="btn btn-sm btn-outline-danger" @click="openCancel(cn)">
-                                        <i class="ti ti-x me-1"></i>Cancel
+                                    <button v-if="cn.can_reverse" type="button" class="btn btn-sm btn-outline-danger" @click="openCancel(cn)">
+                                        <i class="ti ti-arrow-back-up me-1"></i>Reverse
                                     </button>
                                 </td>
                             </tr>
@@ -222,24 +225,24 @@ function submitCancel() {
             </div>
         </div>
 
-        <!-- Cancel modal -->
+        <!-- Reversal modal -->
         <div v-if="cancelTarget" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.5);">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Cancel {{ cancelTarget.credit_note_number }}</h5>
+                        <h5 class="modal-title">Reverse {{ cancelTarget.credit_note_number }}</h5>
                         <button type="button" class="btn-close" @click="closeCancel"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="text-muted small">Cancelling this credit note will reverse its effect on the invoice balance. Provide a reason.</p>
+                        <p class="text-muted small">This keeps the original record and creates a new linked reversal record. Provide a reason.</p>
                         <label class="form-label small">Reason <span class="text-danger">*</span></label>
-                        <textarea v-model="cancelForm.reason" class="form-control" rows="3" placeholder="Reason for cancellation"></textarea>
+                        <textarea v-model="cancelForm.reason" class="form-control" rows="3" placeholder="Reason for reversal"></textarea>
                         <div v-if="cancelForm.errors.reason" class="text-danger small mt-1">{{ cancelForm.errors.reason }}</div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" @click="closeCancel">Keep</button>
+                        <button type="button" class="btn btn-outline-secondary" @click="closeCancel">Close</button>
                         <button type="button" class="btn btn-danger" :disabled="cancelForm.processing" @click="submitCancel">
-                            <i class="ti ti-x me-1"></i>Cancel Credit Note
+                            <i class="ti ti-arrow-back-up me-1"></i>Create Reversal
                         </button>
                     </div>
                 </div>

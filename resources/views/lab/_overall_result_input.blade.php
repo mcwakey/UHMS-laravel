@@ -1,6 +1,7 @@
 @php
     /** @var \App\Models\LabRequestItem $item */
     $service = $item->service ?? null;
+    $savedResult = $item->result;
     $ort = $service ? $service->overallResultType() : \App\Models\ServiceCatalog::OVERALL_RESULT_FREE_TEXT;
 @endphp
 {{-- The configured overall result type drives which input is shown. Stored values
@@ -12,7 +13,7 @@
         <label class="form-label">{{ __('lab.overall_result_label') }} <span class="text-danger">*</span></label>
         <div class="input-group">
             <input type="number" step="any" name="overall_result_value" class="form-control" required
-                   value="{{ old('overall_result_value') }}" placeholder="{{ __('investigations.numeric_value') }}">
+                   value="{{ old('overall_result_value', $savedResult?->overall_result_numeric) }}" placeholder="{{ __('investigations.numeric_value') }}">
             @if($service?->overall_result_unit)
                 <span class="input-group-text">{{ $service->overall_result_unit }}</span>
             @endif
@@ -33,8 +34,8 @@
         <label class="form-label">{{ __('lab.overall_result_label') }} <span class="text-danger">*</span></label>
         <select name="overall_result_value" class="form-select" required>
             <option value="">{{ __('investigations.select_overall_result') }}</option>
-            <option value="true">{{ $service->trueLabel() }}</option>
-            <option value="false">{{ $service->falseLabel() }}</option>
+            <option value="true" @selected(old('overall_result_value', $savedResult?->overall_result_boolean === null ? '' : ($savedResult->overall_result_boolean ? 'true' : 'false')) === 'true')>{{ $service->trueLabel() }}</option>
+            <option value="false" @selected(old('overall_result_value', $savedResult?->overall_result_boolean === null ? '' : ($savedResult->overall_result_boolean ? 'true' : 'false')) === 'false')>{{ $service->falseLabel() }}</option>
         </select>
     </div>
 
@@ -43,8 +44,8 @@
         <label class="form-label">{{ __('lab.overall_result_label') }} <span class="text-danger">*</span></label>
         <select name="overall_result_value" class="form-select" required>
             <option value="">{{ __('investigations.select_overall_result') }}</option>
-            <option value="positive">{{ $service->positiveLabel() }}</option>
-            <option value="negative">{{ $service->negativeLabel() }}</option>
+            <option value="positive" @selected(old('overall_result_value', $savedResult?->overall_result_outcome) === 'positive')>{{ $service->positiveLabel() }}</option>
+            <option value="negative" @selected(old('overall_result_value', $savedResult?->overall_result_outcome) === 'negative')>{{ $service->negativeLabel() }}</option>
         </select>
     </div>
 
@@ -52,6 +53,6 @@
     {{-- free_text (default + backward compatible) --}}
     <div class="mb-3">
         <label class="form-label">{{ __('lab.result_value_label') }} <span class="text-danger">*</span></label>
-        <textarea name="result_value" class="form-control" rows="2" required placeholder="{{ __('lab.enter_result_placeholder') }}"></textarea>
+        <textarea name="result_value" class="form-control" rows="2" required placeholder="{{ __('lab.enter_result_placeholder') }}">{{ old('result_value', $savedResult?->result_value) }}</textarea>
     </div>
 @endif

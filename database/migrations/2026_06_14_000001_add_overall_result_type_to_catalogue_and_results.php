@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -15,15 +16,15 @@ use Illuminate\Support\Facades\Schema;
  *   left untouched for full backward compatibility (old free-text results still
  *   display through the existing accessors).
  *
- * Column existence is guarded via getColumnListing() so the migration is
- * idempotent and safe to re-run on both sqlite (tests) and MariaDB/MySQL (dev).
- * No ->json() columns and no Schema::hasColumn() are used (MariaDB 10.1 dev DB).
+ * Column existence is guarded with a lean information_schema query on MySQL /
+ * MariaDB because Laravel's native introspection asks older MariaDB versions
+ * for generation_expression. SQLite keeps using the native column listing.
  */
 return new class extends Migration
 {
     public function up(): void
     {
-        $catalogueCols = Schema::getColumnListing('service_catalog');
+        $catalogueCols = $this->columnListing('service_catalog');
 
         Schema::table('service_catalog', function (Blueprint $table) use ($catalogueCols) {
             if (! in_array('overall_result_type', $catalogueCols, true)) {
@@ -52,7 +53,7 @@ return new class extends Migration
             }
         });
 
-        $resultCols = Schema::getColumnListing('lab_results');
+        $resultCols = $this->columnListing('lab_results');
 
         Schema::table('lab_results', function (Blueprint $table) use ($resultCols) {
             // Snapshot of the configured type at entry time (null for legacy rows).
@@ -86,7 +87,7 @@ return new class extends Migration
             'overall_result_negative_label', 'overall_result_true_label',
             'overall_result_false_label',
         ];
-        $existingCatalogue = Schema::getColumnListing('service_catalog');
+        $existingCatalogue = $this->columnListing('service_catalog');
         Schema::table('service_catalog', function (Blueprint $table) use ($catalogueCols, $existingCatalogue) {
             foreach ($catalogueCols as $col) {
                 if (in_array($col, $existingCatalogue, true)) {
@@ -99,7 +100,7 @@ return new class extends Migration
             'overall_result_type', 'overall_result_text', 'overall_result_numeric',
             'overall_result_boolean', 'overall_result_outcome', 'overall_result_unit',
         ];
-        $existingResults = Schema::getColumnListing('lab_results');
+        $existingResults = $this->columnListing('lab_results');
         Schema::table('lab_results', function (Blueprint $table) use ($resultCols, $existingResults) {
             foreach ($resultCols as $col) {
                 if (in_array($col, $existingResults, true)) {
@@ -107,5 +108,19 @@ return new class extends Migration
                 }
             }
         });
+    }
+
+    private function columnListing(string $table): array
+    {
+        if (DB::getDriverName() === 'sqlite') {
+            return Schema::getColumnListing($table);
+        }
+
+        return collect(DB::select(
+            'SELECT COLUMN_NAME AS column_name
+             FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?',
+            [$table]
+        ))->pluck('column_name')->all();
     }
 };

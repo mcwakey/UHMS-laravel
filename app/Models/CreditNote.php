@@ -29,6 +29,8 @@ class CreditNote extends Model
         'patient_id',
         'type',
         'status',
+        'is_reversal',
+        'reverses_credit_note_id',
         'amount',
         'reason',
         'notes',
@@ -51,6 +53,7 @@ class CreditNote extends Model
         return [
             'type' => CreditNoteType::class,
             'amount' => 'decimal:2',
+            'is_reversal' => 'boolean',
             'cancelled_at' => 'datetime',
             'accounting_posted_at' => 'datetime',
             'reversed_at' => 'datetime',
@@ -92,9 +95,19 @@ class CreditNote extends Model
         return $this->belongsTo(User::class, 'reversed_by');
     }
 
+    public function reversal()
+    {
+        return $this->hasOne(CreditNote::class, 'reverses_credit_note_id');
+    }
+
+    public function originalCreditNote()
+    {
+        return $this->belongsTo(CreditNote::class, 'reverses_credit_note_id');
+    }
+
     public function scopeActive($query)
     {
-        return $query->where('status', 'issued');
+        return $query->where('status', 'issued')->where('is_reversal', false);
     }
 
     public function getIsCancelledAttribute(): bool

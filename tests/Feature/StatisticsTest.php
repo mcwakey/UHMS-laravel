@@ -74,6 +74,23 @@ class StatisticsTest extends TestCase
 
     /* ── Staff performance is sensitive ── */
 
+    public function test_investigation_results_statistics_is_registered_and_loads(): void
+    {
+        $user = $this->userWith(['statistics.investigations.view']);
+        $data = app(StatisticsService::class)->build('investigation-results', []);
+
+        $this->assertSame('Investigation Results Statistics', $data['title']);
+        $this->assertSame(
+            ['Results Entered', 'Verified Results', 'Abnormal Results', 'Investigations Reported'],
+            collect($data['kpis'])->pluck('label')->all()
+        );
+
+        $this->actingAs($user)
+            ->get(route('admin.statistics.investigation-results'))
+            ->assertOk()
+            ->assertSee('Investigation Results Statistics');
+    }
+
     public function test_staff_performance_forbidden_with_only_umbrella(): void
     {
         $user = $this->userWith(['statistics.view']);

@@ -131,6 +131,9 @@ return [
     'remove_discount_reason'=> 'Motif de suppression de la remise',
     'retry'                 => 'Réessayer',
     'reversal'              => 'Annulation',
+    'reverse_entry'         => 'Annuler',
+    'confirm_reversal'      => 'Créer l’annulation',
+    'reverse_entry_warning' => 'L’écriture d’origine restera dans la piste d’audit. Une nouvelle écriture d’annulation liée sera créée et le solde de la facture sera recalculé.',
 
     // create.blade.php labels
     'new_invoice_title'     => 'Nouvelle facture',

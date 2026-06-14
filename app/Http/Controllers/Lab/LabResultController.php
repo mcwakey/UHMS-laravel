@@ -69,6 +69,22 @@ class LabResultController extends Controller
      */
     public function store(Request $request, LabRequestItem $item)
     {
+        $consumables = collect($request->input('consumables', []))
+            ->filter(function ($row) {
+                if (! is_array($row)) {
+                    return false;
+                }
+
+                return filled($row['product_id'] ?? null)
+                    || filled($row['quantity'] ?? null);
+            })
+            ->values()
+            ->all();
+
+        $request->merge([
+            'consumables' => $consumables ?: null,
+        ]);
+
         $resultType = ResultType::tryFrom($request->input('result_type', 'parameters'))
             ?? ResultType::PARAMETERS;
 
@@ -105,7 +121,9 @@ class LabResultController extends Controller
         if ($resultType === ResultType::RICHTEXT) {
             $rules['result_text'] = ['required', 'string'];
         } elseif ($resultType->isFileBased()) {
-            $rules['result_file'] = ['required', 'file', 'max:20480']; // 20MB
+            $rules['result_file'] = $item->result
+                ? ['nullable', 'file', 'max:20480']
+                : ['required', 'file', 'max:20480']; // 20MB
         } elseif ($typedOverall) {
             // Validate the configured overall result type. Canonical values only.
             $rules['overall_result_type'] = ['required', 'in:numeric,boolean,positive_negative'];
@@ -168,6 +186,7 @@ class LabResultController extends Controller
 
         // Persist criteria-based values if provided.
         if (!empty($validated['values'] ?? []) && $result instanceof LabResult) {
+            $result->values()->delete();
             $sort = 0;
             foreach ($validated['values'] as $criteriaId => $row) {
                 $value = $row['value'] ?? null;
@@ -187,7 +206,7 @@ class LabResultController extends Controller
         }
 
         // Record actual consumable usage (deducts stock from the lab/investigation location).
-        if ($result instanceof LabResult && $request->filled('consumables')) {
+        if ($result instanceof LabResult && ! empty($validated['consumables'] ?? [])) {
             try {
                 $visit   = $item->labRequest?->visit;
                 $service = $item->service ?? ($item->service_id ? \App\Models\ServiceCatalog::find($item->service_id) : null);
@@ -197,7 +216,7 @@ class LabResultController extends Controller
                         $service,
                         'investigation_result',
                         $result->id,
-                        $request->input('consumables', []),
+                        $validated['consumables'],
                         \Illuminate\Support\Facades\Auth::id(),
                     );
                 }

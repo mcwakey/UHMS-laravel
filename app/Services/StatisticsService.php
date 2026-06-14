@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ServiceCatalog;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,10 @@ use Illuminate\Support\Facades\DB;
  */
 class StatisticsService
 {
+    public function __construct(
+        private InvestigationResultSummaryService $investigationResultSummary,
+    ) {}
+
     public function catalogue(): array
     {
         return [
@@ -36,6 +41,7 @@ class StatisticsService
             'consultations' => ['title' => 'Consultation Statistics', 'icon' => 'ti-stethoscope', 'permission' => 'statistics.consultation.view'],
             'pharmacy' => ['title' => 'Pharmacy Statistics', 'icon' => 'ti-pill', 'permission' => 'statistics.pharmacy.view'],
             'investigations' => ['title' => 'Investigation Statistics', 'icon' => 'ti-microscope', 'permission' => 'statistics.investigations.view'],
+            'investigation-results' => ['title' => 'Investigation Results Statistics', 'icon' => 'ti-chart-histogram', 'permission' => 'statistics.investigations.view'],
             'procedures' => ['title' => 'Procedure / Theatre Statistics', 'icon' => 'ti-scalpel', 'permission' => 'statistics.procedures.view'],
             'emergency' => ['title' => 'Emergency Statistics', 'icon' => 'ti-ambulance', 'permission' => 'statistics.emergency.view'],
             'admission' => ['title' => 'Admission Statistics', 'icon' => 'ti-bed', 'permission' => 'statistics.admission.view'],
@@ -67,6 +73,7 @@ class StatisticsService
             'consultations' => $this->consultations($range),
             'pharmacy' => $this->pharmacy($range),
             'investigations' => $this->investigations($range),
+            'investigation-results' => $this->investigationResults($range),
             'procedures' => $this->procedures($range),
             'emergency' => $this->emergency($range),
             'admission' => $this->admission($range),
@@ -303,6 +310,121 @@ class StatisticsService
             'lists' => [
                 $this->rankedList('Most Requested Investigations', ['Investigation', 'Requests'], $top, 'label', 'total', 'admin.reports.investigations', $r),
             ],
+        ];
+    }
+
+    protected function investigationResults(array $r): array
+    {
+        $from = Carbon::parse($r['from'])->startOfDay();
+        $to = Carbon::parse($r['to'])->endOfDay();
+
+        $resultQuery = $this->table('lab_results')
+            ->whereBetween('performed_at', [$from, $to]);
+
+        $totalResults = (int) (clone $resultQuery)->count();
+        $verifiedResults = (int) (clone $resultQuery)->whereNotNull('verified_by')->count();
+        $abnormalResults = (int) (clone $resultQuery)->where('is_abnormal', true)->count();
+
+        $serviceIds = $this->table('lab_results')
+            ->join('lab_request_items', 'lab_request_items.id', '=', 'lab_results.lab_request_item_id')
+            ->whereBetween('lab_results.performed_at', [$from, $to])
+            ->whereNotNull('lab_request_items.service_id')
+            ->distinct()
+            ->pluck('lab_request_items.service_id');
+
+        $services = ServiceCatalog::query()
+            ->whereIn('id', $serviceIds)
+            ->orderBy('name')
+            ->get();
+
+        $summaries = $services->map(fn (ServiceCatalog $service) => [
+            'service' => $service,
+            'summary' => $this->investigationResultSummary->summarise($service, $from, $to),
+        ]);
+
+        $outcomes = $summaries
+            ->where('summary.type', ServiceCatalog::OVERALL_RESULT_POSITIVE_NEGATIVE)
+            ->values();
+        $booleans = $summaries
+            ->where('summary.type', ServiceCatalog::OVERALL_RESULT_BOOLEAN)
+            ->values();
+        $numeric = $summaries
+            ->where('summary.type', ServiceCatalog::OVERALL_RESULT_NUMERIC)
+            ->values();
+        $freeText = $summaries
+            ->where('summary.type', ServiceCatalog::OVERALL_RESULT_FREE_TEXT)
+            ->values();
+
+        $typeCounts = collect([
+            'Positive / Negative' => $outcomes->sum('summary.total_tested'),
+            'Yes / No' => $booleans->sum('summary.total_tested'),
+            'Numeric' => $numeric->sum('summary.count'),
+            'Narrative' => $freeText->sum('summary.completed_count'),
+        ]);
+
+        return [
+            'kpis' => [
+                $this->kpi('Results Entered', $totalResults, 'number', 'primary'),
+                $this->kpi('Verified Results', $verifiedResults, 'number', 'success'),
+                $this->kpi('Abnormal Results', $abnormalResults, 'number', 'danger'),
+                $this->kpi('Investigations Reported', $services->count(), 'number', 'info'),
+            ],
+            'charts' => [
+                $this->donut(
+                    'investigation_result_types',
+                    'Results by Configured Type',
+                    $typeCounts->keys()->all(),
+                    $typeCounts->values()->all()
+                ),
+            ],
+            'lists' => array_values(array_filter([
+                $outcomes->isEmpty() ? null : [
+                    'title' => 'Positive / Negative Results',
+                    'columns' => ['Investigation', 'Positive', 'Negative', 'Positive Rate', 'Total'],
+                    'rows' => $outcomes->map(fn ($row) => ['cells' => [
+                        $row['service']->name,
+                        $row['summary']['positive_count'],
+                        $row['summary']['negative_count'],
+                        $row['summary']['positive_rate'].'%',
+                        $row['summary']['total_tested'],
+                    ]])->all(),
+                ],
+                $booleans->isEmpty() ? null : [
+                    'title' => 'Yes / No Results',
+                    'columns' => ['Investigation', 'Yes / True', 'No / False', 'Yes Rate', 'Total'],
+                    'rows' => $booleans->map(fn ($row) => ['cells' => [
+                        $row['service']->name,
+                        $row['summary']['true_count'],
+                        $row['summary']['false_count'],
+                        $row['summary']['true_rate'].'%',
+                        $row['summary']['total_tested'],
+                    ]])->all(),
+                ],
+                $numeric->isEmpty() ? null : [
+                    'title' => 'Numeric Results',
+                    'columns' => ['Investigation', 'Average', 'Minimum', 'Maximum', 'Normal', 'Abnormal'],
+                    'rows' => $numeric->map(function ($row) {
+                        $unit = $row['summary']['unit'] ? ' '.$row['summary']['unit'] : '';
+
+                        return ['cells' => [
+                            $row['service']->name,
+                            $row['summary']['average_value'] === null ? '-' : $row['summary']['average_value'].$unit,
+                            $row['summary']['minimum_value'] === null ? '-' : $row['summary']['minimum_value'].$unit,
+                            $row['summary']['maximum_value'] === null ? '-' : $row['summary']['maximum_value'].$unit,
+                            $row['summary']['normal_count'] ?? '-',
+                            $row['summary']['abnormal_count'] ?? '-',
+                        ]];
+                    })->all(),
+                ],
+                $freeText->isEmpty() ? null : [
+                    'title' => 'Narrative Results',
+                    'columns' => ['Investigation', 'Results Entered'],
+                    'rows' => $freeText->map(fn ($row) => ['cells' => [
+                        $row['service']->name,
+                        $row['summary']['completed_count'],
+                    ]])->all(),
+                ],
+            ])),
         ];
     }
 

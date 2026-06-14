@@ -134,7 +134,8 @@ return [
 
     'billing' => [
         'credit_note_issued'     => ':type :number émis.',
-        'credit_note_cancelled'  => 'Note de crédit :number annulée.',
+        'credit_note_cancelled'  => 'Note de crédit :number contrepassée.',
+        'credit_note_reversed'   => 'Ajustement :number contrepassé avec la trace :reversal.',
         'receivable_reallocated' => 'Responsabilité du payeur réallouée avec succès.',
         'sponsor_created'        => 'Sponsor :name créé.',
         'sponsor_updated'        => 'Sponsor :name mis à jour.',

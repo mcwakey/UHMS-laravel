@@ -19,7 +19,13 @@ class CreditNoteController extends Controller
 
     public function index(Request $request)
     {
-        $query = CreditNote::with(['invoice:id,invoice_number', 'patient:id,first_name,last_name,patient_number', 'issuedBy:id,name'])
+        $query = CreditNote::with([
+            'invoice:id,invoice_number',
+            'patient:id,first_name,last_name,patient_number',
+            'issuedBy:id,first_name,last_name',
+            'originalCreditNote:id,credit_note_number',
+            'reversal:id,credit_note_number,reverses_credit_note_id',
+        ])
             ->latest();
 
         if ($request->filled('type')) {
@@ -66,8 +72,15 @@ class CreditNoteController extends Controller
                 'reason' => $cn->reason,
                 'issued_by' => $cn->issuedBy?->name,
                 'created_at_display' => optional($cn->created_at)->format('d M Y'),
-                'can_cancel' => $cn->status === 'issued' && ($user?->can('credit_notes.create') ?? false),
-                'cancel_url' => route('admin.billing.credit-notes.cancel', $cn),
+                'is_reversal' => (bool) $cn->is_reversal,
+                'original_number' => $cn->originalCreditNote?->credit_note_number,
+                'reversal_number' => $cn->reversal?->credit_note_number,
+                'can_reverse' => $cn->status === 'issued'
+                    && ! $cn->is_reversal
+                    && ($cn->type === CreditNoteType::WRITE_OFF
+                        ? (($user?->can('credit_notes.write_off') ?? false) || ($user?->can('billing.write_off.reverse') ?? false))
+                        : (($user?->can('credit_notes.create') ?? false) || ($user?->can('billing.credit_note.reverse') ?? false))),
+                'reverse_url' => route('admin.billing.credit-notes.reverse', $cn),
             ]),
             'stats' => $stats,
             'filters' => $request->only(['search', 'type', 'status']),
@@ -171,20 +184,28 @@ class CreditNoteController extends Controller
             ->with('success', __('messages.billing.credit_note_issued', ['type' => $creditNote->type->label(), 'number' => $creditNote->credit_note_number]));
     }
 
-    public function cancel(Request $request, CreditNote $creditNote)
+    public function reverse(Request $request, CreditNote $creditNote)
     {
         $data = $request->validate([
             'reason' => ['required', 'string', 'max:500'],
         ]);
 
         try {
-            $this->creditNoteService->cancel($creditNote, $data['reason']);
+            $reversal = $this->creditNoteService->reverse($creditNote, $data['reason']);
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             return back()->with('error', $e->getMessage());
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', __('messages.billing.credit_note_cancelled', ['number' => $creditNote->credit_note_number]));
+        return back()->with('success', __('messages.billing.credit_note_reversed', [
+            'number' => $creditNote->credit_note_number,
+            'reversal' => $reversal->credit_note_number,
+        ]));
+    }
+
+    public function cancel(Request $request, CreditNote $creditNote)
+    {
+        return $this->reverse($request, $creditNote);
     }
 }

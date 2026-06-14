@@ -48,9 +48,9 @@ class LabRequestItem extends Model
     }
 
     /**
-     * Whether this item's bill is settled (paid). Items with no billable charge
-     * (no invoice line) are considered settled. Used to gate result entry so an
-     * outpatient/walk-in must pay before their results are entered.
+     * Whether this item's bill needs no further cash payment. Items with no
+     * invoice line are considered settled. Paid, covered, waived, or fully
+     * adjusted invoices can proceed to result entry.
      */
     public function isBillSettled(): bool
     {
@@ -62,7 +62,10 @@ class LabRequestItem extends Model
             ? $this->invoiceItem
             : InvoiceItem::find($this->invoice_item_id);
 
-        return $invoiceItem ? $invoiceItem->isPaid() : true;
+        return $invoiceItem
+            ? app(\App\Services\Billing\InvoiceItemSettlementService::class)
+                ->canProceedWithoutCashPayment($invoiceItem)
+            : true;
     }
 
     /**

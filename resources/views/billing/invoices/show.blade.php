@@ -17,6 +17,13 @@
     $canViewAccountingPosting = $currentUser?->can('accounting.posting.view') ?? false;
     $canViewAccountingFailures = $currentUser?->can('accounting.posting.failure.view') ?? false;
     $canRetryAccountingPosting = $currentUser?->can('accounting.posting.retry') ?? false;
+    $canReversePayments = $currentUser?->can('payments.refund') ?? false;
+    $canReverseCreditNotes = ($currentUser?->can('credit_notes.create') ?? false)
+        || ($currentUser?->can('billing.credit_note.reverse') ?? false);
+    $canReverseWriteOffs = ($currentUser?->can('credit_notes.write_off') ?? false)
+        || ($currentUser?->can('billing.write_off.reverse') ?? false);
+    $canReverseSettlements = $canReversePayments || $canReverseCreditNotes || $canReverseWriteOffs;
+    $showSettlementActions = $canViewAccountingPosting || $canReverseSettlements;
     $accountingStatusColors = [
         'pending' => 'secondary',
         'posted' => 'success',
@@ -508,6 +515,8 @@
                                 <th>{{ __('invoices.approved_by') }}</th>
                                 @if($canViewAccountingPosting)
                                 <th>{{ __('invoices.journal_entry') }}</th>
+                                @endif
+                                @if($showSettlementActions)
                                 <th>{{ __('common.action') }}</th>
                                 @endif
                             </tr>
@@ -539,7 +548,29 @@
                                         <div class="small text-danger">{{ $history['accounting_error'] }}</div>
                                     @endif
                                 </td>
+                                @endif
+                                @if($showSettlementActions)
                                 <td>
+                                    @php
+                                        $canReverseHistory = ($history['can_reverse'] ?? false)
+                                            && match ($history['reversal_kind'] ?? null) {
+                                                'payment' => $canReversePayments,
+                                                'credit_note' => $canReverseCreditNotes,
+                                                'write_off' => $canReverseWriteOffs,
+                                                default => false,
+                                            };
+                                    @endphp
+                                    @if($canReverseHistory)
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#reverseSettlementModal"
+                                                data-reverse-url="{{ $history['reverse_url'] }}"
+                                                data-reverse-reference="{{ $history['reference'] }}"
+                                                data-reverse-type="{{ $history['type'] }}">
+                                            <i class="ti ti-arrow-back-up me-1"></i>{{ __('invoices.reverse_entry') }}
+                                        </button>
+                                    @endif
                                     @if($history['accounting_status'] === 'failed' && $canRetryAccountingPosting)
                                         <form method="POST" action="{{ route('admin.accounting.postings.retry') }}" class="d-inline">
                                             @csrf
@@ -549,7 +580,7 @@
                                                 <i class="ti ti-refresh me-1"></i>{{ __('invoices.retry') }}
                                             </button>
                                         </form>
-                                    @else
+                                    @elseif(! $canReverseHistory)
                                         <span class="text-muted">—</span>
                                     @endif
                                 </td>
@@ -557,7 +588,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="{{ $canViewAccountingPosting ? 9 : 7 }}" class="text-center text-muted py-3">{{ __('invoices.no_adjustments') }}</td>
+                                <td colspan="{{ 7 + ($canViewAccountingPosting ? 1 : 0) + ($showSettlementActions ? 1 : 0) }}" class="text-center text-muted py-3">{{ __('invoices.no_adjustments') }}</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -993,11 +1024,59 @@
 </div>
 @endcan
 
+@if($canReverseSettlements)
+<div class="modal fade" id="reverseSettlementModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" id="reverseSettlementForm">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="ti ti-arrow-back-up me-1"></i>{{ __('invoices.reverse_entry') }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('common.close') }}"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">
+                        <strong id="reverseSettlementType"></strong>
+                        <span id="reverseSettlementReference"></span>
+                    </p>
+                    <div class="alert alert-warning py-2 small">
+                        {{ __('invoices.reverse_entry_warning') }}
+                    </div>
+                    <label class="form-label">{{ __('payments.reversal_reason') }} <span class="text-danger">*</span></label>
+                    <textarea name="reason" id="reverseSettlementReason" class="form-control" rows="3" maxlength="500" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="ti ti-arrow-back-up me-1"></i>{{ __('invoices.confirm_reversal') }}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
 @endsection
 
 @section('scripts')
 <script>
 $(function() {
+    const reverseSettlementModal = document.getElementById('reverseSettlementModal');
+    if (reverseSettlementModal) {
+        reverseSettlementModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            if (!button) return;
+
+            document.getElementById('reverseSettlementForm').setAttribute('action', button.getAttribute('data-reverse-url'));
+            document.getElementById('reverseSettlementType').textContent = button.getAttribute('data-reverse-type') || '';
+            document.getElementById('reverseSettlementReference').textContent = button.getAttribute('data-reverse-reference') || '';
+            document.getElementById('reverseSettlementReason').value = '';
+        });
+    }
+
     // Discount modal wiring
     const discountModal = document.getElementById('discountModal');
     if (discountModal) {

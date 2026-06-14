@@ -1029,7 +1029,8 @@ Route::middleware('auth')->group(function () {
                 Route::get('create', [CreditNoteController::class, 'create'])->name('create')->middleware('can:credit_notes.create');
                 Route::get('available', [CreditNoteController::class, 'available'])->name('available');
                 Route::post('/', [CreditNoteController::class, 'store'])->name('store')->middleware('can:credit_notes.create');
-                Route::patch('{creditNote}/cancel', [CreditNoteController::class, 'cancel'])->name('cancel')->middleware('can:credit_notes.create');
+                Route::post('{creditNote}/reverse', [CreditNoteController::class, 'reverse'])->name('reverse');
+                Route::patch('{creditNote}/cancel', [CreditNoteController::class, 'cancel'])->name('cancel');
             });
 
             // Corporate sponsors
@@ -1092,7 +1093,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [StatisticsController::class, 'dashboard'])->name('dashboard');
             foreach ([
                 'activity', 'diagnoses', 'complaints', 'consultations', 'pharmacy',
-                'investigations', 'procedures', 'emergency', 'admission', 'mar',
+                'investigations', 'investigation-results', 'procedures', 'emergency', 'admission', 'mar',
                 'billing', 'claims', 'stock', 'blood-bank', 'staff-performance',
             ] as $statisticReport) {
                 Route::get($statisticReport, [StatisticsController::class, 'show'])
