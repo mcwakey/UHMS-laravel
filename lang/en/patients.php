@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'age_years'                 => ':agey',
     'title' => 'Patients',
     'view_patient_profile' => 'View patient profile',
     'default_tier_used' => 'If no tier is chosen, the provider\'s default tier will be used.',

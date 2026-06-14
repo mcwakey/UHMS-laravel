@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'age_years'                 => ':age ans',
     'title' => 'Patients',
     'view_patient_profile' => 'Voir le profil du patient',
     'default_tier_used' => 'Si aucun niveau n\'est choisi, le niveau par défaut du prestataire sera utilisé.',

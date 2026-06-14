@@ -5,31 +5,27 @@ There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
 Do not try to read it.
 Follow this prompt directly.
 
-Localisation is almost complete, but not yet closed.
+Active-runtime localisation burn-down is complete.
 
-Phase 15F reduced active runtime candidates from 192 to 34. All Blade worklist batches were processed. The remaining active-runtime candidates are now mostly JavaScript/manual-review items.
-
-Do not move to dashboards.
-Do not move to the Full Test Suite yet.
-Do not claim localisation is complete until the remaining 34 active runtime candidates are fixed or formally documented as false positives with evidence.
-
-# UHMS Localisation Phase 15G — Final Runtime JS / Manual-Review Burn-Down
-
-## Goal
-
-Reduce the remaining active runtime localisation candidates from:
-
-```text
-Active runtime candidates: 34
-```
-
-to:
+The latest localisation audit shows:
 
 ```text
 Active runtime candidates: 0
 ```
 
-If true zero is not possible, every remaining item must be documented with exact evidence proving it is not user-facing active runtime text.
+Phase 15G confirms that active runtime candidates went from 34 to 0, with remaining JavaScript/manual-review items either translated or proven as false positives/non-active with evidence.
+
+Do not restart broad translation work.
+Do not touch dormant demo/template files.
+Do not re-open already completed phases unless a test proves a regression.
+
+# UHMS Localisation Phase 16 — QA Gates, Regression Tests, and Localisation Lock
+
+## Goal
+
+Lock the completed localisation work with automated and manual QA gates so future development cannot reintroduce untranslated active-runtime UI strings.
+
+This phase must prepare the system for the Full Test Suite by adding localisation-specific tests, audit commands, documentation, and verification gates.
 
 ---
 
@@ -39,486 +35,261 @@ Read:
 
 ```text
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
-docs/LOCALISATION_PHASE_15F_CLINICAL_ADMIN_BILLING_BURNDOWN_REPORT.md
+docs/LOCALISATION_PHASE_15G_FINAL_RUNTIME_JS_MANUAL_REVIEW_REPORT.md
 ```
 
-Use the active runtime worklist in `LOCALISATION_COVERAGE_AUDIT_REPORT.md` as the source of truth.
-
----
-
-# 2. Remaining Active Runtime Worklist
-
-The latest audit shows only these active runtime candidates remain:
-
-```text
-resources/js/script.js — 23 candidates
-resources/js/doctors.js — 3 candidates
-resources/views/patients/partials/insurance-add-modal-scripts.blade.php — 4 candidates
-resources/views/admin/analyzers/index.blade.php — 3 candidates
-resources/views/claims/partials/clinical-mirror.blade.php — 1 candidate
-```
-
-Process each one carefully.
-
----
-
-# 3. JavaScript Localisation Rule
-
-Do not wrap plain JavaScript files with Laravel `__()` directly.
-
-For active JavaScript strings, use the existing `window.UHMS_I18N` bridge.
-
-Do not introduce:
-
-```text
-i18next
-Vue
-React
-new frontend localisation package
-new localisation framework
-```
-
-If a JS string is active and user-facing, expose it from the relevant Blade layout/page as translated JSON and consume it in JS.
-
-Example pattern:
-
-```blade
-<script>
-    window.UHMS_I18N = Object.assign(window.UHMS_I18N || {}, {
-        loading: @json(__('common.loading')),
-        error: @json(__('common.error')),
-        confirm_delete: @json(__('common.confirm_delete')),
-    });
-</script>
-```
-
-Then in JavaScript:
-
-```js
-const t = window.UHMS_I18N || {};
-alert(t.error || 'Error');
-```
-
-Fallback strings may remain in English only as defensive fallback, but the displayed runtime string must come from `window.UHMS_I18N`.
-
----
-
-# 4. Process `resources/js/script.js`
-
-Review all 23 scanner candidates.
-
-For each candidate, decide one of:
-
-```text
-A. Active user-facing string — translate through window.UHMS_I18N
-B. Dormant/demo/template string — document as false positive with evidence
-C. Internal selector/config key — document as false positive
-```
-
-If active:
-
-* add keys to the correct language namespace
-* expose translated values through the existing global layout or page-specific Blade
-* update `resources/js/script.js` to use the translated values
-* preserve existing JS behavior
-
-Do not break:
-
-* modals
-* notifications
-* DataTables
-* Select2
-* date pickers
-* charts
-* forms
-* dashboard widgets
-* template initialization
-
-If strings are demo examples from unused template widgets, document why they are not active route-linked UI.
-
----
-
-# 5. Process `resources/js/doctors.js`
-
-Review all 3 scanner candidates.
-
-For each candidate, decide:
-
-```text
-A. Active doctor/staff UI string — translate through window.UHMS_I18N
-B. Dormant/demo string — document as false positive
-C. Internal code/config — document as false positive
-```
-
-If active, add the needed translation keys and wire through the Blade/layout i18n bridge.
-
-Do not change doctor workflow or dashboard behavior.
-
----
-
-# 6. Process `patients/partials/insurance-add-modal-scripts.blade.php`
-
-Fix:
-
-```text
-resources/views/patients/partials/insurance-add-modal-scripts.blade.php
-```
-
-This is a Blade JS partial, so it may safely use:
-
-```blade
-@json(__('patients.some_key'))
-```
-
-or a page-level i18n map.
-
-Translate the 4 remaining candidates if they are user-facing.
-
-Do not translate:
-
-* insurance provider names
-* sponsor names
-* policy numbers
-* membership numbers
-* patient-entered values
-* database values
-
-Do not change insurance/sponsor logic.
-
----
-
-# 7. Process `admin/analyzers/index.blade.php`
-
-Fix:
-
-```text
-resources/views/admin/analyzers/index.blade.php
-```
-
-There are 3 residual candidates.
-
-Re-check the current file, because analyzer pages were already processed earlier.
-
-For each remaining candidate:
-
-```text
-A. translate if user-facing
-B. document as false positive if already translated downstream
-C. document as false positive if not displayed
-```
-
-Use or extend:
-
-```text
-lang/en/analyzers.php
-lang/fr/analyzers.php
-```
-
-Do not change analyzer connection, mapping, diagnostics, or lab integration logic.
-
----
-
-# 8. Process `claims/partials/clinical-mirror.blade.php`
-
-Fix or document:
-
-```text
-resources/views/claims/partials/clinical-mirror.blade.php
-```
-
-This is confidentiality-sensitive.
-
-Review the 1 candidate carefully.
-
-If it is a static UI label, translate it.
-
-If it is clinical data, clinician-entered text, diagnosis text, procedure name, medication name, investigation/test name, or claim content from the database, do not translate it. Document exactly why it remains.
-
-Do not expose any additional clinical data.
-Do not change claim generation logic.
-Do not change insurance/NHIS behavior.
-Remember: NHIS is just another insurance provider. Do not hardcode NHIS.
-
----
-
-# 9. Class-A Service Candidate Review
-
-The audit still reports:
-
-```text
-67 class-A user-facing service-output candidates
-```
-
-Review these, but do not blindly translate all of them.
-
-For each class-A candidate, decide:
-
-```text
-A. Confirmed user-facing label/output — translate
-B. Stored canonical event title — leave unchanged
-C. Audit/accounting/journal description — leave unchanged
-D. SQL/internal expression — mark false positive
-E. Already translated downstream — document
-```
-
-Priority services to review:
-
-```text
-app/Services/ConsultationNextPatientService.php
-app/Services/FinancialReportService.php
-app/Services/PatientMergePreviewService.php
-app/Services/ProcedureReportService.php
-app/Services/StatisticsService.php
-app/Services/ReportService.php
-```
-
-Safe examples:
-
-```php
-'label' => __('accounting.revenue')
-```
-
-```php
-'message' => __('consultations.payment_ready')
-```
-
-Unsafe examples:
-
-```text
-stored event titles
-audit descriptions
-journal entry descriptions
-SQL expressions
-canonical workflow titles
-historical records
-```
-
-Do not alter stored semantics.
-
----
-
-# 10. Translation Rules
-
-Use Laravel localisation only.
-
-Use:
-
-```php
-__('module.key')
-```
-
-or:
-
-```blade
-{{ __('module.key') }}
-```
-
-For placeholders:
-
-```php
-__('patients.insurance_added_for_patient', ['patient' => $patient->name])
-```
-
-Do not concatenate translated fragments.
-
-Bad:
-
-```php
-'Patient: ' . $patient->name
-```
-
-Good:
-
-```php
-__('patients.patient_name', ['name' => $patient->name])
-```
-
----
-
-# 11. Language File Rules
-
-Use existing namespaces where possible.
-
-For JS/global strings, prefer:
-
-```text
-common.php
-messages.php
-patients.php
-analyzers.php
-claims.php
-consultations.php
-accounting.php
-reports.php
-statistics.php
-```
-
-Do not dump domain-specific strings into `common.php`.
-
-Use `common.php` only for genuinely generic UI strings:
-
-```text
-save
-cancel
-close
-search
-filter
-clear
-actions
-status
-active
-inactive
-view
-edit
-delete
-yes
-no
-loading
-error
-success
-confirm
-warning
-```
-
-Every English key must exist in French.
-Every French key must exist in English.
-
----
-
-# 12. Do Not Translate These
-
-Do not translate:
-
-* patient names
-* staff names
-* doctor names
-* supplier names
-* medicine names from database
-* product names from database
-* service names from database unless system-defined hardcoded labels
-* diagnosis text typed by clinicians
-* clinical notes typed by clinicians
-* lab test names from catalogue/database
-* insurance provider names
-* sponsor names
-* permission slugs
-* role slugs
-* route names
-* database column names
-* internal enum values
-* CSS classes
-* JS selectors
-* data attributes
-* clinical units such as mmHg, bpm, kg, cm, °C, %, SpO2
-* currency symbols
-* UHMS acronym
-
----
-
-# 13. Security Rules
-
-Do not weaken permissions.
-
-Preserve:
-
-```text
-@can
-@cannot
-Gate
-policies
-middleware
-role checks
-permission checks
-financial visibility checks
-stock-cost visibility checks
-clinical confidentiality checks
-```
-
-Do not expose:
-
-```text
-restricted clinical data
-financial data
-accounting data
-stock cost
-insurance financial details
-sponsor financial details
-audit logs
-user permissions
-```
-
-No business logic should be moved into Blade.
-
----
-
-# 14. Scanner Burn-Down
-
-Run the scanner after each mini-section:
-
-```bash
-php scripts/localisation-audit.php
-```
-
-Track before/after for:
-
-```text
-script.js
-doctors.js
-insurance-add-modal-scripts
-admin/analyzers/index
-claims clinical mirror
-class-A services
-```
-
-Target:
+Use these as the current source of truth:
 
 ```text
 Active runtime candidates: 0
 ```
 
-If any remain, document exact reason and proof.
+---
+
+# 2. Do Not Re-Translate Completed Runtime Pages
+
+Do not make broad Blade translation changes unless a failing test identifies a real active-runtime untranslated string.
+
+Do not edit dormant template/demo pages unless they become route-linked.
+
+Do not translate:
+
+* database values
+* patient names
+* doctor names
+* medicine names
+* product names
+* service names from database
+* clinical notes
+* diagnosis text
+* lab test names from database
+* insurance provider names
+* sponsor names
+* role slugs
+* permission slugs
+* route names
+* database column names
+* protocol names such as HL7 v2.x and ASTM E1394
+* clinical units
+* currency symbols
+* UHMS acronym
 
 ---
 
-# 15. Required Documentation
+# 3. Add Localisation Regression Tests
 
-Create:
+Create or update automated tests for localisation safety.
+
+Add tests under an appropriate namespace, for example:
 
 ```text
-docs/LOCALISATION_PHASE_15G_FINAL_RUNTIME_JS_MANUAL_REVIEW_REPORT.md
+tests/Feature/Localization/
 ```
 
-Include:
+Recommended test files:
 
-* summary
-* starting active runtime candidate count: 34
-* ending active runtime candidate count
-* per-file before/after counts
-* JS strings translated
-* JS strings documented as false positives
-* `window.UHMS_I18N` wiring added/used
-* insurance modal script result
-* analyzer residual result
-* clinical mirror decision
-* class-A service review result
-* service candidates translated
-* service candidates deferred with reasons
-* language files changed
-* namespaces created
-* keys added
-* EN/FR parity result
-* PHP lint result
-* view cache result
-* scanner result
-* security/permissions confirmation
-* manual French verification checklist
-* recommendation for next phase
-
-Do not claim localisation complete unless active runtime candidates are zero or every remaining candidate is proven false-positive/non-user-facing.
+```text
+tests/Feature/Localization/LanguageParityTest.php
+tests/Feature/Localization/ActiveRuntimeLocalizationAuditTest.php
+tests/Feature/Localization/FrenchRouteSmokeTest.php
+tests/Feature/Localization/ValidationLocalizationTest.php
+tests/Feature/Localization/JavaScriptLocalizationBridgeTest.php
+```
 
 ---
 
-# 16. Verification Commands
+# 4. Language Parity Test
+
+Create a test that recursively flattens all keys in:
+
+```text
+lang/en
+lang/fr
+```
+
+The test must fail if:
+
+* an English key is missing in French
+* a French key is missing in English
+* nested keys differ
+* a language file exists in one locale but not the other
+
+The test must print clear output showing:
+
+```text
+missing key
+locale
+file
+```
+
+Do not compare translated values.
+Only compare key structure.
+
+---
+
+# 5. Active Runtime Audit Test
+
+Create a test or command wrapper that runs:
+
+```bash
+php scripts/localisation-audit.php
+```
+
+The test must fail if:
+
+```text
+Active runtime candidates > 0
+```
+
+The test must not fail for:
+
+```text
+demo_template_candidates
+known_false_positives
+service_title_manual_review candidates
+language-file candidates
+```
+
+But the test must display their counts so developers remain aware of them.
+
+Expected current baseline:
+
+```text
+Active runtime candidates: 0
+```
+
+---
+
+# 6. French Route Smoke Test
+
+Create a route smoke test that checks critical GET pages in French mode.
+
+It should not attempt to crawl everything blindly if authentication/permissions make that unstable. Instead, build a curated list of critical active-runtime routes across major modules.
+
+Include routes for:
+
+```text
+auth/login
+dashboard
+patients
+visits
+consultations
+appointments
+billing/invoices
+payments
+pharmacy
+lab
+investigations
+emergency
+wards
+theatre
+stock
+store
+accounting
+reports
+settings
+notifications
+queue
+HR
+blood bank
+```
+
+For each route:
+
+* authenticate as a user with appropriate permissions
+* set locale to French
+* request the page
+* assert HTTP 200 or expected redirect if permission-gated
+* assert the page does not contain obvious untranslated UI markers from the old audit where possible
+
+Do not assert against patient-entered/database content.
+
+---
+
+# 7. Validation Localisation Test
+
+Add tests for French validation messages.
+
+Cover at least:
+
+```text
+auth/profile fields
+patient fields
+visit fields
+consultation fields
+billing/payment fields
+stock/store fields
+emergency fields
+```
+
+The test should confirm that validation errors use French field attributes where available.
+
+Do not require every possible validation message to be manually listed; test representative coverage.
+
+---
+
+# 8. JavaScript I18N Bridge Test
+
+Add a test or static check for JavaScript localisation bridges.
+
+Confirm:
+
+* active Blade-embedded JS uses `@json(__('...'))`
+* active JS pages expose needed values through `window.UHMS_I18N` or page-level I18N maps
+* `resources/js/script.js` and `resources/js/doctors.js` remain documented as dormant/demo false positives unless they become route-linked
+
+If those JS files later become active, the test or documentation must force them to be wired through `window.UHMS_I18N`.
+
+---
+
+# 9. Protect False Positive Rules
+
+The scanner was updated in Phase 15G to reclassify specific known false positives.
+
+Add comments/tests to ensure these remain narrow and safe:
+
+```text
+HL7 v2.x
+ASTM E1394
+resources/js/script.js demo-widget fragments
+resources/js/doctors.js demo-widget fragments
+```
+
+Do not create broad rules that hide real untranslated active UI strings.
+
+If any false-positive rule is widened, require a test or report note explaining why.
+
+---
+
+# 10. Optional Service Output Localisation Review
+
+The audit still has a `service_title_manual_review` bucket.
+
+This is not active-runtime UI debt, but review the safe display-only candidates if time allows.
+
+Priority optional candidates:
+
+```text
+app/Services/StatisticsService.php
+app/Services/PatientMergePreviewService.php
+```
+
+Rules:
+
+* translate only confirmed user-facing display labels
+* do not translate stored event titles
+* do not translate audit records
+* do not translate journal descriptions
+* do not translate SQL/internal expressions
+* do not alter canonical workflow values
+
+If touched, add EN/FR keys and update tests.
+
+If not touched, document as deferred non-blocking debt.
+
+---
+
+# 11. Full Verification Commands
 
 Run:
 
@@ -547,6 +318,18 @@ php scripts/localisation-audit.php
 Run:
 
 ```bash
+php artisan test
+```
+
+If the full test suite is too large or currently unstable, run the new localisation tests first:
+
+```bash
+php artisan test tests/Feature/Localization
+```
+
+Run:
+
+```bash
 git diff --check
 ```
 
@@ -558,62 +341,93 @@ find storage/framework/views -type f -name "*.php" -print0 | xargs -0 -n1 php -l
 
 ---
 
-# 17. Manual French Verification
+# 12. Manual French QA Checklist
 
-Switch the app to French and verify:
+Switch app to French and manually verify a small release-critical sample:
 
 ```text
-global JS behaviours from script.js
-doctor JS behaviours from doctors.js
-patient insurance add modal
-analyzer index
-claims clinical mirror area
-consultation next-patient/payment-ready output if touched
-financial reports if service labels touched
-patient merge preview if service labels touched
-procedure reports if service labels touched
-statistics/report labels if touched
+login
+dashboard
+patients
+visits/create
+consultation show
+pharmacy dispense
+billing invoice show
+payment page
+emergency show
+wards/beds
+theatre show
+stock balances
+purchase orders
+accounting settings
+reports hub
+settings/profile
+notifications
+queue board
 ```
 
 Check:
 
-* alerts
-* confirm dialogs
-* modal messages
-* dynamic generated HTML
+* page title
+* breadcrumbs
+* headings
+* forms
 * placeholders
-* empty states
 * buttons
-* status text
-* service-generated labels
-* no regression in JS behaviour
+* modals
+* alerts
+* validation errors
+* JavaScript confirms/alerts
+* empty states
+* print/PDF labels where relevant
 * no clinical/financial data exposure
+* no permission regression
 
 ---
 
-# 18. Acceptance Criteria
+# 13. Documentation Required
 
-Phase 15G is complete only when:
+Create:
 
-* all 34 remaining active runtime candidates are fixed or documented with proof
-* active runtime candidate count is zero or every remaining candidate is proven non-user-facing/false-positive
-* JS active strings use `window.UHMS_I18N`
-* insurance modal script is translated or documented
-* analyzer residual strings are fixed or documented
-* clinical mirror candidate is fixed or documented safely
-* class-A service outputs are reviewed
-* confirmed user-facing service labels are translated
-* stored/audit/journal/SQL semantics remain unchanged
-* EN/FR parity passes
+```text
+docs/LOCALISATION_PHASE_16_QA_GATES_AND_REGRESSION_LOCK_REPORT.md
+```
+
+Include:
+
+* summary
+* confirmation of starting active runtime count: 0
+* tests added
+* commands run
+* language parity result
+* audit result
+* French route smoke result
+* validation localisation result
+* JavaScript bridge result
+* false-positive protection notes
+* optional service-output review result
+* manual QA checklist
+* known non-blocking localisation debt
+* recommendation for next phase
+
+---
+
+# 14. Acceptance Criteria
+
+Phase 16 is complete only when:
+
+* active runtime candidates remain 0
+* EN/FR parity test passes
+* localisation audit test passes
+* French route smoke tests pass or document permission-gated redirects
+* validation localisation tests pass
+* JavaScript localisation bridge checks pass
+* false-positive rules are documented and narrow
 * PHP lint passes
 * view cache compiles
-* localisation scanner runs
-* permissions are unchanged
-* clinical confidentiality remains protected
-* financial visibility remains protected
+* no permission checks are weakened
+* no clinical/financial data exposure is introduced
 * no business logic is moved into Blade
-* no new localisation framework is introduced
-* no new frontend package is introduced
 * documentation report is created
 
-Proceed with UHMS Localisation Phase 15G now.
+Proceed with UHMS Localisation Phase 16 now.

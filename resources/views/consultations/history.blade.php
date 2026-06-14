@@ -1,5 +1,5 @@
 ﻿@extends('layouts.app')
-@section('title', 'Consultation Summary - ' . $visit->visit_number)
+@section('title', __('consultations.history.page_title', ['visit' => $visit->visit_number]))
 
 @push('styles')
 <style>
@@ -138,25 +138,46 @@
     $insurance = $visit->relationLoaded('visitInsurance') ? $visit->visitInsurance : null;
     $latestVitals = $visit->vitals->first();
     $sectionLabels = [
-        'complaints' => 'Complaints',
-        'history_of_presenting_complaint' => 'History of Presenting Complaint',
-        'examination' => 'Examination Findings',
-        'diagnoses' => 'Diagnoses',
-        'investigations' => 'Investigations',
-        'treatments' => 'Treatments',
-        'prescriptions' => 'Prescriptions',
-        'procedures' => 'Procedures',
-        'tasks' => 'Tasks / Follow-up / Instructions',
-        'notes' => 'Clinical Notes',
+        'complaints' => __('consultations.history.section.complaints'),
+        'history_of_presenting_complaint' => __('consultations.history.section.history_of_presenting_complaint'),
+        'examination' => __('consultations.history.section.examination'),
+        'diagnoses' => __('consultations.history.section.diagnoses'),
+        'investigations' => __('consultations.history.section.investigations'),
+        'treatments' => __('consultations.history.section.treatments'),
+        'prescriptions' => __('consultations.history.section.prescriptions'),
+        'procedures' => __('consultations.history.section.procedures'),
+        'tasks' => __('consultations.history.section.tasks'),
+        'notes' => __('consultations.history.section.notes'),
     ];
+    $detailKeyMap = [
+        'Catalogue' => 'catalogue', 'Category' => 'category', 'Duration' => 'duration',
+        'Severity' => 'severity', 'Complaint' => 'complaint', 'Onset' => 'onset',
+        'General' => 'general', 'Systemic' => 'systemic', 'Specialty' => 'specialty',
+        'Type' => 'type', 'Primary' => 'primary', 'Urgency' => 'urgency',
+        'Status' => 'status', 'Prescription No.' => 'prescription_no',
+        'Description' => 'description', 'Assigned To' => 'assigned_to', 'Due' => 'due',
+        'Completed By' => 'completed_by', 'Date' => 'date', 'Time' => 'time',
+        'Department' => 'department', 'Service' => 'service', 'Doctor' => 'doctor',
+        'Priority' => 'priority', 'Reason' => 'reason', 'Instruction' => 'instruction',
+        'Notes' => 'notes',
+    ];
+    $translateDetailName = fn ($name) => isset($detailKeyMap[$name])
+        ? __('consultations.history.detail.'.$detailKeyMap[$name])
+        : $name;
+    $translateDetailValue = function ($value) {
+        $key = strtolower(trim((string) $value));
+        return \Illuminate\Support\Facades\Lang::has('consultations.history.value.'.$key)
+            ? __('consultations.history.value.'.$key)
+            : $value;
+    };
 @endphp
 
 <div class="d-flex align-items-center gap-2 mb-3 no-print">
     <a href="{{ route('admin.consultations.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
-        <i class="ti ti-arrow-left me-1"></i>Back to Consultation
+        <i class="ti ti-arrow-left me-1"></i>{{ __('consultations.history.back_to_consultation') }}
     </a>
     <button type="button" class="btn btn-primary btn-sm ms-auto" onclick="window.print()">
-        <i class="ti ti-printer me-1"></i>Print Summary
+        <i class="ti ti-printer me-1"></i>{{ __('consultations.history.print_summary') }}
     </button>
 </div>
 
@@ -165,11 +186,10 @@
     {{-- Document header --}}
     <div class="d-flex justify-content-between align-items-start mb-3 pb-2 border-bottom">
         <div>
-            <h1 class="doc-title">CONSULTATION SUMMARY</h1>
+            <h1 class="doc-title">{{ mb_strtoupper(__('consultations.history.consultation_summary')) }}</h1>
             <div class="doc-meta">
-                Visit <strong>{{ $visit->visit_number }}</strong>
-                &middot; Generated {{ $generatedAt->format('d M Y, h:i A') }}
-                @if($visit->visit_type) &middot; {{ is_object($visit->visit_type) ? $visit->visit_type->value : $visit->visit_type }} @endif
+                {{ __('consultations.history.header_meta', ['visit' => $visit->visit_number, 'date' => $generatedAt->translatedFormat('d M Y, h:i A')]) }}
+                @if($visit->visit_type) &middot; {{ is_object($visit->visit_type) && method_exists($visit->visit_type, 'translatedLabel') ? $visit->visit_type->translatedLabel() : $visit->visit_type }} @endif
             </div>
         </div>
         <div class="text-end doc-meta">
@@ -184,12 +204,12 @@
         <div class="info-grid">
             <div><span class="lbl">{{ __('common.name') }}:</span> <strong>{{ $patient->full_name }}</strong></div>
             <div><span class="lbl">{{ __('consultations.label_patient_no') }}:</span> {{ $patient->patient_number }}</div>
-            <div><span class="lbl">{{ __('consultations.label_age_gender') }}:</span> {{ $patient->age }}y &middot; {{ $patient->gender?->value ?? '-' }}</div>
+            <div><span class="lbl">{{ __('consultations.label_age_gender') }}:</span> {{ __('consultations.history.age_gender', ['age' => $patient->age, 'gender' => $patient->gender?->translatedLabel() ?? '-']) }}</div>
             <div><span class="lbl">{{ __('common.phone') }}:</span> {{ $patient->phone ?? '-' }}</div>
-            <div><span class="lbl">{{ __('common.blood_group') }}:</span> {{ $patient->blood_group?->value ?? 'N/A' }}</div>
+            <div><span class="lbl">{{ __('common.blood_group') }}:</span> {{ $patient->blood_group?->translatedLabel() ?? 'N/A' }}</div>
             <div><span class="lbl">{{ __('consultations.label_ghana_card') }}:</span> {{ $patient->ghana_card_number ?? '-' }}</div>
             @if($patient->occupation)<div><span class="lbl">{{ __('consultations.label_occupation') }}:</span> {{ $patient->occupation }}</div>@endif
-            @if($patient->marital_status)<div><span class="lbl">{{ __('consultations.label_marital_status') }}:</span> {{ is_object($patient->marital_status) ? $patient->marital_status->value : $patient->marital_status }}</div>@endif
+            @if($patient->marital_status)<div><span class="lbl">{{ __('consultations.label_marital_status') }}:</span> {{ is_object($patient->marital_status) && method_exists($patient->marital_status, 'translatedLabel') ? $patient->marital_status->translatedLabel() : $patient->marital_status }}</div>@endif
             @if($patient->religion)<div><span class="lbl">{{ __('consultations.label_religion') }}:</span> {{ $patient->religion }}</div>@endif
             <div style="grid-column: 1 / -1;">
                 <span class="lbl">{{ __('consultations.label_insurance') }}:</span>
@@ -209,8 +229,8 @@
         <h2>{{ __('consultations.visit_information') }}</h2>
         <div class="info-grid">
             <div><span class="lbl">{{ __('consultations.label_visit_no') }}:</span> {{ $visit->visit_number }}</div>
-            <div><span class="lbl">{{ __('consultations.visit_type') }}:</span> {{ is_object($visit->visit_type) ? $visit->visit_type->value : ($visit->visit_type ?? '-') }}</div>
-            <div><span class="lbl">{{ __('common.status') }}:</span> {{ is_object($visit->status) ? $visit->status->value : ($visit->status ?? '-') }}</div>
+            <div><span class="lbl">{{ __('consultations.visit_type') }}:</span> {{ is_object($visit->visit_type) && method_exists($visit->visit_type, 'translatedLabel') ? $visit->visit_type->translatedLabel() : ($visit->visit_type ?? '-') }}</div>
+            <div><span class="lbl">{{ __('common.status') }}:</span> {{ is_object($visit->status) && method_exists($visit->status, 'translatedLabel') ? $visit->status->translatedLabel() : ($visit->status ?? '-') }}</div>
             <div><span class="lbl">{{ __('common.visit_date') }}:</span> {{ $visit->visit_date?->format('d M Y H:i') ?? $visit->created_at?->format('d M Y H:i') }}</div>
             <div><span class="lbl">{{ __('common.department') }}:</span> {{ $visit->department?->name ?? '-' }}</div>
             <div><span class="lbl">{{ __('consultations.label_sessions') }}:</span> {{ $sessions->count() ?: 1 }}</div>
@@ -219,15 +239,15 @@
         @if($latestVitals)
         <h3 class="mt-3">{{ __('consultations.latest_vitals') }}</h3>
         <div class="info-grid">
-            <div><span class="lbl">BP:</span> {{ $latestVitals->blood_pressure ?? '-' }} mmHg</div>
-            <div><span class="lbl">Pulse:</span> {{ $latestVitals->heart_rate ?? '-' }} bpm</div>
-            <div><span class="lbl">Temp:</span> {{ $latestVitals->temperature ?? '-' }} C</div>
+            <div><span class="lbl">{{ __('consultations.history.blood_pressure_short') }}:</span> {{ $latestVitals->blood_pressure ?? '-' }} mmHg</div>
+            <div><span class="lbl">{{ __('consultations.history.pulse') }}:</span> {{ $latestVitals->heart_rate ?? '-' }} bpm</div>
+            <div><span class="lbl">{{ __('consultations.history.temperature_short') }}:</span> {{ $latestVitals->temperature ?? '-' }} C</div>
             <div><span class="lbl">SpO2:</span> {{ $latestVitals->spo2 ?? '-' }} %</div>
-            <div><span class="lbl">Resp:</span> {{ $latestVitals->respiratory_rate ?? '-' }} /min</div>
-            <div><span class="lbl">BMI:</span> {{ $latestVitals->bmi ?? '-' }} kg/m2</div>
+            <div><span class="lbl">{{ __('consultations.history.respiratory_rate_short') }}:</span> {{ $latestVitals->respiratory_rate ?? '-' }} /min</div>
+            <div><span class="lbl">{{ __('consultations.history.bmi') }}:</span> {{ $latestVitals->bmi ?? '-' }} kg/m2</div>
         </div>
         <div class="doc-meta mt-1">
-            Recorded {{ $latestVitals->recorded_at?->format('d M Y H:i') }} by {{ $latestVitals->recordedBy?->full_name ?? '-' }}
+            {{ __('consultations.history.recorded_by', ['date' => $latestVitals->recorded_at?->translatedFormat('d M Y H:i'), 'name' => $latestVitals->recordedBy?->full_name ?? '-']) }}
         </div>
         @endif
     </div>
@@ -242,8 +262,8 @@
                 <span class="contributor-pill {{ $c['role_label'] === 'Main Doctor' ? 'main' : '' }}">
                     <i class="ti {{ $c['role_label'] === 'Main Doctor' ? 'ti-stethoscope' : 'ti-user' }}"></i>
                     Dr. {{ $c['name'] }}
-                    <span class="text-muted">&middot; {{ $c['role_label'] }}</span>
-                    <span class="badge bg-secondary-subtle text-secondary ms-1">{{ $c['entries'] }} {{ \Illuminate\Support\Str::plural('entry', $c['entries']) }}</span>
+                    <span class="text-muted">&middot; {{ $c['role_label'] === 'Main Doctor' ? __('consultations.main_doctor_label') : __('consultations.history.contributor') }}</span>
+                    <span class="badge bg-secondary-subtle text-secondary ms-1">{{ trans_choice('consultations.history.entry_count', $c['entries'], ['count' => $c['entries']]) }}</span>
                 </span>
             @endforeach
         @endif
@@ -256,8 +276,8 @@
             $summary = $bundle['summary'];
             $isEmergencySession = $session?->isEmergencySession() ?? false;
             $sessionTitle = $isEmergencySession
-                ? 'Emergency Department Session'
-                : ($session?->department?->name ?? ($summary['department'] ?? 'Consultation'));
+                ? __('consultations.emergency_department_session')
+                : ($session?->department?->name ?? ($summary['department'] ?? __('consultations.title')));
             $statusColor = $session ? match($session->status) {
                 'ACTIVE' => 'success',
                 'COMPLETED' => 'secondary',
@@ -283,23 +303,23 @@
                     @else
                         <span class="empty-state">{{ __('consultations.unassigned') }}</span>
                     @endif
-                    @if($session?->started_at) &middot; Started {{ $session->started_at->format('d M Y, h:i A') }} @endif
-                    @if($session?->completed_at) &middot; Completed {{ $session->completed_at->format('d M Y, h:i A') }} @endif
+                    @if($session?->started_at) &middot; {{ __('consultations.history.started', ['date' => $session->started_at->translatedFormat('d M Y, h:i A')]) }} @endif
+                    @if($session?->completed_at) &middot; {{ __('consultations.history.completed', ['date' => $session->completed_at->translatedFormat('d M Y, h:i A')]) }} @endif
                 </div>
             </div>
 
             @if(!empty($summary['services']))
-                <div class="doc-meta mb-2"><span class="lbl">Services:</span> {{ implode(', ', $summary['services']) }}</div>
+                <div class="doc-meta mb-2"><span class="lbl">{{ __('consultations.history.services') }}:</span> {{ implode(', ', $summary['services']) }}</div>
             @endif
             @if(!empty($summary['contributors']))
-                <div class="doc-meta mb-2"><span class="lbl">Session Contributors:</span> {{ implode(', ', $summary['contributors']) }}</div>
+                <div class="doc-meta mb-2"><span class="lbl">{{ __('consultations.history.session_contributors') }}:</span> {{ implode(', ', $summary['contributors']) }}</div>
             @endif
 
             @php
                 $hasAnySectionEntry = collect($sectionLabels)->keys()->some(fn($k) => !empty($summary['sections'][$k]));
             @endphp
             @if(!$hasAnySectionEntry)
-                <div class="empty-state">No clinical entries recorded for this session.</div>
+                <div class="empty-state">{{ __('consultations.history.no_clinical_entries') }}</div>
             @else
             @foreach($sectionLabels as $key => $label)
                 @php
@@ -310,23 +330,23 @@
                 <div class="doc-subsection mb-2 section-{{ $key }}">
                     <h3>{{ $label }} <span class="text-muted small">({{ $entries->count() }})</span></h3>
                     @if($groups->isEmpty())
-                        <div class="empty-state">None recorded.</div>
+                        <div class="empty-state">{{ __('consultations.history.none_recorded') }}</div>
                     @else
                         @foreach($groups as $ownerKey => $groupEntries)
                             @php
                                 $first = $groupEntries->first();
-                                $ownerName = $first['entered_by'] ?? 'Unknown user';
-                                $isMain = $ownerName !== 'Unknown user' && $ownerName === ($summary['main_doctor'] ?? null);
-                                $roleLabel = $isMain ? 'Main Doctor' : 'Contributor';
+                                $ownerName = $first['entered_by'] ?? __('consultations.history.unknown_user');
+                                $isMain = $ownerName !== __('consultations.history.unknown_user') && $ownerName === ($summary['main_doctor'] ?? null);
+                                $roleLabel = $isMain ? __('consultations.main_doctor_label') : __('consultations.history.contributor');
                             @endphp
                             <div class="owner-block {{ $isMain ? '' : 'owner-contrib' }}">
                                 <div class="owner-head">
                                     <div>
-                                        <strong>{{ $ownerName === 'Unknown user' ? $ownerName : 'Dr. '.$ownerName }}</strong>
+                                        <strong>{{ $ownerName === __('consultations.history.unknown_user') ? $ownerName : 'Dr. '.$ownerName }}</strong>
                                         <span class="badge bg-{{ $isMain ? 'primary' : 'secondary' }}-subtle text-{{ $isMain ? 'primary' : 'secondary' }} ms-1">{{ $roleLabel }}</span>
                                         @if($first['owner_role'])<span class="text-muted small ms-1">&middot; {{ $first['owner_role'] }}</span>@endif
                                     </div>
-                                    <span class="text-muted small">{{ $groupEntries->count() }} {{ \Illuminate\Support\Str::plural('entry', $groupEntries->count()) }}</span>
+                                    <span class="text-muted small">{{ trans_choice('consultations.history.entry_count', $groupEntries->count(), ['count' => $groupEntries->count()]) }}</span>
                                 </div>
 
                                 @foreach($groupEntries as $entry)
@@ -335,17 +355,17 @@
                                         @if(!empty($entry['details']))
                                             <div class="details">
                                                 @foreach($entry['details'] as $name => $value)
-                                                    <span class="b">{{ $name }}: {{ $value }}</span>
+                                                    <span class="b">{{ $translateDetailName($name) }}: {{ $translateDetailValue($value) }}</span>
                                                 @endforeach
                                             </div>
                                         @endif
                                         <div class="meta">
-                                            @if($entry['created_at']) Recorded: {{ $entry['created_at']->format('d M Y, h:i A') }} @endif
+                                            @if($entry['created_at']) {{ __('consultations.history.recorded', ['date' => $entry['created_at']->translatedFormat('d M Y, h:i A')]) }} @endif
                                             @if(!empty($entry['updated_by']) && $entry['updated_at'] && $entry['created_at'] && $entry['updated_at']->gt($entry['created_at']))
-                                                &middot; Edited by {{ $entry['updated_by'] }} on {{ $entry['updated_at']->format('d M Y, h:i A') }}
+                                                &middot; {{ __('consultations.history.edited_by', ['name' => $entry['updated_by'], 'date' => $entry['updated_at']->translatedFormat('d M Y, h:i A')]) }}
                                             @endif
                                             @if(!empty($entry['source_pattern']))
-                                                &middot; Pattern: {{ $entry['source_pattern'] }}
+                                                &middot; {{ __('consultations.history.source_pattern', ['pattern' => $entry['source_pattern']]) }}
                                             @endif
                                         </div>
                                     </div>
@@ -368,7 +388,7 @@
             if ($r->department?->name) return $r->department->name;
             // Fall back to first item's service department
             $firstItem = $r->items->first();
-            return $firstItem?->service?->department?->name ?? 'Other';
+            return $firstItem?->service?->department?->name ?? __('consultations.history.other');
         });
         @endphp
         @if($labGrouped->isEmpty())
@@ -386,22 +406,23 @@
                     @foreach($byOwner as $ownerKey => $ownerReqs)
                         @php
                             $owner = $ownerReqs->first()->requestedBy ?? null;
-                            $ownerName = $owner?->full_name ?? 'Unknown user';
+                            $ownerName = $owner?->full_name ?? __('consultations.history.unknown_user');
                         @endphp
                         <div class="owner-block owner-contrib">
                             <div class="owner-head">
                                 <div>
-                                    <strong>{{ $ownerName === 'Unknown user' ? $ownerName : 'Dr. '.$ownerName }}</strong>
+                                    <strong>{{ $ownerName === __('consultations.history.unknown_user') ? $ownerName : 'Dr. '.$ownerName }}</strong>
                                     <span class="badge bg-secondary-subtle text-secondary ms-1">{{ __('consultations.requesting_clinician') }}</span>
                                 </div>
-                                <span class="text-muted small">{{ $ownerReqs->sum(fn($r) => $r->items?->count() ?? 0) }} test(s)</span>
+                                @php $testCount = $ownerReqs->sum(fn($r) => $r->items?->count() ?? 0); @endphp
+                                <span class="text-muted small">{{ trans_choice('consultations.history.test_count', $testCount, ['count' => $testCount]) }}</span>
                             </div>
                             @foreach($ownerReqs as $req)
                                 @foreach($req->items ?? [] as $item)
                                     <div class="entry">
                                         <div class="entry-text">
-                                            {{ $item->display_name ?? $item->name ?? ($item->labTest?->name ?? 'Test') }}
-                                            <span class="badge bg-{{ $item->status_color ?? 'secondary' }} ms-1">{{ ucfirst($item->status ?? '') }}</span>
+                                            {{ $item->display_name ?? $item->name ?? ($item->labTest?->name ?? __('consultations.history.test')) }}
+                                            <span class="badge bg-{{ $item->status_color ?? 'secondary' }} ms-1">{{ $translateDetailValue($item->status ?? '') }}</span>
                                             @if($item->result?->is_verified)
                                                 <span class="badge bg-success ms-1">{{ __('consultations.verified') }}</span>
                                             @elseif($item->result)
@@ -409,12 +430,12 @@
                                             @endif
                                         </div>
                                         <div class="meta">
-                                            Req #{{ $req->request_number }} &middot; Requested {{ $req->created_at?->format('d M Y H:i') }}
+                                            {{ __('consultations.history.request_number', ['number' => $req->request_number]) }} &middot; {{ __('consultations.history.requested', ['date' => $req->created_at?->translatedFormat('d M Y H:i')]) }}
                                             @if($item->result?->result_value)
                                                 &middot; <strong>{{ __('consultations.result_label') }}:</strong> {{ \Illuminate\Support\Str::limit($item->result->result_value, 120) }}
                                             @endif
                                             @if($item->result?->verifiedBy)
-                                                &middot; Verified by Dr. {{ $item->result->verifiedBy->full_name }}
+                                                &middot; {{ __('consultations.history.verified_by', ['name' => $item->result->verifiedBy->full_name]) }}
                                             @endif
                                         </div>
                                     </div>
@@ -431,7 +452,7 @@
     <div class="doc-section">
         <h2>{{ __('consultations.procedures_heading') }}</h2>
         @php
-            $procGrouped = $procedureRequests->groupBy(fn($p) => $p->department?->name ?? 'Other');
+            $procGrouped = $procedureRequests->groupBy(fn($p) => $p->department?->name ?? __('consultations.history.other'));
         @endphp
         @if($procGrouped->isEmpty())
             <div class="empty-state">{{ __('consultations.no_procedures_requested') }}</div>
@@ -448,33 +469,33 @@
                     @foreach($byOwner as $ownerKey => $ownerProcs)
                         @php
                             $owner = $ownerProcs->first()->requestingDoctor ?? null;
-                            $ownerName = $owner?->full_name ?? 'Unknown user';
+                            $ownerName = $owner?->full_name ?? __('consultations.history.unknown_user');
                         @endphp
                         <div class="owner-block owner-contrib">
                             <div class="owner-head">
                                 <div>
-                                    <strong>{{ $ownerName === 'Unknown user' ? $ownerName : 'Dr. '.$ownerName }}</strong>
+                                    <strong>{{ $ownerName === __('consultations.history.unknown_user') ? $ownerName : 'Dr. '.$ownerName }}</strong>
                                     <span class="badge bg-secondary-subtle text-secondary ms-1">{{ __('consultations.requesting_clinician') }}</span>
                                 </div>
-                                <span class="text-muted small">{{ $ownerProcs->count() }} procedure(s)</span>
+                                <span class="text-muted small">{{ trans_choice('consultations.history.procedure_count', $ownerProcs->count(), ['count' => $ownerProcs->count()]) }}</span>
                             </div>
                             @foreach($ownerProcs as $pr)
                                 <div class="entry">
                                     <div class="entry-text">
-                                        {{ $pr->service?->name ?? 'Procedure' }}
+                                        {{ $pr->service?->name ?? __('consultations.history.procedure') }}
                                         <span class="badge ms-1" style="background-color:{{ $pr->status->color() }};color:#fff">{{ $pr->status->translatedLabel() }}</span>
-                                        @if($pr->priority)<span class="badge bg-light text-dark ms-1">{{ ucfirst($pr->priority) }}</span>@endif
+                                        @if($pr->priority)<span class="badge bg-light text-dark ms-1">{{ $pr->priority instanceof \App\Enums\Priority ? $pr->priority->translatedLabel() : $translateDetailValue($pr->priority) }}</span>@endif
                                     </div>
                                     <div class="meta">
-                                        Req #{{ $pr->request_number }} &middot; Requested {{ $pr->created_at?->format('d M Y H:i') }}
-                                        @if($pr->schedule) &middot; Scheduled {{ optional($pr->schedule->scheduled_start)->format('d M Y H:i') }} @endif
-                                        @if($pr->schedule?->surgeon) &middot; Surgeon: Dr. {{ $pr->schedule->surgeon->full_name }} @endif
+                                        {{ __('consultations.history.request_number', ['number' => $pr->request_number]) }} &middot; {{ __('consultations.history.requested', ['date' => $pr->created_at?->translatedFormat('d M Y H:i')]) }}
+                                        @if($pr->schedule) &middot; {{ __('consultations.history.scheduled', ['date' => $pr->schedule->scheduled_start?->translatedFormat('d M Y H:i')]) }} @endif
+                                        @if($pr->schedule?->surgeon) &middot; {{ __('consultations.history.surgeon', ['name' => $pr->schedule->surgeon->full_name]) }} @endif
                                     </div>
                                     @if($pr->indication)
-                                        <div class="details"><span class="b">Indication: {{ $pr->indication }}</span></div>
+                                        <div class="details"><span class="b">{{ __('consultations.history.indication') }}: {{ $pr->indication }}</span></div>
                                     @endif
                                     @if($pr->notes)
-                                        <div class="details small text-muted"><em>Notes:</em> {{ $pr->notes }}</div>
+                                        <div class="details small text-muted"><em>{{ __('consultations.history.notes') }}:</em> {{ $pr->notes }}</div>
                                     @endif
                                 </div>
                             @endforeach
@@ -488,8 +509,8 @@
     {{-- Document footer --}}
     <div class="doc-section pt-3 border-top doc-meta">
         <div class="d-flex justify-content-between">
-            <span>Generated by {{ auth()->user()?->full_name ?? '-' }} on {{ $generatedAt->format('d M Y, h:i A') }}</span>
-            <span>{{ config('app.name') }} &middot; Consultation Summary</span>
+            <span>{{ __('consultations.history.generated_by', ['name' => auth()->user()?->full_name ?? '-', 'date' => $generatedAt->translatedFormat('d M Y, h:i A')]) }}</span>
+            <span>{{ config('app.name') }} &middot; {{ __('consultations.history.consultation_summary') }}</span>
         </div>
     </div>
 

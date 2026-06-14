@@ -17,9 +17,9 @@
                         <h5 class="mb-0 fw-bold">{{ $patient->full_name }}</h5>
                         <div class="text-muted small">
                             {{ $patient->patient_number }} &middot;
-                            {{ $patient->age }}y &middot;
-                            {{ $patient->gender->value }} &middot;
-                            Blood: {{ $patient->blood_group?->value ?? 'N/A' }}
+                            {{ __('patients.age_years', ['age' => $patient->age]) }} &middot;
+                            {{ $patient->gender->translatedLabel() }} &middot;
+                            {{ __('patients.blood_group') }}: {{ $patient->blood_group?->translatedLabel() ?? 'N/A' }}
                             @if($patient->phone) &middot; <i class="ti ti-phone me-1"></i>{{ $patient->phone }} @endif
                         </div>
                         <div class="text-muted small mt-1 d-flex flex-wrap gap-2">
@@ -30,7 +30,7 @@
                                 <span><i class="ti ti-book me-1"></i>{{ $patient->religion }}</span>
                             @endif
                             @if($patient->marital_status)
-                                <span><i class="ti ti-heart me-1"></i>{{ is_object($patient->marital_status) ? $patient->marital_status->value : $patient->marital_status }}</span>
+                                <span><i class="ti ti-heart me-1"></i>{{ is_object($patient->marital_status) ? $patient->marital_status->translatedLabel() : $patient->marital_status }}</span>
                             @endif
                             @if($department)
                                 <span><i class="ti ti-building-hospital me-1"></i>{{ $department->name }}</span>
@@ -54,7 +54,7 @@
                             default                           => 'primary',
                         };
                     @endphp
-                    <span class="badge bg-{{ $vtBg }}-subtle text-{{ $vtBg }} border border-{{ $vtBg }} px-2 py-1 ms-1" title="Visit Type">
+                    <span class="badge bg-{{ $vtBg }}-subtle text-{{ $vtBg }} border border-{{ $vtBg }} px-2 py-1 ms-1" title="{{ __('visits.visit_type') }}">
                         <i class="ti ti-{{ $visit->visit_type === \App\Enums\VisitType::INPATIENT ? 'bed' : ($visit->visit_type === \App\Enums\VisitType::EMERGENCY ? 'ambulance' : 'walk') }} me-1"></i>{{ $visit->visit_type->translatedLabel() }}
                     </span>
                 @endif
@@ -73,12 +73,12 @@
 
 @if($showAlerts && $patient->allergies)
 <div class="alert alert-danger py-2 mb-3">
-    <i class="ti ti-alert-triangle me-1"></i><strong>Allergies:</strong> {{ $patient->allergies }}
+    <i class="ti ti-alert-triangle me-1"></i><strong>{{ __('patients.allergies') }}:</strong> {{ $patient->allergies }}
 </div>
 @endif
 
 @if($showAlerts && $patient->chronic_conditions)
 <div class="alert alert-warning py-2 mb-3">
-    <i class="ti ti-heart-rate-monitor me-1"></i><strong>Chronic Conditions:</strong> {{ $patient->chronic_conditions }}
+    <i class="ti ti-heart-rate-monitor me-1"></i><strong>{{ __('patients.chronic_conditions') }}:</strong> {{ $patient->chronic_conditions }}
 </div>
 @endif

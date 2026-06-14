@@ -1,5 +1,5 @@
 ﻿@extends('layouts.app')
-@section('title', 'Consultation - ' . $visit->visit_number)
+@section('title', __('consultations.workspace.page_title', ['visit' => $visit->visit_number]))
 
 @push('styles')
 <style>
@@ -59,7 +59,7 @@
         \App\Models\VisitConsultationRoute::STATUS_CANCELLED => 'danger',
     ];
     $routeBadge = fn (?string $status) => $routeBadgeClasses[$status ?? ''] ?? 'light text-dark';
-    $insuranceLabel = $visit->visitInsurance?->insuranceProvider?->name ?? 'Cash & Carry';
+    $insuranceLabel = $visit->visitInsurance?->insuranceProvider?->name ?? __('consultations.cash_self_pay');
     $routeServiceNames = function ($route) {
         if (! $route) {
             return collect();
@@ -79,8 +79,8 @@
     $selectedRouteServiceNames = $routeServiceNames($selectedRoute);
     $ownerOf = fn ($entry) => $entry?->creator ?? $entry?->createdBy ?? $entry?->doctor ?? $entry?->requestedBy ?? $entry?->requestingDoctor ?? null;
     $ownerKey = fn ($entry) => ($ownerOf($entry)?->id) ? 'user-'.$ownerOf($entry)->id : 'unknown';
-    $ownerName = fn ($entry) => $ownerOf($entry)?->full_name ?? 'Unknown user';
-    $ownerDisplayName = fn ($entry) => $ownerName($entry) === 'Unknown user' ? 'Unknown user' : 'Dr. '.$ownerName($entry);
+    $ownerName = fn ($entry) => $ownerOf($entry)?->full_name ?? __('consultations.workspace.unknown');
+    $ownerDisplayName = fn ($entry) => $ownerName($entry) === __('consultations.workspace.unknown') ? __('consultations.workspace.unknown') : 'Dr. '.$ownerName($entry);
     $isMainOwner = fn ($entry) => $selectedRoute?->doctor_id && $ownerOf($entry)?->id && (int) $selectedRoute->doctor_id === (int) $ownerOf($entry)->id;
     $ownerRoleLabel = fn ($entry) => $isMainOwner($entry) ? 'Main Doctor' : 'Contributor';
     $ownerRoleClass = fn ($entry) => $isMainOwner($entry) ? 'primary' : 'secondary';
@@ -109,8 +109,8 @@
         \App\Models\EmergencyCase::STATUS_CANCELLED,
     ], true);
     $selectedRouteLabel = $isEmergencyRoute
-        ? 'Emergency Department Session'
-        : ($selectedRoute?->department?->name ?? 'No active session');
+        ? __('consultations.emergency_department_session')
+        : ($selectedRoute?->department?->name ?? __('consultations.no_active_session'));
 @endphp
 
 {{-- ============================================================ --}}
@@ -119,12 +119,12 @@
 <div class="card mb-3">
     <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
         <div>
-            <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-primary"></i>Current Session</h6>
+            <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-primary"></i>{{ __('consultations.workspace.current_session') }}</h6>
             {{-- <small class="text-muted">Visit {{ $visit->visit_number }} · {{ $visit->patient->full_name }}</small> --}}
             <div class="fw-semibold ms-2">
                 {{ $selectedRouteLabel }}
                 @if($isEmergencyRoute)
-                    <span class="badge bg-danger ms-1">Emergency</span>
+                    <span class="badge bg-danger ms-1">{{ __('consultations.workspace.emergency') }}</span>
                 @endif
             </div>
         </div>
@@ -133,13 +133,13 @@
                 <div class="fw-semibold">{{ $selectedRoute?->department?->name ?? 'No active session' }}</div>
             </div> --}}
             <div>
-                <div class="text-muted small">Linked Services</div>
+                <div class="text-muted small">{{ __('consultations.linked_services') }}</div>
                 <div class="fw-semibold">{{ $selectedRouteServiceNames->implode(', ') ?: '-' }}</div>
             </div>
             <div>
-                <div class="text-muted small">Contributors</div>
+                <div class="text-muted small">{{ __('consultations.workspace.contributors') }}</div>
                 {{-- <div class="fw-semibold">{{ $selectedRoute?->doctor ? 'Dr. '.$selectedRoute->doctor->full_name : 'Unassigned' }}</div> --}}
-                <div class="small text-muted">{{ $contributors->isNotEmpty() ? $contributors->implode(', ') : 'No contributors yet' }}</div>
+                <div class="small text-muted">{{ $contributors->isNotEmpty() ? $contributors->implode(', ') : __('consultations.workspace.no_contributors_yet') }}</div>
             </div>
 
         <div class="d-flex flex-wrap gap-2">
@@ -152,7 +152,7 @@
                     @can('consultations.create')
                     <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $selectedRoute]) }}">
                         @csrf
-                        <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-player-play me-1"></i>Start Session</button>
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-player-play me-1"></i>{{ __('consultations.workspace.start_session') }}</button>
                     </form>
                     @endcan
                 @endif
@@ -160,8 +160,8 @@
                     @can('consultations.create')
                     <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $selectedRoute]) }}">
                         @csrf
-                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Complete this consultation session?')">
-                            <i class="ti ti-check me-1"></i>Complete Current Session
+                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm(@js(__('consultations.workspace.complete_session_confirm')))">
+                            <i class="ti ti-check me-1"></i>{{ __('consultations.workspace.complete_current_session') }}
                         </button>
                     </form>
                     @endcan
@@ -366,7 +366,7 @@
 <div class="card mb-3 vitals-static">
     <div class="card-body py-2">
         <div class="d-flex align-items-center justify-content-between mb-2">
-            <h6 class="fw-bold mb-0 small"><i class="ti ti-heartbeat me-1 text-danger"></i>Latest Vitals</h6>
+            <h6 class="fw-bold mb-0 small"><i class="ti ti-heartbeat me-1 text-danger"></i>{{ __('consultations.latest_vitals') }}</h6>
             @php
                 $triageScore = $visit->triage_score;
                 if (!$triageScore && $vitals->count() > 0) {
@@ -384,7 +384,7 @@
                     <i class="ti {{ $triageScore->icon() }} me-1"></i>{{ $triageScore->translatedLabel() }}
                 </span>
             @else
-                <span class="badge bg-secondary triage-badge"><i class="ti ti-help me-1"></i>Triage N/A</span>
+                <span class="badge bg-secondary triage-badge"><i class="ti ti-help me-1"></i>{{ __('consultations.workspace.triage_not_available') }}</span>
             @endif
         </div>
 
@@ -392,17 +392,17 @@
             @php $lv = $vitals->first(); @endphp
             <div class="row g-2">
                 <div class="col-6 col-sm-4 col-md-2 text-center">
-                    <div class="vitals-label">Blood Pressure</div>
+                    <div class="vitals-label">{{ __('consultations.workspace.blood_pressure') }}</div>
                     <div class="vitals-val">{{ $lv->blood_pressure ?? '—' }}</div>
                     <div class="vitals-label">mmHg</div>
                 </div>
                 <div class="col-6 col-sm-4 col-md-2 text-center">
-                    <div class="vitals-label">Heart Rate</div>
+                    <div class="vitals-label">{{ __('consultations.workspace.heart_rate') }}</div>
                     <div class="vitals-val">{{ $lv->heart_rate ?? '—' }}</div>
                     <div class="vitals-label">bpm</div>
                 </div>
                 <div class="col-6 col-sm-4 col-md-2 text-center">
-                    <div class="vitals-label">Temperature</div>
+                    <div class="vitals-label">{{ __('consultations.workspace.temperature') }}</div>
                     <div class="vitals-val">{{ $lv->temperature ?? '—' }}</div>
                     <div class="vitals-label">°C</div>
                 </div>
@@ -412,36 +412,36 @@
                     <div class="vitals-label">%</div>
                 </div>
                 <div class="col-6 col-sm-4 col-md-2 text-center">
-                    <div class="vitals-label">Resp. Rate</div>
+                    <div class="vitals-label">{{ __('consultations.workspace.respiratory_rate_short') }}</div>
                     <div class="vitals-val">{{ $lv->respiratory_rate ?? '—' }}</div>
                     <div class="vitals-label">/min</div>
                 </div>
                 <div class="col-6 col-sm-4 col-md-2 text-center">
-                    <div class="vitals-label">BMI</div>
+                    <div class="vitals-label">{{ __('consultations.workspace.bmi') }}</div>
                     <div class="vitals-val {{ $lv->bmi ? ($lv->bmi < 18.5 ? 'text-warning' : ($lv->bmi < 25 ? 'text-success' : ($lv->bmi < 30 ? 'text-warning' : 'text-danger'))) : '' }}">
                         {{ $lv->bmi ?? '—' }}
                     </div>
                     <div class="vitals-label">
                         @if($lv->bmi)
-                            @if($lv->bmi < 18.5) Underweight
-                            @elseif($lv->bmi < 25) Normal
-                            @elseif($lv->bmi < 30) Overweight
-                            @else Obese @endif
+                            @if($lv->bmi < 18.5) {{ __('consultations.workspace.underweight') }}
+                            @elseif($lv->bmi < 25) {{ __('consultations.workspace.normal') }}
+                            @elseif($lv->bmi < 30) {{ __('consultations.workspace.overweight') }}
+                            @else {{ __('consultations.workspace.obese') }} @endif
                         @else kg/m² @endif
                     </div>
                 </div>
             </div>
             <div class="text-muted mt-1" style="font-size:0.7rem">
-                <i class="ti ti-clock me-1"></i>{{ $lv->recorded_at->diffForHumans() }} by {{ $lv->recordedBy?->full_name ?? 'Unknown' }}
+                <i class="ti ti-clock me-1"></i>{{ __('consultations.workspace.recorded_by', ['time' => $lv->recorded_at->diffForHumans(), 'name' => $lv->recordedBy?->full_name ?? __('consultations.workspace.unknown')]) }}
                 @if($vitals->count() > 1)
-                    &middot; <span class="text-primary">{{ $vitals->count() - 1 }} earlier reading(s)</span>
+                    &middot; <span class="text-primary">{{ trans_choice('consultations.workspace.earlier_readings', $vitals->count() - 1, ['count' => $vitals->count() - 1]) }}</span>
                 @endif
             </div>
         @else
             <div class="text-muted small py-1">
-                <i class="ti ti-heartbeat me-1"></i>No vitals recorded for this visit yet.
+                <i class="ti ti-heartbeat me-1"></i>{{ __('consultations.workspace.no_vitals') }}
                 @can('vitals.create')
-                    <a href="{{ route('admin.vitals.create', ['visit_id' => $visit->id]) }}" class="ms-2">Record now</a>
+                    <a href="{{ route('admin.vitals.create', ['visit_id' => $visit->id]) }}" class="ms-2">{{ __('consultations.workspace.record_now') }}</a>
                 @endcan
             </div>
         @endif
@@ -477,25 +477,25 @@
 <div class="card border-warning mb-3">
     <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div>
-            <h6 class="fw-bold mb-1 text-warning"><i class="ti ti-player-play me-1"></i>Consultation Not Started</h6>
-            <small class="text-muted">Click <strong>Start Consultation</strong> to begin entering clinical information.</small>
+            <h6 class="fw-bold mb-1 text-warning"><i class="ti ti-player-play me-1"></i>{{ __('consultations.workspace.consultation_not_started') }}</h6>
+            <small class="text-muted">{{ __('consultations.workspace.start_instruction') }}</small>
         </div>
         @can('consultations.create')
         <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $selectedRoute]) }}">
             @csrf
-            <button type="submit" class="btn btn-warning"><i class="ti ti-player-play me-1"></i>Start Consultation</button>
+            <button type="submit" class="btn btn-warning"><i class="ti ti-player-play me-1"></i>{{ __('consultations.workspace.start_consultation') }}</button>
         </form>
         @endcan
     </div>
 </div>
 @elseif($canEdit)
 <div class="alert alert-success py-2 mb-3 small d-flex align-items-center">
-    <i class="ti ti-pencil me-2"></i><strong>Consultation in progress</strong>&nbsp;— you may now enter clinical information.
+    <i class="ti ti-pencil me-2"></i><strong>{{ __('consultations.workspace.consultation_in_progress') }}</strong>&nbsp;— {{ __('consultations.workspace.consultation_in_progress_help') }}
 </div>
 @endif
 @if($isSelectedRouteLocked && ! $canCorrectLocked)
 <div class="alert alert-secondary py-2 mb-3 small d-flex align-items-center">
-    <i class="ti ti-lock me-2"></i><strong>Session locked</strong>&nbsp;- this outpatient session is read-only.
+    <i class="ti ti-lock me-2"></i><strong>{{ __('consultations.workspace.session_locked') }}</strong>&nbsp;- {{ __('consultations.workspace.session_locked_help') }}
 </div>
 @endif
 
@@ -512,66 +512,66 @@
                     <ul class="nav flex-column gap-1" id="consultationTabs" role="tablist">
                         <li class="nav-item">
                             <a class="nav-link active" id="tab-complaints" href="#complaints-section" data-bs-toggle="pill" role="tab">
-                                <i class="ti ti-message-report me-1"></i>Presenting Complaints
+                                <i class="ti ti-message-report me-1"></i>{{ __('consultations.workspace.presenting_complaints') }}
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-complaints">{{ $record?->complaints?->count() ?? 0 }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="tab-hopc" href="#hopc-section" data-bs-toggle="pill" role="tab">
-                                <i class="ti ti-file-description me-1"></i>HOPC
+                                <i class="ti ti-file-description me-1"></i>{{ __('consultations.workspace.hopc') }}
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-hopc">{{ $record?->historiesOfPresentingComplaint?->count() ?? 0 }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="tab-examination" href="#examination-section" data-bs-toggle="pill" role="tab">
-                                <i class="ti ti-zoom-check me-1"></i>Examination
+                                <i class="ti ti-zoom-check me-1"></i>{{ __('consultations.workspace.examination') }}
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-examination">{{ $record?->physicalExaminations?->count() ?? 0 }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="tab-diagnoses" href="#diagnoses-section" data-bs-toggle="pill" role="tab">
-                                <i class="ti ti-report-medical me-1"></i>Diagnoses
+                                <i class="ti ti-report-medical me-1"></i>{{ __('consultations.workspace.diagnoses') }}
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-diagnoses">{{ $record?->diagnoses?->count() ?? 0 }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="tab-investigations" href="#investigations-section" data-bs-toggle="pill" role="tab">
-                                <i class="ti ti-test-pipe me-1"></i>Investigations
+                                <i class="ti ti-test-pipe me-1"></i>{{ __('consultations.workspace.investigations') }}
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-investigations">{{ $record?->investigations?->count() ?? 0 }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="tab-treatments" href="#treatments-section" data-bs-toggle="pill" role="tab">
-                                <i class="ti ti-vaccine me-1"></i>Treatments
+                                <i class="ti ti-vaccine me-1"></i>{{ __('consultations.workspace.treatments') }}
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-treatments">{{ $record?->treatments?->count() ?? 0 }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="tab-prescriptions" href="#prescriptions-section" data-bs-toggle="pill" role="tab">
-                                <i class="ti ti-prescription me-1"></i>Prescriptions
+                                <i class="ti ti-prescription me-1"></i>{{ __('consultations.workspace.prescriptions') }}
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-prescriptions">{{ $record?->prescriptions?->count() ?? 0 }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="tab-procedures" href="#procedures-section" data-bs-toggle="pill" role="tab">
-                                <i class="ti ti-activity-heartbeat me-1"></i>Procedures
+                                <i class="ti ti-activity-heartbeat me-1"></i>{{ __('consultations.workspace.procedures') }}
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-procedures">{{ $procedureRequests->count() }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="tab-tasks" href="#tasks-section" data-bs-toggle="pill" role="tab">
-                                <i class="ti ti-checklist me-1"></i>Tasks
+                                <i class="ti ti-checklist me-1"></i>{{ __('consultations.workspace.tasks') }}
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-tasks">{{ $record?->tasks?->count() ?? 0 }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="tab-summary" href="#summary-section" data-bs-toggle="pill" role="tab">
-                                <i class="ti ti-notes me-1"></i>Notes / Summary
+                                <i class="ti ti-notes me-1"></i>{{ __('consultations.workspace.notes_summary') }}
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="tab-patterns" href="#patterns-section" data-bs-toggle="pill" role="tab">
-                                <i class="ti ti-template me-1"></i>Patterns
+                                <i class="ti ti-template me-1"></i>{{ __('consultations.workspace.patterns') }}
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $patterns->count() }}</span>
                             </a>
                         </li>
@@ -582,30 +582,30 @@
 
         <div class="card">
             <div class="card-header py-2">
-                <h6 class="fw-bold mb-0 small">Quick Actions</h6>
+                <h6 class="fw-bold mb-0 small">{{ __('consultations.workspace.quick_actions') }}</h6>
             </div>
             <div class="card-body p-2">
                 <div class="d-grid gap-2">
                     <a href="{{ route('admin.consultations.history', $visit) }}" class="btn btn-outline-info btn-sm">
-                        <i class="ti ti-history me-1"></i>Preview
+                        <i class="ti ti-history me-1"></i>{{ __('consultations.workspace.preview') }}
                     </a>
                     <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
-                        <i class="ti ti-eye me-1"></i>View Visit
+                        <i class="ti ti-eye me-1"></i>{{ __('consultations.workspace.view_visit') }}
                     </a>
-                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#followUpAppointmentModal" @disabled(! $selectedRoute) title="{{ $selectedRoute ? 'Set next appointment' : 'Select a consultation session first' }}">
-                        <i class="ti ti-calendar-plus me-1"></i>{{ $followUpAppointment ? 'Update Next Appointment' : 'Next Appointment' }}
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#followUpAppointmentModal" @disabled(! $selectedRoute) title="{{ $selectedRoute ? __('consultations.workspace.set_next_appointment') : __('consultations.workspace.select_session_first') }}">
+                        <i class="ti ti-calendar-plus me-1"></i>{{ $followUpAppointment ? __('consultations.workspace.update_next_appointment') : __('consultations.workspace.next_appointment') }}
                         @if($followUpAppointment)
-                            <span class="badge bg-primary-subtle text-primary ms-1">Set</span>
+                            <span class="badge bg-primary-subtle text-primary ms-1">{{ __('consultations.workspace.set') }}</span>
                         @endif
                     </button>
                     @can('consultations.create')
                     <button type="button" class="btn btn-outline-purple btn-sm" data-bs-toggle="modal" data-bs-target="#savePatternModal">
-                        <i class="ti ti-template me-1"></i>Save Pattern
+                        <i class="ti ti-template me-1"></i>{{ __('consultations.workspace.save_pattern') }}
                     </button>
                     @endcan
                     @if($visit->status->allowedTransitions())
                     <hr class="my-1">
-                    <small class="text-muted fw-bold px-1">Transition Visit</small>
+                    <small class="text-muted fw-bold px-1">{{ __('consultations.workspace.transition_visit') }}</small>
                     @foreach($visit->status->allowedTransitions() as $nextStatus)
                         @if($nextStatus === \App\Enums\VisitStatus::ADMITTING)
                         {{-- Special admit button → go straight to admission form --}}
@@ -614,7 +614,7 @@
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
                             <button type="submit" class="btn btn-warning btn-sm w-100"
                                     onclick="return confirm(@js(__('consultations.confirm_admit_patient')))">
-                                <i class="ti ti-bed me-1"></i>Admit Patient
+                                <i class="ti ti-bed me-1"></i>{{ __('consultations.workspace.admit_patient') }}
                             </button>
                         </form>
                         @elseif($nextStatus === \App\Enums\VisitStatus::COMPLETED)
@@ -624,7 +624,7 @@
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
                             <button type="submit" class="btn btn-success btn-sm w-100"
                                     onclick="return confirm(@js(__('consultations.confirm_complete')))">
-                                <i class="ti ti-check me-1"></i>Complete Consultation
+                                <i class="ti ti-check me-1"></i>{{ __('consultations.workspace.complete_consultation') }}
                             </button>
                         </form>
                         @elseif($nextStatus === \App\Enums\VisitStatus::CANCELLED)
@@ -634,7 +634,7 @@
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
                             <button type="submit" class="btn btn-danger btn-sm w-100"
                                     onclick="return confirm(@js(__('consultations.confirm_cancel')))">
-                                <i class="ti ti-trash me-1"></i>Cancel Consultation
+                                <i class="ti ti-trash me-1"></i>{{ __('consultations.workspace.cancel_consultation') }}
                             </button>
                         </form>
 
@@ -652,9 +652,9 @@
                     @endif
                     @if($visit->status === \App\Enums\VisitStatus::CONSULTING)
                     <hr class="my-1">
-                    <small class="text-muted fw-bold px-1">Session Routing</small>
+                    <small class="text-muted fw-bold px-1">{{ __('consultations.workspace.session_routing') }}</small>
                     <button type="button" class="btn btn-outline-indigo btn-sm w-100 mb-1" data-bs-toggle="modal" data-bs-target="#sendSessionModal">
-                        <i class="ti ti-transfer me-1"></i>Transfer Consultation Session
+                        <i class="ti ti-transfer me-1"></i>{{ __('consultations.workspace.transfer_session') }}
                     </button>
                     {{-- <button type="button" class="btn btn-outline-purple btn-sm w-100" data-bs-toggle="modal" data-bs-target="#investigationModal">
                         <i class="ti ti-test-pipe me-1"></i>Send to Invest.
@@ -675,10 +675,10 @@
             <div class="tab-pane fade show active" id="complaints-section" role="tabpanel">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h6 class="fw-bold mb-0"><i class="ti ti-message-report me-1"></i>Complaints</h6>
+                        <h6 class="fw-bold mb-0"><i class="ti ti-message-report me-1"></i>{{ __('consultations.workspace.complaints') }}</h6>
                         @can('consultations.create')
                         <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addComplaintForm">
-                            <i class="ti ti-plus me-1"></i>Add
+                            <i class="ti ti-plus me-1"></i>{{ __('common.add') }}
                         </button>
                         @endcan
                     </div>
@@ -798,7 +798,7 @@
                             </div>
                             @empty
                             <div class="text-center text-muted py-4" id="complaints-empty">
-                                <i class="ti ti-message-report fs-1 d-block mb-2"></i>No complaints recorded yet.
+                                <i class="ti ti-message-report fs-1 d-block mb-2"></i>{{ __('consultations.workspace.no_complaints') }}
                             </div>
                             @endforelse
                         </div>
@@ -1940,16 +1940,16 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <div>
-                                <h5 class="modal-title" id="followUpAppointmentModalLabel"><i class="ti ti-calendar-plus me-1"></i>Next Appointment / Follow-up</h5>
+                                <h5 class="modal-title" id="followUpAppointmentModalLabel"><i class="ti ti-calendar-plus me-1"></i>{{ __('consultations.workspace.follow_up_title') }}</h5>
                                 @if($followUpAppointment)
-                                    <small class="text-muted">Current status: {{ $followUpAppointment->status?->translatedLabel() ?? ucfirst((string) $followUpAppointment->status) }}</small>
+                                    <small class="text-muted">{{ __('consultations.workspace.current_status', ['status' => $followUpAppointment->status?->translatedLabel() ?? ucfirst((string) $followUpAppointment->status)]) }}</small>
                                 @endif
                             </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('common.close') }}"></button>
                         </div>
                         <div class="modal-body">
                         @if(! $selectedRoute)
-                            <x-empty-state icon="ti-route-off" :title="__('consultations.no_active_session')" message="Select a consultation session before setting a follow-up appointment." />
+                            <x-empty-state icon="ti-route-off" :title="__('consultations.no_active_session')" :message="__('consultations.workspace.select_session_for_follow_up')" />
                         @else
                             @php
                                 $followUpDepartmentId = (string) old('department_id', $followUpAppointment?->department_id ?? $selectedRoute?->department_id);
@@ -1967,7 +1967,7 @@
                             @if($followUpAppointment)
                                 <div class="alert alert-light border d-flex flex-wrap gap-3 align-items-center mb-3">
                                     <div>
-                                        <div class="text-muted small">Current follow-up</div>
+                                        <div class="text-muted small">{{ __('consultations.workspace.current_follow_up') }}</div>
                                         <div class="fw-semibold">
                                             {{ $followUpAppointment->appointment_date?->format('d M Y') }}
                                             @if($followUpAppointment->start_time)
@@ -1976,11 +1976,11 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="text-muted small">Department</div>
+                                        <div class="text-muted small">{{ __('common.department') }}</div>
                                         <div class="fw-semibold">{{ $followUpAppointment->department?->name ?? '-' }}</div>
                                     </div>
                                     <div>
-                                        <div class="text-muted small">Doctor</div>
+                                        <div class="text-muted small">{{ __('common.doctor') }}</div>
                                         <div class="fw-semibold">{{ $followUpAppointment->doctor?->full_name ?? 'Unassigned' }}</div>
                                     </div>
                                     @can('consultation.followup.cancel')
@@ -1988,12 +1988,12 @@
                                             <x-confirm-form
                                                 :action="route('admin.consultations.routes.follow-up.cancel', [$visit, $selectedRoute, $followUpAppointment])"
                                                 method="POST"
-                                                button-label="Cancel Follow-up"
+                                                :button-label="__('consultations.workspace.cancel_follow_up_button')"
                                                 button-class="btn btn-outline-danger btn-sm"
                                                 icon="ti-x"
                                                 :confirm-title="__('consultations.cancel_follow_up')"
-                                                confirm-text="A cancellation reason is required and will be recorded in the patient timeline."
-                                                confirm-button="Yes, cancel"
+                                                :confirm-text="__('consultations.workspace.cancel_follow_up_help')"
+                                                :confirm-button="__('consultations.workspace.yes_cancel')"
                                                 :require-reason="true"
                                                 reason-name="reason"
                                                 :reason-placeholder="__('consultations.follow_up_cancel_reason')"
@@ -2012,17 +2012,17 @@
 
                                     <div class="row g-3">
                                         <div class="col-md-4">
-                                            <label class="form-label">Next Appointment Date <span class="text-danger">*</span></label>
+                                            <label class="form-label">{{ __('consultations.workspace.next_appointment_date') }} <span class="text-danger">*</span></label>
                                             <input type="date" name="appointment_date" class="form-control @error('appointment_date') is-invalid @enderror" required value="{{ old('appointment_date', $followUpAppointment?->appointment_date?->toDateString()) }}">
                                             @error('appointment_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="form-label">Next Appointment Time</label>
+                                            <label class="form-label">{{ __('consultations.workspace.next_appointment_time') }}</label>
                                             <input type="time" name="start_time" class="form-control @error('start_time') is-invalid @enderror" value="{{ old('start_time', $followUpAppointment?->start_time ? substr((string) $followUpAppointment->start_time, 0, 5) : '') }}">
                                             @error('start_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="form-label">Priority</label>
+                                            <label class="form-label">{{ __('common.priority') }}</label>
                                             <select name="priority" class="form-select @error('priority') is-invalid @enderror">
                                                 @foreach(\App\Enums\Priority::cases() as $priority)
                                                     <option value="{{ $priority->value }}" @selected($followUpPriority === $priority->value)>{{ $priority->translatedLabel() }}</option>
@@ -2031,7 +2031,7 @@
                                             @error('priority')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="form-label">Department <span class="text-danger">*</span></label>
+                                            <label class="form-label">{{ __('common.department') }} <span class="text-danger">*</span></label>
                                             <select name="department_id" id="followUpDepartmentSelect" class="form-select @error('department_id') is-invalid @enderror" required>
                                                 @foreach($consultationDepartments as $department)
                                                     <option value="{{ $department->id }}" @selected($followUpDepartmentId === (string) $department->id)>{{ $department->name }}</option>
@@ -2040,7 +2040,7 @@
                                             @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="form-label">Service</label>
+                                            <label class="form-label">{{ __('consultations.workspace.service') }}</label>
                                             <select name="service_id" id="followUpServiceSelect" class="form-select @error('service_id') is-invalid @enderror">
                                                 <option value="">{{ __('consultations.no_specific_service') }}</option>
                                                 @foreach($consultationServices as $service)
@@ -2052,7 +2052,7 @@
                                             @error('service_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="form-label">Doctor</label>
+                                            <label class="form-label">{{ __('common.doctor') }}</label>
                                             <select name="doctor_id" class="form-select @error('doctor_id') is-invalid @enderror">
                                                 <option value="">{{ __('consultations.unassigned') }}</option>
                                                 @foreach($doctors as $doc)
@@ -2062,31 +2062,31 @@
                                             @error('doctor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                         </div>
                                         <div class="col-12">
-                                            <label class="form-label">Reason / Follow-up Note <span class="text-danger">*</span></label>
-                                            <textarea name="reason" class="form-control @error('reason') is-invalid @enderror" rows="2" required placeholder="Reason for review, e.g. Review lab results and blood pressure control">{{ old('reason', $followUpAppointment?->reason) }}</textarea>
+                                            <label class="form-label">{{ __('consultations.workspace.follow_up_reason') }} <span class="text-danger">*</span></label>
+                                            <textarea name="reason" class="form-control @error('reason') is-invalid @enderror" rows="2" required placeholder="{{ __('consultations.workspace.follow_up_reason_placeholder') }}">{{ old('reason', $followUpAppointment?->reason) }}</textarea>
                                             @error('reason')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                         </div>
                                         <div class="col-12">
-                                            <label class="form-label">Clinical Instruction / Note</label>
-                                            <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" rows="2" placeholder="Patient instructions, preparation, warning signs, or documents to bring">{{ old('notes', $followUpAppointment?->notes) }}</textarea>
+                                            <label class="form-label">{{ __('consultations.workspace.clinical_instruction') }}</label>
+                                            <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" rows="2" placeholder="{{ __('consultations.workspace.clinical_instruction_placeholder') }}">{{ old('notes', $followUpAppointment?->notes) }}</textarea>
                                             @error('notes')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                         </div>
                                         <div class="col-12">
                                             <div class="form-check">
                                                 <input type="checkbox" name="notify_patient" value="1" id="notifyPatientFollowUp" class="form-check-input" @checked(old('notify_patient'))>
-                                                <label class="form-check-label" for="notifyPatientFollowUp">Notify patient when reminder channels are configured</label>
+                                                <label class="form-check-label" for="notifyPatientFollowUp">{{ __('consultations.workspace.notify_patient') }}</label>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="mt-3 d-flex justify-content-end">
                                         <button type="submit" class="btn btn-primary">
-                                            <i class="ti ti-calendar-check me-1"></i>{{ $followUpAppointment ? 'Update Follow-up' : 'Set Follow-up' }}
+                                            <i class="ti ti-calendar-check me-1"></i>{{ $followUpAppointment ? __('consultations.workspace.update_follow_up') : __('consultations.workspace.set_follow_up') }}
                                         </button>
                                     </div>
                                 </form>
                             @else
                                 <div class="alert alert-secondary mb-0">
-                                    <i class="ti ti-lock me-1"></i>You do not have permission to {{ $followUpAppointment ? 'update' : 'create' }} consultation follow-up appointments.
+                                    <i class="ti ti-lock me-1"></i>{{ __('consultations.workspace.follow_up_permission_denied', ['action' => $followUpAppointment ? __('consultations.workspace.permission_action_update') : __('consultations.workspace.permission_action_create')]) }}
                                 </div>
                             @endif
                         @endif
@@ -2099,7 +2099,7 @@
             <div class="tab-pane fade" id="summary-section" role="tabpanel">
                 <div class="card">
                     <div class="card-header">
-                        <h6 class="fw-bold mb-0"><i class="ti ti-notes me-1"></i>Notes / Consultation Summary</h6>
+                        <h6 class="fw-bold mb-0"><i class="ti ti-notes me-1"></i>{{ __('consultations.workspace.notes_consultation_summary') }}</h6>
                     </div>
                     <div class="card-body" id="consultation-summary-body">
                         @include('consultations.partials.summary-sections', ['consultationSummary' => $consultationSummary])
@@ -2114,7 +2114,7 @@
     <div class="col-lg-4">
         <div class="card mb-3">
             <div class="card-header py-2 d-flex align-items-center justify-content-between">
-                <h6 class="fw-bold mb-0 small"><i class="ti ti-user-forward me-1"></i>Next Patient in Line</h6>
+                <h6 class="fw-bold mb-0 small"><i class="ti ti-user-forward me-1"></i>{{ __('consultations.workspace.next_patient_in_line') }}</h6>
                 @if($nextPatientInLine)
                     <span class="badge bg-{{ $nextPatientInLine['priority_color'] ?? 'secondary' }}">{{ $nextPatientInLine['priority'] ?? 'Normal' }}</span>
                 @endif
@@ -2123,30 +2123,30 @@
                 @if($nextPatientInLine)
                     <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
                         <div class="fw-semibold">{{ $nextPatientInLine['patient_name'] }}</div>
-                        <span class="badge bg-soft-primary text-primary flex-shrink-0">Queue #{{ $nextPatientInLine['queue_number'] }}</span>
+                        <span class="badge bg-soft-primary text-primary flex-shrink-0">{{ __('consultations.workspace.queue_number', ['number' => $nextPatientInLine['queue_number']]) }}</span>
                     </div>
                     <div class="small text-muted mb-2">
-                        {{ $nextPatientInLine['patient_number'] ?: 'No patient number' }}
+                        {{ $nextPatientInLine['patient_number'] ?: __('consultations.workspace.no_patient_number') }}
                         @if($nextPatientInLine['visit_number'])
                             &middot; {{ $nextPatientInLine['visit_number'] }}
                         @endif
                     </div>
                     <div class="small mb-2">
                         @if($nextPatientInLine['age'])
-                            <span class="badge bg-light text-dark border">Age {{ $nextPatientInLine['age'] }}</span>
+                            <span class="badge bg-light text-dark border">{{ __('consultations.workspace.age_value', ['age' => $nextPatientInLine['age']]) }}</span>
                         @endif
                         @if($nextPatientInLine['gender'])
-                            <span class="badge bg-light text-dark border">{{ ucfirst($nextPatientInLine['gender']) }}</span>
+                            <span class="badge bg-light text-dark border">{{ __('common.gender_'.strtolower($nextPatientInLine['gender'])) }}</span>
                         @endif
                     </div>
                     <div class="small text-muted">
-                        <div><i class="ti ti-clock me-1"></i>Waiting: {{ $nextPatientInLine['waiting_minutes'] ?? 0 }} minutes</div>
-                        <div><i class="ti ti-building-hospital me-1"></i>{{ $nextPatientInLine['department'] ?: 'Consultation department' }}</div>
+                        <div><i class="ti ti-clock me-1"></i>{{ __('consultations.workspace.waiting_minutes', ['count' => $nextPatientInLine['waiting_minutes'] ?? 0]) }}</div>
+                        <div><i class="ti ti-building-hospital me-1"></i>{{ $nextPatientInLine['department'] ?: __('consultations.workspace.consultation_department') }}</div>
                         @if(! empty($nextPatientInLine['services']))
                             <div><i class="ti ti-stethoscope me-1"></i>{{ implode(', ', $nextPatientInLine['services']) }}</div>
                         @endif
                         @if($nextPatientInLine['doctor'])
-                            <div><i class="ti ti-user-heart me-1"></i>Assigned: Dr. {{ $nextPatientInLine['doctor'] }}</div>
+                            <div><i class="ti ti-user-heart me-1"></i>{{ __('consultations.workspace.assigned_doctor', ['name' => $nextPatientInLine['doctor']]) }}</div>
                         @endif
                     </div>
                     <div class="mt-2">
@@ -2158,43 +2158,43 @@
                         <div class="d-grid gap-2 mt-3">
                             <form method="POST" action="{{ route('admin.consultations.routes.next-patient.open', [$visit, $selectedRoute]) }}">
                                 @csrf
-                                <button type="submit" class="btn btn-outline-primary btn-sm w-100" @disabled(! $nextPatientInLine['payment_allowed']) title="{{ $nextPatientInLine['payment_allowed'] ? 'Open next patient' : $nextPatientInLine['payment_message'] }}">
-                                    <i class="ti ti-arrow-right me-1"></i>Open Next Patient
+                                <button type="submit" class="btn btn-outline-primary btn-sm w-100" @disabled(! $nextPatientInLine['payment_allowed']) title="{{ $nextPatientInLine['payment_allowed'] ? __('consultations.workspace.open_next_patient') : $nextPatientInLine['payment_message'] }}">
+                                    <i class="ti ti-arrow-right me-1"></i>{{ __('consultations.workspace.open_next_patient') }}
                                 </button>
                             </form>
                             <x-confirm-form
                                 :action="route('admin.consultations.routes.next-patient.complete-open', [$visit, $selectedRoute])"
                                 method="POST"
-                                button-label="Complete & Open Next"
+                                :button-label="__('consultations.workspace.complete_and_open_next')"
                                 button-class="btn btn-success btn-sm w-100"
                                 icon="ti-check"
                                 :confirm-title="__('consultations.complete_open_next_confirm')"
-                                confirm-text="The current consultation session will be completed before the next patient is opened."
-                                confirm-button="Complete and open"
+                                :confirm-text="__('consultations.workspace.complete_and_open_help')"
+                                :confirm-button="__('consultations.workspace.complete_and_open')"
                                 :disabled="! $nextPatientInLine['payment_allowed']"
                                 :disabled-reason="$nextPatientInLine['payment_message']"
                             />
                         </div>
                     @endcan
                 @else
-                    <x-empty-state icon="ti-users-off" :title="__('consultations.no_patient_waiting')" message="No patient is currently waiting in this consultation queue." />
+                    <x-empty-state icon="ti-users-off" :title="__('consultations.no_patient_waiting')" :message="__('consultations.workspace.no_patient_waiting_help')" />
                 @endif
             </div>
         </div>
 
         {{-- todo: next appointment card should also show up here if set, with option to cancel or reschedule if user has permission --}}
         <div class="card">
-            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#followUpAppointmentModal" @disabled(! $selectedRoute) title="{{ $selectedRoute ? 'Set next appointment' : 'Select a consultation session first' }}">
-                <i class="ti ti-calendar-plus me-1"></i>{{ $followUpAppointment ? 'Update Next Appointment' : 'Next Appointment' }}
+            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#followUpAppointmentModal" @disabled(! $selectedRoute) title="{{ $selectedRoute ? __('consultations.workspace.set_next_appointment') : __('consultations.workspace.select_session_first') }}">
+                <i class="ti ti-calendar-plus me-1"></i>{{ $followUpAppointment ? __('consultations.workspace.update_next_appointment') : __('consultations.workspace.next_appointment') }}
                 @if($followUpAppointment)
-                    <span class="badge bg-primary-subtle text-primary ms-1">Set</span>
+                    <span class="badge bg-primary-subtle text-primary ms-1">{{ __('consultations.workspace.set') }}</span>
                 @endif
             </button>
         </div>
 
         <div class="card">
             <div class="card-header py-2">
-                <h6 class="fw-bold mb-0 small"><i class="ti ti-clock-history me-1"></i>Previous Visits
+                <h6 class="fw-bold mb-0 small"><i class="ti ti-clock-history me-1"></i>{{ __('consultations.workspace.previous_visits') }}
                     @if($history['total'] > 0) <span class="badge bg-secondary-subtle text-secondary ms-1">{{ $history['total'] }}</span> @endif
                 </h6>
             </div>
@@ -2210,7 +2210,7 @@
                                     <small class="text-muted d-block">Dr. {{ Str::limit($pastRecord->visit->currentConsultationDoctor()->full_name, 18) }}</small>
                                 @endif
                                 <small class="text-muted d-block">
-                                    {{ $pastRecord->complaints->count() }} complaint(s) &middot; {{ $pastRecord->diagnoses->count() }} dx
+                                    {{ trans_choice('consultations.workspace.complaint_count', $pastRecord->complaints->count(), ['count' => $pastRecord->complaints->count()]) }} &middot; {{ $pastRecord->diagnoses->count() }} dx
                                 </small>
                             </div>
                             <button type="button" class="btn btn-xs btn-outline-primary flex-shrink-0"
@@ -2223,7 +2223,7 @@
                     @if($history['total'] > 10)
                     <div class="text-center mt-1">
                         <a href="{{ route('admin.consultations.history', $visit) }}" class="btn btn-sm btn-outline-secondary w-100">
-                            + {{ $history['total'] - 10 }} more visits
+                            {{ trans_choice('consultations.workspace.more_visits', $history['total'] - 10, ['count' => $history['total'] - 10]) }}
                         </a>
                     </div>
                     @endif
@@ -2244,7 +2244,7 @@
 <div id="sessionsDrawer" class="is-collapsed">
     <div id="sessionsDrawerHandle" role="button" aria-expanded="false" aria-controls="sessionsDrawerBody" data-sessions-drawer-toggle>
         <i class="ti ti-route fs-5"></i>
-        <span class="fw-semibold small">Consultation Sessions for This Visit</span>
+        <span class="fw-semibold small">{{ __('consultations.workspace.sessions_for_visit') }}</span>
         <span class="badge bg-white text-primary rounded-pill ms-1">{{ $sessions->count() }}</span>
         <i class="ti ti-chevron-up ms-auto fs-5"></i>
     </div>
@@ -2268,22 +2268,22 @@
                         $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_COMPLETED ? ' is-completed' : '';
                         $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_CANCELLED ? ' is-cancelled' : '';
                         $sessionServiceNames = $routeServiceNames($session);
-                        $sessionLabel = $session->isEmergencySession() ? 'Emergency Department Session' : ($session->department?->name ?? '-');
+                        $sessionLabel = $session->isEmergencySession() ? __('consultations.emergency_department_session') : ($session->department?->name ?? '-');
                     @endphp
                     <tr class="session-route-row {{ trim($rowClass) }}">
                         <td class="fw-medium">
                             {{ $sessionLabel }}
                             @if($session->isEmergencySession())
-                                <span class="badge bg-danger ms-1">Emergency</span>
+                                <span class="badge bg-danger ms-1">{{ __('consultations.workspace.emergency') }}</span>
                             @endif
                         </td>
                         <td>
                             {{ $sessionServiceNames->implode(', ') ?: '-' }}
                             @if($selectedRoute && $selectedRoute->id === $session->id)
-                                <span class="badge bg-primary ms-1">Current</span>
+                                <span class="badge bg-primary ms-1">{{ __('consultations.workspace.current') }}</span>
                             @endif
                         </td>
-                        <td>{{ $session->doctor ? 'Dr. ' . $session->doctor->full_name : 'Unassigned' }}</td>
+                        <td>{{ $session->doctor ? 'Dr. ' . $session->doctor->full_name : __('consultations.unassigned') }}</td>
                         <td><x-status-badge :status="$session->status" domain="consultation_session" /></td>
                         <td>
                             <div class="small">{{ $session->started_at?->format('d M, h:i A') ?? '—' }}</div>
