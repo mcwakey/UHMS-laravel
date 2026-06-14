@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             AccountCategorySeeder::class,
             AccountingChartSeeder::class,
             ServiceCatalogSeeder::class,
+            InvestigationServiceCriteriaSeeder::class,
 
             // ── Pharmacy / stock spine ───────────────────────────────────
             DrugGenericNameSeeder::class,

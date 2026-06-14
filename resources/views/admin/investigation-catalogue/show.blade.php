@@ -24,6 +24,86 @@
         </div>
     </div>
 
+    @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert"><i class="ti ti-check me-1"></i>{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    @endif
+    @if($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show" role="alert"><i class="ti ti-alert-circle me-1"></i>{{ $errors->first() }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    @endif
+
+    {{-- OVERALL RESULT TYPE CONFIGURATION --}}
+    @php $ort = $service->overallResultType(); @endphp
+    <div class="card mb-3" id="overallResultCard">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0"><i class="ti ti-adjustments-check me-1"></i>{{ __('investigations.overall_result_type') }}</h6>
+            <span class="badge bg-light text-muted">{{ $service->overallResultTypeLabel() }}</span>
+        </div>
+        <div class="card-body">
+            <p class="text-muted small mb-3">{{ __('investigations.overall_result_help') }}</p>
+            <form method="POST" action="{{ route('admin.investigation-catalogue.overall-result.update', $service) }}" class="row g-3">
+                @csrf @method('PUT')
+                <div class="col-md-4">
+                    <label class="form-label small mb-1">{{ __('investigations.overall_result_type') }} <span class="text-danger">*</span></label>
+                    <select name="overall_result_type" id="overallResultType" class="form-select form-select-sm">
+                        @foreach(\App\Models\ServiceCatalog::overallResultTypes() as $value => $labelKey)
+                            <option value="{{ $value }}" @selected($ort === $value)>{{ __($labelKey) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Numeric options --}}
+                <div class="col-md-8 ort-group" data-ort="numeric">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1">{{ __('investigations.overall_result_unit') }}</label>
+                            <input type="text" name="overall_result_unit" class="form-control form-control-sm" value="{{ old('overall_result_unit', $service->overall_result_unit) }}" placeholder="mmol/L">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1">{{ __('investigations.minimum_normal_value') }}</label>
+                            <input type="number" step="any" name="overall_result_min_value" class="form-control form-control-sm" value="{{ old('overall_result_min_value', $service->overall_result_min_value) }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1">{{ __('investigations.maximum_normal_value') }}</label>
+                            <input type="number" step="any" name="overall_result_max_value" class="form-control form-control-sm" value="{{ old('overall_result_max_value', $service->overall_result_max_value) }}">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Positive / Negative labels --}}
+                <div class="col-md-8 ort-group" data-ort="positive_negative">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label small mb-1">{{ __('investigations.positive_label') }}</label>
+                            <input type="text" name="overall_result_positive_label" class="form-control form-control-sm" value="{{ old('overall_result_positive_label', $service->overall_result_positive_label) }}" placeholder="{{ __('investigations.positive') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small mb-1">{{ __('investigations.negative_label') }}</label>
+                            <input type="text" name="overall_result_negative_label" class="form-control form-control-sm" value="{{ old('overall_result_negative_label', $service->overall_result_negative_label) }}" placeholder="{{ __('investigations.negative') }}">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- True / False labels --}}
+                <div class="col-md-8 ort-group" data-ort="boolean">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label small mb-1">{{ __('investigations.true_label') }}</label>
+                            <input type="text" name="overall_result_true_label" class="form-control form-control-sm" value="{{ old('overall_result_true_label', $service->overall_result_true_label) }}" placeholder="{{ __('investigations.true') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small mb-1">{{ __('investigations.false_label') }}</label>
+                            <input type="text" name="overall_result_false_label" class="form-control form-control-sm" value="{{ old('overall_result_false_label', $service->overall_result_false_label) }}" placeholder="{{ __('investigations.false') }}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <button class="btn btn-primary btn-sm"><i class="ti ti-device-floppy me-1"></i>{{ __('investigations.save_overall_result') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="row g-3">
         {{-- LEFT: HEADERS --}}
         <div class="col-lg-4">
@@ -143,6 +223,123 @@
     </div>
 </div>
 
+{{-- Header editor --}}
+<div class="modal fade" id="editHeaderModal" tabindex="-1" aria-labelledby="editHeaderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editHeaderForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editHeaderModalLabel"><i class="ti ti-edit me-1"></i>Edit Header</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('common.close') }}"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id">
+                    <div class="mb-3">
+                        <label class="form-label">Header Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" required maxlength="191">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="2" maxlength="500"></textarea>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label class="form-label">Sort Order</label>
+                            <input type="number" name="sort_order" class="form-control" min="0">
+                        </div>
+                        <div class="col-sm-6 d-flex align-items-end">
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="is_active" value="1" class="form-check-input" id="editHeaderActive">
+                                <label class="form-check-label" for="editHeaderActive">Active</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy me-1"></i>{{ __('common.save') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Criterion editor --}}
+<div class="modal fade" id="editCriterionModal" tabindex="-1" aria-labelledby="editCriterionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="editCriterionForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editCriterionModalLabel"><i class="ti ti-edit me-1"></i>Edit Criterion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('common.close') }}"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" required maxlength="191">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Unit</label>
+                            <input type="text" name="unit" class="form-control" maxlength="50">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Reference Range</label>
+                            <input type="text" name="reference_range" class="form-control" maxlength="191">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Header</label>
+                            <select name="header_id" class="form-select" id="editCriterionHeader">
+                                <option value="">No header</option>
+                                @foreach($headers as $h)
+                                    <option value="{{ $h->id }}">{{ $h->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">{{ __('investigations.input_type') }}</label>
+                            <select name="input_type" class="form-select">
+                                <option value="text">{{ __('investigations.input_text') }}</option>
+                                <option value="number">{{ __('investigations.input_number') }}</option>
+                                <option value="select">{{ __('investigations.input_select') }}</option>
+                                <option value="textarea">{{ __('investigations.input_textarea') }}</option>
+                                <option value="boolean">{{ __('investigations.input_boolean') }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Default Value</label>
+                            <input type="text" name="default_value" class="form-control" maxlength="191">
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label">Options <small class="text-muted">(comma separated)</small></label>
+                            <input type="text" name="options" class="form-control" placeholder="Positive, Negative, Inconclusive">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Sort Order</label>
+                            <input type="number" name="sort_order" class="form-control" min="0">
+                        </div>
+                        <div class="col-12 d-flex gap-4">
+                            <div class="form-check">
+                                <input type="checkbox" name="is_required" value="1" class="form-check-input" id="editCriterionRequired">
+                                <label class="form-check-label" for="editCriterionRequired">Required</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" name="is_active" value="1" class="form-check-input" id="editCriterionActive">
+                                <label class="form-check-label" for="editCriterionActive">Active</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy me-1"></i>{{ __('common.save') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {{-- Default Consumables --}}
 @can('service_consumable.manage')
 <div class="card mt-3">
@@ -227,6 +424,20 @@
 @push('scripts')
 <script>
 (function() {
+    /* ==== OVERALL RESULT TYPE: show only the fields for the selected type ==== */
+    var ortSelect = document.getElementById('overallResultType');
+    if (ortSelect) {
+        var ortGroups = document.querySelectorAll('#overallResultCard .ort-group');
+        var syncOrt = function() {
+            var val = ortSelect.value;
+            ortGroups.forEach(function(g) {
+                g.style.display = (g.getAttribute('data-ort') === val) ? '' : 'none';
+            });
+        };
+        ortSelect.addEventListener('change', syncOrt);
+        syncOrt();
+    }
+
     var app = document.getElementById('catalogue-app');
     if (!app) return;
 
@@ -235,6 +446,8 @@
     var critsStoreUrl   = app.dataset.criteriaStoreUrl;
     var headersBase     = app.dataset.headersBaseUrl;
     var critsBase       = app.dataset.criteriaBaseUrl;
+    var editHeaderModal = new bootstrap.Modal(document.getElementById('editHeaderModal'));
+    var editCritModal   = new bootstrap.Modal(document.getElementById('editCriterionModal'));
 
     function ajax(url, method, body) {
         var fd = body instanceof FormData ? body : null;
@@ -267,6 +480,32 @@
         return d.innerHTML;
     }
 
+    function errorMessage(err) {
+        return err && err.errors
+            ? Object.values(err.errors).flat().join('\n')
+            : (err && err.message ? err.message : 'Failed.');
+    }
+
+    function renderHeader(h) {
+        return '<div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-center" data-header-id="' + h.id + '">'
+            + '<div><div class="fw-medium header-name"></div><small class="text-muted header-description"></small></div>'
+            + '<div class="d-flex gap-1 ms-2">'
+            + '<button type="button" aria-label="Edit" title="Edit" class="btn btn-xs btn-outline-primary edit-header-btn"><i class="ti ti-edit"></i></button>'
+            + '<button type="button" aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-header-btn"><i class="ti ti-trash"></i></button>'
+            + '</div></div>';
+    }
+
+    function syncHeaderRow(row, h) {
+        row.dataset.name = h.name || '';
+        row.dataset.description = h.description || '';
+        row.dataset.sortOrder = h.sort_order == null ? '' : h.sort_order;
+        row.dataset.isActive = h.is_active ? '1' : '0';
+        row.classList.toggle('opacity-50', !h.is_active);
+        row.querySelector('.header-name').textContent = h.name || '';
+        row.querySelector('.header-description').textContent = h.description || '';
+        row.querySelector('.header-description').classList.toggle('d-none', !h.description);
+    }
+
     /* ==== HEADERS ==== */
     document.getElementById('addHeaderForm').addEventListener('submit', function(e){
         e.preventDefault();
@@ -274,25 +513,20 @@
         ajax(headersStoreUrl, 'POST', new FormData(form))
             .then(function(d){
                 var h = d.header;
-                var html = '<div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-center" data-header-id="' + h.id + '">'
-                    + '<div><div class="fw-medium">' + escapeHtml(h.name) + '</div>'
-                    + (h.description ? '<small class="text-muted">' + escapeHtml(h.description) + '</small>' : '')
-                    + '</div>'
-                    + '<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-header-btn"><i class="ti ti-trash"></i></button>'
-                    + '</div>';
                 var list = document.getElementById('headersList');
                 var empty = document.getElementById('headersEmpty');
                 if (empty) empty.remove();
-                list.insertAdjacentHTML('beforeend', html);
+                list.insertAdjacentHTML('beforeend', renderHeader(h));
+                syncHeaderRow(list.lastElementChild, h);
 
                 // Add to dropdown in criterion form
-                var sel = document.getElementById('addCriterionHeader');
-                if (sel) {
+                [document.getElementById('addCriterionHeader'), document.getElementById('editCriterionHeader')].forEach(function(sel) {
+                    if (!sel) return;
                     var opt = document.createElement('option');
                     opt.value = h.id;
                     opt.textContent = h.name;
                     sel.appendChild(opt);
-                }
+                });
 
                 // Add new empty criteria-group section
                 var critList = document.getElementById('criteriaList');
@@ -306,12 +540,24 @@
                 toast('Header added.');
             })
             .catch(function(err){
-                var msg = err && err.errors ? Object.values(err.errors).flat().join('\n') : (err && err.message ? err.message : 'Failed.');
-                toast(msg, 'danger');
+                toast(errorMessage(err), 'danger');
             });
     });
 
     document.getElementById('headersList').addEventListener('click', function(e){
+        var editBtn = e.target.closest('.edit-header-btn');
+        if (editBtn) {
+            var editRow = editBtn.closest('[data-header-id]');
+            var editForm = document.getElementById('editHeaderForm');
+            editForm.elements.id.value = editRow.dataset.headerId;
+            editForm.elements.name.value = editRow.dataset.name || '';
+            editForm.elements.description.value = editRow.dataset.description || '';
+            editForm.elements.sort_order.value = editRow.dataset.sortOrder || '';
+            editForm.elements.is_active.checked = editRow.dataset.isActive === '1';
+            editHeaderModal.show();
+            return;
+        }
+
         var btn = e.target.closest('.delete-header-btn');
         if (!btn) return;
         if (!confirm('Delete this header? Criteria under it will be moved to "Unsorted".')) return;
@@ -321,11 +567,11 @@
             .then(function(){
                 row.remove();
                 // Remove from dropdown
-                var sel = document.getElementById('addCriterionHeader');
-                if (sel) {
+                [document.getElementById('addCriterionHeader'), document.getElementById('editCriterionHeader')].forEach(function(sel) {
+                    if (!sel) return;
                     var opt = sel.querySelector('option[value="' + id + '"]');
                     if (opt) opt.remove();
-                }
+                });
                 // Move criteria from this group into Unsorted
                 var grp = document.querySelector('.criteria-group[data-header-id="' + id + '"]');
                 if (grp) {
@@ -339,6 +585,33 @@
                 toast('Header deleted.');
             })
             .catch(function(){ toast('Failed to delete.', 'danger'); });
+    });
+
+    document.getElementById('editHeaderForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var form = e.target;
+        var id = form.elements.id.value;
+        var fd = new FormData(form);
+        fd.delete('id');
+        fd.set('is_active', form.elements.is_active.checked ? '1' : '0');
+
+        ajax(headersBase + '/' + id, 'PUT', fd)
+            .then(function(d) {
+                var row = document.querySelector('#headersList [data-header-id="' + id + '"]');
+                syncHeaderRow(row, d.header);
+
+                [document.getElementById('addCriterionHeader'), document.getElementById('editCriterionHeader')].forEach(function(sel) {
+                    if (!sel) return;
+                    var opt = sel.querySelector('option[value="' + id + '"]');
+                    if (opt) opt.textContent = d.header.name;
+                });
+
+                var groupTitle = document.querySelector('.criteria-group[data-header-id="' + id + '"] h6');
+                if (groupTitle) groupTitle.textContent = d.header.name;
+                editHeaderModal.hide();
+                toast('Header updated.');
+            })
+            .catch(function(err) { toast(errorMessage(err), 'danger'); });
     });
 
     /* ==== CRITERIA ==== */
@@ -364,17 +637,41 @@
                     var ph = grp.querySelector('.text-muted.small.ps-2');
                     if (ph) ph.remove();
                     grp.insertAdjacentHTML('beforeend', html);
+                    syncCriterionRow(grp.lastElementChild, c);
                 }
                 form.reset();
                 toast('Criterion added.');
             })
             .catch(function(err){
-                var msg = err && err.errors ? Object.values(err.errors).flat().join('\n') : (err && err.message ? err.message : 'Failed.');
-                toast(msg, 'danger');
+                toast(errorMessage(err), 'danger');
             });
     });
 
     document.getElementById('criteriaList').addEventListener('click', function(e){
+        var editBtn = e.target.closest('.edit-crit-btn');
+        if (editBtn) {
+            var editRow = editBtn.closest('[data-criterion-id]');
+            var editForm = document.getElementById('editCriterionForm');
+            var options = [];
+            try {
+                options = JSON.parse(editRow.dataset.options || '[]');
+            } catch (ignore) {}
+
+            editForm.elements.id.value = editRow.dataset.criterionId;
+            editForm.elements.name.value = editRow.dataset.name || '';
+            editForm.elements.unit.value = editRow.dataset.unit || '';
+            editForm.elements.reference_range.value = editRow.dataset.referenceRange || '';
+            editForm.elements.default_value.value = editRow.dataset.defaultValue || '';
+            editForm.elements.header_id.value = editRow.dataset.headerId || '';
+            editForm.elements.input_type.value = editRow.dataset.inputType || 'text';
+            editForm.elements.options.value = options.join(', ');
+            editForm.elements.sort_order.value = editRow.dataset.sortOrder || '';
+            editForm.elements.is_required.checked = editRow.dataset.isRequired === '1';
+            editForm.elements.is_active.checked = editRow.dataset.isActive === '1';
+            editCritModal.show();
+            return;
+        }
+
         var btn = e.target.closest('.delete-crit-btn');
         if (!btn) return;
         if (!confirm(@json(__('investigations.delete_criterion_confirm')))) return;
@@ -385,17 +682,72 @@
             .catch(function(){ toast('Failed to delete.', 'danger'); });
     });
 
+    document.getElementById('editCriterionForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var form = e.target;
+        var id = form.elements.id.value;
+        var fd = new FormData(form);
+        var options = fd.get('options') || '';
+        fd.delete('id');
+        fd.delete('options');
+        options.split(',').map(function(value) { return value.trim(); }).filter(Boolean).forEach(function(value, index) {
+            fd.append('options[' + index + ']', value);
+        });
+        if (!options.trim()) fd.append('options', '');
+        fd.set('is_required', form.elements.is_required.checked ? '1' : '0');
+        fd.set('is_active', form.elements.is_active.checked ? '1' : '0');
+
+        ajax(critsBase + '/' + id, 'PUT', fd)
+            .then(function(d) {
+                var row = document.querySelector('[data-criterion-id="' + id + '"]');
+                var targetGroup = document.querySelector('.criteria-group[data-header-id="' + (d.criterion.header_id || '') + '"]');
+
+                if (targetGroup && row.closest('.criteria-group') !== targetGroup) {
+                    var placeholder = targetGroup.querySelector('.text-muted.small.ps-2');
+                    if (placeholder) placeholder.remove();
+                    targetGroup.appendChild(row);
+                }
+
+                syncCriterionRow(row, d.criterion);
+                editCritModal.hide();
+                toast('Criterion updated.');
+            })
+            .catch(function(err) { toast(errorMessage(err), 'danger'); });
+    });
+
     function renderCriterion(c) {
-        var meta = [];
-        if (c.unit) meta.push('Unit: ' + escapeHtml(c.unit));
-        if (c.reference_range) meta.push('Range: ' + escapeHtml(c.reference_range));
-        if (c.input_type) meta.push('Type: ' + escapeHtml(c.input_type));
-        if (c.is_required) meta.push('<span class="text-danger">Required</span>');
         return '<div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-start" data-criterion-id="' + c.id + '" data-header-id="' + (c.header_id || '') + '">'
-            + '<div class="flex-grow-1"><div class="fw-medium">' + escapeHtml(c.name) + '</div>'
-            + '<small class="text-muted">' + meta.join(' &middot; ') + '</small></div>'
-            + '<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-crit-btn ms-2"><i class="ti ti-trash"></i></button>'
+            + '<div class="flex-grow-1"><div class="fw-medium criterion-name"></div><small class="text-muted criterion-meta"></small></div>'
+            + '<div class="d-flex gap-1 ms-2">'
+            + '<button type="button" aria-label="Edit" title="Edit" class="btn btn-xs btn-outline-primary edit-crit-btn"><i class="ti ti-edit"></i></button>'
+            + '<button type="button" aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-crit-btn"><i class="ti ti-trash"></i></button>'
+            + '</div>'
             + '</div>';
+    }
+
+    function syncCriterionRow(row, c) {
+        var options = Array.isArray(c.options) ? c.options : [];
+        var meta = [];
+        if (c.unit) meta.push('Unit: ' + c.unit);
+        if (c.reference_range) meta.push('Range: ' + c.reference_range);
+        if (c.input_type) meta.push('Type: ' + c.input_type);
+        if (c.is_required) meta.push('Required');
+
+        row.dataset.headerId = c.header_id || '';
+        row.dataset.name = c.name || '';
+        row.dataset.unit = c.unit || '';
+        row.dataset.referenceRange = c.reference_range || '';
+        row.dataset.defaultValue = c.default_value || '';
+        row.dataset.inputType = c.input_type || 'text';
+        row.dataset.options = JSON.stringify(options);
+        row.dataset.sortOrder = c.sort_order == null ? '' : c.sort_order;
+        row.dataset.isRequired = c.is_required ? '1' : '0';
+        row.dataset.isActive = c.is_active ? '1' : '0';
+        row.classList.toggle('opacity-50', !c.is_active);
+        row.querySelector('.criterion-name').textContent = c.name || '';
+        row.querySelector('.criterion-meta').textContent = meta.join(' · ');
+        if (c.is_required) row.querySelector('.criterion-meta').classList.add('text-danger');
+        else row.querySelector('.criterion-meta').classList.remove('text-danger');
     }
 })();
 </script>

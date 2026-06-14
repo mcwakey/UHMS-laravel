@@ -61,6 +61,7 @@ return [
     'awaiting_payment_badge'    => 'Awaiting payment',
     'see_criteria_form'         => 'See criteria form',
     'investigation_result'      => 'Investigation Result',
+    'overall_result_label'      => 'Overall Result',
     'result_value_label'        => 'Result Value',
     'mark_as_abnormal'          => 'Mark as Abnormal',
     'enter_result_placeholder'  => 'Enter test result...',

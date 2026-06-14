@@ -72,6 +72,15 @@ class LabResultController extends Controller
         $resultType = ResultType::tryFrom($request->input('result_type', 'parameters'))
             ?? ResultType::PARAMETERS;
 
+        // Configurable overall result type (per investigation/test). Restrict to the
+        // typed variants; anything else (incl. legacy/unset) is treated as free text.
+        $overallType = $request->input('overall_result_type');
+        $typedOverall = in_array($overallType, [
+            \App\Models\ServiceCatalog::OVERALL_RESULT_NUMERIC,
+            \App\Models\ServiceCatalog::OVERALL_RESULT_BOOLEAN,
+            \App\Models\ServiceCatalog::OVERALL_RESULT_POSITIVE_NEGATIVE,
+        ], true);
+
         $rules = [
             'result_type' => ['required', 'string'],
             'is_abnormal' => ['nullable', 'boolean'],
@@ -97,6 +106,17 @@ class LabResultController extends Controller
             $rules['result_text'] = ['required', 'string'];
         } elseif ($resultType->isFileBased()) {
             $rules['result_file'] = ['required', 'file', 'max:20480']; // 20MB
+        } elseif ($typedOverall) {
+            // Validate the configured overall result type. Canonical values only.
+            $rules['overall_result_type'] = ['required', 'in:numeric,boolean,positive_negative'];
+            $rules['overall_result_value'] = match ($overallType) {
+                \App\Models\ServiceCatalog::OVERALL_RESULT_NUMERIC           => ['required', 'numeric'],
+                \App\Models\ServiceCatalog::OVERALL_RESULT_BOOLEAN          => ['required', 'in:true,false,1,0'],
+                \App\Models\ServiceCatalog::OVERALL_RESULT_POSITIVE_NEGATIVE => ['required', 'in:positive,negative'],
+                default                                                      => ['nullable'],
+            };
+            // result_value is derived from the canonical value below.
+            $rules['result_value'] = ['nullable', 'string', 'max:5000'];
         } else {
             // For criteria-based result entry, result_value can be derived/empty.
             if ($request->filled('values')) {
@@ -107,6 +127,14 @@ class LabResultController extends Controller
         }
 
         $validated = $request->validate($rules);
+
+        // Map the entered overall result into canonical, reportable columns.
+        if ($typedOverall) {
+            $validated = $this->mapOverallResult($validated, $overallType, $item);
+        } elseif ($resultType === ResultType::PARAMETERS) {
+            // free_text overall result: mirror into the typed text column for reporting.
+            $validated['overall_result_type'] = \App\Models\ServiceCatalog::OVERALL_RESULT_FREE_TEXT;
+        }
         // Pass the uploaded file separately because $request->validate strips
         // unrecognised non-validated keys.
         if ($request->hasFile('result_file')) {
@@ -124,6 +152,12 @@ class LabResultController extends Controller
                 ->filter()
                 ->implode(' | ');
             $validated['result_value'] = $summary ?: '(criteria-based result)';
+        }
+
+        // For a free-text overall result, mirror the final text into the canonical
+        // overall_result_text column so reporting can read it uniformly.
+        if (($validated['overall_result_type'] ?? null) === \App\Models\ServiceCatalog::OVERALL_RESULT_FREE_TEXT) {
+            $validated['overall_result_text'] = $validated['result_value'] ?? null;
         }
 
         try {
@@ -173,6 +207,43 @@ class LabResultController extends Controller
         }
 
         return back()->with('success', __('messages.lab.result_saved'));
+    }
+
+    /**
+     * Translate a submitted overall result into canonical, reportable columns
+     * and a backward-compatible result_value text. Canonical DB values only
+     * (numeric / true|false / positive|negative) — never translated labels.
+     */
+    private function mapOverallResult(array $validated, string $overallType, LabRequestItem $item): array
+    {
+        $value = $validated['overall_result_value'] ?? null;
+        $validated['overall_result_type'] = $overallType;
+        unset($validated['overall_result_value']);
+
+        switch ($overallType) {
+            case \App\Models\ServiceCatalog::OVERALL_RESULT_NUMERIC:
+                $numeric = (float) $value;
+                $unit = $item->service?->overall_result_unit;
+                $validated['overall_result_numeric'] = $numeric;
+                $validated['overall_result_unit'] = $unit;
+                $text = rtrim(rtrim(number_format($numeric, 4, '.', ''), '0'), '.');
+                $validated['result_value'] = $unit ? "{$text} {$unit}" : $text;
+                break;
+
+            case \App\Models\ServiceCatalog::OVERALL_RESULT_BOOLEAN:
+                $bool = in_array((string) $value, ['true', '1'], true);
+                $validated['overall_result_boolean'] = $bool;
+                $validated['result_value'] = $bool ? 'true' : 'false';
+                break;
+
+            case \App\Models\ServiceCatalog::OVERALL_RESULT_POSITIVE_NEGATIVE:
+                $outcome = $value === 'positive' ? 'positive' : 'negative';
+                $validated['overall_result_outcome'] = $outcome;
+                $validated['result_value'] = $outcome;
+                break;
+        }
+
+        return $validated;
     }
 
     /**

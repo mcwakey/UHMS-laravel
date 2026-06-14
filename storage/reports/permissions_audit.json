@@ -1,9 +1,9 @@
 {
-    "generated_at": "2026-06-14T16:31:44+00:00",
+    "generated_at": "2026-06-14T17:44:03+00:00",
     "totals": {
         "permissions_in_db": 2,
         "used_in_routes": 242,
-        "admin_mutation_routes": 376
+        "admin_mutation_routes": 377
     },
     "risk_distribution": {
         "LOW": 1,

@@ -9,6 +9,7 @@ use App\Models\InvestigationHeader;
 use App\Models\ServiceCatalog;
 use App\Services\InvestigationCatalogueService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class InvestigationCatalogueController extends Controller
 {
@@ -34,6 +35,30 @@ class InvestigationCatalogueController extends Controller
         return view('admin.investigation-catalogue.show', $config);
     }
 
+    /**
+     * Update the per-service overall result type configuration.
+     */
+    public function updateOverallResult(Request $request, ServiceCatalog $service)
+    {
+        abort_unless($service->department && in_array(($service->department->type?->value ?? null), $this->service->investigationDepartmentTypes(), true),
+            404, 'Service is not part of an investigation-type department.');
+
+        $data = $request->validate([
+            'overall_result_type' => ['required', 'in:' . implode(',', array_keys(ServiceCatalog::overallResultTypes()))],
+            'overall_result_unit' => ['nullable', 'string', 'max:50'],
+            'overall_result_min_value' => ['nullable', 'numeric'],
+            'overall_result_max_value' => ['nullable', 'numeric', 'gte:overall_result_min_value'],
+            'overall_result_positive_label' => ['nullable', 'string', 'max:100'],
+            'overall_result_negative_label' => ['nullable', 'string', 'max:100'],
+            'overall_result_true_label' => ['nullable', 'string', 'max:100'],
+            'overall_result_false_label' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $this->service->updateOverallResultConfig($service, $data);
+
+        return back()->with('success', __('investigations.overall_result_saved'));
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Headers (AJAX)
@@ -56,9 +81,9 @@ class InvestigationCatalogueController extends Controller
     public function updateHeader(Request $request, InvestigationHeader $header)
     {
         $data = $request->validate([
-            'name'        => ['nullable', 'string', 'max:191'],
+            'name'        => ['sometimes', 'required', 'string', 'max:191'],
             'description' => ['nullable', 'string', 'max:500'],
-            'sort_order'  => ['nullable', 'integer', 'min:0'],
+            'sort_order'  => ['sometimes', 'required', 'integer', 'min:0'],
             'is_active'   => ['nullable', 'boolean'],
         ]);
 
@@ -86,10 +111,10 @@ class InvestigationCatalogueController extends Controller
             'unit'            => ['nullable', 'string', 'max:50'],
             'reference_range' => ['nullable', 'string', 'max:191'],
             'default_value'   => ['nullable', 'string', 'max:191'],
-            'input_type'      => ['nullable', 'in:text,number,select,textarea,boolean'],
+            'input_type'      => ['sometimes', 'required', 'in:text,number,select,textarea,boolean'],
             'options'         => ['nullable', 'array'],
             'options.*'       => ['string', 'max:100'],
-            'sort_order'      => ['nullable', 'integer', 'min:0'],
+            'sort_order'      => ['sometimes', 'required', 'integer', 'min:0'],
             'is_required'     => ['nullable', 'boolean'],
         ]);
 
@@ -100,15 +125,20 @@ class InvestigationCatalogueController extends Controller
     public function updateCriterion(Request $request, InvestigationCriterion $criterion)
     {
         $data = $request->validate([
-            'header_id'       => ['nullable', 'integer', 'exists:investigation_headers,id'],
-            'name'            => ['nullable', 'string', 'max:191'],
+            'header_id'       => [
+                'nullable',
+                'integer',
+                Rule::exists('investigation_headers', 'id')
+                    ->where('service_id', $criterion->service_id),
+            ],
+            'name'            => ['sometimes', 'required', 'string', 'max:191'],
             'unit'            => ['nullable', 'string', 'max:50'],
             'reference_range' => ['nullable', 'string', 'max:191'],
             'default_value'   => ['nullable', 'string', 'max:191'],
-            'input_type'      => ['nullable', 'in:text,number,select,textarea,boolean'],
+            'input_type'      => ['sometimes', 'required', 'in:text,number,select,textarea,boolean'],
             'options'         => ['nullable', 'array'],
             'options.*'       => ['string', 'max:100'],
-            'sort_order'      => ['nullable', 'integer', 'min:0'],
+            'sort_order'      => ['sometimes', 'required', 'integer', 'min:0'],
             'is_required'     => ['nullable', 'boolean'],
             'is_active'       => ['nullable', 'boolean'],
         ]);

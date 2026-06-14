@@ -5,452 +5,539 @@ There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
 Do not try to read it.
 Follow this prompt directly.
 
-Localisation active-runtime work is complete and locked.
-
-Current confirmed status:
-
-```text
-Active runtime candidates: 0
-```
-
-Phase 16 added localisation QA gates under:
-
-```text
-tests/Feature/Localization/
-```
-
-The localisation test suite passes:
-
-```text
-12 tests / 60 assertions
-```
-
-Do not restart localisation work.
-Do not re-open translation phases unless a test proves a real regression.
-
-# UHMS Phase 17 — Full Test Suite & System-Wide Regression Stabilisation
+# UHMS Investigation Module — Configurable Overall Result Type
 
 ## Goal
 
-Run and stabilise the full UHMS automated test suite after the major localisation/responsiveness work.
+In the investigation module, the **overall result field** must be configurable per investigation/test type.
 
-The goal is not to add new features.
-
-The goal is to make the whole application testable, stable, and safe after the recent large UI/localisation changes.
+Currently, investigation results are too generic. Some investigations need a free-text conclusion, some need a numeric value, some need true/false, and others need positive/negative outcomes. This must be configurable from the investigation catalogue/test configuration, then respected when entering results and when generating reports/statistics.
 
 ---
 
-# 1. Required Context
+## 1. Add Overall Result Type Configuration
 
-Before changing anything, review the latest reports:
+Add a configurable field to the investigation/test catalogue.
+
+Each investigation type/test must support one of these overall result formats:
 
 ```text
-docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
-docs/LOCALISATION_PHASE_16_QA_GATES_AND_REGRESSION_LOCK_REPORT.md
+free_text
+numeric
+boolean
+positive_negative
 ```
 
-Important baseline:
+Recommended labels:
 
 ```text
-Active runtime candidates: 0
-Localisation tests: passing
+Free text
+Numeric value
+True / False
+Positive / Negative
 ```
 
-Do not break this baseline.
+The configuration should be set per investigation/test type, not globally.
 
----
-
-# 2. Run the Full Test Suite
-
-Run:
-
-```bash
-php artisan test
-```
-
-If the full suite is too large or crashes early, run grouped suites:
-
-```bash
-php artisan test tests/Feature
-php artisan test tests/Unit
-php artisan test tests/Feature/Localization
-```
-
-Also run:
-
-```bash
-php artisan route:list
-php artisan view:cache
-php artisan view:clear
-```
-
-Then record:
-
-* total tests
-* passed tests
-* failed tests
-* skipped tests
-* errors
-* first failing file
-* first failing test
-* failure categories
-
----
-
-# 3. Do Not Fix Blindly
-
-For every failure, classify it first.
-
-Use these categories:
+Example:
 
 ```text
-A. Real application bug
-B. Test expectation outdated after intended change
-C. Seeder/factory/test-data issue
-D. Permission/role setup issue
-E. Route/name/view path changed
-F. Localisation assertion issue
-G. Database migration/schema issue
-H. Environment-only issue
-I. Flaky/time-dependent issue
+Malaria RDT       → positive_negative
+Pregnancy Test    → positive_negative
+Blood Sugar       → numeric
+HIV Screening     → positive_negative
+X-Ray Chest       → free_text
+Consent-related test → boolean
 ```
-
-Do not change production code if the problem is clearly a bad test.
-
-Do not change tests to hide a real bug.
 
 ---
 
-# 4. Preserve Localisation Lock
+## 2. Database Changes
 
-Before and after fixes, run:
+Add the needed columns to the investigation catalogue/test table.
+
+Use the existing model/table names in the project. Do not create a parallel investigation catalogue.
+
+Recommended fields:
+
+```text
+overall_result_type
+overall_result_unit
+overall_result_min_value
+overall_result_max_value
+overall_result_positive_label
+overall_result_negative_label
+overall_result_true_label
+overall_result_false_label
+```
+
+Only add fields that make sense based on the current schema.
+
+At minimum, add:
+
+```text
+overall_result_type
+```
+
+Optional but useful:
+
+```text
+overall_result_unit
+```
+
+For numeric result reporting, the unit can be used in display and reports.
+
+Use safe defaults:
+
+```text
+overall_result_type = free_text
+```
+
+Make the migration compatible with MariaDB/MySQL.
+
+Do not use database enum if the project normally avoids enums for compatibility. A string column with validation is acceptable.
+
+---
+
+## 3. Model Constants / Helper Methods
+
+In the investigation catalogue/test model, add constants or helper methods for supported result types.
+
+Example:
+
+```php
+public const OVERALL_RESULT_FREE_TEXT = 'free_text';
+public const OVERALL_RESULT_NUMERIC = 'numeric';
+public const OVERALL_RESULT_BOOLEAN = 'boolean';
+public const OVERALL_RESULT_POSITIVE_NEGATIVE = 'positive_negative';
+```
+
+Add helper methods such as:
+
+```php
+public static function overallResultTypes(): array
+public function overallResultTypeLabel(): string
+public function usesNumericOverallResult(): bool
+public function usesBooleanOverallResult(): bool
+public function usesPositiveNegativeOverallResult(): bool
+public function usesFreeTextOverallResult(): bool
+```
+
+Make labels localised with `__()`.
+
+---
+
+## 4. Admin Configuration UI
+
+Update the investigation/test catalogue create/edit/configure screens.
+
+Add a field:
+
+```text
+Overall Result Type
+```
+
+Input type:
+
+```text
+select dropdown
+```
+
+Options:
+
+```text
+Free text
+Numeric value
+True / False
+Positive / Negative
+```
+
+If `numeric` is selected, optionally show:
+
+```text
+Unit
+Minimum normal value
+Maximum normal value
+```
+
+If `positive_negative` is selected, optionally show labels:
+
+```text
+Positive label
+Negative label
+```
+
+If `boolean` is selected, optionally show labels:
+
+```text
+True label
+False label
+```
+
+These optional custom labels should default to translated standard labels if not set.
+
+Use Bootstrap 5 only.
+Do not introduce a new frontend library.
+
+---
+
+## 5. Result Entry UI
+
+When entering or verifying investigation results, the overall result input must change based on the configured type.
+
+Rules:
+
+### free_text
+
+Show a textarea or text input.
+
+Store as text.
+
+### numeric
+
+Show a number input.
+
+Allow decimal values.
+
+Store numeric value separately if the schema supports it, or validate/cast carefully if stored in the existing result field.
+
+Show the configured unit if available.
+
+### boolean
+
+Show a select/radio:
+
+```text
+True
+False
+```
+
+Store canonical value:
+
+```text
+true
+false
+```
+
+Do not store translated labels as database values.
+
+### positive_negative
+
+Show a select/radio:
+
+```text
+Positive
+Negative
+```
+
+Store canonical value:
+
+```text
+positive
+negative
+```
+
+Do not store translated labels as database values.
+
+---
+
+## 6. Storage Rules
+
+The stored overall result must be reportable.
+
+Preferred structure, if safe with current schema:
+
+```text
+overall_result_type
+overall_result_text
+overall_result_numeric
+overall_result_boolean
+overall_result_outcome
+overall_result_unit
+```
+
+Where:
+
+```text
+overall_result_text      → free text values
+overall_result_numeric   → numeric values
+overall_result_boolean   → true/false
+overall_result_outcome   → positive/negative
+overall_result_unit      → copied/displayed unit if needed
+```
+
+If the current system already has one `overall_result` column, keep it for backward compatibility but add typed columns if necessary.
+
+Do not break existing results.
+
+Existing free-text results must continue to display correctly.
+
+Backwards compatibility rule:
+
+```text
+If old result has only overall_result text, treat it as free_text unless the investigation type is configured otherwise.
+```
+
+---
+
+## 7. Validation Rules
+
+Add validation based on selected result type.
+
+For result entry:
+
+```text
+free_text           → nullable|string
+numeric             → nullable|numeric
+boolean             → nullable|in:true,false,1,0
+positive_negative   → nullable|in:positive,negative
+```
+
+For catalogue configuration:
+
+```text
+overall_result_type → required|in:free_text,numeric,boolean,positive_negative
+```
+
+If numeric min/max are added:
+
+```text
+min/max must be numeric
+max must be >= min
+```
+
+---
+
+## 8. Reporting / Tally Logic
+
+Add report/statistics support for tallying overall results.
+
+For positive/negative investigations, reports should be able to count:
+
+```text
+Positive count
+Negative count
+Total tested
+Positive rate
+Negative rate
+```
+
+For boolean investigations, reports should be able to count:
+
+```text
+True count
+False count
+Total tested
+True rate
+False rate
+```
+
+For numeric investigations, reports should support:
+
+```text
+count
+average
+minimum
+maximum
+normal / abnormal count if min/max configured
+```
+
+For free-text investigations, reports should support:
+
+```text
+count completed
+latest result summaries where appropriate
+```
+
+Do not mix numeric aggregation with text results.
+
+Add this logic in a service class, not directly in controllers or Blade.
+
+Example service name if no better existing service exists:
+
+```text
+InvestigationResultSummaryService
+```
+
+Reuse existing report services if already present.
+
+---
+
+## 9. Display Rules
+
+Wherever an overall result is displayed, format it based on type.
+
+Examples:
+
+```text
+free_text           → "No acute abnormality detected"
+numeric             → "5.6 mmol/L"
+boolean true        → "True" / translated label
+boolean false       → "False" / translated label
+positive            → "Positive" / translated label
+negative            → "Negative" / translated label
+```
+
+Database values remain canonical English/internal values.
+
+Displayed values must be translated using language files.
+
+---
+
+## 10. Localisation
+
+Add EN/FR translation keys for all new labels.
+
+Use or extend:
+
+```text
+lang/en/investigations.php
+lang/fr/investigations.php
+lang/en/lab.php
+lang/fr/lab.php
+lang/en/reports.php
+lang/fr/reports.php
+```
+
+Required keys include:
+
+```text
+overall_result_type
+free_text
+numeric_value
+true_false
+positive_negative
+overall_result_unit
+minimum_normal_value
+maximum_normal_value
+positive
+negative
+true
+false
+positive_count
+negative_count
+true_count
+false_count
+positive_rate
+negative_rate
+average_value
+minimum_value
+maximum_value
+normal_count
+abnormal_count
+completed_count
+```
+
+Maintain EN/FR parity.
+
+Run the localisation tests after changes.
+
+---
+
+## 11. Permissions / Security
+
+Do not weaken permissions.
+
+Preserve existing access control for:
+
+```text
+investigation catalogue configuration
+result entry
+result verification
+result viewing
+reports
+```
+
+Do not expose clinical results to users without permission.
+
+Do not move business logic into Blade.
+
+---
+
+## 12. Backward Compatibility
+
+Existing investigation records must continue to work.
+
+Do not delete old result data.
+
+Do not rename existing columns without migration safety.
+
+If new typed columns are added, existing data should still display through the old free-text fallback.
+
+Add compatibility helpers if needed.
+
+---
+
+## 13. Tests
+
+Add or update tests for:
+
+```text
+catalogue can configure free_text result type
+catalogue can configure numeric result type
+catalogue can configure boolean result type
+catalogue can configure positive_negative result type
+result entry validates based on configured type
+numeric result can be stored and displayed with unit
+boolean result stores canonical value and displays translated value
+positive_negative result stores canonical value and displays translated value
+old free-text results still display
+report tally counts positive/negative correctly
+report tally counts true/false correctly
+report summary calculates numeric average/min/max
+unauthorized users cannot configure result types
+unauthorized users cannot view restricted results
+```
+
+Also run existing localisation tests:
 
 ```bash
 php artisan test tests/Feature/Localization
 php scripts/localisation-audit.php
 ```
 
-The following must remain true:
+Active runtime candidates must remain:
 
 ```text
-Active runtime candidates: 0
-EN/FR parity: pass
-French route smoke: pass
-Validation localisation: pass
-JS localisation bridge: pass
+0
 ```
-
-If any localisation test fails, fix it immediately before continuing.
 
 ---
 
-# 5. Fix Test Infrastructure First
-
-If failures are caused by missing baseline data, fix factories/seeders/test setup before touching business logic.
-
-Pay attention to:
-
-* roles
-* permissions
-* departments
-* services
-* products
-* stock locations
-* payment methods
-* insurance providers
-* sponsors
-* consultation services
-* emergency service mappings
-* accounting chart of accounts
-* fiscal periods
-* users with proper roles
-
-Prefer reusable test helpers or seeders over copy-pasting setup into every test.
-
----
-
-# 6. Role and Permission Test Stability
-
-Many UHMS pages are permission-aware.
-
-Ensure tests create users with appropriate roles/permissions.
-
-Do not bypass permissions in production code.
-
-For tests, use one of these approaches:
-
-```php
-$user = User::factory()->create();
-$user->assignRole('Super Admin');
-$this->actingAs($user);
-```
-
-or a reusable helper:
-
-```php
-$this->actingAsSuperAdmin();
-```
-
-If roles do not exist in the test database, seed them in the test setup.
-
-Do not remove `@can`, policies, gates, middleware, or permission checks.
-
----
-
-# 7. Database / Migration Stability
-
-If tests fail due to schema issues:
-
-* verify migrations run cleanly on a fresh test database
-* avoid destructive migrations unless absolutely required
-* ensure MariaDB 10.1 compatibility
-* avoid JSON column assumptions if the project must support older MariaDB
-* avoid unsupported indexes or generated columns if not already used safely
+## 14. Verification Commands
 
 Run:
 
 ```bash
-php artisan migrate:fresh --env=testing
-php artisan test
-```
-
-Only if the test environment supports it.
-
----
-
-# 8. Factory and Seeder Stabilisation
-
-Fix factories for core models where needed.
-
-Important UHMS entities likely needed in tests:
-
-```text
-User
-Role
-Permission
-Patient
-Visit
-Department
-Service
-Product
-StockLocation
-Invoice
-Payment
-InsuranceProvider
-PatientInsurance
-Sponsor
-Appointment
-Consultation
-Prescription
-LabRequest
-EmergencyCase
-Ward
-Bed
-TheatreRoom
-PurchaseOrder
-Supplier
-Account
-JournalEntry
-```
-
-Factories should create valid minimal records.
-
-Avoid creating huge fixture data.
-
----
-
-# 9. Billing / Accounting / Stock Safety
-
-When fixing failures in billing, accounting, or stock tests, preserve these rules:
-
-```text
-Products = physical stock items.
-Services = billable activities.
-Operational records stay operational.
-Accounting records are journal entries.
-```
-
-Do not mix product and service logic.
-
-Do not bypass accounting services.
-
-Do not change invoice totals just to satisfy a test.
-
-Do not weaken stock-cost permissions.
-
-Do not expose financial data to unauthorised users.
-
----
-
-# 10. Emergency Workflow Safety
-
-When fixing emergency-related tests, preserve the intended workflow:
-
-* emergency visit type should create/flag Emergency/Casualty context correctly
-* emergency cases should map to configured emergency consultation/service mappings
-* no hardcoded emergency service IDs
-* no hardcoded consultation service IDs
-* emergency workflow must still bill using configured services
-* emergency clinical/financial visibility remains permission-aware
-
-Do not hardcode Emergency/Casualty service names as IDs.
-
-Use configuration or database mappings.
-
----
-
-# 11. Insurance / Sponsor / NHIS Safety
-
-NHIS is just another insurance provider.
-
-Do not create NHIS-only architecture.
-
-Do not hardcode NHIS into generic billing, claims, or insurance workflows.
-
-When fixing tests:
-
-* use generic insurance providers
-* use generic sponsor entities
-* keep patient insurance logic provider-agnostic
-* keep claim logic provider-aware but not provider-hardcoded
-
----
-
-# 12. Activity Log Safety
-
-Do not bypass:
-
-```text
-ActivityLogService
-```
-
-If tests fail because logs are expected, update tests or seed context properly.
-
-Do not remove audit events just to pass tests.
-
-If logging causes unstable assertions, assert the event type/key rather than fragile full text where possible.
-
----
-
-# 13. View / Blade / Route Failures
-
-If tests fail because a page no longer renders:
-
-* check missing language keys
-* check undefined variables
-* check permission-gated buttons
-* check route names
-* check partial includes
-* check `@json()` usage
-* check view cache parse errors
-
-Run:
-
-```bash
+php artisan view:clear
+php artisan config:clear
+php artisan cache:clear
+php artisan route:list
 php artisan view:cache
+php artisan view:clear
 ```
-
-Do not suppress Blade errors.
-
-Fix root causes.
-
----
-
-# 14. Frontend Asset Safety
-
-If tests or builds touch frontend assets:
 
 Run:
 
 ```bash
-npm run build
+for f in lang/en/*.php lang/fr/*.php; do php -l "$f"; done
 ```
 
-Only if Node dependencies are installed.
-
-Do not introduce new frontend frameworks.
-
-Do not introduce Tailwind.
-
-Use existing Bootstrap 5 + Tabler Icons.
-
-Do not break the `window.UHMS_I18N` localisation bridge.
-
----
-
-# 15. Fix Order
-
-Use this order:
-
-```text
-1. Environment/test setup failures
-2. Migration/schema failures
-3. Seeder/factory failures
-4. Auth/role/permission failures
-5. Route/view/cache failures
-6. Localisation regression failures
-7. Core domain logic failures
-8. Billing/accounting/stock failures
-9. Emergency/clinical workflow failures
-10. Flaky/time-sensitive tests
-```
-
-Commit mentally by category; keep diffs reviewable.
-
----
-
-# 16. Reporting Requirements
-
-Create:
-
-```text
-docs/PHASE_17_FULL_TEST_SUITE_REGRESSION_STABILISATION_REPORT.md
-```
-
-Include:
-
-* summary
-* test commands run
-* initial full-suite result
-* final full-suite result
-* number of failures fixed
-* failure categories
-* files changed
-* production code changed
-* test code changed
-* seeders/factories changed
-* migrations changed, if any
-* localisation gate result
-* active runtime candidate count
-* route list result
-* view cache result
-* npm build result, if run
-* remaining failing tests, if any
-* known risks
-* next recommended phase
-
----
-
-# 17. Required Final Verification
-
-At the end, run:
+Run:
 
 ```bash
 php artisan test tests/Feature/Localization
 php scripts/localisation-audit.php
-php artisan route:list
-php artisan view:cache
-php artisan view:clear
 php artisan test
 ```
 
-If available and relevant:
+If frontend assets are touched and dependencies are available:
 
 ```bash
 npm run build
 ```
 
-Also run:
+Run:
 
 ```bash
 git diff --check
@@ -458,21 +545,52 @@ git diff --check
 
 ---
 
-# 18. Acceptance Criteria
+## 15. Documentation
 
-Phase 17 is complete only when:
+Create:
 
-* localisation tests still pass
-* active runtime candidates remain 0
+```text
+docs/INVESTIGATION_CONFIGURABLE_OVERALL_RESULT_TYPE_REPORT.md
+```
+
+Include:
+
+* summary
+* database changes
+* model changes
+* UI changes
+* result entry behavior
+* storage strategy
+* backward compatibility notes
+* reporting/tally logic
+* permissions/security notes
+* tests added
+* commands run
+* localisation audit result
+* remaining risks
+* next recommended phase
+
+---
+
+## 16. Acceptance Criteria
+
+This implementation is complete only when:
+
+* each investigation/test type can configure its overall result type
+* result entry UI changes based on configured type
+* values are stored canonically and safely
+* old free-text results still display
+* positive/negative results can be tallied
+* true/false results can be tallied
+* numeric results can be aggregated
+* free-text results remain supported
+* EN/FR localisation parity passes
+* active runtime localisation candidates remain 0
 * route list works
 * view cache compiles
-* full test suite is run
-* all failures are fixed or clearly documented
-* no permission checks are weakened
-* no clinical/financial data exposure is introduced
-* no business logic is moved into Blade
-* no NHIS-only logic is introduced
-* no stock/product/service rules are broken
+* tests pass or failures are documented
+* no permissions are weakened
+* no clinical data exposure is introduced
 * documentation report is created
 
-Proceed with UHMS Phase 17 now.
+Proceed with the configurable investigation overall result implementation now.

@@ -261,7 +261,7 @@ class LabService
             'items.labTest.criteria',
             'items.service.investigationHeaders.criteria',
             'items.service.investigationCriteria',
-            'items.invoiceItem',
+            'items.invoiceItem.invoice',
             'items.result.performedBy',
             'items.result.verifiedBy',
             'items.result.values',
@@ -346,6 +346,17 @@ class LabService
                 'performed_by'        => Auth::id(),
                 'performed_at'        => now(),
             ];
+
+            // Configurable overall result (canonical storage). Copied through only
+            // when the controller has resolved them; legacy callers are unaffected.
+            foreach ([
+                'overall_result_type', 'overall_result_text', 'overall_result_numeric',
+                'overall_result_boolean', 'overall_result_outcome', 'overall_result_unit',
+            ] as $overallKey) {
+                if (array_key_exists($overallKey, $data)) {
+                    $payload[$overallKey] = $data[$overallKey];
+                }
+            }
 
             if ($resultType === ResultType::RICHTEXT) {
                 $payload['result_text'] = $data['result_text'] ?? null;

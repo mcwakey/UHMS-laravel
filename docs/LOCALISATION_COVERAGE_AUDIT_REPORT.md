@@ -1,15 +1,15 @@
 # UHMS Localisation Coverage Audit Report
 
-Date: 2026-06-14 18:26:13 +02:00
+Date: 2026-06-14 19:37:19 +02:00
 
 ## Summary
 
-- Total files scanned: 1288
+- Total files scanned: 1290
 - Total files with possible hardcoded strings: 459
 - Total hardcoded candidates found: 17274
 - Modules affected: 306
 - Direct active route/controller Blade views: 232
-- Active Blade views including resolved dependencies: 285
+- Active Blade views including resolved dependencies: 286
 
 ### Candidate Classification
 
@@ -325,13 +325,13 @@ Date: 2026-06-14 18:26:13 +02:00
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: investigation_accepted`
-- Line 388 [medium, service_title_manual_review_candidates]: `Investigation result ready`
+- Line 399 [medium, service_title_manual_review_candidates]: `Investigation result ready`
   - Context: `'title' => 'Investigation result ready',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: investigation_result_ready`
-- Line 432 [medium, service_title_manual_review_candidates]: `Investigation result verified`
+- Line 443 [medium, service_title_manual_review_candidates]: `Investigation result verified`
   - Context: `'title' => 'Investigation result verified',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
@@ -5011,102 +5011,102 @@ Date: 2026-06-14 18:26:13 +02:00
 
 ### `resources/views/admin/investigation-catalogue/show.blade.php`
 
-- Line 41 [high, known_false_positive_candidates]: `Description`
+- Line 121 [high, known_false_positive_candidates]: `Description`
   - Context: `<label class="form-label small mb-1">Description</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: description`
-- Line 42 [high, known_false_positive_candidates]: `Optional...`
+- Line 122 [high, known_false_positive_candidates]: `Optional...`
   - Context: `<input type="text" name="description" class="form-control form-control-sm" placeholder="Optional...">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: optional`
-- Line 74 [high, known_false_positive_candidates]: `Unit`
+- Line 154 [high, known_false_positive_candidates]: `Unit`
   - Context: `<label class="form-label small mb-1">Unit</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: unit`
-- Line 78 [high, known_false_positive_candidates]: `Reference Range`
+- Line 158 [high, known_false_positive_candidates]: `Reference Range`
   - Context: `<label class="form-label small mb-1">Reference Range</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: reference_range`
-- Line 82 [high, known_false_positive_candidates]: `Header`
+- Line 162 [high, known_false_positive_candidates]: `Header`
   - Context: `<label class="form-label small mb-1">Header</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: header`
-- Line 101 [high, known_false_positive_candidates]: `Default Value`
+- Line 181 [high, known_false_positive_candidates]: `Default Value`
   - Context: `<label class="form-label small mb-1">Default Value</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: default_value`
-- Line 105 [high, known_false_positive_candidates]: `Options (comma separated, for Select)`
+- Line 185 [high, known_false_positive_candidates]: `Options (comma separated, for Select)`
   - Context: `<label class="form-label small mb-1">Options (comma separated, for Select)</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: options_comma_separated_for_select`
-- Line 106 [high, known_false_positive_candidates]: `Positive, Negative, Inconclusive`
+- Line 186 [high, known_false_positive_candidates]: `Positive, Negative, Inconclusive`
   - Context: `<input type="text" name="options" class="form-control form-control-sm" placeholder="Positive, Negative, Inconclusive">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: positive_negative_inconclusive`
-- Line 111 [high, known_false_positive_candidates]: `Required`
+- Line 191 [high, known_false_positive_candidates]: `Required`
   - Context: `<label class="form-check-label" for="critReq">Required</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: required`
-- Line 126 [high, known_false_positive_candidates]: `No criteria in this header.`
+- Line 206 [high, known_false_positive_candidates]: `No criteria in this header.`
   - Context: `<div class="text-muted small ps-2">No criteria in this header.</div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: no_criteria_in_this_header`
-- Line 136 [high, known_false_positive_candidates]: `No unsorted criteria.`
+- Line 216 [high, known_false_positive_candidates]: `No unsorted criteria.`
   - Context: `<div class="text-muted small ps-2" id="unsortedEmpty">No unsorted criteria.</div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: no_unsorted_criteria`
-- Line 151 [high, known_false_positive_candidates]: `Pre-loaded during result entry; actual usage deducts stock.`
+- Line 231 [high, known_false_positive_candidates]: `Pre-loaded during result entry; actual usage deducts stock.`
   - Context: `<small class="text-muted">Pre-loaded during result entry; actual usage deducts stock.</small>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: pre_loaded_during_result_entry_actual_usage_deduct`
-- Line 213 [high, known_false_positive_candidates]: `Delete`
+- Line 293 [high, known_false_positive_candidates]: `Delete`
   - Context: `<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger"><i class="ti ti-trash"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: delete`
-- Line 213 [high, known_false_positive_candidates]: `Delete`
+- Line 293 [high, known_false_positive_candidates]: `Delete`
   - Context: `<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger"><i class="ti ti-trash"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: delete`
-- Line 281 [high, known_false_positive_candidates]: `Delete`
+- Line 375 [high, known_false_positive_candidates]: `Delete`
   - Context: `+ '<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-header-btn"><i class="ti ti-trash"></i></button>'`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: delete`
-- Line 281 [high, known_false_positive_candidates]: `Delete`
+- Line 375 [high, known_false_positive_candidates]: `Delete`
   - Context: `+ '<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-header-btn"><i class="ti ti-trash"></i></button>'`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: delete`
-- Line 301 [high, known_false_positive_candidates]: `No criteria in this header.`
+- Line 395 [high, known_false_positive_candidates]: `No criteria in this header.`
   - Context: `+ '<div class="text-muted small ps-2">No criteria in this header.</div>'`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: no_criteria_in_this_header`
-- Line 393 [high, known_false_positive_candidates]: `Required`
+- Line 487 [high, known_false_positive_candidates]: `Required`
   - Context: `if (c.is_required) meta.push('<span class="text-danger">Required</span>');`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: required`
-- Line 397 [high, known_false_positive_candidates]: `Delete`
+- Line 491 [high, known_false_positive_candidates]: `Delete`
   - Context: `+ '<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-crit-btn ms-2"><i class="ti ti-trash"></i></button>'`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: delete`
-- Line 397 [high, known_false_positive_candidates]: `Delete`
+- Line 491 [high, known_false_positive_candidates]: `Delete`
   - Context: `+ '<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-crit-btn ms-2"><i class="ti ti-trash"></i></button>'`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive

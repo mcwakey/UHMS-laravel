@@ -61,6 +61,7 @@ return [
     'awaiting_payment_badge'    => 'En attente de paiement',
     'see_criteria_form'         => 'Voir le formulaire de critères',
     'investigation_result'      => 'Résultat d\'examen',
+    'overall_result_label'      => 'Résultat global',
     'result_value_label'        => 'Valeur du résultat',
     'mark_as_abnormal'          => 'Marquer comme anormal',
     'enter_result_placeholder'  => 'Saisir le résultat...',

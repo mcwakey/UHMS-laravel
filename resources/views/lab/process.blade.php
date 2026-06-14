@@ -170,7 +170,7 @@
                         <td><span class="badge bg-{{ $item->status_color }}">{{ ucfirst($item->status) }}</span></td>
                         <td>
                             @if($item->result)
-                                <span class="{{ $item->result->is_abnormal ? 'text-danger fw-bold' : '' }}">{{ $item->result->result_value }}</span>
+                                <span class="{{ $item->result->is_abnormal ? 'text-danger fw-bold' : '' }}">{{ $item->result->overallResultDisplay($item->service) }}</span>
                                 @if($item->result->is_abnormal)<i class="ti ti-alert-triangle text-danger ms-1"></i>@endif
                                 @if($item->result->remarks)<br><small class="text-muted">{{ $item->result->remarks }}</small>@endif
                             @else <span class="text-muted">-</span> @endif
@@ -276,10 +276,7 @@
                         @endif
                     </div>
                 @endif
-                <div class="mb-3">
-                    <label class="form-label">{{ __('lab.result_value_label') }} <span class="text-danger">*</span></label>
-                    <textarea name="result_value" class="form-control" rows="2" required placeholder="{{ __('lab.enter_result_placeholder') }}"></textarea>
-                </div>
+                @include('lab._overall_result_input', ['item' => $item])
                 <div class="mb-3">
                     <div class="form-check">
                         <input type="hidden" name="is_abnormal" value="0">

@@ -77,6 +77,44 @@ class InvestigationCatalogueService
         ];
     }
 
+    /**
+     * Persist the per-service overall result type configuration.
+     *
+     * Only fields relevant to the chosen type are kept; the rest are nulled so
+     * stale unit/range/labels don't leak across type changes.
+     */
+    public function updateOverallResultConfig(ServiceCatalog $service, array $data): ServiceCatalog
+    {
+        $type = $data['overall_result_type'] ?? ServiceCatalog::OVERALL_RESULT_FREE_TEXT;
+
+        $payload = [
+            'overall_result_type'           => $type,
+            'overall_result_unit'           => null,
+            'overall_result_min_value'      => null,
+            'overall_result_max_value'      => null,
+            'overall_result_positive_label' => null,
+            'overall_result_negative_label' => null,
+            'overall_result_true_label'     => null,
+            'overall_result_false_label'    => null,
+        ];
+
+        if ($type === ServiceCatalog::OVERALL_RESULT_NUMERIC) {
+            $payload['overall_result_unit']      = $data['overall_result_unit'] ?? null;
+            $payload['overall_result_min_value'] = $data['overall_result_min_value'] ?? null;
+            $payload['overall_result_max_value'] = $data['overall_result_max_value'] ?? null;
+        } elseif ($type === ServiceCatalog::OVERALL_RESULT_POSITIVE_NEGATIVE) {
+            $payload['overall_result_positive_label'] = $data['overall_result_positive_label'] ?? null;
+            $payload['overall_result_negative_label'] = $data['overall_result_negative_label'] ?? null;
+        } elseif ($type === ServiceCatalog::OVERALL_RESULT_BOOLEAN) {
+            $payload['overall_result_true_label']  = $data['overall_result_true_label'] ?? null;
+            $payload['overall_result_false_label'] = $data['overall_result_false_label'] ?? null;
+        }
+
+        $service->update($payload);
+
+        return $service->fresh();
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Headers
@@ -96,12 +134,15 @@ class InvestigationCatalogueService
 
     public function updateHeader(InvestigationHeader $header, array $data): InvestigationHeader
     {
-        $header->update(array_filter([
-            'name'        => $data['name']        ?? null,
-            'description' => $data['description'] ?? null,
-            'sort_order'  => $data['sort_order']  ?? null,
-            'is_active'   => array_key_exists('is_active', $data) ? (bool) $data['is_active'] : null,
-        ], fn ($v) => !is_null($v)));
+        $payload = [];
+
+        foreach (['name', 'description', 'sort_order', 'is_active'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $payload[$field] = $data[$field];
+            }
+        }
+
+        $header->update($payload);
 
         return $header->fresh();
     }
@@ -143,18 +184,26 @@ class InvestigationCatalogueService
 
     public function updateCriterion(InvestigationCriterion $criterion, array $data): InvestigationCriterion
     {
-        $criterion->update(array_filter([
-            'header_id'       => array_key_exists('header_id', $data) ? $data['header_id'] : '__skip__',
-            'name'            => $data['name']            ?? null,
-            'unit'            => $data['unit']            ?? null,
-            'reference_range' => $data['reference_range'] ?? null,
-            'default_value'   => $data['default_value']   ?? null,
-            'input_type'      => $data['input_type']      ?? null,
-            'options'         => array_key_exists('options', $data) ? $data['options'] : '__skip__',
-            'sort_order'      => $data['sort_order']      ?? null,
-            'is_required'     => array_key_exists('is_required', $data) ? (bool) $data['is_required'] : null,
-            'is_active'       => array_key_exists('is_active', $data) ? (bool) $data['is_active'] : null,
-        ], fn ($v) => $v !== '__skip__' && !is_null($v)));
+        $payload = [];
+
+        foreach ([
+            'header_id',
+            'name',
+            'unit',
+            'reference_range',
+            'default_value',
+            'input_type',
+            'options',
+            'sort_order',
+            'is_required',
+            'is_active',
+        ] as $field) {
+            if (array_key_exists($field, $data)) {
+                $payload[$field] = $data[$field];
+            }
+        }
+
+        $criterion->update($payload);
 
         return $criterion->fresh();
     }

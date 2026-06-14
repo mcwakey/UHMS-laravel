@@ -329,8 +329,9 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
 
         $viewerRole = Role::findOrCreate('Consultation Viewer', 'web');
         $viewerRole->givePermissionTo(Permission::findOrCreate('consultations.view', 'web'));
+        /** @var User $viewer */
         $viewer = User::factory()->create();
-        $viewer->assignRole($viewerRole);
+        $viewer->assignRole($viewerRole)->fresh();
 
         $this->actingAs($viewer)
             ->post(route('admin.consultations.routes.activate', [$visit, $activeRoute]))

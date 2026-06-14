@@ -928,6 +928,7 @@ Route::middleware('auth')->group(function () {
         Route::prefix('investigation-catalogue')->name('investigation-catalogue.')->middleware(['module:investigations', 'can:lab.tests.manage'])->group(function () {
             Route::get('/', [InvestigationCatalogueController::class, 'index'])->name('index');
             Route::get('/{service}', [InvestigationCatalogueController::class, 'show'])->name('show');
+            Route::put('/{service}/overall-result', [InvestigationCatalogueController::class, 'updateOverallResult'])->name('overall-result.update');
 
             Route::post('/{service}/headers', [InvestigationCatalogueController::class, 'storeHeader'])->name('headers.store');
             Route::put('/headers/{header}', [InvestigationCatalogueController::class, 'updateHeader'])->name('headers.update');
