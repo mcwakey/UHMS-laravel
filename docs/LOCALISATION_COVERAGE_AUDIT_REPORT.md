@@ -1,28 +1,28 @@
 # UHMS Localisation Coverage Audit Report
 
-Date: 2026-06-14 05:25:45 +02:00
+Date: 2026-06-14 06:01:19 +02:00
 
 ## Summary
 
 - Total files scanned: 1288
-- Total files with possible hardcoded strings: 464
-- Total hardcoded candidates found: 17330
+- Total files with possible hardcoded strings: 460
+- Total hardcoded candidates found: 17313
 - Modules affected: 306
 - Direct active route/controller Blade views: 232
 - Active Blade views including resolved dependencies: 285
 
 ### Candidate Classification
 
-- Active runtime candidates: 34
-- Demo/template candidates: 15788
+- Active runtime candidates: 0
+- Demo/template candidates: 15827
 - Backup-only candidates: 0
 - Language-file candidates: 136
-- Known false positives: 978
-- Service-title manual-review candidates: 394
+- Known false positives: 965
+- Service-title manual-review candidates: 385
 
 ### Service Candidate Review Classes
 
-- A - User-facing service output: 67
+- A - User-facing service output: 58
 - B - Internal audit/event text: 4
 - C - Stored canonical event/title: 62
 - D - SQL/internal expression: 0
@@ -32,8 +32,8 @@ Date: 2026-06-14 05:25:45 +02:00
 
 - components: 1905
 - layout: 406
-- app: 394
 - widgets.blade.php: 390
+- app: 385
 - ui-dropdowns.blade.php: 336
 - tables-basic.blade.php: 240
 - patterns: 208
@@ -102,7 +102,6 @@ Date: 2026-06-14 05:25:45 +02:00
 - app/Services/PatientMergePreviewService.php: 35
 - app/Services/StatisticsService.php: 21
 - app/Services/ProcedureReportService.php: 16
-- app/Services/FinancialReportService.php: 8
 - app/Services/ProcedureWorkflowService.php: 6
 - app/Services/LabService.php: 4
 - app/Services/EmergencyBedBillingService.php: 3
@@ -126,6 +125,7 @@ Date: 2026-06-14 05:25:45 +02:00
 - lang/fr/consultations.php: 2
 - app/Services/AdmissionService.php: 1
 - app/Services/BloodCrossmatchService.php: 1
+- app/Services/ClinicalTaskService.php: 1
 
 ### Likely False Positives
 
@@ -137,11 +137,6 @@ Date: 2026-06-14 05:25:45 +02:00
 
 | Module | File | Candidate count | Active route-linked? | Shared component? | Priority | User-facing confidence | Risk | Recommended action |
 |---|---|---:|:---:|:---:|---|---|---|---|
-| javascript | `resources/js/script.js` | 23 | no | no | high | high | medium | manual-review |
-| patients | `resources/views/patients/partials/insurance-add-modal-scripts.blade.php` | 4 | no | no | high | high | high | manual-review |
-| javascript | `resources/js/doctors.js` | 3 | no | no | high | high | medium | manual-review |
-| admin | `resources/views/admin/analyzers/index.blade.php` | 3 | yes | no | high | high | medium | fix |
-| claims | `resources/views/claims/partials/clinical-mirror.blade.php` | 1 | no | no | high | high | high | manual-review |
 
 ## Detailed Findings
 
@@ -232,15 +227,6 @@ Date: 2026-06-14 05:25:45 +02:00
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: administer`
 
-### `app/Services/ConsultationNextPatientService.php`
-
-- Line 219 [medium, service_title_manual_review_candidates]: `Payment ready`
-  - Context: `'message' => 'Payment ready',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: manual review
-  - Service review class: A - User-facing service output
-  - Suggested key: `lang/{en,fr}/app.php :: payment_ready`
-
 ### `app/Services/EmergencyBedBillingService.php`
 
 - Line 73 [medium, service_title_manual_review_candidates]: `Emergency bed count started`
@@ -294,57 +280,6 @@ Date: 2026-06-14 05:25:45 +02:00
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: repeat_emergency_vitals`
-
-### `app/Services/FinancialReportService.php`
-
-- Line 55 [medium, service_title_manual_review_candidates]: `Revenue`
-  - Context: `'revenue' => ['label' => 'Revenue', 'rows' => [], 'total' => 0.0],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: manual review
-  - Service review class: A - User-facing service output
-  - Suggested key: `lang/{en,fr}/app.php :: revenue`
-- Line 56 [medium, service_title_manual_review_candidates]: `Cost of Goods Sold`
-  - Context: `'cogs' => ['label' => 'Cost of Goods Sold', 'rows' => [], 'total' => 0.0],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: manual review
-  - Service review class: A - User-facing service output
-  - Suggested key: `lang/{en,fr}/app.php :: cost_of_goods_sold`
-- Line 57 [medium, service_title_manual_review_candidates]: `Operating Expenses`
-  - Context: `'operating' => ['label' => 'Operating Expenses', 'rows' => [], 'total' => 0.0],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: manual review
-  - Service review class: A - User-facing service output
-  - Suggested key: `lang/{en,fr}/app.php :: operating_expenses`
-- Line 58 [medium, service_title_manual_review_candidates]: `Administrative Expenses`
-  - Context: `'admin' => ['label' => 'Administrative Expenses', 'rows' => [], 'total' => 0.0],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: manual review
-  - Service review class: A - User-facing service output
-  - Suggested key: `lang/{en,fr}/app.php :: administrative_expenses`
-- Line 59 [medium, service_title_manual_review_candidates]: `Finance Costs`
-  - Context: `'finance' => ['label' => 'Finance Costs', 'rows' => [], 'total' => 0.0],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: manual review
-  - Service review class: A - User-facing service output
-  - Suggested key: `lang/{en,fr}/app.php :: finance_costs`
-- Line 116 [medium, service_title_manual_review_candidates]: `Assets`
-  - Context: `'assets' => ['label' => 'Assets', 'rows' => [], 'total' => 0.0],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: manual review
-  - Service review class: A - User-facing service output
-  - Suggested key: `lang/{en,fr}/app.php :: assets`
-- Line 117 [medium, service_title_manual_review_candidates]: `Liabilities`
-  - Context: `'liabilities' => ['label' => 'Liabilities', 'rows' => [], 'total' => 0.0],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: manual review
-  - Service review class: A - User-facing service output
-  - Suggested key: `lang/{en,fr}/app.php :: liabilities`
-- Line 118 [medium, service_title_manual_review_candidates]: `Equity`
-  - Context: `'equity' => ['label' => 'Equity', 'rows' => [], 'total' => 0.0],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: manual review
-  - Service review class: A - User-facing service output
-  - Suggested key: `lang/{en,fr}/app.php :: equity`
 
 ### `app/Services/InvestigationRequestService.php`
 
@@ -3409,42 +3344,42 @@ Date: 2026-06-14 05:25:45 +02:00
 
 ### `resources/js/doctors.js`
 
-- Line 18 [high, active_runtime_candidates]: `Select`
+- Line 18 [high, demo_template_candidates]: `Select`
   - Context: `<option>Select</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: select`
-- Line 19 [high, active_runtime_candidates]: `Moring`
+- Line 19 [high, demo_template_candidates]: `Moring`
   - Context: `<option>Moring</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: moring`
-- Line 20 [high, active_runtime_candidates]: `Noon`
+- Line 20 [high, demo_template_candidates]: `Noon`
   - Context: `<option>Noon</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: noon`
-- Line 114 [high, known_false_positive_candidates]: `Educational Degree`
+- Line 114 [high, demo_template_candidates]: `Educational Degree`
   - Context: `<label class="form-label">Educational Degree</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: educational_degree`
-- Line 120 [high, known_false_positive_candidates]: `University`
+- Line 120 [high, demo_template_candidates]: `University`
   - Context: `<label class="form-label">University</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: university`
-- Line 126 [high, known_false_positive_candidates]: `From`
+- Line 126 [high, demo_template_candidates]: `From`
   - Context: `<label class="form-label">From</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: from`
-- Line 199 [high, known_false_positive_candidates]: `From`
+- Line 199 [high, demo_template_candidates]: `From`
   - Context: `<label class="form-label">From</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: from`
-- Line 261 [high, known_false_positive_candidates]: `From`
+- Line 261 [high, demo_template_candidates]: `From`
   - Context: `<label class="form-label">From</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -3506,157 +3441,157 @@ Date: 2026-06-14 05:25:45 +02:00
 
 ### `resources/js/script.js`
 
-- Line 635 [high, known_false_positive_candidates]: `Advice`
+- Line 635 [high, demo_template_candidates]: `Advice`
   - Context: `<label class="form-label mb-1 text-dark fs-14 fw-medium">Advice</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: advice`
-- Line 660 [high, known_false_positive_candidates]: `Investigation & Procedure`
+- Line 660 [high, demo_template_candidates]: `Investigation & Procedure`
   - Context: `<label class="form-label mb-1 text-dark fs-14 fw-medium">Investigation & Procedure</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: investigation_procedure`
-- Line 690 [high, active_runtime_candidates]: `Select`
+- Line 690 [high, demo_template_candidates]: `Select`
   - Context: `<option>Select</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: select`
-- Line 691 [high, active_runtime_candidates]: `Fever`
+- Line 691 [high, demo_template_candidates]: `Fever`
   - Context: `<option>Fever</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: fever`
-- Line 692 [high, active_runtime_candidates]: `Headache`
+- Line 692 [high, demo_template_candidates]: `Headache`
   - Context: `<option>Headache</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: headache`
-- Line 693 [high, active_runtime_candidates]: `Joint Pain`
+- Line 693 [high, demo_template_candidates]: `Joint Pain`
   - Context: `<option>Joint Pain</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: joint_pain`
-- Line 694 [high, active_runtime_candidates]: `Skin Rash`
+- Line 694 [high, demo_template_candidates]: `Skin Rash`
   - Context: `<option>Skin Rash</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: skin_rash`
-- Line 695 [high, active_runtime_candidates]: `Back Pain`
+- Line 695 [high, demo_template_candidates]: `Back Pain`
   - Context: `<option>Back Pain</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: back_pain`
-- Line 743 [high, known_false_positive_candidates]: `Reminder`
+- Line 743 [high, demo_template_candidates]: `Reminder`
   - Context: `<h6 class="fs-14 fw-medium mb-0">Reminder </h6>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: reminder`
-- Line 755 [high, active_runtime_candidates]: `Select`
+- Line 755 [high, demo_template_candidates]: `Select`
   - Context: `<option>Select</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: select`
-- Line 756 [high, active_runtime_candidates]: `Welcome Email`
+- Line 756 [high, demo_template_candidates]: `Welcome Email`
   - Context: `<option>Welcome Email</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: welcome_email`
-- Line 757 [high, active_runtime_candidates]: `Appointment Reminder`
+- Line 757 [high, demo_template_candidates]: `Appointment Reminder`
   - Context: `<option selected>Appointment Reminder</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: appointment_reminder`
-- Line 758 [high, active_runtime_candidates]: `Appointment Confirmation`
+- Line 758 [high, demo_template_candidates]: `Appointment Confirmation`
   - Context: `<option>Appointment Confirmation</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: appointment_confirmation`
-- Line 759 [high, active_runtime_candidates]: `Appointment Rescheduled`
+- Line 759 [high, demo_template_candidates]: `Appointment Rescheduled`
   - Context: `<option>Appointment Rescheduled</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: appointment_rescheduled`
-- Line 760 [high, active_runtime_candidates]: `Appointment Cancelled`
+- Line 760 [high, demo_template_candidates]: `Appointment Cancelled`
   - Context: `<option>Appointment Cancelled</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: appointment_cancelled`
-- Line 761 [high, active_runtime_candidates]: `Test Result Notification`
+- Line 761 [high, demo_template_candidates]: `Test Result Notification`
   - Context: `<option>Test Result Notification</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: test_result_notification`
-- Line 815 [high, active_runtime_candidates]: `Select`
+- Line 815 [high, demo_template_candidates]: `Select`
   - Context: `<option>Select</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: select`
-- Line 816 [high, active_runtime_candidates]: `General Consultation`
+- Line 816 [high, demo_template_candidates]: `General Consultation`
   - Context: `<option>General Consultation</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: general_consultation`
-- Line 817 [high, active_runtime_candidates]: `Dental Cleaning`
+- Line 817 [high, demo_template_candidates]: `Dental Cleaning`
   - Context: `<option>Dental Cleaning</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: dental_cleaning`
-- Line 818 [high, active_runtime_candidates]: `Eye Checkup`
+- Line 818 [high, demo_template_candidates]: `Eye Checkup`
   - Context: `<option>Eye Checkup</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: eye_checkup`
-- Line 819 [high, active_runtime_candidates]: `Blood Test`
+- Line 819 [high, demo_template_candidates]: `Blood Test`
   - Context: `<option>Blood Test</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: blood_test`
-- Line 820 [high, active_runtime_candidates]: `Skin Allergy Test`
+- Line 820 [high, demo_template_candidates]: `Skin Allergy Test`
   - Context: `<option>Skin Allergy Test</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: skin_allergy_test`
-- Line 870 [high, known_false_positive_candidates]: `Medicine Name`
+- Line 870 [high, demo_template_candidates]: `Medicine Name`
   - Context: `<label class="form-label mb-1 text-dark fs-14 fw-medium">Medicine Name</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: medicine_name`
-- Line 877 [high, known_false_positive_candidates]: `Dosage`
+- Line 877 [high, demo_template_candidates]: `Dosage`
   - Context: `<label class="form-label mb-1 text-dark fs-14 fw-medium">Dosage</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: dosage`
-- Line 887 [high, known_false_positive_candidates]: `Dosage`
+- Line 887 [high, demo_template_candidates]: `Dosage`
   - Context: `<label class="form-label mb-1 text-dark fs-14 fw-medium">Dosage</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: dosage`
-- Line 897 [high, known_false_positive_candidates]: `Frequency`
+- Line 897 [high, demo_template_candidates]: `Frequency`
   - Context: `<label class="form-label mb-1 text-dark fs-14 fw-medium">Frequency</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: frequency`
-- Line 899 [high, active_runtime_candidates]: `Select`
+- Line 899 [high, demo_template_candidates]: `Select`
   - Context: `<option>Select</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: select`
-- Line 911 [high, active_runtime_candidates]: `Select`
+- Line 911 [high, demo_template_candidates]: `Select`
   - Context: `<option>Select</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: select`
-- Line 912 [high, active_runtime_candidates]: `Morning`
+- Line 912 [high, demo_template_candidates]: `Morning`
   - Context: `<option>Morning</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: morning`
-- Line 913 [high, active_runtime_candidates]: `Afternoon`
+- Line 913 [high, demo_template_candidates]: `Afternoon`
   - Context: `<option>Afternoon</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: afternoon`
-- Line 920 [high, known_false_positive_candidates]: `Instruction`
+- Line 920 [high, demo_template_candidates]: `Instruction`
   - Context: `<label class="form-label mb-1 text-dark fs-14 fw-medium">Instruction</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -4923,20 +4858,20 @@ Date: 2026-06-14 05:25:45 +02:00
 
 ### `resources/views/admin/analyzers/index.blade.php`
 
-- Line 102 [high, active_runtime_candidates]: `HL7 v2.x`
+- Line 102 [high, known_false_positive_candidates]: `HL7 v2.x`
   - Context: `<option value="hl7" {{ request('protocol') === 'hl7' ? 'selected' : '' }}>HL7 v2.x</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: hl7_v2_x`
-- Line 259 [high, active_runtime_candidates]: `HL7 v2.x`
+- Line 259 [high, known_false_positive_candidates]: `HL7 v2.x`
   - Context: `<option value="hl7">HL7 v2.x</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: hl7_v2_x`
-- Line 340 [high, active_runtime_candidates]: `HL7 v2.x`
+- Line 340 [high, known_false_positive_candidates]: `HL7 v2.x`
   - Context: `<option value="hl7">HL7 v2.x</option>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
+  - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: hl7_v2_x`
 
 ### `resources/views/admin/dashboards/index.blade.php`
@@ -11666,29 +11601,6 @@ Date: 2026-06-14 05:25:45 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/claims.php :: from`
-
-### `resources/views/claims/partials/clinical-mirror.blade.php`
-
-- Line 7 [high, known_false_positive_candidates]: `Read-only consultation record snapshot for claim preparation. Clinical authorship is preserved.`
-  - Context: `<p class="text-muted small mb-3">Read-only consultation record snapshot for claim preparation. Clinical authorship is preserved.</p>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/claims.php :: read_only_consultation_record_snapshot_for_claim_p`
-- Line 11 [high, active_runtime_candidates]: `Department:`
-  - Context: `<strong>Department:</strong> {{ $recordMirror['department'] ?? '-' }}`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/claims.php :: department`
-- Line 12 [high, known_false_positive_candidates]: `Main Doctor:`
-  - Context: `<span class="ms-2"><strong>Main Doctor:</strong> {{ $recordMirror['main_doctor'] ?? 'Unassigned' }}</span>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/claims.php :: main_doctor`
-- Line 13 [high, known_false_positive_candidates]: `Contributors:`
-  - Context: `<span class="ms-2"><strong>Contributors:</strong> {{ collect($recordMirror['contributors'] ?? [])->implode(', ') ?: '-' }}</span>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/claims.php :: contributors`
 
 ### `resources/views/clear-cache-settings.blade.php`
 
@@ -63122,29 +63034,6 @@ Date: 2026-06-14 05:25:45 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: close`
-
-### `resources/views/patients/partials/insurance-add-modal-scripts.blade.php`
-
-- Line 48 [high, active_runtime_candidates]: `Select Provider`
-  - Context: `providerSelect.innerHTML = '<option value="">Select Provider</option>';`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/patients.php :: select_provider`
-- Line 70 [high, active_runtime_candidates]: `Loading...`
-  - Context: `tierSelect.innerHTML = '<option value="">Loading...</option>';`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/patients.php :: loading`
-- Line 80 [high, active_runtime_candidates]: `No tiers available`
-  - Context: `tierSelect.innerHTML = '<option value="">No tiers available</option>';`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/patients.php :: no_tiers_available`
-- Line 84 [high, active_runtime_candidates]: `Select Tier`
-  - Context: `tierSelect.innerHTML = '<option value="">Select Tier</option>';`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/patients.php :: select_tier`
 
 ### `resources/views/patients/show.blade.php`
 

@@ -3,6 +3,7 @@
 return [
     'title' => 'Patients',
     'view_patient_profile' => 'View patient profile',
+    'default_tier_used' => 'If no tier is chosen, the provider\'s default tier will be used.',
     'new_patient' => 'New Patient',
     'new_visit' => 'New Visit',
     'search_placeholder' => 'Search by name, phone, Ghana Card, insurance card, or emergency contact...',

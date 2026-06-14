@@ -191,4 +191,21 @@ return [
     'no_invoice' => 'Aucune facture',
     'prepare_claim' => 'Preparer la demande',
     'no_eligible_visits' => 'Aucune visite admissible trouvee',
+
+    // Miroir clinique (préparation de la réclamation)
+    'clinical_mirror_title' => 'Miroir clinique de préparation de la réclamation',
+    'clinical_mirror_desc' => 'Instantané en lecture seule du dossier de consultation pour la préparation de la réclamation. La paternité clinique est préservée.',
+    'contributors_label' => 'Contributeurs',
+    'sec_complaints' => 'Motifs de consultation',
+    'sec_hopc' => 'Histoire de la maladie',
+    'sec_examination' => 'Examen',
+    'sec_diagnosis' => 'Diagnostic',
+    'sec_investigations' => 'Examens complémentaires',
+    'sec_treatments' => 'Traitements',
+    'sec_prescriptions' => 'Ordonnances',
+    'sec_procedures' => 'Procédures',
+    'sec_tasks' => 'Tâches / Suivi / Instructions',
+    'sec_notes' => 'Notes / Résumé',
+    'original_author' => 'Auteur original',
+    'source_pattern' => 'Modèle source',
 ];

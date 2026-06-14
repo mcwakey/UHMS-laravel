@@ -136,4 +136,5 @@ return [
     'requesting_clinician' => 'Clinicien demandeur',
     'verified' => 'Vérifié',
     'result_pending_verification' => 'Résultat en attente de vérification',
+    'payment_ready' => 'Paiement prêt',
 ];

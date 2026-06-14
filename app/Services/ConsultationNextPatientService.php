@@ -216,7 +216,7 @@ class ConsultationNextPatientService
 
         return [
             'allowed' => true,
-            'message' => 'Payment ready',
+            'message' => __('consultations.payment_ready'),
         ];
     }
 

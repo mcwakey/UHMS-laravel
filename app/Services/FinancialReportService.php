@@ -52,11 +52,11 @@ class FinancialReportService
             ->whereIn('id', $totals->keys())->orderBy('code')->get();
 
         $sections = [
-            'revenue' => ['label' => 'Revenue', 'rows' => [], 'total' => 0.0],
-            'cogs' => ['label' => 'Cost of Goods Sold', 'rows' => [], 'total' => 0.0],
-            'operating' => ['label' => 'Operating Expenses', 'rows' => [], 'total' => 0.0],
-            'admin' => ['label' => 'Administrative Expenses', 'rows' => [], 'total' => 0.0],
-            'finance' => ['label' => 'Finance Costs', 'rows' => [], 'total' => 0.0],
+            'revenue' => ['label' => __('accounting.revenue'), 'rows' => [], 'total' => 0.0],
+            'cogs' => ['label' => __('accounting.cost_of_goods_sold'), 'rows' => [], 'total' => 0.0],
+            'operating' => ['label' => __('accounting.operating_expenses'), 'rows' => [], 'total' => 0.0],
+            'admin' => ['label' => __('accounting.administrative_expenses'), 'rows' => [], 'total' => 0.0],
+            'finance' => ['label' => __('accounting.finance_costs'), 'rows' => [], 'total' => 0.0],
         ];
 
         foreach ($accounts as $account) {
@@ -113,9 +113,9 @@ class FinancialReportService
             ->whereIn('id', $totals->keys())->orderBy('code')->get();
 
         $groups = [
-            'assets' => ['label' => 'Assets', 'rows' => [], 'total' => 0.0],
-            'liabilities' => ['label' => 'Liabilities', 'rows' => [], 'total' => 0.0],
-            'equity' => ['label' => 'Equity', 'rows' => [], 'total' => 0.0],
+            'assets' => ['label' => __('accounting.assets'), 'rows' => [], 'total' => 0.0],
+            'liabilities' => ['label' => __('accounting.liabilities'), 'rows' => [], 'total' => 0.0],
+            'equity' => ['label' => __('accounting.equity'), 'rows' => [], 'total' => 0.0],
         ];
 
         foreach ($accounts as $account) {

@@ -1,5 +1,18 @@
 <script>
 (function () {
+    const I18N = {
+        selectTypeFirst: @json(__('patients.select_type_first')),
+        selectProviderFirst: @json(__('patients.select_provider_first')),
+        loadingProviders: @json(__('patients.loading_providers')),
+        noProvidersForType: @json(__('patients.no_providers_for_type')),
+        failedLoadProviders: @json(__('patients.failed_load_providers')),
+        selectProvider: @json(__('patients.select_provider')),
+        loadingTiers: @json(__('patients.loading_tiers')),
+        noTiers: @json(__('patients.no_tiers')),
+        selectTier: @json(__('patients.select_tier')),
+        failedLoadTiers: @json(__('patients.failed_load_tiers')),
+        defaultTierUsed: @json(__('patients.default_tier_used')),
+    };
     const providerByTypeUrl = '{{ route("admin.insurance-providers.by-type") }}';
     const tiersForProviderUrl = '{{ route("admin.insurance-providers.tiers.for-patient", ":pid") }}';
     const typeSelect = document.getElementById('addInsType');
@@ -17,12 +30,12 @@
         }
     }
 
-    function resetProviderSelect(message = 'Select type first') {
+    function resetProviderSelect(message = I18N.selectTypeFirst) {
         providerSelect.innerHTML = '<option value="">' + message + '</option>';
         providerSelect.disabled = true;
     }
 
-    function resetTierSelect(message = 'Select provider first') {
+    function resetTierSelect(message = I18N.selectProviderFirst) {
         tierSelect.innerHTML = '<option value="">' + message + '</option>';
         tierSelect.disabled = true;
         setTierInfo('');
@@ -30,7 +43,7 @@
 
     typeSelect.addEventListener('change', function() {
         const type = this.value;
-        resetProviderSelect(type ? 'Loading providers...' : 'Select type first');
+        resetProviderSelect(type ? I18N.loadingProviders : I18N.selectTypeFirst);
         resetTierSelect();
 
         if (!type) return;
@@ -41,11 +54,11 @@
         .then(r => r.json())
         .then(providers => {
             if (!providers.length) {
-                resetProviderSelect('No providers for selected type');
+                resetProviderSelect(I18N.noProvidersForType);
                 return;
             }
 
-            providerSelect.innerHTML = '<option value="">Select Provider</option>';
+            providerSelect.innerHTML = '<option value="">' + I18N.selectProvider + '</option>';
             providers.forEach(provider => {
                 const opt = document.createElement('option');
                 opt.value = provider.id;
@@ -55,7 +68,7 @@
             providerSelect.disabled = false;
         })
         .catch(() => {
-            resetProviderSelect('Failed to load providers');
+            resetProviderSelect(I18N.failedLoadProviders);
         });
     });
 
@@ -67,7 +80,7 @@
             return;
         }
 
-        tierSelect.innerHTML = '<option value="">Loading...</option>';
+        tierSelect.innerHTML = '<option value="">' + I18N.loadingTiers + '</option>';
         tierSelect.disabled = true;
         setTierInfo('');
 
@@ -77,11 +90,11 @@
         .then(r => r.json())
         .then(tiers => {
             if (!tiers.length) {
-                tierSelect.innerHTML = '<option value="">No tiers available</option>';
+                tierSelect.innerHTML = '<option value="">' + I18N.noTiers + '</option>';
                 return;
             }
 
-            tierSelect.innerHTML = '<option value="">Select Tier</option>';
+            tierSelect.innerHTML = '<option value="">' + I18N.selectTier + '</option>';
             tiers.forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t.id;
@@ -93,7 +106,7 @@
             updateTierInfo();
         })
         .catch(() => {
-            tierSelect.innerHTML = '<option value="">Failed to load tiers</option>';
+            tierSelect.innerHTML = '<option value="">' + I18N.failedLoadTiers + '</option>';
         });
     });
 
@@ -101,7 +114,7 @@
 
     function updateTierInfo() {
         const opt = tierSelect.options[tierSelect.selectedIndex];
-        setTierInfo(opt && opt.value ? opt.textContent : 'If no tier is chosen, the provider\'s default tier will be used.');
+        setTierInfo(opt && opt.value ? opt.textContent : I18N.defaultTierUsed);
     }
 
     document.querySelectorAll('input[name="member_type"]').forEach(r => {

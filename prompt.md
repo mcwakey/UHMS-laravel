@@ -5,35 +5,31 @@ There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
 Do not try to read it.
 Follow this prompt directly.
 
-Localisation is still not complete.
+Localisation is almost complete, but not yet closed.
 
-Phase 15E reduced active runtime candidates from 317 to 192. The primary target below 200 was met, but 192 active runtime candidates remain. Do not move to dashboards. Do not move to the Full Test Suite. Do not claim localisation is complete.
+Phase 15F reduced active runtime candidates from 192 to 34. All Blade worklist batches were processed. The remaining active-runtime candidates are now mostly JavaScript/manual-review items.
 
-# UHMS Localisation Phase 15F — Clinical, Emergency, Admin Config, Billing Runtime Burn-Down
+Do not move to dashboards.
+Do not move to the Full Test Suite yet.
+Do not claim localisation is complete until the remaining 34 active runtime candidates are fixed or formally documented as false positives with evidence.
+
+# UHMS Localisation Phase 15G — Final Runtime JS / Manual-Review Burn-Down
 
 ## Goal
 
-Continue the localisation burn-down from the Phase 15E exit state.
+Reduce the remaining active runtime localisation candidates from:
 
-Starting point:
-
-```text id="pw6jbo"
-Active runtime candidates: 192
+```text
+Active runtime candidates: 34
 ```
 
-Primary target:
+to:
 
-```text id="k4e6lz"
-Active runtime candidates: below 100
+```text
+Active runtime candidates: 0
 ```
 
-Preferred target:
-
-```text id="k6d4dz"
-Active runtime candidates: below 50
-```
-
-Do not work on dormant demo/template files unless they are route-linked or included by active layouts/components.
+If true zero is not possible, every remaining item must be documented with exact evidence proving it is not user-facing active runtime text.
 
 ---
 
@@ -41,383 +37,40 @@ Do not work on dormant demo/template files unless they are route-linked or inclu
 
 Read:
 
-```text id="z54typ"
+```text
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
-docs/LOCALISATION_PHASE_15E_STOCK_STORE_CLINICAL_BURNDOWN_REPORT.md
+docs/LOCALISATION_PHASE_15F_CLINICAL_ADMIN_BILLING_BURNDOWN_REPORT.md
 ```
 
 Use the active runtime worklist in `LOCALISATION_COVERAGE_AUDIT_REPORT.md` as the source of truth.
 
-Do not repeat files already completed in Phase 15E unless the scanner still reports them.
+---
+
+# 2. Remaining Active Runtime Worklist
+
+The latest audit shows only these active runtime candidates remain:
+
+```text
+resources/js/script.js — 23 candidates
+resources/js/doctors.js — 3 candidates
+resources/views/patients/partials/insurance-add-modal-scripts.blade.php — 4 candidates
+resources/views/admin/analyzers/index.blade.php — 3 candidates
+resources/views/claims/partials/clinical-mirror.blade.php — 1 candidate
+```
+
+Process each one carefully.
 
 ---
 
-# 2. Current Known Status
+# 3. JavaScript Localisation Rule
 
-Phase 15E completed:
+Do not wrap plain JavaScript files with Laravel `__()` directly.
 
-```text id="v6fu5b"
-Batch 4 — stock/product-stock/store/suppliers/procurement
-Batch 5 subset — prescriptions/index, investigations/items, investigation-catalogue/index, vitals/record, lab/results, lab/tests
-```
-
-Phase 15E created:
-
-```text id="h84gwk"
-lang/en/store.php
-lang/fr/store.php
-lang/en/prescriptions.php
-lang/fr/prescriptions.php
-lang/en/vitals.php
-lang/fr/vitals.php
-```
-
-Phase 15E extended:
-
-```text id="ao5t89"
-lang/en/stock.php
-lang/fr/stock.php
-lang/en/investigations.php
-lang/fr/investigations.php
-lang/en/lab.php
-lang/fr/lab.php
-```
-
-Remaining active runtime candidates after Phase 15E:
-
-```text id="qfrikd"
-192
-```
-
----
-
-# 3. Batch 5 Remainder — Clinical Pages
-
-Fix these remaining clinical pages first:
-
-```text id="rlwxfh"
-resources/views/prescriptions/show.blade.php
-resources/views/admin/investigation-catalogue/show.blade.php
-```
-
-Also check whether any deeper active lab/investigation pages still appear in the latest audit and fix them if still listed.
-
-Use or extend:
-
-```text id="h7wufd"
-lang/en/prescriptions.php
-lang/fr/prescriptions.php
-lang/en/investigations.php
-lang/fr/investigations.php
-lang/en/lab.php
-lang/fr/lab.php
-```
-
-Translate:
-
-* prescription detail labels
-* medication/order labels
-* dosage labels
-* route/frequency labels
-* investigation catalogue detail labels
-* consumables labels
-* pricing/service labels
-* status badges
-* patient labels
-* visit labels
-* doctor labels
-* filters
-* table headers
-* form labels
-* action buttons
-* modal titles
-* empty states
-* confirmation messages
-* JavaScript strings if present
-
-Do not translate:
-
-* medicine names from database
-* lab test names from database
-* clinician-entered notes
-* diagnosis text
-* patient names
-* clinical units such as mmHg, bpm, kg, cm, °C, %, SpO2
-
-Do not change clinical workflow.
-
----
-
-# 4. Batch 6 — Emergency Remaining Candidates
-
-Fix:
-
-```text id="vn3jcs"
-resources/views/emergency/show.blade.php
-```
-
-Use or extend:
-
-```text id="omdcuf"
-lang/en/emergency.php
-lang/fr/emergency.php
-```
-
-Translate:
-
-* remaining emergency section labels
-* emergency action buttons
-* emergency status badges
-* emergency clinical labels
-* emergency billing/session labels
-* emergency notes labels
-* modal labels
-* empty states
-* JavaScript confirmation messages if present
-
-Do not change emergency workflows.
-Do not change emergency billing/session logic.
-Do not expose restricted clinical or financial data.
-
----
-
-# 5. Batch 7 — Admin Configuration Pages
-
-Fix:
-
-```text id="h5n0db"
-resources/views/admin/icd-codes/index.blade.php
-resources/views/departments/index.blade.php
-resources/views/admin/services/index.blade.php
-resources/views/designations/index.blade.php
-resources/views/admin/permissions/index.blade.php
-resources/views/admin/modules/index.blade.php
-resources/views/complaints/catalogue/index.blade.php
-resources/views/admin/notifications/broadcast.blade.php
-resources/views/admin/specialties/index.blade.php
-resources/views/admin/users/permissions.blade.php
-resources/views/admin/dashboards/index.blade.php
-resources/views/admin/analyzers/index.blade.php
-```
-
-Use existing namespaces where possible:
-
-```text id="wv6r42"
-lang/en/settings.php
-lang/fr/settings.php
-lang/en/users.php
-lang/fr/users.php
-lang/en/roles.php
-lang/fr/roles.php
-lang/en/messages.php
-lang/fr/messages.php
-lang/en/common.php
-lang/fr/common.php
-```
-
-Create small domain namespaces only if needed:
-
-```text id="wwwg9r"
-lang/en/admin.php
-lang/fr/admin.php
-lang/en/departments.php
-lang/fr/departments.php
-lang/en/services.php
-lang/fr/services.php
-```
-
-Translate:
-
-* headings
-* filters
-* table headers
-* action buttons
-* modal titles
-* form labels
-* placeholders
-* helper text
-* empty states
-* confirmation messages
-* status labels
-* permission management labels
-* module management labels
-* service management labels
-* ICD code labels
-* department/designation labels
-* complaint catalogue labels
-* notification broadcast labels
-
-Important:
-
-Do not translate permission slugs.
-Do not translate route names.
-Do not translate database codes.
-Do not hardcode services.
-Do not hardcode departments.
-Do not change module enable/disable logic.
-
----
-
-# 6. Batch 8 — Billing, Accounting, Accounts
-
-Fix:
-
-```text id="szxbmq"
-resources/views/billing/invoices/show.blade.php
-resources/views/accounting/payable/payables.blade.php
-resources/views/accounting/settings/index.blade.php
-resources/views/accounts/categories.blade.php
-resources/views/accounts/entries/create.blade.php
-resources/views/accounts/entries/index.blade.php
-```
-
-Use or extend:
-
-```text id="ua6xkz"
-lang/en/billing.php
-lang/fr/billing.php
-lang/en/invoices.php
-lang/fr/invoices.php
-lang/en/accounting.php
-lang/fr/accounting.php
-```
-
-Translate:
-
-* invoice labels
-* payable labels
-* accounting setting labels
-* account categories
-* journal entry labels
-* debit/credit labels
-* filters
-* table headers
-* status badges
-* action buttons
-* form labels
-* modal titles
-* empty states
-* confirmation messages
-
-Protect financial visibility.
-
-Do not change:
-
-* journal posting logic
-* invoice totals
-* payment logic
-* credit note logic
-* write-off logic
-* sponsor logic
-* insurance logic
-* accounting semantics
-
-Do not expose financial data to unauthorized users.
-
----
-
-# 7. Batch 9 — Queue, Notifications, Service Renderings
-
-Fix:
-
-```text id="k60fpa"
-resources/views/queue/manage.blade.php
-resources/views/queue/board.blade.php
-resources/views/notifications/index.blade.php
-resources/views/service-renderings/index.blade.php
-```
-
-Use or extend:
-
-```text id="l1otyl"
-lang/en/queue.php
-lang/fr/queue.php
-lang/en/notifications.php
-lang/fr/notifications.php
-lang/en/services.php
-lang/fr/services.php
-```
-
-Translate:
-
-* queue board labels
-* queue management labels
-* notification labels
-* service rendering labels
-* filters
-* table headers
-* buttons
-* empty states
-* badges
-* JavaScript messages if present
-
-Do not change queue workflow.
-Do not hardcode services.
-
----
-
-# 8. Batch 10 — HR, Blood Bank, Settings Long Tail
-
-If the previous batches complete safely, process the long tail:
-
-```text id="uaddtg"
-resources/views/hr/employees/create.blade.php
-resources/views/hr/employees/edit.blade.php
-resources/views/hr/attendance/summary.blade.php
-resources/views/hr/leave/create.blade.php
-resources/views/blood-bank/donations.blade.php
-resources/views/blood-bank/reports.blade.php
-resources/views/blood-bank/requests.blade.php
-resources/views/blood-bank/storage.blade.php
-resources/views/blood-bank/units.blade.php
-resources/views/blood-bank/donation-view.blade.php
-resources/views/blood-bank/donor-profile.blade.php
-resources/views/statistics/dashboard.blade.php
-resources/views/visits/create.blade.php
-resources/views/partials/patient-card.blade.php
-resources/views/settings/activity-log-show.blade.php
-resources/views/settings/activity-log.blade.php
-resources/views/settings/invoice.blade.php
-resources/views/settings/log-retention.blade.php
-resources/views/settings/notification-preferences.blade.php
-resources/views/settings/organization.blade.php
-resources/views/settings/payment-methods.blade.php
-resources/views/settings/profile.blade.php
-```
-
-Use existing namespaces where possible:
-
-```text id="l5lban"
-lang/en/hr.php
-lang/fr/hr.php
-lang/en/blood_bank.php
-lang/fr/blood_bank.php
-lang/en/settings.php
-lang/fr/settings.php
-lang/en/visits.php
-lang/fr/visits.php
-lang/en/patients.php
-lang/fr/patients.php
-```
-
-Create namespaces only if they are missing and necessary.
-
----
-
-# 9. JavaScript Manual Review
-
-Review:
-
-```text id="zsgy1g"
-resources/js/script.js
-resources/js/doctors.js
-```
-
-If strings are active at runtime, wire them through the existing `window.UHMS_I18N` bridge.
+For active JavaScript strings, use the existing `window.UHMS_I18N` bridge.
 
 Do not introduce:
 
-```text id="ctns8d"
+```text
 i18next
 Vue
 React
@@ -425,97 +78,286 @@ new frontend localisation package
 new localisation framework
 ```
 
-If strings are dormant template/demo examples, document them as false positives with evidence.
+If a JS string is active and user-facing, expose it from the relevant Blade layout/page as translated JSON and consume it in JS.
+
+Example pattern:
+
+```blade
+<script>
+    window.UHMS_I18N = Object.assign(window.UHMS_I18N || {}, {
+        loading: @json(__('common.loading')),
+        error: @json(__('common.error')),
+        confirm_delete: @json(__('common.confirm_delete')),
+    });
+</script>
+```
+
+Then in JavaScript:
+
+```js
+const t = window.UHMS_I18N || {};
+alert(t.error || 'Error');
+```
+
+Fallback strings may remain in English only as defensive fallback, but the displayed runtime string must come from `window.UHMS_I18N`.
 
 ---
 
-# 10. Class-A Service Candidates
+# 4. Process `resources/js/script.js`
 
-Review the 67 class-A service candidates.
+Review all 23 scanner candidates.
 
-Translate only confirmed user-facing output labels.
+For each candidate, decide one of:
 
-Likely user-facing examples:
+```text
+A. Active user-facing string — translate through window.UHMS_I18N
+B. Dormant/demo/template string — document as false positive with evidence
+C. Internal selector/config key — document as false positive
+```
 
-```text id="q8hi4r"
-ConsultationNextPatientService.php message output
-FinancialReportService.php report section labels
-PatientMergePreviewService.php merge preview table labels
-ProcedureReportService.php procedure report stage labels
-StatisticsService.php chart/KPI labels
+If active:
+
+* add keys to the correct language namespace
+* expose translated values through the existing global layout or page-specific Blade
+* update `resources/js/script.js` to use the translated values
+* preserve existing JS behavior
+
+Do not break:
+
+* modals
+* notifications
+* DataTables
+* Select2
+* date pickers
+* charts
+* forms
+* dashboard widgets
+* template initialization
+
+If strings are demo examples from unused template widgets, document why they are not active route-linked UI.
+
+---
+
+# 5. Process `resources/js/doctors.js`
+
+Review all 3 scanner candidates.
+
+For each candidate, decide:
+
+```text
+A. Active doctor/staff UI string — translate through window.UHMS_I18N
+B. Dormant/demo string — document as false positive
+C. Internal code/config — document as false positive
+```
+
+If active, add the needed translation keys and wire through the Blade/layout i18n bridge.
+
+Do not change doctor workflow or dashboard behavior.
+
+---
+
+# 6. Process `patients/partials/insurance-add-modal-scripts.blade.php`
+
+Fix:
+
+```text
+resources/views/patients/partials/insurance-add-modal-scripts.blade.php
+```
+
+This is a Blade JS partial, so it may safely use:
+
+```blade
+@json(__('patients.some_key'))
+```
+
+or a page-level i18n map.
+
+Translate the 4 remaining candidates if they are user-facing.
+
+Do not translate:
+
+* insurance provider names
+* sponsor names
+* policy numbers
+* membership numbers
+* patient-entered values
+* database values
+
+Do not change insurance/sponsor logic.
+
+---
+
+# 7. Process `admin/analyzers/index.blade.php`
+
+Fix:
+
+```text
+resources/views/admin/analyzers/index.blade.php
+```
+
+There are 3 residual candidates.
+
+Re-check the current file, because analyzer pages were already processed earlier.
+
+For each remaining candidate:
+
+```text
+A. translate if user-facing
+B. document as false positive if already translated downstream
+C. document as false positive if not displayed
+```
+
+Use or extend:
+
+```text
+lang/en/analyzers.php
+lang/fr/analyzers.php
+```
+
+Do not change analyzer connection, mapping, diagnostics, or lab integration logic.
+
+---
+
+# 8. Process `claims/partials/clinical-mirror.blade.php`
+
+Fix or document:
+
+```text
+resources/views/claims/partials/clinical-mirror.blade.php
+```
+
+This is confidentiality-sensitive.
+
+Review the 1 candidate carefully.
+
+If it is a static UI label, translate it.
+
+If it is clinical data, clinician-entered text, diagnosis text, procedure name, medication name, investigation/test name, or claim content from the database, do not translate it. Document exactly why it remains.
+
+Do not expose any additional clinical data.
+Do not change claim generation logic.
+Do not change insurance/NHIS behavior.
+Remember: NHIS is just another insurance provider. Do not hardcode NHIS.
+
+---
+
+# 9. Class-A Service Candidate Review
+
+The audit still reports:
+
+```text
+67 class-A user-facing service-output candidates
+```
+
+Review these, but do not blindly translate all of them.
+
+For each class-A candidate, decide:
+
+```text
+A. Confirmed user-facing label/output — translate
+B. Stored canonical event title — leave unchanged
+C. Audit/accounting/journal description — leave unchanged
+D. SQL/internal expression — mark false positive
+E. Already translated downstream — document
+```
+
+Priority services to review:
+
+```text
+app/Services/ConsultationNextPatientService.php
+app/Services/FinancialReportService.php
+app/Services/PatientMergePreviewService.php
+app/Services/ProcedureReportService.php
+app/Services/StatisticsService.php
+app/Services/ReportService.php
+```
+
+Safe examples:
+
+```php
+'label' => __('accounting.revenue')
+```
+
+```php
+'message' => __('consultations.payment_ready')
 ```
 
 Unsafe examples:
 
-```text id="n2cr0t"
-stored historical event titles
+```text
+stored event titles
 audit descriptions
-journal descriptions
+journal entry descriptions
 SQL expressions
-canonical workflow event names
-```
-
-For safe user-facing labels, use translations:
-
-```php id="c70ix3"
-'label' => __('accounting.revenue')
+canonical workflow titles
+historical records
 ```
 
 Do not alter stored semantics.
 
 ---
 
-# 11. Translation Rules
+# 10. Translation Rules
 
 Use Laravel localisation only.
 
 Use:
 
-```php id="mtkv0r"
+```php
 __('module.key')
 ```
 
 or:
 
-```blade id="7nsze1"
+```blade
 {{ __('module.key') }}
 ```
 
 For placeholders:
 
-```php id="5j0blb"
-__('queue.patient_waiting_for', ['department' => $departmentName])
+```php
+__('patients.insurance_added_for_patient', ['patient' => $patient->name])
 ```
 
 Do not concatenate translated fragments.
 
 Bad:
 
-```php id="gkzmkp"
-'Patient waiting for ' . $departmentName
+```php
+'Patient: ' . $patient->name
 ```
 
 Good:
 
-```php id="4wtcup"
-__('queue.patient_waiting_for', ['department' => $departmentName])
+```php
+__('patients.patient_name', ['name' => $patient->name])
 ```
 
 ---
 
-# 12. Language File Rules
+# 11. Language File Rules
 
-Use appropriate namespaces.
+Use existing namespaces where possible.
 
-Generic UI words go in:
+For JS/global strings, prefer:
 
-```text id="w0zq65"
+```text
 common.php
+messages.php
+patients.php
+analyzers.php
+claims.php
+consultations.php
+accounting.php
+reports.php
+statistics.php
 ```
 
-Only for truly generic words:
+Do not dump domain-specific strings into `common.php`.
 
-```text id="bhxv04"
+Use `common.php` only for genuinely generic UI strings:
+
+```text
 save
 cancel
 close
@@ -534,25 +376,8 @@ no
 loading
 error
 success
-```
-
-Domain words go in domain files:
-
-```text id="7m495q"
-prescriptions.php
-investigations.php
-lab.php
-emergency.php
-admin.php
-departments.php
-services.php
-billing.php
-accounting.php
-queue.php
-notifications.php
-hr.php
-blood_bank.php
-settings.php
+confirm
+warning
 ```
 
 Every English key must exist in French.
@@ -560,7 +385,7 @@ Every French key must exist in English.
 
 ---
 
-# 13. Do Not Translate These
+# 12. Do Not Translate These
 
 Do not translate:
 
@@ -570,7 +395,7 @@ Do not translate:
 * supplier names
 * medicine names from database
 * product names from database
-* service names from database unless they are system-defined hardcoded labels
+* service names from database unless system-defined hardcoded labels
 * diagnosis text typed by clinicians
 * clinical notes typed by clinicians
 * lab test names from catalogue/database
@@ -590,13 +415,13 @@ Do not translate:
 
 ---
 
-# 14. Security Rules
+# 13. Security Rules
 
 Do not weaken permissions.
 
 Preserve:
 
-```text id="h82xho"
+```text
 @can
 @cannot
 Gate
@@ -611,7 +436,7 @@ clinical confidentiality checks
 
 Do not expose:
 
-```text id="je80nk"
+```text
 restricted clinical data
 financial data
 accounting data
@@ -626,89 +451,78 @@ No business logic should be moved into Blade.
 
 ---
 
-# 15. Responsiveness
+# 14. Scanner Burn-Down
 
-While touching these pages, fix obvious responsiveness problems only where directly encountered:
+Run the scanner after each mini-section:
 
-* wrap large tables in `.table-responsive`
-* ensure action buttons wrap on small screens
-* ensure filters stack on mobile
-* ensure modals are usable on mobile
-* do not break print views
-
-Use Bootstrap 5 and Tabler Icons only.
-Do not introduce Tailwind.
-
----
-
-# 16. Scanner Burn-Down
-
-Run scanner after every batch:
-
-```bash id="whgozm"
+```bash
 php scripts/localisation-audit.php
 ```
 
-Record before/after counts for:
+Track before/after for:
 
-```text id="uxhlwo"
-Batch 5 remainder
-Batch 6
-Batch 7
-Batch 8
-Batch 9
-Batch 10
-JavaScript review
-Class-A services
+```text
+script.js
+doctors.js
+insurance-add-modal-scripts
+admin/analyzers/index
+claims clinical mirror
+class-A services
 ```
 
-If a batch introduces parse errors, stop and fix before continuing.
+Target:
+
+```text
+Active runtime candidates: 0
+```
+
+If any remain, document exact reason and proof.
 
 ---
 
-# 17. Required Documentation
+# 15. Required Documentation
 
 Create:
 
-```text id="24jrfj"
-docs/LOCALISATION_PHASE_15F_CLINICAL_ADMIN_BILLING_BURNDOWN_REPORT.md
+```text
+docs/LOCALISATION_PHASE_15G_FINAL_RUNTIME_JS_MANUAL_REVIEW_REPORT.md
 ```
 
 Include:
 
 * summary
-* starting active runtime candidate count: 192
+* starting active runtime candidate count: 34
 * ending active runtime candidate count
-* per-batch before/after counts
-* Batch 5 remainder files fixed/deferred
-* Batch 6 files fixed/deferred
-* Batch 7 files fixed/deferred
-* Batch 8 files fixed/deferred
-* Batch 9 files fixed/deferred
-* Batch 10 files fixed/deferred
-* JavaScript files reviewed/touched/deferred
-* class-A service candidates reviewed/touched/deferred
+* per-file before/after counts
+* JS strings translated
+* JS strings documented as false positives
+* `window.UHMS_I18N` wiring added/used
+* insurance modal script result
+* analyzer residual result
+* clinical mirror decision
+* class-A service review result
+* service candidates translated
+* service candidates deferred with reasons
 * language files changed
 * namespaces created
 * keys added
-* dynamic labels converted
-* permissions/security confirmation
 * EN/FR parity result
 * PHP lint result
 * view cache result
 * scanner result
+* security/permissions confirmation
 * manual French verification checklist
-* next recommendation if candidates remain
+* recommendation for next phase
 
-Do not claim “all pages translated” unless scanner and manual French checks support it.
+Do not claim localisation complete unless active runtime candidates are zero or every remaining candidate is proven false-positive/non-user-facing.
 
 ---
 
-# 18. Verification Commands
+# 16. Verification Commands
 
 Run:
 
-```bash id="tb409a"
+```bash
 php artisan view:clear
 php artisan config:clear
 php artisan cache:clear
@@ -719,115 +533,87 @@ php artisan view:clear
 
 Run:
 
-```bash id="h8nwni"
+```bash
 for f in lang/en/*.php lang/fr/*.php; do php -l "$f"; done
 ```
 
 Run:
 
-```bash id="mz0cdi"
+```bash
 php -l scripts/localisation-audit.php
 php scripts/localisation-audit.php
 ```
 
 Run:
 
-```bash id="m9mjk8"
+```bash
 git diff --check
 ```
 
 If compiled Blade cache exists, lint compiled views:
 
-```bash id="rn65we"
+```bash
 find storage/framework/views -type f -name "*.php" -print0 | xargs -0 -n1 php -l
 ```
 
 ---
 
-# 19. Manual French Verification
+# 17. Manual French Verification
 
-Switch the app to French and manually verify every fixed batch:
+Switch the app to French and verify:
 
-```text id="uvj8z2"
-prescriptions/show
-investigation catalogue/show
-emergency/show
-ICD codes
-departments
-services
-designations
-permissions
-modules
-complaints catalogue
-notification broadcast
-specialties
-user permissions
-admin dashboards
-billing invoice show
-payables
-accounting settings
-accounts categories
-journal entries create/index
-queue manage/board
-notifications index
-service renderings
-HR employee create/edit
-HR attendance summary
-HR leave create
-blood bank donations/reports/requests/storage/units/profile
-settings pages
-statistics dashboard
-visits/create
-patient card
+```text
+global JS behaviours from script.js
+doctor JS behaviours from doctors.js
+patient insurance add modal
+analyzer index
+claims clinical mirror area
+consultation next-patient/payment-ready output if touched
+financial reports if service labels touched
+patient merge preview if service labels touched
+procedure reports if service labels touched
+statistics/report labels if touched
 ```
 
 Check:
 
-* page title
-* breadcrumbs
-* headings
-* cards
-* filters
-* form labels
-* placeholders
-* helper text
-* buttons
-* tables
-* badges
-* modals
-* empty states
 * alerts
-* print/PDF labels if present
-* JavaScript messages
-* validation errors
-* financial data remains permission-controlled
-* clinical data remains permission-controlled
+* confirm dialogs
+* modal messages
+* dynamic generated HTML
+* placeholders
+* empty states
+* buttons
+* status text
+* service-generated labels
+* no regression in JS behaviour
+* no clinical/financial data exposure
 
 ---
 
-# 20. Acceptance Criteria
+# 18. Acceptance Criteria
 
-Phase 15F is complete only when:
+Phase 15G is complete only when:
 
-* Batch 5 remainder is finished or clearly documented
-* Batch 6 is finished or clearly documented
-* Batch 7 is finished or clearly documented
-* Batch 8 is finished or clearly documented
-* Batch 9 is finished or clearly documented
-* Batch 10 is attempted or clearly deferred
-* active runtime candidates are reduced from 192
-* target below 100 is attempted
-* all added keys have EN/FR parity
+* all 34 remaining active runtime candidates are fixed or documented with proof
+* active runtime candidate count is zero or every remaining candidate is proven non-user-facing/false-positive
+* JS active strings use `window.UHMS_I18N`
+* insurance modal script is translated or documented
+* analyzer residual strings are fixed or documented
+* clinical mirror candidate is fixed or documented safely
+* class-A service outputs are reviewed
+* confirmed user-facing service labels are translated
+* stored/audit/journal/SQL semantics remain unchanged
+* EN/FR parity passes
 * PHP lint passes
 * view cache compiles
 * localisation scanner runs
 * permissions are unchanged
-* financial visibility remains protected
 * clinical confidentiality remains protected
+* financial visibility remains protected
 * no business logic is moved into Blade
 * no new localisation framework is introduced
 * no new frontend package is introduced
 * documentation report is created
-* manual French verification checklist is updated
 
-Proceed with UHMS Localisation Phase 15F now.
+Proceed with UHMS Localisation Phase 15G now.

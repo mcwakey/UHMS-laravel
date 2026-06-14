@@ -227,13 +227,20 @@ return [
     // Ajouts Phase 15F
     'supplier_payables' => 'Dettes fournisseurs',
     'no_payables' => 'Aucune dette',
-    'accounting_settings' => 'Paramètres de comptabilité',
     'not_set' => 'Non défini',
     'account_categories' => 'Catégories de comptes',
     'all_types' => 'Tous les types',
-    'entries' => 'Écritures',
-    'select_type' => 'Sélectionner un type...',
+    'select_type_ph' => 'Sélectionner un type...',
     'select_category' => 'Sélectionner une catégorie...',
     'select_method' => 'Sélectionner une méthode...',
     'delete_entry_confirm' => 'Supprimer cette écriture ?',
+
+    // Étiquettes des sections du rapport financier (compte de résultat / bilan)
+    'cost_of_goods_sold' => 'Coût des marchandises vendues',
+    'operating_expenses' => 'Charges d\'exploitation',
+    'administrative_expenses' => 'Charges administratives',
+    'finance_costs' => 'Charges financières',
+    'assets' => 'Actifs',
+    'liabilities' => 'Passifs',
+    'equity' => 'Capitaux propres',
 ];

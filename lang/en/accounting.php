@@ -227,13 +227,20 @@ return [
     // Phase 15F additions
     'supplier_payables' => 'Supplier Payables',
     'no_payables' => 'No payables',
-    'accounting_settings' => 'Accounting Settings',
     'not_set' => 'Not set',
     'account_categories' => 'Account Categories',
     'all_types' => 'All Types',
-    'entries' => 'Entries',
-    'select_type' => 'Select Type...',
+    'select_type_ph' => 'Select Type...',
     'select_category' => 'Select Category...',
     'select_method' => 'Select Method...',
     'delete_entry_confirm' => 'Delete this entry?',
+
+    // Financial report (P&L / balance sheet) section labels
+    'cost_of_goods_sold' => 'Cost of Goods Sold',
+    'operating_expenses' => 'Operating Expenses',
+    'administrative_expenses' => 'Administrative Expenses',
+    'finance_costs' => 'Finance Costs',
+    'assets' => 'Assets',
+    'liabilities' => 'Liabilities',
+    'equity' => 'Equity',
 ];

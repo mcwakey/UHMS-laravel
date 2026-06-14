@@ -136,4 +136,5 @@ return [
     'requesting_clinician' => 'Requesting Clinician',
     'verified' => 'Verified',
     'result_pending_verification' => 'Result Pending Verification',
+    'payment_ready' => 'Payment ready',
 ];

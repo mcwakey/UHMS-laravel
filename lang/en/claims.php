@@ -191,4 +191,21 @@ return [
     'no_invoice' => 'No invoice',
     'prepare_claim' => 'Prepare Claim',
     'no_eligible_visits' => 'No eligible visits found',
+
+    // Clinical mirror (claim preparation)
+    'clinical_mirror_title' => 'Claim Preparation Clinical Mirror',
+    'clinical_mirror_desc' => 'Read-only consultation record snapshot for claim preparation. Clinical authorship is preserved.',
+    'contributors_label' => 'Contributors',
+    'sec_complaints' => 'Complaints',
+    'sec_hopc' => 'History of Presenting Complaint',
+    'sec_examination' => 'Examination',
+    'sec_diagnosis' => 'Diagnosis',
+    'sec_investigations' => 'Investigations',
+    'sec_treatments' => 'Treatments',
+    'sec_prescriptions' => 'Prescriptions',
+    'sec_procedures' => 'Procedures',
+    'sec_tasks' => 'Tasks / Follow-up / Instructions',
+    'sec_notes' => 'Notes / Summary',
+    'original_author' => 'Original author',
+    'source_pattern' => 'Source Pattern',
 ];

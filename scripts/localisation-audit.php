@@ -325,6 +325,27 @@ function audit_bucket(
         return 'demo_template_candidates';
     }
 
+    // Purchased admin-template bundled demo scripts. Their inline HTML-fragment strings
+    // (option/label/heading markup built in jQuery handlers such as .add-schedule-btn,
+    // .add-diagnosis, .add-reminder) belong to dormant template demo widgets whose trigger
+    // elements only exist on unrouted demo views (add-doctor, online-consultations,
+    // appointment-settings, email-templates-settings, ...). Those views are defined only in
+    // routes/web.php.bak and return nothing from `php artisan route:list`, so the markup is
+    // never produced on an active route. Documented evidence in the Phase 15G report.
+    if (
+        in_array($relative, ['resources/js/script.js', 'resources/js/doctors.js'], true)
+        && (
+            str_contains($lowerContext, '<option')
+            || str_contains($lowerContext, '<label')
+            || str_contains($lowerContext, '<h6')
+            || str_contains($lowerContext, '<th')
+            || str_contains($lowerContext, '<span')
+            || str_contains($lowerContext, '<div')
+        )
+    ) {
+        return 'demo_template_candidates';
+    }
+
     if (str_starts_with($relative, 'app/Services/')) {
         return 'service_title_manual_review_candidates';
     }
@@ -339,7 +360,7 @@ function audit_bucket(
         || str_contains($lowerContext, 'addeventlistener')
         || str_contains($lowerContext, '//')
         || str_starts_with(trim($context), '*')
-        || in_array($normalized, ['UHMS', 'N/A', 'GHS', 'GH₵', 'GHâ‚µ'], true)
+        || in_array($normalized, ['UHMS', 'N/A', 'GHS', 'GH₵', 'GHâ‚µ', 'HL7 v2.x', 'ASTM E1394'], true)
         || preg_match('/^(A|B|AB|O)[+-]$/', $normalized)
         || preg_match('/^(mg|ml|kg|bpm|mmHg|cm|L|%)$/i', $normalized)
     ) {

@@ -3,6 +3,7 @@
 return [
     'title' => 'Patients',
     'view_patient_profile' => 'Voir le profil du patient',
+    'default_tier_used' => 'Si aucun niveau n\'est choisi, le niveau par défaut du prestataire sera utilisé.',
     'new_patient' => 'Nouveau patient',
     'new_visit' => 'Nouvelle visite',
     'search_placeholder' => 'Rechercher par nom, téléphone, carte Ghana, carte d\'assurance ou contact d\'urgence...',

@@ -156,7 +156,7 @@
                     <div class="mb-3">
                         <label class="form-label">Type <span class="text-danger">*</span></label>
                         <select name="type" class="form-select" required>
-                            <option value="">{{ __('accounting.select_type') }}</option>
+                            <option value="">{{ __('accounting.select_type_ph') }}</option>
                             @foreach($types as $type)
                                 <option value="{{ $type->value }}">{{ $type->translatedLabel() }}</option>
                             @endforeach
