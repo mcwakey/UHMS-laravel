@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Supplier Payables')
+@section('title', __('accounting.supplier_payables'))
 
 @php
     $variant = fn ($s) => match ($s) {
@@ -10,7 +10,7 @@
 @endphp
 
 @section('content')
-<x-page-header title="Supplier Payables" icon="ti-file-dollar" description="Amounts the facility owes suppliers (Accounts Payable).">
+<x-page-header :title="__('accounting.supplier_payables')" icon="ti-file-dollar" description="Amounts the facility owes suppliers (Accounts Payable).">
     <x-slot:actions>
         <a href="{{ route('admin.accounts-payable.aging') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-clock-dollar me-1"></i>{{ __('accounting.ap_aging') }}</a>
         <a href="{{ route('admin.accounts-payable.payments') }}" class="btn btn-primary btn-sm"><i class="ti ti-cash me-1"></i>{{ __('accounting.supplier_payments') }}</a>
@@ -56,7 +56,7 @@
                 <td><span class="badge bg-{{ $acctVariant($p->accounting_status) }}-subtle text-{{ $acctVariant($p->accounting_status) }}">{{ __('statuses.default.' . ($p->accounting_status ?? 'pending')) }}</span></td>
             </tr>
         @empty
-            <tr><td colspan="9"><x-empty-state icon="ti-file-dollar" title="No payables" message="No outstanding supplier payables." /></td></tr>
+            <tr><td colspan="9"><x-empty-state icon="ti-file-dollar" :title="__('accounting.no_payables')" message="No outstanding supplier payables." /></td></tr>
         @endforelse
         </tbody>
     </table>

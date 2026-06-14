@@ -37,6 +37,7 @@ return [
     'hrs' => 'hrs',
     'no_attendance_records' => 'No attendance records found',
     'attendance_summary' => 'Attendance Summary',
+    'unpaid_leave' => 'Unpaid Leave:',
     'working_days' => 'Working Days',
     'total_hours' => 'Total Hours',
     'employee_details' => 'Employee Details',

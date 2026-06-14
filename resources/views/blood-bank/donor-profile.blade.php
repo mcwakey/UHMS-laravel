@@ -11,7 +11,7 @@
 
 @section('content')
 <x-page-header :title="$donor->full_name" description="Donor profile and WHO screening workspace." icon="ti-clipboard-heart"
-    :breadcrumbs="[['label' => 'Blood Donors', 'url' => route('admin.blood-bank.donors.index')], ['label' => $donor->donor_number]]">
+    :breadcrumbs="[['label' => __('blood_bank.blood_donors'), 'url' => route('admin.blood-bank.donors.index')], ['label' => $donor->donor_number]]">
     <x-slot:actions>
         <a href="{{ route('admin.blood-bank.donors.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>{{ __('blood_bank.all_donors') }}</a>
         @if($donor->canDonate())

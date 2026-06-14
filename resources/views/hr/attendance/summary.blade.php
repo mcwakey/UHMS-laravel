@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Attendance Summary')
+@section('title', __('hr.attendance_summary'))
 
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">

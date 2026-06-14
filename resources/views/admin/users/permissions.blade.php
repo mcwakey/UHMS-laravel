@@ -59,7 +59,7 @@
                             <div class="form-check mb-2 d-flex align-items-start gap-2">
                                 @if($item['inherited'])
                                     <input class="form-check-input mt-1" type="checkbox" disabled checked
-                                           title="Inherited from role — manage on the role page.">
+                                           title="{{ __('admin.inherited_from_role') }}">
                                 @else
                                     @if($criticalLocked && $item['direct'])
                                         <input type="hidden" name="permissions[]" value="{{ $item['name'] }}">

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Activity Log Entry')
+@section('title', __('settings.activity_log_entry'))
 
 @section('content')
 @php

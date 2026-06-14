@@ -166,6 +166,8 @@ return [
     'sidebar_general'           => 'General',
     'sidebar_system'            => 'System',
     'profile_settings'          => 'Profile Settings',
+    'activity_log_entry'        => 'Activity Log Entry',
+    'payment_method_settings'   => 'Payment Method Settings',
     'complaint_catalogue'       => 'Complaint Catalogue',
     'ward_admissions'           => 'Ward & Admissions',
 

@@ -433,9 +433,9 @@
                             </div>
                             <div class="col-12">
                                 <select class="form-select" name="urgency">
-                                    <option value="emergency" @selected(old('urgency', 'emergency') === 'emergency')>Emergency</option>
-                                    <option value="urgent" @selected(old('urgency') === 'urgent')>Urgent</option>
-                                    <option value="routine" @selected(old('urgency') === 'routine')>Routine</option>
+                                    <option value="emergency" @selected(old('urgency', 'emergency') === 'emergency')>{{ __('emergency.urgency_emergency') }}</option>
+                                    <option value="urgent" @selected(old('urgency') === 'urgent')>{{ __('emergency.urgency_urgent') }}</option>
+                                    <option value="routine" @selected(old('urgency') === 'routine')>{{ __('emergency.urgency_routine') }}</option>
                                 </select>
                             </div>
                             <div class="col-12"><textarea class="form-control" name="clinical_info" rows="2" placeholder="Clinical information">{{ old('clinical_info') }}</textarea></div>
@@ -476,9 +476,9 @@
                             </div>
                             <div class="col-12">
                                 <select class="form-select" name="priority" required>
-                                    <option value="emergency" @selected(old('priority', 'emergency') === 'emergency')>Emergency</option>
-                                    <option value="urgent" @selected(old('priority') === 'urgent')>Urgent</option>
-                                    <option value="routine" @selected(old('priority') === 'routine')>Routine</option>
+                                    <option value="emergency" @selected(old('priority', 'emergency') === 'emergency')>{{ __('emergency.urgency_emergency') }}</option>
+                                    <option value="urgent" @selected(old('priority') === 'urgent')>{{ __('emergency.urgency_urgent') }}</option>
+                                    <option value="routine" @selected(old('priority') === 'routine')>{{ __('emergency.urgency_routine') }}</option>
                                 </select>
                             </div>
                             <div class="col-12"><textarea class="form-control" name="indication" rows="2" placeholder="Indication" required>{{ old('indication') }}</textarea></div>
@@ -1259,7 +1259,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="col-md-4">
                                 <label class="form-label">{{ __('emergency.blood_group_label') }}</label>
                                 <select name="blood_group" class="form-select @error('blood_group') is-invalid @enderror">
-                                    <option value="">Select</option>
+                                    <option value="">{{ __('common.select') }}</option>
                                     @foreach(\App\Enums\BloodGroup::cases() as $bloodGroup)
                                         <option value="{{ $bloodGroup->value }}" @selected(old('blood_group', $temporaryPatient->getRawOriginal('blood_group')) === $bloodGroup->value)>{{ $bloodGroup->label() }}</option>
                                     @endforeach
@@ -1269,7 +1269,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="col-md-4">
                                 <label class="form-label">{{ __('emergency.marital_status_label') }}</label>
                                 <select name="marital_status" class="form-select @error('marital_status') is-invalid @enderror">
-                                    <option value="">Select</option>
+                                    <option value="">{{ __('common.select') }}</option>
                                     @foreach(\App\Enums\MaritalStatus::cases() as $maritalStatus)
                                         <option value="{{ $maritalStatus->value }}" @selected(old('marital_status', $temporaryPatient->getRawOriginal('marital_status')) === $maritalStatus->value)>{{ $maritalStatus->label() }}</option>
                                     @endforeach

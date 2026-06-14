@@ -154,4 +154,8 @@ return [
     'top_outstanding_patients' => 'Patients avec plus gros soldes',
     'invoices_count' => 'Factures',
     'no_outstanding_balances' => 'Aucun solde restant.',
+    'select_provider' => 'Sélectionner un prestataire',
+    'select_sponsor' => 'Sélectionner un sponsor',
+    'select_corporate_client' => 'Sélectionner un client entreprise',
+    'record_payment_confirm' => 'Enregistrer ce paiement ?',
 ];

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Designations')
+@section('title', __('admin.designations'))
 
 @section('content')
 <!-- Page Header -->
@@ -27,7 +27,7 @@
             </div>
             <div class="col-md-3">
                 <select name="department_id" class="form-select">
-                    <option value="">All Departments</option>
+                    <option value="">{{ __('common.all_departments') }}</option>
                     @foreach($departments as $dept)
                         <option value="{{ $dept->id }}" {{ request('department_id') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
                     @endforeach
@@ -48,11 +48,11 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Name</th>
-                        <th>Department</th>
-                        <th>Description</th>
-                        <th>Users</th>
-                        <th class="text-end">Actions</th>
+                        <th>{{ __('common.name') }}</th>
+                        <th>{{ __('common.department') }}</th>
+                        <th>{{ __('common.description') }}</th>
+                        <th>{{ __('admin.users') }}</th>
+                        <th class="text-end">{{ __('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -81,7 +81,7 @@
                                     <li>
                                         <x-confirm-form :action="route('admin.designations.destroy', $desig)" method="DELETE"
                                             button-label="Delete" button-class="dropdown-item text-danger" icon="ti-trash"
-                                            confirm-title="Delete this designation?" confirm-text="This cannot be undone." confirm-button="Yes, delete" />
+                                            :confirm-title="__('admin.delete_designation_confirm')" :confirm-text="__('common.action_cannot_be_undone')" :confirm-button="__('common.yes')" />
                                     </li>
                                     @endcan
                                 </ul>
@@ -158,9 +158,9 @@
                         <input type="text" name="name" class="form-control" placeholder="e.g. Senior Medical Officer" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Department <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('common.department') }} <span class="text-danger">*</span></label>
                         <select name="department_id" class="form-select" required>
-                            <option value="">Select Department</option>
+                            <option value="">{{ __('admin.select_department') }}</option>
                             @foreach($departments as $dept)
                                 <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                             @endforeach

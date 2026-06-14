@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Complaint Catalogue')
+@section('title', __('admin.complaint_catalogue'))
 
 @section('content')
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
@@ -88,18 +88,18 @@
                         <input type="text" name="search" class="form-control" value="{{ $filters['search'] ?? '' }}" placeholder="Name, category, keyword">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label small">Category</label>
+                        <label class="form-label small">{{ __('common.category') }}</label>
                         <select name="category" class="form-select">
-                            <option value="">All</option>
+                            <option value="">{{ __('common.all') }}</option>
                             @foreach($categories as $category)
                                 <option value="{{ $category }}" @selected(($filters['category'] ?? '') === $category)>{{ $category }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label small">Status</label>
+                        <label class="form-label small">{{ __('common.status') }}</label>
                         <select name="active" class="form-select">
-                            <option value="">All</option>
+                            <option value="">{{ __('common.all') }}</option>
                             <option value="1" @selected(($filters['active'] ?? '') === '1')>Active</option>
                             <option value="0" @selected(($filters['active'] ?? '') === '0')>Inactive</option>
                         </select>
@@ -113,9 +113,9 @@
                 <table class="table table-sm table-hover align-middle mb-0">
                     <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Keywords</th>
+                        <th>{{ __('common.name') }}</th>
+                        <th>{{ __('common.category') }}</th>
+                        <th>{{ __('admin.keywords') }}</th>
                         <th>Status</th>
                         <th class="text-end">Actions</th>
                     </tr>

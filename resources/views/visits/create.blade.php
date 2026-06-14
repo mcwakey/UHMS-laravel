@@ -1251,7 +1251,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<button type="button" class="btn btn-sm btn-outline-primary add-service-btn"'
                 + ' data-id="' + svc.id + '"'
                 + ' data-name="' + escapeHtml(svc.name) + '"'
-                + ' title="Add to billing">';
+                + ' title="' + @json(__('visits.add_to_billing')) + '">';
             html += '<i class="ti ti-plus"></i></button>';
             html += '</div>';
             html += '</div>';
@@ -1554,7 +1554,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const parts = [];
         if (data.message)        parts.push('<div>' + escapeHtml(data.message) + '</div>');
         // if (data.member_name)    parts.push('<div><strong>Member:</strong> ' + escapeHtml(data.member_name) + '</div>');
-        if (data.reference_code) parts.push('<div><strong>Reference:</strong> <code>' + escapeHtml(data.reference_code) + '</code></div>');
+        if (data.reference_code) parts.push('<div><strong>' + @json(__('visits.reference_label')) + '</strong> <code>' + escapeHtml(data.reference_code) + '</code></div>');
         // if (data.expires_at)     parts.push('<div><strong>Expires:</strong> ' + escapeHtml(data.expires_at) + '</div>');
         document.getElementById('verificationFeedback').innerHTML = parts.join('');
 

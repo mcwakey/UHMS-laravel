@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Profile Settings')
+@section('title', __('settings.profile_settings'))
 
 @section('content')
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">

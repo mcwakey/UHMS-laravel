@@ -110,7 +110,6 @@ return [
     'investigation_consumables' => 'Consommables d\'investigation',
     'consumables_description'   => 'Vue filtrée des <strong>produits</strong> liés aux départements Investigation / Laboratoire / Radiologie. Les quantités ci-dessous reflètent le solde disponible à l\'<strong>emplacement de stock du laboratoire</strong>. Les nouveaux produits sont ajoutés depuis <em>Stock &rsaquo; Produits</em>.',
     'department_available_qty'  => 'Qté disponible du département',
-    'main_stock_qty'            => 'Qté du stock principal',
 
     // Catalogue d'investigation
     'investigation_catalogue'   => 'Catalogue d\'investigation',
@@ -120,4 +119,20 @@ return [
     'service'                   => 'Service',
     'headers'                   => 'En-têtes',
     'criteria'                  => 'Critères',
+
+    // Détail du catalogue d'investigation (configuration)
+    'input_type'                => 'Type de saisie',
+    'input_text'                => 'Texte',
+    'input_number'              => 'Nombre',
+    'input_select'              => 'Liste déroulante',
+    'input_textarea'            => 'Zone de texte',
+    'input_boolean'             => 'Booléen',
+    'products'                  => 'Produits',
+    'required_q'                => 'Obligatoire ?',
+    'remove_consumable_confirm' => 'Retirer le consommable ?',
+    'delete_criterion_confirm'  => 'Supprimer ce critère ?',
+    'select_product'            => '— Sélectionner un produit —',
+    'default_qty'               => 'Qté par défaut',
+    'this_department'           => 'ce département',
+    'no_products_alert'         => 'Aucun produit lié à :dept. Liez d\'abord des produits consommables/réactifs à ce département sous :link.',
 ];

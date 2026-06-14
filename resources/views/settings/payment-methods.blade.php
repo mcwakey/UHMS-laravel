@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Payment Method Settings')
+@section('title', __('settings.payment_method_settings'))
 
 @section('content')
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">

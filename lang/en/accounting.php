@@ -223,4 +223,17 @@ return [
     'cheque_txn_no' => 'Cheque/txn no.',
     'payment_cannot_exceed_balance' => 'Payment cannot exceed the supplier\'s outstanding balance.',
     'accounting' => 'Accounting',
+
+    // Phase 15F additions
+    'supplier_payables' => 'Supplier Payables',
+    'no_payables' => 'No payables',
+    'accounting_settings' => 'Accounting Settings',
+    'not_set' => 'Not set',
+    'account_categories' => 'Account Categories',
+    'all_types' => 'All Types',
+    'entries' => 'Entries',
+    'select_type' => 'Select Type...',
+    'select_category' => 'Select Category...',
+    'select_method' => 'Select Method...',
+    'delete_entry_confirm' => 'Delete this entry?',
 ];

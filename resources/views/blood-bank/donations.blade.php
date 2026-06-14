@@ -1,11 +1,11 @@
 @extends('layouts.app')
-@section('title', 'Blood Donations')
+@section('title', __('blood_bank.blood_donations'))
 
 @php($groups = ['O-','O+','A-','A+','B-','B+','AB-','AB+'])
 @php($components = ['WHOLE_BLOOD'=>'Whole Blood','PRBC'=>'Packed Red Cells','PLASMA'=>'Plasma / FFP','PLATELETS'=>'Platelets','CRYOPRECIPITATE'=>'Cryoprecipitate'])
 
 @section('content')
-<x-page-header title="Blood Donations" description="Record collection and screening. Units stay quarantined until screening passes." icon="ti-droplet">
+<x-page-header :title="__('blood_bank.blood_donations')" description="Record collection and screening. Units stay quarantined until screening passes." icon="ti-droplet">
     <x-slot:actions>
         @can('blood_bank.donations.record')
             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#recordDonationModal"><i class="ti ti-droplet-plus me-1"></i>{{ __('blood_bank.record_donation') }}</button>

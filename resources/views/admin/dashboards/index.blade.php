@@ -75,7 +75,7 @@
             @include('admin.dashboards.partials.work-queue', ['queue' => $queue])
         @empty
             @if(empty($kpis))
-                <x-empty-state icon="ti-layout-dashboard" title="Nothing to show yet"
+                <x-empty-state icon="ti-layout-dashboard" :title="__('admin.nothing_to_show')"
                     message="There is no department activity to display for your role right now." />
             @endif
         @endforelse

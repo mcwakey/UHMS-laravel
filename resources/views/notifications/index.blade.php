@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Notifications')
+@section('title', __('common.notifications'))
 
 @section('content')
 <div class="content-page">
@@ -28,18 +28,18 @@
                         <h5 class="card-title mb-0">All Notifications</h5>
                         <form method="GET" class="d-flex flex-wrap gap-2 align-items-center">
                             <select name="read" class="form-select form-select-sm" style="min-width:140px;" onchange="this.form.submit()">
-                                <option value="" {{ $filterRead ? '' : 'selected' }}>All</option>
-                                <option value="unread" {{ $filterRead === 'unread' ? 'selected' : '' }}>Unread</option>
-                                <option value="read" {{ $filterRead === 'read' ? 'selected' : '' }}>Read</option>
+                                <option value="" {{ $filterRead ? '' : 'selected' }}>{{ __('common.all') }}</option>
+                                <option value="unread" {{ $filterRead === 'unread' ? 'selected' : '' }}>{{ __('notifications.unread') }}</option>
+                                <option value="read" {{ $filterRead === 'read' ? 'selected' : '' }}>{{ __('notifications.read') }}</option>
                             </select>
                             <select name="module" class="form-select form-select-sm" style="min-width:160px;" onchange="this.form.submit()">
-                                <option value="">All modules</option>
+                                <option value="">{{ __('notifications.all_modules') }}</option>
                                 @foreach($moduleOptions as $mod)
                                     <option value="{{ $mod->value }}" {{ $filterModule === $mod->value ? 'selected' : '' }}>{{ $mod->label() }}</option>
                                 @endforeach
                             </select>
                             <select name="priority" class="form-select form-select-sm" style="min-width:140px;" onchange="this.form.submit()">
-                                <option value="">All priorities</option>
+                                <option value="">{{ __('notifications.all_priorities') }}</option>
                                 @foreach($priorityOptions as $pri)
                                     <option value="{{ $pri->value }}" {{ $filterPriority === $pri->value ? 'selected' : '' }}>{{ $pri->label() }}</option>
                                 @endforeach
@@ -107,7 +107,7 @@
                         @empty
                             <div class="text-center text-muted py-5">
                                 <i class="ti ti-bell-off fs-48 d-block mb-3"></i>
-                                <h6>No notifications yet</h6>
+                                <h6>{{ __('notifications.no_notifications_yet') }}</h6>
                                 <p class="mb-0">You'll see notifications here when there's activity in the system.</p>
                             </div>
                         @endforelse
@@ -173,7 +173,7 @@ $(document).ready(function() {
     $('.delete-notification-btn').on('click', function() {
         var btn = $(this);
         var id = btn.data('id');
-        if (! confirm('Delete this notification?')) return;
+        if (! confirm(@json(__('notifications.delete_notification_confirm')))) return;
         $.ajax({
             url: '{{ url("admin/notifications") }}/' + id,
             method: 'DELETE',

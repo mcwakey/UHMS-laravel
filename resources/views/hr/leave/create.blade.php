@@ -71,7 +71,7 @@
                     <li class="mb-2"><strong>Maternity:</strong> 12 weeks with full pay</li>
                     <li class="mb-2"><strong>Paternity:</strong> 2 weeks</li>
                     <li class="mb-2"><strong>Study Leave:</strong> Subject to approval</li>
-                    <li><strong>Unpaid Leave:</strong> Deducted from salary</li>
+                    <li><strong>{{ __('hr.unpaid_leave') }}</strong> Deducted from salary</li>
                 </ul>
             </div>
         </div>

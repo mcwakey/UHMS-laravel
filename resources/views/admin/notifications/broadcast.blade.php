@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Broadcast Notification')
+@section('title', __('admin.broadcast_notification'))
 
 @section('content')
 <div class="d-flex align-items-center justify-content-between mb-3">
@@ -16,9 +16,9 @@
         <div class="col-md-4">
             <label class="form-label">Target type</label>
             <select name="target_type" id="targetType" class="form-select" required>
-                <option value="role">Role</option>
-                <option value="permission">Permission</option>
-                <option value="department">Department</option>
+                <option value="role">{{ __('admin.role') }}</option>
+                <option value="permission">{{ __('admin.permission') }}</option>
+                <option value="department">{{ __('common.department') }}</option>
             </select>
         </div>
         <div class="col-md-8">

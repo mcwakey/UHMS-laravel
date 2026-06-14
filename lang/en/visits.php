@@ -394,4 +394,6 @@ return [
     'network_error_ins_update'  => 'Network error while updating insurance.',
     'select_type_first'         => 'Select type first',
     'select_provider_first'     => 'Select provider first',
+    'add_to_billing'            => 'Add to billing',
+    'reference_label'           => 'Reference:',
 ];

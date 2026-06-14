@@ -59,7 +59,7 @@
         </div>
         <a href="{{ route('admin.patients.show', $patient) }}"
            class="btn btn-sm btn-outline-primary patient-card__profile-btn"
-           title="View patient profile">
+           title="{{ __('patients.view_patient_profile') }}">
             <i class="ti ti-external-link"></i>
         </a>
     </div>

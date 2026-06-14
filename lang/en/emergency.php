@@ -363,4 +363,7 @@ return [
     'register_confirm_note_ph'  => 'Patient identified during emergency registration',
     'verify_register_checkbox'  => 'I have verified these details and want to register this emergency patient.',
     'register_and_confirm_btn'  => 'Register and Confirm',
+    'urgency_emergency'         => 'Emergency',
+    'urgency_urgent'            => 'Urgent',
+    'urgency_routine'           => 'Routine',
 ];

@@ -88,13 +88,13 @@
                                 </select>
                             </div>
                             <div class="col-md-2">
-                                <label class="form-label small mb-1">Input Type</label>
+                                <label class="form-label small mb-1">{{ __('investigations.input_type') }}</label>
                                 <select name="input_type" class="form-select form-select-sm">
-                                    <option value="text">Text</option>
-                                    <option value="number">Number</option>
-                                    <option value="select">Select</option>
-                                    <option value="textarea">Textarea</option>
-                                    <option value="boolean">Boolean</option>
+                                    <option value="text">{{ __('investigations.input_text') }}</option>
+                                    <option value="number">{{ __('investigations.input_number') }}</option>
+                                    <option value="select">{{ __('investigations.input_select') }}</option>
+                                    <option value="textarea">{{ __('investigations.input_textarea') }}</option>
+                                    <option value="boolean">{{ __('investigations.input_boolean') }}</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -153,37 +153,38 @@
     <div class="card-body">
         @if(($availableProducts ?? collect())->isEmpty())
             <div class="alert alert-warning small">
-                No products linked to <strong>{{ $service->department->name ?? 'this department' }}</strong>.
-                Link consumable/reagent products to this department first under
-                <a href="{{ route('admin.products.index') }}">Products</a>.
+                {!! __('investigations.no_products_alert', [
+                    'dept' => '<strong>'.e($service->department->name ?? __('investigations.this_department')).'</strong>',
+                    'link' => '<a href="'.route('admin.products.index').'">'.e(__('investigations.products')).'</a>',
+                ]) !!}
             </div>
         @else
             <form method="POST" action="{{ route('admin.investigation-catalogue.consumables.store', $service) }}" class="row g-2 align-items-end mb-3">
                 @csrf
                 <div class="col-md-5">
-                    <label class="form-label small mb-1">Product *</label>
+                    <label class="form-label small mb-1">{{ __('stock.product') }} *</label>
                     <select name="product_id" class="form-select form-select-sm" required>
-                        <option value="">— Select product —</option>
+                        <option value="">{{ __('investigations.select_product') }}</option>
                         @foreach($availableProducts as $p)
                             <option value="{{ $p->id }}">{{ $p->name }}@if($p->unit) ({{ $p->unit }})@endif</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small mb-1">Default Qty *</label>
+                    <label class="form-label small mb-1">{{ __('investigations.default_qty') }} *</label>
                     <input type="number" step="0.0001" min="0.0001" name="default_quantity" value="1" class="form-control form-control-sm" required>
                 </div>
                 <div class="col-md-2">
                     <div class="form-check small mt-3">
                         <input class="form-check-input" type="checkbox" name="is_required" value="1" id="consReq">
-                        <label class="form-check-label" for="consReq">Required</label>
+                        <label class="form-check-label" for="consReq">{{ __('common.required') }}</label>
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <input type="text" name="notes" class="form-control form-control-sm" placeholder="Notes">
+                    <input type="text" name="notes" class="form-control form-control-sm" placeholder="{{ __('common.notes') }}">
                 </div>
                 <div class="col-md-1 d-grid">
-                    <button aria-label="Add" title="Add" class="btn btn-primary btn-sm"><i class="ti ti-plus"></i></button>
+                    <button aria-label="{{ __('common.add') }}" title="{{ __('common.add') }}" class="btn btn-primary btn-sm"><i class="ti ti-plus"></i></button>
                 </div>
             </form>
         @endif
@@ -192,10 +193,10 @@
             <table class="table table-sm align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Product</th>
-                        <th class="text-end">Default Qty</th>
-                        <th>Required?</th>
-                        <th>Notes</th>
+                        <th>{{ __('stock.product') }}</th>
+                        <th class="text-end">{{ __('investigations.default_qty') }}</th>
+                        <th>{{ __('investigations.required_q') }}</th>
+                        <th>{{ __('common.notes') }}</th>
                         <th class="text-end"></th>
                     </tr>
                 </thead>
@@ -204,10 +205,10 @@
                     <tr>
                         <td>{{ $sc->product->name ?? '—' }} <small class="text-muted">{{ $sc->product->unit ?? '' }}</small></td>
                         <td class="text-end">{{ rtrim(rtrim(number_format((float) $sc->default_quantity, 4, '.', ''), '0'), '.') }}</td>
-                        <td>{!! $sc->is_required ? '<span class="badge bg-danger-subtle text-danger">Required</span>' : '<span class="text-muted small">Optional</span>' !!}</td>
+                        <td>{!! $sc->is_required ? '<span class="badge bg-danger-subtle text-danger">'.e(__('common.required')).'</span>' : '<span class="text-muted small">'.e(__('common.optional')).'</span>' !!}</td>
                         <td class="small text-muted">{{ $sc->notes }}</td>
                         <td class="text-end">
-                            <form method="POST" action="{{ route('admin.investigation-catalogue.consumables.destroy', [$service, $sc->product_id]) }}" onsubmit="return confirm('Remove consumable?')">
+                            <form method="POST" action="{{ route('admin.investigation-catalogue.consumables.destroy', [$service, $sc->product_id]) }}" onsubmit="return confirm('{{ __('investigations.remove_consumable_confirm') }}')">
                                 @csrf @method('DELETE')
                                 <button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger"><i class="ti ti-trash"></i></button>
                             </form>
@@ -376,7 +377,7 @@
     document.getElementById('criteriaList').addEventListener('click', function(e){
         var btn = e.target.closest('.delete-crit-btn');
         if (!btn) return;
-        if (!confirm('Delete this criterion?')) return;
+        if (!confirm(@json(__('investigations.delete_criterion_confirm')))) return;
         var row = btn.closest('[data-criterion-id]');
         var id = row.dataset.criterionId;
         ajax(critsBase + '/' + id, 'DELETE', new FormData())

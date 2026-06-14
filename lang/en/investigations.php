@@ -110,7 +110,6 @@ return [
     'investigation_consumables' => 'Investigation Consumables',
     'consumables_description'   => 'Filtered view of <strong>products</strong> linked to the Investigation / Laboratory / Radiology departments. Quantities below reflect the on-hand balance at the <strong>Laboratory stock location</strong>. New products are added from <em>Store &rsaquo; Products</em>.',
     'department_available_qty'  => 'Department Available Qty',
-    'main_stock_qty'            => 'Main Stock Qty',
 
     // Investigation catalogue
     'investigation_catalogue'   => 'Investigation Catalogue',
@@ -120,4 +119,20 @@ return [
     'service'                   => 'Service',
     'headers'                   => 'Headers',
     'criteria'                  => 'Criteria',
+
+    // Investigation catalogue detail (configure)
+    'input_type'                => 'Input Type',
+    'input_text'                => 'Text',
+    'input_number'              => 'Number',
+    'input_select'              => 'Select',
+    'input_textarea'            => 'Textarea',
+    'input_boolean'             => 'Boolean',
+    'products'                  => 'Products',
+    'required_q'                => 'Required?',
+    'remove_consumable_confirm' => 'Remove consumable?',
+    'delete_criterion_confirm'  => 'Delete this criterion?',
+    'select_product'            => '— Select product —',
+    'default_qty'               => 'Default Qty',
+    'this_department'           => 'this department',
+    'no_products_alert'         => 'No products linked to :dept. Link consumable/reagent products to this department first under :link.',
 ];

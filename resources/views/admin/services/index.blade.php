@@ -303,8 +303,8 @@
                                                     </div>
                                                 </div>
                                                 <div class="col-md-1 d-flex align-items-end pb-1">
-                                                    <a aria-label="Delete" title="Delete" href="{{ route('admin.services.prices.delete', [$service, $pp]) }}"
-                                                        onclick="return confirm('Remove this price?')"
+                                                    <a aria-label="{{ __('common.delete') }}" title="{{ __('common.delete') }}" href="{{ route('admin.services.prices.delete', [$service, $pp]) }}"
+                                                        onclick="return confirm('{{ __('admin.remove_price_confirm') }}')"
                                                         class="btn btn-sm btn-outline-danger">
                                                         <i class="ti ti-trash"></i>
                                                     </a>
@@ -378,7 +378,7 @@
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-medium">Category <span class="text-danger">*</span></label>
                             <select name="category" class="form-select" required>
-                                <option value="">Select category</option>
+                                <option value="">{{ __('admin.select_category') }}</option>
                                 @foreach($categories as $cat)
                                 <option value="{{ $cat }}">{{ ucfirst($cat) }}</option>
                                 @endforeach
@@ -414,9 +414,9 @@
                 <div class="mb-3 px-3">
                     <label class="form-label fw-medium">Service Rendering Tracking</label>
                     <select name="requires_rendering_tracking" class="form-select">
-                        <option value="">Auto (use department/category rules)</option>
-                        <option value="1">Always track (force on)</option>
-                        <option value="0">Never track (force off)</option>
+                        <option value="">{{ __('admin.track_auto') }}</option>
+                        <option value="1">{{ __('admin.track_always') }}</option>
+                        <option value="0">{{ __('admin.track_never') }}</option>
                     </select>
                     <small class="text-muted">Override the default tracking logic for this service.</small>
                 </div>

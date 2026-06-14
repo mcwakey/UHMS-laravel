@@ -1,11 +1,11 @@
 @extends('layouts.app')
-@section('title', 'Blood Requests')
+@section('title', __('blood_bank.blood_requests'))
 
 @php($groups = ['O-','O+','A-','A+','B-','B+','AB-','AB+'])
 @php($components = ['WHOLE_BLOOD'=>'Whole Blood','PRBC'=>'Packed Red Cells','PLASMA'=>'Plasma / FFP','PLATELETS'=>'Platelets','CRYOPRECIPITATE'=>'Cryoprecipitate'])
 
 @section('content')
-<x-page-header title="Blood Requests" description="Recipient details, compatible units, crossmatch, issue, and transfusion outcomes." icon="ti-droplet">
+<x-page-header :title="__('blood_bank.blood_requests')" description="Recipient details, compatible units, crossmatch, issue, and transfusion outcomes." icon="ti-droplet">
     <x-slot:actions>
         @can('blood_bank.requests.create')
             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createRequestModal"><i class="ti ti-plus me-1"></i>{{ __('blood_bank.new_request') }}</button>

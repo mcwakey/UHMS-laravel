@@ -223,4 +223,17 @@ return [
     'cheque_txn_no' => 'Cheque/transaction no.',
     'payment_cannot_exceed_balance' => 'Le paiement ne peut pas depasser le solde fournisseur restant.',
     'accounting' => 'Comptabilite',
+
+    // Ajouts Phase 15F
+    'supplier_payables' => 'Dettes fournisseurs',
+    'no_payables' => 'Aucune dette',
+    'accounting_settings' => 'Paramètres de comptabilité',
+    'not_set' => 'Non défini',
+    'account_categories' => 'Catégories de comptes',
+    'all_types' => 'Tous les types',
+    'entries' => 'Écritures',
+    'select_type' => 'Sélectionner un type...',
+    'select_category' => 'Sélectionner une catégorie...',
+    'select_method' => 'Sélectionner une méthode...',
+    'delete_entry_confirm' => 'Supprimer cette écriture ?',
 ];

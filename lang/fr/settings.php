@@ -166,6 +166,8 @@ return [
     'sidebar_general'           => 'Général',
     'sidebar_system'            => 'Système',
     'profile_settings'          => 'Paramètres du profil',
+    'activity_log_entry'        => 'Entrée du journal d\'activité',
+    'payment_method_settings'   => 'Paramètres des modes de paiement',
     'complaint_catalogue'       => 'Catalogue des plaintes',
     'ward_admissions'           => 'Unités et admissions',
 

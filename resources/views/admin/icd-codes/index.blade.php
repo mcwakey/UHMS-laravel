@@ -1,11 +1,11 @@
 @extends('layouts.app')
-@section('title', 'ICD-10 Code Database')
+@section('title', __('admin.icd_code_database'))
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"><i class="ti ti-medical-cross me-2"></i>ICD-10 Code Database</h4>
+        <h4 class="fw-bold mb-0"><i class="ti ti-medical-cross me-2"></i>{{ __('admin.icd_code_database') }}</h4>
         <small class="text-muted">{{ $codes->total() }} codes in database</small>
     </div>
     <div class="d-flex gap-2">
@@ -38,15 +38,15 @@
             </div>
             <div class="col-md-3">
                 <select name="chapter" class="form-select form-select-sm">
-                    <option value="">All Chapters</option>
+                    <option value="">{{ __('admin.all_chapters') }}</option>
                     @foreach($chapters as $ch)
-                    <option value="{{ $ch }}" {{ request('chapter') === $ch ? 'selected' : '' }}>Chapter {{ $ch }}</option>
+                    <option value="{{ $ch }}" {{ request('chapter') === $ch ? 'selected' : '' }}>{{ __('admin.chapter') }} {{ $ch }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-3 d-flex gap-1">
-                <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-filter me-1"></i>Filter</button>
-                <a aria-label="Close" title="Close" href="{{ route('admin.icd-codes.index') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-x"></i></a>
+                <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-filter me-1"></i>{{ __('common.filter') }}</button>
+                <a aria-label="{{ __('common.close') }}" title="{{ __('common.close') }}" href="{{ route('admin.icd-codes.index') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-x"></i></a>
             </div>
         </form>
     </div>
@@ -59,12 +59,12 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th style="width:100px">Code</th>
-                        <th>Description</th>
-                        <th>Category</th>
-                        <th style="width:80px">Chapter</th>
-                        <th style="width:80px">Billable</th>
-                        <th style="width:100px">Actions</th>
+                        <th style="width:100px">{{ __('common.code') }}</th>
+                        <th>{{ __('common.description') }}</th>
+                        <th>{{ __('common.category') }}</th>
+                        <th style="width:80px">{{ __('admin.chapter') }}</th>
+                        <th style="width:80px">{{ __('admin.billable') }}</th>
+                        <th style="width:100px">{{ __('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -87,7 +87,7 @@
                             </button>
                             <x-confirm-form :action="route('admin.icd-codes.destroy', $code)" method="DELETE"
                                 button-label="" button-class="btn btn-sm btn-outline-danger" icon="ti-trash"
-                                confirm-title="Delete this ICD code?" confirm-text="This action cannot be undone." confirm-button="Yes, delete" />
+                                :confirm-title="__('admin.delete_icd_confirm')" :confirm-text="__('common.action_cannot_be_undone')" :confirm-button="__('common.yes')" />
                         </td>
                     </tr>
 

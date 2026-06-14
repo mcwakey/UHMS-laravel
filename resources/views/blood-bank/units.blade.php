@@ -1,8 +1,8 @@
 @extends('layouts.app')
-@section('title', 'Blood Units')
+@section('title', __('blood_bank.blood_units'))
 
 @section('content')
-<x-page-header title="Blood Units" description="Inventory and safety state for every unit." icon="ti-droplet">
+<x-page-header :title="__('blood_bank.blood_units')" description="Inventory and safety state for every unit." icon="ti-droplet">
     <x-slot:actions>
         <a href="{{ route('admin.blood-bank.donations.index') }}" class="btn btn-outline-secondary btn-sm">{{ __('blood_bank.donations_link') }}</a>
     </x-slot:actions>

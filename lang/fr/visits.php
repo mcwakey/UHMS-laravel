@@ -384,4 +384,6 @@ return [
     'network_error_ins_update'  => 'Erreur réseau lors de la mise à jour de l\'assurance.',
     'select_type_first'         => 'Sélectionner le type d\'abord',
     'select_provider_first'     => 'Sélectionner le fournisseur d\'abord',
+    'add_to_billing'            => 'Ajouter à la facturation',
+    'reference_label'           => 'Référence :',
 ];

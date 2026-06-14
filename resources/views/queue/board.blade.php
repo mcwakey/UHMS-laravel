@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Queue Board')
+@section('title', __('queue.queue_board'))
 
 @push('styles')
 <style>

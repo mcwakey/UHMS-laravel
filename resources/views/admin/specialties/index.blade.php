@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Specialties')
+@section('title', __('admin.specialties'))
 
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
@@ -43,9 +43,9 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Name</th>
-                        <th>Department</th>
-                        <th>Description</th>
+                        <th>{{ __('common.name') }}</th>
+                        <th>{{ __('common.department') }}</th>
+                        <th>{{ __('common.description') }}</th>
                         <th class="text-center">Doctors</th>
                         <th class="text-center">Services</th>
                         <th class="text-center">Status</th>

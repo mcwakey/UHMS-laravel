@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Permissions Dashboard')
+@section('title', __('admin.permissions_dashboard'))
 
 @section('content')
 <div class="page-wrapper">
@@ -137,17 +137,17 @@
         {{-- ── Permission catalogue ─────────────────────────────────── --}}
         <div class="card border-0 shadow-sm">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <strong>Permission Catalogue</strong>
+                <strong>{{ __('admin.permission_catalogue') }}</strong>
                 <input type="text" id="perm-filter" class="form-control form-control-sm" style="max-width:240px;" placeholder="Filter…">
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive"><table class="table table-sm align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Module</th>
-                            <th>Permission</th>
-                            <th>What it allows</th>
-                            <th>Risk</th>
+                            <th>{{ __('admin.module') }}</th>
+                            <th>{{ __('admin.permission') }}</th>
+                            <th>{{ __('admin.what_it_allows') }}</th>
+                            <th>{{ __('admin.risk') }}</th>
                         </tr>
                     </thead>
                     <tbody>

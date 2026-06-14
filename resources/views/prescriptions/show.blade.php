@@ -63,13 +63,13 @@
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Drug Name</th>
-                                <th>Dosage</th>
-                                <th>Frequency</th>
-                                <th>Duration</th>
-                                <th>Route</th>
-                                <th>Qty</th>
-                                <th>Dispensed</th>
+                                <th>{{ __('prescriptions.drug_name') }}</th>
+                                <th>{{ __('pharmacy.dosage') }}</th>
+                                <th>{{ __('pharmacy.frequency') }}</th>
+                                <th>{{ __('pharmacy.duration') }}</th>
+                                <th>{{ __('pharmacy.route') }}</th>
+                                <th>{{ __('common.qty') }}</th>
+                                <th>{{ __('pharmacy.dispensed') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -126,16 +126,16 @@
                         <table class="table table-sm align-middle mb-0" id="pharmacyBillTable">
                             <thead class="table-light">
                                 <tr>
-                                    <th style="width:48px">Bill</th>
-                                    <th>Drug</th>
-                                    <th class="text-end">Prescribed</th>
-                                    <th class="text-end">Billed</th>
-                                    <th class="text-end">Remaining</th>
-                                    <th class="text-end">Pharmacy Qty</th>
-                                    <th class="text-end">Unit Price</th>
-                                    <th style="width:130px">Selected Qty</th>
-                                    <th class="text-end">Line Total</th>
-                                    <th>Notes</th>
+                                    <th style="width:48px">{{ __('prescriptions.bill') }}</th>
+                                    <th>{{ __('common.drug') }}</th>
+                                    <th class="text-end">{{ __('prescriptions.prescribed') }}</th>
+                                    <th class="text-end">{{ __('pharmacy.billed') }}</th>
+                                    <th class="text-end">{{ __('store.remaining') }}</th>
+                                    <th class="text-end">{{ __('prescriptions.pharmacy_qty') }}</th>
+                                    <th class="text-end">{{ __('pharmacy.unit_price') }}</th>
+                                    <th style="width:130px">{{ __('prescriptions.selected_qty') }}</th>
+                                    <th class="text-end">{{ __('store.line_total') }}</th>
+                                    <th>{{ __('common.notes') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -231,7 +231,7 @@
                 <small class="text-muted d-block">{{ $prescription->patient->age }}y &middot; {{ $prescription->patient->gender->value }}</small>
                 @if($prescription->patient->allergies)
                 <div class="alert alert-danger py-1 mt-2 mb-0">
-                    <small><strong>Allergies:</strong> {{ $prescription->patient->allergies }}</small>
+                    <small><strong>{{ __('prescriptions.allergies') }}:</strong> {{ $prescription->patient->allergies }}</small>
                 </div>
                 @endif
             </div>

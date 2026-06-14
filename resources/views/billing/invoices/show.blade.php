@@ -911,7 +911,7 @@
                     <div class="mb-3 payer-target-select d-none" data-payer-target="insurance">
                         <label class="form-label">{{ __('invoices.insurance') }}</label>
                         <select class="form-select target-payer-id" disabled>
-                            <option value="">Select provider</option>
+                            <option value="">{{ __('billing.select_provider') }}</option>
                             @foreach(($receivablePayerOptions['insurance'] ?? []) as $provider)
                             <option value="{{ $provider->id }}">{{ $provider->name }}</option>
                             @endforeach
@@ -920,7 +920,7 @@
                     <div class="mb-3 payer-target-select d-none" data-payer-target="sponsor">
                         <label class="form-label">{{ __('invoices.sponsor_label') ?? 'Sponsor' }}</label>
                         <select class="form-select target-payer-id" disabled>
-                            <option value="">Select sponsor</option>
+                            <option value="">{{ __('billing.select_sponsor') }}</option>
                             @foreach(($receivablePayerOptions['sponsors'] ?? []) as $sponsor)
                             <option value="{{ $sponsor->id }}">{{ $sponsor->name }}</option>
                             @endforeach
@@ -929,7 +929,7 @@
                     <div class="mb-3 payer-target-select d-none" data-payer-target="corporate">
                         <label class="form-label">{{ __('invoices.corporate') }}</label>
                         <select class="form-select target-payer-id" disabled>
-                            <option value="">Select corporate client</option>
+                            <option value="">{{ __('billing.select_corporate_client') }}</option>
                             @foreach(($receivablePayerOptions['corporate'] ?? []) as $client)
                             <option value="{{ $client->id }}">{{ $client->name }}</option>
                             @endforeach
@@ -1208,7 +1208,7 @@ $(function() {
     paymentForm.on('submit', async function(event) {
         event.preventDefault();
 
-        if (!window.confirm('Record this payment?')) {
+        if (!window.confirm(@json(__('billing.record_payment_confirm')))) {
             return;
         }
 

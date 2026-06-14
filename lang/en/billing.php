@@ -157,4 +157,8 @@ return [
     'top_outstanding_patients' => 'Top Outstanding Patients',
     'invoices_count' => 'Invoices',
     'no_outstanding_balances' => 'No outstanding balances.',
+    'select_provider' => 'Select provider',
+    'select_sponsor' => 'Select sponsor',
+    'select_corporate_client' => 'Select corporate client',
+    'record_payment_confirm' => 'Record this payment?',
 ];

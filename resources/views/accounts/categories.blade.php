@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Account Categories')
+@section('title', __('accounting.account_categories'))
 
 @section('content')
 <!-- Page Header -->
@@ -12,7 +12,7 @@
     <div class="d-flex gap-2">
         <form method="GET" action="{{ route('admin.accounts.categories.index') }}" class="d-flex gap-2">
             <select name="type" class="form-select" style="width:130px;" onchange="this.form.submit()">
-                <option value="">All Types</option>
+                <option value="">{{ __('accounting.all_types') }}</option>
                 @foreach($types as $type)
                     <option value="{{ $type->value }}" {{ request('type') == $type->value ? 'selected' : '' }}>{{ $type->translatedLabel() }}</option>
                 @endforeach
@@ -38,9 +38,9 @@
                 <thead class="table-light">
                     <tr>
                         <th>Name</th>
-                        <th>Type</th>
-                        <th>Description</th>
-                        <th>Entries</th>
+                        <th>{{ __('common.type') }}</th>
+                        <th>{{ __('common.description') }}</th>
+                        <th>{{ __('accounting.entries') }}</th>
                         <th>Status</th>
                         <th class="text-end">Actions</th>
                     </tr>
@@ -156,7 +156,7 @@
                     <div class="mb-3">
                         <label class="form-label">Type <span class="text-danger">*</span></label>
                         <select name="type" class="form-select" required>
-                            <option value="">Select Type...</option>
+                            <option value="">{{ __('accounting.select_type') }}</option>
                             @foreach($types as $type)
                                 <option value="{{ $type->value }}">{{ $type->translatedLabel() }}</option>
                             @endforeach

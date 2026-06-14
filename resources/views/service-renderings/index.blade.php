@@ -177,13 +177,13 @@
                         <div class="col-12">
                             <label class="form-label">{{ __('services.patient_visit') }} <span class="text-danger">*</span></label>
                             <select name="visit_id" id="addSvcVisit" class="form-select" style="width:100%" required>
-                                <option value="">Search by visit number or patient…</option>
+                                <option value="">{{ __('services.search_visit_or_patient') }}</option>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">{{ __('common.department') }} <span class="text-danger">*</span></label>
                             <select id="addSvcDepartment" class="form-select" required>
-                                <option value="">Choose a department…</option>
+                                <option value="">{{ __('services.choose_department') }}</option>
                                 @foreach($renderableDepartments as $dept)
                                     <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                                 @endforeach
@@ -195,7 +195,7 @@
                         <div class="col-md-6">
                             <label class="form-label">{{ __('services.service_name') }} <span class="text-danger">*</span></label>
                             <select name="service_id" id="addSvcService" class="form-select" style="width:100%" required disabled>
-                                <option value="">Choose a department first…</option>
+                                <option value="">{{ __('services.choose_department_first') }}</option>
                             </select>
                         </div>
                         <div class="col-md-4">

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Notification Preferences')
+@section('title', __('settings.notification_preferences'))
 
 @section('content')
 <div class="d-flex align-items-center justify-content-between mb-3">

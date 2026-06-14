@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Departments')
+@section('title', __('admin.departments'))
 
 @section('content')
 <!-- Page Header -->
@@ -25,13 +25,13 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Code</th>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Result Type</th>
-                        <th class="text-center">Stock Managed</th>
-                        <th>Users</th>
-                        <th>Status</th>
+                        <th>{{ __('common.code') }}</th>
+                        <th>{{ __('common.name') }}</th>
+                        <th>{{ __('common.type') }}</th>
+                        <th>{{ __('admin.result_type') }}</th>
+                        <th class="text-center">{{ __('admin.stock_managed') }}</th>
+                        <th>{{ __('admin.users') }}</th>
+                        <th>{{ __('common.status') }}</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -86,7 +86,7 @@
                                     <li>
                                         <x-confirm-form :action="route('admin.departments.destroy', $dept)" method="DELETE"
                                             button-label="Delete" button-class="dropdown-item text-danger" icon="ti-trash"
-                                            confirm-title="Delete this department?" confirm-text="This cannot be undone." confirm-button="Yes, delete" />
+                                            :confirm-title="__('admin.delete_department_confirm')" :confirm-text="__('common.action_cannot_be_undone')" :confirm-button="__('common.yes')" />
                                     </li>
                                     @endcan
                                 </ul>
@@ -159,7 +159,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="is_stock_managed" value="1" id="stockEdit{{ $dept->id }}" {{ $dept->is_stock_managed ? 'checked' : '' }}>
                             <label class="form-check-label" for="stockEdit{{ $dept->id }}">
-                                <strong>Store manages stock for this department</strong>
+                                <strong>{{ __('admin.store_manages_stock') }}</strong>
                                 <div class="text-muted small">Items from this department appear in Procurement & Stock Transfers.</div>
                             </label>
                         </div>
@@ -229,7 +229,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="is_stock_managed" value="1" id="stockAdd">
                             <label class="form-check-label" for="stockAdd">
-                                <strong>Store manages stock for this department</strong>
+                                <strong>{{ __('admin.store_manages_stock') }}</strong>
                                 <div class="text-muted small">Items from this department appear in Procurement & Stock Transfers.</div>
                             </label>
                         </div>

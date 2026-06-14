@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Queue Management')
+@section('title', __('queue.queue_management'))
 
 @section('content')
 <!-- Page Header -->
@@ -99,12 +99,12 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Queue #</th>
-                                <th>Patient</th>
-                                <th>Visit</th>
-                                <th>Priority</th>
-                                <th>Waiting Since</th>
-                                <th class="text-end">Actions</th>
+                                <th>{{ __('queue.queue_number') }}</th>
+                                <th>{{ __('common.patient') }}</th>
+                                <th>{{ __('queue.visit') }}</th>
+                                <th>{{ __('common.priority') }}</th>
+                                <th>{{ __('queue.waiting_since') }}</th>
+                                <th class="text-end">{{ __('common.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>

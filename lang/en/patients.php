@@ -2,6 +2,7 @@
 
 return [
     'title' => 'Patients',
+    'view_patient_profile' => 'View patient profile',
     'new_patient' => 'New Patient',
     'new_visit' => 'New Visit',
     'search_placeholder' => 'Search by name, phone, Ghana Card, insurance card, or emergency contact...',

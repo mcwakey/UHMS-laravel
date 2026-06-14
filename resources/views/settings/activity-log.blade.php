@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Activity Logs')
+@section('title', __('settings.activity_logs_breadcrumb'))
 
 @section('content')
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">

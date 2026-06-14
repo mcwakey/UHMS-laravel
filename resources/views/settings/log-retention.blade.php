@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Log Retention')
+@section('title', __('settings.log_retention'))
 
 @section('content')
 <div class="d-flex align-items-center justify-content-between mb-3">

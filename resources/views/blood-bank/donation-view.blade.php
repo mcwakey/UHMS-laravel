@@ -6,7 +6,7 @@
 
 @section('content')
 <x-page-header :title="'Donation '.$donation->donation_number" description="Collection record, unit status, and infectious-disease screening." icon="ti-microscope"
-    :breadcrumbs="[['label' => 'Blood Donations', 'url' => route('admin.blood-bank.donations.index')], ['label' => $donation->donation_number]]">
+    :breadcrumbs="[['label' => __('blood_bank.blood_donations'), 'url' => route('admin.blood-bank.donations.index')], ['label' => $donation->donation_number]]">
     <x-slot:actions>
         <a href="{{ route('admin.blood-bank.donations.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>{{ __('blood_bank.all_donations') }}</a>
         @if($donation->donor)<a href="{{ route('admin.blood-bank.donors.show', $donation->donor) }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-user me-1"></i>{{ __('blood_bank.donor_profile') }}</a>@endif

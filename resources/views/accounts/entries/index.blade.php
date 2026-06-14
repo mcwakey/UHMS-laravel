@@ -159,7 +159,7 @@
                                     <li>
                                         <x-confirm-form :action="route('admin.accounts.entries.destroy', $entry)" method="DELETE"
                                             button-label="Delete" button-class="dropdown-item text-danger" icon="ti-trash"
-                                            confirm-title="Delete this entry?" confirm-text="This accounting entry will be permanently deleted." confirm-button="Yes, delete" />
+                                            :confirm-title="__('accounting.delete_entry_confirm')" confirm-text="This accounting entry will be permanently deleted." :confirm-button="__('common.yes')" />
                                     </li>
                                     @endcan
                                     @endif

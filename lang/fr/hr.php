@@ -37,6 +37,7 @@ return [
     'hrs' => 'h',
     'no_attendance_records' => 'Aucun enregistrement de presence trouve',
     'attendance_summary' => 'Resume des presences',
+    'unpaid_leave' => 'Congé sans solde :',
     'working_days' => 'Jours travailles',
     'total_hours' => 'Total des heures',
     'employee_details' => 'Details de l employe',

@@ -34,7 +34,7 @@
                         <div class="col-md-4">
                             <label class="form-label">Gender</label>
                             <select name="gender" class="form-select">
-                                <option value="">Select</option>
+                                <option value="">{{ __('common.select') }}</option>
                                 @foreach($genders as $g)
                                     <option value="{{ $g->value }}" {{ old('gender', $employee->gender?->value) == $g->value ? 'selected' : '' }}>{{ $g->translatedLabel() }}</option>
                                 @endforeach
@@ -55,7 +55,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Link to System User</label>
                             <select name="user_id" class="form-select">
-                                <option value="">None</option>
+                                <option value="">{{ __('common.none') }}</option>
                                 @foreach($users as $user)
                                     <option value="{{ $user->id }}" {{ old('user_id', $employee->user_id) == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
                                 @endforeach
@@ -76,7 +76,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Department</label>
                             <select name="department_id" class="form-select">
-                                <option value="">Select</option>
+                                <option value="">{{ __('common.select') }}</option>
                                 @foreach($departments as $dept)
                                     <option value="{{ $dept->id }}" {{ old('department_id', $employee->department_id) == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
                                 @endforeach

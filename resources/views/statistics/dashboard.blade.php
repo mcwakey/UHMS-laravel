@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Statistical Dashboard')
+@section('title', __('statistics.statistical_dashboard'))
 
 @php
     $fmt = function ($value, $format) {
@@ -12,7 +12,7 @@
 @endphp
 
 @section('content')
-<x-page-header title="Statistical Dashboard" icon="ti-chart-histogram"
+<x-page-header :title="__('statistics.statistical_dashboard')" icon="ti-chart-histogram"
     :description="'Hospital-wide KPIs for '.$filters['from'].' → '.$filters['to'].'. Click a card to drill into its statistics.'" />
 
 @include('statistics._nav')

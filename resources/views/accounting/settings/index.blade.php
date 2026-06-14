@@ -1,8 +1,8 @@
 @extends('layouts.app')
-@section('title', 'Accounting Settings')
+@section('title', __('accounting.accounting_settings'))
 
 @section('content')
-<x-page-header title="Accounting Settings" icon="ti-settings-dollar" />
+<x-page-header :title="__('accounting.accounting_settings')" icon="ti-settings-dollar" />
 
 <div class="card">
     <div class="card-body">
@@ -15,7 +15,7 @@
                         <label class="form-label">{{ $setting->description }}</label>
                         @if(str_ends_with($setting->key, '_account_id'))
                             <select name="{{ $setting->key }}" class="form-select select2">
-                                <option value="">Not set</option>
+                                <option value="">{{ __('accounting.not_set') }}</option>
                                 @foreach($accounts as $account)
                                     <option value="{{ $account->id }}" @selected($setting->account_id == $account->id)>{{ $account->display_name }}</option>
                                 @endforeach

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Organization Settings')
+@section('title', __('settings.org_settings_breadcrumb'))
 
 @section('content')
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">

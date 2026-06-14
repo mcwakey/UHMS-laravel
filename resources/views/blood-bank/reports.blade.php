@@ -1,8 +1,8 @@
 @extends('layouts.app')
-@section('title', 'Blood Bank Reports')
+@section('title', __('blood_bank.blood_bank_reports'))
 
 @section('content')
-<x-page-header title="Blood Bank Reports" description="Inventory, requests, issues, transfusion safety, screening, and compatibility." icon="ti-report-analytics">
+<x-page-header :title="__('blood_bank.blood_bank_reports')" description="Inventory, requests, issues, transfusion safety, screening, and compatibility." icon="ti-report-analytics">
     <x-slot:actions>
         <button type="button" class="btn btn-outline-primary btn-sm d-print-none" onclick="window.print()"><i class="ti ti-printer me-1"></i>{{ __('lab.print_button') }}</button>
         <a href="{{ route('admin.blood-bank.dashboard') }}" class="btn btn-outline-secondary btn-sm d-print-none"><i class="ti ti-layout-dashboard me-1"></i>{{ __('blood_bank.dashboard_link') }}</a>

@@ -39,7 +39,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Category <span class="text-danger">*</span></label>
                             <select name="category_id" class="form-select select2" required>
-                                <option value="">Select Category...</option>
+                                <option value="">{{ __('accounting.select_category') }}</option>
                                 @foreach($categories as $cat)
                                     <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>
                                         {{ $cat->name }}
@@ -61,7 +61,7 @@
                         <div class="col-md-4">
                             <label class="form-label">Payment Method</label>
                             <select name="payment_method" class="form-select">
-                                <option value="">Select Method...</option>
+                                <option value="">{{ __('accounting.select_method') }}</option>
                                 @foreach($paymentMethods as $pm)
                                     <option value="{{ $pm->value }}" {{ old('payment_method') == $pm->value ? 'selected' : '' }}>{{ $pm->translatedLabel() }}</option>
                                 @endforeach

@@ -7,30 +7,30 @@ Follow this prompt directly.
 
 Localisation is still not complete.
 
-Phase 15D reduced active runtime candidates from 370 to 317. The report clearly says the pass is partial and not complete. Do not move to dashboards. Do not move to the Full Test Suite. Do not claim localisation is complete.
+Phase 15E reduced active runtime candidates from 317 to 192. The primary target below 200 was met, but 192 active runtime candidates remain. Do not move to dashboards. Do not move to the Full Test Suite. Do not claim localisation is complete.
 
-# UHMS Localisation Phase 15E — Stock, Store, Procurement, Clinical Runtime Burn-Down
+# UHMS Localisation Phase 15F — Clinical, Emergency, Admin Config, Billing Runtime Burn-Down
 
 ## Goal
 
-Continue the localisation burn-down from the Phase 15D exit state.
+Continue the localisation burn-down from the Phase 15E exit state.
 
 Starting point:
 
-```text
-Active runtime candidates: 317
+```text id="pw6jbo"
+Active runtime candidates: 192
 ```
 
 Primary target:
 
-```text
-Active runtime candidates: below 200
+```text id="k4e6lz"
+Active runtime candidates: below 100
 ```
 
 Preferred target:
 
-```text
-Active runtime candidates: below 150
+```text id="k6d4dz"
+Active runtime candidates: below 50
 ```
 
 Do not work on dormant demo/template files unless they are route-linked or included by active layouts/components.
@@ -41,196 +41,70 @@ Do not work on dormant demo/template files unless they are route-linked or inclu
 
 Read:
 
-```text
+```text id="z54typ"
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
-docs/LOCALISATION_PHASE_15D_RUNTIME_BURNDOWN_CONTINUATION_REPORT.md
+docs/LOCALISATION_PHASE_15E_STOCK_STORE_CLINICAL_BURNDOWN_REPORT.md
 ```
 
 Use the active runtime worklist in `LOCALISATION_COVERAGE_AUDIT_REPORT.md` as the source of truth.
 
-Do not repeat files already completed in Phase 15D unless the scanner still reports them.
+Do not repeat files already completed in Phase 15E unless the scanner still reports them.
 
 ---
 
 # 2. Current Known Status
 
-Phase 15D completed:
+Phase 15E completed:
 
-```text
-resources/views/admin/procedures/schedule.blade.php
-resources/views/admin/procedure-catalogue/index.blade.php
-resources/views/theatre/show.blade.php
-resources/views/theatre/partials/schedule-form.blade.php
-resources/views/theatre/rooms/partials/form.blade.php
-resources/views/wards/index.blade.php
-resources/views/wards/beds.blade.php
-resources/views/wards/bed-map.blade.php
-resources/views/settings/ward.blade.php
+```text id="v6fu5b"
+Batch 4 — stock/product-stock/store/suppliers/procurement
+Batch 5 subset — prescriptions/index, investigations/items, investigation-catalogue/index, vitals/record, lab/results, lab/tests
 ```
 
-Phase 15D created:
+Phase 15E created:
 
-```text
-lang/en/wards.php
-lang/fr/wards.php
-```
-
-Phase 15D extended:
-
-```text
-lang/en/theatre.php
-lang/fr/theatre.php
-lang/en/procedures.php
-lang/fr/procedures.php
-```
-
-Remaining active runtime candidates after Phase 15D:
-
-```text
-317
-```
-
----
-
-# 3. Batch 4 — Stock, Product Stock, Store, Suppliers, Procurement
-
-This is the main priority for Phase 15E.
-
-Fix these files:
-
-```text
-resources/views/admin/product-stock/ledger.blade.php
-resources/views/admin/product-stock/balances.blade.php
-resources/views/admin/product-stock/receive.blade.php
-resources/views/admin/product-stock/transfer.blade.php
-resources/views/admin/product-stock/adjust.blade.php
-resources/views/admin/product-stock/return.blade.php
-resources/views/admin/stock-locations/index.blade.php
-resources/views/store/purchase-orders/index.blade.php
-resources/views/store/purchase-orders/create.blade.php
-resources/views/store/purchase-orders/show.blade.php
-resources/views/store/purchase-returns/index.blade.php
-resources/views/store/purchase-returns/create.blade.php
-resources/views/store/purchase-returns/show.blade.php
-resources/views/store/supplier-ledger.blade.php
-resources/views/store/suppliers.blade.php
-resources/views/store/stock-requisitions/index.blade.php
-resources/views/department-consumables/index.blade.php
-```
-
-Use or extend:
-
-```text
-lang/en/stock.php
-lang/fr/stock.php
+```text id="h84gwk"
 lang/en/store.php
 lang/fr/store.php
+lang/en/prescriptions.php
+lang/fr/prescriptions.php
+lang/en/vitals.php
+lang/fr/vitals.php
 ```
 
-Create `store.php` if it does not exist and if store/procurement vocabulary does not fit cleanly inside `stock.php`.
+Phase 15E extended:
 
-Translate:
-
-* stock ledger labels
-* stock balance labels
-* receive stock labels
-* transfer stock labels
-* adjust stock labels
-* return stock labels
-* stock location labels
-* purchase order labels
-* purchase return labels
-* supplier labels
-* supplier ledger labels
-* requisition labels
-* department consumable labels
-* product labels
-* batch labels
-* quantity labels
-* unit cost labels
-* selling price labels
-* expiry date labels
-* filters
-* table headers
-* form labels
-* placeholders
-* helper text
-* buttons
-* modal titles
-* empty states
-* confirmation messages
-* validation labels
-* print labels if present
-* JavaScript messages if present
-
-Important UHMS rule:
-
-```text
-Products = physical stock items.
-Services = billable activities.
+```text id="ao5t89"
+lang/en/stock.php
+lang/fr/stock.php
+lang/en/investigations.php
+lang/fr/investigations.php
+lang/en/lab.php
+lang/fr/lab.php
 ```
 
-Do not mix products and services.
+Remaining active runtime candidates after Phase 15E:
+
+```text id="qfrikd"
+192
+```
 
 ---
 
-# 4. Stock Cost / Financial Security
+# 3. Batch 5 Remainder — Clinical Pages
 
-This batch touches sensitive stock and procurement pages.
+Fix these remaining clinical pages first:
 
-Do not expose stock cost to unauthorized users.
-
-Preserve all permission checks:
-
-```text
-@can
-@cannot
-Gate
-policy checks
-stock-cost visibility checks
-financial visibility checks
-```
-
-Do not modify business rules for:
-
-```text
-stock receiving
-stock transfer
-stock adjustment
-stock returns
-purchase orders
-purchase returns
-supplier ledger
-department consumables
-stock requisitions
-```
-
-Only translate visible UI strings.
-
-Do not move business logic into Blade.
-
----
-
-# 5. Batch 5 — Prescriptions, Investigations, Vitals, Lab
-
-After Batch 4, if time/change-set size remains safe, continue with Batch 5.
-
-Fix:
-
-```text
+```text id="rlwxfh"
 resources/views/prescriptions/show.blade.php
-resources/views/prescriptions/index.blade.php
-resources/views/investigations/items/index.blade.php
-resources/views/admin/investigation-catalogue/index.blade.php
 resources/views/admin/investigation-catalogue/show.blade.php
-resources/views/vitals/record.blade.php
-resources/views/lab/results.blade.php
-resources/views/lab/tests.blade.php
 ```
+
+Also check whether any deeper active lab/investigation pages still appear in the latest audit and fix them if still listed.
 
 Use or extend:
 
-```text
+```text id="h7wufd"
 lang/en/prescriptions.php
 lang/fr/prescriptions.php
 lang/en/investigations.php
@@ -241,23 +115,24 @@ lang/fr/lab.php
 
 Translate:
 
-* prescription labels
-* medication order labels
+* prescription detail labels
+* medication/order labels
 * dosage labels
 * route/frequency labels
-* investigation item labels
-* investigation catalogue labels
-* lab result labels
-* vital sign labels
+* investigation catalogue detail labels
+* consumables labels
+* pricing/service labels
 * status badges
 * patient labels
 * visit labels
+* doctor labels
 * filters
 * table headers
 * form labels
 * action buttons
 * modal titles
 * empty states
+* confirmation messages
 * JavaScript strings if present
 
 Do not translate:
@@ -273,22 +148,32 @@ Do not change clinical workflow.
 
 ---
 
-# 6. Batch 6 — Emergency Remaining Candidates
+# 4. Batch 6 — Emergency Remaining Candidates
 
-If Batch 4 and Batch 5 are completed safely, process:
+Fix:
 
-```text
+```text id="vn3jcs"
 resources/views/emergency/show.blade.php
 ```
 
 Use or extend:
 
-```text
+```text id="omdcuf"
 lang/en/emergency.php
 lang/fr/emergency.php
 ```
 
-Translate remaining active candidates only.
+Translate:
+
+* remaining emergency section labels
+* emergency action buttons
+* emergency status badges
+* emergency clinical labels
+* emergency billing/session labels
+* emergency notes labels
+* modal labels
+* empty states
+* JavaScript confirmation messages if present
 
 Do not change emergency workflows.
 Do not change emergency billing/session logic.
@@ -296,11 +181,234 @@ Do not expose restricted clinical or financial data.
 
 ---
 
-# 7. JavaScript Manual Review
+# 5. Batch 7 — Admin Configuration Pages
 
-Review but do not rush unless safe:
+Fix:
 
-```text
+```text id="h5n0db"
+resources/views/admin/icd-codes/index.blade.php
+resources/views/departments/index.blade.php
+resources/views/admin/services/index.blade.php
+resources/views/designations/index.blade.php
+resources/views/admin/permissions/index.blade.php
+resources/views/admin/modules/index.blade.php
+resources/views/complaints/catalogue/index.blade.php
+resources/views/admin/notifications/broadcast.blade.php
+resources/views/admin/specialties/index.blade.php
+resources/views/admin/users/permissions.blade.php
+resources/views/admin/dashboards/index.blade.php
+resources/views/admin/analyzers/index.blade.php
+```
+
+Use existing namespaces where possible:
+
+```text id="wv6r42"
+lang/en/settings.php
+lang/fr/settings.php
+lang/en/users.php
+lang/fr/users.php
+lang/en/roles.php
+lang/fr/roles.php
+lang/en/messages.php
+lang/fr/messages.php
+lang/en/common.php
+lang/fr/common.php
+```
+
+Create small domain namespaces only if needed:
+
+```text id="wwwg9r"
+lang/en/admin.php
+lang/fr/admin.php
+lang/en/departments.php
+lang/fr/departments.php
+lang/en/services.php
+lang/fr/services.php
+```
+
+Translate:
+
+* headings
+* filters
+* table headers
+* action buttons
+* modal titles
+* form labels
+* placeholders
+* helper text
+* empty states
+* confirmation messages
+* status labels
+* permission management labels
+* module management labels
+* service management labels
+* ICD code labels
+* department/designation labels
+* complaint catalogue labels
+* notification broadcast labels
+
+Important:
+
+Do not translate permission slugs.
+Do not translate route names.
+Do not translate database codes.
+Do not hardcode services.
+Do not hardcode departments.
+Do not change module enable/disable logic.
+
+---
+
+# 6. Batch 8 — Billing, Accounting, Accounts
+
+Fix:
+
+```text id="szxbmq"
+resources/views/billing/invoices/show.blade.php
+resources/views/accounting/payable/payables.blade.php
+resources/views/accounting/settings/index.blade.php
+resources/views/accounts/categories.blade.php
+resources/views/accounts/entries/create.blade.php
+resources/views/accounts/entries/index.blade.php
+```
+
+Use or extend:
+
+```text id="ua6xkz"
+lang/en/billing.php
+lang/fr/billing.php
+lang/en/invoices.php
+lang/fr/invoices.php
+lang/en/accounting.php
+lang/fr/accounting.php
+```
+
+Translate:
+
+* invoice labels
+* payable labels
+* accounting setting labels
+* account categories
+* journal entry labels
+* debit/credit labels
+* filters
+* table headers
+* status badges
+* action buttons
+* form labels
+* modal titles
+* empty states
+* confirmation messages
+
+Protect financial visibility.
+
+Do not change:
+
+* journal posting logic
+* invoice totals
+* payment logic
+* credit note logic
+* write-off logic
+* sponsor logic
+* insurance logic
+* accounting semantics
+
+Do not expose financial data to unauthorized users.
+
+---
+
+# 7. Batch 9 — Queue, Notifications, Service Renderings
+
+Fix:
+
+```text id="k60fpa"
+resources/views/queue/manage.blade.php
+resources/views/queue/board.blade.php
+resources/views/notifications/index.blade.php
+resources/views/service-renderings/index.blade.php
+```
+
+Use or extend:
+
+```text id="l1otyl"
+lang/en/queue.php
+lang/fr/queue.php
+lang/en/notifications.php
+lang/fr/notifications.php
+lang/en/services.php
+lang/fr/services.php
+```
+
+Translate:
+
+* queue board labels
+* queue management labels
+* notification labels
+* service rendering labels
+* filters
+* table headers
+* buttons
+* empty states
+* badges
+* JavaScript messages if present
+
+Do not change queue workflow.
+Do not hardcode services.
+
+---
+
+# 8. Batch 10 — HR, Blood Bank, Settings Long Tail
+
+If the previous batches complete safely, process the long tail:
+
+```text id="uaddtg"
+resources/views/hr/employees/create.blade.php
+resources/views/hr/employees/edit.blade.php
+resources/views/hr/attendance/summary.blade.php
+resources/views/hr/leave/create.blade.php
+resources/views/blood-bank/donations.blade.php
+resources/views/blood-bank/reports.blade.php
+resources/views/blood-bank/requests.blade.php
+resources/views/blood-bank/storage.blade.php
+resources/views/blood-bank/units.blade.php
+resources/views/blood-bank/donation-view.blade.php
+resources/views/blood-bank/donor-profile.blade.php
+resources/views/statistics/dashboard.blade.php
+resources/views/visits/create.blade.php
+resources/views/partials/patient-card.blade.php
+resources/views/settings/activity-log-show.blade.php
+resources/views/settings/activity-log.blade.php
+resources/views/settings/invoice.blade.php
+resources/views/settings/log-retention.blade.php
+resources/views/settings/notification-preferences.blade.php
+resources/views/settings/organization.blade.php
+resources/views/settings/payment-methods.blade.php
+resources/views/settings/profile.blade.php
+```
+
+Use existing namespaces where possible:
+
+```text id="l5lban"
+lang/en/hr.php
+lang/fr/hr.php
+lang/en/blood_bank.php
+lang/fr/blood_bank.php
+lang/en/settings.php
+lang/fr/settings.php
+lang/en/visits.php
+lang/fr/visits.php
+lang/en/patients.php
+lang/fr/patients.php
+```
+
+Create namespaces only if they are missing and necessary.
+
+---
+
+# 9. JavaScript Manual Review
+
+Review:
+
+```text id="zsgy1g"
 resources/js/script.js
 resources/js/doctors.js
 ```
@@ -309,7 +417,7 @@ If strings are active at runtime, wire them through the existing `window.UHMS_I1
 
 Do not introduce:
 
-```text
+```text id="ctns8d"
 i18next
 Vue
 React
@@ -321,31 +429,25 @@ If strings are dormant template/demo examples, document them as false positives 
 
 ---
 
-# 8. Class-A Service Candidates
+# 10. Class-A Service Candidates
 
-Do not rush these in this phase unless they are simple and clearly user-facing.
+Review the 67 class-A service candidates.
 
-Review the 67 class-A service candidates and translate only confirmed user-facing output labels.
+Translate only confirmed user-facing output labels.
 
-Examples:
+Likely user-facing examples:
 
-```text
-ConsultationNextPatientService.php
-FinancialReportService.php
-PatientMergePreviewService.php
-ProcedureReportService.php
-StatisticsService.php
-```
-
-Safe example:
-
-```php
-'label' => __('accounting.revenue')
+```text id="q8hi4r"
+ConsultationNextPatientService.php message output
+FinancialReportService.php report section labels
+PatientMergePreviewService.php merge preview table labels
+ProcedureReportService.php procedure report stage labels
+StatisticsService.php chart/KPI labels
 ```
 
 Unsafe examples:
 
-```text
+```text id="n2cr0t"
 stored historical event titles
 audit descriptions
 journal descriptions
@@ -353,61 +455,67 @@ SQL expressions
 canonical workflow event names
 ```
 
-Leave unsafe items unchanged and document them.
+For safe user-facing labels, use translations:
+
+```php id="c70ix3"
+'label' => __('accounting.revenue')
+```
+
+Do not alter stored semantics.
 
 ---
 
-# 9. Translation Rules
+# 11. Translation Rules
 
 Use Laravel localisation only.
 
 Use:
 
-```php
+```php id="mtkv0r"
 __('module.key')
 ```
 
 or:
 
-```blade
+```blade id="7nsze1"
 {{ __('module.key') }}
 ```
 
 For placeholders:
 
-```php
-__('stock.remaining_quantity', ['qty' => $qty])
+```php id="5j0blb"
+__('queue.patient_waiting_for', ['department' => $departmentName])
 ```
 
 Do not concatenate translated fragments.
 
 Bad:
 
-```php
-'Remaining: ' . $qty
+```php id="gkzmkp"
+'Patient waiting for ' . $departmentName
 ```
 
 Good:
 
-```php
-__('stock.remaining_quantity', ['qty' => $qty])
+```php id="4wtcup"
+__('queue.patient_waiting_for', ['department' => $departmentName])
 ```
 
 ---
 
-# 10. Language File Rules
+# 12. Language File Rules
 
 Use appropriate namespaces.
 
 Generic UI words go in:
 
-```text
+```text id="w0zq65"
 common.php
 ```
 
 Only for truly generic words:
 
-```text
+```text id="bhxv04"
 save
 cancel
 close
@@ -430,13 +538,21 @@ success
 
 Domain words go in domain files:
 
-```text
-stock.php
-store.php
+```text id="7m495q"
 prescriptions.php
 investigations.php
 lab.php
 emergency.php
+admin.php
+departments.php
+services.php
+billing.php
+accounting.php
+queue.php
+notifications.php
+hr.php
+blood_bank.php
+settings.php
 ```
 
 Every English key must exist in French.
@@ -444,7 +560,7 @@ Every French key must exist in English.
 
 ---
 
-# 11. Do Not Translate These
+# 13. Do Not Translate These
 
 Do not translate:
 
@@ -474,13 +590,13 @@ Do not translate:
 
 ---
 
-# 12. Security Rules
+# 14. Security Rules
 
 Do not weaken permissions.
 
 Preserve:
 
-```text
+```text id="h82xho"
 @can
 @cannot
 Gate
@@ -495,7 +611,7 @@ clinical confidentiality checks
 
 Do not expose:
 
-```text
+```text id="je80nk"
 restricted clinical data
 financial data
 accounting data
@@ -510,7 +626,7 @@ No business logic should be moved into Blade.
 
 ---
 
-# 13. Responsiveness
+# 15. Responsiveness
 
 While touching these pages, fix obvious responsiveness problems only where directly encountered:
 
@@ -525,45 +641,51 @@ Do not introduce Tailwind.
 
 ---
 
-# 14. Scanner Burn-Down
+# 16. Scanner Burn-Down
 
-Run the scanner after every batch:
+Run scanner after every batch:
 
-```bash
+```bash id="whgozm"
 php scripts/localisation-audit.php
 ```
 
 Record before/after counts for:
 
-```text
-Batch 4
-Batch 5
+```text id="uxhlwo"
+Batch 5 remainder
 Batch 6
-JavaScript review if touched
-Class-A services if touched
+Batch 7
+Batch 8
+Batch 9
+Batch 10
+JavaScript review
+Class-A services
 ```
 
 If a batch introduces parse errors, stop and fix before continuing.
 
 ---
 
-# 15. Required Documentation
+# 17. Required Documentation
 
 Create:
 
-```text
-docs/LOCALISATION_PHASE_15E_STOCK_STORE_CLINICAL_BURNDOWN_REPORT.md
+```text id="24jrfj"
+docs/LOCALISATION_PHASE_15F_CLINICAL_ADMIN_BILLING_BURNDOWN_REPORT.md
 ```
 
 Include:
 
 * summary
-* starting active runtime candidate count: 317
+* starting active runtime candidate count: 192
 * ending active runtime candidate count
 * per-batch before/after counts
-* Batch 4 files fixed/deferred
-* Batch 5 files fixed/deferred
+* Batch 5 remainder files fixed/deferred
 * Batch 6 files fixed/deferred
+* Batch 7 files fixed/deferred
+* Batch 8 files fixed/deferred
+* Batch 9 files fixed/deferred
+* Batch 10 files fixed/deferred
 * JavaScript files reviewed/touched/deferred
 * class-A service candidates reviewed/touched/deferred
 * language files changed
@@ -582,11 +704,11 @@ Do not claim “all pages translated” unless scanner and manual French checks 
 
 ---
 
-# 16. Verification Commands
+# 18. Verification Commands
 
 Run:
 
-```bash
+```bash id="tb409a"
 php artisan view:clear
 php artisan config:clear
 php artisan cache:clear
@@ -597,55 +719,66 @@ php artisan view:clear
 
 Run:
 
-```bash
+```bash id="h8nwni"
 for f in lang/en/*.php lang/fr/*.php; do php -l "$f"; done
 ```
 
 Run:
 
-```bash
+```bash id="mz0cdi"
 php -l scripts/localisation-audit.php
 php scripts/localisation-audit.php
 ```
 
 Run:
 
-```bash
+```bash id="m9mjk8"
 git diff --check
 ```
 
 If compiled Blade cache exists, lint compiled views:
 
-```bash
+```bash id="rn65we"
 find storage/framework/views -type f -name "*.php" -print0 | xargs -0 -n1 php -l
 ```
 
 ---
 
-# 17. Manual French Verification
+# 19. Manual French Verification
 
 Switch the app to French and manually verify every fixed batch:
 
-```text
-product stock ledger
-product stock balances
-product stock receive
-product stock transfer
-product stock adjust
-product stock return
-stock locations
-purchase orders index/create/show
-purchase returns index/create/show
-supplier ledger
-suppliers
-stock requisitions
-department consumables
-prescriptions index/show
-investigation items
-investigation catalogue index/show
-vitals record
-lab results/tests
-emergency show
+```text id="uvj8z2"
+prescriptions/show
+investigation catalogue/show
+emergency/show
+ICD codes
+departments
+services
+designations
+permissions
+modules
+complaints catalogue
+notification broadcast
+specialties
+user permissions
+admin dashboards
+billing invoice show
+payables
+accounting settings
+accounts categories
+journal entries create/index
+queue manage/board
+notifications index
+service renderings
+HR employee create/edit
+HR attendance summary
+HR leave create
+blood bank donations/reports/requests/storage/units/profile
+settings pages
+statistics dashboard
+visits/create
+patient card
 ```
 
 Check:
@@ -667,26 +800,29 @@ Check:
 * print/PDF labels if present
 * JavaScript messages
 * validation errors
-* stock-cost visibility still permission-controlled
-* clinical data still permission-controlled
+* financial data remains permission-controlled
+* clinical data remains permission-controlled
 
 ---
 
-# 18. Acceptance Criteria
+# 20. Acceptance Criteria
 
-Phase 15E is complete only when:
+Phase 15F is complete only when:
 
-* Batch 4 is finished or clearly documented
-* Batch 5 is finished or clearly documented
+* Batch 5 remainder is finished or clearly documented
 * Batch 6 is finished or clearly documented
-* active runtime candidates are reduced from 317
-* target below 200 is attempted
+* Batch 7 is finished or clearly documented
+* Batch 8 is finished or clearly documented
+* Batch 9 is finished or clearly documented
+* Batch 10 is attempted or clearly deferred
+* active runtime candidates are reduced from 192
+* target below 100 is attempted
 * all added keys have EN/FR parity
-* PHP lint passes 
+* PHP lint passes
 * view cache compiles
 * localisation scanner runs
 * permissions are unchanged
-* stock-cost visibility remains protected
+* financial visibility remains protected
 * clinical confidentiality remains protected
 * no business logic is moved into Blade
 * no new localisation framework is introduced
@@ -694,4 +830,4 @@ Phase 15E is complete only when:
 * documentation report is created
 * manual French verification checklist is updated
 
-Proceed with UHMS Localisation Phase 15E now.
+Proceed with UHMS Localisation Phase 15F now.

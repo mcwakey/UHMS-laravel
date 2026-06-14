@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Modules Management')
+@section('title', __('admin.modules_management'))
 
 @section('content')
 <div class="page-wrapper">
@@ -39,11 +39,11 @@
                         <thead class="table-light">
                             <tr>
                                 <th style="width:40px;"></th>
-                                <th>Module</th>
+                                <th>{{ __('admin.module') }}</th>
                                 <th>Slug</th>
-                                <th>Type</th>
-                                <th>Depends On</th>
-                                <th>Status</th>
+                                <th>{{ __('common.type') }}</th>
+                                <th>{{ __('admin.depends_on') }}</th>
+                                <th>{{ __('common.status') }}</th>
                                 <th class="text-end">Action</th>
                             </tr>
                         </thead>
@@ -123,7 +123,7 @@
 
         <div class="alert alert-info mt-4 mb-0">
             <i class="ti ti-info-circle me-1"></i>
-            <strong>Tip:</strong> Disabling a module hides its sidebar entries and blocks its routes, but data is preserved. Re-enable any time without data loss.
+            <strong>{{ __('admin.tip') }}</strong> {{ __('admin.modules_tip') }}
         </div>
 
     </div>

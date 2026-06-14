@@ -1,8 +1,8 @@
 @extends('layouts.app')
-@section('title', 'Blood Storage Locations')
+@section('title', __('blood_bank.blood_storage_locations'))
 
 @section('content')
-<x-page-header title="Storage Locations" description="Manage blood bank refrigerators, freezers, and storage areas." icon="ti-fridge">
+<x-page-header :title="__('blood_bank.storage_locations')" description="Manage blood bank refrigerators, freezers, and storage areas." icon="ti-fridge">
     <x-slot:actions>
         <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#storageModal" id="addStorageBtn"><i class="ti ti-plus me-1"></i>{{ __('blood_bank.add_storage') }}</button>
         <a href="{{ route('admin.blood-bank.donations.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>{{ __('blood_bank.donations_link') }}</a>
