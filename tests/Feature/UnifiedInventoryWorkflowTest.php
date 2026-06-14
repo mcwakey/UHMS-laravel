@@ -47,6 +47,10 @@ class UnifiedInventoryWorkflowTest extends TestCase
     {
         parent::setUp();
 
+        // Inventory receiving/returns post to accounting, which requires the
+        // chart of accounts + inventory control account mapping to be present.
+        $this->seed(\Database\Seeders\AccountingChartSeeder::class);
+
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $department = Department::factory()->create([

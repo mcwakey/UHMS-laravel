@@ -26,6 +26,8 @@ class Stage2NeedsReviewLogTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // Purchase-return/inventory flows post to accounting (inventory control account).
+        $this->seed(\Database\Seeders\AccountingChartSeeder::class);
         $this->user = User::factory()->create();
         $this->actingAs($this->user);
     }

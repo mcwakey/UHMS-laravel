@@ -242,11 +242,13 @@ class ConsultationClinicalSectionsTest extends TestCase
             'Notes',
         ];
 
+        // Search each label AFTER the previous match so the assertion verifies
+        // the sections appear in the required order even though the workspace
+        // section-nav now repeats these labels earlier in the document.
         $last = -1;
         foreach ($labels as $label) {
-            $position = strpos($content, $label);
-            $this->assertNotFalse($position, "Missing {$label}");
-            $this->assertGreaterThan($last, $position, "{$label} is out of order");
+            $position = strpos($content, $label, $last + 1);
+            $this->assertNotFalse($position, "Missing {$label} (in order after the previous section)");
             $last = $position;
         }
     }

@@ -28,6 +28,11 @@ class InertiaBridgeLeakGuardTest extends TestCase
         'resources/views/lab/process.blade.php' => [
             'window.location.href = target;',
         ],
+        // Accept-and-bill partial: guarded by `if (window.UhmsInertia && data.redirect)`
+        // with a hard-navigation fallback only when the bridge is absent.
+        'resources/views/lab/partials/accept-bill.blade.php' => [
+            'window.location.href = target;',
+        ],
         'resources/views/consultations/show.blade.php' => [
             'window.location.reload();',
         ],

@@ -5,315 +5,62 @@ There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
 Do not try to read it.
 Follow this prompt directly.
 
-Active-runtime localisation burn-down is complete.
+Localisation active-runtime work is complete and locked.
 
-The latest localisation audit shows:
-
-```text
-Active runtime candidates: 0
-```
-
-Phase 15G confirms that active runtime candidates went from 34 to 0, with remaining JavaScript/manual-review items either translated or proven as false positives/non-active with evidence.
-
-Do not restart broad translation work.
-Do not touch dormant demo/template files.
-Do not re-open already completed phases unless a test proves a regression.
-
-# UHMS Localisation Phase 16 — QA Gates, Regression Tests, and Localisation Lock
-
-## Goal
-
-Lock the completed localisation work with automated and manual QA gates so future development cannot reintroduce untranslated active-runtime UI strings.
-
-This phase must prepare the system for the Full Test Suite by adding localisation-specific tests, audit commands, documentation, and verification gates.
-
----
-
-# 1. Required Reports To Read First
-
-Read:
-
-```text
-docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
-docs/LOCALISATION_PHASE_15G_FINAL_RUNTIME_JS_MANUAL_REVIEW_REPORT.md
-```
-
-Use these as the current source of truth:
+Current confirmed status:
 
 ```text
 Active runtime candidates: 0
 ```
 
----
-
-# 2. Do Not Re-Translate Completed Runtime Pages
-
-Do not make broad Blade translation changes unless a failing test identifies a real active-runtime untranslated string.
-
-Do not edit dormant template/demo pages unless they become route-linked.
-
-Do not translate:
-
-* database values
-* patient names
-* doctor names
-* medicine names
-* product names
-* service names from database
-* clinical notes
-* diagnosis text
-* lab test names from database
-* insurance provider names
-* sponsor names
-* role slugs
-* permission slugs
-* route names
-* database column names
-* protocol names such as HL7 v2.x and ASTM E1394
-* clinical units
-* currency symbols
-* UHMS acronym
-
----
-
-# 3. Add Localisation Regression Tests
-
-Create or update automated tests for localisation safety.
-
-Add tests under an appropriate namespace, for example:
+Phase 16 added localisation QA gates under:
 
 ```text
 tests/Feature/Localization/
 ```
 
-Recommended test files:
+The localisation test suite passes:
 
 ```text
-tests/Feature/Localization/LanguageParityTest.php
-tests/Feature/Localization/ActiveRuntimeLocalizationAuditTest.php
-tests/Feature/Localization/FrenchRouteSmokeTest.php
-tests/Feature/Localization/ValidationLocalizationTest.php
-tests/Feature/Localization/JavaScriptLocalizationBridgeTest.php
+12 tests / 60 assertions
 ```
+
+Do not restart localisation work.
+Do not re-open translation phases unless a test proves a real regression.
+
+# UHMS Phase 17 — Full Test Suite & System-Wide Regression Stabilisation
+
+## Goal
+
+Run and stabilise the full UHMS automated test suite after the major localisation/responsiveness work.
+
+The goal is not to add new features.
+
+The goal is to make the whole application testable, stable, and safe after the recent large UI/localisation changes.
 
 ---
 
-# 4. Language Parity Test
+# 1. Required Context
 
-Create a test that recursively flattens all keys in:
-
-```text
-lang/en
-lang/fr
-```
-
-The test must fail if:
-
-* an English key is missing in French
-* a French key is missing in English
-* nested keys differ
-* a language file exists in one locale but not the other
-
-The test must print clear output showing:
+Before changing anything, review the latest reports:
 
 ```text
-missing key
-locale
-file
+docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
+docs/LOCALISATION_PHASE_16_QA_GATES_AND_REGRESSION_LOCK_REPORT.md
 ```
 
-Do not compare translated values.
-Only compare key structure.
-
----
-
-# 5. Active Runtime Audit Test
-
-Create a test or command wrapper that runs:
-
-```bash
-php scripts/localisation-audit.php
-```
-
-The test must fail if:
-
-```text
-Active runtime candidates > 0
-```
-
-The test must not fail for:
-
-```text
-demo_template_candidates
-known_false_positives
-service_title_manual_review candidates
-language-file candidates
-```
-
-But the test must display their counts so developers remain aware of them.
-
-Expected current baseline:
+Important baseline:
 
 ```text
 Active runtime candidates: 0
+Localisation tests: passing
 ```
+
+Do not break this baseline.
 
 ---
 
-# 6. French Route Smoke Test
-
-Create a route smoke test that checks critical GET pages in French mode.
-
-It should not attempt to crawl everything blindly if authentication/permissions make that unstable. Instead, build a curated list of critical active-runtime routes across major modules.
-
-Include routes for:
-
-```text
-auth/login
-dashboard
-patients
-visits
-consultations
-appointments
-billing/invoices
-payments
-pharmacy
-lab
-investigations
-emergency
-wards
-theatre
-stock
-store
-accounting
-reports
-settings
-notifications
-queue
-HR
-blood bank
-```
-
-For each route:
-
-* authenticate as a user with appropriate permissions
-* set locale to French
-* request the page
-* assert HTTP 200 or expected redirect if permission-gated
-* assert the page does not contain obvious untranslated UI markers from the old audit where possible
-
-Do not assert against patient-entered/database content.
-
----
-
-# 7. Validation Localisation Test
-
-Add tests for French validation messages.
-
-Cover at least:
-
-```text
-auth/profile fields
-patient fields
-visit fields
-consultation fields
-billing/payment fields
-stock/store fields
-emergency fields
-```
-
-The test should confirm that validation errors use French field attributes where available.
-
-Do not require every possible validation message to be manually listed; test representative coverage.
-
----
-
-# 8. JavaScript I18N Bridge Test
-
-Add a test or static check for JavaScript localisation bridges.
-
-Confirm:
-
-* active Blade-embedded JS uses `@json(__('...'))`
-* active JS pages expose needed values through `window.UHMS_I18N` or page-level I18N maps
-* `resources/js/script.js` and `resources/js/doctors.js` remain documented as dormant/demo false positives unless they become route-linked
-
-If those JS files later become active, the test or documentation must force them to be wired through `window.UHMS_I18N`.
-
----
-
-# 9. Protect False Positive Rules
-
-The scanner was updated in Phase 15G to reclassify specific known false positives.
-
-Add comments/tests to ensure these remain narrow and safe:
-
-```text
-HL7 v2.x
-ASTM E1394
-resources/js/script.js demo-widget fragments
-resources/js/doctors.js demo-widget fragments
-```
-
-Do not create broad rules that hide real untranslated active UI strings.
-
-If any false-positive rule is widened, require a test or report note explaining why.
-
----
-
-# 10. Optional Service Output Localisation Review
-
-The audit still has a `service_title_manual_review` bucket.
-
-This is not active-runtime UI debt, but review the safe display-only candidates if time allows.
-
-Priority optional candidates:
-
-```text
-app/Services/StatisticsService.php
-app/Services/PatientMergePreviewService.php
-```
-
-Rules:
-
-* translate only confirmed user-facing display labels
-* do not translate stored event titles
-* do not translate audit records
-* do not translate journal descriptions
-* do not translate SQL/internal expressions
-* do not alter canonical workflow values
-
-If touched, add EN/FR keys and update tests.
-
-If not touched, document as deferred non-blocking debt.
-
----
-
-# 11. Full Verification Commands
-
-Run:
-
-```bash
-php artisan view:clear
-php artisan config:clear
-php artisan cache:clear
-php artisan route:list
-php artisan view:cache
-php artisan view:clear
-```
-
-Run:
-
-```bash
-for f in lang/en/*.php lang/fr/*.php; do php -l "$f"; done
-```
-
-Run:
-
-```bash
-php -l scripts/localisation-audit.php
-php scripts/localisation-audit.php
-```
+# 2. Run the Full Test Suite
 
 Run:
 
@@ -321,113 +68,411 @@ Run:
 php artisan test
 ```
 
-If the full test suite is too large or currently unstable, run the new localisation tests first:
+If the full suite is too large or crashes early, run grouped suites:
+
+```bash
+php artisan test tests/Feature
+php artisan test tests/Unit
+php artisan test tests/Feature/Localization
+```
+
+Also run:
+
+```bash
+php artisan route:list
+php artisan view:cache
+php artisan view:clear
+```
+
+Then record:
+
+* total tests
+* passed tests
+* failed tests
+* skipped tests
+* errors
+* first failing file
+* first failing test
+* failure categories
+
+---
+
+# 3. Do Not Fix Blindly
+
+For every failure, classify it first.
+
+Use these categories:
+
+```text
+A. Real application bug
+B. Test expectation outdated after intended change
+C. Seeder/factory/test-data issue
+D. Permission/role setup issue
+E. Route/name/view path changed
+F. Localisation assertion issue
+G. Database migration/schema issue
+H. Environment-only issue
+I. Flaky/time-dependent issue
+```
+
+Do not change production code if the problem is clearly a bad test.
+
+Do not change tests to hide a real bug.
+
+---
+
+# 4. Preserve Localisation Lock
+
+Before and after fixes, run:
 
 ```bash
 php artisan test tests/Feature/Localization
+php scripts/localisation-audit.php
 ```
+
+The following must remain true:
+
+```text
+Active runtime candidates: 0
+EN/FR parity: pass
+French route smoke: pass
+Validation localisation: pass
+JS localisation bridge: pass
+```
+
+If any localisation test fails, fix it immediately before continuing.
+
+---
+
+# 5. Fix Test Infrastructure First
+
+If failures are caused by missing baseline data, fix factories/seeders/test setup before touching business logic.
+
+Pay attention to:
+
+* roles
+* permissions
+* departments
+* services
+* products
+* stock locations
+* payment methods
+* insurance providers
+* sponsors
+* consultation services
+* emergency service mappings
+* accounting chart of accounts
+* fiscal periods
+* users with proper roles
+
+Prefer reusable test helpers or seeders over copy-pasting setup into every test.
+
+---
+
+# 6. Role and Permission Test Stability
+
+Many UHMS pages are permission-aware.
+
+Ensure tests create users with appropriate roles/permissions.
+
+Do not bypass permissions in production code.
+
+For tests, use one of these approaches:
+
+```php
+$user = User::factory()->create();
+$user->assignRole('Super Admin');
+$this->actingAs($user);
+```
+
+or a reusable helper:
+
+```php
+$this->actingAsSuperAdmin();
+```
+
+If roles do not exist in the test database, seed them in the test setup.
+
+Do not remove `@can`, policies, gates, middleware, or permission checks.
+
+---
+
+# 7. Database / Migration Stability
+
+If tests fail due to schema issues:
+
+* verify migrations run cleanly on a fresh test database
+* avoid destructive migrations unless absolutely required
+* ensure MariaDB 10.1 compatibility
+* avoid JSON column assumptions if the project must support older MariaDB
+* avoid unsupported indexes or generated columns if not already used safely
 
 Run:
 
 ```bash
-git diff --check
+php artisan migrate:fresh --env=testing
+php artisan test
 ```
 
-If compiled Blade cache exists, lint compiled views:
-
-```bash
-find storage/framework/views -type f -name "*.php" -print0 | xargs -0 -n1 php -l
-```
+Only if the test environment supports it.
 
 ---
 
-# 12. Manual French QA Checklist
+# 8. Factory and Seeder Stabilisation
 
-Switch app to French and manually verify a small release-critical sample:
+Fix factories for core models where needed.
+
+Important UHMS entities likely needed in tests:
 
 ```text
-login
-dashboard
-patients
-visits/create
-consultation show
-pharmacy dispense
-billing invoice show
-payment page
-emergency show
-wards/beds
-theatre show
-stock balances
-purchase orders
-accounting settings
-reports hub
-settings/profile
-notifications
-queue board
+User
+Role
+Permission
+Patient
+Visit
+Department
+Service
+Product
+StockLocation
+Invoice
+Payment
+InsuranceProvider
+PatientInsurance
+Sponsor
+Appointment
+Consultation
+Prescription
+LabRequest
+EmergencyCase
+Ward
+Bed
+TheatreRoom
+PurchaseOrder
+Supplier
+Account
+JournalEntry
 ```
 
-Check:
+Factories should create valid minimal records.
 
-* page title
-* breadcrumbs
-* headings
-* forms
-* placeholders
-* buttons
-* modals
-* alerts
-* validation errors
-* JavaScript confirms/alerts
-* empty states
-* print/PDF labels where relevant
-* no clinical/financial data exposure
-* no permission regression
+Avoid creating huge fixture data.
 
 ---
 
-# 13. Documentation Required
+# 9. Billing / Accounting / Stock Safety
+
+When fixing failures in billing, accounting, or stock tests, preserve these rules:
+
+```text
+Products = physical stock items.
+Services = billable activities.
+Operational records stay operational.
+Accounting records are journal entries.
+```
+
+Do not mix product and service logic.
+
+Do not bypass accounting services.
+
+Do not change invoice totals just to satisfy a test.
+
+Do not weaken stock-cost permissions.
+
+Do not expose financial data to unauthorised users.
+
+---
+
+# 10. Emergency Workflow Safety
+
+When fixing emergency-related tests, preserve the intended workflow:
+
+* emergency visit type should create/flag Emergency/Casualty context correctly
+* emergency cases should map to configured emergency consultation/service mappings
+* no hardcoded emergency service IDs
+* no hardcoded consultation service IDs
+* emergency workflow must still bill using configured services
+* emergency clinical/financial visibility remains permission-aware
+
+Do not hardcode Emergency/Casualty service names as IDs.
+
+Use configuration or database mappings.
+
+---
+
+# 11. Insurance / Sponsor / NHIS Safety
+
+NHIS is just another insurance provider.
+
+Do not create NHIS-only architecture.
+
+Do not hardcode NHIS into generic billing, claims, or insurance workflows.
+
+When fixing tests:
+
+* use generic insurance providers
+* use generic sponsor entities
+* keep patient insurance logic provider-agnostic
+* keep claim logic provider-aware but not provider-hardcoded
+
+---
+
+# 12. Activity Log Safety
+
+Do not bypass:
+
+```text
+ActivityLogService
+```
+
+If tests fail because logs are expected, update tests or seed context properly.
+
+Do not remove audit events just to pass tests.
+
+If logging causes unstable assertions, assert the event type/key rather than fragile full text where possible.
+
+---
+
+# 13. View / Blade / Route Failures
+
+If tests fail because a page no longer renders:
+
+* check missing language keys
+* check undefined variables
+* check permission-gated buttons
+* check route names
+* check partial includes
+* check `@json()` usage
+* check view cache parse errors
+
+Run:
+
+```bash
+php artisan view:cache
+```
+
+Do not suppress Blade errors.
+
+Fix root causes.
+
+---
+
+# 14. Frontend Asset Safety
+
+If tests or builds touch frontend assets:
+
+Run:
+
+```bash
+npm run build
+```
+
+Only if Node dependencies are installed.
+
+Do not introduce new frontend frameworks.
+
+Do not introduce Tailwind.
+
+Use existing Bootstrap 5 + Tabler Icons.
+
+Do not break the `window.UHMS_I18N` localisation bridge.
+
+---
+
+# 15. Fix Order
+
+Use this order:
+
+```text
+1. Environment/test setup failures
+2. Migration/schema failures
+3. Seeder/factory failures
+4. Auth/role/permission failures
+5. Route/view/cache failures
+6. Localisation regression failures
+7. Core domain logic failures
+8. Billing/accounting/stock failures
+9. Emergency/clinical workflow failures
+10. Flaky/time-sensitive tests
+```
+
+Commit mentally by category; keep diffs reviewable.
+
+---
+
+# 16. Reporting Requirements
 
 Create:
 
 ```text
-docs/LOCALISATION_PHASE_16_QA_GATES_AND_REGRESSION_LOCK_REPORT.md
+docs/PHASE_17_FULL_TEST_SUITE_REGRESSION_STABILISATION_REPORT.md
 ```
 
 Include:
 
 * summary
-* confirmation of starting active runtime count: 0
-* tests added
-* commands run
-* language parity result
-* audit result
-* French route smoke result
-* validation localisation result
-* JavaScript bridge result
-* false-positive protection notes
-* optional service-output review result
-* manual QA checklist
-* known non-blocking localisation debt
-* recommendation for next phase
+* test commands run
+* initial full-suite result
+* final full-suite result
+* number of failures fixed
+* failure categories
+* files changed
+* production code changed
+* test code changed
+* seeders/factories changed
+* migrations changed, if any
+* localisation gate result
+* active runtime candidate count
+* route list result
+* view cache result
+* npm build result, if run
+* remaining failing tests, if any
+* known risks
+* next recommended phase
 
 ---
 
-# 14. Acceptance Criteria
+# 17. Required Final Verification
 
-Phase 16 is complete only when:
+At the end, run:
 
+```bash
+php artisan test tests/Feature/Localization
+php scripts/localisation-audit.php
+php artisan route:list
+php artisan view:cache
+php artisan view:clear
+php artisan test
+```
+
+If available and relevant:
+
+```bash
+npm run build
+```
+
+Also run:
+
+```bash
+git diff --check
+```
+
+---
+
+# 18. Acceptance Criteria
+
+Phase 17 is complete only when:
+
+* localisation tests still pass
 * active runtime candidates remain 0
-* EN/FR parity test passes
-* localisation audit test passes
-* French route smoke tests pass or document permission-gated redirects
-* validation localisation tests pass
-* JavaScript localisation bridge checks pass
-* false-positive rules are documented and narrow
-* PHP lint passes
+* route list works
 * view cache compiles
+* full test suite is run
+* all failures are fixed or clearly documented
 * no permission checks are weakened
 * no clinical/financial data exposure is introduced
 * no business logic is moved into Blade
+* no NHIS-only logic is introduced
+* no stock/product/service rules are broken
 * documentation report is created
 
-Proceed with UHMS Localisation Phase 16 now.
+Proceed with UHMS Phase 17 now.

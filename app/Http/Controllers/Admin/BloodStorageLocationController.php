@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\LogModule;
 use App\Http\Controllers\Controller;
 use App\Models\BloodStorageLocation;
 use App\Models\BloodUnit;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -13,6 +15,8 @@ class BloodStorageLocationController extends Controller
     public const LOCATION_TYPES = [
         'BLOOD_BANK', 'REFRIGERATOR', 'FREEZER', 'PLATELET_AGITATOR', 'TRANSPORT_BOX', 'OTHER',
     ];
+
+    public function __construct(protected ActivityLogService $logger) {}
 
     public function index()
     {
@@ -35,7 +39,8 @@ class BloodStorageLocationController extends Controller
         $data = $this->validateLocation($request);
         $data['is_active'] = $request->boolean('is_active', true);
 
-        BloodStorageLocation::create($data);
+        $location = BloodStorageLocation::create($data);
+        $this->logger->logCreated($location, LogModule::BLOOD_BANK);
 
         return back()->with('success', __('messages.blood_bank.location_added'));
     }
@@ -45,14 +50,18 @@ class BloodStorageLocationController extends Controller
         $data = $this->validateLocation($request, $location);
         $data['is_active'] = $request->boolean('is_active');
 
+        $old = $location->getOriginal();
         $location->update($data);
+        $this->logger->logUpdated($location, LogModule::BLOOD_BANK, $old, $location->getAttributes());
 
         return back()->with('success', __('messages.blood_bank.location_updated'));
     }
 
     public function toggle(BloodStorageLocation $location)
     {
+        $old = $location->getOriginal();
         $location->update(['is_active' => ! $location->is_active]);
+        $this->logger->logUpdated($location, LogModule::BLOOD_BANK, $old, $location->getAttributes());
 
         return back()->with('success', __('messages.blood_bank.location_status_updated', ['status' => $location->is_active ? 'activated' : 'deactivated']));
     }

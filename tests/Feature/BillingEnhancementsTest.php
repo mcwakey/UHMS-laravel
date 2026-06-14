@@ -46,6 +46,7 @@ class BillingEnhancementsTest extends TestCase
             'credit_notes.view', 'credit_notes.create', 'credit_notes.write_off',
             'sponsors.manage',
             'patients.view', 'visits.view', 'services.manage',
+            'reports.ar_aging.view', 'reports.statements.view',
         ] as $p) {
             $role->givePermissionTo(Permission::create(['name' => $p]));
         }

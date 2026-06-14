@@ -240,7 +240,9 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
             ->assertSee('Available Consultation Department Sessions')
             ->assertSee($this->generalService->name)
             ->assertSee('Consultation Department')
-            ->assertSee('Services to add');
+            // The 'Services to add' label was removed in the localisation refactor;
+            // assert the service-select field itself still renders instead.
+            ->assertSee('visitRouteServiceSelect');
     }
 
     public function test_completing_current_session_does_not_close_visit_when_other_routes_remain(): void

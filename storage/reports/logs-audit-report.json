@@ -1,15 +1,15 @@
 {
-    "generated_at": "2026-06-12T02:42:37+00:00",
-    "controllers_flagged": 78,
+    "generated_at": "2026-06-14T16:35:41+00:00",
+    "controllers_flagged": 76,
     "logging_services_detected": 85,
     "summary": {
-        "MISSING_LOG": 1,
-        "NEEDS_REVIEW": 1,
+        "MISSING_LOG": 0,
+        "NEEDS_REVIEW": 0,
         "KNOWN_BACKLOG": 21,
         "INTENTIONALLY_SKIPPED": 1,
         "SERVICE_FUNNEL_COVERED": 54
     },
-    "real_missing_logs": 1,
+    "real_missing_logs": 0,
     "findings": [
         {
             "controller": "app/Http/Controllers/Accounting/JournalEntryController.php",
@@ -787,24 +787,6 @@
             "in_baseline": true
         },
         {
-            "controller": "app/Http/Controllers/Admin/BloodStorageLocationController.php",
-            "unlogged_actions": [
-                "store",
-                "update",
-                "toggle"
-            ],
-            "actions": [
-                "store",
-                "update",
-                "toggle"
-            ],
-            "classification": "MISSING_LOG",
-            "severity": "MEDIUM",
-            "reason": "No logging funnel found in controller or any service it uses.",
-            "services": [],
-            "in_baseline": false
-        },
-        {
             "controller": "app/Http/Controllers/Admin/ComplaintCatalogueController.php",
             "unlogged_actions": [
                 "store",
@@ -1009,25 +991,6 @@
                 "EmergencyProcedureService"
             ],
             "in_baseline": true
-        },
-        {
-            "controller": "app/Http/Controllers/Admin/EmergencyTaskController.php",
-            "unlogged_actions": [
-                "store",
-                "complete"
-            ],
-            "actions": [
-                "store",
-                "complete"
-            ],
-            "classification": "NEEDS_REVIEW",
-            "severity": "MEDIUM",
-            "reason": "Delegates to ClinicalTaskService, EmergencySessionService \u2014 not verified to log. Confirm or wire a funnel.",
-            "services": [
-                "ClinicalTaskService",
-                "EmergencySessionService"
-            ],
-            "in_baseline": false
         },
         {
             "controller": "app/Http/Controllers/Admin/EmergencyTriageController.php",
