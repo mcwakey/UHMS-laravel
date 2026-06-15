@@ -99,17 +99,23 @@ class BankReconciliationAdjustmentPostingService
      */
     public function post(BankReconciliationAdjustment $adjustment, User $actor): BankReconciliationAdjustment
     {
-        if ($adjustment->status !== BankReconciliationAdjustment::STATUS_APPROVED) {
-            throw ValidationException::withMessages(['status' => __('accounting.only_approved_can_post')]);
-        }
-        if (! $adjustment->account_id) {
-            throw ValidationException::withMessages(['account_id' => __('accounting.adjustment_account_required')]);
-        }
+        return DB::transaction(function () use ($adjustment, $actor) {
+            $adjustment = BankReconciliationAdjustment::query()
+                ->with(['journalEntry', 'reconciliation.bankAccount'])
+                ->lockForUpdate()
+                ->findOrFail($adjustment->id);
+            if ($adjustment->status === BankReconciliationAdjustment::STATUS_POSTED && $adjustment->journalEntry) {
+                return $adjustment;
+            }
+            if ($adjustment->status !== BankReconciliationAdjustment::STATUS_APPROVED) {
+                throw ValidationException::withMessages(['status' => __('accounting.only_approved_can_post')]);
+            }
+            if (! $adjustment->account_id) {
+                throw ValidationException::withMessages(['account_id' => __('accounting.adjustment_account_required')]);
+            }
 
-        $reconciliation = $adjustment->reconciliation;
-        $bankGlAccountId = $reconciliation->bankAccount->gl_account_id;
-
-        return DB::transaction(function () use ($adjustment, $reconciliation, $bankGlAccountId, $actor) {
+            $reconciliation = $adjustment->reconciliation;
+            $bankGlAccountId = $reconciliation->bankAccount->gl_account_id;
             $lines = $this->journalLines($adjustment, $bankGlAccountId);
 
             $entry = $this->journalEntries->createDraft([

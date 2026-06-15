@@ -9,19 +9,37 @@ use Carbon\Carbon;
 
 class AccountingCloseReadinessService
 {
+    public function __construct(protected AccountingPostingHandlerRegistry $handlers) {}
+
     public function summary(Carbon|string $from, Carbon|string $to, ?User $actor = null): array
     {
         $from = Carbon::parse($from)->startOfDay();
         $to = Carbon::parse($to)->endOfDay();
         $base = AccountingPostingAttempt::query()
             ->whereBetween('last_attempted_at', [$from, $to]);
+        $failedAttempts = (clone $base)->where('status', 'failed')->get();
+        $material = $failedAttempts->map(function (AccountingPostingAttempt $attempt) {
+            $snapshot = $attempt->source_snapshot ?: [];
+            foreach (['amount', 'total_amount', 'grand_total', 'net_amount'] as $key) {
+                if (isset($snapshot[$key]) && is_numeric($snapshot[$key])) {
+                    return (float) $snapshot[$key];
+                }
+            }
+            return null;
+        })->filter(fn ($amount) => $amount !== null);
 
         $summary = [
             'from' => $from->toDateString(),
             'to' => $to->toDateString(),
             'unresolved_failed_postings' => (clone $base)->where('status', 'failed')->count(),
             'waived_postings' => (clone $base)->where('status', 'waived')->count(),
+            'resolved_postings' => (clone $base)->where('status', 'resolved')->count(),
             'posted_attempts' => (clone $base)->where('status', 'posted')->count(),
+            'posted_after_retry' => (clone $base)->where('status', 'posted')->where('attempt_count', '>', 1)->count(),
+            'unsupported_failed_postings' => $failedAttempts->filter(fn (AccountingPostingAttempt $attempt) => ! $this->handlers->supports($attempt))->count(),
+            'oldest_unresolved_failure' => $failedAttempts->min('last_attempted_at')?->toDateTimeString(),
+            'material_unresolved_failures' => $material->count(),
+            'material_unresolved_amount' => round((float) $material->sum(), 2),
             'unposted_eligible_source_records' => null,
             'unreconciled_control_accounts' => null,
             'open_bank_reconciliations' => null,
@@ -42,6 +60,14 @@ class AccountingCloseReadinessService
                 ->pluck('total', 'source_module')
                 ->map(fn ($value) => (int) $value)
                 ->all(),
+            'resolved_by_source_module' => (clone $base)
+                ->where('status', 'resolved')
+                ->selectRaw('source_module, COUNT(*) total')
+                ->groupBy('source_module')
+                ->orderBy('source_module')
+                ->pluck('total', 'source_module')
+                ->map(fn ($value) => (int) $value)
+                ->all(),
         ];
         $summary['ready'] = $summary['unresolved_failed_postings'] === 0;
 
@@ -49,6 +75,10 @@ class AccountingCloseReadinessService
             'causer' => $actor,
             'metadata' => $summary,
         ], description: 'Accounting close readiness checked');
+        app(ActivityLogService::class)->log(LogModule::ACCOUNTING, 'FAILED_POSTING_CLOSE_READINESS_VIEWED', [
+            'causer' => $actor,
+            'metadata' => $summary,
+        ], description: 'Failed posting close readiness viewed');
 
         return $summary;
     }

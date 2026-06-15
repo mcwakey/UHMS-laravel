@@ -37,6 +37,13 @@ class AccountingPostingAttempt extends Model
         'resolved_at',
         'resolution_type',
         'resolution_note',
+        'resolution_journal_entry_id',
+        'resolution_source_type',
+        'resolution_source_id',
+        'resolution_reference',
+        'resolution_evidence',
+        'materiality_note',
+        'waiver_review_date',
         'created_by',
         'updated_by',
     ];
@@ -51,6 +58,7 @@ class AccountingPostingAttempt extends Model
             'last_attempted_at' => 'datetime',
             'next_retry_at' => 'datetime',
             'resolved_at' => 'datetime',
+            'waiver_review_date' => 'date',
         ];
     }
 
@@ -64,6 +72,11 @@ class AccountingPostingAttempt extends Model
         return $this->belongsTo(JournalEntry::class, 'reversal_journal_entry_id');
     }
 
+    public function resolutionJournalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class, 'resolution_journal_entry_id');
+    }
+
     public function events(): HasMany
     {
         return $this->hasMany(AccountingPostingAttemptEvent::class)->orderBy('occurred_at')->orderBy('id');
@@ -72,6 +85,11 @@ class AccountingPostingAttempt extends Model
     public function resolvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'resolved_by');
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function scopeUnresolvedFailed(Builder $query): Builder

@@ -5,22 +5,43 @@ There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
 Do not try to read it.
 Follow this prompt directly.
 
-# UHMS Accounting Execution Phase B — Bank Accounts, Statement Import & Formal Bank Reconciliation
+# UHMS Accounting Execution Phase C — Failed Posting Workbench & Posting Resolution Controls
 
 ## Goal
 
-Implement formal bank account management, bank statement import, statement-line matching, bank reconciliation preparation, approval, reopening, and adjustment posting.
+Implement the dedicated Failed Posting Workbench for UHMS accounting.
 
-This phase must build on:
+Phase 0 created the shared posting-attempt register and services.
+Phase A connected Basic Accounting entries to the GL.
+Phase B added bank reconciliation and bank adjustment posting.
+
+Now finance users need a proper operator workbench to:
 
 ```text
-Accounting Phase 0 — Shared Controls and Readiness
-Accounting Phase A — Basic-to-Advanced Posting Bridge
+view failed accounting postings
+inspect source snapshots and posting snapshots
+see retained error history
+retry failed postings
+resolve postings manually with evidence
+waive postings with elevated permission
+link corrective journals
+monitor failed postings by source module
+support period-close readiness
 ```
 
-Do not create a parallel accounting or reconciliation system.
+Do not create a parallel accounting system.
 
-Use the existing Advanced Accounting module, existing journal services, Phase 0 posting attempts, Phase 0 account mappings, Phase A bridge conventions, and existing permissions/module middleware.
+Use the Phase 0 shared controls:
+
+```text
+accounting_posting_attempts
+accounting_posting_attempt_events
+AccountingPostingAttemptService
+AccountingIdempotencyService
+AccountingCloseReadinessService
+AccountingPostingService
+ActivityLogService
+```
 
 ---
 
@@ -32,6 +53,7 @@ Read:
 docs/ACCOUNTING_GAP_EXECUTION_MASTER_PLAN.md
 docs/ACCOUNTING_PHASE_0_SHARED_CONTROLS_AND_READINESS_REPORT.md
 docs/ACCOUNTING_PHASE_A_BASIC_TO_ADVANCED_POSTING_BRIDGE_REPORT.md
+docs/ACCOUNTING_PHASE_B_BANK_ACCOUNTS_AND_RECONCILIATION_REPORT.md
 docs/ACCOUNTING_MODULE_SPLIT_AND_GAP_REPORT.md
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
@@ -41,45 +63,88 @@ Current confirmed baseline:
 ```text
 Phase 0 complete.
 Phase A complete.
-Full suite passing.
-Accounting suite passing.
-Localization suite passing.
+Phase B complete.
+Accounting + localisation suites pass.
+Phase B focused suite passes.
 Active runtime candidates: 0.
-Basic Accounting entries can now post to GL through controlled bridge.
+logs:audit: 0 missing / 0 needs-review.
 ```
 
-Do not break this baseline.
+Important Phase B caveat:
+
+```text
+The complete php artisan test suite was not run end-to-end during Phase B.
+```
+
+So before implementation, run the full suite and record the baseline.
 
 ---
 
-# 2. Scope of This Phase
+# 2. Baseline Confirmation First
+
+Before changing code, run:
+
+```bash
+php artisan test
+php artisan test tests/Feature/Accounting
+php artisan test tests/Feature/Localization
+php scripts/localisation-audit.php
+php artisan logs:audit --json
+php artisan route:list
+php artisan view:cache
+php artisan view:clear
+git diff --check
+```
+
+Record:
+
+```text
+full suite result
+accounting suite result
+localisation suite result
+active runtime candidate count
+audit result
+route count
+view cache result
+```
+
+If the full suite has pre-existing failures, document them and confirm they are unrelated to Phase C before continuing.
+
+Do not hide unrelated failures.
+
+---
+
+# 3. Scope of This Phase
 
 Implement:
 
 ```text
-bank account register
-bank statement import
-CSV statement parser
-statement-line storage
-duplicate import/line protection
-manual and suggested matching
-bank reconciliation preparation
-bank reconciliation approval
-bank reconciliation reopening
-bank reconciliation adjustment proposal
-bank charge / interest adjustment posting
-reconciliation statement view
+failed posting workbench index
+failed posting detail page
+retry action
+retry selected action
+manual resolution action
+waive action
+source record link
+journal link
+attempt event timeline
+error context viewer
+source snapshot viewer
+posting snapshot viewer
+filters
+dashboard cards
+close readiness integration
 permissions
 audit logging
 tests
 documentation
 ```
 
-Do not yet implement:
+Do not implement yet:
 
 ```text
-cash flow statement
 subledger reconciliation workbench
+cash flow statement
 payroll posting
 budgets
 fixed assets
@@ -92,42 +157,59 @@ Those come later.
 
 ---
 
-# 3. Core Rules
+# 4. Core Rules
 
-Bank reconciliation must be:
+The failed posting workbench must be:
 
 ```text
 auditable
 permission-aware
 module-aware
-reversible/reopenable
-traceable to statement lines and book transactions
-safe from duplicate imports
-safe from silent auto-matching
+idempotent
+safe from duplicate journals
+safe from silent error loss
+traceable to source records
+traceable to journal entries
 ```
 
-Important rules:
+Important:
 
 ```text
-Imported bank files and statement lines are immutable.
-Rejected imports stay historically visible.
-Approved reconciliations are locked.
-Reopening requires elevated permission and a reason.
-Bank charges and interest must be proposed first, then approved before journal posting.
-Matching suggestions must not silently become approved matches unless explicitly confirmed.
-Do not delete bank statement history.
-Do not create journal entries directly in controllers.
-Do not bypass AccountingPostingService, JournalEntryService, or ActivityLogService.
+Retry must never create duplicate journals.
+Resolving must require evidence.
+Waiving must require elevated permission and a reason.
+Posted attempts cannot be waived.
+Resolved attempts cannot be silently retried.
+Waived attempts must remain visible.
+Errors must not be deleted.
+Attempt event history must be append-only.
 ```
+
+Do not delete failed attempts.
+
+Do not overwrite historical event rows.
 
 ---
 
-# 4. Module Rules
+# 5. Workbench Routes
 
-Bank reconciliation belongs to:
+Add routes under Advanced Accounting.
+
+Suggested route prefix:
 
 ```text
-accounting_advanced
+admin/accounting/failed-postings
+```
+
+Suggested route names:
+
+```text
+admin.accounting.failed-postings.index
+admin.accounting.failed-postings.show
+admin.accounting.failed-postings.retry
+admin.accounting.failed-postings.retry-selected
+admin.accounting.failed-postings.resolve
+admin.accounting.failed-postings.waive
 ```
 
 All routes must use:
@@ -139,627 +221,399 @@ module:accounting_advanced
 permission middleware
 ```
 
-Do not add a separate bank reconciliation module toggle in this phase.
-
-Do not make Billing & Collections depend on Accounting.
+Do not rely on sidebar hiding.
 
 ---
 
-# 5. Database Tables
+# 6. Workbench Index
 
-Create the following tables if they do not already exist:
+The index should show failed, waived, resolved, reversed, and posted attempts depending on filters.
+
+Default view:
 
 ```text
-bank_accounts
-bank_statement_imports
-bank_statement_lines
-bank_reconciliations
-bank_reconciliation_matches
-bank_reconciliation_adjustments
+failed unresolved attempts
 ```
 
-Use safe additive migrations.
-
-Use string statuses with application validation.
-
-Do not use database enums.
-
-Use `DECIMAL(18,2)` for monetary amounts.
-
-Use `LONGTEXT` for imported file metadata or parser snapshots if JSON compatibility is uncertain.
-
-Use explicit short index names compatible with MariaDB.
-
-Do not cascade-delete financial history.
-
----
-
-# 6. bank_accounts
-
-Fields:
+Columns:
 
 ```text
-id
-name
-bank_name
-branch_name
-account_name
-account_number_masked
-account_number_hash
-currency
-gl_account_id
-opening_date
-opening_balance
-is_active
-notes
-created_by
-updated_by
-timestamps
-```
-
-Rules:
-
-```text
-Store masked account number for display.
-Store hash for duplicate/reference checks if needed.
-Do not expose full bank account number broadly.
-Each bank account must map to a GL cash/bank account.
-Inactive accounts cannot receive new imports.
-Historical imports and reconciliations remain visible.
-```
-
-Permissions must control who can view and manage bank accounts.
-
----
-
-# 7. bank_statement_imports
-
-Fields:
-
-```text
-id
-bank_account_id
-format
-original_filename
-file_hash
-period_start
-period_end
-opening_balance
-closing_balance
-total_debit
-total_credit
-line_count
 status
-imported_by
-imported_at
-approved_by
-approved_at
-rejected_by
-rejected_at
-rejection_reason
-error_summary
-metadata_snapshot
-timestamps
+source module
+source type
+source ID
+posting type
+posting version
+attempt count
+error code
+short error message
+last attempted at
+next retry at
+journal link if any
+created by
+actions
 ```
 
-Statuses:
+Filters:
 
 ```text
-draft
-validated
-imported
-approved
-rejected
-cancelled
-```
-
-Rules:
-
-```text
-Duplicate file_hash for the same bank account must be blocked.
-Validation preview should happen before final import.
-Rejected imports remain visible but unusable for reconciliation.
-Approved/imported lines are immutable.
-```
-
----
-
-# 8. bank_statement_lines
-
-Fields:
-
-```text
-id
-bank_statement_import_id
-bank_account_id
-line_number
-transaction_date
-value_date
-reference
-normalized_reference
-description
-debit_amount
-credit_amount
-balance_after
-external_transaction_id
-line_hash
-match_status
-matched_amount
-unmatched_amount
-metadata_snapshot
-timestamps
-```
-
-Match statuses:
-
-```text
-unmatched
-suggested
-partially_matched
-matched
-ignored
-```
-
-Rules:
-
-```text
-A line must not be matched above its debit/credit amount.
-Duplicate line hashes within the same bank account and date/reference/amount context must be detected.
-Statement lines are not deleted after import.
-```
-
----
-
-# 9. bank_reconciliations
-
-Fields:
-
-```text
-id
-bank_account_id
-period_start
-period_end
-statement_opening_balance
-statement_closing_balance
-book_opening_balance
-book_closing_balance
-outstanding_deposits_total
-outstanding_withdrawals_total
-adjustments_total
-difference
 status
-prepared_by
-prepared_at
-approved_by
-approved_at
-reopened_by
-reopened_at
-reopen_reason
-reversed_by
-reversed_at
-reversal_reason
-notes
-timestamps
+source module
+source type
+posting type
+date range
+attempt count
+error code
+has journal
+has reversal
+resolved by
+waived only
 ```
 
-Statuses:
+Dashboard cards:
 
 ```text
-draft
-prepared
-approved
-reopened
+failed unresolved
+failed over 7 days
+failed over 30 days
+waived
+resolved
+posted after retry
+by source module
+```
+
+Keep queries indexed and paginated.
+
+---
+
+# 7. Workbench Detail Page
+
+The detail page must show:
+
+```text
+source identity
+idempotency key
+status
+journal entry link
+reversal journal link
+attempt count
+first attempted at
+last attempted at
+next retry at
+error code
+full error message
+error context
+source snapshot
+posting snapshot
+resolution details
+event timeline
+```
+
+Event timeline should show:
+
+```text
+created
+processing
+failed
+retried
+posted
+resolved
+waived
 reversed
-cancelled
 ```
 
-Rules:
+Snapshots may be LONGTEXT JSON. Display them safely:
 
 ```text
-Approved reconciliation is locked.
-Reopening requires permission and reason.
-Reversing must preserve the original record.
-Reconciliation must show why statement and book balances agree or differ.
+pretty formatted if valid JSON
+raw text fallback if invalid
+```
+
+Do not expose sensitive financial data to unauthorized users.
+
+---
+
+# 8. Retry Handling
+
+Implement retry for supported sources.
+
+Use a handler registry:
+
+```text
+AccountingPostingHandlerRegistry
+```
+
+Each handler should support:
+
+```php
+public function supports(AccountingPostingAttempt $attempt): bool;
+public function retry(AccountingPostingAttempt $attempt, User $actor): RetryResult;
+```
+
+Initial handlers should include existing supported paths:
+
+```text
+invoice
+payment
+discount
+credit note
+financial_entry / Basic Accounting entry
+bank_reconciliation_adjustment
+```
+
+Add supplier/inventory handlers only if existing posting services make it safe.
+
+If a source type has no handler:
+
+```text
+show controlled unsupported-source error
+do not mark resolved
+do not waive automatically
+append retry-failed event
+```
+
+Retry rules:
+
+```text
+same idempotency key
+same source identity
+increment attempt_count
+retain previous error event
+on success link journal
+on failure retain new error event
+do not duplicate journal
 ```
 
 ---
 
-# 10. bank_reconciliation_matches
+# 9. Retry Selected
 
-Fields:
-
-```text
-id
-bank_reconciliation_id
-bank_statement_line_id
-matchable_type
-matchable_id
-matched_amount
-match_method
-confidence_score
-status
-matched_by
-matched_at
-unmatched_by
-unmatched_at
-unmatch_reason
-metadata_snapshot
-timestamps
-```
-
-Match methods:
-
-```text
-manual
-suggested_exact
-suggested_reference
-suggested_amount_date
-suggested_many_to_one
-suggested_one_to_many
-```
+Add bulk retry for selected failed attempts.
 
 Rules:
 
 ```text
-Matches must be reversible/unmatchable before reconciliation approval.
-Approved reconciliation locks matches.
-Matching must never silently alter the source transaction.
+only failed attempts can be selected
+skip unsupported attempts with clear reason
+continue on individual failure
+show batch summary
+audit batch action
 ```
 
-Matchable sources may include:
+Batch summary:
 
 ```text
-journal lines affecting the linked bank GL account
-patient payments
-supplier payments
-Basic Accounting posted cash/bank entries
-payroll settlements later
-bank adjustment journals
+selected
+retried
+posted
+failed_again
+unsupported
+skipped
 ```
 
-Start with journal/cashbook based matching if that is safest.
+Do not use one huge transaction for all selected attempts.
+
+Use one transaction per source attempt unless the existing posting service requires otherwise.
 
 ---
 
-# 11. bank_reconciliation_adjustments
+# 10. Manual Resolution
 
-Fields:
+Manual resolution is for cases where the accounting issue was fixed outside automated retry.
+
+Resolution requires:
 
 ```text
-id
-bank_reconciliation_id
-bank_account_id
-type
-description
-amount
-side
-account_id
-journal_entry_id
-status
-proposed_by
-proposed_at
-approved_by
-approved_at
-posted_by
-posted_at
-rejected_by
-rejected_at
-rejection_reason
-metadata_snapshot
-timestamps
+resolution type
+resolution note
+optional linked journal entry
+optional linked source record
+evidence/reference
+actor
+timestamp
 ```
 
-Types:
+Allowed resolution types:
 
 ```text
-bank_charge
-interest_income
-transfer_fee
-correction
+corrected_by_manual_journal
+source_cancelled
+not_required_after_review
+duplicate_source_record
+external_adjustment
 other
 ```
 
-Side:
+Rules:
 
 ```text
-debit
-credit
+cannot resolve posted attempt
+cannot resolve without note
+cannot resolve without permission
+must append event
+must remain visible in workbench
+must appear in close readiness as resolved, not hidden
 ```
 
-Statuses:
+If linked journal is required for certain resolution types, enforce it.
+
+Recommended:
 
 ```text
-draft
-proposed
-approved
-posted
-rejected
-cancelled
-reversed
+corrected_by_manual_journal requires journal_entry_id
+```
+
+---
+
+# 11. Waive Handling
+
+Waive is an elevated action for non-material or non-ledger items.
+
+Waive requires:
+
+```text
+permission
+reason
+review date or expiry date if supported
+materiality note
+actor
+timestamp
 ```
 
 Rules:
 
 ```text
-Adjustments are proposed first.
-Approved adjustments post through accounting services.
-Do not post adjustment journals directly from controllers.
-Do not allow unapproved adjustments to affect reconciliation as final.
+cannot waive posted attempt
+cannot waive without reason
+waived attempts remain visible
+close readiness must show waived attempts separately
+waive does not create journal
+waive does not change source financial amounts
 ```
 
-Suggested journals:
-
-Bank charge:
-
-```text
-Dr Bank Charges Expense
-Cr Bank Account
-```
-
-Interest income:
-
-```text
-Dr Bank Account
-Cr Interest Income
-```
-
-Use account mappings or selected accounts.
-
-Do not hardcode account IDs.
+Finance Manager or Administrator only.
 
 ---
 
-# 12. Services To Add
+# 12. Close Readiness Integration
 
-Create:
-
-```text
-BankAccountService
-BankStatementImportService
-BankStatementCsvParser
-BankMatchSuggestionService
-BankReconciliationService
-BankReconciliationAdjustmentPostingService
-```
-
-Use existing:
+Extend `AccountingCloseReadinessService` to report:
 
 ```text
-AccountingPostingService
-AccountingPostingAttemptService
-AccountingAccountMappingService
-JournalEntryService
-ActivityLogService
+unresolved failed attempts by period
+unresolved failed attempts by source module
+waived attempts by period
+resolved attempts by period
+unsupported failed attempts
+posted-after-retry attempts
+oldest unresolved failure
+material unresolved failures if amount is available
 ```
 
-Controllers must call services.
+If existing close/period screens exist, add a read-only link/card to failed posting readiness.
 
-Do not put reconciliation logic in Blade.
+Do not hard-block period close yet unless an existing close gate already safely supports this.
+
+Document recommended future close-blocking behavior.
 
 ---
 
-# 13. BankStatementImportService
+# 13. Source Links
 
-This service should:
-
-```text
-validate CSV file
-preview parsed rows
-normalize dates
-normalize debit/credit values
-normalize references
-calculate line hashes
-detect duplicate files
-detect duplicate lines
-store import metadata
-store statement lines
-reject invalid rows with clear errors
-support import cancellation/rejection
-```
-
-CSV parser requirements:
+Where possible, provide source links for:
 
 ```text
-support configurable column mapping
-support date format configuration
-support debit/credit separate columns
-support signed amount column where possible
-support opening and closing balance input/manual confirmation
+invoice
+payment
+discount
+credit note
+financial entry
+bank reconciliation adjustment
+supplier payable
+supplier payment
+goods received note
+stock movement
+purchase return
 ```
 
-First release can support CSV only.
+If a route is unknown or module disabled:
 
-Do not implement OFX/MT940 yet.
+```text
+show source identity text only
+do not crash
+```
 
 ---
 
-# 14. BankMatchSuggestionService
+# 14. Sidebar / Navigation
 
-Generate match suggestions using:
+Add a navigation link under Advanced Accounting if doing so does not break existing sidebar tests.
 
-```text
-exact amount
-transaction date tolerance
-value date tolerance
-reference match
-normalized reference match
-description text match
-known payment reference
-journal line amount
-bank GL account
-```
-
-Return explainable suggestions:
+Suggested label:
 
 ```text
-suggested source
-matched amount
-confidence score
-reason
-date difference
-reference comparison
+Failed Postings
 ```
 
-Do not auto-approve suggestions.
+If sidebar assertions are still locked from Phase B, update the tests correctly and document it.
 
-User must confirm.
+Do not bypass menu tests by hiding the route.
 
 ---
 
-# 15. BankReconciliationService
+# 15. Permissions
 
-This service should:
-
-```text
-prepare reconciliation
-calculate statement opening/closing balances
-calculate book opening/closing balances from linked GL account
-calculate outstanding deposits
-calculate outstanding withdrawals
-calculate adjustments
-calculate difference
-create draft/prepared reconciliation
-approve reconciliation
-reopen reconciliation
-reverse reconciliation where supported
-lock approved reconciliation
-```
-
-Formula:
+Use existing Phase 0 permissions where present:
 
 ```text
-Adjusted bank statement balance
-= statement closing balance
-+ outstanding deposits
-- outstanding withdrawals
-+/- approved adjustments
-
-Book balance
-= GL cash/bank balance at period end
-
-Difference
-= adjusted statement balance - book balance
+accounting.failed_postings.view
+accounting.failed_postings.retry
+accounting.failed_postings.resolve
+accounting.failed_postings.waive
 ```
 
-Use the project’s existing money precision rules.
-
-Do not rely on PHP floats as authoritative.
-
----
-
-# 16. Matching UI
-
-Add screens for:
-
-```text
-Bank accounts index/show/create/edit
-Statement import wizard
-Statement import preview
-Statement lines list
-Match suggestions
-Manual matching workspace
-Reconciliation draft
-Reconciliation statement
-Approval screen
-Reopen screen
-Adjustment proposal screen
-```
-
-Use Bootstrap 5 and Tabler Icons only.
-
-Do not introduce new frontend frameworks.
-
----
-
-# 17. Matching Workflow
-
-Workflow:
-
-```text
-Upload CSV
-Preview parsed lines
-Confirm import
-Review unmatched statement lines
-View suggested matches
-Confirm manual/suggested matches
-Propose bank charges/interest if needed
-Prepare reconciliation
-Approve reconciliation if difference is zero or within tolerance
-Lock approved reconciliation
-```
-
-If difference is not zero, show clear warning and block approval unless a configured tolerance/override permission allows it.
-
----
-
-# 18. Permissions
-
-Add permissions:
-
-```text
-accounting.bank_accounts.view
-accounting.bank_accounts.manage
-accounting.bank_statements.import
-accounting.bank_statements.view
-accounting.bank_statements.reject
-accounting.bank_reconciliation.view
-accounting.bank_reconciliation.manage
-accounting.bank_reconciliation.match
-accounting.bank_reconciliation.approve
-accounting.bank_reconciliation.reopen
-accounting.bank_reconciliation.reverse
-accounting.bank_adjustments.propose
-accounting.bank_adjustments.approve
-accounting.bank_adjustments.post
-```
+Add only if missing.
 
 Suggested role defaults:
 
 ```text
 Accountant:
-- view bank accounts
-- import/view statements
-- manage reconciliation
-- match lines
-- propose adjustments
+- view
+- retry
 
 Finance Manager:
-- approve/reopen/reverse reconciliations
-- approve/post adjustments
-- manage bank accounts
+- view
+- retry
+- resolve
+- waive
 
-Administrator:
-- all seeded permissions
+Administrator / Super Admin:
+- all
 ```
 
-Do not grant these permissions to broad clinical roles.
+Do not grant to broad clinical roles.
 
 ---
 
-# 19. Audit Logging
+# 16. Audit Logging
 
 Use `ActivityLogService`.
 
 Audit:
 
 ```text
-BANK_ACCOUNT_CREATED
-BANK_ACCOUNT_UPDATED
-BANK_ACCOUNT_DISABLED
-BANK_STATEMENT_IMPORT_PREVIEWED
-BANK_STATEMENT_IMPORTED
-BANK_STATEMENT_REJECTED
-BANK_STATEMENT_LINE_MATCHED
-BANK_STATEMENT_LINE_UNMATCHED
-BANK_RECONCILIATION_PREPARED
-BANK_RECONCILIATION_APPROVED
-BANK_RECONCILIATION_REOPENED
-BANK_RECONCILIATION_REVERSED
-BANK_ADJUSTMENT_PROPOSED
-BANK_ADJUSTMENT_APPROVED
-BANK_ADJUSTMENT_POSTED
-BANK_ADJUSTMENT_REJECTED
+FAILED_POSTING_VIEWED
+FAILED_POSTING_RETRY_REQUESTED
+FAILED_POSTING_RETRY_SUCCEEDED
+FAILED_POSTING_RETRY_FAILED
+FAILED_POSTING_BATCH_RETRY_REQUESTED
+FAILED_POSTING_BATCH_RETRY_COMPLETED
+FAILED_POSTING_RESOLVED
+FAILED_POSTING_WAIVED
+FAILED_POSTING_CLOSE_READINESS_VIEWED
 ```
+
+If `AccountingPostingAttemptService` already audits lower-level state changes, do not duplicate low-level event spam unnecessarily. But user actions must still be auditable.
 
 Run:
 
@@ -771,7 +625,7 @@ Fix any missing/needs-review logs.
 
 ---
 
-# 20. Localisation
+# 17. Localisation
 
 All new labels must be localized EN/FR.
 
@@ -782,55 +636,40 @@ lang/en/accounting.php
 lang/fr/accounting.php
 ```
 
-Required keys include:
+Keys:
 
 ```text
-bank_accounts
-bank_account
-bank_name
-branch_name
-account_name
-account_number
-masked_account_number
-opening_balance
-statement_import
-statement_lines
-statement_period
-opening_statement_balance
-closing_statement_balance
-transaction_date
-value_date
-reference
-normalized_reference
-debit_amount
-credit_amount
-balance_after
-match_status
-matched_amount
-unmatched_amount
-match_suggestions
-manual_match
-confirm_match
-unmatch
-reconciliation
-bank_reconciliation
-prepare_reconciliation
-approve_reconciliation
-reopen_reconciliation
-reconciliation_statement
-outstanding_deposits
-outstanding_withdrawals
-book_balance
-statement_balance
-adjusted_statement_balance
-difference
-bank_charge
-interest_income
-adjustment
-adjustments
-propose_adjustment
-approve_adjustment
-post_adjustment
+failed_postings
+failed_posting
+failed_posting_workbench
+retry_posting
+retry_selected
+retry_result
+retry_succeeded
+retry_failed
+unsupported_source_type
+resolve_posting
+waive_posting
+resolution_type
+resolution_note
+waive_reason
+materiality_note
+attempt_timeline
+source_snapshot
+posting_snapshot
+error_context
+posted_after_retry
+failed_again
+unsupported
+oldest_unresolved_failure
+failed_over_7_days
+failed_over_30_days
+close_readiness_failed_postings
+corrected_by_manual_journal
+source_cancelled
+not_required_after_review
+duplicate_source_record
+external_adjustment
 ```
 
 Maintain EN/FR parity.
@@ -850,39 +689,38 @@ Active runtime candidates must remain:
 
 ---
 
-# 21. Tests
+# 18. Tests
 
 Add tests for:
 
 ```text
-bank account can be created with GL account mapping
-unauthorized user cannot manage bank accounts
-duplicate bank statement file is rejected
-CSV preview writes no statement lines
-CSV import creates statement lines
-invalid CSV rows produce clear errors
-duplicate statement lines are blocked or skipped safely
-match suggestion finds exact amount/reference match
-manual match links statement line to journal line
-statement line cannot be overmatched
-match can be reversed before approval
-approved reconciliation locks matches
-bank charge adjustment posts balanced journal
-interest income adjustment posts balanced journal
-reconciliation calculates statement/book difference
-reconciliation cannot approve with unexplained difference
-reconciliation can approve when difference is zero
-reopening approved reconciliation requires permission and reason
-ActivityLogService records import/match/approval events
+failed posting index is permission protected
+failed posting show is permission protected
+failed posting index lists failed attempts
+failed posting detail shows event timeline
+retry unsupported source records retained failure
+retry supported Basic entry posts through Phase A service
+retry supported bank adjustment posts through Phase B service
+duplicate retry does not duplicate journal
+batch retry continues on individual failure
+manual resolution requires note
+corrected_by_manual_journal requires linked journal
+waive requires elevated permission and reason
+posted attempt cannot be waived
+resolved attempt remains visible
+waived attempt appears separately in close readiness
+close readiness shows unresolved failed counts
+source link fallback does not crash for unknown source
 module middleware blocks direct route when Advanced Accounting disabled
+ActivityLogService records retry/resolve/waive user actions
 localisation lock remains active runtime 0
 ```
 
-Existing Phase 0 and Phase A accounting tests must still pass.
+Existing Phase 0, Phase A, and Phase B tests must still pass.
 
 ---
 
-# 22. Verification Commands
+# 19. Verification Commands
 
 Run:
 
@@ -908,56 +746,62 @@ npm run build
 
 ---
 
-# 23. Documentation
+# 20. Documentation
 
 Create:
 
 ```text
-docs/ACCOUNTING_PHASE_B_BANK_ACCOUNTS_AND_RECONCILIATION_REPORT.md
+docs/ACCOUNTING_PHASE_C_FAILED_POSTING_WORKBENCH_REPORT.md
 ```
 
 Include:
 
 ```text
 summary
-database changes
-models added
+baseline before implementation
+database changes if any
 services added
-commands added if any
-permissions added
-routes/controllers/views added
-CSV import behavior
-duplicate detection
-matching strategy
-reconciliation formula
-adjustment posting strategy
+handler registry
+supported retry sources
+unsupported retry sources
+permissions
+routes/controllers/views
+workbench filters
+detail page behavior
+retry behavior
+batch retry behavior
+manual resolution behavior
+waive behavior
+close readiness integration
+source-link behavior
 audit logging
 tests added
 commands run
 localisation audit result
+full suite result
 known limitations
 next recommended phase
 ```
 
 ---
 
-# 24. Acceptance Criteria
+# 21. Acceptance Criteria
 
-Phase B is complete only when:
+Phase C is complete only when:
 
 ```text
-bank accounts can be configured and linked to GL accounts
-CSV statement import supports preview and confirmed import
-duplicate imports are blocked
-statement lines are stored immutably
-match suggestions are explainable and not auto-approved
-manual matching works
-statement lines cannot be overmatched
-matches can be reversed before approval
-reconciliation calculates book/statement/outstanding/adjustment differences
-approved reconciliations are locked
-reopening requires permission and reason
-bank charges and interest can post through accounting services
+failed posting workbench exists
+failed posting detail page exists
+failed attempts can be filtered and inspected
+attempt event timeline is visible
+retry works for supported sources
+unsupported sources fail safely and visibly
+retry does not duplicate journals
+batch retry continues safely
+manual resolution requires evidence
+waive requires elevated permission and reason
+waived attempts remain visible
+close readiness separates failed/resolved/waived attempts
 permissions are enforced
 module middleware protects direct routes
 ActivityLogService is used
@@ -965,12 +809,13 @@ EN/FR localisation parity passes
 active runtime candidates remain 0
 Phase 0 tests still pass
 Phase A tests still pass
+Phase B tests still pass
 Accounting suite passes
 route list works
 view cache compiles
 logs:audit is clean or documented with root-cause fixes
-full test suite is run
+full test suite is run or any inability is clearly documented
 documentation report is created
 ```
 
-Proceed with Accounting Execution Phase B now.
+Proceed with Accounting Execution Phase C now.

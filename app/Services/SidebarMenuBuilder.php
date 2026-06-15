@@ -994,6 +994,14 @@ class SidebarMenuBuilder
                         'module' => 'accounting_advanced',
                     ],
                     [
+                        'label' => 'Failed Postings',
+                        'icon' => 'ti ti-alert-triangle',
+                        'route' => 'admin.accounting.failed-postings.index',
+                        'active_patterns' => ['admin.accounting.failed-postings.*'],
+                        'permission' => 'accounting.failed_postings.view',
+                        'module' => 'accounting_advanced',
+                    ],
+                    [
                         'label' => 'Bank Accounts',
                         'icon' => 'ti ti-building-bank',
                         'route' => 'admin.accounting.bank.accounts.index',
@@ -1595,6 +1603,7 @@ class SidebarMenuBuilder
                     'Accounting Settings',
                     'Basic Posting Bridge',
                     'Posting Templates',
+                    'Failed Postings',
                     'Bank Accounts',
                     'Statement Imports',
                     'Bank Reconciliation',

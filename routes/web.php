@@ -726,6 +726,19 @@ Route::middleware('auth')->group(function () {
                     Route::get('{postingAttempt}', [AccountingPostingAttemptController::class, 'show'])->name('show');
                 });
 
+            Route::middleware(['module:accounting_basic', 'can:accounting.failed_postings.view'])
+                ->prefix('failed-postings')
+                ->name('failed-postings.')
+                ->group(function () {
+                    $workbench = \App\Http\Controllers\Accounting\FailedPostingWorkbenchController::class;
+                    Route::get('/', [$workbench, 'index'])->name('index');
+                    Route::post('retry-selected', [$workbench, 'retrySelected'])->name('retry-selected')->middleware('can:accounting.failed_postings.retry');
+                    Route::get('{failedPosting}', [$workbench, 'show'])->name('show');
+                    Route::post('{failedPosting}/retry', [$workbench, 'retry'])->name('retry')->middleware('can:accounting.failed_postings.retry');
+                    Route::post('{failedPosting}/resolve', [$workbench, 'resolve'])->name('resolve')->middleware('can:accounting.failed_postings.resolve');
+                    Route::post('{failedPosting}/waive', [$workbench, 'waive'])->name('waive')->middleware('can:accounting.failed_postings.waive');
+                });
+
             Route::middleware('can:accounting.mappings.view')
                 ->prefix('mappings')
                 ->name('mappings.')

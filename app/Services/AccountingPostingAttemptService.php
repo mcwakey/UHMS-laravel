@@ -169,6 +169,41 @@ class AccountingPostingAttemptService
         return $this->resolveState($attempt, $actor, 'resolved', $type, $reason, 'ACCOUNTING_POSTING_ATTEMPT_RESOLVED');
     }
 
+    public function resolveWithEvidence(
+        AccountingPostingAttempt $attempt,
+        User $actor,
+        string $type,
+        string $reason,
+        array $evidence,
+    ): AccountingPostingAttempt {
+        return $this->resolveState(
+            $attempt,
+            $actor,
+            'resolved',
+            $type,
+            $reason,
+            'ACCOUNTING_POSTING_ATTEMPT_RESOLVED',
+            $evidence,
+        );
+    }
+
+    public function waiveWithEvidence(
+        AccountingPostingAttempt $attempt,
+        User $actor,
+        string $reason,
+        array $evidence,
+    ): AccountingPostingAttempt {
+        return $this->resolveState(
+            $attempt,
+            $actor,
+            'waived',
+            'waiver',
+            $reason,
+            'ACCOUNTING_POSTING_ATTEMPT_WAIVED',
+            $evidence,
+        );
+    }
+
     public function reversed(AccountingPostingAttempt $attempt, JournalEntry $reversal, User $actor): AccountingPostingAttempt
     {
         return DB::transaction(function () use ($attempt, $reversal, $actor) {
@@ -203,15 +238,19 @@ class AccountingPostingAttemptService
         string $type,
         string $reason,
         string $event,
+        array $evidence = [],
     ): AccountingPostingAttempt {
         if (trim($reason) === '') {
             throw ValidationException::withMessages(['resolution_note' => 'A resolution reason is required.']);
         }
 
-        return DB::transaction(function () use ($attempt, $actor, $status, $type, $reason, $event) {
+        return DB::transaction(function () use ($attempt, $actor, $status, $type, $reason, $event, $evidence) {
             $locked = AccountingPostingAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
             if ($locked->status === 'posted') {
                 throw ValidationException::withMessages(['posting' => 'A posted attempt must be reversed, not resolved or waived.']);
+            }
+            if ($locked->status !== 'failed') {
+                throw ValidationException::withMessages(['posting' => 'Only a failed posting attempt can be resolved or waived.']);
             }
             $oldStatus = $locked->status;
             $locked->update([
@@ -220,10 +259,18 @@ class AccountingPostingAttemptService
                 'resolved_at' => now(),
                 'resolution_type' => $type,
                 'resolution_note' => $reason,
+                'resolution_journal_entry_id' => $evidence['resolution_journal_entry_id'] ?? null,
+                'resolution_source_type' => $evidence['resolution_source_type'] ?? null,
+                'resolution_source_id' => $evidence['resolution_source_id'] ?? null,
+                'resolution_reference' => $evidence['resolution_reference'] ?? null,
+                'resolution_evidence' => $evidence['resolution_evidence'] ?? null,
+                'materiality_note' => $evidence['materiality_note'] ?? null,
+                'waiver_review_date' => $evidence['waiver_review_date'] ?? null,
                 'updated_by' => $actor->id,
             ]);
-            $this->event($locked, $event, $oldStatus, $status, actor: $actor, context: ['reason' => $reason]);
-            $this->audit($locked, $event, $actor, ['reason' => $reason], LogSeverity::WARNING);
+            $context = array_filter(array_merge(['reason' => $reason], $evidence), fn ($value) => $value !== null && $value !== '');
+            $this->event($locked, $event, $oldStatus, $status, actor: $actor, context: $context);
+            $this->audit($locked, $event, $actor, $context, LogSeverity::WARNING);
 
             return $locked->fresh();
         });

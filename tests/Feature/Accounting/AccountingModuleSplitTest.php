@@ -37,6 +37,7 @@ class AccountingModuleSplitTest extends TestCase
             'accounting.periods.view', 'accounting.settings.view',
             'accounting.bank_accounts.view', 'accounting.bank_statements.view',
             'accounting.bank_reconciliation.view',
+            'accounting.failed_postings.view',
         ];
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
@@ -82,6 +83,7 @@ class AccountingModuleSplitTest extends TestCase
         foreach (['Bank Accounts', 'Statement Imports', 'Bank Reconciliation'] as $label) {
             $this->assertTrue($labels->contains($label), "Advanced Accounting menu is missing '{$label}'.");
         }
+        $this->assertTrue($labels->contains('Failed Postings'));
     }
 
     public function test_disabling_basic_accounting_blocks_direct_basic_routes(): void
