@@ -5,41 +5,33 @@ There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
 Do not try to read it.
 Follow this prompt directly.
 
-# UHMS Accounting Execution Phase C — Failed Posting Workbench & Posting Resolution Controls
+# UHMS Accounting Execution Phase D — Subledger Reconciliation Workbench
 
 ## Goal
 
-Implement the dedicated Failed Posting Workbench for UHMS accounting.
+Implement a Subledger Reconciliation Workbench for UHMS.
 
-Phase 0 created the shared posting-attempt register and services.
-Phase A connected Basic Accounting entries to the GL.
-Phase B added bank reconciliation and bank adjustment posting.
+The workbench must compare operational subledger balances against Advanced Accounting GL control accounts and show explainable differences.
 
-Now finance users need a proper operator workbench to:
+This phase builds on:
 
 ```text
-view failed accounting postings
-inspect source snapshots and posting snapshots
-see retained error history
-retry failed postings
-resolve postings manually with evidence
-waive postings with elevated permission
-link corrective journals
-monitor failed postings by source module
-support period-close readiness
+Accounting Phase 0 — Shared Posting Controls
+Accounting Phase A — Basic-to-Advanced Posting Bridge
+Accounting Phase B — Bank Accounts and Bank Reconciliation
+Accounting Phase C — Failed Posting Workbench
 ```
 
-Do not create a parallel accounting system.
+Do not create a parallel accounting engine.
 
-Use the Phase 0 shared controls:
+Use existing:
 
 ```text
-accounting_posting_attempts
-accounting_posting_attempt_events
-AccountingPostingAttemptService
-AccountingIdempotencyService
-AccountingCloseReadinessService
+JournalEntryService
+GeneralLedgerService
 AccountingPostingService
+AccountingPostingAttemptService
+AccountingCloseReadinessService
 ActivityLogService
 ```
 
@@ -54,538 +46,567 @@ docs/ACCOUNTING_GAP_EXECUTION_MASTER_PLAN.md
 docs/ACCOUNTING_PHASE_0_SHARED_CONTROLS_AND_READINESS_REPORT.md
 docs/ACCOUNTING_PHASE_A_BASIC_TO_ADVANCED_POSTING_BRIDGE_REPORT.md
 docs/ACCOUNTING_PHASE_B_BANK_ACCOUNTS_AND_RECONCILIATION_REPORT.md
+docs/ACCOUNTING_PHASE_C_FAILED_POSTING_WORKBENCH_REPORT.md
 docs/ACCOUNTING_MODULE_SPLIT_AND_GAP_REPORT.md
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
 
-Current confirmed baseline:
+Current baseline:
 
 ```text
 Phase 0 complete.
 Phase A complete.
 Phase B complete.
-Accounting + localisation suites pass.
-Phase B focused suite passes.
+Phase C complete.
+Failed posting workbench exists.
+Bank reconciliation exists.
+Basic-to-Advanced posting bridge exists.
 Active runtime candidates: 0.
-logs:audit: 0 missing / 0 needs-review.
+Audit funnel clean for recent accounting code.
 ```
 
-Important Phase B caveat:
+Important testing instruction:
 
 ```text
-The complete php artisan test suite was not run end-to-end during Phase B.
+Do not run the wide full test suite after this individual phase.
+The wide full-suite test will be left until all accounting-gap implementation phases in this batch are complete.
+For this phase, run only necessary safety checks: migrations, route list, view cache, localisation audit, permission audit, logs:audit, PHP lint where relevant, and git diff check.
 ```
-
-So before implementation, run the full suite and record the baseline.
 
 ---
 
-# 2. Baseline Confirmation First
+# 2. Scope of This Phase
 
-Before changing code, run:
-
-```bash
-php artisan test
-php artisan test tests/Feature/Accounting
-php artisan test tests/Feature/Localization
-php scripts/localisation-audit.php
-php artisan logs:audit --json
-php artisan route:list
-php artisan view:cache
-php artisan view:clear
-git diff --check
-```
-
-Record:
+Implement reconciliation for these domains:
 
 ```text
-full suite result
-accounting suite result
-localisation suite result
-active runtime candidate count
-audit result
-route count
-view cache result
+Accounts receivable control account vs open receivables
+Supplier payables control account vs open payables
+Inventory control account vs inventory valuation
+Payroll payable/liability accounts vs payroll subledger where available
+Cash/bank GL accounts vs bank/cash positions where available
+PAYE payable account vs payroll tax calculations where available
+Pension/SSNIT payable account vs payroll pension calculations where available
 ```
 
-If the full suite has pre-existing failures, document them and confirm they are unrelated to Phase C before continuing.
+If some source subledgers are not fully implemented yet, add the reconciliation domain as:
 
-Do not hide unrelated failures.
+```text
+available
+partially_available
+not_available
+```
+
+and explain the missing source data.
+
+Do not fake balances.
 
 ---
 
-# 3. Scope of This Phase
+# 3. Core Rules
 
-Implement:
-
-```text
-failed posting workbench index
-failed posting detail page
-retry action
-retry selected action
-manual resolution action
-waive action
-source record link
-journal link
-attempt event timeline
-error context viewer
-source snapshot viewer
-posting snapshot viewer
-filters
-dashboard cards
-close readiness integration
-permissions
-audit logging
-tests
-documentation
-```
-
-Do not implement yet:
+The reconciliation workbench must be:
 
 ```text
-subledger reconciliation workbench
-cash flow statement
-payroll posting
-budgets
-fixed assets
-statutory tax returns
-receivables collector workbench
-claims settlement accounting
-```
-
-Those come later.
-
----
-
-# 4. Core Rules
-
-The failed posting workbench must be:
-
-```text
+snapshot-based
+repeatable
 auditable
 permission-aware
 module-aware
-idempotent
-safe from duplicate journals
-safe from silent error loss
-traceable to source records
-traceable to journal entries
+drillable
+non-destructive
 ```
 
-Important:
+Rules:
 
 ```text
-Retry must never create duplicate journals.
-Resolving must require evidence.
-Waiving must require elevated permission and a reason.
-Posted attempts cannot be waived.
-Resolved attempts cannot be silently retried.
-Waived attempts must remain visible.
-Errors must not be deleted.
-Attempt event history must be append-only.
+Reconciliation does not auto-create corrections.
+Reconciliation does not silently change GL or source records.
+Differences must be classified and explained.
+Corrections must happen through existing posting, reversal, adjustment, payment, credit-note, write-off, or source services.
+Manual journal differences must be visible separately.
 ```
-
-Do not delete failed attempts.
-
-Do not overwrite historical event rows.
 
 ---
 
-# 5. Workbench Routes
+# 4. Database Tables
 
-Add routes under Advanced Accounting.
-
-Suggested route prefix:
+Create additive tables:
 
 ```text
-admin/accounting/failed-postings
+accounting_reconciliation_runs
+accounting_reconciliation_items
+accounting_reconciliation_resolutions
 ```
 
-Suggested route names:
+Use string statuses with application validation.
 
-```text
-admin.accounting.failed-postings.index
-admin.accounting.failed-postings.show
-admin.accounting.failed-postings.retry
-admin.accounting.failed-postings.retry-selected
-admin.accounting.failed-postings.resolve
-admin.accounting.failed-postings.waive
-```
+Do not use database enums.
 
-All routes must use:
+Use `DECIMAL(18,2)` for money.
 
-```text
-auth
-module:accounting_basic
-module:accounting_advanced
-permission middleware
-```
+Use `LONGTEXT` for snapshots where needed.
 
-Do not rely on sidebar hiding.
+Use explicit short MariaDB-safe index names.
 
 ---
 
-# 6. Workbench Index
+# 5. accounting_reconciliation_runs
 
-The index should show failed, waived, resolved, reversed, and posted attempts depending on filters.
-
-Default view:
+Fields:
 
 ```text
-failed unresolved attempts
+id
+reconciliation_type
+period_start
+period_end
+as_of_date
+status
+tolerance_amount
+subledger_total
+gl_total
+difference_amount
+difference_classification
+source_snapshot
+gl_snapshot
+summary_snapshot
+started_by
+started_at
+completed_by
+completed_at
+approved_by
+approved_at
+cancelled_by
+cancelled_at
+cancellation_reason
+notes
+timestamps
 ```
 
-Columns:
+Statuses:
 
 ```text
-status
-source module
-source type
-source ID
-posting type
-posting version
-attempt count
-error code
-short error message
-last attempted at
-next retry at
-journal link if any
-created by
-actions
+draft
+running
+completed
+approved
+cancelled
+superseded
 ```
 
-Filters:
+Reconciliation types:
 
 ```text
-status
-source module
-source type
-posting type
-date range
-attempt count
-error code
-has journal
-has reversal
-resolved by
-waived only
+accounts_receivable
+accounts_payable
+inventory
+payroll
+cash_bank
+paye
+pension
+```
+
+---
+
+# 6. accounting_reconciliation_items
+
+Fields:
+
+```text
+id
+accounting_reconciliation_run_id
+source_type
+source_id
+source_reference
+source_description
+gl_account_id
+subledger_amount
+gl_amount
+difference_amount
+classification
+resolution_status
+metadata_snapshot
+timestamps
+```
+
+Classifications:
+
+```text
+balanced
+timing_difference
+unposted_source
+failed_posting
+manual_journal
+mapping_issue
+source_data_issue
+period_cutoff
+unknown_difference
+not_available
+```
+
+Resolution statuses:
+
+```text
+open
+explained
+resolved
+accepted_timing
+waived
+```
+
+---
+
+# 7. accounting_reconciliation_resolutions
+
+Fields:
+
+```text
+id
+accounting_reconciliation_run_id
+accounting_reconciliation_item_id nullable
+resolution_type
+resolution_note
+linked_journal_entry_id nullable
+linked_posting_attempt_id nullable
+linked_source_type nullable
+linked_source_id nullable
+resolved_by
+resolved_at
+metadata_snapshot
+timestamps
+```
+
+Resolution types:
+
+```text
+retry_posting
+reverse_journal
+source_corrected
+manual_journal_linked
+accepted_timing_difference
+mapping_corrected
+waived_after_review
+other
+```
+
+---
+
+# 8. Reconciliation Domains
+
+## 8.1 Accounts Receivable
+
+Compare:
+
+```text
+open invoice receivables / payer balances
+```
+
+against:
+
+```text
+patient receivable control account
+insurance receivable control account
+sponsor receivable control account
+corporate receivable control account
+```
+
+Use existing receivable models and AR aging foundation.
+
+Do not create a new receivable balance table.
+
+Show drill-down by:
+
+```text
+payer type
+payer
+invoice
+visit/patient where permitted
+aging bucket
+control account
+```
+
+## 8.2 Accounts Payable
+
+Compare:
+
+```text
+open supplier payables
+supplier balances
+unpaid supplier payments where relevant
+```
+
+against:
+
+```text
+supplier payable control account
+```
+
+Show supplier-level drill-down.
+
+## 8.3 Inventory
+
+Compare:
+
+```text
+stock valuation by inventory class/location/product
+```
+
+against:
+
+```text
+inventory control accounts
+```
+
+Show differences from:
+
+```text
+unposted stock movement
+failed inventory posting
+manual GL journal
+valuation mismatch
+period cutoff
+```
+
+## 8.4 Payroll
+
+Compare:
+
+```text
+approved unpaid payroll
+payroll deductions/liabilities
+```
+
+against:
+
+```text
+payroll payable
+salary payable
+PAYE payable
+pension payable
+staff loan receivable if available
+```
+
+If payroll posting is not yet fully connected, mark payroll as partially available and document required Phase E dependency.
+
+## 8.5 Cash/Bank
+
+Compare:
+
+```text
+bank reconciliation/book balances
+cashier cashbook/daily collection where available
+```
+
+against:
+
+```text
+cash and bank GL accounts
+```
+
+Use Phase B bank reconciliation data where available.
+
+## 8.6 PAYE
+
+Compare:
+
+```text
+payroll PAYE calculations less PAYE settlements
+```
+
+against:
+
+```text
+PAYE payable GL account
+```
+
+If payroll tax data exists but posting is not connected, classify as partially available.
+
+## 8.7 Pension / SSNIT
+
+Compare:
+
+```text
+employee/employer pension calculations less settlements
+```
+
+against:
+
+```text
+pension payable GL account
+```
+
+If source data is not complete, classify as partially available.
+
+---
+
+# 9. Services To Add
+
+Create:
+
+```text
+SubledgerReconciliationService
+ReceivablesReconciliationService
+PayablesReconciliationService
+InventoryReconciliationService
+PayrollReconciliationService
+CashBankReconciliationService
+TaxLiabilityReconciliationService
+ReconciliationResolutionService
+```
+
+Use shared helpers where possible.
+
+Do not put reconciliation calculations in controllers or Blade.
+
+---
+
+# 10. SubledgerReconciliationService
+
+This service should:
+
+```text
+start reconciliation run
+calculate subledger total
+calculate GL total
+calculate difference
+create reconciliation items
+classify differences
+store snapshots
+complete run
+approve run
+cancel run
+supersede old draft runs
+```
+
+A reconciliation run must be reproducible from stored snapshots.
+
+Do not depend only on live totals after the run is completed.
+
+---
+
+# 11. Difference Classification
+
+Classify differences where possible:
+
+```text
+failed_posting → source has failed posting attempt
+unposted_source → source approved/eligible but not posted
+manual_journal → GL control account entry has no source link
+mapping_issue → source/account mapping missing or wrong
+timing_difference → source and GL dates fall in different periods
+source_data_issue → source amount differs from posted snapshot
+period_cutoff → source/posting outside selected period
+unknown_difference → cannot classify safely
+```
+
+Do not claim a difference is solved unless evidence exists.
+
+---
+
+# 12. Workbench UI
+
+Add screens under Advanced Accounting:
+
+```text
+Reconciliation dashboard
+New reconciliation run
+Reconciliation run detail
+Reconciliation item drill-down
+Resolution form
+Approval screen
+History screen
 ```
 
 Dashboard cards:
 
 ```text
-failed unresolved
-failed over 7 days
-failed over 30 days
-waived
-resolved
-posted after retry
-by source module
+balanced domains
+difference detected
+failed posting linked
+manual journals detected
+unposted source records
+oldest unresolved difference
+last reconciliation date
 ```
 
-Keep queries indexed and paginated.
+Use Bootstrap 5 and Tabler Icons only.
+
+Do not introduce new frontend frameworks.
 
 ---
 
-# 7. Workbench Detail Page
+# 13. Resolution Workflow
 
-The detail page must show:
+Allow finance users to resolve or explain differences.
 
-```text
-source identity
-idempotency key
-status
-journal entry link
-reversal journal link
-attempt count
-first attempted at
-last attempted at
-next retry at
-error code
-full error message
-error context
-source snapshot
-posting snapshot
-resolution details
-event timeline
-```
-
-Event timeline should show:
+Supported actions:
 
 ```text
-created
-processing
-failed
-retried
-posted
-resolved
-waived
-reversed
-```
-
-Snapshots may be LONGTEXT JSON. Display them safely:
-
-```text
-pretty formatted if valid JSON
-raw text fallback if invalid
-```
-
-Do not expose sensitive financial data to unauthorized users.
-
----
-
-# 8. Retry Handling
-
-Implement retry for supported sources.
-
-Use a handler registry:
-
-```text
-AccountingPostingHandlerRegistry
-```
-
-Each handler should support:
-
-```php
-public function supports(AccountingPostingAttempt $attempt): bool;
-public function retry(AccountingPostingAttempt $attempt, User $actor): RetryResult;
-```
-
-Initial handlers should include existing supported paths:
-
-```text
-invoice
-payment
-discount
-credit note
-financial_entry / Basic Accounting entry
-bank_reconciliation_adjustment
-```
-
-Add supplier/inventory handlers only if existing posting services make it safe.
-
-If a source type has no handler:
-
-```text
-show controlled unsupported-source error
-do not mark resolved
-do not waive automatically
-append retry-failed event
-```
-
-Retry rules:
-
-```text
-same idempotency key
-same source identity
-increment attempt_count
-retain previous error event
-on success link journal
-on failure retain new error event
-do not duplicate journal
-```
-
----
-
-# 9. Retry Selected
-
-Add bulk retry for selected failed attempts.
-
-Rules:
-
-```text
-only failed attempts can be selected
-skip unsupported attempts with clear reason
-continue on individual failure
-show batch summary
-audit batch action
-```
-
-Batch summary:
-
-```text
-selected
-retried
-posted
-failed_again
-unsupported
-skipped
-```
-
-Do not use one huge transaction for all selected attempts.
-
-Use one transaction per source attempt unless the existing posting service requires otherwise.
-
----
-
-# 10. Manual Resolution
-
-Manual resolution is for cases where the accounting issue was fixed outside automated retry.
-
-Resolution requires:
-
-```text
-resolution type
-resolution note
-optional linked journal entry
-optional linked source record
-evidence/reference
-actor
-timestamp
-```
-
-Allowed resolution types:
-
-```text
-corrected_by_manual_journal
-source_cancelled
-not_required_after_review
-duplicate_source_record
-external_adjustment
-other
+link failed posting attempt
+link corrective journal
+mark as accepted timing difference
+mark mapping corrected
+mark source corrected
+waive after review
+add resolution note
 ```
 
 Rules:
 
 ```text
-cannot resolve posted attempt
-cannot resolve without note
-cannot resolve without permission
-must append event
-must remain visible in workbench
-must appear in close readiness as resolved, not hidden
-```
-
-If linked journal is required for certain resolution types, enforce it.
-
-Recommended:
-
-```text
-corrected_by_manual_journal requires journal_entry_id
+Approval of a reconciliation with unresolved differences requires elevated permission.
+Resolved/explained items remain visible.
+Waived differences remain visible.
+Do not auto-post corrections.
 ```
 
 ---
 
-# 11. Waive Handling
+# 14. Close Readiness Integration
 
-Waive is an elevated action for non-material or non-ledger items.
-
-Waive requires:
+Extend `AccountingCloseReadinessService` to include:
 
 ```text
-permission
-reason
-review date or expiry date if supported
-materiality note
-actor
-timestamp
+latest reconciliation per domain
+unapproved reconciliation runs
+domains with unresolved differences
+domains not run for the period
+failed postings linked to reconciliation differences
+manual control-account journals
 ```
 
-Rules:
+Do not hard-block period close in this phase unless existing close code already supports safe blocking.
 
-```text
-cannot waive posted attempt
-cannot waive without reason
-waived attempts remain visible
-close readiness must show waived attempts separately
-waive does not create journal
-waive does not change source financial amounts
-```
-
-Finance Manager or Administrator only.
-
----
-
-# 12. Close Readiness Integration
-
-Extend `AccountingCloseReadinessService` to report:
-
-```text
-unresolved failed attempts by period
-unresolved failed attempts by source module
-waived attempts by period
-resolved attempts by period
-unsupported failed attempts
-posted-after-retry attempts
-oldest unresolved failure
-material unresolved failures if amount is available
-```
-
-If existing close/period screens exist, add a read-only link/card to failed posting readiness.
-
-Do not hard-block period close yet unless an existing close gate already safely supports this.
-
-Document recommended future close-blocking behavior.
-
----
-
-# 13. Source Links
-
-Where possible, provide source links for:
-
-```text
-invoice
-payment
-discount
-credit note
-financial entry
-bank reconciliation adjustment
-supplier payable
-supplier payment
-goods received note
-stock movement
-purchase return
-```
-
-If a route is unknown or module disabled:
-
-```text
-show source identity text only
-do not crash
-```
-
----
-
-# 14. Sidebar / Navigation
-
-Add a navigation link under Advanced Accounting if doing so does not break existing sidebar tests.
-
-Suggested label:
-
-```text
-Failed Postings
-```
-
-If sidebar assertions are still locked from Phase B, update the tests correctly and document it.
-
-Do not bypass menu tests by hiding the route.
+Document recommended future close-block behavior.
 
 ---
 
 # 15. Permissions
 
-Use existing Phase 0 permissions where present:
+Add permissions:
 
 ```text
-accounting.failed_postings.view
-accounting.failed_postings.retry
-accounting.failed_postings.resolve
-accounting.failed_postings.waive
+accounting.subledger_reconciliation.view
+accounting.subledger_reconciliation.run
+accounting.subledger_reconciliation.resolve
+accounting.subledger_reconciliation.approve
+accounting.subledger_reconciliation.cancel
 ```
-
-Add only if missing.
 
 Suggested role defaults:
 
 ```text
 Accountant:
 - view
-- retry
+- run
+- resolve
 
 Finance Manager:
 - view
-- retry
+- run
 - resolve
-- waive
+- approve
+- cancel
 
 Administrator / Super Admin:
 - all
@@ -602,18 +623,14 @@ Use `ActivityLogService`.
 Audit:
 
 ```text
-FAILED_POSTING_VIEWED
-FAILED_POSTING_RETRY_REQUESTED
-FAILED_POSTING_RETRY_SUCCEEDED
-FAILED_POSTING_RETRY_FAILED
-FAILED_POSTING_BATCH_RETRY_REQUESTED
-FAILED_POSTING_BATCH_RETRY_COMPLETED
-FAILED_POSTING_RESOLVED
-FAILED_POSTING_WAIVED
-FAILED_POSTING_CLOSE_READINESS_VIEWED
+SUBLEDGER_RECONCILIATION_STARTED
+SUBLEDGER_RECONCILIATION_COMPLETED
+SUBLEDGER_RECONCILIATION_APPROVED
+SUBLEDGER_RECONCILIATION_CANCELLED
+SUBLEDGER_RECONCILIATION_RESOLUTION_ADDED
+SUBLEDGER_RECONCILIATION_ITEM_WAIVED
+SUBLEDGER_RECONCILIATION_CLOSE_READINESS_VIEWED
 ```
-
-If `AccountingPostingAttemptService` already audits lower-level state changes, do not duplicate low-level event spam unnecessarily. But user actions must still be auditable.
 
 Run:
 
@@ -621,13 +638,13 @@ Run:
 php artisan logs:audit --json
 ```
 
-Fix any missing/needs-review logs.
+Fix new missing/needs-review audit gaps.
 
 ---
 
 # 17. Localisation
 
-All new labels must be localized EN/FR.
+All new labels must be localised EN/FR.
 
 Use or extend:
 
@@ -639,45 +656,42 @@ lang/fr/accounting.php
 Keys:
 
 ```text
-failed_postings
-failed_posting
-failed_posting_workbench
-retry_posting
-retry_selected
-retry_result
-retry_succeeded
-retry_failed
-unsupported_source_type
-resolve_posting
-waive_posting
-resolution_type
+subledger_reconciliation
+reconciliation_run
+reconciliation_runs
+reconciliation_type
+subledger_total
+gl_total
+difference_amount
+difference_classification
+balanced_domains
+difference_detected
+manual_journals_detected
+unposted_source_records
+oldest_unresolved_difference
+run_reconciliation
+approve_reconciliation_run
+cancel_reconciliation_run
 resolution_note
-waive_reason
-materiality_note
-attempt_timeline
-source_snapshot
-posting_snapshot
-error_context
-posted_after_retry
-failed_again
-unsupported
-oldest_unresolved_failure
-failed_over_7_days
-failed_over_30_days
-close_readiness_failed_postings
-corrected_by_manual_journal
-source_cancelled
-not_required_after_review
-duplicate_source_record
-external_adjustment
+accepted_timing_difference
+mapping_corrected
+source_corrected
+manual_journal_linked
+waived_after_review
+accounts_receivable_reconciliation
+accounts_payable_reconciliation
+inventory_reconciliation
+payroll_reconciliation
+cash_bank_reconciliation
+paye_reconciliation
+pension_reconciliation
 ```
 
 Maintain EN/FR parity.
 
-Run:
+Run localisation audit scanner:
 
 ```bash
-php artisan test tests/Feature/Localization
 php scripts/localisation-audit.php
 ```
 
@@ -689,133 +703,142 @@ Active runtime candidates must remain:
 
 ---
 
-# 18. Tests
+# 18. Navigation
 
-Add tests for:
+Add a sidebar link under Advanced Accounting:
 
 ```text
-failed posting index is permission protected
-failed posting show is permission protected
-failed posting index lists failed attempts
-failed posting detail shows event timeline
-retry unsupported source records retained failure
-retry supported Basic entry posts through Phase A service
-retry supported bank adjustment posts through Phase B service
-duplicate retry does not duplicate journal
-batch retry continues on individual failure
-manual resolution requires note
-corrected_by_manual_journal requires linked journal
-waive requires elevated permission and reason
-posted attempt cannot be waived
-resolved attempt remains visible
-waived attempt appears separately in close readiness
-close readiness shows unresolved failed counts
-source link fallback does not crash for unknown source
-module middleware blocks direct route when Advanced Accounting disabled
-ActivityLogService records retry/resolve/waive user actions
-localisation lock remains active runtime 0
+Subledger Reconciliation
 ```
 
-Existing Phase 0, Phase A, and Phase B tests must still pass.
+If sidebar assertions are locked, update tests later during the final wide test phase instead of forcing broad test rewrites now.
+
+Route access must work even if navigation is adjusted later.
 
 ---
 
-# 19. Verification Commands
+# 19. Tests
 
-Run:
+Add or update tests for Phase D, but do not run the wide full suite yet.
+
+Required test coverage to add:
+
+```text
+permission-protected reconciliation dashboard
+module middleware blocks direct routes when Advanced Accounting disabled
+AR reconciliation calculates subledger and GL totals
+AP reconciliation calculates subledger and GL totals where source exists
+inventory reconciliation calculates valuation vs GL where source exists
+payroll reconciliation marks partially available if payroll posting is not ready
+cash/bank reconciliation uses Phase B data where available
+failed posting is classified as failed_posting
+manual control-account journal is classified as manual_journal
+unposted source is classified as unposted_source
+resolution note can be added
+approval requires permission
+unresolved differences block normal approval unless elevated permission exists
+close readiness includes reconciliation status
+audit logs are recorded
+localisation keys exist
+```
+
+Do not run:
 
 ```bash
-php artisan migrate:fresh --env=testing --force
-php artisan test tests/Feature/Accounting/AccountingPhase0ControlsTest.php
-php artisan test tests/Feature/Accounting
-php artisan test tests/Feature/Localization
-php scripts/localisation-audit.php
-php artisan logs:audit --json
+php artisan test
+```
+
+during this phase unless explicitly instructed.
+
+The wide full-suite test will be run after all accounting implementation phases in the current batch are completed.
+
+---
+
+# 20. Minimal Verification Commands For This Phase
+
+Run only necessary safety checks:
+
+```bash
+php artisan migrate --force
 php artisan route:list
 php artisan view:cache
 php artisan view:clear
-php artisan test
+php scripts/localisation-audit.php
+php artisan logs:audit --json
+php artisan permissions:audit --strict
 git diff --check
 ```
 
-If frontend assets are touched:
+Also run PHP lint on changed files if practical:
 
 ```bash
-npm run build
+find app database routes lang resources/views -name "*.php" -print0 | xargs -0 -n1 php -l
 ```
+
+Do not run the full application test suite yet.
 
 ---
 
-# 20. Documentation
+# 21. Documentation
 
 Create:
 
 ```text
-docs/ACCOUNTING_PHASE_C_FAILED_POSTING_WORKBENCH_REPORT.md
+docs/ACCOUNTING_PHASE_D_SUBLEDGER_RECONCILIATION_WORKBENCH_REPORT.md
 ```
 
 Include:
 
 ```text
 summary
-baseline before implementation
-database changes if any
+database changes
+models added
 services added
-handler registry
-supported retry sources
-unsupported retry sources
-permissions
-routes/controllers/views
-workbench filters
-detail page behavior
-retry behavior
-batch retry behavior
-manual resolution behavior
-waive behavior
+permissions added
+routes/controllers/views added
+reconciliation domains implemented
+domains marked partially available
+difference classifications
+resolution workflow
 close readiness integration
-source-link behavior
 audit logging
-tests added
-commands run
 localisation audit result
-full suite result
+minimal verification commands run
+tests added but not fully executed
 known limitations
 next recommended phase
 ```
 
 ---
 
-# 21. Acceptance Criteria
+# 22. Acceptance Criteria
 
-Phase C is complete only when:
+Phase D is complete only when:
 
 ```text
-failed posting workbench exists
-failed posting detail page exists
-failed attempts can be filtered and inspected
-attempt event timeline is visible
-retry works for supported sources
-unsupported sources fail safely and visibly
-retry does not duplicate journals
-batch retry continues safely
-manual resolution requires evidence
-waive requires elevated permission and reason
-waived attempts remain visible
-close readiness separates failed/resolved/waived attempts
+subledger reconciliation dashboard exists
+reconciliation runs can be created
+AR reconciliation is available
+AP reconciliation is available where source data exists
+inventory reconciliation is available where source data exists
+cash/bank reconciliation can use Phase B data
+payroll/PAYE/pension domains are marked available or partially available honestly
+differences are classified
+items are drillable
+resolutions can be added
+waived/explained items remain visible
+close readiness includes reconciliation status
 permissions are enforced
 module middleware protects direct routes
 ActivityLogService is used
-EN/FR localisation parity passes
+EN/FR localisation parity is maintained
 active runtime candidates remain 0
-Phase 0 tests still pass
-Phase A tests still pass
-Phase B tests still pass
-Accounting suite passes
 route list works
 view cache compiles
-logs:audit is clean or documented with root-cause fixes
-full test suite is run or any inability is clearly documented
+logs:audit has no new missing/needs-review gaps
+permissions audit is clean
 documentation report is created
+full test suite is intentionally deferred to the final wide accounting test phase
 ```
 
-Proceed with Accounting Execution Phase C now.
+Proceed with Accounting Execution Phase D now.

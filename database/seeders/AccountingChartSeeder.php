@@ -43,6 +43,8 @@ class AccountingChartSeeder extends Seeder
             ['2110', 'Supplier Payables', AccountType::LIABILITY, 'CURRENT_LIABILITY', '2100', true],
             ['2200', 'Patient Deposits', AccountType::LIABILITY, 'CURRENT_LIABILITY', '2000', true],
             ['2300', 'Taxes Payable', AccountType::LIABILITY, 'CURRENT_LIABILITY', '2000', true],
+            ['2310', 'PAYE Payable', AccountType::LIABILITY, 'CURRENT_LIABILITY', '2300', true],
+            ['2320', 'Pension / SSNIT Payable', AccountType::LIABILITY, 'CURRENT_LIABILITY', '2300', true],
             ['2400', 'Salary Payable', AccountType::LIABILITY, 'CURRENT_LIABILITY', '2000', true],
             ['2500', 'Accrued Expenses', AccountType::LIABILITY, 'CURRENT_LIABILITY', '2000', true],
 
@@ -151,6 +153,9 @@ class AccountingChartSeeder extends Seeder
             'sponsor_receivable_account_id' => '1230',
             'corporate_receivable_account_id' => '1240',
             'supplier_payable_account_id' => '2110',
+            'payroll_payable_account_id' => '2400',
+            'paye_payable_account_id' => '2310',
+            'pension_payable_account_id' => '2320',
             'patient_deposit_liability_account_id' => '2200',
             'default_revenue_account_id' => '4900',
             'consultation_revenue_account_id' => '4100',

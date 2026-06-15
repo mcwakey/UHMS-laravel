@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Enums\LogModule;
 use App\Models\AccountingPostingAttempt;
+use App\Models\AccountingReconciliationItem;
+use App\Models\AccountingReconciliationResolution;
+use App\Models\AccountingReconciliationRun;
 use App\Models\User;
 use Carbon\Carbon;
 
@@ -27,6 +30,15 @@ class AccountingCloseReadinessService
             }
             return null;
         })->filter(fn ($amount) => $amount !== null);
+        $reconciliationRuns = AccountingReconciliationRun::query()
+            ->whereDate('period_start', '<=', $to)
+            ->whereDate('period_end', '>=', $from)
+            ->whereNotIn('status', ['cancelled', 'superseded'])
+            ->get();
+        $latestReconciliations = collect(AccountingReconciliationRun::TYPES)->mapWithKeys(function (string $type) use ($reconciliationRuns) {
+            return [$type => $reconciliationRuns->where('reconciliation_type', $type)->sortByDesc('completed_at')->first()];
+        });
+        $runIds = $reconciliationRuns->pluck('id');
 
         $summary = [
             'from' => $from->toDateString(),
@@ -44,6 +56,28 @@ class AccountingCloseReadinessService
             'unreconciled_control_accounts' => null,
             'open_bank_reconciliations' => null,
             'unmapped_cash_flow_activity' => null,
+            'latest_reconciliation_by_domain' => $latestReconciliations->map(fn ($run) => $run ? [
+                'id' => $run->id,
+                'status' => $run->status,
+                'availability' => $run->availability(),
+                'difference_amount' => (float) $run->difference_amount,
+                'completed_at' => $run->completed_at?->toDateTimeString(),
+            ] : null)->all(),
+            'unapproved_reconciliation_runs' => $reconciliationRuns->where('status', 'completed')->count(),
+            'domains_with_unresolved_differences' => $latestReconciliations
+                ->filter(fn ($run) => $run?->hasUnresolvedDifferences())
+                ->keys()
+                ->values()
+                ->all(),
+            'domains_not_run_for_period' => $latestReconciliations->filter(fn ($run) => ! $run)->keys()->values()->all(),
+            'reconciliation_failed_posting_links' => AccountingReconciliationResolution::query()
+                ->whereIn('accounting_reconciliation_run_id', $runIds)
+                ->whereNotNull('linked_posting_attempt_id')
+                ->count(),
+            'manual_control_account_journals' => AccountingReconciliationItem::query()
+                ->whereIn('accounting_reconciliation_run_id', $runIds)
+                ->where('classification', 'manual_journal')
+                ->count(),
             'failed_by_source_module' => (clone $base)
                 ->where('status', 'failed')
                 ->selectRaw('source_module, COUNT(*) total')
@@ -79,6 +113,17 @@ class AccountingCloseReadinessService
             'causer' => $actor,
             'metadata' => $summary,
         ], description: 'Failed posting close readiness viewed');
+        app(ActivityLogService::class)->log(LogModule::ACCOUNTING, 'SUBLEDGER_RECONCILIATION_CLOSE_READINESS_VIEWED', [
+            'causer' => $actor,
+            'metadata' => [
+                'from' => $summary['from'],
+                'to' => $summary['to'],
+                'unapproved_runs' => $summary['unapproved_reconciliation_runs'],
+                'domains_with_unresolved_differences' => $summary['domains_with_unresolved_differences'],
+                'domains_not_run_for_period' => $summary['domains_not_run_for_period'],
+                'manual_control_account_journals' => $summary['manual_control_account_journals'],
+            ],
+        ], description: 'Subledger reconciliation close readiness viewed');
 
         return $summary;
     }

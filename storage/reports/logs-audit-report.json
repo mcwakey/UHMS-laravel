@@ -1,13 +1,13 @@
 {
-    "generated_at": "2026-06-15T13:21:49+00:00",
-    "controllers_flagged": 82,
-    "logging_services_detected": 100,
+    "generated_at": "2026-06-15T14:02:23+00:00",
+    "controllers_flagged": 83,
+    "logging_services_detected": 102,
     "summary": {
         "MISSING_LOG": 0,
         "NEEDS_REVIEW": 0,
         "KNOWN_BACKLOG": 21,
         "INTENTIONALLY_SKIPPED": 1,
-        "SERVICE_FUNNEL_COVERED": 60
+        "SERVICE_FUNNEL_COVERED": 61
     },
     "real_missing_logs": 0,
     "findings": [
@@ -379,6 +379,27 @@
             "reason": "Delegates to BankStatementImportService (logs direct).",
             "services": [
                 "BankStatementImportService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Accounting/SubledgerReconciliationController.php",
+            "unlogged_actions": [
+                "store",
+                "approve",
+                "cancel"
+            ],
+            "actions": [
+                "store",
+                "approve",
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to ReconciliationResolutionService, SubledgerReconciliationService (logs direct).",
+            "services": [
+                "ReconciliationResolutionService",
+                "SubledgerReconciliationService"
             ],
             "in_baseline": false
         },

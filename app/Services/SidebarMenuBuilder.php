@@ -1002,6 +1002,14 @@ class SidebarMenuBuilder
                         'module' => 'accounting_advanced',
                     ],
                     [
+                        'label' => 'Subledger Reconciliation',
+                        'icon' => 'ti ti-scale',
+                        'route' => 'admin.accounting.subledger-reconciliation.index',
+                        'active_patterns' => ['admin.accounting.subledger-reconciliation.*'],
+                        'permission' => 'accounting.subledger_reconciliation.view',
+                        'module' => 'accounting_advanced',
+                    ],
+                    [
                         'label' => 'Bank Accounts',
                         'icon' => 'ti ti-building-bank',
                         'route' => 'admin.accounting.bank.accounts.index',
@@ -1604,6 +1612,7 @@ class SidebarMenuBuilder
                     'Basic Posting Bridge',
                     'Posting Templates',
                     'Failed Postings',
+                    'Subledger Reconciliation',
                     'Bank Accounts',
                     'Statement Imports',
                     'Bank Reconciliation',

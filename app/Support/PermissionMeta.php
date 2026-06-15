@@ -175,6 +175,7 @@ class PermissionMeta
             'accounting.dashboard' => 'accounting dashboard',
             'accounting.fiscal_years' => 'fiscal years',
             'accounting.failed_postings' => 'failed accounting postings',
+            'accounting.subledger_reconciliation' => 'subledger reconciliation controls',
             'accounting.journals' => 'manual journal entries',
             'accounting.mappings' => 'account mappings',
             'accounting.periods' => 'accounting periods',

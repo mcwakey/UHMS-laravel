@@ -3,7 +3,7 @@
 
 @section('content')
 <x-page-header :title="__('accounting.close_readiness')" :description="__('accounting.close_readiness_description')" icon="ti-checkup-list">
-    <x-slot:actions><a class="btn btn-outline-danger" href="{{ route('admin.accounting.failed-postings.index') }}">{{ __('accounting.failed_postings') }}</a></x-slot:actions>
+    <x-slot:actions><div class="d-flex gap-2"><a class="btn btn-outline-primary" href="{{ route('admin.accounting.subledger-reconciliation.index') }}">{{ __('accounting.subledger_reconciliation') }}</a><a class="btn btn-outline-danger" href="{{ route('admin.accounting.failed-postings.index') }}">{{ __('accounting.failed_postings') }}</a></div></x-slot:actions>
 </x-page-header>
 
 <div class="card mb-3">
@@ -31,6 +31,22 @@
     <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">{{ __('accounting.unresolved_failed_postings') }}</div><div class="fs-3 fw-bold text-danger">{{ $summary['unresolved_failed_postings'] }}</div></div></div></div>
     <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">{{ __('accounting.waived_postings') }}</div><div class="fs-3 fw-bold text-warning">{{ $summary['waived_postings'] }}</div></div></div></div>
     <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">{{ __('accounting.posted_attempts') }}</div><div class="fs-3 fw-bold text-success">{{ $summary['posted_attempts'] }}</div></div></div></div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">{{ __('accounting.unapproved_reconciliation_runs') }}</div><div class="fs-4 fw-bold text-warning">{{ $summary['unapproved_reconciliation_runs'] }}</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">{{ __('accounting.domains_with_unresolved_differences') }}</div><div class="fs-4 fw-bold text-danger">{{ count($summary['domains_with_unresolved_differences']) }}</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">{{ __('accounting.domains_not_run_for_period') }}</div><div class="fs-4 fw-bold text-secondary">{{ count($summary['domains_not_run_for_period']) }}</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted">{{ __('accounting.manual_control_account_journals') }}</div><div class="fs-4 fw-bold text-warning">{{ $summary['manual_control_account_journals'] }}</div></div></div></div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="card-title mb-0">{{ __('accounting.latest_reconciliation_by_domain') }}</h5></div>
+    <div class="table-responsive"><table class="table mb-0"><thead class="table-light"><tr><th>{{ __('accounting.reconciliation_type') }}</th><th>{{ __('common.status') }}</th><th>{{ __('accounting.availability') }}</th><th>{{ __('accounting.difference_amount') }}</th><th>{{ __('accounting.last_reconciliation_date') }}</th></tr></thead><tbody>
+    @foreach($summary['latest_reconciliation_by_domain'] as $type => $run)
+        <tr><td>{{ __('accounting.reconciliation_type_'.$type) }}</td><td>{{ $run ? __('accounting.reconciliation_status_'.$run['status']) : __('accounting.not_run') }}</td><td>{{ $run ? __('accounting.availability_'.$run['availability']) : '-' }}</td><td>{{ $run ? number_format($run['difference_amount'], 2) : '-' }}</td><td>{{ $run['completed_at'] ?? '-' }}</td></tr>
+    @endforeach
+    </tbody></table></div>
 </div>
 
 <div class="card">

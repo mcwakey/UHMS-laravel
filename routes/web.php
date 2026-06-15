@@ -739,6 +739,23 @@ Route::middleware('auth')->group(function () {
                     Route::post('{failedPosting}/waive', [$workbench, 'waive'])->name('waive')->middleware('can:accounting.failed_postings.waive');
                 });
 
+            Route::middleware(['module:accounting_basic', 'can:accounting.subledger_reconciliation.view'])
+                ->prefix('subledger-reconciliation')
+                ->name('subledger-reconciliation.')
+                ->group(function () {
+                    $controller = \App\Http\Controllers\Accounting\SubledgerReconciliationController::class;
+                    Route::get('/', [$controller, 'index'])->name('index');
+                    Route::get('create', [$controller, 'create'])->name('create')->middleware('can:accounting.subledger_reconciliation.run');
+                    Route::post('/', [$controller, 'store'])->name('store')->middleware('can:accounting.subledger_reconciliation.run');
+                    Route::get('history', [$controller, 'history'])->name('history');
+                    Route::get('{reconciliationRun}', [$controller, 'show'])->name('show');
+                    Route::get('{reconciliationRun}/approval', [$controller, 'approval'])->name('approval')->middleware('can:accounting.subledger_reconciliation.approve');
+                    Route::post('{reconciliationRun}/approve', [$controller, 'approve'])->name('approve')->middleware('can:accounting.subledger_reconciliation.approve');
+                    Route::post('{reconciliationRun}/cancel', [$controller, 'cancel'])->name('cancel')->middleware('can:accounting.subledger_reconciliation.cancel');
+                    Route::get('{reconciliationRun}/items/{item}', [$controller, 'item'])->name('items.show');
+                    Route::post('{reconciliationRun}/items/{item}/resolve', [$controller, 'resolve'])->name('items.resolve')->middleware('can:accounting.subledger_reconciliation.resolve');
+                });
+
             Route::middleware('can:accounting.mappings.view')
                 ->prefix('mappings')
                 ->name('mappings.')
