@@ -1,5 +1,5 @@
 {
-    "generated_at": "2026-06-14T17:48:13+00:00",
+    "generated_at": "2026-06-15T01:49:59+00:00",
     "controllers_flagged": 76,
     "logging_services_detected": 85,
     "summary": {
@@ -239,6 +239,26 @@
             "reason": "Delegates to RolePermissionAuditService (logs direct).",
             "services": [
                 "RolePermissionAuditService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Billing/CreditNoteController.php",
+            "unlogged_actions": [
+                "store",
+                "reverse",
+                "cancel"
+            ],
+            "actions": [
+                "store",
+                "reverse",
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "CRITICAL",
+            "reason": "Delegates to CreditNoteService (logs direct).",
+            "services": [
+                "CreditNoteService"
             ],
             "in_baseline": true
         },
@@ -548,24 +568,6 @@
             "reason": "Delegates to StockRequisitionService (logs direct).",
             "services": [
                 "StockRequisitionService"
-            ],
-            "in_baseline": true
-        },
-        {
-            "controller": "app/Http/Controllers/Billing/CreditNoteController.php",
-            "unlogged_actions": [
-                "store",
-                "cancel"
-            ],
-            "actions": [
-                "store",
-                "cancel"
-            ],
-            "classification": "SERVICE_FUNNEL_COVERED",
-            "severity": "HIGH",
-            "reason": "Delegates to CreditNoteService (logs direct).",
-            "services": [
-                "CreditNoteService"
             ],
             "in_baseline": true
         },

@@ -389,8 +389,23 @@ class MedicationAdministrationWorkflowTest extends TestCase
         $response->assertSee('Ceftriaxone', false);
         $response->assertSee($scheduledAt->format('H:i'), false);
         $response->assertSee('DUE', false);
-        $response->assertSee('data-bs-target="#mar-dose-'.$schedule->id.'"', false);
         $response->assertSee('Print MAR', false);
+
+        // The actionable dose-cell modal trigger (data-bs-target="#mar-dose-{id}")
+        // lives inside #mar-chart-content. On a full-page load that markup is
+        // delivered inside the Inertia data-page JSON envelope, where the literal
+        // quotes are escaped (data-bs-target=\"#mar-dose-1\"). We assert it against
+        // the app's real raw-HTML chart render (the X-Mar-Partial path the chart
+        // refresh actually uses), where the markup is unescaped.
+        $partial = $this->actingAs($this->user)
+            ->withHeaders(['X-Mar-Partial' => 'chart'])
+            ->get(route('admin.admissions.mar-chart', [
+                'admission' => $this->admission,
+                'date' => today()->toDateString(),
+            ]));
+
+        $partial->assertOk();
+        $partial->assertSee('data-bs-target="#mar-dose-'.$schedule->id.'"', false);
     }
 
     public function test_admission_mar_chart_shows_given_details_with_nurse_name(): void
@@ -422,10 +437,16 @@ class MedicationAdministrationWorkflowTest extends TestCase
     {
         $this->makeOrder('PRN', null, 0, ['quantity_dispensed' => 5, 'instructions' => 'For severe pain.']);
 
-        $response = $this->actingAs($this->user)->get(route('admin.admissions.mar-chart', [
-            'admission' => $this->admission,
-            'date' => today()->toDateString(),
-        ]));
+        // The PRN/SOS section is part of #mar-chart-content. On a full-page load it is
+        // serialised inside the Inertia data-page JSON, where the heading's slash is
+        // escaped ("PRN \/ SOS Medications"); assert against the app's raw-HTML chart
+        // render (X-Mar-Partial) where the section is emitted verbatim.
+        $response = $this->actingAs($this->user)
+            ->withHeaders(['X-Mar-Partial' => 'chart'])
+            ->get(route('admin.admissions.mar-chart', [
+                'admission' => $this->admission,
+                'date' => today()->toDateString(),
+            ]));
 
         $response->assertOk();
         $response->assertSee('PRN / SOS Medications', false);

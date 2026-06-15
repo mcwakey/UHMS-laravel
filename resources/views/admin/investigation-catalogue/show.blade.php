@@ -161,7 +161,7 @@
                             <div class="col-md-3">
                                 <label class="form-label small mb-1">Header</label>
                                 <select name="header_id" class="form-select form-select-sm" id="addCriterionHeader">
-                                    <option value="">— No header —</option>
+                                    <option value="">{{ __('investigations.no_header') }}</option>
                                     @foreach($headers as $h)
                                         <option value="{{ $h->id }}">{{ $h->name }}</option>
                                     @endforeach
@@ -291,7 +291,7 @@
                         <div class="col-md-4">
                             <label class="form-label">Header</label>
                             <select name="header_id" class="form-select" id="editCriterionHeader">
-                                <option value="">No header</option>
+                                <option value="">{{ __('investigations.no_header') }}</option>
                                 @foreach($headers as $h)
                                     <option value="{{ $h->id }}">{{ $h->name }}</option>
                                 @endforeach

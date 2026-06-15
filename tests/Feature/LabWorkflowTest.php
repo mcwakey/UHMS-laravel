@@ -96,7 +96,14 @@ class LabWorkflowTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('INV-RESULT-001');
         $response->assertSee('Billed haemoglobin');
-        $response->assertDontSee('Bill Selected');
+        // The results-entry route opens with billing acceptance suppressed
+        // ($showBillingAcceptance = false), so the "Accept & Bill" card must not
+        // render. We assert on the actual control (the accept-selected form/button),
+        // not the bare "Bill Selected" label — that label now also appears inside the
+        // serialised i18n translation bundle embedded on every page, which is not a
+        // visible billing action.
+        $response->assertDontSee('id="acceptSelectedForm"', false);
+        $response->assertDontSee('name="item_ids[]"', false);
     }
 
     public function test_pending_only_request_redirects_back_to_billing_from_results_route(): void

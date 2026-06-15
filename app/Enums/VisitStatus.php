@@ -110,7 +110,10 @@ enum VisitStatus: string
             self::WAITING_CONSULTATION => [self::CONSULTING, self::ACTIVE, self::EMERGENCY, self::CANCELLED],
             self::CONSULTING => [self::ADMITTING, self::COMPLETED, self::DECEASED],
             self::ACTIVE => [self::CONSULTING, self::ADMITTING, self::COMPLETED, self::DECEASED],
-            self::ADMITTING => [self::CONSULTING, self::CANCELLED],
+            // ADMITTING is the in-progress admission state ("Admit Patient"); completing
+            // the admission (e.g. emergency disposition → bed assignment) advances it to
+            // ADMITTED. Cancelling or returning to consultation remain valid.
+            self::ADMITTING => [self::CONSULTING, self::ADMITTED, self::CANCELLED],
             self::REFERRED_CONSULTATION => [self::CONSULTING, self::ACTIVE, self::CANCELLED],
             self::WAITING_INVESTIGATION => [self::CONSULTING, self::ACTIVE, self::COMPLETED, self::CANCELLED],
             self::LAB => [self::CONSULTING, self::ACTIVE, self::COMPLETED, self::CANCELLED],

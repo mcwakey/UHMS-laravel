@@ -101,7 +101,7 @@ class MarChartService
         $orders = $this->queryOrders($visit, $admission, $dayStart, $dayEnd);
         $orderIds = $orders->pluck('id')->all();
         $dailyAdministrations = $this->dailyAdministrations($orderIds, $dayStart, $dayEnd);
-        $timeColumns = $this->timeColumns($orders);
+        $timeColumns = $this->timeColumns($orders, $selectedDate);
         $progress = $this->progressForOrders($orders, $orderIds);
 
         $medicationRows = $orders
@@ -189,15 +189,92 @@ class MarChartService
             ->get();
     }
 
-    private function timeColumns(Collection $orders): Collection
+    private function timeColumns(Collection $orders, Carbon $selectedDate): Collection
     {
-        return $orders
+        // Actual generated schedule times for the day (nurse-adjusted times included).
+        $actual = $orders
             ->flatMap(fn (MedicationOrder $order) => $order->schedules)
             ->map(fn (MedicationAdministrationSchedule $schedule) => $schedule->scheduled_at?->format('H:i'))
+            ->filter();
+
+        // Planned dose times derived from each fixed-schedule order's frequency for the
+        // selected day. This makes the grid show the day's dose slots even before the
+        // schedule rows are generated (e.g. a freshly created order viewed on its start day).
+        $planned = $orders
+            ->reject(fn (MedicationOrder $order) => (bool) $order->frequency?->is_prn)
+            ->flatMap(fn (MedicationOrder $order) => $this->plannedDoseTimesForDay($order, $selectedDate));
+
+        return $actual
+            ->merge($planned)
             ->filter()
             ->unique()
             ->sort()
             ->values();
+    }
+
+    /**
+     * Clock times (H:i) a fixed-schedule medication is due on the selected day,
+     * derived from its frequency and order window. Returns [] when the order does
+     * not fall on the day or is not a scheduled medication.
+     */
+    private function plannedDoseTimesForDay(MedicationOrder $order, Carbon $selectedDate): array
+    {
+        $frequency = $order->frequency;
+
+        if (! $frequency || ! $frequency->requires_schedule || $frequency->is_prn) {
+            return [];
+        }
+
+        $dayStart = $selectedDate->copy()->startOfDay();
+        $dayEnd = $selectedDate->copy()->endOfDay();
+        $start = $order->start_at?->copy();
+        $end = $order->end_at?->copy();
+
+        // Order's active window must overlap the selected day.
+        if ($start && $start->greaterThan($dayEnd)) {
+            return [];
+        }
+        if ($end && $end->lessThan($dayStart)) {
+            return [];
+        }
+
+        if ($frequency->is_stat) {
+            return $start && $start->greaterThanOrEqualTo($dayStart) && $start->lessThanOrEqualTo($dayEnd)
+                ? [$start->format('H:i')]
+                : [];
+        }
+
+        if ($frequency->interval_hours) {
+            $times = [];
+            $cursor = ($start ?? $dayStart)->copy();
+            $guard = 0;
+            while ($cursor->lessThan($dayStart) && $guard++ < 1000) {
+                $cursor->addHours((int) $frequency->interval_hours);
+            }
+            while ($cursor->lessThanOrEqualTo($dayEnd) && (! $end || $cursor->lessThanOrEqualTo($end))) {
+                $times[] = $cursor->format('H:i');
+                $cursor->addHours((int) $frequency->interval_hours);
+            }
+
+            return array_values(array_unique($times));
+        }
+
+        $times = [];
+        foreach (collect($frequency->default_times ?: ['08:00']) as $clock) {
+            [$hour, $minute] = array_pad(explode(':', (string) $clock), 2, 0);
+            $doseAt = $selectedDate->copy()->setTime((int) $hour, (int) $minute);
+
+            if ($start && $doseAt->lessThan($start)) {
+                continue;
+            }
+            if ($end && $doseAt->greaterThan($end)) {
+                continue;
+            }
+
+            $times[] = $doseAt->format('H:i');
+        }
+
+        return $times;
     }
 
     private function buildMedicationRow(MedicationOrder $order, Collection $timeColumns, ?array $progress): array

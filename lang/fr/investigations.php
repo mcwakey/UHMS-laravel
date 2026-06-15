@@ -132,6 +132,7 @@ return [
     'remove_consumable_confirm' => 'Retirer le consommable ?',
     'delete_criterion_confirm'  => 'Supprimer ce critère ?',
     'select_product'            => '— Sélectionner un produit —',
+    'no_header'                 => '— Aucun en-tête —',
     'default_qty'               => 'Qté par défaut',
     'this_department'           => 'ce département',
     'no_products_alert'         => 'Aucun produit lié à :dept. Liez d\'abord des produits consommables/réactifs à ce département sous :link.',

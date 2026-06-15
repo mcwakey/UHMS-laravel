@@ -1,12 +1,12 @@
 # UHMS Localisation Coverage Audit Report
 
-Date: 2026-06-14 19:37:19 +02:00
+Date: 2026-06-15 03:43:51 +02:00
 
 ## Summary
 
 - Total files scanned: 1290
 - Total files with possible hardcoded strings: 459
-- Total hardcoded candidates found: 17274
+- Total hardcoded candidates found: 17294
 - Modules affected: 306
 - Direct active route/controller Blade views: 232
 - Active Blade views including resolved dependencies: 286
@@ -17,14 +17,14 @@ Date: 2026-06-14 19:37:19 +02:00
 - Demo/template candidates: 15827
 - Backup-only candidates: 0
 - Language-file candidates: 138
-- Known false positives: 924
-- Service-title manual-review candidates: 385
+- Known false positives: 940
+- Service-title manual-review candidates: 389
 
 ### Service Candidate Review Classes
 
 - A - User-facing service output: 58
 - B - Internal audit/event text: 4
-- C - Stored canonical event/title: 62
+- C - Stored canonical event/title: 66
 - D - SQL/internal expression: 0
 - E - Translated downstream: 261
 
@@ -33,7 +33,7 @@ Date: 2026-06-14 19:37:19 +02:00
 - components: 1905
 - layout: 406
 - widgets.blade.php: 390
-- app: 385
+- app: 389
 - ui-dropdowns.blade.php: 336
 - tables-basic.blade.php: 240
 - patterns: 208
@@ -44,13 +44,13 @@ Date: 2026-06-14 19:37:19 +02:00
 - payments.blade.php: 161
 - store: 157
 - email.blade.php: 155
+- admin: 153
 - doctors-patient-details.blade.php: 153
 - consultations: 151
 - patient-details.blade.php: 150
 - doctors-list.blade.php: 148
 - patients.blade.php: 145
 - lang: 138
-- admin: 137
 - staffs.blade.php: 137
 - add-doctor.blade.php: 133
 - edit-doctor.blade.php: 133
@@ -100,7 +100,7 @@ Date: 2026-06-14 19:37:19 +02:00
 - lang/en/reports.php: 47
 - lang/fr/reports.php: 46
 - app/Services/PatientMergePreviewService.php: 35
-- app/Services/StatisticsService.php: 21
+- app/Services/StatisticsService.php: 25
 - app/Services/ProcedureReportService.php: 16
 - app/Services/ProcedureWorkflowService.php: 6
 - app/Services/LabService.php: 4
@@ -325,13 +325,13 @@ Date: 2026-06-14 19:37:19 +02:00
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: investigation_accepted`
-- Line 399 [medium, service_title_manual_review_candidates]: `Investigation result ready`
+- Line 404 [medium, service_title_manual_review_candidates]: `Investigation result ready`
   - Context: `'title' => 'Investigation result ready',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: investigation_result_ready`
-- Line 443 [medium, service_title_manual_review_candidates]: `Investigation result verified`
+- Line 448 [medium, service_title_manual_review_candidates]: `Investigation result verified`
   - Context: `'title' => 'Investigation result verified',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
@@ -2359,127 +2359,151 @@ Date: 2026-06-14 19:37:19 +02:00
 
 ### `app/Services/StatisticsService.php`
 
-- Line 33 [medium, service_title_manual_review_candidates]: `Hospital Activity`
+- Line 38 [medium, service_title_manual_review_candidates]: `Hospital Activity`
   - Context: `'activity' => ['title' => 'Hospital Activity', 'icon' => 'ti-activity', 'permission' => 'statistics.activity.view'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: hospital_activity`
-- Line 34 [medium, service_title_manual_review_candidates]: `Diagnosis Statistics`
+- Line 39 [medium, service_title_manual_review_candidates]: `Diagnosis Statistics`
   - Context: `'diagnoses' => ['title' => 'Diagnosis Statistics', 'icon' => 'ti-clipboard-text', 'permission' => 'statistics.diagnosis.view'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: diagnosis_statistics`
-- Line 35 [medium, service_title_manual_review_candidates]: `Complaint Statistics`
+- Line 40 [medium, service_title_manual_review_candidates]: `Complaint Statistics`
   - Context: `'complaints' => ['title' => 'Complaint Statistics', 'icon' => 'ti-message-report', 'permission' => 'statistics.complaints.view'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: complaint_statistics`
-- Line 36 [medium, service_title_manual_review_candidates]: `Consultation Statistics`
+- Line 41 [medium, service_title_manual_review_candidates]: `Consultation Statistics`
   - Context: `'consultations' => ['title' => 'Consultation Statistics', 'icon' => 'ti-stethoscope', 'permission' => 'statistics.consultation.view'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: consultation_statistics`
-- Line 37 [medium, service_title_manual_review_candidates]: `Pharmacy Statistics`
+- Line 42 [medium, service_title_manual_review_candidates]: `Pharmacy Statistics`
   - Context: `'pharmacy' => ['title' => 'Pharmacy Statistics', 'icon' => 'ti-pill', 'permission' => 'statistics.pharmacy.view'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: pharmacy_statistics`
-- Line 38 [medium, service_title_manual_review_candidates]: `Investigation Statistics`
+- Line 43 [medium, service_title_manual_review_candidates]: `Investigation Statistics`
   - Context: `'investigations' => ['title' => 'Investigation Statistics', 'icon' => 'ti-microscope', 'permission' => 'statistics.investigations.view'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: investigation_statistics`
-- Line 39 [medium, service_title_manual_review_candidates]: `Procedure / Theatre Statistics`
+- Line 44 [medium, service_title_manual_review_candidates]: `Procedure / Theatre Statistics`
   - Context: `'procedures' => ['title' => 'Procedure / Theatre Statistics', 'icon' => 'ti-scalpel', 'permission' => 'statistics.procedures.view'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: procedure_theatre_statistics`
-- Line 40 [medium, service_title_manual_review_candidates]: `Emergency Statistics`
+- Line 45 [medium, service_title_manual_review_candidates]: `Emergency Statistics`
   - Context: `'emergency' => ['title' => 'Emergency Statistics', 'icon' => 'ti-ambulance', 'permission' => 'statistics.emergency.view'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: emergency_statistics`
-- Line 41 [medium, service_title_manual_review_candidates]: `Admission Statistics`
+- Line 46 [medium, service_title_manual_review_candidates]: `Admission Statistics`
   - Context: `'admission' => ['title' => 'Admission Statistics', 'icon' => 'ti-bed', 'permission' => 'statistics.admission.view'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: admission_statistics`
-- Line 42 [medium, service_title_manual_review_candidates]: `Medication Administration Statistics`
+- Line 47 [medium, service_title_manual_review_candidates]: `Medication Administration Statistics`
   - Context: `'mar' => ['title' => 'Medication Administration Statistics', 'icon' => 'ti-checkup-list', 'permission' => 'statistics.mar.view'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: medication_administration_statistics`
-- Line 43 [medium, service_title_manual_review_candidates]: `Billing & Financial Statistics`
+- Line 48 [medium, service_title_manual_review_candidates]: `Billing & Financial Statistics`
   - Context: `'billing' => ['title' => 'Billing & Financial Statistics', 'icon' => 'ti-receipt', 'permission' => 'statistics.billing.view'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: billing_financial_statistics`
-- Line 44 [medium, service_title_manual_review_candidates]: `Claims Statistics`
+- Line 49 [medium, service_title_manual_review_candidates]: `Claims Statistics`
   - Context: `'claims' => ['title' => 'Claims Statistics', 'icon' => 'ti-file-dollar', 'permission' => 'statistics.claims.view'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: claims_statistics`
-- Line 45 [medium, service_title_manual_review_candidates]: `Stock / Inventory Statistics`
+- Line 50 [medium, service_title_manual_review_candidates]: `Stock / Inventory Statistics`
   - Context: `'stock' => ['title' => 'Stock / Inventory Statistics', 'icon' => 'ti-packages', 'permission' => 'statistics.stock.view'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: stock_inventory_statistics`
-- Line 46 [medium, service_title_manual_review_candidates]: `Blood Bank Statistics`
+- Line 51 [medium, service_title_manual_review_candidates]: `Blood Bank Statistics`
   - Context: `'blood-bank' => ['title' => 'Blood Bank Statistics', 'icon' => 'ti-droplet', 'permission' => 'statistics.blood_bank.view'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: blood_bank_statistics`
-- Line 47 [medium, service_title_manual_review_candidates]: `Staff Performance`
+- Line 52 [medium, service_title_manual_review_candidates]: `Staff Performance`
   - Context: `'staff-performance' => ['title' => 'Staff Performance', 'icon' => 'ti-users', 'permission' => 'statistics.staff_performance.view'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: staff_performance`
-- Line 392 [medium, service_title_manual_review_candidates]: `Ward Bed Occupancy`
+- Line 381 [medium, service_title_manual_review_candidates]: `Positive / Negative Results`
+  - Context: `'title' => 'Positive / Negative Results',`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: manual review
+  - Service review class: C - Stored canonical event/title
+  - Suggested key: `lang/{en,fr}/app.php :: positive_negative_results`
+- Line 392 [medium, service_title_manual_review_candidates]: `Yes / No Results`
+  - Context: `'title' => 'Yes / No Results',`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: manual review
+  - Service review class: C - Stored canonical event/title
+  - Suggested key: `lang/{en,fr}/app.php :: yes_no_results`
+- Line 403 [medium, service_title_manual_review_candidates]: `Numeric Results`
+  - Context: `'title' => 'Numeric Results',`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: manual review
+  - Service review class: C - Stored canonical event/title
+  - Suggested key: `lang/{en,fr}/app.php :: numeric_results`
+- Line 419 [medium, service_title_manual_review_candidates]: `Narrative Results`
+  - Context: `'title' => 'Narrative Results',`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: manual review
+  - Service review class: C - Stored canonical event/title
+  - Suggested key: `lang/{en,fr}/app.php :: narrative_results`
+- Line 513 [medium, service_title_manual_review_candidates]: `Ward Bed Occupancy`
   - Context: `'title' => 'Ward Bed Occupancy',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: ward_bed_occupancy`
-- Line 556 [medium, service_title_manual_review_candidates]: `Blood Inventory (Available)`
+- Line 677 [medium, service_title_manual_review_candidates]: `Blood Inventory (Available)`
   - Context: `'title' => 'Blood Inventory (Available)',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: blood_inventory_available`
-- Line 559 [medium, service_title_manual_review_candidates]: `Open Blood Bank Report`
+- Line 680 [medium, service_title_manual_review_candidates]: `Open Blood Bank Report`
   - Context: `'drilldown' => ['route' => 'admin.reports.blood-bank', 'label' => 'Open Blood Bank Report', 'params' => $r],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: A - User-facing service output
   - Suggested key: `lang/{en,fr}/app.php :: open_blood_bank_report`
-- Line 734 [medium, service_title_manual_review_candidates]: `Open detailed report`
+- Line 855 [medium, service_title_manual_review_candidates]: `Open detailed report`
   - Context: `'drilldown' => $route ? ['route' => $route, 'label' => 'Open detailed report', 'params' => $params] : null,`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: A - User-facing service output
   - Suggested key: `lang/{en,fr}/app.php :: open_detailed_report`
-- Line 744 [medium, service_title_manual_review_candidates]: `Open detailed report`
+- Line 865 [medium, service_title_manual_review_candidates]: `Open detailed report`
   - Context: `'drilldown' => $route ? ['route' => $route, 'label' => 'Open detailed report', 'params' => $params] : null,`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: A - User-facing service output
   - Suggested key: `lang/{en,fr}/app.php :: open_detailed_report`
-- Line 758 [medium, service_title_manual_review_candidates]: `Daily Activity Breakdown`
+- Line 879 [medium, service_title_manual_review_candidates]: `Daily Activity Breakdown`
   - Context: `'title' => 'Daily Activity Breakdown',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
@@ -4972,31 +4996,51 @@ Date: 2026-06-14 19:37:19 +02:00
 
 ### `resources/views/admin/investigation-catalogue/_criterion.blade.php`
 
-- Line 8 [high, known_false_positive_candidates]: `Required`
+- Line 19 [high, known_false_positive_candidates]: `Required`
   - Context: `@if($c->is_required) &middot; <span class="text-danger">Required</span> @endif`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: required`
-- Line 11 [high, known_false_positive_candidates]: `Delete`
-  - Context: `<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-crit-btn ms-2"><i class="ti ti-trash"></i></button>`
+- Line 23 [high, known_false_positive_candidates]: `Edit`
+  - Context: `<button type="button" aria-label="Edit" title="Edit" class="btn btn-xs btn-outline-primary edit-crit-btn"><i class="ti ti-edit"></i></button>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/admin.php :: edit`
+- Line 23 [high, known_false_positive_candidates]: `Edit`
+  - Context: `<button type="button" aria-label="Edit" title="Edit" class="btn btn-xs btn-outline-primary edit-crit-btn"><i class="ti ti-edit"></i></button>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/admin.php :: edit`
+- Line 24 [high, known_false_positive_candidates]: `Delete`
+  - Context: `<button type="button" aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-crit-btn"><i class="ti ti-trash"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: delete`
-- Line 11 [high, known_false_positive_candidates]: `Delete`
-  - Context: `<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-crit-btn ms-2"><i class="ti ti-trash"></i></button>`
+- Line 24 [high, known_false_positive_candidates]: `Delete`
+  - Context: `<button type="button" aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-crit-btn"><i class="ti ti-trash"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: delete`
 
 ### `resources/views/admin/investigation-catalogue/_header.blade.php`
 
-- Line 8 [high, known_false_positive_candidates]: `Delete`
-  - Context: `<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-header-btn"><i class="ti ti-trash"></i></button>`
+- Line 12 [high, known_false_positive_candidates]: `Edit`
+  - Context: `<button type="button" aria-label="Edit" title="Edit" class="btn btn-xs btn-outline-primary edit-header-btn"><i class="ti ti-edit"></i></button>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/admin.php :: edit`
+- Line 12 [high, known_false_positive_candidates]: `Edit`
+  - Context: `<button type="button" aria-label="Edit" title="Edit" class="btn btn-xs btn-outline-primary edit-header-btn"><i class="ti ti-edit"></i></button>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/admin.php :: edit`
+- Line 13 [high, known_false_positive_candidates]: `Delete`
+  - Context: `<button type="button" aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-header-btn"><i class="ti ti-trash"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: delete`
-- Line 8 [high, known_false_positive_candidates]: `Delete`
-  - Context: `<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-header-btn"><i class="ti ti-trash"></i></button>`
+- Line 13 [high, known_false_positive_candidates]: `Delete`
+  - Context: `<button type="button" aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-header-btn"><i class="ti ti-trash"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: delete`
@@ -5066,48 +5110,108 @@ Date: 2026-06-14 19:37:19 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: no_unsorted_criteria`
-- Line 231 [high, known_false_positive_candidates]: `Pre-loaded during result entry; actual usage deducts stock.`
+- Line 242 [high, known_false_positive_candidates]: `Description`
+  - Context: `<label class="form-label">Description</label>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/admin.php :: description`
+- Line 247 [high, known_false_positive_candidates]: `Sort Order`
+  - Context: `<label class="form-label">Sort Order</label>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/admin.php :: sort_order`
+- Line 284 [high, known_false_positive_candidates]: `Unit`
+  - Context: `<label class="form-label">Unit</label>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/admin.php :: unit`
+- Line 288 [high, known_false_positive_candidates]: `Reference Range`
+  - Context: `<label class="form-label">Reference Range</label>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/admin.php :: reference_range`
+- Line 292 [high, known_false_positive_candidates]: `Header`
+  - Context: `<label class="form-label">Header</label>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/admin.php :: header`
+- Line 311 [high, known_false_positive_candidates]: `Default Value`
+  - Context: `<label class="form-label">Default Value</label>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/admin.php :: default_value`
+- Line 316 [high, known_false_positive_candidates]: `Positive, Negative, Inconclusive`
+  - Context: `<input type="text" name="options" class="form-control" placeholder="Positive, Negative, Inconclusive">`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/admin.php :: positive_negative_inconclusive`
+- Line 319 [high, known_false_positive_candidates]: `Sort Order`
+  - Context: `<label class="form-label">Sort Order</label>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/admin.php :: sort_order`
+- Line 325 [high, known_false_positive_candidates]: `Required`
+  - Context: `<label class="form-check-label" for="editCriterionRequired">Required</label>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/admin.php :: required`
+- Line 348 [high, known_false_positive_candidates]: `Pre-loaded during result entry; actual usage deducts stock.`
   - Context: `<small class="text-muted">Pre-loaded during result entry; actual usage deducts stock.</small>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: pre_loaded_during_result_entry_actual_usage_deduct`
-- Line 293 [high, known_false_positive_candidates]: `Delete`
+- Line 410 [high, known_false_positive_candidates]: `Delete`
   - Context: `<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger"><i class="ti ti-trash"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: delete`
-- Line 293 [high, known_false_positive_candidates]: `Delete`
+- Line 410 [high, known_false_positive_candidates]: `Delete`
   - Context: `<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger"><i class="ti ti-trash"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: delete`
-- Line 375 [high, known_false_positive_candidates]: `Delete`
-  - Context: `+ '<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-header-btn"><i class="ti ti-trash"></i></button>'`
+- Line 493 [high, known_false_positive_candidates]: `Edit`
+  - Context: `+ '<button type="button" aria-label="Edit" title="Edit" class="btn btn-xs btn-outline-primary edit-header-btn"><i class="ti ti-edit"></i></button>'`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/admin.php :: edit`
+- Line 493 [high, known_false_positive_candidates]: `Edit`
+  - Context: `+ '<button type="button" aria-label="Edit" title="Edit" class="btn btn-xs btn-outline-primary edit-header-btn"><i class="ti ti-edit"></i></button>'`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/admin.php :: edit`
+- Line 494 [high, known_false_positive_candidates]: `Delete`
+  - Context: `+ '<button type="button" aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-header-btn"><i class="ti ti-trash"></i></button>'`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: delete`
-- Line 375 [high, known_false_positive_candidates]: `Delete`
-  - Context: `+ '<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-header-btn"><i class="ti ti-trash"></i></button>'`
+- Line 494 [high, known_false_positive_candidates]: `Delete`
+  - Context: `+ '<button type="button" aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-header-btn"><i class="ti ti-trash"></i></button>'`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: delete`
-- Line 395 [high, known_false_positive_candidates]: `No criteria in this header.`
+- Line 535 [high, known_false_positive_candidates]: `No criteria in this header.`
   - Context: `+ '<div class="text-muted small ps-2">No criteria in this header.</div>'`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: no_criteria_in_this_header`
-- Line 487 [high, known_false_positive_candidates]: `Required`
-  - Context: `if (c.is_required) meta.push('<span class="text-danger">Required</span>');`
+- Line 722 [high, known_false_positive_candidates]: `Edit`
+  - Context: `+ '<button type="button" aria-label="Edit" title="Edit" class="btn btn-xs btn-outline-primary edit-crit-btn"><i class="ti ti-edit"></i></button>'`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: required`
-- Line 491 [high, known_false_positive_candidates]: `Delete`
-  - Context: `+ '<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-crit-btn ms-2"><i class="ti ti-trash"></i></button>'`
+  - Suggested key: `lang/{en,fr}/admin.php :: edit`
+- Line 722 [high, known_false_positive_candidates]: `Edit`
+  - Context: `+ '<button type="button" aria-label="Edit" title="Edit" class="btn btn-xs btn-outline-primary edit-crit-btn"><i class="ti ti-edit"></i></button>'`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/admin.php :: edit`
+- Line 723 [high, known_false_positive_candidates]: `Delete`
+  - Context: `+ '<button type="button" aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-crit-btn"><i class="ti ti-trash"></i></button>'`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: delete`
-- Line 491 [high, known_false_positive_candidates]: `Delete`
-  - Context: `+ '<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-crit-btn ms-2"><i class="ti ti-trash"></i></button>'`
+- Line 723 [high, known_false_positive_candidates]: `Delete`
+  - Context: `+ '<button type="button" aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-crit-btn"><i class="ti ti-trash"></i></button>'`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: delete`
@@ -9015,12 +9119,12 @@ Date: 2026-06-14 19:37:19 +02:00
 
 ### `resources/views/billing/invoices/show.blade.php`
 
-- Line 1248 [high, known_false_positive_candidates]: `Receipt`
+- Line 1327 [high, known_false_positive_candidates]: `Receipt`
   - Context: `+ '<div class="d-flex gap-2"><a href="' + (payload.receipt_url \|\| '#') + '" class="btn btn-sm btn-success">Receipt</a>' + (payload.redirect_url ? '<a href="' + payload.redirect_url + '" class="btn btn-sm btn-outline-success">Open Invoice</a>' : '') + '</div>'`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/billing.php :: receipt`
-- Line 1248 [high, known_false_positive_candidates]: `Open Invoice`
+- Line 1327 [high, known_false_positive_candidates]: `Open Invoice`
   - Context: `+ '<div class="d-flex gap-2"><a href="' + (payload.receipt_url \|\| '#') + '" class="btn btn-sm btn-success">Receipt</a>' + (payload.redirect_url ? '<a href="' + payload.redirect_url + '" class="btn btn-sm btn-outline-success">Open Invoice</a>' : '') + '</div>'`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive

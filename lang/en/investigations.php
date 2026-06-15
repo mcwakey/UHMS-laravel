@@ -132,6 +132,7 @@ return [
     'remove_consumable_confirm' => 'Remove consumable?',
     'delete_criterion_confirm'  => 'Delete this criterion?',
     'select_product'            => '— Select product —',
+    'no_header'                 => '— No header —',
     'default_qty'               => 'Default Qty',
     'this_department'           => 'this department',
     'no_products_alert'         => 'No products linked to :dept. Link consumable/reagent products to this department first under :link.',
