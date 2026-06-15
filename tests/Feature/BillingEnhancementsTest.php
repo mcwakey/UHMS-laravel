@@ -131,6 +131,35 @@ class BillingEnhancementsTest extends TestCase
         $this->assertEquals(100.0, (float) $invoice->fresh()->balance);
     }
 
+    public function test_invoice_show_renders_payments_once_in_the_combined_settlement_ledger(): void
+    {
+        $invoice = $this->makeInvoice(100.00);
+        $payment = Payment::create([
+            'payment_number' => 'PAY-COMBINED-001',
+            'invoice_id' => $invoice->id,
+            'patient_id' => $this->patient->id,
+            'payer_type' => 'patient',
+            'amount' => 40.00,
+            'payment_method' => PaymentMethod::BANK_TRANSFER,
+            'reference_number' => 'BANK-REF-001',
+            'received_by' => $this->user->id,
+            'paid_at' => now(),
+            'status' => PaymentStatus::ACTIVE,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('admin.billing.invoices.show', $invoice));
+
+        $response->assertOk()
+            ->assertSee(__('invoices.adjustments_settlements'))
+            ->assertDontSee(__('invoices.payment_history'))
+            ->assertSee($payment->payment_number)
+            ->assertSee('BANK-REF-001')
+            ->assertSee(route('admin.billing.payments.receipt', $payment), false);
+
+        $this->assertSame(1, substr_count($response->getContent(), $payment->payment_number));
+    }
+
     public function test_payment_reversal_requires_permission(): void
     {
         $this->user->removeRole('Accountant');

@@ -1448,8 +1448,12 @@ Route::middleware('auth')->group(function () {
                 Route::get('departments', function () {
                     return response()->json(app(ProcedureRequestService::class)->procedureDepartments());
                 })->name('departments');
-                Route::get('departments/{department}/services', function (Department $department) {
-                    return response()->json(app(ProcedureRequestService::class)->servicesForDepartment($department->id));
+                Route::get('departments/{department}/services', function (\Illuminate\Http\Request $request, Department $department) {
+                    $visit = $request->integer('visit_id')
+                        ? \App\Models\Visit::find($request->integer('visit_id'))
+                        : null;
+
+                    return response()->json(app(ProcedureRequestService::class)->servicesForDepartment($department->id, $visit));
                 })->name('department-services');
             });
         });

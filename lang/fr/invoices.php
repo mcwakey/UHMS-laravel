@@ -91,7 +91,7 @@ return [
     'adjustments'           => 'Ajustements',
     'due_aging'             => 'Échéance / Ancienneté',
     'no_payer_rows'         => 'Aucune ligne de responsabilité de payeur disponible.',
-    'adjustments_settlements' => 'Ajustements et règlements',
+    'adjustments_settlements' => 'Ajustements, règlements et paiements',
     'reference'             => 'Référence',
     'approved_by'           => 'Approuvé par',
     'journal_entry'         => 'Écriture comptable',

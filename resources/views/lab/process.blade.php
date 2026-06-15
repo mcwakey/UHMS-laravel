@@ -227,7 +227,7 @@
 @foreach($request->items as $item)
 @if($request->status !== 'cancelled' && ! $item->result?->is_verified && !$resultBlocked($item))
 <div class="modal fade" id="resultModal-{{ $item->id }}" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-lg-down">
         <form method="POST" action="{{ route('admin.lab.results.store', $item) }}" enctype="multipart/form-data" class="modal-content">
             @csrf
             <input type="hidden" name="result_type" value="parameters">
@@ -377,7 +377,7 @@
 @foreach($request->items as $item)
 @if($request->status !== 'cancelled' && ! $item->result?->is_verified && !$resultBlocked($item))
 <div class="modal fade" id="richtextModal-{{ $item->id }}" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-lg-down">
         <form method="POST" action="{{ route('admin.lab.results.store', $item) }}" enctype="multipart/form-data" class="modal-content">
             @csrf
             <input type="hidden" name="result_type" value="richtext">
@@ -547,8 +547,24 @@
 
     <!-- Sidebar -->
     <div class="col-lg-4">
+        <!-- Patient Card -->
+        @include('partials.patient-card', [
+            'patient' => $request->visit->patient,
+            'visit'   => $request->visit,
+            // 'ins'   => $true,
+        ])
+
+        @php
+            $activeVisitInsurance = $request->visit->visitInsurance;
+            $activeInsuranceProvider = $activeVisitInsurance?->insuranceProvider;
+            $activeInsuranceTier = $activeVisitInsurance?->insuranceTier;
+            $activeInsuranceIsReal = $activeVisitInsurance
+                && $activeVisitInsurance->is_active
+                && $activeInsuranceProvider
+                && ! $activeInsuranceProvider->is_default;
+        @endphp
         <!-- Patient / Recipient -->
-        <div class="card mb-3">
+        {{-- <div class="card mb-3">
             <div class="card-header"><h6 class="fw-bold mb-0"><i class="ti ti-user me-1"></i>{{ $request->patient ? __('lab.patient_label') : __('lab.recipient_label') }}</h6></div>
             <div class="card-body">
                 @if($request->patient)
@@ -567,7 +583,7 @@
                     @if($request->external_party_contact)<small class="text-muted d-block">{{ $request->external_party_contact }}</small>@endif
                 @endif
             </div>
-        </div>
+        </div> --}}
 
         <!-- Visit -->
         @if($request->visit)

@@ -50,6 +50,7 @@ use App\Services\MedicalRecordEntryPermissionService;
 use App\Services\PhysicalExaminationService;
 use App\Services\PrescriptionService;
 use App\Services\ProcedureRequestService;
+use App\Services\ServicePriceResolver;
 use App\Services\VisitService;
 use App\Services\VisitWorkflowService;
 use Illuminate\Http\Request;
@@ -72,6 +73,7 @@ class ConsultationController extends Controller
         protected PhysicalExaminationService $examinationService,
         protected MedicalRecordEntryPermissionService $entryPermissions,
         protected ConsultationSummaryService $summaryService,
+        protected ServicePriceResolver $priceResolver,
     ) {}
 
     private function shouldReturnJson(Request $request): bool
@@ -1137,12 +1139,34 @@ class ConsultationController extends Controller
     /**
      * Return active services for a department (for investigation dept dropdown).
      */
-    public function getDepartmentServices(Department $department)
+    public function getDepartmentServices(Request $request, Department $department)
     {
         $services = $department->services()
+            ->with('prices')
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name', 'code', 'price']);
+
+        $visit = $request->integer('visit_id')
+            ? Visit::with('visitInsurance.insuranceProvider')->find($request->integer('visit_id'))
+            : null;
+
+        if ($visit) {
+            $services = $services->map(function (ServiceCatalog $service) use ($visit) {
+                $pricing = $this->priceResolver->resolveForVisit($service, $visit);
+
+                return [
+                    'id' => $service->id,
+                    'name' => $service->name,
+                    'code' => $service->code,
+                    'price' => $pricing['selected_price'],
+                    'cash_price' => $pricing['cash_price'],
+                    'selected_price' => $pricing['selected_price'],
+                    'payer_type' => $pricing['payer_type'],
+                    'pricing_source' => $pricing['pricing_source'],
+                ];
+            })->values();
+        }
 
         return response()->json($services);
     }

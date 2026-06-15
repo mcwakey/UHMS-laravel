@@ -19,6 +19,30 @@ class InvestigationRequestService
     ) {}
 
     /**
+     * Resolve the prices that will be used if the pending request items are billed.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function billingPreview(LabRequest $labRequest): array
+    {
+        $labRequest->loadMissing([
+            'items.service.prices',
+            'visit.visitInsurance.insuranceProvider',
+        ]);
+
+        if (! $labRequest->visit) {
+            return [];
+        }
+
+        return $labRequest->items
+            ->filter(fn (LabRequestItem $item) => $item->service !== null)
+            ->mapWithKeys(fn (LabRequestItem $item) => [
+                $item->id => $this->priceResolver->resolveForVisit($item->service, $labRequest->visit),
+            ])
+            ->all();
+    }
+
+    /**
      * Accept a subset of a LabRequest's items, generate an invoice for them only,
      * and update aggregate request status.
      *

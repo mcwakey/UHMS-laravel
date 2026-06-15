@@ -139,6 +139,17 @@
                     <div class="card-header"><strong>{{ __('theatre.generate_billing') }}</strong></div>
                     <div class="card-body">
                         <p class="text-muted small">{!! __('theatre.billing_hint', ['service' => '<strong>'.e($procedure->service?->name).'</strong>']) !!}</p>
+                        @if($billingPreview)
+                            <div class="d-flex justify-content-between align-items-center border rounded px-3 py-2 mb-3">
+                                <span class="text-muted small">
+                                    {{ $billingPreview['payer_type'] === 'insurance' ? 'Insurance tariff' : 'Cash price' }}
+                                    @if($billingPreview['pricing_source'] === 'fallback_cash_no_insurance_price')
+                                        <span class="badge bg-warning text-dark ms-1">Cash fallback</span>
+                                    @endif
+                                </span>
+                                <strong>GH₵ {{ number_format($billingPreview['selected_price'], 2) }}</strong>
+                            </div>
+                        @endif
                         <form method="POST" action="{{ route('admin.theatre.bill', $procedure) }}">
                             @csrf
                             <button class="btn btn-primary">{{ __('theatre.add_to_visit_invoice') }}</button>

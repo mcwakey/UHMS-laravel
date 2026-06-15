@@ -172,6 +172,7 @@ class TheatreController extends Controller
         $timeline      = $this->reports->getTimeline($procedure);
         $theatreRooms  = TheatreRoom::schedulable()->orderBy('name')->get();
         $clinicians    = User::query()->where('status', 'active')->orderBy('first_name')->get(['id', 'first_name', 'last_name']);
+        $billingPreview = $this->workflow->billingPreview($procedure);
 
         // Dynamic procedure template (Phase A): build per-stage section/field views with saved values.
         $stageTemplates = [];
@@ -188,7 +189,7 @@ class TheatreController extends Controller
 
         return view('theatre.show', compact(
             'procedure', 'timeline', 'theatreRooms', 'clinicians',
-            'stageTemplates', 'defaultConsumables',
+            'stageTemplates', 'defaultConsumables', 'billingPreview',
         ));
     }
 

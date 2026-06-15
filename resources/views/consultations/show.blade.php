@@ -2799,6 +2799,7 @@ window.destroyUrls    = {
 window.diagnosisBaseUrl  = '{{ url("admin/consultations/diagnoses") }}';
 window.deptServicesBase  = '{{ url("admin/departments") }}';
 window.procedureDeptServicesBase = '{{ url("admin/theatre/departments") }}';
+window.currentVisitId = @json($visit->id);
 window.prescriptionDestroyBase = '{{ url("admin/consultations/prescriptions") }}';
 window.procedureRequestBase = '{{ url("admin/consultations/procedures") }}';
 window.labRequestBase = '{{ url("admin/consultations/lab-requests") }}';
@@ -3081,6 +3082,7 @@ var destroyUrls = window.destroyUrls;
 var diagnosisBaseUrl = window.diagnosisBaseUrl;
 var deptServicesBase = window.deptServicesBase;
 var procedureDeptServicesBase = window.procedureDeptServicesBase;
+var currentVisitId = window.currentVisitId;
 var prescriptionDestroyBase = window.prescriptionDestroyBase;
 var procedureRequestBase = window.procedureRequestBase;
 var labRequestBase = window.labRequestBase;
@@ -3582,7 +3584,7 @@ function loadInvestigationServices(deptId) {
     if (!deptId) { container.innerHTML = '<span class="text-muted small">Select a department first to load services</span>'; return; }
     container.innerHTML = '<div class="py-2 text-center"><span class="spinner-border spinner-border-sm text-primary"></span> Loading...</div>';
 
-    fetch(deptServicesBase + '/' + deptId + '/investigation-services', {
+    fetch(deptServicesBase + '/' + deptId + '/investigation-services?visit_id=' + encodeURIComponent(currentVisitId), {
         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
     })
     .then(function (r) { return r.json(); })
@@ -3593,7 +3595,12 @@ function loadInvestigationServices(deptId) {
             html += '<div class="col-md-6"><div class="form-check">';
             html += '<input type="checkbox" name="service_ids[]" value="' + s.id + '" class="form-check-input" id="svc' + s.id + '">';
             html += '<label class="form-check-label small" for="svc' + s.id + '">' + escapeHtml(s.name);
-            if (s.price) html += ' <span class="text-muted small">GH₵' + parseFloat(s.price).toFixed(2) + '</span>';
+            if (s.price !== null && s.price !== undefined) {
+                html += ' <span class="text-muted small">GH₵' + parseFloat(s.price).toFixed(2) + '</span>';
+                if (s.pricing_source === 'fallback_cash_no_insurance_price') {
+                    html += ' <span class="badge bg-warning text-dark">cash fallback</span>';
+                }
+            }
             html += '</label></div></div>';
         });
         html += '</div>';
@@ -3616,7 +3623,7 @@ function loadProcedureServices(deptId) {
     svc.innerHTML = '<option value="">' + consultationI18n.loading + '</option>';
     svc.disabled = true;
 
-    fetch(procedureDeptServicesBase + '/' + deptId + '/services', {
+    fetch(procedureDeptServicesBase + '/' + deptId + '/services?visit_id=' + encodeURIComponent(currentVisitId), {
         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
     })
     .then(function (r) {
@@ -3633,8 +3640,9 @@ function loadProcedureServices(deptId) {
         items.forEach(function (it) {
             var opt = document.createElement('option');
             opt.value = it.id;
-            var price = it.price || it.selling_price;
-            opt.textContent = it.name + (price ? (' — GH₵' + parseFloat(price).toFixed(2)) : '');
+            var price = it.price ?? it.selling_price;
+            var fallback = it.pricing_source === 'fallback_cash_no_insurance_price' ? ' (cash fallback)' : '';
+            opt.textContent = it.name + (price !== null && price !== undefined ? (' — GH₵' + parseFloat(price).toFixed(2) + fallback) : '');
             svc.appendChild(opt);
         });
         svc.disabled = false;

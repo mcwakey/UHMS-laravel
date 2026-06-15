@@ -111,6 +111,8 @@ class AsyncPageBehaviorTest extends TestCase
         $response->assertOk()
             ->assertSee('invoiceStatusBadge', false)
             ->assertSee('invoiceOutstandingValue', false)
+            ->assertSee('window.UhmsInertia.visit', false)
+            ->assertDontSee('updateInvoiceState', false)
             ->assertDontSee('window.location.assign', false);
     }
 

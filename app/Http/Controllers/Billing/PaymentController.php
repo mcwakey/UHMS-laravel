@@ -174,10 +174,15 @@ class PaymentController extends Controller
         $payment->loadMissing(['invoice.visit']);
         $invoice->refresh();
         $visit = $invoice->visit?->fresh();
+        $successMessage = __('messages.payments.recorded', [
+            'number' => $payment->payment_number,
+            'amount' => '₵' . number_format($payment->amount, 2),
+        ]);
 
         if ($request->expectsJson()) {
+            $request->session()->flash('success', $successMessage);
             return response()->json([
-                'message' => __('messages.payments.recorded', ['number' => $payment->payment_number, 'amount' => '₵' . number_format($payment->amount, 2)]),
+                'message' => $successMessage,
                 'payment_id' => $payment->id,
                 'payment_number' => $payment->payment_number,
                 'amount' => (float) $payment->amount,
@@ -195,12 +200,12 @@ class PaymentController extends Controller
         if ($request->input('return_to') === 'receive') {
             return redirect()
                 ->route('admin.billing.payments.receive')
-                ->with('success', __('messages.payments.recorded', ['number' => $payment->payment_number, 'amount' => '₵' . number_format($payment->amount, 2)]));
+                ->with('success', $successMessage);
         }
 
         return redirect()
             ->route('admin.billing.invoices.show', $invoice)
-            ->with('success', __('messages.payments.recorded', ['number' => $payment->payment_number, 'amount' => '₵' . number_format($payment->amount, 2)]));
+            ->with('success', $successMessage);
     }
 
     /**

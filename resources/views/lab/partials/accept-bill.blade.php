@@ -26,7 +26,8 @@
                     @foreach($request->items as $it)
                         @if($it->status === 'pending')
                         @php
-                            $price = $it->service?->price ?? null;
+                            $pricing = ($billingPrices ?? [])[$it->id] ?? null;
+                            $price = $pricing['selected_price'] ?? null;
                         @endphp
                         <tr data-price="{{ (float) ($price ?? 0) }}">
                             <td>
@@ -37,7 +38,14 @@
                                 @if($it->service)<small class="text-muted d-block">{{ $it->service->code ?? '' }}</small>@endif
                             </td>
                             <td><span class="badge bg-{{ $it->status_color }}">{{ ucfirst($it->status) }}</span></td>
-                            <td class="text-end">{{ $price !== null ? number_format($price, 2) : '—' }}</td>
+                            <td class="text-end">
+                                {{ $price !== null ? number_format($price, 2) : '—' }}
+                                @if(($pricing['payer_type'] ?? null) === 'insurance')
+                                    <small class="d-block text-muted">
+                                        {{ ($pricing['pricing_source'] ?? null) === 'fallback_cash_no_insurance_price' ? 'Cash fallback' : 'Insurance tariff' }}
+                                    </small>
+                                @endif
+                            </td>
                         </tr>
                         @endif
                     @endforeach

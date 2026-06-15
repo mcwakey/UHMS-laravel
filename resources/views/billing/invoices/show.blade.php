@@ -28,7 +28,7 @@
     $canReverseWriteOffs = ($currentUser?->can('credit_notes.write_off') ?? false)
         || ($currentUser?->can('billing.write_off.reverse') ?? false);
     $canReverseSettlements = $canReversePayments || $canReverseCreditNotes || $canReverseWriteOffs;
-    $showSettlementActions = $canViewAccountingPosting || $canReverseSettlements;
+    $showSettlementActions = $canViewAccountingPosting || $canReverseSettlements || $invoice->payments->isNotEmpty();
     $canIssueCreditNote = $currentUser?->can('credit_notes.create') ?? false;
     $canIssueWriteOff = $currentUser?->can('credit_notes.write_off') ?? false;
     $canIssueAdjustment = ($canIssueCreditNote || $canIssueWriteOff)
@@ -528,6 +528,7 @@
                                 <th>{{ __('common.date') }}</th>
                                 <th>{{ __('common.type') }}</th>
                                 <th>{{ __('invoices.reference') }}</th>
+                                <th>{{ __('common.details') }}</th>
                                 <th class="text-end">{{ __('common.amount') }}</th>
                                 <th>{{ __('common.reason') }}</th>
                                 <th>{{ __('common.status') }}</th>
@@ -545,7 +546,25 @@
                             <tr>
                                 <td>{{ $history['date']?->format('d M Y H:i') ?? '—' }}</td>
                                 <td><span class="badge bg-{{ $history['badge'] }}">{{ $history['type'] }}</span></td>
-                                <td class="fw-medium">{{ $history['reference'] }}</td>
+                                <td>
+                                    <span class="fw-medium">{{ $history['reference'] }}</span>
+                                    @if($history['payment_reference'])
+                                        <div class="small text-muted">{{ $history['payment_reference'] }}</div>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($history['payment_method'])
+                                        <span class="badge bg-soft-primary">{{ $history['payment_method'] }}</span>
+                                        @if($history['payer_type'])
+                                            <div class="small mt-1">
+                                                {{ __('statuses.default.' . $history['payer_type']) }}
+                                                @if($history['payer_name']) - {{ $history['payer_name'] }} @endif
+                                            </div>
+                                        @endif
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
                                 <td class="text-end">&#8373;{{ number_format($history['amount'], 2) }}</td>
                                 <td>{{ $history['reason'] ?: '—' }}</td>
                                 <td>{{ $history['status'] }}</td>
@@ -569,7 +588,7 @@
                                 </td>
                                 @endif
                                 @if($showSettlementActions)
-                                <td>
+                                <td class="text-nowrap">
                                     @php
                                         $canReverseHistory = ($history['can_reverse'] ?? false)
                                             && match ($history['reversal_kind'] ?? null) {
@@ -590,6 +609,17 @@
                                             <i class="ti ti-arrow-back-up me-1"></i>{{ __('invoices.reverse_entry') }}
                                         </button>
                                     @endif
+                                    @if($history['receipt_url'])
+                                        <a data-no-inertia href="{{ $history['receipt_url'] }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="{{ __('payments.view_receipt') }}">
+                                            <i class="ti ti-eye"></i>
+                                        </a>
+                                        <a data-no-inertia href="{{ $history['receipt_thermal_url'] }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="{{ __('payments.print_receipt_80mm') }}">
+                                            <i class="ti ti-printer"></i>
+                                        </a>
+                                        <a data-no-inertia href="{{ $history['receipt_pdf_url'] }}" class="btn btn-sm btn-outline-secondary" title="{{ __('payments.download_pdf') }}">
+                                            <i class="ti ti-file-type-pdf"></i>
+                                        </a>
+                                    @endif
                                     @if($history['accounting_status'] === 'failed' && $canRetryAccountingPosting)
                                         <form method="POST" action="{{ route('admin.accounting.postings.retry') }}" class="d-inline">
                                             @csrf
@@ -599,7 +629,7 @@
                                                 <i class="ti ti-refresh me-1"></i>{{ __('invoices.retry') }}
                                             </button>
                                         </form>
-                                    @elseif(! $canReverseHistory)
+                                    @elseif(! $canReverseHistory && ! $history['receipt_url'])
                                         <span class="text-muted">—</span>
                                     @endif
                                 </td>
@@ -607,7 +637,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="{{ 7 + ($canViewAccountingPosting ? 1 : 0) + ($showSettlementActions ? 1 : 0) }}" class="text-center text-muted py-3">{{ __('invoices.no_adjustments') }}</td>
+                                <td colspan="{{ 8 + ($canViewAccountingPosting ? 1 : 0) + ($showSettlementActions ? 1 : 0) }}" class="text-center text-muted py-3">{{ __('invoices.no_adjustments') }}</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -678,81 +708,6 @@
                 </div>
                 @endif
 
-                <!-- Payment History -->
-                @if($invoice->payments->count() > 0)
-                <hr>
-                <h6 class="fw-bold mb-3"><i class="ti ti-cash me-1"></i>{{ __('invoices.payment_history') }}</h6>
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered">
-                        <thead class="table-light">
-                            <tr>
-                                <th>{{ __('invoices.payment_no') }}</th>
-                                <th>{{ __('common.date') }}</th>
-                                <th>{{ __('invoices.payer_col') }}</th>
-                                <th>{{ __('invoices.method') }}</th>
-                                <th>{{ __('invoices.reference') }}</th>
-                                <th class="text-end">{{ __('common.amount') }}</th>
-                                <th>{{ __('invoices.received_by') }}</th>
-                                @if($canViewAccountingPosting)
-                                <th>{{ __('invoices.accounting') }}</th>
-                                @endif
-                                <th class="text-center">{{ __('payments.receipt') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($invoice->payments as $payment)
-                            <tr>
-                                <td class="fw-medium">{{ $payment->payment_number }}</td>
-                                <td>{{ $payment->paid_at->format('d M Y H:i') }}</td>
-                                <td>
-                                    @if($payment->receivable)
-                                        <span class="badge bg-{{ $payment->receivable->payerBadgeColor() }}">{{ __('statuses.default.' . $payment->receivable->payer_type) }}</span>
-                                        <div class="small text-muted">{{ $payment->receivable->payerName() }}</div>
-                                    @else
-                                        <span class="badge bg-light text-dark">{{ __('statuses.default.' . ($payment->payer_type ?: 'patient')) }}</span>
-                                    @endif
-                                </td>
-                                <td>{{ $payment->payment_method->translatedLabel() }}</td>
-                                <td>{{ $payment->reference_number ?? '—' }}</td>
-                                <td class="text-end fw-medium text-success">&#8373;{{ number_format($payment->amount, 2) }}</td>
-                                <td>{{ $payment->receivedBy->name ?? '—' }}</td>
-                                @if($canViewAccountingPosting)
-                                <td>
-                                    <span class="badge bg-{{ $accountingStatusColor($payment->accounting_status) }}">
-                                        {{ $accountingStatusLabel($payment->accounting_status) }}
-                                    </span>
-                                    @if($payment->journalEntry)
-                                        <a href="{{ route('admin.accounting.journals.show', $payment->journalEntry) }}" class="d-block small">{{ $payment->journalEntry->journal_number }}</a>
-                                    @elseif($payment->accounting_status === 'failed' && $canRetryAccountingPosting)
-                                        <form method="POST" action="{{ route('admin.accounting.postings.retry') }}" class="d-inline">
-                                            @csrf
-                                            <input type="hidden" name="source_type" value="payment">
-                                            <input type="hidden" name="source_id" value="{{ $payment->id }}">
-                                            <button type="submit" class="btn btn-link btn-sm p-0">{{ __('invoices.retry') }}</button>
-                                        </form>
-                                    @endif
-                                    @if($payment->accounting_status === 'failed' && $canViewAccountingFailures && $payment->accounting_error)
-                                        <div class="small text-danger">{{ $payment->accounting_error }}</div>
-                                    @endif
-                                </td>
-                                @endif
-                                <td class="text-center text-nowrap">
-                                    <a data-no-inertia href="{{ route('admin.billing.payments.receipt', $payment) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="{{ __('payments.view_receipt') }}">
-                                        <i class="ti ti-eye"></i>
-                                    </a>
-                                    <a data-no-inertia href="{{ route('admin.billing.payments.receipt-thermal', $payment) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="{{ __('payments.print_receipt_80mm') }}">
-                                        <i class="ti ti-printer"></i>
-                                    </a>
-                                    <a data-no-inertia href="{{ route('admin.billing.payments.receipt-pdf', $payment) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('payments.download_pdf') }}">
-                                        <i class="ti ti-file-type-pdf"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                @endif
             </div>
         </div>
     </div>
@@ -1161,78 +1116,30 @@ $(function() {
     const recordPaymentBtn = $('#recordPaymentBtn');
     const paymentMethodSelect = $('#paymentMethodSelect');
     const referenceGroup = $('#referenceGroup');
-    const invoiceStatusBadge = $('#invoiceStatusBadge');
-    const invoiceVisitStatusLabel = $('#invoiceVisitStatusLabel');
-    const invoicePaidValue = $('#invoicePaidValue');
-    const invoiceBalanceValue = $('#invoiceBalanceValue');
-    const invoiceOutstandingAlert = $('#invoiceOutstandingAlert');
-    const invoiceOutstandingValue = $('#invoiceOutstandingValue');
     const paymentAmountInput = $('#paymentAmountInput');
     const invoiceReceivableSelect = $('#invoiceReceivableSelect');
-    let invoiceMarkedPaid = false;
-    const invoiceStatusColors = {
-        draft: 'secondary',
-        pending: 'warning',
-        partially_paid: 'info',
-        paid: 'success',
-        cancelled: 'danger',
-        refunded: 'dark'
-    };
+    let paymentNavigationStarted = false;
     const originalButtonHtml = recordPaymentBtn.html();
-
-    function formatMoney(amount) {
-        return '&#8373;' + Number(amount || 0).toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-    }
 
     function showFeedback(type, html) {
         feedback.removeClass('d-none alert-success alert-danger').addClass('alert-' + type).html(html);
         $('html, body').animate({ scrollTop: 0 }, 200);
     }
 
-    function updateInvoiceState(payload) {
-        const paymentAmount = parseFloat(payload.amount || paymentAmountInput.val() || 0);
-        const currentPaid = parseFloat(invoicePaidValue.data('amount') || 0);
-        const currentBalance = parseFloat(invoiceBalanceValue.data('amount') || paymentAmountInput.attr('max') || 0);
-        const nextPaid = Math.max(0, currentPaid + paymentAmount);
-        const nextBalance = Math.max(0, currentBalance - paymentAmount);
-        const statusColor = invoiceStatusColors[payload.invoice_status] || 'warning';
+    function refreshInvoice(url) {
+        paymentNavigationStarted = true;
+        const target = url || window.location.href;
 
-        if (payload.invoice_status_label && invoiceStatusBadge.length) {
-            invoiceStatusBadge.removeClass('bg-secondary bg-warning bg-info bg-success bg-danger bg-dark')
-                .addClass('bg-' + statusColor)
-                .text(payload.invoice_status_label);
-        }
-
-        if (payload.visit_status_label && invoiceVisitStatusLabel.length) {
-            invoiceVisitStatusLabel.text(payload.visit_status_label);
-        }
-
-        if (invoicePaidValue.length) {
-            invoicePaidValue.data('amount', nextPaid);
-            invoicePaidValue.html('-' + formatMoney(nextPaid));
-        }
-
-        if (invoiceBalanceValue.length) {
-            invoiceBalanceValue.data('amount', nextBalance);
-            invoiceBalanceValue.html(formatMoney(nextBalance));
-        }
-
-        if (invoiceOutstandingValue.length) {
-            invoiceOutstandingValue.html(formatMoney(nextBalance));
-        }
-
-        if (payload.invoice_status === 'paid') {
-            invoiceOutstandingAlert.removeClass('alert-warning').addClass('alert-success');
-            paymentForm.find(':input').prop('disabled', true);
-            recordPaymentBtn.prop('disabled', true).html('<i class="ti ti-circle-check me-1"></i>Paid');
-            invoiceMarkedPaid = true;
+        if (window.UhmsInertia && typeof window.UhmsInertia.visit === 'function') {
+            window.UhmsInertia.visit(target, {
+                preserveScroll: false,
+                preserveState: false,
+                replace: true
+            });
             return;
         }
 
-        paymentAmountInput.attr('max', nextBalance.toFixed(2)).val(nextBalance.toFixed(2));
+        window.location.href = target;
     }
 
     function syncReceivablePaymentLimit() {
@@ -1374,19 +1281,11 @@ $(function() {
                 return;
             }
 
-            updateInvoiceState(payload);
-
-            showFeedback(
-                'success',
-                '<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">'
-                    + '<div><strong>' + (payload.message || 'Payment recorded successfully.') + '</strong><div class="small text-muted">Invoice: ' + (payload.invoice_status_label || '') + (payload.visit_status_label ? ' | Visit: ' + payload.visit_status_label : '') + '</div></div>'
-                    + '<div class="d-flex gap-2"><a data-no-inertia target="_blank" href="' + (payload.receipt_url || '#') + '" class="btn btn-sm btn-success">Receipt</a>' + (payload.redirect_url ? '<a href="' + payload.redirect_url + '" class="btn btn-sm btn-outline-success">Open Invoice</a>' : '') + '</div>'
-                    + '</div>'
-            );
+            refreshInvoice(payload.redirect_url);
         } catch (error) {
             showFeedback('danger', 'Network error while recording payment.');
         } finally {
-            if (!invoiceMarkedPaid) {
+            if (!paymentNavigationStarted) {
                 recordPaymentBtn.prop('disabled', false).html(originalButtonHtml);
             }
         }

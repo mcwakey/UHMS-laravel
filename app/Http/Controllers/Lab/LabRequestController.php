@@ -82,8 +82,9 @@ class LabRequestController extends Controller
     public function show(LabRequest $labRequest)
     {
         $request = $this->labService->getRequestDetails($labRequest);
+        $billingPrices = $this->investigationRequestService->billingPreview($request);
 
-        return view('lab.process', compact('request'));
+        return view('lab.process', compact('request', 'billingPrices'));
     }
 
     /**

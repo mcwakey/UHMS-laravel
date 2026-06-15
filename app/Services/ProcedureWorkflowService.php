@@ -19,9 +19,27 @@ class ProcedureWorkflowService
 {
     public function __construct(
         protected BillingService $billingService,
+        protected ServicePriceResolver $priceResolver,
         protected NotificationService $notifications,
         protected ActivityLogService $logger,
     ) {}
+
+    /**
+     * Resolve the price that will be posted when this procedure is billed.
+     */
+    public function billingPreview(ProcedureRequest $request): ?array
+    {
+        $request->loadMissing([
+            'service.prices',
+            'visit.visitInsurance.insuranceProvider',
+        ]);
+
+        if (! $request->service || ! $request->visit) {
+            return null;
+        }
+
+        return $this->priceResolver->resolveForVisit($request->service, $request->visit);
+    }
 
     public function acceptProcedure(ProcedureRequest $request, User $user, ?string $notes = null): ProcedureRequest
     {

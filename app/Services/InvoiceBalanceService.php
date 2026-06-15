@@ -52,6 +52,10 @@ class InvoiceBalanceService
             'payments.receivedBy',
             'payments.journalEntry',
             'payments.reversalJournalEntry',
+            'payments.receivable.patient',
+            'payments.receivable.insuranceProvider',
+            'payments.receivable.sponsor',
+            'payments.receivable.corporateClient',
             'discountEvents.performedBy',
             'discountEvents.journalEntry',
             'discountEvents.reversalJournalEntry',
@@ -95,6 +99,13 @@ class InvoiceBalanceService
             'reverse_url' => $payment->can_reverse
                 ? route('admin.billing.payments.reverse', $payment)
                 : null,
+            'payment_method' => $payment->payment_method?->translatedLabel(),
+            'payment_reference' => $payment->reference_number,
+            'payer_type' => $payment->receivable?->payer_type ?: ($payment->payer_type ?: 'patient'),
+            'payer_name' => $payment->receivable?->payerName(),
+            'receipt_url' => route('admin.billing.payments.receipt', $payment),
+            'receipt_thermal_url' => route('admin.billing.payments.receipt-thermal', $payment),
+            'receipt_pdf_url' => route('admin.billing.payments.receipt-pdf', $payment),
             'badge' => $isRefund ? 'danger' : 'success',
         ];
     }
@@ -122,6 +133,13 @@ class InvoiceBalanceService
             'can_reverse' => false,
             'reversal_kind' => null,
             'reverse_url' => null,
+            'payment_method' => null,
+            'payment_reference' => null,
+            'payer_type' => null,
+            'payer_name' => null,
+            'receipt_url' => null,
+            'receipt_thermal_url' => null,
+            'receipt_pdf_url' => null,
             'badge' => $isReversal ? 'warning' : ($discount->is_override ? 'danger' : 'warning'),
         ];
     }
@@ -156,6 +174,13 @@ class InvoiceBalanceService
             'reverse_url' => ! $isReversal && ! $isReversed && $creditNote->status === 'issued'
                 ? route('admin.billing.credit-notes.reverse', $creditNote)
                 : null,
+            'payment_method' => null,
+            'payment_reference' => null,
+            'payer_type' => null,
+            'payer_name' => null,
+            'receipt_url' => null,
+            'receipt_thermal_url' => null,
+            'receipt_pdf_url' => null,
             'badge' => $isReversal ? 'warning' : ($isWriteOff ? 'dark' : 'info'),
         ];
     }

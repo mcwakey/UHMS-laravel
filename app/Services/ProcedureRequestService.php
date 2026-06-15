@@ -18,6 +18,7 @@ class ProcedureRequestService
 {
     public function __construct(
         protected ProcedureWorkflowService $workflow,
+        protected ServicePriceResolver $priceResolver,
     ) {}
 
     /**
@@ -113,12 +114,34 @@ class ProcedureRequestService
     /**
      * Services belonging to a given procedure department.
      */
-    public function servicesForDepartment(int $departmentId)
+    public function servicesForDepartment(int $departmentId, ?Visit $visit = null)
     {
-        return ServiceCatalog::where('department_id', $departmentId)
+        $services = ServiceCatalog::with('prices')
+            ->where('department_id', $departmentId)
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
+
+        if (! $visit) {
+            return $services;
+        }
+
+        $visit->loadMissing('visitInsurance.insuranceProvider');
+
+        return $services->map(function (ServiceCatalog $service) use ($visit) {
+            $pricing = $this->priceResolver->resolveForVisit($service, $visit);
+
+            return [
+                'id' => $service->id,
+                'name' => $service->name,
+                'code' => $service->code,
+                'price' => $pricing['selected_price'],
+                'cash_price' => $pricing['cash_price'],
+                'selected_price' => $pricing['selected_price'],
+                'payer_type' => $pricing['payer_type'],
+                'pricing_source' => $pricing['pricing_source'],
+            ];
+        })->values();
     }
 
     protected function isProcedureDepartment(Department $department): bool

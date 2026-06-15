@@ -91,7 +91,7 @@ return [
     'adjustments'           => 'Adjustments',
     'due_aging'             => 'Due / Aging',
     'no_payer_rows'         => 'No payer responsibility rows are available yet.',
-    'adjustments_settlements' => 'Adjustments & Settlements',
+    'adjustments_settlements' => 'Adjustments, Settlements & Payments',
     'reference'             => 'Reference',
     'approved_by'           => 'Approved By',
     'journal_entry'         => 'Journal Entry',
