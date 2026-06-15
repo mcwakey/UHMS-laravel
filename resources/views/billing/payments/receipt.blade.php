@@ -1,178 +1,155 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ __('payments.receipt') }} {{ $payment->payment_number }}</title>
+    @php
+        $org = \App\Models\Setting::getGroup('organization');
+        $orgName = $org['name'] ?? config('app.name', 'UHMS');
+        $orgLogo = !empty($org['logo']) ? asset('storage/'.$org['logo']) : null;
+        $orgAddress = collect([$org['address'] ?? null, $org['city'] ?? null, $org['region'] ?? null])->filter()->implode(', ');
+        $orgContact = collect([$org['phone'] ?? null, $org['email'] ?? null])->filter()->implode('  ·  ');
+        $accent = '#15803d';
+        $inv = $payment->invoice;
+    @endphp
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 14px; color: #333; padding: 20px; background: #f4f4f4; }
-        .receipt { max-width: 720px; margin: 0 auto; background: #fff; padding: 28px 32px; border: 1px solid #e0e0e0; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
-        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #198754; padding-bottom: 14px; margin-bottom: 20px; }
-        .header .logo { font-size: 22px; font-weight: bold; color: #198754; }
-        .header .logo small { display: block; font-size: 11px; color: #666; font-weight: normal; }
-        .header .meta { text-align: right; }
-        .header .meta .title { font-size: 18px; font-weight: bold; letter-spacing: 1px; color: #198754; }
-        .header .meta .num { font-size: 14px; color: #333; margin-top: 4px; font-weight: 600; }
-        .header .meta .stamp { display: inline-block; margin-top: 6px; padding: 4px 10px; border: 2px solid #198754; color: #198754; font-weight: bold; font-size: 11px; letter-spacing: 1px; transform: rotate(-3deg); }
-        .info-grid { display: flex; gap: 24px; margin-bottom: 18px; }
-        .info-grid .col { flex: 1; }
-        .info-grid h5 { font-size: 12px; color: #198754; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-        .info-grid p { margin-bottom: 3px; font-size: 13px; }
-        .info-grid p .label { color: #888; display: inline-block; min-width: 80px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
-        th, td { padding: 7px 10px; border-bottom: 1px solid #eee; text-align: left; font-size: 13px; }
-        th { background: #f8f9fa; color: #555; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 13px; color: #1e293b; background: #f1f5f9; padding: 24px; line-height: 1.5; }
+        .receipt { max-width: 720px; margin: 0 auto; background: #fff; padding: 32px 36px; border-radius: 6px; box-shadow: 0 1px 4px rgba(15,23,42,.08); }
+        .muted { color: #64748b; }
         .text-end { text-align: right; }
         .text-center { text-align: center; }
-        .amount-banner { background: #d1e7dd; color: #0f5132; padding: 14px 18px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin: 16px 0; }
-        .amount-banner .lbl { font-size: 13px; font-weight: 600; }
-        .amount-banner .amt { font-size: 24px; font-weight: 700; }
-        .summary { display: flex; justify-content: flex-end; margin-top: 8px; }
-        .summary table { width: 320px; }
-        .summary td { border: none; padding: 4px 8px; }
-        .summary .total td { border-top: 1px solid #333; font-weight: bold; }
-        .footer { margin-top: 26px; padding-top: 14px; border-top: 1px dashed #ccc; text-align: center; color: #888; font-size: 11px; line-height: 1.6; }
-        .footer .thanks { font-size: 13px; color: #198754; font-weight: 600; margin-bottom: 4px; }
-        .actions { text-align: center; margin-bottom: 16px; }
-        .actions button { padding: 8px 22px; font-size: 14px; cursor: pointer; border: none; border-radius: 4px; margin: 0 4px; }
-        .actions .print { background: #198754; color: #fff; }
-        .actions .close { background: #6c757d; color: #fff; }
+
+        .topbar { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid {{ $accent }}; padding-bottom: 16px; margin-bottom: 20px; }
+        .org-name { font-size: 19px; font-weight: 700; color: #0f172a; }
+        .org-meta { font-size: 12px; color: #64748b; margin-top: 2px; }
+        .doc-title { font-size: 20px; font-weight: 700; letter-spacing: 1px; color: {{ $accent }}; }
+        .doc-num { font-size: 13px; font-weight: 600; margin-top: 3px; }
+        .stamp { display: inline-block; margin-top: 7px; padding: 4px 11px; border: 2px solid {{ $accent }}; color: {{ $accent }}; font-weight: 700; font-size: 11px; letter-spacing: .5px; border-radius: 3px; }
+
+        .info-grid { display: flex; gap: 20px; margin-bottom: 18px; }
+        .info-grid .col { flex: 1; }
+        .info-label { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: #94a3b8; font-weight: 700; margin-bottom: 5px; }
+        .info-name { font-weight: 700; font-size: 14px; color: #0f172a; }
+        .info-line { font-size: 12.5px; margin-top: 2px; }
+        .info-line .k { color: #94a3b8; display: inline-block; min-width: 72px; }
+
+        .banner { background: #dcfce7; color: #166534; padding: 16px 20px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin: 18px 0; }
+        .banner .lbl { font-size: 13px; font-weight: 700; }
+        .banner .amt { font-size: 26px; font-weight: 700; }
+
+        .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: {{ $accent }}; margin: 18px 0 8px; }
+        table.items { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+        table.items th { background: #f1f5f9; color: #475569; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; padding: 9px 11px; text-align: left; border-bottom: 2px solid #cbd5e1; }
+        table.items td { padding: 8px 11px; border-bottom: 1px solid #eef2f7; font-size: 12.5px; }
+
+        .totals-wrap { display: flex; justify-content: flex-end; margin-top: 10px; }
+        .totals { width: 320px; }
+        .totals .row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
+        .totals .row .k { color: #64748b; }
+        .totals .sep { border-top: 1px solid #e2e8f0; margin-top: 4px; padding-top: 8px; }
+        .totals .highlight { color: {{ $accent }}; font-weight: 700; }
+        .totals .due { border-top: 2px solid #334155; margin-top: 6px; padding-top: 9px; font-weight: 700; font-size: 16px; }
+
+        .notes { margin-top: 16px; padding: 11px 13px; background: #f8fafc; border-left: 3px solid {{ $accent }}; border-radius: 4px; font-size: 12.5px; }
+        .footer { margin-top: 28px; padding-top: 14px; border-top: 1px dashed #cbd5e1; text-align: center; color: #94a3b8; font-size: 11.5px; line-height: 1.6; }
+        .footer .thanks { font-size: 13px; color: {{ $accent }}; font-weight: 700; margin-bottom: 3px; }
+
+        .toolbar { max-width: 720px; margin: 0 auto 16px; text-align: center; }
+        .toolbar button { padding: 9px 24px; font-size: 14px; cursor: pointer; border: none; border-radius: 5px; margin: 0 4px; font-weight: 600; }
+        .toolbar .print { background: {{ $accent }}; color: #fff; }
+        .toolbar .close { background: #64748b; color: #fff; }
+
         @media print {
             body { padding: 0; background: #fff; }
-            .receipt { box-shadow: none; border: none; padding: 14px; }
+            .receipt { box-shadow: none; border-radius: 0; padding: 14px; max-width: 100%; }
             .no-print { display: none !important; }
         }
     </style>
 </head>
 <body>
-    <div class="no-print actions">
+    <div class="no-print toolbar">
         <button class="print" onclick="window.print()">{{ __('payments.print_receipt') }}</button>
         <button class="close" onclick="window.close()">{{ __('common.close') }}</button>
     </div>
 
     <div class="receipt">
-        <!-- Header -->
-        <div class="header">
-            <div class="logo">
-                UHMS
-                <small>{{ __('common.app_tagline') }}</small>
+        <div class="topbar">
+            <div>
+                @if($orgLogo)
+                    <img src="{{ $orgLogo }}" alt="{{ $orgName }}" style="max-height:50px; margin-bottom:3px;">
+                    <div class="org-meta">{{ $orgAddress }}</div>
+                @else
+                    <div class="org-name">{{ $orgName }}</div>
+                    <div class="org-meta">{{ $orgAddress ?: __('common.app_tagline') }}</div>
+                @endif
+                @if($orgContact)<div class="org-meta">{{ $orgContact }}</div>@endif
             </div>
-            <div class="meta">
-                <div class="title">{{ __('payments.payment_receipt_label') }}</div>
-                <div class="num">{{ $payment->payment_number }}</div>
-                @if($payment->invoice && $payment->invoice->balance <= 0)
+            <div class="text-end">
+                <div class="doc-title">{{ __('payments.payment_receipt_label') }}</div>
+                <div class="doc-num">{{ $payment->payment_number }}</div>
+                @if($inv && $inv->balance <= 0)
                     <div class="stamp">{{ __('payments.paid_in_full') }}</div>
                 @else
-                    <div class="stamp" style="border-color:#fd7e14; color:#fd7e14;">{{ __('payments.part_payment_label') }}</div>
+                    <div class="stamp" style="border-color:#ea580c; color:#ea580c;">{{ __('payments.part_payment_label') }}</div>
                 @endif
             </div>
         </div>
 
-        <!-- Info -->
         <div class="info-grid">
             <div class="col">
-                <h5>{{ __('payments.received_from') }}</h5>
+                <div class="info-label">{{ __('payments.received_from') }}</div>
                 @if($payment->patient)
-                    <p style="font-weight:bold;">{{ $payment->patient->full_name }}</p>
-                    <p>{{ $payment->patient->patient_number }}</p>
-                    <p>{{ $payment->patient->phone }}</p>
+                    <div class="info-name">{{ $payment->patient->full_name }}</div>
+                    <div class="info-line">{{ $payment->patient->patient_number }}</div>
+                    @if($payment->patient->phone)<div class="info-line">{{ $payment->patient->phone }}</div>@endif
                 @else
-                    <p style="font-weight:bold;">{{ $payment->invoice?->external_party_name ?? __('invoices.external_recipient') }}</p>
-                    <p>{{ __('payments.external_referral') }}</p>
+                    <div class="info-name">{{ $payment->invoice?->external_party_name ?? __('invoices.external_recipient') }}</div>
+                    <div class="info-line muted">{{ __('payments.external_referral') }}</div>
                 @endif
             </div>
             <div class="col">
-                <h5>{{ __('payments.payment_details') }}</h5>
-                <p><span class="label">{{ __('payments.date_label') }}:</span> {{ $payment->paid_at->format('d M Y, h:i A') }}</p>
-                <p><span class="label">{{ __('payments.method_label') }}:</span> {{ $payment->payment_method instanceof \App\Enums\PaymentMethod ? $payment->payment_method->translatedLabel() : (\App\Enums\PaymentMethod::tryFrom((string) $payment->payment_method)?->translatedLabel() ?? $payment->payment_method) }}</p>
+                <div class="info-label">{{ __('payments.payment_details') }}</div>
+                <div class="info-line"><span class="k">{{ __('payments.date_label') }}:</span> {{ $payment->paid_at->format('d M Y, h:i A') }}</div>
+                <div class="info-line"><span class="k">{{ __('payments.method_label') }}:</span> {{ $payment->payment_method instanceof \App\Enums\PaymentMethod ? $payment->payment_method->translatedLabel() : (\App\Enums\PaymentMethod::tryFrom((string) $payment->payment_method)?->translatedLabel() ?? $payment->payment_method) }}</div>
                 @if($payment->reference_number)
-                <p><span class="label">{{ __('payments.reference_label') }}:</span> {{ $payment->reference_number }}</p>
+                <div class="info-line"><span class="k">{{ __('payments.reference_label') }}:</span> {{ $payment->reference_number }}</div>
                 @endif
-                <p><span class="label">{{ __('payments.cashier_label') }}:</span> {{ $payment->receivedBy->name ?? '—' }}</p>
+                <div class="info-line"><span class="k">{{ __('payments.cashier_label') }}:</span> {{ $payment->receivedBy->name ?? '—' }}</div>
             </div>
         </div>
 
-        <!-- Amount Banner -->
-        <div class="amount-banner">
+        <div class="banner">
             <div class="lbl">{{ __('payments.amount_received') }}</div>
             <div class="amt">&#8373;{{ number_format($payment->amount, 2) }}</div>
         </div>
 
-        <!-- Invoice Snapshot -->
-        @if($payment->invoice)
-        @php $inv = $payment->invoice; @endphp
-        <h5 style="font-size:12px; text-transform:uppercase; color:#198754; margin-bottom:6px;">{{ __('payments.applied_to_invoice') }}</h5>
-        <table>
-            <thead>
-                <tr>
-                    <th>{{ __('payments.invoice_num_col') }}</th>
-                    <th>{{ __('payments.date_label') }}</th>
-                    <th>{{ __('payments.visit_col') }}</th>
-                    <th class="text-end">{{ __('payments.total_col_rcpt') }}</th>
-                    <th class="text-end">{{ __('payments.paid_col_rcpt') }}</th>
-                    <th class="text-end">{{ __('payments.balance_col_rcpt') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td style="font-weight:600;">{{ $inv->invoice_number }}</td>
-                    <td>{{ $inv->created_at->format('d M Y') }}</td>
-                    <td>{{ $inv->visit?->visit_number ?? '—' }}</td>
-                    <td class="text-end">&#8373;{{ number_format($inv->total_amount, 2) }}</td>
-                    <td class="text-end" style="color:#198754;">&#8373;{{ number_format($inv->amount_paid, 2) }}</td>
-                    <td class="text-end" style="color:{{ $inv->balance > 0 ? '#dc3545' : '#198754' }}; font-weight:bold;">&#8373;{{ number_format($inv->balance, 2) }}</td>
-                </tr>
-            </tbody>
-        </table>
-
+        @if($inv)
         @if($inv->items->isNotEmpty())
-        @php
-            $sourceLabels = [
-                'cash_and_carry'         => 'Cash & Carry',
-                'cash_price'             => 'Cash & Carry',
-                'provider_specific'      => 'Provider Rate',
-                'payer_specific_price'   => 'Provider Rate',
-                'insurance_type'         => 'Insurance Type',
-                'insurance_type_default' => 'Insurance Type',
-                'base_price'             => 'Base Price',
-            ];
-        @endphp
-        <h5 style="font-size:12px; text-transform:uppercase; color:#198754; margin:14px 0 6px;">{{ __('payments.items_section') }}</h5>
-        <table>
+        <div class="section-title">{{ __('payments.items_section') }} · {{ $inv->invoice_number }}</div>
+        <table class="items">
             <thead>
                 <tr>
                     <th>{{ __('payments.description_col') }}</th>
-                    <th>{{ __('payments.pricing_col') }}</th>
-                    <th class="text-center">{{ __('payments.qty_col') }}</th>
-                    <th class="text-end">{{ __('payments.unit_col') }}</th>
-                    <th class="text-end">{{ __('payments.insurance_col') }}</th>
-                    <th class="text-end">{{ __('payments.total_col_items') }}</th>
+                    <th class="text-center" style="width:10%;">{{ __('payments.qty_col') }}</th>
+                    <th class="text-end" style="width:18%;">{{ __('payments.unit_col') }}</th>
+                    <th class="text-end" style="width:18%;">{{ __('payments.insurance_col') }}</th>
+                    <th class="text-end" style="width:18%;">{{ __('payments.total_col_items') }}</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($inv->items as $item)
                 @php
-                    $src           = $item->pricing_source ?? 'cash_and_carry';
-                    $label         = $sourceLabels[$src] ?? __('statuses.default.' . (string) $src);
-                    $payer         = $item->payer_type ?? 'cash';
                     $selectedPrice = $item->selected_price !== null ? (float) $item->selected_price : (float) ($item->unit_price ?? 0);
                     $lineTotal     = round($selectedPrice * (int) $item->quantity, 2);
                 @endphp
                 <tr>
                     <td>{{ $item->description }}</td>
-                    <td style="font-size:11px;">
-                        {{ $label }}<br>
-                        <span style="color:#666;">{{ __('statuses.default.' . $payer) }}</span>
-                    </td>
                     <td class="text-center">{{ $item->quantity }}</td>
                     <td class="text-end">&#8373;{{ number_format($selectedPrice, 2) }}</td>
                     <td class="text-end">
-                        @if((float) $item->insurance_covered > 0)
-                            &#8373;{{ number_format($item->insurance_covered, 2) }}
-                        @else
-                            —
-                        @endif
+                        @if((float) $item->insurance_covered > 0)&#8373;{{ number_format($item->insurance_covered, 2) }}@else—@endif
                     </td>
                     <td class="text-end">&#8373;{{ number_format($lineTotal, 2) }}</td>
                 </tr>
@@ -181,55 +158,31 @@
         </table>
         @endif
 
-        <div class="summary">
-            <table>
-                <tr>
-                    <td style="color:#888;">{{ __('payments.invoice_subtotal') }}</td>
-                    <td class="text-end">&#8373;{{ number_format($inv->subtotal, 2) }}</td>
-                </tr>
+        <div class="totals-wrap">
+            <div class="totals">
+                <div class="row"><span class="k">{{ __('payments.invoice_subtotal') }}</span><span>&#8373;{{ number_format($inv->subtotal, 2) }}</span></div>
                 @if($inv->discount_amount > 0)
-                <tr>
-                    <td style="color:#888;">{{ __('payments.discount_col') }}</td>
-                    <td class="text-end" style="color:#dc3545;">-&#8373;{{ number_format($inv->discount_amount, 2) }}</td>
-                </tr>
+                <div class="row"><span class="k">{{ __('payments.discount_col') }}</span><span style="color:#dc2626;">-&#8373;{{ number_format($inv->discount_amount, 2) }}</span></div>
                 @endif
                 @if($inv->nhis_amount > 0)
-                <tr>
-                    <td style="color:#888;">{{ __('payments.insurance_covered_col') }}</td>
-                    <td class="text-end" style="color:#0d6efd;">&#8373;{{ number_format($inv->nhis_amount, 2) }}</td>
-                </tr>
+                <div class="row"><span class="k">{{ __('payments.insurance_covered_col') }}</span><span style="color:#1d4ed8;">&#8373;{{ number_format($inv->nhis_amount, 2) }}</span></div>
                 @endif
-                <tr class="total">
-                    <td>{{ __('payments.invoice_total') }}</td>
-                    <td class="text-end">&#8373;{{ number_format($inv->total_amount, 2) }}</td>
-                </tr>
-                <tr>
-                    <td style="color:#198754;">{{ __('payments.this_receipt') }}</td>
-                    <td class="text-end" style="color:#198754; font-weight:bold;">&#8373;{{ number_format($payment->amount, 2) }}</td>
-                </tr>
-                <tr>
-                    <td style="color:#888;">{{ __('payments.total_paid_to_date') }}</td>
-                    <td class="text-end">&#8373;{{ number_format($inv->amount_paid, 2) }}</td>
-                </tr>
-                <tr class="total">
-                    <td>{{ __('payments.outstanding_balance_col') }}</td>
-                    <td class="text-end" style="color:{{ $inv->balance > 0 ? '#dc3545' : '#198754' }};">&#8373;{{ number_format($inv->balance, 2) }}</td>
-                </tr>
-            </table>
+                <div class="row sep" style="font-weight:600;"><span>{{ __('payments.invoice_total') }}</span><span>&#8373;{{ number_format($inv->total_amount, 2) }}</span></div>
+                <div class="row highlight"><span>{{ __('payments.this_receipt') }}</span><span>&#8373;{{ number_format($payment->amount, 2) }}</span></div>
+                <div class="row"><span class="k">{{ __('payments.total_paid_to_date') }}</span><span>&#8373;{{ number_format($inv->amount_paid, 2) }}</span></div>
+                <div class="row due"><span>{{ __('payments.outstanding_balance_col') }}</span><span style="color:{{ $inv->balance > 0 ? '#dc2626' : $accent }};">&#8373;{{ number_format($inv->balance, 2) }}</span></div>
+            </div>
         </div>
         @endif
 
         @if($payment->notes)
-        <div style="margin-top:14px; padding:10px; background:#f8f9fa; border-radius:4px; font-size:12px;">
-            <strong>{{ __('payments.notes') }}:</strong> {{ $payment->notes }}
-        </div>
+        <div class="notes"><strong>{{ __('payments.notes') }}:</strong> {{ $payment->notes }}</div>
         @endif
 
-        <!-- Footer -->
         <div class="footer">
-            <p class="thanks">{{ __('payments.thank_you_payment') }}</p>
-            <p>{{ __('payments.computer_generated_receipt') }}</p>
-            <p>{{ __('payments.issued_footer', ['date' => now()->format('d M Y, h:i A')]) }}</p>
+            <div class="thanks">{{ __('payments.thank_you_payment') }}</div>
+            <div>{{ __('payments.computer_generated_receipt') }}</div>
+            <div>{{ $orgName }} · {{ __('payments.issued_footer', ['date' => now()->format('d M Y, h:i A')]) }}</div>
         </div>
     </div>
 </body>

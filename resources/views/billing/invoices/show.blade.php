@@ -24,6 +24,9 @@
         || ($currentUser?->can('billing.write_off.reverse') ?? false);
     $canReverseSettlements = $canReversePayments || $canReverseCreditNotes || $canReverseWriteOffs;
     $showSettlementActions = $canViewAccountingPosting || $canReverseSettlements;
+    $canVoidInvoice = ($currentUser?->can('invoices.void') ?? false)
+        && ! in_array($invoice->status, [\App\Enums\InvoiceStatus::PAID, \App\Enums\InvoiceStatus::CANCELLED], true);
+    $hasQuickActions = $invoice->visit || $invoice->patient || $invoice->bloodRequest || $canVoidInvoice;
     $accountingStatusColors = [
         'pending' => 'secondary',
         'posted' => 'success',
@@ -136,13 +139,19 @@
                 </div>
 
                 <!-- Invoice Info Row -->
-                <div class="row mb-4 pb-3 border-bottom">
+                <div class="row g-3 mb-4 pb-3 border-bottom">
                     <div class="col-md-4">
-                        <h6 class="fw-bold mb-2">{{ __('invoices.invoice_details') }}</h6>
-                        <p class="mb-1 text-muted">{{ __('invoices.invoice_number') }}: <span class="text-dark fw-medium">{{ $invoice->invoice_number }}</span></p>
-                        <p class="mb-1 text-muted">{{ __('invoices.invoice_date') }}: <span class="text-dark">{{ $invoice->created_at->format('d M Y') }}</span></p>
-                        <p class="mb-1 text-muted">{{ __('invoices.due_date') }}: <span class="text-dark">{{ $invoice->due_date?->format('d M Y') ?? '—' }}</span></p>
-                        <p class="mb-0 text-muted">{{ __('common.type') }}: <span class="badge bg-soft-{{ $invoice->billing_type->color() }}">{{ $invoice->billing_type->translatedLabel() }}</span></p>
+                        <div class="text-uppercase fw-semibold text-muted small mb-2" style="letter-spacing:.04em;">{{ __('invoices.invoice_details') }}</div>
+                        <dl class="row mb-0 small gx-2">
+                            <dt class="col-5 fw-normal text-muted">{{ __('invoices.invoice_number') }}</dt>
+                            <dd class="col-7 fw-semibold mb-1 text-end">{{ $invoice->invoice_number }}</dd>
+                            <dt class="col-5 fw-normal text-muted">{{ __('invoices.invoice_date') }}</dt>
+                            <dd class="col-7 mb-1 text-end">{{ $invoice->created_at->format('d M Y') }}</dd>
+                            <dt class="col-5 fw-normal text-muted">{{ __('invoices.due_date') }}</dt>
+                            <dd class="col-7 mb-1 text-end">{{ $invoice->due_date?->format('d M Y') ?? '—' }}</dd>
+                            <dt class="col-5 fw-normal text-muted">{{ __('common.type') }}</dt>
+                            <dd class="col-7 mb-0 text-end"><span class="badge bg-soft-{{ $invoice->billing_type->color() }}">{{ $invoice->billing_type->translatedLabel() }}</span></dd>
+                        </dl>
                         @if($canViewAccountingPosting)
                             <div class="mt-2 small">
                                 <span class="text-muted">{{ __('invoices.accounting') }}:</span>
@@ -167,25 +176,25 @@
                         @endif
                     </div>
                     <div class="col-md-4">
-                        <h6 class="fw-bold mb-2">{{ $invoice->patient ? __('common.patient') : __('invoices.recipient') }}</h6>
+                        <div class="text-uppercase fw-semibold text-muted small mb-2" style="letter-spacing:.04em;">{{ $invoice->patient ? __('common.patient') : __('invoices.recipient') }}</div>
                         @if($invoice->patient)
-                            <p class="fw-medium mb-1">{{ $invoice->patient->full_name }}</p>
-                            <p class="text-muted mb-1">{{ $invoice->patient->patient_number }}</p>
-                            <p class="text-muted mb-1">{{ $invoice->patient->phone }}</p>
+                            <div class="fw-semibold">{{ $invoice->patient->full_name }}</div>
+                            <div class="text-muted small">{{ $invoice->patient->patient_number }}</div>
+                            @if($invoice->patient->phone)<div class="text-muted small">{{ $invoice->patient->phone }}</div>@endif
                         @else
-                            <p class="fw-medium mb-1">{{ $invoice->external_party_name ?? __('invoices.external_recipient') }}</p>
-                            <p class="text-muted mb-1"><span class="badge bg-purple-lt">{{ __('billing.external_referral') }}</span></p>
-                            @if($invoice->bloodRequest)<p class="text-muted mb-1">{{ __('invoices.blood_requests') }} {{ $invoice->bloodRequest->request_number }}</p>@endif
+                            <div class="fw-semibold">{{ $invoice->external_party_name ?? __('invoices.external_recipient') }}</div>
+                            <div class="mt-1"><span class="badge bg-purple-lt">{{ __('billing.external_referral') }}</span></div>
+                            @if($invoice->bloodRequest)<div class="text-muted small mt-1">{{ __('invoices.blood_requests') }} {{ $invoice->bloodRequest->request_number }}</div>@endif
                         @endif
                     </div>
-                    <div class="col-md-4 text-md-end">
-                        <h6 class="fw-bold mb-2">{{ __('invoices.visit') }}</h6>
+                    <div class="col-md-4">
+                        <div class="text-uppercase fw-semibold text-muted small mb-2" style="letter-spacing:.04em;">{{ __('invoices.visit') }}</div>
                         @if($invoice->visit)
-                            <p class="text-muted mb-1">{{ $invoice->visit->visit_number }}</p>
-                        <p id="invoiceVisitStatusLabel" class="text-muted mb-1">{{ $invoice->visit->status->translatedLabel() }}</p>
-                            <p class="text-muted mb-0">{{ $invoice->visit->visit_date->format('d M Y') }}</p>
+                            <div class="fw-semibold">{{ $invoice->visit->visit_number }}</div>
+                            <div id="invoiceVisitStatusLabel" class="text-muted small">{{ $invoice->visit->status->translatedLabel() }}</div>
+                            <div class="text-muted small">{{ $invoice->visit->visit_date->format('d M Y') }}</div>
                         @else
-                            <p class="text-muted mb-0">—</p>
+                            <span id="invoiceVisitStatusLabel" class="text-muted">—</span>
                         @endif
                     </div>
                 </div>
@@ -389,6 +398,7 @@
                         <p class="text-muted mb-1">{{ __('common.created_by') }}: <span class="text-dark">{{ $invoice->createdBy->name ?? '—' }}</span></p>
                     </div>
                     <div class="col-md-6">
+                        <div class="bg-light rounded p-3">
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-muted">{{ __('invoices.gross_total') }}</span>
                             <span class="fw-medium">&#8373;{{ number_format($invoiceBalanceSummary['gross_total'], 2) }}</span>
@@ -417,17 +427,12 @@
                             <span class="fw-bold text-danger">{{ __('invoices.balance_label') }}</span>
                             <span id="invoiceBalanceValue" class="fw-bold text-danger fs-5" data-amount="{{ $invoice->balance }}">&#8373;{{ number_format($invoiceBalanceSummary['outstanding_balance'], 2) }}</span>
                         </div>
-                        @if($canViewAccountingPosting)
-                        <div class="d-flex justify-content-between mt-2">
-                            <span class="text-muted">{{ __('invoices.accounting_status') }}</span>
-                            <span class="badge bg-{{ $accountingStatusColor($invoiceBalanceSummary['accounting_status']) }}">{{ $accountingStatusLabel($invoiceBalanceSummary['accounting_status']) }}</span>
-                        </div>
-                        @endif
                         @if(! $invoiceBalanceSummary['formula_matches_invoice'])
                         <div class="alert alert-warning py-2 mt-2 mb-0 small">
                             Formula balance is &#8373;{{ number_format($invoiceBalanceSummary['formula_balance'], 2) }}. Invoice balance is &#8373;{{ number_format($invoiceBalanceSummary['outstanding_balance'], 2) }}.
                         </div>
                         @endif
+                        </div>
                     </div>
                 </div>
 
@@ -850,46 +855,12 @@
         @endif
 
         <!-- Quick Actions -->
+        @if($hasQuickActions)
         <div class="card">
             <div class="card-header">
                 <h6 class="fw-bold mb-0">{{ __('invoices.quick_actions') }}</h6>
             </div>
             <div class="card-body d-grid gap-2">
-                @can('claims.view')
-                @if($invoiceClaim)
-                <a href="{{ route('admin.claims.show', $invoiceClaim) }}" class="btn btn-outline-primary">
-                    <i class="ti ti-file-dollar me-1"></i>{{ __('billing.view_insurance_claim') }}
-                </a>
-                @endif
-                @endcan
-                @if($canCreateInsuranceClaim)
-                    @can('claims.create')
-                        @if($invoiceInsuranceProviderId)
-                        <form method="POST" action="{{ route('admin.claims.store-from-invoice') }}">
-                            @csrf
-                            <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
-                            <input type="hidden" name="insurance_provider_id" value="{{ $invoiceInsuranceProviderId }}">
-                            <button type="submit" class="btn btn-outline-primary w-100">
-                                <i class="ti ti-file-plus me-1"></i>{{ __('billing.generate_insurance_claim') }}
-                            </button>
-                        </form>
-                        @else
-                        <a href="{{ route('admin.claims.create', ['invoice_id' => $invoice->id]) }}" class="btn btn-outline-primary">
-                            <i class="ti ti-file-plus me-1"></i>{{ __('billing.generate_insurance_claim') }}
-                        </a>
-                        @endif
-                    @endcan
-                @endif
-                <a data-no-inertia href="{{ route('admin.billing.invoices.print', $invoice) }}" target="_blank" class="btn btn-outline-dark">
-                    <i class="ti ti-printer me-1"></i>{{ __('invoices.print_invoice') }}
-                </a>
-                @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::PAID, \App\Enums\InvoiceStatus::CANCELLED]))
-                @can('invoices.void')
-                <x-confirm-form :action="route('admin.billing.invoices.cancel', $invoice)" method="PATCH"
-                    :button-label="__('billing.cancel_invoice')" button-class="btn btn-outline-danger w-100" icon="ti-x"
-                    :confirm-title="__('billing.cancel_invoice_title')" :confirm-text="__('billing.cancel_invoice_text')" :confirm-button="__('billing.cancel_invoice_confirm')" />
-                @endcan
-                @endif
                 @if($invoice->visit)
                 <a href="{{ route('admin.visits.show', $invoice->visit) }}" class="btn btn-outline-primary">
                     <i class="ti ti-calendar-check me-1"></i>{{ __('invoices.view_visit') }}
@@ -904,8 +875,16 @@
                     <i class="ti ti-droplet me-1"></i>{{ __('invoices.blood_requests') }}
                 </a>
                 @endif
+                @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::PAID, \App\Enums\InvoiceStatus::CANCELLED]))
+                @can('invoices.void')
+                <x-confirm-form :action="route('admin.billing.invoices.cancel', $invoice)" method="PATCH"
+                    :button-label="__('billing.cancel_invoice')" button-class="btn btn-outline-danger w-100" icon="ti-x"
+                    :confirm-title="__('billing.cancel_invoice_title')" :confirm-text="__('billing.cancel_invoice_text')" :confirm-button="__('billing.cancel_invoice_confirm')" />
+                @endcan
+                @endif
             </div>
         </div>
+        @endif
     </div>
 </div>
 
