@@ -685,12 +685,15 @@ Route::middleware('auth')->group(function () {
                 Route::get('/', [FiscalYearController::class, 'index'])->name('index');
                 Route::post('/', [FiscalYearController::class, 'store'])->name('store')->middleware('can:accounting.fiscal_years.manage');
                 Route::patch('{fiscalYear}/close', [FiscalYearController::class, 'close'])->name('close')->middleware('can:accounting.fiscal_years.manage');
+                Route::patch('{fiscalYear}/reopen', [FiscalYearController::class, 'reopen'])->name('reopen')->middleware('can:accounting.fiscal_years.reopen');
+                Route::post('{fiscalYear}/year-end-close', [FiscalYearController::class, 'yearEndClose'])->name('year-end-close')->middleware('can:accounting.fiscal_years.manage');
             });
 
             Route::middleware('can:accounting.periods.view')->prefix('periods')->name('periods.')->group(function () {
                 Route::get('/', [AccountingPeriodController::class, 'index'])->name('index');
                 Route::post('/', [AccountingPeriodController::class, 'store'])->name('store')->middleware('can:accounting.periods.manage');
                 Route::patch('{period}/close', [AccountingPeriodController::class, 'close'])->name('close')->middleware('can:accounting.periods.manage');
+                Route::patch('{period}/reopen', [AccountingPeriodController::class, 'reopen'])->name('reopen')->middleware('can:accounting.periods.reopen');
             });
 
             Route::get('settings', [AccountingSettingsController::class, 'index'])

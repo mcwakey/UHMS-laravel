@@ -64,6 +64,72 @@ class AccountingPeriodService
         return $period;
     }
 
+    public function reopenPeriod(AccountingPeriod $period, User $user, string $reason): AccountingPeriod
+    {
+        if (trim($reason) === '') {
+            throw ValidationException::withMessages(['reason' => 'A reason is required to reopen an accounting period.']);
+        }
+
+        if ($period->status === PeriodStatus::OPEN) {
+            return $period;
+        }
+
+        $period->loadMissing('fiscalYear');
+        if ($period->fiscalYear && $period->fiscalYear->status === PeriodStatus::CLOSED) {
+            throw ValidationException::withMessages([
+                'period' => 'Reopen the fiscal year before reopening one of its periods.',
+            ]);
+        }
+
+        $old = $period->getOriginal();
+        $period->update([
+            'status' => PeriodStatus::OPEN,
+            'closed_by' => null,
+            'closed_at' => null,
+        ]);
+
+        app(ActivityLogService::class)->log(LogModule::ACCOUNTING, 'ACCOUNTING_PERIOD_REOPENED', [
+            'severity' => LogSeverity::WARNING,
+            'accounting_period_id' => $period->id,
+            'fiscal_year_id' => $period->fiscal_year_id,
+            'reason' => $reason,
+            'old_values' => $old,
+            'new_values' => $period->getAttributes(),
+        ], $period, 'Accounting period reopened: ' . $period->name);
+
+        return $period;
+    }
+
+    public function reopenFiscalYear(FiscalYear $year, User $user, string $reason): FiscalYear
+    {
+        if (trim($reason) === '') {
+            throw ValidationException::withMessages(['reason' => 'A reason is required to reopen a fiscal year.']);
+        }
+
+        if ($year->status === PeriodStatus::OPEN) {
+            return $year;
+        }
+
+        $old = $year->getOriginal();
+        $year->update([
+            'status' => PeriodStatus::OPEN,
+            'closed_by' => null,
+            'closed_at' => null,
+        ]);
+
+        // Reopening the fiscal year does NOT auto-reopen its periods; postings remain
+        // blocked until the relevant period is explicitly reopened (open year + open period).
+        app(ActivityLogService::class)->log(LogModule::ACCOUNTING, 'FISCAL_YEAR_REOPENED', [
+            'severity' => LogSeverity::WARNING,
+            'fiscal_year_id' => $year->id,
+            'reason' => $reason,
+            'old_values' => $old,
+            'new_values' => $year->getAttributes(),
+        ], $year, 'Fiscal year reopened: ' . $year->name);
+
+        return $year;
+    }
+
     public function createFiscalYear(array $data, User $user): FiscalYear
     {
         $start = Carbon::parse($data['start_date']);

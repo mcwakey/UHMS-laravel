@@ -43,4 +43,13 @@ class AccountingPeriodController extends Controller
 
         return back()->with('success', __('messages.accounting.period_closed'));
     }
+
+    public function reopen(Request $request, AccountingPeriod $period, AccountingPeriodService $service)
+    {
+        $data = $request->validate(['reason' => ['required', 'string', 'max:500']]);
+
+        $service->reopenPeriod($period, $request->user(), $data['reason']);
+
+        return back()->with('success', __('messages.accounting.period_reopened'));
+    }
 }
