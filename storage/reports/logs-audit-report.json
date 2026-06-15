@@ -1,16 +1,35 @@
 {
-    "generated_at": "2026-06-15T06:46:39+00:00",
-    "controllers_flagged": 78,
-    "logging_services_detected": 95,
+    "generated_at": "2026-06-15T11:44:54+00:00",
+    "controllers_flagged": 82,
+    "logging_services_detected": 99,
     "summary": {
         "MISSING_LOG": 0,
         "NEEDS_REVIEW": 0,
         "KNOWN_BACKLOG": 21,
         "INTENTIONALLY_SKIPPED": 1,
-        "SERVICE_FUNNEL_COVERED": 56
+        "SERVICE_FUNNEL_COVERED": 60
     },
     "real_missing_logs": 0,
     "findings": [
+        {
+            "controller": "app/Http/Controllers/Accounting/BankReconciliationController.php",
+            "unlogged_actions": [
+                "approve",
+                "reverse"
+            ],
+            "actions": [
+                "approve",
+                "reverse"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "CRITICAL",
+            "reason": "Delegates to BankReconciliationService (logs direct).",
+            "services": [
+                "BankMatchSuggestionService",
+                "BankReconciliationService"
+            ],
+            "in_baseline": false
+        },
         {
             "controller": "app/Http/Controllers/Accounting/JournalEntryController.php",
             "unlogged_actions": [
@@ -322,6 +341,44 @@
             "reason": "Delegates to PostingTemplateService (logs direct).",
             "services": [
                 "PostingTemplateService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Accounting/BankReconciliationAdjustmentController.php",
+            "unlogged_actions": [
+                "store",
+                "approve",
+                "reject"
+            ],
+            "actions": [
+                "store",
+                "approve",
+                "reject"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to BankReconciliationAdjustmentPostingService (logs direct).",
+            "services": [
+                "BankReconciliationAdjustmentPostingService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Accounting/BankStatementImportController.php",
+            "unlogged_actions": [
+                "store",
+                "reject"
+            ],
+            "actions": [
+                "store",
+                "reject"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to BankStatementImportService (logs direct).",
+            "services": [
+                "BankStatementImportService"
             ],
             "in_baseline": false
         },
@@ -748,6 +805,24 @@
             "reason": "Delegates to AccountingPeriodService (logs direct).",
             "services": [
                 "AccountingPeriodService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Accounting/BankAccountController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ],
+            "actions": [
+                "store",
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to BankAccountService (logs direct).",
+            "services": [
+                "BankAccountService"
             ],
             "in_baseline": false
         },

@@ -35,6 +35,8 @@ class AccountingModuleSplitTest extends TestCase
             'accounting.reports.revenue_by_department', 'accounting.reports.expense_by_department',
             'accounts_payable.view', 'reports.ap_aging.view', 'accounting.fiscal_years.view',
             'accounting.periods.view', 'accounting.settings.view',
+            'accounting.bank_accounts.view', 'accounting.bank_statements.view',
+            'accounting.bank_reconciliation.view',
         ];
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
@@ -66,6 +68,20 @@ class AccountingModuleSplitTest extends TestCase
             ['Income', 'Expenses', 'Daily Collection', 'Cashier Handover', 'Reconciliation', 'Account Categories'],
             collect($basic['items'])->pluck('label')->all()
         );
+    }
+
+    public function test_advanced_accounting_section_includes_bank_reconciliation_links(): void
+    {
+        app(ModuleService::class)->flush();
+        $sections = app(SidebarMenuBuilder::class)->build($this->user, 'admin.accounting.bank.accounts.index');
+
+        $advanced = collect($sections)->firstWhere('title', 'Advanced Accounting');
+        $this->assertNotNull($advanced);
+
+        $labels = collect($advanced['items'])->pluck('label');
+        foreach (['Bank Accounts', 'Statement Imports', 'Bank Reconciliation'] as $label) {
+            $this->assertTrue($labels->contains($label), "Advanced Accounting menu is missing '{$label}'.");
+        }
     }
 
     public function test_disabling_basic_accounting_blocks_direct_basic_routes(): void

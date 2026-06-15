@@ -358,6 +358,22 @@ class RoleSeeder extends Seeder
             'accounting.settings.view',
             'accounting.settings.manage',
 
+            // ── Bank Accounts & Reconciliation (Phase B) ──────────────────
+            'accounting.bank_accounts.view',
+            'accounting.bank_accounts.manage',
+            'accounting.bank_statements.import',
+            'accounting.bank_statements.view',
+            'accounting.bank_statements.reject',
+            'accounting.bank_reconciliation.view',
+            'accounting.bank_reconciliation.manage',
+            'accounting.bank_reconciliation.match',
+            'accounting.bank_reconciliation.approve',
+            'accounting.bank_reconciliation.reopen',
+            'accounting.bank_reconciliation.reverse',
+            'accounting.bank_adjustments.propose',
+            'accounting.bank_adjustments.approve',
+            'accounting.bank_adjustments.post',
+
             // ── Ward & Inpatient ──────────────────────────────────────────
             'ward.view',
             'ward.manage',
@@ -1054,6 +1070,10 @@ class RoleSeeder extends Seeder
             'accounting.reports.trial_balance', 'accounting.reports.general_ledger',
             'accounting.periods.view', 'accounting.fiscal_years.view',
             'accounting.settings.view',
+            'accounting.bank_accounts.view',
+            'accounting.bank_statements.import', 'accounting.bank_statements.view',
+            'accounting.bank_reconciliation.view', 'accounting.bank_reconciliation.manage', 'accounting.bank_reconciliation.match',
+            'accounting.bank_adjustments.propose',
             'supplier.ledger.view',
             'notifications.view',
         ]);
@@ -1074,6 +1094,13 @@ class RoleSeeder extends Seeder
                 'accounting.basic.batch.execute',
                 'accounting.posting_templates.manage',
                 'accounting.posting_templates.approve',
+                'accounting.bank_accounts.manage',
+                'accounting.bank_statements.reject',
+                'accounting.bank_reconciliation.approve',
+                'accounting.bank_reconciliation.reopen',
+                'accounting.bank_reconciliation.reverse',
+                'accounting.bank_adjustments.approve',
+                'accounting.bank_adjustments.post',
             ])->unique()->values()->all()
         );
 

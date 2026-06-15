@@ -994,6 +994,30 @@ class SidebarMenuBuilder
                         'module' => 'accounting_advanced',
                     ],
                     [
+                        'label' => 'Bank Accounts',
+                        'icon' => 'ti ti-building-bank',
+                        'route' => 'admin.accounting.bank.accounts.index',
+                        'active_patterns' => ['admin.accounting.bank.accounts.*'],
+                        'permission' => 'accounting.bank_accounts.view',
+                        'module' => 'accounting_advanced',
+                    ],
+                    [
+                        'label' => 'Statement Imports',
+                        'icon' => 'ti ti-file-import',
+                        'route' => 'admin.accounting.bank.imports.index',
+                        'active_patterns' => ['admin.accounting.bank.imports.*'],
+                        'permission' => 'accounting.bank_statements.view',
+                        'module' => 'accounting_advanced',
+                    ],
+                    [
+                        'label' => 'Bank Reconciliation',
+                        'icon' => 'ti ti-arrows-diff',
+                        'route' => 'admin.accounting.bank.reconciliations.index',
+                        'active_patterns' => ['admin.accounting.bank.reconciliations.*'],
+                        'permission' => 'accounting.bank_reconciliation.view',
+                        'module' => 'accounting_advanced',
+                    ],
+                    [
                         'label' => 'Receive Payments',
                         'icon' => 'ti ti-cash',
                         'route' => 'admin.billing.payments.receive',
@@ -1571,6 +1595,9 @@ class SidebarMenuBuilder
                     'Accounting Settings',
                     'Basic Posting Bridge',
                     'Posting Templates',
+                    'Bank Accounts',
+                    'Statement Imports',
+                    'Bank Reconciliation',
                 ], 'accounting_advanced'),
             ];
         }

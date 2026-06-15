@@ -742,6 +742,52 @@ Route::middleware('auth')->group(function () {
                 ->name('close-readiness')
                 ->middleware('can:accounting.close_readiness.view');
 
+            // ── Bank Accounts, Statement Import & Reconciliation (Phase B) ──
+            Route::middleware('module:accounting_basic')->prefix('bank')->name('bank.')->group(function () {
+                $bankAccounts = \App\Http\Controllers\Accounting\BankAccountController::class;
+                $imports = \App\Http\Controllers\Accounting\BankStatementImportController::class;
+                $recons = \App\Http\Controllers\Accounting\BankReconciliationController::class;
+                $adjustments = \App\Http\Controllers\Accounting\BankReconciliationAdjustmentController::class;
+
+                Route::middleware('can:accounting.bank_accounts.view')->prefix('accounts')->name('accounts.')->group(function () use ($bankAccounts) {
+                    Route::get('/', [$bankAccounts, 'index'])->name('index');
+                    Route::get('create', [$bankAccounts, 'create'])->name('create')->middleware('can:accounting.bank_accounts.manage');
+                    Route::post('/', [$bankAccounts, 'store'])->name('store')->middleware('can:accounting.bank_accounts.manage');
+                    Route::get('{bankAccount}/edit', [$bankAccounts, 'edit'])->name('edit')->middleware('can:accounting.bank_accounts.manage');
+                    Route::put('{bankAccount}', [$bankAccounts, 'update'])->name('update')->middleware('can:accounting.bank_accounts.manage');
+                    Route::patch('{bankAccount}/disable', [$bankAccounts, 'disable'])->name('disable')->middleware('can:accounting.bank_accounts.manage');
+                    Route::patch('{bankAccount}/activate', [$bankAccounts, 'activate'])->name('activate')->middleware('can:accounting.bank_accounts.manage');
+                });
+
+                Route::middleware('can:accounting.bank_statements.view')->prefix('imports')->name('imports.')->group(function () use ($imports) {
+                    Route::get('/', [$imports, 'index'])->name('index');
+                    Route::get('create', [$imports, 'create'])->name('create')->middleware('can:accounting.bank_statements.import');
+                    Route::post('preview', [$imports, 'preview'])->name('preview')->middleware('can:accounting.bank_statements.import');
+                    Route::post('/', [$imports, 'store'])->name('store')->middleware('can:accounting.bank_statements.import');
+                    Route::get('{import}', [$imports, 'show'])->name('show');
+                    Route::post('{import}/reject', [$imports, 'reject'])->name('reject')->middleware('can:accounting.bank_statements.reject');
+                });
+
+                Route::middleware('can:accounting.bank_reconciliation.view')->prefix('reconciliations')->name('reconciliations.')->group(function () use ($recons, $adjustments) {
+                    Route::get('/', [$recons, 'index'])->name('index');
+                    Route::get('create', [$recons, 'create'])->name('create')->middleware('can:accounting.bank_reconciliation.manage');
+                    Route::post('/', [$recons, 'prepare'])->name('prepare')->middleware('can:accounting.bank_reconciliation.manage');
+                    Route::get('{reconciliation}', [$recons, 'show'])->name('show');
+                    Route::get('{reconciliation}/statement', [$recons, 'statement'])->name('statement');
+                    Route::get('{reconciliation}/lines/{line}/suggestions', [$recons, 'suggestions'])->name('suggestions')->middleware('can:accounting.bank_reconciliation.match');
+                    Route::post('{reconciliation}/lines/{line}/match', [$recons, 'match'])->name('match')->middleware('can:accounting.bank_reconciliation.match');
+                    Route::post('{reconciliation}/matches/{match}/unmatch', [$recons, 'unmatch'])->name('unmatch')->middleware('can:accounting.bank_reconciliation.match');
+                    Route::post('{reconciliation}/approve', [$recons, 'approve'])->name('approve')->middleware('can:accounting.bank_reconciliation.approve');
+                    Route::post('{reconciliation}/reopen', [$recons, 'reopen'])->name('reopen')->middleware('can:accounting.bank_reconciliation.reopen');
+                    Route::post('{reconciliation}/reverse', [$recons, 'reverse'])->name('reverse')->middleware('can:accounting.bank_reconciliation.reverse');
+
+                    Route::post('{reconciliation}/adjustments', [$adjustments, 'store'])->name('adjustments.store')->middleware('can:accounting.bank_adjustments.propose');
+                    Route::post('{reconciliation}/adjustments/{adjustment}/approve', [$adjustments, 'approve'])->name('adjustments.approve')->middleware('can:accounting.bank_adjustments.approve');
+                    Route::post('{reconciliation}/adjustments/{adjustment}/post', [$adjustments, 'post'])->name('adjustments.post')->middleware('can:accounting.bank_adjustments.post');
+                    Route::post('{reconciliation}/adjustments/{adjustment}/reject', [$adjustments, 'reject'])->name('adjustments.reject')->middleware('can:accounting.bank_adjustments.approve');
+                });
+            });
+
             Route::middleware(['module:accounting_basic', 'can:accounting.basic.batch.view'])
                 ->prefix('basic-bridge')
                 ->name('basic-bridge.')
