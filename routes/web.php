@@ -101,6 +101,9 @@ use App\Http\Controllers\Admin\VitalController;
 use App\Http\Controllers\Admin\WardController;
 use App\Http\Controllers\Accounting\AccountController as AccountingAccountController;
 use App\Http\Controllers\Accounting\AccountingDashboardController;
+use App\Http\Controllers\Accounting\AccountingAccountMappingController;
+use App\Http\Controllers\Accounting\AccountingCloseReadinessController;
+use App\Http\Controllers\Accounting\AccountingPostingAttemptController;
 use App\Http\Controllers\Accounting\AccountsPayableController;
 use App\Http\Controllers\Accounting\AccountingPostingController;
 use App\Http\Controllers\Accounting\AccountingPeriodController;
@@ -706,6 +709,30 @@ Route::middleware('auth')->group(function () {
             Route::post('postings/retry', [AccountingPostingController::class, 'retry'])
                 ->name('postings.retry')
                 ->middleware('can:accounting.posting.retry');
+
+            Route::middleware('can:accounting.failed_postings.view')
+                ->prefix('posting-attempts')
+                ->name('posting-attempts.')
+                ->group(function () {
+                    Route::get('/', [AccountingPostingAttemptController::class, 'index'])->name('index');
+                    Route::get('{postingAttempt}', [AccountingPostingAttemptController::class, 'show'])->name('show');
+                });
+
+            Route::middleware('can:accounting.mappings.view')
+                ->prefix('mappings')
+                ->name('mappings.')
+                ->group(function () {
+                    Route::get('/', [AccountingAccountMappingController::class, 'index'])->name('index');
+                    Route::get('create', [AccountingAccountMappingController::class, 'create'])->name('create')->middleware('can:accounting.mappings.manage');
+                    Route::post('/', [AccountingAccountMappingController::class, 'store'])->name('store')->middleware('can:accounting.mappings.manage');
+                    Route::get('{mapping}/edit', [AccountingAccountMappingController::class, 'edit'])->name('edit')->middleware('can:accounting.mappings.manage');
+                    Route::put('{mapping}', [AccountingAccountMappingController::class, 'update'])->name('update')->middleware('can:accounting.mappings.manage');
+                    Route::patch('{mapping}/disable', [AccountingAccountMappingController::class, 'disable'])->name('disable')->middleware('can:accounting.mappings.manage');
+                });
+
+            Route::get('close-readiness', AccountingCloseReadinessController::class)
+                ->name('close-readiness')
+                ->middleware('can:accounting.close_readiness.view');
         });
 
         // HR & Payroll

@@ -1,13 +1,13 @@
 {
-    "generated_at": "2026-06-15T04:50:49+00:00",
-    "controllers_flagged": 76,
-    "logging_services_detected": 90,
+    "generated_at": "2026-06-15T06:05:21+00:00",
+    "controllers_flagged": 77,
+    "logging_services_detected": 93,
     "summary": {
         "MISSING_LOG": 0,
         "NEEDS_REVIEW": 0,
         "KNOWN_BACKLOG": 21,
         "INTENTIONALLY_SKIPPED": 1,
-        "SERVICE_FUNNEL_COVERED": 54
+        "SERVICE_FUNNEL_COVERED": 55
     },
     "real_missing_logs": 0,
     "findings": [
@@ -692,6 +692,24 @@
             "reason": "Delegates to ChartOfAccountsService (logs direct).",
             "services": [
                 "ChartOfAccountsService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Accounting/AccountingAccountMappingController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ],
+            "actions": [
+                "store",
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to AccountingAccountMappingService (logs direct).",
+            "services": [
+                "AccountingAccountMappingService"
             ],
             "in_baseline": false
         },

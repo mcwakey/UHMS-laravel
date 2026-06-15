@@ -333,6 +333,12 @@ class RoleSeeder extends Seeder
             'accounting.reports.expense_by_department',
             'accounting.reconciliation.view',
             'accounting.failed_postings.view',
+            'accounting.failed_postings.retry',
+            'accounting.failed_postings.resolve',
+            'accounting.failed_postings.waive',
+            'accounting.mappings.view',
+            'accounting.mappings.manage',
+            'accounting.close_readiness.view',
             'accounting.exports',
             'accounting.periods.view',
             'accounting.periods.manage',
@@ -1034,12 +1040,29 @@ class RoleSeeder extends Seeder
             'accounting.journals.view', 'accounting.journals.create', 'accounting.journals.edit',
             'accounting.journals.post', 'accounting.journals.reverse', 'accounting.journals.cancel',
             'accounting.posting.view', 'accounting.posting.retry', 'accounting.posting.failure.view',
+            'accounting.failed_postings.view', 'accounting.failed_postings.retry',
+            'accounting.mappings.view', 'accounting.mappings.manage', 'accounting.close_readiness.view',
             'accounting.reports.trial_balance', 'accounting.reports.general_ledger',
             'accounting.periods.view', 'accounting.fiscal_years.view',
             'accounting.settings.view',
             'supplier.ledger.view',
             'notifications.view',
         ]);
+
+        $financeManager = Role::firstOrCreate(['name' => 'Finance Manager']);
+        $financeManager->syncPermissions(
+            $accountant->permissions->pluck('name')->merge([
+                'accounting.failed_postings.resolve',
+                'accounting.failed_postings.waive',
+                'accounting.settings.manage',
+                'accounting.periods.manage',
+                'accounting.periods.close',
+                'accounting.periods.reopen',
+                'accounting.fiscal_years.manage',
+                'accounting.fiscal_years.close',
+                'accounting.fiscal_years.reopen',
+            ])->unique()->values()->all()
+        );
 
         // ── Claims Officer ────────────────────────────────────────────────
         $claimsOfficer = Role::firstOrCreate(['name' => 'Claims Officer']);

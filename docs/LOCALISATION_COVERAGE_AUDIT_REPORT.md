@@ -1,15 +1,15 @@
 # UHMS Localisation Coverage Audit Report
 
-Date: 2026-06-15 06:47:46 +02:00
+Date: 2026-06-15 08:02:13 +02:00
 
 ## Summary
 
-- Total files scanned: 1310
+- Total files scanned: 1327
 - Total files with possible hardcoded strings: 460
 - Total hardcoded candidates found: 17306
 - Modules affected: 306
-- Direct active route/controller Blade views: 234
-- Active Blade views including resolved dependencies: 288
+- Direct active route/controller Blade views: 240
+- Active Blade views including resolved dependencies: 295
 
 ### Candidate Classification
 
@@ -298,13 +298,13 @@ Date: 2026-06-15 06:47:46 +02:00
 
 ### `app/Services/JournalEntryService.php`
 
-- Line 142 [medium, service_title_manual_review_candidates]: `Reversal of`
+- Line 143 [medium, service_title_manual_review_candidates]: `Reversal of`
   - Context: `'description' => 'Reversal of ' . $entry->journal_number . ': ' . $entry->description,`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: B - Internal audit/event text
   - Suggested key: `lang/{en,fr}/app.php :: reversal_of`
-- Line 156 [medium, service_title_manual_review_candidates]: `Reversal:`
+- Line 157 [medium, service_title_manual_review_candidates]: `Reversal:`
   - Context: `'description' => 'Reversal: ' . ($line->description ?: $entry->description),`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review

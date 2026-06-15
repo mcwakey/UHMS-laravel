@@ -22,6 +22,7 @@ class JournalEntry extends Model
         'reference_type',
         'reference_id',
         'source_module',
+        'idempotency_key',
         'description',
         'status',
         'posted_at',

@@ -1,9 +1,9 @@
 {
-    "generated_at": "2026-06-15T04:49:32+00:00",
+    "generated_at": "2026-06-15T06:03:59+00:00",
     "totals": {
         "permissions_in_db": 2,
-        "used_in_routes": 250,
-        "admin_mutation_routes": 385
+        "used_in_routes": 254,
+        "admin_mutation_routes": 388
     },
     "risk_distribution": {
         "LOW": 1,
@@ -142,6 +142,10 @@
         "accounting.settings.view",
         "accounting.settings.manage",
         "accounting.posting.retry",
+        "accounting.failed_postings.view",
+        "accounting.mappings.view",
+        "accounting.mappings.manage",
+        "accounting.close_readiness.view",
         "hr.shifts.view",
         "hr.shifts.manage",
         "hr.employees.view",

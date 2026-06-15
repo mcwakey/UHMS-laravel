@@ -35,6 +35,7 @@ class JournalEntryService
                 'reference_type' => $data['reference_type'] ?? null,
                 'reference_id' => $data['reference_id'] ?? null,
                 'source_module' => $data['source_module'] ?? 'MANUAL',
+                'idempotency_key' => $data['idempotency_key'] ?? null,
                 'description' => $data['description'],
                 'status' => JournalEntryStatus::DRAFT,
                 'created_by' => auth()->id(),

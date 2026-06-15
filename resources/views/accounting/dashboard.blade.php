@@ -90,6 +90,15 @@
                 <a class="list-group-item list-group-item-action" href="{{ route('admin.accounting.fiscal-years.index') }}"><i class="ti ti-calendar-stats me-2"></i>{{ __('accounting.fiscal_years') }}</a>
                 <a class="list-group-item list-group-item-action" href="{{ route('admin.accounting.periods.index') }}"><i class="ti ti-calendar-time me-2"></i>{{ __('accounting.accounting_periods') }}</a>
                 <a class="list-group-item list-group-item-action" href="{{ route('admin.accounting.settings.index') }}"><i class="ti ti-settings-dollar me-2"></i>{{ __('accounting.accounting_settings') }}</a>
+                @can('accounting.failed_postings.view')
+                    <a class="list-group-item list-group-item-action" href="{{ route('admin.accounting.posting-attempts.index') }}"><i class="ti ti-history-toggle me-2"></i>{{ __('accounting.posting_attempts') }}</a>
+                @endcan
+                @can('accounting.mappings.view')
+                    <a class="list-group-item list-group-item-action" href="{{ route('admin.accounting.mappings.index') }}"><i class="ti ti-arrows-random me-2"></i>{{ __('accounting.account_mappings') }}</a>
+                @endcan
+                @can('accounting.close_readiness.view')
+                    <a class="list-group-item list-group-item-action" href="{{ route('admin.accounting.close-readiness') }}"><i class="ti ti-checkup-list me-2"></i>{{ __('accounting.close_readiness') }}</a>
+                @endcan
             </div>
         </div>
     </div>

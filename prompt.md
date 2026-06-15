@@ -1,23 +1,30 @@
 You are working on UHMS — Ultimate Hospital Management System.
 
-Important:
-There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
-Do not try to read it.
-Follow this prompt directly.
-
-# UHMS Accounting Gap Execution — Master Planning Phase
+# UHMS Accounting Execution Phase 0 — Shared Posting Controls, Idempotency, Mapping Foundation & Close Readiness
 
 ## Goal
 
-Create a complete execution plan for the accounting gaps identified in:
+Implement the shared accounting control layer required before executing the accounting gap roadmap.
 
-```text id="0g0v52"
-docs/ACCOUNTING_MODULE_SPLIT_AND_GAP_REPORT.md
+This phase must create the reusable foundation for later phases:
+
+```text id="bujl6y"
+Basic-to-Advanced posting bridge
+Bank reconciliation
+Failed posting workbench
+Subledger reconciliation
+Payroll accounting posting
+Cash flow
+Budgets
+Fixed assets
+Tax ledgers
+Receivables workbench
+Claims settlement accounting
 ```
 
-Do not implement code yet.
+Do not implement those later modules yet.
 
-This phase is for planning the execution thoroughly so no accounting, billing, payroll, bank, tax, reconciliation, reporting, permission, module-toggle, audit, or migration detail is missed.
+This phase is only for the shared posting controls and readiness layer.
 
 ---
 
@@ -25,7 +32,8 @@ This phase is for planning the execution thoroughly so no accounting, billing, p
 
 Read:
 
-```text id="q1y2df"
+```text id="huzhja"
+docs/ACCOUNTING_GAP_EXECUTION_MASTER_PLAN.md
 docs/ACCOUNTING_MODULE_SPLIT_AND_GAP_REPORT.md
 docs/PHASE_17_FULL_TEST_SUITE_REGRESSION_STABILISATION_REPORT.md
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
@@ -33,772 +41,729 @@ docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 
 Respect the current finance module split:
 
-```text id="371lsh"
-Billing & Collections
-Basic Accounting
-Advanced Accounting
-```
-
-Current module rules:
-
-```text id="w8lh9c"
-Billing & Collections remains independent from accounting module toggles.
+```text id="lmp2n5"
+Billing & Collections remains independent.
 Basic Accounting module slug: accounting_basic.
 Advanced Accounting module slug: accounting_advanced.
 Advanced Accounting depends on Basic Accounting.
-Direct routes must be protected with module middleware, not just hidden from sidebar.
+Direct routes must use module middleware, not only sidebar hiding.
 Existing permissions remain the source of action-level authorization.
 ```
 
-Do not weaken existing accounting, billing, stock, payroll, or audit logic.
+Do not weaken billing, accounting, stock, payroll, claims, or audit behavior.
 
 ---
 
-# 2. Planning Deliverable
+# 2. Scope of This Phase
 
-Create:
+Implement only the common foundation:
 
-```text id="niz7z5"
-docs/ACCOUNTING_GAP_EXECUTION_MASTER_PLAN.md
+```text id="t2wxpg"
+accounting_posting_attempts table
+accounting_account_mappings table
+posting idempotency service
+posting attempt lifecycle service
+account mapping lookup service
+close-readiness service foundation
+safe posting contract support
+backfill metadata support
+tests
+documentation
 ```
 
-The document must be implementation-ready and must include:
+Do not yet implement:
 
-```text id="j0sxnz"
-executive summary
-current implemented accounting coverage
-gap-by-gap execution plan
-recommended delivery phases
-database changes per phase
-services per phase
-controllers/views per phase
-permissions per phase
-module-toggle impact
-journal posting strategy
-reconciliation strategy
-audit logging strategy
-migration/backfill strategy
-testing strategy
-risk register
-open decisions
-acceptance criteria
+```text id="h6ywt8"
+Basic-to-Advanced posting bridge
+bank reconciliation
+cash flow statement
+payroll posting
+budgets
+fixed assets
+tax returns
+AR collector workbench
+claims settlement accounting
 ```
+
+Those come after this phase.
 
 ---
 
-# 3. High-Priority Gaps To Plan
+# 3. Core Accounting Rules
 
-Plan execution for these high-priority gaps from the report:
+Every ledger-affecting operation must be:
 
-```text id="dau31g"
-1. Basic-to-Advanced posting bridge
-2. Bank accounts and bank reconciliation
-3. Cash flow statement
-4. Failed posting workbench
-5. Payroll accounting posting
-6. Budgeting and commitments
-7. Fixed assets
-8. Statutory tax accounting
-9. Dedicated receivables workbench
-10. Claims settlement accounting
-```
-
-Do not skip any.
-
----
-
-# 4. Recommended Delivery Order
-
-Use this delivery order unless you discover a blocking dependency:
-
-```text id="iwzf9s"
-1. Basic-to-Advanced posting bridge
-2. Bank accounts, statement import, and formal bank reconciliation
-3. Failed-posting and subledger reconciliation workbenches
-4. Approved payroll posting and salary-payment settlement
-5. Cash flow reporting and accounting exports
-6. Budgets and commitments
-7. Fixed assets and depreciation
-8. Statutory tax ledgers and returns
-9. Dedicated receivables workbench
-10. Claims settlement accounting
-```
-
-Explain why this order is safest.
-
----
-
-# 5. Phase A — Basic-to-Advanced Posting Bridge
-
-This is the most urgent accounting gap.
-
-Current problem:
-
-```text id="o0r907"
-Manual income and expense entries remain in the financial_entries operational ledger.
-They do not create balanced journal entries in the advanced general ledger.
-When Basic and Advanced Accounting are both enabled, this can create two financial views requiring manual reconciliation.
-```
-
-Plan a bridge where approved Basic Accounting entries can generate balanced journal entries.
-
-Plan:
-
-```text id="cjr4y0"
-posting templates
-income templates
-expense templates
-cash/bank account mapping
-category-to-COA mapping
-posting status
-failed posting state
-reversal handling
-reposting rules
-module toggle behavior
-permission checks
-audit logs
+```text id="8dy1zd"
+balanced
+transactional
+idempotent
+traceable to a source record
+auditable
+reversible
+permission-aware
+module-aware
 ```
 
 Important rules:
 
-```text id="qnvuf7"
-Do not auto-post unapproved Basic Accounting entries.
-Do not duplicate journals.
-Do not silently change historical financial_entries.
-Do not post if Advanced Accounting is disabled.
-If Advanced Accounting is later enabled, plan a controlled backfill/reconciliation workflow.
+```text id="5eiob4"
+Posted journal entries are immutable.
+Corrections use reversal and replacement entries.
+Source modules calculate business amounts.
+Accounting services map those amounts to accounts and post journals.
+No source module should directly write journal rows.
+Historical records must not be auto-posted.
+Backfills must be previewed and explicitly approved.
 ```
 
 ---
 
-# 6. Phase B — Bank Accounts and Bank Reconciliation
+# 4. Database: accounting_posting_attempts
 
-Plan a formal bank reconciliation module.
+Create a new table:
 
-Must include:
-
-```text id="h0v5fy"
-bank account register
-bank statement import
-statement lines
-internal cashbook/bank ledger matching
-manual match
-auto-match suggestions
-outstanding cheques
-outstanding deposits
-bank charges
-interest income
-reconciliation period
-reconciliation statement
-approval workflow
-reopening/reversal rules
+```text id="rp1ryi"
+accounting_posting_attempts
 ```
 
-Plan database tables such as:
+Recommended fields:
 
-```text id="eo744h"
-bank_accounts
-bank_statement_imports
-bank_statement_lines
-bank_reconciliations
-bank_reconciliation_matches
-bank_reconciliation_adjustments
+```text id="xcnmx3"
+id
+source_module
+source_type
+source_id
+posting_type
+posting_version
+idempotency_key
+status
+journal_entry_id
+reversal_journal_entry_id
+attempt_count
+first_attempted_at
+last_attempted_at
+next_retry_at
+error_code
+error_message
+error_context
+source_snapshot
+posting_snapshot
+resolved_by
+resolved_at
+resolution_type
+resolution_note
+created_by
+updated_by
+timestamps
 ```
 
-Plan integration with:
+Statuses:
 
-```text id="n3g268"
-Basic Accounting cash records
-Advanced Accounting cashbook
-payment collections
-supplier payments
-payroll payments
-bank charges
-electronic payment references
+```text id="6dch02"
+pending
+processing
+posted
+failed
+waived
+resolved
+reversed
 ```
+
+Use string status values with application validation.
+
+Do not use database enum.
+
+For snapshot fields, use:
+
+```text id="7zn7tt"
+LONGTEXT
+```
+
+with JSON-encoded content for MariaDB compatibility.
+
+Indexes:
+
+```text id="dvk8em"
+unique idempotency_key
+source_module + source_type + source_id
+source_type + source_id + posting_type + posting_version
+status + last_attempted_at
+journal_entry_id
+reversal_journal_entry_id
+```
+
+Use explicit short index names compatible with MariaDB.
 
 ---
 
-# 7. Phase C — Failed Posting Workbench
+# 5. Database: accounting_account_mappings
 
-Plan a dedicated workbench for failed accounting postings.
+Create a new table:
 
-The report says permissions and dashboard counts exist, but there is no searchable workbench.
-
-Plan:
-
-```text id="df22jt"
-failed posting list
-source module
-source record
-posting type
-error message
-retry count
-last attempted at
-resolved status
-manual resolution
-retry action
-ignore/waive action with permission
-audit trail
+```text id="z3nw8i"
+accounting_account_mappings
 ```
 
-Supported source modules:
+Recommended fields:
 
-```text id="cnxhzz"
-billing
-payments
-credit notes
-sponsors
-supplier payables
-inventory
-stock adjustments
-clinical consumables
-payroll
-manual income/expense
-bank reconciliation
-claims settlement
+```text id="c6pfvx"
+id
+mapping_scope
+mapping_key
+mapping_value
+account_id
+facility_id nullable
+department_id nullable
+branch_id nullable
+currency nullable
+effective_from
+effective_to
+priority
+is_active
+notes
+created_by
+updated_by
+timestamps
 ```
 
-Do not lose failed posting errors.
+Purpose:
 
-Do not hide posting failures.
-
----
-
-# 8. Phase D — Subledger Reconciliation Workbench
-
-Plan reconciliation between GL and subledgers.
-
-Include:
-
-```text id="ki21t3"
-AR vs receivable control account
-AP vs supplier payable control account
-inventory valuation vs inventory control account
-payroll payable vs payroll subledger
-cash/bank vs cashbook/bank accounts
-PAYE payable vs payroll tax calculations
-pension payable vs payroll pension calculations
-```
-
-Plan dashboard cards:
-
-```text id="4juhqn"
-balanced
-difference detected
-unposted source records
-failed postings
-manual adjustments
-last reconciliation date
-```
-
----
-
-# 9. Phase E — Payroll Accounting Posting
-
-Plan payroll accounting posting but do not assume payroll automation is fully built yet.
-
-The report says payroll journal preparation exists, but approved payroll is not automatically posted.
-
-Plan:
-
-```text id="6kvptg"
-approved payroll posting
-salary expense
-allowance expense
-employer pension expense
-payroll payable
-PAYE payable
-pension payable
-loan receivable
-salary payment settlement
-payroll reversal/adjustment
+```text id="zdn6gz"
+map operational categories, payment methods, payroll liabilities, tax types, inventory classes, bank accounts, and other source concepts to chart-of-account IDs.
 ```
 
 Rules:
 
-```text id="ct2pyb"
-Only approved payroll can post.
-Do not auto-post draft payroll.
-Do not post twice.
-Do not bypass accounting services.
-Do not create NHIS or insurance-specific payroll logic.
+```text id="izz9wm"
+Mappings must be effective-dated.
+Only active mappings are used.
+If multiple mappings match, highest priority wins.
+If mappings conflict, service validation must fail loudly.
+Do not silently pick a random account.
 ```
+
+Do not delete mappings used by historical postings.
+
+Use `restrictOnDelete` or `nullOnDelete` where appropriate.
+
+Do not cascade-delete financial history.
 
 ---
 
-# 10. Phase F — Cash Flow Statement and Accounting Exports
+# 6. Optional Journal Idempotency Field
 
-Plan implementation for the missing cash flow report.
+Inspect the current `journal_entries` table.
 
-Include:
+If safe, add:
 
-```text id="c4a0ub"
-operating activities
-investing activities
-financing activities
-direct method
-indirect method if feasible
-cash/bank account mapping
-opening cash balance
-closing cash balance
-period filters
-department/branch filters if supported
-export permissions
-PDF/Excel/CSV/print
+```text id="bycj6p"
+idempotency_key nullable unique
 ```
 
-The report says permission exists:
+But only after checking for existing duplicate source journals.
 
-```text id="qkj11p"
-accounting.reports.cash_flow
-```
+If unsafe in this phase, document it and keep idempotency enforced in `accounting_posting_attempts`.
 
-but route/controller/service/screen are missing.
-
-Plan all missing pieces.
+Do not risk breaking existing journals.
 
 ---
 
-# 11. Phase G — Budgets and Commitments
+# 7. Services To Add
 
-Plan:
+Create:
 
-```text id="tiq2mb"
-annual budgets
-department budgets
-account budgets
-budget periods
-budget approval
-budget revisions
-budget transfers
-budget vs actual report
-purchase commitments
-encumbrances
-commitment release
-approval limits
+```text id="whxhs1"
+AccountingPostingAttemptService
+AccountingIdempotencyService
+AccountingAccountMappingService
+AccountingCloseReadinessService
 ```
 
-Integrate with:
+Extend existing accounting posting services only where safe.
 
-```text id="wl9frx"
-purchase orders
-stock procurement
-supplier payables
-department requests
-projects/grants later
-```
-
-Do not block clinical operations because a budget module is disabled unless configured.
+Do not rewrite all existing posting services in this phase.
 
 ---
 
-# 12. Phase H — Fixed Assets
+# 8. AccountingPostingAttemptService
 
-Plan fixed asset accounting.
+This service should handle:
 
-Include:
-
-```text id="9nwcbr"
-asset register
-asset categories
-capitalization workflow
-asset acquisition from procurement
-asset locations
-custodian assignment
-depreciation methods
-depreciation runs
-disposal
-impairment
-asset transfer
-asset verification
-asset maintenance link later
-```
-
-Accounting:
-
-```text id="04iq0z"
-Dr Fixed Asset
-Cr Cash/Bank/AP
-Dr Depreciation Expense
-Cr Accumulated Depreciation
-Dr Loss/Gain on Disposal
-```
-
----
-
-# 13. Phase I — Statutory Tax Accounting
-
-Plan statutory tax accounting.
-
-Include:
-
-```text id="3bhlip"
-PAYE payable ledger
-SSNIT/pension payable ledger
-VAT/NHIL/GETFund if applicable
-withholding tax
-tax input ledger
-tax output ledger
-statutory returns
-tax payment settlement
-tax reconciliation
-```
-
-Do not mix tax calculation with tax accounting.
-
-Tax calculation belongs to source modules such as payroll or billing.
-Tax accounting records payable/receivable and settlement.
-
----
-
-# 14. Phase J — Dedicated Receivables Workbench
-
-Plan AR collector workbench.
-
-Include:
-
-```text id="ox57mb"
-payer statements
-patient receivables
-sponsor receivables
-insurance receivables
-corporate receivables
-promises to pay
-collection notes
-disputes
-write-off queue
-credit note queue
-aging buckets
-collector assignment
-follow-up reminders
-remittance matching
-```
-
-Do not replace existing AR aging.
-Extend it into an operational collector workbench.
-
----
-
-# 15. Phase K — Claims Settlement Accounting
-
-Plan claims settlement accounting.
-
-Include:
-
-```text id="9e0dwg"
-claim submission
-insurer remittance advice
-partial settlement allocation
-denial accounting
-write-down accounting
-resubmission differences
-claim reconciliation
-insurer statement reconciliation
-claim receivable control account
-```
-
-Rules:
-
-```text id="d0trg1"
-NHIS is just another insurance provider.
-Do not hardcode NHIS.
-Support generic insurance providers and sponsors.
-```
-
----
-
-# 16. Medium-Priority Gap Planning
-
-Also plan later roadmap items for:
-
-```text id="igephf"
-multi-currency
-cost centers
-projects
-grants
-donor funds
-recurring journals
-accrual schedules
-prepayments
-deferred revenue
-staff loan accounting
-opening balance import
-branch consolidation
-electronic payment files
-GL/subledger reconciliation dashboard
-```
-
-Mark these as later phases unless dependencies require earlier work.
-
----
-
-# 17. Module Catalogue Planning
-
-The report identifies existing workflows without dedicated module flags.
-
-Plan whether to add module toggles for:
-
-```text id="y2f3dv"
-appointments
-theatre
-procedures
-accounting integrations
-cashier operations
-fixed assets
-budgets
-bank reconciliation
-radiology
-CSSD
-maintenance
-advanced rostering
-```
-
-Rules:
-
-```text id="k4w9wo"
-Do not split modules unnecessarily if it makes deployment harder.
-Do not make Billing dependent on Accounting.
-Advanced Accounting must still depend on Basic Accounting.
-Use module middleware for direct routes.
-```
-
----
-
-# 18. Permissions Planning
-
-For each accounting gap, define permissions.
-
-Examples:
-
-```text id="gvah12"
-accounting.basic.post_to_gl
-accounting.bank_accounts.view
-accounting.bank_accounts.manage
-accounting.bank_reconciliation.view
-accounting.bank_reconciliation.manage
-accounting.bank_reconciliation.approve
-accounting.failed_postings.view
-accounting.failed_postings.retry
-accounting.failed_postings.resolve
-accounting.subledger_reconciliation.view
-accounting.payroll_posting.view
-accounting.payroll_posting.post
-accounting.cash_flow.view
-accounting.exports
-accounting.budgets.view
-accounting.budgets.manage
-accounting.budgets.approve
-accounting.commitments.view
-accounting.commitments.manage
-accounting.fixed_assets.view
-accounting.fixed_assets.manage
-accounting.fixed_assets.depreciate
-accounting.tax_ledgers.view
-accounting.tax_ledgers.manage
-accounting.receivables_workbench.view
-accounting.claims_settlement.view
-accounting.claims_settlement.manage
-```
-
-Map permissions to roles.
-
----
-
-# 19. Audit Logging Planning
-
-Use `ActivityLogService`.
-
-Plan audit events for:
-
-```text id="kd2idd"
-posting bridge template created
-basic entry posted to GL
-posting failed
-posting retried
-posting resolved
-bank account created
-bank statement imported
-bank line matched
-bank reconciliation approved
-budget approved
-commitment created
-asset capitalized
-depreciation run posted
-tax return prepared
-tax payment recorded
-payroll posted
-receivable dispute logged
-claim remittance allocated
-```
-
-Do not bypass audit logging.
-
----
-
-# 20. Data Migration and Backfill Planning
-
-Plan safe migration/backfill strategies.
-
-For each phase, define:
-
-```text id="f9l147"
-new tables
-new nullable columns
-indexes
-backfill command
-dry-run mode
-rollback/reversal strategy
-audit trail
-large database safety
-MariaDB compatibility
+```text id="q9oiv3"
+create pending attempt
+mark processing
+mark posted
+mark failed
+mark waived
+mark resolved
+mark reversed
+increment retry count
+retain error messages
+retain source snapshot
+retain posting snapshot
+link journal entry
+link reversal journal entry
 ```
 
 Important:
 
-```text id="sbdr9i"
-Do not destructively migrate existing financial data.
-Do not auto-post historical records without user approval.
-Historical backfill must be previewed and approved.
+```text id="chsl0o"
+Never overwrite old errors without retaining attempt history.
+Never mark posted without a journal entry.
+Never mark resolved/waived without actor and reason.
+Never retry in a way that can duplicate journal entries.
 ```
+
+If you need separate attempt-history rows, add:
+
+```text id="x2na8o"
+accounting_posting_attempt_events
+```
+
+only if the current structure cannot preserve retry history properly.
 
 ---
 
-# 21. Test Strategy
+# 9. AccountingIdempotencyService
 
-Plan tests for:
+Implement stable idempotency keys.
 
-```text id="6ztgv4"
-module middleware
-permissions
-posting bridge
-journal balance
-duplicate posting prevention
-failed posting retry
-bank statement import
-bank reconciliation matching
-cash flow report
-payroll posting
-budget approval
-commitment release
-asset depreciation
-tax ledger settlement
-AR collector workbench
-claims remittance allocation
-localisation lock
-audit logging
+Default identity:
+
+```text id="1ezf0m"
+source_type + source_id + posting_type + posting_version
 ```
 
-Always run:
+Recommended key format:
 
-```bash id="j8vq2m"
+```text id="dry5ui"
+{source_type}:{source_id}:{posting_type}:v{posting_version}
+```
+
+Rules:
+
+```text id="0mrlq1"
+Same source identity must not create duplicate posted journals.
+Retried failed attempts must reuse the same identity.
+Reversals must use their own reversal identity but link back to the original attempt.
+```
+
+Add tests proving duplicate posting requests return or reference the existing posted journal instead of creating a second journal.
+
+---
+
+# 10. AccountingAccountMappingService
+
+Implement account mapping lookup.
+
+The service must support:
+
+```text id="kjom88"
+mapping scope
+mapping key
+mapping value
+facility override
+department override
+branch override
+currency filter
+effective date
+priority ordering
+active flag
+```
+
+It should return:
+
+```text id="a5a3jr"
+matched account
+matched mapping record
+explanation of why it matched
+```
+
+If no mapping is found, throw a controlled exception that can be captured by posting attempts.
+
+Do not fall back to arbitrary accounts.
+
+---
+
+# 11. AccountingCloseReadinessService
+
+Create the foundation for period-close readiness.
+
+This service should report:
+
+```text id="swou6v"
+unresolved failed postings
+waived postings
+unposted eligible source records
+unreconciled control accounts later
+open bank reconciliations later
+unmapped cash-flow activity later
+```
+
+For this phase, implement at least:
+
+```text id="fuwiyv"
+unresolved failed accounting_posting_attempts inside a date range
+failed attempts by source module
+waived attempts by source module
+posted attempts summary
+```
+
+Do not hard-block closing yet unless existing period-close code already supports it safely.
+
+Return structured data that later UI screens can use.
+
+---
+
+# 12. Integrate Lightly With Existing Posting Flow
+
+Inspect:
+
+```text id="prg4bs"
+JournalEntryService
+AccountingPostingService
+existing source posting services
+billing posting services
+payment posting services
+inventory posting services
+supplier payable posting services
+credit note posting services
+```
+
+Add light integration only where safe:
+
+```text id="7yb317"
+create posting attempt before posting
+mark posted after successful journal creation
+mark failed when controlled posting exception occurs
+store source and posting snapshots
+```
+
+If integrating all posting paths is too risky, integrate only the shared `AccountingPostingService` entry point and document the remaining paths.
+
+Do not break existing posting behavior.
+
+Do not change invoice totals, payment allocation, inventory valuation, supplier balances, payroll summaries, or credit note logic.
+
+---
+
+# 13. Backfill Existing Posted/Error Statuses
+
+Create an artisan command:
+
+```bash id="1oag0d"
+php artisan accounting:posting-attempts-backfill
+```
+
+It must support:
+
+```text id="amfs3d"
+--dry-run
+--from=
+--to=
+--chunk=
+--source-type=
+--source-id=
+--resume-from=
+```
+
+Purpose:
+
+```text id="p7ma1f"
+Backfill metadata only.
+Do not create new journals.
+Do not alter historical financial amounts.
+Do not auto-post historical records.
+```
+
+The command should:
+
+```text id="4rnzgu"
+detect existing posted source records with journal_entry_id
+create posted accounting_posting_attempt rows
+detect existing source records with accounting_error
+create failed accounting_posting_attempt rows
+skip records already backfilled
+report selected, created, skipped, failed
+```
+
+If source tables differ, support the ones already used in accounting services first and document unsupported sources.
+
+Dry-run must perform no writes.
+
+---
+
+# 14. Permissions
+
+Seed or normalize permissions:
+
+```text id="gphhjj"
+accounting.failed_postings.view
+accounting.failed_postings.retry
+accounting.failed_postings.resolve
+accounting.failed_postings.waive
+accounting.mappings.view
+accounting.mappings.manage
+accounting.close_readiness.view
+```
+
+If older permissions already exist:
+
+```text id="0zgo62"
+accounting.posting.view
+accounting.posting.retry
+accounting.posting.reverse
+```
+
+do not remove them.
+
+Map new permissions to Finance Manager / Accountant roles as appropriate.
+
+Do not grant new permissions to broad clinical roles.
+
+---
+
+# 15. Minimal Admin UI
+
+Add minimal screens only if current accounting UI structure allows it safely.
+
+Screens:
+
+```text id="gmciyg"
+Accounting Posting Attempts index
+Accounting Posting Attempt show
+Account Mapping index
+Account Mapping create/edit
+Close Readiness summary
+```
+
+If UI scope is too much for Phase 0, create routes/services/tests and document UI as Phase C/Phase A follow-up.
+
+Do not overbuild the failed-posting workbench yet.
+
+That is Phase C.
+
+---
+
+# 16. Module Middleware
+
+All new accounting control routes must be protected by:
+
+```text id="4v3432"
+auth
+permission middleware
+module:accounting_advanced
+```
+
+Exception:
+
+```text id="9u538z"
+If a read-only close readiness or mapping preview is required for Basic Accounting only, document why.
+```
+
+Billing routes must not depend on accounting module toggles.
+
+---
+
+# 17. Audit Logging
+
+Use `ActivityLogService`.
+
+Audit events:
+
+```text id="cdfisy"
+ACCOUNTING_POSTING_ATTEMPT_CREATED
+ACCOUNTING_POSTING_ATTEMPT_FAILED
+ACCOUNTING_POSTING_ATTEMPT_POSTED
+ACCOUNTING_POSTING_ATTEMPT_RETRIED
+ACCOUNTING_POSTING_ATTEMPT_RESOLVED
+ACCOUNTING_POSTING_ATTEMPT_WAIVED
+ACCOUNTING_ACCOUNT_MAPPING_CREATED
+ACCOUNTING_ACCOUNT_MAPPING_UPDATED
+ACCOUNTING_ACCOUNT_MAPPING_DISABLED
+ACCOUNTING_POSTING_ATTEMPTS_BACKFILLED
+CLOSE_READINESS_CHECKED
+```
+
+Do not bypass audit logging.
+
+Run:
+
+```bash id="1htcis"
+php artisan logs:audit --json
+```
+
+If the audit command reports missing/needs-review logs, fix root causes.
+
+---
+
+# 18. Localisation
+
+All new UI strings must be localised EN/FR.
+
+Use or extend:
+
+```text id="9e2tpp"
+lang/en/accounting.php
+lang/fr/accounting.php
+```
+
+Add keys for:
+
+```text id="3z4l3u"
+posting_attempts
+posting_attempt
+source_module
+source_type
+source_id
+posting_type
+posting_version
+idempotency_key
+attempt_count
+last_attempted_at
+next_retry_at
+error_code
+error_message
+source_snapshot
+posting_snapshot
+resolution_type
+resolution_note
+account_mappings
+mapping_scope
+mapping_key
+mapping_value
+effective_from
+effective_to
+priority
+close_readiness
+unresolved_failed_postings
+waived_postings
+posted_attempts
+```
+
+Maintain EN/FR parity.
+
+Run:
+
+```bash id="0sy480"
 php artisan test tests/Feature/Localization
 php scripts/localisation-audit.php
-php artisan test
 ```
 
 Active runtime candidates must remain:
 
-```text id="ptcxzg"
+```text id="iherrk"
 0
 ```
 
 ---
 
-# 22. Risk Register
+# 19. Tests
 
-Create a risk register covering:
+Add tests for:
 
-```text id="4kxeb7"
-duplicate journal posting
-unbalanced journals
-historical data mismatch
-Basic vs Advanced Accounting divergence
-wrong bank reconciliation matches
-incorrect payroll liabilities
-tax payable mismatch
-claims settlement under/over allocation
-budget blocking clinical operations
-fixed asset depreciation errors
-permission exposure
-audit gaps
-performance on large ledgers
-migration rollback risk
+```text id="dbu2qb"
+posting attempt can be created
+posting attempt can be marked processing
+posting attempt can be marked posted with journal
+posting attempt can be marked failed with retained error
+posting attempt cannot be posted twice
+same idempotency key prevents duplicate journal posting
+account mapping resolves by scope/key/value/date
+account mapping respects priority
+missing account mapping throws controlled exception
+close readiness lists unresolved failed attempts
+backfill dry-run performs no writes
+backfill creates metadata only, no journals
+unauthorized user cannot view posting attempts
+unauthorized user cannot manage mappings
+module middleware blocks direct route when accounting_advanced disabled
+ActivityLogService records state changes
+localisation lock remains active runtime 0
 ```
 
-For each risk, define mitigation.
+Existing accounting posting tests must still pass.
 
 ---
 
-# 23. Output Format
+# 20. Verification Commands
 
-The master plan must include:
+Run:
 
-```text id="vfotrp"
-phase roadmap table
-gap-to-phase mapping
-database table proposal
-service proposal
-permission matrix
-audit event matrix
-test matrix
-risk register
-open decisions
-acceptance criteria
+```bash id="r2e8x7"
+php artisan route:list
+php artisan view:cache
+php artisan view:clear
+php artisan test tests/Feature/Localization
+php scripts/localisation-audit.php
+php artisan logs:audit --json
+php artisan test
+git diff --check
 ```
 
-Use Mermaid diagrams for:
+If frontend assets are touched:
 
-```text id="tlg1zb"
-Basic-to-Advanced posting bridge
-Bank reconciliation flow
-Failed posting retry flow
-Payroll posting flow
-Budget commitment flow
-Claims settlement allocation flow
+```bash id="6uxoia"
+npm run build
 ```
 
 ---
 
-# 24. Open Decisions
+# 21. Documentation
 
-Document open decisions such as:
+Create:
 
-```text id="r8hzqh"
-Should Basic entries auto-post to GL after approval or require manual batch posting?
-Should old Basic entries be backfilled into GL?
-Which bank statement formats are supported first?
-Should bank reconciliation auto-create bank charges?
-Should failed postings block period close?
-Should payroll posting require Advanced Accounting?
-Should budgets block purchase orders or only warn?
-Which depreciation method is default?
-How should insurance denials be accounted for?
-Should statutory tax returns be generated inside UHMS or only tracked?
+```text id="e6x05d"
+docs/ACCOUNTING_PHASE_0_SHARED_CONTROLS_AND_READINESS_REPORT.md
 ```
 
-Recommend defaults but do not hide uncertainty.
+Include:
+
+```text id="lf1zfj"
+summary
+database changes
+services added
+commands added
+permissions added
+routes/controllers/views added
+posting attempt lifecycle
+idempotency strategy
+account mapping strategy
+close readiness strategy
+backfill strategy
+audit logging
+tests added
+commands run
+localisation audit result
+known limitations
+unsupported source posting paths
+next recommended phase
+```
 
 ---
 
-# 25. Acceptance Criteria For This Planning Phase
+# 22. Acceptance Criteria
 
-This phase is complete only when:
+Phase 0 is complete only when:
 
-```text id="o0v9ll"
-all accounting gaps in the report are mapped to execution phases
-dependencies are clear
-database impact is planned
-services are planned
-permissions are planned
-audit logs are planned
-module-toggle behavior is planned
-migration/backfill strategy is planned
-test strategy is planned
-risks are documented
-open decisions are documented
-the planning document is created
-no implementation code is changed
+```text id="sasepz"
+accounting_posting_attempts exists
+accounting_account_mappings exists
+posting attempts can track posted/failed/waived/resolved/reversed states
+idempotency prevents duplicate posted journals
+account mappings resolve predictably and fail loudly when missing
+close readiness can report unresolved failed postings
+backfill command supports dry-run and metadata-only backfill
+permissions are enforced
+module middleware protects direct routes
+ActivityLogService is used
+EN/FR localisation parity passes
+active runtime candidates remain 0
+route list works
+view cache compiles
+logs:audit is clean or documented with root-cause fixes
+full test suite is run
+documentation report is created
 ```
 
-Proceed with the Accounting Gap Execution Master Planning phase now.
+Proceed with Accounting Execution Phase 0 now.
