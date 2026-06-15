@@ -5,510 +5,446 @@ There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
 Do not try to read it.
 Follow this prompt directly.
 
-# UHMS Investigation Module — Configurable Overall Result Type
+# UHMS Phase 18 — Domain Failure Stabilisation: MAR, Lab Billing Gate, Visit Pathway
+
+## Current Status
+
+Phase 17 full-suite stabilisation improved the test suite from:
+
+```text id="ytdcfc"
+525 passing / 15 failing
+```
+
+to:
+
+```text id="uwit64"
+535 passing / 5 failing
+```
+
+Localisation is locked and must remain locked:
+
+```text id="4eibqq"
+Active runtime candidates: 0
+tests/Feature/Localization: 12 passing
+```
+
+Do not restart localisation work.
+Do not touch broad translation files unless a localisation test fails.
+Do not change test strictness to hide domain bugs.
+
+---
 
 ## Goal
 
-In the investigation module, the **overall result field** must be configurable per investigation/test type.
+Fix the remaining 5 domain/feature failures documented in Phase 17.
 
-Currently, investigation results are too generic. Some investigations need a free-text conclusion, some need a numeric value, some need true/false, and others need positive/negative outcomes. This must be configurable from the investigation catalogue/test configuration, then respected when entering results and when generating reports/statistics.
+These failures are not localisation failures. They are domain regressions in:
+
+```text id="b9seyg"
+Medication Administration / MAR
+Lab billing display gating
+Visit status / emergency admission pathway
+```
+
+The goal is to bring the full suite to green without weakening permissions, hiding clinical/billing problems, or changing unrelated workflows.
 
 ---
 
-## 1. Add Overall Result Type Configuration
+## 1. Required Reports To Read First
 
-Add a configurable field to the investigation/test catalogue.
+Read:
 
-Each investigation type/test must support one of these overall result formats:
-
-```text
-free_text
-numeric
-boolean
-positive_negative
+```text id="np3g8v"
+docs/PHASE_17_FULL_TEST_SUITE_REGRESSION_STABILISATION_REPORT.md
+docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
 
-Recommended labels:
-
-```text
-Free text
-Numeric value
-True / False
-Positive / Negative
-```
-
-The configuration should be set per investigation/test type, not globally.
-
-Example:
-
-```text
-Malaria RDT       → positive_negative
-Pregnancy Test    → positive_negative
-Blood Sugar       → numeric
-HIV Screening     → positive_negative
-X-Ray Chest       → free_text
-Consent-related test → boolean
-```
+Use Phase 17’s remaining-failure list as the source of truth.
 
 ---
 
-## 2. Database Changes
+## 2. Remaining Failures To Fix
 
-Add the needed columns to the investigation catalogue/test table.
+The 5 remaining failures are:
 
-Use the existing model/table names in the project. Do not create a parallel investigation catalogue.
-
-Recommended fields:
-
-```text
-overall_result_type
-overall_result_unit
-overall_result_min_value
-overall_result_max_value
-overall_result_positive_label
-overall_result_negative_label
-overall_result_true_label
-overall_result_false_label
+```text id="m6wh1c"
+LabWorkflowTest › billed request opens from results route
+MedicationAdministrationWorkflowTest › admission mar chart renders dose-cell modal trigger
+MedicationAdministrationWorkflowTest › prn medications render PRN/SOS section
+MedicationAdministrationWorkflowTest › mar chart service returns time_columns
+VisitStatusPatientPathwayWorkflowTest › emergency bed billing allows Admit Patient → Admitted transition
 ```
 
-Only add fields that make sense based on the current schema.
+Fix these only.
 
-At minimum, add:
-
-```text
-overall_result_type
-```
-
-Optional but useful:
-
-```text
-overall_result_unit
-```
-
-For numeric result reporting, the unit can be used in display and reports.
-
-Use safe defaults:
-
-```text
-overall_result_type = free_text
-```
-
-Make the migration compatible with MariaDB/MySQL.
-
-Do not use database enum if the project normally avoids enums for compatibility. A string column with validation is acceptable.
+Do not make broad refactors.
 
 ---
 
-## 3. Model Constants / Helper Methods
+# Part A — Lab Billing Display Gate
 
-In the investigation catalogue/test model, add constants or helper methods for supported result types.
+## Failure
 
-Example:
-
-```php
-public const OVERALL_RESULT_FREE_TEXT = 'free_text';
-public const OVERALL_RESULT_NUMERIC = 'numeric';
-public const OVERALL_RESULT_BOOLEAN = 'boolean';
-public const OVERALL_RESULT_POSITIVE_NEGATIVE = 'positive_negative';
+```text id="zq3m32"
+LabWorkflowTest › billed request opens from results route
 ```
 
-Add helper methods such as:
+Root cause documented in Phase 17:
 
-```php
-public static function overallResultTypes(): array
-public function overallResultTypeLabel(): string
-public function usesNumericOverallResult(): bool
-public function usesBooleanOverallResult(): bool
-public function usesPositiveNegativeOverallResult(): bool
-public function usesFreeTextOverallResult(): bool
+```text id="zeg2cf"
+Results-show page renders the "Bill Selected" action for an already-billed request.
 ```
 
-Make labels localised with `__()`.
+## Required Fix
+
+Find the lab results/results-show Blade/controller logic that renders the billing action.
+
+The `Bill Selected` button/action must only appear when there are billable, unbilled selected items.
+
+If the request/items are already billed, the action must not be shown.
+
+Do not merely change the test.
+
+Implement a proper guard based on existing billing state.
+
+Check existing fields/relationships before adding anything new. Likely sources:
+
+```text id="qtykrn"
+invoice_id
+billing_status
+is_billed
+invoice relationship
+accepted/billable lab items
+```
+
+Use whichever exists in the current UHMS schema.
+
+## Rules
+
+Do not change invoice totals.
+Do not create duplicate invoices.
+Do not change lab acceptance workflow.
+Do not hide legitimate billing actions for unbilled investigations.
+Do not bypass permissions.
+
+## Expected Result
+
+The lab test should pass because already-billed requests no longer show `Bill Selected`.
 
 ---
 
-## 4. Admin Configuration UI
+# Part B — MAR Dose-Cell Modal Trigger
 
-Update the investigation/test catalogue create/edit/configure screens.
+## Failure
 
-Add a field:
-
-```text
-Overall Result Type
+```text id="6ptid3"
+MedicationAdministrationWorkflowTest › admission mar chart renders dose-cell modal trigger
 ```
 
-Input type:
+Root cause documented in Phase 17:
 
-```text
-select dropdown
+```text id="y1unjf"
+Dose-cell modal trigger data-bs-target="#mar-dose-{id}" is not rendered.
+Patient/drug/DUE content renders correctly.
 ```
 
-Options:
+## Required Fix
 
-```text
-Free text
-Numeric value
-True / False
-Positive / Negative
+Inspect:
+
+```text id="edmzba"
+MedicationAdministrationWorkflowTest
+MAR chart Blade view
+MAR chart partials/components
+MarChartService
+medication administration schedule/dose models
 ```
 
-If `numeric` is selected, optionally show:
+Find where each due medication dose cell should render its modal trigger.
 
-```text
-Unit
-Minimum normal value
-Maximum normal value
+Restore or correctly render the expected Bootstrap modal trigger:
+
+```html id="d4ofik"
+data-bs-target="#mar-dose-{id}"
 ```
 
-If `positive_negative` is selected, optionally show labels:
+Use the actual dose/schedule/admin record ID expected by the existing test and view structure.
 
-```text
-Positive label
-Negative label
-```
+## Rules
 
-If `boolean` is selected, optionally show labels:
+Do not hardcode IDs.
+Do not fake the markup only for tests.
+Do not remove modal behavior.
+Do not change clinical dose semantics.
+Do not break administered/skipped/held status display.
+Do not expose restricted medication data.
 
-```text
-True label
-False label
-```
+## Expected Result
 
-These optional custom labels should default to translated standard labels if not set.
-
-Use Bootstrap 5 only.
-Do not introduce a new frontend library.
+The MAR chart renders actionable dose cells with modal triggers where appropriate.
 
 ---
 
-## 5. Result Entry UI
+# Part C — MAR PRN / SOS Section
 
-When entering or verifying investigation results, the overall result input must change based on the configured type.
+## Failure
 
-Rules:
-
-### free_text
-
-Show a textarea or text input.
-
-Store as text.
-
-### numeric
-
-Show a number input.
-
-Allow decimal values.
-
-Store numeric value separately if the schema supports it, or validate/cast carefully if stored in the existing result field.
-
-Show the configured unit if available.
-
-### boolean
-
-Show a select/radio:
-
-```text
-True
-False
+```text id="b9kr60"
+MedicationAdministrationWorkflowTest › prn medications render PRN/SOS section
 ```
 
-Store canonical value:
+Root cause documented in Phase 17:
 
-```text
-true
-false
+```text id="zky014"
+PRN / SOS Medications section is not rendered for PRN schedules.
 ```
 
-Do not store translated labels as database values.
+## Required Fix
 
-### positive_negative
+Inspect the PRN branch in:
 
-Show a select/radio:
-
-```text
-Positive
-Negative
+```text id="xz9fyr"
+MarChartService
+MAR chart Blade view
+MedicationAdministrationWorkflowTest factory/setup
+Medication schedule model fields
 ```
 
-Store canonical value:
+Confirm how the system marks PRN/SOS schedules.
 
-```text
-positive
-negative
+Possible fields may include:
+
+```text id="qkoz9p"
+is_prn
+schedule_type
+frequency
+administration_type
+prn_reason
 ```
 
-Do not store translated labels as database values.
+Render the PRN/SOS section when PRN medication schedules exist.
+
+The section label must use existing localisation keys. Do not introduce hardcoded English.
+
+## Rules
+
+Do not convert regular scheduled meds into PRN meds.
+Do not hide PRN meds inside regular time columns.
+Do not change actual administration recording rules unless the service is wrong.
+Do not break localisation lock.
+
+## Expected Result
+
+PRN/SOS medication schedules appear under the PRN/SOS section and the test passes.
 
 ---
 
-## 6. Storage Rules
+# Part D — MAR Time Columns
 
-The stored overall result must be reportable.
+## Failure
 
-Preferred structure, if safe with current schema:
-
-```text
-overall_result_type
-overall_result_text
-overall_result_numeric
-overall_result_boolean
-overall_result_outcome
-overall_result_unit
+```text id="t1zwz4"
+MedicationAdministrationWorkflowTest › mar chart service returns time_columns
 ```
 
-Where:
+Root cause documented in Phase 17:
 
-```text
-overall_result_text      → free text values
-overall_result_numeric   → numeric values
-overall_result_boolean   → true/false
-overall_result_outcome   → positive/negative
-overall_result_unit      → copied/displayed unit if needed
+```text id="kizgyw"
+MarChartService returns empty time_columns for the test schedule window.
 ```
 
-If the current system already has one `overall_result` column, keep it for backward compatibility but add typed columns if necessary.
+## Required Fix
 
-Do not break existing results.
+Inspect `MarChartService`.
 
-Existing free-text results must continue to display correctly.
+Check how it computes:
 
-Backwards compatibility rule:
-
-```text
-If old result has only overall_result text, treat it as free_text unless the investigation type is configured otherwise.
+```text id="mf3jmd"
+time_columns
+schedule window
+dose times
+frequency
+start/end date
+admission date
+current chart date
+timezone/date normalisation
 ```
+
+The service must return expected time columns for scheduled medications that fall within the MAR chart window.
+
+Likely issue types:
+
+```text id="hd4kb5"
+date mismatch
+time parsing mismatch
+timezone normalisation issue
+frequency mapping issue
+schedule start/end not included
+empty collection because status filter excludes due schedules
+```
+
+Fix the root cause.
+
+## Rules
+
+Do not hardcode the test date.
+Do not force time_columns globally.
+Do not break real MAR chart grouping.
+Do not change PRN behavior unless required for the PRN fix.
+
+## Expected Result
+
+Scheduled medication charts produce non-empty `time_columns` when schedules exist in the requested window.
 
 ---
 
-## 7. Validation Rules
+# Part E — Visit Pathway / Emergency Admission Transition
 
-Add validation based on selected result type.
+## Failure
 
-For result entry:
-
-```text
-free_text           → nullable|string
-numeric             → nullable|numeric
-boolean             → nullable|in:true,false,1,0
-positive_negative   → nullable|in:positive,negative
+```text id="u2qqla"
+VisitStatusPatientPathwayWorkflowTest › emergency bed billing allows Admit Patient → Admitted transition
 ```
 
-For catalogue configuration:
+Root cause documented in Phase 17:
 
-```text
-overall_result_type → required|in:free_text,numeric,boolean,positive_negative
+```text id="ozoe19"
+VisitStatusService rejects Admit Patient → Admitted transition.
 ```
 
-If numeric min/max are added:
+## Required Fix
 
-```text
-min/max must be numeric
-max must be >= min
+Inspect:
+
+```text id="58xr58"
+VisitStatusService
+VisitStatusPatientPathwayWorkflowTest
+Emergency bed billing workflow
+Admission workflow
+Visit status constants/enums
 ```
+
+The emergency bed billing pathway must allow the intended transition:
+
+```text id="arivri"
+Admit Patient → Admitted
+```
+
+Only if it is clinically and workflow-valid.
+
+Reconcile the state machine with the emergency admission pathway.
+
+## Rules
+
+Do not allow invalid transitions globally.
+Do not bypass VisitStatusService.
+Do not bypass emergency bed billing workflow.
+Do not hardcode emergency service IDs.
+Do not hardcode Emergency/Casualty service IDs.
+Do not create NHIS-specific logic.
+Do not break normal OPD/admission transitions.
+
+If the transition should only apply to emergency/admission contexts, scope it properly.
+
+## Expected Result
+
+Emergency bed billing pathway can complete the intended admission transition, and invalid transitions remain blocked.
 
 ---
 
-## 8. Reporting / Tally Logic
+# 3. Test Strategy
 
-Add report/statistics support for tallying overall results.
+Run the focused tests first:
 
-For positive/negative investigations, reports should be able to count:
-
-```text
-Positive count
-Negative count
-Total tested
-Positive rate
-Negative rate
+```bash id="4wuly3"
+php artisan test tests/Feature/LabWorkflowTest.php
+php artisan test tests/Feature/MedicationAdministrationWorkflowTest.php
+php artisan test tests/Feature/VisitStatusPatientPathwayWorkflowTest.php
 ```
 
-For boolean investigations, reports should be able to count:
+Then run localisation lock:
 
-```text
-True count
-False count
-Total tested
-True rate
-False rate
-```
-
-For numeric investigations, reports should support:
-
-```text
-count
-average
-minimum
-maximum
-normal / abnormal count if min/max configured
-```
-
-For free-text investigations, reports should support:
-
-```text
-count completed
-latest result summaries where appropriate
-```
-
-Do not mix numeric aggregation with text results.
-
-Add this logic in a service class, not directly in controllers or Blade.
-
-Example service name if no better existing service exists:
-
-```text
-InvestigationResultSummaryService
-```
-
-Reuse existing report services if already present.
-
----
-
-## 9. Display Rules
-
-Wherever an overall result is displayed, format it based on type.
-
-Examples:
-
-```text
-free_text           → "No acute abnormality detected"
-numeric             → "5.6 mmol/L"
-boolean true        → "True" / translated label
-boolean false       → "False" / translated label
-positive            → "Positive" / translated label
-negative            → "Negative" / translated label
-```
-
-Database values remain canonical English/internal values.
-
-Displayed values must be translated using language files.
-
----
-
-## 10. Localisation
-
-Add EN/FR translation keys for all new labels.
-
-Use or extend:
-
-```text
-lang/en/investigations.php
-lang/fr/investigations.php
-lang/en/lab.php
-lang/fr/lab.php
-lang/en/reports.php
-lang/fr/reports.php
-```
-
-Required keys include:
-
-```text
-overall_result_type
-free_text
-numeric_value
-true_false
-positive_negative
-overall_result_unit
-minimum_normal_value
-maximum_normal_value
-positive
-negative
-true
-false
-positive_count
-negative_count
-true_count
-false_count
-positive_rate
-negative_rate
-average_value
-minimum_value
-maximum_value
-normal_count
-abnormal_count
-completed_count
-```
-
-Maintain EN/FR parity.
-
-Run the localisation tests after changes.
-
----
-
-## 11. Permissions / Security
-
-Do not weaken permissions.
-
-Preserve existing access control for:
-
-```text
-investigation catalogue configuration
-result entry
-result verification
-result viewing
-reports
-```
-
-Do not expose clinical results to users without permission.
-
-Do not move business logic into Blade.
-
----
-
-## 12. Backward Compatibility
-
-Existing investigation records must continue to work.
-
-Do not delete old result data.
-
-Do not rename existing columns without migration safety.
-
-If new typed columns are added, existing data should still display through the old free-text fallback.
-
-Add compatibility helpers if needed.
-
----
-
-## 13. Tests
-
-Add or update tests for:
-
-```text
-catalogue can configure free_text result type
-catalogue can configure numeric result type
-catalogue can configure boolean result type
-catalogue can configure positive_negative result type
-result entry validates based on configured type
-numeric result can be stored and displayed with unit
-boolean result stores canonical value and displays translated value
-positive_negative result stores canonical value and displays translated value
-old free-text results still display
-report tally counts positive/negative correctly
-report tally counts true/false correctly
-report summary calculates numeric average/min/max
-unauthorized users cannot configure result types
-unauthorized users cannot view restricted results
-```
-
-Also run existing localisation tests:
-
-```bash
+```bash id="c817pl"
 php artisan test tests/Feature/Localization
 php scripts/localisation-audit.php
 ```
 
-Active runtime candidates must remain:
+Then run the full suite:
 
-```text
-0
+```bash id="m03bao"
+php artisan test
+```
+
+Expected final target:
+
+```text id="vvnlx9"
+540 passing / 0 failing
+```
+
+If the total number of tests changes, report the exact final count.
+
+---
+
+# 4. Safety Rules
+
+Do not weaken:
+
+```text id="bcyjuf"
+permissions
+policies
+gates
+middleware
+clinical confidentiality
+financial visibility
+stock-cost visibility
+audit logging
+```
+
+Do not bypass:
+
+```text id="16ot0w"
+ActivityLogService
+VisitStatusService
+Lab billing services
+MAR services
+```
+
+Do not move business logic into Blade.
+
+Do not change tests to hide real bugs.
+
+Test changes are allowed only when the test expectation is demonstrably outdated and the production behavior is correct. For the 5 current failures, assume production behavior needs inspection first.
+
+---
+
+# 5. Localisation Lock Rules
+
+These must remain true:
+
+```text id="z4p69g"
+Active runtime candidates: 0
+EN/FR parity passes
+12 localisation tests pass
+```
+
+If any new label is needed, add EN/FR keys with parity.
+
+Do not hardcode English labels.
+
+Run:
+
+```bash id="j4zsm0"
+php artisan test tests/Feature/Localization
+php scripts/localisation-audit.php
 ```
 
 ---
 
-## 14. Verification Commands
+# 6. Verification Commands
 
 Run:
 
-```bash
+```bash id="wdgmll"
 php artisan view:clear
 php artisan config:clear
 php artisan cache:clear
@@ -519,78 +455,82 @@ php artisan view:clear
 
 Run:
 
-```bash
+```bash id="v5l9c8"
 for f in lang/en/*.php lang/fr/*.php; do php -l "$f"; done
 ```
 
 Run:
 
-```bash
+```bash id="g2ioi1"
+php artisan test tests/Feature/LabWorkflowTest.php
+php artisan test tests/Feature/MedicationAdministrationWorkflowTest.php
+php artisan test tests/Feature/VisitStatusPatientPathwayWorkflowTest.php
 php artisan test tests/Feature/Localization
 php scripts/localisation-audit.php
 php artisan test
 ```
 
-If frontend assets are touched and dependencies are available:
-
-```bash
-npm run build
-```
-
 Run:
 
-```bash
+```bash id="mcb1z2"
 git diff --check
+```
+
+If frontend assets are touched and dependencies are available:
+
+```bash id="x9p1gy"
+npm run build
 ```
 
 ---
 
-## 15. Documentation
+# 7. Documentation Required
 
 Create:
 
-```text
-docs/INVESTIGATION_CONFIGURABLE_OVERALL_RESULT_TYPE_REPORT.md
+```text id="oqu6f5"
+docs/PHASE_18_DOMAIN_FAILURE_STABILISATION_REPORT.md
 ```
 
 Include:
 
 * summary
-* database changes
-* model changes
-* UI changes
-* result entry behavior
-* storage strategy
-* backward compatibility notes
-* reporting/tally logic
-* permissions/security notes
-* tests added
-* commands run
+* starting full-suite result
+* focused failures fixed
+* root cause per failure
+* files changed
+* production code changed
+* test code changed, if any
+* whether any language keys were added
 * localisation audit result
-* remaining risks
+* localisation test result
+* route list result
+* view cache result
+* full-suite final result
+* remaining failures, if any
+* known risks
 * next recommended phase
 
 ---
 
-## 16. Acceptance Criteria
+# 8. Acceptance Criteria
 
-This implementation is complete only when:
+Phase 18 is complete only when:
 
-* each investigation/test type can configure its overall result type
-* result entry UI changes based on configured type
-* values are stored canonically and safely
-* old free-text results still display
-* positive/negative results can be tallied
-* true/false results can be tallied
-* numeric results can be aggregated
-* free-text results remain supported
-* EN/FR localisation parity passes
-* active runtime localisation candidates remain 0
+* the 5 remaining Phase 17 failures are fixed or explicitly documented with deeper evidence
+* LabWorkflowTest passes
+* MedicationAdministrationWorkflowTest passes
+* VisitStatusPatientPathwayWorkflowTest passes
+* localisation tests still pass
+* active runtime candidates remain 0
 * route list works
 * view cache compiles
-* tests pass or failures are documented
+* full test suite is run
 * no permissions are weakened
-* no clinical data exposure is introduced
+* no clinical/financial data exposure is introduced
+* no business logic is moved into Blade
+* no NHIS-only logic is introduced
+* no audit logging is bypassed
 * documentation report is created
 
-Proceed with the configurable investigation overall result implementation now.
+Proceed with UHMS Phase 18 now.

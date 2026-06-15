@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             // ── Pharmacy / stock spine ───────────────────────────────────
             DrugGenericNameSeeder::class,
             ProductAndDrugSeeder::class,
+            InsurancePricingSeeder::class,
             MedicationFrequencySeeder::class,
 
             // ── Clinical reference data ──────────────────────────────────
