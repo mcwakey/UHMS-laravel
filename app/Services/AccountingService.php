@@ -44,7 +44,7 @@ class AccountingService
 
     public function listEntries(array $filters = []): LengthAwarePaginator
     {
-        return FinancialEntry::with(['category', 'recordedByUser'])
+        return FinancialEntry::with(['category', 'recordedByUser', 'journalEntry', 'reversalJournalEntry'])
             ->when($filters['type'] ?? null, fn ($q, $t) => $q->byType($t))
             ->when($filters['category_id'] ?? null, fn ($q, $c) => $q->byCategory($c))
             ->when($filters['search'] ?? null, fn ($q, $s) => $q->search($s))
@@ -67,6 +67,9 @@ class AccountingService
             'description' => $data['description'],
             'entry_date' => $data['entry_date'],
             'recorded_by' => Auth::id(),
+            'approval_status' => 'pending',
+            'accounting_status' => 'pending',
+            'posting_version' => 1,
         ]);
 
         $type = $entry->type instanceof \BackedEnum ? $entry->type->value : (string) $entry->type;
@@ -80,7 +83,16 @@ class AccountingService
 
     public function approveEntry(FinancialEntry $entry): void
     {
-        $entry->update(['approved_by' => Auth::id()]);
+        if (in_array($entry->accounting_status, ['posted', 'reversed'], true)) {
+            throw new \InvalidArgumentException('A posted or reversed entry cannot be re-approved.');
+        }
+
+        $entry->update([
+            'approved_by' => Auth::id(),
+            'approval_status' => 'approved',
+            'accounting_status' => 'eligible',
+            'accounting_error' => null,
+        ]);
 
         $this->logAccounting(LogModule::BILLING, 'FINANCIAL_ENTRY_APPROVED', $entry, 'financial_entry',
             'Financial entry approved: ' . $entry->entry_number,
@@ -90,7 +102,7 @@ class AccountingService
 
     public function deleteEntry(FinancialEntry $entry): void
     {
-        if ($entry->is_approved) {
+        if ($entry->is_approved || in_array($entry->accounting_status, ['posted', 'reversed'], true)) {
             throw new \InvalidArgumentException('Cannot delete an approved entry.');
         }
 

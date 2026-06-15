@@ -624,6 +624,14 @@ Route::middleware('auth')->group(function () {
             Route::post('entries', [FinancialEntryController::class, 'store'])->name('entries.store')->middleware('can:accounts.entries.create');
             Route::post('entries/{entry}/approve', [FinancialEntryController::class, 'approve'])->name('entries.approve')->middleware('can:accounts.entries.approve');
             Route::delete('entries/{entry}', [FinancialEntryController::class, 'destroy'])->name('entries.destroy')->middleware('can:accounts.entries.create');
+            Route::middleware('module:accounting_advanced')->group(function () {
+                Route::post('entries/{entry}/post-to-gl', [FinancialEntryController::class, 'postToGl'])
+                    ->name('entries.post-to-gl')
+                    ->middleware('can:accounting.basic.post');
+                Route::post('entries/{entry}/reverse-gl', [FinancialEntryController::class, 'reverseGl'])
+                    ->name('entries.reverse-gl')
+                    ->middleware('can:accounting.basic.reverse');
+            });
 
             // Reports
             Route::middleware('can:accounts.entries.view')->group(function () {
@@ -733,6 +741,29 @@ Route::middleware('auth')->group(function () {
             Route::get('close-readiness', AccountingCloseReadinessController::class)
                 ->name('close-readiness')
                 ->middleware('can:accounting.close_readiness.view');
+
+            Route::middleware(['module:accounting_basic', 'can:accounting.basic.batch.view'])
+                ->prefix('basic-bridge')
+                ->name('basic-bridge.')
+                ->group(function () {
+                    Route::get('/', [\App\Http\Controllers\Accounting\BasicAccountingBridgeController::class, 'index'])->name('index');
+                    Route::post('execute', [\App\Http\Controllers\Accounting\BasicAccountingBridgeController::class, 'execute'])
+                        ->name('execute')
+                        ->middleware('can:accounting.basic.batch.execute');
+                });
+
+            Route::middleware('can:accounting.posting_templates.view')
+                ->prefix('posting-templates')
+                ->name('posting-templates.')
+                ->group(function () {
+                    Route::get('/', [\App\Http\Controllers\Accounting\AccountingPostingTemplateController::class, 'index'])->name('index');
+                    Route::get('create', [\App\Http\Controllers\Accounting\AccountingPostingTemplateController::class, 'create'])->name('create')->middleware('can:accounting.posting_templates.manage');
+                    Route::post('/', [\App\Http\Controllers\Accounting\AccountingPostingTemplateController::class, 'store'])->name('store')->middleware('can:accounting.posting_templates.manage');
+                    Route::get('{postingTemplate}/edit', [\App\Http\Controllers\Accounting\AccountingPostingTemplateController::class, 'edit'])->name('edit')->middleware('can:accounting.posting_templates.manage');
+                    Route::put('{postingTemplate}', [\App\Http\Controllers\Accounting\AccountingPostingTemplateController::class, 'update'])->name('update')->middleware('can:accounting.posting_templates.manage');
+                    Route::patch('{postingTemplate}/approve', [\App\Http\Controllers\Accounting\AccountingPostingTemplateController::class, 'approve'])->name('approve')->middleware('can:accounting.posting_templates.approve');
+                    Route::patch('{postingTemplate}/disable', [\App\Http\Controllers\Accounting\AccountingPostingTemplateController::class, 'disable'])->name('disable')->middleware('can:accounting.posting_templates.manage');
+                });
         });
 
         // HR & Payroll

@@ -3,7 +3,10 @@
 <div class="row g-3">
     <div class="col-md-4">
         <label class="form-label">{{ __('accounting.mapping_scope') }}</label>
-        <input class="form-control" name="mapping_scope" required maxlength="50" value="{{ old('mapping_scope', $mapping->mapping_scope ?? '') }}">
+        <input class="form-control" name="mapping_scope" list="accounting-mapping-scopes" required maxlength="50" value="{{ old('mapping_scope', $mapping->mapping_scope ?? '') }}">
+        <datalist id="accounting-mapping-scopes">
+            @foreach(['basic_income_category', 'basic_expense_category', 'basic_payment_method', 'basic_cash_account', 'basic_bank_account'] as $scope)<option value="{{ $scope }}">@endforeach
+        </datalist>
     </div>
     <div class="col-md-4">
         <label class="form-label">{{ __('accounting.mapping_key') }}</label>

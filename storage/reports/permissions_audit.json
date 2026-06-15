@@ -1,9 +1,9 @@
 {
-    "generated_at": "2026-06-15T06:03:59+00:00",
+    "generated_at": "2026-06-15T06:45:16+00:00",
     "totals": {
         "permissions_in_db": 2,
-        "used_in_routes": 254,
-        "admin_mutation_routes": 388
+        "used_in_routes": 261,
+        "admin_mutation_routes": 395
     },
     "risk_distribution": {
         "LOW": 1,
@@ -114,6 +114,8 @@
         "accounts.entries.view",
         "accounts.entries.create",
         "accounts.entries.approve",
+        "accounting.basic.post",
+        "accounting.basic.reverse",
         "accounts.cashier",
         "accounting.dashboard.view",
         "accounting.accounts.view",
@@ -146,6 +148,11 @@
         "accounting.mappings.view",
         "accounting.mappings.manage",
         "accounting.close_readiness.view",
+        "accounting.basic.batch.view",
+        "accounting.basic.batch.execute",
+        "accounting.posting_templates.view",
+        "accounting.posting_templates.manage",
+        "accounting.posting_templates.approve",
         "hr.shifts.view",
         "hr.shifts.manage",
         "hr.employees.view",

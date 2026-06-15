@@ -28,6 +28,17 @@ class FinancialEntry extends Model
         'entry_date',
         'recorded_by',
         'approved_by',
+        'approval_status',
+        'accounting_status',
+        'journal_entry_id',
+        'accounting_posted_at',
+        'accounting_error',
+        'reversal_journal_entry_id',
+        'reversed_at',
+        'reversed_by',
+        'reversal_reason',
+        'posting_version',
+        'posted_by',
     ];
 
     protected $casts = [
@@ -35,6 +46,8 @@ class FinancialEntry extends Model
         'payment_method' => PaymentMethod::class,
         'amount' => 'decimal:2',
         'entry_date' => 'date',
+        'accounting_posted_at' => 'datetime',
+        'reversed_at' => 'datetime',
     ];
 
     public function getActivitylogOptions(): LogOptions
@@ -64,6 +77,21 @@ class FinancialEntry extends Model
     public function approvedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function journalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class);
+    }
+
+    public function reversalJournalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class, 'reversal_journal_entry_id');
+    }
+
+    public function postedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'posted_by');
     }
 
     // ── Scopes ──

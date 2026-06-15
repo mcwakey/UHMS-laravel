@@ -9,12 +9,16 @@ use App\Http\Requests\StoreFinancialEntryRequest;
 use App\Models\AccountCategory;
 use App\Models\FinancialEntry;
 use App\Services\AccountingService;
+use App\Services\BasicAccountingPostingService;
+use App\Services\ModuleService;
 use Illuminate\Http\Request;
 
 class FinancialEntryController extends Controller
 {
     public function __construct(
         private AccountingService $accountingService,
+        private BasicAccountingPostingService $postingService,
+        private ModuleService $moduleService,
     ) {}
 
     public function index(Request $request)
@@ -35,8 +39,10 @@ class FinancialEntryController extends Controller
             ->whereYear('entry_date', now()->year)
             ->sum('amount');
 
+        $advancedAccountingEnabled = $this->moduleService->enabled('accounting_advanced');
+
         return view("accounts.entries.index", compact(
-            'entries', 'categories', 'paymentMethods', 'type', 'totalAmount', 'monthTotal'
+            'entries', 'categories', 'paymentMethods', 'type', 'totalAmount', 'monthTotal', 'advancedAccountingEnabled'
         ));
     }
 
@@ -64,9 +70,36 @@ class FinancialEntryController extends Controller
 
     public function approve(FinancialEntry $entry)
     {
-        $this->accountingService->approveEntry($entry);
+        try {
+            $this->accountingService->approveEntry($entry);
+        } catch (\InvalidArgumentException $error) {
+            return back()->with('error', $error->getMessage());
+        }
 
         return back()->with('success', __('messages.financial_entries.approved'));
+    }
+
+    public function postToGl(FinancialEntry $entry)
+    {
+        $result = $this->postingService->post($entry, request()->user());
+
+        return back()->with(
+            $result['success'] ? 'success' : 'error',
+            $result['success']
+                ? __('accounting.basic_entry_posted', ['journal' => $result['journal']->journal_number])
+                : $result['error'],
+        );
+    }
+
+    public function reverseGl(Request $request, FinancialEntry $entry)
+    {
+        $data = $request->validate(['reason' => ['required', 'string', 'max:1000']]);
+        $result = $this->postingService->reverse($entry, $data['reason'], $request->user());
+
+        return back()->with(
+            $result['success'] ? 'success' : 'error',
+            $result['success'] ? __('accounting.basic_entry_reversed') : $result['error'],
+        );
     }
 
     public function destroy(FinancialEntry $entry)

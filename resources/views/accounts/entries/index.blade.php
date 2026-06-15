@@ -118,6 +118,7 @@
                         <th class="text-end">{{ __('accounting.amount') }}</th>
                         <th>{{ __('accounting.recorded_by') }}</th>
                         <th>{{ __('accounting.status') }}</th>
+                        @if($advancedAccountingEnabled)<th>{{ __('accounting.gl_status') }}</th>@endif
                         <th class="text-end">{{ __('accounting.actions') }}</th>
                     </tr>
                 </thead>
@@ -138,6 +139,15 @@
                                 <span class="badge bg-warning">{{ __('accounting.pending') }}</span>
                             @endif
                         </td>
+                        @if($advancedAccountingEnabled)
+                        <td>
+                            <span class="badge bg-{{ match($entry->accounting_status) { 'posted' => 'success', 'failed' => 'danger', 'reversed' => 'secondary', default => 'warning' } }}">{{ ucfirst($entry->accounting_status ?? 'pending') }}</span>
+                            @if($entry->journalEntry)
+                                <a class="ms-1" href="{{ route('admin.accounting.journals.show', $entry->journalEntry) }}">{{ $entry->journalEntry->journal_number }}</a>
+                            @endif
+                            @if($entry->accounting_error)<div class="small text-danger mt-1" title="{{ $entry->accounting_error }}">{{ Str::limit($entry->accounting_error, 55) }}</div>@endif
+                        </td>
+                        @endif
                         <td class="text-end">
                             <div class="dropdown">
                                 <button aria-label="{{ __('accounting.actions') }}" title="{{ __('accounting.actions') }}" type="button" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
@@ -163,13 +173,26 @@
                                     </li>
                                     @endcan
                                     @endif
+                                    @if($advancedAccountingEnabled && $entry->is_approved && !in_array($entry->accounting_status, ['posted', 'reversed'], true))
+                                    @can('accounting.basic.batch.view')
+                                    <li><a class="dropdown-item" href="{{ route('admin.accounting.basic-bridge.index', ['entry_id' => $entry->id, 'preview' => 1]) }}"><i class="ti ti-eye me-1"></i>{{ __('accounting.preview_posting') }}</a></li>
+                                    @endcan
+                                    @can('accounting.basic.post')
+                                    <li><form method="POST" action="{{ route('admin.accounts.entries.post-to-gl', $entry) }}">@csrf<button class="dropdown-item text-primary" type="submit" onclick="return confirm('{{ __('accounting.confirm_post_to_gl') }}')"><i class="ti ti-send me-1"></i>{{ __('accounting.post_to_gl') }}</button></form></li>
+                                    @endcan
+                                    @endif
+                                    @if($advancedAccountingEnabled && $entry->accounting_status === 'posted')
+                                    @can('accounting.basic.reverse')
+                                    <li><form class="px-3 py-2" method="POST" action="{{ route('admin.accounts.entries.reverse-gl', $entry) }}">@csrf<input class="form-control form-control-sm mb-2" name="reason" required placeholder="{{ __('accounting.reason_for_reversal') }}"><button class="btn btn-sm btn-outline-danger w-100" type="submit" onclick="return confirm('{{ __('accounting.confirm_reverse_gl') }}')">{{ __('accounting.reverse_gl') }}</button></form></li>
+                                    @endcan
+                                    @endif
                                 </ul>
                             </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center text-muted py-4">
+                        <td colspan="{{ $advancedAccountingEnabled ? 10 : 9 }}" class="text-center text-muted py-4">
                             <i class="ti ti-file-off fs-2 d-block mb-2"></i>
                             No {{ $type }} entries found
                         </td>

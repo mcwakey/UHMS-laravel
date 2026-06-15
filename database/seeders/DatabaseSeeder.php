@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             SupplierSeeder::class,
             AccountCategorySeeder::class,
             AccountingChartSeeder::class,
+            AccountingPostingTemplateSeeder::class,
             ServiceCatalogSeeder::class,
             InvestigationServiceCriteriaSeeder::class,
 

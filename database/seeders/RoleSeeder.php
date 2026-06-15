@@ -339,6 +339,13 @@ class RoleSeeder extends Seeder
             'accounting.mappings.view',
             'accounting.mappings.manage',
             'accounting.close_readiness.view',
+            'accounting.basic.post',
+            'accounting.basic.reverse',
+            'accounting.basic.batch.view',
+            'accounting.basic.batch.execute',
+            'accounting.posting_templates.view',
+            'accounting.posting_templates.manage',
+            'accounting.posting_templates.approve',
             'accounting.exports',
             'accounting.periods.view',
             'accounting.periods.manage',
@@ -1042,6 +1049,8 @@ class RoleSeeder extends Seeder
             'accounting.posting.view', 'accounting.posting.retry', 'accounting.posting.failure.view',
             'accounting.failed_postings.view', 'accounting.failed_postings.retry',
             'accounting.mappings.view', 'accounting.mappings.manage', 'accounting.close_readiness.view',
+            'accounting.basic.post', 'accounting.basic.batch.view',
+            'accounting.posting_templates.view',
             'accounting.reports.trial_balance', 'accounting.reports.general_ledger',
             'accounting.periods.view', 'accounting.fiscal_years.view',
             'accounting.settings.view',
@@ -1061,6 +1070,10 @@ class RoleSeeder extends Seeder
                 'accounting.fiscal_years.manage',
                 'accounting.fiscal_years.close',
                 'accounting.fiscal_years.reopen',
+                'accounting.basic.reverse',
+                'accounting.basic.batch.execute',
+                'accounting.posting_templates.manage',
+                'accounting.posting_templates.approve',
             ])->unique()->values()->all()
         );
 

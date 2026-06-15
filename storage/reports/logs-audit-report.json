@@ -1,13 +1,13 @@
 {
-    "generated_at": "2026-06-15T06:05:21+00:00",
-    "controllers_flagged": 77,
-    "logging_services_detected": 93,
+    "generated_at": "2026-06-15T06:46:39+00:00",
+    "controllers_flagged": 78,
+    "logging_services_detected": 95,
     "summary": {
         "MISSING_LOG": 0,
         "NEEDS_REVIEW": 0,
         "KNOWN_BACKLOG": 21,
         "INTENTIONALLY_SKIPPED": 1,
-        "SERVICE_FUNNEL_COVERED": 55
+        "SERVICE_FUNNEL_COVERED": 56
     },
     "real_missing_logs": 0,
     "findings": [
@@ -125,9 +125,11 @@
             ],
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "CRITICAL",
-            "reason": "Delegates to AccountingService (logs direct).",
+            "reason": "Delegates to AccountingService, BasicAccountingPostingService, ModuleService (logs direct).",
             "services": [
-                "AccountingService"
+                "AccountingService",
+                "BasicAccountingPostingService",
+                "ModuleService"
             ],
             "in_baseline": true
         },
@@ -302,6 +304,26 @@
                 "MedicalPatternService"
             ],
             "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Accounting/AccountingPostingTemplateController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "approve"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "approve"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to PostingTemplateService (logs direct).",
+            "services": [
+                "PostingTemplateService"
+            ],
+            "in_baseline": false
         },
         {
             "controller": "app/Http/Controllers/Admin/AdmissionController.php",

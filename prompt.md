@@ -1,30 +1,33 @@
 You are working on UHMS — Ultimate Hospital Management System.
 
-# UHMS Accounting Execution Phase 0 — Shared Posting Controls, Idempotency, Mapping Foundation & Close Readiness
+Important:
+There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
+Do not try to read it.
+Follow this prompt directly.
+
+# UHMS Accounting Execution Phase A — Basic-to-Advanced Posting Bridge
 
 ## Goal
 
-Implement the shared accounting control layer required before executing the accounting gap roadmap.
+Implement the Basic-to-Advanced Accounting posting bridge.
 
-This phase must create the reusable foundation for later phases:
+Approved Basic Accounting income and expense entries currently remain in the operational `financial_entries` ledger. When Advanced Accounting is enabled, those approved Basic entries must be able to post into the Advanced Accounting general ledger as balanced journal entries.
 
-```text id="bujl6y"
-Basic-to-Advanced posting bridge
-Bank reconciliation
-Failed posting workbench
-Subledger reconciliation
-Payroll accounting posting
-Cash flow
-Budgets
-Fixed assets
-Tax ledgers
-Receivables workbench
-Claims settlement accounting
+This phase must use the Phase 0 shared controls:
+
+```text id="wpobrf"
+accounting_posting_attempts
+accounting_posting_attempt_events
+accounting_account_mappings
+AccountingPostingAttemptService
+AccountingIdempotencyService
+AccountingAccountMappingService
+AccountingCloseReadinessService
+AccountingPostingService
+journal_entries.idempotency_key
 ```
 
-Do not implement those later modules yet.
-
-This phase is only for the shared posting controls and readiness layer.
+Do not create a parallel posting system.
 
 ---
 
@@ -32,733 +35,826 @@ This phase is only for the shared posting controls and readiness layer.
 
 Read:
 
-```text id="huzhja"
+```text id="q1212c"
 docs/ACCOUNTING_GAP_EXECUTION_MASTER_PLAN.md
+docs/ACCOUNTING_PHASE_0_SHARED_CONTROLS_AND_READINESS_REPORT.md
 docs/ACCOUNTING_MODULE_SPLIT_AND_GAP_REPORT.md
 docs/PHASE_17_FULL_TEST_SUITE_REGRESSION_STABILISATION_REPORT.md
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
 
-Respect the current finance module split:
+Important Phase 0 status:
 
-```text id="lmp2n5"
+```text id="qtel1s"
+Accounting shared controls implemented.
+Full suite passed: 649 tests.
+Accounting suite passed.
+Localization lock preserved.
+Active runtime candidates: 0.
+logs:audit: 0 missing / 0 needs-review.
+```
+
+Do not break this baseline.
+
+---
+
+# 2. Current Problem
+
+Basic Accounting supports:
+
+```text id="eq2u9l"
+manual income
+manual expenses
+daily collection
+cashier handover
+operational reconciliation
+income/expense categories
+```
+
+But approved manual income/expense entries remain operational only.
+
+They do not create balanced journal entries in Advanced Accounting.
+
+This creates a risk:
+
+```text id="hkk2q7"
+Basic Accounting view says income/expense exists.
+Advanced Accounting GL does not contain it.
+Financial statements can diverge unless manually reconciled.
+```
+
+This phase fixes that gap.
+
+---
+
+# 3. Core Rules
+
+The bridge must follow these rules:
+
+```text id="ku13lc"
+Only approved Basic Accounting entries can post to GL.
+Advanced Accounting must be enabled before posting.
+Do not post draft/unapproved entries.
+Do not post twice.
+Do not silently change historical entries.
+Do not auto-post historical data.
+Do not create journals directly from controllers.
+Do not bypass Phase 0 posting attempts.
+Do not bypass JournalEntryService or AccountingPostingService.
+Do not weaken permissions.
+Do not bypass ActivityLogService.
+```
+
+Posted entries are immutable.
+
+Corrections must use:
+
+```text id="myevub"
+reversal
+replacement entry
+controlled backfill
+```
+
+not direct mutation of posted historical amounts.
+
+---
+
+# 4. Module Rules
+
+Respect the module split:
+
+```text id="lkd5to"
 Billing & Collections remains independent.
 Basic Accounting module slug: accounting_basic.
 Advanced Accounting module slug: accounting_advanced.
 Advanced Accounting depends on Basic Accounting.
-Direct routes must use module middleware, not only sidebar hiding.
-Existing permissions remain the source of action-level authorization.
 ```
 
-Do not weaken billing, accounting, stock, payroll, claims, or audit behavior.
+Rules:
+
+```text id="fcwvmh"
+Basic Accounting entries can still be created when Advanced Accounting is disabled.
+If Advanced Accounting is disabled, Basic entries must not post to GL.
+When Advanced Accounting is disabled, mark Basic entries as eligible/not_applicable, not posted.
+If Advanced Accounting is enabled later, historical posting must happen only through controlled preview/backfill.
+```
+
+All Phase A routes must use:
+
+```text id="eaewuy"
+auth
+module:accounting_basic
+module:accounting_advanced where GL posting is required
+permission middleware
+```
+
+Do not make Billing dependent on Accounting.
 
 ---
 
-# 2. Scope of This Phase
+# 5. Database Changes
 
-Implement only the common foundation:
+Inspect the current Basic Accounting tables, especially the table that stores manual income/expense entries, likely:
 
-```text id="t2wxpg"
-accounting_posting_attempts table
-accounting_account_mappings table
-posting idempotency service
-posting attempt lifecycle service
-account mapping lookup service
-close-readiness service foundation
-safe posting contract support
-backfill metadata support
-tests
-documentation
+```text id="9o02fp"
+financial_entries
 ```
 
-Do not yet implement:
+Add only safe nullable columns where missing:
 
-```text id="h6ywt8"
-Basic-to-Advanced posting bridge
-bank reconciliation
-cash flow statement
-payroll posting
-budgets
-fixed assets
-tax returns
-AR collector workbench
-claims settlement accounting
-```
-
-Those come after this phase.
-
----
-
-# 3. Core Accounting Rules
-
-Every ledger-affecting operation must be:
-
-```text id="8dy1zd"
-balanced
-transactional
-idempotent
-traceable to a source record
-auditable
-reversible
-permission-aware
-module-aware
-```
-
-Important rules:
-
-```text id="5eiob4"
-Posted journal entries are immutable.
-Corrections use reversal and replacement entries.
-Source modules calculate business amounts.
-Accounting services map those amounts to accounts and post journals.
-No source module should directly write journal rows.
-Historical records must not be auto-posted.
-Backfills must be previewed and explicitly approved.
-```
-
----
-
-# 4. Database: accounting_posting_attempts
-
-Create a new table:
-
-```text id="rp1ryi"
-accounting_posting_attempts
-```
-
-Recommended fields:
-
-```text id="xcnmx3"
-id
-source_module
-source_type
-source_id
-posting_type
-posting_version
-idempotency_key
-status
+```text id="1kc3h7"
+approval_status
+accounting_status
 journal_entry_id
+accounting_posted_at
+accounting_error
 reversal_journal_entry_id
-attempt_count
-first_attempted_at
-last_attempted_at
-next_retry_at
-error_code
-error_message
-error_context
-source_snapshot
-posting_snapshot
-resolved_by
-resolved_at
-resolution_type
-resolution_note
-created_by
-updated_by
-timestamps
+reversed_at
+reversed_by
+reversal_reason
+posting_version
+posted_by
 ```
 
-Statuses:
+If equivalent columns already exist, reuse them.
 
-```text id="6dch02"
+Do not duplicate columns.
+
+Recommended statuses:
+
+```text id="qnjxz7"
+not_applicable
+eligible
 pending
-processing
 posted
 failed
-waived
-resolved
 reversed
 ```
 
-Use string status values with application validation.
+Add safe indexes:
 
-Do not use database enum.
-
-For snapshot fields, use:
-
-```text id="7zn7tt"
-LONGTEXT
-```
-
-with JSON-encoded content for MariaDB compatibility.
-
-Indexes:
-
-```text id="dvk8em"
-unique idempotency_key
-source_module + source_type + source_id
-source_type + source_id + posting_type + posting_version
-status + last_attempted_at
+```text id="fjrbvw"
+approval_status
+accounting_status
 journal_entry_id
-reversal_journal_entry_id
+accounting_posted_at
+entry_date
+category_id
 ```
 
 Use explicit short index names compatible with MariaDB.
 
+Do not add non-null columns that would lock large production tables.
+
 ---
 
-# 5. Database: accounting_account_mappings
+# 6. Posting Template Tables
 
-Create a new table:
+Add posting-template support for Basic Accounting entries.
 
-```text id="z3nw8i"
-accounting_account_mappings
+Create tables if they do not already exist:
+
+```text id="v5h6j9"
+accounting_posting_templates
+accounting_posting_template_lines
 ```
 
-Recommended fields:
+## accounting_posting_templates
 
-```text id="c6pfvx"
+Fields:
+
+```text id="vkcewk"
 id
-mapping_scope
-mapping_key
-mapping_value
-account_id
-facility_id nullable
-department_id nullable
-branch_id nullable
-currency nullable
+code
+name
+source_module
+posting_type
+entry_type
+status
 effective_from
 effective_to
-priority
 is_active
-notes
+approved_by
+approved_at
 created_by
 updated_by
 timestamps
 ```
 
-Purpose:
+Example template codes:
 
-```text id="zdn6gz"
-map operational categories, payment methods, payroll liabilities, tax types, inventory classes, bank accounts, and other source concepts to chart-of-account IDs.
+```text id="4oj79b"
+basic_income_cash
+basic_income_bank
+basic_expense_cash
+basic_expense_bank
 ```
 
-Rules:
+Statuses:
 
-```text id="izz9wm"
-Mappings must be effective-dated.
-Only active mappings are used.
-If multiple mappings match, highest priority wins.
-If mappings conflict, service validation must fail loudly.
-Do not silently pick a random account.
+```text id="zovl5x"
+draft
+active
+inactive
+retired
 ```
 
-Do not delete mappings used by historical postings.
+## accounting_posting_template_lines
 
-Use `restrictOnDelete` or `nullOnDelete` where appropriate.
+Fields:
 
-Do not cascade-delete financial history.
+```text id="kwksjc"
+id
+template_id
+line_order
+side
+account_source
+mapping_scope
+mapping_key
+mapping_value_source
+fixed_account_id
+amount_source
+description_template
+is_active
+timestamps
+```
+
+Line side:
+
+```text id="epn6cs"
+debit
+credit
+```
+
+Account source examples:
+
+```text id="c71dtp"
+fixed_account
+category_mapping
+payment_method_mapping
+cash_account_mapping
+bank_account_mapping
+```
+
+Amount source examples:
+
+```text id="p574a2"
+entry_amount
+tax_amount
+net_amount
+gross_amount
+```
+
+For Phase A, start with simple two-line templates.
 
 ---
 
-# 6. Optional Journal Idempotency Field
+# 7. Account Mapping Rules
 
-Inspect the current `journal_entries` table.
+Use the existing Phase 0 table:
 
-If safe, add:
-
-```text id="bycj6p"
-idempotency_key nullable unique
+```text id="7117ip"
+accounting_account_mappings
 ```
 
-But only after checking for existing duplicate source journals.
+Do not create another mapping table unless absolutely necessary.
 
-If unsafe in this phase, document it and keep idempotency enforced in `accounting_posting_attempts`.
+Required mapping scopes:
 
-Do not risk breaking existing journals.
+```text id="5n8o3x"
+basic_income_category
+basic_expense_category
+basic_payment_method
+basic_cash_account
+basic_bank_account
+```
+
+Minimum mapping behavior:
+
+```text id="w6ij58"
+income category → income/revenue account
+expense category → expense account
+payment method/cash/bank → cash or bank account
+```
+
+If a mapping is missing, posting must fail loudly and create a failed posting attempt with the error retained.
+
+Do not fall back to a random account.
 
 ---
 
-# 7. Services To Add
+# 8. Default Journal Strategy
+
+For approved Basic income:
+
+```text id="b5hzh8"
+Dr Cash/Bank Account
+Cr Mapped Income Account
+```
+
+For approved Basic expense:
+
+```text id="2xgydm"
+Dr Mapped Expense Account
+Cr Cash/Bank Account
+```
+
+The cash/bank account should come from payment method or configured mapping.
+
+The income/expense account should come from category mapping.
+
+Do not use hardcoded account IDs.
+
+Do not use account names as permanent logic.
+
+---
+
+# 9. Services To Add
 
 Create:
 
-```text id="whxhs1"
+```text id="gzx9pw"
+BasicAccountingPostingService
+BasicAccountingBackfillService
+PostingTemplateService
+```
+
+Use existing:
+
+```text id="zdvrew"
+AccountingPostingService
 AccountingPostingAttemptService
 AccountingIdempotencyService
 AccountingAccountMappingService
-AccountingCloseReadinessService
+JournalEntryService
+ActivityLogService
 ```
 
-Extend existing accounting posting services only where safe.
+Controllers must call services.
 
-Do not rewrite all existing posting services in this phase.
+Do not put posting logic in controllers or Blade.
 
 ---
 
-# 8. AccountingPostingAttemptService
+# 10. BasicAccountingPostingService
 
-This service should handle:
+This service should:
 
-```text id="q9oiv3"
-create pending attempt
-mark processing
-mark posted
-mark failed
-mark waived
-mark resolved
-mark reversed
-increment retry count
-retain error messages
-retain source snapshot
-retain posting snapshot
-link journal entry
-link reversal journal entry
+```text id="3pchfn"
+validate entry approval state
+validate Advanced Accounting module state
+validate fiscal period is open
+resolve posting template
+resolve account mappings
+build balanced journal lines
+generate idempotency key
+create or reuse posting attempt
+post through AccountingPostingService
+link journal_entry_id to financial entry
+update accounting_status
+retain accounting_error on failure
+audit success/failure
 ```
 
-Important:
+Posting identity:
 
-```text id="chsl0o"
-Never overwrite old errors without retaining attempt history.
-Never mark posted without a journal entry.
-Never mark resolved/waived without actor and reason.
-Never retry in a way that can duplicate journal entries.
+```text id="0s1s9d"
+source_type = financial_entry
+source_id = financial_entries.id
+posting_type = basic_income or basic_expense
+posting_version = financial_entries.posting_version or 1
 ```
 
-If you need separate attempt-history rows, add:
+Idempotency key should follow Phase 0 conventions.
 
-```text id="x2na8o"
-accounting_posting_attempt_events
-```
-
-only if the current structure cannot preserve retry history properly.
+Same entry/version must never produce duplicate journals.
 
 ---
 
-# 9. AccountingIdempotencyService
+# 11. Posting Eligibility
 
-Implement stable idempotency keys.
+An entry is eligible only when:
 
-Default identity:
-
-```text id="1ezf0m"
-source_type + source_id + posting_type + posting_version
+```text id="0f8wak"
+entry is approved
+entry is not already posted
+entry is not reversed
+entry amount is valid
+entry date is inside an open accounting period
+Advanced Accounting is enabled
+required account mappings exist
+required posting template exists and is active
 ```
 
-Recommended key format:
+If not eligible, return structured reasons.
 
-```text id="dry5ui"
-{source_type}:{source_id}:{posting_type}:v{posting_version}
+Do not throw raw exceptions to the UI.
+
+---
+
+# 12. Failure Handling
+
+If posting fails:
+
+```text id="nhmj95"
+record failed accounting_posting_attempt
+store error code/message/context
+set financial entry accounting_status = failed
+store accounting_error
+do not create partial journal
+do not mark entry posted
+do not swallow the error silently
 ```
+
+If the failure is due to missing mapping, the user should clearly see which mapping is missing.
+
+---
+
+# 13. Reversal Handling
+
+Add controlled reversal support for posted Basic entries.
 
 Rules:
 
-```text id="0mrlq1"
-Same source identity must not create duplicate posted journals.
-Retried failed attempts must reuse the same identity.
-Reversals must use their own reversal identity but link back to the original attempt.
+```text id="ezz1vv"
+Only posted entries can be reversed.
+Reversal requires permission.
+Reversal requires reason.
+Reversal creates a reversal journal through existing journal reversal service.
+Reversal links reversal_journal_entry_id.
+Original entry remains historically visible.
+Entry status becomes reversed.
 ```
 
-Add tests proving duplicate posting requests return or reference the existing posted journal instead of creating a second journal.
+Do not delete original journals.
+
+Do not edit posted journal lines.
 
 ---
 
-# 10. AccountingAccountMappingService
+# 14. Posting Template UI
 
-Implement account mapping lookup.
+Add screens under Advanced Accounting settings or accounting controls:
 
-The service must support:
-
-```text id="kjom88"
-mapping scope
-mapping key
-mapping value
-facility override
-department override
-branch override
-currency filter
-effective date
-priority ordering
-active flag
+```text id="5rkrx5"
+Posting templates index
+Posting template create/edit
+Posting template lines editor
+Posting template activate/deactivate
 ```
 
-It should return:
+If a full editor is too large for this phase, seed default templates and provide read-only UI plus mapping UI.
 
-```text id="a5a3jr"
-matched account
-matched mapping record
-explanation of why it matched
-```
-
-If no mapping is found, throw a controlled exception that can be captured by posting attempts.
-
-Do not fall back to arbitrary accounts.
+Do not skip the service/model foundation.
 
 ---
 
-# 11. AccountingCloseReadinessService
+# 15. Basic Entry Posting UI
 
-Create the foundation for period-close readiness.
+Update Basic Accounting income/expense listing/show screens to display:
 
-This service should report:
-
-```text id="swou6v"
-unresolved failed postings
-waived postings
-unposted eligible source records
-unreconciled control accounts later
-open bank reconciliations later
-unmapped cash-flow activity later
+```text id="9mb047"
+approval status
+accounting status
+journal link
+posting error
+posting attempt link
+posted date
+posted by
 ```
 
-For this phase, implement at least:
+Add actions where permitted:
 
-```text id="fuwiyv"
-unresolved failed accounting_posting_attempts inside a date range
-failed attempts by source module
-waived attempts by source module
-posted attempts summary
+```text id="536ld9"
+Post to GL
+Batch post selected
+Preview posting
+Reverse GL posting
 ```
 
-Do not hard-block closing yet unless existing period-close code already supports it safely.
+Actions must be permission-protected.
 
-Return structured data that later UI screens can use.
+Do not show GL posting actions when Advanced Accounting is disabled.
 
 ---
 
-# 12. Integrate Lightly With Existing Posting Flow
+# 16. Batch Posting and Preview
 
-Inspect:
+Implement batch posting safely.
 
-```text id="prg4bs"
-JournalEntryService
-AccountingPostingService
-existing source posting services
-billing posting services
-payment posting services
-inventory posting services
-supplier payable posting services
-credit note posting services
+Features:
+
+```text id="u796nd"
+date range filter
+entry type filter
+category filter
+payment method filter
+approval status filter
+dry-run preview
+eligible count
+ineligible count
+missing mapping list
+expected debit total
+expected credit total
+per-entry journal preview
+execute approved batch
 ```
 
-Add light integration only where safe:
+Dry-run preview must not write journals.
 
-```text id="7yb317"
-create posting attempt before posting
-mark posted after successful journal creation
-mark failed when controlled posting exception occurs
-store source and posting snapshots
+Execution must process entries safely and idempotently.
+
+If one entry fails, decide whether batch continues or stops; document the behavior.
+
+Recommended default:
+
+```text id="vp4hjx"
+continue processing other entries
+record failed attempts for failures
+show batch summary
 ```
-
-If integrating all posting paths is too risky, integrate only the shared `AccountingPostingService` entry point and document the remaining paths.
-
-Do not break existing posting behavior.
-
-Do not change invoice totals, payment allocation, inventory valuation, supplier balances, payroll summaries, or credit note logic.
 
 ---
 
-# 13. Backfill Existing Posted/Error Statuses
+# 17. Controlled Historical Backfill
 
-Create an artisan command:
+Create command:
 
-```bash id="1oag0d"
-php artisan accounting:posting-attempts-backfill
+```bash id="t92c4f"
+php artisan accounting:basic-entries-post-to-gl
 ```
 
-It must support:
+Options:
 
-```text id="amfs3d"
+```text id="jik2x0"
 --dry-run
 --from=
 --to=
 --chunk=
---source-type=
---source-id=
+--entry-type=
+--category-id=
+--entry-id=
 --resume-from=
+--approved-batch-id=
 ```
 
-Purpose:
+Rules:
 
-```text id="p7ma1f"
-Backfill metadata only.
-Do not create new journals.
-Do not alter historical financial amounts.
-Do not auto-post historical records.
+```text id="8s5v5m"
+Dry run writes no journals.
+Historical backfill requires explicit execution.
+Do not auto-post all history.
+Do not post unapproved entries.
+Do not post entries from closed periods unless explicitly allowed by an authorized reopen workflow.
+Do not create duplicate journals.
 ```
 
-The command should:
+Command output must include:
 
-```text id="4rnzgu"
-detect existing posted source records with journal_entry_id
-create posted accounting_posting_attempt rows
-detect existing source records with accounting_error
-create failed accounting_posting_attempt rows
-skip records already backfilled
-report selected, created, skipped, failed
+```text id="8j48da"
+selected
+eligible
+ineligible
+posted
+already_posted
+failed
+debit_total
+credit_total
+missing_mappings
 ```
-
-If source tables differ, support the ones already used in accounting services first and document unsupported sources.
-
-Dry-run must perform no writes.
 
 ---
 
-# 14. Permissions
+# 18. Permissions
 
-Seed or normalize permissions:
+Add permissions:
 
-```text id="gphhjj"
-accounting.failed_postings.view
-accounting.failed_postings.retry
-accounting.failed_postings.resolve
-accounting.failed_postings.waive
-accounting.mappings.view
-accounting.mappings.manage
-accounting.close_readiness.view
+```text id="6356xz"
+accounting.basic.post_to_gl
+accounting.basic.post_batch
+accounting.basic.preview_posting
+accounting.basic.reverse_gl
+accounting.basic.backfill.preview
+accounting.basic.backfill.execute
+accounting.posting_templates.view
+accounting.posting_templates.manage
+accounting.posting_templates.approve
 ```
 
-If older permissions already exist:
+Suggested role defaults:
 
-```text id="0zgo62"
-accounting.posting.view
-accounting.posting.retry
-accounting.posting.reverse
+```text id="v14kom"
+Accountant: preview, post single, post batch, view templates
+Finance Manager: all including reverse, backfill execute, approve templates
+Administrator: all seeded permissions
 ```
 
-do not remove them.
-
-Map new permissions to Finance Manager / Accountant roles as appropriate.
-
-Do not grant new permissions to broad clinical roles.
+Do not grant these permissions to broad clinical roles.
 
 ---
 
-# 15. Minimal Admin UI
-
-Add minimal screens only if current accounting UI structure allows it safely.
-
-Screens:
-
-```text id="gmciyg"
-Accounting Posting Attempts index
-Accounting Posting Attempt show
-Account Mapping index
-Account Mapping create/edit
-Close Readiness summary
-```
-
-If UI scope is too much for Phase 0, create routes/services/tests and document UI as Phase C/Phase A follow-up.
-
-Do not overbuild the failed-posting workbench yet.
-
-That is Phase C.
-
----
-
-# 16. Module Middleware
-
-All new accounting control routes must be protected by:
-
-```text id="4v3432"
-auth
-permission middleware
-module:accounting_advanced
-```
-
-Exception:
-
-```text id="9u538z"
-If a read-only close readiness or mapping preview is required for Basic Accounting only, document why.
-```
-
-Billing routes must not depend on accounting module toggles.
-
----
-
-# 17. Audit Logging
+# 19. Audit Logging
 
 Use `ActivityLogService`.
 
-Audit events:
+Audit:
 
-```text id="cdfisy"
-ACCOUNTING_POSTING_ATTEMPT_CREATED
-ACCOUNTING_POSTING_ATTEMPT_FAILED
-ACCOUNTING_POSTING_ATTEMPT_POSTED
-ACCOUNTING_POSTING_ATTEMPT_RETRIED
-ACCOUNTING_POSTING_ATTEMPT_RESOLVED
-ACCOUNTING_POSTING_ATTEMPT_WAIVED
-ACCOUNTING_ACCOUNT_MAPPING_CREATED
-ACCOUNTING_ACCOUNT_MAPPING_UPDATED
-ACCOUNTING_ACCOUNT_MAPPING_DISABLED
-ACCOUNTING_POSTING_ATTEMPTS_BACKFILLED
-CLOSE_READINESS_CHECKED
+```text id="3ht37w"
+ACCOUNTING_POSTING_TEMPLATE_CREATED
+ACCOUNTING_POSTING_TEMPLATE_UPDATED
+ACCOUNTING_POSTING_TEMPLATE_APPROVED
+ACCOUNTING_POSTING_TEMPLATE_DISABLED
+BASIC_ENTRY_POSTING_PREVIEWED
+BASIC_ENTRY_POSTED_TO_GL
+BASIC_ENTRY_POSTING_FAILED
+BASIC_ENTRY_BATCH_POSTING_STARTED
+BASIC_ENTRY_BATCH_POSTING_COMPLETED
+BASIC_ENTRY_REVERSED
+BASIC_ENTRY_BACKFILL_PREVIEWED
+BASIC_ENTRY_BACKFILL_APPROVED
+BASIC_ENTRY_BACKFILL_COMPLETED
 ```
-
-Do not bypass audit logging.
 
 Run:
 
-```bash id="1htcis"
+```bash id="k10zqa"
 php artisan logs:audit --json
 ```
 
-If the audit command reports missing/needs-review logs, fix root causes.
+Fix any missing/needs-review logs.
 
 ---
 
-# 18. Localisation
+# 20. Localisation
 
-All new UI strings must be localised EN/FR.
+All new labels must be localized EN/FR.
 
 Use or extend:
 
-```text id="9e2tpp"
+```text id="4wsfjw"
 lang/en/accounting.php
 lang/fr/accounting.php
 ```
 
-Add keys for:
+Required labels include:
 
-```text id="3z4l3u"
-posting_attempts
-posting_attempt
-source_module
-source_type
-source_id
-posting_type
-posting_version
-idempotency_key
-attempt_count
-last_attempted_at
-next_retry_at
-error_code
-error_message
-source_snapshot
-posting_snapshot
-resolution_type
-resolution_note
-account_mappings
-mapping_scope
-mapping_key
-mapping_value
-effective_from
-effective_to
-priority
-close_readiness
-unresolved_failed_postings
-waived_postings
-posted_attempts
+```text id="23egje"
+post_to_gl
+post_selected_to_gl
+preview_posting
+posting_preview
+posting_template
+posting_templates
+template_lines
+account_source
+amount_source
+entry_posted_to_gl
+entry_posting_failed
+reverse_gl_posting
+reversal_reason
+batch_posting
+eligible_entries
+ineligible_entries
+missing_mappings
+already_posted
+advanced_accounting_required
+mapping_required
+journal_created
+journal_reversed
 ```
 
 Maintain EN/FR parity.
 
 Run:
 
-```bash id="0sy480"
+```bash id="ezmxuj"
 php artisan test tests/Feature/Localization
 php scripts/localisation-audit.php
 ```
 
 Active runtime candidates must remain:
 
-```text id="iherrk"
+```text id="jtmjho"
 0
 ```
 
 ---
 
-# 19. Tests
+# 21. Tests
 
 Add tests for:
 
-```text id="dbu2qb"
-posting attempt can be created
-posting attempt can be marked processing
-posting attempt can be marked posted with journal
-posting attempt can be marked failed with retained error
-posting attempt cannot be posted twice
-same idempotency key prevents duplicate journal posting
-account mapping resolves by scope/key/value/date
-account mapping respects priority
-missing account mapping throws controlled exception
-close readiness lists unresolved failed attempts
-backfill dry-run performs no writes
-backfill creates metadata only, no journals
-unauthorized user cannot view posting attempts
-unauthorized user cannot manage mappings
-module middleware blocks direct route when accounting_advanced disabled
-ActivityLogService records state changes
+```text id="nsbge3"
+unapproved Basic entry cannot post
+approved income posts balanced journal
+approved expense posts balanced journal
+Advanced Accounting disabled prevents posting
+missing category mapping creates failed posting attempt
+missing cash/bank mapping creates failed posting attempt
+duplicate post request returns existing journal
+posted entry cannot be edited in a way that changes GL silently
+posted entry can be reversed with reason
+reversal creates linked reversal journal
+batch preview writes no journals
+batch execution posts eligible entries and records failures
+historical backfill dry-run writes no journals
+historical backfill execution is idempotent
+posting template can be created
+posting template can be activated/deactivated
+unauthorized user cannot post Basic entry to GL
+module middleware blocks direct GL posting route when Advanced Accounting disabled
+ActivityLogService records posting and reversal
 localisation lock remains active runtime 0
 ```
 
-Existing accounting posting tests must still pass.
+Existing Phase 0 tests must still pass.
 
 ---
 
-# 20. Verification Commands
+# 22. Verification Commands
 
 Run:
 
-```bash id="r2e8x7"
-php artisan route:list
-php artisan view:cache
-php artisan view:clear
+```bash id="fwk1ih"
+php artisan migrate:fresh --env=testing --force
+php artisan test tests/Feature/Accounting/AccountingPhase0ControlsTest.php
+php artisan test tests/Feature/Accounting
 php artisan test tests/Feature/Localization
 php scripts/localisation-audit.php
 php artisan logs:audit --json
+php artisan route:list
+php artisan view:cache
+php artisan view:clear
 php artisan test
 git diff --check
 ```
 
 If frontend assets are touched:
 
-```bash id="6uxoia"
+```bash id="agmz0t"
 npm run build
 ```
 
 ---
 
-# 21. Documentation
+# 23. Documentation
 
 Create:
 
-```text id="e6x05d"
-docs/ACCOUNTING_PHASE_0_SHARED_CONTROLS_AND_READINESS_REPORT.md
+```text id="gm0omr"
+docs/ACCOUNTING_PHASE_A_BASIC_TO_ADVANCED_POSTING_BRIDGE_REPORT.md
 ```
 
 Include:
 
-```text id="lf1zfj"
+```text id="9wqpap"
 summary
 database changes
+posting templates
+account mappings used
 services added
 commands added
 permissions added
 routes/controllers/views added
-posting attempt lifecycle
-idempotency strategy
-account mapping strategy
-close readiness strategy
-backfill strategy
+journal strategy
+posting eligibility rules
+failure handling
+reversal handling
+batch posting behavior
+historical backfill behavior
 audit logging
 tests added
 commands run
 localisation audit result
 known limitations
-unsupported source posting paths
 next recommended phase
 ```
 
 ---
 
-# 22. Acceptance Criteria
+# 24. Acceptance Criteria
 
-Phase 0 is complete only when:
+Phase A is complete only when:
 
-```text id="sasepz"
-accounting_posting_attempts exists
-accounting_account_mappings exists
-posting attempts can track posted/failed/waived/resolved/reversed states
-idempotency prevents duplicate posted journals
-account mappings resolve predictably and fail loudly when missing
-close readiness can report unresolved failed postings
-backfill command supports dry-run and metadata-only backfill
+```text id="4jcbjp"
+approved Basic income can post to GL
+approved Basic expense can post to GL
+journals are balanced
+journal entries are linked to source financial entries
+posting attempts are created and updated
+idempotency prevents duplicate journals
+missing mappings create retained failed attempts
+batch preview performs no journal writes
+batch posting is safe and auditable
+historical backfill is dry-run capable and idempotent
+posted entries can be reversed through journal reversal
 permissions are enforced
 module middleware protects direct routes
 ActivityLogService is used
 EN/FR localisation parity passes
 active runtime candidates remain 0
+Phase 0 tests still pass
+Accounting suite passes
 route list works
 view cache compiles
 logs:audit is clean or documented with root-cause fixes
@@ -766,4 +862,4 @@ full test suite is run
 documentation report is created
 ```
 
-Proceed with Accounting Execution Phase 0 now.
+Proceed with Accounting Execution Phase A now.

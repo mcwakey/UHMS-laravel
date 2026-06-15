@@ -975,6 +975,23 @@ class SidebarMenuBuilder
                         'route' => 'admin.accounting.settings.index',
                         'active_patterns' => ['admin.accounting.settings.*'],
                         'permission' => 'accounting.settings.view',
+                        'module' => 'accounting_advanced',
+                    ],
+                    [
+                        'label' => 'Basic Posting Bridge',
+                        'icon' => 'ti ti-arrows-transfer-up',
+                        'route' => 'admin.accounting.basic-bridge.index',
+                        'active_patterns' => ['admin.accounting.basic-bridge.*'],
+                        'permission' => 'accounting.basic.batch.view',
+                        'module' => 'accounting_advanced',
+                    ],
+                    [
+                        'label' => 'Posting Templates',
+                        'icon' => 'ti ti-template',
+                        'route' => 'admin.accounting.posting-templates.index',
+                        'active_patterns' => ['admin.accounting.posting-templates.*'],
+                        'permission' => 'accounting.posting_templates.view',
+                        'module' => 'accounting_advanced',
                     ],
                     [
                         'label' => 'Receive Payments',
@@ -1552,6 +1569,8 @@ class SidebarMenuBuilder
                     'Fiscal Years',
                     'Accounting Periods',
                     'Accounting Settings',
+                    'Basic Posting Bridge',
+                    'Posting Templates',
                 ], 'accounting_advanced'),
             ];
         }
