@@ -43,6 +43,7 @@
         table.items { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
         table.items th { background: #f1f5f9; color: #475569; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; padding: 9px 11px; text-align: left; border-bottom: 2px solid #cbd5e1; }
         table.items td { padding: 8px 11px; border-bottom: 1px solid #eef2f7; font-size: 12.5px; }
+        table.items .dept-row td { background: #f8fafc; font-weight: 700; font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: {{ $accent }}; padding: 5px 11px; border-bottom: 1px solid #e2e8f0; }
 
         .totals-wrap { display: flex; justify-content: flex-end; margin-top: 10px; }
         .totals { width: 320px; }
@@ -57,8 +58,9 @@
         .footer .thanks { font-size: 13px; color: {{ $accent }}; font-weight: 700; margin-bottom: 3px; }
 
         .toolbar { max-width: 720px; margin: 0 auto 16px; text-align: center; }
-        .toolbar button { padding: 9px 24px; font-size: 14px; cursor: pointer; border: none; border-radius: 5px; margin: 0 4px; font-weight: 600; }
+        .toolbar button, .toolbar a { padding: 9px 24px; font-size: 14px; cursor: pointer; border: none; border-radius: 5px; margin: 0 4px; font-weight: 600; text-decoration: none; display: inline-block; }
         .toolbar .print { background: {{ $accent }}; color: #fff; }
+        .toolbar .thermal { background: #fff; color: {{ $accent }}; border: 1px solid {{ $accent }}; }
         .toolbar .close { background: #64748b; color: #fff; }
 
         @media print {
@@ -71,6 +73,7 @@
 <body>
     <div class="no-print toolbar">
         <button class="print" onclick="window.print()">{{ __('payments.print_receipt') }}</button>
+        <a class="thermal" href="{{ route('admin.billing.payments.receipt-thermal', $payment) }}">{{ __('payments.print_receipt_80mm') }}</a>
         <button class="close" onclick="window.close()">{{ __('common.close') }}</button>
     </div>
 
@@ -139,11 +142,17 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($inv->items as $item)
+                @php $currentDept = null; @endphp
+                @foreach($inv->items->sortBy(fn ($i) => $i->department?->name ?? 'zzz') as $item)
                 @php
                     $selectedPrice = $item->selected_price !== null ? (float) $item->selected_price : (float) ($item->unit_price ?? 0);
                     $lineTotal     = round($selectedPrice * (int) $item->quantity, 2);
+                    $deptName      = $item->department?->name ?? __('payments.unassigned_department');
                 @endphp
+                @if($currentDept !== $deptName)
+                <tr class="dept-row"><td colspan="5">{{ $deptName }}</td></tr>
+                @php $currentDept = $deptName; @endphp
+                @endif
                 <tr>
                     <td>{{ $item->description }}</td>
                     <td class="text-center">{{ $item->quantity }}</td>

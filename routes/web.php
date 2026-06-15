@@ -1021,6 +1021,7 @@ Route::middleware('auth')->group(function () {
                 Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
                 Route::post('payments/{invoice}', [PaymentController::class, 'store'])->name('payments.store')->middleware('can:payments.create');
                 Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
+                Route::get('payments/{payment}/receipt-thermal', [PaymentController::class, 'receiptThermal'])->name('payments.receipt-thermal');
                 Route::get('payments/{payment}/receipt-pdf', [PaymentController::class, 'receiptPdf'])->name('payments.receipt-pdf');
                 Route::post('payments/{payment}/reverse', [PaymentController::class, 'reverse'])
                     ->name('payments.reverse')->middleware('can:payments.refund');

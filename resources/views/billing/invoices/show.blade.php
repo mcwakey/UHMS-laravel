@@ -3,6 +3,11 @@
 
 @section('content')
 @php
+    $org = \App\Models\Setting::getGroup('organization');
+    $orgName = $org['name'] ?? config('app.name', 'UHMS');
+    $orgLogo = !empty($org['logo']) ? asset('storage/'.$org['logo']) : URL::asset('build/img/logo.svg');
+    $orgAddress = collect([$org['address'] ?? null, $org['city'] ?? null, $org['region'] ?? null])->filter()->implode(', ');
+    $orgContact = collect([$org['phone'] ?? null, $org['email'] ?? null])->filter()->implode('  ·  ');
     $invoiceClaim = $invoice->claim;
     $invoiceInsuranceProviderId = $invoice->visit?->visitInsurance?->insurance_provider_id;
     $canCreateInsuranceClaim = (float) $invoice->nhis_amount > 0 && ! $invoiceClaim;
@@ -24,6 +29,12 @@
         || ($currentUser?->can('billing.write_off.reverse') ?? false);
     $canReverseSettlements = $canReversePayments || $canReverseCreditNotes || $canReverseWriteOffs;
     $showSettlementActions = $canViewAccountingPosting || $canReverseSettlements;
+    $canIssueCreditNote = $currentUser?->can('credit_notes.create') ?? false;
+    $canIssueWriteOff = $currentUser?->can('credit_notes.write_off') ?? false;
+    $canIssueAdjustment = ($canIssueCreditNote || $canIssueWriteOff)
+        && ! in_array($invoice->status, [\App\Enums\InvoiceStatus::CANCELLED, \App\Enums\InvoiceStatus::REFUNDED], true)
+        && (float) $invoice->balance > 0;
+    $creditableAmount = app(\App\Services\CreditNoteService::class)->availableToCredit($invoice);
     $canVoidInvoice = ($currentUser?->can('invoices.void') ?? false)
         && ! in_array($invoice->status, [\App\Enums\InvoiceStatus::PAID, \App\Enums\InvoiceStatus::CANCELLED], true);
     $hasQuickActions = $invoice->visit || $invoice->patient || $invoice->bloodRequest || $canVoidInvoice;
@@ -97,13 +108,11 @@
         </a>
         @endif
         @endcan
-        @can('credit_notes.create')
-        @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::CANCELLED, \App\Enums\InvoiceStatus::REFUNDED], true) && $invoice->balance > 0)
-        <a href="{{ route('admin.billing.credit-notes.create', ['invoice_id' => $invoice->id]) }}" class="btn btn-outline-info btn-md">
+        @if($canIssueAdjustment)
+        <button type="button" class="btn btn-outline-info btn-md" data-bs-toggle="modal" data-bs-target="#creditNoteModal">
             <i class="ti ti-receipt-refund me-1"></i>{{ __('invoices.credit_note') }}
-        </a>
+        </button>
         @endif
-        @endcan
     </div>
 </div>
 
@@ -129,12 +138,19 @@
         <div class="card">
             <div class="card-body">
                 <!-- Header -->
-                <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
-                    <div>
-                        <img src="{{ URL::asset('build/img/logo.svg') }}" alt="UHMS" style="height:40px;">
+                <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 pb-3 mb-4" style="border-bottom:2px solid var(--bs-primary);">
+                    <div class="d-flex align-items-start gap-3">
+                        <img src="{{ $orgLogo }}" alt="{{ $orgName }}" style="max-height:48px; max-width:170px;">
+                        <div>
+                            <div class="fw-bold fs-16 lh-sm">{{ $orgName }}</div>
+                            @if($orgAddress)<div class="text-muted small">{{ $orgAddress }}</div>@endif
+                            @if($orgContact)<div class="text-muted small">{{ $orgContact }}</div>@endif
+                        </div>
                     </div>
                     <div class="text-end">
-                        <span id="invoiceStatusBadge" class="badge bg-{{ $invoice->status->color() }} fs-13 px-3 py-2">{{ $invoice->status->translatedLabel() }}</span>
+                        <div class="text-uppercase fw-bold text-primary" style="font-size:22px; letter-spacing:1px;">{{ __('invoices.invoice_label') }}</div>
+                        <div class="fw-semibold">{{ $invoice->invoice_number }}</div>
+                        <span id="invoiceStatusBadge" class="badge bg-{{ $invoice->status->color() }} fs-13 px-3 py-2 mt-1">{{ $invoice->status->translatedLabel() }}</span>
                     </div>
                 </div>
 
@@ -143,8 +159,6 @@
                     <div class="col-md-4">
                         <div class="text-uppercase fw-semibold text-muted small mb-2" style="letter-spacing:.04em;">{{ __('invoices.invoice_details') }}</div>
                         <dl class="row mb-0 small gx-2">
-                            <dt class="col-5 fw-normal text-muted">{{ __('invoices.invoice_number') }}</dt>
-                            <dd class="col-7 fw-semibold mb-1 text-end">{{ $invoice->invoice_number }}</dd>
                             <dt class="col-5 fw-normal text-muted">{{ __('invoices.invoice_date') }}</dt>
                             <dd class="col-7 mb-1 text-end">{{ $invoice->created_at->format('d M Y') }}</dd>
                             <dt class="col-5 fw-normal text-muted">{{ __('invoices.due_date') }}</dt>
@@ -682,6 +696,7 @@
                                 @if($canViewAccountingPosting)
                                 <th>{{ __('invoices.accounting') }}</th>
                                 @endif
+                                <th class="text-center">{{ __('payments.receipt') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -721,6 +736,17 @@
                                     @endif
                                 </td>
                                 @endif
+                                <td class="text-center text-nowrap">
+                                    <a data-no-inertia href="{{ route('admin.billing.payments.receipt', $payment) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="{{ __('payments.view_receipt') }}">
+                                        <i class="ti ti-eye"></i>
+                                    </a>
+                                    <a data-no-inertia href="{{ route('admin.billing.payments.receipt-thermal', $payment) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="{{ __('payments.print_receipt_80mm') }}">
+                                        <i class="ti ti-printer"></i>
+                                    </a>
+                                    <a data-no-inertia href="{{ route('admin.billing.payments.receipt-pdf', $payment) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('payments.download_pdf') }}">
+                                        <i class="ti ti-file-type-pdf"></i>
+                                    </a>
+                                </td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -1002,6 +1028,57 @@
     </div>
 </div>
 @endcan
+
+@if($canIssueAdjustment)
+<!-- Credit Note / Write-Off Modal -->
+<div class="modal fade" id="creditNoteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('admin.billing.credit-notes.store') }}" id="creditNoteForm">
+            @csrf
+            <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
+            <input type="hidden" name="return" value="invoice">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="ti ti-receipt-refund me-1"></i>{{ __('invoices.issue_credit_note_title') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('common.close') }}"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex justify-content-between align-items-center bg-light rounded p-2 mb-3 small">
+                        <span class="text-muted">{{ __('invoices.invoice_number') }} <strong class="text-dark">{{ $invoice->invoice_number }}</strong></span>
+                        <span class="text-muted">{{ __('invoices.available_to_credit') }}: <strong class="text-dark">&#8373;{{ number_format($creditableAmount, 2) }}</strong></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ __('common.type') }} <span class="text-danger">*</span></label>
+                        <select name="type" id="creditNoteType" class="form-select" required>
+                            @if($canIssueCreditNote)<option value="credit_note">{{ __('invoices.credit_note') }}</option>@endif
+                            @if($canIssueWriteOff)<option value="write_off">{{ __('invoices.write_off') }}</option>@endif
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ __('invoices.amount_label') }} <span class="text-danger">*</span></label>
+                        <input type="number" name="amount" id="creditNoteAmount" class="form-control"
+                               step="0.01" min="0.01" max="{{ number_format($creditableAmount, 2, '.', '') }}"
+                               value="{{ number_format($creditableAmount, 2, '.', '') }}" required>
+                        <div class="form-text">{{ __('invoices.adjustment_exceed_note') }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ __('common.reason') }} <span class="text-danger">*</span></label>
+                        <input type="text" name="reason" class="form-control" maxlength="255" required>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">{{ __('invoices.notes') }}</label>
+                        <textarea name="notes" class="form-control" rows="2" maxlength="1000" placeholder="{{ __('invoices.optional_notes') }}"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-info"><i class="ti ti-check me-1"></i>{{ __('invoices.credit_note') }}</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
 
 @if($canReverseSettlements)
 <div class="modal fade" id="reverseSettlementModal" tabindex="-1" aria-hidden="true">
@@ -1303,7 +1380,7 @@ $(function() {
                 'success',
                 '<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">'
                     + '<div><strong>' + (payload.message || 'Payment recorded successfully.') + '</strong><div class="small text-muted">Invoice: ' + (payload.invoice_status_label || '') + (payload.visit_status_label ? ' | Visit: ' + payload.visit_status_label : '') + '</div></div>'
-                    + '<div class="d-flex gap-2"><a href="' + (payload.receipt_url || '#') + '" class="btn btn-sm btn-success">Receipt</a>' + (payload.redirect_url ? '<a href="' + payload.redirect_url + '" class="btn btn-sm btn-outline-success">Open Invoice</a>' : '') + '</div>'
+                    + '<div class="d-flex gap-2"><a data-no-inertia target="_blank" href="' + (payload.receipt_url || '#') + '" class="btn btn-sm btn-success">Receipt</a>' + (payload.redirect_url ? '<a href="' + payload.redirect_url + '" class="btn btn-sm btn-outline-success">Open Invoice</a>' : '') + '</div>'
                     + '</div>'
             );
         } catch (error) {

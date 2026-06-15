@@ -152,12 +152,17 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('admin.billing.payments.receipt', $payment) }}" target="_blank">
+                                        <a data-no-inertia class="dropdown-item" href="{{ route('admin.billing.payments.receipt', $payment) }}" target="_blank">
                                             <i class="ti ti-eye me-1"></i>{{ __('payments.view_receipt') }}
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('admin.billing.payments.receipt-pdf', $payment) }}">
+                                        <a data-no-inertia class="dropdown-item" href="{{ route('admin.billing.payments.receipt-thermal', $payment) }}" target="_blank">
+                                            <i class="ti ti-printer me-1"></i>{{ __('payments.print_receipt_80mm') }}
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a data-no-inertia class="dropdown-item" href="{{ route('admin.billing.payments.receipt-pdf', $payment) }}">
                                             <i class="ti ti-file-type-pdf me-1"></i>{{ __('payments.download_pdf') }}
                                         </a>
                                     </li>

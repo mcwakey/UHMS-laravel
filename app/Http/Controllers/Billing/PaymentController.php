@@ -208,9 +208,19 @@ class PaymentController extends Controller
      */
     public function receipt(Payment $payment)
     {
-        $payment->load(['invoice.items', 'patient', 'receivedBy']);
+        $payment->load(['invoice.items.department', 'patient', 'receivedBy']);
 
         return view('billing.payments.receipt', compact('payment'));
+    }
+
+    /**
+     * Print payment receipt on an 80mm thermal roll.
+     */
+    public function receiptThermal(Payment $payment)
+    {
+        $payment->load(['invoice.items.department', 'patient', 'receivedBy']);
+
+        return view('billing.payments.receipt-thermal', compact('payment'));
     }
 
     /**
@@ -218,7 +228,7 @@ class PaymentController extends Controller
      */
     public function receiptPdf(Payment $payment)
     {
-        $payment->load(['invoice.items', 'patient', 'receivedBy']);
+        $payment->load(['invoice.items.department', 'patient', 'receivedBy']);
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('billing.payments.receipt-pdf', compact('payment'))
             ->setPaper('a5');

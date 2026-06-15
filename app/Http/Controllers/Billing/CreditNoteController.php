@@ -179,8 +179,11 @@ class CreditNoteController extends Controller
             return back()->with('error', $e->getMessage())->withInput();
         }
 
-        return redirect()
-            ->route('admin.billing.credit-notes.index')
+        $redirect = $request->input('return') === 'invoice'
+            ? redirect()->route('admin.billing.invoices.show', $invoice)
+            : redirect()->route('admin.billing.credit-notes.index');
+
+        return $redirect
             ->with('success', __('messages.billing.credit_note_issued', ['type' => $creditNote->type->label(), 'number' => $creditNote->credit_note_number]));
     }
 
