@@ -1,1015 +1,804 @@
 You are working on UHMS — Ultimate Hospital Management System.
 
-# UHMS HR Automation Phase 1 — Attendance Processing, Ghana PAYE Payroll & Payslip Foundation
+Important:
+There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
+Do not try to read it.
+Follow this prompt directly.
+
+# UHMS Accounting Gap Execution — Master Planning Phase
 
 ## Goal
 
-Build the HR automation foundation for UHMS covering:
+Create a complete execution plan for the accounting gaps identified in:
 
-```text id="h0jqah"
-Attendance processing
-Shift/roster support
-Leave impact on attendance
-Payroll draft generation
-Ghana PAYE salary tax deduction
-Payslip generation
-Payroll approval workflow
-Future accounting integration
+```text id="0g0v52"
+docs/ACCOUNTING_MODULE_SPLIT_AND_GAP_REPORT.md
 ```
 
-Do not build this as hardcoded hospital-specific logic.
+Do not implement code yet.
 
-Attendance, payroll, deductions, PAYE, approvals, and payslips must be configurable, auditable, permission-aware, and safe for future changes.
+This phase is for planning the execution thoroughly so no accounting, billing, payroll, bank, tax, reconciliation, reporting, permission, module-toggle, audit, or migration detail is missed.
 
 ---
 
-# 1. Core HR Flow
+# 1. Required Context
 
-The system must follow this workflow:
+Read:
 
-```text id="29138k"
-Raw attendance
-→ Attendance processing
-→ Attendance review
-→ Approved attendance
-→ Payroll draft generation
-→ PAYE and deductions calculation
-→ Payroll review
-→ Payroll approval
-→ Payslip generation
-→ Payslip release
-→ Accounting posting later
+```text id="q1y2df"
+docs/ACCOUNTING_MODULE_SPLIT_AND_GAP_REPORT.md
+docs/PHASE_17_FULL_TEST_SUITE_REGRESSION_STABILISATION_REPORT.md
+docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
 
-Do not allow raw attendance to directly create final payroll or released payslips.
+Respect the current finance module split:
 
-Payroll must be generated as a draft first.
+```text id="371lsh"
+Billing & Collections
+Basic Accounting
+Advanced Accounting
+```
+
+Current module rules:
+
+```text id="w8lh9c"
+Billing & Collections remains independent from accounting module toggles.
+Basic Accounting module slug: accounting_basic.
+Advanced Accounting module slug: accounting_advanced.
+Advanced Accounting depends on Basic Accounting.
+Direct routes must be protected with module middleware, not just hidden from sidebar.
+Existing permissions remain the source of action-level authorization.
+```
+
+Do not weaken existing accounting, billing, stock, payroll, or audit logic.
 
 ---
 
-# 2. HR Policy Configuration
+# 2. Planning Deliverable
 
-Create configurable HR policy settings for:
+Create:
 
-```text id="2zaavt"
-attendance grace period
-late arrival rule
-early exit rule
-absence rule
-overtime rule
-night shift rule
-weekend rule
-public holiday rule
-leave pay rule
-payroll period
-salary structure
-allowance rules
-deduction rules
-PAYE tax table
+```text id="niz7z5"
+docs/ACCOUNTING_GAP_EXECUTION_MASTER_PLAN.md
+```
+
+The document must be implementation-ready and must include:
+
+```text id="j0sxnz"
+executive summary
+current implemented accounting coverage
+gap-by-gap execution plan
+recommended delivery phases
+database changes per phase
+services per phase
+controllers/views per phase
+permissions per phase
+module-toggle impact
+journal posting strategy
+reconciliation strategy
+audit logging strategy
+migration/backfill strategy
+testing strategy
+risk register
+open decisions
+acceptance criteria
+```
+
+---
+
+# 3. High-Priority Gaps To Plan
+
+Plan execution for these high-priority gaps from the report:
+
+```text id="dau31g"
+1. Basic-to-Advanced posting bridge
+2. Bank accounts and bank reconciliation
+3. Cash flow statement
+4. Failed posting workbench
+5. Payroll accounting posting
+6. Budgeting and commitments
+7. Fixed assets
+8. Statutory tax accounting
+9. Dedicated receivables workbench
+10. Claims settlement accounting
+```
+
+Do not skip any.
+
+---
+
+# 4. Recommended Delivery Order
+
+Use this delivery order unless you discover a blocking dependency:
+
+```text id="iwzf9s"
+1. Basic-to-Advanced posting bridge
+2. Bank accounts, statement import, and formal bank reconciliation
+3. Failed-posting and subledger reconciliation workbenches
+4. Approved payroll posting and salary-payment settlement
+5. Cash flow reporting and accounting exports
+6. Budgets and commitments
+7. Fixed assets and depreciation
+8. Statutory tax ledgers and returns
+9. Dedicated receivables workbench
+10. Claims settlement accounting
+```
+
+Explain why this order is safest.
+
+---
+
+# 5. Phase A — Basic-to-Advanced Posting Bridge
+
+This is the most urgent accounting gap.
+
+Current problem:
+
+```text id="o0r907"
+Manual income and expense entries remain in the financial_entries operational ledger.
+They do not create balanced journal entries in the advanced general ledger.
+When Basic and Advanced Accounting are both enabled, this can create two financial views requiring manual reconciliation.
+```
+
+Plan a bridge where approved Basic Accounting entries can generate balanced journal entries.
+
+Plan:
+
+```text id="cjr4y0"
+posting templates
+income templates
+expense templates
+cash/bank account mapping
+category-to-COA mapping
+posting status
+failed posting state
+reversal handling
+reposting rules
+module toggle behavior
+permission checks
+audit logs
+```
+
+Important rules:
+
+```text id="qnvuf7"
+Do not auto-post unapproved Basic Accounting entries.
+Do not duplicate journals.
+Do not silently change historical financial_entries.
+Do not post if Advanced Accounting is disabled.
+If Advanced Accounting is later enabled, plan a controlled backfill/reconciliation workflow.
+```
+
+---
+
+# 6. Phase B — Bank Accounts and Bank Reconciliation
+
+Plan a formal bank reconciliation module.
+
+Must include:
+
+```text id="h0v5fy"
+bank account register
+bank statement import
+statement lines
+internal cashbook/bank ledger matching
+manual match
+auto-match suggestions
+outstanding cheques
+outstanding deposits
+bank charges
+interest income
+reconciliation period
+reconciliation statement
 approval workflow
+reopening/reversal rules
 ```
 
-Use database configuration.
+Plan database tables such as:
 
-Do not hardcode hospital-specific attendance or payroll policies.
-
----
-
-# 3. Shift / Roster Support
-
-Add or improve shift configuration.
-
-A shift should support:
-
-```text id="h4v7km"
-name
-start_time
-end_time
-grace_minutes
-break_minutes
-is_night_shift
-is_active
+```text id="eo744h"
+bank_accounts
+bank_statement_imports
+bank_statement_lines
+bank_reconciliations
+bank_reconciliation_matches
+bank_reconciliation_adjustments
 ```
 
-Employees should be assignable to:
+Plan integration with:
 
-```text id="4wwh7p"
-fixed shifts
-rotational shifts
-department shifts
-individual shift overrides
-```
-
-Do not overbuild advanced roster planning yet, but make the schema ready.
-
----
-
-# 4. Attendance Records
-
-Attendance records should track:
-
-```text id="cn8t5i"
-employee_id
-attendance_date
-shift_id
-clock_in_time
-clock_out_time
-source
-status
-late_minutes
-early_exit_minutes
-overtime_minutes
-review_status
-reviewed_by
-reviewed_at
-notes
-```
-
-Attendance sources should support now or later:
-
-```text id="ou44a1"
-manual entry
-biometric import
-QR check-in
-mobile/geolocation check-in
-shift roster clock-in/out
-```
-
-Build manual attendance first, but keep the model extensible for biometric/QR/mobile later.
-
-Attendance statuses:
-
-```text id="7zuxp8"
-present
-absent
-late
-half_day
-on_leave
-sick_leave
-holiday
-weekend
-off_day
-```
-
-Review statuses:
-
-```text id="8qedg6"
-pending
-approved
-rejected
-adjusted
+```text id="n3g268"
+Basic Accounting cash records
+Advanced Accounting cashbook
+payment collections
+supplier payments
+payroll payments
+bank charges
+electronic payment references
 ```
 
 ---
 
-# 5. Daily Attendance Processing Command
+# 7. Phase C — Failed Posting Workbench
 
-Create an artisan command:
+Plan a dedicated workbench for failed accounting postings.
 
-```bash id="ofh5jp"
-php artisan hr:process-attendance
+The report says permissions and dashboard counts exist, but there is no searchable workbench.
+
+Plan:
+
+```text id="df22jt"
+failed posting list
+source module
+source record
+posting type
+error message
+retry count
+last attempted at
+resolved status
+manual resolution
+retry action
+ignore/waive action with permission
+audit trail
 ```
 
-The command should:
+Supported source modules:
 
-```text id="0eink8"
-check expected employees for the day
-compare shift schedule with clock-in/out
-mark absences
-calculate late minutes
-calculate early exit minutes
-calculate overtime minutes
-respect approved leave
-respect holidays/off days where configured
-create attendance exceptions for HR review
+```text id="cnxhzz"
+billing
+payments
+credit notes
+sponsors
+supplier payables
+inventory
+stock adjustments
+clinical consumables
+payroll
+manual income/expense
+bank reconciliation
+claims settlement
 ```
 
-The command must be safe to run multiple times.
+Do not lose failed posting errors.
 
-No duplicate attendance rows.
-
-Use update-or-create logic where appropriate.
+Do not hide posting failures.
 
 ---
 
-# 6. Leave Impact
+# 8. Phase D — Subledger Reconciliation Workbench
 
-Approved leave must affect attendance.
+Plan reconciliation between GL and subledgers.
 
-If an employee has approved leave for a date:
+Include:
 
-```text id="dxy0xm"
-do not mark absent
-mark attendance as on_leave or sick_leave depending on leave type
-apply paid/unpaid rules later in payroll
+```text id="ki21t3"
+AR vs receivable control account
+AP vs supplier payable control account
+inventory valuation vs inventory control account
+payroll payable vs payroll subledger
+cash/bank vs cashbook/bank accounts
+PAYE payable vs payroll tax calculations
+pension payable vs payroll pension calculations
 ```
 
-Attendance only records facts.
+Plan dashboard cards:
 
-Payroll calculates money.
-
-Do not deduct salary directly inside attendance processing.
+```text id="4juhqn"
+balanced
+difference detected
+unposted source records
+failed postings
+manual adjustments
+last reconciliation date
+```
 
 ---
 
-# 7. Employee Payroll Profile
+# 9. Phase E — Payroll Accounting Posting
 
-Add or improve employee payroll profile fields:
+Plan payroll accounting posting but do not assume payroll automation is fully built yet.
 
-```text id="72avj0"
-basic_salary
-salary_type
-payment_method
-bank_name
-bank_account_number
-mobile_money_number
-tax_identification_number
-tax_residency_status
-paye_exempt
-tax_relief_amount
-ssnit_number
-employee_ssnit_rate
-employer_ssnit_rate
-pension_scheme
-default_allowances
-default_deductions
-```
+The report says payroll journal preparation exists, but approved payroll is not automatically posted.
 
-At minimum, support tax residency:
+Plan:
 
-```text id="4al49u"
-resident
-non_resident
-exempt
+```text id="6kvptg"
+approved payroll posting
+salary expense
+allowance expense
+employer pension expense
+payroll payable
+PAYE payable
+pension payable
+loan receivable
+salary payment settlement
+payroll reversal/adjustment
 ```
 
 Rules:
 
-```text id="kgtsgm"
-resident → Ghana progressive PAYE table
-non_resident → configurable flat tax rate, default 25%
-exempt → PAYE 0
-```
-
-Do not hardcode special staff categories directly into payroll logic.
-
----
-
-# 8. Ghana PAYE Tax Engine
-
-Add Ghana PAYE salary tax deduction support.
-
-PAYE must be:
-
-```text id="yeh2m2"
-configurable
-effective-dated
-auditable
-versioned
-safe for future GRA changes
-```
-
-Do not hardcode PAYE rates inside payroll calculation logic.
-
-Create a tax-table engine that calculates PAYE from payroll chargeable income using progressive tax bands.
-
----
-
-# 9. Ghana PAYE Initial Table
-
-Seed the current Ghana resident PAYE table as an effective-dated tax table.
-
-Support monthly and annual tax tables, but monthly payroll should normally use monthly bands.
-
-Initial monthly Ghana PAYE bands:
-
-```text id="65r79t"
-First 490.00              → 0%
-Next 110.00               → 5%
-Next 130.00               → 10%
-Next 3,166.67             → 17.5%
-Next 16,000.00            → 25%
-Next 30,520.00            → 30%
-Exceeding remaining value → 35%
-```
-
-Equivalent annual bands:
-
-```text id="7d0509"
-First 5,880.00             → 0%
-Next 1,320.00              → 5%
-Next 1,560.00              → 10%
-Next 38,000.00             → 17.5%
-Next 192,000.00            → 25%
-Next 366,240.00            → 30%
-Exceeding 600,000.00       → 35%
-```
-
-Default currency:
-
-```text id="dizgok"
-GHS
-```
-
-Do not assume these rates will never change.
-
-When rates change, the system must allow a new effective-dated PAYE table without altering old approved payrolls.
-
----
-
-# 10. Payroll Tax Database Design
-
-Add payroll tax configuration tables if they do not already exist.
-
-Recommended tables:
-
-```text id="ibphy5"
-payroll_tax_tables
-payroll_tax_bands
-payroll_tax_calculations
-```
-
-## payroll_tax_tables
-
-Fields:
-
-```text id="rkgth1"
-id
-country_code
-name
-tax_type
-period_basis
-resident_type
-currency
-effective_from
-effective_to
-is_active
-notes
-created_by
-updated_by
-timestamps
-```
-
-Example:
-
-```text id="vjxppz"
-country_code = GH
-name = Ghana PAYE Resident Monthly
-tax_type = paye
-period_basis = monthly
-resident_type = resident
-currency = GHS
-effective_from = 2024-01-01
-effective_to = null
-is_active = true
-```
-
-## payroll_tax_bands
-
-Fields:
-
-```text id="p0c77r"
-id
-payroll_tax_table_id
-band_order
-band_label
-lower_bound
-upper_bound
-band_amount
-rate_percent
-fixed_tax_amount
-cumulative_tax
-is_excess_band
-timestamps
-```
-
-## payroll_tax_calculations
-
-Store the PAYE calculation result per payroll/payslip.
-
-Fields:
-
-```text id="pdq3ce"
-id
-payroll_run_id
-payroll_payslip_id
-employee_id
-payroll_tax_table_id
-gross_taxable_income
-pre_tax_deductions
-reliefs_total
-chargeable_income
-tax_amount
-calculation_snapshot_json
-calculated_at
-calculated_by
-timestamps
-```
-
-If JSON columns are unsafe for MariaDB compatibility, use LONGTEXT with JSON-encoded content.
-
-Use decimal columns for money and rates.
-
-Avoid database enum if the project normally avoids enums for compatibility.
-
----
-
-# 11. PAYE Calculation Formula
-
-PAYE calculation must follow this flow:
-
-```text id="n1k2vk"
-Gross taxable income
-- allowable pre-tax deductions
-- statutory employee deductions where configured
-- approved reliefs where configured
-= chargeable income
-→ progressive PAYE calculation
-= PAYE deduction
-```
-
-For each PAYE band:
-
-```text id="8zzraf"
-taxable_in_band = min(remaining_income, band_amount)
-tax_for_band = taxable_in_band * rate_percent
-remaining_income -= taxable_in_band
-```
-
-For excess band:
-
-```text id="j3osvw"
-tax_for_excess = remaining_income * excess_rate
-```
-
-Do not round each band in a way that creates material differences.
-
-Round final PAYE amount using the project money rounding policy.
-
-Return a detailed breakdown:
-
-```text id="l7oztc"
-band label
-taxable amount in band
-rate
-tax amount
-cumulative tax
+```text id="ct2pyb"
+Only approved payroll can post.
+Do not auto-post draft payroll.
+Do not post twice.
+Do not bypass accounting services.
+Do not create NHIS or insurance-specific payroll logic.
 ```
 
 ---
 
-# 12. Payroll Services
+# 10. Phase F — Cash Flow Statement and Accounting Exports
 
-Do not put business logic in controllers or Blade.
+Plan implementation for the missing cash flow report.
 
-Create or extend services such as:
+Include:
 
-```text id="dacvtt"
-AttendanceProcessingService
-LeaveImpactService
-PayrollDraftService
-PayrollTaxCalculationService
-PayslipGenerationService
-PayrollApprovalService
-PayrollAccountingService
+```text id="c4a0ub"
+operating activities
+investing activities
+financing activities
+direct method
+indirect method if feasible
+cash/bank account mapping
+opening cash balance
+closing cash balance
+period filters
+department/branch filters if supported
+export permissions
+PDF/Excel/CSV/print
 ```
 
-Controllers should call services.
+The report says permission exists:
+
+```text id="qkj11p"
+accounting.reports.cash_flow
+```
+
+but route/controller/service/screen are missing.
+
+Plan all missing pieces.
 
 ---
 
-# 13. Payroll Draft Generation
+# 11. Phase G — Budgets and Commitments
 
-Create an artisan command:
+Plan:
 
-```bash id="w2h254"
-php artisan hr:generate-payroll-draft --period=YYYY-MM
+```text id="tiq2mb"
+annual budgets
+department budgets
+account budgets
+budget periods
+budget approval
+budget revisions
+budget transfers
+budget vs actual report
+purchase commitments
+encumbrances
+commitment release
+approval limits
 ```
 
-The command should generate payroll drafts based on:
+Integrate with:
 
-```text id="sbucw5"
-employee salary
-approved attendance
-approved leave
-overtime
-allowances
-deductions
-loans
-taxable allowances
-non-taxable allowances
-employee SSNIT/pension if configured
-PAYE
-unpaid absences
-late penalties
+```text id="wl9frx"
+purchase orders
+stock procurement
+supplier payables
+department requests
+projects/grants later
 ```
 
-Payroll statuses:
-
-```text id="yd3mv8"
-draft
-under_review
-approved
-posted
-paid
-cancelled
-```
-
-Do not generate final/released payslips until payroll is approved.
+Do not block clinical operations because a budget module is disabled unless configured.
 
 ---
 
-# 14. Payroll Calculation Fields
+# 12. Phase H — Fixed Assets
 
-Payroll draft should calculate and store:
+Plan fixed asset accounting.
 
-```text id="nc1m7i"
-basic_salary
-taxable_allowances
-non_taxable_allowances
-gross_pay
-gross_taxable_income
-employee_pension_deduction
-other_pre_tax_deductions
-tax_reliefs
-chargeable_income
-paye_tax
-other_deductions
-total_deductions
-net_pay
+Include:
+
+```text id="9nwcbr"
+asset register
+asset categories
+capitalization workflow
+asset acquisition from procurement
+asset locations
+custodian assignment
+depreciation methods
+depreciation runs
+disposal
+impairment
+asset transfer
+asset verification
+asset maintenance link later
 ```
 
-Do not subtract PAYE before calculating chargeable income.
+Accounting:
 
-PAYE is the output tax deduction.
-
-Payroll formulas must be traceable.
+```text id="04iq0z"
+Dr Fixed Asset
+Cr Cash/Bank/AP
+Dr Depreciation Expense
+Cr Accumulated Depreciation
+Dr Loss/Gain on Disposal
+```
 
 ---
 
-# 15. Payroll Approval Workflow
+# 13. Phase I — Statutory Tax Accounting
 
-Add approval workflow:
+Plan statutory tax accounting.
 
-```text id="8p4auh"
-draft generated by HR/payroll officer
-reviewed by HR manager
-approved by finance/admin
-posted to accounting
-released to staff
+Include:
+
+```text id="3bhlip"
+PAYE payable ledger
+SSNIT/pension payable ledger
+VAT/NHIL/GETFund if applicable
+withholding tax
+tax input ledger
+tax output ledger
+statutory returns
+tax payment settlement
+tax reconciliation
 ```
 
-Only users with proper permission should approve payroll.
+Do not mix tax calculation with tax accounting.
 
-Do not weaken permissions.
+Tax calculation belongs to source modules such as payroll or billing.
+Tax accounting records payable/receivable and settlement.
 
 ---
 
-# 16. Payslip Generation
+# 14. Phase J — Dedicated Receivables Workbench
 
-Payslips should be generated from approved payroll records.
+Plan AR collector workbench.
 
-Payslip should include:
+Include:
 
-```text id="prn13y"
-employee details
-department
-position
-payroll period
-basic salary
-allowances
-overtime
-gross pay
-gross taxable income
-PAYE deduction
-other deductions
-tax
-pension/social security
-net pay
-payment method
-approval status
-generated date
+```text id="ox57mb"
+payer statements
+patient receivables
+sponsor receivables
+insurance receivables
+corporate receivables
+promises to pay
+collection notes
+disputes
+write-off queue
+credit note queue
+aging buckets
+collector assignment
+follow-up reminders
+remittance matching
 ```
 
-Support:
-
-```text id="h7tcqk"
-PDF
-print view
-staff portal view
-email later
-```
-
-Do not expose payslips to staff until payroll is approved/released.
-
-Staff should only see their own released payslips.
+Do not replace existing AR aging.
+Extend it into an operational collector workbench.
 
 ---
 
-# 17. Payslip PAYE Breakdown
+# 15. Phase K — Claims Settlement Accounting
 
-Payslip should show:
+Plan claims settlement accounting.
 
-```text id="4g8bz3"
-Gross taxable income
-Chargeable income
-PAYE deduction
-Other statutory deductions
-Total deductions
-Net pay
+Include:
+
+```text id="9e0dwg"
+claim submission
+insurer remittance advice
+partial settlement allocation
+denial accounting
+write-down accounting
+resubmission differences
+claim reconciliation
+insurer statement reconciliation
+claim receivable control account
 ```
 
-Optional detail view:
+Rules:
 
-```text id="kd49lm"
-PAYE band breakdown
-tax table version
-calculation date
+```text id="d0trg1"
+NHIS is just another insurance provider.
+Do not hardcode NHIS.
+Support generic insurance providers and sponsors.
 ```
-
-Do not expose other employees’ tax details to unauthorized users.
 
 ---
 
-# 18. Accounting Integration Preparation
+# 16. Medium-Priority Gap Planning
 
-Do not fully post accounting automatically unless the existing accounting services are ready.
+Also plan later roadmap items for:
 
-Prepare payroll records for future journal posting:
-
-```text id="v1wc19"
-Dr Salaries Expense
-Dr Employer Pension Expense
-Cr Payroll Payable
-Cr PAYE Tax Payable
-Cr Pension Payable
-Cr Staff Loan Receivable
+```text id="igephf"
+multi-currency
+cost centers
+projects
+grants
+donor funds
+recurring journals
+accrual schedules
+prepayments
+deferred revenue
+staff loan accounting
+opening balance import
+branch consolidation
+electronic payment files
+GL/subledger reconciliation dashboard
 ```
 
-When salaries are paid later:
-
-```text id="1eavh8"
-Dr Payroll Payable
-Cr Cash/Bank
-```
-
-Create a service skeleton if appropriate:
-
-```text id="u33jog"
-PayrollAccountingService
-```
-
-Do not post automatically without payroll approval.
-
-Do not bypass existing accounting services.
+Mark these as later phases unless dependencies require earlier work.
 
 ---
 
-# 19. Permissions
+# 17. Module Catalogue Planning
 
-Add permissions:
+The report identifies existing workflows without dedicated module flags.
 
-```text id="7iv2pq"
-hr.attendance.view
-hr.attendance.manage
-hr.attendance.approve
-hr.shifts.view
-hr.shifts.manage
-hr.payroll.view
-hr.payroll.generate
-hr.payroll.review
-hr.payroll.approve
-hr.payroll.post
-hr.payslips.view
-hr.payslips.release
-hr.payslips.download
-hr.tax_tables.view
-hr.tax_tables.manage
-hr.employee_tax_profile.view
-hr.employee_tax_profile.manage
-hr.payroll_tax.view
-hr.payroll_tax.recalculate
+Plan whether to add module toggles for:
+
+```text id="y2f3dv"
+appointments
+theatre
+procedures
+accounting integrations
+cashier operations
+fixed assets
+budgets
+bank reconciliation
+radiology
+CSSD
+maintenance
+advanced rostering
 ```
 
-Only authorized HR/payroll/finance users should manage payroll, PAYE tables, and employee tax profiles.
+Rules:
+
+```text id="k4w9wo"
+Do not split modules unnecessarily if it makes deployment harder.
+Do not make Billing dependent on Accounting.
+Advanced Accounting must still depend on Basic Accounting.
+Use module middleware for direct routes.
+```
 
 ---
 
-# 20. UI Screens
+# 18. Permissions Planning
 
-Add or improve screens for:
+For each accounting gap, define permissions.
 
-```text id="p9dj4n"
-HR policy settings
-shift settings
-employee shift assignment
-attendance list
-attendance review
-attendance exceptions
-payroll periods
-payroll draft
-payroll approval
-payslip view
-payroll tax tables
-PAYE bands
-employee tax profile
-payroll tax breakdown
+Examples:
+
+```text id="gvah12"
+accounting.basic.post_to_gl
+accounting.bank_accounts.view
+accounting.bank_accounts.manage
+accounting.bank_reconciliation.view
+accounting.bank_reconciliation.manage
+accounting.bank_reconciliation.approve
+accounting.failed_postings.view
+accounting.failed_postings.retry
+accounting.failed_postings.resolve
+accounting.subledger_reconciliation.view
+accounting.payroll_posting.view
+accounting.payroll_posting.post
+accounting.cash_flow.view
+accounting.exports
+accounting.budgets.view
+accounting.budgets.manage
+accounting.budgets.approve
+accounting.commitments.view
+accounting.commitments.manage
+accounting.fixed_assets.view
+accounting.fixed_assets.manage
+accounting.fixed_assets.depreciate
+accounting.tax_ledgers.view
+accounting.tax_ledgers.manage
+accounting.receivables_workbench.view
+accounting.claims_settlement.view
+accounting.claims_settlement.manage
 ```
 
-Use Bootstrap 5 and Tabler Icons only.
-
-Do not introduce Tailwind or new frontend frameworks.
+Map permissions to roles.
 
 ---
 
-# 21. Audit Logging
+# 19. Audit Logging Planning
 
 Use `ActivityLogService`.
 
-Audit:
+Plan audit events for:
 
-```text id="ocn75t"
-attendance created
-attendance adjusted
-attendance approved
-attendance rejected
-payroll draft generated
-payroll reviewed
-payroll approved
-payroll cancelled
-payslip generated
-payslip released
-PAYE table created
-PAYE table updated
-PAYE table activated
-PAYE table deactivated
-PAYE band changed
-employee tax profile changed
-payroll PAYE calculated
-payroll PAYE recalculated
+```text id="kd2idd"
+posting bridge template created
+basic entry posted to GL
+posting failed
+posting retried
+posting resolved
+bank account created
+bank statement imported
+bank line matched
+bank reconciliation approved
+budget approved
+commitment created
+asset capitalized
+depreciation run posted
+tax return prepared
+tax payment recorded
+payroll posted
+receivable dispute logged
+claim remittance allocated
 ```
 
 Do not bypass audit logging.
 
 ---
 
-# 22. Localisation
+# 20. Data Migration and Backfill Planning
 
-All new UI labels must be localised EN/FR.
+Plan safe migration/backfill strategies.
 
-Use or create:
+For each phase, define:
 
-```text id="bcqitc"
-lang/en/hr.php
-lang/fr/hr.php
-lang/en/payroll.php
-lang/fr/payroll.php
+```text id="f9l147"
+new tables
+new nullable columns
+indexes
+backfill command
+dry-run mode
+rollback/reversal strategy
+audit trail
+large database safety
+MariaDB compatibility
 ```
 
-Add keys for attendance, payroll, payslip, and PAYE labels.
+Important:
 
-Required examples:
-
-```text id="xmz9u4"
-attendance
-shift
-clock_in
-clock_out
-late_minutes
-overtime_minutes
-review_status
-payroll
-payroll_draft
-payslip
-gross_pay
-net_pay
-paye
-paye_tax
-tax_table
-tax_tables
-tax_band
-tax_bands
-chargeable_income
-gross_taxable_income
-pre_tax_deductions
-tax_reliefs
-tax_amount
-resident
-non_resident
-tax_exempt
-effective_from
-effective_to
-band_order
-band_label
-lower_bound
-upper_bound
-rate_percent
-cumulative_tax
-excess_band
-tax_breakdown
-employee_tax_profile
-tax_identification_number
+```text id="sbdr9i"
+Do not destructively migrate existing financial data.
+Do not auto-post historical records without user approval.
+Historical backfill must be previewed and approved.
 ```
 
-Maintain EN/FR parity.
+---
 
-Run:
+# 21. Test Strategy
 
-```bash id="8xudsn"
+Plan tests for:
+
+```text id="6ztgv4"
+module middleware
+permissions
+posting bridge
+journal balance
+duplicate posting prevention
+failed posting retry
+bank statement import
+bank reconciliation matching
+cash flow report
+payroll posting
+budget approval
+commitment release
+asset depreciation
+tax ledger settlement
+AR collector workbench
+claims remittance allocation
+localisation lock
+audit logging
+```
+
+Always run:
+
+```bash id="j8vq2m"
 php artisan test tests/Feature/Localization
 php scripts/localisation-audit.php
+php artisan test
 ```
 
 Active runtime candidates must remain:
 
-```text id="pdbk3x"
+```text id="ptcxzg"
 0
 ```
 
 ---
 
-# 23. Tests
+# 22. Risk Register
 
-Add tests for attendance:
+Create a risk register covering:
 
-```text id="gcwwrh"
-attendance processing marks present
-attendance processing marks absent
-late minutes are calculated
-early exit minutes are calculated
-overtime minutes are calculated
-approved leave prevents absence
-attendance must be reviewed before payroll use
-unauthorized user cannot approve attendance
+```text id="4kxeb7"
+duplicate journal posting
+unbalanced journals
+historical data mismatch
+Basic vs Advanced Accounting divergence
+wrong bank reconciliation matches
+incorrect payroll liabilities
+tax payable mismatch
+claims settlement under/over allocation
+budget blocking clinical operations
+fixed asset depreciation errors
+permission exposure
+audit gaps
+performance on large ledgers
+migration rollback risk
 ```
 
-Add tests for payroll:
-
-```text id="ylhurq"
-payroll draft generation uses approved attendance
-unapproved attendance is not used for final payroll
-payroll calculates gross pay
-payroll calculates deductions
-payslip cannot be released before payroll approval
-approved payroll can generate payslips
-unauthorised users cannot approve payroll
-```
-
-Add tests for Ghana PAYE:
-
-```text id="9j8emp"
-Ghana resident monthly PAYE table is seeded
-PAYE bands are ordered correctly
-PAYE calculation returns 0 for income within tax-free band
-PAYE calculation applies multiple bands progressively
-PAYE calculation applies 35% excess band
-non-resident flat tax can be calculated
-tax-exempt employee returns PAYE 0
-PAYE calculation snapshot is stored on payroll draft
-approved payroll keeps original tax table snapshot
-new effective-dated PAYE table does not alter old approved payroll
-employee without permission cannot manage tax tables
-payslip shows PAYE deduction
-localisation remains locked
-```
-
-Example PAYE tests:
-
-```text id="z4q6i2"
-Chargeable income: 490 → PAYE 0
-Chargeable income: 600 → PAYE 5.50
-Chargeable income: 730 → PAYE 18.50
-```
-
-Add at least one larger salary test crossing several bands.
+For each risk, define mitigation.
 
 ---
 
-# 24. Safety Rules
+# 23. Output Format
 
-Do not weaken:
+The master plan must include:
 
-```text id="hgwnzv"
-permissions
-policies
-gates
-middleware
-clinical confidentiality
-financial visibility
-audit logging
-payroll approval checks
+```text id="vfotrp"
+phase roadmap table
+gap-to-phase mapping
+database table proposal
+service proposal
+permission matrix
+audit event matrix
+test matrix
+risk register
+open decisions
+acceptance criteria
 ```
 
-Do not bypass:
+Use Mermaid diagrams for:
 
-```text id="z1aywn"
-ActivityLogService
-Payroll services
-Attendance services
-Accounting services
-```
-
-Do not move business logic into Blade.
-
-Do not hardcode Ghana PAYE inside controllers.
-
-Do not hardcode hospital-specific HR policies.
-
-Do not expose salary, tax, or payslip information to unauthorized users.
-
-Do not release payslips before payroll approval.
-
----
-
-# 25. Verification Commands
-
-Run:
-
-```bash id="xqd34r"
-php artisan route:list
-php artisan view:cache
-php artisan view:clear
-php artisan test tests/Feature/Localization
-php scripts/localisation-audit.php
-php artisan test
-git diff --check
-```
-
-If assets are touched:
-
-```bash id="4le25c"
-npm run build
+```text id="tlg1zb"
+Basic-to-Advanced posting bridge
+Bank reconciliation flow
+Failed posting retry flow
+Payroll posting flow
+Budget commitment flow
+Claims settlement allocation flow
 ```
 
 ---
 
-# 26. Documentation
+# 24. Open Decisions
 
-Create:
+Document open decisions such as:
 
-```text id="ta01zc"
-docs/HR_ATTENDANCE_GHANA_PAYE_PAYROLL_FOUNDATION_REPORT.md
+```text id="r8hzqh"
+Should Basic entries auto-post to GL after approval or require manual batch posting?
+Should old Basic entries be backfilled into GL?
+Which bank statement formats are supported first?
+Should bank reconciliation auto-create bank charges?
+Should failed postings block period close?
+Should payroll posting require Advanced Accounting?
+Should budgets block purchase orders or only warn?
+Which depreciation method is default?
+How should insurance denials be accounted for?
+Should statutory tax returns be generated inside UHMS or only tracked?
 ```
 
-Include:
-
-```text id="luu073"
-summary
-database changes
-models added/changed
-services added
-commands added
-permissions added
-UI screens added
-attendance workflow
-shift/roster workflow
-leave impact workflow
-payroll draft workflow
-Ghana PAYE table seeded
-PAYE calculation formula
-sample PAYE calculations
-employee tax profile
-payslip workflow
-approval workflow
-accounting integration preparation
-audit logging
-tests added
-commands run
-localisation audit result
-remaining risks
-next recommended phase
-```
+Recommend defaults but do not hide uncertainty.
 
 ---
 
-# 27. Acceptance Criteria
+# 25. Acceptance Criteria For This Planning Phase
 
 This phase is complete only when:
 
-```text id="qd7z9q"
-HR policies can be configured
-shifts can be configured
-attendance can be processed safely
-attendance can be reviewed/approved
-approved leave affects attendance
-payroll drafts can be generated from approved attendance
-Ghana PAYE table is configurable and effective-dated
-resident PAYE uses progressive bands
-non-resident flat tax is configurable
-tax-exempt employees calculate PAYE as 0
-PAYE calculation stores detailed snapshot
-payroll draft includes PAYE deduction
-payslips can be generated from approved payroll
-payslips are not released before approval
-payslip displays PAYE deduction
-permissions are enforced
-ActivityLogService is used
-EN/FR localisation parity passes
-active runtime candidates remain 0
-route list works
-view cache compiles
-tests pass or failures are documented
-documentation report is created
+```text id="o0v9ll"
+all accounting gaps in the report are mapped to execution phases
+dependencies are clear
+database impact is planned
+services are planned
+permissions are planned
+audit logs are planned
+module-toggle behavior is planned
+migration/backfill strategy is planned
+test strategy is planned
+risks are documented
+open decisions are documented
+the planning document is created
+no implementation code is changed
 ```
 
-Proceed with UHMS HR Attendance + Ghana PAYE Payroll Foundation now.
+Proceed with the Accounting Gap Execution Master Planning phase now.
