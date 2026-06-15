@@ -1,6 +1,6 @@
 # UHMS UI Audit Report
 
-_Generated Mon, Jun 15, 2026 4:33 AM by `php artisan ui:audit`._
+_Generated Mon, Jun 15, 2026 4:50 AM by `php artisan ui:audit`._
 
 ## Scope
 - Blade views: 1

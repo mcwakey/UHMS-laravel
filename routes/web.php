@@ -596,7 +596,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Accounts & Finance
-        Route::prefix('accounts')->name('accounts.')->group(function () {
+        Route::prefix('accounts')->name('accounts.')->middleware('module:accounting_basic')->group(function () {
             // Categories
             Route::middleware('can:accounts.manage')->group(function () {
                 Route::get('categories', [AccountCategoryController::class, 'index'])->name('categories.index');
@@ -638,7 +638,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Double-entry Accounting Foundation
-        Route::prefix('accounting')->name('accounting.')->group(function () {
+        Route::prefix('accounting')->name('accounting.')->middleware('module:accounting_advanced')->group(function () {
             Route::get('/', AccountingDashboardController::class)
                 ->name('dashboard')
                 ->middleware('can:accounting.dashboard.view');
@@ -1071,7 +1071,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Accounts Payable (Accounting Phase 5)
-        Route::prefix('accounts-payable')->name('accounts-payable.')->middleware('can:accounts_payable.view')->group(function () {
+        Route::prefix('accounts-payable')->name('accounts-payable.')->middleware(['module:accounting_advanced', 'can:accounts_payable.view'])->group(function () {
             Route::get('/', [AccountsPayableController::class, 'payables'])->name('payables');
             Route::get('aging', [AccountsPayableController::class, 'aging'])->name('aging')->middleware('can:reports.ap_aging.view');
             Route::get('payments', [AccountsPayableController::class, 'payments'])->name('payments');

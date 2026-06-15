@@ -37,9 +37,13 @@ class ModuleSeeder extends Seeder
             ['name' => 'Analyzer',         'slug' => 'analyzer',       'is_core' => false, 'depends_on' => 'investigations', 'icon' => 'ti-device-analytics', 'sort_order' => 25],
             ['name' => 'HR',               'slug' => 'hr',             'is_core' => false, 'icon' => 'ti-id-badge',      'sort_order' => 26],
             ['name' => 'Payroll',          'slug' => 'payroll',        'is_core' => false, 'depends_on' => 'hr',         'icon' => 'ti-cash',  'sort_order' => 27],
-            ['name' => 'Reports',          'slug' => 'reports',        'is_core' => false, 'icon' => 'ti-chart-bar',     'sort_order' => 28],
-            ['name' => 'Medical Patterns', 'slug' => 'medical-patterns', 'is_core' => false, 'icon' => 'ti-template',    'sort_order' => 29],
-            ['name' => 'Notifications',    'slug' => 'notifications',  'is_core' => false, 'icon' => 'ti-bell',          'sort_order' => 30],
+            ['name' => 'Basic Accounting', 'slug' => 'accounting_basic', 'is_core' => false, 'icon' => 'ti-cash-banknote', 'sort_order' => 28,
+             'description' => 'Simple income, expense, cash collection, cashier handover and operational reconciliation.'],
+            ['name' => 'Advanced Accounting', 'slug' => 'accounting_advanced', 'is_core' => false, 'depends_on' => 'accounting_basic', 'icon' => 'ti-building-bank', 'sort_order' => 29,
+             'description' => 'Double-entry accounting, ledgers, financial statements, receivables, payables, periods and closing controls.'],
+            ['name' => 'Reports',          'slug' => 'reports',        'is_core' => false, 'icon' => 'ti-chart-bar',     'sort_order' => 30],
+            ['name' => 'Medical Patterns', 'slug' => 'medical-patterns', 'is_core' => false, 'icon' => 'ti-template',    'sort_order' => 31],
+            ['name' => 'Notifications',    'slug' => 'notifications',  'is_core' => false, 'icon' => 'ti-bell',          'sort_order' => 32],
         ];
 
         foreach ($modules as $m) {

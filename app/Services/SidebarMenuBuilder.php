@@ -1468,7 +1468,95 @@ class SidebarMenuBuilder
             ],
         ];
 
+        $sections = $this->splitAccountingSections($sections);
+
         return $this->finaliseSections($sections, $user, $currentRouteName);
+    }
+
+    /**
+     * Separate revenue collection, simple cash accounting, and the double-entry
+     * ledger so each tier can be enabled and navigated independently.
+     */
+    protected function splitAccountingSections(array $sections): array
+    {
+        $result = [];
+
+        foreach ($sections as $section) {
+            if (($section['title'] ?? null) !== 'Accounts & Finance') {
+                $result[] = $section;
+                continue;
+            }
+
+            $items = collect($section['items'])->keyBy('label');
+            $pick = fn (array $labels, ?string $module = null) => collect($labels)
+                ->map(fn (string $label) => $items->get($label))
+                ->filter()
+                ->map(function (array $item) use ($module) {
+                    if ($module) {
+                        $item['module'] = $module;
+                    }
+                    return $item;
+                })
+                ->values()
+                ->all();
+
+            $result[] = [
+                'title' => 'Billing & Collections',
+                'items' => $pick([
+                    'Billing Dashboard',
+                    'Invoices',
+                    'Counter Sale',
+                    'Receive Payments',
+                    'Payments',
+                    'Credit Notes',
+                    'Corporate Sponsors',
+                    'Patient Statements',
+                    'Discount Report',
+                    'AR Aging',
+                ]),
+            ];
+
+            $basic = $pick([
+                'Income',
+                'Expenses',
+                'Daily Collection',
+                'Reconciliation',
+                'Account Categories',
+            ], 'accounting_basic');
+            array_splice($basic, 3, 0, [[
+                'label' => 'Cashier Handover',
+                'icon' => 'ti ti-arrows-exchange',
+                'route' => 'admin.accounts.handover.index',
+                'active_patterns' => ['admin.accounts.handover.*'],
+                'permission' => 'accounts.cashier',
+                'module' => 'accounting_basic',
+            ]]);
+            $result[] = ['title' => 'Basic Accounting', 'items' => $basic];
+
+            $result[] = [
+                'title' => 'Advanced Accounting',
+                'items' => $pick([
+                    'Accounting Dashboard',
+                    'Chart of Accounts',
+                    'Journal Entries',
+                    'General Ledger',
+                    'Trial Balance',
+                    'Cashbook',
+                    'Profit & Loss',
+                    'Balance Sheet',
+                    'Revenue by Dept',
+                    'Expense by Dept',
+                    'Supplier Payables',
+                    'Supplier Payments',
+                    'AP Aging',
+                    'Fiscal Years',
+                    'Accounting Periods',
+                    'Accounting Settings',
+                ], 'accounting_advanced'),
+            ];
+        }
+
+        return $result;
     }
 
     protected function finaliseSections(array $sections, User $user, string $currentRouteName): array
