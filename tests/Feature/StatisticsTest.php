@@ -74,21 +74,42 @@ class StatisticsTest extends TestCase
 
     /* ── Staff performance is sensitive ── */
 
-    public function test_investigation_results_statistics_is_registered_and_loads(): void
+    public function test_investigation_statistics_includes_result_statistics(): void
     {
         $user = $this->userWith(['statistics.investigations.view']);
-        $data = app(StatisticsService::class)->build('investigation-results', []);
+        $data = app(StatisticsService::class)->build('investigations', []);
 
-        $this->assertSame('Investigation Results Statistics', $data['title']);
-        $this->assertSame(
+        $this->assertSame('Investigation Statistics', $data['title']);
+        $this->assertEqualsCanonicalizing(
             ['Results Entered', 'Verified Results', 'Abnormal Results', 'Investigations Reported'],
-            collect($data['kpis'])->pluck('label')->all()
+            collect($data['kpis'])->pluck('label')->intersect([
+                'Results Entered',
+                'Verified Results',
+                'Abnormal Results',
+                'Investigations Reported',
+            ])->values()->all()
         );
 
         $this->actingAs($user)
-            ->get(route('admin.statistics.investigation-results'))
+            ->get(route('admin.statistics.investigations'))
             ->assertOk()
-            ->assertSee('Investigation Results Statistics');
+            ->assertSee('Investigation Statistics')
+            ->assertSee('Results Entered');
+    }
+
+    public function test_legacy_investigation_results_route_redirects_with_filters(): void
+    {
+        $user = $this->userWith(['statistics.investigations.view']);
+
+        $this->actingAs($user)
+            ->get(route('admin.statistics.investigation-results', [
+                'date_from' => '2026-06-01',
+                'date_to' => '2026-06-14',
+            ]))
+            ->assertRedirect(route('admin.statistics.investigations', [
+                'date_from' => '2026-06-01',
+                'date_to' => '2026-06-14',
+            ]));
     }
 
     public function test_staff_performance_forbidden_with_only_umbrella(): void

@@ -1091,9 +1091,12 @@ Route::middleware('auth')->group(function () {
         // staff_performance) can still reach that page.
         Route::middleware('module:reports')->prefix('statistics')->name('statistics.')->group(function () {
             Route::get('/', [StatisticsController::class, 'dashboard'])->name('dashboard');
+            Route::get('investigation-results', function (\Illuminate\Http\Request $request) {
+                return redirect()->route('admin.statistics.investigations', $request->query());
+            })->name('investigation-results');
             foreach ([
                 'activity', 'diagnoses', 'complaints', 'consultations', 'pharmacy',
-                'investigations', 'investigation-results', 'procedures', 'emergency', 'admission', 'mar',
+                'investigations', 'procedures', 'emergency', 'admission', 'mar',
                 'billing', 'claims', 'stock', 'blood-bank', 'staff-performance',
             ] as $statisticReport) {
                 Route::get($statisticReport, [StatisticsController::class, 'show'])

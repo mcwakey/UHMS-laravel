@@ -41,7 +41,6 @@ class StatisticsService
             'consultations' => ['title' => 'Consultation Statistics', 'icon' => 'ti-stethoscope', 'permission' => 'statistics.consultation.view'],
             'pharmacy' => ['title' => 'Pharmacy Statistics', 'icon' => 'ti-pill', 'permission' => 'statistics.pharmacy.view'],
             'investigations' => ['title' => 'Investigation Statistics', 'icon' => 'ti-microscope', 'permission' => 'statistics.investigations.view'],
-            'investigation-results' => ['title' => 'Investigation Results Statistics', 'icon' => 'ti-chart-histogram', 'permission' => 'statistics.investigations.view'],
             'procedures' => ['title' => 'Procedure / Theatre Statistics', 'icon' => 'ti-scalpel', 'permission' => 'statistics.procedures.view'],
             'emergency' => ['title' => 'Emergency Statistics', 'icon' => 'ti-ambulance', 'permission' => 'statistics.emergency.view'],
             'admission' => ['title' => 'Admission Statistics', 'icon' => 'ti-bed', 'permission' => 'statistics.admission.view'],
@@ -73,7 +72,6 @@ class StatisticsService
             'consultations' => $this->consultations($range),
             'pharmacy' => $this->pharmacy($range),
             'investigations' => $this->investigations($range),
-            'investigation-results' => $this->investigationResults($range),
             'procedures' => $this->procedures($range),
             'emergency' => $this->emergency($range),
             'admission' => $this->admission($range),
@@ -296,20 +294,21 @@ class StatisticsService
             ->groupBy('lab_request_items.name')->orderByDesc('total')->limit(15)->get();
         $byStatus = $this->groupCount('lab_requests', 'status', 'created_at', $r);
         $emergency = (int) $this->table('lab_requests')->where('is_emergency', true)->whereDate('created_at', '>=', $r['from'])->whereDate('created_at', '<=', $r['to'])->count();
+        $results = $this->investigationResults($r);
 
         return [
-            'kpis' => [
+            'kpis' => array_merge([
                 $this->kpi('Requests', $this->count('lab_requests', 'created_at', $r), 'number', 'primary', 'admin.reports.investigations'),
                 $this->kpi('Emergency Requests', $emergency, 'number', 'danger'),
                 $this->kpi('Distinct Tests', (int) $this->table('lab_request_items')->join('lab_requests', 'lab_requests.id', '=', 'lab_request_items.lab_request_id')->whereDate('lab_requests.created_at', '>=', $r['from'])->whereDate('lab_requests.created_at', '<=', $r['to'])->distinct()->count(DB::raw('lab_request_items.name')), 'number', 'info'),
-            ],
-            'charts' => [
+            ], $results['kpis']),
+            'charts' => array_merge([
                 $this->bar('top_tests', 'Most Requested Investigations', $top->pluck('label')->all(), $top->pluck('total')->all()),
                 $this->donut('lab_status', 'Requests by Status', $byStatus->pluck('label')->all(), $byStatus->pluck('total')->all()),
-            ],
-            'lists' => [
+            ], $results['charts']),
+            'lists' => array_merge([
                 $this->rankedList('Most Requested Investigations', ['Investigation', 'Requests'], $top, 'label', 'total', 'admin.reports.investigations', $r),
-            ],
+            ], $results['lists']),
         ];
     }
 

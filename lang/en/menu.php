@@ -130,7 +130,6 @@ return [
     'consultation_statistics' => 'Consultation Statistics',
     'pharmacy_statistics' => 'Pharmacy Statistics',
     'investigation_statistics' => 'Investigation Statistics',
-    'investigation_results_statistics' => 'Investigation Results Statistics',
     'procedure_theatre' => 'Procedure / Theatre',
     'emergency_statistics' => 'Emergency Statistics',
     'admission_statistics' => 'Admission Statistics',
