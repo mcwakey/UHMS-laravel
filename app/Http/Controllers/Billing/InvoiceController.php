@@ -326,7 +326,7 @@ class InvoiceController extends Controller
      */
     public function print(Invoice $invoice)
     {
-        $invoice->load(['items.serviceCatalog', 'payments', 'receivables.sponsor', 'receivables.insuranceProvider', 'receivables.corporateClient', 'patient', 'visit.department', 'createdBy']);
+        $invoice->load(['items.serviceCatalog', 'items.department', 'payments', 'receivables.sponsor', 'receivables.insuranceProvider', 'receivables.corporateClient', 'patient', 'visit.department', 'createdBy']);
 
         return view('billing.invoices.print', compact('invoice'));
     }
@@ -336,7 +336,7 @@ class InvoiceController extends Controller
      */
     public function downloadPdf(Invoice $invoice)
     {
-        $invoice->load(['items.serviceCatalog', 'payments', 'receivables.sponsor', 'receivables.insuranceProvider', 'receivables.corporateClient', 'patient', 'sponsor', 'corporateClient', 'visit.department', 'createdBy', 'creditNotes']);
+        $invoice->load(['items.serviceCatalog', 'items.department', 'payments', 'receivables.sponsor', 'receivables.insuranceProvider', 'receivables.corporateClient', 'patient', 'sponsor', 'corporateClient', 'visit.department', 'createdBy', 'creditNotes']);
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('billing.invoices.invoice-pdf', compact('invoice'))
             ->setPaper('a4');

@@ -39,6 +39,7 @@ return [
     'write_off'             => 'Annulation de créance',
     'credit_note'           => 'Note de crédit',
     'issue_credit_note_title' => 'Émettre une note de crédit / annulation',
+    'unassigned_department' => 'Général',
     'available_to_credit'   => 'Disponible à créditer',
     'adjustment_exceed_note' => 'Ne peut pas dépasser le montant disponible à créditer.',
     'refund'                => 'Remboursement',

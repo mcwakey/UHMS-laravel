@@ -39,6 +39,7 @@ return [
     'write_off'             => 'Write-Off',
     'credit_note'           => 'Credit Note',
     'issue_credit_note_title' => 'Issue Credit Note / Write-Off',
+    'unassigned_department' => 'General',
     'available_to_credit'   => 'Available to credit',
     'adjustment_exceed_note' => 'Cannot exceed the amount available to credit.',
     'refund'                => 'Refund',

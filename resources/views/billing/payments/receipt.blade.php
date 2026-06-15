@@ -142,17 +142,21 @@
                 </tr>
             </thead>
             <tbody>
-                @php $currentDept = null; @endphp
-                @foreach($inv->items->sortBy(fn ($i) => $i->department?->name ?? 'zzz') as $item)
+                @php
+                    $deptGroups = $inv->items
+                        ->sortBy(fn ($i) => $i->department?->name ?? 'zzz')
+                        ->groupBy(fn ($i) => $i->department?->name ?? __('payments.unassigned_department'));
+                @endphp
+                @foreach($deptGroups as $deptName => $deptItems)
+                @php
+                    $deptTotal = $deptItems->sum(fn ($i) => round(($i->selected_price !== null ? (float) $i->selected_price : (float) ($i->unit_price ?? 0)) * (int) $i->quantity, 2));
+                @endphp
+                <tr class="dept-row"><td colspan="4">{{ $deptName }}</td><td class="text-end">&#8373;{{ number_format($deptTotal, 2) }}</td></tr>
+                @foreach($deptItems as $item)
                 @php
                     $selectedPrice = $item->selected_price !== null ? (float) $item->selected_price : (float) ($item->unit_price ?? 0);
                     $lineTotal     = round($selectedPrice * (int) $item->quantity, 2);
-                    $deptName      = $item->department?->name ?? __('payments.unassigned_department');
                 @endphp
-                @if($currentDept !== $deptName)
-                <tr class="dept-row"><td colspan="5">{{ $deptName }}</td></tr>
-                @php $currentDept = $deptName; @endphp
-                @endif
                 <tr>
                     <td>{{ $item->description }}</td>
                     <td class="text-center">{{ $item->quantity }}</td>
@@ -162,6 +166,7 @@
                     </td>
                     <td class="text-end">&#8373;{{ number_format($lineTotal, 2) }}</td>
                 </tr>
+                @endforeach
                 @endforeach
             </tbody>
         </table>

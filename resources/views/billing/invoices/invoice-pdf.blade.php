@@ -47,6 +47,7 @@
         table.items th { background: #f1f5f9; color: #475569; font-weight: bold; font-size: 9.5px; text-transform: uppercase; letter-spacing: .4px; padding: 7px 9px; text-align: left; border-bottom: 1.5px solid #cbd5e1; }
         table.items td { padding: 7px 9px; border-bottom: 1px solid #eef2f7; font-size: 10.5px; }
         table.items tbody tr:nth-child(even) { background: #fafbfc; }
+        table.items tr.dept-row td { background: #eef2f7; font-weight: bold; font-size: 9.5px; text-transform: uppercase; letter-spacing: .4px; color: {{ $accent }}; padding: 6px 9px; }
         .item-code { font-size: 9px; color: #94a3b8; }
 
         .totals { width: 270px; float: right; }
@@ -134,10 +135,22 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($invoice->items as $idx => $item)
-            @php $selectedPrice = $item->selected_price !== null ? (float) $item->selected_price : (float) ($item->unit_price ?? 0); @endphp
+            @php
+                $rowNum = 0;
+                $deptGroups = $invoice->items
+                    ->sortBy(fn ($i) => $i->department?->name ?? 'zzz')
+                    ->groupBy(fn ($i) => $i->department?->name ?? __('invoices.unassigned_department'));
+            @endphp
+            @foreach($deptGroups as $deptName => $deptItems)
+            @php $deptTotal = $deptItems->sum(fn ($i) => (float) $i->patient_payable); @endphp
+            <tr class="dept-row"><td colspan="4">{{ $deptName }}</td><td class="text-end">&#8373;{{ number_format($deptTotal, 2) }}</td></tr>
+            @foreach($deptItems as $item)
+            @php
+                $selectedPrice = $item->selected_price !== null ? (float) $item->selected_price : (float) ($item->unit_price ?? 0);
+                $rowNum++;
+            @endphp
             <tr>
-                <td>{{ $idx + 1 }}</td>
+                <td>{{ $rowNum }}</td>
                 <td>
                     {{ $item->description }}
                     @if($item->serviceCatalog)<div class="item-code">{{ $item->serviceCatalog->code }}</div>@endif
@@ -146,6 +159,7 @@
                 <td class="text-end">&#8373;{{ number_format($selectedPrice, 2) }}</td>
                 <td class="text-end">&#8373;{{ number_format($item->patient_payable, 2) }}</td>
             </tr>
+            @endforeach
             @endforeach
         </tbody>
     </table>
