@@ -8,7 +8,7 @@ class ProcessPayrollRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('hr.payroll.process');
+        return $this->user()->can('hr.payroll.generate') || $this->user()->can('hr.payroll.process');
     }
 
     public function rules(): array

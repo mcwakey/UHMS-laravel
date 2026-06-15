@@ -710,6 +710,12 @@ Route::middleware('auth')->group(function () {
 
         // HR & Payroll
         Route::prefix('hr')->name('hr.')->middleware('module:hr')->group(function () {
+            Route::get('configuration', [\App\Http\Controllers\Admin\HrConfigurationController::class, 'index'])
+                ->name('configuration.index')->middleware('can:hr.shifts.view');
+            Route::post('configuration/shifts', [\App\Http\Controllers\Admin\HrConfigurationController::class, 'storeShift'])
+                ->name('configuration.shifts.store')->middleware('can:hr.shifts.manage');
+            Route::put('configuration/policies/{policy}', [\App\Http\Controllers\Admin\HrConfigurationController::class, 'updatePolicy'])
+                ->name('configuration.policies.update')->middleware('can:hr.shifts.manage');
             // Employees
             Route::middleware('can:hr.employees.view')->group(function () {
                 Route::get('employees', [EmployeeController::class, 'index'])->name('employees.index');
@@ -724,6 +730,7 @@ Route::middleware('auth')->group(function () {
             Route::middleware('can:hr.attendance.view')->group(function () {
                 Route::get('attendance', [AttendanceController::class, 'index'])->name('attendance.index');
                 Route::post('attendance', [AttendanceController::class, 'store'])->name('attendance.store')->middleware('can:hr.attendance.manage');
+                Route::post('attendance/{attendance}/approve', [AttendanceController::class, 'approve'])->name('attendance.approve')->middleware('can:hr.attendance.approve');
                 Route::get('attendance/summary', [AttendanceController::class, 'summary'])->name('attendance.summary');
             });
 
@@ -739,8 +746,9 @@ Route::middleware('auth')->group(function () {
             // Payroll
             Route::middleware(['module:payroll', 'can:hr.payroll.view'])->group(function () {
                 Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index');
-                Route::post('payroll/process', [PayrollController::class, 'process'])->name('payroll.process')->middleware('can:hr.payroll.process');
-                Route::post('payroll/approve', [PayrollController::class, 'approve'])->name('payroll.approve')->middleware('can:hr.payroll.process');
+                Route::post('payroll/process', [PayrollController::class, 'process'])->name('payroll.process')->middleware('can:hr.payroll.generate');
+                Route::post('payroll/review', [PayrollController::class, 'review'])->name('payroll.review')->middleware('can:hr.payroll.review');
+                Route::post('payroll/approve', [PayrollController::class, 'approve'])->name('payroll.approve')->middleware('can:hr.payroll.approve');
                 Route::post('payroll/mark-paid', [PayrollController::class, 'markPaid'])->name('payroll.mark-paid')->middleware('can:hr.payroll.process');
                 Route::get('payroll/{record}/payslip', [PayrollController::class, 'payslip'])->name('payroll.payslip');
             });

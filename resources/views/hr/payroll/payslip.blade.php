@@ -62,6 +62,8 @@
                 <table class="table table-sm">
                     <tbody>
                         <tr><td>{{ __('payroll.ssnit_employee') }}</td><td class="text-end">GH₵ {{ number_format($record->ssnit_employee, 2) }}</td></tr>
+                        <tr><td>{{ __('payroll.gross_taxable_income') }}</td><td class="text-end">GH₵ {{ number_format($record->gross_taxable_income, 2) }}</td></tr>
+                        <tr><td>{{ __('payroll.chargeable_income') }}</td><td class="text-end">GH₵ {{ number_format($record->chargeable_income, 2) }}</td></tr>
                         <tr><td>{{ __('payroll.paye_tax') }}</td><td class="text-end">GH₵ {{ number_format($record->tax, 2) }}</td></tr>
                         <tr><td>{{ __('payroll.other_deductions_short') }}</td><td class="text-end">GH₵ {{ number_format($record->other_deductions, 2) }}</td></tr>
                     </tbody>

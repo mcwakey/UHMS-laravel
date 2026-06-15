@@ -1,7 +1,7 @@
 {
-    "generated_at": "2026-06-15T01:49:59+00:00",
+    "generated_at": "2026-06-15T04:33:23+00:00",
     "controllers_flagged": 76,
-    "logging_services_detected": 85,
+    "logging_services_detected": 90,
     "summary": {
         "MISSING_LOG": 0,
         "NEEDS_REVIEW": 0,
@@ -346,6 +346,25 @@
             "in_baseline": true
         },
         {
+            "controller": "app/Http/Controllers/Admin/AttendanceController.php",
+            "unlogged_actions": [
+                "store",
+                "approve"
+            ],
+            "actions": [
+                "store",
+                "approve"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to AttendanceProcessingService, HRService (logs direct).",
+            "services": [
+                "AttendanceProcessingService",
+                "HRService"
+            ],
+            "in_baseline": true
+        },
+        {
             "controller": "app/Http/Controllers/Admin/BloodCrossmatchController.php",
             "unlogged_actions": [
                 "store",
@@ -466,8 +485,10 @@
             ],
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
-            "reason": "Delegates to PayrollService (logs direct).",
+            "reason": "Delegates to PayrollApprovalService, PayrollDraftService, PayrollService (logs direct).",
             "services": [
+                "PayrollApprovalService",
+                "PayrollDraftService",
                 "PayrollService"
             ],
             "in_baseline": true
@@ -700,9 +721,10 @@
             ],
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
-            "reason": "Delegates to AccountingPeriodService (logs direct).",
+            "reason": "Delegates to AccountingPeriodService, YearEndClosingService (logs direct).",
             "services": [
-                "AccountingPeriodService"
+                "AccountingPeriodService",
+                "YearEndClosingService"
             ],
             "in_baseline": false
         },
@@ -722,22 +744,6 @@
             "severity": "MEDIUM",
             "reason": "Deferred lower-priority gap (config backlog).",
             "services": [],
-            "in_baseline": true
-        },
-        {
-            "controller": "app/Http/Controllers/Admin/AttendanceController.php",
-            "unlogged_actions": [
-                "store"
-            ],
-            "actions": [
-                "store"
-            ],
-            "classification": "SERVICE_FUNNEL_COVERED",
-            "severity": "MEDIUM",
-            "reason": "Delegates to HRService (logs direct).",
-            "services": [
-                "HRService"
-            ],
             "in_baseline": true
         },
         {

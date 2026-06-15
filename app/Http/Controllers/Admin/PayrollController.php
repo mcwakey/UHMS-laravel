@@ -7,12 +7,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ProcessPayrollRequest;
 use App\Models\Department;
 use App\Models\PayrollRecord;
+use App\Models\PayrollRun;
+use App\Services\PayrollApprovalService;
+use App\Services\PayrollDraftService;
 use App\Services\PayrollService;
 use Illuminate\Http\Request;
 
 class PayrollController extends Controller
 {
-    public function __construct(private PayrollService $payrollService) {}
+    public function __construct(private PayrollService $payrollService, private PayrollDraftService $drafts, private PayrollApprovalService $approvals) {}
 
     public function index(Request $request)
     {
@@ -30,22 +33,26 @@ class PayrollController extends Controller
 
     public function process(ProcessPayrollRequest $request)
     {
-        $records = $this->payrollService->processPayroll(
-            $request->pay_period,
-            null,
-            (float) ($request->allowances ?? 0),
-            (float) ($request->other_deductions ?? 0)
-        );
+        $run = $this->drafts->generate($request->pay_period);
 
         return redirect()->route('admin.hr.payroll.index', ['pay_period' => $request->pay_period])
-            ->with('success', __('messages.payroll.processed', ['count' => $records->count()]));
+            ->with('success', __('messages.payroll.processed', ['count' => $run->records->count()]));
+    }
+
+    public function review(Request $request)
+    {
+        $request->validate(['pay_period' => ['required', 'regex:/^\d{4}-\d{2}$/']]);
+        $run = PayrollRun::where('pay_period', $request->pay_period)->firstOrFail();
+        $this->approvals->review($run);
+        return back()->with('success', __('payroll.reviewed'));
     }
 
     public function approve(Request $request)
     {
         $request->validate(['pay_period' => 'required|string']);
-        $count = $this->payrollService->approvePayroll($request->pay_period);
-        return redirect()->back()->with('success', __('messages.payroll.approved', ['count' => $count]));
+        $run = PayrollRun::where('pay_period', $request->pay_period)->firstOrFail();
+        $this->approvals->approve($run);
+        return redirect()->back()->with('success', __('messages.payroll.approved', ['count' => $run->records()->count()]));
     }
 
     public function markPaid(Request $request)
@@ -57,6 +64,7 @@ class PayrollController extends Controller
 
     public function payslip(PayrollRecord $record)
     {
+        abort_unless(in_array($record->status->value, ['approved', 'paid'], true), 404);
         $record->load(['employee.department', 'processedByUser']);
         return view('hr.payroll.payslip', compact('record'));
     }

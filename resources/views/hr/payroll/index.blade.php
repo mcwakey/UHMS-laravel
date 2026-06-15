@@ -88,7 +88,7 @@
 </div>
 
 <!-- Action Buttons -->
-@can('hr.payroll.process')
+@can('hr.payroll.generate')
 <div class="card mb-3">
     <div class="card-body d-flex gap-2 align-items-center py-2">
         <form method="POST" action="{{ route('admin.hr.payroll.process') }}" class="d-flex gap-2 align-items-center">
@@ -102,11 +102,16 @@
             </div>
             <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-calculator me-1"></i>{{ __('payroll.process_payroll') }}</button>
         </form>
+        @can('hr.payroll.review')
+        <form method="POST" action="{{ route('admin.hr.payroll.review') }}" class="d-inline">@csrf<input type="hidden" name="pay_period" value="{{ $payPeriod }}"><button class="btn btn-outline-primary btn-sm"><i class="ti ti-eye-check me-1"></i>{{ __('payroll.review_payroll') }}</button></form>
+        @endcan
+        @can('hr.payroll.approve')
         <form method="POST" action="{{ route('admin.hr.payroll.approve') }}" class="d-inline">
             @csrf
             <input type="hidden" name="pay_period" value="{{ $payPeriod }}">
             <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-check me-1"></i>{{ __('payroll.approve_all') }}</button>
         </form>
+        @endcan
         <form method="POST" action="{{ route('admin.hr.payroll.mark-paid') }}" class="d-inline">
             @csrf
             <input type="hidden" name="pay_period" value="{{ $payPeriod }}">

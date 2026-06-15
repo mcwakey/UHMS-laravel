@@ -8,6 +8,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(GhanaPayeTaxTableSeeder::class);
         $this->call([
             // ── Core access control & org structure ──────────────────────
             RoleSeeder::class,

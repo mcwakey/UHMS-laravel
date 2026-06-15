@@ -1141,6 +1141,14 @@ class SidebarMenuBuilder
                         'permission' => 'hr.payroll.view',
                         'module' => 'payroll',
                     ],
+                    [
+                        'label' => 'HR Configuration',
+                        'icon' => 'ti ti-settings',
+                        'route' => 'admin.hr.configuration.index',
+                        'active_patterns' => ['admin.hr.configuration.*'],
+                        'permission' => 'hr.shifts.view',
+                        'module' => 'hr',
+                    ],
                 ],
             ],
             [

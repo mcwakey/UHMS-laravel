@@ -95,21 +95,33 @@ class Stage2NeedsReviewLogTest extends TestCase
     public function test_payroll_batch_events_log_under_system(): void
     {
         $dept = \App\Models\Department::factory()->create();
-        \App\Models\Employee::create([
+        $employee = \App\Models\Employee::create([
             'employee_number' => 'EMP-0001', 'first_name' => 'Ama', 'last_name' => 'Mensah',
             'email' => 'ama@example.test', 'phone' => '0240000001', 'position' => 'Nurse',
             'department_id' => $dept->id,
             'basic_salary' => 2000, 'status' => \App\Enums\EmployeeStatus::ACTIVE->value,
             'hire_date' => now()->subYear()->toDateString(),
         ]);
+        $this->seed(\Database\Seeders\GhanaPayeTaxTableSeeder::class);
 
-        $payroll = app(PayrollService::class);
         $period = now()->format('Y-m');
-        $payroll->processPayroll($period);
-        $payroll->approvePayroll($period);
+        \App\Models\EmployeeAttendance::create([
+            'employee_id' => $employee->id,
+            'date' => now()->toDateString(),
+            'status' => 'present',
+            'source' => 'manual',
+            'review_status' => 'approved',
+            'reviewed_by' => $this->user->id,
+            'reviewed_at' => now(),
+        ]);
+        $run = app(\App\Services\PayrollDraftService::class)->generate($period);
+        $approval = app(\App\Services\PayrollApprovalService::class);
+        $approval->review($run);
+        $approval->approve($run->fresh());
+        $payroll = app(PayrollService::class);
         $payroll->markPaid($period);
 
-        foreach (['PAYROLL_PROCESSED', 'PAYROLL_APPROVED', 'PAYROLL_PAID'] as $event) {
+        foreach (['PAYROLL_DRAFT_GENERATED', 'PAYROLL_APPROVED', 'PAYROLL_PAID'] as $event) {
             $log = $this->event($event);
             $this->assertNotNull($log, "$event should be logged");
             $this->assertSame('SYSTEM', $log->log_name);

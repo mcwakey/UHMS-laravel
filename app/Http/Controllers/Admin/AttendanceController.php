@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAttendanceRequest;
 use App\Models\Employee;
+use App\Models\EmployeeAttendance;
+use App\Services\AttendanceProcessingService;
 use App\Services\HRService;
 use Illuminate\Http\Request;
 
 class AttendanceController extends Controller
 {
-    public function __construct(private HRService $hrService) {}
+    public function __construct(private HRService $hrService, private AttendanceProcessingService $processing) {}
 
     public function index(Request $request)
     {
@@ -34,5 +36,11 @@ class AttendanceController extends Controller
         $summaries = $this->hrService->getBulkAttendanceSummary($employees->pluck('id')->toArray(), $month);
 
         return view('hr.attendance.summary', compact('employees', 'summaries', 'month'));
+    }
+
+    public function approve(Request $request, EmployeeAttendance $attendance)
+    {
+        $this->processing->approve($attendance, $request->user()->id);
+        return back()->with('success', __('hr.attendance_approved'));
     }
 }

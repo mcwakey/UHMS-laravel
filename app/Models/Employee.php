@@ -28,11 +28,23 @@ class Employee extends Model
         'position',
         'hire_date',
         'basic_salary',
+        'salary_type',
+        'payment_method',
         'bank_name',
         'bank_account',
+        'mobile_money_number',
         'bank_branch',
         'ssnit_number',
+        'employee_ssnit_rate',
+        'employer_ssnit_rate',
+        'pension_scheme',
         'tin_number',
+        'tax_identification_number',
+        'tax_residency_status',
+        'paye_exempt',
+        'tax_relief_amount',
+        'default_allowances',
+        'default_deductions',
         'emergency_contact_name',
         'emergency_contact_phone',
         'status',
@@ -44,6 +56,12 @@ class Employee extends Model
         'date_of_birth' => 'date',
         'hire_date' => 'date',
         'basic_salary' => 'decimal:2',
+        'employee_ssnit_rate' => 'decimal:4',
+        'employer_ssnit_rate' => 'decimal:4',
+        'tax_relief_amount' => 'decimal:2',
+        'paye_exempt' => 'boolean',
+        'default_allowances' => 'array',
+        'default_deductions' => 'array',
     ];
 
     // Relationships
@@ -70,6 +88,11 @@ class Employee extends Model
     public function payrollRecords(): HasMany
     {
         return $this->hasMany(PayrollRecord::class);
+    }
+
+    public function shiftAssignments(): HasMany
+    {
+        return $this->hasMany(EmployeeShiftAssignment::class);
     }
 
     // Accessors

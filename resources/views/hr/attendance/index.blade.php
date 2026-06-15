@@ -93,6 +93,7 @@
                                 <th>{{ __('hr.clock_out') }}</th>
                                 <th>{{ __('hr.hours') }}</th>
                                 <th>{{ __('hr.status') }}</th>
+                                <th>{{ __('hr.review_status') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -109,9 +110,17 @@
                                     @endphp
                                     <span class="badge bg-{{ $statusColors[$rec->status] ?? 'secondary' }}">{{ __('hr.' . $rec->status) }}</span>
                                 </td>
+                                <td>
+                                    <span class="badge bg-{{ $rec->review_status === 'approved' ? 'success' : 'warning' }}">{{ __('hr.'.$rec->review_status) }}</span>
+                                    @can('hr.attendance.approve')
+                                    @if($rec->review_status !== 'approved')
+                                    <form method="POST" action="{{ route('admin.hr.attendance.approve', $rec) }}" class="d-inline">@csrf<button class="btn btn-sm btn-outline-success" title="{{ __('hr.approve') }}"><i class="ti ti-check"></i></button></form>
+                                    @endif
+                                    @endcan
+                                </td>
                             </tr>
                             @empty
-                            <tr><td colspan="6"><x-empty-state :message="__('hr.no_attendance_records')" /></td></tr>
+                            <tr><td colspan="7"><x-empty-state :message="__('hr.no_attendance_records')" /></td></tr>
                             @endforelse
                         </tbody>
                     </table>

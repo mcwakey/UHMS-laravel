@@ -132,6 +132,15 @@
                             <label class="form-label">TIN Number</label>
                             <input type="text" name="tin_number" class="form-control" value="{{ old('tin_number', $employee->tin_number) }}">
                         </div>
+                        <div class="col-12">
+                            <label class="form-label">{{ __('payroll.resident_type') }}</label>
+                            <select name="tax_residency_status" class="form-select">
+                                @foreach(['resident', 'non_resident', 'exempt'] as $type)<option value="{{ $type }}" @selected(old('tax_residency_status', $employee->tax_residency_status) === $type)>{{ __('payroll.'.$type) }}</option>@endforeach
+                            </select>
+                        </div>
+                        <div class="col-12"><label class="form-label">{{ __('payroll.tax_identification_number') }}</label><input name="tax_identification_number" class="form-control" value="{{ old('tax_identification_number', $employee->tax_identification_number) }}"></div>
+                        <div class="col-6"><label class="form-label">{{ __('payroll.tax_reliefs') }}</label><input type="number" step="0.01" min="0" name="tax_relief_amount" class="form-control" value="{{ old('tax_relief_amount', $employee->tax_relief_amount) }}"></div>
+                        <div class="col-6"><label class="form-label">SSNIT %</label><input type="number" step="0.0001" min="0" name="employee_ssnit_rate" class="form-control" value="{{ old('employee_ssnit_rate', $employee->employee_ssnit_rate) }}"></div>
                     </div>
                 </div>
             </div>
