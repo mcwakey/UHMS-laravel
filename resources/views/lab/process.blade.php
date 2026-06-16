@@ -2,7 +2,10 @@
 @section('title', 'Investigation: ' . $request->request_number)
 
 @section('content')
-@php $resultType = $request->result_type ?? \App\Enums\ResultType::PARAMETERS; @endphp
+@php
+    $resultType = $request->result_type ?? \App\Enums\ResultType::PARAMETERS;
+    $verifiedPrintItems = $request->items->filter(fn ($item) => $item->result?->is_verified)->values();
+@endphp
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
@@ -14,6 +17,11 @@
         @if($request->targetDepartment)<small class="text-muted">{{ __('lab.department_label') }}: <strong>{{ $request->targetDepartment->name }}</strong></small>@endif
     </div>
     <div class="d-flex gap-2">
+        @if($verifiedPrintItems->isNotEmpty())
+        <button type="button" class="btn btn-outline-primary btn-md" data-bs-toggle="modal" data-bs-target="#printResultsModal">
+            <i class="ti ti-printer me-1"></i>{{ __('lab.print_selected_results') }}
+        </button>
+        @endif
         @if(!in_array($request->status, ['completed', 'cancelled']))
         <x-confirm-form :action="route('admin.lab.requests.cancel', $request)" method="PATCH"
             :button-label="__('lab.cancel_request')" button-class="btn btn-outline-danger btn-md" icon="ti-x"
@@ -141,8 +149,8 @@
                     <tr>
                         <th>{{ __('lab.hash_col') }}</th>
                         <th>{{ __('lab.test_name_col') }}</th>
-                        <th>{{ __('lab.category_col') }}</th>
-                        <th>{{ __('lab.normal_range') }}</th>
+                        {{-- <th>{{ __('lab.category_col') }}</th> --}}
+                        {{-- <th>{{ __('lab.normal_range') }}</th> --}}
                         <th>{{ __('lab.status_col') }}</th>
                         <th>{{ __('lab.result_col') }}</th>
                         <th>{{ __('lab.performed_by_col') }}</th>
@@ -152,11 +160,12 @@
                 </thead>
                 <tbody>
                     @foreach($request->items as $index => $item)
-                    <tr class="{{ $item->result && $item->result->is_abnormal ? 'table-danger' : '' }}">
+                    {{-- <tr class="{{ $item->result && $item->result->is_abnormal ? 'table-danger' : '' }}"> --}}
+                    <tr>
                         <td>{{ $index + 1 }}</td>
                         <td class="fw-medium">{{ $item->labTest->name ?? $item->name }} <small class="text-muted">({{ $item->labTest->code ?? '' }})</small></td>
-                        <td>{{ $item->labTest?->category?->name ?? '-' }}</td>
-                        <td>
+                        {{-- <td>{{ $item->labTest?->category?->name ?? '-' }}</td> --}}
+                        {{-- <td>
                             @if($item->labTest?->criteria?->isNotEmpty())
                                 @foreach($item->labTest->criteria as $criterion)
                                     <div><small><strong>{{ $criterion->name }}:</strong> {{ $criterion->normal_range ?? '-' }} {{ $criterion->unit ?? '' }}</small></div>
@@ -166,7 +175,7 @@
                             @else
                                 <small>{{ $item->labTest?->normal_range ?? '-' }} {{ $item->labTest?->unit ?? '' }}</small>
                             @endif
-                        </td>
+                        </td> --}}
                         <td><span class="badge bg-{{ $item->status_color }}">{{ ucfirst($item->status) }}</span></td>
                         <td>
                             @if($item->result)
@@ -627,6 +636,72 @@
     </div>{{-- /col-lg-4 --}}
 </div>{{-- /row --}}
 
+@if($verifiedPrintItems->isNotEmpty())
+<div class="modal fade" id="printResultsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <form method="GET" action="{{ route('admin.lab.results.print-request', $request) }}" target="_blank" class="modal-content" id="printResultsForm">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title"><i class="ti ti-printer me-1"></i>{{ __('lab.print_selected_results') }}</h5>
+                    <small class="text-muted">{{ __('lab.print_results_hint') }}</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('common.close') }}"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="fw-semibold">{{ __('lab.verified_results') }}</span>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="selectAllPrintResults" checked>
+                        <label class="form-check-label" for="selectAllPrintResults">{{ __('common.select') }} {{ __('common.all') }}</label>
+                    </div>
+                </div>
+                <div class="list-group mb-4">
+                    @foreach($verifiedPrintItems as $printItem)
+                        <label class="list-group-item d-flex align-items-center gap-3">
+                            <input class="form-check-input print-result-checkbox" type="checkbox" name="items[]" value="{{ $printItem->id }}" checked>
+                            <span class="flex-grow-1">
+                                <strong>{{ $printItem->display_name }}</strong>
+                                <small class="text-muted d-block">
+                                    {{ $printItem->result?->performed_at?->format('d M Y H:i') }}
+                                    @if($printItem->result?->is_abnormal)
+                                        <span class="text-danger ms-1">{{ __('investigations.abnormal') }}</span>
+                                    @endif
+                                </small>
+                            </span>
+                            <span class="badge bg-success">{{ __('lab.verified_badge') }}</span>
+                        </label>
+                    @endforeach
+                </div>
+                <label class="form-label fw-semibold">{{ __('lab.print_layout') }}</label>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="border rounded p-3 d-flex gap-2 h-100">
+                            <input class="form-check-input" type="radio" name="layout" value="compact" checked>
+                            <span><strong>{{ __('lab.compact_combined') }}</strong><small class="text-muted d-block">{{ __('lab.compact_combined_hint') }}</small></span>
+                        </label>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="border rounded p-3 d-flex gap-2 h-100">
+                            <input class="form-check-input" type="radio" name="layout" value="separate">
+                            <span><strong>{{ __('lab.one_result_per_page') }}</strong><small class="text-muted d-block">{{ __('lab.one_result_per_page_hint') }}</small></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="alert alert-warning py-2 mt-3 mb-0 d-none" id="printResultsWarning">
+                    {{ __('lab.select_result_to_print') }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                <button type="submit" class="btn btn-primary" id="printSelectedResultsButton">
+                    <i class="ti ti-printer me-1"></i>{{ __('lab.open_print_preview') }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
 {{-- View Result Modal (lazy-loaded via fetch) --}}
 <div class="modal fade" id="viewResultModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -646,6 +721,125 @@
 </div>
 @push('scripts')
 <script>
+const printResultsForm = document.getElementById('printResultsForm');
+if (printResultsForm) {
+    const selectAll = document.getElementById('selectAllPrintResults');
+    const boxes = [...printResultsForm.querySelectorAll('.print-result-checkbox')];
+    const warning = document.getElementById('printResultsWarning');
+    const submitButton = document.getElementById('printSelectedResultsButton');
+
+    const syncPrintSelection = () => {
+        const selected = boxes.filter((box) => box.checked);
+        selectAll.checked = selected.length === boxes.length;
+        selectAll.indeterminate = selected.length > 0 && selected.length < boxes.length;
+        warning.classList.toggle('d-none', selected.length > 0);
+        submitButton.disabled = selected.length === 0;
+    };
+
+    selectAll.addEventListener('change', () => {
+        boxes.forEach((box) => { box.checked = selectAll.checked; });
+        syncPrintSelection();
+    });
+    boxes.forEach((box) => box.addEventListener('change', syncPrintSelection));
+    syncPrintSelection();
+}
+
+function evaluateInvestigationFlag(rawValue, rawRange) {
+    const value = String(rawValue ?? '').trim();
+    const range = String(rawRange ?? '').trim();
+    if (!value || !range) return null;
+
+    const numeric = Number(value.replace(/[,\s]/g, ''));
+    if (Number.isFinite(numeric)) {
+        const normalized = range.replace(/[–—−]/g, '-');
+        let match = normalized.match(/^\s*(-?\d+(?:\.\d+)?)\s*(?:-|to)\s*(-?\d+(?:\.\d+)?)\s*$/i);
+        if (match) {
+            const min = Number(match[1]);
+            const max = Number(match[2]);
+            return numeric < min ? 'low' : (numeric > max ? 'high' : 'normal');
+        }
+
+        match = range.match(/^\s*(<=|≤|<|>=|≥|>)\s*(-?\d+(?:\.\d+)?)\s*$/u);
+        if (match) {
+            const limit = Number(match[2]);
+            if (match[1] === '<') return numeric < limit ? 'normal' : 'high';
+            if (match[1] === '<=' || match[1] === '≤') return numeric <= limit ? 'normal' : 'high';
+            if (match[1] === '>') return numeric > limit ? 'normal' : 'low';
+            return numeric >= limit ? 'normal' : 'low';
+        }
+
+        match = range.match(/^\s*(?:up\s+to|max(?:imum)?\.?)\s*(-?\d+(?:\.\d+)?)\s*$/i);
+        if (match) return numeric <= Number(match[1]) ? 'normal' : 'high';
+
+        match = range.match(/^\s*(?:at\s+least|min(?:imum)?\.?)\s*(-?\d+(?:\.\d+)?)\s*$/i);
+        if (match) return numeric >= Number(match[1]) ? 'normal' : 'low';
+    }
+
+    if (!/\d/.test(range)) {
+        return value.toLocaleLowerCase() === range.toLocaleLowerCase() ? 'normal' : 'abnormal';
+    }
+
+    return null;
+}
+
+function syncResultModalAbnormalState(form) {
+    if (!form) return;
+
+    const flags = [...form.querySelectorAll('.criterion-flag-select')]
+        .map((select) => select.value)
+        .filter(Boolean);
+    const numeric = form.querySelector('.overall-numeric-result');
+    let numericAbnormal = false;
+
+    if (numeric && numeric.value !== '') {
+        const value = Number(numeric.value);
+        const min = numeric.dataset.normalMin === '' ? null : Number(numeric.dataset.normalMin);
+        const max = numeric.dataset.normalMax === '' ? null : Number(numeric.dataset.normalMax);
+        numericAbnormal = (min !== null && value < min) || (max !== null && value > max);
+        numeric.classList.toggle('is-invalid', numericAbnormal);
+        numeric.classList.toggle('is-valid', !numericAbnormal && (min !== null || max !== null));
+    }
+
+    const checkbox = form.querySelector('input[type="checkbox"][name="is_abnormal"]');
+    if (checkbox && (flags.length || numeric)) {
+        checkbox.checked = numericAbnormal || flags.some((flag) => flag !== 'normal');
+    }
+}
+
+function autoFlagCriterion(input) {
+    const row = input.closest('.investigation-criterion-row');
+    if (!row) return;
+
+    const flagSelect = row.querySelector('.criterion-flag-select');
+    const flag = evaluateInvestigationFlag(input.value, row.dataset.referenceRange);
+    if (flagSelect && flag) {
+        flagSelect.value = flag;
+        flagSelect.classList.toggle('border-success', flag === 'normal');
+        flagSelect.classList.toggle('border-danger', flag !== 'normal');
+        input.classList.toggle('is-valid', flag === 'normal');
+        input.classList.toggle('is-invalid', flag !== 'normal');
+    } else if (flagSelect && input.value === '') {
+        flagSelect.value = '';
+        flagSelect.classList.remove('border-success', 'border-danger');
+        input.classList.remove('is-valid', 'is-invalid');
+    }
+
+    syncResultModalAbnormalState(input.closest('form'));
+}
+
+document.addEventListener('input', (event) => {
+    if (event.target.matches('.criterion-value-input')) autoFlagCriterion(event.target);
+    if (event.target.matches('.overall-numeric-result')) syncResultModalAbnormalState(event.target.closest('form'));
+});
+document.addEventListener('change', (event) => {
+    if (event.target.matches('.criterion-value-input')) autoFlagCriterion(event.target);
+    if (event.target.matches('.criterion-flag-select, .overall-numeric-result')) {
+        syncResultModalAbnormalState(event.target.closest('form'));
+    }
+});
+document.querySelectorAll('.criterion-value-input').forEach(autoFlagCriterion);
+document.querySelectorAll('.overall-numeric-result').forEach((input) => syncResultModalAbnormalState(input.closest('form')));
+
 document.addEventListener('click', async (e) => {
     const btn = e.target.closest('.viewResultBtn');
     if (!btn) return;

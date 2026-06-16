@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Department;
 use App\Models\LabRequest;
+use App\Models\LabResult;
 use App\Models\LabTest;
 use App\Models\LabTestCategory;
 use App\Models\Patient;
@@ -145,6 +146,90 @@ class LabWorkflowTest extends TestCase
             'normal_range' => '12-16',
             'unit' => 'g/dL',
         ]);
+    }
+
+    public function test_verified_results_can_be_combined_on_one_printout(): void
+    {
+        $request = $this->makeLabRequest('INV-PRINT-001', 'completed');
+        $first = $request->items()->create(['name' => 'Full Blood Count', 'status' => 'completed']);
+        $second = $request->items()->create(['name' => 'Liver Function Test', 'status' => 'completed']);
+
+        foreach ([$first, $second] as $item) {
+            LabResult::create([
+                'lab_request_item_id' => $item->id,
+                'lab_request_id' => $request->id,
+                'result_type' => 'parameters',
+                'result_value' => $item->name . ' result',
+                'is_abnormal' => false,
+                'performed_by' => $this->user->id,
+                'verified_by' => $this->user->id,
+                'performed_at' => now(),
+                'verified_at' => now(),
+            ]);
+        }
+
+        $response = $this->actingAs($this->user)->get(route('admin.lab.results.print-request', [
+            'labRequest' => $request,
+            'items' => [$first->id, $second->id],
+            'layout' => 'compact',
+        ]));
+
+        $response->assertOk()
+            ->assertSee('Full Blood Count')
+            ->assertSee('Liver Function Test')
+            ->assertSee('2 results')
+            ->assertDontSee('<div class="result-page-break">', false);
+    }
+
+    public function test_multi_result_print_can_start_each_result_on_a_new_page(): void
+    {
+        $request = $this->makeLabRequest('INV-PRINT-002', 'completed');
+        $items = collect(['Urinalysis', 'Malaria Test'])->map(function (string $name) use ($request) {
+            $item = $request->items()->create(['name' => $name, 'status' => 'completed']);
+            LabResult::create([
+                'lab_request_item_id' => $item->id,
+                'lab_request_id' => $request->id,
+                'result_type' => 'parameters',
+                'result_value' => 'Normal',
+                'is_abnormal' => false,
+                'performed_by' => $this->user->id,
+                'verified_by' => $this->user->id,
+                'performed_at' => now(),
+                'verified_at' => now(),
+            ]);
+            return $item;
+        });
+
+        $this->actingAs($this->user)->get(route('admin.lab.results.print-request', [
+            'labRequest' => $request,
+            'items' => $items->pluck('id')->all(),
+            'layout' => 'separate',
+        ]))
+            ->assertOk()
+            ->assertSee('<div class="result-page-break">', false);
+    }
+
+    public function test_multi_result_print_rejects_items_from_another_request(): void
+    {
+        $request = $this->makeLabRequest('INV-PRINT-003', 'completed');
+        $otherRequest = $this->makeLabRequest('INV-PRINT-004', 'completed');
+        $otherItem = $otherRequest->items()->create(['name' => 'Foreign Result', 'status' => 'completed']);
+        LabResult::create([
+            'lab_request_item_id' => $otherItem->id,
+            'lab_request_id' => $otherRequest->id,
+            'result_type' => 'parameters',
+            'result_value' => 'Normal',
+            'is_abnormal' => false,
+            'performed_by' => $this->user->id,
+            'verified_by' => $this->user->id,
+            'performed_at' => now(),
+            'verified_at' => now(),
+        ]);
+
+        $this->actingAs($this->user)->get(route('admin.lab.results.print-request', [
+            'labRequest' => $request,
+            'items' => [$otherItem->id],
+        ]))->assertStatus(422);
     }
 
     private function makeLabRequest(string $requestNumber, string $status): LabRequest

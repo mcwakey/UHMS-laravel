@@ -12,7 +12,9 @@
     <div class="mb-3">
         <label class="form-label">{{ __('lab.overall_result_label') }} <span class="text-danger">*</span></label>
         <div class="input-group">
-            <input type="number" step="any" name="overall_result_value" class="form-control" required
+            <input type="number" step="any" name="overall_result_value" class="form-control overall-numeric-result" required
+                   data-normal-min="{{ $service?->overall_result_min_value }}"
+                   data-normal-max="{{ $service?->overall_result_max_value }}"
                    value="{{ old('overall_result_value', $savedResult?->overall_result_numeric) }}" placeholder="{{ __('investigations.numeric_value') }}">
             @if($service?->overall_result_unit)
                 <span class="input-group-text">{{ $service->overall_result_unit }}</span>

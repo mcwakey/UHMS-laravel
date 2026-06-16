@@ -1051,6 +1051,7 @@ Route::middleware('auth')->group(function () {
                 Route::post('results/batch/{labRequest}', [LabResultController::class, 'batchStore'])->name('results.batch')->middleware('can:lab.results.create');
                 Route::patch('results/{result}/verify', [LabResultController::class, 'verify'])->name('results.verify')->middleware('can:lab.results.verify');
                 Route::get('results/{item}/view', [LabResultController::class, 'view'])->name('results.view');
+                Route::get('results/requests/{labRequest}/print', [LabResultController::class, 'printRequest'])->name('results.print-request');
                 Route::get('results/{item}/print', [LabResultController::class, 'print'])->name('results.print');
                 Route::post('results/{item}', [LabResultController::class, 'store'])->name('results.store')->middleware('can:lab.results.create');
             });

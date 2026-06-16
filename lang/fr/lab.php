@@ -174,6 +174,16 @@ return [
     'verified_by_label'         => 'Vérifié par',
     'awaiting_verification'     => 'En attente de vérification',
     'print_report_btn'          => 'Imprimer le rapport',
+    'print_selected_results'    => 'Imprimer les résultats sélectionnés',
+    'print_results_hint'        => 'Regroupez un ou plusieurs résultats vérifiés dans un rapport officiel.',
+    'verified_results'          => 'Résultats vérifiés',
+    'print_layout'              => 'Mise en page',
+    'compact_combined'          => 'Rapport combiné compact',
+    'compact_combined_hint'     => 'Regroupe les résultats sélectionnés et utilise efficacement les pages.',
+    'one_result_per_page'       => 'Un résultat par page',
+    'one_result_per_page_hint'  => 'Commence chaque investigation sélectionnée sur une nouvelle page.',
+    'select_result_to_print'    => 'Sélectionnez au moins un résultat vérifié à imprimer.',
+    'open_print_preview'        => 'Ouvrir l’aperçu avant impression',
 
     // _consumables.blade.php
     'consumables_summary'       => 'Consommables utilisés (facultatif, déduit du stock du laboratoire)',

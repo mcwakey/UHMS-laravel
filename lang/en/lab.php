@@ -175,6 +175,16 @@ return [
     'verified_by_label'         => 'Verified by',
     'awaiting_verification'     => 'Awaiting verification',
     'print_report_btn'          => 'Print Report',
+    'print_selected_results'    => 'Print Selected Results',
+    'print_results_hint'        => 'Combine one or more verified investigation results into one official report.',
+    'verified_results'          => 'Verified Results',
+    'print_layout'              => 'Print Layout',
+    'compact_combined'          => 'Compact Combined Report',
+    'compact_combined_hint'     => 'Fit selected results together and use pages efficiently.',
+    'one_result_per_page'       => 'One Result Per Page',
+    'one_result_per_page_hint'  => 'Start every selected investigation on a new page.',
+    'select_result_to_print'    => 'Select at least one verified result to print.',
+    'open_print_preview'        => 'Open Print Preview',
 
     // _consumables.blade.php
     'consumables_summary'       => 'Consumables Used (optional, deducts stock from lab location)',

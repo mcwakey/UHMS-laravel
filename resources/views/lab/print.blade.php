@@ -1,163 +1,128 @@
 @php
-    $result  = $item->result;
-    $request = $item->labRequest;
     $patient = $request->patient;
-    $visit   = $request->visit;
-    $serviceCriteria = $item->service?->investigationCriteria?->where('is_active', true) ?? collect();
-    $serviceHeaders  = $item->service?->investigationHeaders?->where('is_active', true) ?? collect();
-    $values  = $result?->values ?? collect();
-    $valuesByCriteria = $values->keyBy('criteria_id');
-    $hospital = config('app.name');
+    $visit = $request->visit;
+    $org = \App\Models\Setting::getGroup('organization');
+    $orgName = $org['name'] ?? config('app.name', 'UHMS');
+    $orgLogo = ! empty($org['logo']) ? asset('storage/' . $org['logo']) : null;
+    $orgAddress = collect([$org['address'] ?? null, $org['city'] ?? null, $org['region'] ?? null])->filter()->implode(', ');
+    $orgContact = collect([$org['phone'] ?? null, $org['email'] ?? null])->filter()->implode(' | ');
+    $doctor = $visit?->currentConsultationDoctor();
 @endphp
 <!DOCTYPE html>
-<html>
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="utf-8">
-    <title>Investigation Result — {{ $request->request_number }} — {{ $item->display_name }}</title>
+    <title>{{ __('lab.result_report_title') }} - {{ $request->request_number }}</title>
     <style>
-        @page { margin: 18mm; }
-        body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #222; }
-        h1, h2, h3 { margin: 0; }
-        .header { border-bottom: 2px solid #333; padding-bottom: 8px; margin-bottom: 12px; }
-        .hospital { font-size: 18px; font-weight: bold; }
-        .meta { display: flex; justify-content: space-between; font-size: 11px; color: #555; margin-bottom: 12px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-        th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; vertical-align: top; }
-        th { background: #f4f4f4; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-        .label { color: #777; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
-        .value { font-weight: bold; font-size: 12px; }
-        .signatures { margin-top: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-        .sig-box { border-top: 1px solid #333; padding-top: 4px; text-align: center; font-size: 11px; }
-        .footer { margin-top: 16px; text-align: center; font-size: 10px; color: #777; }
-        .no-print { margin: 12px 0; }
-        @media print { .no-print { display: none; } }
-        .section-title { font-weight: bold; font-size: 12px; margin: 12px 0 4px; border-bottom: 1px solid #999; padding-bottom: 2px; }
-        .badge-verified { background: #198754; color: white; padding: 2px 6px; font-size: 10px; border-radius: 3px; }
+        @page { size: A4 portrait; margin: 12mm 14mm 14mm; }
+        * { box-sizing: border-box; }
+        body { margin: 0; color: #17243a; font-family: "Segoe UI", Arial, sans-serif; font-size: 10.5px; line-height: 1.35; background: #eef2f7; }
+        .print-toolbar { max-width: 210mm; margin: 12px auto; display: flex; gap: 8px; }
+        .print-toolbar button { border: 0; border-radius: 6px; padding: 8px 14px; cursor: pointer; }
+        .print-primary { background: #155eef; color: #fff; }
+        .print-secondary { background: #fff; color: #344054; }
+        .report-page { width: 210mm; min-height: 297mm; margin: 0 auto 12px; padding: 12mm 14mm 14mm; background: #fff; }
+        .report-header { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: center; padding-bottom: 10px; border-bottom: 3px solid #155eef; }
+        .brand { display: flex; gap: 12px; align-items: center; }
+        .brand img { max-height: 48px; max-width: 125px; }
+        .brand-name { font-size: 19px; font-weight: 800; color: #102a56; }
+        .brand-meta { color: #667085; font-size: 9px; }
+        .document-title { text-align: right; }
+        .document-title strong { display: block; color: #155eef; font-size: 16px; text-transform: uppercase; letter-spacing: .08em; }
+        .document-title span { color: #667085; }
+        .patient-band { display: grid; grid-template-columns: 1.4fr .8fr .8fr .9fr; gap: 8px; margin: 12px 0; padding: 10px 12px; border: 1px solid #d8e1ee; border-radius: 8px; background: #f8fbff; }
+        .meta-label { color: #667085; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+        .meta-value { margin-top: 2px; font-weight: 700; }
+        .clinical-note { margin: 0 0 10px; padding: 8px 10px; border-left: 3px solid #7aa7e8; background: #f8fafc; }
+        .result-report-section { margin: 0 0 12px; border: 1px solid #d8e1ee; border-radius: 8px; overflow: hidden; break-inside: avoid; page-break-inside: avoid; }
+        .result-page-break { break-before: page; page-break-before: always; }
+        .result-report-heading { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 9px 11px; border-bottom: 1px solid #dde5ef; background: #f5f8fc; }
+        .result-report-heading h2 { margin: 0; color: #102a56; font-size: 13px; }
+        .result-report-kicker { color: #667085; font-size: 8px; text-transform: uppercase; letter-spacing: .08em; }
+        .result-status { border-radius: 999px; padding: 3px 7px; font-size: 8px; font-weight: 800; text-transform: uppercase; }
+        .result-status-normal { background: #dcfce7; color: #166534; }
+        .result-status-alert { background: #fee2e2; color: #991b1b; }
+        .result-group-title { margin: 8px 10px 4px; color: #475467; font-size: 9px; text-transform: uppercase; letter-spacing: .06em; }
+        .result-table { width: calc(100% - 20px); margin: 0 10px 9px; border-collapse: collapse; }
+        .result-table th, .result-table td { border-bottom: 1px solid #e4e9f0; padding: 5px 6px; text-align: left; }
+        .result-table th { color: #667085; background: #f8fafc; font-size: 8px; text-transform: uppercase; letter-spacing: .04em; }
+        .result-table .result-value { font-weight: 800; }
+        .result-flag-normal { color: #166534; }
+        .result-flag-alert { color: #b42318; background: #fff8f6; }
+        .result-narrative, .result-summary-value { margin: 9px 10px; padding: 9px; background: #f8fafc; white-space: pre-wrap; }
+        .result-summary-value { font-size: 15px; font-weight: 800; }
+        .result-remarks, .result-attachment { margin: 0 10px 8px; padding: 6px 8px; border-left: 2px solid #7aa7e8; background: #f8fafc; }
+        .signoff { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 20px; }
+        .signature { padding-top: 5px; border-top: 1px solid #98a2b3; text-align: center; }
+        .signature strong { display: block; }
+        .report-footer { margin-top: 12px; padding-top: 7px; border-top: 1px solid #d0d5dd; color: #667085; font-size: 8px; display: flex; justify-content: space-between; }
+        @media print {
+            body { background: #fff; }
+            .print-toolbar { display: none; }
+            .report-page { width: auto; min-height: 0; margin: 0; padding: 0; }
+        }
     </style>
 </head>
 <body>
-<div class="no-print">
-    <button onclick="window.print()" style="padding:6px 12px;">{{ __('lab.print_button') }}</button>
-    <button onclick="window.close()" style="padding:6px 12px;">{{ __('lab.close_button') }}</button>
+<div class="print-toolbar">
+    <button type="button" class="print-primary" onclick="window.print()">{{ __('lab.print_button') }}</button>
+    <button type="button" class="print-secondary" onclick="window.close()">{{ __('lab.close_button') }}</button>
 </div>
 
-<div class="header">
-    <div class="hospital">{{ $hospital }}</div>
-    <div style="font-size:11px;color:#555;">{{ __('lab.result_report_title') }} &nbsp;<span class="badge-verified">{{ __('lab.verified_badge') }}</span></div>
-</div>
+<main class="report-page">
+    <header class="report-header">
+        <div class="brand">
+            @if($orgLogo)<img src="{{ $orgLogo }}" alt="{{ $orgName }}">@endif
+            <div>
+                <div class="brand-name">{{ $orgName }}</div>
+                @if($orgAddress)<div class="brand-meta">{{ $orgAddress }}</div>@endif
+                @if($orgContact)<div class="brand-meta">{{ $orgContact }}</div>@endif
+            </div>
+        </div>
+        <div class="document-title">
+            <strong>{{ __('lab.result_report_title') }}</strong>
+            <span>{{ $request->request_number }} | {{ $items->count() }} {{ Str::plural('result', $items->count()) }}</span>
+        </div>
+    </header>
 
-<div class="meta">
-    <div>{{ __('lab.request_hash') }}: <strong>{{ $request->request_number }}</strong></div>
-    <div>{{ __('lab.date_printed') }}: {{ now()->format('d M Y H:i') }}</div>
-</div>
+    <section class="patient-band">
+        <div><div class="meta-label">{{ $patient ? __('lab.patient_label') : __('lab.recipient_label') }}</div><div class="meta-value">{{ $patient?->full_name ?? $request->external_party_name ?? '—' }}</div></div>
+        <div><div class="meta-label">{{ __('common.patient_no') }}</div><div class="meta-value">{{ $patient?->patient_number ?? __('lab.walk_in') }}</div></div>
+        <div><div class="meta-label">{{ __('common.gender') }} / {{ __('common.age') }}</div><div class="meta-value">{{ $patient?->gender?->label() ?? $request->external_party_sex ?? '—' }} / {{ $patient?->age ?? $request->external_party_age ?? '—' }}</div></div>
+        <div><div class="meta-label">{{ __('lab.visit_label') }}</div><div class="meta-value">{{ $visit?->visit_number ?? '—' }}</div></div>
+        <div><div class="meta-label">{{ __('lab.department_label') }}</div><div class="meta-value">{{ $request->targetDepartment?->name ?? '—' }}</div></div>
+        <div><div class="meta-label">{{ __('lab.requested_by_label') }}</div><div class="meta-value">{{ $request->requestedBy?->name ?? '—' }}</div></div>
+        <div><div class="meta-label">{{ __('common.doctor') }}</div><div class="meta-value">{{ $doctor?->full_name ?? $doctor?->name ?? '—' }}</div></div>
+        <div><div class="meta-label">{{ __('common.date') }}</div><div class="meta-value">{{ $request->created_at?->format('d M Y H:i') }}</div></div>
+    </section>
 
-<div class="grid">
-    <div>
-        <span class="label">{{ $patient ? __('lab.patient_label') : __('lab.recipient_label') }}</span><br>
-        <span class="value">{{ $patient?->full_name ?? $request->external_party_name ?? '—' }}</span><br>
-        <span style="font-size:11px;color:#555;">
-            {{ $patient?->patient_number ?? ($request->external_party_name ? __('lab.walk_in') : '') }}
-            @if($patient?->age) &middot; {{ $patient->age }}y @elseif($request->external_party_age) &middot; {{ $request->external_party_age }}y @endif
-            @if($patient?->gender) &middot; {{ ucfirst($patient->gender->value ?? $patient->gender) }} @elseif($request->external_party_sex) &middot; {{ $request->external_party_sex }} @endif
-        </span>
-    </div>
-    <div>
-        <span class="label">{{ __('lab.visit_label') }}</span><br>
-        <span class="value">{{ $visit?->visit_number ?? '—' }}</span><br>
-        <span style="font-size:11px;color:#555;">
-            {{ $visit?->visit_date?->format('d M Y') ?? '' }}
-            @if($visit?->currentConsultationDoctor()) &middot; Dr. {{ $visit->currentConsultationDoctor()->full_name ?? $visit->currentConsultationDoctor()->name }} @endif
-        </span>
-    </div>
-    <div>
-        <span class="label">{{ __('lab.investigation_col') }}</span><br>
-        <span class="value">{{ $item->display_name }}</span>
-    </div>
-    <div>
-        <span class="label">{{ __('lab.department_label') }}</span><br>
-        <span class="value">{{ $request->targetDepartment->name ?? '—' }}</span>
-    </div>
-</div>
+    @if($request->clinical_info)
+        <div class="clinical-note"><strong>{{ __('lab.clinical_information') }}:</strong> {{ $request->clinical_info }}</div>
+    @endif
 
-@if($request->clinical_info)
-<div style="margin-bottom:8px;">
-    <span class="label">{{ __('lab.clinical_information') }}</span><br>
-    <span>{{ $request->clinical_info }}</span>
-</div>
-@endif
-
-<div class="section-title">{{ __('lab.result_col') }}</div>
-
-@if($values->isNotEmpty())
-    @foreach($serviceHeaders as $h)
-        @php $hCriteria = $serviceCriteria->where('header_id', $h->id); @endphp
-        @if($hCriteria->isNotEmpty())
-        <div style="font-weight:bold;margin-top:8px;">{{ $h->name }}</div>
-        <table>
-            <thead><tr><th>{{ __('lab.parameter_th') }}</th><th>{{ __('lab.value_th') }}</th><th>{{ __('lab.unit_th') }}</th><th>{{ __('lab.reference_range_th') }}</th><th>{{ __('lab.flag_th') }}</th></tr></thead>
-            <tbody>
-            @foreach($hCriteria as $c)
-                @php $v = $valuesByCriteria->get($c->id); @endphp
-                <tr>
-                    <td>{{ $c->name }}</td>
-                    <td><strong>{{ $v?->value ?? '—' }}</strong></td>
-                    <td>{{ $v?->unit ?? $c->unit }}</td>
-                    <td>{{ $v?->reference_range ?? $c->reference_range }}</td>
-                    <td>{{ $v?->flag ? ucfirst($v->flag) : '' }}</td>
-                </tr>
-            @endforeach
-            </tbody>
-        </table>
-        @endif
+    @foreach($items as $printItem)
+        <div class="{{ $separatePages && ! $loop->first ? 'result-page-break' : '' }}">
+            @include('lab.partials.report-result', ['item' => $printItem])
+        </div>
     @endforeach
 
-    @php $unsorted = $values->filter(fn ($v) => $serviceCriteria->firstWhere('id', $v->criteria_id)?->header_id === null || $serviceCriteria->firstWhere('id', $v->criteria_id) === null); @endphp
-    @if($unsorted->isNotEmpty())
-    <table>
-        <thead><tr><th>{{ __('lab.parameter_th') }}</th><th>{{ __('lab.value_th') }}</th><th>{{ __('lab.unit_th') }}</th><th>{{ __('lab.reference_range_th') }}</th><th>{{ __('lab.flag_th') }}</th></tr></thead>
-        <tbody>
-        @foreach($unsorted as $v)
-            <tr>
-                <td>{{ $v->name }}</td>
-                <td><strong>{{ $v->value }}</strong></td>
-                <td>{{ $v->unit }}</td>
-                <td>{{ $v->reference_range }}</td>
-                <td>{{ $v->flag ? ucfirst($v->flag) : '' }}</td>
-            </tr>
-        @endforeach
-        </tbody>
-    </table>
-    @endif
-@elseif($result->result_text)
-    <div style="white-space:pre-wrap;border:1px solid #ccc;padding:8px;">{{ $result->result_text }}</div>
-@elseif($result->result_value)
-    <div><strong>{{ $result->result_value }}</strong></div>
-@endif
-
-@if($result->remarks)
-<div style="margin-top:8px;"><strong>{{ __('lab.remarks_label') }}:</strong> {{ $result->remarks }}</div>
-@endif
-
-<div class="signatures">
-    <div>
-        <div class="sig-box">
-            {{ $result->performedBy?->name ?? '—' }}<br>
-            <small>{{ __('lab.performed_by_sig') }} &middot; {{ $result->performed_at?->format('d M Y H:i') }}</small>
+    <section class="signoff">
+        <div class="signature">
+            <strong>{{ $items->last()->result->performedBy?->name ?? '—' }}</strong>
+            {{ __('lab.performed_by_sig') }} | {{ $items->last()->result->performed_at?->format('d M Y H:i') }}
         </div>
-    </div>
-    <div>
-        <div class="sig-box">
-            {{ $result->verifiedBy?->name ?? '—' }}<br>
-            <small>{{ __('lab.verified_by_sig') }} &middot; {{ $result->verified_at?->format('d M Y H:i') }}</small>
+        <div class="signature">
+            <strong>{{ $items->last()->result->verifiedBy?->name ?? '—' }}</strong>
+            {{ __('lab.verified_by_sig') }} | {{ $items->last()->result->verified_at?->format('d M Y H:i') }}
         </div>
-    </div>
-</div>
+    </section>
 
-<div class="footer">
-    {{ __('lab.footer_generated', ['hospital' => $hospital, 'date' => now()->format('d M Y H:i')]) }}
-</div>
+    <footer class="report-footer">
+        <span>{{ __('lab.footer_generated', ['hospital' => $orgName, 'date' => now()->format('d M Y H:i')]) }}</span>
+        <span>{{ $request->request_number }}</span>
+    </footer>
+</main>
 
-<script>window.addEventListener('load', () => { setTimeout(() => window.print(), 250); });</script>
+<script>window.addEventListener('load', () => setTimeout(() => window.print(), 250));</script>
 </body>
 </html>

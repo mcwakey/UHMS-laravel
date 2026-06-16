@@ -8,6 +8,7 @@ use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 use App\Models\LabResult;
 use App\Services\ConsumableUsageService;
+use App\Services\InvestigationResultFlagService;
 use App\Services\LabService;
 use Illuminate\Http\Request;
 
@@ -16,6 +17,7 @@ class LabResultController extends Controller
     public function __construct(
         protected LabService $labService,
         protected ConsumableUsageService $consumableUsage,
+        protected InvestigationResultFlagService $resultFlagging,
     ) {}
 
     /**
@@ -146,6 +148,39 @@ class LabResultController extends Controller
 
         $validated = $request->validate($rules);
 
+        if (! empty($validated['values'])) {
+            $hasAutoFlag = false;
+            $hasUnflaggedValue = false;
+            $hasAbnormalFlag = false;
+
+            foreach ($validated['values'] as &$row) {
+                if (($row['value'] ?? '') === '') {
+                    continue;
+                }
+
+                $autoFlag = $this->resultFlagging->evaluate(
+                    $row['value'],
+                    $row['reference_range'] ?? null,
+                );
+
+                if ($autoFlag === null) {
+                    $hasUnflaggedValue = true;
+                    continue;
+                }
+
+                $row['flag'] = $autoFlag;
+                $hasAutoFlag = true;
+                $hasAbnormalFlag = $hasAbnormalFlag || $autoFlag !== 'normal';
+            }
+            unset($row);
+
+            if ($hasAbnormalFlag) {
+                $validated['is_abnormal'] = true;
+            } elseif ($hasAutoFlag && ! $hasUnflaggedValue) {
+                $validated['is_abnormal'] = false;
+            }
+        }
+
         // Map the entered overall result into canonical, reportable columns.
         if ($typedOverall) {
             $validated = $this->mapOverallResult($validated, $overallType, $item);
@@ -243,8 +278,14 @@ class LabResultController extends Controller
             case \App\Models\ServiceCatalog::OVERALL_RESULT_NUMERIC:
                 $numeric = (float) $value;
                 $unit = $item->service?->overall_result_unit;
+                $min = $item->service?->overall_result_min_value;
+                $max = $item->service?->overall_result_max_value;
                 $validated['overall_result_numeric'] = $numeric;
                 $validated['overall_result_unit'] = $unit;
+                if ($min !== null || $max !== null) {
+                    $validated['is_abnormal'] = ($min !== null && $numeric < (float) $min)
+                        || ($max !== null && $numeric > (float) $max);
+                }
                 $text = rtrim(rtrim(number_format($numeric, 4, '.', ''), '0'), '.');
                 $validated['result_value'] = $unit ? "{$text} {$unit}" : $text;
                 break;
@@ -329,6 +370,62 @@ class LabResultController extends Controller
     }
 
     /**
+     * Print one or more verified results from the same investigation request.
+     */
+    public function printRequest(Request $request, LabRequest $labRequest)
+    {
+        $validated = $request->validate([
+            'items' => ['nullable', 'array'],
+            'items.*' => ['integer'],
+            'layout' => ['nullable', 'in:compact,separate'],
+        ]);
+
+        $selectedIds = collect($validated['items'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $items = $labRequest->items()
+            ->when($selectedIds->isNotEmpty(), fn ($query) => $query->whereIn('id', $selectedIds))
+            ->whereHas('result', fn ($query) => $query->whereNotNull('verified_at'))
+            ->get();
+
+        if ($selectedIds->isNotEmpty() && $items->count() !== $selectedIds->count()) {
+            abort(422, 'Every selected investigation must belong to this request and have a verified result.');
+        }
+
+        if ($items->isEmpty()) {
+            return back()->with('error', 'Select at least one verified result to print.');
+        }
+
+        $relations = [
+            'labRequest.patient',
+            'labRequest.requestedBy',
+            'labRequest.targetDepartment',
+            'labRequest.visit.activeConsultationRoute.doctor',
+            'labRequest.visit.pendingConsultationRoutes.doctor',
+            'service.investigationHeaders.criteria',
+            'service.investigationCriteria',
+            'labTest.criteria',
+            'result.values',
+            'result.performedBy',
+            'result.verifiedBy',
+        ];
+
+        $items->each(function (LabRequestItem $printItem) use ($relations) {
+            $printItem->load($relations);
+            $this->logPrintedResult($printItem);
+        });
+
+        return view('lab.print', [
+            'request' => $items->first()->labRequest,
+            'items' => $items,
+            'separatePages' => ($validated['layout'] ?? 'compact') === 'separate',
+        ]);
+    }
+
+    /**
      * Print a verified result.
      */
     public function print(LabRequestItem $item)
@@ -363,6 +460,24 @@ class LabResultController extends Controller
             'Result printed: ' . ($item->name ?? $item->service?->name ?? $item->labTest?->name ?? $item->labRequest->request_number),
         );
 
-        return view('lab.print', ['item' => $item]);
+        return view('lab.print', [
+            'request' => $item->labRequest,
+            'items' => collect([$item]),
+            'separatePages' => false,
+        ]);
+    }
+
+    private function logPrintedResult(LabRequestItem $item): void
+    {
+        app(\App\Services\ActivityLogService::class)->log(
+            \App\Enums\LogModule::INVESTIGATION,
+            'RESULT_PRINTED',
+            $item->labRequest->toActivityContext() + array_filter([
+                'investigation_result_id' => $item->result?->id,
+                'service_id' => $item->service_id,
+            ], fn ($v) => $v !== null),
+            $item->result,
+            'Result printed: ' . ($item->name ?? $item->service?->name ?? $item->labTest?->name ?? $item->labRequest->request_number),
+        );
     }
 }
