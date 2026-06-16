@@ -45,6 +45,9 @@
             <div class="col-md-1">
                 <button class="btn btn-outline-primary w-100" type="submit"><i class="ti ti-search"></i></button>
             </div>
+            <div class="col-md-1">
+                <a class="btn btn-outline-success w-100" href="{{ route('admin.accounting.trial-balance.export', request()->query()) }}"><i class="ti ti-download"></i></a>
+            </div>
         </form>
     </div>
 </div>

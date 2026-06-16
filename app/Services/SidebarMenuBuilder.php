@@ -942,6 +942,13 @@ class SidebarMenuBuilder
                         'permission' => 'accounting.reports.cashbook',
                     ],
                     [
+                        'label' => 'Cash Flow',
+                        'icon' => 'ti ti-arrows-exchange',
+                        'route' => 'admin.accounting.reports.cash-flow',
+                        'active_patterns' => ['admin.accounting.reports.cash-flow'],
+                        'permission' => 'accounting.reports.cash_flow',
+                    ],
+                    [
                         'label' => 'Revenue by Dept',
                         'icon' => 'ti ti-building-bank',
                         'route' => 'admin.accounting.reports.revenue-by-department',

@@ -32,8 +32,11 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-1">
                 <button class="btn btn-outline-primary w-100" type="submit"><i class="ti ti-search me-1"></i>{{ __('reports.actions.load') }}</button>
+            </div>
+            <div class="col-md-1">
+                <a class="btn btn-outline-success w-100" href="{{ route('admin.accounting.general-ledger.export', request()->query()) }}"><i class="ti ti-download"></i></a>
             </div>
         </form>
     </div>

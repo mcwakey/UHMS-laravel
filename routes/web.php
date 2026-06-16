@@ -680,15 +680,23 @@ Route::middleware('auth')->group(function () {
             Route::get('trial-balance', [AccountingReportController::class, 'trialBalance'])
                 ->name('trial-balance')
                 ->middleware('can:accounting.reports.trial_balance');
+            Route::get('trial-balance/export', [AccountingReportController::class, 'trialBalanceExport'])
+                ->name('trial-balance.export')
+                ->middleware(['can:accounting.reports.trial_balance', 'can:accounting.exports']);
             Route::get('general-ledger', [AccountingReportController::class, 'generalLedger'])
                 ->name('general-ledger')
                 ->middleware('can:accounting.reports.general_ledger');
+            Route::get('general-ledger/export', [AccountingReportController::class, 'generalLedgerExport'])
+                ->name('general-ledger.export')
+                ->middleware(['can:accounting.reports.general_ledger', 'can:accounting.exports']);
 
             // Financial statements (Phase 7)
             Route::name('reports.')->group(function () {
                 Route::get('profit-loss', [AccountingReportController::class, 'profitLoss'])->name('profit-loss')->middleware('can:accounting.reports.profit_loss');
                 Route::get('balance-sheet', [AccountingReportController::class, 'balanceSheet'])->name('balance-sheet')->middleware('can:accounting.reports.balance_sheet');
                 Route::get('cashbook', [AccountingReportController::class, 'cashbook'])->name('cashbook')->middleware('can:accounting.reports.cashbook');
+                Route::get('cash-flow', [AccountingReportController::class, 'cashFlow'])->name('cash-flow')->middleware('can:accounting.reports.cash_flow');
+                Route::get('cash-flow/export', [AccountingReportController::class, 'cashFlowExport'])->name('cash-flow.export')->middleware(['can:accounting.reports.cash_flow', 'can:accounting.exports']);
                 Route::get('revenue-by-department', [AccountingReportController::class, 'revenueByDepartment'])->name('revenue-by-department')->middleware('can:accounting.reports.revenue_by_department');
                 Route::get('expense-by-department', [AccountingReportController::class, 'expenseByDepartment'])->name('expense-by-department')->middleware('can:accounting.reports.expense_by_department');
             });
