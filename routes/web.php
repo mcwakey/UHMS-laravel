@@ -111,6 +111,7 @@ use App\Http\Controllers\Accounting\AccountingReportController;
 use App\Http\Controllers\Accounting\AccountingSettingsController;
 use App\Http\Controllers\Accounting\BudgetController;
 use App\Http\Controllers\Accounting\FiscalYearController;
+use App\Http\Controllers\Accounting\FixedAssetController;
 use App\Http\Controllers\Accounting\JournalEntryController;
 use App\Http\Controllers\Accounting\PayrollPostingController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -712,6 +713,17 @@ Route::middleware('auth')->group(function () {
                 Route::post('commitments', [BudgetController::class, 'storeCommitment'])->name('commitments.store')->middleware('can:accounting.commitments.manage');
                 Route::post('commitments/{commitment}/release', [BudgetController::class, 'releaseCommitment'])->name('commitments.release')->middleware('can:accounting.commitments.manage');
                 Route::post('commitments/{commitment}/cancel', [BudgetController::class, 'cancelCommitment'])->name('commitments.cancel')->middleware('can:accounting.commitments.manage');
+            });
+
+            Route::middleware('module:fixed_assets')->prefix('fixed-assets')->name('fixed-assets.')->group(function () {
+                Route::get('/', [FixedAssetController::class, 'index'])->name('index')->middleware('can:accounting.fixed_assets.view');
+                Route::post('/', [FixedAssetController::class, 'store'])->name('store')->middleware('can:accounting.fixed_assets.manage');
+                Route::post('categories', [FixedAssetController::class, 'storeCategory'])->name('categories.store')->middleware('can:accounting.fixed_assets.manage');
+                Route::post('locations', [FixedAssetController::class, 'storeLocation'])->name('locations.store')->middleware('can:accounting.fixed_assets.manage');
+                Route::post('{asset}/capitalize', [FixedAssetController::class, 'capitalize'])->name('capitalize')->middleware('can:accounting.fixed_assets.capitalize');
+                Route::post('depreciation/run', [FixedAssetController::class, 'runDepreciation'])->name('depreciation.run')->middleware('can:accounting.fixed_assets.depreciate');
+                Route::post('{asset}/dispose', [FixedAssetController::class, 'dispose'])->name('dispose')->middleware('can:accounting.fixed_assets.dispose');
+                Route::post('{asset}/verify', [FixedAssetController::class, 'verify'])->name('verify')->middleware('can:accounting.fixed_assets.verify');
             });
 
             Route::middleware('can:accounting.fiscal_years.view')->prefix('fiscal-years')->name('fiscal-years.')->group(function () {

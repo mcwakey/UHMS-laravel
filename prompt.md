@@ -5,32 +5,36 @@ There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
 Do not try to read it.
 Follow this prompt directly.
 
-# UHMS Accounting Execution Phase G — Budgets, Commitments & Encumbrances
+# UHMS Accounting Execution Phase I — Statutory Tax Ledgers, Returns & Tax Payment Controls
 
 ## Goal
 
-Implement budgeting, commitments, encumbrances, and budget-vs-actual reporting for UHMS Advanced Accounting.
+Implement statutory tax accounting ledgers, tax return preparation, tax payment tracking, tax reconciliation, and exportable statutory schedules for UHMS.
 
-This phase must build on the accounting foundation already completed:
+This phase must build on:
 
 ```text
-Phase 0 — Shared posting controls, idempotency, mappings, close readiness
+Phase 0 — Shared posting controls and idempotency
 Phase A — Basic-to-Advanced posting bridge
-Phase B — Bank accounts and bank reconciliation
+Phase B — Bank accounts and reconciliation
 Phase C — Failed posting workbench
 Phase D — Subledger reconciliation workbench
 Phase E — Payroll accounting posting
-Phase E2 — PAYE and Pension / SSNIT statutory settlement
-Phase F — Cash Flow Statement and accounting exports
+Phase E2 — PAYE and Pension / SSNIT settlement
+Phase F — Cash flow and exports
+Phase G — Budgets and commitments
+Phase H — Fixed assets and depreciation
 ```
 
-Do not create a parallel accounting system.
+Do not create a parallel tax or accounting engine.
 
-Do not weaken existing procurement, stock, supplier payable, GL, audit, localisation, permission, or module middleware behavior.
+Do not hardcode Ghana tax rates into accounting logic.
+
+Tax calculation and tax accounting must remain separate.
 
 ---
 
-# 1. Required Context
+## 1. Required Context
 
 Read:
 
@@ -44,20 +48,21 @@ docs/ACCOUNTING_PHASE_D_SUBLEDGER_RECONCILIATION_WORKBENCH_REPORT.md
 docs/ACCOUNTING_PHASE_E_PAYROLL_ACCOUNTING_POSTING_REPORT.md
 docs/ACCOUNTING_PHASE_E2_STATUTORY_PAYROLL_SETTLEMENT_REPORT.md
 docs/ACCOUNTING_PHASE_F_CASH_FLOW_AND_EXPORTS_REPORT.md
+docs/ACCOUNTING_PHASE_G_BUDGETS_AND_COMMITMENTS_REPORT.md
+docs/ACCOUNTING_PHASE_H_FIXED_ASSETS_AND_DEPRECIATION_REPORT.md
 docs/ACCOUNTING_MODULE_SPLIT_AND_GAP_REPORT.md
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
 
-Current accounting status:
+Current status:
 
 ```text
-Basic-to-Advanced posting bridge exists.
-Bank reconciliation exists.
-Failed posting workbench exists.
-Subledger reconciliation exists.
-Payroll accounting posting exists.
-PAYE/Pension settlement exists.
-Cash flow statement and accounting CSV exports exist.
+PAYE and pension liabilities are already recognised through payroll posting.
+PAYE and pension remittances are already posted through Phase E2.
+Bank/cash settlement data exists.
+Cash flow exists.
+Fixed asset accounting exists.
+Tax ledgers and statutory returns are still missing.
 ```
 
 Important testing instruction:
@@ -65,140 +70,133 @@ Important testing instruction:
 ```text
 Do not run the wide full application test suite after this individual phase.
 The wide full-suite test is deferred until all accounting-gap implementation phases in this batch are complete.
-For this phase, run only necessary safety checks: migrations, route list, view cache, localisation audit, permission audit, logs:audit, PHP lint where practical, focused accounting checks where needed, and git diff check.
+Run only necessary safety checks: migrations, route list, view cache, localisation audit, permission audit, logs:audit, PHP lint where practical, focused accounting checks where needed, and git diff check.
 ```
 
 ---
 
-# 2. Scope of This Phase
+## 2. Scope of This Phase
 
 Implement:
 
 ```text
-budget years
-budget periods
-budget headers
-budget lines
-department/account budgets
-budget submission
-budget approval
-budget revisions
-budget transfers
-budget availability calculation
-commitment creation
-encumbrance tracking
-commitment release
-budget-vs-actual report
-budget-vs-actual export if existing export service supports it
-procurement integration where safe
-supplier payable integration where safe
-close-readiness visibility
+tax types
+tax registrations
+tax account mappings
+tax ledger entries
+tax return periods
+tax returns
+tax return lines
+tax payment records
+tax payment allocations
+withholding certificates
+PAYE tax ledger integration
+Pension / SSNIT ledger integration
+withholding tax ledger foundation
+VAT/NHIL/GETFund ledger foundation where source data exists
+input tax ledger
+output tax ledger
+tax return preparation
+tax return approval
+tax return export
+tax payment allocation
+tax reconciliation
+failed posting workbench integration
+subledger reconciliation integration
+cash flow integration
+close readiness integration
 permissions
 audit logging
 localisation
 documentation
 ```
 
-Do not implement yet:
+Do not implement:
 
 ```text
-fixed assets
-statutory tax returns
-receivables collector workbench
-claims settlement accounting
-multi-currency budget revaluation
-donor fund accounting
-grant accounting
-project accounting
-branch consolidation
-electronic bank payment files
+direct GRA electronic filing API
+direct SSNIT API filing
+automatic external tax submission
+tax rate legal advice
+new billing tax calculation engine unless required by existing source data
+new payroll PAYE calculation engine
 ```
 
 ---
 
-# 3. Core Rules
+## 3. Core Rules
 
-Budgeting must be:
+Tax accounting must be:
 
 ```text
-approval-gated
-versioned
+configurable
+effective-dated
 auditable
 permission-aware
 module-aware
-non-destructive
-reconcilable to actual GL postings
-safe for hospital operations
+reconcilable
+exportable
+settlement-aware
 ```
 
-Important rules:
+Rules:
 
 ```text
-Approved budget versions are immutable.
-Budget changes use revisions or transfers.
-Commitments are separate from actuals.
-Actuals come from posted GL journals.
-Commitments reduce available budget but do not create GL journals.
-Encumbrances are operational controls, not accounting journals.
-Clinical care must not be blocked by budget rules.
-Emergency care must not be blocked by budget rules.
-Budget enforcement should default to warning mode.
-Hard blocking should apply only to configured procurement workflows.
+Do not hardcode tax rates.
+Do not mix tax calculation with tax accounting.
+Source modules calculate tax amounts.
+Accounting records tax payable, tax receivable, tax settlement, and return balances.
+Posted tax journals are immutable.
+Corrections use reversal, adjustment, or replacement.
+Tax returns are versioned and approval-gated.
+Tax payments cannot over-allocate unless explicit credit balance handling exists.
 ```
 
 ---
 
-# 4. Module Rules
+## 4. Separation of Concerns
 
-Add a dedicated optional module if the module catalogue supports it safely:
-
-```text
-budgets
-```
-
-Recommended dependency:
+Tax calculation belongs to source modules:
 
 ```text
-budgets depends on accounting_advanced
+Payroll calculates PAYE.
+Payroll calculates pension / SSNIT deductions.
+Billing calculates output tax only if tax-enabled invoices already exist.
+Procurement/AP calculates input tax or withholding only if source data exists.
+Supplier payment may calculate withholding tax if configured.
 ```
 
-If adding the module toggle is risky in this phase, keep budgets under `accounting_advanced` and document the module toggle as deferred.
-
-Routes must use:
+Tax accounting records:
 
 ```text
-auth
-module:accounting_basic
-module:accounting_advanced
-permission middleware
+tax ledger entries
+tax returns
+tax payable / receivable balances
+tax payments
+tax payment allocations
+tax reconciliation
+tax certificates
 ```
 
-If `budgets` module is added, budget routes must also use:
-
-```text
-module:budgets
-```
-
-Do not make Billing & Collections dependent on budgets.
-
-Do not make clinical workflows dependent on budgets.
+Do not invent tax source amounts where the source module does not currently store them.
 
 ---
 
-# 5. Database Tables
+## 5. Database Tables
 
 Create additive tables:
 
 ```text
-budgets
-budget_periods
-budget_lines
-budget_revisions
-budget_revision_lines
-budget_transfers
-budget_commitments
-budget_commitment_movements
-budget_approval_limits
+tax_types
+tax_registrations
+tax_account_mappings
+tax_ledger_entries
+tax_return_periods
+tax_returns
+tax_return_lines
+tax_payments
+tax_payment_allocations
+withholding_certificates
 ```
 
 Use string statuses with application validation.
@@ -215,350 +213,17 @@ Do not cascade-delete financial history.
 
 ---
 
-# 6. budgets
+## 6. tax_types
 
 Fields:
 
 ```text
 id
-budget_code
+code
 name
-fiscal_year_id nullable
-period_start
-period_end
-currency
-department_id nullable
-branch_id nullable
-status
-approved_by nullable
-approved_at nullable
-closed_by nullable
-closed_at nullable
-cancelled_by nullable
-cancelled_at nullable
-cancellation_reason nullable
-notes
-created_by
-updated_by
-timestamps
-```
-
-Statuses:
-
-```text
-draft
-submitted
-approved
-active
-closed
-cancelled
-superseded
-```
-
-Rules:
-
-```text
-draft budgets can be edited
-submitted budgets require review
-approved budgets become immutable
-active budgets drive availability checks
-closed budgets cannot receive new commitments
-cancelled budgets cannot be used
-```
-
----
-
-# 7. budget_periods
-
-Fields:
-
-```text
-id
-budget_id
-name
-period_start
-period_end
-status
-created_by
-updated_by
-timestamps
-```
-
-Purpose:
-
-```text
-Allow monthly, quarterly, annual, or custom budget periods.
-```
-
----
-
-# 8. budget_lines
-
-Fields:
-
-```text
-id
-budget_id
-budget_period_id nullable
-department_id nullable
-branch_id nullable
-gl_account_id
-budget_amount
-revised_amount
-committed_amount
-actual_amount
-available_amount
-enforcement_mode
-status
-notes
-created_by
-updated_by
-timestamps
-```
-
-Enforcement modes:
-
-```text
-none
-warning
-blocking
-approval_override
-```
-
-Rules:
-
-```text
-budget_amount is the approved base amount
-revised_amount changes only through approved revisions/transfers
-committed_amount comes from open commitments
-actual_amount comes from posted GL journals
-available_amount is calculated, not trusted blindly
-```
-
-Do not rely only on stored available_amount. Recalculate when needed.
-
----
-
-# 9. budget_revisions and budget_revision_lines
-
-Purpose:
-
-```text
-Increase or decrease approved budget amounts with audit trail.
-```
-
-budget_revisions fields:
-
-```text
-id
-budget_id
-revision_number
-reason
-status
-submitted_by
-submitted_at
-approved_by
-approved_at
-rejected_by
-rejected_at
-rejection_reason
-created_by
-updated_by
-timestamps
-```
-
-budget_revision_lines fields:
-
-```text
-id
-budget_revision_id
-budget_line_id
-old_amount
-change_amount
-new_amount
-reason
-timestamps
-```
-
-Statuses:
-
-```text
-draft
-submitted
-approved
-rejected
-cancelled
-```
-
-Rules:
-
-```text
-approved revisions update revised budget
-rejected revisions change nothing
-budget history remains visible
-```
-
----
-
-# 10. budget_transfers
-
-Purpose:
-
-```text
-Move budget amount from one approved budget line to another.
-```
-
-Fields:
-
-```text
-id
-budget_id
-transfer_number
-from_budget_line_id
-to_budget_line_id
-amount
-reason
-status
-submitted_by
-submitted_at
-approved_by
-approved_at
-rejected_by
-rejected_at
-rejection_reason
-created_by
-updated_by
-timestamps
-```
-
-Rules:
-
-```text
-source budget line must have enough available amount unless elevated override is used
-approved transfer reduces source revised amount and increases target revised amount
-transfer must be balanced
-```
-
----
-
-# 11. budget_commitments
-
-Purpose:
-
-```text
-Reserve budget for purchase orders, procurement requests, department requests, or other controlled spending before actual supplier payable/payment occurs.
-```
-
-Fields:
-
-```text
-id
-commitment_number
-budget_id
-budget_line_id
-source_type
-source_id
-source_reference
-department_id nullable
-branch_id nullable
-gl_account_id
-amount
-open_amount
-released_amount
-actualized_amount
-status
-committed_by
-committed_at
-released_by nullable
-released_at nullable
-release_reason nullable
-metadata_snapshot
-timestamps
-```
-
-Statuses:
-
-```text
-draft
-committed
-partially_released
-released
-actualized
-cancelled
-reversed
-```
-
-Rules:
-
-```text
-committed amount reduces available budget
-actualized amount becomes actual when supplier payable/payment posts to GL
-released amount restores available budget
-commitment does not create journal
-commitment must remain linked to source record
-```
-
----
-
-# 12. budget_commitment_movements
-
-Purpose:
-
-```text
-Append-only movement history for commitments.
-```
-
-Fields:
-
-```text
-id
-budget_commitment_id
-movement_type
-amount
-old_open_amount
-new_open_amount
-source_type nullable
-source_id nullable
-reason
-actor_id
-metadata_snapshot
-created_at
-updated_at
-```
-
-Movement types:
-
-```text
-created
-increased
-decreased
-released
-actualized
-cancelled
-reversed
-```
-
----
-
-# 13. budget_approval_limits
-
-Purpose:
-
-```text
-Define who can approve budgets, revisions, transfers, and overrides by amount and department.
-```
-
-Fields:
-
-```text
-id
-approval_type
-role_id nullable
-user_id nullable
-department_id nullable
-branch_id nullable
-min_amount
-max_amount
+country_code
+tax_category
+description
 is_active
 effective_from
 effective_to
@@ -568,258 +233,657 @@ updated_by
 timestamps
 ```
 
-Approval types:
+Tax categories:
 
 ```text
-budget
-revision
-transfer
-commitment_override
+payroll_tax
+social_security
+withholding_tax
+vat
+input_tax
+output_tax
+levy
+other
+```
+
+Initial configurable tax type examples:
+
+```text
+PAYE
+Pension / SSNIT
+Withholding Tax
+VAT Output
+VAT Input
+NHIL
+GETFund Levy
+COVID / other levy placeholder if source configuration requires it
+```
+
+Do not seed rates unless the project already has verified tax-rate configuration.
+
+---
+
+## 7. tax_registrations
+
+Fields:
+
+```text
+id
+tax_type_id
+registration_number
+registration_name
+country_code
+authority_name
+filing_frequency
+currency
+is_active
+effective_from
+effective_to
+notes
+created_by
+updated_by
+timestamps
+```
+
+Filing frequencies:
+
+```text
+monthly
+quarterly
+annual
+custom
+```
+
+Purpose:
+
+```text
+Track facility/company tax registration details without hardcoding one authority into the system.
 ```
 
 ---
 
-# 14. Budget Availability Formula
+## 8. tax_account_mappings
 
-Budget availability should be calculated as:
-
-```text
-approved budget
-+ approved revisions
-+ approved incoming transfers
-- approved outgoing transfers
-- open commitments
-- actual posted GL expenditure
-= available budget
-```
-
-For revenue budgets later:
+Fields:
 
 ```text
-actual posted GL income can be compared against budgeted income
+id
+tax_type_id
+mapping_purpose
+account_id
+effective_from
+effective_to
+priority
+is_active
+notes
+created_by
+updated_by
+timestamps
 ```
 
-Start with expense-control budgets first.
-
-Do not block clinical workflows.
-
-Do not calculate actuals from operational source records when posted GL data exists.
-
----
-
-# 15. Services To Add
-
-Create:
+Mapping purposes:
 
 ```text
-BudgetService
-BudgetApprovalService
-BudgetRevisionService
-BudgetTransferService
-BudgetAvailabilityService
-CommitmentService
-BudgetActualsService
-BudgetReportService
+payable
+receivable
+expense
+income
+settlement_bank
+withholding_payable
+input_tax_receivable
+output_tax_payable
 ```
-
-Controllers must call services.
-
-Do not put budget calculations in controllers or Blade.
-
----
-
-# 16. BudgetAvailabilityService
-
-This service should:
-
-```text
-resolve applicable budget line
-calculate approved/revised budget
-calculate open commitments
-calculate actual posted GL expense
-calculate available amount
-detect over-budget state
-apply enforcement mode
-return warning/block/override decision
-```
-
-Inputs:
-
-```text
-gl_account_id
-department_id
-branch_id
-amount
-date
-source_type
-source_id
-```
-
-Output:
-
-```text
-budget line
-approved amount
-revised amount
-committed amount
-actual amount
-available amount
-requested amount
-decision
-message
-override_required
-```
-
----
-
-# 17. CommitmentService
-
-This service should:
-
-```text
-create commitment
-increase commitment
-decrease commitment
-release commitment
-actualize commitment
-cancel commitment
-reverse commitment
-append movement history
-update commitment totals
-audit each movement
-```
-
-Commitments must be idempotent by:
-
-```text
-source_type + source_id + gl_account_id + budget_line_id
-```
-
-Do not duplicate commitments for the same source line.
-
----
-
-# 18. Procurement Integration
-
-Inspect existing procurement/purchase-order/supplier payable workflow.
-
-Where safe, integrate budget checks at configured points:
-
-```text
-purchase request approval
-purchase order approval
-supplier payable creation
-goods received note approval
-```
-
-Recommended first integration point:
-
-```text
-purchase order approval or supplier payable creation
-```
-
-depending on the existing UHMS workflow.
 
 Rules:
 
 ```text
-if budgets disabled: no effect
-if no budget line found: warn, do not block by default
-if enforcement_mode = warning: allow with warning and audit
-if enforcement_mode = blocking: block unless override permission exists
-if enforcement_mode = approval_override: require authorized override
-emergency/clinical direct care must not be blocked
+Mappings are effective-dated.
+Missing mappings block posting/return finalisation where accounting impact is required.
+Do not pick arbitrary accounts.
+Historical mappings remain visible.
 ```
 
-Do not rewrite procurement logic.
-
-Add budget hooks through services.
+Use Phase 0 account mappings if cleaner, but avoid duplicate conflicting mapping logic.
 
 ---
 
-# 19. Actuals Integration
+## 9. tax_ledger_entries
 
-Actuals should come from posted GL journal lines.
-
-BudgetActualsService should:
+Purpose:
 
 ```text
-query posted journal lines
-filter by expense accounts
-filter by date/period
-filter by department/branch where dimension exists
-exclude reversed journals
-include reversal effects correctly
-group by budget line/account/department
+Create a tax subledger independent of the GL but reconciled to GL control accounts.
 ```
 
-Do not use unposted source records as actuals.
-
----
-
-# 20. Budget Reports
-
-Implement:
+Fields:
 
 ```text
-budget summary
-budget line detail
-budget vs actual
-commitment register
-over-budget report
-budget revision history
-budget transfer history
-```
-
-Budget-vs-actual columns:
-
-```text
-budget amount
-revisions
-transfers in
-transfers out
-revised budget
-open commitments
-actuals
-available
-variance amount
-variance percentage
+id
+tax_type_id
+tax_registration_id nullable
+source_module
+source_type
+source_id
+source_reference
+tax_period_start
+tax_period_end
+tax_date
+direction
+taxable_amount
+tax_amount
+settled_amount
+outstanding_amount
+currency
 status
+journal_entry_id nullable
+settlement_journal_entry_id nullable
+metadata_snapshot
+created_by
+updated_by
+timestamps
 ```
 
-Exports:
+Directions:
 
 ```text
-CSV
-print
-PDF if existing export tooling supports it
+payable
+receivable
+credit
+debit
 ```
 
-Use existing `AccountingExportService` where possible.
+Statuses:
 
-Do not introduce a new export library.
+```text
+draft
+recognised
+included_in_return
+settled
+partially_settled
+reversed
+cancelled
+```
+
+Rules:
+
+```text
+Tax ledger entries must link to a source record.
+Tax ledger entries must not be duplicated for the same source tax event.
+Tax ledger entries must reconcile to GL control accounts.
+```
 
 ---
 
-# 21. UI Screens
+## 10. tax_return_periods
 
-Add Advanced Accounting / Budgeting screens:
+Fields:
 
 ```text
-Budget dashboard
-Budget index
-Budget create/edit
-Budget line editor
-Budget submit
-Budget approval
-Budget detail
-Budget revisions
-Budget transfers
-Budget commitments
-Budget availability check
-Budget-vs-actual report
-Commitment register
-Approval limits
+id
+tax_type_id
+tax_registration_id nullable
+period_start
+period_end
+due_date nullable
+status
+opened_by
+opened_at
+closed_by nullable
+closed_at nullable
+notes
+timestamps
+```
+
+Statuses:
+
+```text
+open
+prepared
+approved
+filed
+paid
+closed
+cancelled
+```
+
+---
+
+## 11. tax_returns
+
+Fields:
+
+```text
+id
+tax_return_period_id
+return_number
+tax_type_id
+tax_registration_id nullable
+status
+taxable_amount_total
+tax_amount_total
+adjustment_amount_total
+payment_amount_total
+outstanding_amount
+prepared_by
+prepared_at
+approved_by nullable
+approved_at nullable
+filed_by nullable
+filed_at nullable
+filing_reference nullable
+filing_notes nullable
+cancelled_by nullable
+cancelled_at nullable
+cancellation_reason nullable
+metadata_snapshot
+timestamps
+```
+
+Statuses:
+
+```text
+draft
+prepared
+approved
+filed
+paid
+closed
+cancelled
+superseded
+```
+
+Rules:
+
+```text
+Prepared return can be reviewed.
+Approved return cannot be silently edited.
+Filed return requires filing reference or note.
+Corrections use amendment/supersession, not destructive edits.
+```
+
+---
+
+## 12. tax_return_lines
+
+Fields:
+
+```text
+id
+tax_return_id
+tax_ledger_entry_id nullable
+line_type
+description
+taxable_amount
+tax_amount
+adjustment_amount
+metadata_snapshot
+timestamps
+```
+
+Line types:
+
+```text
+source_tax
+adjustment
+payment
+credit_balance
+rounding
+```
+
+---
+
+## 13. tax_payments
+
+Fields:
+
+```text
+id
+payment_reference
+tax_type_id
+tax_registration_id nullable
+payment_date
+amount
+payment_account_id
+tax_account_id
+journal_entry_id nullable
+reversal_journal_entry_id nullable
+status
+approved_by nullable
+approved_at nullable
+posted_by nullable
+posted_at nullable
+reversed_by nullable
+reversed_at nullable
+reversal_reason nullable
+notes
+metadata_snapshot
+created_by
+updated_by
+timestamps
+```
+
+Statuses:
+
+```text
+draft
+approved
+posted
+allocated
+partially_allocated
+reversed
+cancelled
+failed
+```
+
+Journal pattern:
+
+```text
+Dr Tax Payable
+Cr Bank/Cash
+```
+
+For recoverable tax credits, use configured receivable/payable accounts.
+
+---
+
+## 14. tax_payment_allocations
+
+Fields:
+
+```text
+id
+tax_payment_id
+tax_return_id nullable
+tax_ledger_entry_id nullable
+allocated_amount
+metadata_snapshot
+timestamps
+```
+
+Rules:
+
+```text
+Allocation cannot exceed payment amount.
+Allocation cannot exceed return or ledger outstanding amount unless explicit credit balance is supported.
+Allocations are retained after posting.
+```
+
+---
+
+## 15. withholding_certificates
+
+Fields:
+
+```text
+id
+certificate_number
+tax_type_id
+supplier_id nullable
+payer_name nullable
+source_module
+source_type
+source_id
+certificate_date
+taxable_amount
+withheld_amount
+status
+issued_by nullable
+issued_at nullable
+cancelled_by nullable
+cancelled_at nullable
+cancellation_reason nullable
+metadata_snapshot
+timestamps
+```
+
+Statuses:
+
+```text
+draft
+issued
+cancelled
+reissued
+```
+
+Do not generate certificates from missing source data.
+
+---
+
+## 16. Services To Add
+
+Create:
+
+```text
+TaxTypeService
+TaxLedgerService
+TaxReturnService
+TaxPaymentService
+TaxReconciliationService
+WithholdingCertificateService
+TaxExportService
+```
+
+Use existing:
+
+```text
+JournalEntryService
+AccountingPostingService
+AccountingPostingAttemptService
+AccountingCloseReadinessService
+ActivityLogService
+AccountingExportService
+```
+
+Do not put tax logic in controllers or Blade.
+
+---
+
+## 17. TaxLedgerService
+
+Responsibilities:
+
+```text
+create tax ledger entry from recognised source tax event
+prevent duplicate source tax event
+update outstanding tax amount
+reverse tax ledger entry where source is reversed
+link to GL journal where applicable
+prepare tax ledger summaries
+```
+
+Source integration:
+
+```text
+payroll PAYE liabilities from Phase E/E2
+pension / SSNIT liabilities from Phase E/E2
+supplier withholding where source data exists
+billing output tax where source data exists
+procurement input tax where source data exists
+```
+
+If a source does not yet store tax amount fields, mark as unavailable and document.
+
+---
+
+## 18. TaxReturnService
+
+Responsibilities:
+
+```text
+open tax return period
+prepare return from tax ledger entries
+create return lines
+calculate totals
+approve return
+mark return filed with filing reference
+cancel/supersede draft or prepared returns
+prevent duplicate active return for same tax type and period
+```
+
+Return preparation must be repeatable.
+
+Prepared return must use a snapshot so later source changes do not silently alter the approved return.
+
+---
+
+## 19. TaxPaymentService
+
+Responsibilities:
+
+```text
+create tax payment
+approve payment
+post payment journal
+allocate payment to return or ledger entries
+prevent over-allocation
+reverse payment
+restore outstanding balances after reversal
+create posting attempt
+retain accounting errors
+```
+
+Posting identity examples:
+
+```text
+source_type = tax_payment
+posting_type = tax_payment
+posting_version = 1
+```
+
+Do not duplicate Phase E2 payroll statutory settlement records. Either integrate them into tax ledgers/returns or map them as existing payroll statutory settlements.
+
+---
+
+## 20. TaxReconciliationService
+
+Compare:
+
+```text
+tax ledger outstanding
+tax return outstanding
+posted tax payments
+```
+
+against:
+
+```text
+tax GL payable / receivable control accounts
+```
+
+Domains:
+
+```text
+PAYE
+Pension / SSNIT
+Withholding tax
+VAT input
+VAT output
+Other configured taxes
+```
+
+Classify differences:
+
+```text
+unposted_tax_event
+failed_tax_posting
+payment_not_allocated
+manual_journal
+return_not_prepared
+source_data_missing
+mapping_issue
+unknown_difference
+```
+
+Integrate with Phase D subledger reconciliation.
+
+---
+
+## 21. PAYE and Pension / SSNIT Integration
+
+Phase E2 already posts payroll statutory settlements.
+
+For this phase:
+
+```text
+create tax ledger entries for PAYE and pension liabilities from posted payroll runs
+create tax ledger settlement links from Phase E2 statutory settlement records
+allow PAYE and pension return preparation
+allow filing reference and filing notes
+ensure reconciliation subtracts posted settlements
+```
+
+Do not create duplicate payment journals for Phase E2 settlements.
+
+---
+
+## 22. Withholding Tax Integration
+
+If supplier payment or procurement source data already supports withholding:
+
+```text
+create withholding tax ledger entries
+allow return preparation
+allow payment settlement
+allow certificate generation
+```
+
+If not:
+
+```text
+create the configuration and ledger foundation
+mark source integration as deferred
+document missing source fields
+```
+
+Do not fabricate withholding amounts.
+
+---
+
+## 23. VAT / NHIL / GETFund Integration
+
+If invoice/procurement source data already stores applicable tax components:
+
+```text
+create output tax ledger entries from invoices
+create input tax ledger entries from procurement/AP
+prepare return schedules
+track payment or credit balance
+```
+
+If source data does not yet store tax components:
+
+```text
+create configurable tax types and account mappings only
+mark ledger automation as not_available
+document required future billing/procurement source fields
+```
+
+Do not hardcode Ghana VAT/NHIL/GETFund rates.
+
+Do not infer tax amounts from gross totals without explicit tax fields.
+
+---
+
+## 24. UI Screens
+
+Add Advanced Accounting tax screens:
+
+```text
+Tax Dashboard
+Tax Types
+Tax Registrations
+Tax Account Mappings
+Tax Ledger
+Tax Return Periods
+Tax Returns
+Prepare Tax Return
+Approve Tax Return
+Mark Filed
+Tax Payments
+Tax Payment Allocation
+Tax Reconciliation
+Withholding Certificates
+Tax Reports
 ```
 
 Use Bootstrap 5 and Tabler Icons only.
@@ -828,50 +892,47 @@ Do not introduce new frontend frameworks.
 
 ---
 
-# 22. Permissions
+## 25. Permissions
 
 Add:
 
 ```text
-accounting.budgets.view
-accounting.budgets.manage
-accounting.budgets.submit
-accounting.budgets.approve
-accounting.budgets.revise
-accounting.budgets.transfer
-accounting.budgets.close
-accounting.budgets.cancel
-accounting.commitments.view
-accounting.commitments.manage
-accounting.commitments.release
-accounting.commitments.override
-accounting.budget_reports.view
-accounting.budget_reports.export
-accounting.budget_approval_limits.view
-accounting.budget_approval_limits.manage
+accounting.tax_types.view
+accounting.tax_types.manage
+accounting.tax_registrations.view
+accounting.tax_registrations.manage
+accounting.tax_ledgers.view
+accounting.tax_returns.view
+accounting.tax_returns.prepare
+accounting.tax_returns.approve
+accounting.tax_returns.file
+accounting.tax_payments.view
+accounting.tax_payments.create
+accounting.tax_payments.approve
+accounting.tax_payments.post
+accounting.tax_payments.reverse
+accounting.tax_reconciliation.view
+accounting.tax_reconciliation.run
+accounting.withholding_certificates.view
+accounting.withholding_certificates.issue
+accounting.tax_reports.export
 ```
 
-Suggested role defaults:
+Suggested defaults:
 
 ```text
 Accountant:
-- view budgets
-- manage draft budgets
-- submit budgets
-- view commitments
-- view budget reports
+- view tax types/registrations/ledgers/returns/payments
+- prepare returns
+- create payments
+- run reconciliation
 
 Finance Manager:
-- approve budgets
-- revise/transfer
-- close/cancel
-- release/override commitments
-- manage approval limits
-- export reports
-
-Department Head:
-- view assigned department budgets
-- submit budget requests if role exists
+- approve returns
+- mark filed
+- approve/post/reverse payments
+- issue withholding certificates
+- manage tax configuration
 
 Administrator / Super Admin:
 - all
@@ -881,34 +942,33 @@ Do not grant to broad clinical roles.
 
 ---
 
-# 23. Audit Logging
+## 26. Audit Logging
 
 Use `ActivityLogService`.
 
 Audit:
 
 ```text
-BUDGET_CREATED
-BUDGET_UPDATED
-BUDGET_SUBMITTED
-BUDGET_APPROVED
-BUDGET_CLOSED
-BUDGET_CANCELLED
-BUDGET_REVISION_CREATED
-BUDGET_REVISION_SUBMITTED
-BUDGET_REVISION_APPROVED
-BUDGET_REVISION_REJECTED
-BUDGET_TRANSFER_CREATED
-BUDGET_TRANSFER_APPROVED
-BUDGET_TRANSFER_REJECTED
-BUDGET_COMMITMENT_CREATED
-BUDGET_COMMITMENT_RELEASED
-BUDGET_COMMITMENT_ACTUALIZED
-BUDGET_COMMITMENT_CANCELLED
-BUDGET_OVERRIDE_USED
-BUDGET_AVAILABILITY_CHECKED
-BUDGET_REPORT_VIEWED
-BUDGET_REPORT_EXPORTED
+TAX_TYPE_CREATED
+TAX_TYPE_UPDATED
+TAX_REGISTRATION_CREATED
+TAX_REGISTRATION_UPDATED
+TAX_LEDGER_ENTRY_CREATED
+TAX_LEDGER_ENTRY_REVERSED
+TAX_RETURN_PERIOD_OPENED
+TAX_RETURN_PREPARED
+TAX_RETURN_APPROVED
+TAX_RETURN_FILED
+TAX_RETURN_CANCELLED
+TAX_PAYMENT_CREATED
+TAX_PAYMENT_APPROVED
+TAX_PAYMENT_POSTED
+TAX_PAYMENT_ALLOCATED
+TAX_PAYMENT_REVERSED
+TAX_RECONCILIATION_RUN
+WITHHOLDING_CERTIFICATE_ISSUED
+WITHHOLDING_CERTIFICATE_CANCELLED
+TAX_REPORT_EXPORTED
 ```
 
 Run:
@@ -921,26 +981,7 @@ Fix new missing/needs-review audit gaps.
 
 ---
 
-# 24. Close Readiness Integration
-
-Update `AccountingCloseReadinessService` to show:
-
-```text
-open commitments for the period
-over-budget lines
-unapproved budget revisions
-unapproved budget transfers
-commitments not released after payable actualization
-budget-vs-actual report not generated
-```
-
-Do not hard-block period close yet unless current close code safely supports it.
-
-Document recommended future close-block behavior.
-
----
-
-# 25. Localisation
+## 27. Localisation
 
 All new labels must be localised EN/FR.
 
@@ -953,46 +994,42 @@ lang/en/reports.php
 lang/fr/reports.php
 ```
 
-Required labels:
+Required keys include:
 
 ```text
-budgets
-budget
-budgeting
-budget_period
-budget_line
-budget_amount
-revised_budget
-budget_revision
-budget_revisions
-budget_transfer
-budget_transfers
-commitment
-commitments
-encumbrance
-encumbrances
-open_commitments
-actual_amount
-available_budget
-budget_vs_actual
-budget_variance
-variance_percentage
-over_budget
-under_budget
-within_budget
-enforcement_mode
-warning_mode
-blocking_mode
-approval_override
-commitment_register
-approval_limits
-submit_budget
-approve_budget
-close_budget
-cancel_budget
-release_commitment
-actualize_commitment
-budget_override
+statutory_taxes
+tax_type
+tax_types
+tax_registration
+tax_registrations
+tax_ledger
+tax_ledger_entries
+tax_return
+tax_returns
+tax_return_period
+prepare_tax_return
+approve_tax_return
+mark_tax_return_filed
+filing_reference
+tax_payment
+tax_payments
+tax_payment_allocation
+tax_reconciliation
+withholding_tax
+withholding_certificate
+withholding_certificates
+input_tax
+output_tax
+tax_payable
+tax_receivable
+taxable_amount
+tax_amount
+settled_amount
+outstanding_tax
+tax_authority
+filing_frequency
+return_due_date
+tax_report
 ```
 
 Maintain EN/FR parity.
@@ -1011,46 +1048,47 @@ Active runtime candidates must remain:
 
 ---
 
-# 26. Navigation
+## 28. Navigation
 
 Add Advanced Accounting navigation:
 
 ```text
-Budgets
-Budget Reports
-Commitments
+Tax Accounting
+Tax Ledger
+Tax Returns
+Tax Payments
+Tax Reconciliation
+Withholding Certificates
 ```
 
-If a dedicated `budgets` module is added, navigation must respect module state.
-
-Route access must still work correctly through middleware and permissions.
+Routes must remain protected by module middleware and permissions.
 
 ---
 
-# 27. Focused Tests To Add
+## 29. Focused Tests To Add
 
 Add focused tests but do not run the wide full suite.
 
 Required coverage:
 
 ```text
-budget can be created in draft
-budget can be submitted
-budget can be approved
-approved budget cannot be edited directly
-budget revision changes revised amount only after approval
-budget transfer moves amount between lines after approval
-availability formula includes budget, revisions, transfers, commitments and actuals
-commitment reduces available budget
-commitment release restores available budget
-payable actualization releases commitment and increases actual
-warning mode allows over-budget with audit
-blocking mode blocks over-budget without override
-override permission allows approved over-budget commitment
-budget-vs-actual report uses posted GL actuals
-unposted source records are not counted as actuals
-permissions protect budget actions
-module middleware protects budget routes
+tax type can be created
+tax registration can be created
+tax account mapping is effective-dated
+PAYE ledger entries can be created from posted payroll liabilities
+pension ledger entries can be created from posted payroll liabilities
+Phase E2 settlements link without duplicate journals
+tax return can be prepared from ledger entries
+approved return cannot be edited silently
+tax return can be marked filed with reference
+tax payment posts balanced journal
+tax payment cannot over-allocate
+payment reversal restores outstanding tax
+withholding certificate cannot issue without source amount
+tax reconciliation detects manual journal difference
+missing mapping creates controlled failure
+permissions protect tax actions
+module middleware protects tax routes
 audit events are recorded
 localisation keys exist
 ```
@@ -1067,7 +1105,7 @@ The wide full-suite test will be run after all accounting implementation phases 
 
 ---
 
-# 28. Minimal Verification Commands
+## 30. Minimal Verification Commands
 
 Run only necessary safety checks:
 
@@ -1092,12 +1130,12 @@ Do not run the full application test suite yet.
 
 ---
 
-# 29. Documentation
+## 31. Documentation
 
 Create:
 
 ```text
-docs/ACCOUNTING_PHASE_G_BUDGETS_COMMITMENTS_REPORT.md
+docs/ACCOUNTING_PHASE_I_STATUTORY_TAX_LEDGERS_AND_RETURNS_REPORT.md
 ```
 
 Include:
@@ -1109,15 +1147,18 @@ models added
 services added
 permissions added
 routes/controllers/views added
-module toggle decision
-budget lifecycle
-revision lifecycle
-transfer lifecycle
-commitment lifecycle
-budget availability formula
-procurement integration point
-actuals calculation strategy
-budget-vs-actual report
+tax type configuration
+tax registration behavior
+tax ledger behavior
+PAYE/Pension integration
+withholding tax integration
+VAT/NHIL/GETFund readiness
+tax return workflow
+tax payment workflow
+allocation rules
+reconciliation behavior
+failed posting integration
+cash flow integration
 close readiness integration
 audit logging
 localisation audit result
@@ -1129,26 +1170,28 @@ next recommended phase
 
 ---
 
-# 30. Acceptance Criteria
+## 32. Acceptance Criteria
 
-Phase G is complete only when:
+Phase I is complete only when:
 
 ```text
-budgets can be created
-budget lines can be configured
-budgets can be submitted and approved
-approved budgets are immutable
-budget revisions are versioned and approval-gated
-budget transfers are balanced and approval-gated
-budget availability is calculated correctly
-commitments can be created and released
-commitments reduce available budget
-actual posted GL expenses affect budget actuals
-budget-vs-actual report exists
-over-budget behavior respects enforcement mode
-clinical/emergency workflows are not blocked
+tax types can be configured
+tax registrations can be configured
+tax account mappings are effective-dated
+PAYE and pension ledger entries can be built from payroll liabilities
+Phase E2 settlements are visible in tax ledger/return context without duplicate journals
+tax returns can be prepared
+tax returns can be approved
+tax returns can be marked filed with reference
+tax payments can be posted where not already handled by Phase E2
+tax payment allocation prevents over-allocation
+payment reversal restores outstanding tax
+withholding foundation exists
+VAT/NHIL/GETFund readiness is honest and non-hardcoded
+tax reconciliation exists
+close readiness reports tax exceptions
 permissions are enforced
-module middleware protects direct routes
+module middleware protects routes
 ActivityLogService is used
 EN/FR localisation parity is maintained
 active runtime candidates remain 0
@@ -1160,4 +1203,4 @@ documentation report is created
 full test suite is intentionally deferred to the final wide accounting test phase
 ```
 
-Proceed with Accounting Execution Phase G now.
+Proceed with Accounting Execution Phase I now.

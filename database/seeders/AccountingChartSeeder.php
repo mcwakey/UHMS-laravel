@@ -27,6 +27,7 @@ class AccountingChartSeeder extends Seeder
             ['1220', 'Insurance Receivables', AccountType::ASSET, 'CURRENT_ASSET', '1200', true],
             ['1230', 'Sponsor Receivables', AccountType::ASSET, 'CURRENT_ASSET', '1200', true],
             ['1240', 'Corporate Receivables', AccountType::ASSET, 'CURRENT_ASSET', '1200', true],
+            ['1250', 'Input Tax Receivable', AccountType::ASSET, 'CURRENT_ASSET', '1200', true],
             ['1300', 'Inventory', AccountType::ASSET, 'CURRENT_ASSET', '1000', true],
             ['1310', 'Pharmacy Inventory', AccountType::ASSET, 'CURRENT_ASSET', '1300', true],
             ['1320', 'Medical Consumables Inventory', AccountType::ASSET, 'CURRENT_ASSET', '1300', true],
@@ -37,6 +38,7 @@ class AccountingChartSeeder extends Seeder
             ['1420', 'Furniture and Fixtures', AccountType::ASSET, 'NON_CURRENT_ASSET', '1400'],
             ['1430', 'Computers and IT Equipment', AccountType::ASSET, 'NON_CURRENT_ASSET', '1400'],
             ['1440', 'Vehicles', AccountType::ASSET, 'NON_CURRENT_ASSET', '1400'],
+            ['1490', 'Accumulated Depreciation', AccountType::ASSET, 'NON_CURRENT_ASSET', '1400'],
 
             ['2000', 'Liabilities', AccountType::LIABILITY, null, null, true],
             ['2100', 'Accounts Payable', AccountType::LIABILITY, 'CURRENT_LIABILITY', '2000', true],
@@ -45,6 +47,8 @@ class AccountingChartSeeder extends Seeder
             ['2300', 'Taxes Payable', AccountType::LIABILITY, 'CURRENT_LIABILITY', '2000', true],
             ['2310', 'PAYE Payable', AccountType::LIABILITY, 'CURRENT_LIABILITY', '2300', true],
             ['2320', 'Pension / SSNIT Payable', AccountType::LIABILITY, 'CURRENT_LIABILITY', '2300', true],
+            ['2330', 'Withholding Tax Payable', AccountType::LIABILITY, 'CURRENT_LIABILITY', '2300', true],
+            ['2340', 'Output Tax Payable', AccountType::LIABILITY, 'CURRENT_LIABILITY', '2300', true],
             ['2400', 'Salary Payable', AccountType::LIABILITY, 'CURRENT_LIABILITY', '2000', true],
             ['2500', 'Accrued Expenses', AccountType::LIABILITY, 'CURRENT_LIABILITY', '2000', true],
 
@@ -66,6 +70,7 @@ class AccountingChartSeeder extends Seeder
             ['4950', 'Discounts and Allowances', AccountType::INCOME, 'OTHER_INCOME', '4000'],
             ['4960', 'Credit Notes and Refunds', AccountType::INCOME, 'OTHER_INCOME', '4000'],
             ['4970', 'Inventory Adjustment Gain', AccountType::INCOME, 'OTHER_INCOME', '4000'],
+            ['4980', 'Gain on Fixed Asset Disposal', AccountType::INCOME, 'OTHER_INCOME', '4000'],
 
             ['5000', 'Expenses', AccountType::EXPENSE, null, null, true],
             ['5100', 'Cost of Goods Sold', AccountType::EXPENSE, 'COST_OF_SALES', '5000'],
@@ -80,6 +85,8 @@ class AccountingChartSeeder extends Seeder
             ['5600', 'Maintenance', AccountType::EXPENSE, 'OPERATING_EXPENSE', '5000'],
             ['5700', 'Administrative Expenses', AccountType::EXPENSE, 'ADMIN_EXPENSE', '5000'],
             ['5800', 'Bad Debt / Write-off Expense', AccountType::EXPENSE, 'OPERATING_EXPENSE', '5000'],
+            ['5850', 'Depreciation Expense', AccountType::EXPENSE, 'OPERATING_EXPENSE', '5000'],
+            ['5860', 'Loss on Fixed Asset Disposal', AccountType::EXPENSE, 'OPERATING_EXPENSE', '5000'],
             ['5900', 'Bank Charges', AccountType::EXPENSE, 'FINANCE_COST', '5000'],
             ['5990', 'Rounding Difference', AccountType::EXPENSE, 'ADMIN_EXPENSE', '5000'],
         ];
@@ -158,6 +165,9 @@ class AccountingChartSeeder extends Seeder
             'payroll_payable_account_id' => '2400',
             'paye_payable_account_id' => '2310',
             'pension_payable_account_id' => '2320',
+            'withholding_tax_payable_account_id' => '2330',
+            'output_tax_payable_account_id' => '2340',
+            'input_tax_receivable_account_id' => '1250',
             'payroll_other_deductions_payable_account_id' => '2500',
             'patient_deposit_liability_account_id' => '2200',
             'default_revenue_account_id' => '4900',
@@ -181,6 +191,10 @@ class AccountingChartSeeder extends Seeder
             'inventory_adjustment_loss_account_id' => '5210',
             'damaged_expired_stock_expense_account_id' => '5220',
             'bad_debt_expense_account_id' => '5800',
+            'fixed_asset_accumulated_depreciation_account_id' => '1490',
+            'fixed_asset_depreciation_expense_account_id' => '5850',
+            'fixed_asset_disposal_gain_account_id' => '4980',
+            'fixed_asset_disposal_loss_account_id' => '5860',
             'rounding_difference_account_id' => '5990',
             'retained_earnings_account_id' => '3200',
         ];

@@ -979,6 +979,14 @@ class SidebarMenuBuilder
                         'module' => 'budgets',
                     ],
                     [
+                        'label' => 'Fixed Assets',
+                        'icon' => 'ti ti-building-factory-2',
+                        'route' => 'admin.accounting.fixed-assets.index',
+                        'active_patterns' => ['admin.accounting.fixed-assets.*'],
+                        'permission' => 'accounting.fixed_assets.view',
+                        'module' => 'fixed_assets',
+                    ],
+                    [
                         'label' => 'Fiscal Years',
                         'icon' => 'ti ti-calendar-stats',
                         'route' => 'admin.accounting.fiscal-years.index',
