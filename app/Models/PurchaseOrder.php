@@ -19,6 +19,10 @@ class PurchaseOrder extends Model
     protected $fillable = [
         'po_number',
         'supplier_id',
+        'budget_department_id',
+        'budget_account_id',
+        'budget_commitment_id',
+        'budget_overrun_acknowledged',
         'order_date',
         'expected_date',
         'received_date',
@@ -35,6 +39,7 @@ class PurchaseOrder extends Model
         'expected_date' => 'date',
         'received_date' => 'date',
         'total_amount' => 'decimal:2',
+        'budget_overrun_acknowledged' => 'boolean',
     ];
 
     public function getActivitylogOptions(): LogOptions
@@ -67,6 +72,11 @@ class PurchaseOrder extends Model
     public function approvedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function budgetCommitment(): BelongsTo
+    {
+        return $this->belongsTo(BudgetCommitment::class, 'budget_commitment_id');
     }
 
     // Scopes

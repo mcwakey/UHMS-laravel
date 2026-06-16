@@ -5,27 +5,28 @@ There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
 Do not try to read it.
 Follow this prompt directly.
 
-# UHMS Accounting Execution Phase F — Cash Flow Statement & Controlled Accounting Exports
+# UHMS Accounting Execution Phase G — Budgets, Commitments & Encumbrances
 
 ## Goal
 
-Implement the missing Cash Flow Statement and controlled accounting exports for UHMS Advanced Accounting.
+Implement budgeting, commitments, encumbrances, and budget-vs-actual reporting for UHMS Advanced Accounting.
 
-This phase must use the accounting foundation already completed:
+This phase must build on the accounting foundation already completed:
 
 ```text
-Phase 0 — Shared posting controls, idempotency, account mappings, close readiness
+Phase 0 — Shared posting controls, idempotency, mappings, close readiness
 Phase A — Basic-to-Advanced posting bridge
-Phase B — Bank accounts, statement import, reconciliation and bank adjustments
+Phase B — Bank accounts and bank reconciliation
 Phase C — Failed posting workbench
 Phase D — Subledger reconciliation workbench
-Phase E — Payroll accrual and salary settlement posting
-Phase E2 — PAYE and Pension / SSNIT statutory settlement posting
+Phase E — Payroll accounting posting
+Phase E2 — PAYE and Pension / SSNIT statutory settlement
+Phase F — Cash Flow Statement and accounting exports
 ```
 
-Do not create a parallel reporting engine.
+Do not create a parallel accounting system.
 
-Do not bypass existing journal, ledger, reconciliation, permission, audit, localisation, or export controls.
+Do not weaken existing procurement, stock, supplier payable, GL, audit, localisation, permission, or module middleware behavior.
 
 ---
 
@@ -42,23 +43,21 @@ docs/ACCOUNTING_PHASE_C_FAILED_POSTING_WORKBENCH_REPORT.md
 docs/ACCOUNTING_PHASE_D_SUBLEDGER_RECONCILIATION_WORKBENCH_REPORT.md
 docs/ACCOUNTING_PHASE_E_PAYROLL_ACCOUNTING_POSTING_REPORT.md
 docs/ACCOUNTING_PHASE_E2_STATUTORY_PAYROLL_SETTLEMENT_REPORT.md
+docs/ACCOUNTING_PHASE_F_CASH_FLOW_AND_EXPORTS_REPORT.md
 docs/ACCOUNTING_MODULE_SPLIT_AND_GAP_REPORT.md
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
 
-Current baseline:
+Current accounting status:
 
 ```text
-Phase 0 complete.
-Phase A complete.
-Phase B complete.
-Phase C complete.
-Phase D complete.
-Phase E complete.
-Phase E2 complete.
-PAYE and Pension / SSNIT settlements are now posted through accounting.
-Cash and bank movements are now richer and ready for cash-flow reporting.
-Active runtime candidates must remain 0.
+Basic-to-Advanced posting bridge exists.
+Bank reconciliation exists.
+Failed posting workbench exists.
+Subledger reconciliation exists.
+Payroll accounting posting exists.
+PAYE/Pension settlement exists.
+Cash flow statement and accounting CSV exports exist.
 ```
 
 Important testing instruction:
@@ -76,40 +75,41 @@ For this phase, run only necessary safety checks: migrations, route list, view c
 Implement:
 
 ```text
-cash flow statement
-direct-method cash flow report
-cash flow mapping configuration
-cash/bank account selection
-operating activities classification
-investing activities classification
-financing activities classification
-unmapped cash movement detection
-cash flow drill-down
-opening cash balance
-cash movement summary
-closing cash balance
-comparison period support where practical
-controlled exports for accounting reports
-PDF export
-CSV export
-Excel-compatible export where existing export tooling supports it
-print view
-export permission enforcement
-export audit logging
-close-readiness integration for unmapped cash-flow movements
+budget years
+budget periods
+budget headers
+budget lines
+department/account budgets
+budget submission
+budget approval
+budget revisions
+budget transfers
+budget availability calculation
+commitment creation
+encumbrance tracking
+commitment release
+budget-vs-actual report
+budget-vs-actual export if existing export service supports it
+procurement integration where safe
+supplier payable integration where safe
+close-readiness visibility
+permissions
+audit logging
+localisation
 documentation
 ```
 
 Do not implement yet:
 
 ```text
-budgets and commitments
 fixed assets
-full statutory tax returns
+statutory tax returns
 receivables collector workbench
 claims settlement accounting
-multi-currency exchange gains/losses
+multi-currency budget revaluation
 donor fund accounting
+grant accounting
+project accounting
 branch consolidation
 electronic bank payment files
 ```
@@ -118,397 +118,760 @@ electronic bank payment files
 
 # 3. Core Rules
 
-Cash flow reporting must be:
+Budgeting must be:
 
 ```text
-ledger-based
-period-based
-drillable
+approval-gated
+versioned
 auditable
 permission-aware
 module-aware
-export-controlled
-reconcilable to cash/bank GL balances
+non-destructive
+reconcilable to actual GL postings
+safe for hospital operations
 ```
 
-Rules:
+Important rules:
 
 ```text
-Cash flow must be derived from posted journal entries.
-Draft, failed, reversed, or unposted source records must not be counted as final cash movement.
-Opening balance plus cash movement must equal closing balance.
-Closing balance must agree to selected cash/bank GL accounts.
-Unmapped cash movements must be shown explicitly.
-Do not hide unmapped movements.
-Do not invent cash-flow classifications.
-Do not use source modules directly when posted GL data is available.
-Do not bypass permissions.
-Do not bypass ActivityLogService.
+Approved budget versions are immutable.
+Budget changes use revisions or transfers.
+Commitments are separate from actuals.
+Actuals come from posted GL journals.
+Commitments reduce available budget but do not create GL journals.
+Encumbrances are operational controls, not accounting journals.
+Clinical care must not be blocked by budget rules.
+Emergency care must not be blocked by budget rules.
+Budget enforcement should default to warning mode.
+Hard blocking should apply only to configured procurement workflows.
 ```
 
 ---
 
-# 4. Reporting Method
+# 4. Module Rules
 
-Implement the **direct method** first.
-
-Direct method categories:
+Add a dedicated optional module if the module catalogue supports it safely:
 
 ```text
-operating activities
-investing activities
-financing activities
+budgets
 ```
 
-Examples:
+Recommended dependency:
 
 ```text
-Operating:
-- patient collections
-- sponsor / insurance collections
-- supplier payments for operating goods
-- salary payments
-- PAYE / pension remittances
-- bank charges
-- operating income and expenses
-
-Investing:
-- fixed asset purchases
-- asset disposals
-- long-term investment activity
-
-Financing:
-- loans received
-- loan repayments
-- owner/capital contributions
-- dividends/distributions if ever supported
+budgets depends on accounting_advanced
 ```
 
-Do not implement indirect method yet unless the codebase already has all required non-cash adjustment data.
+If adding the module toggle is risky in this phase, keep budgets under `accounting_advanced` and document the module toggle as deferred.
 
-Document indirect method as future.
+Routes must use:
+
+```text
+auth
+module:accounting_basic
+module:accounting_advanced
+permission middleware
+```
+
+If `budgets` module is added, budget routes must also use:
+
+```text
+module:budgets
+```
+
+Do not make Billing & Collections dependent on budgets.
+
+Do not make clinical workflows dependent on budgets.
 
 ---
 
 # 5. Database Tables
 
-Create additive table if needed:
+Create additive tables:
 
 ```text
-cash_flow_mappings
+budgets
+budget_periods
+budget_lines
+budget_revisions
+budget_revision_lines
+budget_transfers
+budget_commitments
+budget_commitment_movements
+budget_approval_limits
 ```
 
-Use existing accounting account mapping table if it cleanly supports this. Do not duplicate mapping systems unnecessarily.
+Use string statuses with application validation.
 
-## cash_flow_mappings
+Do not use database enums.
+
+Use `DECIMAL(18,2)` for money.
+
+Use `LONGTEXT` for snapshots where needed.
+
+Use explicit short MariaDB-safe index names.
+
+Do not cascade-delete financial history.
+
+---
+
+# 6. budgets
 
 Fields:
 
 ```text
 id
-mapping_type
-mapping_key
-mapping_value
-gl_account_id nullable
-source_module nullable
-source_type nullable
-posting_type nullable
-cash_flow_section
-cash_flow_category
-direction
-priority
-effective_from
-effective_to
-is_active
+budget_code
+name
+fiscal_year_id nullable
+period_start
+period_end
+currency
+department_id nullable
+branch_id nullable
+status
+approved_by nullable
+approved_at nullable
+closed_by nullable
+closed_at nullable
+cancelled_by nullable
+cancelled_at nullable
+cancellation_reason nullable
 notes
 created_by
 updated_by
 timestamps
 ```
 
-Cash flow sections:
+Statuses:
 
 ```text
-operating
-investing
-financing
-```
-
-Direction:
-
-```text
-inflow
-outflow
-auto
+draft
+submitted
+approved
+active
+closed
+cancelled
+superseded
 ```
 
 Rules:
 
 ```text
-Mappings must be effective-dated.
-Highest priority mapping wins.
-Conflicts must fail loudly.
-Inactive mappings must not classify new reports.
-Historical mappings should remain visible.
-Do not hardcode account IDs.
-```
-
-If Phase 0 `accounting_account_mappings` is reused, define scopes such as:
-
-```text
-cash_flow_section
-cash_flow_category
-cash_flow_source_type
-cash_flow_posting_type
+draft budgets can be edited
+submitted budgets require review
+approved budgets become immutable
+active budgets drive availability checks
+closed budgets cannot receive new commitments
+cancelled budgets cannot be used
 ```
 
 ---
 
-# 6. CashFlowReportService
+# 7. budget_periods
+
+Fields:
+
+```text
+id
+budget_id
+name
+period_start
+period_end
+status
+created_by
+updated_by
+timestamps
+```
+
+Purpose:
+
+```text
+Allow monthly, quarterly, annual, or custom budget periods.
+```
+
+---
+
+# 8. budget_lines
+
+Fields:
+
+```text
+id
+budget_id
+budget_period_id nullable
+department_id nullable
+branch_id nullable
+gl_account_id
+budget_amount
+revised_amount
+committed_amount
+actual_amount
+available_amount
+enforcement_mode
+status
+notes
+created_by
+updated_by
+timestamps
+```
+
+Enforcement modes:
+
+```text
+none
+warning
+blocking
+approval_override
+```
+
+Rules:
+
+```text
+budget_amount is the approved base amount
+revised_amount changes only through approved revisions/transfers
+committed_amount comes from open commitments
+actual_amount comes from posted GL journals
+available_amount is calculated, not trusted blindly
+```
+
+Do not rely only on stored available_amount. Recalculate when needed.
+
+---
+
+# 9. budget_revisions and budget_revision_lines
+
+Purpose:
+
+```text
+Increase or decrease approved budget amounts with audit trail.
+```
+
+budget_revisions fields:
+
+```text
+id
+budget_id
+revision_number
+reason
+status
+submitted_by
+submitted_at
+approved_by
+approved_at
+rejected_by
+rejected_at
+rejection_reason
+created_by
+updated_by
+timestamps
+```
+
+budget_revision_lines fields:
+
+```text
+id
+budget_revision_id
+budget_line_id
+old_amount
+change_amount
+new_amount
+reason
+timestamps
+```
+
+Statuses:
+
+```text
+draft
+submitted
+approved
+rejected
+cancelled
+```
+
+Rules:
+
+```text
+approved revisions update revised budget
+rejected revisions change nothing
+budget history remains visible
+```
+
+---
+
+# 10. budget_transfers
+
+Purpose:
+
+```text
+Move budget amount from one approved budget line to another.
+```
+
+Fields:
+
+```text
+id
+budget_id
+transfer_number
+from_budget_line_id
+to_budget_line_id
+amount
+reason
+status
+submitted_by
+submitted_at
+approved_by
+approved_at
+rejected_by
+rejected_at
+rejection_reason
+created_by
+updated_by
+timestamps
+```
+
+Rules:
+
+```text
+source budget line must have enough available amount unless elevated override is used
+approved transfer reduces source revised amount and increases target revised amount
+transfer must be balanced
+```
+
+---
+
+# 11. budget_commitments
+
+Purpose:
+
+```text
+Reserve budget for purchase orders, procurement requests, department requests, or other controlled spending before actual supplier payable/payment occurs.
+```
+
+Fields:
+
+```text
+id
+commitment_number
+budget_id
+budget_line_id
+source_type
+source_id
+source_reference
+department_id nullable
+branch_id nullable
+gl_account_id
+amount
+open_amount
+released_amount
+actualized_amount
+status
+committed_by
+committed_at
+released_by nullable
+released_at nullable
+release_reason nullable
+metadata_snapshot
+timestamps
+```
+
+Statuses:
+
+```text
+draft
+committed
+partially_released
+released
+actualized
+cancelled
+reversed
+```
+
+Rules:
+
+```text
+committed amount reduces available budget
+actualized amount becomes actual when supplier payable/payment posts to GL
+released amount restores available budget
+commitment does not create journal
+commitment must remain linked to source record
+```
+
+---
+
+# 12. budget_commitment_movements
+
+Purpose:
+
+```text
+Append-only movement history for commitments.
+```
+
+Fields:
+
+```text
+id
+budget_commitment_id
+movement_type
+amount
+old_open_amount
+new_open_amount
+source_type nullable
+source_id nullable
+reason
+actor_id
+metadata_snapshot
+created_at
+updated_at
+```
+
+Movement types:
+
+```text
+created
+increased
+decreased
+released
+actualized
+cancelled
+reversed
+```
+
+---
+
+# 13. budget_approval_limits
+
+Purpose:
+
+```text
+Define who can approve budgets, revisions, transfers, and overrides by amount and department.
+```
+
+Fields:
+
+```text
+id
+approval_type
+role_id nullable
+user_id nullable
+department_id nullable
+branch_id nullable
+min_amount
+max_amount
+is_active
+effective_from
+effective_to
+notes
+created_by
+updated_by
+timestamps
+```
+
+Approval types:
+
+```text
+budget
+revision
+transfer
+commitment_override
+```
+
+---
+
+# 14. Budget Availability Formula
+
+Budget availability should be calculated as:
+
+```text
+approved budget
++ approved revisions
++ approved incoming transfers
+- approved outgoing transfers
+- open commitments
+- actual posted GL expenditure
+= available budget
+```
+
+For revenue budgets later:
+
+```text
+actual posted GL income can be compared against budgeted income
+```
+
+Start with expense-control budgets first.
+
+Do not block clinical workflows.
+
+Do not calculate actuals from operational source records when posted GL data exists.
+
+---
+
+# 15. Services To Add
 
 Create:
 
 ```text
-CashFlowReportService
+BudgetService
+BudgetApprovalService
+BudgetRevisionService
+BudgetTransferService
+BudgetAvailabilityService
+CommitmentService
+BudgetActualsService
+BudgetReportService
 ```
 
-Responsibilities:
+Controllers must call services.
 
-```text
-resolve selected cash/bank GL accounts
-calculate opening cash balance
-load posted journal lines affecting cash/bank accounts
-classify movements using mappings
-separate operating/investing/financing sections
-detect unmapped cash movements
-calculate net cash movement
-calculate closing cash balance
-compare closing balance to GL balance
-build drill-down rows
-build export-ready report data
-support comparison period where practical
-```
-
-Do not put report calculations in controllers or Blade.
+Do not put budget calculations in controllers or Blade.
 
 ---
 
-# 7. Cash Flow Calculation
+# 16. BudgetAvailabilityService
 
-For selected period:
+This service should:
 
 ```text
-opening_cash_balance = posted cash/bank GL balance before period_start
-
-cash_movements = posted journal lines affecting selected cash/bank accounts during period
-
-net_cash_movement = total inflows - total outflows
-
-closing_cash_balance = opening_cash_balance + net_cash_movement
-
-gl_closing_cash_balance = posted cash/bank GL balance at period_end
-
-difference = closing_cash_balance - gl_closing_cash_balance
+resolve applicable budget line
+calculate approved/revised budget
+calculate open commitments
+calculate actual posted GL expense
+calculate available amount
+detect over-budget state
+apply enforcement mode
+return warning/block/override decision
 ```
 
-Acceptance:
+Inputs:
 
 ```text
-opening_cash_balance + net_cash_movement = closing_cash_balance
-closing_cash_balance must match GL cash/bank balance
-difference should be 0 unless clearly explained
+gl_account_id
+department_id
+branch_id
+amount
+date
+source_type
+source_id
 ```
 
-Use decimal arithmetic according to existing money precision policy.
-
-Do not rely on PHP floats as authoritative.
-
----
-
-# 8. Classification Strategy
-
-Classify each cash/bank journal line using:
+Output:
 
 ```text
-source module
-source type
-posting type
-contra account
-journal description
-mapping priority
-effective date
-```
-
-Recommended priority:
-
-```text
-1. explicit source/posting type mapping
-2. explicit GL account mapping
-3. contra account mapping
-4. default section mapping
-5. unmapped
-```
-
-If no mapping is found:
-
-```text
-classify as unmapped
-show in unmapped section
-include in total cash movement
-prevent "complete" badge
-add close-readiness warning
-```
-
-Do not silently exclude unmapped cash activity.
-
----
-
-# 9. Cash Flow UI
-
-Add screens under Advanced Accounting:
-
-```text
-Cash Flow Statement
-Cash Flow Mapping Settings
-Cash Flow Drill-down
-Cash Flow Export Preview
-```
-
-Report filters:
-
-```text
-date range
-fiscal period
-cash/bank account
-branch/facility where supported
-department where reliably populated
-comparison period optional
-include/exclude unmapped
-```
-
-Report sections:
-
-```text
-Opening cash balance
-Operating activities
-Investing activities
-Financing activities
-Net increase/decrease in cash
-Closing cash balance
-GL closing cash balance
-Difference
-Unmapped cash movements
-```
-
-Each line should be drillable to:
-
-```text
-journal entry
-journal line
-source record where linked
-posting attempt where linked
-bank reconciliation where linked
+budget line
+approved amount
+revised amount
+committed amount
+actual amount
+available amount
+requested amount
+decision
+message
+override_required
 ```
 
 ---
 
-# 10. Controlled Accounting Exports
+# 17. CommitmentService
 
-Implement controlled exports for accounting reports.
-
-Start with cash flow and extend common export service where safe.
-
-Supported formats:
+This service should:
 
 ```text
-PDF
+create commitment
+increase commitment
+decrease commitment
+release commitment
+actualize commitment
+cancel commitment
+reverse commitment
+append movement history
+update commitment totals
+audit each movement
+```
+
+Commitments must be idempotent by:
+
+```text
+source_type + source_id + gl_account_id + budget_line_id
+```
+
+Do not duplicate commitments for the same source line.
+
+---
+
+# 18. Procurement Integration
+
+Inspect existing procurement/purchase-order/supplier payable workflow.
+
+Where safe, integrate budget checks at configured points:
+
+```text
+purchase request approval
+purchase order approval
+supplier payable creation
+goods received note approval
+```
+
+Recommended first integration point:
+
+```text
+purchase order approval or supplier payable creation
+```
+
+depending on the existing UHMS workflow.
+
+Rules:
+
+```text
+if budgets disabled: no effect
+if no budget line found: warn, do not block by default
+if enforcement_mode = warning: allow with warning and audit
+if enforcement_mode = blocking: block unless override permission exists
+if enforcement_mode = approval_override: require authorized override
+emergency/clinical direct care must not be blocked
+```
+
+Do not rewrite procurement logic.
+
+Add budget hooks through services.
+
+---
+
+# 19. Actuals Integration
+
+Actuals should come from posted GL journal lines.
+
+BudgetActualsService should:
+
+```text
+query posted journal lines
+filter by expense accounts
+filter by date/period
+filter by department/branch where dimension exists
+exclude reversed journals
+include reversal effects correctly
+group by budget line/account/department
+```
+
+Do not use unposted source records as actuals.
+
+---
+
+# 20. Budget Reports
+
+Implement:
+
+```text
+budget summary
+budget line detail
+budget vs actual
+commitment register
+over-budget report
+budget revision history
+budget transfer history
+```
+
+Budget-vs-actual columns:
+
+```text
+budget amount
+revisions
+transfers in
+transfers out
+revised budget
+open commitments
+actuals
+available
+variance amount
+variance percentage
+status
+```
+
+Exports:
+
+```text
 CSV
 print
-Excel-compatible CSV or XLSX only if existing library/tooling is already present
+PDF if existing export tooling supports it
 ```
 
-Do not introduce a new export library unless the project already uses one.
+Use existing `AccountingExportService` where possible.
 
-All exports must require:
-
-```text
-accounting.exports
-```
-
-and report-specific permission.
-
-Exported reports should include:
-
-```text
-facility/system name
-report name
-period
-filters
-generated by
-generated at
-currency
-totals
-page number for PDF/print where practical
-```
+Do not introduce a new export library.
 
 ---
 
-# 11. AccountingExportService
+# 21. UI Screens
 
-Create or extend:
-
-```text
-AccountingExportService
-```
-
-Responsibilities:
+Add Advanced Accounting / Budgeting screens:
 
 ```text
-authorize export
-record export audit
-prepare export metadata
-render PDF/print views
-generate CSV
-reuse existing report layouts where practical
-ensure exported totals match screen totals
+Budget dashboard
+Budget index
+Budget create/edit
+Budget line editor
+Budget submit
+Budget approval
+Budget detail
+Budget revisions
+Budget transfers
+Budget commitments
+Budget availability check
+Budget-vs-actual report
+Commitment register
+Approval limits
 ```
 
-Do not duplicate report calculation in the export layer.
+Use Bootstrap 5 and Tabler Icons only.
 
-The export layer must receive already-calculated report data from `CashFlowReportService`.
+Do not introduce new frontend frameworks.
 
 ---
 
-# 12. Permissions
+# 22. Permissions
 
-Use existing permission where already present:
-
-```text
-accounting.reports.cash_flow
-accounting.exports
-```
-
-Add only if missing:
+Add:
 
 ```text
-accounting.cash_flow.view
-accounting.cash_flow.manage_mappings
-accounting.cash_flow.export
+accounting.budgets.view
+accounting.budgets.manage
+accounting.budgets.submit
+accounting.budgets.approve
+accounting.budgets.revise
+accounting.budgets.transfer
+accounting.budgets.close
+accounting.budgets.cancel
+accounting.commitments.view
+accounting.commitments.manage
+accounting.commitments.release
+accounting.commitments.override
+accounting.budget_reports.view
+accounting.budget_reports.export
+accounting.budget_approval_limits.view
+accounting.budget_approval_limits.manage
 ```
 
-Avoid duplicate effective permissions if `accounting.reports.cash_flow` and `accounting.exports` are already enough.
-
-Suggested defaults:
+Suggested role defaults:
 
 ```text
 Accountant:
-- view cash flow
-- export if accounting.exports already granted
+- view budgets
+- manage draft budgets
+- submit budgets
+- view commitments
+- view budget reports
 
 Finance Manager:
-- view cash flow
-- manage mappings
-- export
+- approve budgets
+- revise/transfer
+- close/cancel
+- release/override commitments
+- manage approval limits
+- export reports
+
+Department Head:
+- view assigned department budgets
+- submit budget requests if role exists
 
 Administrator / Super Admin:
 - all
@@ -518,22 +881,35 @@ Do not grant to broad clinical roles.
 
 ---
 
-# 13. Audit Logging
+# 23. Audit Logging
 
 Use `ActivityLogService`.
 
 Audit:
 
 ```text
-CASH_FLOW_REPORT_VIEWED
-CASH_FLOW_REPORT_EXPORTED
-CASH_FLOW_MAPPING_CREATED
-CASH_FLOW_MAPPING_UPDATED
-CASH_FLOW_MAPPING_DISABLED
-CASH_FLOW_UNMAPPED_MOVEMENTS_REVIEWED
+BUDGET_CREATED
+BUDGET_UPDATED
+BUDGET_SUBMITTED
+BUDGET_APPROVED
+BUDGET_CLOSED
+BUDGET_CANCELLED
+BUDGET_REVISION_CREATED
+BUDGET_REVISION_SUBMITTED
+BUDGET_REVISION_APPROVED
+BUDGET_REVISION_REJECTED
+BUDGET_TRANSFER_CREATED
+BUDGET_TRANSFER_APPROVED
+BUDGET_TRANSFER_REJECTED
+BUDGET_COMMITMENT_CREATED
+BUDGET_COMMITMENT_RELEASED
+BUDGET_COMMITMENT_ACTUALIZED
+BUDGET_COMMITMENT_CANCELLED
+BUDGET_OVERRIDE_USED
+BUDGET_AVAILABILITY_CHECKED
+BUDGET_REPORT_VIEWED
+BUDGET_REPORT_EXPORTED
 ```
-
-If export service records generic accounting export events, use those and add report-specific context.
 
 Run:
 
@@ -545,29 +921,26 @@ Fix new missing/needs-review audit gaps.
 
 ---
 
-# 14. Close Readiness Integration
+# 24. Close Readiness Integration
 
-Update `AccountingCloseReadinessService` to include:
-
-```text
-cash flow report not generated for period
-unmapped cash flow movements
-cash flow closing difference
-cash/bank GL mismatch
-cash flow mappings missing
-```
-
-Do not hard-block period close in this phase unless existing close code safely supports it.
-
-Document recommended future close-block behavior:
+Update `AccountingCloseReadinessService` to show:
 
 ```text
-period close should warn/block if cash flow has unmapped material cash movements or unexplained closing difference
+open commitments for the period
+over-budget lines
+unapproved budget revisions
+unapproved budget transfers
+commitments not released after payable actualization
+budget-vs-actual report not generated
 ```
+
+Do not hard-block period close yet unless current close code safely supports it.
+
+Document recommended future close-block behavior.
 
 ---
 
-# 15. Localisation
+# 25. Localisation
 
 All new labels must be localised EN/FR.
 
@@ -583,31 +956,43 @@ lang/fr/reports.php
 Required labels:
 
 ```text
-cash_flow
-cash_flow_statement
-cash_flow_mappings
-cash_flow_mapping
-operating_activities
-investing_activities
-financing_activities
-cash_inflows
-cash_outflows
-net_cash_flow
-opening_cash_balance
-closing_cash_balance
-gl_closing_cash_balance
-net_increase_decrease_cash
-unmapped_cash_movements
-cash_flow_difference
-complete_cash_flow
-incomplete_cash_flow
-export_cash_flow
-print_cash_flow
-cash_flow_report_viewed
-cash_flow_report_exported
-source_posting_type
-contra_account
-classification_priority
+budgets
+budget
+budgeting
+budget_period
+budget_line
+budget_amount
+revised_budget
+budget_revision
+budget_revisions
+budget_transfer
+budget_transfers
+commitment
+commitments
+encumbrance
+encumbrances
+open_commitments
+actual_amount
+available_budget
+budget_vs_actual
+budget_variance
+variance_percentage
+over_budget
+under_budget
+within_budget
+enforcement_mode
+warning_mode
+blocking_mode
+approval_override
+commitment_register
+approval_limits
+submit_budget
+approve_budget
+close_budget
+cancel_budget
+release_commitment
+actualize_commitment
+budget_override
 ```
 
 Maintain EN/FR parity.
@@ -626,43 +1011,46 @@ Active runtime candidates must remain:
 
 ---
 
-# 16. Navigation
+# 26. Navigation
 
 Add Advanced Accounting navigation:
 
 ```text
-Cash Flow Statement
-Cash Flow Mappings
+Budgets
+Budget Reports
+Commitments
 ```
 
-If sidebar tests are locked, update them during final wide test phase.
+If a dedicated `budgets` module is added, navigation must respect module state.
 
-Route access must still work via direct URL and permissions.
+Route access must still work correctly through middleware and permissions.
 
 ---
 
-# 17. Focused Tests To Add
+# 27. Focused Tests To Add
 
 Add focused tests but do not run the wide full suite.
 
 Required coverage:
 
 ```text
-cash flow route is permission protected
-module middleware blocks cash flow route when Advanced Accounting disabled
-cash flow calculates opening balance
-cash flow classifies operating cash movement
-cash flow classifies investing cash movement
-cash flow classifies financing cash movement
-unmapped cash movement is shown and not hidden
-opening plus movement equals closing balance
-closing balance agrees to GL cash/bank balance
-cash flow drill-down links to journal
-cash flow export requires accounting.exports
-CSV export totals match screen totals
-PDF/print view renders
-cash flow mapping conflict fails clearly
-close readiness reports unmapped cash movements
+budget can be created in draft
+budget can be submitted
+budget can be approved
+approved budget cannot be edited directly
+budget revision changes revised amount only after approval
+budget transfer moves amount between lines after approval
+availability formula includes budget, revisions, transfers, commitments and actuals
+commitment reduces available budget
+commitment release restores available budget
+payable actualization releases commitment and increases actual
+warning mode allows over-budget with audit
+blocking mode blocks over-budget without override
+override permission allows approved over-budget commitment
+budget-vs-actual report uses posted GL actuals
+unposted source records are not counted as actuals
+permissions protect budget actions
+module middleware protects budget routes
 audit events are recorded
 localisation keys exist
 ```
@@ -679,7 +1067,7 @@ The wide full-suite test will be run after all accounting implementation phases 
 
 ---
 
-# 18. Minimal Verification Commands
+# 28. Minimal Verification Commands
 
 Run only necessary safety checks:
 
@@ -704,12 +1092,12 @@ Do not run the full application test suite yet.
 
 ---
 
-# 19. Documentation
+# 29. Documentation
 
 Create:
 
 ```text
-docs/ACCOUNTING_PHASE_F_CASH_FLOW_AND_EXPORTS_REPORT.md
+docs/ACCOUNTING_PHASE_G_BUDGETS_COMMITMENTS_REPORT.md
 ```
 
 Include:
@@ -717,18 +1105,19 @@ Include:
 ```text
 summary
 database changes
-models added/changed
+models added
 services added
 permissions added
 routes/controllers/views added
-cash flow method
-cash flow formula
-classification strategy
-mapping strategy
-unmapped movement handling
-drill-down behavior
-export behavior
-export permissions
+module toggle decision
+budget lifecycle
+revision lifecycle
+transfer lifecycle
+commitment lifecycle
+budget availability formula
+procurement integration point
+actuals calculation strategy
+budget-vs-actual report
 close readiness integration
 audit logging
 localisation audit result
@@ -740,23 +1129,24 @@ next recommended phase
 
 ---
 
-# 20. Acceptance Criteria
+# 30. Acceptance Criteria
 
-Phase F is complete only when:
+Phase G is complete only when:
 
 ```text
-cash flow statement route exists
-cash flow statement calculates opening balance
-cash flow statement calculates operating/investing/financing movements
-cash flow statement calculates closing cash balance
-closing balance agrees to GL cash/bank balance
-unmapped cash movements are visible
-classification mappings are configurable
-cash flow drill-down links to journals/source records where available
-cash flow export is permission controlled
-PDF/CSV/print exports work using existing tooling
-export totals match screen totals
-close readiness reports unmapped cash-flow issues
+budgets can be created
+budget lines can be configured
+budgets can be submitted and approved
+approved budgets are immutable
+budget revisions are versioned and approval-gated
+budget transfers are balanced and approval-gated
+budget availability is calculated correctly
+commitments can be created and released
+commitments reduce available budget
+actual posted GL expenses affect budget actuals
+budget-vs-actual report exists
+over-budget behavior respects enforcement mode
+clinical/emergency workflows are not blocked
 permissions are enforced
 module middleware protects direct routes
 ActivityLogService is used
@@ -770,4 +1160,4 @@ documentation report is created
 full test suite is intentionally deferred to the final wide accounting test phase
 ```
 
-Proceed with Accounting Execution Phase F now.
+Proceed with Accounting Execution Phase G now.

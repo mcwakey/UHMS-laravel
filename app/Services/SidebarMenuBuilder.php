@@ -963,6 +963,22 @@ class SidebarMenuBuilder
                         'permission' => 'accounting.reports.expense_by_department',
                     ],
                     [
+                        'label' => 'Budgets',
+                        'icon' => 'ti ti-chart-pie',
+                        'route' => 'admin.accounting.budgets.index',
+                        'active_patterns' => ['admin.accounting.budgets.*'],
+                        'permission' => 'accounting.budgets.view',
+                        'module' => 'budgets',
+                    ],
+                    [
+                        'label' => 'Commitments',
+                        'icon' => 'ti ti-lock-dollar',
+                        'route' => 'admin.accounting.commitments.index',
+                        'active_patterns' => ['admin.accounting.commitments.*'],
+                        'permission' => 'accounting.commitments.view',
+                        'module' => 'budgets',
+                    ],
+                    [
                         'label' => 'Fiscal Years',
                         'icon' => 'ti ti-calendar-stats',
                         'route' => 'admin.accounting.fiscal-years.index',

@@ -109,6 +109,7 @@ use App\Http\Controllers\Accounting\AccountingPostingController;
 use App\Http\Controllers\Accounting\AccountingPeriodController;
 use App\Http\Controllers\Accounting\AccountingReportController;
 use App\Http\Controllers\Accounting\AccountingSettingsController;
+use App\Http\Controllers\Accounting\BudgetController;
 use App\Http\Controllers\Accounting\FiscalYearController;
 use App\Http\Controllers\Accounting\JournalEntryController;
 use App\Http\Controllers\Accounting\PayrollPostingController;
@@ -699,6 +700,18 @@ Route::middleware('auth')->group(function () {
                 Route::get('cash-flow/export', [AccountingReportController::class, 'cashFlowExport'])->name('cash-flow.export')->middleware(['can:accounting.reports.cash_flow', 'can:accounting.exports']);
                 Route::get('revenue-by-department', [AccountingReportController::class, 'revenueByDepartment'])->name('revenue-by-department')->middleware('can:accounting.reports.revenue_by_department');
                 Route::get('expense-by-department', [AccountingReportController::class, 'expenseByDepartment'])->name('expense-by-department')->middleware('can:accounting.reports.expense_by_department');
+            });
+
+            Route::middleware('module:budgets')->group(function () {
+                Route::get('budgets', [BudgetController::class, 'index'])->name('budgets.index')->middleware('can:accounting.budgets.view');
+                Route::post('budgets', [BudgetController::class, 'store'])->name('budgets.store')->middleware('can:accounting.budgets.manage');
+                Route::post('budgets/{budget}/lines', [BudgetController::class, 'addLine'])->name('budgets.lines.store')->middleware('can:accounting.budgets.manage');
+                Route::post('budgets/{budget}/submit', [BudgetController::class, 'submit'])->name('budgets.submit')->middleware('can:accounting.budgets.submit');
+                Route::post('budgets/{budget}/approve', [BudgetController::class, 'approve'])->name('budgets.approve')->middleware('can:accounting.budgets.approve');
+                Route::get('commitments', [BudgetController::class, 'commitments'])->name('commitments.index')->middleware('can:accounting.commitments.view');
+                Route::post('commitments', [BudgetController::class, 'storeCommitment'])->name('commitments.store')->middleware('can:accounting.commitments.manage');
+                Route::post('commitments/{commitment}/release', [BudgetController::class, 'releaseCommitment'])->name('commitments.release')->middleware('can:accounting.commitments.manage');
+                Route::post('commitments/{commitment}/cancel', [BudgetController::class, 'cancelCommitment'])->name('commitments.cancel')->middleware('can:accounting.commitments.manage');
             });
 
             Route::middleware('can:accounting.fiscal_years.view')->prefix('fiscal-years')->name('fiscal-years.')->group(function () {

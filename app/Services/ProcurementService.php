@@ -181,6 +181,8 @@ class ProcurementService
             'approved_by' => Auth::id(),
         ]);
 
+        app(CommitmentService::class)->commitPurchaseOrder($po->fresh(), Auth::user());
+
         $this->logPo($po->fresh(), 'PURCHASE_ORDER_APPROVED', 'Purchase order approved: ' . $po->po_number);
     }
 
@@ -303,6 +305,17 @@ class ProcurementService
                 app(SupplierPayableService::class)->recognizeFromGoodsReceipt($grn, $ledgerEntry->id);
             }
 
+            if ($receivedValue > 0 && $po->budget_commitment_id) {
+                app(CommitmentService::class)->release(
+                    $po->budgetCommitment,
+                    round($receivedValue, 2),
+                    Auth::user(),
+                    'Commitment released by goods receipt.',
+                    GoodsReceivedNote::class,
+                    $grnHasItems ? $grn->id : null,
+                );
+            }
+
             if ($receivedQty > 0) {
                 $this->logPo(
                     $po->fresh(),
@@ -345,6 +358,10 @@ class ProcurementService
         }
 
         $po->update(['status' => PurchaseOrderStatus::CANCELLED]);
+
+        if ($po->budget_commitment_id) {
+            app(CommitmentService::class)->cancel($po->budgetCommitment, Auth::user(), 'Purchase order cancelled.');
+        }
 
         $this->logPo($po->fresh(), 'PURCHASE_ORDER_CANCELLED', 'Purchase order cancelled: ' . $po->po_number, [], ['severity' => \App\Enums\LogSeverity::WARNING]);
     }

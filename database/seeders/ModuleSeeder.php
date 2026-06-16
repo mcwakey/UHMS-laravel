@@ -41,9 +41,11 @@ class ModuleSeeder extends Seeder
              'description' => 'Simple income, expense, cash collection, cashier handover and operational reconciliation.'],
             ['name' => 'Advanced Accounting', 'slug' => 'accounting_advanced', 'is_core' => false, 'depends_on' => 'accounting_basic', 'icon' => 'ti-building-bank', 'sort_order' => 29,
              'description' => 'Double-entry accounting, ledgers, financial statements, receivables, payables, periods and closing controls.'],
-            ['name' => 'Reports',          'slug' => 'reports',        'is_core' => false, 'icon' => 'ti-chart-bar',     'sort_order' => 30],
-            ['name' => 'Medical Patterns', 'slug' => 'medical-patterns', 'is_core' => false, 'icon' => 'ti-template',    'sort_order' => 31],
-            ['name' => 'Notifications',    'slug' => 'notifications',  'is_core' => false, 'icon' => 'ti-bell',          'sort_order' => 32],
+            ['name' => 'Budgets',          'slug' => 'budgets',        'is_core' => false, 'depends_on' => 'accounting_advanced', 'icon' => 'ti-chart-pie', 'sort_order' => 30,
+             'description' => 'Approved budgets, availability, commitments and encumbrance controls.'],
+            ['name' => 'Reports',          'slug' => 'reports',        'is_core' => false, 'icon' => 'ti-chart-bar',     'sort_order' => 31],
+            ['name' => 'Medical Patterns', 'slug' => 'medical-patterns', 'is_core' => false, 'icon' => 'ti-template',    'sort_order' => 32],
+            ['name' => 'Notifications',    'slug' => 'notifications',  'is_core' => false, 'icon' => 'ti-bell',          'sort_order' => 33],
         ];
 
         foreach ($modules as $m) {
