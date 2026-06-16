@@ -122,6 +122,7 @@ class PayrollAccountingService
                 'settlement_status' => $this->outstandingNetPay($run) > 0 ? 'open' : 'settled',
             ])->save();
             $run->records()->where('status', 'approved')->update(['status' => 'posted']);
+            app(TaxLedgerService::class)->syncPayrollRun($run->fresh('records'));
 
             $this->audit('PAYROLL_ACCOUNTING_POSTED', $run, $actor, ['journal_entry_id' => $journal->id] + $snapshot);
 
@@ -376,6 +377,7 @@ class PayrollAccountingService
                 'posted_by' => $actor->id,
                 'accounting_error' => null,
             ])->save();
+            app(TaxLedgerService::class)->allocateSettlement($settlement->fresh(), $actor);
 
             $this->audit('PAYROLL_STATUTORY_SETTLEMENT_POSTED', $settlement, $actor, [
                 'journal_entry_id' => $journal->id,

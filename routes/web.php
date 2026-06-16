@@ -114,6 +114,7 @@ use App\Http\Controllers\Accounting\FiscalYearController;
 use App\Http\Controllers\Accounting\FixedAssetController;
 use App\Http\Controllers\Accounting\JournalEntryController;
 use App\Http\Controllers\Accounting\PayrollPostingController;
+use App\Http\Controllers\Accounting\TaxAccountingController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
@@ -724,6 +725,14 @@ Route::middleware('auth')->group(function () {
                 Route::post('depreciation/run', [FixedAssetController::class, 'runDepreciation'])->name('depreciation.run')->middleware('can:accounting.fixed_assets.depreciate');
                 Route::post('{asset}/dispose', [FixedAssetController::class, 'dispose'])->name('dispose')->middleware('can:accounting.fixed_assets.dispose');
                 Route::post('{asset}/verify', [FixedAssetController::class, 'verify'])->name('verify')->middleware('can:accounting.fixed_assets.verify');
+            });
+
+            Route::middleware('module:tax_accounting')->prefix('tax')->name('tax.')->group(function () {
+                Route::get('/', [TaxAccountingController::class, 'index'])->name('index')->middleware('can:accounting.tax_ledgers.view');
+                Route::post('returns/prepare', [TaxAccountingController::class, 'prepareReturn'])->name('returns.prepare')->middleware('can:accounting.tax_returns.prepare');
+                Route::post('returns/{return}/approve', [TaxAccountingController::class, 'approveReturn'])->name('returns.approve')->middleware('can:accounting.tax_returns.approve');
+                Route::post('payments', [TaxAccountingController::class, 'recordPayment'])->name('payments.store')->middleware('can:accounting.tax_payments.record');
+                Route::post('payments/{payment}/allocate', [TaxAccountingController::class, 'allocatePayment'])->name('payments.allocate')->middleware('can:accounting.tax_payments.record');
             });
 
             Route::middleware('can:accounting.fiscal_years.view')->prefix('fiscal-years')->name('fiscal-years.')->group(function () {

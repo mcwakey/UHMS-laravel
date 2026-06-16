@@ -987,6 +987,14 @@ class SidebarMenuBuilder
                         'module' => 'fixed_assets',
                     ],
                     [
+                        'label' => 'Tax Accounting',
+                        'icon' => 'ti ti-receipt-tax',
+                        'route' => 'admin.accounting.tax.index',
+                        'active_patterns' => ['admin.accounting.tax.*'],
+                        'permission' => 'accounting.tax_ledgers.view',
+                        'module' => 'tax_accounting',
+                    ],
+                    [
                         'label' => 'Fiscal Years',
                         'icon' => 'ti ti-calendar-stats',
                         'route' => 'admin.accounting.fiscal-years.index',

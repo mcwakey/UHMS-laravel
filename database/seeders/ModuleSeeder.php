@@ -45,9 +45,11 @@ class ModuleSeeder extends Seeder
              'description' => 'Approved budgets, availability, commitments and encumbrance controls.'],
             ['name' => 'Fixed Assets',     'slug' => 'fixed_assets',   'is_core' => false, 'depends_on' => 'accounting_advanced', 'icon' => 'ti-building-factory-2', 'sort_order' => 31,
              'description' => 'Asset register, capitalization, depreciation, transfers, verifications and disposals.'],
-            ['name' => 'Reports',          'slug' => 'reports',        'is_core' => false, 'icon' => 'ti-chart-bar',     'sort_order' => 32],
-            ['name' => 'Medical Patterns', 'slug' => 'medical-patterns', 'is_core' => false, 'icon' => 'ti-template',    'sort_order' => 33],
-            ['name' => 'Notifications',    'slug' => 'notifications',  'is_core' => false, 'icon' => 'ti-bell',          'sort_order' => 34],
+            ['name' => 'Tax Accounting',   'slug' => 'tax_accounting', 'is_core' => false, 'depends_on' => 'accounting_advanced', 'icon' => 'ti-receipt-tax', 'sort_order' => 32,
+             'description' => 'Statutory tax ledgers, returns, payments, allocations and reconciliation.'],
+            ['name' => 'Reports',          'slug' => 'reports',        'is_core' => false, 'icon' => 'ti-chart-bar',     'sort_order' => 33],
+            ['name' => 'Medical Patterns', 'slug' => 'medical-patterns', 'is_core' => false, 'icon' => 'ti-template',    'sort_order' => 34],
+            ['name' => 'Notifications',    'slug' => 'notifications',  'is_core' => false, 'icon' => 'ti-bell',          'sort_order' => 35],
         ];
 
         foreach ($modules as $m) {
