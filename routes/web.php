@@ -111,6 +111,7 @@ use App\Http\Controllers\Accounting\AccountingReportController;
 use App\Http\Controllers\Accounting\AccountingSettingsController;
 use App\Http\Controllers\Accounting\FiscalYearController;
 use App\Http\Controllers\Accounting\JournalEntryController;
+use App\Http\Controllers\Accounting\PayrollPostingController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
@@ -754,6 +755,19 @@ Route::middleware('auth')->group(function () {
                     Route::post('{reconciliationRun}/cancel', [$controller, 'cancel'])->name('cancel')->middleware('can:accounting.subledger_reconciliation.cancel');
                     Route::get('{reconciliationRun}/items/{item}', [$controller, 'item'])->name('items.show');
                     Route::post('{reconciliationRun}/items/{item}/resolve', [$controller, 'resolve'])->name('items.resolve')->middleware('can:accounting.subledger_reconciliation.resolve');
+                });
+
+            Route::middleware('can:accounting.payroll_posting.view')
+                ->prefix('payroll-posting')
+                ->name('payroll-posting.')
+                ->group(function () {
+                    Route::get('/', [PayrollPostingController::class, 'index'])->name('index');
+                    Route::post('{payrollRun}/post', [PayrollPostingController::class, 'post'])->name('post')->middleware('can:accounting.payroll_posting.post');
+                    Route::post('{payrollRun}/reverse', [PayrollPostingController::class, 'reverse'])->name('reverse')->middleware('can:accounting.payroll_posting.reverse');
+                    Route::post('{payrollRun}/settle', [PayrollPostingController::class, 'settle'])->name('settle')->middleware('can:accounting.payroll_posting.settle');
+                    Route::post('{payrollRun}/statutory-settle', [PayrollPostingController::class, 'settleStatutory'])->name('statutory-settle')->middleware('can:accounting.payroll_posting.settle');
+                    Route::post('settlements/{settlement}/reverse', [PayrollPostingController::class, 'reverseSettlement'])->name('settlements.reverse')->middleware('can:accounting.payroll_posting.reverse');
+                    Route::post('statutory-settlements/{settlement}/reverse', [PayrollPostingController::class, 'reverseStatutory'])->name('statutory-settlements.reverse')->middleware('can:accounting.payroll_posting.reverse');
                 });
 
             Route::middleware('can:accounting.mappings.view')

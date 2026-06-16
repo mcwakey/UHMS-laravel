@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\PayrollRecord;
+use App\Models\PayrollRun;
 use Carbon\Carbon;
 
 class PayrollReconciliationService extends AbstractReconciliationDomainService
@@ -10,30 +10,33 @@ class PayrollReconciliationService extends AbstractReconciliationDomainService
     public function calculate(Carbon $periodStart, Carbon $periodEnd, Carbon $asOf): array
     {
         $account = $this->account('payroll_payable_account_id');
-        $rows = PayrollRecord::query()
-            ->whereHas('payrollRun', fn ($query) => $query
-                ->whereIn('status', ['approved', 'posted'])
-                ->whereDate('period_end', '<=', $asOf))
-            ->whereNull('paid_at')
+        $runs = PayrollRun::query()
+            ->with(['records', 'settlements' => fn ($query) => $query->where('status', 'posted')])
+            ->where('accounting_status', 'posted')
+            ->whereDate('period_end', '<=', $asOf)
             ->get();
-        $subledger = round((float) $rows->sum('net_pay'), 2);
+        $subledger = round((float) $runs->sum(function (PayrollRun $run) {
+            $net = (float) $run->records->sum('net_pay');
+            $settled = (float) $run->settlements->sum('amount');
+
+            return max(0, $net - $settled);
+        }), 2);
         $gl = $this->glBalance($account, $asOf);
         $classification = ! $account ? 'mapping_issue' : (abs($subledger - $gl) < 0.01 ? 'balanced' : 'unposted_source');
         $items = [
             $this->item('payroll_liability_control', null, 'PAYROLL', 'Approved unpaid payroll', $account, $subledger, $gl, $classification, [
-                'record_count' => $rows->count(),
-                'phase_dependency' => 'Accounting Phase E payroll posting and settlement',
+                'run_count' => $runs->count(),
+                'posted_settlement_count' => $runs->sum(fn (PayrollRun $run) => $run->settlements->count()),
             ]),
         ];
 
         return $this->result(
-            'partially_available',
+            'available',
             $subledger,
             $gl,
             $items,
-            ['approved_unpaid_records' => $rows->count()],
+            ['posted_payroll_runs' => $runs->count()],
             ['account_id' => $account?->id, 'balance' => $gl],
-            'Payroll calculation exists, but authoritative GL posting and settlement are deferred to Phase E.',
         );
     }
 }

@@ -1010,6 +1010,14 @@ class SidebarMenuBuilder
                         'module' => 'accounting_advanced',
                     ],
                     [
+                        'label' => 'Payroll Posting',
+                        'icon' => 'ti ti-cash-banknote',
+                        'route' => 'admin.accounting.payroll-posting.index',
+                        'active_patterns' => ['admin.accounting.payroll-posting.*'],
+                        'permission' => 'accounting.payroll_posting.view',
+                        'module' => 'accounting_advanced',
+                    ],
+                    [
                         'label' => 'Bank Accounts',
                         'icon' => 'ti ti-building-bank',
                         'route' => 'admin.accounting.bank.accounts.index',

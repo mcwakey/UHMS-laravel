@@ -5,35 +5,44 @@ There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
 Do not try to read it.
 Follow this prompt directly.
 
-# UHMS Accounting Execution Phase D — Subledger Reconciliation Workbench
+# UHMS Accounting Execution Phase E2 — Statutory Liability Settlement Controls for PAYE, Pension / SSNIT & Payroll Deductions
 
 ## Goal
 
-Implement a Subledger Reconciliation Workbench for UHMS.
+Complete the statutory payroll liability settlement gap left after Phase E.
 
-The workbench must compare operational subledger balances against Advanced Accounting GL control accounts and show explainable differences.
-
-This phase builds on:
+Phase E implemented:
 
 ```text
-Accounting Phase 0 — Shared Posting Controls
-Accounting Phase A — Basic-to-Advanced Posting Bridge
-Accounting Phase B — Bank Accounts and Bank Reconciliation
-Accounting Phase C — Failed Posting Workbench
+approved payroll accrual posting
+net salary payable recognition
+PAYE payable recognition
+pension / SSNIT payable recognition
+other deduction payable recognition
+salary settlement posting
+payroll accrual reversal
+salary settlement reversal
 ```
 
-Do not create a parallel accounting engine.
-
-Use existing:
+But Phase E explicitly deferred:
 
 ```text
-JournalEntryService
-GeneralLedgerService
-AccountingPostingService
-AccountingPostingAttemptService
-AccountingCloseReadinessService
-ActivityLogService
+PAYE statutory remittance settlement records
+pension / SSNIT statutory remittance settlement records
+other payroll deduction settlement controls
 ```
+
+This phase must implement those settlement controls.
+
+Do not rebuild payroll calculation.
+
+Do not rebuild HR attendance.
+
+Do not rebuild payslips.
+
+Do not build full statutory tax return filing yet.
+
+This phase is only for accounting settlement of already-recognised payroll liabilities.
 
 ---
 
@@ -47,6 +56,8 @@ docs/ACCOUNTING_PHASE_0_SHARED_CONTROLS_AND_READINESS_REPORT.md
 docs/ACCOUNTING_PHASE_A_BASIC_TO_ADVANCED_POSTING_BRIDGE_REPORT.md
 docs/ACCOUNTING_PHASE_B_BANK_ACCOUNTS_AND_RECONCILIATION_REPORT.md
 docs/ACCOUNTING_PHASE_C_FAILED_POSTING_WORKBENCH_REPORT.md
+docs/ACCOUNTING_PHASE_D_SUBLEDGER_RECONCILIATION_WORKBENCH_REPORT.md
+docs/ACCOUNTING_PHASE_E_PAYROLL_ACCOUNTING_POSTING_REPORT.md
 docs/ACCOUNTING_MODULE_SPLIT_AND_GAP_REPORT.md
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
@@ -58,85 +69,128 @@ Phase 0 complete.
 Phase A complete.
 Phase B complete.
 Phase C complete.
-Failed posting workbench exists.
-Bank reconciliation exists.
-Basic-to-Advanced posting bridge exists.
-Active runtime candidates: 0.
-Audit funnel clean for recent accounting code.
+Phase D complete.
+Phase E complete for payroll accrual and salary settlement.
+PAYE and pension liabilities are recognised in GL.
+PAYE and pension statutory remittance settlement records are not yet modelled.
+Active runtime candidates must remain 0.
 ```
 
 Important testing instruction:
 
 ```text
-Do not run the wide full test suite after this individual phase.
-The wide full-suite test will be left until all accounting-gap implementation phases in this batch are complete.
-For this phase, run only necessary safety checks: migrations, route list, view cache, localisation audit, permission audit, logs:audit, PHP lint where relevant, and git diff check.
+Do not run the wide full application test suite after this individual phase.
+The wide full-suite test is deferred until all accounting-gap implementation phases in this batch are complete.
+For this phase, run only necessary safety checks: migrations, route list, view cache, localisation audit, permission audit, logs:audit, PHP lint where practical, focused accounting checks where needed, and git diff check.
 ```
 
 ---
 
 # 2. Scope of This Phase
 
-Implement reconciliation for these domains:
+Implement settlement controls for:
 
 ```text
-Accounts receivable control account vs open receivables
-Supplier payables control account vs open payables
-Inventory control account vs inventory valuation
-Payroll payable/liability accounts vs payroll subledger where available
-Cash/bank GL accounts vs bank/cash positions where available
-PAYE payable account vs payroll tax calculations where available
-Pension/SSNIT payable account vs payroll pension calculations where available
+PAYE payable settlement
+pension / SSNIT payable settlement
+other payroll deduction payable settlement
+staff loan recovery settlement where applicable
+statutory liability settlement approval
+statutory liability settlement posting
+statutory liability settlement reversal
+liability outstanding balance calculation
+settlement allocation to payroll runs
+failed posting workbench integration
+subledger reconciliation integration
+close readiness integration
+permissions
+audit logging
+localisation
+documentation
 ```
 
-If some source subledgers are not fully implemented yet, add the reconciliation domain as:
+Do not implement yet:
 
 ```text
-available
-partially_available
-not_available
+full statutory tax return filing
+VAT/NHIL/GETFund returns
+withholding tax certificates
+electronic filing APIs
+bank payment file generation
+department payroll expense analytics
+cash flow statement
+budgets
+fixed assets
+receivables collector workbench
+claims settlement accounting
 ```
-
-and explain the missing source data.
-
-Do not fake balances.
 
 ---
 
 # 3. Core Rules
 
-The reconciliation workbench must be:
+Statutory liability settlement must be:
 
 ```text
-snapshot-based
-repeatable
+approval-gated
+balanced
+transactional
+idempotent
 auditable
 permission-aware
 module-aware
-drillable
-non-destructive
+reversible
+reconcilable
 ```
 
 Rules:
 
 ```text
-Reconciliation does not auto-create corrections.
-Reconciliation does not silently change GL or source records.
-Differences must be classified and explained.
-Corrections must happen through existing posting, reversal, adjustment, payment, credit-note, write-off, or source services.
-Manual journal differences must be visible separately.
+Only recognised liabilities can be settled.
+Settlement cannot exceed outstanding liability unless an explicit overpayment/credit workflow exists.
+Draft settlement must not post.
+Approved settlement can post.
+Posted settlement cannot be edited silently.
+Corrections use reversal and replacement settlement.
+Do not create journals directly in controllers.
+Do not bypass JournalEntryService.
+Do not bypass AccountingPostingService.
+Do not bypass Phase 0 posting attempts.
+Do not bypass ActivityLogService.
 ```
 
 ---
 
-# 4. Database Tables
+# 4. Module Rules
 
-Create additive tables:
+Routes must require:
 
 ```text
-accounting_reconciliation_runs
-accounting_reconciliation_items
-accounting_reconciliation_resolutions
+auth
+module:accounting_basic
+module:accounting_advanced
+permission middleware
+```
+
+Payroll calculation must remain independent from Advanced Accounting.
+
+If Advanced Accounting is disabled:
+
+```text
+statutory liability settlement controls are hidden/inaccessible
+existing payroll calculation remains unaffected
+no false posted/settled status is shown
+```
+
+---
+
+# 5. Database Tables
+
+Create additive tables if they do not already exist:
+
+```text
+payroll_liability_settlements
+payroll_liability_settlement_allocations
 ```
 
 Use string statuses with application validation.
@@ -145,452 +199,440 @@ Do not use database enums.
 
 Use `DECIMAL(18,2)` for money.
 
-Use `LONGTEXT` for snapshots where needed.
+Use `LONGTEXT` for metadata snapshots where needed.
 
 Use explicit short MariaDB-safe index names.
 
+Do not cascade-delete financial history.
+
 ---
 
-# 5. accounting_reconciliation_runs
+# 6. payroll_liability_settlements
 
 Fields:
 
 ```text
 id
-reconciliation_type
+settlement_reference
+liability_type
 period_start
 period_end
-as_of_date
+payment_date
+amount
+bank_account_id nullable
+cash_account_id nullable
+gl_payment_account_id
+liability_account_id
+journal_entry_id nullable
+reversal_journal_entry_id nullable
 status
-tolerance_amount
-subledger_total
-gl_total
-difference_amount
-difference_classification
-source_snapshot
-gl_snapshot
-summary_snapshot
-started_by
-started_at
-completed_by
-completed_at
-approved_by
-approved_at
-cancelled_by
-cancelled_at
-cancellation_reason
+approved_by nullable
+approved_at nullable
+posted_by nullable
+posted_at nullable
+reversed_by nullable
+reversed_at nullable
+reversal_reason nullable
+accounting_error nullable
+metadata_snapshot
 notes
+created_by
+updated_by
 timestamps
+```
+
+Liability types:
+
+```text
+paye
+pension
+ssnit
+other_deduction
+staff_loan
 ```
 
 Statuses:
 
 ```text
 draft
-running
-completed
 approved
+posted
+failed
 cancelled
-superseded
-```
-
-Reconciliation types:
-
-```text
-accounts_receivable
-accounts_payable
-inventory
-payroll
-cash_bank
-paye
-pension
-```
-
----
-
-# 6. accounting_reconciliation_items
-
-Fields:
-
-```text
-id
-accounting_reconciliation_run_id
-source_type
-source_id
-source_reference
-source_description
-gl_account_id
-subledger_amount
-gl_amount
-difference_amount
-classification
-resolution_status
-metadata_snapshot
-timestamps
-```
-
-Classifications:
-
-```text
-balanced
-timing_difference
-unposted_source
-failed_posting
-manual_journal
-mapping_issue
-source_data_issue
-period_cutoff
-unknown_difference
-not_available
-```
-
-Resolution statuses:
-
-```text
-open
-explained
-resolved
-accepted_timing
-waived
-```
-
----
-
-# 7. accounting_reconciliation_resolutions
-
-Fields:
-
-```text
-id
-accounting_reconciliation_run_id
-accounting_reconciliation_item_id nullable
-resolution_type
-resolution_note
-linked_journal_entry_id nullable
-linked_posting_attempt_id nullable
-linked_source_type nullable
-linked_source_id nullable
-resolved_by
-resolved_at
-metadata_snapshot
-timestamps
-```
-
-Resolution types:
-
-```text
-retry_posting
-reverse_journal
-source_corrected
-manual_journal_linked
-accepted_timing_difference
-mapping_corrected
-waived_after_review
-other
-```
-
----
-
-# 8. Reconciliation Domains
-
-## 8.1 Accounts Receivable
-
-Compare:
-
-```text
-open invoice receivables / payer balances
-```
-
-against:
-
-```text
-patient receivable control account
-insurance receivable control account
-sponsor receivable control account
-corporate receivable control account
-```
-
-Use existing receivable models and AR aging foundation.
-
-Do not create a new receivable balance table.
-
-Show drill-down by:
-
-```text
-payer type
-payer
-invoice
-visit/patient where permitted
-aging bucket
-control account
-```
-
-## 8.2 Accounts Payable
-
-Compare:
-
-```text
-open supplier payables
-supplier balances
-unpaid supplier payments where relevant
-```
-
-against:
-
-```text
-supplier payable control account
-```
-
-Show supplier-level drill-down.
-
-## 8.3 Inventory
-
-Compare:
-
-```text
-stock valuation by inventory class/location/product
-```
-
-against:
-
-```text
-inventory control accounts
-```
-
-Show differences from:
-
-```text
-unposted stock movement
-failed inventory posting
-manual GL journal
-valuation mismatch
-period cutoff
-```
-
-## 8.4 Payroll
-
-Compare:
-
-```text
-approved unpaid payroll
-payroll deductions/liabilities
-```
-
-against:
-
-```text
-payroll payable
-salary payable
-PAYE payable
-pension payable
-staff loan receivable if available
-```
-
-If payroll posting is not yet fully connected, mark payroll as partially available and document required Phase E dependency.
-
-## 8.5 Cash/Bank
-
-Compare:
-
-```text
-bank reconciliation/book balances
-cashier cashbook/daily collection where available
-```
-
-against:
-
-```text
-cash and bank GL accounts
-```
-
-Use Phase B bank reconciliation data where available.
-
-## 8.6 PAYE
-
-Compare:
-
-```text
-payroll PAYE calculations less PAYE settlements
-```
-
-against:
-
-```text
-PAYE payable GL account
-```
-
-If payroll tax data exists but posting is not connected, classify as partially available.
-
-## 8.7 Pension / SSNIT
-
-Compare:
-
-```text
-employee/employer pension calculations less settlements
-```
-
-against:
-
-```text
-pension payable GL account
-```
-
-If source data is not complete, classify as partially available.
-
----
-
-# 9. Services To Add
-
-Create:
-
-```text
-SubledgerReconciliationService
-ReceivablesReconciliationService
-PayablesReconciliationService
-InventoryReconciliationService
-PayrollReconciliationService
-CashBankReconciliationService
-TaxLiabilityReconciliationService
-ReconciliationResolutionService
-```
-
-Use shared helpers where possible.
-
-Do not put reconciliation calculations in controllers or Blade.
-
----
-
-# 10. SubledgerReconciliationService
-
-This service should:
-
-```text
-start reconciliation run
-calculate subledger total
-calculate GL total
-calculate difference
-create reconciliation items
-classify differences
-store snapshots
-complete run
-approve run
-cancel run
-supersede old draft runs
-```
-
-A reconciliation run must be reproducible from stored snapshots.
-
-Do not depend only on live totals after the run is completed.
-
----
-
-# 11. Difference Classification
-
-Classify differences where possible:
-
-```text
-failed_posting → source has failed posting attempt
-unposted_source → source approved/eligible but not posted
-manual_journal → GL control account entry has no source link
-mapping_issue → source/account mapping missing or wrong
-timing_difference → source and GL dates fall in different periods
-source_data_issue → source amount differs from posted snapshot
-period_cutoff → source/posting outside selected period
-unknown_difference → cannot classify safely
-```
-
-Do not claim a difference is solved unless evidence exists.
-
----
-
-# 12. Workbench UI
-
-Add screens under Advanced Accounting:
-
-```text
-Reconciliation dashboard
-New reconciliation run
-Reconciliation run detail
-Reconciliation item drill-down
-Resolution form
-Approval screen
-History screen
-```
-
-Dashboard cards:
-
-```text
-balanced domains
-difference detected
-failed posting linked
-manual journals detected
-unposted source records
-oldest unresolved difference
-last reconciliation date
-```
-
-Use Bootstrap 5 and Tabler Icons only.
-
-Do not introduce new frontend frameworks.
-
----
-
-# 13. Resolution Workflow
-
-Allow finance users to resolve or explain differences.
-
-Supported actions:
-
-```text
-link failed posting attempt
-link corrective journal
-mark as accepted timing difference
-mark mapping corrected
-mark source corrected
-waive after review
-add resolution note
+reversed
 ```
 
 Rules:
 
 ```text
-Approval of a reconciliation with unresolved differences requires elevated permission.
-Resolved/explained items remain visible.
-Waived differences remain visible.
-Do not auto-post corrections.
+draft settlement can be edited
+approved settlement cannot be edited except posting/reversal controls
+posted settlement is immutable
+reversal uses reversal journal
+cancelled settlement creates no journal
 ```
 
 ---
 
-# 14. Close Readiness Integration
+# 7. payroll_liability_settlement_allocations
 
-Extend `AccountingCloseReadinessService` to include:
+Purpose:
 
 ```text
-latest reconciliation per domain
-unapproved reconciliation runs
-domains with unresolved differences
-domains not run for the period
-failed postings linked to reconciliation differences
-manual control-account journals
+Allocate a statutory payment to one or more payroll runs or liability sources.
 ```
 
-Do not hard-block period close in this phase unless existing close code already supports safe blocking.
+Fields:
+
+```text
+id
+payroll_liability_settlement_id
+payroll_run_id nullable
+source_type nullable
+source_id nullable
+liability_type
+allocated_amount
+metadata_snapshot
+timestamps
+```
+
+Rules:
+
+```text
+total allocations must equal settlement amount unless unapplied balance is explicitly allowed
+allocation cannot exceed outstanding liability for the source
+allocation records are retained after posting
+```
+
+---
+
+# 8. Liability Outstanding Calculation
+
+Create a reliable outstanding-liability calculation.
+
+For PAYE:
+
+```text
+PAYE outstanding =
+posted payroll PAYE payable
+- posted PAYE settlements
++ reversed settlement amounts
+```
+
+For pension / SSNIT:
+
+```text
+Pension outstanding =
+posted payroll pension payable
+- posted pension / SSNIT settlements
++ reversed settlement amounts
+```
+
+For other deductions:
+
+```text
+Other deduction outstanding =
+posted payroll other deduction payable
+- posted other deduction settlements
++ reversed settlement amounts
+```
+
+For staff loans:
+
+```text
+Staff loan recovery outstanding =
+posted payroll loan recovery credit
+- posted loan allocation/settlement where available
+```
+
+If staff loan accounting is not fully implemented, mark it partially available and document the missing source model.
+
+Do not infer payments without records.
+
+---
+
+# 9. Journal Strategy
+
+PAYE settlement:
+
+```text
+Dr PAYE Payable
+Cr Bank/Cash
+```
+
+Pension / SSNIT settlement:
+
+```text
+Dr Pension / SSNIT Payable
+Cr Bank/Cash
+```
+
+Other payroll deduction settlement:
+
+```text
+Dr Other Deduction Payable
+Cr Bank/Cash
+```
+
+Staff loan recovery settlement, if external settlement is required:
+
+```text
+Dr Staff Loan Recovery Clearing / Payable
+Cr Bank/Cash
+```
+
+If staff loan recovery should reduce staff loan receivable directly, use the existing staff loan accounting design. Do not guess.
+
+All accounts must come from configurable mappings/settings.
+
+Do not hardcode account IDs.
+
+---
+
+# 10. Account Mapping
+
+Use existing accounting settings and Phase 0 mappings where possible.
+
+Required accounts:
+
+```text
+PAYE payable account
+pension / SSNIT payable account
+other deduction payable account
+staff loan receivable or clearing account where applicable
+bank/cash payment account
+```
+
+Use existing Phase D settings where available:
+
+```text
+paye_payable_account_id
+pension_payable_account_id
+payroll_payable_account_id
+```
+
+Add missing mapping scopes only if needed:
+
+```text
+payroll_liability
+payroll_liability_payment
+statutory_payment_account
+```
+
+Missing mappings must:
+
+```text
+block posting
+create retained failed posting attempt
+show clear error message
+not create partial journal
+```
+
+---
+
+# 11. Service To Add
+
+Create:
+
+```text
+PayrollLiabilitySettlementService
+```
+
+Responsibilities:
+
+```text
+calculate outstanding liabilities
+create draft settlement
+validate allocations
+approve settlement
+post settlement journal
+prevent over-allocation
+reverse posted settlement
+link journal and reversal journal
+update status
+retain accounting errors
+create posting attempts
+audit state changes
+```
+
+Do not put settlement logic in controllers or Blade.
+
+---
+
+# 12. Posting Identity
+
+Use Phase 0 idempotency.
+
+Suggested identities:
+
+```text
+source_type = payroll_liability_settlement
+source_id = payroll_liability_settlements.id
+posting_type = paye_payment
+posting_type = pension_payment
+posting_type = ssnit_payment
+posting_type = other_deduction_payment
+posting_type = staff_loan_settlement
+posting_version = 1
+```
+
+Same settlement and posting type must never produce duplicate journals.
+
+---
+
+# 13. Reversal Rules
+
+Posted settlement reversal:
+
+```text
+requires permission
+requires reason
+creates reversal journal
+links reversal_journal_entry_id
+marks settlement reversed
+restores outstanding liability
+does not delete original journal
+does not delete allocation records
+```
+
+A reversed settlement cannot be posted again.
+
+Create a replacement settlement if needed.
+
+---
+
+# 14. UI Screens
+
+Add screens under Advanced Accounting / Payroll Accounting:
+
+```text
+Payroll Liability Settlement Dashboard
+Outstanding PAYE Liabilities
+Outstanding Pension / SSNIT Liabilities
+Other Deduction Liabilities
+Create Settlement
+Settlement Preview
+Settlement Detail
+Approve Settlement
+Post Settlement
+Reverse Settlement
+```
+
+Each settlement detail should show:
+
+```text
+liability type
+period
+amount
+payment account
+liability account
+allocations
+journal link
+reversal journal link
+status
+approval data
+posting data
+error message
+audit summary
+```
+
+Do not expose payroll financial data to unauthorized users.
+
+---
+
+# 15. Failed Posting Workbench Integration
+
+Add retry handler support for:
+
+```text
+payroll_liability_settlement:paye_payment
+payroll_liability_settlement:pension_payment
+payroll_liability_settlement:ssnit_payment
+payroll_liability_settlement:other_deduction_payment
+payroll_liability_settlement:staff_loan_settlement
+```
+
+Retry must:
+
+```text
+reuse the same idempotency key
+not duplicate journals
+retain prior error history
+mark posted only after successful journal creation
+```
+
+Unsupported liability states must remain visibly failed.
+
+---
+
+# 16. Subledger Reconciliation Integration
+
+Update Phase D reconciliation.
+
+PAYE domain should compare:
+
+```text
+posted PAYE liability accruals
+- posted PAYE settlements
+versus PAYE payable GL account
+```
+
+Pension domain should compare:
+
+```text
+posted pension / SSNIT liability accruals
+- posted pension / SSNIT settlements
+versus pension payable GL account
+```
+
+Other deductions can be added as:
+
+```text
+available
+partially_available
+not_available
+```
+
+depending on existing payroll data.
+
+After this phase, PAYE and pension reconciliation should no longer be marked partial due to missing settlement records.
+
+If some payroll source records are incomplete, document that exact limitation.
+
+---
+
+# 17. Close Readiness Integration
+
+Update `AccountingCloseReadinessService` to show:
+
+```text
+unpaid PAYE liabilities by period
+unpaid pension / SSNIT liabilities by period
+unpaid other deduction liabilities
+failed statutory settlement postings
+reversed settlements requiring replacement
+settlements awaiting approval
+settlements approved but not posted
+PAYE/pension reconciliation not run
+PAYE/pension reconciliation unresolved differences
+```
+
+Do not hard-block period close unless existing close code safely supports it.
 
 Document recommended future close-block behavior.
 
 ---
 
-# 15. Permissions
+# 18. Permissions
 
 Add permissions:
 
 ```text
-accounting.subledger_reconciliation.view
-accounting.subledger_reconciliation.run
-accounting.subledger_reconciliation.resolve
-accounting.subledger_reconciliation.approve
-accounting.subledger_reconciliation.cancel
+accounting.payroll_liability.view
+accounting.payroll_liability.create
+accounting.payroll_liability.approve
+accounting.payroll_liability.post
+accounting.payroll_liability.reverse
 ```
 
 Suggested role defaults:
@@ -598,15 +640,14 @@ Suggested role defaults:
 ```text
 Accountant:
 - view
-- run
-- resolve
+- create
 
 Finance Manager:
 - view
-- run
-- resolve
+- create
 - approve
-- cancel
+- post
+- reverse
 
 Administrator / Super Admin:
 - all
@@ -616,20 +657,20 @@ Do not grant to broad clinical roles.
 
 ---
 
-# 16. Audit Logging
+# 19. Audit Logging
 
 Use `ActivityLogService`.
 
 Audit:
 
 ```text
-SUBLEDGER_RECONCILIATION_STARTED
-SUBLEDGER_RECONCILIATION_COMPLETED
-SUBLEDGER_RECONCILIATION_APPROVED
-SUBLEDGER_RECONCILIATION_CANCELLED
-SUBLEDGER_RECONCILIATION_RESOLUTION_ADDED
-SUBLEDGER_RECONCILIATION_ITEM_WAIVED
-SUBLEDGER_RECONCILIATION_CLOSE_READINESS_VIEWED
+PAYROLL_LIABILITY_SETTLEMENT_CREATED
+PAYROLL_LIABILITY_SETTLEMENT_APPROVED
+PAYROLL_LIABILITY_SETTLEMENT_POSTED
+PAYROLL_LIABILITY_SETTLEMENT_FAILED
+PAYROLL_LIABILITY_SETTLEMENT_REVERSED
+PAYROLL_LIABILITY_SETTLEMENT_CANCELLED
+PAYROLL_LIABILITY_OUTSTANDING_VIEWED
 ```
 
 Run:
@@ -642,7 +683,7 @@ Fix new missing/needs-review audit gaps.
 
 ---
 
-# 17. Localisation
+# 20. Localisation
 
 All new labels must be localised EN/FR.
 
@@ -651,40 +692,37 @@ Use or extend:
 ```text
 lang/en/accounting.php
 lang/fr/accounting.php
+lang/en/payroll.php
+lang/fr/payroll.php
 ```
 
-Keys:
+Required labels:
 
 ```text
-subledger_reconciliation
-reconciliation_run
-reconciliation_runs
-reconciliation_type
-subledger_total
-gl_total
-difference_amount
-difference_classification
-balanced_domains
-difference_detected
-manual_journals_detected
-unposted_source_records
-oldest_unresolved_difference
-run_reconciliation
-approve_reconciliation_run
-cancel_reconciliation_run
-resolution_note
-accepted_timing_difference
-mapping_corrected
-source_corrected
-manual_journal_linked
-waived_after_review
-accounts_receivable_reconciliation
-accounts_payable_reconciliation
-inventory_reconciliation
-payroll_reconciliation
-cash_bank_reconciliation
-paye_reconciliation
-pension_reconciliation
+payroll_liability_settlement
+payroll_liability_settlements
+statutory_liability
+statutory_liabilities
+paye_liability
+paye_settlement
+paye_outstanding
+pension_liability
+pension_settlement
+pension_outstanding
+ssnit_liability
+ssnit_settlement
+ssnit_outstanding
+other_deduction_liability
+other_deduction_settlement
+liability_payment
+settlement_allocation
+settlement_reference
+approve_liability_settlement
+post_liability_settlement
+reverse_liability_settlement
+settlement_reversal_reason
+unpaid_statutory_liabilities
+approved_not_posted_settlements
 ```
 
 Maintain EN/FR parity.
@@ -703,42 +741,46 @@ Active runtime candidates must remain:
 
 ---
 
-# 18. Navigation
+# 21. Navigation
 
-Add a sidebar link under Advanced Accounting:
+Add navigation under Advanced Accounting / Payroll Accounting:
 
 ```text
-Subledger Reconciliation
+Liability Settlements
+PAYE Settlements
+Pension / SSNIT Settlements
 ```
 
-If sidebar assertions are locked, update tests later during the final wide test phase instead of forcing broad test rewrites now.
+If sidebar assertions are locked, update tests later during final wide testing.
 
-Route access must work even if navigation is adjusted later.
+Route access must still work through direct URL and permissions.
 
 ---
 
-# 19. Tests
+# 22. Focused Tests To Add
 
-Add or update tests for Phase D, but do not run the wide full suite yet.
+Add focused tests but do not run the wide full suite.
 
-Required test coverage to add:
+Required coverage:
 
 ```text
-permission-protected reconciliation dashboard
-module middleware blocks direct routes when Advanced Accounting disabled
-AR reconciliation calculates subledger and GL totals
-AP reconciliation calculates subledger and GL totals where source exists
-inventory reconciliation calculates valuation vs GL where source exists
-payroll reconciliation marks partially available if payroll posting is not ready
-cash/bank reconciliation uses Phase B data where available
-failed posting is classified as failed_posting
-manual control-account journal is classified as manual_journal
-unposted source is classified as unposted_source
-resolution note can be added
-approval requires permission
-unresolved differences block normal approval unless elevated permission exists
-close readiness includes reconciliation status
-audit logs are recorded
+draft settlement can be created
+settlement approval requires permission
+approved PAYE settlement posts balanced journal
+approved pension settlement posts balanced journal
+settlement cannot exceed outstanding liability
+allocation cannot exceed payroll-run liability
+duplicate settlement posting does not duplicate journal
+posted settlement can be reversed with reason
+reversed settlement restores outstanding liability
+missing payment account mapping creates failed posting attempt
+failed posting workbench can retry statutory settlement
+PAYE reconciliation includes posted settlements
+pension reconciliation includes posted settlements
+close readiness reports unpaid statutory liabilities
+unauthorized user cannot post settlement
+module middleware blocks route when Advanced Accounting disabled
+audit events are recorded
 localisation keys exist
 ```
 
@@ -750,11 +792,11 @@ php artisan test
 
 during this phase unless explicitly instructed.
 
-The wide full-suite test will be run after all accounting implementation phases in the current batch are completed.
+The wide full-suite test will be run after all accounting implementation phases in this batch are complete.
 
 ---
 
-# 20. Minimal Verification Commands For This Phase
+# 23. Minimal Verification Commands
 
 Run only necessary safety checks:
 
@@ -779,12 +821,12 @@ Do not run the full application test suite yet.
 
 ---
 
-# 21. Documentation
+# 24. Documentation
 
 Create:
 
 ```text
-docs/ACCOUNTING_PHASE_D_SUBLEDGER_RECONCILIATION_WORKBENCH_REPORT.md
+docs/ACCOUNTING_PHASE_E2_STATUTORY_LIABILITY_SETTLEMENT_REPORT.md
 ```
 
 Include:
@@ -796,10 +838,15 @@ models added
 services added
 permissions added
 routes/controllers/views added
-reconciliation domains implemented
-domains marked partially available
-difference classifications
-resolution workflow
+PAYE settlement strategy
+pension / SSNIT settlement strategy
+other deduction settlement strategy
+allocation rules
+overpayment prevention
+reversal behavior
+account mapping behavior
+failed posting integration
+subledger reconciliation integration
 close readiness integration
 audit logging
 localisation audit result
@@ -811,23 +858,25 @@ next recommended phase
 
 ---
 
-# 22. Acceptance Criteria
+# 25. Acceptance Criteria
 
-Phase D is complete only when:
+Phase E2 is complete only when:
 
 ```text
-subledger reconciliation dashboard exists
-reconciliation runs can be created
-AR reconciliation is available
-AP reconciliation is available where source data exists
-inventory reconciliation is available where source data exists
-cash/bank reconciliation can use Phase B data
-payroll/PAYE/pension domains are marked available or partially available honestly
-differences are classified
-items are drillable
-resolutions can be added
-waived/explained items remain visible
-close readiness includes reconciliation status
+PAYE settlement records exist
+pension / SSNIT settlement records exist
+other deduction settlements are supported where source data exists
+settlements can be approved and posted
+settlement journals are balanced
+settlements cannot exceed outstanding liability
+allocations cannot exceed source liability
+settlement posting is idempotent
+posted settlement can be reversed with reason
+reversal restores outstanding liability
+failed posting workbench can retry settlement posting
+PAYE reconciliation includes settlement records
+pension reconciliation includes settlement records
+close readiness reports unpaid/failed statutory liabilities
 permissions are enforced
 module middleware protects direct routes
 ActivityLogService is used
@@ -841,4 +890,4 @@ documentation report is created
 full test suite is intentionally deferred to the final wide accounting test phase
 ```
 
-Proceed with Accounting Execution Phase D now.
+Proceed with Accounting Execution Phase E2 now.

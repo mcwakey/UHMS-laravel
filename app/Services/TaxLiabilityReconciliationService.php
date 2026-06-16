@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\PayrollRecord;
+use App\Models\PayrollStatutorySettlement;
 use App\Models\PayrollTaxCalculation;
 use Carbon\Carbon;
 
@@ -13,21 +14,23 @@ class TaxLiabilityReconciliationService extends AbstractReconciliationDomainServ
         $account = $this->account('paye_payable_account_id');
         $rows = PayrollTaxCalculation::query()
             ->whereHas('payrollRun', fn ($query) => $query
-                ->whereIn('status', ['approved', 'posted'])
+                ->where('accounting_status', 'posted')
                 ->whereDate('period_end', '<=', $asOf))
             ->get();
-        $subledger = round((float) $rows->sum('tax_amount'), 2);
+        $settled = $this->settled(PayrollStatutorySettlement::TYPE_PAYE, $asOf);
+        $subledger = max(0, round((float) $rows->sum('tax_amount') - $settled, 2));
         $gl = $this->glBalance($account, $asOf);
 
         return $this->partialLiabilityResult(
             'paye_liability_control',
             'PAYE',
-            'Calculated PAYE liability before statutory settlements',
+            'Posted PAYE liability before statutory settlements',
             $account,
             $subledger,
             $gl,
             $rows->count(),
-            'PAYE settlement records and authoritative payroll posting are deferred to Phases E and I.',
+            $settled,
+            'PAYE liability and remittance settlements are available through Phase E2.',
         );
     }
 
@@ -36,21 +39,23 @@ class TaxLiabilityReconciliationService extends AbstractReconciliationDomainServ
         $account = $this->account('pension_payable_account_id');
         $rows = PayrollRecord::query()
             ->whereHas('payrollRun', fn ($query) => $query
-                ->whereIn('status', ['approved', 'posted'])
+                ->where('accounting_status', 'posted')
                 ->whereDate('period_end', '<=', $asOf))
             ->get();
-        $subledger = round((float) $rows->sum(fn ($row) => (float) $row->ssnit_employee + (float) $row->ssnit_employer), 2);
+        $settled = $this->settled(PayrollStatutorySettlement::TYPE_PENSION, $asOf);
+        $subledger = max(0, round((float) $rows->sum(fn ($row) => (float) $row->ssnit_employee + (float) $row->ssnit_employer) - $settled, 2));
         $gl = $this->glBalance($account, $asOf);
 
         return $this->partialLiabilityResult(
             'pension_liability_control',
             'PENSION',
-            'Calculated employee and employer pension liability before settlements',
+            'Posted employee and employer pension liability before settlements',
             $account,
             $subledger,
             $gl,
             $rows->count(),
-            'Pension settlement records and authoritative payroll posting are deferred to Phases E and I.',
+            $settled,
+            'Pension / SSNIT liability and remittance settlements are available through Phase E2.',
         );
     }
 
@@ -67,6 +72,7 @@ class TaxLiabilityReconciliationService extends AbstractReconciliationDomainServ
         float $subledger,
         float $gl,
         int $recordCount,
+        float $settled,
         string $reason,
     ): array {
         $classification = ! $account ? 'mapping_issue' : (abs($subledger - $gl) < 0.01 ? 'balanced' : 'unposted_source');
@@ -76,13 +82,22 @@ class TaxLiabilityReconciliationService extends AbstractReconciliationDomainServ
         ])];
 
         return $this->result(
-            'partially_available',
+            'available',
             $subledger,
             $gl,
             $items,
-            ['record_count' => $recordCount, 'settlements_available' => false],
+            ['record_count' => $recordCount, 'statutory_settled_amount' => round($settled, 2)],
             ['account_id' => $account?->id, 'balance' => $gl],
             $reason,
         );
+    }
+
+    private function settled(string $type, Carbon $asOf): float
+    {
+        return round((float) PayrollStatutorySettlement::query()
+            ->where('liability_type', $type)
+            ->where('status', 'posted')
+            ->whereDate('settlement_date', '<=', $asOf)
+            ->sum('amount'), 2);
     }
 }

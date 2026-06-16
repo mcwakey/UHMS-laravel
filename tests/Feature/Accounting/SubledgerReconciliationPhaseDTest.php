@@ -126,12 +126,12 @@ class SubledgerReconciliationPhaseDTest extends TestCase
         $this->assertSame(60.0, (float) $run->gl_total);
     }
 
-    public function test_payroll_paye_and_pension_are_honestly_partially_available(): void
+    public function test_payroll_paye_and_pension_domains_are_available_after_phase_e(): void
     {
         foreach (['payroll', 'paye', 'pension'] as $type) {
             $run = $this->reconciliationRun($type);
-            $this->assertSame('partially_available', $run->availability());
-            $this->assertNotEmpty(data_get($run->summary_snapshot, 'availability_reason'));
+            $this->assertSame('available', $run->availability());
+            $this->assertSame(0.0, (float) $run->difference_amount);
         }
     }
 
