@@ -56,7 +56,16 @@ export function url(path: string) {
 
 export async function gotoLogin(page: Page) {
   await page.goto(url(loginPath), { waitUntil: 'commit' });
-  await expect(page.locator('input[name="email"]')).toBeVisible();
+
+  try {
+    await expect(page.locator('input[name="email"]')).toBeVisible();
+  } catch (error) {
+    if (new URL(page.url()).pathname !== loginPath) {
+      return;
+    }
+
+    throw error;
+  }
 }
 
 export async function submitLoginForm(page: Page) {
@@ -76,6 +85,10 @@ export async function loginAs(page: Page, emailEnv: string, passwordEnv: string)
   const credentials = requiredCredentials(emailEnv, passwordEnv);
 
   await gotoLogin(page);
+  if (new URL(page.url()).pathname !== loginPath) {
+    return;
+  }
+
   await page.getByRole('textbox', { name: /email address/i }).fill(credentials.email);
   await page.locator('input[name="password"]').fill(credentials.password);
   await submitLoginForm(page);

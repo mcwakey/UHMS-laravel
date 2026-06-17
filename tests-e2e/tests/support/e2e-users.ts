@@ -17,9 +17,15 @@ const users: E2EUser[] = [
     'patients.view',
     'patients.create',
     'patients.edit',
+    'visits.view',
+    'visits.create',
+    'visits.edit',
   ]),
   credentialsFor('UHMS_CASHIER_EMAIL', 'UHMS_CASHIER_PASSWORD', 'Cashier', `${employeeIdPrefix}CASHIER`),
-  credentialsFor('UHMS_DOCTOR_EMAIL', 'UHMS_DOCTOR_PASSWORD', 'Doctor', `${employeeIdPrefix}DOCTOR`, ['patients.view']),
+  credentialsFor('UHMS_DOCTOR_EMAIL', 'UHMS_DOCTOR_PASSWORD', 'Doctor', `${employeeIdPrefix}DOCTOR`, [
+    'patients.view',
+    'visits.view',
+  ]),
   credentialsFor('UHMS_LIMITED_EMAIL', 'UHMS_LIMITED_PASSWORD', null, `${employeeIdPrefix}LIMITED`),
 ];
 
@@ -78,7 +84,7 @@ foreach ($users as $data) {
     }
 
     if ($existing) {
-        try { $existing->syncRoles([]); } catch (Throwable $e) {}
+        try { $existing->syncRoles([]); $existing->syncPermissions([]); } catch (Throwable $e) {}
         $existing->forceDelete();
     }
 
@@ -142,7 +148,7 @@ foreach ($users as $data) {
             continue;
         }
 
-        try { $user->syncRoles([]); } catch (Throwable $e) {}
+        try { $user->syncRoles([]); $user->syncPermissions([]); } catch (Throwable $e) {}
         $user->forceDelete();
     }
 }
