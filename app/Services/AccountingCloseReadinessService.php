@@ -7,6 +7,12 @@ use App\Models\AccountingPostingAttempt;
 use App\Models\AccountingReconciliationItem;
 use App\Models\AccountingReconciliationResolution;
 use App\Models\AccountingReconciliationRun;
+use App\Models\InvoiceReceivable;
+use App\Models\ReceivableCase;
+use App\Models\ReceivableCreditnoteRecommendation;
+use App\Models\ReceivableDispute;
+use App\Models\ReceivablePromise;
+use App\Models\ReceivableWriteoffRecommendation;
 use App\Models\User;
 use Carbon\Carbon;
 
@@ -102,6 +108,23 @@ class AccountingCloseReadinessService
                 ->pluck('total', 'source_module')
                 ->map(fn ($value) => (int) $value)
                 ->all(),
+            'receivable_exceptions' => [
+                'large_overdue_receivables' => InvoiceReceivable::open()
+                    ->where('balance', '>=', 10000)
+                    ->whereDate('due_date', '<', $to)
+                    ->count(),
+                'unassigned_overdue_receivables' => InvoiceReceivable::open()
+                    ->whereDate('due_date', '<', $to)
+                    ->whereDoesntHave('receivableCaseItems.receivableCase', fn ($query) => $query->active()->whereNotNull('assigned_to'))
+                    ->count(),
+                'unresolved_receivable_disputes' => ReceivableDispute::whereIn('status', ['open', 'under_review', 'credit_note_recommended', 'writeoff_recommended'])->count(),
+                'approved_writeoffs_not_converted' => ReceivableWriteoffRecommendation::where('status', 'approved')->whereNull('linked_writeoff_id')->count(),
+                'approved_creditnotes_not_converted' => ReceivableCreditnoteRecommendation::where('status', 'approved')->whereNull('linked_credit_note_id')->count(),
+                'broken_payment_promises' => ReceivablePromise::where('status', 'broken')->count(),
+                'claims_receivables_over_threshold' => InvoiceReceivable::open()->whereNotNull('claim_id')->where('balance', '>=', 10000)->count(),
+                'sponsor_corporate_over_threshold' => InvoiceReceivable::open()->whereIn('payer_type', ['sponsor', 'corporate'])->where('balance', '>=', 10000)->count(),
+                'active_receivable_cases' => ReceivableCase::active()->count(),
+            ],
         ];
         $summary['ready'] = $summary['unresolved_failed_postings'] === 0;
 

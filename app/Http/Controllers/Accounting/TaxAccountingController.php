@@ -70,6 +70,6 @@ class TaxAccountingController extends Controller
 
         $returns->allocatePayment($payment, TaxReturn::findOrFail($data['tax_return_id']), (float) $data['amount'], $request->user());
 
-        return back()->with('success', 'Tax payment allocated.');
+        return back()->with('success', __('messages.accounting.tax_payment_allocated'));
     }
 }

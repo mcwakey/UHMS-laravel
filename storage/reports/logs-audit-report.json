@@ -1,13 +1,13 @@
 {
-    "generated_at": "2026-06-15T14:02:23+00:00",
-    "controllers_flagged": 83,
-    "logging_services_detected": 102,
+    "generated_at": "2026-06-17T00:04:29+00:00",
+    "controllers_flagged": 87,
+    "logging_services_detected": 106,
     "summary": {
         "MISSING_LOG": 0,
-        "NEEDS_REVIEW": 0,
+        "NEEDS_REVIEW": 2,
         "KNOWN_BACKLOG": 21,
         "INTENTIONALLY_SKIPPED": 1,
-        "SERVICE_FUNNEL_COVERED": 61
+        "SERVICE_FUNNEL_COVERED": 63
     },
     "real_missing_logs": 0,
     "findings": [
@@ -49,6 +49,22 @@
             "reason": "Delegates to JournalEntryService (logs direct).",
             "services": [
                 "JournalEntryService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Accounting/PayrollPostingController.php",
+            "unlogged_actions": [
+                "reverse"
+            ],
+            "actions": [
+                "reverse"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "CRITICAL",
+            "reason": "Delegates to PayrollAccountingService (logs direct).",
+            "services": [
+                "PayrollAccountingService"
             ],
             "in_baseline": false
         },
@@ -379,6 +395,46 @@
             "reason": "Delegates to BankStatementImportService (logs direct).",
             "services": [
                 "BankStatementImportService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Accounting/BudgetController.php",
+            "unlogged_actions": [
+                "store",
+                "submit",
+                "approve"
+            ],
+            "actions": [
+                "store",
+                "submit",
+                "approve"
+            ],
+            "classification": "NEEDS_REVIEW",
+            "severity": "HIGH",
+            "reason": "Delegates to BudgetApprovalService, BudgetAvailabilityService, CommitmentService \u2014 not verified to log. Confirm or wire a funnel.",
+            "services": [
+                "BudgetApprovalService",
+                "BudgetAvailabilityService",
+                "CommitmentService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Accounting/FixedAssetController.php",
+            "unlogged_actions": [
+                "store",
+                "verify"
+            ],
+            "actions": [
+                "store",
+                "verify"
+            ],
+            "classification": "NEEDS_REVIEW",
+            "severity": "HIGH",
+            "reason": "Delegates to FixedAssetService \u2014 not verified to log. Confirm or wire a funnel.",
+            "services": [
+                "FixedAssetService"
             ],
             "in_baseline": false
         },
@@ -861,6 +917,25 @@
             "services": [
                 "AccountingPeriodService",
                 "YearEndClosingService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Accounting/ReceivableWorkbenchController.php",
+            "unlogged_actions": [
+                "assign"
+            ],
+            "actions": [
+                "assign"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to ReceivableCaseService, ReceivableRecommendationService, ReceivableStatementService (logs direct).",
+            "services": [
+                "ReceivableCaseService",
+                "ReceivableRecommendationService",
+                "ReceivableStatementService",
+                "ReceivableWorkbenchService"
             ],
             "in_baseline": false
         },

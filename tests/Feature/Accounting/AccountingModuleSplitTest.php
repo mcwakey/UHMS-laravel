@@ -88,6 +88,50 @@ class AccountingModuleSplitTest extends TestCase
         $this->assertTrue($labels->contains('Subledger Reconciliation'));
     }
 
+    public function test_advanced_accounting_section_exposes_every_accounting_screen(): void
+    {
+        foreach (['budgets', 'fixed_assets', 'tax_accounting', 'payroll'] as $slug) {
+            Module::where('slug', $slug)->update(['is_enabled' => true]);
+        }
+        app(ModuleService::class)->flush();
+
+        $extra = [
+            'accounting.reports.cash_flow', 'accounting.fixed_assets.view',
+            'accounting.budgets.view', 'accounting.commitments.view',
+            'accounting.tax_ledgers.view', 'accounting.payroll_posting.view',
+        ];
+        foreach ($extra as $permission) {
+            Permission::firstOrCreate(['name' => $permission]);
+        }
+        $this->user->givePermissionTo($extra);
+
+        $sections = app(SidebarMenuBuilder::class)->build($this->user, 'admin.accounting.dashboard');
+        $labels = collect(collect($sections)->firstWhere('title', 'Advanced Accounting')['items'])->pluck('label');
+
+        foreach (['Cash Flow', 'Fixed Assets', 'Tax Accounting', 'Budgets', 'Commitments', 'Payroll Posting'] as $label) {
+            $this->assertTrue($labels->contains($label), "Advanced Accounting menu is missing '{$label}'.");
+        }
+    }
+
+    public function test_module_gating_hides_screens_whose_module_is_disabled(): void
+    {
+        Module::where('slug', 'fixed_assets')->update(['is_enabled' => true]);
+        app(ModuleService::class)->flush();
+        Permission::firstOrCreate(['name' => 'accounting.fixed_assets.view']);
+        $this->user->givePermissionTo('accounting.fixed_assets.view');
+
+        // Visible when enabled…
+        $labels = fn () => collect(collect(app(SidebarMenuBuilder::class)->build($this->user, 'admin.accounting.dashboard'))
+            ->firstWhere('title', 'Advanced Accounting')['items'])->pluck('label');
+        $this->assertTrue($labels()->contains('Fixed Assets'));
+
+        // …and gone once its own module is disabled (its module gate is preserved,
+        // not overridden by the section default).
+        Module::where('slug', 'fixed_assets')->update(['is_enabled' => false]);
+        app(ModuleService::class)->flush();
+        $this->assertFalse($labels()->contains('Fixed Assets'));
+    }
+
     public function test_disabling_basic_accounting_blocks_direct_basic_routes(): void
     {
         Module::where('slug', 'accounting_basic')->update(['is_enabled' => false]);

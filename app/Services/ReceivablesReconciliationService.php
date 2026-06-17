@@ -3,6 +3,11 @@
 namespace App\Services;
 
 use App\Models\InvoiceReceivable;
+use App\Models\ReceivableCaseItem;
+use App\Models\ReceivableCreditnoteRecommendation;
+use App\Models\ReceivableDispute;
+use App\Models\ReceivablePromise;
+use App\Models\ReceivableWriteoffRecommendation;
 use Carbon\Carbon;
 
 class ReceivablesReconciliationService extends AbstractReconciliationDomainService
@@ -38,6 +43,10 @@ class ReceivablesReconciliationService extends AbstractReconciliationDomainServi
 
         foreach ($rows as $row) {
             $classification = $this->sourceClassification(InvoiceReceivable::class, $row->id, $row->accounting_status, $row->journal_entry_id);
+            $operationalClassification = $this->operationalClassification($row);
+            if ($operationalClassification) {
+                $classification = $operationalClassification;
+            }
             $account = $this->account(self::SETTINGS[$row->payer_type] ?? 'patient_receivable_account_id');
             $attempt = $this->failedAttempt(InvoiceReceivable::class, $row->id);
             $attributedGl = $classification === 'balanced' ? (float) $row->balance : 0.0;
@@ -75,5 +84,43 @@ class ReceivablesReconciliationService extends AbstractReconciliationDomainServi
             ['record_count' => $rows->count(), 'by_payer_type' => $sourceGroups],
             ['accounts' => $glGroups],
         );
+    }
+
+    private function operationalClassification(InvoiceReceivable $receivable): ?string
+    {
+        $caseIds = ReceivableCaseItem::query()
+            ->where('source_type', InvoiceReceivable::class)
+            ->where('source_id', $receivable->id)
+            ->pluck('receivable_case_id');
+
+        if ($caseIds->isNotEmpty()) {
+            if (ReceivableDispute::whereIn('receivable_case_id', $caseIds)->whereIn('status', ['open', 'under_review'])->exists()) {
+                return 'disputed_receivable';
+            }
+            if (ReceivablePromise::whereIn('receivable_case_id', $caseIds)->where('status', 'broken')->exists()) {
+                return 'payment_promise_broken';
+            }
+            if (ReceivablePromise::whereIn('receivable_case_id', $caseIds)->where('status', 'active')->exists()) {
+                return 'payment_promise_active';
+            }
+            if (ReceivableWriteoffRecommendation::whereIn('receivable_case_id', $caseIds)->whereIn('status', ['recommended', 'approved'])->exists()) {
+                return 'writeoff_recommended';
+            }
+            if (ReceivableCreditnoteRecommendation::whereIn('receivable_case_id', $caseIds)->whereIn('status', ['recommended', 'approved'])->exists()) {
+                return 'creditnote_recommended';
+            }
+        }
+
+        if ($receivable->claim_id) {
+            return 'claim_pending';
+        }
+        if ($receivable->payer_type === InvoiceReceivable::PAYER_SPONSOR) {
+            return 'sponsor_pending';
+        }
+        if ($receivable->payer_type === InvoiceReceivable::PAYER_CORPORATE) {
+            return 'corporate_pending';
+        }
+
+        return null;
     }
 }

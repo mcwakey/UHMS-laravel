@@ -1,10 +1,10 @@
 @extends('layouts.app')
-@section('title', 'Tax Accounting')
+@section('title', __('accounting.tax_accounting'))
 
 @php $money = fn ($n) => 'GHS '.number_format((float) $n, 2); @endphp
 
 @section('content')
-<x-page-header title="Tax Accounting" icon="ti-receipt-tax" description="Tax ledgers, returns, payments and reconciliation foundation." />
+<x-page-header :title="__('accounting.tax_accounting')" icon="ti-receipt-tax" description="Tax ledgers, returns, payments and reconciliation foundation." />
 
 <div class="row g-2 mb-3">
     <div class="col-md-6"><div class="card h-100"><div class="card-body text-center"><small class="text-muted d-block">Ledger Total</small><strong>{{ $money($summary['totals']['ledger_total'] ?? 0) }}</strong></div></div></div>

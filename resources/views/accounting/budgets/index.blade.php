@@ -1,10 +1,10 @@
 @extends('layouts.app')
-@section('title', 'Budgets')
+@section('title', __('accounting.budgets'))
 
 @php $money = fn ($n) => 'GHS '.number_format((float) $n, 2); @endphp
 
 @section('content')
-<x-page-header title="Budgets" icon="ti-chart-pie" description="Approved budgets, actuals, commitments and available balances." />
+<x-page-header :title="__('accounting.budgets')" icon="ti-chart-pie" description="Approved budgets, actuals, commitments and available balances." />
 
 <div class="row g-3 mb-3">
     <div class="col-lg-5">
@@ -25,8 +25,8 @@
                     <div class="col-12">
                         <label class="form-label small">Enforcement</label>
                         <select name="enforcement_mode" class="form-select">
-                            <option value="warning">Warning with acknowledgement</option>
-                            <option value="blocking">Block procurement when over budget</option>
+                            <option value="warning">{{ __('accounting.warning_with_acknowledgement') }}</option>
+                            <option value="blocking">{{ __('accounting.block_procurement_over_budget') }}</option>
                         </select>
                     </div>
                     <div class="col-12"><label class="form-label small">Notes</label><textarea name="notes" class="form-control" rows="2"></textarea></div>

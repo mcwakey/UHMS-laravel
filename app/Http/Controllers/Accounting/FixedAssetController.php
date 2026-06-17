@@ -42,7 +42,7 @@ class FixedAssetController extends Controller
 
         AssetCategory::create($data + ['depreciation_method' => 'straight_line']);
 
-        return back()->with('success', 'Asset category created.');
+        return back()->with('success', __('messages.accounting.asset_category_created'));
     }
 
     public function storeLocation(Request $request)
@@ -55,7 +55,7 @@ class FixedAssetController extends Controller
 
         AssetLocation::create($data);
 
-        return back()->with('success', 'Asset location created.');
+        return back()->with('success', __('messages.accounting.asset_location_created'));
     }
 
     public function store(Request $request, FixedAssetService $service)
@@ -86,7 +86,7 @@ class FixedAssetController extends Controller
 
         $service->capitalize($asset, Account::findOrFail($data['credit_account_id']), $request->user(), $data['capitalization_date'] ?? null);
 
-        return back()->with('success', 'Asset capitalized.');
+        return back()->with('success', __('messages.accounting.asset_capitalized'));
     }
 
     public function runDepreciation(Request $request, FixedAssetService $service)
@@ -108,7 +108,7 @@ class FixedAssetController extends Controller
 
         $service->dispose($asset, $data, $request->user());
 
-        return back()->with('success', 'Asset disposed.');
+        return back()->with('success', __('messages.accounting.asset_disposed'));
     }
 
     public function verify(Request $request, FixedAsset $asset, FixedAssetService $service)
@@ -121,6 +121,6 @@ class FixedAssetController extends Controller
 
         $service->verify($asset, $data, $request->user());
 
-        return back()->with('success', 'Asset verification recorded.');
+        return back()->with('success', __('messages.accounting.asset_verification_recorded'));
     }
 }

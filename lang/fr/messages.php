@@ -43,6 +43,19 @@ return [
         'adjustment_approved'      => 'Ajustement approuvé.',
         'adjustment_posted'        => 'Ajustement comptabilisé au grand livre.',
         'adjustment_rejected'      => 'Ajustement rejeté.',
+        'budget_draft_created'     => 'Brouillon de budget créé.',
+        'budget_line_added'        => 'Ligne budgétaire ajoutée.',
+        'budget_submitted'         => 'Budget soumis pour approbation.',
+        'budget_approved'          => 'Budget approuvé et activé.',
+        'commitment_created'       => 'Engagement budgétaire créé.',
+        'commitment_released'      => 'Engagement budgétaire libéré.',
+        'commitment_cancelled'     => 'Engagement budgétaire annulé.',
+        'asset_category_created'   => 'Catégorie d\'immobilisation créée.',
+        'asset_location_created'   => 'Emplacement d\'immobilisation créé.',
+        'asset_capitalized'        => 'Immobilisation capitalisée.',
+        'asset_disposed'           => 'Immobilisation cédée.',
+        'asset_verification_recorded' => 'Vérification d\'immobilisation enregistrée.',
+        'tax_payment_allocated'    => 'Paiement de taxe affecté.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -447,6 +460,7 @@ return [
         'accept_items_first'            => 'Acceptez et facturez les articles d\'investigation avant de saisir les résultats.',
         'items_accepted'                => ':count article(s) accepté(s) (aucun service facturable).',
         'items_accepted_with_invoice'   => ':count article(s) accepté(s) — facture :number générée.',
+        'select_verified_to_print'      => 'Sélectionnez au moins un résultat vérifié à imprimer.',
     ],
 
     /* ------------------------------------------------------------------ */

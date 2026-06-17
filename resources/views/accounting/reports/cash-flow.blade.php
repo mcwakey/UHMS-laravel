@@ -1,10 +1,10 @@
 @extends('layouts.app')
-@section('title', 'Cash Flow Statement')
+@section('title', __('accounting.cash_flow_statement'))
 
 @php $money = fn ($n) => 'GHS '.number_format((float) $n, 2); @endphp
 
 @section('content')
-<x-page-header title="Cash Flow Statement" icon="ti-arrows-exchange" description="Direct-method cash movement across cash and bank accounts." />
+<x-page-header :title="__('accounting.cash_flow_statement')" icon="ti-arrows-exchange" description="Direct-method cash movement across cash and bank accounts." />
 
 <div class="card mb-3">
     <div class="card-body py-2">
@@ -12,7 +12,7 @@
             <div class="col-md-3">
                 <label class="form-label small mb-1">Cash / Bank Account</label>
                 <select name="account_id" class="form-select">
-                    <option value="">All cash and bank accounts</option>
+                    <option value="">{{ __('accounting.all_cash_and_bank_accounts') }}</option>
                     @foreach($accounts as $account)
                         <option value="{{ $account->id }}" @selected((string) request('account_id') === (string) $account->id)>{{ $account->display_name }}</option>
                     @endforeach
@@ -78,7 +78,7 @@
                         <th>{{ __('reports.col_date') }}</th>
                         <th>{{ __('reports.columns.journal_number') }}</th>
                         <th>{{ __('reports.columns.description') }}</th>
-                        <th>Counterpart</th>
+                        <th>{{ __('accounting.counterpart') }}</th>
                         <th>{{ __('reports.filters.source') }}</th>
                         <th class="text-end">Inflow</th>
                         <th class="text-end">Outflow</th>
@@ -106,7 +106,7 @@
                 </tbody>
                 <tfoot class="table-light">
                     <tr>
-                        <th colspan="5">Section total</th>
+                        <th colspan="5">{{ __('accounting.section_total') }}</th>
                         <th class="text-end text-success">{{ $money($section['inflows']) }}</th>
                         <th class="text-end text-danger">{{ $money($section['outflows']) }}</th>
                         <th class="text-end">{{ $money($section['net']) }}</th>

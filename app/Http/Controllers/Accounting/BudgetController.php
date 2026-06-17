@@ -46,7 +46,7 @@ class BudgetController extends Controller
         $budget = Budget::create($data + ['created_by' => $request->user()?->id]);
 
         return redirect()->route('admin.accounting.budgets.index', ['fiscal_year_id' => $budget->fiscal_year_id])
-            ->with('success', 'Budget draft created.');
+            ->with('success', __('messages.accounting.budget_draft_created'));
     }
 
     public function addLine(Request $request, Budget $budget)
@@ -60,21 +60,21 @@ class BudgetController extends Controller
 
         $budget->lines()->create($data);
 
-        return back()->with('success', 'Budget line added.');
+        return back()->with('success', __('messages.accounting.budget_line_added'));
     }
 
     public function submit(Budget $budget, BudgetApprovalService $approval)
     {
         $approval->submit($budget, auth()->user());
 
-        return back()->with('success', 'Budget submitted for approval.');
+        return back()->with('success', __('messages.accounting.budget_submitted'));
     }
 
     public function approve(Budget $budget, BudgetApprovalService $approval)
     {
         $approval->approve($budget, auth()->user());
 
-        return back()->with('success', 'Budget approved and activated.');
+        return back()->with('success', __('messages.accounting.budget_approved'));
     }
 
     public function commitments(Request $request)
@@ -108,7 +108,7 @@ class BudgetController extends Controller
             'over_budget_acknowledged' => $request->boolean('over_budget_acknowledged'),
         ], $request->user());
 
-        return back()->with('success', 'Budget commitment created.');
+        return back()->with('success', __('messages.accounting.commitment_created'));
     }
 
     public function releaseCommitment(Request $request, BudgetCommitment $commitment, CommitmentService $commitments)
@@ -120,7 +120,7 @@ class BudgetController extends Controller
 
         $commitments->release($commitment, (float) $data['amount'], $request->user(), $data['notes'] ?? null);
 
-        return back()->with('success', 'Budget commitment released.');
+        return back()->with('success', __('messages.accounting.commitment_released'));
     }
 
     public function cancelCommitment(Request $request, BudgetCommitment $commitment, CommitmentService $commitments)
@@ -128,6 +128,6 @@ class BudgetController extends Controller
         $data = $request->validate(['notes' => ['nullable', 'string', 'max:1000']]);
         $commitments->cancel($commitment, $request->user(), $data['notes'] ?? null);
 
-        return back()->with('success', 'Budget commitment cancelled.');
+        return back()->with('success', __('messages.accounting.commitment_cancelled'));
     }
 }

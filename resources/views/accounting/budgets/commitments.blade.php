@@ -1,10 +1,10 @@
 @extends('layouts.app')
-@section('title', 'Budget Commitments')
+@section('title', __('accounting.budget_commitments'))
 
 @php $money = fn ($n) => 'GHS '.number_format((float) $n, 2); @endphp
 
 @section('content')
-<x-page-header title="Budget Commitments" icon="ti-lock-dollar" description="Open encumbrances against approved budgets." />
+<x-page-header :title="__('accounting.budget_commitments')" icon="ti-lock-dollar" description="Open encumbrances against approved budgets." />
 
 <div class="card mb-3">
     <div class="card-body">

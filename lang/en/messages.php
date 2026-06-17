@@ -43,6 +43,19 @@ return [
         'adjustment_approved'      => 'Adjustment approved.',
         'adjustment_posted'        => 'Adjustment posted to the general ledger.',
         'adjustment_rejected'      => 'Adjustment rejected.',
+        'budget_draft_created'     => 'Budget draft created.',
+        'budget_line_added'        => 'Budget line added.',
+        'budget_submitted'         => 'Budget submitted for approval.',
+        'budget_approved'          => 'Budget approved and activated.',
+        'commitment_created'       => 'Budget commitment created.',
+        'commitment_released'      => 'Budget commitment released.',
+        'commitment_cancelled'     => 'Budget commitment cancelled.',
+        'asset_category_created'   => 'Asset category created.',
+        'asset_location_created'   => 'Asset location created.',
+        'asset_capitalized'        => 'Asset capitalized.',
+        'asset_disposed'           => 'Asset disposed.',
+        'asset_verification_recorded' => 'Asset verification recorded.',
+        'tax_payment_allocated'    => 'Tax payment allocated.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -430,6 +443,7 @@ return [
         'accept_items_first'            => 'Accept and bill investigation items before entering results.',
         'items_accepted'                => 'Accepted :count item(s) (no billable services).',
         'items_accepted_with_invoice'   => 'Accepted :count item(s) — invoice :number generated.',
+        'select_verified_to_print'      => 'Select at least one verified result to print.',
     ],
 
     /* ------------------------------------------------------------------ */

@@ -114,6 +114,7 @@ use App\Http\Controllers\Accounting\FiscalYearController;
 use App\Http\Controllers\Accounting\FixedAssetController;
 use App\Http\Controllers\Accounting\JournalEntryController;
 use App\Http\Controllers\Accounting\PayrollPostingController;
+use App\Http\Controllers\Accounting\ReceivableWorkbenchController;
 use App\Http\Controllers\Accounting\TaxAccountingController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
@@ -733,6 +734,20 @@ Route::middleware('auth')->group(function () {
                 Route::post('returns/{return}/approve', [TaxAccountingController::class, 'approveReturn'])->name('returns.approve')->middleware('can:accounting.tax_returns.approve');
                 Route::post('payments', [TaxAccountingController::class, 'recordPayment'])->name('payments.store')->middleware('can:accounting.tax_payments.record');
                 Route::post('payments/{payment}/allocate', [TaxAccountingController::class, 'allocatePayment'])->name('payments.allocate')->middleware('can:accounting.tax_payments.record');
+            });
+
+            Route::middleware('module:accounting_advanced')->prefix('receivables')->name('receivables.')->group(function () {
+                Route::get('/', [ReceivableWorkbenchController::class, 'index'])->name('index')->middleware('can:receivables.workbench.view');
+                Route::post('cases', [ReceivableWorkbenchController::class, 'openCase'])->name('cases.store')->middleware('can:receivables.cases.manage');
+                Route::post('cases/{case}/assign', [ReceivableWorkbenchController::class, 'assign'])->name('cases.assign')->middleware('can:receivables.cases.assign');
+                Route::post('cases/{case}/followups', [ReceivableWorkbenchController::class, 'followup'])->name('cases.followups.store')->middleware('can:receivables.followups.create');
+                Route::post('cases/{case}/promises', [ReceivableWorkbenchController::class, 'promise'])->name('cases.promises.store')->middleware('can:receivables.promises.manage');
+                Route::post('cases/{case}/disputes', [ReceivableWorkbenchController::class, 'dispute'])->name('cases.disputes.store')->middleware('can:receivables.disputes.manage');
+                Route::post('cases/{case}/dunning', [ReceivableWorkbenchController::class, 'dunning'])->name('cases.dunning.store')->middleware('can:receivables.dunning.generate');
+                Route::post('cases/{case}/recommend-writeoff', [ReceivableWorkbenchController::class, 'recommendWriteoff'])->name('cases.recommend-writeoff')->middleware('can:receivables.recommendations.writeoff');
+                Route::post('cases/{case}/recommend-credit-note', [ReceivableWorkbenchController::class, 'recommendCreditNote'])->name('cases.recommend-credit-note')->middleware('can:receivables.recommendations.creditnote');
+                Route::post('statements', [ReceivableWorkbenchController::class, 'statement'])->name('statements.store')->middleware('can:receivables.statements.generate');
+                Route::post('statements/{statement}/approve', [ReceivableWorkbenchController::class, 'approveStatement'])->name('statements.approve')->middleware('can:receivables.statements.approve');
             });
 
             Route::middleware('can:accounting.fiscal_years.view')->prefix('fiscal-years')->name('fiscal-years.')->group(function () {

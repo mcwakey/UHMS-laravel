@@ -5,11 +5,29 @@ There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
 Do not try to read it.
 Follow this prompt directly.
 
-# UHMS Accounting Execution Phase I — Statutory Tax Ledgers, Returns & Tax Payment Controls
+# UHMS Accounting Execution Phase J — Dedicated Receivables Workbench, Collections, Dunning & AR Controls
 
 ## Goal
 
-Implement statutory tax accounting ledgers, tax return preparation, tax payment tracking, tax reconciliation, and exportable statutory schedules for UHMS.
+Implement a dedicated receivables workbench for UHMS.
+
+The workbench must give finance users one place to manage:
+
+```text
+patient receivables
+insurance receivables
+sponsor receivables
+corporate receivables
+claims receivables
+aged receivables
+collection follow-up
+payment promises
+disputes
+write-off recommendations
+credit-note follow-up
+statement generation
+receivable reconciliation
+```
 
 This phase must build on:
 
@@ -20,17 +38,18 @@ Phase B — Bank accounts and reconciliation
 Phase C — Failed posting workbench
 Phase D — Subledger reconciliation workbench
 Phase E — Payroll accounting posting
-Phase E2 — PAYE and Pension / SSNIT settlement
-Phase F — Cash flow and exports
+Phase E2 — PAYE and Pension / SSNIT settlements
+Phase F — Cash Flow Statement and exports
 Phase G — Budgets and commitments
 Phase H — Fixed assets and depreciation
+Phase I — Statutory tax accounting
 ```
 
-Do not create a parallel tax or accounting engine.
+Do not create a parallel billing system.
 
-Do not hardcode Ghana tax rates into accounting logic.
+Do not create a parallel accounting system.
 
-Tax calculation and tax accounting must remain separate.
+Receivables must remain linked to invoices, payments, credit notes, write-offs, sponsors, claims, and GL control accounts.
 
 ---
 
@@ -50,6 +69,7 @@ docs/ACCOUNTING_PHASE_E2_STATUTORY_PAYROLL_SETTLEMENT_REPORT.md
 docs/ACCOUNTING_PHASE_F_CASH_FLOW_AND_EXPORTS_REPORT.md
 docs/ACCOUNTING_PHASE_G_BUDGETS_AND_COMMITMENTS_REPORT.md
 docs/ACCOUNTING_PHASE_H_FIXED_ASSETS_AND_DEPRECIATION_REPORT.md
+docs/ACCOUNTING_PHASE_I_STATUTORY_TAX_ACCOUNTING_REPORT.md
 docs/ACCOUNTING_MODULE_SPLIT_AND_GAP_REPORT.md
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
@@ -57,12 +77,13 @@ docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 Current status:
 
 ```text
-PAYE and pension liabilities are already recognised through payroll posting.
-PAYE and pension remittances are already posted through Phase E2.
-Bank/cash settlement data exists.
-Cash flow exists.
-Fixed asset accounting exists.
-Tax ledgers and statutory returns are still missing.
+Billing and Collections already exist.
+Invoice receivables foundation exists.
+AR aging foundation exists.
+Sponsor/corporate/insurance payer handling exists.
+Claims preparation exists.
+Subledger reconciliation can compare receivables to GL.
+The missing gap is a dedicated receivables operations workbench.
 ```
 
 Important testing instruction:
@@ -80,123 +101,129 @@ Run only necessary safety checks: migrations, route list, view cache, localisati
 Implement:
 
 ```text
-tax types
-tax registrations
-tax account mappings
-tax ledger entries
-tax return periods
-tax returns
-tax return lines
-tax payment records
-tax payment allocations
-withholding certificates
-PAYE tax ledger integration
-Pension / SSNIT ledger integration
-withholding tax ledger foundation
-VAT/NHIL/GETFund ledger foundation where source data exists
-input tax ledger
-output tax ledger
-tax return preparation
-tax return approval
-tax return export
-tax payment allocation
-tax reconciliation
-failed posting workbench integration
-subledger reconciliation integration
-cash flow integration
-close readiness integration
+receivables dashboard
+payer balance workbench
+patient receivable workbench
+insurance receivable workbench
+sponsor receivable workbench
+corporate receivable workbench
+claims receivable workbench
+AR aging drill-down
+collection follow-up records
+payment promise records
+dispute tracking
+dunning/reminder notices
+statement generation
+collector assignment
+receivable notes
+receivable status workflow
+write-off recommendation workflow
+credit-note recommendation workflow
+receivable reconciliation links
+export-ready AR reports
+close-readiness integration
 permissions
 audit logging
 localisation
 documentation
 ```
 
-Do not implement:
+Do not implement yet:
 
 ```text
-direct GRA electronic filing API
-direct SSNIT API filing
-automatic external tax submission
-tax rate legal advice
-new billing tax calculation engine unless required by existing source data
-new payroll PAYE calculation engine
+external debt collection agency integration
+SMS gateway sending if not already configured
+email sending automation if not already configured
+legal case management
+claims electronic submission
+insurance portal API integration
+credit scoring
+automatic write-off posting without approval
 ```
 
 ---
 
 ## 3. Core Rules
 
-Tax accounting must be:
+Receivables workbench must be:
 
 ```text
-configurable
-effective-dated
-auditable
+payer-aware
+invoice-linked
+payment-linked
+claim-linked where applicable
+sponsor-aware
+insurance-aware
 permission-aware
-module-aware
-reconcilable
-exportable
-settlement-aware
+auditable
+non-destructive
+reconcilable to GL
 ```
 
 Rules:
 
 ```text
-Do not hardcode tax rates.
-Do not mix tax calculation with tax accounting.
-Source modules calculate tax amounts.
-Accounting records tax payable, tax receivable, tax settlement, and return balances.
-Posted tax journals are immutable.
-Corrections use reversal, adjustment, or replacement.
-Tax returns are versioned and approval-gated.
-Tax payments cannot over-allocate unless explicit credit balance handling exists.
+Do not change invoice totals from the receivables workbench.
+Do not post write-offs directly without approval and existing accounting controls.
+Do not post credit notes directly without approval and existing credit-note controls.
+Do not delete receivable history.
+Do not hide disputed balances.
+Do not treat NHIS as special or hardcoded.
+NHIS remains just another insurance provider.
+Do not expose clinical details to finance users beyond what permissions allow.
+Do not expose restricted financial data to clinical users.
 ```
 
 ---
 
-## 4. Separation of Concerns
+## 4. Module Rules
 
-Tax calculation belongs to source modules:
-
-```text
-Payroll calculates PAYE.
-Payroll calculates pension / SSNIT deductions.
-Billing calculates output tax only if tax-enabled invoices already exist.
-Procurement/AP calculates input tax or withholding only if source data exists.
-Supplier payment may calculate withholding tax if configured.
-```
-
-Tax accounting records:
+This phase belongs to:
 
 ```text
-tax ledger entries
-tax returns
-tax payable / receivable balances
-tax payments
-tax payment allocations
-tax reconciliation
-tax certificates
+Billing & Collections
+Advanced Accounting
 ```
 
-Do not invent tax source amounts where the source module does not currently store them.
+Receivable operations must work for Billing users, but GL reconciliation links require Advanced Accounting.
+
+Routes should use appropriate middleware:
+
+```text
+auth
+permission middleware
+module middleware for billing/collections where applicable
+module:accounting_basic and module:accounting_advanced only for accounting-specific reconciliation screens
+```
+
+Do not make basic billing unusable when Advanced Accounting is disabled.
+
+If Advanced Accounting is disabled:
+
+```text
+receivable follow-up still works
+GL reconciliation links are hidden/inaccessible
+accounting posting controls are hidden/inaccessible
+```
 
 ---
 
 ## 5. Database Tables
 
-Create additive tables:
+Create additive tables if they do not already exist:
 
 ```text
-tax_types
-tax_registrations
-tax_account_mappings
-tax_ledger_entries
-tax_return_periods
-tax_returns
-tax_return_lines
-tax_payments
-tax_payment_allocations
-withholding_certificates
+receivable_cases
+receivable_case_items
+receivable_followups
+receivable_promises
+receivable_disputes
+receivable_assignments
+receivable_dunning_notices
+receivable_statement_runs
+receivable_statement_items
+receivable_writeoff_recommendations
+receivable_creditnote_recommendations
 ```
 
 Use string statuses with application validation.
@@ -209,228 +236,123 @@ Use `LONGTEXT` for snapshots where needed.
 
 Use explicit short MariaDB-safe index names.
 
-Do not cascade-delete financial history.
+Do not cascade-delete financial or billing history.
 
 ---
 
-## 6. tax_types
-
-Fields:
-
-```text
-id
-code
-name
-country_code
-tax_category
-description
-is_active
-effective_from
-effective_to
-notes
-created_by
-updated_by
-timestamps
-```
-
-Tax categories:
-
-```text
-payroll_tax
-social_security
-withholding_tax
-vat
-input_tax
-output_tax
-levy
-other
-```
-
-Initial configurable tax type examples:
-
-```text
-PAYE
-Pension / SSNIT
-Withholding Tax
-VAT Output
-VAT Input
-NHIL
-GETFund Levy
-COVID / other levy placeholder if source configuration requires it
-```
-
-Do not seed rates unless the project already has verified tax-rate configuration.
-
----
-
-## 7. tax_registrations
-
-Fields:
-
-```text
-id
-tax_type_id
-registration_number
-registration_name
-country_code
-authority_name
-filing_frequency
-currency
-is_active
-effective_from
-effective_to
-notes
-created_by
-updated_by
-timestamps
-```
-
-Filing frequencies:
-
-```text
-monthly
-quarterly
-annual
-custom
-```
+## 6. receivable_cases
 
 Purpose:
 
 ```text
-Track facility/company tax registration details without hardcoding one authority into the system.
+Group one payer’s outstanding receivables into an operational collection case.
 ```
-
----
-
-## 8. tax_account_mappings
 
 Fields:
 
 ```text
 id
-tax_type_id
-mapping_purpose
-account_id
-effective_from
-effective_to
+case_number
+payer_type
+payer_id nullable
+payer_name_snapshot
+patient_id nullable
+insurance_provider_id nullable
+sponsor_id nullable
+corporate_client_id nullable
+claim_id nullable
+case_type
 priority
-is_active
-notes
-created_by
-updated_by
-timestamps
-```
-
-Mapping purposes:
-
-```text
-payable
-receivable
-expense
-income
-settlement_bank
-withholding_payable
-input_tax_receivable
-output_tax_payable
-```
-
-Rules:
-
-```text
-Mappings are effective-dated.
-Missing mappings block posting/return finalisation where accounting impact is required.
-Do not pick arbitrary accounts.
-Historical mappings remain visible.
-```
-
-Use Phase 0 account mappings if cleaner, but avoid duplicate conflicting mapping logic.
-
----
-
-## 9. tax_ledger_entries
-
-Purpose:
-
-```text
-Create a tax subledger independent of the GL but reconciled to GL control accounts.
-```
-
-Fields:
-
-```text
-id
-tax_type_id
-tax_registration_id nullable
-source_module
-source_type
-source_id
-source_reference
-tax_period_start
-tax_period_end
-tax_date
-direction
-taxable_amount
-tax_amount
-settled_amount
-outstanding_amount
-currency
 status
-journal_entry_id nullable
-settlement_journal_entry_id nullable
+assigned_to nullable
+opened_by
+opened_at
+closed_by nullable
+closed_at nullable
+closure_reason nullable
+total_original_amount
+total_outstanding_amount
+total_disputed_amount
+total_promised_amount
+oldest_due_date nullable
+aging_bucket
 metadata_snapshot
-created_by
-updated_by
+notes
 timestamps
 ```
 
-Directions:
+Payer types:
 
 ```text
-payable
-receivable
-credit
-debit
+patient
+insurance
+sponsor
+corporate
+claim
+mixed
+unknown
+```
+
+Case types:
+
+```text
+normal_collection
+insurance_followup
+sponsor_followup
+corporate_followup
+claims_followup
+dispute
+writeoff_review
+credit_note_review
 ```
 
 Statuses:
 
 ```text
-draft
-recognised
-included_in_return
-settled
-partially_settled
-reversed
+open
+in_progress
+awaiting_payer
+promised
+partially_paid
+disputed
+escalated
+recommended_writeoff
+recommended_credit_note
+resolved
+closed
 cancelled
-```
-
-Rules:
-
-```text
-Tax ledger entries must link to a source record.
-Tax ledger entries must not be duplicated for the same source tax event.
-Tax ledger entries must reconcile to GL control accounts.
 ```
 
 ---
 
-## 10. tax_return_periods
+## 7. receivable_case_items
+
+Purpose:
+
+```text
+Link collection cases to invoices, invoice receivables, claim receivables, or payer balances.
+```
 
 Fields:
 
 ```text
 id
-tax_type_id
-tax_registration_id nullable
-period_start
-period_end
+receivable_case_id
+source_type
+source_id
+invoice_id nullable
+invoice_number nullable
+claim_id nullable
+payer_type
+payer_id nullable
+original_amount
+outstanding_amount
+disputed_amount
+promised_amount
 due_date nullable
+aging_bucket
 status
-opened_by
-opened_at
-closed_by nullable
-closed_at nullable
-notes
+metadata_snapshot
 timestamps
 ```
 
@@ -438,125 +360,88 @@ Statuses:
 
 ```text
 open
-prepared
-approved
-filed
+partially_paid
 paid
-closed
+disputed
+written_off
+credited
 cancelled
-```
-
----
-
-## 11. tax_returns
-
-Fields:
-
-```text
-id
-tax_return_period_id
-return_number
-tax_type_id
-tax_registration_id nullable
-status
-taxable_amount_total
-tax_amount_total
-adjustment_amount_total
-payment_amount_total
-outstanding_amount
-prepared_by
-prepared_at
-approved_by nullable
-approved_at nullable
-filed_by nullable
-filed_at nullable
-filing_reference nullable
-filing_notes nullable
-cancelled_by nullable
-cancelled_at nullable
-cancellation_reason nullable
-metadata_snapshot
-timestamps
-```
-
-Statuses:
-
-```text
-draft
-prepared
-approved
-filed
-paid
-closed
-cancelled
-superseded
+removed
 ```
 
 Rules:
 
 ```text
-Prepared return can be reviewed.
-Approved return cannot be silently edited.
-Filed return requires filing reference or note.
-Corrections use amendment/supersession, not destructive edits.
+One receivable source can be linked to multiple historical cases, but only one active case unless explicitly allowed.
+Case item snapshots must not replace invoice/payment source-of-truth.
 ```
 
 ---
 
-## 12. tax_return_lines
+## 8. receivable_followups
 
 Fields:
 
 ```text
 id
-tax_return_id
-tax_ledger_entry_id nullable
-line_type
-description
-taxable_amount
-tax_amount
-adjustment_amount
-metadata_snapshot
+receivable_case_id
+followup_type
+followup_date
+next_followup_date nullable
+contact_person nullable
+contact_channel
+summary
+outcome
+created_by
 timestamps
 ```
 
-Line types:
+Follow-up types:
 
 ```text
-source_tax
-adjustment
-payment
-credit_balance
-rounding
+phone
+sms
+email
+letter
+in_person
+portal
+internal_note
+other
+```
+
+Outcomes:
+
+```text
+no_response
+payer_contacted
+payment_promised
+dispute_raised
+documents_requested
+claim_resubmission_needed
+escalated
+resolved
+other
 ```
 
 ---
 
-## 13. tax_payments
+## 9. receivable_promises
 
 Fields:
 
 ```text
 id
-payment_reference
-tax_type_id
-tax_registration_id nullable
-payment_date
-amount
-payment_account_id
-tax_account_id
-journal_entry_id nullable
-reversal_journal_entry_id nullable
+receivable_case_id
+promised_by
+promise_date
+expected_payment_date
+promised_amount
 status
-approved_by nullable
-approved_at nullable
-posted_by nullable
-posted_at nullable
-reversed_by nullable
-reversed_at nullable
-reversal_reason nullable
+fulfilled_amount
+fulfilled_at nullable
+broken_at nullable
+broken_reason nullable
 notes
-metadata_snapshot
 created_by
 updated_by
 timestamps
@@ -565,73 +450,187 @@ timestamps
 Statuses:
 
 ```text
-draft
-approved
-posted
-allocated
-partially_allocated
-reversed
+active
+fulfilled
+partially_fulfilled
+broken
 cancelled
-failed
-```
-
-Journal pattern:
-
-```text
-Dr Tax Payable
-Cr Bank/Cash
-```
-
-For recoverable tax credits, use configured receivable/payable accounts.
-
----
-
-## 14. tax_payment_allocations
-
-Fields:
-
-```text
-id
-tax_payment_id
-tax_return_id nullable
-tax_ledger_entry_id nullable
-allocated_amount
-metadata_snapshot
-timestamps
 ```
 
 Rules:
 
 ```text
-Allocation cannot exceed payment amount.
-Allocation cannot exceed return or ledger outstanding amount unless explicit credit balance is supported.
-Allocations are retained after posting.
+A promise does not reduce receivable balance.
+A promise is operational follow-up only.
+Payment reduces balance only when actual payment is posted.
 ```
 
 ---
 
-## 15. withholding_certificates
+## 10. receivable_disputes
 
 Fields:
 
 ```text
 id
-certificate_number
-tax_type_id
-supplier_id nullable
-payer_name nullable
-source_module
-source_type
-source_id
-certificate_date
-taxable_amount
-withheld_amount
+receivable_case_id
+source_type nullable
+source_id nullable
+dispute_reason
+disputed_amount
 status
-issued_by nullable
-issued_at nullable
-cancelled_by nullable
-cancelled_at nullable
-cancellation_reason nullable
+raised_by
+raised_at
+resolved_by nullable
+resolved_at nullable
+resolution_note nullable
+recommended_action nullable
+metadata_snapshot
+timestamps
+```
+
+Statuses:
+
+```text
+open
+under_review
+resolved_valid
+resolved_invalid
+credit_note_recommended
+writeoff_recommended
+cancelled
+```
+
+Recommended actions:
+
+```text
+collect
+credit_note
+writeoff
+rebill
+claim_resubmit
+payer_correction
+other
+```
+
+Rules:
+
+```text
+Disputed amount remains visible in AR aging.
+Resolved dispute does not itself change financial balances.
+Financial correction must use credit note, write-off, payment, or rebilling workflow.
+```
+
+---
+
+## 11. receivable_assignments
+
+Fields:
+
+```text
+id
+receivable_case_id
+assigned_to
+assigned_by
+assigned_at
+released_at nullable
+release_reason nullable
+timestamps
+```
+
+Only one active assignment should exist per case.
+
+---
+
+## 12. receivable_dunning_notices
+
+Purpose:
+
+```text
+Generate controlled reminder notices without forcing immediate sending.
+```
+
+Fields:
+
+```text
+id
+receivable_case_id
+notice_number
+notice_level
+notice_date
+delivery_channel
+recipient_name
+recipient_contact
+subject
+body
+status
+generated_by
+generated_at
+sent_by nullable
+sent_at nullable
+metadata_snapshot
+timestamps
+```
+
+Notice levels:
+
+```text
+friendly_reminder
+first_notice
+second_notice
+final_notice
+legal_notice
+```
+
+Statuses:
+
+```text
+draft
+generated
+sent
+cancelled
+failed
+```
+
+Rules:
+
+```text
+Generate notice first.
+Send only if an existing email/SMS mechanism is safely available.
+If no sending mechanism exists, leave as generated/printable.
+```
+
+---
+
+## 13. receivable_statement_runs and items
+
+Purpose:
+
+```text
+Prepare payer statements for patient, sponsor, insurance, or corporate clients.
+```
+
+receivable_statement_runs fields:
+
+```text
+id
+statement_number
+payer_type
+payer_id nullable
+payer_name_snapshot
+period_start
+period_end
+status
+opening_balance
+charges
+payments
+credit_notes
+writeoffs
+closing_balance
+generated_by
+generated_at
+approved_by nullable
+approved_at nullable
 metadata_snapshot
 timestamps
 ```
@@ -640,335 +639,434 @@ Statuses:
 
 ```text
 draft
-issued
+generated
+approved
+sent
 cancelled
-reissued
 ```
 
-Do not generate certificates from missing source data.
+receivable_statement_items fields:
+
+```text
+id
+receivable_statement_run_id
+source_type
+source_id
+transaction_date
+description
+debit_amount
+credit_amount
+balance_after
+metadata_snapshot
+timestamps
+```
+
+Rules:
+
+```text
+Statement is a snapshot.
+Statement does not post accounting entries.
+Statement totals must reconcile to source invoices/payments/credit notes/write-offs.
+```
 
 ---
 
-## 16. Services To Add
+## 14. Write-off and Credit-note Recommendations
 
 Create:
 
 ```text
-TaxTypeService
-TaxLedgerService
-TaxReturnService
-TaxPaymentService
-TaxReconciliationService
-WithholdingCertificateService
-TaxExportService
+receivable_writeoff_recommendations
+receivable_creditnote_recommendations
 ```
 
-Use existing:
+Purpose:
 
 ```text
-JournalEntryService
+Recommend financial corrections without bypassing approval and posting controls.
+```
+
+Fields:
+
+```text
+id
+receivable_case_id
+source_type
+source_id
+recommended_amount
+reason
+status
+recommended_by
+recommended_at
+approved_by nullable
+approved_at nullable
+rejected_by nullable
+rejected_at nullable
+rejection_reason nullable
+linked_writeoff_id nullable
+linked_credit_note_id nullable
+metadata_snapshot
+timestamps
+```
+
+Statuses:
+
+```text
+draft
+recommended
+approved
+rejected
+converted
+cancelled
+```
+
+Rules:
+
+```text
+Recommendation does not affect AR balance.
+Actual write-off must use existing write-off workflow.
+Actual credit note must use existing credit-note workflow.
+Link converted recommendation to final financial record.
+```
+
+---
+
+## 15. Services To Add
+
+Create:
+
+```text
+ReceivableWorkbenchService
+ReceivableCaseService
+ReceivableAgingService
+ReceivableFollowupService
+ReceivablePromiseService
+ReceivableDisputeService
+ReceivableAssignmentService
+ReceivableDunningService
+ReceivableStatementService
+ReceivableRecommendationService
+ReceivableReconciliationService
+ReceivableExportService
+```
+
+Use existing where available:
+
+```text
+InvoiceService
+PaymentService
+CreditNoteService
+WriteOffService if present
+StatementService if present
 AccountingPostingService
-AccountingPostingAttemptService
 AccountingCloseReadinessService
 ActivityLogService
 AccountingExportService
 ```
 
-Do not put tax logic in controllers or Blade.
+Do not put receivable calculations in controllers or Blade.
 
 ---
 
-## 17. TaxLedgerService
+## 16. ReceivableWorkbenchService
 
 Responsibilities:
 
 ```text
-create tax ledger entry from recognised source tax event
-prevent duplicate source tax event
-update outstanding tax amount
-reverse tax ledger entry where source is reversed
-link to GL journal where applicable
-prepare tax ledger summaries
+build dashboard metrics
+group receivables by payer
+group receivables by aging bucket
+show top overdue payers
+show disputed balances
+show promised payments
+show broken promises
+show unassigned cases
+show high-risk cases
+show claims awaiting settlement
+show sponsor/corporate overdue balances
 ```
 
-Source integration:
+Metrics:
 
 ```text
-payroll PAYE liabilities from Phase E/E2
-pension / SSNIT liabilities from Phase E/E2
-supplier withholding where source data exists
-billing output tax where source data exists
-procurement input tax where source data exists
+total AR
+current
+1-30 days
+31-60 days
+61-90 days
+over 90 days
+disputed amount
+promised amount
+collection rate
+days sales outstanding if enough data exists
+top debtors
 ```
 
-If a source does not yet store tax amount fields, mark as unavailable and document.
+Do not include restricted clinical data in finance dashboard.
 
 ---
 
-## 18. TaxReturnService
+## 17. ReceivableAgingService
+
+Calculate aging from due date or invoice date.
+
+Aging buckets:
+
+```text
+current
+1_30
+31_60
+61_90
+over_90
+```
+
+Support filters:
+
+```text
+payer type
+payer
+department
+branch
+invoice type
+claim status
+sponsor
+insurance provider
+corporate client
+date range
+```
+
+Rules:
+
+```text
+Aging must use outstanding balances after payments, credit notes, and write-offs.
+Disputed balances remain included but separately labelled.
+Claims receivables should show claim status where available.
+```
+
+---
+
+## 18. ReceivableCaseService
 
 Responsibilities:
 
 ```text
-open tax return period
-prepare return from tax ledger entries
-create return lines
-calculate totals
-approve return
-mark return filed with filing reference
-cancel/supersede draft or prepared returns
-prevent duplicate active return for same tax type and period
+open case
+add receivable items
+refresh outstanding snapshots
+change status
+close case
+reopen case
+assign collector
+escalate case
+link to payer/patient/claim/sponsor
 ```
 
-Return preparation must be repeatable.
+Case opening should support:
 
-Prepared return must use a snapshot so later source changes do not silently alter the approved return.
+```text
+single invoice
+payer balance
+aging bucket selection
+claim batch
+sponsor statement
+insurance payer
+corporate payer
+```
 
 ---
 
-## 19. TaxPaymentService
+## 19. Dunning / Reminder Notices
 
-Responsibilities:
-
-```text
-create tax payment
-approve payment
-post payment journal
-allocate payment to return or ledger entries
-prevent over-allocation
-reverse payment
-restore outstanding balances after reversal
-create posting attempt
-retain accounting errors
-```
-
-Posting identity examples:
+Dunning service should:
 
 ```text
-source_type = tax_payment
-posting_type = tax_payment
-posting_version = 1
+generate reminder notice from case
+choose template by notice level
+include payer statement summary
+include invoice list
+include payment instructions where configured
+support printable output
+support email/SMS only if existing safe channels exist
+record generated/sent status
 ```
 
-Do not duplicate Phase E2 payroll statutory settlement records. Either integrate them into tax ledgers/returns or map them as existing payroll statutory settlements.
+Do not send automatically unless an existing notification preference and channel exists.
+
+Default to printable/generated notices.
 
 ---
 
-## 20. TaxReconciliationService
+## 20. Statement Generation
 
-Compare:
+Statement service should:
 
 ```text
-tax ledger outstanding
-tax return outstanding
-posted tax payments
+generate payer statement snapshot
+include opening balance
+include invoices/charges
+include payments
+include credit notes
+include write-offs
+include closing balance
+support patient, sponsor, insurance, corporate payer types
+support PDF/print/CSV if existing export service supports it
 ```
 
-against:
+Statement must not post accounting entries.
+
+---
+
+## 21. Receivable Reconciliation Integration
+
+Update Phase D receivables reconciliation.
+
+It should link to:
 
 ```text
-tax GL payable / receivable control accounts
+receivable cases
+disputes
+writeoff recommendations
+credit-note recommendations
+unassigned overdue balances
+unresolved case amounts
 ```
 
-Domains:
+Classifications:
 
 ```text
-PAYE
-Pension / SSNIT
-Withholding tax
-VAT input
-VAT output
-Other configured taxes
-```
-
-Classify differences:
-
-```text
-unposted_tax_event
-failed_tax_posting
-payment_not_allocated
-manual_journal
-return_not_prepared
-source_data_missing
-mapping_issue
+open_receivable
+disputed_receivable
+unassigned_overdue
+payment_promise_active
+payment_promise_broken
+writeoff_recommended
+creditnote_recommended
+claim_pending
+sponsor_pending
+corporate_pending
 unknown_difference
 ```
 
-Integrate with Phase D subledger reconciliation.
+---
+
+## 22. Failed Posting Workbench Integration
+
+Link failed receivable-related postings to the receivables workbench:
+
+```text
+invoice receivable posting
+payment posting
+credit note posting
+write-off posting
+claim receivable posting
+sponsor receivable posting
+```
+
+Receivable case detail should show related failed posting attempts.
+
+Do not retry postings directly from the receivables case unless existing Phase C permissions and services are used.
 
 ---
 
-## 21. PAYE and Pension / SSNIT Integration
+## 23. Close Readiness Integration
 
-Phase E2 already posts payroll statutory settlements.
-
-For this phase:
+Update `AccountingCloseReadinessService` to show:
 
 ```text
-create tax ledger entries for PAYE and pension liabilities from posted payroll runs
-create tax ledger settlement links from Phase E2 statutory settlement records
-allow PAYE and pension return preparation
-allow filing reference and filing notes
-ensure reconciliation subtracts posted settlements
+large overdue receivables
+unassigned overdue receivables
+unresolved receivable disputes
+approved writeoff recommendations not converted
+approved credit-note recommendations not converted
+broken payment promises
+claims receivables over threshold
+sponsor/corporate balances over threshold
+AR reconciliation not run
+AR reconciliation unresolved differences
 ```
 
-Do not create duplicate payment journals for Phase E2 settlements.
+Do not hard-block period close unless existing close code safely supports it.
+
+Document recommended future close-block behavior.
 
 ---
 
-## 22. Withholding Tax Integration
-
-If supplier payment or procurement source data already supports withholding:
-
-```text
-create withholding tax ledger entries
-allow return preparation
-allow payment settlement
-allow certificate generation
-```
-
-If not:
-
-```text
-create the configuration and ledger foundation
-mark source integration as deferred
-document missing source fields
-```
-
-Do not fabricate withholding amounts.
-
----
-
-## 23. VAT / NHIL / GETFund Integration
-
-If invoice/procurement source data already stores applicable tax components:
-
-```text
-create output tax ledger entries from invoices
-create input tax ledger entries from procurement/AP
-prepare return schedules
-track payment or credit balance
-```
-
-If source data does not yet store tax components:
-
-```text
-create configurable tax types and account mappings only
-mark ledger automation as not_available
-document required future billing/procurement source fields
-```
-
-Do not hardcode Ghana VAT/NHIL/GETFund rates.
-
-Do not infer tax amounts from gross totals without explicit tax fields.
-
----
-
-## 24. UI Screens
-
-Add Advanced Accounting tax screens:
-
-```text
-Tax Dashboard
-Tax Types
-Tax Registrations
-Tax Account Mappings
-Tax Ledger
-Tax Return Periods
-Tax Returns
-Prepare Tax Return
-Approve Tax Return
-Mark Filed
-Tax Payments
-Tax Payment Allocation
-Tax Reconciliation
-Withholding Certificates
-Tax Reports
-```
-
-Use Bootstrap 5 and Tabler Icons only.
-
-Do not introduce new frontend frameworks.
-
----
-
-## 25. Permissions
+## 24. Permissions
 
 Add:
 
 ```text
-accounting.tax_types.view
-accounting.tax_types.manage
-accounting.tax_registrations.view
-accounting.tax_registrations.manage
-accounting.tax_ledgers.view
-accounting.tax_returns.view
-accounting.tax_returns.prepare
-accounting.tax_returns.approve
-accounting.tax_returns.file
-accounting.tax_payments.view
-accounting.tax_payments.create
-accounting.tax_payments.approve
-accounting.tax_payments.post
-accounting.tax_payments.reverse
-accounting.tax_reconciliation.view
-accounting.tax_reconciliation.run
-accounting.withholding_certificates.view
-accounting.withholding_certificates.issue
-accounting.tax_reports.export
+receivables.workbench.view
+receivables.cases.view
+receivables.cases.manage
+receivables.cases.assign
+receivables.followups.create
+receivables.promises.manage
+receivables.disputes.manage
+receivables.dunning.generate
+receivables.dunning.send
+receivables.statements.generate
+receivables.statements.approve
+receivables.recommendations.writeoff
+receivables.recommendations.creditnote
+receivables.reports.view
+receivables.reports.export
 ```
 
 Suggested defaults:
 
 ```text
+Cashier / Billing Officer:
+- view assigned receivable cases
+- create followups
+- record payment promises
+
 Accountant:
-- view tax types/registrations/ledgers/returns/payments
-- prepare returns
-- create payments
-- run reconciliation
+- view workbench
+- manage cases
+- generate statements
+- generate dunning notices
+- manage disputes
 
 Finance Manager:
-- approve returns
-- mark filed
-- approve/post/reverse payments
-- issue withholding certificates
-- manage tax configuration
+- assign cases
+- approve statements
+- recommend write-offs / credit notes
+- export reports
 
 Administrator / Super Admin:
 - all
 ```
 
-Do not grant to broad clinical roles.
+Do not grant broadly to clinical roles.
 
 ---
 
-## 26. Audit Logging
+## 25. Audit Logging
 
 Use `ActivityLogService`.
 
 Audit:
 
 ```text
-TAX_TYPE_CREATED
-TAX_TYPE_UPDATED
-TAX_REGISTRATION_CREATED
-TAX_REGISTRATION_UPDATED
-TAX_LEDGER_ENTRY_CREATED
-TAX_LEDGER_ENTRY_REVERSED
-TAX_RETURN_PERIOD_OPENED
-TAX_RETURN_PREPARED
-TAX_RETURN_APPROVED
-TAX_RETURN_FILED
-TAX_RETURN_CANCELLED
-TAX_PAYMENT_CREATED
-TAX_PAYMENT_APPROVED
-TAX_PAYMENT_POSTED
-TAX_PAYMENT_ALLOCATED
-TAX_PAYMENT_REVERSED
-TAX_RECONCILIATION_RUN
-WITHHOLDING_CERTIFICATE_ISSUED
-WITHHOLDING_CERTIFICATE_CANCELLED
-TAX_REPORT_EXPORTED
+RECEIVABLE_CASE_OPENED
+RECEIVABLE_CASE_UPDATED
+RECEIVABLE_CASE_ASSIGNED
+RECEIVABLE_CASE_ESCALATED
+RECEIVABLE_CASE_CLOSED
+RECEIVABLE_FOLLOWUP_CREATED
+RECEIVABLE_PROMISE_CREATED
+RECEIVABLE_PROMISE_UPDATED
+RECEIVABLE_DISPUTE_CREATED
+RECEIVABLE_DISPUTE_RESOLVED
+RECEIVABLE_DUNNING_GENERATED
+RECEIVABLE_DUNNING_SENT
+RECEIVABLE_STATEMENT_GENERATED
+RECEIVABLE_STATEMENT_APPROVED
+RECEIVABLE_WRITEOFF_RECOMMENDED
+RECEIVABLE_CREDITNOTE_RECOMMENDED
+RECEIVABLE_REPORT_VIEWED
+RECEIVABLE_REPORT_EXPORTED
 ```
 
 Run:
@@ -981,13 +1079,15 @@ Fix new missing/needs-review audit gaps.
 
 ---
 
-## 27. Localisation
+## 26. Localisation
 
 All new labels must be localised EN/FR.
 
 Use or extend:
 
 ```text
+lang/en/receivables.php
+lang/fr/receivables.php
 lang/en/accounting.php
 lang/fr/accounting.php
 lang/en/reports.php
@@ -997,39 +1097,42 @@ lang/fr/reports.php
 Required keys include:
 
 ```text
-statutory_taxes
-tax_type
-tax_types
-tax_registration
-tax_registrations
-tax_ledger
-tax_ledger_entries
-tax_return
-tax_returns
-tax_return_period
-prepare_tax_return
-approve_tax_return
-mark_tax_return_filed
-filing_reference
-tax_payment
-tax_payments
-tax_payment_allocation
-tax_reconciliation
-withholding_tax
-withholding_certificate
-withholding_certificates
-input_tax
-output_tax
-tax_payable
-tax_receivable
-taxable_amount
-tax_amount
-settled_amount
-outstanding_tax
-tax_authority
-filing_frequency
-return_due_date
-tax_report
+receivables
+receivable_workbench
+receivable_case
+receivable_cases
+payer_type
+payer_balance
+aging_bucket
+aged_receivables
+patient_receivables
+insurance_receivables
+sponsor_receivables
+corporate_receivables
+claims_receivables
+collection_followup
+payment_promise
+payment_promises
+broken_promise
+receivable_dispute
+receivable_disputes
+dunning_notice
+dunning_notices
+friendly_reminder
+first_notice
+second_notice
+final_notice
+legal_notice
+payer_statement
+statement_run
+writeoff_recommendation
+creditnote_recommendation
+assigned_collector
+top_debtors
+overdue_receivables
+unassigned_overdue
+disputed_balance
+promised_balance
 ```
 
 Maintain EN/FR parity.
@@ -1048,47 +1151,51 @@ Active runtime candidates must remain:
 
 ---
 
-## 28. Navigation
+## 27. Navigation
 
-Add Advanced Accounting navigation:
+Add navigation:
 
 ```text
-Tax Accounting
-Tax Ledger
-Tax Returns
-Tax Payments
-Tax Reconciliation
-Withholding Certificates
+Billing & Collections > Receivables Workbench
+Billing & Collections > AR Aging
+Billing & Collections > Payer Statements
+Advanced Accounting > Receivable Reconciliation
 ```
 
-Routes must remain protected by module middleware and permissions.
+Do not hide route access behind navigation only.
+
+Use permissions and module middleware.
 
 ---
 
-## 29. Focused Tests To Add
+## 28. Focused Tests To Add
 
 Add focused tests but do not run the wide full suite.
 
 Required coverage:
 
 ```text
-tax type can be created
-tax registration can be created
-tax account mapping is effective-dated
-PAYE ledger entries can be created from posted payroll liabilities
-pension ledger entries can be created from posted payroll liabilities
-Phase E2 settlements link without duplicate journals
-tax return can be prepared from ledger entries
-approved return cannot be edited silently
-tax return can be marked filed with reference
-tax payment posts balanced journal
-tax payment cannot over-allocate
-payment reversal restores outstanding tax
-withholding certificate cannot issue without source amount
-tax reconciliation detects manual journal difference
-missing mapping creates controlled failure
-permissions protect tax actions
-module middleware protects tax routes
+receivables dashboard is permission protected
+aging buckets calculate correctly
+payer balance groups patient/insurance/sponsor/corporate balances
+case can be opened from invoice receivable
+case can be opened from payer balance
+case assignment records active collector
+follow-up record updates next follow-up date
+payment promise does not reduce AR balance
+fulfilled promise links to actual payment
+broken promise appears in dashboard
+dispute remains included in aging but separately labelled
+dunning notice can be generated without sending
+statement snapshot reconciles invoices/payments/credit notes/write-offs
+writeoff recommendation does not affect balance
+credit-note recommendation does not affect balance
+converted recommendation links to final record
+failed receivable posting appears on case detail
+AR reconciliation links to receivable cases/disputes
+close readiness reports overdue/unassigned/disputed AR
+permissions protect mutation routes
+module middleware protects accounting reconciliation routes
 audit events are recorded
 localisation keys exist
 ```
@@ -1105,7 +1212,7 @@ The wide full-suite test will be run after all accounting implementation phases 
 
 ---
 
-## 30. Minimal Verification Commands
+## 29. Minimal Verification Commands
 
 Run only necessary safety checks:
 
@@ -1130,12 +1237,12 @@ Do not run the full application test suite yet.
 
 ---
 
-## 31. Documentation
+## 30. Documentation
 
 Create:
 
 ```text
-docs/ACCOUNTING_PHASE_I_STATUTORY_TAX_LEDGERS_AND_RETURNS_REPORT.md
+docs/ACCOUNTING_PHASE_J_RECEIVABLES_WORKBENCH_REPORT.md
 ```
 
 Include:
@@ -1147,18 +1254,17 @@ models added
 services added
 permissions added
 routes/controllers/views added
-tax type configuration
-tax registration behavior
-tax ledger behavior
-PAYE/Pension integration
-withholding tax integration
-VAT/NHIL/GETFund readiness
-tax return workflow
-tax payment workflow
-allocation rules
-reconciliation behavior
+receivable case lifecycle
+aging calculation
+payer balance logic
+follow-up workflow
+payment promise workflow
+dispute workflow
+dunning behavior
+statement generation
+recommendation workflows
 failed posting integration
-cash flow integration
+subledger reconciliation integration
 close readiness integration
 audit logging
 localisation audit result
@@ -1170,28 +1276,29 @@ next recommended phase
 
 ---
 
-## 32. Acceptance Criteria
+## 31. Acceptance Criteria
 
-Phase I is complete only when:
+Phase J is complete only when:
 
 ```text
-tax types can be configured
-tax registrations can be configured
-tax account mappings are effective-dated
-PAYE and pension ledger entries can be built from payroll liabilities
-Phase E2 settlements are visible in tax ledger/return context without duplicate journals
-tax returns can be prepared
-tax returns can be approved
-tax returns can be marked filed with reference
-tax payments can be posted where not already handled by Phase E2
-tax payment allocation prevents over-allocation
-payment reversal restores outstanding tax
-withholding foundation exists
-VAT/NHIL/GETFund readiness is honest and non-hardcoded
-tax reconciliation exists
-close readiness reports tax exceptions
+receivables workbench exists
+payer balances are visible by type
+AR aging drill-down exists
+cases can be opened and managed
+collector assignment works
+follow-ups are recorded
+payment promises are tracked without changing AR balance
+disputes are tracked and remain visible in aging
+dunning notices can be generated
+payer statements can be generated
+write-off recommendations do not post directly
+credit-note recommendations do not post directly
+recommendations can link to final approved financial records
+failed posting attempts can be viewed from receivable context
+AR reconciliation links receivable cases and disputes
+close readiness reports receivable exceptions
 permissions are enforced
-module middleware protects routes
+module middleware protects accounting routes
 ActivityLogService is used
 EN/FR localisation parity is maintained
 active runtime candidates remain 0
@@ -1203,4 +1310,4 @@ documentation report is created
 full test suite is intentionally deferred to the final wide accounting test phase
 ```
 
-Proceed with Accounting Execution Phase I now.
+Proceed with Accounting Execution Phase J now.

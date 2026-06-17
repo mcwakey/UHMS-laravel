@@ -8,9 +8,11 @@
         "sass": "sass resources/scss/main.scss:resources/css/style.css",
         "sass:watch": "sass resources/scss/main.scss:resources/css/style.css --watch",
         "sass:no-map": "sass resources/scss/main.scss:resources/css/style.css --style=compressed --no-source-map",
+        "test:e2e": "playwright test --config=tests-e2e/playwright.config.ts",
         "screenshots": "node scripts/capture-user-manual-screenshots.mjs"
     },
     "devDependencies": {
+        "@playwright/test": "^1.60.0",
         "@vitejs/plugin-vue": "^5.2.4",
         "axios": "^1.14.0",
         "concurrently": "^9.2.1",

@@ -134,6 +134,12 @@ class InvoiceReceivable extends Model
         return $this->belongsTo(JournalEntry::class);
     }
 
+    public function receivableCaseItems()
+    {
+        return $this->hasMany(ReceivableCaseItem::class, 'source_id')
+            ->where('source_type', self::class);
+    }
+
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');

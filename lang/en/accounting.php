@@ -610,4 +610,22 @@ return [
     'domains_not_run_for_period' => 'Domains Not Run for Period',
     'manual_control_account_journals' => 'Manual Control-account Journals',
     'latest_reconciliation_by_domain' => 'Latest Reconciliation by Domain',
+
+    // ── Surfaced screens (Fixed Assets / Budgets / Tax / Payroll / Cash Flow) ──
+    'payroll_posting_title' => 'Payroll Accounting Posting',
+    'action_blocked' => 'Action blocked.',
+    'line' => 'Line',
+    'settlement' => 'Settlement',
+    'statutory_settlement' => 'Statutory Settlement',
+    'pension_ssnit' => 'Pension / SSNIT',
+    'budgets' => 'Budgets',
+    'budget_commitments' => 'Budget Commitments',
+    'warning_with_acknowledgement' => 'Warning with acknowledgement',
+    'block_procurement_over_budget' => 'Block procurement when over budget',
+    'fixed_assets' => 'Fixed Assets',
+    'cash_flow_statement' => 'Cash Flow Statement',
+    'all_cash_and_bank_accounts' => 'All cash and bank accounts',
+    'counterpart' => 'Counterpart',
+    'section_total' => 'Section total',
+    'tax_accounting' => 'Tax Accounting',
 ];

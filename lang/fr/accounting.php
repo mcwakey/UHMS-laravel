@@ -610,4 +610,22 @@ return [
     'domains_not_run_for_period' => 'Domaines non executes pour la periode',
     'manual_control_account_journals' => 'Journaux manuels des comptes de controle',
     'latest_reconciliation_by_domain' => 'Dernier rapprochement par domaine',
+
+    // ── Surfaced screens (Fixed Assets / Budgets / Tax / Payroll / Cash Flow) ──
+    'payroll_posting_title' => 'Comptabilisation de la paie',
+    'action_blocked' => 'Action bloquée.',
+    'line' => 'Ligne',
+    'settlement' => 'Règlement',
+    'statutory_settlement' => 'Règlement statutaire',
+    'pension_ssnit' => 'Pension / SSNIT',
+    'budgets' => 'Budgets',
+    'budget_commitments' => 'Engagements budgétaires',
+    'warning_with_acknowledgement' => 'Avertissement avec accusé',
+    'block_procurement_over_budget' => 'Bloquer les achats en cas de dépassement',
+    'fixed_assets' => 'Immobilisations',
+    'cash_flow_statement' => 'État des flux de trésorerie',
+    'all_cash_and_bank_accounts' => 'Tous les comptes de trésorerie et bancaires',
+    'counterpart' => 'Contrepartie',
+    'section_total' => 'Total de la section',
+    'tax_accounting' => 'Comptabilité fiscale',
 ];

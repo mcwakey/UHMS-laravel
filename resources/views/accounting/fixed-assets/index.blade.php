@@ -1,10 +1,10 @@
 @extends('layouts.app')
-@section('title', 'Fixed Assets')
+@section('title', __('accounting.fixed_assets'))
 
 @php $money = fn ($n) => 'GHS '.number_format((float) $n, 2); @endphp
 
 @section('content')
-<x-page-header title="Fixed Assets" icon="ti-building-factory-2" description="Asset register, capitalization, depreciation and disposal foundation." />
+<x-page-header :title="__('accounting.fixed_assets')" icon="ti-building-factory-2" description="Asset register, capitalization, depreciation and disposal foundation." />
 
 <div class="row g-3 mb-3">
     <div class="col-lg-4">

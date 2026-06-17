@@ -995,6 +995,14 @@ class SidebarMenuBuilder
                         'module' => 'tax_accounting',
                     ],
                     [
+                        'label' => 'Receivables Workbench',
+                        'icon' => 'ti ti-report-money',
+                        'route' => 'admin.accounting.receivables.index',
+                        'active_patterns' => ['admin.accounting.receivables.*'],
+                        'permission' => 'receivables.workbench.view',
+                        'module' => 'accounting_advanced',
+                    ],
+                    [
                         'label' => 'Fiscal Years',
                         'icon' => 'ti ti-calendar-stats',
                         'route' => 'admin.accounting.fiscal-years.index',
@@ -1596,7 +1604,10 @@ class SidebarMenuBuilder
                 ->map(fn (string $label) => $items->get($label))
                 ->filter()
                 ->map(function (array $item) use ($module) {
-                    if ($module) {
+                    // Only apply the section's default module when the item does not
+                    // already declare its own (e.g. Fixed Assets → fixed_assets,
+                    // Budgets → budgets) so its module gate is preserved.
+                    if ($module && empty($item['module'])) {
                         $item['module'] = $module;
                     }
                     return $item;
@@ -1646,6 +1657,7 @@ class SidebarMenuBuilder
                     'General Ledger',
                     'Trial Balance',
                     'Cashbook',
+                    'Cash Flow',
                     'Profit & Loss',
                     'Balance Sheet',
                     'Revenue by Dept',
@@ -1653,6 +1665,11 @@ class SidebarMenuBuilder
                     'Supplier Payables',
                     'Supplier Payments',
                     'AP Aging',
+                    'Fixed Assets',
+                    'Tax Accounting',
+                    'Budgets',
+                    'Commitments',
+                    'Payroll Posting',
                     'Fiscal Years',
                     'Accounting Periods',
                     'Accounting Settings',

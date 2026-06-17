@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('title', 'Payroll Accounting Posting')
+@section('title', __('accounting.payroll_posting_title'))
 
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Payroll Accounting Posting</h4>
+        <h4 class="fw-bold mb-0">{{ __('accounting.payroll_posting_title') }}</h4>
         <div class="text-muted small">Post approved payroll, recognise PAYE/SSNIT liabilities, and settle net salary payable.</div>
     </div>
     <form method="GET" action="{{ route('admin.accounting.payroll-posting.index') }}" class="d-flex gap-2">
@@ -19,7 +19,7 @@
 @endif
 @if($errors->any())
     <div class="alert alert-danger">
-        <strong>Action blocked.</strong>
+        <strong>{{ __('accounting.action_blocked') }}</strong>
         <ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
     </div>
 @endif
@@ -60,7 +60,7 @@
                         <table class="table table-sm table-bordered align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Line</th>
+                                    <th>{{ __('accounting.line') }}</th>
                                     <th class="text-end">Debit</th>
                                     <th class="text-end">Credit</th>
                                 </tr>
@@ -120,12 +120,12 @@
                     <table class="table table-sm mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Settlement</th>
-                                <th>Date</th>
-                                <th>Account</th>
-                                <th class="text-end">Amount</th>
-                                <th>Status</th>
-                                <th class="text-end">Action</th>
+                                <th>{{ __('accounting.settlement') }}</th>
+                                <th>{{ __('common.date') }}</th>
+                                <th>{{ __('accounting.account') }}</th>
+                                <th class="text-end">{{ __('common.amount') }}</th>
+                                <th>{{ __('common.status') }}</th>
+                                <th class="text-end">{{ __('common.action') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -160,7 +160,7 @@
             <div class="row g-3 mt-1">
                 @foreach([
                     'paye' => ['label' => 'PAYE', 'liability' => $preview['paye'], 'settled' => $postedPaye, 'outstanding' => $payeOutstanding],
-                    'pension' => ['label' => 'Pension / SSNIT', 'liability' => $preview['credits']['pension_payable'], 'settled' => $postedPension, 'outstanding' => $pensionOutstanding],
+                    'pension' => ['label' => __('accounting.pension_ssnit'), 'liability' => $preview['credits']['pension_payable'], 'settled' => $postedPension, 'outstanding' => $pensionOutstanding],
                 ] as $type => $liability)
                     <div class="col-md-6">
                         <div class="border rounded p-3 h-100">
@@ -196,13 +196,13 @@
                     <table class="table table-sm mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Statutory Settlement</th>
-                                <th>Type</th>
-                                <th>Date</th>
-                                <th>Account</th>
-                                <th class="text-end">Amount</th>
-                                <th>Status</th>
-                                <th class="text-end">Action</th>
+                                <th>{{ __('accounting.statutory_settlement') }}</th>
+                                <th>{{ __('common.type') }}</th>
+                                <th>{{ __('common.date') }}</th>
+                                <th>{{ __('accounting.account') }}</th>
+                                <th class="text-end">{{ __('common.amount') }}</th>
+                                <th>{{ __('common.status') }}</th>
+                                <th class="text-end">{{ __('common.action') }}</th>
                             </tr>
                         </thead>
                         <tbody>

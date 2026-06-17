@@ -396,7 +396,7 @@ class LabResultController extends Controller
         }
 
         if ($items->isEmpty()) {
-            return back()->with('error', 'Select at least one verified result to print.');
+            return back()->with('error', __('messages.lab.select_verified_to_print'));
         }
 
         $relations = [
