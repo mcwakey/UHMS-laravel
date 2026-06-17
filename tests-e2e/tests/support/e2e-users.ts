@@ -20,11 +20,16 @@ const users: E2EUser[] = [
     'visits.view',
     'visits.create',
     'visits.edit',
+    'emergency.board.view',
+    'emergency.case.create',
+    'emergency.case.view',
   ]),
   credentialsFor('UHMS_CASHIER_EMAIL', 'UHMS_CASHIER_PASSWORD', 'Cashier', `${employeeIdPrefix}CASHIER`),
   credentialsFor('UHMS_DOCTOR_EMAIL', 'UHMS_DOCTOR_PASSWORD', 'Doctor', `${employeeIdPrefix}DOCTOR`, [
     'patients.view',
     'visits.view',
+    'emergency.board.view',
+    'emergency.case.view',
   ]),
   credentialsFor('UHMS_LIMITED_EMAIL', 'UHMS_LIMITED_PASSWORD', null, `${employeeIdPrefix}LIMITED`),
 ];
