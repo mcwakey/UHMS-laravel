@@ -79,7 +79,7 @@ export async function loginAs(page: Page, emailEnv: string, passwordEnv: string)
   await page.getByRole('textbox', { name: /email address/i }).fill(credentials.email);
   await page.locator('input[name="password"]').fill(credentials.password);
   await submitLoginForm(page);
-  await expect.poll(() => page.url(), { timeout: 30_000 }).not.toMatch(/\/login$/);
+  await expect.poll(() => page.url(), { timeout: 30_000 }).not.toMatch(/\/login(?:[?#].*)?$/);
 }
 
 export async function waitForBodyText(page: Page, pattern: RegExp, timeout = 30_000) {

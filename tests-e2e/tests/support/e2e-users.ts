@@ -6,19 +6,30 @@ type E2EUser = {
   password: string;
   role: string | null;
   employee_id: string;
+  permissions?: string[];
 };
 
 const phpBinary = process.env.UHMS_PHP_BINARY ?? 'php';
 const employeeIdPrefix = 'E2E-PERM-';
 
 const users: E2EUser[] = [
-  credentialsFor('UHMS_RECEPTION_EMAIL', 'UHMS_RECEPTION_PASSWORD', 'Receptionist', `${employeeIdPrefix}RECEPTION`),
+  credentialsFor('UHMS_RECEPTION_EMAIL', 'UHMS_RECEPTION_PASSWORD', 'Receptionist', `${employeeIdPrefix}RECEPTION`, [
+    'patients.view',
+    'patients.create',
+    'patients.edit',
+  ]),
   credentialsFor('UHMS_CASHIER_EMAIL', 'UHMS_CASHIER_PASSWORD', 'Cashier', `${employeeIdPrefix}CASHIER`),
-  credentialsFor('UHMS_DOCTOR_EMAIL', 'UHMS_DOCTOR_PASSWORD', 'Doctor', `${employeeIdPrefix}DOCTOR`),
+  credentialsFor('UHMS_DOCTOR_EMAIL', 'UHMS_DOCTOR_PASSWORD', 'Doctor', `${employeeIdPrefix}DOCTOR`, ['patients.view']),
   credentialsFor('UHMS_LIMITED_EMAIL', 'UHMS_LIMITED_PASSWORD', null, `${employeeIdPrefix}LIMITED`),
 ];
 
-function credentialsFor(emailEnv: string, passwordEnv: string, role: string | null, employeeId: string): E2EUser {
+function credentialsFor(
+  emailEnv: string,
+  passwordEnv: string,
+  role: string | null,
+  employeeId: string,
+  permissions: string[] = [],
+): E2EUser {
   const credentials = requiredCredentials(emailEnv, passwordEnv);
 
   return {
@@ -26,6 +37,7 @@ function credentialsFor(emailEnv: string, passwordEnv: string, role: string | nu
     password: credentials.password,
     role,
     employee_id: employeeId,
+    permissions,
   };
 }
 
@@ -53,6 +65,12 @@ $users = json_decode(getenv('UHMS_E2E_USERS_JSON') ?: '[]', true, flags: JSON_TH
 $prefix = getenv('UHMS_E2E_EMPLOYEE_PREFIX') ?: 'E2E-PERM-';
 
 foreach ($users as $data) {
+    foreach (['127.0.0.1', '::1'] as $ipAddress) {
+        Illuminate\Support\Facades\RateLimiter::clear(
+            Illuminate\Support\Str::transliterate(Illuminate\Support\Str::lower($data['email']) . '|' . $ipAddress)
+        );
+    }
+
     $existing = App\Models\User::withTrashed()->where('email', $data['email'])->first();
 
     if ($existing && ! str_starts_with((string) $existing->employee_id, $prefix)) {
@@ -66,6 +84,17 @@ foreach ($users as $data) {
 
     if ($data['role'] && ! Spatie\Permission\Models\Role::where('name', $data['role'])->exists()) {
         throw new RuntimeException("Required E2E role [{$data['role']}] does not exist. Run the role seeder before E2E tests.");
+    }
+
+    $permissions = $data['permissions'] ?? [];
+
+    if ($permissions) {
+        $existingPermissions = Spatie\Permission\Models\Permission::whereIn('name', $permissions)->pluck('name')->all();
+        $missingPermissions = array_values(array_diff($permissions, $existingPermissions));
+
+        if ($missingPermissions) {
+            throw new RuntimeException('Required E2E permissions do not exist: ' . implode(', ', $missingPermissions));
+        }
     }
 
     $user = new App\Models\User();
@@ -82,6 +111,10 @@ foreach ($users as $data) {
     ])->save();
 
     $data['role'] ? $user->syncRoles([$data['role']]) : $user->syncRoles([]);
+
+    if ($permissions) {
+        $user->givePermissionTo($permissions);
+    }
 }
 `);
 }
@@ -98,6 +131,12 @@ $users = json_decode(getenv('UHMS_E2E_USERS_JSON') ?: '[]', true, flags: JSON_TH
 $prefix = getenv('UHMS_E2E_EMPLOYEE_PREFIX') ?: 'E2E-PERM-';
 
 foreach ($users as $data) {
+    foreach (['127.0.0.1', '::1'] as $ipAddress) {
+        Illuminate\Support\Facades\RateLimiter::clear(
+            Illuminate\Support\Str::transliterate(Illuminate\Support\Str::lower($data['email']) . '|' . $ipAddress)
+        );
+    }
+
     foreach (App\Models\User::withTrashed()->where('email', $data['email'])->get() as $user) {
         if (! str_starts_with((string) $user->employee_id, $prefix)) {
             continue;
