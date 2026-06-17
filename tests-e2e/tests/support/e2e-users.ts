@@ -24,7 +24,12 @@ const users: E2EUser[] = [
     'emergency.case.create',
     'emergency.case.view',
   ]),
-  credentialsFor('UHMS_CASHIER_EMAIL', 'UHMS_CASHIER_PASSWORD', 'Cashier', `${employeeIdPrefix}CASHIER`),
+  credentialsFor('UHMS_CASHIER_EMAIL', 'UHMS_CASHIER_PASSWORD', 'Cashier', `${employeeIdPrefix}CASHIER`, [
+    'invoices.view',
+    'payments.view',
+    'payments.create',
+    'accounts.cashier',
+  ]),
   credentialsFor('UHMS_DOCTOR_EMAIL', 'UHMS_DOCTOR_PASSWORD', 'Doctor', `${employeeIdPrefix}DOCTOR`, [
     'patients.view',
     'visits.view',
@@ -88,11 +93,6 @@ foreach ($users as $data) {
         continue;
     }
 
-    if ($existing) {
-        try { $existing->syncRoles([]); $existing->syncPermissions([]); } catch (Throwable $e) {}
-        $existing->forceDelete();
-    }
-
     if ($data['role'] && ! Spatie\Permission\Models\Role::where('name', $data['role'])->exists()) {
         throw new RuntimeException("Required E2E role [{$data['role']}] does not exist. Run the role seeder before E2E tests.");
     }
@@ -108,7 +108,11 @@ foreach ($users as $data) {
         }
     }
 
-    $user = new App\Models\User();
+    $user = $existing ?: new App\Models\User();
+    if (method_exists($user, 'trashed') && $user->trashed()) {
+        $user->restore();
+    }
+
     $user->forceFill([
         'first_name' => 'E2E',
         'last_name' => $data['role'] ?: 'Limited',
@@ -154,7 +158,7 @@ foreach ($users as $data) {
         }
 
         try { $user->syncRoles([]); $user->syncPermissions([]); } catch (Throwable $e) {}
-        $user->forceDelete();
+        try { $user->forceDelete(); } catch (Throwable $e) {}
     }
 }
 `);
