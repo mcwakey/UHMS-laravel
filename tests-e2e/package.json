@@ -1,0 +1,22 @@
+{
+  "private": true,
+  "type": "module",
+  "description": "Convenient UHMS Playwright run groups. Workflow and regression groups intentionally use one worker for now.",
+  "scripts": {
+    "test:all": "playwright test --config=playwright.config.ts --workers=1",
+    "test:smoke": "playwright test --config=playwright.config.ts tests/auth.spec.ts tests/permissions.spec.ts tests/setup.spec.ts --workers=1",
+    "test:auth": "playwright test --config=playwright.config.ts tests/auth.spec.ts",
+    "test:permissions": "playwright test --config=playwright.config.ts tests/permissions.spec.ts",
+    "test:setup": "playwright test --config=playwright.config.ts tests/setup.spec.ts",
+    "test:emergency": "playwright test --config=playwright.config.ts tests/emergency.spec.ts --workers=1",
+    "test:billing": "playwright test --config=playwright.config.ts tests/billing.spec.ts --workers=1",
+    "test:accounting": "playwright test --config=playwright.config.ts tests/accounting.spec.ts --workers=1",
+    "test:lab": "playwright test --config=playwright.config.ts tests/lab.spec.ts --workers=1",
+    "test:pharmacy": "playwright test --config=playwright.config.ts tests/pharmacy.spec.ts --workers=1",
+    "test:reports": "playwright test --config=playwright.config.ts tests/reports.spec.ts --workers=1",
+    "test:ui-localisation": "playwright test --config=playwright.config.ts tests/ui-localisation.spec.ts --workers=1",
+    "test:security": "playwright test --config=playwright.config.ts --grep \"OTB-SEC\" --workers=1",
+    "test:headed": "playwright test --config=playwright.config.ts --headed --workers=1",
+    "test:ui": "playwright test --config=playwright.config.ts --ui"
+  }
+}

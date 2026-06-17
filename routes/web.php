@@ -214,7 +214,9 @@ Route::middleware('auth')->group(function () {
     Route::prefix('admin')->name('admin.')->group(function () {
 
         // Dashboard
-        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('dashboard', [DashboardController::class, 'index'])
+            ->name('dashboard')
+            ->middleware('can:patients.view');
 
         // Department-type dashboard — resolves the right dashboard for the user.
         Route::get('my-dashboard', [\App\Http\Controllers\Admin\DepartmentDashboardController::class, 'index'])->name('my-dashboard');
