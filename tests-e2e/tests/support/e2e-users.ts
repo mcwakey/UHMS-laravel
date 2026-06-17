@@ -30,6 +30,17 @@ const users: E2EUser[] = [
     'payments.create',
     'accounts.cashier',
   ]),
+  ...optionalCredentialsFor('UHMS_ACCOUNTANT_EMAIL', 'UHMS_ACCOUNTANT_PASSWORD', 'Accountant', `${employeeIdPrefix}ACCOUNTANT`, [
+    'accounting.dashboard.view',
+    'accounting.journals.view',
+    'accounting.reports.trial_balance',
+    'accounting.reports.general_ledger',
+    'accounting.reports.cashbook',
+    'accounting.reports.revenue_by_department',
+    'accounting.settings.view',
+    'accounting.failed_postings.view',
+    'accounting.posting.view',
+  ]),
   credentialsFor('UHMS_DOCTOR_EMAIL', 'UHMS_DOCTOR_PASSWORD', 'Doctor', `${employeeIdPrefix}DOCTOR`, [
     'patients.view',
     'visits.view',
@@ -55,6 +66,20 @@ function credentialsFor(
     employee_id: employeeId,
     permissions,
   };
+}
+
+function optionalCredentialsFor(
+  emailEnv: string,
+  passwordEnv: string,
+  role: string | null,
+  employeeId: string,
+  permissions: string[] = [],
+): E2EUser[] {
+  if (!process.env[emailEnv] && !process.env[passwordEnv]) {
+    return [];
+  }
+
+  return [credentialsFor(emailEnv, passwordEnv, role, employeeId, permissions)];
 }
 
 function runPhp(script: string) {
