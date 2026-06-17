@@ -40,6 +40,7 @@ const users: E2EUser[] = [
     'accounting.settings.view',
     'accounting.failed_postings.view',
     'accounting.posting.view',
+    'accounting.exports',
   ]),
   ...optionalCredentialsFor('UHMS_LAB_EMAIL', 'UHMS_LAB_PASSWORD', 'Lab Technician', `${employeeIdPrefix}LAB`, [
     'lab.requests.view',
