@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import { loginAs, url } from './support/auth';
 import { cleanupPermissionE2EUsers, ensurePermissionE2EUsers } from './support/e2e-users';
+import { laravelRoot } from './support/laravel-root';
 
 const pharmacyRoutes = {
   queue: '/admin/pharmacy/dispensing',
@@ -83,7 +84,7 @@ test.afterAll(() => {
 function runPhpJson<T>(script: string, env: Record<string, string> = {}): T {
   return JSON.parse(
     execFileSync(phpBinary, ['-r', script], {
-      cwd: process.cwd(),
+      cwd: laravelRoot,
       env: {
         ...process.env,
         ...env,
@@ -210,11 +211,11 @@ Illuminate\Support\Facades\Auth::login($doctor);
 
 $module = App\Models\Module::where('slug', 'pharmacy')->first();
 if ($module) {
-    $module->forceFill(['is_active' => true])->save();
+    $module->forceFill(['is_enabled' => true])->save();
 }
 $inventoryModule = App\Models\Module::where('slug', 'inventory')->first();
 if ($inventoryModule) {
-    $inventoryModule->forceFill(['is_active' => true])->save();
+    $inventoryModule->forceFill(['is_enabled' => true])->save();
 }
 
 $pharmacyDepartment = App\Models\Department::updateOrCreate(

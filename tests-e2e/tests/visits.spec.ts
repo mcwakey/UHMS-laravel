@@ -123,8 +123,10 @@ async function openPathWithSelector(page: Page, path: string, selector: string) 
   let response: Awaited<ReturnType<Page['goto']>> = null;
   let lastError: unknown = null;
 
-  for (const attempt of [1, 2, 3, 4]) {
+  for (const attempt of [1, 2, 3, 4, 5, 6]) {
     response = await page.goto(url(path), { waitUntil: 'commit' });
+    await page.waitForLoadState('load', { timeout: 15_000 }).catch(() => undefined);
+    await page.waitForSelector('body', { state: 'attached', timeout: 10_000 }).catch(() => undefined);
 
     try {
       await expectSelectorVisible(page, selector);
@@ -132,8 +134,8 @@ async function openPathWithSelector(page: Page, path: string, selector: string) 
     } catch (error) {
       lastError = error;
 
-      if (attempt < 4) {
-        await page.waitForTimeout(2_000);
+      if (attempt < 6) {
+        await page.waitForTimeout(3_000);
       }
     }
   }

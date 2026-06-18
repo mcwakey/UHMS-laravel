@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { type Page } from '@playwright/test';
 import { loginAs } from '../support/auth';
+import { laravelRoot } from '../support/laravel-root';
 
 export type TestPatient = {
   firstName: string;
@@ -71,7 +72,7 @@ echo json_encode([
 `,
       ],
       {
-        cwd: process.cwd(),
+        cwd: laravelRoot,
         env: {
           ...process.env,
           UHMS_E2E_PATIENT_JSON: JSON.stringify(data),

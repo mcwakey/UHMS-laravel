@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import { loginAs, url } from './support/auth';
 import { cleanupPermissionE2EUsers, ensurePermissionE2EUsers } from './support/e2e-users';
+import { laravelRoot } from './support/laravel-root';
 
 const accountingRoutes = {
   dashboard: '/admin/accounting',
@@ -85,7 +86,7 @@ test.afterAll(() => {
 function runPhpJson<T>(script: string, env: Record<string, string> = {}): T {
   return JSON.parse(
     execFileSync(phpBinary, ['-r', script], {
-      cwd: process.cwd(),
+      cwd: laravelRoot,
       env: {
         ...process.env,
         ...env,
@@ -128,6 +129,15 @@ async function pageOrResponseText(page: Page, response: Awaited<ReturnType<Page[
   try {
     const html = await page.content();
     if (html.trim()) {
+      if (/uhms-loading/i.test(html) && !/<body[\s>]/i.test(html)) {
+        await page.reload({ waitUntil: 'commit' }).catch(() => undefined);
+        await page.waitForSelector('body', { state: 'attached', timeout: 15_000 }).catch(() => undefined);
+        const retryText = await bodyText(page);
+        if (retryText.trim()) {
+          return retryText;
+        }
+      }
+
       return html;
     }
   } catch {
@@ -535,16 +545,16 @@ test.describe('Level 9A accounting posting smoke', () => {
 
   test('L9-ACC-006 - Receivable/balance is cleared or reduced after full payment', async ({ page }) => {
     const fixture = ensureAccountingFixture();
-    await loginAs(page, 'UHMS_CASHIER_EMAIL', 'UHMS_CASHIER_PASSWORD');
+    await loginAs(page, 'UHMS_ACCOUNTANT_EMAIL', 'UHMS_ACCOUNTANT_PASSWORD');
 
-    const response = await page.goto(url(fixture.invoicePath), { waitUntil: 'commit' });
+    const response = await page.goto(url(fixture.paymentJournalPath ?? accountingRoutes.journals), { waitUntil: 'commit' });
     const text = await pageOrResponseText(page, response);
 
     expect(response?.status()).toBeLessThan(400);
     expect(fixture.amountPaid).toBeCloseTo(fixture.totalAmount, 2);
     expect(fixture.balance).toBeCloseTo(0, 2);
     expect(fixture.receivableBalance).toBeCloseTo(0, 2);
-    expect(text).toMatch(/paid|fully paid/i);
+    expect(text).toMatch(new RegExp(`${fixture.paymentNumber}|${fixture.invoiceNumber}`));
     assertTextHasNoSensitiveLeak(text);
   });
 

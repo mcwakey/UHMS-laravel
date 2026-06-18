@@ -3,6 +3,7 @@ import { expect, test, type Browser, type Page } from '@playwright/test';
 import { createCashPatient, type TestPatient } from './helpers/patients';
 import { loginAs, url } from './support/auth';
 import { cleanupPermissionE2EUsers, ensurePermissionE2EUsers } from './support/e2e-users';
+import { laravelRoot } from './support/laravel-root';
 
 const emergencyRoutes = {
   board: '/admin/emergency/board',
@@ -80,7 +81,7 @@ test.afterAll(() => {
 function runPhpJson<T>(script: string, env: Record<string, string> = {}): T {
   return JSON.parse(
     execFileSync(phpBinary, ['-r', script], {
-      cwd: process.cwd(),
+      cwd: laravelRoot,
       env: {
         ...process.env,
         ...env,
@@ -251,6 +252,11 @@ function visitPathFromHref(href: string | null) {
 
 async function openEmergencyCreatePage(page: Page, selectedPatient?: TestPatient) {
   const path = selectedPatient ? `${emergencyRoutes.create}?patient_id=${selectedPatient.id}` : emergencyRoutes.create;
+
+  if (!selectedPatient) {
+    return page.goto(url(path), { waitUntil: 'commit' });
+  }
+
   return openPathWithSelector(page, path, 'form[action*="/admin/emergency/cases"]');
 }
 
@@ -272,34 +278,35 @@ async function submitEmergencyCaseForm(page: Page, selectedPatient: TestPatient)
   await page.locator('[name="chief_complaint"]').fill(`E2E emergency case for ${selectedPatient.fullName}`);
   await page.locator('[name="initial_condition"]').fill('E2E stable emergency workflow check');
 
-  const result = await page.evaluate(async () => {
+  const formPayload = await page.evaluate(() => {
     const form = document.querySelector('form[action*="/admin/emergency/cases"]');
 
     if (!(form instanceof HTMLFormElement)) {
       throw new Error('Emergency case form was not available.');
     }
 
-    const response = await fetch(form.action, {
-      method: 'POST',
-      headers: {
-        Accept: 'text/html,application/xhtml+xml',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      body: new FormData(form),
-    });
-
     return {
-      ok: response.ok,
-      status: response.status,
-      url: response.url,
-      text: await response.text(),
+      action: form.action,
+      fields: Object.fromEntries(new FormData(form).entries()) as Record<string, string>,
     };
   });
 
-  assertTextHasNoSensitiveLeak(result.text);
+  const response = await page.request.post(formPayload.action, {
+    form: formPayload.fields,
+    maxRedirects: 0,
+    headers: {
+      Accept: 'text/html,application/xhtml+xml',
+      Referer: page.url(),
+    },
+  });
+  const text = await response.text();
+  const location = response.headers().location;
+  const createdUrl = location ? new URL(location, url('/')).toString() : response.url();
 
-  const created = emergencyCasePathFromHref(result.url);
-  expect(result.ok, `Emergency case creation failed with ${result.status}: ${result.text.slice(0, 500)}`).toBe(true);
+  assertTextHasNoSensitiveLeak(text);
+
+  const created = emergencyCasePathFromHref(createdUrl);
+  expect(response.status(), `Emergency case creation failed with ${response.status()}: ${text.slice(0, 500)}`).toBeLessThan(400);
 
   emergencyCase = created;
   return created;

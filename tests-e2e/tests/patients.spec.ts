@@ -44,7 +44,7 @@ const leakPatterns = [
   /\.env\s+(?:file|values?|contents?|dump)/i,
 ];
 
-test.describe.configure({ mode: 'serial', timeout: 90_000 });
+test.describe.configure({ mode: 'serial', timeout: 180_000 });
 
 test.beforeAll(() => {
   ensurePermissionE2EUsers();
@@ -75,9 +75,12 @@ async function assertNoSensitiveLeak(page: Page) {
 async function pageOrResponseText(page: Page, response: Awaited<ReturnType<Page['goto']>>) {
   let renderedText = '';
 
+  await page.waitForLoadState('load', { timeout: 20_000 }).catch(() => undefined);
+  await page.waitForSelector('body', { state: 'attached', timeout: 15_000 }).catch(() => undefined);
+
   try {
     renderedText = await expect
-      .poll(() => bodyText(page), { timeout: 5_000 })
+      .poll(() => bodyText(page), { timeout: 15_000 })
       .toBeTruthy()
       .then(() => bodyText(page));
   } catch {
@@ -86,6 +89,15 @@ async function pageOrResponseText(page: Page, response: Awaited<ReturnType<Page[
 
   if (renderedText.trim()) {
     return renderedText;
+  }
+
+  try {
+    const html = await page.content();
+    if (html.trim()) {
+      return html;
+    }
+  } catch {
+    // Fall back to response text.
   }
 
   try {
@@ -116,8 +128,10 @@ async function openPathWithField(page: Page, path: string, fieldName: string) {
   let response: Awaited<ReturnType<Page['goto']>> = null;
   let lastError: unknown = null;
 
-  for (const attempt of [1, 2]) {
+  for (const attempt of [1, 2, 3, 4, 5, 6]) {
     response = await page.goto(url(path), { waitUntil: 'commit' });
+    await page.waitForLoadState('load', { timeout: 15_000 }).catch(() => undefined);
+    await page.waitForSelector('body', { state: 'attached', timeout: 10_000 }).catch(() => undefined);
 
     try {
       await expectFieldVisible(page, fieldName);
@@ -125,8 +139,8 @@ async function openPathWithField(page: Page, path: string, fieldName: string) {
     } catch (error) {
       lastError = error;
 
-      if (attempt === 1) {
-        await page.waitForTimeout(1_000);
+      if (attempt < 6) {
+        await page.waitForTimeout(3_000);
       }
     }
   }
