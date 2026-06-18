@@ -5,57 +5,69 @@ There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
 Do not try to read it.
 Follow this prompt directly.
 
-# UHMS Accounting Execution Phase J — Dedicated Receivables Workbench, Collections, Dunning & AR Controls
+# UHMS External Integrations Phase 1 — SMS Gateway Module & Payment Gateway Module
 
 ## Goal
 
-Implement a dedicated receivables workbench for UHMS.
-
-The workbench must give finance users one place to manage:
+Implement two separate, provider-based integration modules for UHMS:
 
 ```text
-patient receivables
-insurance receivables
-sponsor receivables
-corporate receivables
-claims receivables
-aged receivables
-collection follow-up
-payment promises
-disputes
-write-off recommendations
-credit-note follow-up
-statement generation
-receivable reconciliation
+SMS Gateway Module
+Payment Gateway Module
 ```
 
-This phase must build on:
+Each module must support:
 
 ```text
-Phase 0 — Shared posting controls and idempotency
-Phase A — Basic-to-Advanced posting bridge
-Phase B — Bank accounts and reconciliation
-Phase C — Failed posting workbench
-Phase D — Subledger reconciliation workbench
-Phase E — Payroll accounting posting
-Phase E2 — PAYE and Pension / SSNIT settlements
-Phase F — Cash Flow Statement and exports
-Phase G — Budgets and commitments
-Phase H — Fixed assets and depreciation
-Phase I — Statutory tax accounting
+multiple providers configured in the system
+only one active provider at a time
+sandbox/live mode
+encrypted credentials
+provider adapters
+request/response logging
+callback/webhook handling
+retry-safe processing
+permissions
+audit logging
+localisation
+documentation
 ```
 
-Do not create a parallel billing system.
+Initial providers:
 
-Do not create a parallel accounting system.
+```text
+SMS providers:
+- Nalo Solutions
 
-Receivables must remain linked to invoices, payments, credit notes, write-offs, sponsors, claims, and GL control accounts.
+Payment providers:
+- MTN MoMo
+- Nalo Solutions
+```
+
+Design must allow adding more providers later, such as:
+
+```text
+PayGate
+FedaPay
+QOSIC
+Hubtel
+Flutterwave
+Paystack
+AirtelTigo Money
+Telecel Cash
+Twilio
+MNotify
+Arkesel
+other local or international providers
+```
+
+Do not hardcode provider-specific behavior into controllers, billing, invoice, patient, appointment, or accounting modules.
 
 ---
 
-## 1. Required Context
+# 1. Required Context
 
-Read:
+Read existing project structure and relevant reports if present:
 
 ```text
 docs/ACCOUNTING_GAP_EXECUTION_MASTER_PLAN.md
@@ -70,1003 +82,1066 @@ docs/ACCOUNTING_PHASE_F_CASH_FLOW_AND_EXPORTS_REPORT.md
 docs/ACCOUNTING_PHASE_G_BUDGETS_AND_COMMITMENTS_REPORT.md
 docs/ACCOUNTING_PHASE_H_FIXED_ASSETS_AND_DEPRECIATION_REPORT.md
 docs/ACCOUNTING_PHASE_I_STATUTORY_TAX_ACCOUNTING_REPORT.md
-docs/ACCOUNTING_MODULE_SPLIT_AND_GAP_REPORT.md
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
 
-Current status:
-
-```text
-Billing and Collections already exist.
-Invoice receivables foundation exists.
-AR aging foundation exists.
-Sponsor/corporate/insurance payer handling exists.
-Claims preparation exists.
-Subledger reconciliation can compare receivables to GL.
-The missing gap is a dedicated receivables operations workbench.
-```
+Also inspect existing modules, payments, invoices, notifications, settings, permissions, audit logging, queue/jobs, and localisation structure.
 
 Important testing instruction:
 
 ```text
-Do not run the wide full application test suite after this individual phase.
-The wide full-suite test is deferred until all accounting-gap implementation phases in this batch are complete.
-Run only necessary safety checks: migrations, route list, view cache, localisation audit, permission audit, logs:audit, PHP lint where practical, focused accounting checks where needed, and git diff check.
+Do not run the wide full application test suite after this phase.
+The wide full-suite test is deferred until all current implementation phases are complete.
+For this phase, run only necessary safety checks: migrations, route list, view cache, localisation audit, permission audit, logs:audit, PHP lint where practical, focused tests where needed, and git diff check.
 ```
 
 ---
 
-## 2. Scope of This Phase
+# 2. Core Principles
 
-Implement:
-
-```text
-receivables dashboard
-payer balance workbench
-patient receivable workbench
-insurance receivable workbench
-sponsor receivable workbench
-corporate receivable workbench
-claims receivable workbench
-AR aging drill-down
-collection follow-up records
-payment promise records
-dispute tracking
-dunning/reminder notices
-statement generation
-collector assignment
-receivable notes
-receivable status workflow
-write-off recommendation workflow
-credit-note recommendation workflow
-receivable reconciliation links
-export-ready AR reports
-close-readiness integration
-permissions
-audit logging
-localisation
-documentation
-```
-
-Do not implement yet:
-
-```text
-external debt collection agency integration
-SMS gateway sending if not already configured
-email sending automation if not already configured
-legal case management
-claims electronic submission
-insurance portal API integration
-credit scoring
-automatic write-off posting without approval
-```
-
----
-
-## 3. Core Rules
-
-Receivables workbench must be:
-
-```text
-payer-aware
-invoice-linked
-payment-linked
-claim-linked where applicable
-sponsor-aware
-insurance-aware
-permission-aware
-auditable
-non-destructive
-reconcilable to GL
-```
+Implement this as a clean integration layer.
 
 Rules:
 
 ```text
-Do not change invoice totals from the receivables workbench.
-Do not post write-offs directly without approval and existing accounting controls.
-Do not post credit notes directly without approval and existing credit-note controls.
-Do not delete receivable history.
-Do not hide disputed balances.
-Do not treat NHIS as special or hardcoded.
-NHIS remains just another insurance provider.
-Do not expose clinical details to finance users beyond what permissions allow.
-Do not expose restricted financial data to clinical users.
+SMS logic must not be hardcoded in patient, appointment, billing, or queue controllers.
+Payment API logic must not be hardcoded in invoice, visit, cashier, billing, or accounting controllers.
+Controllers must call services.
+Services must call provider adapters.
+Provider adapters must implement shared interfaces.
+Provider credentials must be encrypted.
+Provider callbacks must be idempotent.
+Payment success must be verified before marking an invoice or transaction as paid.
+Duplicate callbacks must not duplicate payments.
+Failed provider calls must be retained for troubleshooting.
+Only one active SMS provider is allowed at a time.
+Only one active Payment provider is allowed at a time.
 ```
+
+Do not introduce a new frontend framework.
+
+Use existing Laravel, Bootstrap 5, Tabler Icons, permissions, audit logging, module middleware, and localisation structure.
+
+Do not add a new HTTP library unless the project already uses it.
+
+Use Laravel HTTP client if available.
 
 ---
 
-## 4. Module Rules
+# 3. Modules
 
-This phase belongs to:
-
-```text
-Billing & Collections
-Advanced Accounting
-```
-
-Receivable operations must work for Billing users, but GL reconciliation links require Advanced Accounting.
-
-Routes should use appropriate middleware:
+Add two optional modules:
 
 ```text
-auth
-permission middleware
-module middleware for billing/collections where applicable
-module:accounting_basic and module:accounting_advanced only for accounting-specific reconciliation screens
+sms_gateway
+payment_gateway
 ```
 
-Do not make basic billing unusable when Advanced Accounting is disabled.
-
-If Advanced Accounting is disabled:
+Suggested module names:
 
 ```text
-receivable follow-up still works
-GL reconciliation links are hidden/inaccessible
-accounting posting controls are hidden/inaccessible
+SMS Gateway
+Payment Gateway
 ```
+
+Module behavior:
+
+```text
+SMS Gateway disabled:
+- SMS settings hidden/inaccessible
+- SMS sending disabled safely
+- no crash when notifications request SMS
+- show "SMS gateway not configured" or equivalent controlled message
+
+Payment Gateway disabled:
+- online/mobile money payment initiation hidden/inaccessible
+- manual/cash payment workflows still work
+- invoices and billing remain usable
+- no callback should post payment if module disabled unless explicitly allowed for pending verification
+```
+
+Module dependencies:
+
+```text
+sms_gateway:
+- no dependency on accounting
+- can be used by appointments, billing notifications, patient communication, reminders
+
+payment_gateway:
+- depends on billing/collections module if such module exists
+- must integrate with accounting only through existing payment/accounting services
+- must not require accounting_advanced for basic online payment collection
+```
+
+Do not make clinical workflows dependent on SMS or payment APIs.
 
 ---
 
-## 5. Database Tables
+# 4. Provider Model
 
-Create additive tables if they do not already exist:
+Create a shared provider registry or separate provider tables.
 
-```text
-receivable_cases
-receivable_case_items
-receivable_followups
-receivable_promises
-receivable_disputes
-receivable_assignments
-receivable_dunning_notices
-receivable_statement_runs
-receivable_statement_items
-receivable_writeoff_recommendations
-receivable_creditnote_recommendations
-```
-
-Use string statuses with application validation.
-
-Do not use database enums.
-
-Use `DECIMAL(18,2)` for money.
-
-Use `LONGTEXT` for snapshots where needed.
-
-Use explicit short MariaDB-safe index names.
-
-Do not cascade-delete financial or billing history.
-
----
-
-## 6. receivable_cases
-
-Purpose:
+Recommended tables:
 
 ```text
-Group one payer’s outstanding receivables into an operational collection case.
+integration_providers
+integration_provider_credentials
+integration_provider_events
 ```
+
+Or use separate tables if cleaner:
+
+```text
+sms_providers
+payment_providers
+```
+
+The design must clearly separate SMS providers from Payment providers.
+
+## integration_providers
 
 Fields:
 
 ```text
 id
-case_number
-payer_type
-payer_id nullable
-payer_name_snapshot
-patient_id nullable
-insurance_provider_id nullable
-sponsor_id nullable
-corporate_client_id nullable
-claim_id nullable
-case_type
-priority
+module_type
+code
+name
+description
+environment
+base_url
 status
-assigned_to nullable
-opened_by
-opened_at
-closed_by nullable
-closed_at nullable
-closure_reason nullable
-total_original_amount
-total_outstanding_amount
-total_disputed_amount
-total_promised_amount
-oldest_due_date nullable
-aging_bucket
-metadata_snapshot
-notes
-timestamps
-```
-
-Payer types:
-
-```text
-patient
-insurance
-sponsor
-corporate
-claim
-mixed
-unknown
-```
-
-Case types:
-
-```text
-normal_collection
-insurance_followup
-sponsor_followup
-corporate_followup
-claims_followup
-dispute
-writeoff_review
-credit_note_review
-```
-
-Statuses:
-
-```text
-open
-in_progress
-awaiting_payer
-promised
-partially_paid
-disputed
-escalated
-recommended_writeoff
-recommended_credit_note
-resolved
-closed
-cancelled
-```
-
----
-
-## 7. receivable_case_items
-
-Purpose:
-
-```text
-Link collection cases to invoices, invoice receivables, claim receivables, or payer balances.
-```
-
-Fields:
-
-```text
-id
-receivable_case_id
-source_type
-source_id
-invoice_id nullable
-invoice_number nullable
-claim_id nullable
-payer_type
-payer_id nullable
-original_amount
-outstanding_amount
-disputed_amount
-promised_amount
-due_date nullable
-aging_bucket
-status
-metadata_snapshot
-timestamps
-```
-
-Statuses:
-
-```text
-open
-partially_paid
-paid
-disputed
-written_off
-credited
-cancelled
-removed
-```
-
-Rules:
-
-```text
-One receivable source can be linked to multiple historical cases, but only one active case unless explicitly allowed.
-Case item snapshots must not replace invoice/payment source-of-truth.
-```
-
----
-
-## 8. receivable_followups
-
-Fields:
-
-```text
-id
-receivable_case_id
-followup_type
-followup_date
-next_followup_date nullable
-contact_person nullable
-contact_channel
-summary
-outcome
-created_by
-timestamps
-```
-
-Follow-up types:
-
-```text
-phone
-sms
-email
-letter
-in_person
-portal
-internal_note
-other
-```
-
-Outcomes:
-
-```text
-no_response
-payer_contacted
-payment_promised
-dispute_raised
-documents_requested
-claim_resubmission_needed
-escalated
-resolved
-other
-```
-
----
-
-## 9. receivable_promises
-
-Fields:
-
-```text
-id
-receivable_case_id
-promised_by
-promise_date
-expected_payment_date
-promised_amount
-status
-fulfilled_amount
-fulfilled_at nullable
-broken_at nullable
-broken_reason nullable
-notes
+is_active
+supports_send
+supports_status_check
+supports_callback
+supports_collection
+supports_disbursement
+supports_refund
+supports_balance_check
+sender_id
+callback_url
+webhook_secret_hint
+last_tested_at
+last_test_status
+last_test_message
 created_by
 updated_by
 timestamps
 ```
 
-Statuses:
+module_type:
 
 ```text
-active
-fulfilled
-partially_fulfilled
-broken
-cancelled
+sms
+payment
 ```
 
-Rules:
+environment:
 
 ```text
-A promise does not reduce receivable balance.
-A promise is operational follow-up only.
-Payment reduces balance only when actual payment is posted.
+sandbox
+live
 ```
 
----
-
-## 10. receivable_disputes
-
-Fields:
+provider codes:
 
 ```text
-id
-receivable_case_id
-source_type nullable
-source_id nullable
-dispute_reason
-disputed_amount
-status
-raised_by
-raised_at
-resolved_by nullable
-resolved_at nullable
-resolution_note nullable
-recommended_action nullable
-metadata_snapshot
-timestamps
+nalo_sms
+mtn_momo
+nalo_payment
 ```
 
-Statuses:
-
-```text
-open
-under_review
-resolved_valid
-resolved_invalid
-credit_note_recommended
-writeoff_recommended
-cancelled
-```
-
-Recommended actions:
-
-```text
-collect
-credit_note
-writeoff
-rebill
-claim_resubmit
-payer_correction
-other
-```
-
-Rules:
-
-```text
-Disputed amount remains visible in AR aging.
-Resolved dispute does not itself change financial balances.
-Financial correction must use credit note, write-off, payment, or rebilling workflow.
-```
-
----
-
-## 11. receivable_assignments
-
-Fields:
-
-```text
-id
-receivable_case_id
-assigned_to
-assigned_by
-assigned_at
-released_at nullable
-release_reason nullable
-timestamps
-```
-
-Only one active assignment should exist per case.
-
----
-
-## 12. receivable_dunning_notices
-
-Purpose:
-
-```text
-Generate controlled reminder notices without forcing immediate sending.
-```
-
-Fields:
-
-```text
-id
-receivable_case_id
-notice_number
-notice_level
-notice_date
-delivery_channel
-recipient_name
-recipient_contact
-subject
-body
-status
-generated_by
-generated_at
-sent_by nullable
-sent_at nullable
-metadata_snapshot
-timestamps
-```
-
-Notice levels:
-
-```text
-friendly_reminder
-first_notice
-second_notice
-final_notice
-legal_notice
-```
-
-Statuses:
+statuses:
 
 ```text
 draft
-generated
-sent
-cancelled
+active
+inactive
+suspended
 failed
 ```
 
 Rules:
 
 ```text
-Generate notice first.
-Send only if an existing email/SMS mechanism is safely available.
-If no sending mechanism exists, leave as generated/printable.
+Only one active provider where module_type = sms.
+Only one active provider where module_type = payment.
+Activating one provider must deactivate the previously active provider for that module type.
+Provider code must be unique per module type.
+Provider credentials must not be displayed after saving.
 ```
+
+Because MariaDB partial unique indexes may be limited, enforce “one active provider” through service-level transaction and validation. Add helpful database indexes but do not rely only on unsupported partial unique constraints.
 
 ---
 
-## 13. receivable_statement_runs and items
+# 5. Credentials
 
-Purpose:
+Create secure credential storage.
 
-```text
-Prepare payer statements for patient, sponsor, insurance, or corporate clients.
-```
-
-receivable_statement_runs fields:
+Recommended table:
 
 ```text
-id
-statement_number
-payer_type
-payer_id nullable
-payer_name_snapshot
-period_start
-period_end
-status
-opening_balance
-charges
-payments
-credit_notes
-writeoffs
-closing_balance
-generated_by
-generated_at
-approved_by nullable
-approved_at nullable
-metadata_snapshot
-timestamps
-```
-
-Statuses:
-
-```text
-draft
-generated
-approved
-sent
-cancelled
-```
-
-receivable_statement_items fields:
-
-```text
-id
-receivable_statement_run_id
-source_type
-source_id
-transaction_date
-description
-debit_amount
-credit_amount
-balance_after
-metadata_snapshot
-timestamps
-```
-
-Rules:
-
-```text
-Statement is a snapshot.
-Statement does not post accounting entries.
-Statement totals must reconcile to source invoices/payments/credit notes/write-offs.
-```
-
----
-
-## 14. Write-off and Credit-note Recommendations
-
-Create:
-
-```text
-receivable_writeoff_recommendations
-receivable_creditnote_recommendations
-```
-
-Purpose:
-
-```text
-Recommend financial corrections without bypassing approval and posting controls.
+integration_provider_credentials
 ```
 
 Fields:
 
 ```text
 id
-receivable_case_id
-source_type
-source_id
-recommended_amount
-reason
-status
-recommended_by
-recommended_at
-approved_by nullable
-approved_at nullable
-rejected_by nullable
-rejected_at nullable
-rejection_reason nullable
-linked_writeoff_id nullable
-linked_credit_note_id nullable
-metadata_snapshot
+integration_provider_id
+credential_key
+encrypted_value
+is_sensitive
+created_by
+updated_by
 timestamps
 ```
 
-Statuses:
+Credential examples:
+
+For Nalo SMS:
 
 ```text
-draft
-recommended
-approved
-rejected
-converted
-cancelled
+api_key
+username
+password
+sender_id
+client_id
+client_secret
 ```
+
+For MTN MoMo:
+
+```text
+subscription_key
+api_user
+api_key
+target_environment
+collection_primary_key
+callback_secret
+merchant_account_reference
+```
+
+For Nalo Payment:
+
+```text
+api_key
+merchant_id
+client_id
+client_secret
+callback_secret
+```
+
+Do not assume exact credential names are final. Make credentials flexible per provider.
 
 Rules:
 
 ```text
-Recommendation does not affect AR balance.
-Actual write-off must use existing write-off workflow.
-Actual credit note must use existing credit-note workflow.
-Link converted recommendation to final financial record.
+Encrypt all credential values.
+Do not log secrets.
+Do not expose secrets in Blade.
+Do not expose secrets in exception messages.
+Allow credential update without showing current value.
+Mask credential values in UI.
 ```
+
+Use Laravel encryption helpers, encrypted casts, or existing project secret storage pattern.
 
 ---
 
-## 15. Services To Add
+# 6. SMS Tables
 
 Create:
 
 ```text
-ReceivableWorkbenchService
-ReceivableCaseService
-ReceivableAgingService
-ReceivableFollowupService
-ReceivablePromiseService
-ReceivableDisputeService
-ReceivableAssignmentService
-ReceivableDunningService
-ReceivableStatementService
-ReceivableRecommendationService
-ReceivableReconciliationService
-ReceivableExportService
+sms_messages
+sms_message_recipients
+sms_delivery_reports
+sms_templates
+sms_provider_callbacks
 ```
 
-Use existing where available:
+## sms_messages
+
+Fields:
 
 ```text
-InvoiceService
-PaymentService
-CreditNoteService
-WriteOffService if present
-StatementService if present
-AccountingPostingService
-AccountingCloseReadinessService
-ActivityLogService
-AccountingExportService
+id
+message_uuid
+provider_id
+template_id nullable
+sender_id
+message_body
+message_type
+status
+scheduled_at nullable
+sent_at nullable
+completed_at nullable
+failed_at nullable
+provider_batch_reference nullable
+error_code nullable
+error_message nullable
+metadata_snapshot
+created_by nullable
+timestamps
 ```
 
-Do not put receivable calculations in controllers or Blade.
-
----
-
-## 16. ReceivableWorkbenchService
-
-Responsibilities:
+message_type:
 
 ```text
-build dashboard metrics
-group receivables by payer
-group receivables by aging bucket
-show top overdue payers
-show disputed balances
-show promised payments
-show broken promises
-show unassigned cases
-show high-risk cases
-show claims awaiting settlement
-show sponsor/corporate overdue balances
+manual
+appointment_reminder
+invoice_notification
+payment_receipt
+lab_result_ready
+queue_notification
+admission_notice
+discharge_notice
+custom
 ```
 
-Metrics:
+statuses:
 
 ```text
-total AR
-current
-1-30 days
-31-60 days
-61-90 days
-over 90 days
-disputed amount
-promised amount
-collection rate
-days sales outstanding if enough data exists
-top debtors
+draft
+queued
+sending
+sent
+partially_sent
+failed
+cancelled
+delivered
+undelivered
 ```
 
-Do not include restricted clinical data in finance dashboard.
+## sms_message_recipients
 
----
-
-## 17. ReceivableAgingService
-
-Calculate aging from due date or invoice date.
-
-Aging buckets:
+Fields:
 
 ```text
-current
-1_30
-31_60
-61_90
-over_90
+id
+sms_message_id
+recipient_type nullable
+recipient_id nullable
+phone_number
+normalized_phone_number
+recipient_name nullable
+status
+provider_message_id nullable
+provider_status nullable
+sent_at nullable
+delivered_at nullable
+failed_at nullable
+error_code nullable
+error_message nullable
+metadata_snapshot
+timestamps
 ```
 
-Support filters:
+## sms_delivery_reports
+
+Fields:
 
 ```text
-payer type
-payer
-department
-branch
-invoice type
-claim status
-sponsor
-insurance provider
-corporate client
-date range
+id
+sms_message_recipient_id
+provider_id
+provider_message_id nullable
+provider_status
+status
+reported_at nullable
+raw_payload
+timestamps
+```
+
+## sms_templates
+
+Fields:
+
+```text
+id
+code
+name
+description
+language
+body
+is_active
+created_by
+updated_by
+timestamps
 ```
 
 Rules:
 
 ```text
-Aging must use outstanding balances after payments, credit notes, and write-offs.
-Disputed balances remain included but separately labelled.
-Claims receivables should show claim status where available.
+Templates are optional in Phase 1.
+SMS can be sent manually without template.
+Templates must support placeholders later.
+Do not allow unrestricted PHI/clinical data in SMS templates by default.
 ```
 
 ---
 
-## 18. ReceivableCaseService
+# 7. Payment Tables
+
+Create:
+
+```text
+payment_provider_transactions
+payment_provider_callbacks
+payment_provider_attempts
+payment_provider_refunds
+```
+
+## payment_provider_transactions
+
+Purpose:
+
+```text
+Represent an online/mobile-money payment request before it becomes a confirmed UHMS payment.
+```
+
+Fields:
+
+```text
+id
+transaction_uuid
+provider_id
+provider_code
+payment_reference
+provider_transaction_id nullable
+external_reference nullable
+invoice_id nullable
+visit_id nullable
+patient_id nullable
+payer_name nullable
+payer_phone nullable
+payer_email nullable
+amount
+currency
+payment_method
+status
+provider_status nullable
+initiated_at nullable
+authorized_at nullable
+paid_at nullable
+failed_at nullable
+cancelled_at nullable
+expired_at nullable
+verified_at nullable
+uhms_payment_id nullable
+accounting_posting_attempt_id nullable
+error_code nullable
+error_message nullable
+metadata_snapshot
+created_by nullable
+updated_by nullable
+timestamps
+```
+
+payment_method examples:
+
+```text
+mtn_momo
+nalo_payment
+mobile_money
+card
+bank_transfer
+wallet
+```
+
+statuses:
+
+```text
+draft
+initiated
+pending
+requires_customer_action
+authorized
+paid
+failed
+cancelled
+expired
+verified
+reconciled
+refunded
+partially_refunded
+```
+
+Rules:
+
+```text
+Provider transaction does not equal UHMS payment until verified.
+Only verified successful provider transaction can create/attach a UHMS payment record.
+Do not duplicate UHMS payment when provider sends duplicate callback.
+Amount must match expected invoice/payment request amount.
+Currency must match expected invoice/payment request currency.
+```
+
+## payment_provider_callbacks
+
+Fields:
+
+```text
+id
+provider_id
+provider_code
+event_type
+provider_transaction_id nullable
+payment_reference nullable
+signature_valid
+processed
+processed_at nullable
+processing_error nullable
+raw_payload
+headers_snapshot
+ip_address nullable
+timestamps
+```
+
+Rules:
+
+```text
+Store every callback.
+Verify signature where provider supports it.
+Callback processing must be idempotent.
+Do not trust callback alone if provider supports status verification.
+```
+
+## payment_provider_attempts
+
+Fields:
+
+```text
+id
+payment_provider_transaction_id
+provider_id
+attempt_type
+status
+request_payload_snapshot
+response_payload_snapshot
+http_status nullable
+error_code nullable
+error_message nullable
+started_at
+completed_at nullable
+timestamps
+```
+
+attempt_type:
+
+```text
+initiate
+verify
+status_check
+callback_process
+refund
+cancel
+```
+
+## payment_provider_refunds
+
+Fields:
+
+```text
+id
+payment_provider_transaction_id
+provider_id
+refund_reference
+provider_refund_id nullable
+amount
+currency
+status
+reason
+requested_by
+requested_at
+processed_at nullable
+failed_at nullable
+uhms_refund_id nullable
+metadata_snapshot
+timestamps
+```
+
+Refunds can be mostly foundation in Phase 1 unless existing refund workflow is ready.
+
+---
+
+# 8. Provider Interfaces
+
+Create provider interfaces.
+
+## SMS Interface
+
+```php
+interface SmsProviderInterface
+{
+    public function code(): string;
+
+    public function send(SmsSendRequest $request): SmsSendResult;
+
+    public function queryStatus(string $providerMessageId): SmsStatusResult;
+
+    public function handleCallback(array $payload, array $headers = []): SmsCallbackResult;
+
+    public function testConnection(): ProviderTestResult;
+}
+```
+
+## Payment Interface
+
+```php
+interface PaymentProviderInterface
+{
+    public function code(): string;
+
+    public function initiate(PaymentInitiationRequest $request): PaymentInitiationResult;
+
+    public function verify(string $providerTransactionId, ?string $paymentReference = null): PaymentVerificationResult;
+
+    public function handleCallback(array $payload, array $headers = []): PaymentCallbackResult;
+
+    public function refund(PaymentRefundRequest $request): PaymentRefundResult;
+
+    public function testConnection(): ProviderTestResult;
+}
+```
+
+Use DTOs/value objects where project style allows.
+
+Do not pass raw request arrays everywhere.
+
+---
+
+# 9. Provider Adapters
+
+Create provider adapters:
+
+```text
+NaloSmsProvider
+MtnMomoPaymentProvider
+NaloPaymentProvider
+```
+
+Adapters must:
+
+```text
+load credentials from active provider config
+build provider-specific payload
+send HTTP request
+handle provider response
+normalize provider response into shared result objects
+never expose raw credentials
+record request/response safely
+support sandbox/live base URLs
+handle provider errors gracefully
+```
+
+Important:
+
+```text
+If exact provider API payloads are not available in the project yet, implement adapter skeletons with clearly isolated TODO sections and configuration placeholders.
+Do not fake successful provider responses in production code.
+Provide test/fake providers for local testing.
+```
+
+Add fake providers:
+
+```text
+FakeSmsProvider
+FakePaymentProvider
+```
+
+Purpose:
+
+```text
+local testing
+demo environment
+automated tests
+development without real credentials
+```
+
+Fake providers must be disabled in production unless explicitly allowed by config.
+
+---
+
+# 10. SMS Gateway Service
+
+Create:
+
+```text
+SmsGatewayService
+SmsTemplateService
+SmsPhoneNumberNormalizer
+SmsDeliveryReportService
+```
 
 Responsibilities:
 
 ```text
-open case
-add receivable items
-refresh outstanding snapshots
-change status
-close case
-reopen case
-assign collector
-escalate case
-link to payer/patient/claim/sponsor
+resolve active SMS provider
+validate active provider exists
+normalize phone numbers
+create message record
+create recipient records
+send SMS via provider
+record provider attempts
+update statuses
+handle delivery callbacks
+query delivery status
+support manual resend where safe
 ```
 
-Case opening should support:
+Phone rules:
 
 ```text
-single invoice
-payer balance
-aging bucket selection
-claim batch
-sponsor statement
-insurance payer
-corporate payer
+support Ghana/Togo style phone normalisation where project already has phone rules
+do not assume every number is Ghanaian
+store original and normalized phone number
+validate minimum safe format before sending
 ```
 
----
-
-## 19. Dunning / Reminder Notices
-
-Dunning service should:
+Sending rules:
 
 ```text
-generate reminder notice from case
-choose template by notice level
-include payer statement summary
-include invoice list
-include payment instructions where configured
-support printable output
-support email/SMS only if existing safe channels exist
-record generated/sent status
-```
-
-Do not send automatically unless an existing notification preference and channel exists.
-
-Default to printable/generated notices.
-
----
-
-## 20. Statement Generation
-
-Statement service should:
-
-```text
-generate payer statement snapshot
-include opening balance
-include invoices/charges
-include payments
-include credit notes
-include write-offs
-include closing balance
-support patient, sponsor, insurance, corporate payer types
-support PDF/print/CSV if existing export service supports it
-```
-
-Statement must not post accounting entries.
-
----
-
-## 21. Receivable Reconciliation Integration
-
-Update Phase D receivables reconciliation.
-
-It should link to:
-
-```text
-receivable cases
-disputes
-writeoff recommendations
-credit-note recommendations
-unassigned overdue balances
-unresolved case amounts
-```
-
-Classifications:
-
-```text
-open_receivable
-disputed_receivable
-unassigned_overdue
-payment_promise_active
-payment_promise_broken
-writeoff_recommended
-creditnote_recommended
-claim_pending
-sponsor_pending
-corporate_pending
-unknown_difference
+SMS send should be queued if queue exists.
+If queue is not configured, provide synchronous fallback with timeout.
+Do not block clinical workflow because SMS failed.
+SMS failures should be visible in logs/workbench.
 ```
 
 ---
 
-## 22. Failed Posting Workbench Integration
+# 11. Payment Gateway Service
 
-Link failed receivable-related postings to the receivables workbench:
+Create:
 
 ```text
-invoice receivable posting
-payment posting
-credit note posting
-write-off posting
-claim receivable posting
-sponsor receivable posting
+PaymentGatewayService
+PaymentProviderTransactionService
+PaymentVerificationService
+PaymentCallbackService
+PaymentProviderResolver
 ```
 
-Receivable case detail should show related failed posting attempts.
+Responsibilities:
 
-Do not retry postings directly from the receivables case unless existing Phase C permissions and services are used.
+```text
+resolve active payment provider
+initiate payment request
+record pending provider transaction
+handle callback
+verify provider transaction
+create/attach UHMS payment after verified success
+allocate payment to invoice using existing payment services
+trigger accounting posting through existing payment/accounting flow
+record failed/expired/cancelled payments
+support manual verify/recheck
+prevent duplicate payment creation
+```
+
+Payment initiation flow:
+
+```text
+User chooses online/mobile-money payment
+System creates provider transaction
+System calls active provider
+Provider returns pending/success/customer-action response
+System shows pending/checkout instructions
+Provider sends callback or user clicks verify
+System verifies transaction
+If success and amount/currency/reference match:
+    create UHMS payment using existing payment service
+    link provider transaction to UHMS payment
+    update invoice/payment status through existing workflow
+If failed:
+    retain failure and allow retry/new transaction
+```
+
+Rules:
+
+```text
+Never mark invoice paid before verification.
+Never create duplicate payment for same provider transaction.
+Never trust amount from callback without checking expected amount.
+Do not allow callback to allocate to arbitrary invoice without matching internal reference.
+Callbacks must be idempotent.
+```
 
 ---
 
-## 23. Close Readiness Integration
+# 12. Payment Integration Points
 
-Update `AccountingCloseReadinessService` to show:
+Integrate payment gateway into existing billing/payment areas.
+
+Add buttons/actions where safe:
 
 ```text
-large overdue receivables
-unassigned overdue receivables
-unresolved receivable disputes
-approved writeoff recommendations not converted
-approved credit-note recommendations not converted
-broken payment promises
-claims receivables over threshold
-sponsor/corporate balances over threshold
-AR reconciliation not run
-AR reconciliation unresolved differences
+Invoice show: Pay Online / Mobile Money
+Billing payment screen: Initiate Payment API
+Patient statement: Pay selected invoice if public portal exists
+Cashier dashboard: Payment API transactions
 ```
 
-Do not hard-block period close unless existing close code safely supports it.
+Do not replace manual payment entry.
 
-Document recommended future close-block behavior.
+Manual payments must continue to work.
+
+When provider payment is verified:
+
+```text
+create normal UHMS payment record
+use existing receipt/invoice status workflow
+use existing accounting/payment posting service
+use existing ActivityLogService
+```
 
 ---
 
-## 24. Permissions
+# 13. SMS Integration Points
 
-Add:
+Initial safe SMS use cases:
 
 ```text
-receivables.workbench.view
-receivables.cases.view
-receivables.cases.manage
-receivables.cases.assign
-receivables.followups.create
-receivables.promises.manage
-receivables.disputes.manage
-receivables.dunning.generate
-receivables.dunning.send
-receivables.statements.generate
-receivables.statements.approve
-receivables.recommendations.writeoff
-receivables.recommendations.creditnote
-receivables.reports.view
-receivables.reports.export
+manual SMS test/send from SMS Gateway workbench
+payment receipt notification
+invoice payment request notification
+appointment reminder if appointment module is available
+queue notification if queue module is available
 ```
 
-Suggested defaults:
+Do not automatically enable all SMS events.
+
+Add settings:
 
 ```text
-Cashier / Billing Officer:
-- view assigned receivable cases
-- create followups
-- record payment promises
+enable payment request SMS
+enable receipt SMS
+enable appointment reminder SMS
+enable queue SMS
+enable low-balance/admin alert SMS
+```
 
-Accountant:
-- view workbench
-- manage cases
-- generate statements
-- generate dunning notices
-- manage disputes
+Default all automatic SMS events to disabled.
+
+Manual test SMS should be available to authorized admins.
+
+---
+
+# 14. Admin UI
+
+Add settings/workbench screens.
+
+## SMS Gateway
+
+Routes under:
+
+```text
+admin/integrations/sms
+```
+
+Screens:
+
+```text
+SMS Providers
+Create/Edit SMS Provider
+Activate SMS Provider
+Provider Credentials
+Test SMS Provider
+Manual SMS Send
+SMS Messages
+SMS Message Detail
+Delivery Reports
+SMS Templates
+```
+
+## Payment Gateway
+
+Routes under:
+
+```text
+admin/integrations/payments
+```
+
+Screens:
+
+```text
+Payment Providers
+Create/Edit Payment Provider
+Activate Payment Provider
+Provider Credentials
+Test Payment Provider
+Payment Transactions
+Payment Transaction Detail
+Manual Verify/Recheck
+Callbacks
+Refund Foundation
+```
+
+Provider activation screen must show warning:
+
+```text
+Activating this provider will deactivate the currently active provider for this module.
+```
+
+---
+
+# 15. Callback Routes
+
+Add public callback routes with strict processing.
+
+Suggested routes:
+
+```text
+POST /api/integrations/sms/{providerCode}/callback
+POST /api/integrations/payments/{providerCode}/callback
+```
+
+Rules:
+
+```text
+Do not require normal browser auth for provider callbacks.
+Do require provider verification/signature/secret where available.
+Store raw callback.
+Process idempotently.
+Return provider-friendly response.
+Never expose internal stack traces.
+```
+
+Also add internal admin route to view callbacks.
+
+---
+
+# 16. Security
+
+Security requirements:
+
+```text
+encrypt credentials
+mask credentials in UI
+never log secrets
+verify webhook signatures/secrets where provider supports it
+rate-limit callback routes where possible
+validate provider code
+validate expected amount
+validate currency
+validate internal reference
+reject unknown transaction references
+protect admin routes with permissions
+```
+
+Add config:
+
+```text
+INTEGRATIONS_HTTP_TIMEOUT
+INTEGRATIONS_CALLBACK_IP_ALLOWLIST optional
+INTEGRATIONS_ALLOW_FAKE_PROVIDERS
+```
+
+Do not hardcode production credentials in code or seeders.
+
+---
+
+# 17. Permissions
+
+Add permissions.
+
+## SMS
+
+```text
+integrations.sms.view
+integrations.sms.providers.manage
+integrations.sms.providers.activate
+integrations.sms.credentials.manage
+integrations.sms.test
+integrations.sms.send
+integrations.sms.templates.manage
+integrations.sms.reports.view
+```
+
+## Payment
+
+```text
+integrations.payments.view
+integrations.payments.providers.manage
+integrations.payments.providers.activate
+integrations.payments.credentials.manage
+integrations.payments.test
+integrations.payments.transactions.view
+integrations.payments.transactions.initiate
+integrations.payments.transactions.verify
+integrations.payments.callbacks.view
+integrations.payments.refunds.manage
+```
+
+Suggested role defaults:
+
+```text
+Administrator / Super Admin:
+- all integration permissions
 
 Finance Manager:
-- assign cases
-- approve statements
-- recommend write-offs / credit notes
-- export reports
+- view payment providers
+- view payment transactions
+- initiate/verify payments
+- view callbacks
 
-Administrator / Super Admin:
-- all
+Accountant / Cashier:
+- initiate payment transactions
+- verify payment transactions
+- view own/related payment transactions
+
+IT Admin if role exists:
+- manage providers
+- credentials
+- activate providers
+- test providers
+
+Receptionist:
+- send approved SMS templates if desired
+- view SMS delivery status for patient communication only
 ```
 
-Do not grant broadly to clinical roles.
+Do not grant provider credential management to ordinary billing users.
 
 ---
 
-## 25. Audit Logging
+# 18. Audit Logging
 
 Use `ActivityLogService`.
 
-Audit:
+Audit events:
 
 ```text
-RECEIVABLE_CASE_OPENED
-RECEIVABLE_CASE_UPDATED
-RECEIVABLE_CASE_ASSIGNED
-RECEIVABLE_CASE_ESCALATED
-RECEIVABLE_CASE_CLOSED
-RECEIVABLE_FOLLOWUP_CREATED
-RECEIVABLE_PROMISE_CREATED
-RECEIVABLE_PROMISE_UPDATED
-RECEIVABLE_DISPUTE_CREATED
-RECEIVABLE_DISPUTE_RESOLVED
-RECEIVABLE_DUNNING_GENERATED
-RECEIVABLE_DUNNING_SENT
-RECEIVABLE_STATEMENT_GENERATED
-RECEIVABLE_STATEMENT_APPROVED
-RECEIVABLE_WRITEOFF_RECOMMENDED
-RECEIVABLE_CREDITNOTE_RECOMMENDED
-RECEIVABLE_REPORT_VIEWED
-RECEIVABLE_REPORT_EXPORTED
+SMS_PROVIDER_CREATED
+SMS_PROVIDER_UPDATED
+SMS_PROVIDER_ACTIVATED
+SMS_PROVIDER_DEACTIVATED
+SMS_PROVIDER_CREDENTIAL_UPDATED
+SMS_PROVIDER_TESTED
+SMS_MESSAGE_CREATED
+SMS_MESSAGE_SENT
+SMS_MESSAGE_FAILED
+SMS_DELIVERY_REPORT_RECEIVED
+SMS_TEMPLATE_CREATED
+SMS_TEMPLATE_UPDATED
+
+PAYMENT_PROVIDER_CREATED
+PAYMENT_PROVIDER_UPDATED
+PAYMENT_PROVIDER_ACTIVATED
+PAYMENT_PROVIDER_DEACTIVATED
+PAYMENT_PROVIDER_CREDENTIAL_UPDATED
+PAYMENT_PROVIDER_TESTED
+PAYMENT_TRANSACTION_INITIATED
+PAYMENT_TRANSACTION_VERIFIED
+PAYMENT_TRANSACTION_FAILED
+PAYMENT_TRANSACTION_CALLBACK_RECEIVED
+PAYMENT_TRANSACTION_PAYMENT_CREATED
+PAYMENT_TRANSACTION_DUPLICATE_CALLBACK_IGNORED
+PAYMENT_REFUND_REQUESTED
+PAYMENT_REFUND_COMPLETED
+PAYMENT_REFUND_FAILED
 ```
 
 Run:
@@ -1079,65 +1154,82 @@ Fix new missing/needs-review audit gaps.
 
 ---
 
-## 26. Localisation
+# 19. Localisation
 
-All new labels must be localised EN/FR.
+All labels must be localised EN/FR.
 
-Use or extend:
+Create or extend:
 
 ```text
-lang/en/receivables.php
-lang/fr/receivables.php
-lang/en/accounting.php
-lang/fr/accounting.php
-lang/en/reports.php
-lang/fr/reports.php
+lang/en/integrations.php
+lang/fr/integrations.php
+lang/en/sms.php
+lang/fr/sms.php
+lang/en/payments.php
+lang/fr/payments.php
 ```
 
 Required keys include:
 
 ```text
-receivables
-receivable_workbench
-receivable_case
-receivable_cases
-payer_type
-payer_balance
-aging_bucket
-aged_receivables
-patient_receivables
-insurance_receivables
-sponsor_receivables
-corporate_receivables
-claims_receivables
-collection_followup
-payment_promise
-payment_promises
-broken_promise
-receivable_dispute
-receivable_disputes
-dunning_notice
-dunning_notices
-friendly_reminder
-first_notice
-second_notice
-final_notice
-legal_notice
-payer_statement
-statement_run
-writeoff_recommendation
-creditnote_recommendation
-assigned_collector
-top_debtors
-overdue_receivables
-unassigned_overdue
-disputed_balance
-promised_balance
+integrations
+provider
+providers
+active_provider
+activate_provider
+deactivate_provider
+credentials
+masked_credentials
+sandbox
+live
+test_connection
+callback_url
+webhook_secret
+request_log
+response_log
+
+sms_gateway
+sms_provider
+sms_providers
+sms_message
+sms_messages
+sms_template
+sms_templates
+sender_id
+delivery_report
+manual_sms
+send_test_sms
+message_body
+recipient
+recipients
+delivered
+undelivered
+
+payment_gateway
+payment_provider
+payment_providers
+payment_transaction
+payment_transactions
+initiate_payment
+verify_payment
+manual_verify
+provider_reference
+provider_transaction_id
+payment_callback
+payment_callbacks
+callback_received
+callback_processed
+payment_pending
+payment_verified
+payment_failed
+payment_cancelled
+payment_expired
+duplicate_callback_ignored
 ```
 
 Maintain EN/FR parity.
 
-Run localisation audit scanner:
+Run:
 
 ```bash
 php scripts/localisation-audit.php
@@ -1151,51 +1243,54 @@ Active runtime candidates must remain:
 
 ---
 
-## 27. Navigation
+# 20. Navigation
 
 Add navigation:
 
 ```text
-Billing & Collections > Receivables Workbench
-Billing & Collections > AR Aging
-Billing & Collections > Payer Statements
-Advanced Accounting > Receivable Reconciliation
+Administration / Integrations > SMS Gateway
+Administration / Integrations > Payment Gateway
+Billing & Collections > Payment API Transactions
 ```
 
-Do not hide route access behind navigation only.
+Payment provider transaction pages may also appear under Billing & Collections for cashier/finance users.
 
-Use permissions and module middleware.
+Provider configuration pages should remain admin/IT controlled.
 
 ---
 
-## 28. Focused Tests To Add
+# 21. Focused Tests To Add
 
 Add focused tests but do not run the wide full suite.
 
 Required coverage:
 
 ```text
-receivables dashboard is permission protected
-aging buckets calculate correctly
-payer balance groups patient/insurance/sponsor/corporate balances
-case can be opened from invoice receivable
-case can be opened from payer balance
-case assignment records active collector
-follow-up record updates next follow-up date
-payment promise does not reduce AR balance
-fulfilled promise links to actual payment
-broken promise appears in dashboard
-dispute remains included in aging but separately labelled
-dunning notice can be generated without sending
-statement snapshot reconciles invoices/payments/credit notes/write-offs
-writeoff recommendation does not affect balance
-credit-note recommendation does not affect balance
-converted recommendation links to final record
-failed receivable posting appears on case detail
-AR reconciliation links to receivable cases/disputes
-close readiness reports overdue/unassigned/disputed AR
-permissions protect mutation routes
-module middleware protects accounting reconciliation routes
+only one SMS provider can be active at a time
+only one payment provider can be active at a time
+provider credentials are encrypted and masked
+unauthorized user cannot manage provider credentials
+SMS provider can be configured
+Nalo SMS adapter normalizes request/response through interface
+fake SMS provider sends test message
+SMS send creates message and recipient records
+SMS failure is retained and visible
+SMS callback/delivery report is idempotent
+
+payment provider can be configured
+MTN MoMo adapter normalizes request/response through interface
+Nalo payment adapter normalizes request/response through interface
+fake payment provider initiates payment
+payment initiation creates provider transaction
+payment callback is stored
+duplicate payment callback does not duplicate UHMS payment
+payment is not marked paid until verified
+verified payment creates UHMS payment through existing payment service
+amount mismatch blocks payment creation
+unknown reference callback is retained but not posted
+payment manual verify updates transaction safely
+module middleware blocks disabled SMS gateway routes
+module middleware blocks disabled payment gateway routes
 audit events are recorded
 localisation keys exist
 ```
@@ -1208,11 +1303,11 @@ php artisan test
 
 during this phase unless explicitly instructed.
 
-The wide full-suite test will be run after all accounting implementation phases in this batch are complete.
+The wide full-suite test will be run after all current implementation phases are complete.
 
 ---
 
-## 29. Minimal Verification Commands
+# 22. Minimal Verification Commands
 
 Run only necessary safety checks:
 
@@ -1237,35 +1332,36 @@ Do not run the full application test suite yet.
 
 ---
 
-## 30. Documentation
+# 23. Documentation
 
 Create:
 
 ```text
-docs/ACCOUNTING_PHASE_J_RECEIVABLES_WORKBENCH_REPORT.md
+docs/INTEGRATIONS_PHASE_1_SMS_AND_PAYMENT_GATEWAYS_REPORT.md
 ```
 
 Include:
 
 ```text
 summary
+module changes
 database changes
 models added
 services added
-permissions added
-routes/controllers/views added
-receivable case lifecycle
-aging calculation
-payer balance logic
-follow-up workflow
-payment promise workflow
-dispute workflow
-dunning behavior
-statement generation
-recommendation workflows
-failed posting integration
-subledger reconciliation integration
-close readiness integration
+provider interfaces
+provider adapters
+initial SMS providers
+initial payment providers
+active-provider rule
+credential encryption
+SMS workflow
+payment initiation workflow
+callback workflow
+verification workflow
+billing/payment integration
+security controls
+permissions
+routes/controllers/views
 audit logging
 localisation audit result
 minimal verification commands run
@@ -1276,29 +1372,29 @@ next recommended phase
 
 ---
 
-## 31. Acceptance Criteria
+# 24. Acceptance Criteria
 
-Phase J is complete only when:
+Phase 1 is complete only when:
 
 ```text
-receivables workbench exists
-payer balances are visible by type
-AR aging drill-down exists
-cases can be opened and managed
-collector assignment works
-follow-ups are recorded
-payment promises are tracked without changing AR balance
-disputes are tracked and remain visible in aging
-dunning notices can be generated
-payer statements can be generated
-write-off recommendations do not post directly
-credit-note recommendations do not post directly
-recommendations can link to final approved financial records
-failed posting attempts can be viewed from receivable context
-AR reconciliation links receivable cases and disputes
-close readiness reports receivable exceptions
-permissions are enforced
-module middleware protects accounting routes
+sms_gateway module exists
+payment_gateway module exists
+Nalo SMS provider can be configured
+MTN MoMo payment provider can be configured
+Nalo payment provider can be configured
+only one SMS provider can be active at a time
+only one payment provider can be active at a time
+credentials are encrypted and masked
+SMS messages can be sent through active provider or fake provider
+SMS delivery callbacks can be stored idempotently
+payment transactions can be initiated through active provider or fake provider
+payment callbacks can be stored idempotently
+payments are verified before invoice/payment status changes
+duplicate callbacks do not duplicate UHMS payments
+verified provider payment creates normal UHMS payment through existing service
+manual/cash payments continue to work
+provider admin routes are permission protected
+callback routes are safe and idempotent
 ActivityLogService is used
 EN/FR localisation parity is maintained
 active runtime candidates remain 0
@@ -1307,7 +1403,7 @@ view cache compiles
 logs:audit has no new missing/needs-review gaps
 permissions audit is clean
 documentation report is created
-full test suite is intentionally deferred to the final wide accounting test phase
+full test suite is intentionally deferred
 ```
 
-Proceed with Accounting Execution Phase J now.
+Proceed with External Integrations Phase 1 now.

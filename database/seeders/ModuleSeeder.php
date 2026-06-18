@@ -50,6 +50,12 @@ class ModuleSeeder extends Seeder
             ['name' => 'Reports',          'slug' => 'reports',        'is_core' => false, 'icon' => 'ti-chart-bar',     'sort_order' => 33],
             ['name' => 'Medical Patterns', 'slug' => 'medical-patterns', 'is_core' => false, 'icon' => 'ti-template',    'sort_order' => 34],
             ['name' => 'Notifications',    'slug' => 'notifications',  'is_core' => false, 'icon' => 'ti-bell',          'sort_order' => 35],
+
+            // External integrations
+            ['name' => 'SMS Gateway',      'slug' => 'sms_gateway',    'is_core' => false, 'icon' => 'ti-message-2',     'sort_order' => 36,
+             'description' => 'Provider-based SMS sending, delivery reports, templates and manual test messages.'],
+            ['name' => 'Payment Gateway',  'slug' => 'payment_gateway', 'is_core' => false, 'icon' => 'ti-credit-card', 'sort_order' => 37,
+             'description' => 'Online / mobile-money payment collection with verification and idempotent provider callbacks.'],
         ];
 
         foreach ($modules as $m) {

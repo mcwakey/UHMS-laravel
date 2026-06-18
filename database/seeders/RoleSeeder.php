@@ -687,6 +687,28 @@ class RoleSeeder extends Seeder
             'blood_bank.recipient_details.manage',
             'blood_bank.transfusion.reaction_record',
 
+            // ── External Integrations — SMS Gateway ───────────────────────
+            'integrations.sms.view',
+            'integrations.sms.providers.manage',
+            'integrations.sms.providers.activate',
+            'integrations.sms.credentials.manage',
+            'integrations.sms.test',
+            'integrations.sms.send',
+            'integrations.sms.templates.manage',
+            'integrations.sms.reports.view',
+
+            // ── External Integrations — Payment Gateway ───────────────────
+            'integrations.payments.view',
+            'integrations.payments.providers.manage',
+            'integrations.payments.providers.activate',
+            'integrations.payments.credentials.manage',
+            'integrations.payments.test',
+            'integrations.payments.transactions.view',
+            'integrations.payments.transactions.initiate',
+            'integrations.payments.transactions.verify',
+            'integrations.payments.callbacks.view',
+            'integrations.payments.refunds.manage',
+
             // ── Settings ─────────────────────────────────────────────────
             'settings.view',
             'settings.manage',
@@ -988,6 +1010,8 @@ class RoleSeeder extends Seeder
             'queue.view', 'queue.manage',
             'invoices.view',
             'appointments.view', 'appointments.create', 'appointments.edit', 'appointments.update', 'appointments.cancel',
+            // Patient communication: send approved SMS + view delivery status only
+            'integrations.sms.view', 'integrations.sms.send', 'integrations.sms.reports.view',
             'notifications.view',
         ]);
 
@@ -1005,6 +1029,11 @@ class RoleSeeder extends Seeder
             'receivables.followups.create', 'receivables.promises.manage',
             'reports.ar_aging.view',
             'accounts.cashier',
+            // Online / mobile-money payment collection (no provider config)
+            'integrations.payments.view',
+            'integrations.payments.transactions.view',
+            'integrations.payments.transactions.initiate',
+            'integrations.payments.transactions.verify',
             'notifications.view',
         ]);
 
@@ -1147,6 +1176,12 @@ class RoleSeeder extends Seeder
             'accounting.bank_reconciliation.view', 'accounting.bank_reconciliation.manage', 'accounting.bank_reconciliation.match',
             'accounting.bank_adjustments.propose',
             'supplier.ledger.view',
+            // Online / mobile-money payment collection + oversight (no provider config)
+            'integrations.payments.view',
+            'integrations.payments.transactions.view',
+            'integrations.payments.transactions.initiate',
+            'integrations.payments.transactions.verify',
+            'integrations.payments.callbacks.view',
             'notifications.view',
         ]);
 

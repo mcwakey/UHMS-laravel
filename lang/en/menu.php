@@ -225,4 +225,10 @@ return [
     'investigation_stock' => 'Investigation Stock',
     'investigation_results' => 'Investigation Results',
     'new_claim' => 'New Claim',
+
+    // External integrations
+    'integrations' => 'Integrations',
+    'sms_gateway' => 'SMS Gateway',
+    'payment_gateway' => 'Payment Gateway',
+    'payment_api_transactions' => 'Payment API Transactions',
 ];

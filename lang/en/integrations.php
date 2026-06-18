@@ -1,0 +1,95 @@
+<?php
+
+return [
+    // Shared
+    'integrations' => 'Integrations',
+    'provider' => 'Provider',
+    'providers' => 'Providers',
+    'active_provider' => 'Active provider',
+    'no_active_provider' => 'No active provider',
+    'activate_provider' => 'Activate provider',
+    'deactivate_provider' => 'Deactivate provider',
+    'activate' => 'Activate',
+    'deactivate' => 'Deactivate',
+    'add_provider' => 'Add provider',
+    'edit_provider' => 'Edit provider',
+    'test_connection' => 'Test connection',
+    'test' => 'Test',
+    'edit' => 'Edit',
+    'save' => 'Save',
+    'cancel' => 'Cancel',
+    'back' => 'Back',
+    'none' => 'None',
+    'yes' => 'Yes',
+    'no' => 'No',
+
+    // Provider fields
+    'provider_code' => 'Provider code',
+    'select_provider_code' => 'Select a provider',
+    'name' => 'Name',
+    'description' => 'Description',
+    'environment' => 'Environment',
+    'sandbox' => 'Sandbox',
+    'live' => 'Live',
+    'base_url' => 'Base URL',
+    'base_url_hint' => 'Leave blank to use the built-in default for the selected environment.',
+    'status' => 'Status',
+    'sender_id' => 'Sender ID',
+    'callback_url' => 'Callback URL',
+    'webhook_secret' => 'Webhook secret',
+    'webhook_secret_hint' => 'Webhook secret hint',
+    'last_tested' => 'Last tested',
+    'last_test_result' => 'Last test result',
+    'not_tested' => 'Not tested yet',
+    'request_log' => 'Request log',
+    'response_log' => 'Response log',
+
+    // Capabilities
+    'capabilities' => 'Capabilities',
+    'supports_send' => 'Send',
+    'supports_status_check' => 'Status check',
+    'supports_callback' => 'Callback',
+    'supports_collection' => 'Collection',
+    'supports_disbursement' => 'Disbursement',
+    'supports_refund' => 'Refund',
+
+    // Credentials
+    'credentials' => 'Credentials',
+    'masked_credentials' => 'Masked credentials',
+    'credential_key' => 'Key',
+    'credential_value' => 'Value',
+    'update_credentials' => 'Update credentials',
+    'configured_credentials' => 'Configured credentials',
+    'no_credentials' => 'No credentials configured yet.',
+    'leave_blank_keep' => 'Leave a field blank to keep its current value.',
+    'credentials_never_shown' => 'For security, saved credential values are never displayed again.',
+
+    // Activation
+    'activation_warning' => 'Activating this provider will deactivate the currently active provider for this module.',
+    'only_one_active' => 'Only one provider can be active per module at a time.',
+
+    // Flash messages
+    'flash' => [
+        'provider_created' => 'Provider created.',
+        'provider_updated' => 'Provider updated.',
+        'credentials_updated' => 'Credentials updated securely.',
+        'provider_activated' => ':name is now the active provider.',
+        'provider_deactivated' => ':name has been deactivated.',
+        'sms_queued' => 'SMS has been queued for delivery.',
+        'no_recipients' => 'Please provide at least one valid recipient.',
+        'template_created' => 'Template created.',
+        'template_updated' => 'Template updated.',
+        'payment_initiated' => 'Payment request initiated.',
+        'payment_verified' => 'Payment verified and recorded.',
+        'payment_not_confirmed' => 'Payment is not yet confirmed by the provider.',
+        'refund_requested' => 'Refund request recorded.',
+    ],
+
+    // Controlled, user-safe errors
+    'errors' => [
+        'generic' => 'The integration could not complete the request. Please try again later.',
+        'sms_not_configured' => 'No active SMS provider is configured. Please configure and activate an SMS provider first.',
+        'payment_not_configured' => 'No active payment provider is configured. Please configure and activate a payment provider first.',
+        'sms_body_required' => 'The message text is required.',
+    ],
+];

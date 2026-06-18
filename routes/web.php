@@ -1425,6 +1425,67 @@ Route::middleware('auth')->group(function () {
             Route::post('flush', [ModuleController::class, 'flushCache'])->name('flush');
         });
 
+        /*
+        |--------------------------------------------------------------------
+        | External Integrations — SMS & Payment Gateways (Phase 1)
+        |--------------------------------------------------------------------
+        | Provider configuration is admin/IT controlled. Public provider
+        | callbacks live in routes/api.php (session-less, CSRF-exempt).
+        */
+        Route::prefix('integrations')->name('integrations.')->group(function () {
+
+            // ── SMS Gateway ──────────────────────────────────────────────
+            Route::middleware(['module:sms_gateway', 'can:integrations.sms.view'])
+                ->prefix('sms')->name('sms.')->group(function () {
+                    Route::get('providers', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'index'])->name('providers.index');
+                    Route::get('providers/create', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'create'])->name('providers.create')->middleware('can:integrations.sms.providers.manage');
+                    Route::post('providers', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'store'])->name('providers.store')->middleware('can:integrations.sms.providers.manage');
+                    Route::get('providers/{provider}/edit', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'edit'])->name('providers.edit')->middleware('can:integrations.sms.providers.manage');
+                    Route::put('providers/{provider}', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'update'])->name('providers.update')->middleware('can:integrations.sms.providers.manage');
+                    Route::put('providers/{provider}/credentials', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'updateCredentials'])->name('providers.credentials.update')->middleware('can:integrations.sms.credentials.manage');
+                    Route::post('providers/{provider}/activate', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'activate'])->name('providers.activate')->middleware('can:integrations.sms.providers.activate');
+                    Route::post('providers/{provider}/deactivate', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'deactivate'])->name('providers.deactivate')->middleware('can:integrations.sms.providers.activate');
+                    Route::post('providers/{provider}/test', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'test'])->name('providers.test')->middleware('can:integrations.sms.test');
+
+                    Route::get('messages', [\App\Http\Controllers\Admin\Integrations\SmsMessageController::class, 'index'])->name('messages.index');
+                    Route::get('messages/create', [\App\Http\Controllers\Admin\Integrations\SmsMessageController::class, 'create'])->name('messages.create')->middleware('can:integrations.sms.send');
+                    Route::post('messages', [\App\Http\Controllers\Admin\Integrations\SmsMessageController::class, 'store'])->name('messages.store')->middleware('can:integrations.sms.send');
+                    Route::get('messages/{message}', [\App\Http\Controllers\Admin\Integrations\SmsMessageController::class, 'show'])->name('messages.show');
+                    Route::post('messages/{message}/resend', [\App\Http\Controllers\Admin\Integrations\SmsMessageController::class, 'resend'])->name('messages.resend')->middleware('can:integrations.sms.send');
+
+                    Route::middleware('can:integrations.sms.templates.manage')->group(function () {
+                        Route::get('templates', [\App\Http\Controllers\Admin\Integrations\SmsTemplateController::class, 'index'])->name('templates.index');
+                        Route::post('templates', [\App\Http\Controllers\Admin\Integrations\SmsTemplateController::class, 'store'])->name('templates.store');
+                        Route::put('templates/{template}', [\App\Http\Controllers\Admin\Integrations\SmsTemplateController::class, 'update'])->name('templates.update');
+                    });
+
+                    Route::get('delivery-reports', [\App\Http\Controllers\Admin\Integrations\SmsDeliveryReportController::class, 'index'])->name('delivery-reports.index')->middleware('can:integrations.sms.reports.view');
+                });
+
+            // ── Payment Gateway ──────────────────────────────────────────
+            Route::middleware(['module:payment_gateway', 'can:integrations.payments.view'])
+                ->prefix('payments')->name('payments.')->group(function () {
+                    Route::get('providers', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'index'])->name('providers.index');
+                    Route::get('providers/create', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'create'])->name('providers.create')->middleware('can:integrations.payments.providers.manage');
+                    Route::post('providers', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'store'])->name('providers.store')->middleware('can:integrations.payments.providers.manage');
+                    Route::get('providers/{provider}/edit', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'edit'])->name('providers.edit')->middleware('can:integrations.payments.providers.manage');
+                    Route::put('providers/{provider}', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'update'])->name('providers.update')->middleware('can:integrations.payments.providers.manage');
+                    Route::put('providers/{provider}/credentials', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'updateCredentials'])->name('providers.credentials.update')->middleware('can:integrations.payments.credentials.manage');
+                    Route::post('providers/{provider}/activate', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'activate'])->name('providers.activate')->middleware('can:integrations.payments.providers.activate');
+                    Route::post('providers/{provider}/deactivate', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'deactivate'])->name('providers.deactivate')->middleware('can:integrations.payments.providers.activate');
+                    Route::post('providers/{provider}/test', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'test'])->name('providers.test')->middleware('can:integrations.payments.test');
+
+                    Route::get('transactions', [\App\Http\Controllers\Admin\Integrations\PaymentTransactionController::class, 'index'])->name('transactions.index')->middleware('can:integrations.payments.transactions.view');
+                    Route::get('transactions/create', [\App\Http\Controllers\Admin\Integrations\PaymentTransactionController::class, 'create'])->name('transactions.create')->middleware('can:integrations.payments.transactions.initiate');
+                    Route::post('transactions', [\App\Http\Controllers\Admin\Integrations\PaymentTransactionController::class, 'store'])->name('transactions.store')->middleware('can:integrations.payments.transactions.initiate');
+                    Route::get('transactions/{transaction}', [\App\Http\Controllers\Admin\Integrations\PaymentTransactionController::class, 'show'])->name('transactions.show')->middleware('can:integrations.payments.transactions.view');
+                    Route::post('transactions/{transaction}/verify', [\App\Http\Controllers\Admin\Integrations\PaymentTransactionController::class, 'verify'])->name('transactions.verify')->middleware('can:integrations.payments.transactions.verify');
+                    Route::post('transactions/{transaction}/refunds', [\App\Http\Controllers\Admin\Integrations\PaymentRefundController::class, 'store'])->name('refunds.store')->middleware('can:integrations.payments.refunds.manage');
+
+                    Route::get('callbacks', [\App\Http\Controllers\Admin\Integrations\PaymentCallbackController::class, 'index'])->name('callbacks.index')->middleware('can:integrations.payments.callbacks.view');
+                });
+        });
+
         // ICD-10 Code Database
         Route::middleware('can:icd.manage')->group(function () {
             Route::get('icd-codes', [IcdCodeController::class, 'index'])->name('icd-codes.index');

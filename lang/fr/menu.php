@@ -219,4 +219,10 @@ return [
     'investigation_stock' => 'Stock d\'examens',
     'investigation_results' => 'Résultats d\'examens',
     'new_claim' => 'Nouvelle réclamation',
+
+    // Intégrations externes
+    'integrations' => 'Intégrations',
+    'sms_gateway' => 'Passerelle SMS',
+    'payment_gateway' => 'Passerelle de paiement',
+    'payment_api_transactions' => 'Transactions de paiement API',
 ];

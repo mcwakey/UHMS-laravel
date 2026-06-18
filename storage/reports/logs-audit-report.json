@@ -1,13 +1,13 @@
 {
-    "generated_at": "2026-06-17T00:04:29+00:00",
-    "controllers_flagged": 87,
-    "logging_services_detected": 106,
+    "generated_at": "2026-06-18T13:11:51+00:00",
+    "controllers_flagged": 93,
+    "logging_services_detected": 114,
     "summary": {
         "MISSING_LOG": 0,
         "NEEDS_REVIEW": 2,
         "KNOWN_BACKLOG": 21,
         "INTENTIONALLY_SKIPPED": 1,
-        "SERVICE_FUNNEL_COVERED": 63
+        "SERVICE_FUNNEL_COVERED": 69
     },
     "real_missing_logs": 0,
     "findings": [
@@ -610,6 +610,24 @@
                 "VerificationManager"
             ],
             "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/Integrations/PaymentTransactionController.php",
+            "unlogged_actions": [
+                "store",
+                "verify"
+            ],
+            "actions": [
+                "store",
+                "verify"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to PaymentGatewayService (logs direct).",
+            "services": [
+                "PaymentGatewayService"
+            ],
+            "in_baseline": false
         },
         {
             "controller": "app/Http/Controllers/Admin/LeaveController.php",
@@ -1278,6 +1296,96 @@
             "reason": "Deferred lower-priority gap (config backlog).",
             "services": [],
             "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/Integrations/PaymentProviderController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ],
+            "actions": [
+                "store",
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to IntegrationProviderService (logs direct).",
+            "services": [
+                "IntegrationCredentialService",
+                "IntegrationProviderRegistry",
+                "IntegrationProviderService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/Integrations/PaymentRefundController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to PaymentGatewayService (logs direct).",
+            "services": [
+                "PaymentGatewayService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/Integrations/SmsMessageController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to SmsGatewayService (logs direct).",
+            "services": [
+                "SmsGatewayService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/Integrations/SmsProviderController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ],
+            "actions": [
+                "store",
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to IntegrationProviderService (logs direct).",
+            "services": [
+                "IntegrationCredentialService",
+                "IntegrationProviderRegistry",
+                "IntegrationProviderService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/Integrations/SmsTemplateController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ],
+            "actions": [
+                "store",
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to SmsTemplateService (logs direct).",
+            "services": [
+                "SmsTemplateService"
+            ],
+            "in_baseline": false
         },
         {
             "controller": "app/Http/Controllers/Admin/InvestigationItemController.php",

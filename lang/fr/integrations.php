@@ -1,0 +1,95 @@
+<?php
+
+return [
+    // Shared
+    'integrations' => 'Intégrations',
+    'provider' => 'Fournisseur',
+    'providers' => 'Fournisseurs',
+    'active_provider' => 'Fournisseur actif',
+    'no_active_provider' => 'Aucun fournisseur actif',
+    'activate_provider' => 'Activer le fournisseur',
+    'deactivate_provider' => 'Désactiver le fournisseur',
+    'activate' => 'Activer',
+    'deactivate' => 'Désactiver',
+    'add_provider' => 'Ajouter un fournisseur',
+    'edit_provider' => 'Modifier le fournisseur',
+    'test_connection' => 'Tester la connexion',
+    'test' => 'Tester',
+    'edit' => 'Modifier',
+    'save' => 'Enregistrer',
+    'cancel' => 'Annuler',
+    'back' => 'Retour',
+    'none' => 'Aucun',
+    'yes' => 'Oui',
+    'no' => 'Non',
+
+    // Provider fields
+    'provider_code' => 'Code du fournisseur',
+    'select_provider_code' => 'Sélectionner un fournisseur',
+    'name' => 'Nom',
+    'description' => 'Description',
+    'environment' => 'Environnement',
+    'sandbox' => 'Bac à sable',
+    'live' => 'Production',
+    'base_url' => 'URL de base',
+    'base_url_hint' => 'Laisser vide pour utiliser la valeur par défaut de l’environnement sélectionné.',
+    'status' => 'Statut',
+    'sender_id' => 'Identifiant expéditeur',
+    'callback_url' => 'URL de rappel',
+    'webhook_secret' => 'Secret du webhook',
+    'webhook_secret_hint' => 'Indice du secret du webhook',
+    'last_tested' => 'Dernier test',
+    'last_test_result' => 'Résultat du dernier test',
+    'not_tested' => 'Pas encore testé',
+    'request_log' => 'Journal des requêtes',
+    'response_log' => 'Journal des réponses',
+
+    // Capabilities
+    'capabilities' => 'Capacités',
+    'supports_send' => 'Envoi',
+    'supports_status_check' => 'Vérification du statut',
+    'supports_callback' => 'Rappel',
+    'supports_collection' => 'Encaissement',
+    'supports_disbursement' => 'Décaissement',
+    'supports_refund' => 'Remboursement',
+
+    // Credentials
+    'credentials' => 'Identifiants',
+    'masked_credentials' => 'Identifiants masqués',
+    'credential_key' => 'Clé',
+    'credential_value' => 'Valeur',
+    'update_credentials' => 'Mettre à jour les identifiants',
+    'configured_credentials' => 'Identifiants configurés',
+    'no_credentials' => 'Aucun identifiant configuré pour le moment.',
+    'leave_blank_keep' => 'Laisser un champ vide pour conserver sa valeur actuelle.',
+    'credentials_never_shown' => 'Pour des raisons de sécurité, les valeurs enregistrées ne sont jamais réaffichées.',
+
+    // Activation
+    'activation_warning' => 'Activer ce fournisseur désactivera le fournisseur actuellement actif pour ce module.',
+    'only_one_active' => 'Un seul fournisseur peut être actif par module à la fois.',
+
+    // Flash messages
+    'flash' => [
+        'provider_created' => 'Fournisseur créé.',
+        'provider_updated' => 'Fournisseur mis à jour.',
+        'credentials_updated' => 'Identifiants mis à jour en toute sécurité.',
+        'provider_activated' => ':name est désormais le fournisseur actif.',
+        'provider_deactivated' => ':name a été désactivé.',
+        'sms_queued' => 'Le SMS a été mis en file d’attente pour l’envoi.',
+        'no_recipients' => 'Veuillez fournir au moins un destinataire valide.',
+        'template_created' => 'Modèle créé.',
+        'template_updated' => 'Modèle mis à jour.',
+        'payment_initiated' => 'Demande de paiement initiée.',
+        'payment_verified' => 'Paiement vérifié et enregistré.',
+        'payment_not_confirmed' => 'Le paiement n’est pas encore confirmé par le fournisseur.',
+        'refund_requested' => 'Demande de remboursement enregistrée.',
+    ],
+
+    // Controlled, user-safe errors
+    'errors' => [
+        'generic' => 'L’intégration n’a pas pu traiter la demande. Veuillez réessayer plus tard.',
+        'sms_not_configured' => 'Aucun fournisseur SMS actif n’est configuré. Veuillez configurer et activer un fournisseur SMS.',
+        'payment_not_configured' => 'Aucun fournisseur de paiement actif n’est configuré. Veuillez configurer et activer un fournisseur de paiement.',
+        'sms_body_required' => 'Le texte du message est obligatoire.',
+    ],
+];

@@ -1503,6 +1503,27 @@ class SidebarMenuBuilder
                     ],
                 ],
             ],
+            [
+                'title' => 'Integrations',
+                'items' => [
+                    [
+                        'label' => 'SMS Gateway',
+                        'icon' => 'ti ti-message-2',
+                        'route' => 'admin.integrations.sms.providers.index',
+                        'active_patterns' => ['admin.integrations.sms.*'],
+                        'permission' => 'integrations.sms.view',
+                        'module' => 'sms_gateway',
+                    ],
+                    [
+                        'label' => 'Payment Gateway',
+                        'icon' => 'ti ti-credit-card',
+                        'route' => 'admin.integrations.payments.providers.index',
+                        'active_patterns' => ['admin.integrations.payments.*'],
+                        'permission' => 'integrations.payments.view',
+                        'module' => 'payment_gateway',
+                    ],
+                ],
+            ],
             // [
             //     'title' => null,
             //     'items' => [
@@ -1617,7 +1638,7 @@ class SidebarMenuBuilder
 
             $result[] = [
                 'title' => 'Billing & Collections',
-                'items' => $pick([
+                'items' => array_merge($pick([
                     'Billing Dashboard',
                     'Invoices',
                     'Counter Sale',
@@ -1628,6 +1649,15 @@ class SidebarMenuBuilder
                     'Patient Statements',
                     'Discount Report',
                     'AR Aging',
+                ]), [
+                    [
+                        'label' => 'Payment API Transactions',
+                        'icon' => 'ti ti-cash-register',
+                        'route' => 'admin.integrations.payments.transactions.index',
+                        'active_patterns' => ['admin.integrations.payments.transactions.*'],
+                        'permission' => 'integrations.payments.transactions.view',
+                        'module' => 'payment_gateway',
+                    ],
                 ]),
             ];
 

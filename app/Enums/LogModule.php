@@ -30,6 +30,7 @@ enum LogModule: string
     case PERMISSIONS = 'PERMISSIONS';
     case SETTINGS = 'SETTINGS';
     case NOTIFICATIONS = 'NOTIFICATIONS';
+    case INTEGRATIONS = 'INTEGRATIONS';
     case AUTH = 'AUTH';
     case SYSTEM = 'SYSTEM';
 
@@ -52,6 +53,7 @@ enum LogModule: string
             self::STOCK, self::PHARMACY => 'info',
             self::BLOOD_BANK => 'danger',
             self::USERS, self::ROLES, self::PERMISSIONS, self::SETTINGS => 'dark',
+            self::INTEGRATIONS => 'info',
             self::PATIENT_MERGE => 'danger',
             default => 'secondary',
         };

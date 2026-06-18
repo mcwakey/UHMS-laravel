@@ -25,7 +25,9 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
@@ -50,6 +52,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Schema::defaultStringLength(191);
+
+        // Rate limiters. `api` backs the default API middleware group; the
+        // dedicated `integration-callbacks` limiter throttles inbound provider
+        // webhooks (keyed by source IP) so a noisy/abusive caller can't flood us.
+        RateLimiter::for('api', fn ($request) => Limit::perMinute(60)->by($request->user()?->id ?: $request->ip()));
+        RateLimiter::for('integration-callbacks', fn ($request) => Limit::perMinute(120)->by($request->ip()));
 
         Paginator::defaultView('vendor.pagination.uhms');
         Paginator::defaultSimpleView('vendor.pagination.uhms-simple');
