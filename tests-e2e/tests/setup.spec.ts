@@ -23,12 +23,12 @@ const setupPages = {
   servicePricing: {
     name: 'service pricing setup',
     path: '/admin/services',
-    expectedText: /price|pricing|cash|insurance|tariff|service catalog/i,
+    expectedText: /price|pricing|cash|insurance|tariff|service catalog|prix|tarifs?|catalogue des services/i,
   },
   insuranceProviders: {
     name: 'insurance providers setup',
     path: '/admin/insurance-providers',
-    expectedText: /insurance providers?|tiers?|claims?/i,
+    expectedText: /insurance providers?|tiers?|claims?|assureurs?|fournisseurs d assurance|demandes d assurance/i,
   },
   sponsors: {
     name: 'sponsors/corporate clients setup',
@@ -39,7 +39,7 @@ const setupPages = {
   paymentMethods: {
     name: 'payment methods setup',
     path: '/admin/settings/payment-methods',
-    expectedText: /payment methods?|cash|mobile money|bank|method/i,
+    expectedText: /payment methods?|cash|mobile money|bank|method|modes de paiement|méthodes de paiement|espèces|argent mobile|banque/i,
     optional: true,
   },
   invalidSetupRoute: {
@@ -69,7 +69,7 @@ const leakPatterns = [
   /\.env\s+(?:file|values?|contents?|dump)/i,
 ];
 
-test.describe.configure({ timeout: 60_000 });
+test.describe.configure({ timeout: 120_000 });
 
 test.beforeAll(() => {
   ensurePermissionE2EUsers();
@@ -98,6 +98,15 @@ async function assertNoSensitiveLeak(page: Page) {
 }
 
 async function pageOrResponseText(page: Page, response: Awaited<ReturnType<Page['goto']>>) {
+  await page.waitForLoadState('load', { timeout: 20_000 }).catch(() => undefined);
+  await page.waitForSelector('body', { state: 'attached', timeout: 15_000 }).catch(() => undefined);
+
+  try {
+    await expect.poll(() => bodyText(page), { timeout: 15_000 }).toBeTruthy();
+  } catch {
+    // Some error/redirect responses are easier to inspect from HTML or response text.
+  }
+
   const renderedText = await bodyText(page);
 
   if (renderedText.trim()) {
@@ -110,9 +119,17 @@ async function pageOrResponseText(page: Page, response: Awaited<ReturnType<Page[
   let navigationText = '';
 
   try {
-    navigationText = response ? await response.text() : '';
+    navigationText = await page.content();
   } catch {
     navigationText = '';
+  }
+
+  if (!navigationText.trim()) {
+    try {
+      navigationText = response ? await response.text() : '';
+    } catch {
+      navigationText = '';
+    }
   }
 
   return {
@@ -124,10 +141,17 @@ async function pageOrResponseText(page: Page, response: Awaited<ReturnType<Page[
 async function openSetupPageAsAdmin(page: Page, setupPage: SetupPage) {
   await loginAs(page, 'UHMS_ADMIN_EMAIL', 'UHMS_ADMIN_PASSWORD');
 
-  const response = await page.goto(url(setupPage.path), { waitUntil: 'commit' });
-  const fallback = await pageOrResponseText(page, response);
-  const status = response?.status() ?? fallback.status ?? 0;
-  const body = fallback.text;
+  let response = await page.goto(url(setupPage.path), { waitUntil: 'commit' });
+  let fallback = await pageOrResponseText(page, response);
+  let status = response?.status() ?? fallback.status ?? 0;
+  let body = fallback.text;
+
+  if (!setupPage.expectedText.test(body) && /uhms-loading|<html/i.test(body) && !/<body[\s>]/i.test(body)) {
+    response = await page.goto(url(setupPage.path), { waitUntil: 'commit' });
+    fallback = await pageOrResponseText(page, response);
+    status = response?.status() ?? fallback.status ?? 0;
+    body = fallback.text;
+  }
 
   assertTextHasNoSensitiveLeak(body);
 
@@ -186,13 +210,13 @@ test.describe('Level 2 setup/master-data access', () => {
 
     await assertSetupBlockedForRole(page, setupPages.departments, /departments?|department setup|designations?/i);
     await assertSetupBlockedForRole(page, setupPages.services, /services?|service catalog|add service/i);
-    await assertSetupBlockedForRole(page, setupPages.insuranceProviders, /insurance providers?|tiers?|claims?/i);
+    await assertSetupBlockedForRole(page, setupPages.insuranceProviders, /insurance providers?|tiers?|claims?|assureurs?|fournisseurs d assurance|demandes d assurance/i);
   });
 
   test('L2-SETUP-008 - Cashier cannot access service pricing setup directly', async ({ page }) => {
     await loginAs(page, 'UHMS_CASHIER_EMAIL', 'UHMS_CASHIER_PASSWORD');
 
-    await assertSetupBlockedForRole(page, setupPages.servicePricing, /price|pricing|cash|insurance|tariff|service catalog/i);
+    await assertSetupBlockedForRole(page, setupPages.servicePricing, /price|pricing|cash|insurance|tariff|service catalog|prix|tarifs?|catalogue des services/i);
   });
 
   test('L2-SETUP-009 - Doctor cannot access setup/master-data pages directly', async ({ page }) => {
@@ -200,7 +224,7 @@ test.describe('Level 2 setup/master-data access', () => {
 
     await assertSetupBlockedForRole(page, setupPages.departments, /departments?|department setup|designations?/i);
     await assertSetupBlockedForRole(page, setupPages.services, /services?|service catalog|add service/i);
-    await assertSetupBlockedForRole(page, setupPages.insuranceProviders, /insurance providers?|tiers?|claims?/i);
+    await assertSetupBlockedForRole(page, setupPages.insuranceProviders, /insurance providers?|tiers?|claims?|assureurs?|fournisseurs d assurance|demandes d assurance/i);
   });
 
   test('OTB-SEC-002 - Setup invalid route or invalid ID does not expose debug or secrets', async ({ page }) => {

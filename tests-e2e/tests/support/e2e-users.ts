@@ -1,5 +1,9 @@
-import { execFileSync } from 'node:child_process';
+// import { execFileSync } from 'node:child_process';
 import { requiredCredentials } from './auth';
+
+import fs from 'fs';
+import path from 'path';
+import { execFileSync } from 'child_process';
 
 type E2EUser = {
   email: string;
@@ -123,9 +127,36 @@ function optionalCredentialsFor(
   return [credentialsFor(emailEnv, passwordEnv, role, employeeId, permissions)];
 }
 
+function findLaravelRoot(startDir: string): string {
+  let dir = path.resolve(startDir);
+
+  while (true) {
+    const hasLaravelFiles =
+      fs.existsSync(path.join(dir, 'artisan')) &&
+      fs.existsSync(path.join(dir, 'vendor', 'autoload.php')) &&
+      fs.existsSync(path.join(dir, 'bootstrap', 'app.php'));
+
+    if (hasLaravelFiles) {
+      return dir;
+    }
+
+    const parent = path.dirname(dir);
+
+    if (parent === dir) {
+      throw new Error(
+        `Could not find Laravel root from ${startDir}. Expected artisan, vendor/autoload.php, and bootstrap/app.php.`
+      );
+    }
+
+    dir = parent;
+  }
+}
+
+const laravelRoot = findLaravelRoot(process.cwd());
+
 function runPhp(script: string) {
   execFileSync(phpBinary, ['-r', script], {
-    cwd: process.cwd(),
+    cwd: laravelRoot,
     env: {
       ...process.env,
       UHMS_E2E_USERS_JSON: JSON.stringify(users),
@@ -155,7 +186,9 @@ foreach ($users as $data) {
 
     $existing = App\Models\User::withTrashed()->where('email', $data['email'])->first();
 
-    if ($existing && ! str_starts_with((string) $existing->employee_id, $prefix)) {
+    $isLocalE2EEmail = str_ends_with((string) $data['email'], '@uhms.local');
+
+    if ($existing && ! str_starts_with((string) $existing->employee_id, $prefix) && ! $isLocalE2EEmail) {
         continue;
     }
 
@@ -193,9 +226,7 @@ foreach ($users as $data) {
 
     $data['role'] ? $user->syncRoles([$data['role']]) : $user->syncRoles([]);
 
-    if ($permissions) {
-        $user->givePermissionTo($permissions);
-    }
+    $user->syncPermissions($permissions);
 }
 `);
 }

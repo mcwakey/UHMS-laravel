@@ -1,9 +1,11 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, type Page } from '@playwright/test';
 
 const supportDir = dirname(fileURLToPath(import.meta.url));
+const phpBinary = process.env.UHMS_PHP_BINARY ?? 'php';
 
 loadEnvFile(resolve(supportDir, '..', '.env'));
 loadEnvFile(resolve(supportDir, '..', '..', '.env'));
@@ -11,6 +13,30 @@ loadEnvFile(resolve(supportDir, '..', '..', '.env'));
 export const baseURL = process.env.UHMS_BASE_URL ?? 'http://localhost:8000';
 
 const loginPath = '/login';
+
+function findLaravelRoot(startDir: string): string {
+  let dir = resolve(startDir);
+
+  while (true) {
+    if (
+      existsSync(resolve(dir, 'artisan')) &&
+      existsSync(resolve(dir, 'vendor', 'autoload.php')) &&
+      existsSync(resolve(dir, 'bootstrap', 'app.php'))
+    ) {
+      return dir;
+    }
+
+    const parent = resolve(dir, '..');
+
+    if (parent === dir) {
+      throw new Error(`Could not find Laravel root from ${startDir}.`);
+    }
+
+    dir = parent;
+  }
+}
+
+const laravelRoot = findLaravelRoot(supportDir);
 
 function loadEnvFile(path: string) {
   if (!existsSync(path)) {
@@ -54,6 +80,46 @@ export function url(path: string) {
   return new URL(path, baseURL).toString();
 }
 
+function clearLoginRateLimits(email: string) {
+  execFileSync(
+    phpBinary,
+    [
+      '-r',
+      String.raw`
+require 'vendor/autoload.php';
+
+$app = require 'bootstrap/app.php';
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
+
+$email = getenv('UHMS_E2E_LOGIN_EMAIL') ?: '';
+$ips = ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
+$domains = ['', 'localhost', 'localhost:8000'];
+
+foreach ($ips as $ipAddress) {
+    Illuminate\Support\Facades\RateLimiter::clear(
+        Illuminate\Support\Str::transliterate(Illuminate\Support\Str::lower($email) . '|' . $ipAddress)
+    );
+
+    foreach ($domains as $domain) {
+        $routeThrottleKey = $domain . '|' . $ipAddress;
+        Illuminate\Support\Facades\RateLimiter::clear($routeThrottleKey);
+        Illuminate\Support\Facades\RateLimiter::clear(sha1($routeThrottleKey));
+    }
+}
+`,
+    ],
+    {
+      cwd: laravelRoot,
+      env: {
+        ...process.env,
+        UHMS_E2E_LOGIN_EMAIL: email,
+      },
+      stdio: 'pipe',
+    },
+  );
+}
+
 export async function gotoLogin(page: Page) {
   await page.goto(url(loginPath), { waitUntil: 'commit' });
 
@@ -83,6 +149,7 @@ export async function submitLoginForm(page: Page) {
 
 export async function loginAs(page: Page, emailEnv: string, passwordEnv: string) {
   const credentials = requiredCredentials(emailEnv, passwordEnv);
+  clearLoginRateLimits(credentials.email);
 
   await gotoLogin(page);
   if (new URL(page.url()).pathname !== loginPath) {
