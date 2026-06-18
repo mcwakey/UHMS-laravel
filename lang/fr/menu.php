@@ -225,4 +225,9 @@ return [
     'sms_gateway' => 'Passerelle SMS',
     'payment_gateway' => 'Passerelle de paiement',
     'payment_api_transactions' => 'Transactions de paiement API',
+    'provider_health' => 'Santé des fournisseurs',
+    'sms_queue' => 'File d’attente SMS',
+    'sms_events' => 'Événements SMS',
+    'payment_reconciliation' => 'Réconciliation des paiements',
+    'payment_request_links' => 'Liens de demande de paiement',
 ];

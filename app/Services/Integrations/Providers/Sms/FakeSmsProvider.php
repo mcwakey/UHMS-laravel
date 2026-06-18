@@ -63,7 +63,7 @@ class FakeSmsProvider extends AbstractIntegrationProvider implements SmsProvider
             providerStatus: $payload['provider_status'] ?? ($payload['status'] ?? 'DELIVRD'),
             reportedAt: $payload['reported_at'] ?? now()->toIso8601String(),
             eventType: 'delivery_report',
-            signatureValid: true,
+            signatureValid: $this->verifySignature($payload, $headers),
             raw: $payload,
         );
     }

@@ -91,5 +91,12 @@ return [
         'sms_not_configured' => 'No active SMS provider is configured. Please configure and activate an SMS provider first.',
         'payment_not_configured' => 'No active payment provider is configured. Please configure and activate a payment provider first.',
         'sms_body_required' => 'The message text is required.',
+        'unknown_placeholders' => 'The template contains unknown placeholder(s): :list.',
+        'link_expired' => 'This payment link has expired.',
+        'link_unusable' => 'This payment link can no longer be used.',
+        'invoice_settled' => 'This invoice has already been settled.',
+        'refund_not_eligible' => 'Only a verified, linked provider payment can be refunded.',
+        'refund_amount_invalid' => 'The refund amount must be greater than zero.',
+        'refund_over_amount' => 'The refund exceeds the original payment amount.',
     ],
 ];

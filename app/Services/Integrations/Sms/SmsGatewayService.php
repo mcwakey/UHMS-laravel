@@ -88,28 +88,151 @@ class SmsGatewayService
             return $message->load('recipients');
         });
 
+        $message->update(['queued_at' => now()]);
+
         $this->logger->log(LogModule::INTEGRATIONS, 'SMS_MESSAGE_CREATED', [
             'source_type' => 'sms_message',
             'source_id' => $message->id,
             'metadata' => ['type' => $message->message_type, 'recipients' => $message->recipients->count()],
         ], $message, 'SMS message created');
 
-        $this->dispatchToProvider($provider, $message);
+        $this->logger->log(LogModule::INTEGRATIONS, 'SMS_MESSAGE_QUEUED', [
+            'source_type' => 'sms_message',
+            'source_id' => $message->id,
+            'metadata' => ['queued' => $this->shouldQueue()],
+        ], $message, 'SMS message queued');
+
+        $this->queueOrSend($message);
 
         return $message->refresh()->load('recipients');
+    }
+
+    /** Whether a real (non-sync) queue connection is configured. */
+    public function shouldQueue(): bool
+    {
+        return ! in_array((string) config('queue.default'), ['sync', ''], true);
+    }
+
+    /**
+     * Dispatch delivery to the queue when one is configured; otherwise run a
+     * controlled synchronous fallback. Either way, SMS failure never blocks the
+     * calling workflow.
+     */
+    public function queueOrSend(SmsMessage $message): void
+    {
+        if ($this->shouldQueue()) {
+            \App\Jobs\Integrations\SendSmsMessageJob::dispatch($message->id);
+            return;
+        }
+        $this->deliverNow($message);
+    }
+
+    /**
+     * Send the still-sendable recipients of a message NOW (used by the queue job
+     * and the synchronous fallback). Resolves the active provider itself so it is
+     * safe to run from a queued context with no request.
+     */
+    public function deliverNow(SmsMessage $message, bool $resend = false): SmsMessage
+    {
+        $provider = $this->providers->activeProvider(IntegrationProvider::MODULE_SMS);
+        if (! $provider) {
+            $this->markAllFailed($message, $message->recipients()->whereNotIn('status', [
+                SmsMessageRecipient::STATUS_SENT, SmsMessageRecipient::STATUS_DELIVERED,
+            ])->get(), 'no_active_provider', 'No active SMS provider.');
+            return $message->refresh()->load('recipients');
+        }
+
+        $this->dispatchToProvider($provider, $message->load('recipients'), $resend);
+
+        return $message->refresh()->load('recipients');
+    }
+
+    /**
+     * Recipient-safe retry: re-deliver only failed/queued recipients, never the
+     * ones already sent/delivered. Honours max_retries.
+     */
+    public function retry(SmsMessage $message): SmsMessage
+    {
+        if ((int) $message->retry_count >= (int) ($message->max_retries ?: 3)) {
+            return $message;
+        }
+
+        $message->update([
+            'retry_count' => (int) $message->retry_count + 1,
+            'last_retry_at' => now(),
+        ]);
+
+        $this->logger->log(LogModule::INTEGRATIONS, 'SMS_MESSAGE_RETRY_REQUESTED', [
+            'source_type' => 'sms_message',
+            'source_id' => $message->id,
+            'metadata' => ['retry_count' => $message->retry_count],
+        ], $message, 'SMS message retry requested');
+
+        return $this->deliverNow($message, resend: true);
     }
 
     /** Resend the still-unsent recipients of an existing message. */
     public function resend(SmsMessage $message): SmsMessage
     {
-        $provider = $this->providers->activeProvider(IntegrationProvider::MODULE_SMS);
-        if (! $provider) {
-            throw IntegrationException::notConfigured('sms');
+        return $this->retry($message);
+    }
+
+    /**
+     * Send a single recipient (used by SendSmsRecipientJob for targeted retry).
+     * Never re-sends an already sent/delivered recipient.
+     */
+    public function deliverRecipient(SmsMessageRecipient $recipient): void
+    {
+        if (in_array($recipient->status, [SmsMessageRecipient::STATUS_SENT, SmsMessageRecipient::STATUS_DELIVERED], true)
+            || $recipient->error_code === 'invalid_number') {
+            return;
         }
 
-        $this->dispatchToProvider($provider, $message, resend: true);
+        $provider = $this->providers->activeProvider(IntegrationProvider::MODULE_SMS);
+        $message = $recipient->message;
+        if (! $provider || ! $message) {
+            $recipient->update(['status' => SmsMessageRecipient::STATUS_FAILED, 'failed_at' => now(), 'error_code' => 'no_active_provider']);
+            return;
+        }
 
-        return $message->refresh()->load('recipients');
+        $request = new SmsSendRequest(
+            body: $message->message_body,
+            recipients: [['recipient_id' => $recipient->id, 'phone' => $recipient->normalized_phone_number, 'name' => $recipient->recipient_name]],
+            senderId: $message->sender_id,
+            reference: $message->message_uuid,
+            messageType: $message->message_type,
+        );
+
+        try {
+            $result = $this->registry->makeSms($provider)->send($request);
+        } catch (\Throwable $e) {
+            $recipient->update(['status' => SmsMessageRecipient::STATUS_FAILED, 'failed_at' => now(), 'error_code' => 'send_exception']);
+            $this->finaliseMessageStatus($message->refresh()->load('recipients'));
+            return;
+        }
+
+        $info = $result->perRecipient[$recipient->normalized_phone_number] ?? null;
+        if ($info && ($info['status'] ?? null) === 'sent') {
+            $recipient->update([
+                'status' => SmsMessageRecipient::STATUS_SENT,
+                'provider_message_id' => $info['provider_message_id'] ?? null,
+                'provider_status' => $info['provider_status'] ?? null,
+                'sent_at' => now(),
+                'retry_count' => (int) $recipient->retry_count + 1,
+                'last_retry_at' => now(),
+            ]);
+        } else {
+            $recipient->update([
+                'status' => SmsMessageRecipient::STATUS_FAILED,
+                'failed_at' => now(),
+                'error_code' => $info['error_code'] ?? 'send_failed',
+                'error_message' => $info['error_message'] ?? null,
+                'retry_count' => (int) $recipient->retry_count + 1,
+                'last_retry_at' => now(),
+            ]);
+        }
+
+        $this->finaliseMessageStatus($message->refresh()->load('recipients'));
     }
 
     public function handleDeliveryCallback(IntegrationProvider $provider, array $payload, array $headers = []): SmsCallbackResult

@@ -72,7 +72,7 @@ class FakePaymentProvider extends AbstractIntegrationProvider implements Payment
             amount: isset($payload['amount']) ? (float) $payload['amount'] : null,
             currency: $payload['currency'] ?? config('integrations.default_currency', 'GHS'),
             eventType: $payload['event_type'] ?? 'payment_status',
-            signatureValid: true,
+            signatureValid: $this->verifySignature($payload, $headers),
             raw: $payload,
         );
     }

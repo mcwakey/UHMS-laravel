@@ -2,21 +2,48 @@
 
 namespace App\Http\Controllers\Admin\Integrations;
 
+use App\Enums\LogModule;
 use App\Http\Controllers\Controller;
 use App\Models\SmsTemplate;
+use App\Services\ActivityLogService;
+use App\Services\Integrations\Sms\SmsTemplateRenderer;
 use App\Services\Integrations\Sms\SmsTemplateService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class SmsTemplateController extends Controller
 {
-    public function __construct(protected SmsTemplateService $templates) {}
+    public function __construct(
+        protected SmsTemplateService $templates,
+        protected SmsTemplateRenderer $renderer,
+    ) {}
 
     public function index()
     {
         $templates = SmsTemplate::orderBy('name')->paginate(20);
+        $placeholders = SmsTemplateRenderer::ALLOWED;
 
-        return view('admin.integrations.sms.templates.index', compact('templates'));
+        return view('admin.integrations.sms.templates.index', compact('templates', 'placeholders'));
+    }
+
+    /** Preview a template body with sample data + placeholder validation. */
+    public function preview(Request $request, ActivityLogService $logger)
+    {
+        $data = $request->validate([
+            'body' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $unknown = $this->renderer->unknownPlaceholders($data['body']);
+        $rendered = $this->renderer->render($data['body'], $this->renderer->sampleData(), strict: false);
+
+        $logger->log(LogModule::INTEGRATIONS, 'SMS_TEMPLATE_PREVIEWED', [
+            'metadata' => ['unknown_placeholders' => $unknown],
+        ], null, 'SMS template previewed');
+
+        return back()
+            ->with('sms_preview_rendered', $rendered)
+            ->with('sms_preview_unknown', $unknown)
+            ->withInput();
     }
 
     public function store(Request $request)

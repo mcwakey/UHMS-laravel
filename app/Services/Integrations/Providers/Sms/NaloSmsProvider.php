@@ -120,7 +120,7 @@ class NaloSmsProvider extends AbstractIntegrationProvider implements SmsProvider
             providerStatus: $payload['status'] ?? ($payload['dlr_status'] ?? null),
             reportedAt: $payload['timestamp'] ?? now()->toIso8601String(),
             eventType: 'delivery_report',
-            signatureValid: false, // Nalo does not sign DLRs; rely on IP allow-list.
+            signatureValid: $this->verifySignature($payload, $headers),
             raw: $payload,
         );
     }

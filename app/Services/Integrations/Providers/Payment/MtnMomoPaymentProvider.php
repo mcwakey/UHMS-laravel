@@ -154,7 +154,7 @@ class MtnMomoPaymentProvider extends AbstractIntegrationProvider implements Paym
             amount: isset($payload['amount']) ? (float) $payload['amount'] : null,
             currency: $payload['currency'] ?? null,
             eventType: 'payment_status',
-            signatureValid: false,
+            signatureValid: $this->verifySignature($payload, $headers),
             raw: $payload,
         );
     }

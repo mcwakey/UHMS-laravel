@@ -81,6 +81,19 @@ class PaymentCallbackService
             'metadata' => ['provider' => $callback->provider_code, 'status' => $result->status],
         ], $txn, 'Payment callback received');
 
+        // Signature/secret hardening: a provider that requires a signature must
+        // present a valid one. A signature failure NEVER creates a UHMS payment;
+        // the transaction is left for provider-verified manual recheck.
+        if ($provider->require_signature && ! $result->signatureValid) {
+            $this->logger->log(LogModule::INTEGRATIONS, 'PAYMENT_TRANSACTION_CALLBACK_RECEIVED', [
+                'source_type' => 'payment_provider_transaction',
+                'source_id' => $txn->id,
+                'severity' => \App\Enums\LogSeverity::WARNING,
+                'metadata' => ['signature_valid' => false, 'blocked' => true],
+            ], $txn, 'Payment callback signature invalid — not posted');
+            return $this->finish($callback, 'signature_invalid');
+        }
+
         // Idempotency: a transaction already converted to a UHMS payment is done.
         if ($txn->hasUhmsPayment()) {
             $this->logger->log(LogModule::INTEGRATIONS, 'PAYMENT_TRANSACTION_DUPLICATE_CALLBACK_IGNORED', [

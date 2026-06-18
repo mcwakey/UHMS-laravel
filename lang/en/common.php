@@ -107,6 +107,8 @@ return [
     'per_page' => 'Per Page',
     'showing_results' => 'Showing :from to :to of :total results',
     'language' => 'Language',
+    'english' => 'English',
+    'french' => 'Français',
     'doctor' => 'Doctor',
     'priority' => 'Priority',
     'id' => 'ID',

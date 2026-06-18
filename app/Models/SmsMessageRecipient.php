@@ -31,6 +31,10 @@ class SmsMessageRecipient extends Model
         'failed_at',
         'error_code',
         'error_message',
+        'retry_count',
+        'last_retry_at',
+        'next_retry_at',
+        'provider_status_checked_at',
         'metadata_snapshot',
     ];
 
@@ -40,6 +44,10 @@ class SmsMessageRecipient extends Model
             'sent_at' => 'datetime',
             'delivered_at' => 'datetime',
             'failed_at' => 'datetime',
+            'last_retry_at' => 'datetime',
+            'next_retry_at' => 'datetime',
+            'provider_status_checked_at' => 'datetime',
+            'retry_count' => 'integer',
             'metadata_snapshot' => 'array',
         ];
     }

@@ -18,6 +18,7 @@ class SmsMessage extends Model
     public const STATUS_CANCELLED = 'cancelled';
     public const STATUS_DELIVERED = 'delivered';
     public const STATUS_UNDELIVERED = 'undelivered';
+    public const STATUS_EXPIRED = 'expired';
 
     protected $fillable = [
         'message_uuid',
@@ -28,12 +29,18 @@ class SmsMessage extends Model
         'message_type',
         'status',
         'scheduled_at',
+        'queued_at',
         'sent_at',
         'completed_at',
         'failed_at',
         'provider_batch_reference',
         'error_code',
         'error_message',
+        'retry_count',
+        'max_retries',
+        'last_retry_at',
+        'next_retry_at',
+        'provider_status_checked_at',
         'metadata_snapshot',
         'created_by',
     ];
@@ -42,9 +49,15 @@ class SmsMessage extends Model
     {
         return [
             'scheduled_at' => 'datetime',
+            'queued_at' => 'datetime',
             'sent_at' => 'datetime',
             'completed_at' => 'datetime',
             'failed_at' => 'datetime',
+            'last_retry_at' => 'datetime',
+            'next_retry_at' => 'datetime',
+            'provider_status_checked_at' => 'datetime',
+            'retry_count' => 'integer',
+            'max_retries' => 'integer',
             'metadata_snapshot' => 'array',
         ];
     }

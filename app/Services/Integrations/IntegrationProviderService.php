@@ -152,6 +152,9 @@ class IntegrationProviderService
             'last_tested_at' => now(),
             'last_test_status' => $result->status(),
             'last_test_message' => $result->message,
+            'last_success_at' => $result->success ? now() : $provider->last_success_at,
+            'last_failure_at' => $result->success ? $provider->last_failure_at : now(),
+            'last_error_message' => $result->success ? $provider->last_error_message : $result->message,
             'updated_by' => Auth::id(),
         ]);
 

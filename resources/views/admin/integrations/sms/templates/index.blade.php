@@ -8,6 +8,30 @@
 
         <x-page-header :title="__('sms.sms_templates')" :description="__('sms.sms_gateway')" icon="ti-template" />
 
+        {{-- Template preview + placeholder validation --}}
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><strong>{{ __('sms.preview_template') }}</strong></div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">{{ __('sms.template_placeholders') }}:
+                    @foreach(($placeholders ?? []) as $ph)<code class="me-1">{{ '{{' . $ph . '}}' }}</code>@endforeach
+                </p>
+                <form method="POST" action="{{ route('admin.integrations.sms.templates.preview') }}">
+                    @csrf
+                    <textarea name="body" rows="2" maxlength="1000" class="form-control mb-2" placeholder="Dear {{ '{{patient_name}}' }}, ...">{{ old('body') }}</textarea>
+                    <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="ti ti-eye me-1"></i>{{ __('sms.preview') }}</button>
+                </form>
+                @if(session()->has('sms_preview_rendered'))
+                    <div class="mt-3">
+                        <div class="fw-semibold small">{{ __('sms.preview_result') }}</div>
+                        <div class="alert alert-light border mt-1 mb-1">{{ session('sms_preview_rendered') }}</div>
+                        @if(! empty(session('sms_preview_unknown')))
+                            <div class="text-danger small"><i class="ti ti-alert-triangle me-1"></i>{{ __('sms.unknown_placeholders') }}: {{ implode(', ', session('sms_preview_unknown')) }}</div>
+                        @endif
+                    </div>
+                @endif
+            </div>
+        </div>
+
         <div class="row g-3">
             <div class="col-lg-5">
                 <div class="card border-0 shadow-sm">

@@ -231,4 +231,9 @@ return [
     'sms_gateway' => 'SMS Gateway',
     'payment_gateway' => 'Payment Gateway',
     'payment_api_transactions' => 'Payment API Transactions',
+    'provider_health' => 'Provider Health',
+    'sms_queue' => 'SMS Queue',
+    'sms_events' => 'SMS Events',
+    'payment_reconciliation' => 'Payment Reconciliation',
+    'payment_request_links' => 'Payment Request Links',
 ];

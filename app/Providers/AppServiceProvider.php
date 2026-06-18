@@ -94,6 +94,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(LabResultsCompleted::class, NotifyDoctorLabResults::class);
         Event::listen(PrescriptionCreated::class, NotifyPharmacists::class);
         Event::listen(PaymentRecorded::class, NotifyAccountants::class);
+        Event::listen(PaymentRecorded::class, \App\Listeners\Integrations\SendPaymentReceiptSms::class);
         Event::listen(PatientAdmitted::class, NotifyWardStaffAdmission::class);
         Event::listen(PatientDischarged::class, NotifyAccountantsDischarge::class);
         Event::listen(StockLow::class, NotifyStockManagers::class);

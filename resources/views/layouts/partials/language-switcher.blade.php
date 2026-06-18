@@ -19,7 +19,7 @@
                 <input type="hidden" name="locale" value="en">
                 <button type="submit" class="dropdown-item d-flex align-items-center {{ app()->getLocale() === 'en' ? 'active' : '' }}">
                     <span class="me-2" aria-hidden="true">🇬🇧</span>
-                    <span>English</span>
+                    <span>{{ __('common.english') }}</span>
                     @if(app()->getLocale() === 'en')<i class="ti ti-check ms-auto"></i>@endif
                 </button>
             </form>
@@ -28,7 +28,7 @@
                 <input type="hidden" name="locale" value="fr">
                 <button type="submit" class="dropdown-item d-flex align-items-center {{ app()->getLocale() === 'fr' ? 'active' : '' }}">
                     <span class="me-2" aria-hidden="true">🇫🇷</span>
-                    <span>Français</span>
+                    <span>{{ __('common.french') }}</span>
                     @if(app()->getLocale() === 'fr')<i class="ti ti-check ms-auto"></i>@endif
                 </button>
             </form>

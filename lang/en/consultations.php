@@ -141,7 +141,7 @@ return [
         'session_locked' => 'Session locked',
         'session_locked_help' => 'this outpatient session is read-only.',
         'presenting_complaints' => 'Presenting Complaints',
-        'hopc' => 'HOPC',
+        'hopc' => 'History of Presenting Complaint',
         'examination' => 'Examination',
         'diagnoses' => 'Diagnoses',
         'investigations' => 'Investigations',

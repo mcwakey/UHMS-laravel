@@ -1461,6 +1461,14 @@ Route::middleware('auth')->group(function () {
                     });
 
                     Route::get('delivery-reports', [\App\Http\Controllers\Admin\Integrations\SmsDeliveryReportController::class, 'index'])->name('delivery-reports.index')->middleware('can:integrations.sms.reports.view');
+
+                    // Phase 2 — queue, events, status reconciliation, template preview
+                    Route::get('queue', [\App\Http\Controllers\Admin\Integrations\SmsQueueController::class, 'index'])->name('queue.index')->middleware('can:integrations.sms.queue.view');
+                    Route::post('messages/{message}/retry', [\App\Http\Controllers\Admin\Integrations\SmsQueueController::class, 'retry'])->name('queue.retry')->middleware('can:integrations.sms.queue.retry');
+                    Route::post('status-reconcile', [\App\Http\Controllers\Admin\Integrations\SmsQueueController::class, 'reconcile'])->name('status.reconcile')->middleware('can:integrations.sms.status.reconcile');
+                    Route::get('events', [\App\Http\Controllers\Admin\Integrations\SmsEventController::class, 'index'])->name('events.index')->middleware('can:integrations.sms.events.manage');
+                    Route::put('events', [\App\Http\Controllers\Admin\Integrations\SmsEventController::class, 'update'])->name('events.update')->middleware('can:integrations.sms.events.manage');
+                    Route::post('templates/preview', [\App\Http\Controllers\Admin\Integrations\SmsTemplateController::class, 'preview'])->name('templates.preview')->middleware('can:integrations.sms.templates.manage');
                 });
 
             // ── Payment Gateway ──────────────────────────────────────────
@@ -1484,7 +1492,22 @@ Route::middleware('auth')->group(function () {
                     Route::post('transactions/{transaction}/refunds', [\App\Http\Controllers\Admin\Integrations\PaymentRefundController::class, 'store'])->name('refunds.store')->middleware('can:integrations.payments.refunds.manage');
 
                     Route::get('callbacks', [\App\Http\Controllers\Admin\Integrations\PaymentCallbackController::class, 'index'])->name('callbacks.index')->middleware('can:integrations.payments.callbacks.view');
+
+                    // Phase 2 — reconciliation dashboard, recheck/expire, refund bridge, request links
+                    Route::get('reconciliation', [\App\Http\Controllers\Admin\Integrations\PaymentReconciliationController::class, 'index'])->name('reconciliation.index')->middleware('can:integrations.payments.reconciliation.view');
+                    Route::post('transactions/{transaction}/recheck', [\App\Http\Controllers\Admin\Integrations\PaymentReconciliationController::class, 'recheck'])->name('reconciliation.recheck')->middleware('can:integrations.payments.reconciliation.verify');
+                    Route::post('transactions/{transaction}/expire', [\App\Http\Controllers\Admin\Integrations\PaymentReconciliationController::class, 'markExpired'])->name('transactions.expire')->middleware('can:integrations.payments.reconciliation.expire');
+                    Route::post('transactions/{transaction}/cancel', [\App\Http\Controllers\Admin\Integrations\PaymentReconciliationController::class, 'cancel'])->name('transactions.cancel')->middleware('can:integrations.payments.reconciliation.expire');
+                    Route::post('transactions/{transaction}/refund-bridge', [\App\Http\Controllers\Admin\Integrations\PaymentRefundController::class, 'bridge'])->name('refunds.bridge')->middleware('can:integrations.payments.refunds.prepare');
+
+                    Route::get('request-links', [\App\Http\Controllers\Admin\Integrations\PaymentRequestLinkController::class, 'index'])->name('request-links.index')->middleware('can:integrations.payments.request_links.manage');
+                    Route::post('request-links', [\App\Http\Controllers\Admin\Integrations\PaymentRequestLinkController::class, 'store'])->name('request-links.store')->middleware('can:integrations.payments.request_links.manage');
+                    Route::post('request-links/{link}/expire', [\App\Http\Controllers\Admin\Integrations\PaymentRequestLinkController::class, 'expire'])->name('request-links.expire')->middleware('can:integrations.payments.request_links.manage');
+                    Route::post('invoices/{invoice}/payment-request-sms', [\App\Http\Controllers\Admin\Integrations\PaymentRequestLinkController::class, 'sendSms'])->name('invoices.payment-request-sms')->middleware('can:integrations.payments.request_links.manage');
                 });
+
+            // ── Provider Health (spans both modules; admin/IT) ───────────
+            Route::get('health', [\App\Http\Controllers\Admin\Integrations\ProviderHealthController::class, 'index'])->name('health.index')->middleware('can:integrations.payments.reconciliation.view');
         });
 
         // ICD-10 Code Database

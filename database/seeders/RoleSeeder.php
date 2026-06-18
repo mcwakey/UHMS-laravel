@@ -709,6 +709,18 @@ class RoleSeeder extends Seeder
             'integrations.payments.callbacks.view',
             'integrations.payments.refunds.manage',
 
+            // ── External Integrations Phase 2 ─────────────────────────────
+            'integrations.sms.queue.view',
+            'integrations.sms.queue.retry',
+            'integrations.sms.events.manage',
+            'integrations.sms.status.reconcile',
+            'integrations.payments.reconciliation.view',
+            'integrations.payments.reconciliation.verify',
+            'integrations.payments.reconciliation.expire',
+            'integrations.payments.refunds.prepare',
+            'integrations.payments.refunds.execute',
+            'integrations.payments.request_links.manage',
+
             // ── Settings ─────────────────────────────────────────────────
             'settings.view',
             'settings.manage',
@@ -1012,6 +1024,7 @@ class RoleSeeder extends Seeder
             'appointments.view', 'appointments.create', 'appointments.edit', 'appointments.update', 'appointments.cancel',
             // Patient communication: send approved SMS + view delivery status only
             'integrations.sms.view', 'integrations.sms.send', 'integrations.sms.reports.view',
+            'integrations.sms.queue.view',
             'notifications.view',
         ]);
 
@@ -1034,6 +1047,8 @@ class RoleSeeder extends Seeder
             'integrations.payments.transactions.view',
             'integrations.payments.transactions.initiate',
             'integrations.payments.transactions.verify',
+            'integrations.payments.reconciliation.view',
+            'integrations.payments.request_links.manage',
             'notifications.view',
         ]);
 
@@ -1182,6 +1197,9 @@ class RoleSeeder extends Seeder
             'integrations.payments.transactions.initiate',
             'integrations.payments.transactions.verify',
             'integrations.payments.callbacks.view',
+            'integrations.payments.reconciliation.view',
+            'integrations.payments.reconciliation.verify',
+            'integrations.payments.request_links.manage',
             'notifications.view',
         ]);
 
@@ -1211,6 +1229,13 @@ class RoleSeeder extends Seeder
                 'accounting.bank_reconciliation.reverse',
                 'accounting.bank_adjustments.approve',
                 'accounting.bank_adjustments.post',
+                // External integrations — payment operations oversight
+                'integrations.payments.reconciliation.view',
+                'integrations.payments.reconciliation.verify',
+                'integrations.payments.reconciliation.expire',
+                'integrations.payments.refunds.prepare',
+                'integrations.payments.refunds.execute',
+                'integrations.payments.request_links.manage',
             ])->unique()->values()->all()
         );
 

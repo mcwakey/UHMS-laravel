@@ -91,5 +91,12 @@ return [
         'sms_not_configured' => 'Aucun fournisseur SMS actif n’est configuré. Veuillez configurer et activer un fournisseur SMS.',
         'payment_not_configured' => 'Aucun fournisseur de paiement actif n’est configuré. Veuillez configurer et activer un fournisseur de paiement.',
         'sms_body_required' => 'Le texte du message est obligatoire.',
+        'unknown_placeholders' => 'Le modèle contient des variables inconnues : :list.',
+        'link_expired' => 'Ce lien de paiement a expiré.',
+        'link_unusable' => 'Ce lien de paiement ne peut plus être utilisé.',
+        'invoice_settled' => 'Cette facture est déjà réglée.',
+        'refund_not_eligible' => 'Seul un paiement fournisseur vérifié et lié peut être remboursé.',
+        'refund_amount_invalid' => 'Le montant du remboursement doit être supérieur à zéro.',
+        'refund_over_amount' => 'Le remboursement dépasse le montant du paiement initial.',
     ],
 ];

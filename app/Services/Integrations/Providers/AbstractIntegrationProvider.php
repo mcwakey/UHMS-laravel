@@ -65,4 +65,45 @@ abstract class AbstractIntegrationProvider
             ->connectTimeout(10)
             ->acceptJson();
     }
+
+    /* ── Webhook signature/secret verification ──────────────────────── */
+
+    /**
+     * Whether an inbound callback is trusted.
+     *
+     * - If the provider does not require a signature → trusted.
+     * - If it requires one: verify the configured signature header against an
+     *   HMAC-SHA256 of the payload using the `callback_secret` credential.
+     *   (TODO: confirm each provider's exact signing scheme with live creds.)
+     * - If verification cannot be performed (missing secret/header/value), only
+     *   trust it in sandbox when `allow_unsigned_sandbox_callbacks` is enabled.
+     */
+    public function verifySignature(array $payload, array $headers = []): bool
+    {
+        if (! $this->provider->require_signature) {
+            return true;
+        }
+
+        $secret = $this->credential('callback_secret');
+        $headerName = strtolower(trim((string) $this->provider->signature_header));
+        $provided = $headerName !== '' ? $this->headerValue($headers, $headerName) : null;
+
+        if ($secret === null || $headerName === '' || $provided === null) {
+            return $this->isSandbox() && (bool) $this->provider->allow_unsigned_sandbox_callbacks;
+        }
+
+        $expected = hash_hmac('sha256', json_encode($payload), $secret);
+
+        return hash_equals($expected, $provided);
+    }
+
+    protected function headerValue(array $headers, string $name): ?string
+    {
+        foreach ($headers as $key => $value) {
+            if (strtolower((string) $key) === $name) {
+                return is_array($value) ? (string) ($value[0] ?? '') : (string) $value;
+            }
+        }
+        return null;
+    }
 }
