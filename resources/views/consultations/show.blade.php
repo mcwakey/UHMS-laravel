@@ -76,6 +76,38 @@
 {{-- ============================================================ --}}
 @include('partials.patient-visit-header', ['visit' => $visit, 'showAlerts' => true])
 
+@if(auth()->user()?->can('patients.edit') || auth()->user()?->can('consultation.view_patient'))
+<div class="card mb-3 border-danger-subtle">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <h6 class="fw-bold mb-0">
+            <i class="ti ti-report-medical me-1 text-danger"></i>{{ __('patients.clinical_summary') }}
+        </h6>
+        <span class="badge bg-danger-transparent text-danger">{{ __('patients.medical_notes') }}</span>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ route('admin.patients.medical-summary.update', $visit->patient) }}">
+            @csrf
+            @method('PATCH')
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ __('patients.known_allergies') }}</label>
+                    <textarea name="allergies" class="form-control @error('allergies') is-invalid @enderror" rows="3" placeholder="{{ __('patients.known_allergies_ph') }}">{{ old('allergies', $visit->patient->allergies) }}</textarea>
+                    @error('allergies')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">{{ __('patients.chronic_conditions') }}</label>
+                    <textarea name="chronic_conditions" class="form-control @error('chronic_conditions') is-invalid @enderror" rows="3" placeholder="{{ __('patients.chronic_conditions_ph') }}">{{ old('chronic_conditions', $visit->patient->chronic_conditions) }}</textarea>
+                    @error('chronic_conditions')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="ti ti-device-floppy me-1"></i>{{ __('patients.save_medical_summary') }}
+            </button>
+        </form>
+    </div>
+</div>
+@endif
+
 @php
     $routeBadgeClasses = [
         \App\Models\VisitConsultationRoute::STATUS_ACTIVE => 'success',

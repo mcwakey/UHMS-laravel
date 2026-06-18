@@ -27,6 +27,8 @@ return [
     'this_month' => 'Ce mois-ci',
     'last_month' => 'Mois dernier',
     'clear' => 'Effacer',
+    'send_to_triage_queue' => 'Envoyer à la file de triage',
+    'waiting_for_triage_note' => 'En attente de triage',
     'edit_visit' => 'Modifier la visite',
     'transition_failed' => 'Le changement de statut a échoué.',
     'no_visits_found' => 'Aucune visite trouvée',

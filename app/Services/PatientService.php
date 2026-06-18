@@ -96,6 +96,16 @@ class PatientService
         return $patient->fresh();
     }
 
+    public function updateMedicalSummary(Patient $patient, array $data): Patient
+    {
+        $patient->update([
+            'allergies' => $data['allergies'] ?? null,
+            'chronic_conditions' => $data['chronic_conditions'] ?? null,
+        ]);
+
+        return $patient->fresh();
+    }
+
     public function toggleStatus(Patient $patient): Patient
     {
         // Do not allow toggling away from deceased via this method.

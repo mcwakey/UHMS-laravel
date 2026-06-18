@@ -260,35 +260,63 @@
     </div>
 </div>
 
-<!-- Medical Notes -->
-@if($patient->allergies || $patient->chronic_conditions)
 <div class="row">
-    @if($patient->allergies)
     <div class="col-md-6 d-flex">
         <div class="card shadow-sm flex-fill">
-            <div class="card-header">
+            <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="fw-bold mb-0 text-danger"><i class="ti ti-alert-triangle me-1"></i>{{ __('patients.allergies') }}</h5>
+                @if(auth()->user()?->can('patients.edit') || auth()->user()?->can('consultation.view_patient'))
+                    <span class="badge bg-danger-transparent text-danger">{{ __('patients.clinical_summary') }}</span>
+                @endif
             </div>
             <div class="card-body">
-                <p class="mb-0">{{ $patient->allergies }}</p>
+                @if(auth()->user()?->can('patients.edit') || auth()->user()?->can('consultation.view_patient'))
+                    <form method="POST" action="{{ route('admin.patients.medical-summary.update', $patient) }}">
+                        @csrf
+                        @method('PATCH')
+                        <div class="mb-3">
+                            <label class="form-label">{{ __('patients.known_allergies') }}</label>
+                            <textarea name="allergies" class="form-control @error('allergies') is-invalid @enderror" rows="4" placeholder="{{ __('patients.known_allergies_ph') }}">{{ old('allergies', $patient->allergies) }}</textarea>
+                            @error('allergies')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <input type="hidden" name="chronic_conditions" value="{{ old('chronic_conditions', $patient->chronic_conditions) }}">
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="ti ti-device-floppy me-1"></i>{{ __('patients.save_medical_summary') }}
+                        </button>
+                    </form>
+                @else
+                    <p class="mb-0">{{ $patient->allergies ?: __('patients.no_known_allergies') }}</p>
+                @endif
             </div>
         </div>
     </div>
-    @endif
-    @if($patient->chronic_conditions)
     <div class="col-md-6 d-flex">
         <div class="card shadow-sm flex-fill">
             <div class="card-header">
                 <h5 class="fw-bold mb-0 text-warning"><i class="ti ti-heartbeat me-1"></i>{{ __('patients.chronic_conditions') }}</h5>
             </div>
             <div class="card-body">
-                <p class="mb-0">{{ $patient->chronic_conditions }}</p>
+                @if(auth()->user()?->can('patients.edit') || auth()->user()?->can('consultation.view_patient'))
+                    <form method="POST" action="{{ route('admin.patients.medical-summary.update', $patient) }}">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="allergies" value="{{ old('allergies', $patient->allergies) }}">
+                        <div class="mb-3">
+                            <label class="form-label">{{ __('patients.chronic_conditions') }}</label>
+                            <textarea name="chronic_conditions" class="form-control @error('chronic_conditions') is-invalid @enderror" rows="4" placeholder="{{ __('patients.chronic_conditions_ph') }}">{{ old('chronic_conditions', $patient->chronic_conditions) }}</textarea>
+                            @error('chronic_conditions')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="ti ti-device-floppy me-1"></i>{{ __('patients.save_medical_summary') }}
+                        </button>
+                    </form>
+                @else
+                    <p class="mb-0">{{ $patient->chronic_conditions ?: __('patients.no_chronic_conditions') }}</p>
+                @endif
             </div>
         </div>
     </div>
-    @endif
 </div>
-@endif
 
 <!-- Tabs -->
 <ul class="nav nav-tabs nav-bordered mb-3">

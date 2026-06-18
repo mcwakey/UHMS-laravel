@@ -610,6 +610,7 @@ return [
     /* Patients                                                             */
     /* ------------------------------------------------------------------ */
     'patients' => [
+        'medical_summary_updated' => 'Résumé médical du patient mis à jour avec succès.',
         'registered'            => 'Patient :number enregistré avec succès.',
         'updated'               => 'Patient mis à jour avec succès.',
         'status_changed'        => 'Statut du patient changé en :status.',

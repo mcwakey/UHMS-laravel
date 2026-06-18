@@ -59,7 +59,7 @@
                         <i class="ti ti-bell-check fs-16 animate-ring"></i>
                         <span class="notification-badge" id="notificationBadge" style="display:none;"></span>
                     </button>
-                    <div class="dropdown-menu p-0 dropdown-menu-end dropdown-menu-lg" style="min-height: 300px;">
+                    <div class="dropdown-menu p-0 dropdown-menu-end dropdown-menu-lg notification-dropdown-menu">
                         <div class="p-2 border-bottom">
                             <div class="row align-items-center">
                                 <div class="col">
@@ -86,6 +86,8 @@
                     </div>
                 </div>
             </div>
+
+            @include('layouts.partials.language-switcher')
 
             <!-- User Dropdown -->
             <div class="dropdown profile-dropdown d-flex align-items-center justify-content-center">

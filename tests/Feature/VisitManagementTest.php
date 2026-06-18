@@ -7,6 +7,7 @@ use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Models\Department;
 use App\Models\Patient;
+use App\Models\QueueEntry;
 use App\Models\User;
 use App\Models\Visit;
 use App\Services\VisitService;
@@ -121,6 +122,25 @@ class VisitManagementTest extends TestCase
         $response->assertRedirect();
         $visit->refresh();
         $this->assertEquals(VisitStatus::WAITING, $visit->status);
+
+        $this->assertDatabaseHas('queue_entries', [
+            'visit_id' => $visit->id,
+            'department_id' => null,
+            'status' => 'waiting',
+        ]);
+
+        $this->actingAs($this->user)->patch(
+            route('admin.visits.transition', $visit),
+            ['status' => VisitStatus::WAITING->value]
+        );
+
+        $this->assertSame(
+            1,
+            QueueEntry::where('visit_id', $visit->id)
+                ->whereNull('department_id')
+                ->where('status', 'waiting')
+                ->count()
+        );
     }
 
     // ── Today's Visits ──────────────────────────

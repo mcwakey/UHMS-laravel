@@ -281,6 +281,7 @@ Route::middleware('auth')->group(function () {
             Route::get('patients/create', [PatientController::class, 'create'])->name('patients.create')->middleware('can:patients.create');
             Route::post('patients', [PatientController::class, 'store'])->name('patients.store')->middleware('can:patients.create');
             Route::get('patients/{patient}', [PatientController::class, 'show'])->name('patients.show');
+            Route::patch('patients/{patient}/medical-summary', [PatientController::class, 'updateMedicalSummary'])->name('patients.medical-summary.update');
             Route::get('patients/{patient}/edit', [PatientController::class, 'edit'])->name('patients.edit')->middleware('can:patients.edit');
             Route::put('patients/{patient}', [PatientController::class, 'update'])->name('patients.update')->middleware('can:patients.edit');
             Route::patch('patients/{patient}/toggle-status', [PatientController::class, 'toggleStatus'])->name('patients.toggle-status')->middleware('can:patients.edit');

@@ -43,6 +43,18 @@ class QueueService
         return $entry;
     }
 
+    public function ensureTriageEntry(Visit $visit): QueueEntry
+    {
+        $entry = $visit->queueEntries()
+            ->whereNull('department_id')
+            ->where('status', 'waiting')
+            ->whereDate('created_at', today())
+            ->orderBy('queue_number')
+            ->first();
+
+        return $entry ?: $this->addTriageEntry($visit);
+    }
+
     /**
      * Create a queue entry for a specific department.
      */

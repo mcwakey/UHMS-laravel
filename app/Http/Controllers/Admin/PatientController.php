@@ -221,6 +221,23 @@ class PatientController extends Controller
             ->with('success', __('messages.patients.updated'));
     }
 
+    public function updateMedicalSummary(Request $request, Patient $patient)
+    {
+        abort_unless(
+            $request->user()?->can('patients.edit') || $request->user()?->can('consultation.view_patient'),
+            403
+        );
+
+        $validated = $request->validate([
+            'allergies' => ['nullable', 'string', 'max:1000'],
+            'chronic_conditions' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $this->patientService->updateMedicalSummary($patient, $validated);
+
+        return back()->with('success', __('messages.patients.medical_summary_updated'));
+    }
+
     public function toggleStatus(Patient $patient)
     {
         if ($patient->status === 'deceased') {

@@ -428,8 +428,8 @@
                 </div>
 
                 {{-- WAITING: Triage / Cancelled / Reschedule only --}}
-                @if($isWaiting)
                 <p class="text-muted small mb-2">{{ __('visits.next_step') }}</p>
+                @if($isWaiting)
                 <div class="d-flex flex-wrap gap-2">
                     @foreach([\App\Enums\VisitStatus::TRIAGE, \App\Enums\VisitStatus::CANCELLED, \App\Enums\VisitStatus::RESCHEDULED] as $nextStatus)
                         <form method="POST" action="{{ route('admin.visits.transition', $visit) }}" class="d-inline">
@@ -455,9 +455,9 @@
                             <i class="ti ti-eye me-1"></i>{{ __('visits.view_triage_record') }}
                         </a>
                     @endif
-                </div>
-                <div class="d-flex flex-wrap gap-2">
-                    <form method="POST" action="{{ route('admin.visits.transition', $visit) }}" class="d-inline">
+                {{-- </div>
+                <div class="d-flex flex-wrap gap-2"> --}}
+                    <form method="POST" action="{{ route('admin.visits.transition', $visit) }}" class="d-inline ms-1">
                         @csrf
                         @method('PATCH')
                         <input type="hidden" name="status" value="{{ \App\Enums\VisitStatus::CANCELLED->value }}">
@@ -489,13 +489,22 @@
                 @endif --}}
                 <div class="d-flex flex-wrap gap-2">
                     @foreach($visit->status->allowedTransitions() as $nextStatus)
+                        @php
+                            $isWaitingTriageTarget = $nextStatus === \App\Enums\VisitStatus::WAITING;
+                            $transitionLabel = $isWaitingTriageTarget
+                                ? __('visits.send_to_triage_queue')
+                                : $nextStatus->translatedLabel();
+                        @endphp
                         <form method="POST" action="{{ route('admin.visits.transition', $visit) }}" class="d-inline">
                             @csrf
                             @method('PATCH')
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
+                            @if($isWaitingTriageTarget)
+                                <input type="hidden" name="notes" value="{{ __('visits.waiting_for_triage_note') }}">
+                            @endif
                             <button type="submit" class="btn btn-{{ $nextStatus->color() }} btn-sm"
-                                    onclick="return confirm('{{ __('visits.move_to_confirm', ['status' => $nextStatus->translatedLabel()]) }}')">
-                                <i class="ti ti-arrow-right me-1"></i>{{ $nextStatus->translatedLabel() }}
+                                    onclick="return confirm('{{ __('visits.move_to_confirm', ['status' => $transitionLabel]) }}')">
+                                <i class="ti ti-arrow-right me-1"></i>{{ $transitionLabel }}
                             </button>
                         </form>
                     @endforeach

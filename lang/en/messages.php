@@ -595,6 +595,7 @@ return [
     'patients' => [
         'registered'                   => 'Patient :number registered successfully.',
         'updated'                      => 'Patient updated successfully.',
+        'medical_summary_updated'      => 'Patient medical summary updated successfully.',
         'status_changed'               => 'Patient status changed to :status.',
         'marked_deceased'              => ':name has been marked as deceased.',
         'already_deceased'             => 'Patient is already marked as deceased.',

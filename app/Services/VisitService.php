@@ -467,7 +467,17 @@ class VisitService
 
     public function transition(Visit $visit, VisitStatus $newStatus, ?string $notes = null): Visit
     {
-        return $this->statusService->transition($visit, $newStatus, $notes);
+        $visit = $this->statusService->transition(
+            $visit,
+            $newStatus,
+            $notes ?? ($newStatus === VisitStatus::WAITING ? 'Waiting for triage' : null)
+        );
+
+        if ($newStatus === VisitStatus::WAITING) {
+            $this->queueService->ensureTriageEntry($visit);
+        }
+
+        return $visit->fresh();
     }
 
     /**

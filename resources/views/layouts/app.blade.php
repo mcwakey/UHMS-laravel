@@ -67,6 +67,49 @@
         /* keep sidebar dimensions reserved while JS initializes */
         .sidebar-menu ul { list-style: none; padding-left: 0; margin: 0; }
         .sidebar-menu .menu-title { opacity: 0.7; }
+        .notification-dropdown-menu {
+            width: min(480px, calc(100vw - 1.5rem)) !important;
+            max-width: calc(100vw - 1.5rem) !important;
+            min-height: 300px;
+            overflow: hidden;
+        }
+        .notification-dropdown-menu .notification-body {
+            max-height: min(420px, calc(100vh - 220px));
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        .notification-dropdown-menu .simplebar-content-wrapper,
+        .notification-dropdown-menu .simplebar-mask {
+            max-height: min(420px, calc(100vh - 220px));
+        }
+        .notification-dropdown-menu .notification-item {
+            max-width: 100%;
+            overflow: hidden;
+            white-space: normal;
+        }
+        .notification-dropdown-menu .notification-item .d-flex {
+            min-width: 0;
+            max-width: 100%;
+        }
+        .notification-dropdown-menu .notification-content {
+            flex-basis: 0;
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        .notification-dropdown-menu .notification-title,
+        .notification-dropdown-menu .notification-message {
+            display: block;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            white-space: normal;
+        }
+        .notification-dropdown-menu .badge {
+            max-width: 100%;
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
     </style>
     <script>document.documentElement.classList.add('uhms-loading');</script>
 
@@ -171,6 +214,79 @@
     <script src="{{ URL::asset('build/js/script.js') }}"></script>
 
     <!--UHMS_LEGACY_SCRIPTS_START-->
+    <script>
+    (function() {
+        const storageKey = '__THEME_CONFIG__';
+        const html = document.documentElement;
+
+        function readThemeConfig() {
+            const baseConfig = Object.assign({}, window.defaultConfig || {}, window.config || {});
+
+            try {
+                const storedConfig = JSON.parse(sessionStorage.getItem(storageKey) || '{}');
+                return Object.assign(baseConfig, storedConfig || {});
+            } catch (error) {
+                return baseConfig;
+            }
+        }
+
+        function writeThemeConfig(theme) {
+            const config = readThemeConfig();
+            config.theme = theme;
+            window.config = Object.assign({}, window.config || {}, config);
+
+            try {
+                sessionStorage.setItem(storageKey, JSON.stringify(config));
+            } catch (error) {
+                // Session storage can be disabled by the browser; the DOM update still works.
+            }
+        }
+
+        function updateThemeButton(theme) {
+            const button = document.getElementById('light-dark-mode');
+            const icon = button ? button.querySelector('i') : null;
+
+            if (!button || !icon) {
+                return;
+            }
+
+            const darkMode = theme === 'dark';
+            icon.classList.toggle('ti-moon', !darkMode);
+            icon.classList.toggle('ti-sun', darkMode);
+            button.setAttribute('aria-label', darkMode ? 'Light mode' : 'Dark mode');
+            button.setAttribute('title', darkMode ? 'Light mode' : 'Dark mode');
+        }
+
+        function applyTheme(theme) {
+            const normalizedTheme = theme === 'dark' ? 'dark' : 'light';
+            html.setAttribute('data-bs-theme', normalizedTheme);
+            writeThemeConfig(normalizedTheme);
+            updateThemeButton(normalizedTheme);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (html.hasAttribute('data-enable-theme-customizer')) {
+                return;
+            }
+
+            const button = document.getElementById('light-dark-mode');
+            const currentTheme = html.getAttribute('data-bs-theme') || readThemeConfig().theme || 'light';
+
+            applyTheme(currentTheme);
+
+            if (!button || button.dataset.uhmsThemeBound === 'true') {
+                return;
+            }
+
+            button.dataset.uhmsThemeBound = 'true';
+            button.addEventListener('click', function() {
+                const activeTheme = html.getAttribute('data-bs-theme') || readThemeConfig().theme || 'light';
+                applyTheme(activeTheme === 'dark' ? 'light' : 'dark');
+            });
+        });
+    })();
+    </script>
+
     <!-- Notification Polling -->
     @auth
     <script>
@@ -212,16 +328,16 @@
                         data.notifications.forEach(function(n) {
                             var modBadge = n.module ? '<span class="badge bg-light text-dark border me-1 fs-11">' + $('<span>').text(n.module).html() + '</span>' : '';
                             var prioBadge = (n.priority && n.priority !== 'NORMAL') ? '<span class="badge bg-' + n.color + ' me-1 fs-11">' + $('<span>').text(n.priority).html() + '</span>' : '';
-                            var title = n.title ? '<div class="fw-semibold fs-13 mb-0">' + $('<span>').text(n.title).html() + '</div>' : '';
+                            var title = n.title ? '<div class="fw-semibold fs-13 mb-0 notification-title">' + $('<span>').text(n.title).html() + '</div>' : '';
                             html += '<a href="' + n.url + '" class="dropdown-item px-3 py-2 notification-item" data-id="' + n.id + '">' +
                                 '<div class="d-flex align-items-start">' +
                                 '<div class="flex-shrink-0 me-2">' +
                                 '<span class="avatar avatar-sm bg-' + n.color + '-subtle rounded-circle d-flex align-items-center justify-content-center">' +
                                 '<i class="ti ' + n.icon + ' text-' + n.color + '"></i></span></div>' +
-                                '<div class="flex-grow-1">' +
+                                '<div class="flex-grow-1 notification-content">' +
                                 title +
                                 '<div class="mb-1">' + modBadge + prioBadge + '</div>' +
-                                '<p class="mb-0 fs-13">' + $('<span>').text(n.message).html() + '</p>' +
+                                '<p class="mb-0 fs-13 notification-message">' + $('<span>').text(n.message).html() + '</p>' +
                                 '<span class="fs-12 text-muted">' + $('<span>').text(n.time).html() + '</span>' +
                                 '</div></div></a>';
                         });

@@ -29,6 +29,8 @@ return [
     'clear' => 'Clear',
     'edit_visit' => 'Edit Visit',
     'transition_failed' => 'Status transition failed.',
+    'send_to_triage_queue' => 'Send to Triage Queue',
+    'waiting_for_triage_note' => 'Waiting for triage',
     'no_visits_found' => 'No visits found',
     'no_visits_match_filters'   => 'No visits match the selected filters.',
 

@@ -103,11 +103,11 @@ enum VisitStatus: string
         return match ($this) {
             self::SCHEDULED => [self::CONFIRMED, self::REGISTERED, self::CANCELLED, self::RESCHEDULED, self::NO_SHOW],
             self::CONFIRMED => [self::REGISTERED, self::CANCELLED, self::RESCHEDULED, self::NO_SHOW],
-            self::REGISTERED => [self::WAITING, self::ACTIVE, self::EMERGENCY, self::ADMITTING, self::ADMITTED, self::CANCELLED],
-            self::WAITING => [self::TRIAGE, self::ACTIVE, self::EMERGENCY, self::ADMITTING, self::ADMITTED, self::CANCELLED, self::RESCHEDULED],
+            self::REGISTERED => [self::WAITING, self::CANCELLED],
+            self::WAITING => [self::TRIAGE, self::CANCELLED, self::RESCHEDULED],
             // Triage transitions are handled by TriageController (processTriage) — manual transitions disabled
             self::TRIAGE => [self::WAITING_CONSULTATION, self::CONSULTING, self::ACTIVE, self::EMERGENCY, self::ADMITTED, self::INPATIENT, self::CANCELLED],
-            self::WAITING_CONSULTATION => [self::CONSULTING, self::ACTIVE, self::EMERGENCY, self::CANCELLED],
+            self::WAITING_CONSULTATION => [self::CONSULTING, self::CANCELLED],
             self::CONSULTING => [self::ADMITTING, self::COMPLETED, self::DECEASED],
             self::ACTIVE => [self::CONSULTING, self::ADMITTING, self::COMPLETED, self::DECEASED],
             // ADMITTING is the in-progress admission state ("Admit Patient"); completing

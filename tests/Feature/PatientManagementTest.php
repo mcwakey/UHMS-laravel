@@ -167,6 +167,60 @@ class PatientManagementTest extends TestCase
         $response->assertSee($patient->first_name);
     }
 
+    public function test_doctor_can_update_patient_medical_summary_without_full_patient_edit_permission(): void
+    {
+        $doctor = User::factory()->create();
+        $role = Role::create(['name' => 'Doctor']);
+        $role->givePermissionTo([
+            Permission::firstOrCreate(['name' => 'patients.view']),
+            Permission::firstOrCreate(['name' => 'consultation.view_patient']),
+        ]);
+        $doctor->assignRole($role);
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+
+        $response = $this->actingAs($doctor)
+            ->from(route('admin.patients.show', $patient))
+            ->patch(route('admin.patients.medical-summary.update', $patient), [
+                'allergies' => 'Penicillin',
+                'chronic_conditions' => 'Hypertension',
+            ]);
+
+        $response->assertRedirect(route('admin.patients.show', $patient));
+        $response->assertSessionHasNoErrors();
+
+        $patient->refresh();
+        $this->assertSame('Penicillin', $patient->allergies);
+        $this->assertSame('Hypertension', $patient->chronic_conditions);
+        $this->assertFalse($doctor->can('patients.edit'));
+    }
+
+    public function test_patient_medical_summary_update_is_blocked_without_clinical_permission(): void
+    {
+        $limited = User::factory()->create();
+        $role = Role::create(['name' => 'Limited Patient Viewer']);
+        $role->givePermissionTo(Permission::firstOrCreate(['name' => 'patients.view']));
+        $limited->assignRole($role);
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+        $patient = Patient::factory()->create([
+            'registered_by' => $this->user->id,
+            'allergies' => null,
+            'chronic_conditions' => null,
+        ]);
+
+        $response = $this->actingAs($limited)
+            ->patch(route('admin.patients.medical-summary.update', $patient), [
+                'allergies' => 'Penicillin',
+                'chronic_conditions' => 'Hypertension',
+            ]);
+
+        $response->assertForbidden();
+        $this->assertNull($patient->fresh()->allergies);
+        $this->assertNull($patient->fresh()->chronic_conditions);
+    }
+
     public function test_patient_can_add_insurance_without_explicit_tier_selection(): void
     {
         $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
