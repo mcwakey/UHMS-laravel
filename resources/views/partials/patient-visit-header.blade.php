@@ -71,14 +71,22 @@
     </div>
 </div>
 
-@if($showAlerts && $patient->allergies)
-<div class="alert alert-danger py-2 mb-3">
-    <i class="ti ti-alert-triangle me-1"></i><strong>{{ __('patients.allergies') }}:</strong> {{ $patient->allergies }}
-</div>
-@endif
+@if($showAlerts && ($patient->allergies || $patient->chronic_conditions))
+<div class="row g-2 align-items-stretch mb-3">
+    @if($patient->allergies)
+    <div class="col-md-6">
+        <div class="alert alert-danger h-100 mb-0 text-wrap">
+            <i class="ti ti-alert-triangle me-1"></i><strong>{{ __('patients.allergies') }}:</strong> {{ $patient->allergies }}
+        </div>
+    </div>
+    @endif
 
-@if($showAlerts && $patient->chronic_conditions)
-<div class="alert alert-warning py-2 mb-3">
-    <i class="ti ti-heart-rate-monitor me-1"></i><strong>{{ __('patients.chronic_conditions') }}:</strong> {{ $patient->chronic_conditions }}
+    @if($patient->chronic_conditions)
+    <div class="col-md-6">
+        <div class="alert alert-warning h-100 mb-0 text-wrap">
+            <i class="ti ti-heart-rate-monitor me-1"></i><strong>{{ __('patients.chronic_conditions') }}:</strong> {{ $patient->chronic_conditions }}
+        </div>
+    </div>
+    @endif
 </div>
 @endif

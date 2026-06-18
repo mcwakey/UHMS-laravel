@@ -76,37 +76,74 @@
 {{-- ============================================================ --}}
 @include('partials.patient-visit-header', ['visit' => $visit, 'showAlerts' => true])
 
-@if(auth()->user()?->can('patients.edit') || auth()->user()?->can('consultation.view_patient'))
-<div class="card mb-3 border-danger-subtle">
-    <div class="card-header d-flex align-items-center justify-content-between">
+@can('patients.edit'))
+{{-- <div class="card mb-3 border-danger-subtle"> --}}
+    {{-- <div class="card-header d-flex align-items-center justify-content-between">
         <h6 class="fw-bold mb-0">
             <i class="ti ti-report-medical me-1 text-danger"></i>{{ __('patients.clinical_summary') }}
         </h6>
-        <span class="badge bg-danger-transparent text-danger">{{ __('patients.medical_notes') }}</span>
-    </div>
-    <div class="card-body">
-        <form method="POST" action="{{ route('admin.patients.medical-summary.update', $visit->patient) }}">
-            @csrf
-            @method('PATCH')
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">{{ __('patients.known_allergies') }}</label>
-                    <textarea name="allergies" class="form-control @error('allergies') is-invalid @enderror" rows="3" placeholder="{{ __('patients.known_allergies_ph') }}">{{ old('allergies', $visit->patient->allergies) }}</textarea>
-                    @error('allergies')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">{{ __('patients.chronic_conditions') }}</label>
-                    <textarea name="chronic_conditions" class="form-control @error('chronic_conditions') is-invalid @enderror" rows="3" placeholder="{{ __('patients.chronic_conditions_ph') }}">{{ old('chronic_conditions', $visit->patient->chronic_conditions) }}</textarea>
-                    @error('chronic_conditions')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#clinicalSummaryModal">
+            <i class="ti ti-edit me-1"></i>{{ __('common.edit') }}
+        </button>
+    </div> --}}
+    {{-- <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted fs-12 text-uppercase fw-semibold mb-2">{{ __('patients.known_allergies') }}</div>
+                    <div class="fw-medium text-wrap">{{ $visit->patient->allergies ?: __('common.not_available') }}</div>
                 </div>
             </div>
-            <button type="submit" class="btn btn-sm btn-primary">
-                <i class="ti ti-device-floppy me-1"></i>{{ __('patients.save_medical_summary') }}
-            </button>
-        </form>
+            <div class="col-md-6">
+                <div class="border rounded p-3 h-100">
+                    <div class="text-muted fs-12 text-uppercase fw-semibold mb-2">{{ __('patients.chronic_conditions') }}</div>
+                    <div class="fw-medium text-wrap">{{ $visit->patient->chronic_conditions ?: __('common.not_available') }}</div>
+                </div>
+            </div>
+        </div>
+    </div> --}}
+{{-- </div> --}}
+
+<div class="modal fade" id="clinicalSummaryModal" tabindex="-1" aria-labelledby="clinicalSummaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.patients.medical-summary.update', $visit->patient) }}">
+                @csrf
+                @method('PATCH')
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title" id="clinicalSummaryModalLabel">
+                            <i class="ti ti-report-medical me-1 text-danger"></i>Patient Conditions
+                        </h5>
+                        <p class="text-muted mb-0 fs-13">{{ __('patients.medical_notes') }}</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('common.close') }}"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{{ __('patients.known_allergies') }}</label>
+                            <textarea name="allergies" class="form-control @error('allergies') is-invalid @enderror" rows="6" placeholder="{{ __('patients.known_allergies_ph') }}">{{ old('allergies', $visit->patient->allergies) }}</textarea>
+                            @error('allergies')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ __('patients.chronic_conditions') }}</label>
+                            <textarea name="chronic_conditions" class="form-control @error('chronic_conditions') is-invalid @enderror" rows="6" placeholder="{{ __('patients.chronic_conditions_ph') }}">{{ old('chronic_conditions', $visit->patient->chronic_conditions) }}</textarea>
+                            @error('chronic_conditions')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="ti ti-device-floppy me-1"></i>{{ __('patients.save_medical_summary') }}
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
-@endif
+@endcan
 
 @php
     $routeBadgeClasses = [
@@ -868,11 +905,19 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0"><i class="ti ti-file-description me-1"></i>History of Presenting Complaint</h6>
-                                @can('consultations.create')
-                                <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addHopcForm">
-                                    <i class="ti ti-plus me-1"></i>Add
-                                </button>
-                                @endcan
+                                <div>
+                                    @can('consultations.create')
+                                    @can('patients.edit')
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#clinicalSummaryModal">
+                                        <i class="ti ti-edit me-1"></i>Manage Patient Conditions
+                                    </button>
+                                    @endcan
+
+                                    <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addHopcForm">
+                                        <i class="ti ti-plus me-1"></i>Add
+                                    </button>
+                                    @endcan
+                                </div>
                             </div>
                             <div class="card-body">
                                 @can('consultations.create')
