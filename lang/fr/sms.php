@@ -69,6 +69,7 @@ return [
     'event_type' => 'Événement',
     'triggered_at' => 'Déclenché',
     'no_events' => 'Aucun événement de notification pour le moment.',
+    'receipt_sms' => 'SMS de reçu',
     'flash' => [
         'retry_started' => 'Nouvelle tentative lancée pour les destinataires en échec.',
         'reconciliation_run' => 'Réconciliation : :checked vérifiés, :delivered livrés.',

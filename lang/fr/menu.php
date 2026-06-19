@@ -230,4 +230,6 @@ return [
     'sms_events' => 'Événements SMS',
     'payment_reconciliation' => 'Réconciliation des paiements',
     'payment_request_links' => 'Liens de demande de paiement',
+    'go_live_checklists' => 'Listes de mise en production',
+    'scheduler_status' => 'État du planificateur',
 ];

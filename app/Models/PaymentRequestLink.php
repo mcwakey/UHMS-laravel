@@ -15,12 +15,16 @@ class PaymentRequestLink extends Model
     use HasFactory;
 
     public const STATUS_ACTIVE = 'active';
+    public const STATUS_INITIATED = 'initiated';
     public const STATUS_USED = 'used';
     public const STATUS_EXPIRED = 'expired';
     public const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_FAILED = 'failed';
 
     protected $fillable = [
         'link_uuid',
+        'public_token',
+        'token_hash',
         'invoice_id',
         'visit_id',
         'patient_id',
@@ -29,22 +33,39 @@ class PaymentRequestLink extends Model
         'amount',
         'currency',
         'status',
+        'initiated_count',
+        'last_initiated_at',
+        'last_viewed_at',
         'expires_at',
         'used_at',
+        'cancelled_by',
+        'cancelled_at',
+        'cancel_reason',
+        'success_redirect_url',
+        'failure_redirect_url',
         'payment_provider_transaction_id',
         'created_by',
         'metadata_snapshot',
+    ];
+
+    protected $hidden = [
+        'token_hash',
     ];
 
     protected function casts(): array
     {
         return [
             'amount' => 'decimal:2',
+            'initiated_count' => 'integer',
+            'last_initiated_at' => 'datetime',
+            'last_viewed_at' => 'datetime',
             'expires_at' => 'datetime',
             'used_at' => 'datetime',
+            'cancelled_at' => 'datetime',
             'metadata_snapshot' => 'array',
         ];
     }
+
 
     public function invoice()
     {

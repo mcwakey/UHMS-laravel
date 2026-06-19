@@ -34,6 +34,9 @@ class IntegrationsSmsReconcileStatusCommand extends Command
             $this->line(sprintf('  %-13s %d', $key, $value));
         }
 
+        app(\App\Services\Integrations\SchedulerStatusService::class)
+            ->recordRun('integrations:sms-reconcile-status', 'success', $summary);
+
         return self::SUCCESS;
     }
 }

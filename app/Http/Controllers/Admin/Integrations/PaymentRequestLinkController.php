@@ -57,6 +57,7 @@ class PaymentRequestLinkController extends Controller
     public function sendSms(Request $request, Invoice $invoice, SmsNotificationEventService $events)
     {
         $phone = $request->input('phone', $invoice->patient?->phone);
+        $resend = $request->boolean('resend');
 
         $link = $this->links->create([
             'invoice_id' => $invoice->id,
@@ -65,12 +66,28 @@ class PaymentRequestLinkController extends Controller
             'amount' => (float) $invoice->balance,
         ]);
 
-        $event = $events->invoicePaymentRequest($invoice, $phone, 'Ref: ' . $link->link_uuid);
+        // The SMS carries the public payment link ({{payment_link}}); resolution
+        // and dedup happen in the event service.
+        $event = $events->dispatch([
+            'event_type' => \App\Models\SmsNotificationEvent::TYPE_INVOICE_PAYMENT_REQUEST,
+            'source_type' => 'invoice',
+            'source_id' => $invoice->id,
+            'phone' => $phone,
+            'force_resend' => $resend,
+            'data' => [
+                'patient_name' => $invoice->patient?->first_name,
+                'invoice_number' => $invoice->invoice_number,
+                'amount' => number_format((float) $invoice->balance, 2),
+                'currency' => config('integrations.default_currency', 'GHS'),
+                'payment_link' => route('public.payments.show', $link->public_token),
+                'hospital_name' => config('app.name', 'UHMS'),
+            ],
+        ]);
 
-        $this->logger->log(LogModule::INTEGRATIONS, 'PAYMENT_REQUEST_SMS_SENT', [
+        $this->logger->log(LogModule::INTEGRATIONS, $resend ? 'PAYMENT_REQUEST_SMS_RESENT' : 'PAYMENT_REQUEST_SMS_SENT', [
             'source_type' => 'invoice', 'source_id' => $invoice->id,
             'invoice_id' => $invoice->id,
-            'metadata' => ['event_status' => $event->status, 'link' => $link->link_uuid],
+            'metadata' => ['event_status' => $event->status, 'link' => $link->public_token],
         ], $invoice, 'Payment request SMS dispatched');
 
         return back()->with(

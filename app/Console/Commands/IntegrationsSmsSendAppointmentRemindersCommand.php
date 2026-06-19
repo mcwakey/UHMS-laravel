@@ -65,6 +65,17 @@ class IntegrationsSmsSendAppointmentRemindersCommand extends Command
             $this->line(sprintf('  %-11s %d', $key, $value));
         }
 
+        app(\App\Services\Integrations\SchedulerStatusService::class)
+            ->recordRun('integrations:sms-send-appointment-reminders', 'success', $summary);
+
+        app(\App\Services\ActivityLogService::class)->log(
+            \App\Enums\LogModule::INTEGRATIONS,
+            'APPOINTMENT_REMINDER_SCHEDULER_RUN',
+            ['metadata' => array_merge($summary, ['dry_run' => $dryRun])],
+            null,
+            'Appointment reminder scheduler run',
+        );
+
         return self::SUCCESS;
     }
 }

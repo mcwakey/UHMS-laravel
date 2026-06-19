@@ -53,6 +53,38 @@ class PaymentReconciliationController extends Controller
         );
     }
 
+    /** Stream a CSV of the filtered reconciliation transactions. */
+    public function export(Request $request)
+    {
+        $filters = $request->only(['provider_code', 'status', 'from', 'to', 'reference', 'payer_phone', 'amount', 'patient_id', 'invoice_number', 'linked']);
+
+        $this->logger->log(LogModule::INTEGRATIONS, 'PAYMENT_RECONCILIATION_EXPORTED', [
+            'metadata' => ['filters' => array_filter($filters)],
+        ], null, 'Payment reconciliation exported');
+
+        $filename = 'payment-reconciliation-' . now()->format('Ymd_His') . '.csv';
+
+        return response()->streamDownload(function () use ($filters) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['reference', 'provider', 'amount', 'currency', 'status', 'provider_status', 'invoice', 'uhms_payment_id', 'created_at']);
+
+            $this->reconciliation->query($filters)->getCollection()->each(function ($txn) use ($out) {
+                fputcsv($out, [
+                    $txn->payment_reference,
+                    $txn->provider_code,
+                    (float) $txn->amount,
+                    $txn->currency,
+                    $txn->status,
+                    $txn->provider_status,
+                    $txn->invoice?->invoice_number,
+                    $txn->uhms_payment_id,
+                    optional($txn->created_at)->toDateTimeString(),
+                ]);
+            });
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv']);
+    }
+
     public function markExpired(PaymentProviderTransaction $transaction)
     {
         if (! $transaction->isSuccessful() && ! $transaction->hasUhmsPayment()) {

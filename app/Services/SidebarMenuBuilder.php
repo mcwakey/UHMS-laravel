@@ -1553,6 +1553,20 @@ class SidebarMenuBuilder
                         'active_patterns' => ['admin.integrations.health.*'],
                         'permission' => 'integrations.payments.reconciliation.view',
                     ],
+                    [
+                        'label' => 'Go-Live Checklists',
+                        'icon' => 'ti ti-rocket',
+                        'route' => 'admin.integrations.golive.index',
+                        'active_patterns' => ['admin.integrations.golive.*'],
+                        'permissions_any' => ['integrations.payments.golive.view', 'integrations.sms.golive.view'],
+                    ],
+                    [
+                        'label' => 'Scheduler Status',
+                        'icon' => 'ti ti-clock-cog',
+                        'route' => 'admin.integrations.scheduler.index',
+                        'active_patterns' => ['admin.integrations.scheduler.*'],
+                        'permission' => 'integrations.scheduler.view',
+                    ],
                 ],
             ],
             // [

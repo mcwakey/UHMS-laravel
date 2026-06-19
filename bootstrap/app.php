@@ -24,6 +24,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('notifications:flush-digest')->everyTenMinutes()->withoutOverlapping();
         $schedule->command('outpatient-sessions:auto-complete')->dailyAt('00:10')->withoutOverlapping();
         $schedule->command('reports:notifications-summary')->monthlyOn(1, '06:00');
+
+        // External Integrations (Phase 3). These commands are self-guarding: they
+        // no-op unless the module is enabled, a provider is active and the relevant
+        // toggle is on — so it is safe to schedule them unconditionally.
+        $schedule->command('integrations:sms-reconcile-status')->hourly()->withoutOverlapping();
+        $schedule->command('integrations:payments-recheck-pending')->everyFifteenMinutes()->withoutOverlapping();
+        $schedule->command('integrations:sms-send-appointment-reminders')->dailyAt('08:00')->withoutOverlapping();
     })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([

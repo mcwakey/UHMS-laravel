@@ -73,6 +73,9 @@ class IntegrationsPaymentsRecheckPendingCommand extends Command
             $this->line(sprintf('  %-13s %d', $key, $value));
         }
 
+        app(\App\Services\Integrations\SchedulerStatusService::class)
+            ->recordRun('integrations:payments-recheck-pending', 'success', $summary);
+
         return self::SUCCESS;
     }
 }

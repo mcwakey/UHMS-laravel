@@ -236,4 +236,6 @@ return [
     'sms_events' => 'SMS Events',
     'payment_reconciliation' => 'Payment Reconciliation',
     'payment_request_links' => 'Payment Request Links',
+    'go_live_checklists' => 'Go-Live Checklists',
+    'scheduler_status' => 'Scheduler Status',
 ];

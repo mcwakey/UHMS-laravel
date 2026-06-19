@@ -36,10 +36,17 @@ class PaymentRefundController extends Controller
             'amount' => ['required', 'numeric', 'min:0.01'],
             'reason' => ['nullable', 'string', 'max:500'],
             'uhms_refund_id' => ['nullable', 'integer'],
+            'credit_note_id' => ['nullable', 'integer', 'exists:credit_notes,id'],
         ]);
 
         try {
-            $refund = $bridge->prepare($transaction, (float) $data['amount'], $data['reason'] ?? null, $data['uhms_refund_id'] ?? null);
+            $refund = $bridge->prepare(
+                $transaction,
+                (float) $data['amount'],
+                $data['reason'] ?? null,
+                $data['uhms_refund_id'] ?? null,
+                $data['credit_note_id'] ?? null,
+            );
         } catch (IntegrationException $e) {
             return back()->with('error', $e->localisedMessage());
         }

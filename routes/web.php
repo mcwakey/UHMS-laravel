@@ -191,6 +191,22 @@ Route::get('/', function () {
 
 /*
 |--------------------------------------------------------------------------
+| Public Payment-Link Portal (no auth) — External Integrations Phase 3
+|--------------------------------------------------------------------------
+| Unauthenticated, rate-limited, resolved by random public token only (never an
+| internal id). Module-gated so the portal disappears when payment_gateway is off.
+*/
+Route::middleware(['throttle:public-payments', 'module:payment_gateway'])
+    ->prefix('pay')->name('public.payments.')->group(function () {
+        Route::get('{token}', [\App\Http\Controllers\PublicPaymentController::class, 'show'])->name('show')->where('token', '[A-Za-z0-9]+');
+        Route::post('{token}/initiate', [\App\Http\Controllers\PublicPaymentController::class, 'initiate'])->name('initiate')->where('token', '[A-Za-z0-9]+');
+        Route::post('{token}/verify', [\App\Http\Controllers\PublicPaymentController::class, 'verify'])->name('verify')->where('token', '[A-Za-z0-9]+');
+        Route::get('{token}/status', [\App\Http\Controllers\PublicPaymentController::class, 'status'])->name('status')->where('token', '[A-Za-z0-9]+');
+        Route::get('{token}/receipt', [\App\Http\Controllers\PublicPaymentController::class, 'receipt'])->name('receipt')->where('token', '[A-Za-z0-9]+');
+    });
+
+/*
+|--------------------------------------------------------------------------
 | Authenticated Routes
 |--------------------------------------------------------------------------
 */
@@ -1495,6 +1511,7 @@ Route::middleware('auth')->group(function () {
 
                     // Phase 2 — reconciliation dashboard, recheck/expire, refund bridge, request links
                     Route::get('reconciliation', [\App\Http\Controllers\Admin\Integrations\PaymentReconciliationController::class, 'index'])->name('reconciliation.index')->middleware('can:integrations.payments.reconciliation.view');
+                    Route::get('reconciliation/export', [\App\Http\Controllers\Admin\Integrations\PaymentReconciliationController::class, 'export'])->name('reconciliation.export')->middleware('can:integrations.payments.reconciliation.view');
                     Route::post('transactions/{transaction}/recheck', [\App\Http\Controllers\Admin\Integrations\PaymentReconciliationController::class, 'recheck'])->name('reconciliation.recheck')->middleware('can:integrations.payments.reconciliation.verify');
                     Route::post('transactions/{transaction}/expire', [\App\Http\Controllers\Admin\Integrations\PaymentReconciliationController::class, 'markExpired'])->name('transactions.expire')->middleware('can:integrations.payments.reconciliation.expire');
                     Route::post('transactions/{transaction}/cancel', [\App\Http\Controllers\Admin\Integrations\PaymentReconciliationController::class, 'cancel'])->name('transactions.cancel')->middleware('can:integrations.payments.reconciliation.expire');
@@ -1508,6 +1525,17 @@ Route::middleware('auth')->group(function () {
 
             // ── Provider Health (spans both modules; admin/IT) ───────────
             Route::get('health', [\App\Http\Controllers\Admin\Integrations\ProviderHealthController::class, 'index'])->name('health.index')->middleware('can:integrations.payments.reconciliation.view');
+
+            // ── Provider go-live checklists + scheduler status (Phase 3) ──
+            Route::prefix('golive')->name('golive.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Admin\Integrations\GoLiveChecklistController::class, 'index'])->name('index');
+                Route::get('providers/{provider}', [\App\Http\Controllers\Admin\Integrations\GoLiveChecklistController::class, 'show'])->name('show');
+                Route::post('checklists/{checklist}/items', [\App\Http\Controllers\Admin\Integrations\GoLiveChecklistController::class, 'updateItem'])->name('items.update')->middleware('can:integrations.payments.golive.manage');
+                Route::post('checklists/{checklist}/signoff', [\App\Http\Controllers\Admin\Integrations\GoLiveChecklistController::class, 'signoff'])->name('signoff')->middleware('can:integrations.payments.golive.approve');
+                Route::post('checklists/{checklist}/approve', [\App\Http\Controllers\Admin\Integrations\GoLiveChecklistController::class, 'approve'])->name('approve')->middleware('can:integrations.payments.golive.approve');
+            });
+
+            Route::get('scheduler', [\App\Http\Controllers\Admin\Integrations\SchedulerStatusController::class, 'index'])->name('scheduler.index')->middleware('can:integrations.scheduler.view');
         });
 
         // ICD-10 Code Database

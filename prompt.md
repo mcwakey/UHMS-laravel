@@ -5,53 +5,41 @@ There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
 Do not try to read it.
 Follow this prompt directly.
 
-# UHMS External Integrations Phase 2 — Queue Dispatch, Live Provider Hardening, Payment Reconciliation & Automated SMS Events
+# UHMS External Integrations Phase 3 — Patient Payment Portal, Scheduler Wiring, Provider Go-Live & Refund/Credit-Note Completion
 
 ## Goal
 
-Extend the Phase 1 SMS and Payment Gateway foundation into production-ready operational workflows.
+Complete the production-facing SMS and Payment Gateway workflow.
 
-Phase 1 delivered:
+Phase 1 created the provider-based SMS and Payment Gateway foundation.
 
-```text
-sms_gateway module
-payment_gateway module
-provider-based architecture
-Nalo SMS provider
-MTN MoMo payment provider
-Nalo payment provider
-fake providers
-encrypted credentials
-single-active-provider rule
-callback storage
-idempotent payment verification
-UHMS payment creation only after verified provider success
-```
+Phase 2 added queue-backed SMS, status reconciliation, SMS events, payment request links, payment reconciliation, stale pending recheck, webhook hardening, provider health, and refund bridge foundation.
 
-Phase 2 must now add:
+Phase 3 must now add:
 
 ```text
-queue-backed SMS sending
-scheduled SMS delivery-status reconciliation
-live-provider payload hardening
-webhook signature/secret verification hardening
-payment reconciliation dashboard
-manual provider recheck tools
-refund / credit-note workflow foundation
-patient invoice payment link foundation
-automatic SMS event toggles
-SMS templates and placeholders
-payment request SMS
-receipt SMS
-appointment reminder SMS
-queue notification SMS
-provider health monitoring
+public patient payment-link portal
+secure invoice payment page
+payment request link usage flow
+provider go-live checklist
+scheduler wiring for SMS/payment commands
+live provider payload verification records
+provider signature verification readiness
+refund bridge connection to UHMS credit-note/refund workflow
+queue notification SMS hook
+appointment reminder scheduler activation
+receipt/payment-request SMS operational workflow
+admin go-live dashboard
 documentation
 ```
 
-Do not break the Phase 1 provider architecture.
+Do not break the existing provider architecture:
 
-Do not hardcode provider logic into billing, invoices, appointments, patients, cashier, or accounting controllers.
+```text
+controllers → services → provider interfaces → provider adapters
+```
+
+Do not put provider-specific logic into billing, invoice, patient, appointment, queue, cashier, or accounting controllers.
 
 ---
 
@@ -61,6 +49,7 @@ Read:
 
 ```text
 docs/INTEGRATIONS_PHASE_1_SMS_AND_PAYMENT_GATEWAYS_REPORT.md
+docs/INTEGRATIONS_PHASE_2_QUEUE_RECONCILIATION_AND_EVENTS_REPORT.md
 docs/ACCOUNTING_PHASE_0_SHARED_CONTROLS_AND_READINESS_REPORT.md
 docs/ACCOUNTING_PHASE_A_BASIC_TO_ADVANCED_POSTING_BRIDGE_REPORT.md
 docs/ACCOUNTING_PHASE_B_BANK_ACCOUNTS_AND_RECONCILIATION_REPORT.md
@@ -69,9 +58,6 @@ docs/ACCOUNTING_PHASE_D_SUBLEDGER_RECONCILIATION_WORKBENCH_REPORT.md
 docs/ACCOUNTING_PHASE_E_PAYROLL_ACCOUNTING_POSTING_REPORT.md
 docs/ACCOUNTING_PHASE_E2_STATUTORY_PAYROLL_SETTLEMENT_REPORT.md
 docs/ACCOUNTING_PHASE_F_CASH_FLOW_AND_EXPORTS_REPORT.md
-docs/ACCOUNTING_PHASE_G_BUDGETS_AND_COMMITMENTS_REPORT.md
-docs/ACCOUNTING_PHASE_H_FIXED_ASSETS_AND_DEPRECIATION_REPORT.md
-docs/ACCOUNTING_PHASE_I_STATUTORY_TAX_ACCOUNTING_REPORT.md
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
 
@@ -79,13 +65,18 @@ Current integration baseline:
 
 ```text
 Phase 1 complete.
-SMS and Payment Gateway modules exist.
-Nalo SMS, MTN MoMo, Nalo Payment and fake providers exist.
+Phase 2 complete.
+sms_gateway module exists.
+payment_gateway module exists.
+Nalo SMS, MTN MoMo, Nalo Payment, and fake providers exist.
 Credentials are encrypted and masked.
 Callbacks are stored idempotently.
 Verified provider payments create normal UHMS payments through existing PaymentService.
-Manual/cash payments remain untouched.
-Full suite is intentionally deferred.
+SMS queue/retry/status reconciliation exists.
+Payment reconciliation dashboard exists.
+Payment request links exist but no public patient payment portal is exposed yet.
+Refund bridge exists but is not fully connected to UHMS credit-note/refund posting.
+Provider live payload/signature formats still need sandbox confirmation before go-live.
 ```
 
 Important testing instruction:
@@ -103,24 +94,23 @@ For this phase, run only necessary safety checks: migrations, route list, view c
 Implement:
 
 ```text
-SMS queue dispatch
-SMS retry and status reconciliation
-SMS template placeholders
-automatic SMS event dispatcher
-provider health checks
-provider status test logs
-provider webhook signature/secret validation hardening
-payment reconciliation dashboard
-payment manual verify/recheck
-payment stale pending detection
-payment failed/cancelled/expired handling
-payment request link foundation
-invoice payment request SMS
-payment receipt SMS
-appointment reminder SMS where appointment module exists
-queue notification SMS where queue module exists
-refund / credit-note workflow bridge foundation
-provider callback replay protection
+public payment-link portal
+secure invoice payment page
+payment link validation and expiry handling
+payer confirmation screen
+provider payment initiation from payment link
+payment success / failed / pending page
+receipt lookup after verified payment
+scheduler command wiring documentation and optional Kernel schedule entries
+provider go-live checklist records
+provider sandbox verification records
+provider signature verification readiness records
+refund bridge connection to approved UHMS refund / credit-note workflow
+queue notification SMS event hook
+appointment reminder scheduler activation
+payment request SMS operational workflow
+receipt SMS operational workflow
+admin go-live dashboard
 permissions
 audit logging
 localisation
@@ -130,13 +120,12 @@ documentation
 Do not implement yet:
 
 ```text
-direct provider contract-specific go-live without real sandbox credential confirmation
-full public patient portal if it does not already exist
-full card-payment PCI flow
-MoMo disbursement if provider credentials are not confirmed
+full patient portal account system
+card PCI vaulting
+provider disbursement without confirmed credentials
 bulk marketing SMS
-external debt collection SMS automation
-automatic SMS sending without explicit settings
+automatic debt collection SMS campaigns
+provider-specific legal/compliance advice
 ```
 
 ---
@@ -146,608 +135,514 @@ automatic SMS sending without explicit settings
 Rules:
 
 ```text
-Automatic SMS events must remain disabled by default.
-No clinical workflow should fail because SMS failed.
-No invoice should be marked paid before provider verification.
-No duplicate callback should duplicate a UHMS payment.
-No refund should bypass credit-note/refund approval workflow.
-No provider credential should be logged or displayed.
-No provider adapter should fake success in production.
+Public payment page must never expose internal numeric IDs.
+Public payment page must not expose clinical details.
+Payment link must not mark invoice paid.
+Provider payment must be verified before UHMS payment creation.
+Duplicate callback or duplicate return-page refresh must not duplicate UHMS payment.
+Expired or cancelled payment link must not initiate payment.
+Amount and currency must be revalidated before provider initiation.
+Manual/cash payments must remain unchanged.
+SMS failure must not block billing, appointments, queue, or payment workflows.
+Refund must not bypass approved UHMS refund/credit-note workflow.
+Live providers must fail safe until sandbox payload/signature confirmation is recorded.
 ```
-
-Architecture must remain:
-
-```text
-controllers → services → provider interfaces → provider adapters
-```
-
-Do not put provider-specific logic in controllers.
-
-Do not put business workflow logic in provider adapters.
 
 ---
 
-# 4. Queue-backed SMS Sending
+# 4. Public Payment Link Portal
 
-Add queue-backed SMS dispatch.
-
-Create jobs:
+Add public routes, if the project safely supports public routes:
 
 ```text
-SendSmsMessageJob
-SendSmsRecipientJob
-ReconcileSmsDeliveryStatusJob
-RetryFailedSmsMessageJob
+GET  /pay/{linkUuid}
+POST /pay/{linkUuid}/initiate
+GET  /pay/{linkUuid}/status
+GET  /pay/{linkUuid}/receipt
+```
+
+Route names:
+
+```text
+public.payments.show
+public.payments.initiate
+public.payments.status
+public.payments.receipt
 ```
 
 Rules:
 
 ```text
-If queue is configured, SMS should dispatch through queue.
-If queue is not configured, allow controlled synchronous fallback.
-Failed SMS attempts must be retained.
-Retry must not duplicate successfully sent recipients.
-Message-level status must derive from recipient statuses.
-Recipient-level statuses must remain visible.
+No auth required.
+No internal IDs in URL.
+Use UUID / random public token only.
+Rate-limit public payment routes.
+Do not expose diagnosis, service details, clinical notes, or restricted patient data.
+Show only safe invoice summary:
+- hospital/facility name
+- invoice number
+- amount due
+- currency
+- payer/patient display name if safe
+- expiry status
+- payment instructions
 ```
 
-SMS statuses should support:
-
-```text
-queued
-sending
-sent
-partially_sent
-failed
-delivered
-undelivered
-expired
-cancelled
-```
-
-Add fields if missing:
-
-```text
-queued_at
-retry_count
-last_retry_at
-next_retry_at
-max_retries
-provider_status_checked_at
-```
-
-Use additive migrations only.
+If public routes are not safe in this app, implement the portal foundation behind a feature flag and document what remains.
 
 ---
 
-# 5. SMS Delivery Status Reconciliation
+# 5. Payment Link Lifecycle
 
-Implement scheduled/manual reconciliation.
-
-Create command:
-
-```bash
-php artisan integrations:sms-reconcile-status
-```
-
-Options:
+Extend `payment_request_links` if needed:
 
 ```text
---provider=
---message-id=
---recipient-id=
---from=
---to=
---limit=
---dry-run
-```
-
-Behavior:
-
-```text
-find sent recipients without final delivery status
-query provider status where supported
-update delivery reports
-mark delivered/undelivered/expired
-retain raw provider result
-continue on individual failure
-audit summary
-```
-
-If provider does not support status query:
-
-```text
-show controlled unsupported message
-do not mark as delivered
-keep status as sent/pending
-```
-
----
-
-# 6. SMS Templates and Placeholders
-
-Improve SMS templates.
-
-Support placeholders:
-
-```text
-{{patient_name}}
-{{invoice_number}}
-{{amount}}
-{{currency}}
-{{payment_link}}
-{{appointment_date}}
-{{appointment_time}}
-{{queue_number}}
-{{hospital_name}}
-{{receipt_number}}
-```
-
-Rules:
-
-```text
-Placeholders must be resolved by service, not Blade.
-Unknown placeholders should fail preview or show clear warning.
-Templates must support EN/FR.
-Clinical-sensitive placeholders must be restricted.
-Default templates should be safe and minimal.
-```
-
-Create service:
-
-```text
-SmsTemplateRenderer
-```
-
-Add preview screen:
-
-```text
-template preview with sample data
-placeholder validation
-```
-
----
-
-# 7. Automatic SMS Event Dispatcher
-
-Create:
-
-```text
-SmsNotificationEventService
-```
-
-Supported initial events:
-
-```text
-invoice_payment_request
-payment_receipt
-appointment_reminder
-queue_notification
-manual_custom
-```
-
-Settings:
-
-```text
-enable_payment_request_sms
-enable_receipt_sms
-enable_appointment_reminder_sms
-enable_queue_sms
-```
-
-Default:
-
-```text
-all automatic SMS events disabled
-```
-
-Rules:
-
-```text
-No automatic SMS is sent unless the event toggle is enabled.
-Do not send SMS if patient/payer has no valid phone number.
-Do not send duplicate event SMS for same source/event/template unless explicitly resent.
-Do not expose sensitive diagnosis/lab details in SMS.
-```
-
-Create table if needed:
-
-```text
-sms_notification_events
-```
-
-Fields:
-
-```text
-id
-event_type
-source_type
-source_id
-template_id nullable
-sms_message_id nullable
-recipient_phone
-status
-triggered_by nullable
-triggered_at
-sent_at nullable
-failed_at nullable
-error_message nullable
-metadata_snapshot
-timestamps
-```
-
-Use this to prevent duplicate automatic SMS.
-
----
-
-# 8. Payment Request Link Foundation
-
-Implement payment request link foundation.
-
-Purpose:
-
-```text
-Create secure payment request references that can be sent by SMS or displayed on invoice pages.
-```
-
-Create table if needed:
-
-```text
-payment_request_links
-```
-
-Fields:
-
-```text
-id
-link_uuid
-invoice_id nullable
-visit_id nullable
-patient_id nullable
-payer_type nullable
-payer_id nullable
-amount
-currency
-status
-expires_at nullable
-used_at nullable
-payment_provider_transaction_id nullable
-created_by nullable
-metadata_snapshot
-timestamps
+public_token
+token_hash
+initiated_count
+last_initiated_at
+last_viewed_at
+cancelled_by
+cancelled_at
+cancel_reason
+success_redirect_url nullable
+failure_redirect_url nullable
 ```
 
 Statuses:
 
 ```text
 active
+initiated
 used
 expired
 cancelled
+failed
 ```
 
 Rules:
 
 ```text
-A payment link does not mark invoice paid.
-A payment link starts provider payment initiation.
-Amount and invoice reference must be validated again before provider initiation.
-Expired link cannot initiate payment.
-Used link cannot be reused unless explicitly configured.
-Do not expose internal numeric IDs in public link.
-```
-
-If public patient portal is not available:
-
-```text
-create backend-generated link/reference foundation
-do not expose a public route unless the app already supports safe public pages
-document patient portal route as deferred
+Active link can start provider payment.
+Initiated link can show pending status.
+Used link cannot initiate another payment unless reissue is configured.
+Expired link blocks initiation.
+Cancelled link blocks initiation.
+If invoice is already paid, show paid state and do not initiate.
+If invoice balance changed, recalculate amount before initiation.
 ```
 
 ---
 
-# 9. Payment Reconciliation Dashboard
+# 6. Payment Page UX
 
-Add dashboard for provider payment operations.
-
-Route area:
+Create public views:
 
 ```text
-admin/integrations/payments/reconciliation
+payment-link/show.blade.php
+payment-link/pending.blade.php
+payment-link/success.blade.php
+payment-link/failed.blade.php
+payment-link/expired.blade.php
+payment-link/receipt.blade.php
 ```
 
-Dashboard cards:
+The page should support:
 
 ```text
-pending transactions
-stale pending transactions
-verified but not linked
-paid and linked to UHMS payment
-failed transactions
-amount mismatches
-unknown callbacks
-duplicate callbacks ignored
-callbacks awaiting verification
-provider errors
+mobile-first layout
+clear amount due
+provider selection hidden because only active provider is used
+phone number input if provider requires payer phone
+payment method instructions
+pending status message
+manual refresh / verify button
+safe receipt after verified payment
 ```
 
-Filters:
+Use Bootstrap 5 and existing UI components.
 
-```text
-provider
-status
-date range
-invoice
-patient
-payer phone
-amount
-reference
-callback status
-UHMS payment linked/unlinked
-```
-
-Actions:
-
-```text
-manual verify/recheck
-view callback payload
-view provider attempts
-link to invoice
-link to UHMS payment
-mark expired where safe
-cancel pending transaction where safe
-```
-
-Rules:
-
-```text
-Manual verify must use PaymentVerificationService.
-Do not create UHMS payment without verification.
-Do not allow arbitrary invoice allocation.
-Unknown callbacks remain retained but not posted.
-```
+Do not introduce a frontend framework.
 
 ---
 
-# 10. Stale Pending Payment Recheck
-
-Create command:
-
-```bash
-php artisan integrations:payments-recheck-pending
-```
-
-Options:
-
-```text
---provider=
---from=
---to=
---limit=
---dry-run
---mark-expired
-```
-
-Behavior:
-
-```text
-find pending/stale provider transactions
-verify with provider where possible
-update status
-create UHMS payment only when verified success and amount/currency/reference match
-mark expired only when configured/confirmed
-audit summary
-continue on individual failure
-```
-
----
-
-# 11. Provider Webhook Verification Hardening
-
-Review and strengthen:
-
-```text
-Nalo SMS callback verification
-MTN MoMo callback verification
-Nalo Payment callback verification
-```
-
-Rules:
-
-```text
-If provider supports signature header, verify it.
-If provider supports callback secret, verify it.
-If provider supports status recheck, recheck before payment creation.
-If exact live signature format is unknown, isolate TODO inside adapter and fail safely in live mode unless configured to accept sandbox callbacks.
-Do not allow unsigned live payment callback to create UHMS payment unless provider verification is performed.
-```
-
-Add provider settings:
-
-```text
-require_signature
-allow_unsigned_sandbox_callbacks
-callback_secret
-signature_header
-```
-
----
-
-# 12. Live Provider Payload Hardening
-
-Confirm adapter payload structure areas.
-
-For each real provider adapter:
-
-```text
-NaloSmsProvider
-MtnMomoPaymentProvider
-NaloPaymentProvider
-```
-
-Add:
-
-```text
-clear request builder method
-clear response normalizer
-clear error normalizer
-sandbox/live URL selector
-provider-specific required credential list
-provider capability flags
-safe TODO comments where live credentials are required
-```
-
-Provider test must show:
-
-```text
-missing credential errors
-network error
-authentication failure
-successful sandbox/fake test
-```
-
-Do not fake success for real providers.
-
----
-
-# 13. Refund / Credit-note Workflow Bridge Foundation
-
-Build foundation but do not force full refund automation if provider support is not confirmed.
+# 7. Payment Initiation From Link
 
 Add service:
 
 ```text
-PaymentRefundBridgeService
+PublicPaymentLinkService
 ```
 
 Responsibilities:
 
 ```text
-prepare provider refund request from approved UHMS refund or credit-note workflow
-validate original provider transaction
-validate refundable amount
-create provider refund record
-call provider refund if supported
-record provider response
-link refund to UHMS refund/credit note where available
+validate public token
+validate link status
+validate invoice balance
+validate amount/currency
+collect payer phone if required
+call PaymentGatewayService
+link payment_provider_transaction_id to payment_request_link
+mark link initiated
+show provider instructions
+```
+
+Do not duplicate payment initiation logic.
+
+Do not create UHMS payment directly.
+
+---
+
+# 8. Payment Status and Receipt
+
+Payment status page must:
+
+```text
+load payment request link
+load linked provider transaction
+show pending / paid / failed / expired
+allow manual recheck through safe service method
+show receipt only after verified UHMS payment exists
 ```
 
 Rules:
 
 ```text
-Refund cannot exceed verified provider payment amount minus previous refunds.
-Refund must require permission.
-Refund must not bypass UHMS credit-note/refund approval workflow.
-If provider refund is unsupported, mark as unsupported and retain manual-refund instruction.
+Do not reveal provider secrets.
+Do not show raw callback payload publicly.
+Do not expose accounting posting details publicly.
 ```
 
 ---
 
-# 14. Billing Integration
+# 9. SMS Payment Request Workflow
 
-Enhance existing billing/payment screens safely.
+Improve payment request SMS.
 
-Add:
-
-```text
-Initiate mobile money / online payment
-View provider transaction status
-Manual verify/recheck
-Send payment request SMS
-View payment callback history
-```
-
-Do not remove manual payment entry.
-
-Do not change invoice total logic.
-
-Do not change existing accounting posting flow.
-
-Verified provider payment must still create a normal UHMS payment through existing `PaymentService`.
-
----
-
-# 15. SMS Integration Points
-
-Add optional event hooks:
+When billing user clicks "Send payment request SMS":
 
 ```text
-invoice payment request SMS
-payment receipt SMS
-appointment reminder SMS
-queue notification SMS
+create or reuse active payment request link
+render SMS template with {{payment_link}}
+queue SMS through SmsGatewayService
+record sms_notification_event
+audit action
 ```
 
 Rules:
 
 ```text
-Event hooks must check module enabled.
-Event hooks must check active provider exists.
-Event hooks must check automatic event setting enabled.
-Event hooks must avoid duplicate event messages.
-Failure must be logged but not block source workflow.
+Do not send if SMS event toggle is disabled unless user explicitly chooses manual send with permission.
+Do not send duplicate payment request SMS for same invoice/link unless resend is confirmed.
+Payment link expiry should be shown to user before sending.
 ```
 
-Appointment reminder should be foundation only if scheduling command is not already present.
+---
 
-Create command if safe:
+# 10. Receipt SMS Workflow
+
+When provider payment is verified and UHMS payment is created:
+
+```text
+if receipt SMS toggle enabled:
+    render receipt template
+    queue SMS
+    deduplicate by payment id + event type
+```
+
+Receipt SMS must include safe fields only:
+
+```text
+receipt number
+amount paid
+invoice number
+facility name
+payment date
+```
+
+Do not include diagnoses, clinical notes, lab details, or restricted patient details.
+
+---
+
+# 11. Appointment Reminder Scheduler
+
+Phase 2 added command:
 
 ```bash
 php artisan integrations:sms-send-appointment-reminders
 ```
 
-Options:
+Now wire it operationally.
+
+If Laravel console scheduler is present, add schedule entry:
+
+```php
+$schedule->command('integrations:sms-send-appointment-reminders --date=tomorrow')->dailyAt('08:00');
+```
+
+But only activate sending if:
 
 ```text
---date=
---from=
---to=
---dry-run
+sms_gateway module enabled
+active SMS provider exists
+enable_appointment_reminder_sms = true
+appointment module exists
+```
+
+If scheduler structure is not ready, document exact cron entry:
+
+```bash
+* * * * * php /path/to/artisan schedule:run >> /dev/null 2>&1
+```
+
+and document the command to schedule later.
+
+---
+
+# 12. Queue Notification SMS Hook
+
+If the queue module exists, add hook:
+
+```text
+queue ticket created
+patient called
+patient moved to consultation
+```
+
+Rules:
+
+```text
+Do not automatically send unless enable_queue_sms is true.
+Deduplicate by queue entry + event type.
+Failure must not block queue workflow.
+SMS should be short and safe.
+```
+
+If queue workflow is not cleanly hookable, document deferred hook points.
+
+---
+
+# 13. Scheduler Wiring
+
+Add or document scheduled jobs for:
+
+```text
+SMS status reconciliation
+pending payment recheck
+appointment reminders
+```
+
+Recommended schedule:
+
+```text
+integrations:sms-reconcile-status every 15 minutes or hourly
+integrations:payments-recheck-pending every 10-15 minutes
+integrations:sms-send-appointment-reminders daily morning
+```
+
+Use project scheduler conventions.
+
+If scheduler is not used in the project, create documentation instead of forcing it.
+
+Add admin screen to show:
+
+```text
+last command run
+last success/failure
+recommended cron status if detectable
 ```
 
 ---
 
-# 16. Provider Health Monitoring
+# 14. Provider Go-Live Checklist
 
-Add provider health screen.
-
-Track:
+Create tables:
 
 ```text
-last_tested_at
-last_test_status
-last_success_at
-last_failure_at
-last_error_message
-pending_transactions
-failed_transactions
-undelivered_sms_count
-callback_failures
+integration_provider_checklists
+integration_provider_checklist_items
 ```
 
-Provider test should not expose secrets.
+Or store checklist as structured provider metadata if simpler.
+
+Checklist items:
+
+```text
+sandbox credentials configured
+test connection passed
+test SMS/payment sent
+callback URL configured at provider
+callback signature/secret confirmed
+sandbox callback received
+amount/currency validation tested
+duplicate callback tested
+failed transaction tested
+live credentials configured
+live callback URL configured
+live provider status verified
+finance sign-off
+IT sign-off
+go-live approved
+```
+
+Statuses:
+
+```text
+pending
+passed
+failed
+not_applicable
+waived
+```
+
+Rules:
+
+```text
+Provider cannot be marked live-ready until required checklist items pass or are waived with reason.
+Waiver requires elevated permission.
+Checklist does not activate provider automatically unless user explicitly activates provider.
+```
 
 ---
 
-# 17. Permissions
+# 15. Provider Sandbox Verification Records
 
-Reuse Phase 1 permissions where possible.
+Add service:
+
+```text
+ProviderGoLiveChecklistService
+```
+
+Responsibilities:
+
+```text
+create default checklist for provider
+record checklist item status
+record evidence/reference
+record sandbox test results
+record callback verification result
+record sign-off
+determine live readiness
+audit all changes
+```
+
+Evidence may include:
+
+```text
+reference number
+provider ticket id
+test transaction id
+callback sample hash
+notes
+timestamp
+actor
+```
+
+Do not store secrets in evidence.
+
+---
+
+# 16. Live Provider Activation Guard
+
+When activating a real provider in live mode:
+
+```text
+check required go-live checklist
+warn or block if not live-ready
+allow elevated override only with reason
+audit override
+```
+
+Fake providers must remain blocked in production unless explicitly allowed by config.
+
+---
+
+# 17. Refund / Credit-note Completion
+
+Phase 2 created refund bridge foundation.
+
+Now connect it to existing UHMS credit-note/refund workflow.
+
+Inspect existing:
+
+```text
+credit notes
+refunds
+write-offs
+payments
+invoice adjustments
+cash/bank refunds
+```
+
+Implement only where existing workflow is clear.
+
+Rules:
+
+```text
+Provider refund requires approved UHMS refund or credit note.
+Refund cannot exceed verified provider payment remaining refundable amount.
+Provider refund result must link back to UHMS refund/credit note.
+If provider refund unsupported, retain manual refund instruction.
+If provider refund succeeds, update UHMS refund status using existing refund workflow.
+Do not reverse invoice/payment incorrectly.
+Do not bypass accounting posting rules.
+```
+
+Add refund statuses if missing:
+
+```text
+provider_pending
+provider_refunded
+provider_failed
+provider_unsupported
+manual_required
+```
+
+---
+
+# 18. Payment Reconciliation Enhancement
+
+Add reconciliation improvements:
+
+```text
+provider totals by date
+UHMS payments by date
+provider-paid not linked
+UHMS-linked but provider status unknown
+amount mismatch report
+currency mismatch report
+duplicate callback report
+manual refund required report
+```
+
+Export:
+
+```text
+CSV export for payment reconciliation dashboard
+```
+
+Use existing export tooling.
+
+---
+
+# 19. Permissions
+
+Reuse Phase 1 and 2 permissions where possible.
 
 Add only if missing:
 
 ```text
-integrations.sms.queue.view
-integrations.sms.queue.retry
-integrations.sms.events.manage
-integrations.sms.status.reconcile
-
-integrations.payments.reconciliation.view
-integrations.payments.reconciliation.verify
-integrations.payments.reconciliation.expire
-integrations.payments.refunds.prepare
-integrations.payments.refunds.execute
-integrations.payments.request_links.manage
+integrations.payments.public_links.view
+integrations.payments.public_links.cancel
+integrations.payments.golive.view
+integrations.payments.golive.manage
+integrations.payments.golive.approve
+integrations.sms.golive.view
+integrations.sms.golive.manage
+integrations.sms.golive.approve
+integrations.scheduler.view
+integrations.scheduler.manage
 ```
 
 Suggested defaults:
@@ -757,56 +652,52 @@ Administrator / Super Admin:
 - all
 
 IT Admin:
-- provider health
-- queues
-- status reconciliation
-- provider testing
+- provider go-live checklist
+- scheduler
+- provider activation
 
 Finance Manager:
 - payment reconciliation
-- manual verify
-- refunds bridge
-- payment request links
+- go-live approval for payment providers
+- refund bridge
 
 Cashier / Accountant:
-- initiate payments
-- verify related payment transactions
-- send payment request SMS where allowed
+- create/send payment request links
+- view transaction status
+- manual verify if already permitted
 
 Receptionist:
-- appointment reminder / queue SMS where allowed
+- appointment/queue SMS actions only where permitted
 ```
-
-Do not grant credential management to ordinary billing users.
 
 ---
 
-# 18. Audit Logging
+# 20. Audit Logging
 
 Use `ActivityLogService`.
 
 Audit:
 
 ```text
-SMS_MESSAGE_QUEUED
-SMS_MESSAGE_RETRY_REQUESTED
-SMS_STATUS_RECONCILIATION_RUN
-SMS_NOTIFICATION_EVENT_CREATED
-SMS_NOTIFICATION_EVENT_SKIPPED
-SMS_NOTIFICATION_EVENT_SENT
-SMS_TEMPLATE_PREVIEWED
-
-PAYMENT_RECONCILIATION_VIEWED
-PAYMENT_TRANSACTION_RECHECK_REQUESTED
-PAYMENT_TRANSACTION_RECHECK_COMPLETED
-PAYMENT_TRANSACTION_MARKED_EXPIRED
-PAYMENT_REQUEST_LINK_CREATED
-PAYMENT_REQUEST_LINK_USED
-PAYMENT_REQUEST_SMS_SENT
-PAYMENT_REFUND_BRIDGE_PREPARED
-PAYMENT_REFUND_PROVIDER_REQUESTED
-PAYMENT_REFUND_PROVIDER_UNSUPPORTED
-PAYMENT_PROVIDER_HEALTH_CHECKED
+PAYMENT_LINK_PUBLIC_VIEWED
+PAYMENT_LINK_PUBLIC_INITIATED
+PAYMENT_LINK_PUBLIC_STATUS_VIEWED
+PAYMENT_LINK_PUBLIC_RECEIPT_VIEWED
+PAYMENT_REQUEST_SMS_RESENT
+RECEIPT_SMS_QUEUED
+APPOINTMENT_REMINDER_SCHEDULER_RUN
+QUEUE_SMS_EVENT_TRIGGERED
+INTEGRATION_SCHEDULER_STATUS_VIEWED
+PROVIDER_GOLIVE_CHECKLIST_CREATED
+PROVIDER_GOLIVE_ITEM_UPDATED
+PROVIDER_GOLIVE_SIGNOFF_RECORDED
+PROVIDER_GOLIVE_OVERRIDE_USED
+PROVIDER_LIVE_ACTIVATION_BLOCKED
+PROVIDER_LIVE_ACTIVATION_APPROVED
+PAYMENT_REFUND_BRIDGE_LINKED
+PAYMENT_REFUND_PROVIDER_COMPLETED
+PAYMENT_REFUND_MANUAL_REQUIRED
+PAYMENT_RECONCILIATION_EXPORTED
 ```
 
 Run:
@@ -819,7 +710,7 @@ Fix new missing/needs-review audit gaps.
 
 ---
 
-# 19. Localisation
+# 21. Localisation
 
 All labels must be localised EN/FR.
 
@@ -839,40 +730,37 @@ lang/fr/menu.php
 Required keys:
 
 ```text
-sms_queue
-retry_sms
-sms_status_reconciliation
-sms_notification_event
-sms_notification_events
-template_placeholders
-preview_template
-payment_request_sms
+public_payment
+payment_link
+payment_link_expired
+payment_link_cancelled
+payment_link_used
+pay_invoice
+amount_due
+payer_phone
+payment_pending
+payment_successful
+payment_unsuccessful
+view_receipt
+download_receipt
+send_payment_request_sms
+resend_payment_request_sms
 receipt_sms
-appointment_reminder_sms
-queue_notification_sms
-automatic_sms_events
-enable_payment_request_sms
-enable_receipt_sms
-enable_appointment_reminder_sms
-enable_queue_sms
-
-payment_reconciliation
-stale_pending_transactions
-manual_recheck
-recheck_pending_payments
-verified_not_linked
-amount_mismatch
-unknown_callback
-duplicate_callback
-payment_request_link
-payment_request_links
-create_payment_link
-expire_payment_link
-provider_health
-provider_health_check
-refund_bridge
-provider_refund
-refund_unsupported
+go_live_checklist
+go_live_ready
+not_live_ready
+sandbox_verification
+callback_signature_confirmed
+provider_signoff
+finance_signoff
+it_signoff
+activation_override
+scheduler_status
+scheduled_commands
+last_command_run
+refund_manual_required
+provider_refund_completed
+payment_reconciliation_export
 ```
 
 Maintain EN/FR parity.
@@ -892,51 +780,50 @@ Active runtime candidates must remain:
 
 ---
 
-# 20. Navigation
+# 22. Navigation
 
 Add or extend navigation:
 
 ```text
-Administration / Integrations > Provider Health
-Administration / Integrations > SMS Queue
-Administration / Integrations > SMS Events
-Administration / Integrations > Payment Reconciliation
-Billing & Collections > Payment API Transactions
+Administration / Integrations > Go-Live Checklists
+Administration / Integrations > Scheduler Status
 Billing & Collections > Payment Request Links
+Billing & Collections > Payment Reconciliation
 ```
 
-Route access must be permission and module protected.
+Public payment pages must not appear in authenticated sidebar navigation.
 
 ---
 
-# 21. Focused Tests To Add
+# 23. Focused Tests To Add
 
 Add focused tests but do not run the wide full suite.
 
 Required coverage:
 
 ```text
-SMS dispatch can be queued
-queued SMS updates recipient statuses
-SMS retry does not duplicate delivered recipients
-SMS status reconciliation updates delivery report idempotently
-SMS template placeholder validation works
-automatic SMS event is skipped when toggle disabled
-payment request SMS creates notification event when enabled
-
-payment reconciliation dashboard is permission protected
-pending transaction can be manually rechecked
-stale pending command verifies transactions safely
-verified recheck creates UHMS payment once
-duplicate recheck does not duplicate UHMS payment
-amount mismatch remains blocked
-unknown callback remains retained
-payment request link can be created
-expired payment request link cannot initiate payment
-refund bridge blocks refund above original payment
-unsupported provider refund is retained visibly
-webhook signature failure does not create payment
-module middleware blocks disabled routes
+public payment link page does not expose internal IDs
+expired payment link cannot initiate payment
+cancelled payment link cannot initiate payment
+already-paid invoice link shows paid state
+payment link initiation creates provider transaction
+payment link does not create UHMS payment before verification
+verified payment link creates one UHMS payment
+duplicate return/status refresh does not duplicate payment
+receipt page only works after verified payment
+payment request SMS includes payment link when enabled
+receipt SMS queues after verified payment when enabled
+appointment reminder command respects toggle
+queue SMS hook respects toggle
+scheduler status page is permission protected
+go-live checklist is created for provider
+live provider activation blocked when checklist incomplete
+go-live waiver requires permission and reason
+provider activation override is audited
+provider refund links to approved UHMS refund/credit note
+unsupported provider refund marks manual required
+payment reconciliation export requires permission
+module middleware protects integration routes
 audit events are recorded
 localisation keys exist
 ```
@@ -953,7 +840,7 @@ The wide full-suite test will be run after all current implementation phases are
 
 ---
 
-# 22. Minimal Verification Commands
+# 24. Minimal Verification Commands
 
 Run only necessary safety checks:
 
@@ -979,12 +866,12 @@ Do not run the full application test suite yet.
 
 ---
 
-# 23. Documentation
+# 25. Documentation
 
 Create:
 
 ```text
-docs/INTEGRATIONS_PHASE_2_QUEUE_RECONCILIATION_AND_EVENTS_REPORT.md
+docs/INTEGRATIONS_PHASE_3_PUBLIC_PAYMENT_PORTAL_GOLIVE_AND_REFUNDS_REPORT.md
 ```
 
 Include:
@@ -994,23 +881,21 @@ summary
 database changes
 models added/changed
 services added
-jobs added
-commands added
-provider hardening
-SMS queue workflow
-SMS status reconciliation
-SMS template placeholders
-automatic SMS events
-payment request links
-payment reconciliation dashboard
-manual recheck workflow
-stale pending recheck command
-webhook signature behavior
-refund bridge behavior
-billing integration
+routes/controllers/views added
+public payment-link portal workflow
+payment link security
+payment request SMS workflow
+receipt SMS workflow
+appointment reminder scheduler
+queue SMS hook
+scheduler wiring
+provider go-live checklist
+sandbox verification behavior
+live activation guard
+refund/credit-note workflow connection
+payment reconciliation export
 security controls
 permissions
-routes/controllers/views
 audit logging
 localisation audit result
 minimal verification commands run
@@ -1021,28 +906,31 @@ next recommended phase
 
 ---
 
-# 24. Acceptance Criteria
+# 26. Acceptance Criteria
 
-Phase 2 is complete only when:
+Phase 3 is complete only when:
 
 ```text
-SMS dispatch can run through queue
-SMS retry is recipient-safe
-SMS delivery status reconciliation exists
-SMS templates support validated placeholders
-automatic SMS event toggles exist and default disabled
-payment request SMS can be generated when enabled
-payment request link foundation exists
-payment reconciliation dashboard exists
-manual payment recheck works through verification service
-stale pending payment recheck command exists
-duplicate rechecks/callbacks do not duplicate UHMS payment
-amount mismatch remains blocked
-unknown callbacks remain retained but not posted
-webhook signature/secret failure blocks payment creation
-provider health screen exists
-refund bridge prevents over-refund and unsupported refunds are visible
+public payment link page exists or is explicitly feature-flagged with foundation complete
+payment link does not expose internal IDs
+expired/cancelled/used links are handled safely
+payment link initiation creates provider transaction but not UHMS payment
+verified payment creates exactly one UHMS payment
+receipt page only appears after verified payment
+payment request SMS can include payment link
+receipt SMS can queue after verified payment
+appointment reminder scheduler is wired or documented
+queue SMS hook is implemented or exact hook points are documented
+scheduler status page exists
+go-live checklist exists
+live provider activation guard exists
+sandbox verification records exist
+provider activation override requires permission and reason
+refund bridge connects to approved UHMS refund/credit-note workflow where existing workflow is available
+unsupported provider refunds remain visible as manual-required
+payment reconciliation CSV export exists
 manual/cash payment workflows remain unchanged
+provider credentials remain encrypted and masked
 permissions are enforced
 module middleware protects routes
 ActivityLogService is used
@@ -1056,4 +944,4 @@ documentation report is created
 full test suite is intentionally deferred
 ```
 
-Proceed with External Integrations Phase 2 now.
+Proceed with External Integrations Phase 3 now.

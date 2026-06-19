@@ -87,11 +87,17 @@ class SmsProviderController extends Controller
         return back()->with('success', __('integrations.flash.credentials_updated'));
     }
 
-    public function activate(IntegrationProvider $provider)
+    public function activate(Request $request, IntegrationProvider $provider)
     {
         abort_unless($provider->module_type === IntegrationProvider::MODULE_SMS, 404);
 
-        $this->providers->activate($provider);
+        $override = $request->boolean('override') && (bool) $request->user()?->can('integrations.sms.golive.approve');
+
+        try {
+            $this->providers->activate($provider, $override, $request->input('override_reason'));
+        } catch (\App\Exceptions\Integrations\IntegrationException $e) {
+            return back()->with('error', $e->localisedMessage());
+        }
 
         return back()->with('success', __('integrations.flash.provider_activated', ['name' => $provider->name]));
     }

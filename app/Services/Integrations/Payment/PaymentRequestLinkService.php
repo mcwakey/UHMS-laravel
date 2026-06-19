@@ -27,8 +27,12 @@ class PaymentRequestLinkService
     {
         $expiresDays = (int) config('integrations.payment_link_expiry_days', 7);
 
+        $token = Str::random(48);
+
         $link = PaymentRequestLink::create([
             'link_uuid' => (string) Str::uuid(),
+            'public_token' => $token,
+            'token_hash' => hash('sha256', $token),
             'invoice_id' => $data['invoice_id'] ?? null,
             'visit_id' => $data['visit_id'] ?? null,
             'patient_id' => $data['patient_id'] ?? null,

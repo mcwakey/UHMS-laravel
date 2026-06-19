@@ -139,6 +139,28 @@ class SmsNotificationEventService
         ]);
     }
 
+    /**
+     * Queue-notification SMS hook. Foundation: callers (queue ticket created /
+     * patient called / moved to consultation) pass the queue entry id + phone +
+     * a short queue number. Strictly opt-in (enable_queue_sms) and deduplicated by
+     * queue entry + event. Never blocks the queue workflow.
+     */
+    public function queueNotification(int $queueEntryId, ?string $phone, array $data = []): SmsNotificationEvent
+    {
+        $this->logger->log(LogModule::INTEGRATIONS, 'QUEUE_SMS_EVENT_TRIGGERED', [
+            'source_type' => 'queue_entry', 'source_id' => $queueEntryId,
+            'metadata' => ['queue_number' => $data['queue_number'] ?? null],
+        ], null, 'Queue SMS event triggered');
+
+        return $this->dispatch([
+            'event_type' => SmsNotificationEvent::TYPE_QUEUE_NOTIFICATION,
+            'source_type' => 'queue_entry',
+            'source_id' => $queueEntryId,
+            'phone' => $phone,
+            'data' => $data,
+        ]);
+    }
+
     /* ── internals ──────────────────────────────────────────────────── */
 
     private function skipReason(array $args, string $eventType, string $phone): ?string

@@ -100,7 +100,7 @@ return [
     // resolved by SmsTemplateRenderer — never include clinical detail). Operators
     // should create proper SMS templates; these are conservative fallbacks.
     'sms_default_bodies' => [
-        'invoice_payment_request' => 'Dear {{patient_name}}, invoice {{invoice_number}} of {{currency}} {{amount}} is awaiting payment. {{hospital_name}}.',
+        'invoice_payment_request' => 'Dear {{patient_name}}, invoice {{invoice_number}} of {{currency}} {{amount}} is awaiting payment. Pay: {{payment_link}} — {{hospital_name}}.',
         'payment_receipt' => 'Payment of {{currency}} {{amount}} received. Receipt {{receipt_number}}. Thank you, {{hospital_name}}.',
         'appointment_reminder' => 'Reminder: you have an appointment on {{appointment_date}} at {{appointment_time}}. {{hospital_name}}.',
         'queue_notification' => 'Your queue number is {{queue_number}}. {{hospital_name}}.',

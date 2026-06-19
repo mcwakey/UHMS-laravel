@@ -2,7 +2,10 @@
 
 namespace App\Listeners\Integrations;
 
+use App\Enums\LogModule;
 use App\Events\PaymentRecorded;
+use App\Models\SmsNotificationEvent;
+use App\Services\ActivityLogService;
 use App\Services\Integrations\Sms\SmsEventSettingsService;
 use App\Services\Integrations\Sms\SmsNotificationEventService;
 use App\Services\ModuleService;
@@ -20,6 +23,7 @@ class SendPaymentReceiptSms
         protected ModuleService $modules,
         protected SmsEventSettingsService $settings,
         protected SmsNotificationEventService $events,
+        protected ActivityLogService $logger,
     ) {}
 
     public function handle(PaymentRecorded $event): void
@@ -29,7 +33,14 @@ class SendPaymentReceiptSms
         }
 
         try {
-            $this->events->paymentReceipt($event->payment);
+            $notification = $this->events->paymentReceipt($event->payment);
+
+            if ($notification->status === SmsNotificationEvent::STATUS_SENT) {
+                $this->logger->log(LogModule::INTEGRATIONS, 'RECEIPT_SMS_QUEUED', [
+                    'source_type' => 'payment', 'source_id' => $event->payment->id,
+                    'payment_id' => $event->payment->id,
+                ], $event->payment, 'Receipt SMS queued');
+            }
         } catch (\Throwable $e) {
             // SMS must never affect payment recording.
         }

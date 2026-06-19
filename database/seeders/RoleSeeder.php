@@ -721,6 +721,18 @@ class RoleSeeder extends Seeder
             'integrations.payments.refunds.execute',
             'integrations.payments.request_links.manage',
 
+            // ── External Integrations Phase 3 ─────────────────────────────
+            'integrations.payments.public_links.view',
+            'integrations.payments.public_links.cancel',
+            'integrations.payments.golive.view',
+            'integrations.payments.golive.manage',
+            'integrations.payments.golive.approve',
+            'integrations.sms.golive.view',
+            'integrations.sms.golive.manage',
+            'integrations.sms.golive.approve',
+            'integrations.scheduler.view',
+            'integrations.scheduler.manage',
+
             // ── Settings ─────────────────────────────────────────────────
             'settings.view',
             'settings.manage',
@@ -1049,6 +1061,7 @@ class RoleSeeder extends Seeder
             'integrations.payments.transactions.verify',
             'integrations.payments.reconciliation.view',
             'integrations.payments.request_links.manage',
+            'integrations.payments.public_links.view',
             'notifications.view',
         ]);
 
@@ -1200,6 +1213,7 @@ class RoleSeeder extends Seeder
             'integrations.payments.reconciliation.view',
             'integrations.payments.reconciliation.verify',
             'integrations.payments.request_links.manage',
+            'integrations.payments.public_links.view',
             'notifications.view',
         ]);
 
@@ -1236,6 +1250,13 @@ class RoleSeeder extends Seeder
                 'integrations.payments.refunds.prepare',
                 'integrations.payments.refunds.execute',
                 'integrations.payments.request_links.manage',
+                // Phase 3 — public links, go-live approval, scheduler oversight
+                'integrations.payments.public_links.view',
+                'integrations.payments.public_links.cancel',
+                'integrations.payments.golive.view',
+                'integrations.payments.golive.manage',
+                'integrations.payments.golive.approve',
+                'integrations.scheduler.view',
             ])->unique()->values()->all()
         );
 

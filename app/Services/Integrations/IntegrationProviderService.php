@@ -64,9 +64,36 @@ class IntegrationProviderService
     /**
      * Activate a provider, deactivating any other active provider for the same
      * module type. Enforced in a transaction (the "single active" guarantee).
+     *
+     * Live activation is guarded by the go-live checklist: a live provider that
+     * is not live-ready is blocked unless an elevated override (with reason) is
+     * supplied. Fake providers are never selectable in production (registry).
+     *
+     * @throws \App\Exceptions\Integrations\IntegrationException when blocked.
      */
-    public function activate(IntegrationProvider $provider): IntegrationProvider
+    public function activate(IntegrationProvider $provider, bool $allowOverride = false, ?string $overrideReason = null): IntegrationProvider
     {
+        if ($provider->environment === IntegrationProvider::ENV_LIVE
+            && ! app(ProviderGoLiveChecklistService::class)->liveActivationAllowed($provider)) {
+            if (! $allowOverride || ! $overrideReason) {
+                $this->logger->log(LogModule::INTEGRATIONS, 'PROVIDER_LIVE_ACTIVATION_BLOCKED', [
+                    'source_type' => 'integration_provider', 'source_id' => $provider->id,
+                    'severity' => \App\Enums\LogSeverity::WARNING,
+                ], $provider, "Live activation blocked (not go-live ready): {$provider->name}");
+
+                throw new \App\Exceptions\Integrations\IntegrationException(
+                    'Provider is not go-live ready.',
+                    'integrations.errors.not_live_ready',
+                );
+            }
+
+            $this->logger->log(LogModule::INTEGRATIONS, 'PROVIDER_GOLIVE_OVERRIDE_USED', [
+                'source_type' => 'integration_provider', 'source_id' => $provider->id,
+                'severity' => \App\Enums\LogSeverity::SECURITY,
+                'reason' => $overrideReason,
+            ], $provider, "Live activation override used: {$provider->name}");
+        }
+
         DB::transaction(function () use ($provider) {
             $previous = IntegrationProvider::query()
                 ->where('module_type', $provider->module_type)
@@ -99,6 +126,13 @@ class IntegrationProviderService
             'source_id' => $provider->id,
             'severity' => \App\Enums\LogSeverity::WARNING,
         ], $provider, "Integration provider activated: {$provider->name}");
+
+        if ($provider->environment === IntegrationProvider::ENV_LIVE) {
+            $this->logger->log(LogModule::INTEGRATIONS, 'PROVIDER_LIVE_ACTIVATION_APPROVED', [
+                'source_type' => 'integration_provider', 'source_id' => $provider->id,
+                'severity' => \App\Enums\LogSeverity::WARNING,
+            ], $provider, "Live provider activation approved: {$provider->name}");
+        }
 
         return $provider->refresh();
     }

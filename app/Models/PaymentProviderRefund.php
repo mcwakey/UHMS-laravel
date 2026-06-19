@@ -19,6 +19,13 @@ class PaymentProviderRefund extends Model
     public const STATUS_COMPLETED = 'completed';
     public const STATUS_FAILED = 'failed';
 
+    // Phase 3 — provider/credit-note lifecycle
+    public const STATUS_PROVIDER_PENDING = 'provider_pending';
+    public const STATUS_PROVIDER_REFUNDED = 'provider_refunded';
+    public const STATUS_PROVIDER_FAILED = 'provider_failed';
+    public const STATUS_PROVIDER_UNSUPPORTED = 'provider_unsupported';
+    public const STATUS_MANUAL_REQUIRED = 'manual_required';
+
     protected $fillable = [
         'payment_provider_transaction_id',
         'provider_id',
@@ -33,6 +40,7 @@ class PaymentProviderRefund extends Model
         'processed_at',
         'failed_at',
         'uhms_refund_id',
+        'uhms_credit_note_id',
         'metadata_snapshot',
     ];
 
@@ -45,6 +53,11 @@ class PaymentProviderRefund extends Model
             'failed_at' => 'datetime',
             'metadata_snapshot' => 'array',
         ];
+    }
+
+    public function creditNote()
+    {
+        return $this->belongsTo(CreditNote::class, 'uhms_credit_note_id');
     }
 
     public function transaction()

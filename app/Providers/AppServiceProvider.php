@@ -58,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
         // webhooks (keyed by source IP) so a noisy/abusive caller can't flood us.
         RateLimiter::for('api', fn ($request) => Limit::perMinute(60)->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('integration-callbacks', fn ($request) => Limit::perMinute(120)->by($request->ip()));
+        RateLimiter::for('public-payments', fn ($request) => Limit::perMinute(30)->by($request->ip()));
 
         Paginator::defaultView('vendor.pagination.uhms');
         Paginator::defaultSimpleView('vendor.pagination.uhms-simple');
