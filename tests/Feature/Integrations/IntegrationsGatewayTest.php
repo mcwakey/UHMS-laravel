@@ -30,6 +30,7 @@ use App\Support\Integrations\Payment\PaymentInitiationRequest;
 use App\Support\Integrations\Sms\SmsSendRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Lang;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -240,6 +241,45 @@ class IntegrationsGatewayTest extends TestCase
         $this->assertFalse($result->success);
         $this->assertArrayHasKey('233241234567', $result->perRecipient);
         $this->assertSame('failed', $result->perRecipient['233241234567']['status']);
+    }
+
+    public function test_nalo_sms_adapter_uses_post_json_auth_key_contract(): void
+    {
+        Http::fake([
+            'https://sms.nalosolutions.com/smsbackend/Resl_Nalo/send-message/' => Http::response([
+                'status' => '1701',
+                'job_id' => 'api.0000011.20221222.0000003',
+                'msisdn' => '233241234567',
+            ], 200),
+        ]);
+
+        $provider = $this->smsProvider('nalo_sms', true, [
+            'base_url' => 'https://sms.nalosolutions.com/smsbackend/clientapi/Resl_Nalo/send-message/',
+            'sender_id' => 'UHMS',
+        ]);
+        $adapter = new NaloSmsProvider($provider, ['auth_key' => 'nalo-auth-key']);
+
+        $result = $adapter->send(new SmsSendRequest(
+            body: 'Hello from UHMS',
+            recipients: [['phone' => '233241234567', 'recipient_id' => null, 'name' => null]],
+            senderId: 'UHMS',
+        ));
+
+        $this->assertTrue($result->success);
+        $this->assertSame('sent', $result->perRecipient['233241234567']['status']);
+        $this->assertSame('api.0000011.20221222.0000003', $result->perRecipient['233241234567']['provider_message_id']);
+
+        Http::assertSent(function ($request) {
+            return $request->method() === 'POST'
+                && $request->url() === 'https://sms.nalosolutions.com/smsbackend/Resl_Nalo/send-message/'
+                && $request->hasHeader('Content-Type', 'application/json')
+                && $request['key'] === 'nalo-auth-key'
+                && $request['msisdn'] === '233241234567'
+                && $request['message'] === 'Hello from UHMS'
+                && $request['sender_id'] === 'UHMS'
+                && ! isset($request['username'])
+                && ! isset($request['password']);
+        });
     }
 
     public function test_sms_delivery_callback_is_idempotent(): void

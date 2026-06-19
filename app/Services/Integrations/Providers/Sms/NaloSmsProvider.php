@@ -28,17 +28,18 @@ class NaloSmsProvider extends AbstractIntegrationProvider implements SmsProvider
 {
     public function send(SmsSendRequest $request): SmsSendResult
     {
-        $url = $this->baseUrl();
+        $url = $this->jsonSendUrl();
         if (! $url) {
             return $this->failAll($request, 'no_base_url', 'Nalo SMS base URL is not configured.');
         }
-        if (! $this->hasCredentials(['api_key']) && ! $this->hasCredentials(['username', 'password'])) {
+        if (! $this->authKey() && ! $this->hasCredentials(['username', 'password'])) {
             return $this->failAll($request, 'no_credentials', 'Nalo SMS credentials are not configured.');
         }
 
         $sender = $request->senderId ?: $this->credential('sender_id', $this->provider->sender_id);
 
         $perRecipient = [];
+        $rawResponses = [];
         $anyOk = false;
 
         // Nalo's clientapi sends per-destination; loop keeps per-recipient status.
@@ -48,27 +49,35 @@ class NaloSmsProvider extends AbstractIntegrationProvider implements SmsProvider
                 continue;
             }
 
-            // TODO: confirm exact field names/auth mode with the live Nalo account.
-            $payload = array_filter([
-                'key' => $this->credential('api_key'),
-                'username' => $this->credential('username'),
-                'password' => $this->credential('password'),
-                'msisdn' => $phone,
-                'message' => $request->body,
-                'sender_id' => $sender,
-            ], fn ($v) => $v !== null && $v !== '');
+            $payload = $this->authKey()
+                ? [
+                    'key' => $this->authKey(),
+                    'msisdn' => $phone,
+                    'message' => $request->body,
+                    'sender_id' => $sender,
+                ]
+                : [
+                    'username' => $this->credential('username'),
+                    'password' => $this->credential('password'),
+                    'msisdn' => $phone,
+                    'message' => $request->body,
+                    'sender_id' => $sender,
+                ];
+
+            $payload = array_filter($payload, fn ($v) => $v !== null && $v !== '');
 
             try {
                 $response = $this->http()->asJson()->post($url, $payload);
-                $body = $this->decode($response->body());
+                $body = $this->decodeResponse($response->body());
                 $ok = $response->successful() && $this->looksAccepted($body);
+                $rawResponses[$phone] = $body;
 
                 $perRecipient[$phone] = [
-                    'provider_message_id' => $body['message_id'] ?? ($body['job_id'] ?? null),
-                    'provider_status' => $body['status'] ?? (string) $response->status(),
+                    'provider_message_id' => $body['job_id'] ?? ($body['message_id'] ?? null),
+                    'provider_status' => (string) ($body['status'] ?? $response->status()),
                     'status' => $ok ? 'sent' : 'failed',
-                    'error_code' => $ok ? null : (string) ($body['code'] ?? $response->status()),
-                    'error_message' => $ok ? null : ($body['message'] ?? 'Provider rejected the message.'),
+                    'error_code' => $ok ? null : (string) ($body['code'] ?? $body['status'] ?? $response->status()),
+                    'error_message' => $ok ? null : $this->errorMessage($body),
                 ];
                 $anyOk = $anyOk || $ok;
             } catch (\Throwable $e) {
@@ -89,7 +98,7 @@ class NaloSmsProvider extends AbstractIntegrationProvider implements SmsProvider
             perRecipient: $perRecipient,
             errorCode: $anyOk ? null : 'send_failed',
             errorMessage: $anyOk ? null : 'No messages were accepted by the provider.',
-            rawResponse: [],
+            rawResponse: $rawResponses,
         );
     }
 
@@ -130,11 +139,11 @@ class NaloSmsProvider extends AbstractIntegrationProvider implements SmsProvider
         if (! $this->baseUrl()) {
             return ProviderTestResult::fail('Base URL is not configured.');
         }
-        if (! $this->hasCredentials(['api_key']) && ! $this->hasCredentials(['username', 'password'])) {
-            return ProviderTestResult::fail('Credentials are not configured (api_key OR username+password).');
+        if (! $this->authKey() && ! $this->hasCredentials(['username', 'password'])) {
+            return ProviderTestResult::fail('Credentials are not configured (auth_key/api_key OR username+password).');
         }
 
-        return ProviderTestResult::pass('Configuration present. Send a manual test SMS to confirm delivery.');
+        return ProviderTestResult::pass('Configuration present. Nalo POST JSON send is ready for a manual test SMS.');
     }
 
     /* ── helpers ────────────────────────────────────────────────────── */
@@ -154,16 +163,67 @@ class NaloSmsProvider extends AbstractIntegrationProvider implements SmsProvider
         return new SmsSendResult(false, $request->reference, $perRecipient, $code, $message);
     }
 
-    private function decode(string $body): array
+    private function authKey(): ?string
+    {
+        return $this->credential('auth_key') ?: $this->credential('api_key');
+    }
+
+    private function jsonSendUrl(): ?string
+    {
+        $url = $this->baseUrl();
+        if (! $url) {
+            return null;
+        }
+
+        return str_replace('/smsbackend/clientapi/Resl_Nalo/', '/smsbackend/Resl_Nalo/', $url);
+    }
+
+    private function decodeResponse(string $body): array
     {
         $decoded = json_decode($body, true);
-        return is_array($decoded) ? $decoded : ['raw' => $body];
+        if (is_array($decoded)) {
+            return $decoded;
+        }
+
+        if (preg_match('/^(?<status>\d+)\|(?<msisdn>[^|]+)\|(?<job_id>.+)$/', trim($body), $matches)) {
+            return [
+                'status' => $matches['status'],
+                'msisdn' => $matches['msisdn'],
+                'job_id' => $matches['job_id'],
+                'raw' => $body,
+            ];
+        }
+
+        return ['raw' => $body];
     }
 
     private function looksAccepted(array $body): bool
     {
         $status = strtolower((string) ($body['status'] ?? ''));
-        return in_array($status, ['1700', 'success', 'accepted', 'ok', 'sent'], true)
+        return in_array($status, ['1701', 'success', 'accepted', 'ok', 'sent'], true)
+            || (isset($body['job_id']) && $body['job_id'] !== '')
             || (isset($body['message_id']) && $body['message_id'] !== '');
+    }
+
+    private function errorMessage(array $body): string
+    {
+        if (isset($body['message']) && $body['message'] !== '') {
+            return (string) $body['message'];
+        }
+
+        return match ((string) ($body['status'] ?? $body['code'] ?? '')) {
+            '1702' => 'Invalid URL or missing required parameter.',
+            '1703' => 'Invalid username or password.',
+            '1704' => 'Invalid message type.',
+            '1705' => 'Invalid message.',
+            '1706' => 'Invalid destination.',
+            '1707' => 'Invalid source/sender.',
+            '1708' => 'Invalid DLR value.',
+            '1709' => 'User validation failed.',
+            '1710' => 'Nalo internal error.',
+            '1025' => 'Insufficient user credit.',
+            '1026' => 'Insufficient reseller credit.',
+            default => 'Provider rejected the message.',
+        };
     }
 }

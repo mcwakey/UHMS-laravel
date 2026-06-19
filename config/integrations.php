@@ -50,8 +50,8 @@ return [
                 'adapter' => NaloSmsProvider::class,
                 'label' => 'Nalo Solutions SMS',
                 'is_fake' => false,
-                'sandbox_url' => 'https://sms.nalosolutions.com/smsbackend/clientapi/Resl_Nalo/send-message/',
-                'live_url' => 'https://sms.nalosolutions.com/smsbackend/clientapi/Resl_Nalo/send-message/',
+                'sandbox_url' => 'https://sms.nalosolutions.com/smsbackend/Resl_Nalo/send-message/',
+                'live_url' => 'https://sms.nalosolutions.com/smsbackend/Resl_Nalo/send-message/',
             ],
             'fake_sms' => [
                 'adapter' => FakeSmsProvider::class,

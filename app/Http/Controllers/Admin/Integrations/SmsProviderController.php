@@ -141,7 +141,7 @@ class SmsProviderController extends Controller
     private function credentialKeysFor(string $code): array
     {
         return match ($code) {
-            'nalo_sms' => ['api_key', 'username', 'password', 'sender_id', 'client_id', 'client_secret'],
+            'nalo_sms' => ['auth_key', 'api_key', 'username', 'password', 'sender_id', 'client_id', 'client_secret'],
             default => [],
         };
     }
