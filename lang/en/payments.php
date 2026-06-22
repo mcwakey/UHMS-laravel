@@ -251,5 +251,13 @@ return [
         'payment_reconciliation_export' => 'Export reconciliation (CSV)',
         'refund_manual_required' => 'Manual refund required',
         'provider_refund_completed' => 'Provider refund completed',
+
+        // Inline invoice-screen payment (third path)
+        'pay_with_mobile_money' => 'Pay by Mobile Money',
+        'charge_now' => 'Charge now',
+        'charge_started' => 'Mobile money charge started. Ask the payer to approve the prompt, then recheck.',
+        'not_payable' => 'This invoice has no outstanding balance to charge.',
+        'inline_hint' => 'A prompt is sent to the payer’s phone. The invoice is only deducted after the payment is verified.',
+        'inline_unavailable' => 'Online payment is unavailable for this invoice.',
     ],
 ];

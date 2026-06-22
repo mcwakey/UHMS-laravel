@@ -835,6 +835,9 @@
         </div>
         @endif
 
+        <!-- Mobile Money / Online Payment (Payment Gateway — third path) -->
+        <x-integrations.invoice-payment :invoice="$invoice" />
+
         <!-- Quick Actions -->
         @if($hasQuickActions)
         <div class="card">

@@ -251,5 +251,13 @@ return [
         'payment_reconciliation_export' => 'Exporter la réconciliation (CSV)',
         'refund_manual_required' => 'Remboursement manuel requis',
         'provider_refund_completed' => 'Remboursement fournisseur terminé',
+
+        // Paiement intégré à l’écran de facture (troisième voie)
+        'pay_with_mobile_money' => 'Payer par Mobile Money',
+        'charge_now' => 'Débiter maintenant',
+        'charge_started' => 'Débit mobile money lancé. Demandez au payeur d’approuver l’invite, puis revérifiez.',
+        'not_payable' => 'Cette facture n’a aucun solde à débiter.',
+        'inline_hint' => 'Une invite est envoyée au téléphone du payeur. La facture n’est déduite qu’après vérification du paiement.',
+        'inline_unavailable' => 'Le paiement en ligne n’est pas disponible pour cette facture.',
     ],
 ];

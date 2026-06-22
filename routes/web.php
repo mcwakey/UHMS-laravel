@@ -1521,6 +1521,10 @@ Route::middleware('auth')->group(function () {
                     Route::post('request-links', [\App\Http\Controllers\Admin\Integrations\PaymentRequestLinkController::class, 'store'])->name('request-links.store')->middleware('can:integrations.payments.request_links.manage');
                     Route::post('request-links/{link}/expire', [\App\Http\Controllers\Admin\Integrations\PaymentRequestLinkController::class, 'expire'])->name('request-links.expire')->middleware('can:integrations.payments.request_links.manage');
                     Route::post('invoices/{invoice}/payment-request-sms', [\App\Http\Controllers\Admin\Integrations\PaymentRequestLinkController::class, 'sendSms'])->name('invoices.payment-request-sms')->middleware('can:integrations.payments.request_links.manage');
+
+                    // Inline mobile-money payment from the invoice screen (third path)
+                    Route::post('invoices/{invoice}/charge', [\App\Http\Controllers\Admin\Integrations\InvoiceGatewayPaymentController::class, 'charge'])->name('invoices.charge')->middleware('can:integrations.payments.transactions.initiate');
+                    Route::post('transactions/{transaction}/verify-inline', [\App\Http\Controllers\Admin\Integrations\InvoiceGatewayPaymentController::class, 'verify'])->name('transactions.verify-inline')->middleware('can:integrations.payments.transactions.verify');
                 });
 
             // ── Provider Health (spans both modules; admin/IT) ───────────
