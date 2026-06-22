@@ -213,7 +213,7 @@ class IntegrationProviderService
             'nalo_sms' => ['supports_send' => true, 'supports_status_check' => false, 'supports_callback' => true],
             'fake_sms' => ['supports_send' => true, 'supports_status_check' => true, 'supports_callback' => true],
             'mtn_momo' => ['supports_collection' => true, 'supports_status_check' => true, 'supports_callback' => true, 'supports_refund' => false],
-            'nalo_payment' => ['supports_collection' => true, 'supports_status_check' => false, 'supports_callback' => true, 'supports_refund' => false],
+            'nalo_payment' => ['supports_collection' => true, 'supports_status_check' => true, 'supports_callback' => true, 'supports_refund' => false],
             'fake_payment' => ['supports_collection' => true, 'supports_status_check' => true, 'supports_callback' => true, 'supports_refund' => true],
         ];
 

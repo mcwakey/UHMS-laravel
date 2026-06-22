@@ -132,7 +132,7 @@ class PaymentProviderController extends Controller
     {
         return match ($code) {
             'mtn_momo' => ['subscription_key', 'api_user', 'api_key', 'target_environment', 'collection_primary_key', 'callback_secret', 'merchant_account_reference'],
-            'nalo_payment' => ['api_key', 'merchant_id', 'client_id', 'client_secret', 'callback_secret'],
+            'nalo_payment' => ['merchant_id', 'basic_auth_token', 'secret_key'],
             default => [],
         };
     }

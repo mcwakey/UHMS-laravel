@@ -39,6 +39,9 @@ return [
 
     'default_currency' => env('INTEGRATIONS_DEFAULT_CURRENCY', 'GHS'),
 
+    // Seconds to cache the auto-generated NALOPAY payment token (JWT ~15 min).
+    'nalo_token_ttl' => (int) env('INTEGRATIONS_NALO_TOKEN_TTL', 600),
+
     /*
     | Provider registry: code => adapter class. The registry is the single
     | source of truth that maps a stored provider row to the adapter that
@@ -70,11 +73,14 @@ return [
                 'live_url' => 'https://proxy.momoapi.mtn.com',
             ],
             'nalo_payment' => [
+                // NALOPAY API v1 base. The adapter appends /clientapi/* paths.
+                // Override per provider in base_url with the exact host from your
+                // NALOPAY merchant account if it differs.
                 'adapter' => NaloPaymentProvider::class,
-                'label' => 'Nalo Solutions Payments',
+                'label' => 'Nalo Solutions Payments (NALOPAY)',
                 'is_fake' => false,
-                'sandbox_url' => 'https://api.nalosolutions.com/payplus/api/',
-                'live_url' => 'https://api.nalosolutions.com/payplus/api/',
+                'sandbox_url' => 'https://api.nalosolutions.com',
+                'live_url' => 'https://api.nalosolutions.com',
             ],
             'fake_payment' => [
                 'adapter' => FakePaymentProvider::class,
