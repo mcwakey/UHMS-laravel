@@ -70,53 +70,49 @@
 </div>
 
 <!-- Filters -->
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="GET" action="{{ route('admin.visits.index') }}">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label class="form-label">{{ __('common.search') }}</label>
-                    <input type="text" name="search" class="form-control" placeholder="{{ __('visits.search_placeholder') }}" value="{{ $filters['search'] ?? '' }}">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">{{ __('visits.visit_type') }}</label>
-                    <select name="visit_type" class="form-select">
-                        <option value="">{{ __('visits.all_types') }}</option>
-                        @foreach(\App\Enums\VisitType::cases() as $type)
-                            <option value="{{ $type->value }}" {{ ($filters['visit_type'] ?? '') == $type->value ? 'selected' : '' }}>{{ $type->translatedLabel() }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">{{ __('visits.active_insurance') }}</label>
-                    <select name="insurance_provider_id" class="form-select">
-                        <option value="">{{ __('visits.all_insurance') }}</option>
-                        @php
-                            $legacyInsuranceOptions = collect($insuranceProviderOptions ?? [['value' => 'cash', 'label' => __('visits.cash_and_carry')]]);
-                        @endphp
-                        @foreach($legacyInsuranceOptions as $provider)
-                            <option value="{{ $provider['value'] }}" {{ (string) ($filters['insurance_provider_id'] ?? '') === (string) $provider['value'] ? 'selected' : '' }}>
-                                {{ $provider['label'] }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    @include('partials.date-range-filter', [
-                        'id' => 'visitDateRangePicker',
-                        'value' => $filters['date_range'] ?? '',
-                    ])
-                </div>
-                <div class="col-md-auto">
-                    <div class="d-flex gap-1">
-                        <button aria-label="{{ __('common.filter') }}" title="{{ __('common.filter') }}" type="submit" class="btn btn-primary"><i class="ti ti-filter"></i> {{ __('common.filter') }}</button>
-                        <a aria-label="Close" title="Close" href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary"><i class="ti ti-x"></i></a>
-                    </div>
-                </div>
-            </div>
-        </form>
+<x-filter-bar
+    :action="route('admin.visits.index')"
+    :reset-url="route('admin.visits.index')"
+    class="mb-4"
+>
+    <div class="col-md-3">
+        <label class="form-label">{{ __('common.search') }}</label>
+        <input type="text" name="search" class="form-control" placeholder="{{ __('visits.search_placeholder') }}" value="{{ $filters['search'] ?? '' }}">
     </div>
-</div>
+    <div class="col-md-2">
+        <label class="form-label">{{ __('visits.visit_type') }}</label>
+        <select name="visit_type" class="form-select">
+            <option value="">{{ __('visits.all_types') }}</option>
+            @foreach(\App\Enums\VisitType::cases() as $type)
+                <option value="{{ $type->value }}" {{ ($filters['visit_type'] ?? '') == $type->value ? 'selected' : '' }}>{{ $type->translatedLabel() }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">{{ __('visits.active_insurance') }}</label>
+        <select name="insurance_provider_id" class="form-select">
+            <option value="">{{ __('visits.all_insurance') }}</option>
+            @php
+                $legacyInsuranceOptions = collect($insuranceProviderOptions ?? [['value' => 'cash', 'label' => __('visits.cash_and_carry')]]);
+            @endphp
+            @foreach($legacyInsuranceOptions as $provider)
+                <option value="{{ $provider['value'] }}" {{ (string) ($filters['insurance_provider_id'] ?? '') === (string) $provider['value'] ? 'selected' : '' }}>
+                    {{ $provider['label'] }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+    <div class="col-md-2">
+        @include('partials.date-range-filter', [
+            'id' => 'visitDateRangePicker',
+            'value' => $filters['date_range'] ?? '',
+        ])
+    </div>
+    <x-slot:actions>
+        <!-- <button aria-label="{{ __('common.filter') }}" title="{{ __('common.filter') }}" type="submit" class="btn btn-primary"><i class="ti ti-filter"></i>{{ __('common.filter') }}</button> -->
+        <a aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary btn-icon"><i class="ti ti-x"></i></a>
+    </x-slot:actions>
+</x-filter-bar>
 
 <!-- Visit List -->
 <div class="card">

@@ -68,65 +68,63 @@
     </div>
 
     {{-- Filters --}}
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="GET" action="{{ route('admin.appointments.index') }}" class="row g-3 align-items-end" data-auto-filter-form="appointments-index">
-                <div class="col-md-3">
-                    <label class="form-label small">{{ __('common.search') }}</label>
-                    <input type="text" name="search" class="form-control" placeholder="{{ __('appointments.search_placeholder') }}" value="{{ $filters['search'] ?? '' }}">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label small">{{ __('common.status') }}</label>
-                    <select name="status" class="form-select">
-                        <option value="">{{ __('common.all_statuses') }}</option>
-                        @foreach($statuses as $status)
-                            <option value="{{ $status->value }}" {{ ($filters['status'] ?? '') == $status->value ? 'selected' : '' }}>
-                                {{ $status->translatedLabel() }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label small">{{ __('common.doctor') }}</label>
-                    <select name="doctor_id" class="form-select">
-                        <option value="">{{ __('appointments.all_doctors') }}</option>
-                        @foreach($doctors as $doctor)
-                            <option value="{{ $doctor->id }}" {{ ($filters['doctor_id'] ?? '') == $doctor->id ? 'selected' : '' }}>
-                                {{ $doctor->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label small">{{ __('common.department') }}</label>
-                    <select name="department_id" class="form-select">
-                        <option value="">{{ __('common.all_departments') }}</option>
-                        @foreach($departments as $dept)
-                            <option value="{{ $dept->id }}" {{ ($filters['department_id'] ?? '') == $dept->id ? 'selected' : '' }}>
-                                {{ $dept->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    @include('partials.date-range-filter', [
-                        'id' => 'appointmentIndexDateRangePicker',
-                        'value' => $filters['date_range'] ?? '',
-                        'labelClass' => 'small',
-                        'submitOnApply' => true,
-                    ])
-                </div>
-                <div class="col-md-auto">
-                    <!-- <button type="submit" class="btn btn-primary me-2">
-                        <i class="ti ti-filter me-1"></i> {{ __('common.filter') }}
-                    </button> -->
-                    <a href="{{ route('admin.appointments.index') }}" class="btn btn-outline-secondary">
-                        <i class="ti ti-x me-1"></i>
-                    </a>
-                </div>
-            </form>
+    <x-filter-bar
+        :action="route('admin.appointments.index')"
+        :reset-url="route('admin.appointments.index')"
+        class="mb-4"
+        data-auto-filter-form="appointments-index"
+    >
+        <div class="col-md-3">
+            <label class="form-label small">{{ __('common.search') }}</label>
+            <input type="text" name="search" class="form-control" placeholder="{{ __('appointments.search_placeholder') }}" value="{{ $filters['search'] ?? '' }}">
         </div>
-    </div>
+        <div class="col-md-2">
+            <label class="form-label small">{{ __('common.status') }}</label>
+            <select name="status" class="form-select">
+                <option value="">{{ __('common.all_statuses') }}</option>
+                @foreach($statuses as $status)
+                    <option value="{{ $status->value }}" {{ ($filters['status'] ?? '') == $status->value ? 'selected' : '' }}>
+                        {{ $status->translatedLabel() }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">{{ __('common.doctor') }}</label>
+            <select name="doctor_id" class="form-select">
+                <option value="">{{ __('appointments.all_doctors') }}</option>
+                @foreach($doctors as $doctor)
+                    <option value="{{ $doctor->id }}" {{ ($filters['doctor_id'] ?? '') == $doctor->id ? 'selected' : '' }}>
+                        {{ $doctor->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">{{ __('common.department') }}</label>
+            <select name="department_id" class="form-select">
+                <option value="">{{ __('common.all_departments') }}</option>
+                @foreach($departments as $dept)
+                    <option value="{{ $dept->id }}" {{ ($filters['department_id'] ?? '') == $dept->id ? 'selected' : '' }}>
+                        {{ $dept->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-2">
+            @include('partials.date-range-filter', [
+                'id' => 'appointmentIndexDateRangePicker',
+                'value' => $filters['date_range'] ?? '',
+                'labelClass' => 'small',
+                'submitOnApply' => true,
+            ])
+        </div>
+        <x-slot:actions>
+            <a href="{{ route('admin.appointments.index') }}" class="btn btn-outline-secondary btn-icon" aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}">
+                <i class="ti ti-x"></i>
+            </a>
+        </x-slot:actions>
+    </x-filter-bar>
 
     {{-- Appointments Table --}}
     <div class="card">

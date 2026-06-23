@@ -7,6 +7,11 @@
     'collapsible' => false,
     'applyLabel' => null,
     'resetLabel' => null,
+    'showApply' => true,
+    'showReset' => true,
+    'rowClass' => 'row g-2 align-items-end',
+    'actionsClass' => 'col-md-auto d-flex gap-2 align-items-end ms-md-auto',
+    'bodyClass' => 'card-body py-2',
 ])
 
 @php
@@ -20,11 +25,11 @@
 @endphp
 
 {{--
-    Standard GET filter/search wrapper. Place filter fields (col-* divs) in the
-    default slot; Apply + Reset buttons are added automatically. Preserves the
-    query string via standard GET submission.
+    Standard filter/search wrapper. Place filter fields (col-* divs) in the
+    default slot. Apply + Reset buttons are added automatically, or provide an
+    actions slot for page-specific controls.
 --}}
-<form method="{{ $isGet ? 'GET' : 'POST' }}" action="{{ $action }}" {{ $attributes->merge(['class' => 'card mb-3']) }}>
+<form method="{{ $isGet ? 'GET' : 'POST' }}" action="{{ $action }}" {{ $attributes->merge(['class' => 'card mb-3 uhms-filter-bar']) }}>
     @unless($isGet)
         @csrf
         @method($method)
@@ -39,13 +44,23 @@
         </div>
     @endif
 
-    <div class="card-body {{ $collapsible ? 'collapse show' : '' }}" id="{{ $bodyId }}">
-        <div class="row g-2 align-items-end">
+    <div class="{{ $bodyClass }} {{ $collapsible ? 'collapse show' : '' }}" id="{{ $bodyId }}">
+        <div class="{{ $rowClass }}">
             {{ $slot }}
-            <div class="col-md-auto d-flex gap-2 align-items-end ms-md-auto">
-                <button type="submit" class="btn btn-primary"><i class="ti {{ $icon }} me-1"></i>{{ $applyLabel }}</button>
-                <a href="{{ $resetUrl }}" class="btn btn-outline-secondary">{{ $resetLabel }}</a>
-            </div>
+            @isset($actions)
+                <div class="{{ $actionsClass }}">{{ $actions }}</div>
+            @else
+                @if($showApply || $showReset)
+                    <div class="{{ $actionsClass }}">
+                        @if($showApply)
+                            <button type="submit" class="btn btn-primary"><i class="ti {{ $icon }} me-1"></i>{{ $applyLabel }}</button>
+                        @endif
+                        @if($showReset)
+                            <a href="{{ $resetUrl }}" class="btn btn-outline-secondary">{{ $resetLabel }}</a>
+                        @endif
+                    </div>
+                @endif
+            @endisset
         </div>
     </div>
 </form>

@@ -38,7 +38,7 @@
          document actually served to the browser, so the stylesheet must live here. --}}
     <link rel="stylesheet" href="{{ URL::asset('build/plugins/sweetalert2/sweetalert2.min.css') }}">
     <link rel="stylesheet" href="{{ URL::asset('build/css/style.css') }}">
-    <link rel="stylesheet" href="{{ URL::asset('build/css/uhms-design-system.css') }}">
+    <link rel="stylesheet" href="{{ URL::asset('build/css/uhms-design-system.css') }}?v={{ filemtime(public_path('build/css/uhms-design-system.css')) }}">
 
     <style>
         html.uhms-loading body { visibility: hidden; }

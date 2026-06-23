@@ -188,4 +188,4 @@
     <link rel="stylesheet" href="{{URL::asset('build/css/style.css')}}" id="app-style">
 
     <!-- UHMS Design Rules -->
-    <link rel="stylesheet" href="{{URL::asset('build/css/uhms-design-system.css')}}">
+    <link rel="stylesheet" href="{{URL::asset('build/css/uhms-design-system.css')}}?v={{ filemtime(public_path('build/css/uhms-design-system.css')) }}">

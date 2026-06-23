@@ -15,47 +15,46 @@
 </x-page-header>
 
 <!-- Filters -->
-<div class="card mb-3">
-    <div class="card-body py-2">
-        <form method="GET" action="{{ route('admin.patients.index') }}" class="row g-2 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label small">{{ __('common.search') }}</label>
-                <input type="text" name="search" class="form-control" placeholder="{{ __('patients.search_placeholder') }}" value="{{ $filters['search'] ?? '' }}">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">{{ __('patients.insurance_provider') }}</label>
-                <select name="insurance_provider_id" class="form-select">
-                    <option value="">{{ __('patients.all_insurances') }}</option>
-                    @foreach($insuranceProviders as $provider)
-                        <option value="{{ $provider->id }}" {{ ($filters['insurance_provider_id'] ?? '') == $provider->id ? 'selected' : '' }}>{{ $provider->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">{{ __('common.status') }}</label>
-                <select name="status" class="form-select">
-                    <option value="">{{ __('patients.all_status') }}</option>
-                    <option value="active" {{ ($filters['status'] ?? '') == 'active' ? 'selected' : '' }}>{{ __('common.active') }}</option>
-                    <option value="inactive" {{ ($filters['status'] ?? '') == 'inactive' ? 'selected' : '' }}>{{ __('common.inactive') }}</option>
-                    <option value="deceased" {{ ($filters['status'] ?? '') == 'deceased' ? 'selected' : '' }}>{{ __('patients.deceased') }}</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                @include('partials.date-range-filter', [
-                    'id' => 'patientLastVisitDateRangePicker',
-                    'value' => $filters['date_range'] ?? '',
-                    'label' => __('patients.last_visit_range'),
-                    'labelClass' => 'small',
-                    'submitOnApply' => true,
-                ])
-            </div>
-            <div class="col-md-auto">
-                <button type="submit" class="btn btn-outline-primary btn-md"><i class="ti ti-filter me-1"></i>{{ __('common.filter') }}</button>
-                <a aria-label="Close" title="Close" href="{{ route('admin.patients.index') }}" class="btn btn-outline-secondary btn-md ms-1"><i class="ti ti-x me-1"></i></a>
-            </div>
-        </form>
+<x-filter-bar
+    :action="route('admin.patients.index')"
+    :reset-url="route('admin.patients.index')"
+>
+    <div class="col-md-3">
+        <label class="form-label small">{{ __('common.search') }}</label>
+        <input type="text" name="search" class="form-control" placeholder="{{ __('patients.search_placeholder') }}" value="{{ $filters['search'] ?? '' }}">
     </div>
-</div>
+    <div class="col-md-2">
+        <label class="form-label small">{{ __('patients.insurance_provider') }}</label>
+        <select name="insurance_provider_id" class="form-select">
+            <option value="">{{ __('patients.all_insurances') }}</option>
+            @foreach($insuranceProviders as $provider)
+                <option value="{{ $provider->id }}" {{ ($filters['insurance_provider_id'] ?? '') == $provider->id ? 'selected' : '' }}>{{ $provider->name }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small">{{ __('common.status') }}</label>
+        <select name="status" class="form-select">
+            <option value="">{{ __('patients.all_status') }}</option>
+            <option value="active" {{ ($filters['status'] ?? '') == 'active' ? 'selected' : '' }}>{{ __('common.active') }}</option>
+            <option value="inactive" {{ ($filters['status'] ?? '') == 'inactive' ? 'selected' : '' }}>{{ __('common.inactive') }}</option>
+            <option value="deceased" {{ ($filters['status'] ?? '') == 'deceased' ? 'selected' : '' }}>{{ __('patients.deceased') }}</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        @include('partials.date-range-filter', [
+            'id' => 'patientLastVisitDateRangePicker',
+            'value' => $filters['date_range'] ?? '',
+            'label' => __('patients.last_visit_range'),
+            'labelClass' => 'small',
+            'submitOnApply' => true,
+        ])
+    </div>
+    <x-slot:actions>
+        <!-- <button type="submit" class="btn btn-outline-primary btn-md"><i class="ti ti-filter me-1"></i>{{ __('common.filter') }}</button> -->
+        <a aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" href="{{ route('admin.patients.index') }}" class="btn btn-outline-secondary btn-icon"><i class="ti ti-x"></i></a>
+    </x-slot:actions>
+</x-filter-bar>
 
 <!-- Patients Table -->
 <div class="card">
@@ -139,7 +138,7 @@
                                 @endif
                                 @endcan
                                 <div class="dropdown">
-                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="btn btn-sm btn-light" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">

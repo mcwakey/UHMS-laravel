@@ -266,10 +266,10 @@ function transitionVisit(visitId, nextStatusValue) {
         </div>
 
         <!-- Filters -->
-        <div class="card mb-4">
-            <div class="card-body">
+        <div class="card mb-4 uhms-filter-bar">
+            <div class="card-body py-2">
                 <form @submit.prevent="applyFilters">
-                    <div class="row g-3 align-items-end">
+                    <div class="row g-2 align-items-end">
                         <div class="col-md-3">
                             <label class="form-label">{{ t('common.search') }}</label>
                             <input
@@ -318,13 +318,24 @@ function transitionVisit(visitId, nextStatusValue) {
                                 <i class="ti ti-chevron-down text-gray-5 ms-2"></i>
                             </div>
                         </div>
-                        <div class="col-md-1">
-                            <div class="d-flex gap-1">
-                                <button type="submit" class="btn btn-primary"><i class="ti ti-filter"></i></button>
-                                <button type="button" class="btn btn-outline-secondary" @click="clearFilters">
-                                    <i class="ti ti-x"></i>
-                                </button>
-                            </div>
+                        <div class="col-md-auto d-flex gap-2 align-items-end ms-md-auto">
+                            <button
+                                type="submit"
+                                class="btn btn-primary btn-icon"
+                                :aria-label="t('common.filter')"
+                                :title="t('common.filter')"
+                            >
+                                <i class="ti ti-filter"></i>
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-outline-secondary btn-icon"
+                                :aria-label="t('common.reset')"
+                                :title="t('common.reset')"
+                                @click="clearFilters"
+                            >
+                                <i class="ti ti-x"></i>
+                            </button>
                         </div>
                     </div>
                 </form>

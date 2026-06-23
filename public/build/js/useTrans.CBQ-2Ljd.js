@@ -1,1 +1,0 @@
-import{H as i}from"./inertia.DgYEXYn1.bundle.js";function f(){return{t:(n,e={})=>{var o;let t=((o=i().props.i18n)==null?void 0:o.translations)??{};for(const r of n.split("."))if(t&&typeof t=="object"&&r in t)t=t[r];else{t=null;break}return typeof t!="string"?n:t.replace(/:(\w+)/g,(r,s)=>s in e?String(e[s]):r)}}}export{f as u};
