@@ -7,7 +7,7 @@ return [
     'default_tier_used' => 'Si aucun niveau n\'est choisi, le niveau par défaut du prestataire sera utilisé.',
     'new_patient' => 'Nouveau patient',
     'new_visit' => 'Nouvelle visite',
-    'search_placeholder' => 'Rechercher par nom, téléphone, carte Ghana, carte d\'assurance ou contact d\'urgence...',
+    'search_placeholder' => 'Rechercher par nom, téléphone, pièce d\'identité, carte d\'assurance ou contact d\'urgence...',
     'insurance_provider' => 'Assureur',
     'all_insurances' => 'Toutes les assurances',
     'all_status' => 'Tous les statuts',
@@ -56,7 +56,7 @@ return [
 
     // Identification card
     'identification'            => 'Identification & Urgence',
-    'ghana_card'                => 'Carte Ghana',
+    'ghana_card'                => 'Pièce d\'identité',
     'primary_insurance'         => 'Assurance principale',
     'city_town'                 => 'Ville / Commune',
     'digital_address'           => 'Adresse numérique',
@@ -168,12 +168,19 @@ return [
     'address_information'       => 'Informations d\'adresse',
     'medical_notes'             => 'Notes médicales',
     'profile_image'             => 'Photo de profil',
+    'use_webcam'                => 'Utiliser la webcam',
+    'capture_photo'             => 'Capturer la photo',
+    'stop_webcam'               => 'Arrêter la webcam',
+    'webcam_not_supported'      => 'Ce navigateur ne prend pas en charge la capture par webcam.',
+    'webcam_unavailable'        => 'Impossible d\'accéder à la webcam. Vérifiez les autorisations de caméra et réessayez.',
+    'webcam_capture_failed'     => 'Impossible de capturer la photo depuis la webcam.',
     'first_name'                => 'Prénom',
     'last_name'                 => 'Nom de famille',
     'other_names'               => 'Autres prénoms',
     'phone_number'              => 'Numéro de téléphone',
     'email_address'             => 'Adresse e-mail',
-    'ghana_card_number'         => 'Numéro de carte Ghana',
+    'ghana_card_number'         => 'Numéro de pièce d\'identité',
+    'id_card_number'            => 'Numéro de pièce d\'identité',
     'region'                    => 'Région',
     'town'                      => 'Ville',
     'digital_address_gps'       => 'Adresse numérique (GPS)',
@@ -202,7 +209,7 @@ return [
     'insurance_none'            => '— Aucune —',
     'active_label'              => 'Actif',
     'no_phone'                  => 'Pas de téléphone',
-    'no_ghana_card'             => 'Pas de carte Ghana',
+    'no_ghana_card'             => 'Pas de pièce d\'identité',
 
     // Insurance JS cascade i18n
     'select_type_first'         => 'Sélectionner le type d\'abord',
@@ -229,14 +236,14 @@ return [
 
     // Patient search select
     'search_patient'            => 'Rechercher un patient',
-    'search_patient_ph'         => 'Tapez le nom, numéro de dossier, téléphone, carte Ghana ou numéro d\'assurance…',
+    'search_patient_ph'         => 'Tapez le nom, numéro de dossier, téléphone, pièce d\'identité ou numéro d\'assurance...',
 
     // Merge
     'merge_patients'            => 'Fusion de dossiers patients',
     'merge_subtitle'            => 'Recherchez les doublons possibles, comparez les dossiers et consolidez-les en toute sécurité.',
     'audit_logs'                => 'Journaux d\'audit',
     'patient_search'            => 'Recherche de patient',
-    'merge_search_ph'           => 'Rechercher par nom, numéro de patient, ancien numéro temporaire, téléphone, carte Ghana ou numéro d\'assurance',
+    'merge_search_ph'           => 'Rechercher par nom, numéro de patient, ancien numéro temporaire, téléphone, pièce d\'identité ou numéro d\'assurance',
     'selected_folders'          => 'Dossiers sélectionnés',
     'main_patient_number'       => 'Numéro du patient principal',
     'duplicate_patient_number'  => 'Numéro du patient doublon',
@@ -362,7 +369,7 @@ return [
             'phone' => 'Téléphone',
             'phone_secondary' => 'Téléphone secondaire',
             'email' => 'E-mail',
-            'ghana_card_number' => 'Ghana Card',
+            'ghana_card_number' => 'Pièce d\'identité',
             'address' => 'Adresse',
             'city' => 'Ville',
             'town' => 'Localité',

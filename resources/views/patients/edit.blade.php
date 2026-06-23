@@ -17,6 +17,13 @@
     </div> --}}
 </div>
 
+@php
+    $phonePattern = $countrySettings['phone_pattern'] ?? null;
+    $phonePlaceholder = $countrySettings['phone_placeholder'] ?? '';
+    $digitalAddressPattern = $countrySettings['digital_address_pattern'] ?? null;
+    $digitalAddressPlaceholder = $countrySettings['digital_address_placeholder'] ?? '';
+@endphp
+
 <form method="POST" action="{{ route('admin.patients.update', $patient) }}" enctype="multipart/form-data">
     @csrf @method('PUT')
 
@@ -29,16 +36,24 @@
             <div class="row">
                 <div class="col-lg-12 mb-3">
                     <label class="form-label mb-1 fw-medium">{{ __('patients.profile_image') }}</label>
-                    <div class="d-flex align-items-center">
-                        <div class="avatar avatar-xxl rounded-circle bg-light text-muted me-3 d-flex align-items-center justify-content-center">
+                    <div class="d-flex align-items-start flex-wrap gap-3">
+                        <div class="avatar avatar-xxl rounded-circle bg-light text-muted d-flex align-items-center justify-content-center patient-avatar-preview" id="avatar-preview">
                             @if($patient->avatar)
                                 <img src="{{ Storage::url($patient->avatar) }}" alt="{{ $patient->full_name }}" class="rounded-circle">
                             @else
                                 <span class="fs-16 fw-bold">{{ strtoupper(substr($patient->first_name, 0, 1) . substr($patient->last_name, 0, 1)) }}</span>
                             @endif
                         </div>
-                        <input type="file" name="avatar" class="form-control @error('avatar') is-invalid @enderror" accept="image/*" style="max-width: 300px;">
-                        @error('avatar')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="flex-grow-1" style="max-width: 520px;">
+                            <div class="d-flex gap-2 flex-wrap">
+                                <input type="file" name="avatar" id="patientAvatarInput" class="form-control @error('avatar') is-invalid @enderror" accept="image/*" style="max-width: 300px;">
+                                <button type="button" class="btn btn-outline-secondary" id="startPatientCameraBtn">
+                                    <i class="ti ti-camera me-1"></i>{{ __('patients.use_webcam') }}
+                                </button>
+                            </div>
+                            @error('avatar')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                            @include('patients.partials.avatar-camera')
+                        </div>
                     </div>
                 </div>
 
@@ -112,9 +127,9 @@
 
                 <div class="col-md-4 mb-3">
                     <label class="form-label">{{ __('patients.occupation') }}</label>
-                    <select name="occupation" class="form-select @error('occupation') is-invalid @enderror">
+                    <select name="occupation" class="form-select patient-searchable-select @error('occupation') is-invalid @enderror" data-placeholder="{{ __('patients.select_occupation') }}">
                         <option value="">{{ __('patients.select_occupation') }}</option>
-                        @foreach(['Accountant','Architect','Artist','Baker','Banker','Barber','Business Owner','Carpenter','Cashier','Chef','Civil Servant','Clergy','Cleaner','Construction Worker','Consultant','Dentist','Doctor','Driver','Electrician','Engineer','Farmer','Fisherman','Graphic Designer','Hairdresser','Journalist','Lawyer','Lecturer','Mechanic','Miner','Musician','Nurse','Pharmacist','Photographer','Pilot','Plumber','Police Officer','Politician','Programmer','Retired','Salesperson','Secretary','Security Guard','Social Worker','Student','Surveyor','Tailor','Teacher','Technician','Trader','Unemployed','Veterinarian','Welder','Other'] as $occ)
+                        @foreach($occupations as $occ)
                             <option value="{{ $occ }}" {{ old('occupation', $patient->occupation) == $occ ? 'selected' : '' }}>{{ $occ }}</option>
                         @endforeach
                     </select>
@@ -133,25 +148,25 @@
             <div class="row">
                 <div class="col-md-3 mb-3">
                     <label class="form-label">{{ __('patients.phone_number') }} <span class="text-danger">*</span></label>
-                    <input type="tel" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone', $patient->phone) }}" required>
+                    <input type="tel" name="phone" class="form-control js-phone-mask @error('phone') is-invalid @enderror" value="{{ old('phone', $patient->phone) }}" placeholder="{{ $phonePlaceholder }}" inputmode="tel" @if($phonePattern) pattern="{{ $phonePattern }}" @endif required>
                     @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="col-md-3 mb-3">
                     <label class="form-label">{{ __('patients.secondary_phone') }}</label>
-                    <input type="tel" name="phone_secondary" class="form-control @error('phone_secondary') is-invalid @enderror" value="{{ old('phone_secondary', $patient->phone_secondary) }}">
+                    <input type="tel" name="phone_secondary" class="form-control @error('phone_secondary') is-invalid @enderror" value="{{ old('phone_secondary', $patient->phone_secondary) }}" placeholder="+000000000000" inputmode="tel">
                     @error('phone_secondary')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="col-md-3 mb-3">
                     <label class="form-label">{{ __('patients.email_address') }}</label>
-                    <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email', $patient->email) }}">
+                    <input type="email" name="email" class="form-control js-email-input @error('email') is-invalid @enderror" value="{{ old('email', $patient->email) }}" autocomplete="email" inputmode="email" pattern="^[^@\s]+@[^@\s]+\.[^@\s]+$">
                     @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="col-md-3 mb-3">
-                    <label class="form-label">{{ __('patients.ghana_card_number') }}</label>
-                    <input type="text" name="ghana_card_number" class="form-control @error('ghana_card_number') is-invalid @enderror" value="{{ old('ghana_card_number', $patient->ghana_card_number) }}" placeholder="GHA-XXXXXXXXX-X">
+                    <label class="form-label">{{ __('patients.id_card_number') }}</label>
+                    <input type="text" name="ghana_card_number" class="form-control js-id-card-input @error('ghana_card_number') is-invalid @enderror" value="{{ old('ghana_card_number', $patient->ghana_card_number) }}" placeholder="{{ __('patients.id_card_number') }}" inputmode="text" maxlength="30">
                     @error('ghana_card_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
@@ -173,10 +188,10 @@
 
                 <div class="col-md-3 mb-3">
                     <label class="form-label">{{ __('patients.region') }}</label>
-                    <select name="region" class="form-select @error('region') is-invalid @enderror">
+                    <select name="region" id="patientRegionSelect" class="form-select patient-searchable-select @error('region') is-invalid @enderror" data-placeholder="{{ __('patients.select_region') }}">
                         <option value="">{{ __('patients.select_region') }}</option>
-                        @foreach(['Greater Accra', 'Ashanti', 'Western', 'Central', 'Eastern', 'Volta', 'Northern', 'Upper East', 'Upper West', 'Bono', 'Bono East', 'Ahafo', 'Western North', 'Oti', 'North East', 'Savannah'] as $region)
-                            <option value="{{ $region }}" {{ old('region', $patient->region) == $region ? 'selected' : '' }}>{{ $region }}</option>
+                        @foreach($regions as $region)
+                            <option value="{{ $region->name }}" {{ old('region', $patient->region) == $region->name ? 'selected' : '' }}>{{ $region->name }}</option>
                         @endforeach
                     </select>
                     @error('region')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -184,19 +199,28 @@
 
                 <div class="col-md-3 mb-3">
                     <label class="form-label">{{ __('patients.city') }}</label>
-                    <input type="text" name="city" class="form-control @error('city') is-invalid @enderror" value="{{ old('city', $patient->city) }}">
+                    <select name="city" id="patientCitySelect" class="form-select patient-searchable-select @error('city') is-invalid @enderror" data-selected="{{ old('city', $patient->city) }}" data-placeholder="{{ __('patients.city') }}" disabled>
+                        <option value="">{{ __('patients.city') }}</option>
+                    </select>
                     @error('city')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="col-md-3 mb-3">
                     <label class="form-label">{{ __('patients.town') }}</label>
-                    <input type="text" name="town" class="form-control @error('town') is-invalid @enderror" value="{{ old('town', $patient->town) }}">
+                    <select name="town" id="patientTownSelect" class="form-select patient-searchable-select @error('town') is-invalid @enderror" data-selected="{{ old('town', $patient->town) }}" data-placeholder="{{ __('patients.town') }}" disabled>
+                        <option value="">{{ __('patients.town') }}</option>
+                    </select>
                     @error('town')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="col-md-3 mb-3">
                     <label class="form-label">{{ __('patients.digital_address_gps') }}</label>
-                    <input type="text" name="digital_address" class="form-control @error('digital_address') is-invalid @enderror" value="{{ old('digital_address', $patient->digital_address) }}" placeholder="e.g. GA-123-4567">
+                    <div class="input-group">
+                        <input type="text" name="digital_address" id="digitalAddressInput" class="form-control js-digital-address-mask @error('digital_address') is-invalid @enderror" value="{{ old('digital_address', $patient->digital_address) }}" placeholder="{{ $digitalAddressPlaceholder }}" inputmode="text" @if($digitalAddressPattern) pattern="{{ $digitalAddressPattern }}" @endif>
+                        <button class="btn btn-outline-secondary" type="button" id="detectDigitalAddressBtn" title="Use device location">
+                            <i class="ti ti-current-location"></i>
+                        </button>
+                    </div>
                     @error('digital_address')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
@@ -231,4 +255,9 @@
         <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>{{ __('patients.update_patient') }}</button>
     </div>
 </form>
+
+@push('scripts')
+@include('patients.partials.avatar-camera-scripts')
+@include('patients.partials.registration-input-scripts')
+@endpush
 @endsection

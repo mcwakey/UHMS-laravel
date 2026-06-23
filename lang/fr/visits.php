@@ -348,7 +348,7 @@ return [
     'dept_session_label'        => 'Session du département',
     'consult_sessions_note'     => 'Les sessions de consultation seront créées uniquement pour les départements de type consultation.',
     'unassigned_doctor'         => 'Médecin non assigné',
-    'search_patient_placeholder'=> 'Nom du patient, ID, téléphone, numéro Ghana Card...',
+    'search_patient_placeholder'=> 'Nom du patient, ID, téléphone, numéro de pièce d\'identité...',
     'search_dept_placeholder'   => 'Rechercher un département...',
     'search_doctor_placeholder' => 'Rechercher médecin/personnel...',
     'failed_load_dept'          => 'Échec du chargement des options du département',

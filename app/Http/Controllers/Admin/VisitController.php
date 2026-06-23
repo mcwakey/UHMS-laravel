@@ -207,6 +207,7 @@ class VisitController extends Controller
             ->where(function ($q) {
                 $q->where('is_default', false)->orWhereNull('is_default');
             })
+            ->with('insuranceType')
             ->with(['tiers' => fn ($t) => $t->orderBy('sort_order')->orderBy('name')])
             ->orderBy('name')
             ->get();

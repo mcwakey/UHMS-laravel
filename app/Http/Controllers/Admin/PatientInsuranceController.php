@@ -142,10 +142,16 @@ class PatientInsuranceController extends Controller
 
         $providers = InsuranceProvider::active()
             ->where('is_default', false)
+            ->with('insuranceType')
             ->with(['tiers' => fn ($q) => $q->active()->orderBy('sort_order')->orderBy('name')])
-            ->when($type, fn ($q) => $q->where('type', $type))
+            ->when($type, function ($q) use ($type) {
+                $q->where(function ($query) use ($type) {
+                    $query->where('type', $type)
+                        ->orWhereHas('insuranceType', fn ($typeQuery) => $typeQuery->whereRaw('LOWER(code) = ?', [strtolower($type)]));
+                });
+            })
             ->orderBy('name')
-            ->get(['id', 'name', 'short_name', 'type']);
+            ->get(['id', 'name', 'short_name', 'type', 'insurance_type_id']);
 
         return response()->json($providers);
     }
@@ -193,4 +199,3 @@ class PatientInsuranceController extends Controller
         return back()->with('error', $message);
     }
 }
-

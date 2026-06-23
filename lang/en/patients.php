@@ -7,7 +7,7 @@ return [
     'default_tier_used' => 'If no tier is chosen, the provider\'s default tier will be used.',
     'new_patient' => 'New Patient',
     'new_visit' => 'New Visit',
-    'search_placeholder' => 'Search by name, phone, Ghana Card, insurance card, or emergency contact...',
+    'search_placeholder' => 'Search by name, phone, ID card, insurance card, or emergency contact...',
     'insurance_provider' => 'Insurance Provider',
     'all_insurances' => 'All Insurances',
     'all_status' => 'All Status',
@@ -56,7 +56,7 @@ return [
 
     // Identification card
     'identification'            => 'Identification & Emergency',
-    'ghana_card'                => 'Ghana Card',
+    'ghana_card'                => 'ID Card',
     'primary_insurance'         => 'Primary Insurance',
     'city_town'                 => 'City / Town',
     'digital_address'           => 'Digital Address',
@@ -168,12 +168,19 @@ return [
     'address_information'       => 'Address Information',
     'medical_notes'             => 'Medical Notes',
     'profile_image'             => 'Profile Image',
+    'use_webcam'                => 'Use Webcam',
+    'capture_photo'             => 'Capture Photo',
+    'stop_webcam'               => 'Stop Webcam',
+    'webcam_not_supported'      => 'This browser does not support webcam capture.',
+    'webcam_unavailable'        => 'Unable to access the webcam. Check camera permissions and try again.',
+    'webcam_capture_failed'     => 'Unable to capture the webcam photo.',
     'first_name'                => 'First Name',
     'last_name'                 => 'Last Name',
     'other_names'               => 'Other Names',
     'phone_number'              => 'Phone Number',
     'email_address'             => 'Email Address',
-    'ghana_card_number'         => 'Ghana Card Number',
+    'ghana_card_number'         => 'ID Card Number',
+    'id_card_number'            => 'ID Card Number',
     'region'                    => 'Region',
     'town'                      => 'Town',
     'digital_address_gps'       => 'Digital Address (GPS)',
@@ -202,7 +209,7 @@ return [
     'insurance_none'            => '— None —',
     'active_label'              => 'Active',
     'no_phone'                  => 'No phone',
-    'no_ghana_card'             => 'No Ghana Card',
+    'no_ghana_card'             => 'No ID card',
 
     // Insurance JS cascade i18n
     'select_type_first'         => 'Select type first',
@@ -229,14 +236,14 @@ return [
 
     // Patient search select
     'search_patient'            => 'Search Patient',
-    'search_patient_ph'         => 'Type patient name, folder no., phone, Ghana Card, or insurance number…',
+    'search_patient_ph'         => 'Type patient name, folder no., phone, ID card, or insurance number...',
 
     // Merge
     'merge_patients'            => 'Patient Folder Merge',
     'merge_subtitle'            => 'Search possible duplicates, compare folders, and consolidate safely.',
     'audit_logs'                => 'Audit Logs',
     'patient_search'            => 'Patient Search',
-    'merge_search_ph'           => 'Search by name, patient number, old temporary number, phone, Ghana Card, or insurance number',
+    'merge_search_ph'           => 'Search by name, patient number, old temporary number, phone, ID card, or insurance number',
     'selected_folders'          => 'Selected Folders',
     'main_patient_number'       => 'Main Patient Number',
     'duplicate_patient_number'  => 'Duplicate Patient Number',
@@ -362,7 +369,7 @@ return [
             'phone' => 'Phone',
             'phone_secondary' => 'Secondary phone',
             'email' => 'Email',
-            'ghana_card_number' => 'Ghana Card',
+            'ghana_card_number' => 'ID Card',
             'address' => 'Address',
             'city' => 'City',
             'town' => 'Town',

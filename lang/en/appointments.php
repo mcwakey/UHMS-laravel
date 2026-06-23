@@ -22,7 +22,7 @@ return [
     'back_to_appointment' => 'Back to Appointment',
     'select_patient' => 'Select Patient',
     'search_patient' => 'Search Patient',
-    'search_patient_placeholder' => 'Type patient name, ID, phone, or Ghana Card number...',
+    'search_patient_placeholder' => 'Type patient name, ID, phone, or ID card number...',
     'insurance' => 'Insurance',
     'insurance_fallback_badge' => 'Default expired - using Cash & Carry',
     'loading_patient_insurances' => 'Loading patient insurances...',

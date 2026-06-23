@@ -319,7 +319,7 @@ return [
     'no_procedures_requested' => 'Aucune procédure demandée pour cette visite.',
     'label_patient_no' => 'N° patient',
     'label_age_gender' => 'Âge / Sexe',
-    'label_ghana_card' => 'Carte Ghana',
+    'label_ghana_card' => 'Pièce d\'identité',
     'label_occupation' => 'Profession',
     'label_marital_status' => 'État civil',
     'label_religion' => 'Religion',

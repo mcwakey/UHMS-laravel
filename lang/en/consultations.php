@@ -319,7 +319,7 @@ return [
     'no_procedures_requested' => 'No procedures requested for this visit.',
     'label_patient_no' => 'Patient No.',
     'label_age_gender' => 'Age / Gender',
-    'label_ghana_card' => 'Ghana Card',
+    'label_ghana_card' => 'ID Card',
     'label_occupation' => 'Occupation',
     'label_marital_status' => 'Marital Status',
     'label_religion' => 'Religion',

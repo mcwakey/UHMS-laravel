@@ -22,7 +22,7 @@ return [
     'back_to_appointment' => 'Retour au rendez-vous',
     'select_patient' => 'Sélectionner un patient',
     'search_patient' => 'Rechercher un patient',
-    'search_patient_placeholder' => 'Nom du patient, ID, téléphone ou numéro Ghana Card...',
+    'search_patient_placeholder' => 'Nom du patient, ID, téléphone ou numéro de pièce d\'identité...',
     'insurance' => 'Assurance',
     'insurance_fallback_badge' => 'Défaut expiré - utilisation du paiement comptant',
     'loading_patient_insurances' => 'Chargement des assurances du patient...',

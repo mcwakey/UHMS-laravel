@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\MarkPatientDeceasedRequest;
 use App\Http\Requests\StorePatientRequest;
 use App\Http\Requests\UpdatePatientRequest;
+use App\Models\CountryRegion;
 use App\Models\InsuranceProvider;
 use App\Models\InsuranceTier;
 use App\Models\Patient;
@@ -53,6 +54,7 @@ class PatientController extends Controller
 
         $insuranceProviders = InsuranceProvider::where('is_active', true)
             ->where('is_default', false)
+            ->with('insuranceType')
             ->orderBy('name')
             ->get();
 
@@ -78,8 +80,11 @@ class PatientController extends Controller
             ->where('is_default', false)
             ->orderBy('name')
             ->get();
+        $regions = $this->setupCountryRegions();
+        $occupations = config('patient_reference.occupations', []);
+        $countrySettings = $this->setupCountrySettings();
 
-        return view('patients.create', compact('insuranceProviders'));
+        return view('patients.create', compact('insuranceProviders', 'regions', 'occupations', 'countrySettings'));
     }
 
     public function store(StorePatientRequest $request)
@@ -194,7 +199,10 @@ class PatientController extends Controller
             ->get();
         $patient->setRelation('visits', $visits);
 
-        $insuranceProviders = InsuranceProvider::where('is_active', true)->orderBy('name')->get();
+        $insuranceProviders = InsuranceProvider::where('is_active', true)
+            ->with('insuranceType')
+            ->orderBy('name')
+            ->get();
         $upcomingVisits = app(VisitService::class)->upcomingForPatient($patient->id);
         $upcomingAppointments = \App\Models\Appointment::with(['department', 'doctor', 'services'])
             ->where('patient_id', $patient->id)
@@ -209,7 +217,11 @@ class PatientController extends Controller
 
     public function edit(Patient $patient)
     {
-        return view('patients.edit', compact('patient'));
+        $regions = $this->setupCountryRegions();
+        $occupations = config('patient_reference.occupations', []);
+        $countrySettings = $this->setupCountrySettings();
+
+        return view('patients.edit', compact('patient', 'regions', 'occupations', 'countrySettings'));
     }
 
     public function update(UpdatePatientRequest $request, Patient $patient)
@@ -258,5 +270,28 @@ class PatientController extends Controller
         $this->patientService->markDeceased($patient, $request->validated());
 
         return back()->with('success', __('messages.patients.marked_deceased', ['name' => $patient->full_name]));
+    }
+
+    private function setupCountryRegions()
+    {
+        return CountryRegion::active()
+            ->whereHas('country', fn ($query) => $query
+                ->active()
+                ->where('iso2', config('patient_reference.setup_country_code', 'GH')))
+            ->with(['cities' => fn ($query) => $query
+                ->active()
+                ->with(['towns' => fn ($townQuery) => $townQuery->active()->orderBy('name')])
+                ->orderBy('name')])
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+    }
+
+    private function setupCountrySettings(): array
+    {
+        $code = config('patient_reference.setup_country_code', 'GH');
+        $countries = config('patient_reference.countries', []);
+
+        return $countries[$code] ?? $countries['GH'] ?? ['iso2' => $code];
     }
 }

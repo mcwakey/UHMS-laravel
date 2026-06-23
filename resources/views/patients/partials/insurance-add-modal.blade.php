@@ -14,22 +14,24 @@
     $formAction = $formAction ?: ($patient ? route('admin.patients.insurances.store', $patient) : '#');
     $addableInsuranceTypes = $insuranceProviders
         ->where('is_default', false)
-        ->pluck('type')
-        ->filter()
-        ->unique(fn ($type) => $type instanceof \BackedEnum ? $type->value : (string) $type)
-        ->sortBy(fn ($type) => $type instanceof \BackedEnum && method_exists($type, 'label') ? $type->label() : ucfirst((string) ($type instanceof \BackedEnum ? $type->value : $type)));
+        ->map(function ($provider) {
+            $value = $provider->type instanceof \BackedEnum
+                ? $provider->type->value
+                : ((string) ($provider->type ?: strtolower((string) $provider->insuranceType?->code)));
 
-    $insuranceI18n = [
-        'select_type_first' => __('patients.select_type_first'),
-        'loading_providers' => __('patients.loading_providers'),
-        'no_providers'      => __('patients.no_providers'),
-        'select_provider'   => __('patients.select_provider'),
-        'loading_tiers'     => __('patients.loading_tiers'),
-        'no_tiers'          => __('patients.no_tiers'),
-        'select_tier'       => __('patients.select_tier'),
-    ];
+            return [
+                'value' => $value,
+                'label' => $provider->type instanceof \BackedEnum && method_exists($provider->type, 'label')
+                    ? $provider->type->label()
+                    : ($provider->insuranceType?->name ?? ucfirst($value)),
+            ];
+        })
+        ->filter(fn ($type) => filled($type['value']))
+        ->unique('value')
+        ->sortBy('label')
+        ->values();
+
 @endphp
-<script>const insuranceI18n = @json($insuranceI18n);</script>
 
 <div class="modal fade" id="{{ $modalId }}" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -48,11 +50,7 @@
                             <select id="addInsType" class="form-select" required>
                                 <option value="">{{ __('patients.select') }}</option>
                                 @foreach($addableInsuranceTypes as $type)
-                                    @php
-                                        $typeValue = $type instanceof \BackedEnum ? $type->value : (string) $type;
-                                        $typeLabel = $type instanceof \BackedEnum && method_exists($type, 'label') ? $type->label() : ucfirst($typeValue);
-                                    @endphp
-                                    <option value="{{ $typeValue }}">{{ $typeLabel }}</option>
+                                    <option value="{{ $type['value'] }}">{{ $type['label'] }}</option>
                                 @endforeach
                             </select>
                         </div>

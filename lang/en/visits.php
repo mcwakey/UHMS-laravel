@@ -358,7 +358,7 @@ return [
     'dept_session_label'        => 'Department Session',
     'consult_sessions_note'     => 'Consultation department sessions will be created only for consultation-type departments.',
     'unassigned_doctor'         => 'Unassigned doctor',
-    'search_patient_placeholder'=> 'Type patient name, ID, phone, or Ghana Card number...',
+    'search_patient_placeholder'=> 'Type patient name, ID, phone, or ID card number...',
     'search_dept_placeholder'   => 'Search department...',
     'search_doctor_placeholder' => 'Search doctor/staff...',
     'failed_load_dept'          => 'Failed to load department options',

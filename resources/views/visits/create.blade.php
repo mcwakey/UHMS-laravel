@@ -847,7 +847,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if ($patient.hasClass('select2-hidden-accessible')) return;
 
         $patient.select2({
-            placeholder: searchInput.dataset.placeholder || 'Type patient name, ID, phone, or Ghana Card number...',
+            placeholder: searchInput.dataset.placeholder || 'Type patient name, ID, phone, or ID card number...',
             allowClear: true,
             minimumInputLength: 2,
             width: '100%',

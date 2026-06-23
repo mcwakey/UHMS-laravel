@@ -17,6 +17,13 @@
     </div> --}}
 </div>
 
+@php
+    $phonePattern = $countrySettings['phone_pattern'] ?? null;
+    $phonePlaceholder = $countrySettings['phone_placeholder'] ?? '';
+    $digitalAddressPattern = $countrySettings['digital_address_pattern'] ?? null;
+    $digitalAddressPlaceholder = $countrySettings['digital_address_placeholder'] ?? '';
+@endphp
+
 <form method="POST" action="{{ route('admin.patients.store') }}" enctype="multipart/form-data">
     @csrf
 
@@ -29,12 +36,20 @@
             <div class="row">
                 <div class="col-lg-12 mb-3">
                     <label class="form-label mb-1 fw-medium">{{ __('patients.profile_image') }}</label>
-                    <div class="d-flex align-items-center">
-                        <div class="avatar avatar-xxl rounded-circle bg-light text-muted me-3 d-flex align-items-center justify-content-center" id="avatar-preview">
+                    <div class="d-flex align-items-start flex-wrap gap-3">
+                        <div class="avatar avatar-xxl rounded-circle bg-light text-muted d-flex align-items-center justify-content-center patient-avatar-preview" id="avatar-preview">
                             <i class="ti ti-user-plus fs-16"></i>
                         </div>
-                        <input type="file" name="avatar" class="form-control @error('avatar') is-invalid @enderror" accept="image/*" style="max-width: 300px;">
-                        @error('avatar')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="flex-grow-1" style="max-width: 520px;">
+                            <div class="d-flex gap-2 flex-wrap">
+                                <input type="file" name="avatar" id="patientAvatarInput" class="form-control @error('avatar') is-invalid @enderror" accept="image/*" style="max-width: 300px;">
+                                <button type="button" class="btn btn-outline-secondary" id="startPatientCameraBtn">
+                                    <i class="ti ti-camera me-1"></i>{{ __('patients.use_webcam') }}
+                                </button>
+                            </div>
+                            @error('avatar')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                            @include('patients.partials.avatar-camera')
+                        </div>
                     </div>
                 </div>
 
@@ -108,9 +123,9 @@
 
                 <div class="col-md-4 mb-3">
                     <label class="form-label">{{ __('patients.occupation') }}</label>
-                    <select name="occupation" class="form-select @error('occupation') is-invalid @enderror">
+                    <select name="occupation" class="form-select patient-searchable-select @error('occupation') is-invalid @enderror" data-placeholder="{{ __('patients.select_occupation') }}">
                         <option value="">{{ __('patients.select_occupation') }}</option>
-                        @foreach(['Accountant','Architect','Artist','Baker','Banker','Barber','Business Owner','Carpenter','Cashier','Chef','Civil Servant','Clergy','Cleaner','Construction Worker','Consultant','Dentist','Doctor','Driver','Electrician','Engineer','Farmer','Fisherman','Graphic Designer','Hairdresser','Journalist','Lawyer','Lecturer','Mechanic','Miner','Musician','Nurse','Pharmacist','Photographer','Pilot','Plumber','Police Officer','Politician','Programmer','Retired','Salesperson','Secretary','Security Guard','Social Worker','Student','Surveyor','Tailor','Teacher','Technician','Trader','Unemployed','Veterinarian','Welder','Other'] as $occ)
+                        @foreach($occupations as $occ)
                             <option value="{{ $occ }}" {{ old('occupation') == $occ ? 'selected' : '' }}>{{ $occ }}</option>
                         @endforeach
                     </select>
@@ -129,25 +144,25 @@
             <div class="row">
                 <div class="col-md-3 mb-3">
                     <label class="form-label">{{ __('patients.phone_number') }} <span class="text-danger">*</span></label>
-                    <input type="tel" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone') }}" placeholder="e.g. 0241234567" required>
+                    <input type="tel" name="phone" class="form-control js-phone-mask @error('phone') is-invalid @enderror" value="{{ old('phone') }}" placeholder="{{ $phonePlaceholder }}" inputmode="tel" @if($phonePattern) pattern="{{ $phonePattern }}" @endif required>
                     @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="col-md-3 mb-3">
                     <label class="form-label">{{ __('patients.secondary_phone') }}</label>
-                    <input type="tel" name="phone_secondary" class="form-control @error('phone_secondary') is-invalid @enderror" value="{{ old('phone_secondary') }}">
+                    <input type="tel" name="phone_secondary" class="form-control @error('phone_secondary') is-invalid @enderror" value="{{ old('phone_secondary') }}" placeholder="+000000000000" inputmode="tel">
                     @error('phone_secondary')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="col-md-3 mb-3">
                     <label class="form-label">{{ __('patients.email_address') }}</label>
-                    <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email') }}">
+                    <input type="email" name="email" class="form-control js-email-input @error('email') is-invalid @enderror" value="{{ old('email') }}" autocomplete="email" inputmode="email" pattern="^[^@\s]+@[^@\s]+\.[^@\s]+$">
                     @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="col-md-3 mb-3">
-                    <label class="form-label">{{ __('patients.ghana_card_number') }}</label>
-                    <input type="text" name="ghana_card_number" class="form-control @error('ghana_card_number') is-invalid @enderror" value="{{ old('ghana_card_number') }}" placeholder="GHA-XXXXXXXXX-X">
+                    <label class="form-label">{{ __('patients.id_card_number') }}</label>
+                    <input type="text" name="ghana_card_number" class="form-control js-id-card-input @error('ghana_card_number') is-invalid @enderror" value="{{ old('ghana_card_number') }}" placeholder="{{ __('patients.id_card_number') }}" inputmode="text" maxlength="30">
                     @error('ghana_card_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
@@ -169,10 +184,10 @@
 
                 <div class="col-md-3 mb-3">
                     <label class="form-label">{{ __('patients.region') }}</label>
-                    <select name="region" class="form-select @error('region') is-invalid @enderror">
+                    <select name="region" id="patientRegionSelect" class="form-select patient-searchable-select @error('region') is-invalid @enderror" data-placeholder="{{ __('patients.select_region') }}">
                         <option value="">{{ __('patients.select_region') }}</option>
-                        @foreach(['Greater Accra', 'Ashanti', 'Western', 'Central', 'Eastern', 'Volta', 'Northern', 'Upper East', 'Upper West', 'Bono', 'Bono East', 'Ahafo', 'Western North', 'Oti', 'North East', 'Savannah'] as $region)
-                            <option value="{{ $region }}" {{ old('region') == $region ? 'selected' : '' }}>{{ $region }}</option>
+                        @foreach($regions as $region)
+                            <option value="{{ $region->name }}" {{ old('region') == $region->name ? 'selected' : '' }}>{{ $region->name }}</option>
                         @endforeach
                     </select>
                     @error('region')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -180,19 +195,28 @@
 
                 <div class="col-md-3 mb-3">
                     <label class="form-label">{{ __('patients.city') }}</label>
-                    <input type="text" name="city" class="form-control @error('city') is-invalid @enderror" value="{{ old('city') }}">
+                    <select name="city" id="patientCitySelect" class="form-select patient-searchable-select @error('city') is-invalid @enderror" data-selected="{{ old('city') }}" data-placeholder="{{ __('patients.city') }}" disabled>
+                        <option value="">{{ __('patients.city') }}</option>
+                    </select>
                     @error('city')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="col-md-3 mb-3">
                     <label class="form-label">{{ __('patients.town') }}</label>
-                    <input type="text" name="town" class="form-control @error('town') is-invalid @enderror" value="{{ old('town') }}">
+                    <select name="town" id="patientTownSelect" class="form-select patient-searchable-select @error('town') is-invalid @enderror" data-selected="{{ old('town') }}" data-placeholder="{{ __('patients.town') }}" disabled>
+                        <option value="">{{ __('patients.town') }}</option>
+                    </select>
                     @error('town')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="col-md-3 mb-3">
                     <label class="form-label">{{ __('patients.digital_address_gps') }}</label>
-                    <input type="text" name="digital_address" class="form-control @error('digital_address') is-invalid @enderror" value="{{ old('digital_address') }}" placeholder="e.g. GA-123-4567">
+                    <div class="input-group">
+                        <input type="text" name="digital_address" id="digitalAddressInput" class="form-control js-digital-address-mask @error('digital_address') is-invalid @enderror" value="{{ old('digital_address') }}" placeholder="{{ $digitalAddressPlaceholder }}" inputmode="text" @if($digitalAddressPattern) pattern="{{ $digitalAddressPattern }}" @endif>
+                        <button class="btn btn-outline-secondary" type="button" id="detectDigitalAddressBtn" title="Use device location">
+                            <i class="ti ti-current-location"></i>
+                        </button>
+                    </div>
                     @error('digital_address')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
@@ -222,12 +246,12 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label form-label-sm">{{ __('common.phone') }} <span class="text-danger">*</span></label>
-                            <input type="tel" name="emergency_contacts[0][phone]" class="form-control form-control-sm @error('emergency_contacts.0.phone') is-invalid @enderror" value="{{ old('emergency_contacts.0.phone') }}" placeholder="e.g. 0241234567">
+                            <input type="tel" name="emergency_contacts[0][phone]" class="form-control form-control-sm js-phone-mask @error('emergency_contacts.0.phone') is-invalid @enderror" value="{{ old('emergency_contacts.0.phone') }}" placeholder="{{ $phonePlaceholder }}" inputmode="tel" @if($phonePattern) pattern="{{ $phonePattern }}" @endif>
                             @error('emergency_contacts.0.phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-3">
                             <label class="form-label form-label-sm">{{ __('patients.secondary_phone') }}</label>
-                            <input type="tel" name="emergency_contacts[0][phone_secondary]" class="form-control form-control-sm" value="{{ old('emergency_contacts.0.phone_secondary') }}" placeholder="{{ __('common.optional') }}">
+                            <input type="tel" name="emergency_contacts[0][phone_secondary]" class="form-control form-control-sm" value="{{ old('emergency_contacts.0.phone_secondary') }}" placeholder="{{ __('common.optional') }}" inputmode="tel">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label form-label-sm">{{ __('patients.relationship') }}</label>
@@ -249,10 +273,22 @@
     @php
         $registrationInsuranceTypes = $insuranceProviders
             ->where('is_default', false)
-            ->pluck('type')
-            ->filter()
-            ->unique(fn ($type) => $type instanceof \BackedEnum ? $type->value : (string) $type)
-            ->sortBy(fn ($type) => $type instanceof \BackedEnum ? $type->label() : ucfirst((string) $type));
+            ->map(function ($provider) {
+                $value = $provider->type instanceof \BackedEnum
+                    ? $provider->type->value
+                    : ((string) ($provider->type ?: strtolower((string) $provider->insuranceType?->code)));
+
+                return [
+                    'value' => $value,
+                    'label' => $provider->type instanceof \BackedEnum && method_exists($provider->type, 'label')
+                        ? $provider->type->label()
+                        : ($provider->insuranceType?->name ?? ucfirst($value)),
+                ];
+            })
+            ->filter(fn ($type) => filled($type['value']))
+            ->unique('value')
+            ->sortBy('label')
+            ->values();
 
         $insuranceI18n = [
             'select_type_first' => __('patients.select_type_first'),
@@ -264,7 +300,6 @@
             'select_tier'       => __('patients.select_tier'),
         ];
     @endphp
-    <script>const insuranceI18n = @json($insuranceI18n);</script>
     <div class="card">
         <div class="card-header d-flex align-items-center justify-content-between">
             <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>{{ __('patients.tab_insurance') }}</h5>
@@ -290,11 +325,7 @@
                             <select name="insurances[0][type]" class="form-select form-select-sm ins-type" data-idx="0" data-selected-provider="{{ old('insurances.0.provider_id') }}" data-selected-tier="{{ old('insurances.0.insurance_tier_id') }}">
                                 <option value="">{{ __('patients.insurance_none') }}</option>
                                 @foreach($registrationInsuranceTypes as $type)
-                                    @php
-                                        $typeValue = $type instanceof \BackedEnum ? $type->value : (string) $type;
-                                        $typeLabel = method_exists($type, 'label') ? $type->label() : ucfirst($typeValue);
-                                    @endphp
-                                    <option value="{{ $typeValue }}" {{ old('insurances.0.type') === $typeValue ? 'selected' : '' }}>{{ $typeLabel }}</option>
+                                    <option value="{{ $type['value'] }}" {{ old('insurances.0.type') === $type['value'] ? 'selected' : '' }}>{{ $type['label'] }}</option>
                                 @endforeach
                             </select>
                             @error('insurances.0.type')<div class="text-danger small">{{ $message }}</div>@enderror
@@ -361,6 +392,8 @@
 </form>
 
 @push('scripts')
+@include('patients.partials.avatar-camera-scripts')
+@include('patients.partials.registration-input-scripts')
 <script>
 (function () {
     // ── Emergency contacts ─────────────────────────────────────────────
@@ -398,19 +431,19 @@
                 <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ec"><i class="ti ti-trash"></i></button>
             </div>
             <div class="row g-2">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label form-label-sm">${ecI18n.name} <span class="text-danger">*</span></label>
                     <input type="text" name="emergency_contacts[${idx}][name]" class="form-control form-control-sm" placeholder="${ecI18n.name}">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label form-label-sm">${ecI18n.phone} <span class="text-danger">*</span></label>
-                    <input type="tel" name="emergency_contacts[${idx}][phone]" class="form-control form-control-sm" placeholder="e.g. 0241234567">
+                    <input type="tel" name="emergency_contacts[${idx}][phone]" class="form-control form-control-sm js-phone-mask" placeholder="{{ $phonePlaceholder }}" inputmode="tel" @if($phonePattern) pattern="{{ $phonePattern }}" @endif>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label form-label-sm">${ecI18n.secondary_phone}</label>
-                    <input type="tel" name="emergency_contacts[${idx}][phone_secondary]" class="form-control form-control-sm" placeholder="${ecI18n.optional}">
+                    <input type="tel" name="emergency_contacts[${idx}][phone_secondary]" class="form-control form-control-sm" placeholder="${ecI18n.optional}" inputmode="tel">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label form-label-sm">${ecI18n.relationship}</label>
                     <select name="emergency_contacts[${idx}][relationship]" class="form-select form-select-sm">
                         <option value="">${ecI18n.select}</option>
@@ -442,17 +475,12 @@
 
     // ── Insurance rows ─────────────────────────────────────────────────
     @php
-        $registrationInsuranceTypeOptions = $registrationInsuranceTypes->map(function ($type) {
-            $typeValue = $type instanceof \BackedEnum ? $type->value : (string) $type;
-            return [
-                'value' => $typeValue,
-                'label' => method_exists($type, 'label') ? $type->label() : ucfirst($typeValue),
-            ];
-        })->values();
+        $registrationInsuranceTypeOptions = $registrationInsuranceTypes;
     @endphp
     const insTypes = {!! json_encode($registrationInsuranceTypeOptions) !!};
     const providerByTypeUrl = '{{ route("admin.insurance-providers.by-type") }}';
     const tiersForProviderUrl = '{{ route("admin.insurance-providers.tiers.for-patient", ":pid") }}';
+    const registrationInsuranceI18n = @json($insuranceI18n);
     @php
         $insI18n = [
             'insurance'      => __('patients.tab_insurance'),
@@ -481,14 +509,14 @@
     }
 
     function resetInsProvider(row, message) {
-        if (message === undefined) message = insuranceI18n.select_type_first;
+        if (message === undefined) message = registrationInsuranceI18n.select_type_first;
         const provider = row.querySelector('.ins-provider');
         provider.innerHTML = `<option value="">${message}</option>`;
         provider.disabled = true;
     }
 
     function resetInsTier(row, message) {
-        if (message === undefined) message = insuranceI18n.select_type_first;
+        if (message === undefined) message = registrationInsuranceI18n.select_type_first;
         const tier = row.querySelector('.ins-tier');
         tier.innerHTML = `<option value="">${message}</option>`;
         tier.disabled = true;
@@ -504,8 +532,8 @@
         const type = row.querySelector('.ins-type').value;
         const provider = row.querySelector('.ins-provider');
 
-        resetInsProvider(row, type ? insuranceI18n.loading_providers : insuranceI18n.select_type_first);
-        resetInsTier(row, insuranceI18n.select_type_first);
+        resetInsProvider(row, type ? registrationInsuranceI18n.loading_providers : registrationInsuranceI18n.select_type_first);
+        resetInsTier(row, registrationInsuranceI18n.select_type_first);
         toggleInsuranceExtras(row, false);
 
         if (!type) return;
@@ -516,11 +544,11 @@
         .then(r => r.json())
         .then(providers => {
             if (!providers.length) {
-                resetInsProvider(row, insuranceI18n.no_providers);
+                resetInsProvider(row, registrationInsuranceI18n.no_providers);
                 return;
             }
 
-            provider.innerHTML = `<option value="">${insuranceI18n.select_provider}</option>`;
+            provider.innerHTML = `<option value="">${registrationInsuranceI18n.select_provider}</option>`;
             providers.forEach(p => {
                 const opt = document.createElement('option');
                 opt.value = p.id;
@@ -537,7 +565,7 @@
                 }
             }
         })
-        .catch(() => resetInsProvider(row, insuranceI18n.no_providers));
+        .catch(() => resetInsProvider(row, registrationInsuranceI18n.no_providers));
     }
 
     function loadTiersForRow(row, selectedTier) {
@@ -546,12 +574,12 @@
         const tier = row.querySelector('.ins-tier');
 
         if (!providerId) {
-            resetInsTier(row, insuranceI18n.select_type_first);
+            resetInsTier(row, registrationInsuranceI18n.select_type_first);
             toggleInsuranceExtras(row, false);
             return;
         }
 
-        tier.innerHTML = `<option value="">${insuranceI18n.loading_tiers}</option>`;
+        tier.innerHTML = `<option value="">${registrationInsuranceI18n.loading_tiers}</option>`;
         tier.disabled = true;
         toggleInsuranceExtras(row, true);
 
@@ -561,11 +589,11 @@
         .then(r => r.json())
         .then(tiers => {
             if (!tiers.length) {
-                resetInsTier(row, insuranceI18n.no_tiers);
+                resetInsTier(row, registrationInsuranceI18n.no_tiers);
                 return;
             }
 
-            tier.innerHTML = `<option value="">${insuranceI18n.select_tier}</option>`;
+            tier.innerHTML = `<option value="">${registrationInsuranceI18n.select_tier}</option>`;
             tiers.forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t.id;
@@ -575,7 +603,7 @@
             });
             tier.disabled = false;
         })
-        .catch(() => resetInsTier(row, insuranceI18n.no_tiers));
+        .catch(() => resetInsTier(row, registrationInsuranceI18n.no_tiers));
     }
 
     // Cascade insurance type -> provider -> tier per row.
@@ -619,13 +647,13 @@
                 <div class="col-md-4">
                     <label class="form-label form-label-sm">${insI18n.provider}</label>
                     <select name="insurances[${idx}][provider_id]" class="form-select form-select-sm ins-provider" data-idx="${idx}" disabled>
-                        <option value="">${insuranceI18n.select_type_first}</option>
+                        <option value="">${registrationInsuranceI18n.select_type_first}</option>
                     </select>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label form-label-sm">${insI18n.tier}</label>
                     <select name="insurances[${idx}][insurance_tier_id]" class="form-select form-select-sm ins-tier" data-idx="${idx}" disabled>
-                        <option value="">${insuranceI18n.select_type_first}</option>
+                        <option value="">${registrationInsuranceI18n.select_type_first}</option>
                     </select>
                 </div>
                 <div class="col-md-4 ins-row-extra" style="display:none">

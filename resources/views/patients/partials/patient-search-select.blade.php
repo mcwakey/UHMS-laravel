@@ -1,7 +1,7 @@
 {{--
     Reusable AJAX patient search (select2) — the SINGLE source of truth for
     "find a patient" UI across Visit Create, Emergency Create, etc. Searches by
-    name, folder number, phone, email, Ghana Card and insurance membership number
+    name, folder number, phone, email, ID card and insurance membership number
     via the shared `admin.visits.patient-search` endpoint.
 
     Params (all optional):

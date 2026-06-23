@@ -59,7 +59,7 @@ class PatientMergePreviewService
         'phone' => 'Phone',
         'phone_secondary' => 'Secondary phone',
         'email' => 'Email',
-        'ghana_card_number' => 'Ghana Card',
+        'ghana_card_number' => 'ID Card',
         'address' => 'Address',
         'city' => 'City',
         'town' => 'Town',

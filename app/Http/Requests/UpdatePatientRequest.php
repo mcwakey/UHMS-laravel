@@ -18,6 +18,10 @@ class UpdatePatientRequest extends FormRequest
 
     public function rules(): array
     {
+        $country = config('patient_reference.countries.' . config('patient_reference.setup_country_code'), []);
+        $phoneRegex = $country['phone_regex'] ?? null;
+        $digitalAddressRegex = $country['digital_address_regex'] ?? null;
+
         return [
             'first_name' => ['required', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
@@ -27,8 +31,8 @@ class UpdatePatientRequest extends FormRequest
             'blood_group' => ['nullable', new Enum(BloodGroup::class)],
             'marital_status' => ['nullable', new Enum(MaritalStatus::class)],
             'religion' => ['nullable', 'string', 'max:100'],
-            'phone' => ['required', 'string', 'max:20'],
-            'phone_secondary' => ['nullable', 'string', 'max:20'],
+            'phone' => array_values(array_filter(['required', 'string', 'max:20', $phoneRegex ? 'regex:' . $phoneRegex : null])),
+            'phone_secondary' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:191'],
             'ghana_card_number' => ['nullable', 'string', 'max:30', Rule::unique('patients')->ignore($this->route('patient'))],
             'occupation' => ['nullable', 'string', 'max:100'],
@@ -36,7 +40,7 @@ class UpdatePatientRequest extends FormRequest
             'city' => ['nullable', 'string', 'max:100'],
             'town' => ['nullable', 'string', 'max:100'],
             'region' => ['nullable', 'string', 'max:100'],
-            'digital_address' => ['nullable', 'string', 'max:30'],
+            'digital_address' => array_values(array_filter(['nullable', 'string', 'max:30', $digitalAddressRegex ? 'regex:' . $digitalAddressRegex : null])),
             'avatar' => ['nullable', 'image', 'max:2048'],
             'allergies' => ['nullable', 'string', 'max:1000'],
             'chronic_conditions' => ['nullable', 'string', 'max:1000'],
