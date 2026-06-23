@@ -14,7 +14,6 @@ use App\Models\User;
 use App\Models\Visit;
 use App\Services\Integrations\IntegrationProviderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Blade;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -84,7 +83,7 @@ class IntegrationsInlineInvoicePaymentTest extends TestCase
 
         $this->actingAs($this->userWith(['integrations.payments.view', 'integrations.payments.transactions.initiate']))
             ->post(route('admin.integrations.payments.invoices.charge', $invoice), [
-                'payer_phone' => '0241234567', 'payment_method' => 'mtn_momo',
+                'payer_phone' => '0241234567', 'mobile_network' => 'mtn_momo',
             ])
             ->assertRedirect(route('admin.billing.invoices.show', $invoice));
 
@@ -101,7 +100,7 @@ class IntegrationsInlineInvoicePaymentTest extends TestCase
             'integrations.payments.view', 'integrations.payments.transactions.initiate', 'integrations.payments.transactions.verify',
         ]);
         $this->actingAs($actor)->post(route('admin.integrations.payments.invoices.charge', $invoice), [
-            'payer_phone' => '0241234567', 'payment_method' => 'mtn_momo',
+            'payer_phone' => '0241234567', 'mobile_network' => 'mtn_momo',
         ]);
 
         $txn = PaymentProviderTransaction::where('invoice_id', $invoice->id)->latest()->first();
@@ -122,7 +121,7 @@ class IntegrationsInlineInvoicePaymentTest extends TestCase
 
         $this->actingAs($this->userWith(['integrations.payments.view', 'integrations.payments.transactions.initiate']))
             ->post(route('admin.integrations.payments.invoices.charge', $invoice), [
-                'payer_phone' => '0241234567', 'payment_method' => 'mtn_momo',
+                'payer_phone' => '0241234567', 'mobile_network' => 'mtn_momo',
             ])
             ->assertRedirect();
 
@@ -136,23 +135,24 @@ class IntegrationsInlineInvoicePaymentTest extends TestCase
 
         $this->actingAs($this->userWith(['integrations.payments.view']))
             ->post(route('admin.integrations.payments.invoices.charge', $invoice), [
-                'payer_phone' => '0241234567', 'payment_method' => 'mtn_momo',
+                'payer_phone' => '0241234567', 'mobile_network' => 'mtn_momo',
             ])
             ->assertForbidden();
     }
 
-    public function test_component_renders_when_gateway_active_and_hides_when_off(): void
+    public function test_inline_charge_uses_amount_from_form_capped_at_balance(): void
     {
-        $invoice = $this->payableInvoice(100);
-        $this->actingAs($this->userWith(['integrations.payments.transactions.initiate']));
-
-        // No active provider → component renders nothing.
-        $empty = Blade::render('<x-integrations.invoice-payment :invoice="$invoice" />', ['invoice' => $invoice]);
-        $this->assertStringNotContainsString(__('payments.gateway.pay_with_mobile_money'), $empty);
-
-        // Active provider → the inline card appears.
         $this->fakePaymentProvider();
-        $shown = Blade::render('<x-integrations.invoice-payment :invoice="$invoice" />', ['invoice' => $invoice->fresh()]);
-        $this->assertStringContainsString(__('payments.gateway.pay_with_mobile_money'), $shown);
+        $invoice = $this->payableInvoice(100);
+
+        // Operator typed 40 in the Record Payment amount field → partial charge.
+        $this->actingAs($this->userWith(['integrations.payments.view', 'integrations.payments.transactions.initiate']))
+            ->post(route('admin.integrations.payments.invoices.charge', $invoice), [
+                'payer_phone' => '0241234567', 'mobile_network' => 'mtn_momo', 'amount' => 40,
+            ])->assertRedirect();
+
+        $this->assertDatabaseHas('payment_provider_transactions', [
+            'invoice_id' => $invoice->id, 'amount' => 40.00, 'payment_method' => 'mtn_momo',
+        ]);
     }
 }

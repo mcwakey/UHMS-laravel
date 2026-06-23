@@ -2,6 +2,11 @@
 @section('title', __('payments.receive_payment'))
 
 @section('content')
+@php
+    $paymentGatewayAvailable = app(\App\Services\ModuleService::class)->enabled('payment_gateway')
+        && app(\App\Services\Integrations\Payment\PaymentProviderResolver::class)->activeProvider() !== null
+        && (bool) auth()->user()?->can('integrations.payments.transactions.initiate');
+@endphp
 <div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-1"><i class="ti ti-cash me-2"></i>{{ __('payments.receive_payment') }}</h4>
@@ -171,7 +176,8 @@
                         <td class="text-end text-success">&#8373;{{ number_format($invoice->amount_paid, 2) }}</td>
                         <td class="text-end fw-bold text-danger">&#8373;{{ number_format($invoice->balance, 2) }}</td>
                         <td>
-                            <form method="POST" action="{{ route('admin.billing.payments.store', $invoice) }}" class="payment-inline-form">
+                            <form method="POST" action="{{ route('admin.billing.payments.store', $invoice) }}" class="payment-inline-form"
+                                @if($paymentGatewayAvailable) data-gateway-charge="{{ route('admin.integrations.payments.invoices.charge', $invoice) }}" @endif>
                                 @csrf
                                 <input type="hidden" name="return_to" value="receive">
                                 <div class="row g-2 align-items-end">
@@ -181,15 +187,17 @@
                                     </div>
                                     <div class="col-sm-3">
                                         <label class="form-label small">{{ __('payments.method_lbl') }}</label>
-                                        <select name="payment_method" class="form-select form-select-sm" required>
+                                        <select name="payment_method" class="form-select form-select-sm js-method" required>
                                             @if(! $openShift)
                                             <option value="" selected disabled>{{ __('payments.select_method') }}</option>
                                             @endif
-                                            @foreach($paymentMethods as $method)
-                                            <option value="{{ $method->value }}" {{ $method === \App\Enums\PaymentMethod::CASH && ! $openShift ? 'disabled' : '' }}>
-                                                {{ $method->translatedLabel() }}{{ $method === \App\Enums\PaymentMethod::CASH && ! $openShift ? ' ' . __('payments.shift_closed_suffix') : '' }}
-                                            </option>
-                                            @endforeach
+                                            <option value="cash" {{ ! $openShift ? 'disabled' : '' }}>{{ __('payments.cash') }}{{ ! $openShift ? ' ' . __('payments.shift_closed_suffix') : '' }}</option>
+                                            @if($paymentGatewayAvailable)
+                                            <option value="mobile_money">{{ __('payments.mobile_money') }}</option>
+                                            @endif
+                                            <option value="bank_transfer">{{ __('payments.bank_transfer') }}</option>
+                                            <option value="card">{{ __('payments.card') }}</option>
+                                            <option value="cheque">{{ __('payments.cheque') }}</option>
                                         </select>
                                     </div>
                                     <div class="col-sm-4">
@@ -202,6 +210,21 @@
                                         </button>
                                     </div>
                                 </div>
+                                @if($paymentGatewayAvailable)
+                                <div class="row g-2 mt-1 js-momo-fields" style="display:none;">
+                                    <div class="col-sm-6">
+                                        <input type="tel" name="payer_phone" class="form-control form-control-sm js-momo-phone"
+                                            value="{{ $invoice->patient?->phone }}" placeholder="{{ __('payments.gateway.payer_phone') }}">
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <select name="mobile_network" class="form-select form-select-sm">
+                                            <option value="mtn_momo">{{ __('payments.gateway.method_mtn_momo') }}</option>
+                                            <option value="vodafone_cash">{{ __('payments.gateway.method_telecel_cash') }}</option>
+                                            <option value="airteltigo_money">{{ __('payments.gateway.method_airteltigo_money') }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                @endif
                             </form>
                         </td>
                     </tr>
@@ -225,3 +248,28 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+// Mobile Money inline on the receive page: reveal phone + network when chosen,
+// and post that row to the payment gateway (charge) instead of the manual store.
+document.querySelectorAll('.payment-inline-form[data-gateway-charge]').forEach(function (form) {
+    var sel = form.querySelector('.js-method');
+    var momo = form.querySelector('.js-momo-fields');
+    var phone = form.querySelector('.js-momo-phone');
+    if (!sel) { return; }
+    function sync() {
+        var isMomo = sel.value === 'mobile_money';
+        if (momo) { momo.style.display = isMomo ? '' : 'none'; }
+        if (phone) { phone.required = isMomo; }
+    }
+    sel.addEventListener('change', sync);
+    sync();
+    form.addEventListener('submit', function () {
+        if (sel.value === 'mobile_money') {
+            form.action = form.getAttribute('data-gateway-charge');
+        }
+    });
+});
+</script>
+@endpush

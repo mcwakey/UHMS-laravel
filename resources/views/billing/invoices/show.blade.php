@@ -724,7 +724,13 @@
                     <small><strong>{{ __('invoices.outstanding_label') }}:</strong> <span id="invoiceOutstandingValue">&#8373;{{ number_format($invoice->balance, 2) }}</span></small>
                 </div>
 
-                <form method="POST" action="{{ route('admin.billing.payments.store', $invoice) }}" id="paymentForm">
+                @php
+                    $paymentGatewayAvailable = app(\App\Services\ModuleService::class)->enabled('payment_gateway')
+                        && app(\App\Services\Integrations\Payment\PaymentProviderResolver::class)->activeProvider() !== null
+                        && (bool) auth()->user()?->can('integrations.payments.transactions.initiate');
+                @endphp
+                <form method="POST" action="{{ route('admin.billing.payments.store', $invoice) }}" id="paymentForm"
+                    @if($paymentGatewayAvailable) data-gateway-charge="{{ route('admin.integrations.payments.invoices.charge', $invoice) }}" @endif>
                     @csrf
                     @if($openReceivables->isNotEmpty())
                     <div class="mb-3">
@@ -756,14 +762,36 @@
                     <div class="mb-3">
                         <label class="form-label fw-medium">{{ __('payments.payment_method') }} <span class="text-danger">*</span></label>
                         <select name="payment_method" class="form-select @error('payment_method') is-invalid @enderror" required id="paymentMethodSelect">
-                            @foreach(\App\Enums\PaymentMethod::cases() as $method)
-                            <option value="{{ $method->value }}">{{ $method->translatedLabel() }}</option>
-                            @endforeach
+                            <option value="cash">{{ __('payments.cash') }}</option>
+                            @if($paymentGatewayAvailable)
+                            <option value="mobile_money">{{ __('payments.mobile_money') }}</option>
+                            @endif
+                            <option value="bank_transfer">{{ __('payments.bank_transfer') }}</option>
+                            <option value="card">{{ __('payments.card') }}</option>
+                            <option value="cheque">{{ __('payments.cheque') }}</option>
                         </select>
                         @error('payment_method')
                         <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+
+                    @if($paymentGatewayAvailable)
+                    {{-- Mobile Money: revealed when the method above is "Mobile Money".
+                         On submit the form posts to the payment gateway (charge), using
+                         the Amount entered above; the invoice is deducted after verification. --}}
+                    <div class="mb-3" id="momoFields" style="display:none;">
+                        <label class="form-label fw-medium">{{ __('payments.gateway.payer_phone') }} <span class="text-danger">*</span></label>
+                        <input type="tel" name="payer_phone" id="momoPhone" class="form-control"
+                            value="{{ old('payer_phone', $invoice->patient?->phone) }}" autocomplete="off">
+                        <label class="form-label fw-medium mt-2">{{ __('payments.gateway.method') }}</label>
+                        <select name="mobile_network" class="form-select">
+                            <option value="mtn_momo">{{ __('payments.gateway.method_mtn_momo') }}</option>
+                            <option value="vodafone_cash">{{ __('payments.gateway.method_telecel_cash') }}</option>
+                            <option value="airteltigo_money">{{ __('payments.gateway.method_airteltigo_money') }}</option>
+                        </select>
+                        <div class="form-text">{{ __('payments.gateway.inline_hint') }}</div>
+                    </div>
+                    @endif
 
                     <div class="mb-3" id="referenceGroup" style="display:none;">
                         <label class="form-label fw-medium">{{ __('payments.payment_reference') }}</label>
@@ -834,9 +862,6 @@
             </div>
         </div>
         @endif
-
-        <!-- Mobile Money / Online Payment (Payment Gateway — third path) -->
-        <x-integrations.invoice-payment :invoice="$invoice" />
 
         <!-- Quick Actions -->
         @if($hasQuickActions)
@@ -1215,9 +1240,14 @@ $(function() {
         }
     }
 
+    const momoFields = $('#momoFields');
+    const momoPhone = $('#momoPhone');
     paymentMethodSelect.on('change', function() {
         let method = $(this).val();
-        let needsRef = ['mtn_momo', 'vodafone_cash', 'airteltigo_money', 'bank_transfer', 'card', 'cheque'].includes(method);
+        let isMomo = method === 'mobile_money';
+        momoFields.toggle(isMomo);
+        momoPhone.prop('required', isMomo);
+        let needsRef = ['bank_transfer', 'card', 'cheque'].includes(method);
         referenceGroup.toggle(needsRef);
     }).trigger('change');
     invoiceReceivableSelect.on('change', syncReceivablePaymentLimit);
@@ -1251,6 +1281,16 @@ $(function() {
     $(document).on('change', '.alloc-toggle, .alloc-amount', syncAllocations);
 
     paymentForm.on('submit', async function(event) {
+        // Mobile Money → initiate the gateway charge via a normal POST so the
+        // provider redirect + flash work (the AJAX path below is for cash etc.).
+        if (paymentMethodSelect.val() === 'mobile_money') {
+            const gatewayUrl = paymentForm.attr('data-gateway-charge');
+            if (gatewayUrl) {
+                paymentForm.attr('action', gatewayUrl);
+                return; // allow native submission to the gateway
+            }
+        }
+
         event.preventDefault();
 
         if (!window.confirm(@json(__('billing.record_payment_confirm')))) {
