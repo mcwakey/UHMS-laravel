@@ -5,6 +5,8 @@ return [
     'queue_board' => 'Queue Board',
     'new_visit' => 'New Visit',
     'range_total' => 'Range Total',
+    'outpatient' => 'Outpatient',
+    'inpatient' => 'Inpatient',
     'outpatients' => 'Outpatients',
     'inpatients' => 'Inpatients',
     'emergency' => 'Emergency',

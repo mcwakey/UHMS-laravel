@@ -5,6 +5,8 @@ return [
     'queue_board' => 'Tableau de file d\'attente',
     'new_visit' => 'Nouvelle visite',
     'range_total' => 'Total de la période',
+    'outpatient' => 'Consultation externe',
+    'inpatient' => 'Hospitalisation',
     'outpatients' => 'Patients externes',
     'inpatients' => 'Patients hospitalisés',
     'emergency' => 'Urgences',
