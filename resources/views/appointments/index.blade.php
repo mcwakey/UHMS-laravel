@@ -3,29 +3,17 @@
 @section('title', __('appointments.title'))
 
 @section('content')
-    <div class="page-header">
-        <div class="row align-items-center">
-            <div class="col-sm-6">
-                <h3 class="page-title">{{ __('appointments.title') }} <span class="badge bg-primary ms-2">{{ $appointments->total() }}</span></h3>
-            </div>
-            <div class="col-sm-6 text-sm-end">
-                <div class="bg-white border shadow-sm rounded px-1 pb-0 text-center d-flex align-items-center justify-content-center">
-                    <a aria-label="{{ __('appointments.list_view') }}" title="{{ __('appointments.list_view') }}" href="{{ route('admin.appointments.index') }}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-body"></i></a>
-                    <a aria-label="{{ __('appointments.calendar_view') }}" title="{{ __('appointments.calendar_view') }}" href="{{ route('admin.appointments.calendar') }}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-calendar-event fs-14 text-body"></i> </a>
-                </div>
-                {{-- @can('appointments.view')
-                <a href="{{ route('admin.appointments.calendar') }}" class="btn btn-outline-info me-2">
-                    <i class="ti ti-calendar me-1"></i> Calendar
-                </a>
-                @endcan --}}
-                @can('appointments.create')
-                <a href="{{ route('admin.appointments.create') }}" class="btn btn-primary">
-                    <i class="ti ti-plus me-1"></i> {{ __('appointments.new_appointment') }}
-                </a>
-                @endcan
-            </div>
-        </div>
-    </div>
+<x-page-header :title="__('appointments.title')" icon="ti-calendar-event">
+    <!-- <span class="badge bg-primary ms-2">{{ $appointments->total() }}</span> -->
+    <x-slot:actions>
+        @include('appointments.partials.view-switch', ['active' => 'list'])
+        @can('appointments.create')
+        <a href="{{ route('admin.appointments.create') }}" class="btn btn-primary">
+            <i class="ti ti-plus me-1"></i> {{ __('appointments.new_appointment') }}
+        </a>
+        @endcan
+    </x-slot:actions>
+</x-page-header>
 
     {{-- Stats Cards --}}
     <div class="row mb-4">
@@ -72,8 +60,8 @@
         <div class="col-xl-2 col-md-4 col-sm-6">
             <div class="card">
                 <div class="card-body text-center">
-                    <h3 class="mb-1 text-dark">{{ $stats['no_show_today'] }}</h3>
-                    <p class="text-muted mb-0">{{ __('appointments.no_show') }}</p>
+                    <h3 class="mb-1 text-dark">{{ $stats['no_show_cancelled_today'] }}</h3>
+                    <p class="text-muted mb-0">{{ __('appointments.no_show_cancelled') }}</p>
                 </div>
             </div>
         </div>
@@ -129,9 +117,9 @@
                     ])
                 </div>
                 <div class="col-md-auto">
-                    <button type="submit" class="btn btn-primary me-2">
+                    <!-- <button type="submit" class="btn btn-primary me-2">
                         <i class="ti ti-filter me-1"></i> {{ __('common.filter') }}
-                    </button>
+                    </button> -->
                     <a href="{{ route('admin.appointments.index') }}" class="btn btn-outline-secondary">
                         <i class="ti ti-x me-1"></i>
                     </a>

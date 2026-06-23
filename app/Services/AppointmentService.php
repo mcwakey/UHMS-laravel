@@ -223,6 +223,10 @@ class AppointmentService
             'checked_in_today' => (clone $baseQuery)->where('status', AppointmentStatus::CHECKED_IN)->count(),
             'completed_today' => (clone $baseQuery)->where('status', AppointmentStatus::COMPLETED)->count(),
             'no_show_today' => (clone $baseQuery)->where('status', AppointmentStatus::NO_SHOW)->count(),
+            'no_show_cancelled_today' => (clone $baseQuery)->whereIn('status', [
+                AppointmentStatus::NO_SHOW->value,
+                AppointmentStatus::CANCELLED->value,
+            ])->count(),
             'upcoming' => Appointment::upcoming()->count(),
         ];
     }

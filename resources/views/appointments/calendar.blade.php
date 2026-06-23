@@ -8,31 +8,32 @@
             <div class="col-sm-6">
                 <h3 class="page-title">{{ __('appointments.calendar_title') }}</h3>
             </div>
-            <div class="col-sm-6 text-sm-end">
-                <div class="bg-white border shadow-sm rounded px-1 pb-0 text-center d-flex align-items-center justify-content-center">
-                    <a aria-label="{{ __('appointments.list_view') }}" title="{{ __('appointments.list_view') }}" href="{{ route('admin.appointments.index') }}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-body"></i></a>
-                    <a aria-label="{{ __('appointments.calendar_view') }}" title="{{ __('appointments.calendar_view') }}" href="{{ route('admin.appointments.calendar') }}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-calendar-event fs-14 text-body"></i> </a>
-                </div>
-                {{-- <a href="{{ route('admin.appointments.index') }}" class="btn btn-outline-secondary me-2">
-                    <i class="ti ti-list me-1"></i> List View
-                </a> --}}
+            <div class="col-sm-6">
+                <div class="d-flex justify-content-sm-end align-items-center gap-2 flex-wrap">
+                @include('appointments.partials.view-switch', ['active' => 'calendar'])
                 @can('appointments.create')
                 <a href="{{ route('admin.appointments.create') }}" class="btn btn-primary">
                     <i class="ti ti-plus me-1"></i> {{ __('appointments.new_appointment') }}
                 </a>
                 @endcan
+                </div>
             </div>
         </div>
     </div>
 
     {{-- Filters --}}
+    @php
+        $defaultRangeStart = today()->subDays(3)->toDateString();
+        $defaultRangeEnd = today()->addDays(11)->toDateString();
+        $activeDateRange = ($from ?? $defaultRangeStart).' to '.($to ?? $defaultRangeEnd);
+    @endphp
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('admin.appointments.calendar') }}" class="row g-3 align-items-end" data-auto-filter-form="appointments-calendar">
                 <div class="col-md-3">
                     @include('partials.date-range-filter', [
                         'id' => 'appointmentCalendarDateRangePicker',
-                        'value' => $filters['date_range'] ?? '',
+                        'value' => $activeDateRange,
                         'submitOnApply' => true,
                     ])
                 </div>
@@ -81,6 +82,7 @@
             $nextStart = $rangeStart->copy()->addDays($rangeDays);
             $nextEnd = $rangeEnd->copy()->addDays($rangeDays);
             $rangeQuery = request()->except(['date_range', 'date_from', 'date_to', 'from', 'to']);
+            $defaultRangeQuery = array_merge($rangeQuery, ['date_range' => $defaultRangeStart.' to '.$defaultRangeEnd]);
         @endphp
         <a href="{{ route('admin.appointments.calendar', array_merge($rangeQuery, ['date_range' => $prevStart->toDateString().' to '.$prevEnd->toDateString()])) }}" class="btn btn-outline-secondary btn-sm">
             <i class="ti ti-chevron-left me-1"></i> {{ __('appointments.previous_range') }}
@@ -91,8 +93,8 @@
             </h5>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('admin.appointments.calendar', $rangeQuery) }}" class="btn btn-outline-primary btn-sm">
-                {{ __('appointments.today') }}
+            <a href="{{ route('admin.appointments.calendar', $defaultRangeQuery) }}" class="btn btn-outline-primary btn-sm">
+                {{ __('appointments.default_range') }}
             </a>
             <a href="{{ route('admin.appointments.calendar', array_merge($rangeQuery, ['date_range' => $nextStart->toDateString().' to '.$nextEnd->toDateString()])) }}" class="btn btn-outline-secondary btn-sm">
                 {{ __('appointments.next_range') }} <i class="ti ti-chevron-right ms-1"></i>

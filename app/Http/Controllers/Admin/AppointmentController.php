@@ -49,9 +49,10 @@ class AppointmentController extends Controller
 
         $departments = Department::active()->orderBy('name')->get();
         $doctors = User::role('Doctor')->orderBy('first_name')->get();
+        $appointmentDate = $this->defaultAppointmentDate($request->query('date'));
 
         return view('appointments.create', compact(
-            'selectedPatient', 'departments', 'doctors'
+            'selectedPatient', 'departments', 'doctors', 'appointmentDate'
         ));
     }
 
@@ -244,7 +245,7 @@ class AppointmentController extends Controller
      */
     public function calendar(Request $request)
     {
-        $filters = $this->normalizedDateFilters($request);
+        $filters = $this->normalizedDateFilters($request, true);
         $from = $filters['date_from'];
         $to = $filters['date_to'];
 
@@ -260,7 +261,7 @@ class AppointmentController extends Controller
         return view('appointments.calendar', compact('calendarData', 'from', 'to', 'doctors', 'departments', 'filters'));
     }
 
-    private function normalizedDateFilters(Request $request): array
+    private function normalizedDateFilters(Request $request, bool $expandTodayRange = false): array
     {
         $filters = $request->all();
         $dateRange = trim((string) ($filters['date_range'] ?? ''));
@@ -281,8 +282,7 @@ class AppointmentController extends Controller
         $filters['date_to'] = $this->normalizeDateValue($filters['date_to'] ?? null);
 
         if (empty($filters['date_from']) && empty($filters['date_to'])) {
-            $filters['date_from'] = today()->toDateString();
-            $filters['date_to'] = today()->toDateString();
+            $this->applyDefaultAppointmentRange($filters);
         }
 
         if (! empty($filters['date_from']) && empty($filters['date_to'])) {
@@ -297,10 +297,28 @@ class AppointmentController extends Controller
             [$filters['date_from'], $filters['date_to']] = [$filters['date_to'], $filters['date_from']];
         }
 
+        if ($expandTodayRange && $this->isTodayOnlyRange($filters)) {
+            $this->applyDefaultAppointmentRange($filters);
+        }
+
         $filters['date_range'] = $filters['date_from'].' to '.$filters['date_to'];
         unset($filters['date'], $filters['from'], $filters['to']);
 
         return $filters;
+    }
+
+    private function applyDefaultAppointmentRange(array &$filters): void
+    {
+        $filters['date_from'] = today()->subDays(3)->toDateString();
+        $filters['date_to'] = today()->addDays(11)->toDateString();
+    }
+
+    private function isTodayOnlyRange(array $filters): bool
+    {
+        $today = today()->toDateString();
+
+        return ($filters['date_from'] ?? null) === $today
+            && ($filters['date_to'] ?? null) === $today;
     }
 
     private function normalizeDateValue(?string $value): ?string
@@ -314,5 +332,14 @@ class AppointmentController extends Controller
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    private function defaultAppointmentDate(?string $requestedDate = null): string
+    {
+        $tomorrow = today()->addDay();
+        $date = $this->normalizeDateValue($requestedDate) ?: $tomorrow->toDateString();
+        $date = Carbon::parse($date);
+
+        return $date->lt($tomorrow) ? $tomorrow->toDateString() : $date->toDateString();
     }
 }

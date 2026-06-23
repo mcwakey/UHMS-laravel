@@ -3,7 +3,7 @@
 
 @section('content')
 <x-page-header :title="__('patients.title')" icon="ti-users">
-    <span class="badge badge-soft-primary fw-medium border py-1 px-2 border-primary fs-13 ms-1">{{ __('common.total') }}: {{ $patients->total() }}</span>
+    <!-- <span class="badge badge-soft-primary fw-medium border py-1 px-2 border-primary fs-13 ms-1">{{ __('common.total') }}: {{ $patients->total() }}</span> -->
     <x-slot:actions>
         @can('patients.merge.view')
         <a href="{{ route('admin.patients.merge.index') }}" class="btn btn-outline-primary btn-md fs-13"><i class="ti ti-git-merge me-1"></i>{{ __('menu.folder_merge') }}</a>

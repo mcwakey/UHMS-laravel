@@ -3,15 +3,19 @@
 
 @section('content')
 <!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
+<!-- <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">{{ __('appointments.schedule_title') }}</h4>
-    </div>
-    <div>
+    </div> -->
+<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
+    <h6 class="fw-bold mb-0 d-flex align-items-center">
+        <a href="{{ route('admin.appointments.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>{{ __('appointments.schedule_title') }}</a>
+    </h6>
+    <!-- <div>
         <a href="{{ route('admin.appointments.index') }}" class="btn btn-outline-secondary btn-md">
             <i class="ti ti-arrow-left me-1"></i>{{ __('appointments.back_to_appointments') }}
         </a>
-    </div>
+    </div> -->
 </div>
 
 @if(session('error'))
@@ -137,8 +141,8 @@
                         <div class="col-md-4 mb-3">
                             <label class="form-label">{{ __('appointments.appointment_date') }} <span class="text-danger">*</span></label>
                             <input type="date" name="appointment_date" id="appointmentDate" class="form-control @error('appointment_date') is-invalid @enderror"
-                                   value="{{ old('appointment_date', date('Y-m-d', strtotime('+1 day'))) }}"
-                                   min="{{ date('Y-m-d') }}" required>
+                                   value="{{ old('appointment_date', $appointmentDate) }}"
+                                   min="{{ date('Y-m-d', strtotime('+1 day')) }}" required>
                             @error('appointment_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                     </div>
