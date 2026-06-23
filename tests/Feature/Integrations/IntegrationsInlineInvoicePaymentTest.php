@@ -140,6 +140,26 @@ class IntegrationsInlineInvoicePaymentTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_status_poll_resolves_and_records_payment(): void
+    {
+        $this->fakePaymentProvider();
+        $invoice = $this->payableInvoice(100);
+        $actor = $this->userWith([
+            'integrations.payments.view', 'integrations.payments.transactions.initiate', 'integrations.payments.transactions.verify',
+        ]);
+        $this->actingAs($actor)->post(route('admin.integrations.payments.invoices.charge', $invoice), [
+            'payer_phone' => '0241234567', 'mobile_network' => 'mtn_momo',
+        ]);
+        $txn = PaymentProviderTransaction::where('invoice_id', $invoice->id)->latest()->first();
+
+        $this->actingAs($actor)
+            ->getJson(route('admin.integrations.payments.transactions.status', $txn))
+            ->assertOk()
+            ->assertJson(['resolved' => true, 'paid' => true]);
+
+        $this->assertSame(1, Payment::where('invoice_id', $invoice->id)->count());
+    }
+
     public function test_inline_charge_uses_amount_from_form_capped_at_balance(): void
     {
         $this->fakePaymentProvider();

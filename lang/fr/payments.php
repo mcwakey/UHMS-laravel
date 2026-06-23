@@ -259,5 +259,7 @@ return [
         'not_payable' => 'Cette facture n’a aucun solde à débiter.',
         'inline_hint' => 'Une invite est envoyée au téléphone du payeur. La facture n’est déduite qu’après vérification du paiement.',
         'inline_unavailable' => 'Le paiement en ligne n’est pas disponible pour cette facture.',
+        'awaiting_payment' => 'Paiement Mobile Money en attente',
+        'awaiting_instructions' => 'Demandez au payeur d’approuver l’invite sur son téléphone. La vérification est automatique — ou cliquez sur Revérifier.',
     ],
 ];

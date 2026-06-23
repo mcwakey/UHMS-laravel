@@ -259,5 +259,7 @@ return [
         'not_payable' => 'This invoice has no outstanding balance to charge.',
         'inline_hint' => 'A prompt is sent to the payer’s phone. The invoice is only deducted after the payment is verified.',
         'inline_unavailable' => 'Online payment is unavailable for this invoice.',
+        'awaiting_payment' => 'Awaiting Mobile Money payment',
+        'awaiting_instructions' => 'Ask the payer to approve the prompt on their phone. This checks automatically — or click Recheck.',
     ],
 ];

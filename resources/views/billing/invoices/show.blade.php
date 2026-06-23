@@ -714,6 +714,50 @@
 
     <!-- Right Sidebar: Record Payment -->
     <div class="col-lg-4">
+
+        {{-- Awaiting Mobile Money payment: pending gateway charges for this invoice,
+             with a manual Recheck and a live status poll. Only shows while pending. --}}
+        @php
+            $gatewayModuleActive = app(\App\Services\ModuleService::class)->enabled('payment_gateway')
+                && app(\App\Services\Integrations\Payment\PaymentProviderResolver::class)->activeProvider() !== null;
+            $pendingMomoCharges = $gatewayModuleActive
+                ? \App\Models\PaymentProviderTransaction::where('invoice_id', $invoice->id)
+                    ->whereIn('status', ['initiated', 'pending', 'requires_customer_action'])
+                    ->latest()->get()
+                : collect();
+        @endphp
+        @if($pendingMomoCharges->isNotEmpty())
+        <div class="card border-warning mb-3" id="pendingMomoCard"
+            data-status-url="{{ route('admin.integrations.payments.transactions.status', $pendingMomoCharges->first()) }}">
+            <div class="card-header bg-warning-subtle">
+                <h6 class="fw-bold mb-0"><i class="ti ti-clock-hour-4 me-1 spinner-grow spinner-grow-sm"></i>{{ __('payments.gateway.awaiting_payment') }}</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">{{ __('payments.gateway.awaiting_instructions') }}</p>
+                @foreach($pendingMomoCharges as $charge)
+                <div class="border rounded p-2 mb-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="small"><code>{{ $charge->payment_reference }}</code></div>
+                            <div class="fw-semibold">{{ $charge->currency }} {{ number_format((float) $charge->amount, 2) }}</div>
+                            @if($charge->payer_phone)<div class="text-muted small">{{ $charge->payer_phone }}</div>@endif
+                        </div>
+                        <x-status-badge :status="$charge->status" domain="payment_transaction" size="sm" />
+                    </div>
+                    @can('integrations.payments.transactions.verify')
+                    <form method="POST" action="{{ route('admin.integrations.payments.transactions.verify-inline', $charge) }}" class="mt-2">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="ti ti-refresh me-1"></i>{{ __('payments.gateway.recheck') }}
+                        </button>
+                    </form>
+                    @endcan
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
         @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::PAID, \App\Enums\InvoiceStatus::CANCELLED, \App\Enums\InvoiceStatus::REFUNDED]))
         <div class="card border-primary" id="recordPaymentCard">
             <div class="card-header bg-primary text-white">
@@ -1334,5 +1378,23 @@ $(function() {
         }
     });
 });
+</script>
+<script>
+// Live "awaiting payment" poll: while a mobile-money charge is pending, ask the
+// gateway for its status; reload the invoice once it resolves (paid / failed).
+(function () {
+    var card = document.getElementById('pendingMomoCard');
+    if (!card) { return; }
+    var url = card.getAttribute('data-status-url');
+    if (!url) { return; }
+    var attempts = 0, max = 20;
+    var timer = setInterval(function () {
+        if (attempts++ >= max) { clearInterval(timer); return; }
+        fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) { if (d && d.resolved) { clearInterval(timer); window.location.reload(); } })
+            .catch(function () {});
+    }, 6000);
+})();
 </script>
 @endsection

@@ -91,9 +91,10 @@ normal billing → accounting flow.
      **Record Payment / Receive** button → the form posts to the payment gateway
      (`charge`) and a provider transaction is created; the prompt goes to the payer's
      phone. **The invoice is not changed yet.**
-  2. The charge is resolved by the provider **callback**, the
-     `integrations:payments-recheck-pending` scheduler, or a manual recheck on the
-     **Payment API Transactions** / **Reconciliation** screen.
+  2. An **"Awaiting Mobile Money payment"** panel appears on the invoice showing the
+     pending charge. It **auto-polls** the provider (and reloads when the charge
+     resolves) and offers a manual **Recheck** button. The provider **callback** and the
+     `integrations:payments-recheck-pending` scheduler also resolve it.
   3. On verification the existing `PaymentService` creates the UHMS payment, **deducts
      the invoice balance and posts to accounting** — exactly like a manual payment.
 

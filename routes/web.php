@@ -1528,6 +1528,7 @@ Route::middleware('auth')->group(function () {
                     // Inline mobile-money payment from the invoice screen (third path)
                     Route::post('invoices/{invoice}/charge', [\App\Http\Controllers\Admin\Integrations\InvoiceGatewayPaymentController::class, 'charge'])->name('invoices.charge')->middleware('can:integrations.payments.transactions.initiate');
                     Route::post('transactions/{transaction}/verify-inline', [\App\Http\Controllers\Admin\Integrations\InvoiceGatewayPaymentController::class, 'verify'])->name('transactions.verify-inline')->middleware('can:integrations.payments.transactions.verify');
+                    Route::get('transactions/{transaction}/status', [\App\Http\Controllers\Admin\Integrations\InvoiceGatewayPaymentController::class, 'status'])->name('transactions.status')->middleware('can:integrations.payments.transactions.verify');
                 });
 
             // ── Provider Health (spans both modules; admin/IT) ───────────

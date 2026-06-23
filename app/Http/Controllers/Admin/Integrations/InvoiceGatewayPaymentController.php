@@ -70,6 +70,30 @@ class InvoiceGatewayPaymentController extends Controller
             ->with('success', __('payments.gateway.charge_started'));
     }
 
+    /**
+     * Live status poll (JSON) for the "awaiting payment" panel. Safely re-verifies
+     * through the gateway (idempotent — never double-pays) and reports whether the
+     * charge has resolved so the page can refresh itself.
+     */
+    public function status(PaymentProviderTransaction $transaction)
+    {
+        if (! $transaction->isSuccessful()) {
+            $transaction = $this->gateway->verify($transaction);
+        }
+
+        $resolved = $transaction->isSuccessful() || in_array($transaction->status, [
+            PaymentProviderTransaction::STATUS_FAILED,
+            PaymentProviderTransaction::STATUS_CANCELLED,
+            PaymentProviderTransaction::STATUS_EXPIRED,
+        ], true);
+
+        return response()->json([
+            'status' => $transaction->status,
+            'paid' => $transaction->isSuccessful(),
+            'resolved' => $resolved,
+        ]);
+    }
+
     /** Verify/recheck a pending gateway transaction and return to the invoice. */
     public function verify(PaymentProviderTransaction $transaction)
     {
