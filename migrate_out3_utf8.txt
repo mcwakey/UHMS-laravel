@@ -1,5 +1,0 @@
-﻿
-   INFO  Running migrations.  
-
-  2026_05_25_100000_add_insurance_type_claim_workflows .............. 18s DONE
-

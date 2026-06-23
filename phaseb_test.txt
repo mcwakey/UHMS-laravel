@@ -1,8 +1,0 @@
-﻿﻿﻿
-   PASS  Tests\Feature\InertiaBridgeLeakGuardTest
-  ✓ no blade view introduces unguarded full reload                                                                                      4.12s  
-  ✓ blade views do not reintroduce data inertia optin                                                                                   0.97s  
-
-  Tests:    2 passed (2 assertions)
-  Duration: 8.23s
-

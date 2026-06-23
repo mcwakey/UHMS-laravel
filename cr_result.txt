@@ -1,9 +1,0 @@
-service_renderings total: 4
-service_renderings with null service_id: 0
-invoice_items with catalog but NO rendering: 47
-invoice_items with catalog AND rendering: 4
-Item #1 - General Consultation (service_catalog) - catalog: General Consultation
-Item #6 - General Consultation (service_catalog) - catalog: General Consultation
-Item #7 - General Consultation (service_catalog) - catalog: General Consultation
-Item #8 - General Consultation (service_catalog) - catalog: General Consultation
-Item #9 - General Consultation (service_catalog) - catalog: General Consultation
