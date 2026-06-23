@@ -107,7 +107,7 @@ return [
     | the link. Key = controller path relative to app root; value = reason.
     */
     'known_false_positive_controllers' => [
-        'app/Http/Controllers/Admin/UserController.php' =>
+        'app/Http/Controllers/Admin/Settings/UserController.php' =>
             'User create/update audited by UserObserver (USER_CREATED / USER_FIELD_CHANGED); '
             . 'role assignment audited by UserService → RolePermissionAuditService (USER_ROLES_UPDATED).',
     ],
@@ -121,7 +121,7 @@ return [
     */
     'intentionally_skipped_actions' => [
         // Per-user preference toggles — not a security/clinical event.
-        'app/Http/Controllers/Admin/NotificationPreferenceController.php@update',
+        'app/Http/Controllers/Admin/Settings/NotificationPreferenceController.php@update',
     ],
 
     /*
@@ -136,55 +136,55 @@ return [
     */
     'backlog_controllers' => [
         // Catalogue / reference-data CRUD
-        'app/Http/Controllers/Admin/AccountCategoryController.php',
-        'app/Http/Controllers/Admin/ComplaintCatalogueController.php',
-        'app/Http/Controllers/Admin/DepartmentController.php',
-        'app/Http/Controllers/Admin/DesignationController.php',
-        'app/Http/Controllers/Admin/IcdCodeController.php',
-        'app/Http/Controllers/Admin/InsuranceProviderController.php',
-        'app/Http/Controllers/Admin/InsuranceTierController.php',
-        'app/Http/Controllers/Admin/InvestigationItemController.php',
-        'app/Http/Controllers/Admin/ProcedureController.php',
-        'app/Http/Controllers/Admin/ProductController.php',
-        'app/Http/Controllers/Admin/ServiceCatalogController.php',
-        'app/Http/Controllers/Admin/SpecialtyController.php',
-        'app/Http/Controllers/Admin/StockLocationController.php',
-        'app/Http/Controllers/Admin/SupplierController.php',
-        'app/Http/Controllers/Admin/AnalyzerController.php',
-        'app/Http/Controllers/Admin/WardController.php',
-        'app/Http/Controllers/Admin/EmergencyBayController.php',
+        'app/Http/Controllers/Admin/Billing/AccountCategoryController.php',
+        'app/Http/Controllers/Admin/Settings/ComplaintCatalogueController.php',
+        'app/Http/Controllers/Admin/Settings/DepartmentController.php',
+        'app/Http/Controllers/Admin/Hr/DesignationController.php',
+        'app/Http/Controllers/Admin/Settings/IcdCodeController.php',
+        'app/Http/Controllers/Admin/Insurance/InsuranceProviderController.php',
+        'app/Http/Controllers/Admin/Insurance/InsuranceTierController.php',
+        'app/Http/Controllers/Admin/Lab/InvestigationItemController.php',
+        'app/Http/Controllers/Admin/Procedures/ProcedureController.php',
+        'app/Http/Controllers/Admin/Pharmacy/ProductController.php',
+        'app/Http/Controllers/Admin/Procedures/ServiceCatalogController.php',
+        'app/Http/Controllers/Admin/Settings/SpecialtyController.php',
+        'app/Http/Controllers/Admin/Store/StockLocationController.php',
+        'app/Http/Controllers/Admin/Store/SupplierController.php',
+        'app/Http/Controllers/Admin/Lab/AnalyzerController.php',
+        'app/Http/Controllers/Admin/AdmissionsWard/WardController.php',
+        'app/Http/Controllers/Admin/Emergency/EmergencyBayController.php',
         'app/Http/Controllers/Billing/SponsorController.php',
         // Theatre ROOMS are facility configuration (rooms + maintenance blocks),
         // same tier as wards / stock locations above — catalogue CRUD, deferred.
         'app/Http/Controllers/Theatre/TheatreRoomController.php',
         // Patient demographic sub-records
-        'app/Http/Controllers/Admin/PatientInsuranceController.php',
-        'app/Http/Controllers/Admin/EmergencyContactController.php',
-        'app/Http/Controllers/Admin/ProfileController.php',
+        'app/Http/Controllers/Admin/Patients/PatientInsuranceController.php',
+        'app/Http/Controllers/Admin/Emergency/EmergencyContactController.php',
+        'app/Http/Controllers/Admin/Dashboard/ProfileController.php',
         // HR (non-financial reference + attendance). Payroll/leave APPROVALS are
         // financial and deliberately left to surface as NEEDS_REVIEW, not backlog.
-        'app/Http/Controllers/Admin/AttendanceController.php',
-        'app/Http/Controllers/Admin/EmployeeController.php',
+        'app/Http/Controllers/Admin/Hr/AttendanceController.php',
+        'app/Http/Controllers/Admin/Hr/EmployeeController.php',
         // Notifications
-        'app/Http/Controllers/Admin/NotificationController.php',
-        'app/Http/Controllers/Admin/NotificationBroadcastController.php',
+        'app/Http/Controllers/Admin/Settings/NotificationController.php',
+        'app/Http/Controllers/Admin/Settings/NotificationBroadcastController.php',
         // Stock adjustments (raw ledger; global-log only, no patient ctx). Purchase
         // RETURNS are left to surface (they move supplier ledger + stock) — not here.
-        'app/Http/Controllers/Admin/ProductStockController.php',
+        'app/Http/Controllers/Admin/Store/ProductStockController.php',
         // Emergency ancillary records not yet on a logging funnel
-        'app/Http/Controllers/Admin/EmergencyVitalsController.php',
-        'app/Http/Controllers/Admin/EmergencyNoteController.php',
-        'app/Http/Controllers/Admin/EmergencyInvestigationController.php',
-        'app/Http/Controllers/Admin/EmergencyProcedureController.php',
-        'app/Http/Controllers/Admin/EmergencyPatientIdentityController.php',
+        'app/Http/Controllers/Admin/Emergency/EmergencyVitalsController.php',
+        'app/Http/Controllers/Admin/Emergency/EmergencyNoteController.php',
+        'app/Http/Controllers/Admin/Emergency/EmergencyInvestigationController.php',
+        'app/Http/Controllers/Admin/Emergency/EmergencyProcedureController.php',
+        'app/Http/Controllers/Admin/Emergency/EmergencyPatientIdentityController.php',
         // Front-desk / queue workflow deferred (non-financial)
-        'app/Http/Controllers/Admin/AppointmentController.php',
-        'app/Http/Controllers/Admin/QueueController.php',
-        'app/Http/Controllers/Admin/TriageController.php',
-        'app/Http/Controllers/Admin/VitalController.php',
+        'app/Http/Controllers/Admin/Appointments/AppointmentController.php',
+        'app/Http/Controllers/Admin/Appointments/QueueController.php',
+        'app/Http/Controllers/Admin/Patients/TriageController.php',
+        'app/Http/Controllers/Admin/AdmissionsWard/VitalController.php',
         // Blood bank intake (lifecycle issue/crossmatch/request already covered)
-        'app/Http/Controllers/Admin/BloodDonationController.php',
-        'app/Http/Controllers/Admin/BloodDonorController.php',
+        'app/Http/Controllers/Admin/BloodBank/BloodDonationController.php',
+        'app/Http/Controllers/Admin/BloodBank/BloodDonorController.php',
     ],
 
     /*

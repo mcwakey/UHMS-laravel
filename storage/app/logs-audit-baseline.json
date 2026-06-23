@@ -5,7 +5,7 @@
     "refused_high_risk_gaps": [],
     "accepted": [
         {
-            "controller": "app/Http/Controllers/Admin/AnalyzerController.php",
+            "controller": "app/Http/Controllers/Admin/Lab/AnalyzerController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "CRITICAL",
             "actions": [
@@ -16,7 +16,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/DepartmentController.php",
+            "controller": "app/Http/Controllers/Admin/Settings/DepartmentController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "CRITICAL",
             "actions": [
@@ -26,7 +26,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/DesignationController.php",
+            "controller": "app/Http/Controllers/Admin/Hr/DesignationController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "CRITICAL",
             "actions": [
@@ -36,7 +36,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/EmergencyContactController.php",
+            "controller": "app/Http/Controllers/Admin/Emergency/EmergencyContactController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "CRITICAL",
             "actions": [
@@ -46,7 +46,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/FinancialEntryController.php",
+            "controller": "app/Http/Controllers/Admin/Billing/FinancialEntryController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "CRITICAL",
             "actions": [
@@ -56,7 +56,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/IcdCodeController.php",
+            "controller": "app/Http/Controllers/Admin/Settings/IcdCodeController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "CRITICAL",
             "actions": [
@@ -66,7 +66,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/InsuranceTierController.php",
+            "controller": "app/Http/Controllers/Admin/Insurance/InsuranceTierController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "CRITICAL",
             "actions": [
@@ -76,7 +76,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/NotificationController.php",
+            "controller": "app/Http/Controllers/Admin/Settings/NotificationController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "CRITICAL",
             "actions": [
@@ -84,7 +84,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/PatientComplaintController.php",
+            "controller": "app/Http/Controllers/Admin/Patients/PatientComplaintController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "CRITICAL",
             "actions": [
@@ -94,7 +94,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/PatientInsuranceController.php",
+            "controller": "app/Http/Controllers/Admin/Patients/PatientInsuranceController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "CRITICAL",
             "actions": [
@@ -104,7 +104,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/RoleController.php",
+            "controller": "app/Http/Controllers/Admin/Settings/RoleController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "CRITICAL",
             "actions": [
@@ -133,7 +133,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/AdmissionController.php",
+            "controller": "app/Http/Controllers/Admin/AdmissionsWard/AdmissionController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
             "actions": [
@@ -142,7 +142,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/AppointmentController.php",
+            "controller": "app/Http/Controllers/Admin/Appointments/AppointmentController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
             "actions": [
@@ -152,7 +152,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/BloodCrossmatchController.php",
+            "controller": "app/Http/Controllers/Admin/BloodBank/BloodCrossmatchController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
             "actions": [
@@ -161,7 +161,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/BloodRequestController.php",
+            "controller": "app/Http/Controllers/Admin/BloodBank/BloodRequestController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
             "actions": [
@@ -170,7 +170,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/CashierShiftController.php",
+            "controller": "app/Http/Controllers/Admin/Billing/CashierShiftController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
             "actions": [
@@ -178,7 +178,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/ClaimController.php",
+            "controller": "app/Http/Controllers/Admin/Billing/ClaimController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
             "actions": [
@@ -187,7 +187,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/InsuranceVerificationController.php",
+            "controller": "app/Http/Controllers/Admin/Insurance/InsuranceVerificationController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
             "actions": [
@@ -195,7 +195,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/LeaveController.php",
+            "controller": "app/Http/Controllers/Admin/Hr/LeaveController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
             "actions": [
@@ -205,7 +205,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/PayrollController.php",
+            "controller": "app/Http/Controllers/Admin/Hr/PayrollController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
             "actions": [
@@ -213,7 +213,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/ProductStockController.php",
+            "controller": "app/Http/Controllers/Admin/Store/ProductStockController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "HIGH",
             "actions": [
@@ -221,7 +221,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/PurchaseOrderController.php",
+            "controller": "app/Http/Controllers/Admin/Store/PurchaseOrderController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
             "actions": [
@@ -232,7 +232,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/PurchaseReturnController.php",
+            "controller": "app/Http/Controllers/Admin/Store/PurchaseReturnController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
             "actions": [
@@ -242,7 +242,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/ServiceRenderingActionController.php",
+            "controller": "app/Http/Controllers/Admin/Procedures/ServiceRenderingActionController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
             "actions": [
@@ -250,7 +250,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/StockRequisitionController.php",
+            "controller": "app/Http/Controllers/Admin/Store/StockRequisitionController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
             "actions": [
@@ -317,7 +317,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/AccountCategoryController.php",
+            "controller": "app/Http/Controllers/Admin/Billing/AccountCategoryController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "MEDIUM",
             "actions": [
@@ -327,7 +327,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/AttendanceController.php",
+            "controller": "app/Http/Controllers/Admin/Hr/AttendanceController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -335,7 +335,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/BloodDonationController.php",
+            "controller": "app/Http/Controllers/Admin/BloodBank/BloodDonationController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -343,7 +343,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/BloodDonorController.php",
+            "controller": "app/Http/Controllers/Admin/BloodBank/BloodDonorController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -351,7 +351,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/BloodIssueController.php",
+            "controller": "app/Http/Controllers/Admin/BloodBank/BloodIssueController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -359,7 +359,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/ComplaintCatalogueController.php",
+            "controller": "app/Http/Controllers/Admin/Settings/ComplaintCatalogueController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "MEDIUM",
             "actions": [
@@ -369,7 +369,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/DrugController.php",
+            "controller": "app/Http/Controllers/Admin/Pharmacy/DrugController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -379,7 +379,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/EmergencyBayController.php",
+            "controller": "app/Http/Controllers/Admin/Emergency/EmergencyBayController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -388,7 +388,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/EmergencyCaseController.php",
+            "controller": "app/Http/Controllers/Admin/Emergency/EmergencyCaseController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -397,7 +397,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/EmergencyConsumableController.php",
+            "controller": "app/Http/Controllers/Admin/Emergency/EmergencyConsumableController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -405,7 +405,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/EmergencyDispositionController.php",
+            "controller": "app/Http/Controllers/Admin/Emergency/EmergencyDispositionController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -413,7 +413,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/EmergencyInvestigationController.php",
+            "controller": "app/Http/Controllers/Admin/Emergency/EmergencyInvestigationController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -421,7 +421,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/EmergencyMedicationController.php",
+            "controller": "app/Http/Controllers/Admin/Emergency/EmergencyMedicationController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -429,7 +429,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/EmergencyNoteController.php",
+            "controller": "app/Http/Controllers/Admin/Emergency/EmergencyNoteController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -437,7 +437,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/EmergencyPatientIdentityController.php",
+            "controller": "app/Http/Controllers/Admin/Emergency/EmergencyPatientIdentityController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -445,7 +445,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/EmergencyProcedureController.php",
+            "controller": "app/Http/Controllers/Admin/Emergency/EmergencyProcedureController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -453,7 +453,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/EmergencyTriageController.php",
+            "controller": "app/Http/Controllers/Admin/Emergency/EmergencyTriageController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -461,7 +461,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/EmergencyVitalsController.php",
+            "controller": "app/Http/Controllers/Admin/Emergency/EmergencyVitalsController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -469,7 +469,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/EmployeeController.php",
+            "controller": "app/Http/Controllers/Admin/Hr/EmployeeController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -478,7 +478,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/InsuranceProviderController.php",
+            "controller": "app/Http/Controllers/Admin/Insurance/InsuranceProviderController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "MEDIUM",
             "actions": [
@@ -488,7 +488,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/InvestigationItemController.php",
+            "controller": "app/Http/Controllers/Admin/Lab/InvestigationItemController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "MEDIUM",
             "actions": [
@@ -498,7 +498,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/ModuleController.php",
+            "controller": "app/Http/Controllers/Admin/Settings/ModuleController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -506,7 +506,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/NotificationBroadcastController.php",
+            "controller": "app/Http/Controllers/Admin/Settings/NotificationBroadcastController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "MEDIUM",
             "actions": [
@@ -514,7 +514,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/NotificationPreferenceController.php",
+            "controller": "app/Http/Controllers/Admin/Settings/NotificationPreferenceController.php",
             "classification": "INTENTIONALLY_SKIPPED",
             "severity": "MEDIUM",
             "actions": [
@@ -522,7 +522,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/PatientMergeController.php",
+            "controller": "app/Http/Controllers/Admin/Patients/PatientMergeController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -530,7 +530,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/ProcedureController.php",
+            "controller": "app/Http/Controllers/Admin/Procedures/ProcedureController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "MEDIUM",
             "actions": [
@@ -540,7 +540,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/ProductController.php",
+            "controller": "app/Http/Controllers/Admin/Pharmacy/ProductController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "MEDIUM",
             "actions": [
@@ -550,7 +550,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/ProfileController.php",
+            "controller": "app/Http/Controllers/Admin/Dashboard/ProfileController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -558,7 +558,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/QueueController.php",
+            "controller": "app/Http/Controllers/Admin/Appointments/QueueController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "MEDIUM",
             "actions": [
@@ -566,7 +566,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/ServiceCatalogController.php",
+            "controller": "app/Http/Controllers/Admin/Procedures/ServiceCatalogController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "MEDIUM",
             "actions": [
@@ -576,7 +576,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/SpecialtyController.php",
+            "controller": "app/Http/Controllers/Admin/Settings/SpecialtyController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "MEDIUM",
             "actions": [
@@ -586,7 +586,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/StockLocationController.php",
+            "controller": "app/Http/Controllers/Admin/Store/StockLocationController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "MEDIUM",
             "actions": [
@@ -596,7 +596,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/SupplierController.php",
+            "controller": "app/Http/Controllers/Admin/Store/SupplierController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -606,7 +606,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/TriageController.php",
+            "controller": "app/Http/Controllers/Admin/Patients/TriageController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -614,7 +614,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/UserController.php",
+            "controller": "app/Http/Controllers/Admin/Settings/UserController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -623,7 +623,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/VisitController.php",
+            "controller": "app/Http/Controllers/Admin/Visits/VisitController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -632,7 +632,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/VitalController.php",
+            "controller": "app/Http/Controllers/Admin/AdmissionsWard/VitalController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
@@ -640,7 +640,7 @@
             ]
         },
         {
-            "controller": "app/Http/Controllers/Admin/WardController.php",
+            "controller": "app/Http/Controllers/Admin/AdmissionsWard/WardController.php",
             "classification": "KNOWN_BACKLOG",
             "severity": "MEDIUM",
             "actions": [

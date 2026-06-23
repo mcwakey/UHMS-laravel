@@ -207,7 +207,7 @@ class RolePermissionSecurityLogTest extends TestCase
         Artisan::call('logs:audit', ['--json' => true]);
         $report = json_decode(file_get_contents(storage_path('reports/logs-audit-report.json')), true);
 
-        $role = collect($report['findings'])->firstWhere('controller', 'app/Http/Controllers/Admin/RoleController.php');
+        $role = collect($report['findings'])->firstWhere('controller', 'app/Http/Controllers/Admin/Settings/RoleController.php');
         $this->assertNotNull($role);
         $this->assertSame('SERVICE_FUNNEL_COVERED', $role['classification']);
         $this->assertSame(0, $report['summary']['MISSING_LOG']);

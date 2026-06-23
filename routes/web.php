@@ -1,105 +1,105 @@
 <?php
 
-use App\Http\Controllers\Admin\AccountCategoryController;
-use App\Http\Controllers\Admin\ActivityLogController;
-use App\Http\Controllers\Admin\AdmissionController;
-use App\Http\Controllers\Admin\AdmissionMedicationBoardController;
-use App\Http\Controllers\Admin\AnalyzerController;
-use App\Http\Controllers\Admin\AppointmentController;
-use App\Http\Controllers\Admin\AttendanceController;
-use App\Http\Controllers\Admin\BloodBankDashboardController;
-use App\Http\Controllers\Admin\BloodBankReportController;
-use App\Http\Controllers\Admin\BloodCrossmatchController;
-use App\Http\Controllers\Admin\BloodDonationController;
-use App\Http\Controllers\Admin\BloodDonorController;
-use App\Http\Controllers\Admin\BloodIssueController;
-use App\Http\Controllers\Admin\BloodRequestController;
-use App\Http\Controllers\Admin\BloodStorageLocationController;
-use App\Http\Controllers\Admin\BloodUnitController;
-use App\Http\Controllers\Admin\CounterSaleController;
-use App\Http\Controllers\Admin\CashierShiftController;
-use App\Http\Controllers\Admin\ClaimController;
-use App\Http\Controllers\Admin\ComplaintCatalogueController;
-use App\Http\Controllers\Admin\ComplaintSearchController;
-use App\Http\Controllers\Admin\ConsultationTaskController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\DepartmentController;
-use App\Http\Controllers\Admin\DepartmentConsumablesController;
-use App\Http\Controllers\Admin\DesignationController;
-use App\Http\Controllers\Admin\DrugController;
-use App\Http\Controllers\Admin\EmergencyContactController;
-use App\Http\Controllers\Admin\EmergencyBayController;
-use App\Http\Controllers\Admin\EmergencyBillingController;
-use App\Http\Controllers\Admin\EmergencyBoardController;
-use App\Http\Controllers\Admin\EmergencyCaseController;
-use App\Http\Controllers\Admin\EmergencyConsumableController;
-use App\Http\Controllers\Admin\EmergencyPatientIdentityController;
-use App\Http\Controllers\Admin\EmergencyDispositionController;
-use App\Http\Controllers\Admin\EmergencyInvestigationController;
-use App\Http\Controllers\Admin\EmergencyMedicationBoardController;
-use App\Http\Controllers\Admin\EmergencyMedicationController;
-use App\Http\Controllers\Admin\EmergencyNoteController;
-use App\Http\Controllers\Admin\EmergencyProcedureController;
-use App\Http\Controllers\Admin\EmergencyReportController;
-use App\Http\Controllers\Admin\EmergencyTriageController;
-use App\Http\Controllers\Admin\EmergencyVitalsController;
-use App\Http\Controllers\Admin\EmergencyTaskController;
-use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Admin\FinancialEntryController;
-use App\Http\Controllers\Admin\LocationController;
-use App\Http\Controllers\Admin\IcdCodeController;
-use App\Http\Controllers\Admin\InsuranceProviderController;
-use App\Http\Controllers\Admin\InsuranceTierController;
-use App\Http\Controllers\Admin\InsuranceVerificationController;
-use App\Http\Controllers\Admin\InvestigationCatalogueController;
-use App\Http\Controllers\Admin\InvestigationItemController;
-use App\Http\Controllers\Admin\LabTestController;
-use App\Http\Controllers\Admin\LeaveController;
-use App\Http\Controllers\Admin\MedicationAdministrationController;
-use App\Http\Controllers\Admin\MedicationAdministrationReportController;
-use App\Http\Controllers\Admin\MarChartController;
-use App\Http\Controllers\Admin\ModuleController;
-use App\Http\Controllers\Admin\NotificationController;
-use App\Http\Controllers\Admin\PatientController;
-use App\Http\Controllers\Admin\PatientComplaintController;
-use App\Http\Controllers\Admin\PatientInsuranceController;
-use App\Http\Controllers\Admin\PatientMergeController;
-use App\Http\Controllers\Admin\PayrollController;
-use App\Http\Controllers\Admin\ProcedureCatalogueController;
-use App\Http\Controllers\Admin\ProcedureConsumablesController;
-use App\Http\Controllers\Admin\ProcedureController;
-use App\Http\Controllers\Admin\ProductController;
-use App\Http\Controllers\Admin\ProductPricingController;
-use App\Http\Controllers\Admin\ProductStockController;
-use App\Http\Controllers\Admin\ProfileController;
-use App\Http\Controllers\Admin\LogRetentionController;
-use App\Http\Controllers\Admin\NotificationBroadcastController;
-use App\Http\Controllers\Admin\NotificationPreferenceController;
-use App\Http\Controllers\Admin\OperationalReportController;
-use App\Http\Controllers\Admin\PurchaseOrderController;
-use App\Http\Controllers\Admin\PurchaseReturnController;
-use App\Http\Controllers\Admin\QueueController;
-use App\Http\Controllers\Admin\ReportController;
-use App\Http\Controllers\Admin\ReportsHubController;
-use App\Http\Controllers\Admin\RoleController;
-use App\Http\Controllers\Admin\ServiceCatalogController;
-use App\Http\Controllers\Admin\ServiceRenderingActionController;
-use App\Http\Controllers\Admin\ServiceRenderingController;
-use App\Http\Controllers\Admin\ServiceRenderingReportController;
-use App\Http\Controllers\Admin\StatisticsController;
-use App\Http\Controllers\Admin\SettingsController;
-use App\Http\Controllers\Admin\SpecialtyController;
-use App\Http\Controllers\Admin\StockController;
-use App\Http\Controllers\Admin\StockLocationController;
-use App\Http\Controllers\Admin\StockRequisitionController;
-use App\Http\Controllers\Admin\SupplierController;
-use App\Http\Controllers\Admin\TriageController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\VisitController;
-use App\Http\Controllers\Admin\VisitDepartmentOptionsController;
-use App\Http\Controllers\Admin\VisitPreviewController;
-use App\Http\Controllers\Admin\VitalController;
-use App\Http\Controllers\Admin\WardController;
+use App\Http\Controllers\Admin\Billing\AccountCategoryController;
+use App\Http\Controllers\Admin\Reporting\ActivityLogController;
+use App\Http\Controllers\Admin\AdmissionsWard\AdmissionController;
+use App\Http\Controllers\Admin\AdmissionsWard\AdmissionMedicationBoardController;
+use App\Http\Controllers\Admin\Lab\AnalyzerController;
+use App\Http\Controllers\Admin\Appointments\AppointmentController;
+use App\Http\Controllers\Admin\Hr\AttendanceController;
+use App\Http\Controllers\Admin\BloodBank\BloodBankDashboardController;
+use App\Http\Controllers\Admin\BloodBank\BloodBankReportController;
+use App\Http\Controllers\Admin\BloodBank\BloodCrossmatchController;
+use App\Http\Controllers\Admin\BloodBank\BloodDonationController;
+use App\Http\Controllers\Admin\BloodBank\BloodDonorController;
+use App\Http\Controllers\Admin\BloodBank\BloodIssueController;
+use App\Http\Controllers\Admin\BloodBank\BloodRequestController;
+use App\Http\Controllers\Admin\BloodBank\BloodStorageLocationController;
+use App\Http\Controllers\Admin\BloodBank\BloodUnitController;
+use App\Http\Controllers\Admin\Pharmacy\CounterSaleController;
+use App\Http\Controllers\Admin\Billing\CashierShiftController;
+use App\Http\Controllers\Admin\Billing\ClaimController;
+use App\Http\Controllers\Admin\Settings\ComplaintCatalogueController;
+use App\Http\Controllers\Admin\Settings\ComplaintSearchController;
+use App\Http\Controllers\Admin\Appointments\ConsultationTaskController;
+use App\Http\Controllers\Admin\Dashboard\DashboardController;
+use App\Http\Controllers\Admin\Settings\DepartmentController;
+use App\Http\Controllers\Admin\Store\DepartmentConsumablesController;
+use App\Http\Controllers\Admin\Hr\DesignationController;
+use App\Http\Controllers\Admin\Pharmacy\DrugController;
+use App\Http\Controllers\Admin\Emergency\EmergencyContactController;
+use App\Http\Controllers\Admin\Emergency\EmergencyBayController;
+use App\Http\Controllers\Admin\Emergency\EmergencyBillingController;
+use App\Http\Controllers\Admin\Emergency\EmergencyBoardController;
+use App\Http\Controllers\Admin\Emergency\EmergencyCaseController;
+use App\Http\Controllers\Admin\Emergency\EmergencyConsumableController;
+use App\Http\Controllers\Admin\Emergency\EmergencyPatientIdentityController;
+use App\Http\Controllers\Admin\Emergency\EmergencyDispositionController;
+use App\Http\Controllers\Admin\Emergency\EmergencyInvestigationController;
+use App\Http\Controllers\Admin\Emergency\EmergencyMedicationBoardController;
+use App\Http\Controllers\Admin\Emergency\EmergencyMedicationController;
+use App\Http\Controllers\Admin\Emergency\EmergencyNoteController;
+use App\Http\Controllers\Admin\Emergency\EmergencyProcedureController;
+use App\Http\Controllers\Admin\Emergency\EmergencyReportController;
+use App\Http\Controllers\Admin\Emergency\EmergencyTriageController;
+use App\Http\Controllers\Admin\Emergency\EmergencyVitalsController;
+use App\Http\Controllers\Admin\Emergency\EmergencyTaskController;
+use App\Http\Controllers\Admin\Hr\EmployeeController;
+use App\Http\Controllers\Admin\Billing\FinancialEntryController;
+use App\Http\Controllers\Admin\Settings\LocationController;
+use App\Http\Controllers\Admin\Settings\IcdCodeController;
+use App\Http\Controllers\Admin\Insurance\InsuranceProviderController;
+use App\Http\Controllers\Admin\Insurance\InsuranceTierController;
+use App\Http\Controllers\Admin\Insurance\InsuranceVerificationController;
+use App\Http\Controllers\Admin\Lab\InvestigationCatalogueController;
+use App\Http\Controllers\Admin\Lab\InvestigationItemController;
+use App\Http\Controllers\Admin\Lab\LabTestController;
+use App\Http\Controllers\Admin\Hr\LeaveController;
+use App\Http\Controllers\Admin\Pharmacy\MedicationAdministrationController;
+use App\Http\Controllers\Admin\Pharmacy\MedicationAdministrationReportController;
+use App\Http\Controllers\Admin\AdmissionsWard\MarChartController;
+use App\Http\Controllers\Admin\Settings\ModuleController;
+use App\Http\Controllers\Admin\Settings\NotificationController;
+use App\Http\Controllers\Admin\Patients\PatientController;
+use App\Http\Controllers\Admin\Patients\PatientComplaintController;
+use App\Http\Controllers\Admin\Patients\PatientInsuranceController;
+use App\Http\Controllers\Admin\Patients\PatientMergeController;
+use App\Http\Controllers\Admin\Hr\PayrollController;
+use App\Http\Controllers\Admin\Procedures\ProcedureCatalogueController;
+use App\Http\Controllers\Admin\Procedures\ProcedureConsumablesController;
+use App\Http\Controllers\Admin\Procedures\ProcedureController;
+use App\Http\Controllers\Admin\Pharmacy\ProductController;
+use App\Http\Controllers\Admin\Pharmacy\ProductPricingController;
+use App\Http\Controllers\Admin\Store\ProductStockController;
+use App\Http\Controllers\Admin\Dashboard\ProfileController;
+use App\Http\Controllers\Admin\Reporting\LogRetentionController;
+use App\Http\Controllers\Admin\Settings\NotificationBroadcastController;
+use App\Http\Controllers\Admin\Settings\NotificationPreferenceController;
+use App\Http\Controllers\Admin\Reporting\OperationalReportController;
+use App\Http\Controllers\Admin\Store\PurchaseOrderController;
+use App\Http\Controllers\Admin\Store\PurchaseReturnController;
+use App\Http\Controllers\Admin\Appointments\QueueController;
+use App\Http\Controllers\Admin\Reporting\ReportController;
+use App\Http\Controllers\Admin\Reporting\ReportsHubController;
+use App\Http\Controllers\Admin\Settings\RoleController;
+use App\Http\Controllers\Admin\Procedures\ServiceCatalogController;
+use App\Http\Controllers\Admin\Procedures\ServiceRenderingActionController;
+use App\Http\Controllers\Admin\Procedures\ServiceRenderingController;
+use App\Http\Controllers\Admin\Procedures\ServiceRenderingReportController;
+use App\Http\Controllers\Admin\Reporting\StatisticsController;
+use App\Http\Controllers\Admin\Settings\SettingsController;
+use App\Http\Controllers\Admin\Settings\SpecialtyController;
+use App\Http\Controllers\Admin\Store\StockController;
+use App\Http\Controllers\Admin\Store\StockLocationController;
+use App\Http\Controllers\Admin\Store\StockRequisitionController;
+use App\Http\Controllers\Admin\Store\SupplierController;
+use App\Http\Controllers\Admin\Patients\TriageController;
+use App\Http\Controllers\Admin\Settings\UserController;
+use App\Http\Controllers\Admin\Visits\VisitController;
+use App\Http\Controllers\Admin\Visits\VisitDepartmentOptionsController;
+use App\Http\Controllers\Admin\Visits\VisitPreviewController;
+use App\Http\Controllers\Admin\AdmissionsWard\VitalController;
+use App\Http\Controllers\Admin\AdmissionsWard\WardController;
 use App\Http\Controllers\Accounting\AccountController as AccountingAccountController;
 use App\Http\Controllers\Accounting\AccountingDashboardController;
 use App\Http\Controllers\Accounting\AccountingAccountMappingController;
@@ -236,7 +236,7 @@ Route::middleware('auth')->group(function () {
             ->middleware('can:patients.view');
 
         // Department-type dashboard — resolves the right dashboard for the user.
-        Route::get('my-dashboard', [\App\Http\Controllers\Admin\DepartmentDashboardController::class, 'index'])->name('my-dashboard');
+        Route::get('my-dashboard', [\App\Http\Controllers\Admin\Dashboard\DepartmentDashboardController::class, 'index'])->name('my-dashboard');
 
         // Complaint catalogue and patient complaint endpoints
         Route::get('complaints/search', ComplaintSearchController::class)->name('complaints.search')->middleware('can:complaints.view');
@@ -276,14 +276,14 @@ Route::middleware('auth')->group(function () {
 
         // Permissions Dashboard (read-only audit / catalogue)
         Route::middleware('can:permissions.view')->group(function () {
-            Route::get('permissions', [\App\Http\Controllers\Admin\PermissionDashboardController::class, 'index'])->name('permissions.index');
-            Route::post('permissions/refresh', [\App\Http\Controllers\Admin\PermissionDashboardController::class, 'refresh'])->name('permissions.refresh')->middleware('can:permissions.assign');
+            Route::get('permissions', [\App\Http\Controllers\Admin\Dashboard\PermissionDashboardController::class, 'index'])->name('permissions.index');
+            Route::post('permissions/refresh', [\App\Http\Controllers\Admin\Dashboard\PermissionDashboardController::class, 'refresh'])->name('permissions.refresh')->middleware('can:permissions.assign');
         });
 
         // Per-user direct permission overrides
         Route::middleware('can:permissions.assign')->group(function () {
-            Route::get('users/{user}/permissions', [\App\Http\Controllers\Admin\UserPermissionController::class, 'edit'])->name('users.permissions.edit');
-            Route::put('users/{user}/permissions', [\App\Http\Controllers\Admin\UserPermissionController::class, 'update'])->name('users.permissions.update');
+            Route::get('users/{user}/permissions', [\App\Http\Controllers\Admin\Settings\UserPermissionController::class, 'edit'])->name('users.permissions.edit');
+            Route::put('users/{user}/permissions', [\App\Http\Controllers\Admin\Settings\UserPermissionController::class, 'update'])->name('users.permissions.update');
         });
 
         // Patients
@@ -937,11 +937,11 @@ Route::middleware('auth')->group(function () {
 
         // HR & Payroll
         Route::prefix('hr')->name('hr.')->middleware('module:hr')->group(function () {
-            Route::get('configuration', [\App\Http\Controllers\Admin\HrConfigurationController::class, 'index'])
+            Route::get('configuration', [\App\Http\Controllers\Admin\Hr\HrConfigurationController::class, 'index'])
                 ->name('configuration.index')->middleware('can:hr.shifts.view');
-            Route::post('configuration/shifts', [\App\Http\Controllers\Admin\HrConfigurationController::class, 'storeShift'])
+            Route::post('configuration/shifts', [\App\Http\Controllers\Admin\Hr\HrConfigurationController::class, 'storeShift'])
                 ->name('configuration.shifts.store')->middleware('can:hr.shifts.manage');
-            Route::put('configuration/policies/{policy}', [\App\Http\Controllers\Admin\HrConfigurationController::class, 'updatePolicy'])
+            Route::put('configuration/policies/{policy}', [\App\Http\Controllers\Admin\Hr\HrConfigurationController::class, 'updatePolicy'])
                 ->name('configuration.policies.update')->middleware('can:hr.shifts.manage');
             // Employees
             Route::middleware('can:hr.employees.view')->group(function () {
