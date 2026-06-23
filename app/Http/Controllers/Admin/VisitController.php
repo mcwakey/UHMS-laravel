@@ -27,7 +27,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Inertia\Inertia;
 
 class VisitController extends Controller
 {
@@ -69,81 +68,6 @@ class VisitController extends Controller
 
         $visits = $this->visitService->list($filters);
         $stats = $this->visitService->todayStats($filters);
-        $doctors = User::whereHas('roles', fn ($query) => $query->whereIn('name', User::CONSULTATION_ROLES))
-            ->where('status', 'active')
-            ->orderBy('first_name')
-            ->get();
-
-        // True-Inertia migration (Phase B / B4): serialize for Vue page.
-        $user = $request->user();
-
-        $visitTypeColor = static fn (VisitType $t): string => match ($t) {
-            VisitType::EMERGENCY => 'danger',
-            VisitType::INPATIENT => 'info',
-            default => 'light text-dark',
-        };
-
-        $visitsPayload = $visits->through(function (Visit $visit) use ($visitTypeColor) {
-            $visitInsurance = $visit->visitInsurance;
-            $insuranceProvider = $visitInsurance?->insuranceProvider;
-            $hasInsurance = $visitInsurance
-                && $visitInsurance->is_active
-                && ! $visitInsurance->is_expired
-                && $insuranceProvider
-                && ! $insuranceProvider->is_default;
-
-            return [
-                'id' => $visit->id,
-                'visit_number' => $visit->visit_number,
-                'visit_date_display' => optional($visit->visit_date)->format('d M Y'),
-                'duration' => $visit->duration,
-                'age_display' => $visit->patient_age ?? optional($visit->patient)->age,
-                'route_doctor_name' => optional($visit->currentConsultationDoctor())->full_name,
-                'patient' => $visit->patient ? [
-                    'id' => $visit->patient->id,
-                    'full_name' => $visit->patient->full_name,
-                    'patient_number' => $visit->patient->patient_number,
-                ] : null,
-                'active_insurance' => [
-                    'provider_id' => $insuranceProvider?->id,
-                    'label' => $hasInsurance ? $insuranceProvider->name : ($insuranceProvider?->name ?? __('visits.cash_and_carry')),
-                    'tier' => $hasInsurance ? $visitInsurance->insuranceTier?->name : null,
-                    'is_cash' => ! $hasInsurance,
-                    'is_expired' => (bool) ($visitInsurance?->is_expired ?? false),
-                    'color' => $hasInsurance ? ($insuranceProvider->type?->color() ?? 'info') : 'secondary',
-                ],
-                'visit_type' => $visit->visit_type ? [
-                    'value' => $visit->visit_type->value,
-                    'label' => $visit->visit_type->label(),
-                    'color' => $visitTypeColor($visit->visit_type),
-                ] : null,
-                'priority' => $visit->priority ? [
-                    'value' => $visit->priority->value,
-                    'label' => $visit->priority->label(),
-                    'color' => $visit->priority->color(),
-                ] : null,
-                'triage_score' => $visit->triage_score ? [
-                    'value' => $visit->triage_score->value,
-                    'label' => $visit->triage_score->label(),
-                    'color' => $visit->triage_score->color(),
-                ] : null,
-                'status' => $visit->status ? [
-                    'value' => $visit->status->value,
-                    'label' => $visit->status->label(),
-                    'color' => $visit->status->color(),
-                ] : null,
-                'allowed_transitions' => collect($visit->status?->allowedTransitions() ?? [])
-                    ->map(fn (VisitStatus $s) => [
-                        'value' => $s->value,
-                        'label' => $s->label(),
-                    ])->values()->all(),
-                'urls' => [
-                    'show' => route('admin.visits.show', $visit),
-                    'edit' => route('admin.visits.edit', $visit),
-                    'patient' => $visit->patient ? route('admin.patients.show', $visit->patient) : null,
-                ],
-            ];
-        });
 
         $insuranceProviderOptions = collect([[
             'value' => 'cash',
@@ -161,32 +85,7 @@ class VisitController extends Controller
                 ])
         )->values();
 
-        return Inertia::render('Visits/Index', [
-            'visits' => $visitsPayload,
-            'stats' => $stats,
-            'doctors' => $doctors->map(fn ($d) => [
-                'id' => $d->id,
-                'full_name' => $d->full_name,
-            ])->values(),
-            'filters' => $filters,
-            'visitTypeOptions' => collect(VisitType::cases())->map(fn ($c) => [
-                'value' => $c->value,
-                'label' => $c->label(),
-            ])->values(),
-            'insuranceProviderOptions' => $insuranceProviderOptions,
-            'routes' => [
-                'index' => route('admin.visits.index'),
-                'create' => route('admin.visits.create'),
-                'queueBoard' => route('admin.queue.board'),
-                // {visit} placeholder swapped client-side per row.
-                'transition' => route('admin.visits.transition', ['visit' => '__ID__']),
-            ],
-            'can' => [
-                'create' => $user?->can('visits.create') ?? false,
-                'edit' => $user?->can('visits.edit') ?? false,
-                'queueView' => $user?->can('queue.view') ?? false,
-            ],
-        ]);
+        return view('visits.index', compact('visits', 'stats', 'filters', 'insuranceProviderOptions'));
     }
 
     public function create(Request $request)
