@@ -36,7 +36,7 @@
         <small class="text-muted">{{ now()->format('l, d F Y — h:i A') }}</small>
     </div>
     <div class="d-flex gap-2">
-        <button class="btn btn-outline-secondary btn-sm" type="button" onclick="(window.UhmsInertia ? window.UhmsInertia.reload({ preserveScroll: true }) : location.reload())">
+        <button class="btn btn-outline-secondary btn-sm" type="button" onclick="location.reload()">
             <i class="ti ti-refresh me-1"></i>Refresh
         </button>
         @can('queue.manage')
@@ -178,11 +178,7 @@
             return;
         }
 
-        if (window.UhmsInertia) {
-            window.UhmsInertia.reload({ preserveScroll: true, preserveState: true });
-        } else {
-            location.reload();
-        }
+        location.reload();
     }
 
     window.UhmsQueueBoardRefreshTimer = setInterval(refreshQueueBoard, refreshMs);

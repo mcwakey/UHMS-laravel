@@ -9,7 +9,6 @@ use App\Models\Invoice;
 use App\Services\CreditNoteService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Inertia\Inertia;
 
 class CreditNoteController extends Controller
 {
@@ -54,48 +53,9 @@ class CreditNoteController extends Controller
             'count' => CreditNote::active()->count(),
         ];
 
-        return Inertia::render('Billing/CreditNotes/Index', [
-            'creditNotes' => $creditNotes->through(fn (CreditNote $cn) => [
-                'id' => $cn->id,
-                'credit_note_number' => $cn->credit_note_number,
-                'invoice_number' => $cn->invoice?->invoice_number,
-                'invoice_url' => $cn->invoice ? route('admin.billing.invoices.show', $cn->invoice_id) : null,
-                'patient_name' => $cn->patient ? trim($cn->patient->first_name . ' ' . $cn->patient->last_name) : '—',
-                'patient_number' => $cn->patient?->patient_number,
-                'type' => [
-                    'value' => $cn->type?->value,
-                    'label' => $cn->type?->label(),
-                    'color' => $cn->type?->color(),
-                ],
-                'status' => $cn->status,
-                'amount' => (float) $cn->amount,
-                'reason' => $cn->reason,
-                'issued_by' => $cn->issuedBy?->name,
-                'created_at_display' => optional($cn->created_at)->format('d M Y'),
-                'is_reversal' => (bool) $cn->is_reversal,
-                'original_number' => $cn->originalCreditNote?->credit_note_number,
-                'reversal_number' => $cn->reversal?->credit_note_number,
-                'can_reverse' => $cn->status === 'issued'
-                    && ! $cn->is_reversal
-                    && ($cn->type === CreditNoteType::WRITE_OFF
-                        ? (($user?->can('credit_notes.write_off') ?? false) || ($user?->can('billing.write_off.reverse') ?? false))
-                        : (($user?->can('credit_notes.create') ?? false) || ($user?->can('billing.credit_note.reverse') ?? false))),
-                'reverse_url' => route('admin.billing.credit-notes.reverse', $cn),
-            ]),
-            'stats' => $stats,
-            'filters' => $request->only(['search', 'type', 'status']),
-            'typeOptions' => collect(CreditNoteType::cases())->map(fn ($c) => [
-                'value' => $c->value,
-                'label' => $c->label(),
-            ])->values(),
-            'routes' => [
-                'index' => route('admin.billing.credit-notes.index'),
-                'create' => route('admin.billing.credit-notes.create'),
-            ],
-            'can' => [
-                'create' => $user?->can('credit_notes.create') ?? false,
-            ],
-        ]);
+        $canCreate = $user?->can('credit_notes.create') ?? false;
+
+        return view('billing.credit-notes.index', compact('creditNotes', 'stats', 'canCreate'));
     }
 
     public function create(Request $request)
@@ -126,19 +86,9 @@ class CreditNoteController extends Controller
             }
         }
 
-        return Inertia::render('Billing/CreditNotes/Create', [
-            'invoices' => $invoices,
-            'selected' => $selected,
-            'typeOptions' => collect(CreditNoteType::cases())->map(fn ($c) => [
-                'value' => $c->value,
-                'label' => $c->label(),
-            ])->values(),
-            'routes' => [
-                'store' => route('admin.billing.credit-notes.store'),
-                'index' => route('admin.billing.credit-notes.index'),
-                'available' => route('admin.billing.credit-notes.available'),
-            ],
-        ]);
+        $typeOptions = CreditNoteType::cases();
+
+        return view('billing.credit-notes.create', compact('invoices', 'selected', 'typeOptions'));
     }
 
     /**

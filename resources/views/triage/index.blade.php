@@ -5,7 +5,7 @@
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"><i class="ti ti-stethoscope me-2 text-info"></i>{{ __('triage.queue') }}</h4>
+        <h4 class="fw-bold mb-0"><i class="ti ti-heart-broken me-2 text-info"></i>{{ __('triage.queue') }}</h4>
         <small class="text-muted">{{ __('triage.patients_awaiting_today') }}</small>
     </div>
     <a href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary btn-sm">

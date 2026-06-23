@@ -77,9 +77,7 @@
 @push('scripts')
 <script>
     setTimeout(function () {
-        if (window.UhmsInertia) {
-            window.UhmsInertia.reload({ preserveScroll: true, preserveState: true });
-        }
+        location.reload();
     }, 60000);
 </script>
 @endpush

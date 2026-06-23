@@ -90,9 +90,7 @@
 @push('scripts')
 <script>
 setTimeout(function () {
-    if (window.UhmsInertia) {
-        window.UhmsInertia.reload({ preserveScroll: true, preserveState: true });
-    }
+    location.reload();
 }, 60000);
 document.querySelectorAll('.med-status').forEach(function (select) {
     function update() {

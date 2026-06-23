@@ -10,7 +10,6 @@ use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Inertia\Inertia;
 
 class SponsorController extends Controller
 {
@@ -37,37 +36,13 @@ class SponsorController extends Controller
         $sponsors = $query->paginate(20)->withQueryString();
         $user = $request->user();
 
-        return Inertia::render('Billing/Sponsors/Index', [
-            'sponsors' => $sponsors->through(fn (Sponsor $s) => [
-                'id' => $s->id,
-                'code' => $s->code,
-                'name' => $s->name,
-                'contact_person' => $s->contact_person,
-                'email' => $s->email,
-                'phone' => $s->phone,
-                'address' => $s->address,
-                'credit_limit' => $s->credit_limit !== null ? (float) $s->credit_limit : null,
-                'is_active' => (bool) $s->is_active,
-                'notes' => $s->notes,
-                'invoices_count' => (int) $s->invoices_count,
-                'outstanding_balance' => (float) ($s->outstanding_balance ?? 0),
-            ]),
-            'stats' => [
-                'total' => Sponsor::count(),
-                'active' => Sponsor::where('is_active', true)->count(),
-            ],
-            'filters' => $request->only(['search', 'status']),
-            'routes' => [
-                'index' => route('admin.billing.sponsors.index'),
-                'store' => route('admin.billing.sponsors.store'),
-            ],
-            'can' => [
-                'manage' => $user?->can('sponsors.manage') ?? false,
-                'create' => ($user?->can('sponsors.create') ?? false) || ($user?->can('sponsors.manage') ?? false),
-                'edit' => ($user?->can('sponsors.edit') ?? false) || ($user?->can('sponsors.manage') ?? false),
-                'authorize' => ($user?->can('sponsors.authorize') ?? false) || ($user?->can('sponsors.manage') ?? false),
-            ],
-        ]);
+        $stats = [
+            'total' => Sponsor::count(),
+            'active' => Sponsor::where('is_active', true)->count(),
+        ];
+        $canManage = $user?->can('sponsors.manage') ?? false;
+
+        return view('billing.sponsors.index', compact('sponsors', 'stats', 'canManage'));
     }
 
     public function store(Request $request)

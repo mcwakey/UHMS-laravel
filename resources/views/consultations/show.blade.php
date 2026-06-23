@@ -4180,11 +4180,7 @@ function bindApplyButtons() {
             .then(function (d) {
                 if (d.success) {
                     saveTabBeforeSubmit('patterns-section');
-                    if (window.UhmsInertia) {
-                        window.UhmsInertia.reload({ preserveScroll: true, preserveState: true });
-                    } else {
-                        window.location.reload();
-                    }
+                    window.location.reload();
                 }
                 else { alert('Failed to apply pattern.'); self.disabled = false; self.innerHTML = '<i class="ti ti-check me-1"></i>Apply'; }
             })

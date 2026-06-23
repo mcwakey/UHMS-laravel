@@ -1202,15 +1202,6 @@ $(function() {
         paymentNavigationStarted = true;
         const target = url || window.location.href;
 
-        if (window.UhmsInertia && typeof window.UhmsInertia.visit === 'function') {
-            window.UhmsInertia.visit(target, {
-                preserveScroll: false,
-                preserveState: false,
-                replace: true
-            });
-            return;
-        }
-
         window.location.href = target;
     }
 

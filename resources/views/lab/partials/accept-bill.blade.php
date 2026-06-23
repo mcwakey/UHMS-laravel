@@ -111,11 +111,7 @@
                 return;
             }
             const target = data.redirect || window.location.href;
-            if (window.UhmsInertia && data.redirect) {
-                window.UhmsInertia.visit(target, { preserveScroll: true });
-            } else {
-                window.location.href = target;
-            }
+            window.location.href = target;
         } catch (err) {
             errs.textContent = err.message;
             errs.classList.remove('d-none');

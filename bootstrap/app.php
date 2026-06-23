@@ -40,39 +40,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
 
-        // Inertia.js — appended to the web group so any future Inertia
-        // controller response automatically receives shared props.
-        // Harmless on classic Blade responses (no-ops unless an
-        // Inertia\Response is returned).
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
-            \App\Http\Middleware\HandleInertiaRequests::class,
-            \App\Http\Middleware\ConvertBladeViewsToInertia::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $redirectInertiaToLogin = function (\Illuminate\Http\Request $request) {
-            if ($request->hasSession()) {
-                $intendedUrl = $request->isMethod('GET')
-                    ? $request->fullUrl()
-                    : $request->headers->get('referer');
-
-                if ($intendedUrl) {
-                    $request->session()->put('url.intended', $intendedUrl);
-                }
-            }
-
-            return \Inertia\Inertia::location(route('login'));
-        };
-
-        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, \Illuminate\Http\Request $request) use ($redirectInertiaToLogin) {
-            if ($request->headers->has('X-Inertia')) {
-                return $redirectInertiaToLogin($request);
-            }
-
-            return null;
-        });
-
         // Production shield for raw database errors. The full technical detail is
         // always logged; users never see SQLSTATE, SQL, table/column names or a
         // stack trace. In debug mode developers still get the full Laravel page.
@@ -116,11 +88,5 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->view('errors.500', [], 500);
         });
 
-        $exceptions->respond(function ($response, \Throwable $e, \Illuminate\Http\Request $request) use ($redirectInertiaToLogin) {
-            if ($request->headers->has('X-Inertia') && in_array($response->getStatusCode(), [401, 419], true)) {
-                return $redirectInertiaToLogin($request);
-            }
-
-            return $response;
-        });
+        $exceptions->respond(fn ($response) => $response);
     })->create();

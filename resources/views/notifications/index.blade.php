@@ -160,11 +160,7 @@ $(document).ready(function() {
             method: 'POST',
             data: { _token: '{{ csrf_token() }}' },
             success: function() {
-                if (window.UhmsInertia) {
-                    window.UhmsInertia.reload({ preserveScroll: true });
-                } else {
-                    location.reload();
-                }
+                location.reload();
             }
         });
     });

@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
-import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
 
 const supportsPwaBuild = Number.parseInt(process.versions.node.split('.')[0], 10) >= 20;
@@ -30,18 +29,8 @@ export default defineConfig({
             input: [
                 'resources/css/style.css',
                 'resources/js/script.js',
-                'resources/js/inertia.js',
             ],
             refresh: true,
-        }),
-
-        vue({
-            template: {
-                transformAssetUrls: {
-                    base: null,
-                    includeAbsolute: false,
-                },
-            },
         }),
 
         supportsPwaBuild && VitePWA({

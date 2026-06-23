@@ -51,7 +51,7 @@ class SidebarMenuBuilder
                 'items' => [
                     [
                         'label' => 'Patients',
-                        'icon' => 'ti ti-user-heart',
+                        'icon' => 'ti ti-users',
                         'route' => 'admin.patients.index',
                         'active_patterns' => ['admin.patients.*'],
                         'permission' => 'patients.view',
@@ -174,7 +174,7 @@ class SidebarMenuBuilder
                     // ],
                     [
                         'label' => 'Vitals / Triage',
-                        'icon' => 'ti ti-ambulance',
+                        'icon' => 'ti ti-heart-broken',
                         'route' => 'admin.triage.index',
                         'active_patterns' => ['admin.triage.*'],
                         'permission' => 'vitals.view',
@@ -287,7 +287,7 @@ class SidebarMenuBuilder
                     //     'permission' => 'emergency.board.view',
                     //     'active_patterns' => ['admin.emergency.*'],
                     //     'children' => [
-                            
+
                     //     ],
                     // ],
                     // [

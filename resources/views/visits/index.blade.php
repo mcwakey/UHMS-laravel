@@ -2,7 +2,7 @@
 @section('title', __('visits.title'))
 
 @section('content')
-<x-page-header :title="__('visits.title')" icon="ti-stethoscope">
+<x-page-header :title="__('visits.title')" icon="ti-calendar-check">
     <x-slot:actions>
         @can('queue.view')
         <a href="{{ route('admin.queue.board') }}" class="btn btn-outline-info btn-md">

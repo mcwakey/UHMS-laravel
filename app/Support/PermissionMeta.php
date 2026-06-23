@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
  * Resolves metadata (module, description, risk) for permission names
  * using the rules in `config/permissions.php`.
  *
- * Pure / static — safe to call from anywhere (Inertia share, Blade,
+ * Pure / static — safe to call from anywhere (Blade,
  * Artisan commands, controllers).
  */
 class PermissionMeta
