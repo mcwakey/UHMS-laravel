@@ -31,6 +31,23 @@
             };
         }
 
+        function submitClosestForm($picker) {
+            var form = $picker.closest('form').get(0);
+            if (! form) {
+                return;
+            }
+
+            if (form.requestSubmit) {
+                form.requestSubmit();
+                return;
+            }
+
+            var event = new Event('submit', { bubbles: true, cancelable: true });
+            if (form.dispatchEvent(event)) {
+                form.submit();
+            }
+        }
+
         function setPickerValue($picker, start, end, shouldSubmit) {
             var inputSelector = $picker.data('input');
             var $input = inputSelector ? $(inputSelector) : $();
@@ -40,7 +57,7 @@
             $input.val(start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
 
             if (shouldSubmit && $picker.data('submit-on-apply') === true) {
-                $picker.closest('form').trigger('submit');
+                submitClosestForm($picker);
             }
         }
 
@@ -52,7 +69,7 @@
             $input.val('');
 
             if ($picker.data('submit-on-apply') === true) {
-                $picker.closest('form').trigger('submit');
+                submitClosestForm($picker);
             }
         }
 

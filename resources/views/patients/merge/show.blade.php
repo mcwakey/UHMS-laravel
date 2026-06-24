@@ -2,63 +2,93 @@
 @section('title', $mergeRequest->request_number)
 
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+<!-- <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
         <h4 class="fw-bold mb-1">{{ $mergeRequest->request_number }}</h4>
         <p class="text-muted mb-0">{{ __('patients.merge_request_subtitle') }}</p>
     </div>
     <a href="{{ route('admin.patients.merge.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-chevron-left me-1"></i>{{ __('common.back') }}</a>
-</div>
+</div> -->
+<x-page-header-back
+    :title="__('patients.merge_patients') . ' - ' . $mergeRequest->request_number"
+    :href="route('admin.patients.merge.index')"
+/>
 
-@if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-@endif
 @if($errors->any())
     <div class="alert alert-danger">{{ $errors->first() }}</div>
 @endif
 
-<div class="row g-3 mb-3">
+<div class="row g-3 mb-2">
     <div class="col-md-4">
-        <div class="card h-100">
+        <div class="card">
             <div class="card-body">
                 <div class="text-muted small">{{ __('common.status') }}</div>
-                <div class="h5 mb-1">{{ str_replace('_', ' ', $mergeRequest->status) }}</div>
+                <div class="d-flex justify-content-between align-items-center h5 mb-1">
+                    {{ str_replace('_', ' ', $mergeRequest->status) }}
+                    @if($mergeRequest->can_execute)
+                        @can('patients.merge.execute')
+                            <form method="POST" action="{{ route('admin.patients.merge.requests.execute', $mergeRequest) }}">
+                                @csrf
+                                <button class="btn btn-success"><i class="ti ti-git-merge me-1"></i>{{ __('patients.execute_merge') }}</button>
+                            </form>
+                        @endcan
+                    @endif
+                </div>
                 <small class="text-muted">{{ __('patients.requested') }} {{ $mergeRequest->created_at?->format('d M Y H:i') }}</small>
+                <div class="mt-1"><small ><strong>{{ __('patients.reason_label') }}:</strong> {{ $mergeRequest->reason }}</small></div>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card h-100 border-success">
-            <div class="card-body">
-                <div class="text-muted small">{{ __('patients.main_folder') }}</div>
-                <a href="{{ route('admin.patients.show', $mergeRequest->mainPatient) }}" class="h6 d-block mb-1">{{ $mergeRequest->mainPatient?->full_name }}</a>
-                <small class="text-muted">{{ $mergeRequest->mainPatient?->patient_number }}</small>
-            </div>
-        </div>
+        <x-patient-selection-card
+            :selected-patient="$mergeRequest->mainPatient"
+            :show-search="false"
+            :show-clear-button="false"
+            :show-active-admission-warning="false"
+            title="{{ __('patients.main_folder') }}"
+            icon="ti-check"
+            patient-info-id="mergeRequestMainInfo"
+            patient-initial-id="mergeRequestMainInitial"
+            patient-name-id="mergeRequestMainName"
+            patient-number-id="mergeRequestMainNumber"
+            patient-phone-id="mergeRequestMainPhone"
+            patient-last-visit-id="mergeRequestMainLastVisit"
+            deceased-warning-id="mergeRequestMainDeceasedWarning"
+            class="border-success"
+        />
     </div>
     <div class="col-md-4">
-        <div class="card h-100 border-warning">
-            <div class="card-body">
-                <div class="text-muted small">{{ __('patients.duplicate_folder') }}</div>
-                <a href="{{ route('admin.patients.show', $mergeRequest->duplicatePatient) }}" class="h6 d-block mb-1">{{ $mergeRequest->duplicatePatient?->full_name }}</a>
-                <small class="text-muted">{{ $mergeRequest->duplicatePatient?->patient_number }}</small>
-            </div>
-        </div>
+        <x-patient-selection-card
+            :selected-patient="$mergeRequest->duplicatePatient"
+            :show-search="false"
+            :show-clear-button="false"
+            :show-active-admission-warning="false"
+            title="{{ __('patients.duplicate_folder') }}"
+            icon="ti-copy"
+            patient-info-id="mergeRequestDuplicateInfo"
+            patient-initial-id="mergeRequestDuplicateInitial"
+            patient-name-id="mergeRequestDuplicateName"
+            patient-number-id="mergeRequestDuplicateNumber"
+            patient-phone-id="mergeRequestDuplicatePhone"
+            patient-last-visit-id="mergeRequestDuplicateLastVisit"
+            deceased-warning-id="mergeRequestDuplicateDeceasedWarning"
+            class="border-warning"
+        />
     </div>
 </div>
 
-@if($mergeRequest->reason)
+<!-- @if($mergeRequest->reason)
     <div class="alert alert-light border"><strong>{{ __('patients.reason_label') }}:</strong> {{ $mergeRequest->reason }}</div>
-@endif
+@endif -->
 
-@if($mergeRequest->can_execute)
+<!-- @if($mergeRequest->can_execute)
     @can('patients.merge.execute')
         <form method="POST" action="{{ route('admin.patients.merge.requests.execute', $mergeRequest) }}" class="mb-3">
             @csrf
             <button class="btn btn-primary"><i class="ti ti-git-merge me-1"></i>{{ __('patients.execute_merge') }}</button>
         </form>
     @endcan
-@endif
+@endif -->
 
 <div class="card mb-3">
     <div class="card-header">

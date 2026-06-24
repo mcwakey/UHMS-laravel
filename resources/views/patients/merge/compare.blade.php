@@ -2,13 +2,17 @@
 @section('title', __('patients.compare_folders'))
 
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+<!-- <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
         <h4 class="fw-bold mb-1">{{ __('patients.compare_folders') }}</h4>
         <p class="text-muted mb-0">{{ __('patients.compare_subtitle') }}</p>
     </div>
     <a href="{{ route('admin.patients.merge.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-chevron-left me-1"></i>{{ __('common.back') }}</a>
-</div>
+</div> -->
+<x-page-header-back
+    :title="__('patients.compare_folders')"
+    :href="route('admin.patients.merge.index')"
+/>
 
 @if($errors->any())
     <div class="alert alert-danger">{{ $errors->first() }}</div>
@@ -18,32 +22,48 @@
     <div class="alert alert-warning">{{ $warning }}</div>
 @endforeach
 
-<div class="row g-3 mb-3">
+<div class="row g-3 mb-2">
     <div class="col-md-6">
-        <div class="card h-100 border-success">
-            <div class="card-header bg-success-subtle text-success fw-semibold">{{ __('patients.main_folder') }}</div>
-            <div class="card-body">
-                <div class="h5 mb-1">{{ $mainPatient->full_name }}</div>
-                <div class="text-muted">{{ $mainPatient->patient_number }}</div>
-                <div class="small mt-2">{{ $mainPatient->phone ?: __('patients.no_phone') }} · {{ $mainPatient->ghana_card_number ?: __('patients.no_ghana_card') }}</div>
-            </div>
-        </div>
+        <x-patient-selection-card
+            :selected-patient="$mainPatient"
+            :show-search="false"
+            :show-clear-button="false"
+            :show-active-admission-warning="false"
+            title="{{ __('patients.main_folder') }}"
+            icon="ti-check"
+            patient-info-id="mainFolderInfo"
+            patient-initial-id="mainFolderInitial"
+            patient-name-id="mainFolderName"
+            patient-number-id="mainFolderNumber"
+            patient-phone-id="mainFolderPhone"
+            patient-last-visit-id="mainFolderLastVisit"
+            deceased-warning-id="mainFolderDeceasedWarning"
+            class="border-success"
+        />
     </div>
     <div class="col-md-6">
-        <div class="card h-100 border-warning">
-            <div class="card-header bg-warning-subtle text-warning fw-semibold">{{ __('patients.duplicate_folder') }}</div>
-            <div class="card-body">
-                <div class="h5 mb-1">{{ $duplicatePatient->full_name }}</div>
-                <div class="text-muted">{{ $duplicatePatient->patient_number }}</div>
-                <div class="small mt-2">{{ $duplicatePatient->phone ?: __('patients.no_phone') }} · {{ $duplicatePatient->ghana_card_number ?: __('patients.no_ghana_card') }}</div>
-                @if($duplicatePatient->is_temporary)
-                    <span class="badge bg-warning-subtle text-warning mt-2">{{ __('patients.temporary_emergency') }}</span>
-                @endif
-            </div>
-        </div>
+        <x-patient-selection-card
+            :selected-patient="$duplicatePatient"
+            :show-search="false"
+            :show-clear-button="false"
+            :show-active-admission-warning="false"
+            title="{{ __('patients.duplicate_folder') }}"
+            icon="ti-copy"
+            patient-info-id="duplicateFolderInfo"
+            patient-initial-id="duplicateFolderInitial"
+            patient-name-id="duplicateFolderName"
+            patient-number-id="duplicateFolderNumber"
+            patient-phone-id="duplicateFolderPhone"
+            patient-last-visit-id="duplicateFolderLastVisit"
+            deceased-warning-id="duplicateFolderDeceasedWarning"
+            class="border-warning"
+        >
+            @if($duplicatePatient->is_temporary)
+                <span class="badge bg-warning-subtle text-warning mt-2">{{ __('patients.temporary_emergency') }}</span>
+            @endif
+        </x-patient-selection-card>
     </div>
 </div>
-
 <div class="card mb-3">
     <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="card-title mb-0">{{ __('patients.records_to_reassign') }}</h5>
@@ -87,14 +107,18 @@
                 <tbody>
                     @foreach($preview['demographic_fields'] as $field)
                         <tr class="{{ $field['differs'] ? '' : 'table-light' }}">
-                            <td>{{ $field['label'] }}</td>
-                            <td>{{ $field['main'] ?: '-' }}</td>
-                            <td>{{ $field['duplicate'] ?: '-' }}</td>
+                            <td class="{{ $field['differs'] ? '' : 'text-dark' }}">{{ $field['label'] }}</td>
+                            <td class="{{ $field['differs'] ? '' : 'text-dark' }}">{{ $field['main'] ?: '-' }}</td>
+                            <td class="{{ $field['differs'] ? '' : 'text-dark' }}">{{ $field['duplicate'] ?: '-' }}</td>
                             <td style="min-width: 180px;">
-                                <select name="field_resolution[{{ $field['field'] }}]" class="form-select form-select-sm">
-                                    <option value="main" {{ $field['suggested_source'] === 'main' ? 'selected' : '' }}>{{ __('patients.main_folder_value') }}</option>
-                                    <option value="duplicate" {{ $field['suggested_source'] === 'duplicate' ? 'selected' : '' }}>{{ __('patients.duplicate_folder_value') }}</option>
-                                </select>
+                                @if($field['differs'])
+                                    <select name="field_resolution[{{ $field['field'] }}]" class="form-select form-select-sm">
+                                        <option value="main" {{ $field['suggested_source'] === 'main' ? 'selected' : '' }}>{{ __('patients.main_folder_value') }}</option>
+                                        <option value="duplicate" {{ $field['suggested_source'] === 'duplicate' ? 'selected' : '' }}>{{ __('patients.duplicate_folder_value') }}</option>
+                                    </select>
+                                @else
+                                    <input type="hidden" name="field_resolution[{{ $field['field'] }}]" value="{{ $field['suggested_source'] }}">
+                                @endif
                             </td>
                         </tr>
                     @endforeach

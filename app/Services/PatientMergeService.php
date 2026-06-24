@@ -224,6 +224,7 @@ class PatientMergeService
     {
         $allowedFields = array_keys($this->previewService->demographicFields());
         $resolution = $mergeRequest->field_resolution ?? [];
+        $uniqueTransferFields = ['ghana_card_number'];
         $changes = [];
 
         foreach ($resolution as $field => $source) {
@@ -241,6 +242,24 @@ class PatientMergeService
 
         if ($changes === []) {
             return;
+        }
+
+        $uniqueTransfers = array_intersect_key($changes, array_flip($uniqueTransferFields));
+        if ($uniqueTransfers !== []) {
+            $duplicateOldValues = Arr::only($duplicatePatient->getRawOriginal(), array_keys($uniqueTransfers));
+
+            $duplicatePatient->forceFill(array_fill_keys(array_keys($uniqueTransfers), null))->save();
+            $duplicatePatient->refresh();
+
+            $this->log(
+                $mergeRequest,
+                'DUPLICATE_UNIQUE_FIELDS_RELEASED',
+                'patients',
+                $duplicatePatient->id,
+                $duplicateOldValues,
+                array_fill_keys(array_keys($uniqueTransfers), null),
+                $user
+            );
         }
 
         $oldValues = Arr::only($mainPatient->getRawOriginal(), array_keys($changes));

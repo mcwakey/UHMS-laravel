@@ -2,15 +2,22 @@
 @section('title', __('patients.merge_audit_logs'))
 
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+<!-- <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
         <h4 class="fw-bold mb-1">{{ __('patients.merge_audit_logs') }}</h4>
-        <p class="text-muted mb-0">{{ __('patients.merge_audit_subtitle') }}</p>
     </div>
-    <a href="{{ route('admin.patients.merge.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-chevron-left me-1"></i>{{ __('common.back') }}</a>
-</div>
+   </div> -->
+<x-page-header-back
+    :title="__('patients.merge_audit_logs')"
+    :href="route('admin.patients.merge.index')"
+/>
 
+        <!-- <p class="text-muted mb-0">{{ __('patients.merge_audit_subtitle') }}</p> -->
+ <!-- <a href="{{ route('admin.patients.merge.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-chevron-left me-1"></i>{{ __('common.back') }}</a> -->
 <div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">{{ __('patients.merge_history') }}</h5>
+    </div>
     <div class="table-responsive">
         <table class="table table-hover mb-0">
             <thead class="bg-light">

@@ -145,6 +145,7 @@
                 @endif
 
                 @yield('content')
+                @include('layouts.partials.flash-dedupe')
             </div>
         </div>
         <!-- /Page Content -->

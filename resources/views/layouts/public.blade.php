@@ -34,6 +34,7 @@
         @endif
 
         @yield('content')
+        @include('layouts.partials.flash-dedupe')
 
         <p class="text-center text-muted mt-4" style="font-size:.75rem;">{{ config('app.name') }}</p>
     </div>

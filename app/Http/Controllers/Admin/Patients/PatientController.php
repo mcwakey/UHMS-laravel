@@ -24,6 +24,7 @@ class PatientController extends Controller
     public function index(Request $request)
     {
         $filters = $request->all();
+        $filters['per_page'] = $this->normalizePerPage($filters['per_page'] ?? null);
         $dateRange = trim((string) ($filters['date_range'] ?? ''));
         if ($dateRange !== '') {
             $parts = preg_split('/\s+(?:to|-)\s+/', $dateRange);
@@ -72,6 +73,18 @@ class PatientController extends Controller
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    private function normalizePerPage(mixed $value): int|string
+    {
+        if (is_string($value) && strtolower($value) === 'all') {
+            return 'all';
+        }
+
+        $perPage = (int) $value;
+        $allowed = [10, 25, 50, 100];
+
+        return in_array($perPage, $allowed, true) ? $perPage : 10;
     }
 
     public function create()

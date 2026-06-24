@@ -66,7 +66,12 @@ class PatientService
             });
         }
 
-        return $query->latest()->paginate($filters['per_page'] ?? 15);
+        $perPage = $filters['per_page'] ?? 10;
+        if ($perPage === 'all') {
+            $perPage = max((clone $query)->count(), 1);
+        }
+
+        return $query->latest()->paginate((int) $perPage);
     }
 
     public function create(array $data): Patient

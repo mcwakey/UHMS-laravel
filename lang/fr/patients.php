@@ -269,6 +269,7 @@ return [
     'col_duplicate_folder'      => 'Dossier doublon',
     'col_requested'             => 'Demandé le',
     'no_merge_requests'         => 'Aucune demande de fusion.',
+    'merge_history'             => 'Historique des fusions',
 
     // Compare
     'compare_folders'           => 'Comparer les dossiers patients',

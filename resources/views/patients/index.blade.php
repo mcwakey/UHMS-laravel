@@ -18,7 +18,11 @@
 <x-filter-bar
     :action="route('admin.patients.index')"
     :reset-url="route('admin.patients.index')"
+    ajax
+    ajax-target="#patientsIndexResults"
 >
+    <input type="hidden" name="per_page" value="{{ $filters['per_page'] ?? $patients->perPage() }}" data-filter-per-page-input>
+
     <div class="col-md-3">
         <label class="form-label small">{{ __('common.search') }}</label>
         <input type="text" name="search" class="form-control" placeholder="{{ __('patients.search_placeholder') }}" value="{{ $filters['search'] ?? '' }}">
@@ -52,10 +56,11 @@
     </div>
     <x-slot:actions>
         <!-- <button type="submit" class="btn btn-outline-primary btn-md"><i class="ti ti-filter me-1"></i>{{ __('common.filter') }}</button> -->
-        <a aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" href="{{ route('admin.patients.index') }}" class="btn btn-outline-secondary btn-icon"><i class="ti ti-x"></i></a>
+        <a aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" href="{{ route('admin.patients.index') }}" class="btn btn-outline-secondary btn-icon" data-filter-reset><i class="ti ti-x"></i></a>
     </x-slot:actions>
 </x-filter-bar>
 
+<div id="patientsIndexResults">
 <!-- Patients Table -->
 <div class="card">
     <div class="card-body p-0">
@@ -179,12 +184,33 @@
     </div>
 </div>
 
-<!-- Pagination -->
-@if($patients->hasPages())
-<div class="d-flex justify-content-end mt-3">
-    {{ $patients->withQueryString()->links() }}
+<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mt-3">
+    <div class="d-flex flex-wrap align-items-center gap-2 small text-muted">
+        <span>
+            {{ __('common.showing_results', [
+                'from' => $patients->firstItem() ?? 0,
+                'to' => $patients->lastItem() ?? 0,
+                'total' => $patients->total(),
+            ]) }}
+        </span>
+        <span class="d-flex align-items-center gap-1">
+            <label for="patientsPerPage" class="mb-0">{{ __('common.per_page') }}</label>
+            <select id="patientsPerPage" class="form-select form-select-sm w-auto" data-filter-per-page>
+                @foreach([10, 25, 50, 100] as $perPageOption)
+                    <option value="{{ $perPageOption }}" @selected((string) ($filters['per_page'] ?? $patients->perPage()) === (string) $perPageOption)>{{ $perPageOption }}</option>
+                @endforeach
+                <option value="all" @selected(($filters['per_page'] ?? null) === 'all')>{{ __('common.all') }}</option>
+            </select>
+        </span>
+    </div>
+
+    @if($patients->hasPages())
+        <div>
+            {{ $patients->withQueryString()->links() }}
+        </div>
+    @endif
 </div>
-@endif
+</div>
 @endsection
 
 @push('scripts')

@@ -141,18 +141,54 @@ class PatientMergeTest extends TestCase
         $this->assertNotContains($duplicatePatient->id, $results);
     }
 
+    public function test_merge_can_transfer_duplicate_unique_ghana_card_to_main_patient(): void
+    {
+        [$mainPatient, $duplicatePatient] = $this->patients();
+        $mainPatient->forceFill(['ghana_card_number' => null])->save();
+        $duplicatePatient->forceFill(['ghana_card_number' => 'GHA-304726678-5'])->save();
+
+        $service = app(PatientMergeService::class);
+        $request = $service->createRequest(
+            $mainPatient,
+            $duplicatePatient,
+            $this->user,
+            ['ghana_card_number' => 'duplicate'],
+            'Duplicate folder consolidation.',
+            true
+        );
+
+        $service->execute($request, $this->user);
+
+        $this->assertDatabaseHas('patients', [
+            'id' => $mainPatient->id,
+            'ghana_card_number' => 'GHA-304726678-5',
+        ]);
+        $this->assertDatabaseHas('patients', [
+            'id' => $duplicatePatient->id,
+            'ghana_card_number' => null,
+            'merge_status' => 'MERGED',
+            'merged_to_patient_id' => $mainPatient->id,
+        ]);
+        $this->assertDatabaseHas('patient_aliases', [
+            'patient_id' => $mainPatient->id,
+            'source_patient_id' => $duplicatePatient->id,
+            'alias_type' => PatientAlias::TYPE_GHANA_CARD,
+            'alias_value' => 'GHA-304726678-5',
+        ]);
+    }
+
     public function test_merge_index_offers_patient_search_card_with_assign_actions(): void
     {
         $indexResponse = $this->actingAs($this->user)->get(route('admin.patients.merge.index'));
 
         $indexResponse->assertOk()
-            ->assertSee('mergeSearchInput', false)
-            ->assertSee(__('patients.use_as_main'))
-            ->assertSee(__('patients.use_as_duplicate'))
-            ->assertDontSee('Select as main folder', false)
-            ->assertDontSee('Select as duplicate folder', false)
-            ->assertDontSee('main_patient_id', false)
-            ->assertDontSee('duplicate_patient_id', false);
+            ->assertSee('mainPatientSearchInput', false)
+            ->assertSee('duplicatePatientSearchInput', false)
+            ->assertSee('main_patient_id', false)
+            ->assertSee('duplicate_patient_id', false)
+            ->assertDontSee(__('patients.use_as_main'))
+            ->assertDontSee(__('patients.use_as_duplicate'))
+            ->assertDontSee('mergeSearchInput', false);
     }
 
     public function test_merge_search_endpoint_returns_matching_patients_by_patient_number(): void

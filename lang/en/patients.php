@@ -269,6 +269,7 @@ return [
     'col_duplicate_folder'      => 'Duplicate Folder',
     'col_requested'             => 'Requested',
     'no_merge_requests'         => 'No merge requests yet.',
+    'merge_history'             => 'Merge History',
 
     // Compare
     'compare_folders'           => 'Compare Patient Folders',

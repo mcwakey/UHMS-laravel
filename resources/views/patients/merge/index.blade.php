@@ -2,100 +2,78 @@
 @section('title', __('patients.merge_patients'))
 
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between">
 <x-page-header-back
     :title="__('patients.merge_patients')"
     :href="route('admin.patients.index')"
-/>
-    <a href="{{ route('admin.patients.merge.logs') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-history me-1"></i>{{ __('patients.audit_logs') }}</a>
-</div>
+>
+    <x-slot:actions>
+        <a href="{{ route('admin.patients.merge.logs') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="ti ti-history me-1"></i>{{ __('patients.audit_logs') }}
+        </a>
+    </x-slot:actions>
+</x-page-header-back>
 
-@if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-@endif
 @if($errors->any())
     <div class="alert alert-danger">{{ $errors->first() }}</div>
 @endif
 
-<!-- <p class="text-muted">{{ __('patients.merge_subtitle') }}</p> -->
-<div class="row">
-        <!-- Left Column - Patient, Insurance, Visit Details -->
-        <div class="col-lg-8">
-<x-patient-selection-card
-    title="{{ __('patients.patient_search') }}"
-    search-label="{{ __('patients.patient_search') }}"
-    search-placeholder="{{ __('patients.merge_search_ph') }}"
-    :show-active-admission-warning="false"
-    patient-field-name="merge_search_patient_id"
-    patient-search-id="mergeSearchInput"
-    patient-id-id="mergeSearchPatientId"
-    patient-info-id="mergeSearchPatientInfo"
-    deceased-warning-id="mergeSearchDeceasedWarning"
-    patient-initial-id="mergeSearchInitial"
-    patient-name-id="mergeSearchName"
-    patient-number-id="mergeSearchNumber"
-    patient-phone-id="mergeSearchPhone"
-    patient-last-visit-id="mergeSearchLastVisit"
-    clear-patient-handler="clearMergeSearch()"
-    :required="false"
-/>
-</div>
-<div class="col-lg-3">
-    <div class="card">
-        <div class="card-body d-grid gap-2">
-            <button type="button" id="assignAsMainBtn" class="btn btn-outline-success w-100 mb-3">
-                <i class="ti ti-check me-1"></i>{{ __('patients.use_as_main') }}
-            </button>
-            <button type="button" id="assignAsDuplicateBtn" class="btn btn-outline-warning w-100">
-                <i class="ti ti-copy me-1"></i>{{ __('patients.use_as_duplicate') }}
+<div class="card mb-3">
+    <form method="GET" action="{{ route('admin.patients.merge.compare') }}" id="mergeCompareForm">
+        <div class="card-header d-flex justify-content-between align-items-center gap-2">
+            <h5 class="card-title mb-0">{{ __('patients.selected_folders') }}</h5>
+            <button class="btn btn-primary" type="submit" id="compareBtn" disabled>
+                <i class="ti ti-git-compare me-1"></i>{{ __('patients.preview') }}
             </button>
         </div>
-    </div>
-</div>
-</div>
-
-<div class="card mb-3">
-        <form method="GET" action="{{ route('admin.patients.merge.compare') }}" id="mergeCompareForm">
-
-    <div class="card-header d-flex justify-content-between align-items-center gap-2">
-        <h5 class="card-title mb-0">{{ __('patients.selected_folders') }}</h5>
-        <button class="btn btn-primary" type="submit" id="compareBtn" disabled><i class="ti ti-git-compare me-1"></i>{{ __('patients.preview') }}</button>
-    </div>
-    <div class="card-body">
+        <div class="card-body">
             <input type="hidden" name="main_patient_number" id="mainPatientNumberField">
             <input type="hidden" name="duplicate_patient_number" id="duplicatePatientNumberField">
             <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label text-success"><i class="ti ti-check me-1"></i>{{ __('patients.main_patient_number') }}</label>
-                    <div class="border rounded p-3 d-flex align-items-center justify-content-between text-muted small" id="mainSlotEmpty">
-                        {{ __('patients.not_selected_yet') }}
-                    </div>
-                    <div class="border rounded p-3 d-flex align-items-center justify-content-between gap-2 d-none" id="mainSlotFilled">
-                        <div class="flex-grow-1 text-truncate">
-                            <div class="fw-semibold text-truncate" id="mainSlotName"></div>
-                            <small class="text-muted text-truncate d-block" id="mainSlotMeta"></small>
-                        </div>
-                        <button aria-label="{{ __('common.clear') }}" title="{{ __('common.clear') }}" type="button" class="btn btn-sm btn-outline-danger flex-shrink-0" id="mainSlotClear"><i class="ti ti-x"></i></button>
-                    </div>
+                <div class="col-lg-6">
+                    <x-patient-selection-card
+                        title="{{ __('patients.main_patient_number') }}"
+                        search-label="{{ __('patients.patient_search') }}"
+                        search-placeholder="{{ __('patients.merge_search_ph') }}"
+                        :show-active-admission-warning="false"
+                        patient-field-name="main_patient_id"
+                        patient-search-id="mainPatientSearchInput"
+                        patient-id-id="mainPatientId"
+                        patient-info-id="mainPatientInfo"
+                        deceased-warning-id="mainPatientDeceasedWarning"
+                        patient-initial-id="mainPatientInitial"
+                        patient-name-id="mainPatientName"
+                        patient-number-id="mainPatientNumber"
+                        patient-phone-id="mainPatientPhone"
+                        patient-last-visit-id="mainPatientLastVisit"
+                        clear-patient-handler="clearMergeMain()"
+                        :required="false"
+                        class="border-success h-100 mb-0"
+                    />
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label text-warning"><i class="ti ti-copy me-1"></i>{{ __('patients.duplicate_patient_number') }}</label>
-                    <div class="border rounded p-3 d-flex align-items-center justify-content-between text-muted small" id="duplicateSlotEmpty">
-                        {{ __('patients.not_selected_yet') }}
-                    </div>
-                    <div class="border rounded p-3 d-flex align-items-center justify-content-between gap-2 d-none" id="duplicateSlotFilled">
-                        <div class="flex-grow-1 text-truncate">
-                            <div class="fw-semibold text-truncate" id="duplicateSlotName"></div>
-                            <small class="text-muted text-truncate d-block" id="duplicateSlotMeta"></small>
-                        </div>
-                        <button aria-label="{{ __('common.clear') }}" title="{{ __('common.clear') }}" type="button" class="btn btn-sm btn-outline-danger flex-shrink-0" id="duplicateSlotClear"><i class="ti ti-x"></i></button>
-                    </div>
+                <div class="col-lg-6">
+                    <x-patient-selection-card
+                        title="{{ __('patients.duplicate_patient_number') }}"
+                        search-label="{{ __('patients.patient_search') }}"
+                        search-placeholder="{{ __('patients.merge_search_ph') }}"
+                        :show-active-admission-warning="false"
+                        patient-field-name="duplicate_patient_id"
+                        patient-search-id="duplicatePatientSearchInput"
+                        patient-id-id="duplicatePatientId"
+                        patient-info-id="duplicatePatientInfo"
+                        deceased-warning-id="duplicatePatientDeceasedWarning"
+                        patient-initial-id="duplicatePatientInitial"
+                        patient-name-id="duplicatePatientName"
+                        patient-number-id="duplicatePatientNumber"
+                        patient-phone-id="duplicatePatientPhone"
+                        patient-last-visit-id="duplicatePatientLastVisit"
+                        clear-patient-handler="clearMergeDuplicate()"
+                        :required="false"
+                        class="border-warning h-100 mb-0"
+                    />
                 </div>
-                <!-- <div class="col-md-2 d-flex align-items-end">
-                </div> -->
             </div>
-    </div>
-        </form>
+        </div>
+    </form>
 </div>
 
 <div class="card">
@@ -144,13 +122,8 @@
 <script>const mergeI18n = @json($mergeI18n);</script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const searchInput = document.getElementById('mergeSearchInput');
-    const searchPatientIdInput = document.getElementById('mergeSearchPatientId');
-    const searchPatientInfo = document.getElementById('mergeSearchPatientInfo');
-    const assignActions = document.getElementById('mergeAssignActions');
     const compareBtn = document.getElementById('compareBtn');
 
-    let currentPatient = null;
     let mainPatient = null;
     let duplicatePatient = null;
 
@@ -170,9 +143,10 @@ document.addEventListener('DOMContentLoaded', function () {
         return [patient.patient_number, patient.full_name].filter(Boolean).join(' - ') || patient.text || '';
     }
 
-    function initPatientSearchSelect2() {
+    function initPatientSearchSelect2(config) {
         if (!hasSelect2()) return;
 
+        const searchInput = document.getElementById(config.searchId);
         const $patient = jQuery(searchInput);
         if ($patient.hasClass('select2-hidden-accessible')) return;
 
@@ -210,7 +184,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (patient.is_deceased) {
                     html += ' <span class="badge bg-danger ms-1">' + mergeI18n.deceased + '</span>';
                 }
-                html += '<small class="text-muted d-block">' + meta.map(escapeHtml).join(' • ') + '</small>';
+                html += '<small class="text-muted d-block">' + meta.map(escapeHtml).join(' &bull; ') + '</small>';
 
                 return jQuery('<span>').html(html);
             },
@@ -218,100 +192,93 @@ document.addEventListener('DOMContentLoaded', function () {
                 return patientDisplayText(patient);
             },
         }).on('select2:select', function (event) {
-            selectMergeSearchPatient(event.params.data);
+            selectMergePatient(config.role, event.params.data);
         }).on('select2:clear', function () {
-            clearMergeSearch({ keepSelect: true });
+            clearMergePatient(config.role, { keepSelect: true });
         });
     }
-    initPatientSearchSelect2();
 
-    function selectMergeSearchPatient(patient) {
-        currentPatient = patient;
-        searchPatientIdInput.value = patient.id;
-
-        document.getElementById('mergeSearchInitial').textContent = (patient.full_name || '').charAt(0).toUpperCase();
-        document.getElementById('mergeSearchName').textContent = patient.full_name;
-        document.getElementById('mergeSearchNumber').textContent = patient.patient_number;
-        document.getElementById('mergeSearchPhone').textContent = patient.phone || mergeI18n.no_phone;
-        document.getElementById('mergeSearchLastVisit').classList.add('d-none');
-
-        document.getElementById('mergeSearchDeceasedWarning').classList.toggle('d-none', !patient.is_deceased);
-
-        searchPatientInfo.classList.remove('d-none');
-        assignActions.classList.remove('d-none');
+    function rolePrefix(role) {
+        return role === 'main' ? 'mainPatient' : 'duplicatePatient';
     }
 
-    window.clearMergeSearch = function (options) {
-        options = options || {};
-        currentPatient = null;
-        searchPatientIdInput.value = '';
-        if (!options.keepSelect) {
-            searchInput.value = '';
-            if (hasSelect2()) {
-                jQuery(searchInput).val(null).trigger('change.select2');
-            }
-        }
-        searchPatientInfo.classList.add('d-none');
-        assignActions.classList.add('d-none');
-    };
-
-    function renderSlot(role, patient) {
-        const emptyEl = document.getElementById(role + 'SlotEmpty');
-        const filledEl = document.getElementById(role + 'SlotFilled');
-        const field = document.getElementById(role + 'PatientNumberField');
+    function renderSelectedPatient(role, patient) {
+        const prefix = rolePrefix(role);
+        const numberField = document.getElementById(role + 'PatientNumberField');
+        const idInput = document.getElementById(prefix + 'Id');
+        const info = document.getElementById(prefix + 'Info');
 
         if (!patient) {
-            emptyEl.classList.remove('d-none');
-            filledEl.classList.add('d-none');
-            field.value = '';
+            idInput.value = '';
+            numberField.value = '';
+            info.classList.add('d-none');
             return;
         }
 
-        emptyEl.classList.add('d-none');
-        filledEl.classList.remove('d-none');
-        document.getElementById(role + 'SlotName').textContent = patient.full_name;
-        document.getElementById(role + 'SlotMeta').textContent = [patient.patient_number, patient.phone || mergeI18n.no_phone].filter(Boolean).join(' • ');
-        field.value = patient.patient_number;
+        idInput.value = patient.id;
+        numberField.value = patient.patient_number || '';
+        document.getElementById(prefix + 'Initial').textContent = (patient.full_name || '').charAt(0).toUpperCase();
+        document.getElementById(prefix + 'Name').textContent = patient.full_name || '';
+        document.getElementById(prefix + 'Number').textContent = patient.patient_number || '';
+        document.getElementById(prefix + 'Phone').textContent = patient.phone || mergeI18n.no_phone;
+        document.getElementById(prefix + 'LastVisit').classList.add('d-none');
+        document.getElementById(prefix + 'DeceasedWarning').classList.toggle('d-none', !patient.is_deceased);
+        info.classList.remove('d-none');
     }
 
     function updateCompareBtn() {
         compareBtn.disabled = !(mainPatient && duplicatePatient && mainPatient.id !== duplicatePatient.id);
     }
 
-    document.getElementById('assignAsMainBtn').addEventListener('click', function () {
-        if (!currentPatient) return;
-        if (duplicatePatient && duplicatePatient.id === currentPatient.id) {
-            duplicatePatient = null;
-            renderSlot('duplicate', null);
+    function selectMergePatient(role, patient) {
+        if (role === 'main') {
+            mainPatient = patient;
+            renderSelectedPatient('main', mainPatient);
+        } else {
+            duplicatePatient = patient;
+            renderSelectedPatient('duplicate', duplicatePatient);
         }
-        mainPatient = currentPatient;
-        renderSlot('main', mainPatient);
-        updateCompareBtn();
-        clearMergeSearch();
-    });
 
-    document.getElementById('assignAsDuplicateBtn').addEventListener('click', function () {
-        if (!currentPatient) return;
-        if (mainPatient && mainPatient.id === currentPatient.id) {
+        updateCompareBtn();
+    }
+
+    function clearMergePatient(role, options) {
+        options = options || {};
+        const prefix = rolePrefix(role);
+        const searchInput = document.getElementById(prefix + 'SearchInput');
+
+        if (role === 'main') {
             mainPatient = null;
-            renderSlot('main', null);
+        } else {
+            duplicatePatient = null;
         }
-        duplicatePatient = currentPatient;
-        renderSlot('duplicate', duplicatePatient);
-        updateCompareBtn();
-        clearMergeSearch();
-    });
 
-    document.getElementById('mainSlotClear').addEventListener('click', function () {
-        mainPatient = null;
-        renderSlot('main', null);
+        renderSelectedPatient(role, null);
+        if (!options.keepSelect) {
+            if (hasSelect2()) {
+                jQuery(searchInput).val(null).trigger('change.select2');
+            } else {
+                searchInput.value = '';
+            }
+        }
         updateCompareBtn();
-    });
+    }
 
-    document.getElementById('duplicateSlotClear').addEventListener('click', function () {
-        duplicatePatient = null;
-        renderSlot('duplicate', null);
-        updateCompareBtn();
+    window.clearMergeMain = function (options) {
+        clearMergePatient('main', options);
+    };
+
+    window.clearMergeDuplicate = function (options) {
+        clearMergePatient('duplicate', options);
+    };
+
+    initPatientSearchSelect2({ role: 'main', searchId: 'mainPatientSearchInput' });
+    initPatientSearchSelect2({ role: 'duplicate', searchId: 'duplicatePatientSearchInput' });
+
+    document.getElementById('mergeCompareForm').addEventListener('submit', function (event) {
+        if (!mainPatient || !duplicatePatient || mainPatient.id === duplicatePatient.id) {
+            event.preventDefault();
+        }
     });
 });
 </script>

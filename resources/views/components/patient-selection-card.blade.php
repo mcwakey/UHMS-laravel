@@ -20,6 +20,9 @@
     'searchLabel' => null,
     'searchPlaceholder' => null,
     'required' => true,
+    'showSearch' => true,
+    'showClearButton' => true,
+    'icon' => 'ti-search',
 ])
 
 @php
@@ -32,23 +35,30 @@
 
 <div {{ $attributes->merge(['class' => 'card']) }}>
     <div class="card-header">
-        <h5 class="fw-bold mb-0"><i class="ti ti-search me-1"></i>{{ $title }}</h5>
+        <h5 class="fw-bold mb-0">
+            @if($icon)
+                <i class="ti {{ $icon }} me-1"></i>
+            @endif
+            {{ $title }}
+        </h5>
     </div>
     <div class="card-body">
-        <div class="mb-3">
-            <label class="form-label">{{ $searchLabel }} @if($required)<span class="text-danger">*</span>@endif</label>
-            <select id="{{ $patientSearchId }}"
-                    class="form-select form-select-lg @error($patientFieldName) is-invalid @enderror"
-                    data-placeholder="{{ $searchPlaceholder }}"
-                    style="width:100%">
-                <option value=""></option>
-                @if($selectedPatient)
-                    <option value="{{ $selectedPatient->id }}" selected>{{ $selectedPatient->patient_number }} - {{ $selectedPatient->full_name }}</option>
-                @endif
-            </select>
-            <input type="hidden" name="{{ $patientFieldName }}" id="{{ $patientIdId }}" value="{{ $selectedPatient?->id ?? old($patientFieldName) }}">
-            @error($patientFieldName)<div class="invalid-feedback">{{ $message }}</div>@enderror
-        </div>
+        @if($showSearch)
+            <div class="mb-3">
+                <label class="form-label">{{ $searchLabel }} @if($required)<span class="text-danger">*</span>@endif</label>
+                <select id="{{ $patientSearchId }}"
+                        class="form-select form-select-lg @error($patientFieldName) is-invalid @enderror"
+                        data-placeholder="{{ $searchPlaceholder }}"
+                        style="width:100%">
+                    <option value=""></option>
+                    @if($selectedPatient)
+                        <option value="{{ $selectedPatient->id }}" selected>{{ $selectedPatient->patient_number }} - {{ $selectedPatient->full_name }}</option>
+                    @endif
+                </select>
+                <input type="hidden" name="{{ $patientFieldName }}" id="{{ $patientIdId }}" value="{{ $selectedPatient?->id ?? old($patientFieldName) }}">
+                @error($patientFieldName)<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+        @endif
 
         <div id="{{ $patientInfoId }}" class="{{ $selectedPatient ? '' : 'd-none' }}">
             @if($selectedPatient?->is_deceased)
@@ -100,10 +110,14 @@
                         </span>
                     </small>
                 </div>
-                <button aria-label="{{ __('common.close') }}" title="{{ __('common.close') }}" type="button" class="btn btn-sm btn-outline-danger" onclick="{{ $clearPatientHandler }}">
-                    <i class="ti ti-x"></i>
-                </button>
+                @if($showClearButton)
+                    <button aria-label="{{ __('common.close') }}" title="{{ __('common.close') }}" type="button" class="btn btn-sm btn-outline-danger" onclick="{{ $clearPatientHandler }}">
+                        <i class="ti ti-x"></i>
+                    </button>
+                @endif
             </div>
+
+            {{ $slot }}
         </div>
     </div>
 </div>
