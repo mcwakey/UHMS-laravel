@@ -61,26 +61,29 @@
 </x-filter-bar>
 
 <div id="patientsIndexResults">
-<!-- Patients Table -->
-<div class="card">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="bg-light">
-                    <tr>
-                        <th>{{ __('patients.patient_id') }}</th>
-                        <th>{{ __('patients.patient_name') }}</th>
-                        <th>{{ __('common.phone') }}</th>
-                        <th>{{ __('common.gender') }}</th>
-                        <th>{{ __('common.date_of_birth') }}</th>
-                        <th>{{ __('patients.city') }}</th>
-                        <th>{{ __('patients.insurance') }}</th>
-                        <th>{{ __('common.status') }}</th>
-                        <th>{{ __('patients.last_visit') }}</th>
-                        <th class="text-end">{{ __('common.actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
+<x-data-table
+    id="patientsDataTable"
+    :paginator="$patients"
+    show-summary
+    show-per-page
+    :current-per-page="$filters['per_page'] ?? $patients->perPage()"
+    :per-page-options="[10, 25, 50, 100, 'all']"
+>
+    <x-slot:head>
+        <tr>
+            <th>{{ __('patients.patient_id') }}</th>
+            <th>{{ __('patients.patient_name') }}</th>
+            <th>{{ __('common.phone') }}</th>
+            <th>{{ __('common.gender') }}</th>
+            <th>{{ __('common.date_of_birth') }}</th>
+            <th>{{ __('patients.city') }}</th>
+            <th>{{ __('patients.insurance') }}</th>
+            <th>{{ __('common.status') }}</th>
+            <th>{{ __('patients.last_visit') }}</th>
+            <th class="text-end">{{ __('common.actions') }}</th>
+        </tr>
+    </x-slot:head>
+
                     @forelse($patients as $patient)
                     <tr>
                         <td>
@@ -178,38 +181,7 @@
                         </td>
                     </tr>
                     @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mt-3">
-    <div class="d-flex flex-wrap align-items-center gap-2 small text-muted">
-        <span>
-            {{ __('common.showing_results', [
-                'from' => $patients->firstItem() ?? 0,
-                'to' => $patients->lastItem() ?? 0,
-                'total' => $patients->total(),
-            ]) }}
-        </span>
-        <span class="d-flex align-items-center gap-1">
-            <label for="patientsPerPage" class="mb-0">{{ __('common.per_page') }}</label>
-            <select id="patientsPerPage" class="form-select form-select-sm w-auto" data-filter-per-page>
-                @foreach([10, 25, 50, 100] as $perPageOption)
-                    <option value="{{ $perPageOption }}" @selected((string) ($filters['per_page'] ?? $patients->perPage()) === (string) $perPageOption)>{{ $perPageOption }}</option>
-                @endforeach
-                <option value="all" @selected(($filters['per_page'] ?? null) === 'all')>{{ __('common.all') }}</option>
-            </select>
-        </span>
-    </div>
-
-    @if($patients->hasPages())
-        <div>
-            {{ $patients->withQueryString()->links() }}
-        </div>
-    @endif
-</div>
+</x-data-table>
 </div>
 @endsection
 

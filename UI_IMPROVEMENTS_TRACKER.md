@@ -53,6 +53,24 @@ Use this file as the shared checklist for UI improvements. Attach it to new UI p
   - `resources/views/statistics/show.blade.php`
 - **Next Check:** When touching an index/list/report page with a hand-written filter card, convert it to `x-filter-bar`.
 
+### `x-data-table`
+
+- **Status:** Implemented, adoption in progress.
+- **Component:** `resources/views/components/data-table.blade.php`
+- **Purpose:** Standard reusable table card with responsive wrapper, consistent table classes, optional paginator summary, per-page selector, and pagination links.
+- **Use For:** Index/list/report pages that display paginator-backed tabular records.
+- **Usage Notes:**
+  - Pass `:paginator`.
+  - Put table headings in `<x-slot:head>`.
+  - Put `@forelse` table rows in the default slot.
+  - Use `show-summary` to render `Showing :from to :to of :total results`.
+  - Use `show-per-page` with `:current-per-page` and `:per-page-options` when the connected filter form supports `per_page`.
+  - When used with `x-filter-bar ajax`, keep the table inside the AJAX target container so pagination and per-page changes refresh only the result area.
+- **Current Adoption Examples:**
+  - `resources/views/patients/index.blade.php`
+  - `resources/views/blood-bank/units.blade.php`
+- **Next Check:** Convert hand-written table cards and page-specific pagination footers to `x-data-table` when those pages are touched.
+
 ### `x-page-header-back`
 
 - **Status:** Implemented, first adoption complete.

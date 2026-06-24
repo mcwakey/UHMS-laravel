@@ -14,7 +14,7 @@
         </x-slot:actions>
     </x-page-header>
 --}}
-<div {{ $attributes->merge(['class' => 'uhms-page-header d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 mb-3 border-bottom']) }}>
+<div {{ $attributes->merge(['class' => 'uhms-page-header d-flex flex-wrap align-items-center justify-content-between gap-2 pb-2 mb-2 border-bottom']) }}>
     <div>
         @if($breadcrumbs)
             <nav aria-label="breadcrumb">
