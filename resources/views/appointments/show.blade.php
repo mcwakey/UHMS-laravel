@@ -3,13 +3,14 @@
 @section('title', __('appointments.show_title'))
 
 @section('content')
-<!-- <div class="content"> -->
-    <div id="appointmentActionFeedback" class="alert d-none" role="alert"></div>
-
     <x-page-header-back
         :title="__('appointments.title') . ' - ' . $appointment->appointment_number"
         :href="route('admin.appointments.index')"
     />
+
+<!-- <div class="content"> -->
+    <div id="appointmentActionFeedback" class="alert d-none" role="alert"></div>
+
 
     @php
         $allStatuses = [

@@ -8,8 +8,28 @@
 @endpush
 
 @section('content')
+<x-page-header-back
+        :title="__('visits.title') . ' - ' . $visit->visit_number"
+        :href="route('admin.visits.index')"
+    >
+    <x-slot:actions>
+        @can('emergency.case.create')
+        @if(!in_array($visit->status, [\App\Enums\VisitStatus::COMPLETED, \App\Enums\VisitStatus::CANCELLED, \App\Enums\VisitStatus::NO_SHOW], true))
+        <a href="{{ route('admin.emergency.cases.create', ['visit_id' => $visit->id]) }}" class="btn btn-outline-danger btn-md">
+            <i class="ti ti-ambulance me-1"></i>{{ __('visits.create_emergency_case') }}
+        </a>
+        @endif
+        @endcan
+        @can('visits.create')
+        <a href="{{ route('admin.visits.create', ['patient_id' => $visit->patient_id]) }}" class="btn btn-primary btn-md">
+            <i class="ti ti-plus me-1"></i>{{ __('visits.new_visit_btn') }}
+        </a>
+        @endcan
+    </x-slot:actions>
+</x-page-header-back>
+
 <!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
+<!-- <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
     <h6 class="fw-bold mb-0 d-flex align-items-center">
         <a href="{{ route('admin.visits.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i> </a>
     </h6>
@@ -45,8 +65,9 @@
         </a>
         @endcan --}}
     </div>
-</div>
+</div> -->
 
+<div id="visitShowMainContent">
 <div class="row">
     <!-- Left Column — Visit Info -->
     <div class="col-lg-8">
@@ -333,7 +354,7 @@
                         <i class="ti ti-plus text-primary"></i>
                         <h6 class="fw-bold mb-0">{{ __('visits.queue_another_dept') }}</h6>
                     </div>
-                    <form method="POST" action="{{ route('admin.consultations.routes.store', $visit) }}" class="row g-2 align-items-end">
+                    <form method="POST" action="{{ route('admin.consultations.routes.store', $visit) }}" class="row g-2 align-items-end js-queue-consultation-route-form">
                         @csrf
                         <div class="col-md-3">
                             <label class="form-label small">{{ __('visits.consultation_dept') }}</label>
@@ -370,6 +391,9 @@
                                 <label class="form-check-label small" for="visitRouteActivateNow">{{ __('visits.activate_label') }}</label>
                             </div>
                             <button type="submit" class="btn btn-sm btn-primary w-100">{{ __('visits.queue_btn') }}</button>
+                        </div>
+                        <div class="col-12">
+                            <div class="alert d-none mb-0 js-queue-route-feedback" role="alert"></div>
                         </div>
                     </form>
                     @endcan
@@ -806,6 +830,7 @@
         </div>
     </div>
 </div>
+</div>
 
 @module('insurance')
 @can('visits.edit')
@@ -864,14 +889,7 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const deptSelect = document.getElementById('visitRouteDeptSelect');
-    const serviceSelect = document.getElementById('visitRouteServiceSelect');
-    const showOtherServices = document.getElementById('visitRouteShowOtherServices');
-    const doctorSelect = document.getElementById('visitRouteDoctorSelect');
-    if (!deptSelect || !serviceSelect || !doctorSelect) return;
-
     const endpointTemplate = @json(route('admin.departments.visit-options', ['department' => '__ID__']));
-    let routeServices = [];
 
     function optionList(select, placeholder, rows, labelFn, includePlaceholder = true) {
         select.innerHTML = '';
@@ -887,56 +905,152 @@ document.addEventListener('DOMContentLoaded', () => {
         return String(service?.category || '').toLowerCase() === 'consultation';
     }
 
-    function visibleRouteServices() {
-        if (showOtherServices && showOtherServices.checked) {
-            return routeServices;
+    function initVisitRouteChooser(scope = document) {
+        const deptSelect = scope.querySelector('#visitRouteDeptSelect');
+        const serviceSelect = scope.querySelector('#visitRouteServiceSelect');
+        const showOtherServices = scope.querySelector('#visitRouteShowOtherServices');
+        const doctorSelect = scope.querySelector('#visitRouteDoctorSelect');
+        if (!deptSelect || !serviceSelect || !doctorSelect || deptSelect.dataset.routeChooserReady) return;
+
+        deptSelect.dataset.routeChooserReady = 'true';
+        let routeServices = [];
+
+        function visibleRouteServices() {
+            if (showOtherServices && showOtherServices.checked) {
+                return routeServices;
+            }
+
+            return routeServices.filter(isConsultationService);
         }
 
-        return routeServices.filter(isConsultationService);
-    }
+        function renderRouteServices() {
+            const visibleServices = visibleRouteServices();
 
-    function renderRouteServices() {
-        const visibleServices = visibleRouteServices();
-
-        optionList(serviceSelect, '', visibleServices, row => row.name, false);
-    }
-
-    deptSelect.addEventListener('change', async () => {
-        serviceSelect.disabled = true;
-        doctorSelect.disabled = true;
-        if (showOtherServices) {
-            showOtherServices.checked = false;
-            showOtherServices.disabled = true;
-        }
-        serviceSelect.innerHTML = '<option value="">{{ __('visits.loading_services_doctors') }}</option>';
-        doctorSelect.innerHTML = '<option value="">{{ __('visits.loading_services_doctors') }}</option>';
-
-        if (!deptSelect.value) {
-            routeServices = [];
-            serviceSelect.innerHTML = '<option value="">{{ __('visits.select_dept_first') }}</option>';
-            doctorSelect.innerHTML = '<option value="">{{ __('visits.select_dept_first') }}</option>';
-            return;
+            optionList(serviceSelect, '', visibleServices, row => row.name, false);
         }
 
-        const response = await fetch(endpointTemplate.replace('__ID__', deptSelect.value), {
-            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        deptSelect.addEventListener('change', async () => {
+            serviceSelect.disabled = true;
+            doctorSelect.disabled = true;
+            if (showOtherServices) {
+                showOtherServices.checked = false;
+                showOtherServices.disabled = true;
+            }
+            serviceSelect.innerHTML = '<option value="">{{ __('visits.loading_services_doctors') }}</option>';
+            doctorSelect.innerHTML = '<option value="">{{ __('visits.loading_services_doctors') }}</option>';
+
+            if (!deptSelect.value) {
+                routeServices = [];
+                serviceSelect.innerHTML = '<option value="">{{ __('visits.select_dept_first') }}</option>';
+                doctorSelect.innerHTML = '<option value="">{{ __('visits.select_dept_first') }}</option>';
+                return;
+            }
+
+            const response = await fetch(endpointTemplate.replace('__ID__', deptSelect.value), {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const payload = await response.json();
+            routeServices = payload.services || [];
+            const doctors = payload.doctors || [];
+
+            serviceSelect.disabled = false;
+            doctorSelect.disabled = false;
+            if (showOtherServices) {
+                showOtherServices.disabled = !routeServices.some(service => !isConsultationService(service));
+            }
+            renderRouteServices();
+            optionList(doctorSelect, doctors.length ? '{{ __('visits.select_doctor') }}' : '{{ __('visits.select_dept_first') }}', doctors, row => row.name);
         });
-        const payload = await response.json();
-        routeServices = payload.services || [];
-        const doctors = payload.doctors || [];
 
-        serviceSelect.disabled = false;
-        doctorSelect.disabled = false;
         if (showOtherServices) {
-            showOtherServices.disabled = !routeServices.some(service => !isConsultationService(service));
+            showOtherServices.addEventListener('change', renderRouteServices);
         }
-        renderRouteServices();
-        optionList(doctorSelect, doctors.length ? '{{ __('visits.select_doctor') }}' : '{{ __('visits.select_dept_first') }}', doctors, row => row.name);
+    }
+
+    function showQueueRouteFeedback(form, type, message) {
+        const feedback = form.querySelector('.js-queue-route-feedback');
+        if (!feedback) return;
+
+        feedback.className = 'alert alert-' + type + ' mb-0 js-queue-route-feedback';
+        feedback.textContent = message;
+        feedback.classList.remove('d-none');
+    }
+
+    function escapeHtml(value) {
+        const div = document.createElement('div');
+        div.textContent = value || '';
+        return div.innerHTML;
+    }
+
+    async function refreshVisitShowContent(message) {
+        const currentContent = document.getElementById('visitShowMainContent');
+        if (!currentContent) return;
+
+        const response = await fetch(window.location.href, {
+            headers: {
+                'Accept': 'text/html',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+        const html = await response.text();
+        const parsed = new DOMParser().parseFromString(html, 'text/html');
+        const replacement = parsed.getElementById('visitShowMainContent');
+        if (!replacement) return;
+
+        currentContent.innerHTML = replacement.innerHTML;
+        if (message) {
+            currentContent.insertAdjacentHTML(
+                'afterbegin',
+                '<div class="alert alert-success alert-dismissible fade show" role="alert">'
+                    + escapeHtml(message)
+                    + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>'
+                + '</div>'
+            );
+        }
+        initVisitRouteChooser(currentContent);
+    }
+
+    document.addEventListener('submit', async (event) => {
+        const form = event.target.closest('.js-queue-consultation-route-form');
+        if (!form) return;
+
+        event.preventDefault();
+
+        const submitBtn = form.querySelector('[type="submit"]');
+        const originalLabel = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>{{ __('visits.queue_btn') }}';
+        }
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: new FormData(form),
+            });
+            const payload = await response.json();
+
+            if (!response.ok) {
+                showQueueRouteFeedback(form, 'danger', payload.error || payload.message || 'Unable to queue consultation route.');
+                return;
+            }
+
+            await refreshVisitShowContent(payload.success || payload.message || '');
+        } catch (error) {
+            showQueueRouteFeedback(form, 'danger', error.message || 'Unable to queue consultation route.');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalLabel;
+            }
+        }
     });
 
-    if (showOtherServices) {
-        showOtherServices.addEventListener('change', renderRouteServices);
-    }
+    initVisitRouteChooser();
 });
 </script>
 @if($errors->has('visit_insurance_id'))
