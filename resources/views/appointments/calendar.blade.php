@@ -3,7 +3,18 @@
 @section('title', __('appointments.calendar_title'))
 
 @section('content')
-    <div class="page-header">
+<x-page-header :title="__('appointments.calendar_title')" icon="ti-calendar-event">
+    <x-slot:actions>
+        @include('appointments.partials.view-switch', ['active' => 'calendar'])
+        @can('appointments.create')
+        <a href="{{ route('admin.appointments.create') }}" class="btn btn-primary">
+            <i class="ti ti-plus me-1"></i> {{ __('appointments.new_appointment') }}
+        </a>
+        @endcan
+    </x-slot:actions>
+</x-page-header>
+
+    <!-- <div class="page-header">
         <div class="row align-items-center">
             <div class="col-sm-6">
                 <h3 class="page-title">{{ __('appointments.calendar_title') }}</h3>
@@ -19,57 +30,71 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
 
     {{-- Filters --}}
     @php
         $defaultRangeStart = today()->subDays(3)->toDateString();
-        $defaultRangeEnd = today()->addDays(11)->toDateString();
+        $defaultRangeEnd = today()->addDays(10)->toDateString();
         $activeDateRange = ($from ?? $defaultRangeStart).' to '.($to ?? $defaultRangeEnd);
     @endphp
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="GET" action="{{ route('admin.appointments.calendar') }}" class="row g-3 align-items-end" data-auto-filter-form="appointments-calendar">
-                <div class="col-md-3">
-                    @include('partials.date-range-filter', [
-                        'id' => 'appointmentCalendarDateRangePicker',
-                        'value' => $activeDateRange,
-                        'submitOnApply' => true,
-                    ])
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">{{ __('common.doctor') }}</label>
-                    <select name="doctor_id" class="form-select">
-                        <option value="">{{ __('appointments.all_doctors') }}</option>
-                        @foreach($doctors as $doctor)
-                            <option value="{{ $doctor->id }}" {{ ($filters['doctor_id'] ?? '') == $doctor->id ? 'selected' : '' }}>
-                                Dr. {{ $doctor->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">{{ __('common.department') }}</label>
-                    <select name="department_id" class="form-select">
-                        <option value="">{{ __('common.all_departments') }}</option>
-                        @foreach($departments as $dept)
-                            <option value="{{ $dept->id }}" {{ ($filters['department_id'] ?? '') == $dept->id ? 'selected' : '' }}>
-                                {{ $dept->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-primary me-2">
-                        <i class="ti ti-filter me-1"></i> {{ __('common.filter') }}
-                    </button>
-                    <a href="{{ route('admin.appointments.calendar') }}" class="btn btn-outline-secondary">
-                        <i class="ti ti-x me-1"></i>
-                    </a>
-                </div>
-            </form>
+    <x-filter-bar
+        :action="route('admin.appointments.calendar')"
+        :reset-url="route('admin.appointments.calendar')"
+        class="mb-4"
+        :show-apply="false"
+        row-class="row g-3 align-items-end"
+    >
+        <div class="col-md-3">
+            <label class="form-label small">{{ __('common.search') }}</label>
+            <input type="text" name="search" class="form-control" placeholder="{{ __('appointments.search_placeholder') }}" value="{{ $filters['search'] ?? '' }}">
         </div>
-    </div>
+        <div class="col-md-2">
+            <label class="form-label small">{{ __('common.status') }}</label>
+            <select name="status" class="form-select">
+                <option value="">{{ __('common.all_statuses') }}</option>
+                @foreach($statuses as $status)
+                    <option value="{{ $status->value }}" {{ ($filters['status'] ?? '') == $status->value ? 'selected' : '' }}>
+                        {{ $status->translatedLabel() }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">{{ __('common.doctor') }}</label>
+            <select name="doctor_id" class="form-select">
+                <option value="">{{ __('appointments.all_doctors') }}</option>
+                @foreach($doctors as $doctor)
+                    <option value="{{ $doctor->id }}" {{ ($filters['doctor_id'] ?? '') == $doctor->id ? 'selected' : '' }}>
+                        Dr. {{ $doctor->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">{{ __('common.department') }}</label>
+            <select name="department_id" class="form-select">
+                <option value="">{{ __('common.all_departments') }}</option>
+                @foreach($departments as $dept)
+                    <option value="{{ $dept->id }}" {{ ($filters['department_id'] ?? '') == $dept->id ? 'selected' : '' }}>
+                        {{ $dept->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-2">
+            @include('partials.date-range-filter', [
+                'id' => 'appointmentCalendarDateRangePicker',
+                'value' => $activeDateRange,
+                'submitOnApply' => true,
+            ])
+        </div>
+        <x-slot:actions>
+            <a href="{{ route('admin.appointments.calendar') }}" class="btn btn-outline-secondary btn-icon" aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}">
+                <i class="ti ti-x"></i>
+            </a>
+        </x-slot:actions>
+    </x-filter-bar>
 
     {{-- Range Navigation --}}
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -210,18 +235,4 @@
 
 @push('scripts')
 @include('partials.date-range-filter-scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const filterForm = document.querySelector('[data-auto-filter-form="appointments-calendar"]');
-    if (!filterForm) {
-        return;
-    }
-
-    filterForm.querySelectorAll('select').forEach(function (select) {
-        select.addEventListener('change', function () {
-            filterForm.requestSubmit();
-        });
-    });
-});
-</script>
 @endpush

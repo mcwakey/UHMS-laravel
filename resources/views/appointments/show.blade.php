@@ -6,62 +6,55 @@
 <div class="content">
     <div id="appointmentActionFeedback" class="alert d-none" role="alert"></div>
 
-    <div class="page-header">
-        <div class="row align-items-center">
-            <div class="col">
-                <h3 class="page-title">
-                    {{ __('appointments.title') }} {{ $appointment->appointment_number }}
-                    <x-status-badge :status="$appointment->status" class="ms-2 js-appointment-status-badge" />
-                </h3>
-            </div>
-            <div class="col-auto">
-                <div class="d-flex gap-2">
-                    @if($appointment->status === \App\Enums\AppointmentStatus::SCHEDULED)
-                    <form method="POST" action="{{ route('admin.appointments.transition', $appointment) }}" class="d-inline js-appointment-action-form" data-follow-up="appointment">
-                        @csrf @method('PATCH')
-                        <input type="hidden" name="status" value="confirmed">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="ti ti-check me-1"></i> {{ __('appointments.confirm') }}
-                        </button>
-                    </form>
-                    @endif
-                    @if($appointment->status === \App\Enums\AppointmentStatus::CONFIRMED)
-                    @can('appointments.create')
-                    <form method="POST" action="{{ route('admin.appointments.check-in', $appointment) }}" class="d-inline js-appointment-action-form" data-follow-up="visit">
-                        @csrf
-                        <button type="submit" class="btn btn-primary">
-                            <i class="ti ti-login me-1"></i> {{ __('appointments.check_in_patient') }}
-                        </button>
-                    </form>
-                    @endcan
-                    <form method="POST" action="{{ route('admin.appointments.no-show', $appointment) }}" class="d-inline">
-                        @csrf
-                        <button type="submit" class="btn btn-dark">
-                            <i class="ti ti-user-off me-1"></i> {{ __('appointments.no_show_action') }}
-                        </button>
-                    </form>
-                    @endif
-                    @if($appointment->is_active && $appointment->status !== \App\Enums\AppointmentStatus::CHECKED_IN)
-                    @can('appointments.edit')
-                    <a href="{{ route('admin.appointments.edit', $appointment) }}" class="btn btn-outline-primary">
-                        <i class="ti ti-pencil me-1"></i> {{ __('common.edit') }}
-                    </a>
-                    @endcan
-                    @endif
-                    <a href="{{ route('admin.appointments.index') }}" class="btn btn-outline-secondary">
-                        <i class="ti ti-arrow-left me-1"></i> {{ __('common.back') }}
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
+    <x-page-header-back
+        :title="__('appointments.title') . ' ' . $appointment->appointment_number"
+        :href="route('admin.appointments.index')"
+    />
 
     <div class="row">
         {{-- Appointment Details --}}
         <div class="col-lg-8">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center gap-2">
                     <h5 class="card-title mb-0"><i class="ti ti-calendar me-2"></i>{{ __('appointments.appointment_information') }}</h5>
+                    <div>
+                        <x-status-badge :status="$appointment->status" class="js-appointment-status-badge" />
+
+                                @if($appointment->status === \App\Enums\AppointmentStatus::SCHEDULED)
+                                <form method="POST" action="{{ route('admin.appointments.transition', $appointment) }}" class="d-inline js-appointment-action-form" data-follow-up="appointment">
+                                    @csrf @method('PATCH')
+                                    <input type="hidden" name="status" value="confirmed">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="ti ti-check me-1"></i> {{ __('appointments.confirm') }}
+                                    </button>
+                                </form>
+                                @endif
+
+                                @if($appointment->status === \App\Enums\AppointmentStatus::CONFIRMED)
+                                @can('appointments.create')
+                                <form method="POST" action="{{ route('admin.appointments.check-in', $appointment) }}" class="d-inline js-appointment-action-form" data-follow-up="visit">
+                                    @csrf
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="ti ti-login me-1"></i> {{ __('appointments.check_in_patient') }}
+                                    </button>
+                                </form>
+                                @endcan
+                                <form method="POST" action="{{ route('admin.appointments.no-show', $appointment) }}" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-dark">
+                                        <i class="ti ti-user-off me-1"></i> {{ __('appointments.no_show_action') }}
+                                    </button>
+                                </form>
+                                @endif
+
+                                @if($appointment->is_active && $appointment->status !== \App\Enums\AppointmentStatus::CHECKED_IN)
+                                @can('appointments.edit')
+                                <a href="{{ route('admin.appointments.edit', $appointment) }}" class="btn btn-outline-primary">
+                                    <i class="ti ti-pencil me-1"></i> {{ __('common.edit') }}
+                                </a>
+                                @endcan
+                                @endif
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -212,41 +205,11 @@
 
         {{-- Patient Sidebar --}}
         <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="ti ti-user me-2"></i>{{ __('common.patient') }}</h5>
-                </div>
-                <div class="card-body">
-                    <div class="text-center mb-3">
-                        <div class="avatar avatar-lg bg-primary rounded-circle d-inline-flex align-items-center justify-content-center">
-                            <span class="text-white fs-4">{{ strtoupper(substr($appointment->patient->first_name, 0, 1)) }}{{ strtoupper(substr($appointment->patient->last_name, 0, 1)) }}</span>
-                        </div>
-                        <h5 class="mt-2 mb-0">{{ $appointment->patient->first_name }} {{ $appointment->patient->last_name }}</h5>
-                        <small class="text-muted">{{ $appointment->patient->patient_number }}</small>
-                    </div>
-                    <div class="table-responsive"><table class="table table-sm table-borderless mb-0">
-                        <tr>
-                            <td class="text-muted">{{ __('appointments.phone') }}</td>
-                            <td>{{ $appointment->patient->phone ?? '—' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted">{{ __('appointments.gender') }}</td>
-                            <td>{{ $appointment->patient->gender?->translatedLabel() ?? '—' }}</td>
-                        </tr>
-                        @if($appointment->patient->date_of_birth)
-                        <tr>
-                            <td class="text-muted">{{ __('common.age') }}</td>
-                            <td>{{ __('appointments.age_years', ['age' => $appointment->patient->date_of_birth->age]) }}</td>
-                        </tr>
-                        @endif
-                    </table></div>
-                    <div class="mt-3">
-                        <a href="{{ route('admin.patients.show', $appointment->patient) }}" class="btn btn-outline-primary btn-sm w-100">
-                            <i class="ti ti-external-link me-1"></i> {{ __('appointments.view_patient_profile') }}
-                        </a>
-                    </div>
-                </div>
-            </div>
+            <x-patient-card
+                :patient="$appointment->patient"
+                :visit="$appointment->visit"
+                :visit-insurance="$appointment->visitInsurance"
+            />
 
             {{-- Actions Card --}}
             @if($appointment->is_active)

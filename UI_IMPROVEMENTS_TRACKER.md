@@ -83,6 +83,7 @@ Use this file as the shared checklist for UI improvements. Attach it to new UI p
   - Put secondary actions in `<x-slot:actions>` when needed.
 - **Current Adoption Examples:**
   - `resources/views/visits/create.blade.php`
+  - `resources/views/appointments/show.blade.php`
 - **Next Check:** Replace matching hand-written back-title headers on create/edit pages as they are touched.
 
 ### `x-patient-selection-card`
@@ -100,6 +101,23 @@ Use this file as the shared checklist for UI improvements. Attach it to new UI p
   - `resources/views/visits/create.blade.php`
   - `resources/views/appointments/create.blade.php`
 - **Next Check:** Convert admission/emergency patient selection cards to this component when those pages are touched.
+
+### `x-patient-card`
+
+- **Status:** Implemented, adoption in progress.
+- **Component:** `resources/views/components/patient-card.blade.php`
+- **Purpose:** Standard patient summary card with demographics, alerts, profile link, and optional visit insurance display.
+- **Use For:** Detail/workflow sidebars that need to show a selected patient without rendering a picker.
+- **Usage Notes:**
+  - Pass `:patient="$patient"`.
+  - Pass `:visit="$visit"` when the card should show the insurance selected for that visit.
+  - Pass `:visit-insurance="$appointment->visitInsurance"` when rendering appointment insurance before a visit exists.
+  - Use `compact` to hide allergy/chronic-condition alert blocks.
+  - `resources/views/partials/patient-card.blade.php` remains a compatibility wrapper; prefer `<x-patient-card>` in new or touched views.
+- **Current Adoption Examples:**
+  - `resources/views/visits/show.blade.php`
+  - `resources/views/appointments/show.blade.php`
+- **Next Check:** Replace `@include('partials.patient-card')` with `x-patient-card` when those pages are touched.
 
 ### `x-insurance-selection-card`
 
@@ -283,5 +301,5 @@ Use this file as the shared checklist for UI improvements. Attach it to new UI p
 ## Open Adoption Notes
 
 - Continue replacing page-specific filter cards as pages are touched.
-- Keep `x-page-header`, `x-filter-bar`, `x-patient-selection-card`, `x-insurance-selection-card`, `x-visit-details-card`, `x-department-services-card`, `x-patient-insurance-form-modal`, and patient registration card components visually aligned with `resources/css/uhms-design-system.css`.
+- Keep `x-page-header`, `x-filter-bar`, `x-patient-selection-card`, `x-patient-card`, `x-insurance-selection-card`, `x-visit-details-card`, `x-department-services-card`, `x-patient-insurance-form-modal`, and patient registration card components visually aligned with `resources/css/uhms-design-system.css`.
 - If a new reusable UI pattern emerges, add it here before using it across multiple pages.

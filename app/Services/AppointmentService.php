@@ -21,17 +21,24 @@ class AppointmentService
      */
     public function list(array $filters = []): LengthAwarePaginator
     {
-        return Appointment::with(['patient', 'doctor', 'department', 'visit'])
+        $query = Appointment::with(['patient', 'doctor', 'department', 'visit'])
             ->when($filters['search'] ?? null, fn ($q, $s) => $q->search($s))
             ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
             ->when($filters['doctor_id'] ?? null, fn ($q, $d) => $q->byDoctor($d))
             ->when($filters['department_id'] ?? null, fn ($q, $d) => $q->byDepartment($d))
             ->when($filters['date'] ?? null, fn ($q, $d) => $q->whereDate('appointment_date', $d))
             ->when($filters['date_from'] ?? null, fn ($q, $d) => $q->whereDate('appointment_date', '>=', $d))
-            ->when($filters['date_to'] ?? null, fn ($q, $d) => $q->whereDate('appointment_date', '<=', $d))
+            ->when($filters['date_to'] ?? null, fn ($q, $d) => $q->whereDate('appointment_date', '<=', $d));
+
+        $perPage = $filters['per_page'] ?? 10;
+        if ($perPage === 'all') {
+            $perPage = max((clone $query)->count(), 1);
+        }
+
+        return $query
             ->orderBy('appointment_date')
             ->orderBy('start_time')
-            ->paginate($filters['per_page'] ?? 15);
+            ->paginate((int) $perPage);
     }
 
     /**
@@ -238,9 +245,11 @@ class AppointmentService
     {
         return Appointment::with(['patient', 'doctor', 'department'])
             ->whereBetween('appointment_date', [$from, $to])
+            ->when($filters['search'] ?? null, fn ($q, $s) => $q->search($s))
+            ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
             ->when($filters['doctor_id'] ?? null, fn ($q, $d) => $q->byDoctor($d))
             ->when($filters['department_id'] ?? null, fn ($q, $d) => $q->byDepartment($d))
-            ->whereNotIn('status', [AppointmentStatus::CANCELLED->value])
+            ->when(empty($filters['status']), fn ($q) => $q->whereNotIn('status', [AppointmentStatus::CANCELLED->value]))
             ->orderBy('appointment_date')
             ->orderBy('start_time')
             ->get()

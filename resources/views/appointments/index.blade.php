@@ -16,7 +16,7 @@
 </x-page-header>
 
     {{-- Stats Cards --}}
-    <div class="row mb-4">
+    <div class="row mb-0">
         <div class="col-xl-2 col-md-4 col-sm-6">
             <div class="card">
                 <div class="card-body text-center">
@@ -71,9 +71,12 @@
     <x-filter-bar
         :action="route('admin.appointments.index')"
         :reset-url="route('admin.appointments.index')"
-        class="mb-4"
-        data-auto-filter-form="appointments-index"
+        class="mb-0"
+        ajax
+        ajax-target="#appointmentsIndexResults"
     >
+        <input type="hidden" name="per_page" value="{{ $filters['per_page'] ?? $appointments->perPage() }}" data-filter-per-page-input>
+
         <div class="col-md-3">
             <label class="form-label small">{{ __('common.search') }}</label>
             <input type="text" name="search" class="form-control" placeholder="{{ __('appointments.search_placeholder') }}" value="{{ $filters['search'] ?? '' }}">
@@ -120,44 +123,50 @@
             ])
         </div>
         <x-slot:actions>
-            <a href="{{ route('admin.appointments.index') }}" class="btn btn-outline-secondary btn-icon" aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}">
+            <a href="{{ route('admin.appointments.index') }}" class="btn btn-outline-secondary btn-icon" aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" data-filter-reset>
                 <i class="ti ti-x"></i>
             </a>
         </x-slot:actions>
     </x-filter-bar>
 
-    {{-- Appointments Table --}}
-    <div class="card">
-        <div class="card-body p-0">
-            <div class="p-3 pb-0">
-                <div id="appointmentIndexActionFeedback" class="alert d-none mb-0" role="alert"></div>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>{{ __('appointments.appointment_no') }}</th>
-                            <th>{{ __('common.patient') }}</th>
-                            <th>{{ __('common.doctor') }}</th>
-                            <th>{{ __('common.department') }}</th>
-                            <th>{{ __('common.date') }}</th>
-                            <th>{{ __('common.status') }}</th>
-                            <th class="text-end">{{ __('common.actions') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+    <div id="appointmentsIndexResults">
+        <div class=" pb-0">
+            <div id="appointmentIndexActionFeedback" class="alert d-none mb-0" role="alert"></div>
+        </div>
+
+        <x-data-table
+            id="appointmentsDataTable"
+            :paginator="$appointments"
+            show-summary
+            show-per-page
+            :current-per-page="$filters['per_page'] ?? $appointments->perPage()"
+            :per-page-options="[10, 25, 50, 100, 'all']"
+        >
+            <x-slot:head>
+                <tr>
+                    <th>{{ __('appointments.appointment_no') }}</th>
+                    <th>{{ __('common.patient') }}</th>
+                    <th>{{ __('common.doctor') }}</th>
+                    <!-- <th>{{ __('common.department') }}</th> -->
+                    <th>{{ __('common.date') }}</th>
+                    <th>{{ __('common.status') }}</th>
+                    <th class="text-end">{{ __('common.actions') }}</th>
+                </tr>
+            </x-slot:head>
+
                         @forelse($appointments as $appointment)
                         <tr data-appointment-row="{{ $appointment->id }}">
                             <td>
                                 <a href="{{ route('admin.appointments.show', $appointment) }}" class="fw-medium">
                                     {{ $appointment->appointment_number }}
                                 </a>
+                                <div class="small text-muted">{{ $appointment->patient->patient_number }}</div>
                             </td>
                             <td>
                                 <a href="{{ route('admin.patients.show', $appointment->patient) }}">
                                     {{ $appointment->patient->full_name ?? $appointment->patient->first_name . ' ' . $appointment->patient->last_name }}
                                 </a>
-                                <div class="small text-muted">{{ $appointment->patient->patient_number }}</div>
+                                <!-- <div class="small text-muted">{{ $appointment->patient->patient_number }}</div> -->
                                 @php
                                     $patientPhones = collect([
                                         $appointment->patient?->phone,
@@ -170,8 +179,10 @@
                                     </div>
                                 @endif
                             </td>
-                            <td>{{ $appointment->doctor?->name ?? '—' }}</td>
-                            <td>{{ $appointment->department->name }}</td>
+                            <td>{{ $appointment->doctor?->name ?? '—' }}
+                                <div class="small text-muted">{{ $appointment->department->name }}</div>
+                            </td>
+                            <!-- <td>{{ $appointment->department->name }}</td> -->
                             <td>
                                 {{ $appointment->appointment_date->format('d M Y') }}
                                 <div class="small text-muted">
@@ -285,17 +296,8 @@
                             </td>
                         </tr>
                         @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        </x-data-table>
     </div>
-
-    @if($appointments->hasPages())
-    <div class="d-flex justify-content-end mt-3">
-        {{ $appointments->withQueryString()->links() }}
-    </div>
-    @endif
 @endsection
 
 @push('scripts')
@@ -312,29 +314,6 @@ document.addEventListener('DOMContentLoaded', function () {
         ];
     @endphp
     const i18n = @json($appointmentIndexI18nData);
-    const filterForm = document.querySelector('[data-auto-filter-form="appointments-index"]');
-    if (filterForm) {
-        let filterTimer = null;
-        const searchInput = filterForm.querySelector('input[name="search"]');
-
-        filterForm.querySelectorAll('select').forEach(function (select) {
-            select.addEventListener('change', function () {
-                filterForm.requestSubmit();
-            });
-        });
-
-        if (searchInput) {
-            searchInput.addEventListener('input', function () {
-                window.clearTimeout(filterTimer);
-                filterTimer = window.setTimeout(function () {
-                    filterForm.requestSubmit();
-                }, 400);
-            });
-        }
-    }
-
-    const feedback = document.getElementById('appointmentIndexActionFeedback');
-    const forms = document.querySelectorAll('.js-appointment-action-form');
     const statusColors = {
         scheduled: 'secondary',
         confirmed: 'info',
@@ -345,11 +324,10 @@ document.addEventListener('DOMContentLoaded', function () {
         cancelled: 'danger',
     };
 
-    if (!feedback || !forms.length) {
-        return;
-    }
-
     function showFeedback(type, html) {
+        const feedback = document.getElementById('appointmentIndexActionFeedback');
+        if (!feedback) return;
+
         feedback.className = 'alert alert-' + type;
         feedback.innerHTML = html;
         feedback.classList.remove('d-none');
@@ -375,59 +353,60 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    forms.forEach(function (form) {
-        form.addEventListener('submit', async function (event) {
-            event.preventDefault();
+    document.addEventListener('submit', async function (event) {
+        const form = event.target.closest('.js-appointment-action-form');
+        if (!form) return;
 
-            const submitButton = form.querySelector('button[type="submit"]');
-            const originalHtml = submitButton ? submitButton.innerHTML : '';
+        event.preventDefault();
 
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalHtml = submitButton ? submitButton.innerHTML : '';
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="ti ti-loader me-1"></i>' + i18n.working;
+        }
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: new FormData(form),
+            });
+
+            const payload = (response.headers.get('content-type') || '').includes('application/json')
+                ? await response.json()
+                : {};
+
+            if (!response.ok) {
+                showFeedback('danger', payload.message || i18n.unableCompleteAction);
+                return;
+            }
+
+            const followUp = form.dataset.followUp === 'visit'
+                ? (payload.visit_redirect_url || payload.redirect_url)
+                : payload.redirect_url;
+
+            updateRowState(form, payload);
+
+            showFeedback(
+                'success',
+                '<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">'
+                    + '<div><strong>' + (payload.message || i18n.updatedSuccessfully) + '</strong></div>'
+                    + (followUp ? '<div><a href="' + followUp + '" class="btn btn-sm btn-success">' + i18n.open + '</a></div>' : '')
+                    + '</div>'
+            );
+        } catch (error) {
+            showFeedback('danger', i18n.networkErrorAction);
+        } finally {
             if (submitButton) {
-                submitButton.disabled = true;
-                submitButton.innerHTML = '<i class="ti ti-loader me-1"></i>' + i18n.working;
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalHtml;
             }
-
-            try {
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                    body: new FormData(form),
-                });
-
-                const payload = (response.headers.get('content-type') || '').includes('application/json')
-                    ? await response.json()
-                    : {};
-
-                if (!response.ok) {
-                    showFeedback('danger', payload.message || i18n.unableCompleteAction);
-                    return;
-                }
-
-                const followUp = form.dataset.followUp === 'visit'
-                    ? (payload.visit_redirect_url || payload.redirect_url)
-                    : payload.redirect_url;
-
-                updateRowState(form, payload);
-
-                showFeedback(
-                    'success',
-                    '<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">'
-                        + '<div><strong>' + (payload.message || i18n.updatedSuccessfully) + '</strong></div>'
-                        + (followUp ? '<div><a href="' + followUp + '" class="btn btn-sm btn-success">' + i18n.open + '</a></div>' : '')
-                        + '</div>'
-                );
-            } catch (error) {
-                showFeedback('danger', i18n.networkErrorAction);
-            } finally {
-                if (submitButton) {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalHtml;
-                }
-            }
-        });
+        }
     });
 });
 </script>

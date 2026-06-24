@@ -89,7 +89,16 @@ class AppointmentController extends Controller
      */
     public function show(Appointment $appointment)
     {
-        $appointment->load(['patient', 'doctor', 'department', 'visit', 'createdByUser', 'cancelledByUser']);
+        $appointment->load([
+            'patient',
+            'doctor',
+            'department',
+            'visit',
+            'visitInsurance.insuranceProvider',
+            'visitInsurance.insuranceTier',
+            'createdByUser',
+            'cancelledByUser',
+        ]);
 
         return view('appointments.show', compact('appointment'));
     }
@@ -257,13 +266,15 @@ class AppointmentController extends Controller
 
         $doctors = User::role('Doctor')->orderBy('first_name')->get();
         $departments = Department::active()->orderBy('name')->get();
+        $statuses = AppointmentStatus::cases();
 
-        return view('appointments.calendar', compact('calendarData', 'from', 'to', 'doctors', 'departments', 'filters'));
+        return view('appointments.calendar', compact('calendarData', 'from', 'to', 'doctors', 'departments', 'statuses', 'filters'));
     }
 
     private function normalizedDateFilters(Request $request, bool $expandTodayRange = false): array
     {
         $filters = $request->all();
+        $filters['per_page'] = $this->normalizePerPage($filters['per_page'] ?? null);
         $dateRange = trim((string) ($filters['date_range'] ?? ''));
 
         if ($dateRange !== '') {
@@ -307,10 +318,22 @@ class AppointmentController extends Controller
         return $filters;
     }
 
+    private function normalizePerPage(mixed $value): int|string
+    {
+        if (is_string($value) && strtolower($value) === 'all') {
+            return 'all';
+        }
+
+        $perPage = (int) $value;
+        $allowed = [10, 25, 50, 100];
+
+        return in_array($perPage, $allowed, true) ? $perPage : 10;
+    }
+
     private function applyDefaultAppointmentRange(array &$filters): void
     {
         $filters['date_from'] = today()->subDays(3)->toDateString();
-        $filters['date_to'] = today()->addDays(11)->toDateString();
+        $filters['date_to'] = today()->addDays(10)->toDateString();
     }
 
     private function isTodayOnlyRange(array $filters): bool

@@ -153,7 +153,7 @@
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h6 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>{{ __('visits.visit_details') }}</h6>
-                
+
                 @can('visits.preview')
                 <a href="{{ route('admin.visits.preview', $visit) }}" class="btn btn-outline-info btn-md">
                     <i class="ti ti-eye-search me-1"></i>{{ __('visits.preview_visit_btn') }}
@@ -213,7 +213,7 @@
                 {{-- @if($triage->triage_score)
                     <x-status-badge :status="$triage->triage_score" />
                 @endif --}}
-                
+
                 <div>
                     <a href="{{ route('admin.triage.show', $visit) }}" class="btn btn-outline-info btn-sm">
                         <i class="ti ti-eye me-1"></i>{{ __('visits.full_triage_report') }}
@@ -673,7 +673,7 @@
                                     </div>
                                 </td>
                                 {{-- <td class="text-end fw-semibold small">&#8373;{{ number_format($selectedPrice, 2) }}</td> --}}
-                                
+
                                 <td class="text-end">
                                     @if($item->cash_price > $selectedPrice)
                                     <div class="small text-muted text-decoration-line-through">&#8373;{{ number_format($item->cash_price, 2) }}</div>
@@ -723,173 +723,7 @@
     <!-- Right Column — Patient Card -->
     <div class="col-lg-4">
         <!-- Patient Card -->
-        @include('partials.patient-card', [
-            'patient' => $visit->patient,
-            'visit'   => $visit,
-            // 'ins'   => $true,
-        ])
-
-        @php
-            $activeVisitInsurance = $visit->visitInsurance;
-            $activeInsuranceProvider = $activeVisitInsurance?->insuranceProvider;
-            $activeInsuranceTier = $activeVisitInsurance?->insuranceTier;
-            $activeInsuranceIsReal = $activeVisitInsurance
-                && $activeVisitInsurance->is_active
-                && $activeInsuranceProvider
-                && ! $activeInsuranceProvider->is_default;
-        @endphp
-        {{-- <div class="card mb-3">
-            <div class="card-header d-flex align-items-center justify-content-between">
-                <h6 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Visit Insurance</h6>
-                @module('insurance')
-                @can('visits.edit')
-                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#changeVisitInsuranceModal">
-                    <i class="ti ti-switch-horizontal me-1"></i>Change
-                </button>
-                @endcan
-                @endmodule
-            </div>
-            <div class="card-body">
-                <div class="d-flex align-items-start gap-2">
-                    <span class="avatar avatar-sm rounded bg-{{ $activeInsuranceIsReal ? 'success' : 'secondary' }}-subtle text-{{ $activeInsuranceIsReal ? 'success' : 'secondary' }} flex-shrink-0">
-                        <i class="ti ti-{{ $activeInsuranceIsReal ? 'shield-check' : 'cash' }}"></i>
-                    </span>
-                    <div class="min-w-0">
-                        <div class="fw-semibold">{{ $activeInsuranceProvider?->name ?? 'Cash & Carry' }}</div>
-                        @if($activeInsuranceIsReal)
-                            <div class="small text-muted">
-                                {{ $activeInsuranceTier?->name ?? 'No tier' }}
-                                @if($activeVisitInsurance?->membership_number)
-                                    <span class="mx-1">/</span>{{ $activeVisitInsurance->membership_number }}
-                                @endif
-                            </div>
-                            <span class="badge bg-{{ $activeInsuranceProvider->type?->color() ?? 'secondary' }} mt-1">
-                                {{ $activeInsuranceProvider->type?->translatedLabel() ?? ucfirst((string) $activeInsuranceProvider->type) }}
-                            </span>
-                        @else
-                            <div class="small text-muted">New billed items use cash pricing.</div>
-                        @endif
-                    </div>
-                </div>
-                <div class="alert alert-light border small mt-3 mb-0">
-                    Existing billed items keep the insurance snapshot they were created with. Changes here apply only to new billed items.
-                </div>
-            </div>
-        </div> --}}
-        {{-- <div class="card mb-3">
-            <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-user me-1"></i>Patient</h6>
-            </div>
-            <div class="card-body text-center">
-                @if($visit->patient->avatar)
-                    <img src="{{ asset('storage/' . $visit->patient->avatar) }}" class="avatar avatar-xl rounded-circle mb-3" alt="">
-                @else
-                    <div class="avatar avatar-xl bg-primary rounded-circle text-white mx-auto mb-3 d-flex align-items-center justify-content-center">
-                        <span class="fs-24">{{ strtoupper(substr($visit->patient->first_name, 0, 1) . substr($visit->patient->last_name, 0, 1)) }}</span>
-                    </div>
-                @endif
-                <h5 class="fw-bold mb-1">{{ $visit->patient->full_name }}</h5>
-                <p class="text-muted mb-2">{{ $visit->patient->patient_number }}</p>
-
-                <div class="d-flex justify-content-center gap-2 mb-3">
-                    @if($visit->patient->blood_group)
-                        <span class="badge bg-danger">{{ $visit->patient->blood_group->translatedLabel() }}</span>
-                    @endif
-                </div>
-
-                <div class="text-start">
-                    <div class="d-flex justify-content-between py-2 border-bottom">
-                        <span class="text-muted">Age</span>
-                        <span class="fw-medium">{{ $visit->patient_age ?? $visit->patient->age }} years</span>
-                    </div>
-                    <div class="d-flex justify-content-between py-2 border-bottom">
-                        <span class="text-muted">Gender</span>
-                        <span class="fw-medium">{{ $visit->patient->gender?->translatedLabel() ?? '—' }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between py-2 border-bottom">
-                        <span class="text-muted">Phone</span>
-                        <span class="fw-medium">{{ $visit->patient->phone }}</span>
-                    </div>
-                    @if($visit->patient->allergies)
-                    <div class="mt-3">
-                        <span class="text-muted small">Allergies</span>
-                        <div class="alert alert-warning py-1 px-2 mt-1 mb-0 small">{{ $visit->patient->allergies }}</div>
-                    </div>
-                    @endif
-                    @if($visit->patient->chronic_conditions)
-                    <div class="mt-2">
-                        <span class="text-muted small">Chronic Conditions</span>
-                        <div class="alert alert-info py-1 px-2 mt-1 mb-0 small">{{ $visit->patient->chronic_conditions }}</div>
-                    </div>
-                    @endif
-                </div>
-
-                <a href="{{ route('admin.patients.show', $visit->patient) }}" class="btn btn-outline-primary btn-sm mt-3 w-100">
-                    <i class="ti ti-external-link me-1"></i>View Full Profile
-                </a>
-            </div>
-        </div> --}}
-
-        <!-- Insurance -->
-        {{-- <div class="card mb-3">
-            <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Insurance</h6>
-            </div>
-            <div class="card-body">
-            @if($insuranceInfo)
-                <div class="row">
-                    <div class="col-6 mb-2">
-                        <label class="text-muted small mb-1">Provider</label>
-                        <div class="fw-medium small">{{ $insuranceInfo['provider']?->name ?? 'Cash & Carry' }}</div>
-                        @if($insuranceInfo['provider'])
-                        <span class="badge bg-{{ $insuranceInfo['provider']->type->color() }} mt-1">{{ $insuranceInfo['provider']->type->translatedLabel() }}</span>
-                        @endif
-                    </div>
-                    <div class="col-6 mb-2">
-                        <label class="text-muted small mb-1">Coverage</label>
-                        <div class="fw-medium small">{{ $insuranceInfo['coverage_percentage'] ?? 0 }}%</div>
-                        @php
-                            $memberTypeVal = $insuranceInfo['member_type'] ?? 'holder';
-                            $memberTypeBadge = $memberTypeVal === 'beneficiary' ? 'warning' : 'info';
-                            $memberTypeLabel = $memberTypeVal === 'beneficiary' ? 'Beneficiary' : 'Card Holder';
-                        @endphp
-                        <span class="badge bg-{{ $memberTypeBadge }}">{{ $memberTypeLabel }}</span>
-                    </div>
-                    <div class="col-6 mb-2">
-                        <label class="text-muted small mb-1">Annual Remaining</label>
-                        <div class="fw-bold small {{ ($insuranceInfo['remaining_annual'] ?? 0) > 0 ? 'text-success' : 'text-danger' }}">
-                            @if($insuranceInfo['annual_limit'])
-                                &#8373;{{ number_format($insuranceInfo['remaining_annual'] ?? 0, 2) }}
-                            @else
-                                Unlimited
-                            @endif
-                        </div>
-                    </div>
-                    <div class="col-6 mb-2">
-                        <label class="text-muted small mb-1">Membership #</label>
-                        <div class="fw-medium small">{{ $insuranceInfo['insurance']?->membership_number ?? '—' }}</div>
-                    </div>
-                </div>
-                @if($insuranceInfo['annual_limit'])
-                @php
-                    $usagePercent = $insuranceInfo['annual_limit'] > 0 ? min(100, round(($insuranceInfo['used_this_year'] / $insuranceInfo['annual_limit']) * 100)) : 0;
-                @endphp
-                <div class="d-flex justify-content-between small text-muted mb-1">
-                    <span>Annual: &#8373;{{ number_format($insuranceInfo['used_this_year'] ?? 0, 2) }} / &#8373;{{ number_format($insuranceInfo['annual_limit'], 2) }}</span>
-                    <span>{{ $usagePercent }}%</span>
-                </div>
-                <div class="progress" style="height: 5px;">
-                    <div class="progress-bar {{ $usagePercent > 80 ? 'bg-danger' : ($usagePercent > 50 ? 'bg-warning' : 'bg-success') }}" style="width: {{ $usagePercent }}%"></div>
-                </div>
-                @endif
-            @else
-                <div class="text-center py-2">
-                    <span class="badge bg-danger px-3 py-2 mb-1">Cash &amp; Carry</span>
-                    <p class="text-muted mb-0 small">No insurance — patient pays full amount.</p>
-                </div>
-            @endif
-            </div>
-        </div> --}}
+        <x-patient-card :patient="$visit->patient" :visit="$visit" />
 
         <!-- Queue Info -->
         @if($visit->queueEntries->isNotEmpty())
@@ -986,7 +820,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Status Timeline -->
         <div class="card">
             <div class="card-header">
