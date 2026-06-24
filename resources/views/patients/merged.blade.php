@@ -2,11 +2,10 @@
 @section('title', __('patients.merged_folder_title'))
 
 @section('content')
-<div class="d-flex mb-3">
-    <h6 class="fw-bold mb-0 d-flex align-items-center">
-        <a href="{{ route('admin.patients.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>{{ __('patients.title') }}</a>
-    </h6>
-</div>
+<x-page-header-back
+    :title="__('patients.title')"
+    :href="route('admin.patients.index')"
+/>
 
 <div class="alert alert-warning d-flex align-items-start" role="alert">
     <i class="ti ti-lock fs-20 me-3 flex-shrink-0 mt-1"></i>

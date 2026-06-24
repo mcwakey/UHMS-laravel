@@ -2,11 +2,15 @@
 @section('title', __('patients.merge_patients'))
 
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-    <div>
+<div class="d-flex flex-wrap align-items-center justify-content-between">
+<x-page-header-back
+    :title="__('patients.merge_patients')"
+    :href="route('admin.patients.index')"
+/>
+    <!-- <div>
         <h4 class="fw-bold mb-1">{{ __('patients.merge_patients') }}</h4>
         <p class="text-muted mb-0">{{ __('patients.merge_subtitle') }}</p>
-    </div>
+    </div> -->
     <a href="{{ route('admin.patients.merge.logs') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-history me-1"></i>{{ __('patients.audit_logs') }}</a>
 </div>
 

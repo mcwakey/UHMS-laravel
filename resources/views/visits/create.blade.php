@@ -2,20 +2,10 @@
 @section('title', __('visits.create_new_visit'))
 
 @section('content')
-<!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
-    <h6 class="fw-bold mb-0 d-flex align-items-center">
-        <a href="{{ route('admin.visits.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>{{ __('visits.create_new_visit') }}</a>
-    </h6>
-    {{-- <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"></h4>
-    </div> --}}
-    {{-- <div>
-        <a href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary btn-md">
-            <i class="ti ti-arrow-left me-1"></i>Back to Visits
-        </a>
-    </div> --}}
-</div>
+<x-page-header-back
+    :title="__('visits.create_new_visit')"
+    :href="route('admin.visits.index')"
+/>
 
 @if(session('error'))
 <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -32,293 +22,21 @@
     <div class="row">
         <!-- Left Column - Patient, Insurance, Visit Details -->
         <div class="col-lg-8">
-            <!-- Patient Search -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-search me-1"></i>{{ __('visits.select_patient_heading') }}</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label">{{ __('visits.search_patient_label') }} <span class="text-danger">*</span></label>
-                        <select id="patientSearch"
-                                class="form-select form-select-lg @error('patient_id') is-invalid @enderror"
-                                data-placeholder="{{ __('visits.search_patient_placeholder') }}"
-                                style="width:100%">
-                            <option value=""></option>
-                            @if($selectedPatient)
-                                <option value="{{ $selectedPatient->id }}" selected>{{ $selectedPatient->patient_number }} - {{ $selectedPatient->full_name }}</option>
-                            @endif
-                        </select>
-                        <input type="hidden" name="patient_id" id="patientId" value="{{ $selectedPatient?->id ?? old('patient_id') }}">
-                        @error('patient_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
+            <x-patient-selection-card
+                :selected-patient="$selectedPatient"
+                :can-override-active-admission="$canOverrideActiveAdmission"
+            />
 
-                    <!-- Selected Patient Info Card -->
-                    <div id="patientInfo" class="{{ $selectedPatient ? '' : 'd-none' }}">
-                        @if($selectedPatient?->is_deceased)
-                        <div class="alert alert-danger d-flex align-items-center gap-2 mb-2">
-                            <i class="ti ti-skull fs-18 flex-shrink-0"></i>
-                            <span><strong>{{ __('visits.patient_deceased_warning') }}</strong></span>
-                        </div>
-                        @endif
-                        <div id="deceasedWarning" class="alert alert-danger d-flex align-items-center gap-2 mb-2 d-none">
-                            <i class="ti ti-skull fs-18 flex-shrink-0"></i>
-                            <span><strong>{{ __('visits.patient_deceased_warning') }}</strong></span>
-                        </div>
-                        @php $selectedActiveAdmission = $selectedPatient?->activeAdmission; @endphp
-                        <div id="activeAdmissionWarning" class="alert alert-warning mb-2 {{ $selectedActiveAdmission ? '' : 'd-none' }}">
-                            <div class="d-flex align-items-start gap-2">
-                                <i class="ti ti-bed fs-18 flex-shrink-0"></i>
-                                <div>
-                                    <div class="fw-semibold">{{ __('visits.currently_admitted') }}</div>
-                                    <div class="small" id="activeAdmissionText">
-                                        @if($selectedActiveAdmission)
-                                            Admission {{ $selectedActiveAdmission->admission_number }}{{ $selectedActiveAdmission->bed ? ' - '.$selectedActiveAdmission->bed->ward?->name.' / Bed '.$selectedActiveAdmission->bed->bed_number : '' }}.
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                            @if($canOverrideActiveAdmission)
-                                <div class="mt-2">
-                                    <label class="form-label small mb-1" for="admissionOverrideReason">{{ __('visits.override_reason') }}</label>
-                                    <textarea class="form-control" id="admissionOverrideReason" name="admission_override_reason" rows="2" placeholder="{{ __('visits.override_reason') }}">{{ old('admission_override_reason') }}</textarea>
-                                </div>
-                            @else
-                                <div class="small mt-2">{{ __('visits.complete_admission_first') }}</div>
-                            @endif
-                        </div>
-                        <div class="alert alert-light border d-flex align-items-center gap-3 mb-0">
-                            <div class="avatar avatar-lg bg-primary rounded-circle text-white d-flex align-items-center justify-content-center">
-                                <span id="patientInitial">{{ $selectedPatient ? strtoupper(substr($selectedPatient->first_name, 0, 1)) : '' }}</span>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="mb-0" id="patientName">{{ $selectedPatient?->full_name }} &bull; {{ $selectedPatient?->gender }}</h6>
-                                <small class="text-muted">
-                                    <span id="patientNumber">{{ $selectedPatient?->patient_number }}</span>
-                                    &bull; <span id="patientPhone">{{ $selectedPatient?->phone }}</span>
-                                    <span id="patientLastVisit" class="{{ $selectedPatient && $selectedPatient->visits()->exists() ? '' : 'd-none' }}">
-                                        &bull; {{ __('visits.last_visit') }} <strong>{{ $selectedPatient ? ($selectedPatient->visits()->latest('visit_date')->value('visit_date') ? \Carbon\Carbon::parse($selectedPatient->visits()->latest('visit_date')->value('visit_date'))->format('d M Y') : '') : '' }}</strong>
-                                    </span>
-                                </small>
-                            </div>
-                            <button aria-label="Close" title="Close" type="button" class="btn btn-sm btn-outline-danger" onclick="clearPatient()">
-                                <i class="ti ti-x"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <x-insurance-selection-card
+                :can-add-insurance="auth()->user()?->can('patients.edit') ?? false"
+            />
 
-            <!-- Insurance Selection -->
-            <div class="card d-none" id="insuranceCard">
-                <div class="card-header d-flex align-items-center justify-content-between">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>{{ __('visits.insurance_heading') }}</h5>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">{{ __('visits.insurance_fallback_badge') }}</span>
-                        @can('patients.edit')
-                            <button type="button" class="btn btn-sm btn-outline-primary" id="addInsuranceBtn">
-                                <i class="ti ti-plus me-1"></i>{{ __('visits.add_insurance_btn') }}
-                            </button>
-                        @endcan
-                    </div>
-                </div>
-                <div class="card-body">
-                    <!-- Insurance List (radio selection) -->
-                    <div id="insuranceList" class="mb-3">
-                        <div class="text-muted text-center py-3">
-                            <i class="ti ti-loader me-1"></i>{{ __('visits.loading_insurances') }}
-                        </div>
-                    </div>
-
-                    <input type="hidden" name="visit_insurance_id" id="visitInsuranceId" value="">
-                    <input type="hidden" name="insurance_verification_id" id="insuranceVerificationId" value="">
-
-                    {{-- Provider-agnostic verification panel.
-                         Visibility / inputs are driven entirely by the response from
-                         /admin/insurance/verify; no provider names appear here. --}}
-                    <div id="verificationPanel" class="border rounded p-3 mt-3 d-none">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <h6 class="mb-0"><i class="ti ti-shield-lock me-1"></i>{{ __('visits.verification') }}</h6>
-                            <span class="badge bg-secondary" id="verificationStatusBadge">{{ __('visits.not_started') }}</span>
-                        </div>
-                        <div class="text-muted small mb-2" id="verificationProviderMeta">&mdash;</div>
-
-                        <div class="row g-2 align-items-end" id="verificationCodeRow" style="display:none;">
-                            <div class="col-sm-8">
-                                <label class="form-label mb-1">{{ __('visits.ccc_code_label') }}</label>
-                                <input type="text" id="verificationReferenceInput" name="verification_reference_code"
-                                       class="form-control" placeholder="{{ __('visits.ccc_code_label') }}"
-                                       autocomplete="off">
-                            </div>
-                            <div class="col-sm-4 d-grid">
-                                <button type="button" class="btn btn-primary" id="runVerificationBtn">
-                                    <i class="ti ti-shield-check me-1"></i>{{ __('common.confirm') }}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="row g-2 align-items-end mt-1" id="verificationManualRow" style="display:none;">
-                            <div class="col-12 d-grid">
-                                <button type="button" class="btn btn-outline-primary btn-sm" id="runVerificationBtn2">
-                                    <i class="ti ti-shield-check me-1"></i>{{ __('common.confirm') }}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="verificationFeedback" class="small mt-2"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Visit Details -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>{{ __('visits.visit_details_heading') }}</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">{{ __('visits.visit_type_label') }} <span class="text-danger">*</span></label>
-                            <select name="visit_type" class="form-select @error('visit_type') is-invalid @enderror" required>
-                                <option value="">{{ __('visits.select_type_opt') }}</option>
-                                @foreach(\App\Enums\VisitType::cases() as $type)
-                                    <option value="{{ $type->value }}" {{ old('visit_type') == $type->value ? 'selected' : '' }}>{{ $type->translatedLabel() }}</option>
-                                @endforeach
-                            </select>
-                            @error('visit_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">{{ __('visits.priority_label') }} <span class="text-danger">*</span></label>
-                            <select name="priority" class="form-select @error('priority') is-invalid @enderror" required>
-                                @foreach(\App\Enums\Priority::cases() as $priority)
-                                    <option value="{{ $priority->value }}" {{ old('priority', 'normal') == $priority->value ? 'selected' : '' }}>{{ $priority->translatedLabel() }}</option>
-                                @endforeach
-                            </select>
-                            @error('priority')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">{{ __('visits.visit_date_label') }}</label>
-                            <input type="date" name="visit_date" class="form-control @error('visit_date') is-invalid @enderror" value="{{ old('visit_date', date('Y-m-d')) }}" id="visitDate">
-                            @error('visit_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            <small class="text-muted" id="schedulingHint">{{ __('visits.today_scheduling_hint') }}</small>
-                        </div>
-                    </div>
-
-                    {{-- Scheduling Fields (shown when future date selected) --}}
-                    <div class="row" id="schedulingFields" style="display: none;">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">{{ __('visits.start_time_label') }}</label>
-                            <input type="time" name="start_time" class="form-control @error('start_time') is-invalid @enderror" value="{{ old('start_time') }}">
-                            @error('start_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">{{ __('visits.end_time_label') }}</label>
-                            <input type="time" name="end_time" class="form-control @error('end_time') is-invalid @enderror" value="{{ old('end_time') }}">
-                            @error('end_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">{{ __('visits.consultation_mode_label') }}</label>
-                            <select name="consultation_mode" class="form-select @error('consultation_mode') is-invalid @enderror">
-                                @foreach(\App\Enums\ConsultationMode::cases() as $mode)
-                                    <option value="{{ $mode->value }}" {{ old('consultation_mode', 'in_person') == $mode->value ? 'selected' : '' }}>{{ $mode->translatedLabel() }}</option>
-                                @endforeach
-                            </select>
-                            @error('consultation_mode')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">{{ __('visits.chief_complaint_field') }}</label>
-                            <textarea name="chief_complaint" class="form-control @error('chief_complaint') is-invalid @enderror" rows="3" placeholder="{{ __('visits.complaint_placeholder') }}">{{ old('chief_complaint') }}</textarea>
-                            @error('chief_complaint')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">{{ __('visits.notes_field') }}</label>
-                            <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" rows="3" placeholder="{{ __('visits.notes_placeholder') }}">{{ old('notes') }}</textarea>
-                            @error('notes')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <x-visit-details-card />
         </div>
 
         <!-- Right Column - Department, Services & Submit -->
         <div class="col-lg-4">
-            <!-- Department, Services & Doctor Selection -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-building-hospital me-1"></i>{{ __('visits.dept_services_heading') }}</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">{{ __('visits.department_filter_label') }} <small class="text-muted">{{ __('visits.dept_filters_services') }}</small></label>
-                            <select id="departmentSelect" class="form-select @error('department_id') is-invalid @enderror" data-placeholder="{{ __('visits.search_dept_placeholder') }}" style="width:100%">
-                                <option value="">{{ __('visits.select_department') }}</option>
-                                @foreach($departments as $dept)
-                                    <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">{{ __('visits.assign_doctor_label') }} <small class="text-muted">{{ __('visits.optional_label') }}</small></label>
-                            <select id="doctorSelect" class="form-select" data-placeholder="{{ __('visits.search_doctor_placeholder') }}" style="width:100%" disabled>
-                                <option value="">{{ __('visits.select_dept_first') }}</option>
-                            </select>
-                            {{-- <div id="doctorSelectHelp" class="form-text">Doctors load from specialties linked to the selected department.</div> --}}
-                        </div>
-                    </div>
-
-                    <!-- Service Selection -->
-                    <div class="mb-3">
-                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">
-                            <label class="form-label mb-0">{{ __('visits.available_services_label') }}</label>
-                            <div class="form-check form-switch mb-0">
-                                <input class="form-check-input" type="checkbox" role="switch" id="showExtraServices">
-                                <label class="form-check-label small text-muted" for="showExtraServices">{{ __('visits.show_other_services') }}</label>
-                            </div>
-                        </div>
-                        <div id="servicesList" class="border rounded p-3 bg-light">
-                            <div class="text-muted text-center py-3" id="servicesPlaceholder">
-                                <i class="ti ti-list-search me-1"></i>{{ __('visits.select_dept_load_services') }}
-                            </div>
-                            <div id="servicesContent" class="d-none">
-                                <div class="input-group mb-2">
-                                    <span class="input-group-text"><i class="ti ti-search"></i></span>
-                                    <input type="text" id="serviceFilter" class="form-control" placeholder="{{ __('visits.filter_services') }}">
-                                </div>
-                                <div id="servicesItems" style="max-height: 280px; overflow-y: auto;"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Selected Services (Department Sessions + Billing Lines) -->
-                    <div id="selectedServicesCard" class="d-none">
-                        <label class="form-label fw-bold"><i class="ti ti-receipt me-1"></i>{{ __('visits.selected_services_label') }}</label>
-                        <div id="routeDoctorSummary" class="small text-muted mb-2"></div>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-hover table-bordered mb-0" id="billingTable">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>{{ __('visits.service_name') }}</th>
-                                        <th class="text-end" style="width: 120px;">{{ __('visits.price_col') }}</th>
-                                        <th class="text-center" style="width: 50px;">{{ __('visits.action_col') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="billingBody"></tbody>
-                                <tfoot>
-                                    <tr class="table-light fw-bold">
-                                        <td class="text-end text-primary">{{ __('visits.overall_total_label') }}</td>
-                                        <td class="text-end text-primary" id="totalAmount">&#8373;0.00</td>
-                                        <td></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <x-department-services-card :departments="$departments" />
 
             <!-- Quick Info -->
             <div class="card bg-light" id="walkInInfo">
@@ -367,160 +85,17 @@
     'formAction' => '#',
 ])
 
-<div class="modal fade" id="insuranceModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form id="insuranceForm" autocomplete="off">
-                @csrf
-                <input type="hidden" id="insuranceFormPatientId" name="_patient_id">
-                <input type="hidden" id="insuranceFormInsuranceId" name="_insurance_id">
-
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold">
-                        <i class="ti ti-shield-plus me-1"></i><span id="insuranceModalTitle">{{ __('visits.add_insurance_title') }}</span>
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="insuranceFormFeedback" class="alert d-none" role="alert"></div>
-
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">{{ __('visits.insurance_provider_label') }} <span class="text-danger">*</span></label>
-                            <select name="insurance_provider_id" id="insuranceProviderSelect" class="form-select" required>
-                                <option value="">{{ __('visits.select_provider_opt') }}</option>
-                                @foreach($insuranceProviders as $prov)
-                                    <option value="{{ $prov->id }}"
-                                            data-type="{{ $prov->type?->value }}"
-                                            data-tiers='@json($prov->tiers->map(fn($t) => ["id"=>$t->id, "name"=>$t->name]))'>
-                                        {{ $prov->name }} ({{ $prov->type?->translatedLabel() }})
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">{{ __('visits.tier_label') }}</label>
-                            <select name="insurance_tier_id" id="insuranceTierSelect" class="form-select">
-                                <option value="">{{ __('visits.tier_default') }}</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">{{ __('visits.membership_number_label') }}</label>
-                            <input type="text" name="membership_number" class="form-control" maxlength="50">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">{{ __('visits.policy_number_label') }}</label>
-                            <input type="text" name="policy_number" class="form-control" maxlength="50">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">{{ __('visits.ccc_code_label') }} <small class="text-muted">{{ __('visits.optional_label') }}</small></label>
-                            <input type="text" name="ccc_code" class="form-control" maxlength="64">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">{{ __('visits.member_type_label') }}</label>
-                            <select name="member_type" class="form-select">
-                                <option value="holder" selected>{{ __('visits.card_holder_opt') }}</option>
-                                <option value="beneficiary">{{ __('visits.beneficiary_opt') }}</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">{{ __('visits.expiry_date_label') }}</label>
-                            <input type="date" name="expiry_date" class="form-control">
-                        </div>
-
-                        <div class="col-12">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="is_primary" value="1" id="insIsPrimary">
-                                <label class="form-check-label" for="insIsPrimary">{{ __('visits.set_primary_label') }}</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('visits.cancel_btn') }}</button>
-                    <button type="submit" class="btn btn-primary" id="insuranceFormSaveBtn">
-                        <i class="ti ti-device-floppy me-1"></i>{{ __('visits.save_insurance_btn') }}
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<x-patient-insurance-form-modal :insurance-providers="$insuranceProviders" />
 @endcan
 @endsection
 
 @push('scripts')
 @php
-$visitI18nData = [
-    'search_patient_placeholder' => __('visits.search_patient_placeholder'),
-    'search_dept_placeholder'    => __('visits.search_dept_placeholder'),
-    'search_doctor_placeholder'  => __('visits.search_doctor_placeholder'),
-    'select_dept_load_services'  => __('visits.select_dept_load_services'),
-    'loading_services_doctors'   => __('visits.loading_services_doctors'),
-    'no_services_dept'           => __('visits.no_services_dept'),
-    'no_consult_services'        => __('visits.no_consult_services'),
-    'failed_load_dept'           => __('visits.failed_load_dept'),
-    'loading_insurances'         => __('visits.loading_insurances'),
-    'failed_load_insurances'     => __('visits.failed_load_insurances'),
-    'no_insurances_cash'         => __('visits.no_insurances_cash'),
-    'no_phone'                   => __('visits.no_phone'),
-    'last_visit_label'           => __('visits.last_visit_label'),
-    'member_label'               => __('visits.member_label'),
-    'expires_label'              => __('visits.expires_label'),
-    'expires_today'              => __('visits.expires_today'),
-    'no_expiry'                  => __('visits.no_expiry'),
-    'valid_status'               => __('visits.valid_status'),
-    'expired_status'             => __('visits.expired_status'),
-    'inactive_status'            => __('visits.inactive_status'),
-    'renew_btn'                  => __('visits.renew_btn'),
-    'edit_btn'                   => __('visits.edit_btn'),
-    'beneficiary_label'          => __('visits.beneficiary_opt'),
-    'card_holder_label'          => __('visits.card_holder_opt'),
-    'admission_prefix'           => __('visits.admission_prefix'),
-    'bed_prefix'                 => __('visits.bed_prefix'),
-    'filter_services'            => __('visits.filter_services'),
-    'dept_session_label'         => __('visits.dept_session_label'),
-    'dept_total_label'           => __('visits.dept_total_label'),
-    'doctor_prefix'              => __('visits.doctor_prefix'),
-    'doctor_unassigned'          => __('visits.doctor_unassigned'),
-    'assign_doctor_opt'          => __('visits.assign_doctor_opt'),
-    'select_dept_first'          => __('visits.select_dept_first'),
-    'consult_sessions_note'      => __('visits.consult_sessions_note'),
-    'unassigned_doctor'          => __('visits.unassigned_doctor'),
-    'created_successfully'       => __('visits.created_successfully'),
-    'open_visit'                 => __('visits.open_visit'),
-    'create_another'             => __('visits.create_another'),
-    'current_status'             => __('visits.current_status'),
-    'correct_fields'             => __('visits.correct_fields'),
-    'select_patient_first'       => __('visits.select_patient_first'),
-    'saving'                     => __('visits.saving'),
-    'verifying'                  => __('visits.verifying'),
-    'schedule_visit_btn'         => __('visits.schedule_visit_btn'),
-    'create_visit_btn'           => __('visits.create_visit_btn'),
-    'tier_default'               => __('visits.tier_default'),
-    'add_insurance_title'        => __('visits.add_insurance_title'),
-    'failed_create_visit'        => __('visits.failed_create_visit'),
-    'network_error_visit'        => __('visits.network_error_visit'),
-    'verification_failed'        => __('visits.verification_failed'),
-    'select_patient_ins_update'  => __('visits.select_patient_ins_update'),
-    'insurance_saved'            => __('visits.insurance_saved'),
-    'insurance_updated'          => __('visits.insurance_updated'),
-    'correct_fields_short'       => __('visits.correct_fields_short'),
-    'failed_save_insurance'      => __('visits.failed_save_insurance'),
-    'failed_update_insurance'    => __('visits.failed_update_insurance'),
-    'network_error_insurance'    => __('visits.network_error_insurance'),
-    'network_error_ins_update'   => __('visits.network_error_ins_update'),
-    'select_type_first'          => __('visits.select_type_first'),
-    'select_provider_first'      => __('visits.select_provider_first'),
-];
+    $visitI18n = collect(trans('visits.create_js_keys'))
+        ->mapWithKeys(fn ($translationKey, $jsKey) => [$jsKey => trans($translationKey)])
+        ->all();
 @endphp
-<script>const visitI18n = @json($visitI18nData);</script>
+<script>const visitI18n = @json($visitI18n);</script>
 @include('patients.partials.insurance-add-modal-scripts')
 @include('patients.partials.insurance-edit-modal-scripts')
 <script>

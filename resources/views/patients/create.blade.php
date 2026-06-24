@@ -3,19 +3,10 @@
 
 @section('content')
 <!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
-    <h6 class="fw-bold mb-0 d-flex align-items-center">
-        <a href="{{ route('admin.patients.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>{{ __('patients.register_patient') }}</a>
-    </h6>
-    {{-- <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"></h4>
-    </div> --}}
-    {{-- <div>
-        <a href="{{ route('admin.patients.index') }}" class="btn btn-outline-secondary btn-md">
-            <i class="ti ti-arrow-left me-1"></i>Back to Patients
-        </a>
-    </div> --}}
-</div>
+<x-page-header-back
+    :title="__('patients.register_patient')"
+    :href="route('admin.patients.index')"
+/>
 
 @php
     $phonePattern = $countrySettings['phone_pattern'] ?? null;
@@ -27,248 +18,23 @@
 <form method="POST" action="{{ route('admin.patients.store') }}" enctype="multipart/form-data">
     @csrf
 
-    <!-- Personal Information -->
-    <div class="card">
-        <div class="card-header">
-            <h5 class="fw-bold mb-0"><i class="ti ti-user me-1"></i>{{ __('patients.personal_information') }}</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-lg-12 mb-3">
-                    <label class="form-label mb-1 fw-medium">{{ __('patients.profile_image') }}</label>
-                    <div class="d-flex align-items-start flex-wrap gap-3">
-                        <div class="avatar avatar-xxl rounded-circle bg-light text-muted d-flex align-items-center justify-content-center patient-avatar-preview" id="avatar-preview">
-                            <i class="ti ti-user-plus fs-16"></i>
-                        </div>
-                        <div class="flex-grow-1" style="max-width: 520px;">
-                            <div class="d-flex gap-2 flex-wrap">
-                                <input type="file" name="avatar" id="patientAvatarInput" class="form-control @error('avatar') is-invalid @enderror" accept="image/*" style="max-width: 300px;">
-                                <button type="button" class="btn btn-outline-secondary" id="startPatientCameraBtn">
-                                    <i class="ti ti-camera me-1"></i>{{ __('patients.use_webcam') }}
-                                </button>
-                            </div>
-                            @error('avatar')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
-                            @include('patients.partials.avatar-camera')
-                        </div>
-                    </div>
-                </div>
+    <x-patient-personal-information-card :occupations="$occupations" />
 
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">{{ __('patients.first_name') }} <span class="text-danger">*</span></label>
-                    <input type="text" name="first_name" class="form-control @error('first_name') is-invalid @enderror" value="{{ old('first_name') }}" required>
-                    @error('first_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
+    <x-patient-contact-identification-card
+        :phone-pattern="$phonePattern"
+        :phone-placeholder="$phonePlaceholder"
+    />
 
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">{{ __('patients.other_names') }}</label>
-                    <input type="text" name="other_names" class="form-control @error('other_names') is-invalid @enderror" value="{{ old('other_names') }}">
-                    @error('other_names')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
+    <x-patient-address-information-card
+        :regions="$regions"
+        :digital-address-pattern="$digitalAddressPattern"
+        :digital-address-placeholder="$digitalAddressPlaceholder"
+    />
 
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">{{ __('patients.last_name') }} <span class="text-danger">*</span></label>
-                    <input type="text" name="last_name" class="form-control @error('last_name') is-invalid @enderror" value="{{ old('last_name') }}" required>
-                    @error('last_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">{{ __('patients.date_of_birth') }} <span class="text-danger">*</span></label>
-                    <input type="date" name="date_of_birth" class="form-control @error('date_of_birth') is-invalid @enderror" value="{{ old('date_of_birth') }}" max="{{ date('Y-m-d') }}" required>
-                    @error('date_of_birth')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">{{ __('patients.gender') }} <span class="text-danger">*</span></label>
-                    <select name="gender" class="form-select @error('gender') is-invalid @enderror" required>
-                        <option value="">{{ __('patients.select_gender') }}</option>
-                        @foreach(\App\Enums\Gender::cases() as $g)
-                            <option value="{{ $g->value }}" {{ old('gender') == $g->value ? 'selected' : '' }}>{{ $g->label() }}</option>
-                        @endforeach
-                    </select>
-                    @error('gender')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">{{ __('patients.marital_status') }}</label>
-                    <select name="marital_status" class="form-select @error('marital_status') is-invalid @enderror">
-                        <option value="">{{ __('patients.select') }}</option>
-                        @foreach(\App\Enums\MaritalStatus::cases() as $ms)
-                            <option value="{{ $ms->value }}" {{ old('marital_status') == $ms->value ? 'selected' : '' }}>{{ $ms->label() }}</option>
-                        @endforeach
-                    </select>
-                    @error('marital_status')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">{{ __('patients.religion') }}</label>
-                    <select name="religion" class="form-select @error('religion') is-invalid @enderror">
-                        <option value="">{{ __('patients.select') }}</option>
-                        @foreach(['Christianity', 'Islam', 'Traditional', 'Hindu', 'Buddhist', 'Other', 'None'] as $rel)
-                            <option value="{{ $rel }}" {{ old('religion') == $rel ? 'selected' : '' }}>{{ $rel }}</option>
-                        @endforeach
-                    </select>
-                    @error('religion')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">{{ __('patients.blood_group') }}</label>
-                    <select name="blood_group" class="form-select @error('blood_group') is-invalid @enderror">
-                        <option value="">{{ __('patients.select') }}</option>
-                        @foreach(\App\Enums\BloodGroup::cases() as $bg)
-                            <option value="{{ $bg->value }}" {{ old('blood_group') == $bg->value ? 'selected' : '' }}>{{ $bg->label() }}</option>
-                        @endforeach
-                    </select>
-                    @error('blood_group')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">{{ __('patients.occupation') }}</label>
-                    <select name="occupation" class="form-select patient-searchable-select @error('occupation') is-invalid @enderror" data-placeholder="{{ __('patients.select_occupation') }}">
-                        <option value="">{{ __('patients.select_occupation') }}</option>
-                        @foreach($occupations as $occ)
-                            <option value="{{ $occ }}" {{ old('occupation') == $occ ? 'selected' : '' }}>{{ $occ }}</option>
-                        @endforeach
-                    </select>
-                    @error('occupation')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Contact & Identification -->
-    <div class="card">
-        <div class="card-header">
-            <h5 class="fw-bold mb-0"><i class="ti ti-phone me-1"></i>{{ __('patients.contact_identification') }}</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">{{ __('patients.phone_number') }} <span class="text-danger">*</span></label>
-                    <input type="tel" name="phone" class="form-control js-phone-mask @error('phone') is-invalid @enderror" value="{{ old('phone') }}" placeholder="{{ $phonePlaceholder }}" inputmode="tel" @if($phonePattern) pattern="{{ $phonePattern }}" @endif required>
-                    @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">{{ __('patients.secondary_phone') }}</label>
-                    <input type="tel" name="phone_secondary" class="form-control @error('phone_secondary') is-invalid @enderror" value="{{ old('phone_secondary') }}" placeholder="+000000000000" inputmode="tel">
-                    @error('phone_secondary')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">{{ __('patients.email_address') }}</label>
-                    <input type="email" name="email" class="form-control js-email-input @error('email') is-invalid @enderror" value="{{ old('email') }}" autocomplete="email" inputmode="email" pattern="^[^@\s]+@[^@\s]+\.[^@\s]+$">
-                    @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">{{ __('patients.id_card_number') }}</label>
-                    <input type="text" name="ghana_card_number" class="form-control js-id-card-input @error('ghana_card_number') is-invalid @enderror" value="{{ old('ghana_card_number') }}" placeholder="{{ __('patients.id_card_number') }}" inputmode="text" maxlength="30">
-                    @error('ghana_card_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Address Information -->
-    <div class="card">
-        <div class="card-header">
-            <h5 class="fw-bold mb-0"><i class="ti ti-map-pin me-1"></i>{{ __('patients.address_information') }}</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-12 mb-3">
-                    <label class="form-label">{{ __('patients.address') }}</label>
-                    <textarea name="address" class="form-control @error('address') is-invalid @enderror" rows="2">{{ old('address') }}</textarea>
-                    @error('address')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">{{ __('patients.region') }}</label>
-                    <select name="region" id="patientRegionSelect" class="form-select patient-searchable-select @error('region') is-invalid @enderror" data-placeholder="{{ __('patients.select_region') }}">
-                        <option value="">{{ __('patients.select_region') }}</option>
-                        @foreach($regions as $region)
-                            <option value="{{ $region->name }}" {{ old('region') == $region->name ? 'selected' : '' }}>{{ $region->name }}</option>
-                        @endforeach
-                    </select>
-                    @error('region')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">{{ __('patients.city') }}</label>
-                    <select name="city" id="patientCitySelect" class="form-select patient-searchable-select @error('city') is-invalid @enderror" data-selected="{{ old('city') }}" data-placeholder="{{ __('patients.city') }}" disabled>
-                        <option value="">{{ __('patients.city') }}</option>
-                    </select>
-                    @error('city')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">{{ __('patients.town') }}</label>
-                    <select name="town" id="patientTownSelect" class="form-select patient-searchable-select @error('town') is-invalid @enderror" data-selected="{{ old('town') }}" data-placeholder="{{ __('patients.town') }}" disabled>
-                        <option value="">{{ __('patients.town') }}</option>
-                    </select>
-                    @error('town')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">{{ __('patients.digital_address_gps') }}</label>
-                    <div class="input-group">
-                        <input type="text" name="digital_address" id="digitalAddressInput" class="form-control js-digital-address-mask @error('digital_address') is-invalid @enderror" value="{{ old('digital_address') }}" placeholder="{{ $digitalAddressPlaceholder }}" inputmode="text" @if($digitalAddressPattern) pattern="{{ $digitalAddressPattern }}" @endif>
-                        <button class="btn btn-outline-secondary" type="button" id="detectDigitalAddressBtn" title="Use device location">
-                            <i class="ti ti-current-location"></i>
-                        </button>
-                    </div>
-                    @error('digital_address')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Emergency Contacts -->
-    <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between">
-            <h5 class="fw-bold mb-0"><i class="ti ti-urgent me-1"></i>{{ __('patients.emergency_contacts') }}</h5>
-            <button type="button" class="btn btn-sm btn-outline-primary" id="add-ec-btn">
-                <i class="ti ti-plus me-1"></i>{{ __('patients.add_another_ec') }}
-            </button>
-        </div>
-        <div class="card-body">
-            <div id="ec-wrapper">
-                <div class="ec-row border rounded p-3 mb-2" data-index="0">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fw-medium small text-muted ec-label">{{ __('patients.contact_name') }} #1 <span class="badge bg-primary ms-1">{{ __('patients.primary_contact_badge') }}</span></span>
-                        <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ec d-none"><i class="ti ti-trash"></i></button>
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-md-3">
-                            <label class="form-label form-label-sm">{{ __('common.name') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="emergency_contacts[0][name]" class="form-control form-control-sm @error('emergency_contacts.0.name') is-invalid @enderror" value="{{ old('emergency_contacts.0.name') }}" placeholder="{{ __('common.name') }}">
-                            @error('emergency_contacts.0.name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label form-label-sm">{{ __('common.phone') }} <span class="text-danger">*</span></label>
-                            <input type="tel" name="emergency_contacts[0][phone]" class="form-control form-control-sm js-phone-mask @error('emergency_contacts.0.phone') is-invalid @enderror" value="{{ old('emergency_contacts.0.phone') }}" placeholder="{{ $phonePlaceholder }}" inputmode="tel" @if($phonePattern) pattern="{{ $phonePattern }}" @endif>
-                            @error('emergency_contacts.0.phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label form-label-sm">{{ __('patients.secondary_phone') }}</label>
-                            <input type="tel" name="emergency_contacts[0][phone_secondary]" class="form-control form-control-sm" value="{{ old('emergency_contacts.0.phone_secondary') }}" placeholder="{{ __('common.optional') }}" inputmode="tel">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label form-label-sm">{{ __('patients.relationship') }}</label>
-                            <select name="emergency_contacts[0][relationship]" class="form-select form-select-sm">
-                                <option value="">{{ __('patients.select') }}</option>
-                                @foreach(['Spouse', 'Parent', 'Child', 'Sibling', 'Relative', 'Friend', 'Other'] as $rel)
-                                    <option value="{{ $rel }}" {{ old('emergency_contacts.0.relationship') == $rel ? 'selected' : '' }}>{{ $rel }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <small class="text-muted"><i class="ti ti-info-circle me-1"></i>{{ __('patients.ec_first_contact_info') }}</small>
-        </div>
-    </div>
-
+    <x-patient-emergency-contacts-card
+        :phone-pattern="$phonePattern"
+        :phone-placeholder="$phonePlaceholder"
+    />
     <!-- Insurance -->
     @php
         $registrationInsuranceTypes = $insuranceProviders
@@ -300,90 +66,9 @@
             'select_tier'       => __('patients.select_tier'),
         ];
     @endphp
-    <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between">
-            <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>{{ __('patients.tab_insurance') }}</h5>
+    <x-patient-registration-insurance-card :registration-insurance-types="$registrationInsuranceTypes" />
 
-            <button type="button" class="btn btn-sm btn-outline-primary mt-1" id="add-ins-btn">
-                <i class="ti ti-plus me-1"></i>{{ __('patients.add_another_insurance') }}
-            </button>
-        </div>
-        <div class="card-body">
-            <div class="alert alert-info small py-2 mb-3">
-                <i class="ti ti-info-circle me-1"></i>
-                {!! __('patients.cash_carry_info', ['strong' => '<strong>Cash &amp; Carry</strong>']) !!}
-            </div>
-            <div id="ins-wrapper">
-                <div class="ins-row border rounded p-3 mb-2" data-index="0">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fw-medium small text-muted ins-label">{{ __('patients.tab_insurance') }} #1 <span class="badge bg-primary ms-1">{{ __('patients.primary_contact_badge') }}</span></span>
-                        <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ins d-none"><i class="ti ti-trash"></i></button>
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-md-4">
-                            <label class="form-label form-label-sm">{{ __('patients.insurance_type') }}</label>
-                            <select name="insurances[0][type]" class="form-select form-select-sm ins-type" data-idx="0" data-selected-provider="{{ old('insurances.0.provider_id') }}" data-selected-tier="{{ old('insurances.0.insurance_tier_id') }}">
-                                <option value="">{{ __('patients.insurance_none') }}</option>
-                                @foreach($registrationInsuranceTypes as $type)
-                                    <option value="{{ $type['value'] }}" {{ old('insurances.0.type') === $type['value'] ? 'selected' : '' }}>{{ $type['label'] }}</option>
-                                @endforeach
-                            </select>
-                            @error('insurances.0.type')<div class="text-danger small">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label form-label-sm">{{ __('patients.insurance_provider_label') }}</label>
-                            <select name="insurances[0][provider_id]" class="form-select form-select-sm ins-provider" data-idx="0" disabled>
-                                <option value="">{{ __('patients.select_type_first') }}</option>
-                            </select>
-                            @error('insurances.0.provider_id')<div class="text-danger small">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label form-label-sm">{{ __('patients.insurance_tier') }}</label>
-                            <select name="insurances[0][insurance_tier_id]" class="form-select form-select-sm ins-tier" data-idx="0" disabled>
-                                <option value="">{{ __('patients.select_type_first') }}</option>
-                            </select>
-                            @error('insurances.0.insurance_tier_id')<div class="text-danger small">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-4 ins-row-extra" style="display:none">
-                            <label class="form-label form-label-sm">{{ __('patients.membership_card_number') }}</label>
-                            <input type="text" name="insurances[0][membership_number]" class="form-control form-control-sm" value="{{ old('insurances.0.membership_number') }}" placeholder="e.g. INS-123456789">
-                        </div>
-                        <div class="col-md-4 ins-row-extra" style="display:none">
-                            <label class="form-label form-label-sm">{{ __('patients.policy_number') }}</label>
-                            <input type="text" name="insurances[0][policy_number]" class="form-control form-control-sm" value="{{ old('insurances.0.policy_number') }}">
-                        </div>
-                        <div class="col-md-4 ins-row-extra" style="display:none">
-                            <label class="form-label form-label-sm">{{ __('patients.expiry_date') }}</label>
-                            <input type="date" name="insurances[0][expiry_date]" class="form-control form-control-sm" value="{{ old('insurances.0.expiry_date') }}">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Medical Notes -->
-    <div class="card">
-        <div class="card-header">
-            <h5 class="fw-bold mb-0"><i class="ti ti-report-medical me-1"></i>{{ __('patients.medical_notes') }}</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">{{ __('patients.known_allergies') }}</label>
-                    <textarea name="allergies" class="form-control @error('allergies') is-invalid @enderror" rows="3" placeholder="{{ __('patients.known_allergies_ph') }}">{{ old('allergies') }}</textarea>
-                    @error('allergies')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">{{ __('patients.chronic_conditions') }}</label>
-                    <textarea name="chronic_conditions" class="form-control @error('chronic_conditions') is-invalid @enderror" rows="3" placeholder="{{ __('patients.chronic_conditions_ph') }}">{{ old('chronic_conditions') }}</textarea>
-                    @error('chronic_conditions')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <x-patient-medical-notes-card />
     <!-- Submit -->
     <div class="d-flex justify-content-end gap-2 mb-4">
         <a href="{{ route('admin.patients.index') }}" class="btn btn-outline-secondary">{{ __('common.cancel') }}</a>

@@ -2,20 +2,10 @@
 @section('title', __('visits.edit_visit_heading') . ' — ' . $visit->visit_number)
 
 @section('content')
-<!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
-    <h6 class="fw-bold mb-0 d-flex align-items-center">
-        <a href="{{ route('admin.visits.show', $visit) }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>{{ __('visits.edit_visit_heading') }}</a>
-    </h6>
-    {{-- <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Edit Visit <span class="text-muted fw-normal fs-5">{{ $visit->visit_number }}</span></h4>
-    </div>
-    <div class="d-flex gap-2">
-        <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-md">
-            <i class="ti ti-arrow-left me-1"></i>Back to Visit
-        </a>
-    </div> --}}
-</div>
+<x-page-header-back
+    :title="__('visits.edit_visit_heading')"
+    :href="route('admin.visits.show', $visit)"
+/>
 
 @if(session('error'))
 <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -64,186 +54,66 @@
                 </div>
             </div>
 
-            <!-- Insurance Selection -->
-            <div class="card" id="insuranceCard">
-                <div class="card-header d-flex align-items-center justify-content-between">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>{{ __('visits.insurance') }}</h5>
-                    <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">{{ __('visits.insurance_fallback_badge') }}</span>
-                </div>
-                <div class="card-body">
-                    <div id="insuranceList" class="mb-3">
-                        <div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>{{ __('visits.loading_insurances') }}</div>
-                    </div>
-                    <div id="selectedInsuranceInfo" class="d-none">
-                        <div class="alert alert-light border mb-0">
-                            <div class="row">
-                                <div class="col-6">
-                                    <small class="text-muted d-block">{{ __('visits.insurance_type_label') }}</small>
-                                    <span class="fw-medium" id="insInfoType">—</span>
-                                </div>
-                                <div class="col-6">
-                                    <small class="text-muted d-block">{{ __('visits.coverage_label') }}</small>
-                                    <span class="fw-medium" id="insInfoCoverage">—</span>
-                                </div>
-                                <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">{{ __('visits.total_billed_ytd') }}</small>
-                                    <span class="fw-medium" id="insInfoBilled">—</span>
-                                </div>
-                                <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">{{ __('visits.remaining_balance') }}</small>
-                                    <span class="fw-bold" id="insInfoRemaining">—</span>
-                                </div>
+            <x-insurance-selection-card
+                :hidden="false"
+                :title="__('visits.insurance')"
+                :fallback-label="__('visits.insurance_fallback_badge')"
+                :loading-label="__('visits.loading_insurances')"
+                :show-verification="false"
+                :selected-insurance-id="$visit->visit_insurance_id"
+            >
+                <div id="selectedInsuranceInfo" class="d-none">
+                    <div class="alert alert-light border mb-0">
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted d-block">{{ __('visits.insurance_type_label') }}</small>
+                                <span class="fw-medium" id="insInfoType">&mdash;</span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">{{ __('visits.coverage_label') }}</small>
+                                <span class="fw-medium" id="insInfoCoverage">&mdash;</span>
+                            </div>
+                            <div class="col-6 mt-2">
+                                <small class="text-muted d-block">{{ __('visits.total_billed_ytd') }}</small>
+                                <span class="fw-medium" id="insInfoBilled">&mdash;</span>
+                            </div>
+                            <div class="col-6 mt-2">
+                                <small class="text-muted d-block">{{ __('visits.remaining_balance') }}</small>
+                                <span class="fw-bold" id="insInfoRemaining">&mdash;</span>
                             </div>
                         </div>
                     </div>
-                    <input type="hidden" name="visit_insurance_id" id="visitInsuranceId" value="{{ old('visit_insurance_id', $visit->visit_insurance_id) }}">
                 </div>
-            </div>
+            </x-insurance-selection-card>
 
-            <!-- Visit Details -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>{{ __('visits.visit_details_heading') }}</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">{{ __('visits.visit_type_label') }} <span class="text-danger">*</span></label>
-                            <select name="visit_type" class="form-select @error('visit_type') is-invalid @enderror" required>
-                                @foreach(\App\Enums\VisitType::cases() as $type)
-                                    <option value="{{ $type->value }}" {{ old('visit_type', $visit->visit_type->value) == $type->value ? 'selected' : '' }}>{{ $type->translatedLabel() }}</option>
-                                @endforeach
-                            </select>
-                            @error('visit_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">{{ __('visits.priority_label') }} <span class="text-danger">*</span></label>
-                            <select name="priority" class="form-select @error('priority') is-invalid @enderror" required>
-                                @foreach(\App\Enums\Priority::cases() as $priority)
-                                    <option value="{{ $priority->value }}" {{ old('priority', $visit->priority->value) == $priority->value ? 'selected' : '' }}>{{ $priority->translatedLabel() }}</option>
-                                @endforeach
-                            </select>
-                            @error('priority')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">{{ __('visits.visit_date_label') }}</label>
-                            <input type="date" name="visit_date" id="visitDate" class="form-control @error('visit_date') is-invalid @enderror"
-                                   value="{{ old('visit_date', $visit->visit_date?->format('Y-m-d') ?? date('Y-m-d')) }}">
-                            @error('visit_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            <small class="text-muted" id="schedulingHint">{{ __('visits.today_scheduling_hint') }}</small>
-                        </div>
-                    </div>
-
-                    <!-- Scheduling fields -->
-                    <div class="row" id="schedulingFields" style="{{ ($visit->start_time || $visit->visit_date?->isFuture()) ? '' : 'display:none;' }}">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">{{ __('visits.start_time_label') }}</label>
-                            <input type="time" name="start_time" class="form-control @error('start_time') is-invalid @enderror"
-                                   value="{{ old('start_time', $visit->start_time ? \Carbon\Carbon::parse($visit->start_time)->format('H:i') : '') }}">
-                            @error('start_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">{{ __('visits.end_time_label') }}</label>
-                            <input type="time" name="end_time" class="form-control @error('end_time') is-invalid @enderror"
-                                   value="{{ old('end_time', $visit->end_time ? \Carbon\Carbon::parse($visit->end_time)->format('H:i') : '') }}">
-                            @error('end_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">{{ __('visits.consultation_mode_label') }}</label>
-                            <select name="consultation_mode" class="form-select @error('consultation_mode') is-invalid @enderror">
-                                @foreach(\App\Enums\ConsultationMode::cases() as $mode)
-                                    <option value="{{ $mode->value }}" {{ old('consultation_mode', $visit->consultation_mode?->value ?? 'in_person') == $mode->value ? 'selected' : '' }}>{{ $mode->translatedLabel() }}</option>
-                                @endforeach
-                            </select>
-                            @error('consultation_mode')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">{{ __('visits.chief_complaint_field') }}</label>
-                        <textarea name="chief_complaint" class="form-control @error('chief_complaint') is-invalid @enderror" rows="3">{{ old('chief_complaint', $visit->chief_complaint) }}</textarea>
-                        @error('chief_complaint')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">{{ __('visits.notes_field') }}</label>
-                        <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" rows="2">{{ old('notes', $visit->notes) }}</textarea>
-                        @error('notes')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                </div>
-            </div>
+            <x-visit-details-card
+                :visit="$visit"
+                :show-scheduling-fields="$visit->start_time || $visit->visit_date?->isFuture()"
+                :notes-rows="2"
+                :stack-textareas="true"
+            />
         </div>
 
         <!-- Right Column -->
         <div class="col-lg-4">
-            <!-- Department, Services & Doctor -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-building-hospital me-1"></i>{{ __('visits.dept_services_heading') }}</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">{{ __('visits.department_filter_label') }} <small class="text-muted">({{ __('visits.available_services_label') }})</small></label>
-                            <select id="departmentSelect" name="department_id" class="form-select @error('department_id') is-invalid @enderror">
-                                <option value="">{{ __('visits.select_department') }}</option>
-                                @foreach($departments as $dept)
-                                    <option value="{{ $dept->id }}" {{ old('department_id', $visit->department_id) == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">{{ __('visits.route_doctor') }}</label>
-                            <select id="doctorSelect" class="form-select">
-                                <option value="">{{ __('visits.select_dept_load_doctors') }}</option>
-                            </select>
-                            <div class="form-text">{{ __('visits.route_doctor_note') }}</div>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">{{ __('visits.available_services_label') }}</label>
-                        <div id="servicesList" class="border rounded p-3 bg-light">
-                            <div class="text-muted text-center py-3" id="servicesPlaceholder">
-                                <i class="ti ti-list-search me-1"></i>Select a department or doctor to load services
-                            </div>
-                            <div id="servicesContent" class="d-none">
-                                <div class="input-group mb-2">
-                                    <span class="input-group-text"><i class="ti ti-search"></i></span>
-                                    <input type="text" id="serviceFilter" class="form-control" placeholder="{{ __('visits.filter_services') }}">
-                                </div>
-                                <div id="servicesItems" style="max-height:280px;overflow-y:auto;"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="selectedServicesCard" class="{{ $visit->visitServices->isNotEmpty() ? '' : 'd-none' }}">
-                        <label class="form-label fw-bold"><i class="ti ti-receipt me-1"></i>{{ __('visits.selected_services_label') }}</label>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered mb-0" id="billingTable">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>{{ __('visits.service_name') }}</th>
-                                        <th class="text-center" style="width:70px;">{{ __('common.quantity') }}</th>
-                                        <th class="text-end" style="width:100px;">{{ __('invoices.unit_price') }}</th>
-                                        <th class="text-end" style="width:100px;">{{ __('common.total') }}</th>
-                                        <th style="width:36px;"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="billingBody"></tbody>
-                                <tfoot>
-                                    <tr class="table-light fw-bold">
-                                        <td colspan="3" class="text-end">{{ __('visits.est_total') }}</td>
-                                        <td class="text-end" id="totalAmount">&#8373;0.00</td>
-                                        <td></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <x-department-services-card
+                :departments="$departments"
+                :title="__('visits.dept_services_heading')"
+                :department-label="__('visits.department_filter_label')"
+                :doctor-label="__('visits.route_doctor')"
+                :available-services-label="__('visits.available_services_label')"
+                :selected-services-label="__('visits.selected_services_label')"
+                department-name="department_id"
+                :selected-department-id="$visit->department_id"
+                :selected-services-visible="$visit->visitServices->isNotEmpty()"
+                :show-extra-services-toggle="false"
+                billing-table-variant="quantity"
+                :department-placeholder="__('visits.select_department')"
+                :doctor-placeholder="__('visits.select_dept_load_doctors')"
+                :services-placeholder="__('visits.select_dept_load_services')"
+                :service-filter-placeholder="__('visits.filter_services')"
+                :estimated-total-label="__('visits.est_total')"
+            />
 
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary btn-lg">
