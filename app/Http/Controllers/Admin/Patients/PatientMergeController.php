@@ -18,30 +18,42 @@ class PatientMergeController extends Controller
         private PatientMergeService $mergeService,
     ) {}
 
-    public function index(Request $request)
+    public function index()
     {
-        $patients = collect();
-        $selectedMainPatient = $request->filled('main_patient_number')
-            ? $this->findPatientByNumber($request->query('main_patient_number'))
-            : null;
-        $selectedDuplicatePatient = $request->filled('duplicate_patient_number')
-            ? $this->findPatientByNumber($request->query('duplicate_patient_number'))
-            : null;
-
-        if ($request->filled('search')) {
-            $patients = Patient::with(['aliases', 'mergedToPatient'])
-                ->search($request->query('search'))
-                ->latest()
-                ->limit(30)
-                ->get();
-        }
-
         $recentRequests = PatientMergeRequest::with(['mainPatient', 'duplicatePatient', 'requestedBy', 'executedBy'])
             ->latest()
             ->limit(15)
             ->get();
 
-        return view('patients.merge.index', compact('patients', 'recentRequests', 'selectedMainPatient', 'selectedDuplicatePatient'));
+        return view('patients.merge.index', compact('recentRequests'));
+    }
+
+    /**
+     * AJAX: search patients to assign as the main or duplicate folder.
+     */
+    public function search(Request $request)
+    {
+        $term = (string) $request->get('q', '');
+        if (mb_strlen($term) < 2) {
+            return response()->json([]);
+        }
+
+        $patients = Patient::with('aliases')
+            ->search($term)
+            ->limit(10)
+            ->get()
+            ->map(function (Patient $patient) {
+                return [
+                    'id' => $patient->id,
+                    'patient_number' => $patient->patient_number,
+                    'full_name' => $patient->full_name,
+                    'phone' => $patient->phone,
+                    'is_deceased' => (bool) $patient->is_deceased,
+                    'is_merged' => $patient->isMerged(),
+                ];
+            });
+
+        return response()->json($patients);
     }
 
     public function compare(Request $request)

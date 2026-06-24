@@ -141,23 +141,36 @@ class PatientMergeTest extends TestCase
         $this->assertNotContains($duplicatePatient->id, $results);
     }
 
-    public function test_merge_ui_uses_patient_numbers_and_table_selection_actions(): void
+    public function test_merge_index_offers_patient_search_card_with_assign_actions(): void
+    {
+        $indexResponse = $this->actingAs($this->user)->get(route('admin.patients.merge.index'));
+
+        $indexResponse->assertOk()
+            ->assertSee('mergeSearchInput', false)
+            ->assertSee(__('patients.use_as_main'))
+            ->assertSee(__('patients.use_as_duplicate'))
+            ->assertDontSee('Select as main folder', false)
+            ->assertDontSee('Select as duplicate folder', false)
+            ->assertDontSee('main_patient_id', false)
+            ->assertDontSee('duplicate_patient_id', false);
+    }
+
+    public function test_merge_search_endpoint_returns_matching_patients_by_patient_number(): void
     {
         [$mainPatient, $duplicatePatient] = $this->patients();
 
-        $indexResponse = $this->actingAs($this->user)->get(route('admin.patients.merge.index', [
-            'search' => $mainPatient->patient_number,
+        $response = $this->actingAs($this->user)->getJson(route('admin.patients.merge.search', [
+            'q' => $mainPatient->patient_number,
         ]));
-        $escapedMainPatientNumber = str_replace('/', '\\/', $mainPatient->patient_number);
-        $escapedDuplicatePatientNumber = str_replace('/', '\\/', $duplicatePatient->patient_number);
 
-        $indexResponse->assertOk()
-            ->assertSee($escapedMainPatientNumber, false)
-            ->assertSee('Select as main folder', false)
-            ->assertSee('Select as duplicate folder', false)
-            ->assertDontSee('<th>ID</th>', false)
-            ->assertDontSee('main_patient_id', false)
-            ->assertDontSee('duplicate_patient_id', false);
+        $response->assertOk();
+        $response->assertJsonFragment(['patient_number' => $mainPatient->patient_number]);
+        $response->assertJsonMissing(['patient_number' => $duplicatePatient->patient_number]);
+    }
+
+    public function test_merge_compare_page_uses_patient_numbers_not_ids(): void
+    {
+        [$mainPatient, $duplicatePatient] = $this->patients();
 
         $compareResponse = $this->actingAs($this->user)->get(route('admin.patients.merge.compare', [
             'main_patient_number' => $mainPatient->patient_number,
@@ -165,8 +178,8 @@ class PatientMergeTest extends TestCase
         ]));
 
         $compareResponse->assertOk()
-            ->assertSee($escapedMainPatientNumber, false)
-            ->assertSee($escapedDuplicatePatientNumber, false)
+            ->assertSee($mainPatient->patient_number, false)
+            ->assertSee($duplicatePatient->patient_number, false)
             ->assertDontSee('Main Patient ID')
             ->assertDontSee('Duplicate Patient ID')
             ->assertDontSee('main_patient_id', false)

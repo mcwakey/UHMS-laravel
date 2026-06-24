@@ -290,6 +290,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware('can:patients.view')->group(function () {
             Route::get('patients', [PatientController::class, 'index'])->name('patients.index');
             Route::get('patients/merge', [PatientMergeController::class, 'index'])->name('patients.merge.index')->middleware('can:patients.merge.view');
+            Route::get('patients/merge/search', [PatientMergeController::class, 'search'])->name('patients.merge.search')->middleware('can:patients.merge.view');
             Route::get('patients/merge/compare', [PatientMergeController::class, 'compare'])->name('patients.merge.compare')->middleware('can:patients.merge.request');
             Route::post('patients/merge/requests', [PatientMergeController::class, 'store'])->name('patients.merge.requests.store')->middleware('can:patients.merge.request');
             Route::get('patients/merge/requests/{mergeRequest}', [PatientMergeController::class, 'show'])->name('patients.merge.requests.show')->middleware('can:patients.merge.view');
