@@ -47,7 +47,7 @@ class AppointmentController extends Controller
             ? Patient::find($request->patient_id)
             : null;
 
-        $departments = Department::active()->orderBy('name')->get();
+        $departments = Department::active()->consultation()->orderBy('name')->get();
         $doctors = User::role('Doctor')->orderBy('first_name')->get();
         $appointmentDate = $this->defaultAppointmentDate($request->query('date'));
 
@@ -93,6 +93,7 @@ class AppointmentController extends Controller
             'patient',
             'doctor',
             'department',
+            'services.department',
             'visit',
             'visitInsurance.insuranceProvider',
             'visitInsurance.insuranceTier',
@@ -110,7 +111,7 @@ class AppointmentController extends Controller
     {
         $appointment->load(['patient', 'services', 'visitInsurance.insuranceProvider']);
         $doctors = User::role('Doctor')->orderBy('first_name')->get();
-        $departments = Department::active()->orderBy('name')->get();
+        $departments = Department::active()->consultation()->orderBy('name')->get();
 
         return view('appointments.edit', compact(
             'appointment', 'doctors', 'departments'

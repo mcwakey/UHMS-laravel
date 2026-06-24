@@ -59,6 +59,7 @@ return [
     'qty' => 'Qté',
     'unit_price' => 'Prix unitaire',
     'estimated_total' => 'Total estimé :',
+    'no_services_selected' => 'Aucun service n\'a été sélectionné pour ce rendez-vous.',
     'what_happens_next' => 'Ce qui se passe ensuite',
     'appointment_is_scheduled' => 'Le rendez-vous est planifié',
     'patient_can_be_notified' => 'Le patient peut être notifié',

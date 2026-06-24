@@ -41,7 +41,7 @@
     <x-filter-bar
         :action="route('admin.appointments.calendar')"
         :reset-url="route('admin.appointments.calendar')"
-        class="mb-4"
+        class="mb-2"
         :show-apply="false"
         row-class="row g-3 align-items-end"
     >
@@ -97,7 +97,7 @@
     </x-filter-bar>
 
     {{-- Range Navigation --}}
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
         @php
             $rangeStart = \Carbon\Carbon::parse($from);
             $rangeEnd = \Carbon\Carbon::parse($to);
@@ -222,7 +222,7 @@
 
     {{-- Legend --}}
     <div class="card mt-3">
-        <div class="card-body py-2">
+        <div class="card-body py-3">
             <div class="d-flex flex-wrap gap-3 align-items-center">
                 <small class="text-muted fw-medium">{{ __('appointments.status_legend') }}</small>
                 @foreach(\App\Enums\AppointmentStatus::cases() as $status)

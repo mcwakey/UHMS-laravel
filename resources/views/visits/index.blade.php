@@ -18,7 +18,7 @@
 </x-page-header>
 
 <!-- Visit Stats -->
-<div class="row mb-4">
+<div class="row mb-1">
     <div class="col-xl-2 col-md-4 col-6">
         <div class="card border-start border-primary border-3">
             <div class="card-body py-3 px-3">
@@ -73,8 +73,12 @@
 <x-filter-bar
     :action="route('admin.visits.index')"
     :reset-url="route('admin.visits.index')"
-    class="mb-4"
+    class="mb-2"
+    ajax
+    ajax-target="#visitsIndexResults"
 >
+    <input type="hidden" name="per_page" value="{{ $filters['per_page'] ?? $visits->perPage() }}" data-filter-per-page-input>
+
     <div class="col-md-3">
         <label class="form-label">{{ __('common.search') }}</label>
         <input type="text" name="search" class="form-control" placeholder="{{ __('visits.search_placeholder') }}" value="{{ $filters['search'] ?? '' }}">
@@ -88,7 +92,7 @@
             @endforeach
         </select>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <label class="form-label">{{ __('visits.active_insurance') }}</label>
         <select name="insurance_provider_id" class="form-select">
             <option value="">{{ __('visits.all_insurance') }}</option>
@@ -110,42 +114,48 @@
     </div>
     <x-slot:actions>
         <!-- <button aria-label="{{ __('common.filter') }}" title="{{ __('common.filter') }}" type="submit" class="btn btn-primary"><i class="ti ti-filter"></i>{{ __('common.filter') }}</button> -->
-        <a aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary btn-icon"><i class="ti ti-x"></i></a>
+        <a aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary btn-icon" data-filter-reset><i class="ti ti-x"></i></a>
     </x-slot:actions>
 </x-filter-bar>
 
 <!-- Visit List -->
-<div class="card">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>{{ __('common.visit_number_short') }}</th>
-                        <th>{{ __('common.patient') }}</th>
-                        <th>{{ __('visits.active_insurance') }}</th>
-                        <th>{{ __('common.age') }}</th>
-                        <th>{{ __('common.type') }}</th>
-                        <th>{{ __('common.priority') }}</th>
-                        <th>{{ __('common.doctor') }}</th>
-                        <th>{{ __('common.status') }}</th>
-                        <th>{{ __('common.date') }}</th>
-                        <th>{{ __('visits.duration') }}</th>
-                        <th class="text-end">{{ __('common.actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
+<div id="visitsIndexResults">
+<x-data-table
+    id="visitsDataTable"
+    :paginator="$visits"
+    show-summary
+    show-per-page
+    :current-per-page="$filters['per_page'] ?? $visits->perPage()"
+    :per-page-options="[10, 15, 25, 50, 100]"
+>
+    <x-slot:head>
+        <tr>
+            <th>{{ __('common.visit_number_short') }}</th>
+            <th>{{ __('common.patient') }}</th>
+            <th>{{ __('visits.active_insurance') }}</th>
+            <!-- <th>{{ __('common.age') }}</th> -->
+            <th>{{ __('common.type') }}</th>
+            <th>{{ __('common.priority') }}</th>
+            <!-- <th>{{ __('common.doctor') }}</th> -->
+            <th>{{ __('common.status') }}</th>
+            <th>{{ __('common.date') }}</th>
+            <th>{{ __('visits.duration') }}</th>
+            <th class="text-end">{{ __('common.actions') }}</th>
+        </tr>
+    </x-slot:head>
+
                     @forelse($visits as $visit)
                     <tr>
                         <td>
                             <a href="{{ route('admin.visits.show', $visit) }}" class="fw-medium text-primary">
                                 {{ $visit->visit_number }}
                             </a>
+                            <div class="small text-muted">{{ $visit->patient->patient_number }}</div>
                         </td>
                         <td>
                             <div>
                                 <a href="{{ route('admin.patients.show', $visit->patient) }}" class="fw-medium">{{ $visit->patient->full_name }}</a>
-                                <br><small class="text-muted">{{ $visit->patient->patient_number }}</small>
+                                <div class="small text-muted">{{ $visit->patient->gender }} · {{ $visit->patient->age }}y</div>
                             </div>
                         </td>
                         <td>
@@ -165,7 +175,7 @@
                                 <small class="text-muted d-block mt-1">{{ $visitInsurance->insuranceTier->name }}</small>
                             @endif
                         </td>
-                        <td>{{ $visit->patient_age ?? $visit->patient->age }}y</td>
+                        <!-- <td>{{ $visit->patient_age ?? $visit->patient->age }}y</td> -->
                         <td>
                             <span class="badge bg-{{ $visit->visit_type === \App\Enums\VisitType::EMERGENCY ? 'danger' : ($visit->visit_type === \App\Enums\VisitType::INPATIENT ? 'info' : 'light text-dark') }}">
                                 {{ $visit->visit_type->translatedLabel() }}
@@ -177,7 +187,7 @@
                                 <x-status-badge :status="$visit->triage_score" class="ms-1" />
                             @endif
                         </td>
-                        <td>{{ $visit->currentConsultationDoctor()?->full_name ?? '—' }}</td>
+                        <!-- <td>{{ $visit->currentConsultationDoctor()?->full_name ?? '—' }}</td> -->
                         <td>
                             <x-status-badge :status="$visit->status" />
                         </td>
@@ -196,7 +206,7 @@
                                     {{-- @can('visits.edit')
                                     <li><a class="dropdown-item" href="{{ route('admin.visits.edit', $visit) }}"><i class="ti ti-pencil me-2"></i>Edit Visit</a></li>
                                     @endcan --}}
-                                    @if($visit->status->allowedTransitions())
+                                    <!-- @if($visit->status->allowedTransitions())
                                     <li><hr class="dropdown-divider"></li>
                                     @foreach($visit->status->allowedTransitions() as $nextStatus)
                                         <li>
@@ -210,7 +220,7 @@
                                             </form>
                                         </li>
                                     @endforeach
-                                    @endif
+                                    @endif -->
                                 </ul>
                             </div>
                         </td>
@@ -222,15 +232,7 @@
                         </td>
                     </tr>
                     @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-    @if($visits->hasPages())
-    <div class="card-footer">
-        {{ $visits->withQueryString()->links() }}
-    </div>
-    @endif
+</x-data-table>
 </div>
 @endsection
 

@@ -157,7 +157,7 @@
                         @forelse($appointments as $appointment)
                         <tr data-appointment-row="{{ $appointment->id }}">
                             <td>
-                                <a href="{{ route('admin.appointments.show', $appointment) }}" class="fw-medium">
+                                <a href="{{ route('admin.appointments.show', $appointment) }}" class="fw-medium text-primary">
                                     {{ $appointment->appointment_number }}
                                 </a>
                                 <div class="small text-muted">{{ $appointment->patient->patient_number }}</div>

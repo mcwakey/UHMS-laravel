@@ -98,21 +98,8 @@
         <div class="col-lg-4">
             <x-department-services-card
                 :departments="$departments"
-                :title="__('visits.dept_services_heading')"
-                :department-label="__('visits.department_filter_label')"
-                :doctor-label="__('visits.route_doctor')"
-                :available-services-label="__('visits.available_services_label')"
-                :selected-services-label="__('visits.selected_services_label')"
-                department-name="department_id"
                 :selected-department-id="$visit->department_id"
                 :selected-services-visible="$visit->visitServices->isNotEmpty()"
-                :show-extra-services-toggle="false"
-                billing-table-variant="quantity"
-                :department-placeholder="__('visits.select_department')"
-                :doctor-placeholder="__('visits.select_dept_load_doctors')"
-                :services-placeholder="__('visits.select_dept_load_services')"
-                :service-filter-placeholder="__('visits.filter_services')"
-                :estimated-total-label="__('visits.est_total')"
             />
 
             <div class="d-grid gap-2">
@@ -171,6 +158,38 @@ document.addEventListener('DOMContentLoaded', function () {
         schedulingFields.style.display = sel > today ? '' : 'none';
     }
     visitDateInput.addEventListener('change', checkSchedulingFields);
+
+    function hasSelect2() {
+        return window.jQuery && jQuery.fn && jQuery.fn.select2;
+    }
+
+    function initSearchableVisitSelects() {
+        if (!hasSelect2()) return;
+
+        const searchableOptions = function(select, fallbackPlaceholder) {
+            return {
+                placeholder: select.dataset.placeholder || fallbackPlaceholder,
+                allowClear: true,
+                minimumResultsForSearch: 0,
+                width: '100%',
+            };
+        };
+
+        const $department = jQuery(departmentSelect);
+        if (!$department.hasClass('select2-hidden-accessible')) {
+            $department.select2(searchableOptions(departmentSelect, 'Search department...'));
+            $department.on('select2:select select2:clear', function() {
+                window.setTimeout(function() {
+                    departmentSelect.dispatchEvent(new Event('change'));
+                }, 0);
+            });
+        }
+
+        const $doctor = jQuery(doctorSelect);
+        if (!$doctor.hasClass('select2-hidden-accessible')) {
+            $doctor.select2(searchableOptions(doctorSelect, 'Search doctor/staff...'));
+        }
+    }
 
     /* ----- Insurance ----- */
     function loadPatientInsurances() {
@@ -355,20 +374,13 @@ document.addEventListener('DOMContentLoaded', function () {
         card.classList.remove('d-none');
         let html = '';
         selectedServices.forEach((svc, idx) => {
+            const qty = svc.quantity || 1;
             html += `<tr>
                 <td>${escapeHtml(svc.name)}
                     <input type="hidden" name="services[${idx}][service_catalog_id]" value="${svc.service_catalog_id}">
-                    <input type="hidden" name="services[${idx}][quantity]" value="${svc.quantity}">
+                    <input type="hidden" name="services[${idx}][quantity]" value="${qty}">
                 </td>
-                <td class="text-center">
-                    <div class="input-group input-group-sm" style="width:70px;">
-                        <button type="button" class="btn btn-outline-secondary btn-xs qty-dec" data-index="${idx}">-</button>
-                        <span class="form-control form-control-sm text-center px-1">${svc.quantity}</span>
-                        <button type="button" class="btn btn-outline-secondary btn-xs qty-inc" data-index="${idx}">+</button>
-                    </div>
-                </td>
-                <td class="text-end text-muted">₵${formatNumber(svc.price)}</td>
-                <td class="text-end fw-medium">₵${formatNumber(svc.price * svc.quantity)}</td>
+                <td class="text-end fw-medium">₵${formatNumber(svc.price * qty)}</td>
                 <td class="text-center">
                     <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="${idx}">
                         <i class="ti ti-trash"></i>
@@ -379,10 +391,6 @@ document.addEventListener('DOMContentLoaded', function () {
         tbody.innerHTML = html;
         tbody.querySelectorAll('.remove-service-btn').forEach(b =>
             b.addEventListener('click', function () { removeServiceFromBilling(parseInt(this.dataset.index)); }));
-        tbody.querySelectorAll('.qty-dec').forEach(b =>
-            b.addEventListener('click', function () { updateServiceQuantity(parseInt(this.dataset.index), selectedServices[parseInt(this.dataset.index)].quantity - 1); }));
-        tbody.querySelectorAll('.qty-inc').forEach(b =>
-            b.addEventListener('click', function () { updateServiceQuantity(parseInt(this.dataset.index), selectedServices[parseInt(this.dataset.index)].quantity + 1); }));
         recalculateBilling();
     }
 
@@ -400,6 +408,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Initial
+    initSearchableVisitSelects();
     loadPatientInsurances();
     if (departmentSelect.value) departmentSelect.dispatchEvent(new Event('change'));
     renderBillingTable();

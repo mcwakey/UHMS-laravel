@@ -3,204 +3,111 @@
 @section('title', __('appointments.show_title'))
 
 @section('content')
-<div class="content">
+<!-- <div class="content"> -->
     <div id="appointmentActionFeedback" class="alert d-none" role="alert"></div>
 
     <x-page-header-back
-        :title="__('appointments.title') . ' ' . $appointment->appointment_number"
+        :title="__('appointments.title') . ' - ' . $appointment->appointment_number"
         :href="route('admin.appointments.index')"
     />
+
+    @php
+        $allStatuses = [
+            \App\Enums\AppointmentStatus::SCHEDULED,
+            \App\Enums\AppointmentStatus::CONFIRMED,
+            \App\Enums\AppointmentStatus::CHECKED_IN,
+            \App\Enums\AppointmentStatus::IN_PROGRESS,
+            \App\Enums\AppointmentStatus::COMPLETED,
+        ];
+        $currentStatusIndex = array_search($appointment->status, $allStatuses);
+        $isCancelled = $appointment->status === \App\Enums\AppointmentStatus::CANCELLED;
+        $isNoShow = $appointment->status === \App\Enums\AppointmentStatus::NO_SHOW;
+    @endphp
 
     <div class="row">
         {{-- Appointment Details --}}
         <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center gap-2">
-                    <h5 class="card-title mb-0"><i class="ti ti-calendar me-2"></i>{{ __('appointments.appointment_information') }}</h5>
-                    <div>
-                        <x-status-badge :status="$appointment->status" class="js-appointment-status-badge" />
-
-                                @if($appointment->status === \App\Enums\AppointmentStatus::SCHEDULED)
-                                <form method="POST" action="{{ route('admin.appointments.transition', $appointment) }}" class="d-inline js-appointment-action-form" data-follow-up="appointment">
-                                    @csrf @method('PATCH')
-                                    <input type="hidden" name="status" value="confirmed">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="ti ti-check me-1"></i> {{ __('appointments.confirm') }}
-                                    </button>
-                                </form>
-                                @endif
-
-                                @if($appointment->status === \App\Enums\AppointmentStatus::CONFIRMED)
-                                @can('appointments.create')
-                                <form method="POST" action="{{ route('admin.appointments.check-in', $appointment) }}" class="d-inline js-appointment-action-form" data-follow-up="visit">
-                                    @csrf
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="ti ti-login me-1"></i> {{ __('appointments.check_in_patient') }}
-                                    </button>
-                                </form>
-                                @endcan
-                                <form method="POST" action="{{ route('admin.appointments.no-show', $appointment) }}" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-dark">
-                                        <i class="ti ti-user-off me-1"></i> {{ __('appointments.no_show_action') }}
-                                    </button>
-                                </form>
-                                @endif
-
-                                @if($appointment->is_active && $appointment->status !== \App\Enums\AppointmentStatus::CHECKED_IN)
-                                @can('appointments.edit')
-                                <a href="{{ route('admin.appointments.edit', $appointment) }}" class="btn btn-outline-primary">
-                                    <i class="ti ti-pencil me-1"></i> {{ __('common.edit') }}
-                                </a>
-                                @endcan
-                                @endif
-                    </div>
-                </div>
+            {{-- Status Bar --}}
+            <div class="card mb-3">
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="table-responsive"><table class="table table-sm table-borderless">
-                                <tr>
-                                    <td class="text-muted" width="40%">{{ __('appointments.appointment_number') }}</td>
-                                    <td class="fw-medium">{{ $appointment->appointment_number }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">{{ __('common.date') }}</td>
-                                    <td>{{ $appointment->appointment_date->format('l, d M Y') }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">{{ __('appointments.time') }}</td>
-                                    <td>
-                                        {{ \Carbon\Carbon::parse($appointment->start_time)->format('h:i A') }}
-                                        @if($appointment->end_time)
-                                            – {{ \Carbon\Carbon::parse($appointment->end_time)->format('h:i A') }}
-                                        @endif
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">{{ __('common.type') }}</td>
-                                    <td><span class="badge bg-outline-primary">{{ $appointment->visit_type->translatedLabel() }}</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">{{ __('common.status') }}</td>
-                                    <td><x-status-badge :status="$appointment->status" class="js-appointment-status-badge" /></td>
-                                </tr>
-                            </table></div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="table-responsive"><table class="table table-sm table-borderless">
-                                <tr>
-                                    <td class="text-muted" width="40%">{{ __('common.department') }}</td>
-                                    <td>{{ $appointment->department->name }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">{{ __('common.doctor') }}</td>
-                                    <td>{{ $appointment->doctor ? 'Dr. ' . $appointment->doctor->name : '—' }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">{{ __('appointments.created_by') }}</td>
-                                    <td>{{ $appointment->createdByUser->name ?? '—' }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">{{ __('appointments.created') }}</td>
-                                    <td>{{ $appointment->created_at->format('d M Y, h:i A') }}</td>
-                                </tr>
-                                @if($appointment->visit)
-                                <tr>
-                                    <td class="text-muted">{{ __('appointments.linked_visit') }}</td>
-                                    <td>
-                                        <a href="{{ route('admin.visits.show', $appointment->visit) }}">
-                                            {{ $appointment->visit->visit_number }}
-                                        </a>
-                                    </td>
-                                </tr>
-                                @endif
-                            </table></div>
-                        </div>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h6 class="fw-bold mb-0"><i class="ti ti-timeline me-2"></i>{{ __('appointments.status_flow') }}</h6>
+                        <x-status-badge :status="$appointment->status" class="js-appointment-status-badge fs-14 px-3 py-2" />
                     </div>
-
-                    @if($appointment->reason)
-                    <div class="mt-3">
-                        <h6 class="text-muted">{{ __('appointments.reason_for_visit') }}</h6>
-                        <p class="mb-0">{{ $appointment->reason }}</p>
-                    </div>
-                    @endif
-
-                    @if($appointment->notes)
-                    <div class="mt-3">
-                        <h6 class="text-muted">{{ __('appointments.notes') }}</h6>
-                        <p class="mb-0">{{ $appointment->notes }}</p>
-                    </div>
-                    @endif
-
-                    @if($appointment->status === \App\Enums\AppointmentStatus::CANCELLED)
-                    <div class="mt-3">
-                        <div class="alert alert-danger mb-0">
-                            <h6 class="alert-heading"><i class="ti ti-x me-1"></i>{{ __('appointments.cancelled') }}</h6>
-                            @if($appointment->cancelledByUser)
-                            <p class="mb-1"><strong>{{ __('appointments.cancelled_by') }}</strong> {{ $appointment->cancelledByUser->name }}</p>
-                            @endif
-                            @if($appointment->cancellation_reason)
-                            <p class="mb-0"><strong>{{ __('appointments.reason') }}</strong> {{ $appointment->cancellation_reason }}</p>
-                            @endif
-                        </div>
-                    </div>
-                    @endif
-                </div>
-            </div>
-
-            {{-- Status Timeline --}}
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="ti ti-timeline me-2"></i>{{ __('appointments.status_flow') }}</h5>
-                </div>
-                <div class="card-body">
-                    @php
-                        $allStatuses = [
-                            \App\Enums\AppointmentStatus::SCHEDULED,
-                            \App\Enums\AppointmentStatus::CONFIRMED,
-                            \App\Enums\AppointmentStatus::CHECKED_IN,
-                            \App\Enums\AppointmentStatus::IN_PROGRESS,
-                            \App\Enums\AppointmentStatus::COMPLETED,
-                        ];
-                        $currentIndex = array_search($appointment->status, $allStatuses);
-                        $isCancelled = $appointment->status === \App\Enums\AppointmentStatus::CANCELLED;
-                        $isNoShow = $appointment->status === \App\Enums\AppointmentStatus::NO_SHOW;
-                    @endphp
 
                     @if($isCancelled || $isNoShow)
-                    <div class="text-center py-3">
+                    <!-- <div class="text-center py-3">
                         <span class="badge bg-{{ $appointment->status->color() }} fs-6 px-4 py-2">
                             <i class="ti ti-{{ $isCancelled ? 'x' : 'user-off' }} me-1"></i>
                             {{ $appointment->status->translatedLabel() }}
                         </span>
-                    </div>
+                    </div> -->
                     @else
                     <div class="d-flex justify-content-between align-items-center">
                         @foreach($allStatuses as $index => $status)
                         <div class="text-center flex-fill">
-                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center {{ $currentIndex !== false && $index <= $currentIndex ? 'bg-' . $status->color() . ' text-white' : 'bg-light text-muted' }}"
+                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center {{ $currentStatusIndex !== false && $index <= $currentStatusIndex ? 'bg-' . $status->color() . ' text-white' : 'bg-light text-muted' }}"
                                  style="width: 40px; height: 40px;">
-                                @if($currentIndex !== false && $index < $currentIndex)
+                                @if($currentStatusIndex !== false && $index < $currentStatusIndex)
                                     <i class="ti ti-check"></i>
-                                @elseif($currentIndex !== false && $index === $currentIndex)
+                                @elseif($currentStatusIndex !== false && $index === $currentStatusIndex)
                                     <i class="ti ti-point-filled"></i>
                                 @else
                                     <small>{{ $index + 1 }}</small>
                                 @endif
                             </div>
-                            <div class="mt-1 small {{ $currentIndex !== false && $index <= $currentIndex ? 'fw-medium' : 'text-muted' }}">
+                            <div class="mt-1 small {{ $currentStatusIndex !== false && $index <= $currentStatusIndex ? 'fw-medium' : 'text-muted' }}">
                                 {{ $status->translatedLabel() }}
                             </div>
                         </div>
                         @if(!$loop->last)
-                        <div class="flex-fill border-top {{ $currentIndex !== false && $index < $currentIndex ? 'border-success' : 'border-light' }}" style="height: 2px; margin-top: -15px;"></div>
+                        <div class="flex-fill border-top {{ $currentStatusIndex !== false && $index < $currentStatusIndex ? 'border-success' : 'border-light' }}" style="height: 2px; margin-top: -15px;"></div>
                         @endif
                         @endforeach
                     </div>
                     @endif
                 </div>
             </div>
+
+            {{-- Appointment Information --}}
+            <x-visit-summary-card :appointment="$appointment">
+                <x-slot:actions>
+                    @if($appointment->status === \App\Enums\AppointmentStatus::SCHEDULED)
+                    <form method="POST" action="{{ route('admin.appointments.transition', $appointment) }}" class="js-appointment-action-form" data-follow-up="appointment">
+                        @csrf @method('PATCH')
+                        <input type="hidden" name="status" value="confirmed">
+                        <button type="submit" class="btn btn-primary btn-md">
+                            <i class="ti ti-check me-1"></i>{{ __('appointments.confirm') }}
+                        </button>
+                    </form>
+                    @endif
+
+                    @if($appointment->status === \App\Enums\AppointmentStatus::CONFIRMED)
+                        @can('appointments.create')
+                        <form method="POST" action="{{ route('admin.appointments.check-in', $appointment) }}" class="js-appointment-action-form" data-follow-up="visit">
+                            @csrf
+                            <button type="submit" class="btn btn-primary btn-md">
+                                <i class="ti ti-login me-1"></i>{{ __('appointments.check_in_patient') }}
+                            </button>
+                        </form>
+                        @endcan
+                        <form method="POST" action="{{ route('admin.appointments.no-show', $appointment) }}">
+                            @csrf
+                            <button type="submit" class="btn btn-dark btn-md">
+                                <i class="ti ti-user-off me-1"></i>{{ __('appointments.no_show_action') }}
+                            </button>
+                        </form>
+                    @endif
+
+                    @if($appointment->is_active && $appointment->status !== \App\Enums\AppointmentStatus::CHECKED_IN)
+                        @can('appointments.edit')
+                        <a href="{{ route('admin.appointments.edit', $appointment) }}" class="btn btn-outline-primary btn-md">
+                            <i class="ti ti-pencil me-1"></i>{{ __('common.reschedule') }}
+                        </a>
+                        @endcan
+                    @endif
+                </x-slot:actions>
+            </x-visit-summary-card>
         </div>
 
         {{-- Patient Sidebar --}}
@@ -211,47 +118,63 @@
                 :visit-insurance="$appointment->visitInsurance"
             />
 
-            {{-- Actions Card --}}
-            @if($appointment->is_active)
+            @can('appointments.create')
             <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="ti ti-bolt me-2"></i>{{ __('appointments.quick_actions') }}</h5>
-                </div>
                 <div class="card-body">
-                    <div class="d-grid gap-2">
-                        @if($appointment->status === \App\Enums\AppointmentStatus::SCHEDULED)
-                        <form method="POST" action="{{ route('admin.appointments.transition', $appointment) }}" class="js-appointment-action-form" data-follow-up="appointment">
-                            @csrf @method('PATCH')
-                            <input type="hidden" name="status" value="confirmed">
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="ti ti-check me-1"></i> {{ __('appointments.confirm_appointment') }}
-                            </button>
-                        </form>
-                        @endif
-
-                        @if($appointment->status === \App\Enums\AppointmentStatus::CONFIRMED)
-                        @can('appointments.create')
-                        <form method="POST" action="{{ route('admin.appointments.check-in', $appointment) }}" class="js-appointment-action-form" data-follow-up="visit">
-                            @csrf
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="ti ti-login me-1"></i> {{ __('appointments.check_in_create_visit') }}
-                            </button>
-                        </form>
-                        @endcan
-                        @endif
-
-                        @can('appointments.create')
-                        <a href="{{ route('admin.appointments.create', ['patient_id' => $appointment->patient_id]) }}" class="btn btn-outline-primary">
-                            <i class="ti ti-calendar-plus me-1"></i> {{ __('appointments.schedule_another') }}
-                        </a>
-                        @endcan
-                    </div>
+                    <a href="{{ route('admin.appointments.create', ['patient_id' => $appointment->patient_id]) }}" class="btn btn-outline-primary w-100">
+                        <i class="ti ti-calendar-plus me-1"></i> {{ __('appointments.schedule_another') }}
+                    </a>
                 </div>
             </div>
-            @endif
+            @endcan
+            {{-- Selected Services --}}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1"></i>{{ __('appointments.selected_services') }}</h6>
+                </div>
+                <div class="card-body p-0">
+                    @if($appointment->services->isNotEmpty())
+                    <div class="px-3 py-2">
+                        <div class="d-flex flex-column gap-2">
+                            @foreach($appointment->services as $service)
+                            @php
+                                $quantity = (int) ($service->pivot->quantity ?? 1);
+                                $lineTotal = (float) $service->price * $quantity;
+                            @endphp
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div class="flex-grow-1">
+                                    <span class="small fw-medium">{{ $service->name }}</span>
+                                    @if($quantity > 1)
+                                        <span class="badge bg-secondary-subtle text-secondary ms-1">×{{ $quantity }}</span>
+                                    @endif
+                                    @if($service->department)
+                                        <span class="badge bg-light text-dark border ms-1 small">{{ $service->department->name }}</span>
+                                    @endif
+                                </div>
+                                <div class="text-end small text-muted text-nowrap">
+                                    &#8373;{{ number_format($lineTotal, 2) }}
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                        @php
+                            $servicesTotal = $appointment->services->sum(fn ($service) => (float) $service->price * (int) ($service->pivot->quantity ?? 1));
+                        @endphp
+                        <div class="d-flex justify-content-between border-top mt-2 pt-2 fw-bold">
+                            <span>{{ __('appointments.estimated_total') }}</span>
+                            <span>&#8373;{{ number_format($servicesTotal, 2) }}</span>
+                        </div>
+                    </div>
+                    @else
+                    <div class="px-3 py-3">
+                        <p class="text-muted small mb-0 text-center">{{ __('appointments.no_services_selected') }}</p>
+                    </div>
+                    @endif
+                </div>
+            </div>
         </div>
     </div>
-</div>
+<!-- </div> -->
 @endsection
 
 @push('scripts')

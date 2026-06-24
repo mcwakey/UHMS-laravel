@@ -53,6 +53,7 @@ return [
     'mark_all_read' => 'Mark all read',
     'view_all' => 'View All',
     'view_all_notifications' => 'View All Notifications',
+    'reschedule' => 'Reschedule',
 
     // Labels
     'status' => 'Status',

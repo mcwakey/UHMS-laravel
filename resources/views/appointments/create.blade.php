@@ -99,26 +99,9 @@
         <div class="col-lg-4">
 
             <!-- Department, Services & Doctor -->
-            <x-department-services-card
-                :departments="$departments"
-                :doctors="$doctors"
-                :title="__('appointments.department_services_doctor')"
-                :department-label="__('common.department')"
-                :doctor-label="__('appointments.assign_doctor')"
-                :available-services-label="__('appointments.available_services')"
-                :selected-services-label="__('appointments.selected_services')"
-                department-name="department_id"
-                doctor-name="doctor_id"
-                :department-required="true"
-                :doctor-disabled-until-department="false"
-                :show-extra-services-toggle="false"
-                billing-table-variant="quantity"
-                :department-placeholder="__('appointments.select_department')"
-                :doctor-placeholder="__('appointments.select_doctor_optional')"
-                :services-placeholder="__('appointments.select_dept_or_doctor_services')"
-                :service-filter-placeholder="__('appointments.filter_services')"
-                :estimated-total-label="__('appointments.estimated_total')"
-            />
+
+            <x-department-services-card :departments="$departments" />
+
             <div class="card bg-light">
                 <div class="card-body">
                     <h6 class="fw-bold mb-3"><i class="ti ti-calendar-event me-1 text-primary"></i>{{ __('appointments.what_happens_next') }}</h6>
@@ -150,6 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const departmentSelect = document.getElementById('departmentSelect');
     const doctorSelect = document.getElementById('doctorSelect');
     const insuranceCard = document.getElementById('insuranceCard');
+    const showExtraServicesInput = document.getElementById('showExtraServices');
 
     let patientInsurances = [];
     let selectedInsurance = null;
@@ -186,6 +170,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function hasSelect2() {
         return window.jQuery && jQuery.fn && jQuery.fn.select2;
+    }
+
+    function refreshAppointmentSelect2(select) {
+        if (!hasSelect2()) return;
+
+        const $select = jQuery(select);
+        if ($select.hasClass('select2-hidden-accessible')) {
+            $select.prop('disabled', select.disabled).trigger('change.select2');
+        }
+    }
+
+    function initSearchableAppointmentSelects() {
+        if (!hasSelect2()) return;
+
+        const searchableOptions = function(select, fallbackPlaceholder) {
+            return {
+                placeholder: select.dataset.placeholder || fallbackPlaceholder,
+                allowClear: true,
+                minimumResultsForSearch: 0,
+                width: '100%',
+            };
+        };
+
+        const $department = jQuery(departmentSelect);
+        if (!$department.hasClass('select2-hidden-accessible')) {
+            $department.select2(searchableOptions(departmentSelect, 'Search department...'));
+            $department.on('select2:select select2:clear', function() {
+                window.setTimeout(function() {
+                    departmentSelect.dispatchEvent(new Event('change'));
+                }, 0);
+            });
+        }
+
+        const $doctor = jQuery(doctorSelect);
+        if (!$doctor.hasClass('select2-hidden-accessible')) {
+            $doctor.select2(searchableOptions(doctorSelect, 'Search doctor/staff...'));
+        }
     }
 
     function patientDisplayText(patient) {
@@ -390,7 +411,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     departmentSelect.addEventListener('change', function() {
-        if (!this.value) { showServicesPlaceholder(); return; }
+        if (!this.value) {
+            doctorSelect.disabled = true;
+            doctorSelect.innerHTML = '<option value="">' + escapeHtml(i18n.selectDoctorOptional) + '</option>';
+            refreshAppointmentSelect2(doctorSelect);
+            showServicesPlaceholder();
+            return;
+        }
         showServicesLoading();
         fetch('{{ route("admin.visits.department-services") }}?department_id=' + this.value, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
         .then(r => r.json()).then(data => { availableServices = data; renderServicesList(); updateDoctorsForSelectedServices(); });
@@ -409,10 +436,18 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('servicesPlaceholder').classList.remove('d-none');
             document.getElementById('servicesContent').classList.add('d-none'); return;
         }
+
+        const visibleServices = getVisibleAvailableServices();
+        if (visibleServices.length === 0) {
+            document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-info-circle me-1 text-muted"></i>' + escapeHtml(i18n.noServicesFound);
+            document.getElementById('servicesPlaceholder').classList.remove('d-none');
+            document.getElementById('servicesContent').classList.add('d-none'); return;
+        }
+
         document.getElementById('servicesPlaceholder').classList.add('d-none');
         document.getElementById('servicesContent').classList.remove('d-none');
         let html = '';
-        availableServices.forEach(svc => {
+        visibleServices.forEach(svc => {
             html += '<div class="service-item d-flex align-items-center justify-content-between py-2 px-2 border-bottom bg-white rounded mb-1" data-name="' + escapeHtml(svc.name.toLowerCase()) + '">';
             html += '<div><span class="fw-medium">' + escapeHtml(svc.name) + '</span> <span class="badge bg-light text-dark ms-1">' + escapeHtml(svc.code) + '</span><div class="small text-muted">' + escapeHtml(svc.category) + '</div></div>';
             html += '<div class="d-flex align-items-center gap-2"><span class="fw-bold text-success svc-price-display" data-svc-id="' + svc.id + '">\u20B5' + formatNumber(resolveServicePrice(svc)) + '</span>';
@@ -424,10 +459,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }));
     }
 
+    function isConsultationService(svc) {
+        return String(svc?.category || '').toLowerCase() === 'consultation';
+    }
+
+    function getVisibleAvailableServices() {
+        if (showExtraServicesInput && showExtraServicesInput.checked) {
+            return availableServices;
+        }
+
+        return availableServices.filter(isConsultationService);
+    }
+
     document.getElementById('serviceFilter').addEventListener('input', function() {
         const f = this.value.toLowerCase();
         document.querySelectorAll('.service-item').forEach(item => { item.style.display = item.dataset.name.includes(f) ? '' : 'none'; });
     });
+
+    if (showExtraServicesInput) {
+        showExtraServicesInput.addEventListener('change', function() {
+            const serviceFilter = document.getElementById('serviceFilter');
+            if (serviceFilter) serviceFilter.value = '';
+            renderServicesList();
+        });
+    }
 
     function showServicesPlaceholder() {
         document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-list-search me-1"></i>' + escapeHtml(i18n.selectServices);
@@ -457,15 +512,15 @@ document.addEventListener('DOMContentLoaded', function() {
         card.classList.remove('d-none');
         let html = '';
         selectedServices.forEach((svc, idx) => {
-            html += '<tr><td>' + escapeHtml(svc.name) + '<input type="hidden" name="services[' + idx + '][service_catalog_id]" value="' + svc.service_catalog_id + '"><input type="hidden" name="services[' + idx + '][quantity]" value="' + svc.quantity + '"></td>';
-            html += '<td class="text-center"><div class="input-group input-group-sm" style="width:70px;"><button type="button" class="btn btn-outline-secondary btn-xs qty-dec" data-index="' + idx + '">-</button><span class="form-control form-control-sm text-center px-1">' + svc.quantity + '</span><button type="button" class="btn btn-outline-secondary btn-xs qty-inc" data-index="' + idx + '">+</button></div></td>';
-            html += '<td class="text-end text-muted">\u20B5' + formatNumber(svc.price) + '</td><td class="text-end fw-medium">\u20B5' + formatNumber(svc.price * svc.quantity) + '</td>';
+            const qty = svc.quantity || 1;
+            html += '<tr><td>' + escapeHtml(svc.name);
+            html += '<input type="hidden" name="services[' + idx + '][service_catalog_id]" value="' + svc.service_catalog_id + '">';
+            html += '<input type="hidden" name="services[' + idx + '][quantity]" value="' + qty + '"></td>';
+            html += '<td class="text-end fw-medium">\u20B5' + formatNumber(svc.price * qty) + '</td>';
             html += '<td class="text-center"><button aria-label="' + escapeHtml(i18n.delete) + '" title="' + escapeHtml(i18n.delete) + '" type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="' + idx + '"><i class="ti ti-trash"></i></button></td></tr>';
         });
         tbody.innerHTML = html;
         tbody.querySelectorAll('.remove-service-btn').forEach(b => b.addEventListener('click', function() { removeServiceFromBilling(parseInt(this.dataset.index)); }));
-        tbody.querySelectorAll('.qty-dec').forEach(b => b.addEventListener('click', function() { updateServiceQuantity(parseInt(this.dataset.index), selectedServices[parseInt(this.dataset.index)].quantity - 1); }));
-        tbody.querySelectorAll('.qty-inc').forEach(b => b.addEventListener('click', function() { updateServiceQuantity(parseInt(this.dataset.index), selectedServices[parseInt(this.dataset.index)].quantity + 1); }));
         recalculateBilling();
     }
 
@@ -482,6 +537,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function repopulateDoctorSelect(doctors) {
         const cur = doctorSelect.value;
+        doctorSelect.disabled = false;
         doctorSelect.innerHTML = '<option value="">' + escapeHtml(i18n.selectDoctorOptional) + '</option>';
         doctors.forEach(doc => {
             const opt = document.createElement('option');
@@ -490,7 +546,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (String(doc.id) === String(cur)) opt.selected = true;
             doctorSelect.appendChild(opt);
         });
+        refreshAppointmentSelect2(doctorSelect);
     }
+
+    initSearchableAppointmentSelects();
 
     function escapeHtml(str) { return str == null ? '' : String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
     function formatNumber(n) { return parseFloat(n || 0).toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }

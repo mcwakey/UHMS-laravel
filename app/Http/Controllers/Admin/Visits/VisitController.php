@@ -90,10 +90,7 @@ class VisitController extends Controller
 
     public function create(Request $request)
     {
-        $departments = Department::active()
-            ->where('type', DepartmentType::CONSULTATION->value)
-            ->orderBy('name')
-            ->get();
+        $departments = Department::active()->consultation()->orderBy('name')->get();
         $selectedPatient = null;
 
         if ($request->has('patient_id')) {
@@ -234,7 +231,7 @@ class VisitController extends Controller
             'pendingConsultationRoutes.doctor',
         ]);
 
-        $departments = Department::active()->orderBy('name')->get();
+        $departments = Department::active()->consultation()->orderBy('name')->get();
         $doctors = User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get();
 
         return view('visits.edit', compact('visit', 'departments', 'doctors'));

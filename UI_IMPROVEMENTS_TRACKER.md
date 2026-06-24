@@ -159,6 +159,23 @@ Use this file as the shared checklist for UI improvements. Attach it to new UI p
   - `resources/views/appointments/edit.blade.php`
 - **Next Check:** Convert other visit-detail sections to this component when those pages are touched.
 
+### `x-visit-summary-card`
+
+- **Status:** Implemented, first adoption complete.
+- **Component:** `resources/views/components/visit-summary-card.blade.php`
+- **Purpose:** Read-only visit/appointment details summary card with type, priority, date/time, route metadata, complaint/reason, notes, and optional actions.
+- **Use For:** Visit and appointment detail/show screens and other read-only visit-style contexts.
+- **Usage Notes:**
+  - Pass `:visit="$visit"`.
+  - Pass `:appointment="$appointment"` on appointment detail pages.
+  - Use `<x-slot:actions>` for workflow buttons such as confirm, check-in, no-show, or reschedule.
+  - Use `:show-preview-action="false"` when the preview button should not render.
+  - Keep `x-visit-details-card` for create/edit forms; use this component for display-only summaries.
+- **Current Adoption Examples:**
+  - `resources/views/visits/show.blade.php`
+  - `resources/views/appointments/show.blade.php`
+- **Next Check:** Replace duplicated read-only visit detail cards with `x-visit-summary-card` when those pages are touched.
+
 ### `x-department-services-card`
 
 - **Status:** Implemented, first adoption complete.
@@ -168,11 +185,8 @@ Use this file as the shared checklist for UI improvements. Attach it to new UI p
 - **Usage Notes:**
   - Defaults preserve the visits create DOM IDs: `departmentSelect`, `doctorSelect`, `showExtraServices`, `servicesList`, `servicesContent`, `servicesItems`, `selectedServicesCard`, `billingBody`, and `totalAmount`.
   - Pass `:departments="$departments"` and, when needed, `:doctors="$doctors"` to populate selectors.
-  - Override labels/placeholders with `:title`, `:department-label`, `:doctor-label`, `:available-services-label`, `:selected-services-label`, `:department-placeholder`, `:doctor-placeholder`, `:services-placeholder`, and `:service-filter-placeholder`.
-  - Set `department-name` and `doctor-name` when the workflow needs native form submission for those fields.
-  - Use `:department-required`, `:doctor-required`, and `:doctor-disabled-until-department` to match validation and loading behavior.
-  - Use `:show-extra-services-toggle="false"` for appointment-style service selection.
-  - Use `billing-table-variant="quantity"` with `:estimated-total-label` when the workflow needs quantity/unit-price/line-total columns.
+  - The visit-side layout, labels, placeholders, extra-services toggle, and billing table style are shared across visit and appointment pages.
+  - Pass `:selected-department-id`, `:selected-doctor-id`, and `:selected-services-visible` on edit pages.
   - Keep page JavaScript pointed at the component IDs instead of duplicating the markup.
 - **Current Adoption Examples:**
   - `resources/views/visits/create.blade.php`
@@ -301,5 +315,5 @@ Use this file as the shared checklist for UI improvements. Attach it to new UI p
 ## Open Adoption Notes
 
 - Continue replacing page-specific filter cards as pages are touched.
-- Keep `x-page-header`, `x-filter-bar`, `x-patient-selection-card`, `x-patient-card`, `x-insurance-selection-card`, `x-visit-details-card`, `x-department-services-card`, `x-patient-insurance-form-modal`, and patient registration card components visually aligned with `resources/css/uhms-design-system.css`.
+- Keep `x-page-header`, `x-filter-bar`, `x-patient-selection-card`, `x-patient-card`, `x-insurance-selection-card`, `x-visit-details-card`, `x-visit-summary-card`, `x-department-services-card`, `x-patient-insurance-form-modal`, and patient registration card components visually aligned with `resources/css/uhms-design-system.css`.
 - If a new reusable UI pattern emerges, add it here before using it across multiple pages.

@@ -47,7 +47,7 @@
 <div class="row g-3 mb-4">
 
     {{-- Visit info --}}
-    <div class="col-xl-3 col-md-6">
+    <!-- <div class="col-xl-3 col-md-6">
         <div class="card h-100 border-start border-primary border-3">
             <div class="card-body py-3">
                 <p class="text-muted small mb-1 text-uppercase fw-semibold">{{ __('visits.visit_header') }}</p>
@@ -63,10 +63,10 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
 
     {{-- Patient info --}}
-    <div class="col-xl-3 col-md-6">
+    <!-- <div class="col-xl-3 col-md-6">
         <div class="card h-100 border-start border-info border-3">
             <div class="card-body py-3">
                 <p class="text-muted small mb-1 text-uppercase fw-semibold">{{ __('visits.patient_header') }}</p>
@@ -85,10 +85,10 @@
                 @endif
             </div>
         </div>
-    </div>
+    </div> -->
 
     {{-- Clinical summary --}}
-    <div class="col-xl-3 col-md-6">
+    <!-- <div class="col-xl-3 col-md-6">
         <div class="card h-100 border-start border-success border-3">
             <div class="card-body py-3">
                 <p class="text-muted small mb-1 text-uppercase fw-semibold">{{ __('visits.clinical_card') }}</p>
@@ -125,10 +125,10 @@
                 @endcan
             </div>
         </div>
-    </div>
+    </div> -->
 
     {{-- Billing summary --}}
-    <div class="col-xl-3 col-md-6">
+    <!-- <div class="col-xl-3 col-md-6">
         <div class="card h-100 border-start border-warning border-3">
             <div class="card-body py-3">
                 <p class="text-muted small mb-1 text-uppercase fw-semibold">{{ __('visits.billing_card') }}</p>
@@ -152,7 +152,7 @@
                 @endif
             </div>
         </div>
-    </div>
+    </div> -->
 </div>
 
 {{-- ── Timeline ─────────────────────────────────────────────────── --}}

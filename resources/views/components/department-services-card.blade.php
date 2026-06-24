@@ -1,60 +1,33 @@
 @props([
     'departments' => collect(),
     'doctors' => collect(),
-    'title' => null,
-    'departmentLabel' => null,
-    'doctorLabel' => null,
-    'availableServicesLabel' => null,
-    'selectedServicesLabel' => null,
-    'departmentName' => null,
-    'doctorName' => null,
-    'departmentRequired' => false,
-    'doctorRequired' => false,
-    'doctorDisabledUntilDepartment' => true,
     'selectedDepartmentId' => null,
     'selectedDoctorId' => null,
-    'showExtraServicesToggle' => true,
     'selectedServicesVisible' => false,
-    'billingTableVariant' => 'visit',
-    'departmentSelectId' => 'departmentSelect',
-    'doctorSelectId' => 'doctorSelect',
-    'showExtraServicesId' => 'showExtraServices',
-    'servicesListId' => 'servicesList',
-    'servicesPlaceholderId' => 'servicesPlaceholder',
-    'servicesContentId' => 'servicesContent',
-    'serviceFilterId' => 'serviceFilter',
-    'servicesItemsId' => 'servicesItems',
-    'selectedServicesCardId' => 'selectedServicesCard',
-    'routeDoctorSummaryId' => 'routeDoctorSummary',
-    'billingTableId' => 'billingTable',
-    'billingBodyId' => 'billingBody',
-    'totalAmountId' => 'totalAmount',
-    'departmentPlaceholder' => null,
-    'doctorPlaceholder' => null,
-    'servicesPlaceholder' => null,
-    'serviceFilterPlaceholder' => null,
-    'departmentSearchPlaceholder' => null,
-    'doctorSearchPlaceholder' => null,
-    'estimatedTotalLabel' => null,
 ])
 
 @php
     $departments = collect($departments);
     $doctors = collect($doctors);
-    $title ??= __('visits.dept_services_heading');
-    $departmentLabel ??= __('visits.department_filter_label');
-    $doctorLabel ??= __('visits.assign_doctor_label');
-    $availableServicesLabel ??= __('visits.available_services_label');
-    $selectedServicesLabel ??= __('visits.selected_services_label');
-    $departmentPlaceholder ??= __('visits.select_department');
-    $doctorPlaceholder ??= __('visits.select_dept_first');
-    $servicesPlaceholder ??= __('visits.select_dept_load_services');
-    $serviceFilterPlaceholder ??= __('visits.filter_services');
-    $departmentSearchPlaceholder ??= __('visits.search_dept_placeholder');
-    $doctorSearchPlaceholder ??= __('visits.search_doctor_placeholder');
-    $estimatedTotalLabel ??= __('visits.overall_total_label');
-    $departmentValue = old($departmentName ?? 'department_id', $selectedDepartmentId);
-    $doctorValue = old($doctorName ?? 'doctor_id', $selectedDoctorId);
+    $isVisitEdit = request()->routeIs('admin.visits.edit');
+
+    $title = __('visits.dept_services_heading');
+    $departmentLabel = __('visits.department_filter_label');
+    $doctorLabel = $isVisitEdit ? __('visits.route_doctor') : __('visits.assign_doctor_label');
+    $availableServicesLabel = __('visits.available_services_label');
+    $selectedServicesLabel = __('visits.selected_services_label');
+    $departmentPlaceholder = __('visits.select_department');
+    $doctorPlaceholder = $isVisitEdit ? __('visits.select_dept_load_doctors') : __('visits.select_dept_first');
+    $servicesPlaceholder = __('visits.select_dept_load_services');
+    $serviceFilterPlaceholder = __('visits.filter_services');
+    $departmentSearchPlaceholder = __('visits.search_dept_placeholder');
+    $doctorSearchPlaceholder = __('visits.search_doctor_placeholder');
+    $estimatedTotalLabel = $isVisitEdit ? __('visits.est_total') : __('visits.overall_total_label');
+
+    $departmentValue = old('department_id', $selectedDepartmentId);
+    $doctorValue = old('doctor_id', $selectedDoctorId);
+    $showExtraServicesToggle = ! $isVisitEdit;
+    $doctorDisabledUntilDepartment = true;
 @endphp
 
 <div {{ $attributes->merge(['class' => 'card']) }}>
@@ -69,34 +42,30 @@
                     @if($showExtraServicesToggle)
                         <small class="text-muted">{{ __('visits.dept_filters_services') }}</small>
                     @endif
-                    @if($departmentRequired)<span class="text-danger">*</span>@endif
                 </label>
-                <select id="{{ $departmentSelectId }}"
-                        @if($departmentName) name="{{ $departmentName }}" @endif
-                        class="form-select @error($departmentName ?? 'department_id') is-invalid @enderror"
+                <select id="departmentSelect"
+                        name="department_id"
+                        class="form-select @error('department_id') is-invalid @enderror"
                         data-placeholder="{{ $departmentSearchPlaceholder }}"
-                        style="width:100%"
-                        @if($departmentRequired) required @endif>
+                        style="width:100%">
                     <option value="">{{ $departmentPlaceholder }}</option>
                     @foreach($departments as $dept)
                         <option value="{{ $dept->id }}" {{ (string) $departmentValue === (string) $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
                     @endforeach
                 </select>
-                @error($departmentName ?? 'department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
             <div class="col-md-6 mb-3">
                 <label class="form-label">
                     {{ $doctorLabel }}
-                    @if(! $doctorRequired)<small class="text-muted">{{ __('visits.optional_label') }}</small>@endif
-                    @if($doctorRequired)<span class="text-danger">*</span>@endif
+                    <small class="text-muted">{{ __('visits.optional_label') }}</small>
                 </label>
-                <select id="{{ $doctorSelectId }}"
-                        @if($doctorName) name="{{ $doctorName }}" @endif
-                        class="form-select @error($doctorName ?? 'doctor_id') is-invalid @enderror"
+                <select id="doctorSelect"
+                        name="doctor_id"
+                        class="form-select @error('doctor_id') is-invalid @enderror"
                         data-placeholder="{{ $doctorSearchPlaceholder }}"
                         style="width:100%"
-                        @if($doctorDisabledUntilDepartment && ! $departmentValue) disabled @endif
-                        @if($doctorRequired) required @endif>
+                        @if($doctorDisabledUntilDepartment && ! $departmentValue) disabled @endif>
                     <option value="">{{ $doctorPlaceholder }}</option>
                     @foreach($doctors as $doctor)
                         <option value="{{ $doctor->id }}" {{ (string) $doctorValue === (string) $doctor->id ? 'selected' : '' }}>
@@ -107,7 +76,7 @@
                         <option value="{{ $doctorValue }}" selected>{{ $doctorValue }}</option>
                     @endif
                 </select>
-                @error($doctorName ?? 'doctor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                @error('doctor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
         </div>
 
@@ -116,68 +85,46 @@
                 <label class="form-label mb-0">{{ $availableServicesLabel }}</label>
                 @if($showExtraServicesToggle)
                     <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" role="switch" id="{{ $showExtraServicesId }}">
-                        <label class="form-check-label small text-muted" for="{{ $showExtraServicesId }}">{{ __('visits.show_other_services') }}</label>
+                        <input class="form-check-input" type="checkbox" role="switch" id="showExtraServices">
+                        <label class="form-check-label small text-muted" for="showExtraServices">{{ __('visits.show_other_services') }}</label>
                     </div>
                 @endif
             </div>
-            <div id="{{ $servicesListId }}" class="border rounded p-3 bg-light">
-                <div class="text-muted text-center py-3" id="{{ $servicesPlaceholderId }}">
+            <div id="servicesList" class="border rounded p-3 bg-light">
+                <div class="text-muted text-center py-3" id="servicesPlaceholder">
                     <i class="ti ti-list-search me-1"></i>{{ $servicesPlaceholder }}
                 </div>
-                <div id="{{ $servicesContentId }}" class="d-none">
+                <div id="servicesContent" class="d-none">
                     <div class="input-group mb-2">
                         <span class="input-group-text"><i class="ti ti-search"></i></span>
-                        <input type="text" id="{{ $serviceFilterId }}" class="form-control" placeholder="{{ $serviceFilterPlaceholder }}">
+                        <input type="text" id="serviceFilter" class="form-control" placeholder="{{ $serviceFilterPlaceholder }}">
                     </div>
-                    <div id="{{ $servicesItemsId }}" style="max-height: 280px; overflow-y: auto;"></div>
+                    <div id="servicesItems" style="max-height: 280px; overflow-y: auto;"></div>
                 </div>
             </div>
         </div>
 
-        <div id="{{ $selectedServicesCardId }}" class="{{ $selectedServicesVisible ? '' : 'd-none' }}">
+        <div id="selectedServicesCard" class="{{ $selectedServicesVisible ? '' : 'd-none' }}">
             <label class="form-label fw-bold"><i class="ti ti-receipt me-1"></i>{{ $selectedServicesLabel }}</label>
-            <div id="{{ $routeDoctorSummaryId }}" class="small text-muted mb-2"></div>
+            <div id="routeDoctorSummary" class="small text-muted mb-2"></div>
             <div class="table-responsive">
-                @if($billingTableVariant === 'quantity')
-                    <table class="table table-sm table-bordered mb-0" id="{{ $billingTableId }}">
-                        <thead class="table-light">
-                            <tr>
-                                <th>{{ __('appointments.service') }}</th>
-                                <th class="text-center" style="width: 70px;">{{ __('appointments.qty') }}</th>
-                                <th class="text-end" style="width: 100px;">{{ __('appointments.unit_price') }}</th>
-                                <th class="text-end" style="width: 100px;">{{ __('common.total') }}</th>
-                                <th style="width: 36px;"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="{{ $billingBodyId }}"></tbody>
-                        <tfoot>
-                            <tr class="table-light fw-bold">
-                                <td colspan="3" class="text-end">{{ $estimatedTotalLabel }}</td>
-                                <td class="text-end" id="{{ $totalAmountId }}">&#8373;0.00</td>
-                                <td></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                @else
-                    <table class="table table-sm table-hover table-bordered mb-0" id="{{ $billingTableId }}">
-                        <thead class="table-light">
-                            <tr>
-                                <th>{{ __('visits.service_name') }}</th>
-                                <th class="text-end" style="width: 120px;">{{ __('visits.price_col') }}</th>
-                                <th class="text-center" style="width: 50px;">{{ __('visits.action_col') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody id="{{ $billingBodyId }}"></tbody>
-                        <tfoot>
-                            <tr class="table-light fw-bold">
-                                <td class="text-end text-primary">{{ $estimatedTotalLabel }}</td>
-                                <td class="text-end text-primary" id="{{ $totalAmountId }}">&#8373;0.00</td>
-                                <td></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                @endif
+                <table class="table table-sm table-hover table-bordered mb-0" id="billingTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>{{ __('visits.service_name') }}</th>
+                            <th class="text-end" style="width: 120px;">{{ __('visits.price_col') }}</th>
+                            <th class="text-center" style="width: 50px;">{{ __('visits.action_col') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="billingBody"></tbody>
+                    <tfoot>
+                        <tr class="table-light fw-bold">
+                            <td class="text-end text-primary">{{ $estimatedTotalLabel }}</td>
+                            <td class="text-end text-primary" id="totalAmount">&#8373;0.00</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
         </div>
     </div>

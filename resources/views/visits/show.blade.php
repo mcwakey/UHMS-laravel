@@ -54,7 +54,7 @@
         <div class="card mb-3">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-3">
-                    <h6 class="fw-bold mb-0">{{ __('visits.visit_status_flow') }}</h6>
+                    <h6 class="fw-bold mb-0"><i class="ti ti-timeline me-2"></i>{{ __('visits.visit_status_flow') }}</h6>
                     <div class="d-flex align-items-center gap-2">
                         <x-status-badge :status="$visit->status" class="fs-14 px-3 py-2" />
                         @if($visit->triage_score)
@@ -69,9 +69,7 @@
                             \App\Enums\VisitStatus::REGISTERED,
                             \App\Enums\VisitStatus::WAITING,
                             \App\Enums\VisitStatus::TRIAGE,
-                            \App\Enums\VisitStatus::ACTIVE,
                             \App\Enums\VisitStatus::CONSULTING,
-                            \App\Enums\VisitStatus::EMERGENCY,
                             \App\Enums\VisitStatus::ADMITTED,
                             \App\Enums\VisitStatus::COMPLETED,
                         ];
@@ -150,57 +148,7 @@
         @endphp
 
         <!-- Visit Details Card -->
-        <div class="card mb-3">
-            <div class="card-header d-flex align-items-center justify-content-between">
-                <h6 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>{{ __('visits.visit_details') }}</h6>
-
-                @can('visits.preview')
-                <a href="{{ route('admin.visits.preview', $visit) }}" class="btn btn-outline-info btn-md">
-                    <i class="ti ti-eye-search me-1"></i>{{ __('visits.preview_visit_btn') }}
-                </a>
-                @endcan
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 mb-2">
-                        <label class="text-muted small mb-1">{{ __('visits.visit_type_label') }}</label>
-                        <div>
-                            <span class="badge bg-{{ $visit->visit_type === \App\Enums\VisitType::EMERGENCY ? 'danger' : ($visit->visit_type === \App\Enums\VisitType::INPATIENT ? 'info' : 'light text-dark') }}">
-                                {{ $visit->visit_type->translatedLabel() }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <label class="text-muted small mb-1">{{ __('visits.priority_label') }}</label>
-                        <div><x-status-badge :status="$visit->priority" /></div>
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <label class="text-muted small mb-1">{{ __('visits.visit_date_label') }}</label>
-                        <div class="fw-medium">{{ $visit->visit_date->format('d M Y') }}</div>
-                    </div>
-                    {{-- <div class="col-md-4 mb-3">
-                        <label class="text-muted small mb-1">Current Route Doctor</label>
-                        <div class="fw-medium">{{ $visit->currentConsultationDoctor() ? 'Dr. ' . $visit->currentConsultationDoctor()->full_name : '—' }}</div>
-                    </div> --}}
-                    <div class="col-md-3 mb-2">
-                        <label class="text-muted small mb-1">{{ __('visits.duration_label') }}</label>
-                        <div class="fw-medium">{{ $visit->duration ?? '—' }}</div>
-                    </div>
-                </div>
-                @if($visit->chief_complaint)
-                <div class="mb-2">
-                    <label class="text-muted small mb-1">{{ __('visits.chief_complaint_label') }}</label>
-                    <div class="bg-light rounded p-2">{{ $visit->chief_complaint }}</div>
-                </div>
-                @endif
-                @if($visit->notes)
-                <div class="mb-2">
-                    <label class="text-muted small mb-1">{{ __('visits.notes_label') }}</label>
-                    <div class="bg-light rounded p-2">{{ $visit->notes }}</div>
-                </div>
-                @endif
-            </div>
-        </div>
+        <x-visit-summary-card :visit="$visit" />
 
         {{-- Triage Summary Card (shown once triage exists) --}}
         @if($visit->triage)

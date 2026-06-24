@@ -66,6 +66,11 @@ class Department extends Model
         return $query->where('status', 'active');
     }
 
+    public function scopeConsultation($query)
+    {
+        return $query->where('type', DepartmentType::CONSULTATION->value);
+    }
+
     public function scopeStockManaged($query)
     {
         return $query->where('is_stock_managed', true);

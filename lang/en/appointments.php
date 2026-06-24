@@ -59,6 +59,7 @@ return [
     'qty' => 'Qty',
     'unit_price' => 'Unit Price',
     'estimated_total' => 'Est. Total:',
+    'no_services_selected' => 'No services were selected for this appointment.',
     'what_happens_next' => 'What Happens Next',
     'appointment_is_scheduled' => 'Appointment is Scheduled',
     'patient_can_be_notified' => 'Patient can be notified',

@@ -53,6 +53,7 @@ return [
     'mark_all_read' => 'Tout marquer comme lu',
     'view_all' => 'Voir tout',
     'view_all_notifications' => 'Voir toutes les notifications',
+    'reschedule' => 'Reprogrammer',
 
     // Labels
     'status' => 'Statut',
