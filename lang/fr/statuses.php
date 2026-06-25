@@ -130,6 +130,7 @@ return [
         'scheduled' => 'Planifié',
         'confirmed' => 'Confirmé',
         'registered' => 'Enregistré',
+        'checked_in' => 'Arrivée enregistrée',
         'waiting' => 'En attente',
         'active' => 'Actif',
         'triage' => 'Triage',

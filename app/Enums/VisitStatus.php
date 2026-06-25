@@ -7,6 +7,7 @@ enum VisitStatus: string
     case SCHEDULED = 'scheduled';
     case CONFIRMED = 'confirmed';
     case REGISTERED = 'registered';
+    case CHECKED_IN = 'checked_in';
     case WAITING = 'waiting';
     case ACTIVE = 'active';
     case TRIAGE = 'triage';
@@ -36,6 +37,7 @@ enum VisitStatus: string
             self::SCHEDULED => 'Scheduled',
             self::CONFIRMED => 'Confirmed',
             self::REGISTERED => 'Registered',
+            self::CHECKED_IN => 'Checked In',
             self::WAITING => 'Waiting',
             self::ACTIVE => 'Active',
             self::TRIAGE => 'Triage',
@@ -71,6 +73,7 @@ enum VisitStatus: string
             self::SCHEDULED => 'secondary',
             self::CONFIRMED => 'info',
             self::REGISTERED => 'secondary',
+            self::CHECKED_IN => 'primary',
             self::WAITING => 'warning',
             self::ACTIVE => 'primary',
             self::TRIAGE => 'info',
@@ -104,6 +107,7 @@ enum VisitStatus: string
             self::SCHEDULED => [self::CONFIRMED, self::REGISTERED, self::CANCELLED, self::RESCHEDULED, self::NO_SHOW],
             self::CONFIRMED => [self::REGISTERED, self::CANCELLED, self::RESCHEDULED, self::NO_SHOW],
             self::REGISTERED => [self::WAITING, self::CANCELLED],
+            self::CHECKED_IN => [self::WAITING, self::CANCELLED],
             self::WAITING => [self::TRIAGE, self::CANCELLED, self::RESCHEDULED],
             // Triage transitions are handled by TriageController (processTriage) — manual transitions disabled
             self::TRIAGE => [self::WAITING_CONSULTATION, self::CONSULTING, self::ACTIVE, self::EMERGENCY, self::ADMITTED, self::INPATIENT, self::CANCELLED],

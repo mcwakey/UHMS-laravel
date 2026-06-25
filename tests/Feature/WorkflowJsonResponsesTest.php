@@ -318,6 +318,8 @@ class WorkflowJsonResponsesTest extends TestCase
             'status' => AppointmentStatus::CONFIRMED,
             'created_by' => $this->user->id,
         ]);
+        $service = $this->createService($this->department, 'Appointment General Consultation');
+        $appointment->services()->attach($service->id, ['quantity' => 1]);
 
         $response = $this->actingAs($this->user)->postJson(route('admin.appointments.check-in', $appointment));
 
@@ -332,6 +334,17 @@ class WorkflowJsonResponsesTest extends TestCase
 
         $this->assertSame(AppointmentStatus::CHECKED_IN, $appointment->status);
         $this->assertNotNull($visit);
+        $this->assertSame(VisitStatus::WAITING, $visit->status);
+        $this->assertDatabaseHas('visit_status_logs', [
+            'visit_id' => $visit->id,
+            'from_status' => null,
+            'to_status' => VisitStatus::CHECKED_IN->value,
+        ]);
+        $this->assertDatabaseHas('visit_status_logs', [
+            'visit_id' => $visit->id,
+            'from_status' => VisitStatus::CHECKED_IN->value,
+            'to_status' => VisitStatus::WAITING->value,
+        ]);
     }
 
     public function test_appointment_transition_returns_json_and_updates_status(): void

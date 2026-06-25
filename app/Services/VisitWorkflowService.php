@@ -57,6 +57,18 @@ class VisitWorkflowService
         return $visit->fresh();
     }
 
+    public function initializeCheckedIn(Visit $visit): Visit
+    {
+        $visit->statusLogs()->create([
+            'from_status' => null,
+            'to_status'   => VisitStatus::CHECKED_IN->value,
+            'changed_by'  => Auth::id(),
+            'notes'       => 'Patient checked in from appointment',
+        ]);
+
+        return $visit->fresh();
+    }
+
     /**
      * Push a freshly-registered walk-in visit into the triage queue.
      * Idempotent: if the visit is already past REGISTERED it is returned
@@ -64,7 +76,7 @@ class VisitWorkflowService
      */
     public function queueForTriage(Visit $visit): Visit
     {
-        if ($visit->status !== VisitStatus::REGISTERED) {
+        if (! in_array($visit->status, [VisitStatus::REGISTERED, VisitStatus::CHECKED_IN], true)) {
             return $visit;
         }
 

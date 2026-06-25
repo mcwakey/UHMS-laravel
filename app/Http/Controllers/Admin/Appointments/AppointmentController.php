@@ -109,7 +109,7 @@ class AppointmentController extends Controller
      */
     public function edit(Appointment $appointment)
     {
-        $appointment->load(['patient', 'services', 'visitInsurance.insuranceProvider']);
+        $appointment->load(['patient', 'services.department', 'services.prices', 'visitInsurance.insuranceProvider']);
         $doctors = User::role('Doctor')->orderBy('first_name')->get();
         $departments = Department::active()->consultation()->orderBy('name')->get();
 
@@ -150,10 +150,16 @@ class AppointmentController extends Controller
     /**
      * Check in patient (creates visit from appointment).
      */
-    public function checkIn(Appointment $appointment)
+    public function checkIn(Request $request, Appointment $appointment)
     {
+        $data = $request->validate([
+            'visit_insurance_id' => ['nullable', 'exists:patient_insurances,id'],
+            'insurance_verification_id' => ['nullable', 'exists:insurance_verifications,id'],
+            'verification_reference_code' => ['nullable', 'string', 'max:80'],
+        ]);
+
         try {
-            $appointment = $this->appointmentService->checkIn($appointment);
+            $appointment = $this->appointmentService->checkIn($appointment, $data);
 
             if (request()->expectsJson()) {
                 return response()->json([
@@ -243,9 +249,21 @@ class AppointmentController extends Controller
     /**
      * Mark appointment as no-show.
      */
-    public function noShow(Appointment $appointment)
+    public function noShow(Request $request, Appointment $appointment)
     {
-        $this->appointmentService->markNoShow($appointment);
+        $appointment = $this->appointmentService->markNoShow($appointment)->fresh();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => __('messages.appointments.no_show'),
+                'appointment_id' => $appointment->id,
+                'appointment_number' => $appointment->appointment_number,
+                'appointment_status' => $appointment->status->value,
+                'appointment_status_label' => $appointment->status->label(),
+                'status_color' => $appointment->status->color(),
+                'redirect_url' => route('admin.appointments.show', $appointment),
+            ]);
+        }
 
         return back()->with('success', __('messages.appointments.no_show'));
     }

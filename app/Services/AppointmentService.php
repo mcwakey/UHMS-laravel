@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\AppointmentStatus;
 use App\Enums\VisitStatus;
 use App\Models\Appointment;
+use App\Models\PatientInsurance;
+use App\Models\ServiceCatalog;
 use App\Models\Visit;
 use App\Services\VisitService;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -15,6 +17,7 @@ class AppointmentService
 {
     public function __construct(
         private VisitService $visitService,
+        private VisitWorkflowService $visitWorkflowService,
     ) {}
     /**
      * List appointments with filters.
@@ -70,13 +73,14 @@ class AppointmentService
      */
     public function update(Appointment $appointment, array $data): Appointment
     {
+        $servicesWereSubmitted = array_key_exists('_services_present', $data);
         $services = $data['services'] ?? null;
-        unset($data['services']);
+        unset($data['services'], $data['_services_present']);
 
         $appointment->update($data);
 
-        if ($services !== null) {
-            $this->syncServices($appointment, $services);
+        if ($servicesWereSubmitted || $services !== null) {
+            $this->syncServices($appointment, $services ?? []);
         }
 
         return $appointment->fresh();
@@ -88,9 +92,37 @@ class AppointmentService
     private function syncServices(Appointment $appointment, array $services): void
     {
         $syncData = [];
+        $serviceIds = collect($services)
+            ->pluck('service_catalog_id')
+            ->filter()
+            ->unique()
+            ->values();
+        $catalogs = $serviceIds->isNotEmpty()
+            ? ServiceCatalog::with('prices')->whereIn('id', $serviceIds)->get()->keyBy('id')
+            : collect();
+        $insurance = $appointment->visit_insurance_id
+            ? PatientInsurance::with('insuranceProvider')->find($appointment->visit_insurance_id)
+            : null;
+        $insuranceType = $insurance?->insuranceProvider?->type;
+        $providerId = $insurance?->insurance_provider_id;
+
         foreach ($services as $svc) {
-            $syncData[$svc['service_catalog_id']] = ['quantity' => $svc['quantity'] ?? 1];
+            $catalog = $catalogs->get($svc['service_catalog_id']);
+
+            if (! $catalog) {
+                continue;
+            }
+
+            $quantity = max(1, (int) ($svc['quantity'] ?? 1));
+            $unitPrice = round($catalog->getPriceForInsurance($insuranceType, $providerId), 2);
+
+            $syncData[$catalog->id] = [
+                'quantity' => $quantity,
+                'unit_price' => $unitPrice,
+                'total_price' => round($unitPrice * $quantity, 2),
+            ];
         }
+
         $appointment->services()->sync($syncData);
     }
 
@@ -127,10 +159,14 @@ class AppointmentService
     /**
      * Check in a patient and create a visit from the appointment.
      */
-    public function checkIn(Appointment $appointment): Appointment
+    public function checkIn(Appointment $appointment, array $data = []): Appointment
     {
-        return DB::transaction(function () use ($appointment) {
+        return DB::transaction(function () use ($appointment, $data) {
             $appointment->load('services');
+
+            if (array_key_exists('visit_insurance_id', $data)) {
+                $appointment->visit_insurance_id = $data['visit_insurance_id'];
+            }
 
             // Create a visit from this appointment
             $visit = Visit::create([
@@ -138,15 +174,19 @@ class AppointmentService
                 'patient_id'         => $appointment->patient_id,
                 'visit_type'         => $appointment->visit_type,
                 'visit_date'         => now(),
-                'status'             => VisitStatus::REGISTERED,
+                'status'             => VisitStatus::CHECKED_IN,
                 'priority'           => $appointment->priority ?? 'normal',
                 'chief_complaint'    => $appointment->chief_complaint ?? $appointment->reason,
                 'notes'              => $appointment->notes,
                 'consultation_mode'  => $appointment->consultation_mode ?? 'in_person',
                 'visit_insurance_id' => $appointment->visit_insurance_id,
+                'insurance_verification_id' => $data['insurance_verification_id'] ?? null,
+                'verification_reference_code' => $data['verification_reference_code'] ?? null,
                 'checked_in_at'      => now(),
                 'created_by'         => Auth::id(),
             ]);
+
+            $this->visitWorkflowService->initializeCheckedIn($visit);
 
             // Attach pre-selected appointment services to the new visit
             if ($appointment->services->isNotEmpty()) {
@@ -155,12 +195,15 @@ class AppointmentService
                     'quantity'           => $svc->pivot->quantity,
                     'doctor_id'          => $appointment->doctor_id,
                 ])->all());
+
+                $visit = $this->visitWorkflowService->queueForTriage($visit->fresh());
             }
 
             // Link appointment to visit and mark as checked in
             $appointment->update([
                 'status'   => AppointmentStatus::CHECKED_IN,
                 'visit_id' => $visit->id,
+                'visit_insurance_id' => $appointment->visit_insurance_id,
             ]);
 
             return $appointment->fresh(['visit']);

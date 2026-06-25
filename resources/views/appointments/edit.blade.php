@@ -3,7 +3,7 @@
 
 @section('content')
 <x-page-header-back
-    :title="__('appointments.edit_title') . ' ' . $appointment->appointment_number"
+    :title="__('appointments.edit_title') . ' - ' . $appointment->appointment_number"
     :href="route('admin.appointments.show', $appointment)"
 />
 
@@ -127,6 +127,7 @@
                 :selected-doctor-id="$appointment->doctor_id"
                 :selected-services-visible="$appointment->services->isNotEmpty()"
             />
+            <input type="hidden" name="_services_present" value="1">
 
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary btn-lg">
@@ -140,21 +141,43 @@
 @endsection
 
 @php
-    $existingServicesJson = $appointment->services->map(fn($s) => [
-        'service_catalog_id' => $s->id,
-        'name'     => $s->name,
-        'price'    => (float) ($s->price ?? 0),
-        'quantity' => (int) $s->pivot->quantity,
-        'originalService' => [
-            'id'       => $s->id,
+    $existingServicesJson = $appointment->services->map(function ($s) {
+        $typePrices = [];
+        $providerPrices = [];
+
+        foreach ($s->prices as $price) {
+            if ($price->insurance_provider_id === null) {
+                $typePrices[$price->insurance_type] = (float) $price->price;
+            } else {
+                $providerPrices[$price->insurance_provider_id][$price->insurance_type] = (float) $price->price;
+            }
+        }
+
+        $departmentType = $s->department?->type ?? $s->department_type;
+
+        if ($departmentType instanceof \App\Enums\DepartmentType) {
+            $departmentType = $departmentType->value;
+        }
+
+        return [
+            'service_catalog_id' => $s->id,
             'name'     => $s->name,
-            'price'    => (float) ($s->price ?? 0),
-            'code'     => $s->code ?? '',
-            'category' => $s->category ?? '',
-            'provider_prices' => [],
-            'type_prices'     => [],
-        ],
-    ]);
+            'price'    => (float) ($s->pivot->unit_price ?? $s->price ?? 0),
+            'quantity' => (int) $s->pivot->quantity,
+            'originalService' => [
+                'id'       => $s->id,
+                'name'     => $s->name,
+                'price'    => (float) ($s->price ?? 0),
+                'base_price' => (float) ($s->price ?? 0),
+                'code'     => $s->code ?? '',
+                'category' => $s->category ?? '',
+                'department_id' => $s->department_id,
+                'department_type' => (string) $departmentType,
+                'provider_prices' => $providerPrices,
+                'type_prices'     => $typePrices,
+            ],
+        ];
+    });
 @endphp
 @push('scripts')
 <script>

@@ -136,6 +136,7 @@ return [
         'scheduled' => 'Scheduled',
         'confirmed' => 'Confirmed',
         'registered' => 'Registered',
+        'checked_in' => 'Checked In',
         'waiting' => 'Waiting',
         'active' => 'Active',
         'triage' => 'Triage',

@@ -29,6 +29,7 @@ class UpdateAppointmentRequest extends FormRequest
             'notes'               => ['nullable', 'string', 'max:2000'],
             'consultation_mode'   => ['nullable', 'string', 'in:in_person,telehealth,virtual'],
             'visit_insurance_id'  => ['nullable', 'exists:patient_insurances,id'],
+            '_services_present'   => ['nullable', 'boolean'],
             'services'            => ['nullable', 'array'],
             'services.*.service_catalog_id' => ['required_with:services', 'exists:service_catalog,id'],
             'services.*.quantity'           => ['nullable', 'integer', 'min:1', 'max:100'],

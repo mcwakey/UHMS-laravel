@@ -106,7 +106,7 @@ class Appointment extends Model
     public function services(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->belongsToMany(ServiceCatalog::class, 'appointment_services')
-            ->withPivot('quantity')
+            ->withPivot('quantity', 'unit_price', 'total_price')
             ->withTimestamps();
     }
 

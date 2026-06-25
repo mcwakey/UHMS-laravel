@@ -2,8 +2,23 @@
 @section('title', __('triage.queue'))
 
 @section('content')
+<x-page-header :title="__('triage.queue')" icon="ti-heart-broken">
+    <x-slot:actions>
+        <!-- @can('queue.view')
+        <a href="{{ route('admin.queue.board') }}" class="btn btn-outline-info btn-md">
+            <i class="ti ti-list-numbers me-1"></i>{{ __('visits.queue_board') }}
+        </a>
+        @endcan -->
+        <!-- @can('visits.create')
+        <a href="{{ route('admin.visits.create') }}" class="btn btn-primary btn-md">
+            <i class="ti ti-plus me-1"></i>{{ __('visits.new_visit') }}
+        </a>
+        @endcan -->
+    </x-slot:actions>
+</x-page-header>
+
 <!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
+<!-- <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0"><i class="ti ti-heart-broken me-2 text-info"></i>{{ __('triage.queue') }}</h4>
         <small class="text-muted">{{ __('triage.patients_awaiting_today') }}</small>
@@ -11,7 +26,7 @@
     <a href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary btn-sm">
         <i class="ti ti-arrow-left me-1"></i>{{ __('triage.all_visits') }}
     </a>
-</div>
+</div> -->
 
 @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show" role="alert">
