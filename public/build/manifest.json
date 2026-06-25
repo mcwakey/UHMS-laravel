@@ -12,6 +12,27 @@
     "file": "icons/generate-bg-02.png",
     "src": "resources/img/bg/generate-bg-02.png"
   },
+  "resources/js/Pages/Legacy/BladePage.vue": {
+    "file": "js/BladePage.B2tC32nI.js",
+    "name": "BladePage",
+    "src": "resources/js/Pages/Legacy/BladePage.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/inertia.js"
+    ],
+    "css": [
+      "css/BladePage.min.css"
+    ]
+  },
+  "resources/js/inertia.js": {
+    "file": "js/inertia.BuHPQT8m.bundle.js",
+    "name": "inertia",
+    "src": "resources/js/inertia.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/Pages/Legacy/BladePage.vue"
+    ]
+  },
   "resources/js/script.js": {
     "file": "js/script.BNpSsRhF.bundle.js",
     "name": "script",
