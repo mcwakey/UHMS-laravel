@@ -78,15 +78,24 @@ return [
 
         // Visit lifecycle
         'visit' => [
+            'CREATED' => 'secondary',
+            'SCHEDULED' => 'secondary',
+            'CONFIRMED' => 'info',
             'REGISTERED' => 'secondary',
+            'WALKED_IN' => 'primary',
+            'CHECKED_IN' => 'primary',
+            'QUEUED' => 'warning',
             'WAITING_TRIAGE' => 'warning',
-            'WAITING_CONSULTATION' => 'warning',
+            'TRIAGE' => 'info',
+            'WAITING' => 'indigo',
             'CONSULTING' => 'info',
             'IN_CONSULTATION' => 'info',
             'EMERGENCY' => 'danger',
             'ADMITTED' => 'primary',
             'COMPLETED' => 'success',
             'CANCELLED' => 'secondary',
+            'NO_SHOW' => 'dark',
+            'ABANDONED' => 'dark',
         ],
 
         // Invoices — mirrors App\Enums\InvoiceStatus::color() (enum is the runtime

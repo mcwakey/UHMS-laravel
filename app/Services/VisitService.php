@@ -40,6 +40,7 @@ class VisitService
         protected VisitGuardService $visitGuard,
         protected VisitStatusService $statusService,
         protected VisitPathwayService $pathway,
+        protected VisitStatusFlowService $flowService,
     ) {}
 
     public function list(array $filters = []): LengthAwarePaginator
@@ -149,8 +150,14 @@ class VisitService
             'description' => $isScheduled ? 'Scheduled visit created.' : 'Walk-in visit registered.',
         ]);
 
-        $visit = $this->workflowService
-            ->initialize($visit, $isScheduled)
+        // Separate concepts: visit_source (how it started) + attendance_class
+        // (statistical category, auto-computed) + the resolved initial status.
+        // Emergency-type visits are sourced as 'emergency'; everything created
+        // through this path is otherwise a 'direct' visit.
+        $source = $visit->visit_type === VisitType::EMERGENCY ? 'emergency' : 'direct';
+
+        $visit = $this->flowService
+            ->classifyAndInitialize($visit, $source, $isScheduled)
             ->load(['patient', 'activeConsultationRoute.doctor', 'pendingConsultationRoutes.doctor']);
 
         $this->pathway->record($visit, $isScheduled ? 'VISIT_SCHEDULED' : 'VISIT_WAITING', [
@@ -470,10 +477,10 @@ class VisitService
         $visit = $this->statusService->transition(
             $visit,
             $newStatus,
-            $notes ?? ($newStatus === VisitStatus::WAITING ? 'Waiting for triage' : null)
+            $notes ?? ($newStatus === VisitStatus::QUEUED ? 'Waiting for triage' : null)
         );
 
-        if ($newStatus === VisitStatus::WAITING) {
+        if ($newStatus === VisitStatus::QUEUED) {
             $this->queueService->ensureTriageEntry($visit);
         }
 
@@ -488,7 +495,7 @@ class VisitService
     {
         $serviceStatuses = [
             VisitStatus::TRIAGE,
-            VisitStatus::WAITING_CONSULTATION,
+            VisitStatus::WAITING,
             VisitStatus::CONSULTING,
             VisitStatus::ACTIVE,
             VisitStatus::EMERGENCY,
@@ -569,11 +576,11 @@ class VisitService
         $visit->update(['triage_score' => $score->value]);
 
         // Determine next visit status based on triage score.
-        // Non-emergency: WAITING_CONSULTATION (patient is queued for a doctor to
+        // Non-emergency: WAITING (patient is queued for a doctor to
         // start the consultation). Emergency: EMERGENCY.
         $nextStatus = match ($score) {
             TriageScore::EMERGENCY => VisitStatus::EMERGENCY,
-            default => VisitStatus::WAITING_CONSULTATION,
+            default => VisitStatus::WAITING,
         };
 
         // Assign consultation department if provided
@@ -953,9 +960,9 @@ class VisitService
             'inpatient' => (clone $activeAdmissions)->count(),
             'emergency' => (clone $activeEmergencyCases)->count(),
             'waiting_consulting' => (clone $visitQuery)->whereIn('status', [
-                VisitStatus::WAITING->value,
+                VisitStatus::QUEUED->value,
                 VisitStatus::TRIAGE->value,
-                VisitStatus::WAITING_CONSULTATION->value,
+                VisitStatus::WAITING->value,
                 VisitStatus::ACTIVE->value,
                 VisitStatus::CONSULTING->value,
             ])->count(),

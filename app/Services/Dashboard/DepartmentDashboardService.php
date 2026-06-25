@@ -74,16 +74,16 @@ class DepartmentDashboardService
         return [
             'title' => __('dashboards.titles.consultation'),
             'kpis' => array_values(array_filter([
-                $this->kpi(__('dashboards.consultation.waiting'), $s('waiting_consultation'), 'ti-users', 'warning'),
+                $this->kpi(__('dashboards.consultation.waiting'), $s('waiting'), 'ti-users', 'warning'),
                 $this->kpi(__('dashboards.consultation.in_consultation'), $s('consulting'), 'ti-stethoscope', 'info'),
                 $this->kpi(__('dashboards.consultation.completed_today'), $s('completed'), 'ti-check', 'success'),
                 $this->kpi(__('dashboards.consultation.visits_today'), $this->count(fn () => $V::query()->whereDate('created_at', today())->count()), 'ti-calendar', 'primary'),
             ])),
             'alerts' => array_values(array_filter([
-                $this->alert(__('dashboards.consultation.alert_waiting'), $s('waiting_consultation'), 'warning', 'ti-clock'),
+                $this->alert(__('dashboards.consultation.alert_waiting'), $s('waiting'), 'warning', 'ti-clock'),
             ])),
             'queues' => [
-                $this->visitQueue(__('dashboards.consultation.queue_title'), ['waiting_consultation', 'consulting']),
+                $this->visitQueue(__('dashboards.consultation.queue_title'), ['waiting', 'consulting']),
             ],
             'quick_actions' => $this->actions([
                 [__('dashboards.consultation.action_new_visit'), 'ti-plus', 'admin.visits.create', 'primary', null],
@@ -481,7 +481,7 @@ class DepartmentDashboardService
                 $this->kpi(__('dashboards.reception.visits_today'), $this->count(fn () => $V::query()->whereDate('created_at', today())->count()), 'ti-clipboard', 'primary', 'admin.visits.index'),
                 $this->kpi(__('dashboards.reception.appointments_today'), $this->count(fn () => $A::query()->whereDate('appointment_date', today())->count()), 'ti-calendar', 'info', 'admin.appointments.index'),
                 $this->kpi(__('dashboards.reception.checked_in'), $this->count(fn () => $A::query()->whereDate('appointment_date', today())->where('status', 'checked_in')->count()), 'ti-user-check', 'success'),
-                $this->kpi(__('dashboards.reception.waiting'), $this->count(fn () => $V::query()->whereDate('created_at', today())->whereIn('status', ['waiting', 'registered'])->count()), 'ti-clock', 'warning'),
+                $this->kpi(__('dashboards.reception.waiting'), $this->count(fn () => $V::query()->whereDate('created_at', today())->whereIn('status', ['created', 'registered', 'walked_in', 'checked_in', 'queued'])->count()), 'ti-clock', 'warning'),
             ])),
             'alerts' => [],
             'queues' => [$this->appointmentQueue()],

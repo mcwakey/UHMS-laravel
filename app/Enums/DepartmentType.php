@@ -52,7 +52,7 @@ enum DepartmentType: string
     public function toVisitStatus(): \App\Enums\VisitStatus
     {
         return match ($this) {
-            self::CONSULTATION  => \App\Enums\VisitStatus::WAITING_CONSULTATION,
+            self::CONSULTATION  => \App\Enums\VisitStatus::WAITING,
             self::INVESTIGATION,
             self::RADIOLOGY,
             self::PROCEDURE,

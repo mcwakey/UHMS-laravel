@@ -207,7 +207,7 @@ class ConsultationRouteService
         $visit = $route->visit;
 
         if (! in_array($visit->status, [
-            VisitStatus::WAITING_CONSULTATION,
+            VisitStatus::WAITING,
             VisitStatus::ACTIVE,
             VisitStatus::CONSULTING,
             VisitStatus::EMERGENCY,
@@ -222,7 +222,7 @@ class ConsultationRouteService
             $visit = $route->visit;
             $visit->forceFill(['current_department_id' => $route->department_id])->save();
 
-            if (in_array($visit->status, [VisitStatus::WAITING_CONSULTATION, VisitStatus::ACTIVE], true)) {
+            if (in_array($visit->status, [VisitStatus::WAITING, VisitStatus::ACTIVE], true)) {
                 $this->queueService->completeCurrentEntry($visit);
                 $this->visitWorkflowService->transition($visit->fresh(), VisitStatus::CONSULTING, 'Consultation started');
                 $visit = $visit->fresh();

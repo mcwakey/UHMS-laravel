@@ -22,6 +22,7 @@ use App\Services\BillingService;
 use App\Services\InsuranceService;
 use App\Services\QueueService;
 use App\Services\VisitService;
+use App\Services\VisitStatusFlowService;
 use App\Services\VisitWorkflowService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -201,7 +202,7 @@ class VisitController extends Controller
 
         $message = match (true) {
             $visit->status === VisitStatus::SCHEDULED => __('messages.visits.scheduled', ['number' => $visit->visit_number]),
-            $visit->status === VisitStatus::WAITING => __('messages.visits.created_waiting', ['number' => $visit->visit_number]),
+            $visit->status === VisitStatus::QUEUED => __('messages.visits.created_waiting', ['number' => $visit->visit_number]),
             default => __('messages.visits.created_no_triage', ['number' => $visit->visit_number]),
         };
 
@@ -372,22 +373,60 @@ class VisitController extends Controller
         return back()->with('success', __('messages.visits.insurance_changed', ['provider' => $providerName]));
     }
 
-    public function transition(Request $request, Visit $visit)
+    public function transition(Request $request, Visit $visit, VisitStatusFlowService $flowService)
     {
         $request->validate([
             'status' => ['required', 'string'],
             'notes' => ['nullable', 'string', 'max:500'],
+            'force' => ['nullable', 'boolean'],
         ]);
 
         $newStatus = VisitStatus::from($request->status);
+        $force = $request->boolean('force');
 
-        if (! $visit->canTransitionTo($newStatus)) {
-            return back()->with('error', __('messages.visits.cannot_transition', ['from' => $visit->status->label(), 'to' => $newStatus->label()]));
+        try {
+            if ($force) {
+                // Override an otherwise-invalid transition. The flow service only
+                // allows this when the user holds `visits.override_transition`.
+                $flowService->transition($visit, $newStatus, $request->notes, force: true);
+            } else {
+                if (! $visit->canTransitionTo($newStatus)) {
+                    return back()->with('error', __('messages.visits.cannot_transition', ['from' => $visit->status->label(), 'to' => $newStatus->label()]));
+                }
+
+                $this->visitService->transition($visit, $newStatus, $request->notes);
+            }
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
         }
 
-        $this->visitService->transition($visit, $newStatus, $request->notes);
-
         return back()->with('success', __('messages.visits.status_updated', ['status' => $newStatus->label()]));
+    }
+
+    /**
+     * Lightweight endpoint: returns the attendance classification a patient
+     * would receive for a (proposed) visit date, so the create/check-in forms
+     * can show a badge without persisting anything.
+     */
+    public function attendancePreview(Request $request, VisitStatusFlowService $flowService)
+    {
+        $request->validate([
+            'patient_id' => ['required', 'integer', 'exists:patients,id'],
+            'visit_date' => ['nullable', 'date'],
+        ]);
+
+        $patient = Patient::findOrFail($request->integer('patient_id'));
+        $date = $request->filled('visit_date')
+            ? \Carbon\Carbon::parse($request->input('visit_date'))
+            : today();
+
+        $code = $flowService->determineAttendanceClass($patient, $date);
+
+        return response()->json([
+            'attendance_class' => $code,
+            'label' => __('visit_flow.attendance_class.'.$code),
+            'color' => \App\Models\AttendanceClass::where('code', $code)->value('color') ?? 'secondary',
+        ]);
     }
 
     public function sendToDepartment(Request $request, Visit $visit)

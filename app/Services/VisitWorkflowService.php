@@ -12,6 +12,7 @@ class VisitWorkflowService
         protected QueueService $queueService,
         protected InsuranceService $insuranceService,
         protected VisitPathwayService $pathway,
+        protected VisitStatusFlowService $flowService,
     ) {}
 
     /**
@@ -70,17 +71,26 @@ class VisitWorkflowService
     }
 
     /**
-     * Push a freshly-registered walk-in visit into the triage queue.
-     * Idempotent: if the visit is already past REGISTERED it is returned
-     * unchanged.
+     * Push a freshly-created walk-in / checked-in visit into the triage queue.
+     * Walks the source-specific arrival chain (created/registered → walked_in →
+     * queued, or scheduled/confirmed/checked_in → checked_in → queued) and then
+     * registers the triage queue entry. Idempotent: a visit already past the
+     * pre-queue arrival states is returned unchanged.
      */
     public function queueForTriage(Visit $visit): Visit
     {
-        if (! in_array($visit->status, [VisitStatus::REGISTERED, VisitStatus::CHECKED_IN], true)) {
+        $preQueue = [
+            VisitStatus::CREATED,
+            VisitStatus::REGISTERED,
+            VisitStatus::WALKED_IN,
+            VisitStatus::CHECKED_IN,
+        ];
+
+        if (! in_array($visit->status, $preQueue, true)) {
             return $visit;
         }
 
-        $visit->transitionTo(VisitStatus::WAITING, 'Added to triage queue');
+        $visit = $this->flowService->advanceToQueue($visit);
         $this->queueService->addTriageEntry($visit->fresh());
 
         return $visit->fresh();
@@ -101,14 +111,12 @@ class VisitWorkflowService
             throw new \InvalidArgumentException('Only scheduled or confirmed visits can be checked in.');
         }
 
-        $visit->update([
-            'visit_date' => today(),
-            'checked_in_at' => now(),
-        ]);
+        $visit->update(['visit_date' => today()]);
 
-        $this->transition($visit, VisitStatus::REGISTERED);
+        // Scheduled/confirmed → checked_in (arrival), then walk into the queue.
+        $this->flowService->transition($visit, VisitStatus::CHECKED_IN, 'Patient checked in');
 
-        return $this->transition($visit->fresh(), VisitStatus::WAITING);
+        return $this->queueForTriage($visit->fresh());
     }
 
     public function markRescheduled(Visit $visit, ?string $reason = null): Visit
@@ -182,7 +190,7 @@ class VisitWorkflowService
             'description' => $notes,
         ]);
 
-        if ($newStatus === VisitStatus::WAITING) {
+        if ($newStatus === VisitStatus::QUEUED) {
             $this->queueService->addTriageEntry($visit->fresh());
         }
 
@@ -200,7 +208,7 @@ class VisitWorkflowService
 
     /**
      * Doctor explicitly starts a consultation.
-     * Requires the visit to be in WAITING_CONSULTATION (post-triage / referral).
+     * Requires the visit to be in WAITING (post-triage / referral).
      * Transitions to CONSULTING and activates a PENDING consultation route.
      *
      * @param int|null $routeId When the visit has multiple PENDING routes the
@@ -214,7 +222,7 @@ class VisitWorkflowService
         if ($visit->status === VisitStatus::CONSULTING) {
             return $visit;
         }
-        if (! in_array($visit->status, [VisitStatus::WAITING_CONSULTATION, VisitStatus::ACTIVE, VisitStatus::EMERGENCY], true)) {
+        if (! in_array($visit->status, [VisitStatus::WAITING, VisitStatus::ACTIVE, VisitStatus::EMERGENCY], true)) {
             throw new \RuntimeException(
                 'Visit is not in a consultable state. Current: ' . $visit->status->label()
             );

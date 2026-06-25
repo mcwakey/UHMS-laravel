@@ -136,7 +136,10 @@ return [
         'scheduled' => 'Scheduled',
         'confirmed' => 'Confirmed',
         'registered' => 'Registered',
+        'created' => 'Created',
         'checked_in' => 'Checked In',
+        'walked_in' => 'Walked In',
+        'queued' => 'Queued',
         'waiting' => 'Waiting',
         'active' => 'Active',
         'triage' => 'Triage',
@@ -159,6 +162,7 @@ return [
         'cancelled' => 'Cancelled',
         'rescheduled' => 'Rescheduled',
         'no_show' => 'No Show',
+        'abandoned' => 'Abandoned',
         'deceased' => 'Deceased',
     ],
 

@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 @section('title', __('consultations.workspace.page_title', ['visit' => $visit->visit_number]))
 
 @push('styles')
@@ -562,7 +562,7 @@
             || (
                 $selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE
                 && in_array($visit->status, [
-                    \App\Enums\VisitStatus::WAITING_CONSULTATION,
+                    \App\Enums\VisitStatus::WAITING,
                     \App\Enums\VisitStatus::ACTIVE,
                 ], true)
             )

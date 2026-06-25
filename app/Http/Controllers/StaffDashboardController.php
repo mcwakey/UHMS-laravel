@@ -32,7 +32,7 @@ class StaffDashboardController extends Controller
         if ($user->hasRole('Receptionist')) {
             $stats['todayVisits'] = Visit::today()->count();
             $stats['todayAppointments'] = Appointment::today()->count();
-            $stats['waitingQueue'] = Visit::today()->where('status', VisitStatus::WAITING->value)->count();
+            $stats['waitingQueue'] = Visit::today()->where('status', VisitStatus::QUEUED->value)->count();
             $lists['recentVisits'] = Visit::with(['patient', 'department'])->today()->latest()->take(8)->get();
         }
 

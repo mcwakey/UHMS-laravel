@@ -83,6 +83,12 @@
                     </form>
                     @endif
 
+                    @if(($attendanceClass ?? null) && ! $appointment->visit)
+                        <span class="badge bg-light text-dark border align-self-center" title="{{ __('visit_flow.ui.attendance_label') }}">
+                            <i class="ti ti-user-check me-1"></i>{{ __('visit_flow.attendance_class.'.$attendanceClass) }}
+                        </span>
+                    @endif
+
                     @if($appointment->status === \App\Enums\AppointmentStatus::CONFIRMED)
                         @can('appointments.create')
                         <form method="POST" action="{{ route('admin.appointments.check-in', $appointment) }}" class="js-appointment-action-form" data-follow-up="visit" data-requires-insurance-verification="1">

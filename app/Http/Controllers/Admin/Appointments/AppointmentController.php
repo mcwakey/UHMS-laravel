@@ -11,6 +11,7 @@ use App\Models\Department;
 use App\Models\Patient;
 use App\Models\User;
 use App\Services\AppointmentService;
+use App\Services\VisitStatusFlowService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -87,7 +88,7 @@ class AppointmentController extends Controller
     /**
      * Show appointment details.
      */
-    public function show(Appointment $appointment)
+    public function show(Appointment $appointment, VisitStatusFlowService $flowService)
     {
         $appointment->load([
             'patient',
@@ -101,7 +102,17 @@ class AppointmentController extends Controller
             'cancelledByUser',
         ]);
 
-        return view('appointments.show', compact('appointment'));
+        // Attendance classification the resulting visit would receive on check-in.
+        $attendanceClass = $appointment->patient
+            ? $flowService->determineAttendanceClass(
+                $appointment->patient,
+                $appointment->appointment_date instanceof Carbon
+                    ? $appointment->appointment_date
+                    : Carbon::parse($appointment->appointment_date),
+            )
+            : null;
+
+        return view('appointments.show', compact('appointment', 'attendanceClass'));
     }
 
     /**

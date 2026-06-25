@@ -39,6 +39,8 @@ class RoleSeeder extends Seeder
             'visits.preview',
             'visits.create_while_admitted',
             'visits.reopen_locked_session',
+            'visits.override_transition',
+            'visit_flow.configure',
 
             // ── Queue ─────────────────────────────────────────────────────
             'queue.view',

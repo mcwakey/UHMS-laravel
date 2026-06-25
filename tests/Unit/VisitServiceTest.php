@@ -72,9 +72,9 @@ class VisitServiceTest extends TestCase
             'status' => VisitStatus::REGISTERED,
         ]);
 
-        $transitoned = $this->service->transition($visit, VisitStatus::WAITING);
+        $transitoned = $this->service->transition($visit, VisitStatus::QUEUED);
 
-        $this->assertEquals(VisitStatus::WAITING, $transitoned->status);
+        $this->assertEquals(VisitStatus::QUEUED, $transitoned->status);
     }
 
     public function test_today_stats(): void

@@ -368,7 +368,7 @@ class VisitConsultationRoutingTest extends TestCase
             'patient_id' => $patient->id,
             'created_by' => $this->admin->id,
             'visit_type' => VisitType::OUTPATIENT,
-            'status' => VisitStatus::WAITING_CONSULTATION,
+            'status' => VisitStatus::WAITING,
             'current_department_id' => $this->department->id,
         ]);
 
@@ -397,7 +397,7 @@ class VisitConsultationRoutingTest extends TestCase
             'patient_id' => $patient->id,
             'created_by' => $this->admin->id,
             'visit_type' => VisitType::OUTPATIENT,
-            'status' => VisitStatus::WAITING_CONSULTATION,
+            'status' => VisitStatus::WAITING,
             'current_department_id' => $this->department->id,
         ]);
 
@@ -428,7 +428,7 @@ class VisitConsultationRoutingTest extends TestCase
             'patient_id' => $patient->id,
             'created_by' => $this->admin->id,
             'visit_type' => VisitType::OUTPATIENT,
-            'status' => VisitStatus::WAITING_CONSULTATION,
+            'status' => VisitStatus::WAITING,
             'current_department_id' => $this->department->id,
         ]);
 
@@ -449,7 +449,7 @@ class VisitConsultationRoutingTest extends TestCase
             ->assertRedirect(route('admin.visits.show', $visit));
 
         $this->assertSame(VisitConsultationRoute::STATUS_ACTIVE, $route->fresh()->status);
-        $this->assertSame(VisitStatus::WAITING_CONSULTATION, $visit->fresh()->status);
+        $this->assertSame(VisitStatus::WAITING, $visit->fresh()->status);
         $this->assertSame($this->doctor->id, $route->fresh()->doctor_id);
         $this->assertSame(1, QueueEntry::where('visit_id', $visit->id)
             ->where('department_id', $this->department->id)

@@ -26,17 +26,17 @@ class TriageController extends Controller
      */
     public function create(Visit $visit)
     {
-        if (! in_array($visit->status, [VisitStatus::WAITING, VisitStatus::TRIAGE])) {
+        if (! in_array($visit->status, [VisitStatus::QUEUED, VisitStatus::TRIAGE])) {
             return redirect()
                 ->route('admin.visits.show', $visit)
                 ->with('error', __('messages.triage.not_awaiting'));
         }
 
         // Auto-transition WAITING → TRIAGE when nurse opens the form
-        if ($visit->status === VisitStatus::WAITING) {
+        if ($visit->status === VisitStatus::QUEUED) {
             $visit->update(['status' => VisitStatus::TRIAGE->value]);
             $visit->statusLogs()->create([
-                'from_status' => VisitStatus::WAITING->value,
+                'from_status' => VisitStatus::QUEUED->value,
                 'to_status' => VisitStatus::TRIAGE->value,
                 'changed_by' => auth()->id(),
                 'notes' => 'Triage assessment started',
@@ -207,7 +207,7 @@ class TriageController extends Controller
                 ->orderBy('queue_number'),
         ])
             ->addSelect(['triage_queue_number' => $triageQueueNumber])
-            ->whereIn('status', [VisitStatus::WAITING->value, VisitStatus::TRIAGE->value])
+            ->whereIn('status', [VisitStatus::QUEUED->value, VisitStatus::TRIAGE->value])
             ->today()
             ->orderByRaw('triage_queue_number IS NULL')
             ->orderBy('triage_queue_number')

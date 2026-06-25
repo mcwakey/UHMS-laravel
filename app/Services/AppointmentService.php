@@ -18,6 +18,7 @@ class AppointmentService
     public function __construct(
         private VisitService $visitService,
         private VisitWorkflowService $visitWorkflowService,
+        private VisitStatusFlowService $flowService,
     ) {}
     /**
      * List appointments with filters.
@@ -168,13 +169,15 @@ class AppointmentService
                 $appointment->visit_insurance_id = $data['visit_insurance_id'];
             }
 
-            // Create a visit from this appointment
+            // Create a visit from this appointment. The visit-status flow owns
+            // the source / attendance_class / initial-status; it starts at
+            // SCHEDULED and is then walked scheduled → checked_in (→ queued).
             $visit = Visit::create([
                 'visit_number'       => Visit::generateVisitNumber(),
                 'patient_id'         => $appointment->patient_id,
                 'visit_type'         => $appointment->visit_type,
                 'visit_date'         => now(),
-                'status'             => VisitStatus::CHECKED_IN,
+                'status'             => VisitStatus::SCHEDULED,
                 'priority'           => $appointment->priority ?? 'normal',
                 'chief_complaint'    => $appointment->chief_complaint ?? $appointment->reason,
                 'notes'              => $appointment->notes,
@@ -182,11 +185,13 @@ class AppointmentService
                 'visit_insurance_id' => $appointment->visit_insurance_id,
                 'insurance_verification_id' => $data['insurance_verification_id'] ?? null,
                 'verification_reference_code' => $data['verification_reference_code'] ?? null,
-                'checked_in_at'      => now(),
                 'created_by'         => Auth::id(),
             ]);
 
-            $this->visitWorkflowService->initializeCheckedIn($visit);
+            // visit_source = appointment; compute attendance_class; log null → scheduled.
+            $visit = $this->flowService->classifyAndInitialize($visit, 'appointment');
+            // scheduled → checked_in (patient is now present).
+            $visit = $this->flowService->transition($visit, VisitStatus::CHECKED_IN, 'Patient checked in from appointment');
 
             // Attach pre-selected appointment services to the new visit
             if ($appointment->services->isNotEmpty()) {

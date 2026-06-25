@@ -34,7 +34,7 @@ class DashboardController extends Controller
         // Stats
         $stats = [
             'total_today' => $todayVisits->count(),
-            'waiting' => $todayVisits->where('status', VisitStatus::WAITING)->count(),
+            'waiting' => $todayVisits->where('status', VisitStatus::QUEUED)->count(),
             'consulting' => $todayVisits->where('status', VisitStatus::CONSULTING)->count(),
             'completed_today' => $todayVisits->where('status', VisitStatus::COMPLETED)->count(),
             'pending_lab' => LabRequest::whereHas('visit', function ($q) use ($doctorId) {

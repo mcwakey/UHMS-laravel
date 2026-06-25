@@ -59,7 +59,7 @@ class VitalController extends Controller
 
         // Get today's visits in triage or waiting status
         $triageVisits = Visit::with('patient')
-            ->whereIn('status', ['triage', 'waiting', 'consulting'])
+            ->whereIn('status', ['triage', 'queued', 'consulting'])
             ->today()
             ->latest()
             ->get();

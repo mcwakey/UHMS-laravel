@@ -116,12 +116,12 @@ class VisitManagementTest extends TestCase
 
         $response = $this->actingAs($this->user)->patch(
             route('admin.visits.transition', $visit),
-            ['status' => VisitStatus::WAITING->value]
+            ['status' => VisitStatus::QUEUED->value]
         );
 
         $response->assertRedirect();
         $visit->refresh();
-        $this->assertEquals(VisitStatus::WAITING, $visit->status);
+        $this->assertEquals(VisitStatus::QUEUED, $visit->status);
 
         $this->assertDatabaseHas('queue_entries', [
             'visit_id' => $visit->id,
@@ -131,7 +131,7 @@ class VisitManagementTest extends TestCase
 
         $this->actingAs($this->user)->patch(
             route('admin.visits.transition', $visit),
-            ['status' => VisitStatus::WAITING->value]
+            ['status' => VisitStatus::QUEUED->value]
         );
 
         $this->assertSame(

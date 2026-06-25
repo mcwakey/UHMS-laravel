@@ -334,6 +334,7 @@ Route::middleware('auth')->group(function () {
             Route::get('visits/create', [VisitController::class, 'create'])->name('visits.create')->middleware('can:visits.create');
             Route::post('visits', [VisitController::class, 'store'])->name('visits.store')->middleware('can:visits.create');
             Route::get('visits/patient-search', [VisitController::class, 'patientSearch'])->name('visits.patient-search');
+            Route::get('visits/attendance-preview', [VisitController::class, 'attendancePreview'])->name('visits.attendance-preview');
             Route::get('visits/patient-insurances', [VisitController::class, 'patientInsurances'])->name('visits.patient-insurances')->middleware('module:insurance');
             Route::get('visits/department-services', [VisitController::class, 'departmentServices'])->name('visits.department-services');
             Route::get('departments/{department}/visit-options', [VisitDepartmentOptionsController::class, 'show'])->name('departments.visit-options');

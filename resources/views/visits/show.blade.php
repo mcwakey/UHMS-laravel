@@ -76,26 +76,56 @@
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <h6 class="fw-bold mb-0"><i class="ti ti-timeline me-2"></i>{{ __('visits.visit_status_flow') }}</h6>
-                    <div class="d-flex align-items-center gap-2">
-                        <x-status-badge :status="$visit->status" class="fs-14 px-3 py-2" />
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        @if($visit->visit_source)
+                            <span class="badge bg-light text-dark border" title="{{ __('visit_flow.ui.source_label') }}">
+                                <i class="ti ti-arrow-guide me-1"></i>{{ __('visit_flow.source.'.$visit->visit_source) }}
+                            </span>
+                        @endif
+                        @if($visit->attendance_class)
+                            <span class="badge bg-light text-dark border" title="{{ __('visit_flow.ui.attendance_label') }}">
+                                <i class="ti ti-user-check me-1"></i>{{ __('visit_flow.attendance_class.'.$visit->attendance_class) }}
+                            </span>
+                        @endif
                         @if($visit->triage_score)
                             <x-status-badge :status="$visit->triage_score" icon="ti-activity" class="px-2 py-2" />
                         @endif
+                        <x-status-badge :status="$visit->status" class="fs-14 px-3 py-2" />
                     </div>
                 </div>
                 <!-- Status Timeline -->
                 <div class="d-flex align-items-center gap-1 flex-wrap">
                     @php
-                        $statusFlow = [
+                        // Dynamic status-flow reflecting THIS visit's parcours: the
+                        // arrival segment depends on the source (direct → walked_in,
+                        // appointment → scheduled/checked_in) and is only shown for
+                        // states actually visited; the clinical path is previewed.
+                        $visitedStatuses = $visit->statusLogs->pluck('to_status')->filter()->all();
+                        $currentStatus = $visit->status;
+
+                        $arrivalStates = [
+                            \App\Enums\VisitStatus::SCHEDULED,
+                            \App\Enums\VisitStatus::CHECKED_IN,
+                            \App\Enums\VisitStatus::CREATED,
                             \App\Enums\VisitStatus::REGISTERED,
-                            \App\Enums\VisitStatus::WAITING,
+                            \App\Enums\VisitStatus::WALKED_IN,
+                        ];
+
+                        $arrival = $visit->visit_source === 'appointment'
+                            ? [\App\Enums\VisitStatus::SCHEDULED, \App\Enums\VisitStatus::CHECKED_IN]
+                            : [\App\Enums\VisitStatus::CREATED, \App\Enums\VisitStatus::REGISTERED, \App\Enums\VisitStatus::WALKED_IN];
+
+                        $statusFlow = collect(array_merge($arrival, [
+                            \App\Enums\VisitStatus::QUEUED,
                             \App\Enums\VisitStatus::TRIAGE,
+                            \App\Enums\VisitStatus::WAITING,
                             \App\Enums\VisitStatus::CONSULTING,
                             \App\Enums\VisitStatus::ADMITTED,
                             \App\Enums\VisitStatus::COMPLETED,
-                        ];
-                        $visitedStatuses = $visit->statusLogs->pluck('to_status')->toArray();
-                        $currentStatus = $visit->status;
+                        ]))
+                            ->filter(fn ($s) => ! in_array($s, $arrivalStates, true) || in_array($s->value, $visitedStatuses, true))
+                            ->values()
+                            ->all();
                     @endphp
                     @foreach($statusFlow as $i => $flowStatus)
                         @php
@@ -117,7 +147,7 @@
 
         <!-- Status Transition Actions -->
         @php
-            $isWaiting  = $visit->status === \App\Enums\VisitStatus::WAITING;
+            $isWaiting  = $visit->status === \App\Enums\VisitStatus::QUEUED;
             $isTriage   = $visit->status === \App\Enums\VisitStatus::TRIAGE;
             $serviceDepts = $visit->invoices
                 ->flatMap->items
@@ -128,7 +158,7 @@
             // Statuses that can use the department send button (triage or at a service dept)
             $canSendToDept = in_array($visit->status, [
                 \App\Enums\VisitStatus::TRIAGE,
-                \App\Enums\VisitStatus::WAITING_CONSULTATION,
+                \App\Enums\VisitStatus::WAITING,
                 \App\Enums\VisitStatus::ACTIVE,
                 \App\Enums\VisitStatus::CONSULTING,
                 \App\Enums\VisitStatus::EMERGENCY,
@@ -462,7 +492,7 @@
                 <div class="d-flex flex-wrap gap-2">
                     @foreach($visit->status->allowedTransitions() as $nextStatus)
                         @php
-                            $isWaitingTriageTarget = $nextStatus === \App\Enums\VisitStatus::WAITING;
+                            $isWaitingTriageTarget = $nextStatus === \App\Enums\VisitStatus::QUEUED;
                             $transitionLabel = $isWaitingTriageTarget
                                 ? __('visits.send_to_triage_queue')
                                 : $nextStatus->translatedLabel();

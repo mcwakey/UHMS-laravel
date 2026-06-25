@@ -164,7 +164,7 @@ class ConsultationNextPatientService
                 $visitQuery
                     ->where('id', '!=', $currentRoute->visit_id)
                     ->where('visit_type', VisitType::OUTPATIENT->value)
-                    ->where('status', VisitStatus::WAITING_CONSULTATION->value);
+                    ->where('status', VisitStatus::WAITING->value);
             })
             ->whereHas('visit.consultationRoutes', $routeConstraint)
             ->orderBy('queue_number')
@@ -188,7 +188,7 @@ class ConsultationNextPatientService
 
         return $visit
             && $visit->visit_type === VisitType::OUTPATIENT
-            && $visit->status === VisitStatus::WAITING_CONSULTATION;
+            && $visit->status === VisitStatus::WAITING;
     }
 
     private function paymentReadiness(VisitConsultationRoute $route, User $user): array

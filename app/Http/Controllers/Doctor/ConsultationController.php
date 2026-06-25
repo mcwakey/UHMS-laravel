@@ -260,7 +260,7 @@ class ConsultationController extends Controller
                             $outpatientQuery
                                 ->where('visit_type', VisitType::OUTPATIENT->value)
                                 ->whereIn('status', [
-                                    VisitStatus::WAITING_CONSULTATION->value,
+                                    VisitStatus::WAITING->value,
                                     VisitStatus::ACTIVE->value,
                                     VisitStatus::CONSULTING->value,
                                     VisitStatus::EMERGENCY->value,

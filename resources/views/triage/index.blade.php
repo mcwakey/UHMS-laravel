@@ -43,7 +43,7 @@
 
 <div class="row g-3">
     {{-- ── Awaiting Triage (WAITING) ───────────────────────────────────────── --}}
-    @php $waiting = $visits->where('status', \App\Enums\VisitStatus::WAITING)->values(); @endphp
+    @php $waiting = $visits->where('status', \App\Enums\VisitStatus::QUEUED)->values(); @endphp
     <div class="col-6">
         <div class="card border-warning border-opacity-50">
             <div class="card-header d-flex align-items-center gap-2 bg-warning bg-opacity-10">

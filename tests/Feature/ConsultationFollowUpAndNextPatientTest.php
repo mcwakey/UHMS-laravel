@@ -296,7 +296,7 @@ class ConsultationFollowUpAndNextPatientTest extends TestCase
         int $queueNumber,
         bool $withQueueEntry = true,
         VisitType $visitType = VisitType::OUTPATIENT,
-        VisitStatus $status = VisitStatus::WAITING_CONSULTATION,
+        VisitStatus $status = VisitStatus::WAITING,
     ): array
     {
         $patient = Patient::factory()->create([

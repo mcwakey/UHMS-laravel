@@ -26,7 +26,7 @@ class VisitStatusService
 
     public function setWaitingTriage(Visit $visit, ?string $notes = null): Visit
     {
-        return $this->transition($visit, VisitStatus::WAITING, $notes ?? 'Waiting for triage');
+        return $this->transition($visit, VisitStatus::QUEUED, $notes ?? 'Waiting for triage');
     }
 
     public function setTriage(Visit $visit, ?string $notes = null): Visit
@@ -36,7 +36,7 @@ class VisitStatusService
 
     public function setWaitingConsultation(Visit $visit, ?string $notes = null): Visit
     {
-        return $this->transition($visit, VisitStatus::WAITING_CONSULTATION, $notes ?? 'Waiting for consultation');
+        return $this->transition($visit, VisitStatus::WAITING, $notes ?? 'Waiting for consultation');
     }
 
     public function setConsulting(Visit $visit, ?string $notes = null): Visit

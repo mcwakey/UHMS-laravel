@@ -97,7 +97,7 @@ class QueueBoardAndTriageQueueTest extends TestCase
             'patient_id' => $patient->id,
             'created_by' => $this->user->id,
             'visit_type' => VisitType::OUTPATIENT,
-            'status' => VisitStatus::WAITING,
+            'status' => VisitStatus::QUEUED,
             'visit_date' => today(),
             'checked_in_at' => now()->subMinutes(20),
         ]);
@@ -128,7 +128,7 @@ class QueueBoardAndTriageQueueTest extends TestCase
             'patient_id' => $patient->id,
             'created_by' => $this->user->id,
             'visit_type' => VisitType::OUTPATIENT,
-            'status' => VisitStatus::WAITING_CONSULTATION,
+            'status' => VisitStatus::WAITING,
             'priority' => $priority,
             'visit_date' => today(),
             'current_department_id' => $department->id,

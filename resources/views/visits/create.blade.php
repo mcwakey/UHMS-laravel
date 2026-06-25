@@ -27,6 +27,12 @@
                 :can-override-active-admission="$canOverrideActiveAdmission"
             />
 
+            {{-- Auto-computed attendance classification (read-only hint) --}}
+            <div id="attendancePreview" class="alert alert-light border d-none align-items-center gap-2 py-2 px-3 mb-3" role="status">
+                <i class="ti ti-user-check text-primary"></i>
+                <span class="fw-semibold" id="attendancePreviewLabel"></span>
+            </div>
+
             <x-insurance-selection-card
                 :can-add-insurance="auth()->user()?->can('patients.edit') ?? false"
             />
@@ -545,7 +551,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // ==========================================
     // Insurance Loading & Selection
     // ==========================================
+    function loadAttendancePreview(patientId) {
+        const box = document.getElementById('attendancePreview');
+        const label = document.getElementById('attendancePreviewLabel');
+        if (!box || !label) return;
+        box.classList.remove('d-none');
+        box.classList.add('d-flex');
+        label.textContent = @json(__('visit_flow.ui.computing'));
+        fetch('{{ route("admin.visits.attendance-preview") }}?patient_id=' + patientId, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.ok ? r.json() : Promise.reject(r))
+        .then(data => { label.textContent = data.label || ''; })
+        .catch(() => { box.classList.add('d-none'); box.classList.remove('d-flex'); });
+    }
+
     function loadPatientInsurances(patientId) {
+        loadAttendancePreview(patientId);
         insuranceCard.classList.remove('d-none');
         document.getElementById('insuranceList').innerHTML = '<div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>' + visitI18n.loading_insurances + '</div>';
 

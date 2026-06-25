@@ -33,6 +33,8 @@ class Visit extends Model
         'patient_id',
         'patient_age',
         'visit_type',
+        'visit_source',
+        'attendance_class',
         'visit_date',
         'start_time',
         'end_time',
@@ -42,6 +44,10 @@ class Visit extends Model
         'notes',
         'checked_in_at',
         'checked_out_at',
+        'arrived_at',
+        'cancelled_at',
+        'no_show_at',
+        'abandoned_at',
         'created_by',
         'current_department_id',
         'triage_score',
@@ -73,6 +79,10 @@ class Visit extends Model
             'consultation_mode' => ConsultationMode::class,
             'checked_in_at' => 'datetime',
             'checked_out_at' => 'datetime',
+            'arrived_at' => 'datetime',
+            'cancelled_at' => 'datetime',
+            'no_show_at' => 'datetime',
+            'abandoned_at' => 'datetime',
             'completed_at' => 'datetime',
             'locked_at' => 'datetime',
             'rescheduled_at' => 'datetime',
@@ -93,6 +103,16 @@ class Visit extends Model
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function visitSource()
+    {
+        return $this->belongsTo(VisitSource::class, 'visit_source', 'code');
+    }
+
+    public function attendanceClassModel()
+    {
+        return $this->belongsTo(AttendanceClass::class, 'attendance_class', 'code');
     }
 
     public function statusLogs()
@@ -368,6 +388,40 @@ class Visit extends Model
         return $query->where('status', $status);
     }
 
+    /**
+     * Filter by visit_status code (string), e.g. scopeStatus($q, 'queued').
+     */
+    public function scopeStatus($query, string $code)
+    {
+        return $query->where('status', $code);
+    }
+
+    /**
+     * Filter by visit_source code, e.g. scopeSource($q, 'appointment').
+     */
+    public function scopeSource($query, string $code)
+    {
+        return $query->where('visit_source', $code);
+    }
+
+    /**
+     * Filter by attendance_class code, e.g. scopeAttendanceClass($q, 'first_ever').
+     */
+    public function scopeAttendanceClass($query, string $code)
+    {
+        return $query->where('attendance_class', $code);
+    }
+
+    /**
+     * Filter visits whose visit_date falls within [$from, $to] (inclusive).
+     */
+    public function scopeBetweenVisitDates($query, $from, $to)
+    {
+        return $query
+            ->when($from, fn ($q) => $q->whereDate('visit_date', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('visit_date', '<=', $to));
+    }
+
     public function scopeActive($query)
     {
         return $query->whereNotIn('status', [
@@ -438,9 +492,36 @@ class Visit extends Model
             'notes' => $notes,
         ]);
 
-        // Auto-set timestamps
-        if ($target === VisitStatus::WAITING && ! $this->checked_in_at) {
+        // Auto-set workflow timestamps. Arrival (walked_in / checked_in) stamps
+        // arrived_at + checked_in_at; queuing also backfills checked_in_at for
+        // walk-ins that skipped an explicit arrival step.
+        if (in_array($target, [VisitStatus::WALKED_IN, VisitStatus::CHECKED_IN], true)) {
+            $stamps = [];
+            if (! $this->arrived_at) {
+                $stamps['arrived_at'] = now();
+            }
+            if (! $this->checked_in_at) {
+                $stamps['checked_in_at'] = now();
+            }
+            if ($stamps) {
+                $this->update($stamps);
+            }
+        }
+
+        if ($target === VisitStatus::QUEUED && ! $this->checked_in_at) {
             $this->update(['checked_in_at' => now()]);
+        }
+
+        if ($target === VisitStatus::CANCELLED && ! $this->cancelled_at) {
+            $this->update(['cancelled_at' => now()]);
+        }
+
+        if ($target === VisitStatus::NO_SHOW && ! $this->no_show_at) {
+            $this->update(['no_show_at' => now()]);
+        }
+
+        if ($target === VisitStatus::ABANDONED && ! $this->abandoned_at) {
+            $this->update(['abandoned_at' => now()]);
         }
 
         if (in_array($target, [VisitStatus::COMPLETED, VisitStatus::CANCELLED])) {

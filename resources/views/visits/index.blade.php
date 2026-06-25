@@ -190,6 +190,20 @@
                         <!-- <td>{{ $visit->currentConsultationDoctor()?->full_name ?? '—' }}</td> -->
                         <td>
                             <x-status-badge :status="$visit->status" />
+                            @if($visit->visit_source || $visit->attendance_class)
+                                <div class="mt-1 d-flex flex-wrap gap-1">
+                                    @if($visit->visit_source)
+                                        <span class="badge bg-light text-dark border" title="{{ __('visit_flow.ui.source_label') }}">
+                                            <i class="ti ti-arrow-guide me-1"></i>{{ __('visit_flow.source.'.$visit->visit_source) }}
+                                        </span>
+                                    @endif
+                                    @if($visit->attendance_class)
+                                        <span class="badge bg-light text-dark border" title="{{ __('visit_flow.ui.attendance_label') }}">
+                                            <i class="ti ti-user-check me-1"></i>{{ __('visit_flow.attendance_class.'.$visit->attendance_class) }}
+                                        </span>
+                                    @endif
+                                </div>
+                            @endif
                         </td>
                         <td>{{ $visit->visit_date->translatedFormat('d M Y') }}</td>
                         <td>{{ $visit->duration ?? '—' }}</td>

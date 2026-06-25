@@ -179,11 +179,11 @@ class WorkflowJsonResponsesTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('visit_id', $visit->id)
-            ->assertJsonPath('status', VisitStatus::WAITING_CONSULTATION->value)
+            ->assertJsonPath('status', VisitStatus::WAITING->value)
             ->assertJsonPath('redirect_url', route('admin.visits.show', $visit))
             ->assertJsonPath('queue_url', route('admin.consultations.index'));
 
-        $this->assertSame(VisitStatus::WAITING_CONSULTATION, $visit->status);
+        $this->assertSame(VisitStatus::WAITING, $visit->status);
         $this->assertSame(VisitConsultationRoute::STATUS_ACTIVE, $route->fresh()->status);
         $this->assertDatabaseHas('queue_entries', [
             'visit_id' => $visit->id,
@@ -334,16 +334,23 @@ class WorkflowJsonResponsesTest extends TestCase
 
         $this->assertSame(AppointmentStatus::CHECKED_IN, $appointment->status);
         $this->assertNotNull($visit);
-        $this->assertSame(VisitStatus::WAITING, $visit->status);
+        $this->assertSame(VisitStatus::QUEUED, $visit->status);
+        $this->assertSame('appointment', $visit->visit_source);
+        // Appointment check-in walks the full chain: null → scheduled → checked_in → queued.
         $this->assertDatabaseHas('visit_status_logs', [
             'visit_id' => $visit->id,
             'from_status' => null,
+            'to_status' => VisitStatus::SCHEDULED->value,
+        ]);
+        $this->assertDatabaseHas('visit_status_logs', [
+            'visit_id' => $visit->id,
+            'from_status' => VisitStatus::SCHEDULED->value,
             'to_status' => VisitStatus::CHECKED_IN->value,
         ]);
         $this->assertDatabaseHas('visit_status_logs', [
             'visit_id' => $visit->id,
             'from_status' => VisitStatus::CHECKED_IN->value,
-            'to_status' => VisitStatus::WAITING->value,
+            'to_status' => VisitStatus::QUEUED->value,
         ]);
     }
 

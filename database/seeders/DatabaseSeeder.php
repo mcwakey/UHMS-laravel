@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             // ── Core access control & org structure ──────────────────────
             RoleSeeder::class,
+            VisitFlowSeeder::class,
             CountryLocationSeeder::class,
             DepartmentSeeder::class,
             AdminUserSeeder::class,
