@@ -29,6 +29,7 @@
 @endpush
 
 @section('content')
+<div id="queueBoardContent">
 <!-- Page Header -->
 <div class="d-flex align-items-center justify-content-between mb-4">
     <div>
@@ -36,11 +37,17 @@
         <small class="text-muted">{{ now()->format('l, d F Y — h:i A') }}</small>
     </div>
     <div class="d-flex gap-2">
+        @if(request()->boolean('embedded'))
+        <button class="btn btn-outline-secondary btn-sm" type="button" data-queue-board-refresh>
+            <i class="ti ti-refresh me-1"></i>Refresh
+        </button>
+        @else
         <button class="btn btn-outline-secondary btn-sm" type="button" onclick="location.reload()">
             <i class="ti ti-refresh me-1"></i>Refresh
         </button>
+        @endif
         @can('queue.manage')
-        <a href="{{ route('admin.queue.manage') }}" class="btn btn-outline-primary btn-sm">
+        <a href="{{ route('admin.queue.manage') }}" class="btn btn-outline-primary btn-sm" @if(request()->boolean('embedded')) target="_blank" rel="noopener" @endif>
             <i class="ti ti-settings me-1"></i>Manage
         </a>
         @endcan
@@ -162,9 +169,11 @@
     </div>
     @endif
 </div>
+</div>
 @endsection
 
 @push('scripts')
+@unless(request()->boolean('embedded'))
 <script>
 (function () {
     var refreshMs = 30000;
@@ -184,4 +193,5 @@
     window.UhmsQueueBoardRefreshTimer = setInterval(refreshQueueBoard, refreshMs);
 })();
 </script>
+@endunless
 @endpush

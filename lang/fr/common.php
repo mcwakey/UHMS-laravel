@@ -6,6 +6,7 @@ return [
     'save_changes' => 'Enregistrer les modifications',
     'cancel' => 'Annuler',
     'close' => 'Fermer',
+    'open' => 'Ouvrir',
     'delete' => 'Supprimer',
     'edit' => 'Modifier',
     'view' => 'Voir',

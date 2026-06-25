@@ -38,6 +38,21 @@
 
         <div class="d-flex align-items-center">
 
+            @can('queue.view')
+            @unless(request()->boolean('embedded'))
+            <div class="header-item d-none d-md-flex me-2">
+                <button type="button"
+                        class="topbar-link btn btn-icon"
+                        aria-label="{{ __('menu.queue_board') }}"
+                        title="{{ __('menu.queue_board') }}"
+                        data-bs-toggle="offcanvas"
+                        data-bs-target="#queueBoardTopbarPanel">
+                    <i class="ti ti-list-numbers fs-16"></i>
+                </button>
+            </div>
+            @endunless
+            @endcan
+
             <!-- Search for Mobile -->
             <div class="header-item d-flex d-lg-none me-2">
                 <button aria-label="Search" title="Search" class="topbar-link btn btn-icon" data-bs-toggle="modal" data-bs-target="#searchModal" type="button">
@@ -165,6 +180,79 @@
     </div>
 </header>
 <!-- Topbar End -->
+
+@can('queue.view')
+@unless(request()->boolean('embedded'))
+<div class="offcanvas offcanvas-end" tabindex="-1" id="queueBoardTopbarPanel" aria-labelledby="queueBoardTopbarPanelLabel" style="width: min(920px, 100vw);">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title" id="queueBoardTopbarPanelLabel">
+            <i class="ti ti-list-numbers me-1"></i>{{ __('menu.queue_board') }}
+        </h5>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ route('admin.queue.board') }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
+                <i class="ti ti-external-link me-1"></i>{{ __('common.open') }}
+            </a>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{{ __('common.close') }}"></button>
+        </div>
+    </div>
+    <div class="offcanvas-body p-0">
+        <div id="queueBoardTopbarContent" class="p-3" data-url="{{ route('admin.queue.board', ['embedded' => 1]) }}">
+            <div class="text-center text-muted py-5">
+                <span class="spinner-border spinner-border-sm me-2"></span>{{ __('common.loading') }}
+            </div>
+        </div>
+    </div>
+</div>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const panel = document.getElementById('queueBoardTopbarPanel');
+    const content = document.getElementById('queueBoardTopbarContent');
+    if (!panel || !content) return;
+
+    async function loadQueueBoard(force) {
+        if (content.dataset.loaded === '1' && !force) return;
+
+        content.innerHTML = '<div class="text-center text-muted py-5"><span class="spinner-border spinner-border-sm me-2"></span>{{ __('common.loading') }}</div>';
+
+        try {
+            const response = await fetch(content.dataset.url, {
+                headers: {
+                    'Accept': 'text/html',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            });
+            const html = await response.text();
+            const parsed = new DOMParser().parseFromString(html, 'text/html');
+            const board = parsed.getElementById('queueBoardContent');
+
+            if (!response.ok || !board) {
+                throw new Error('Unable to load queue board.');
+            }
+
+            content.innerHTML = board.innerHTML;
+            content.dataset.loaded = '1';
+        } catch (error) {
+            content.innerHTML = '<div class="alert alert-danger m-3">Unable to load queue board.</div>';
+        }
+    }
+
+    panel.addEventListener('show.bs.offcanvas', function () {
+        loadQueueBoard(false);
+    });
+
+    content.addEventListener('click', function (event) {
+        const refreshButton = event.target.closest('[data-queue-board-refresh]');
+        if (!refreshButton) return;
+
+        event.preventDefault();
+        loadQueueBoard(true);
+    });
+});
+</script>
+@endpush
+@endunless
+@endcan
 
 <!-- Search Modal -->
 <div class="modal fade" id="searchModal">
