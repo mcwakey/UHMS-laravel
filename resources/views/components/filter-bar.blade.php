@@ -101,13 +101,14 @@
                     };
 
                     const replaceAjaxTarget = function (html) {
-                        if (!ajaxTarget || !ajaxTargetSelector) return;
+                        if (!ajaxTarget || !ajaxTargetSelector) return false;
 
                         const parsed = new DOMParser().parseFromString(html, 'text/html');
                         const replacement = parsed.querySelector(ajaxTargetSelector);
-                        if (!replacement) return;
+                        if (!replacement) return false;
 
                         ajaxTarget.innerHTML = replacement.innerHTML;
+                        return true;
                     };
 
                     const buildGetUrl = function () {
@@ -134,15 +135,26 @@
                             });
 
                             if (!response.ok) {
-                                window.location.href = url.toString();
+                                if (window.UhmsInertia && typeof window.UhmsInertia.visit === 'function') {
+                                    window.UhmsInertia.visit(url.toString());
+                                } else {
+                                    window.open(url.toString(), '_self');
+                                }
                                 return true;
                             }
 
-                            replaceAjaxTarget(await response.text());
+                            if (!replaceAjaxTarget(await response.text())) {
+                                throw new Error('AJAX target not found in response.');
+                            }
+
                             window.history.replaceState({}, '', url.toString());
                             return true;
                         } catch (error) {
-                            window.location.href = url.toString();
+                            if (window.UhmsInertia && typeof window.UhmsInertia.visit === 'function') {
+                                window.UhmsInertia.visit(url.toString());
+                            } else {
+                                window.open(url.toString(), '_self');
+                            }
                             return true;
                         } finally {
                             setLoading(false);

@@ -34,7 +34,7 @@ class QueueController extends Controller
         return view('queue.manage', compact('departments', 'selectedDepartment', 'queue', 'serving'));
     }
 
-    public function board()
+    public function board(Request $request)
     {
         $departments = Department::active()->orderBy('name')->get();
 
@@ -53,7 +53,13 @@ class QueueController extends Controller
             ->filter(fn (QueueEntry $entry) => $entry->department_id !== null)
             ->groupBy('department_id');
 
-        return view('queue.board', compact('departments', 'queues', 'triageQueue'));
+        $viewData = compact('departments', 'queues', 'triageQueue');
+
+        if ($request->boolean('embedded')) {
+            return view('queue.partials.board-content', $viewData);
+        }
+
+        return view('queue.board', $viewData);
     }
 
     public function callNext(Request $request)

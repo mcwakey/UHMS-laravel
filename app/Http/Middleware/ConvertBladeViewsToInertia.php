@@ -41,7 +41,7 @@ class ConvertBladeViewsToInertia
             return false;
         }
 
-        if ($request->expectsJson() && ! $request->headers->has('X-Inertia')) {
+        if (($request->expectsJson() || $request->ajax()) && ! $request->headers->has('X-Inertia')) {
             return false;
         }
 
