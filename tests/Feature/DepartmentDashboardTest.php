@@ -11,6 +11,7 @@ use App\Services\Dashboard\DepartmentDashboardResolver;
 use App\Services\Dashboard\DepartmentDashboardService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\View;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -62,6 +63,18 @@ class DepartmentDashboardTest extends TestCase
         }
     }
 
+    public function test_every_previewable_dashboard_has_its_own_blade_file(): void
+    {
+        $registry = app(DepartmentDashboardRegistry::class);
+
+        foreach ($registry->previewableKeys() as $key) {
+            $this->assertTrue(
+                View::exists('admin.dashboards.department.types.'.$key),
+                "Missing separated dashboard view for {$key}",
+            );
+        }
+    }
+
     public function test_registry_maps_types_to_expected_dashboards(): void
     {
         $registry = app(DepartmentDashboardRegistry::class);
@@ -101,11 +114,13 @@ class DepartmentDashboardTest extends TestCase
         $controller = app(DepartmentDashboardController::class);
 
         // Valid preview key → switch to it.
-        $valid = $controller->index($this->requestAs($admin, DepartmentDashboardResolver::PHARMACY))->getData();
+        $validView = $controller->index($this->requestAs($admin, DepartmentDashboardResolver::PHARMACY));
+        $valid = $validView->getData();
         $this->assertSame(DepartmentDashboardResolver::PHARMACY, $valid['key']);
         $this->assertSame(DepartmentDashboardResolver::MANAGEMENT, $valid['resolved_key']);
         $this->assertTrue($valid['is_preview']);
         $this->assertArrayHasKey(DepartmentDashboardResolver::PHARMACY, $valid['available_dashboards']);
+        $this->assertSame('admin.dashboards.department.types.pharmacy', $validView->getName());
 
         // Unknown preview key → fall back to the admin's own dashboard (no crash).
         $invalid = $controller->index($this->requestAs($admin, 'totally-invalid'))->getData();

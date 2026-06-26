@@ -1,1456 +1,913 @@
-# UHMS Department Dashboard UI — Phase 8.1: Design Differentiation, Dashboard Naming, Department Personalisation & Menu Identity Correction
+Yes. The KPIs must be different **per department type**, otherwise the dashboards will keep feeling the same.
 
-## Goal
-
-Correct the current department dashboard UI issue where all department dashboards look too similar.
-
-The system is already department-aware, scoped, permission-safe, and supports modern dashboard cards, drilldowns, ApexCharts, department switching, comparison reports, and assignment management.
-
-However, the dashboards still feel too generic because they share almost the same layout and only change colors/metrics.
-
-This phase must make dashboards visually and structurally different by department type, while also personalising each dashboard with the actual department name.
-
-The core rule is:
+The rule should be:
 
 ```text
-Department Type = dashboard design / personality / workflow family / menu profile
-Department Name = dashboard identity / personalisation
-Department ID = actual data scope
+Dashboard type decides the KPI family.
+Department ID decides the actual records counted.
+Permissions decide whether sensitive KPIs are visible.
 ```
 
-Example:
+So every KPI below must be scoped to the **current department_id**, not just the department type. That follows the Phase 7/8 model where department type controls layout/theme/menu, but department ID controls actual data scope.  Also, KPI cards should only be clickable when the user has the route and permission, using the drilldown URL builder pattern already added in Phase 8. 
+
+## Recommended KPI structure
+
+Each dashboard should have:
 
 ```text
-A Laboratory user belongs to Laboratory Department.
-Department type = investigation.
-Dashboard name = Investigation Dashboard.
-Dashboard identity = Laboratory Department.
-Data scope = Laboratory department_id only.
-
-An X-Ray user belongs to X-Ray / Radiology Unit.
-Department type = radiology.
-Dashboard name = Radiology Dashboard.
-Dashboard identity = X-Ray / Radiology Unit.
-Data scope = X-Ray / Radiology department_id only.
+4 primary KPIs — big cards at the top
+4–8 secondary KPIs — smaller cards or side cards
+2–4 operational lists — queue, alerts, recent activity
+2–3 charts — trend, breakdown, workload
 ```
 
-Do not show all investigation data to every investigation-type user.
-
-Do not show all radiology data to every radiology-type user.
-
-Do not use department type as a permission layer.
-
-Permissions and modules remain the security layer.
-
-Do not apply department backfill in this phase.
-
-Do not run the wide full suite unless explicitly instructed.
+Do **not** show 20 KPI cards at the top. That makes every dashboard ugly and noisy.
 
 ---
 
-## 1. Required Context
+# KPIs per Department Type
 
-Read:
+## 1. Consultation Dashboard
 
-```text
-docs/DEPARTMENT_DASHBOARD_UI_PHASE_6_REPORT.md
-docs/DEPARTMENT_DASHBOARD_UI_PHASE_7_ADVANCED_CHARTS_CONTEXT_REPORT.md
-docs/DEPARTMENT_DASHBOARD_UI_PHASE_8_DRILLDOWNS_ASSIGNMENTS_POLISH_REPORT.md
-docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
-```
+Best for OPD, doctors, clinics, specialist consultation rooms.
 
-Also inspect:
+**Primary KPIs**
 
 ```text
-app/Services/Department/DepartmentContextResolver.php
-app/Services/Department/DepartmentContextSwitcherService.php
-app/Services/Department/DepartmentDashboardThemeRegistry.php
-app/Services/Department/DepartmentDashboardDataService.php
-app/Services/Department/DepartmentDashboardChartService.php
-app/Services/Department/DepartmentDashboardDrilldownUrlBuilder.php
-app/Services/Department/DepartmentMenuProfileService.php
-app/Services/Department/DepartmentMetricsRegistry.php
-app/Services/Dashboard/DepartmentDashboardRegistry.php
-app/Http/Controllers/Admin/Dashboard/DepartmentDashboardController.php
-app/Http/Controllers/Admin/Reports/DepartmentComparisonController.php
-resources/views/admin/dashboards/department/show.blade.php
-resources/views/admin/dashboards/department/partials
-resources/views/layouts
-resources/views/components
-lang/en/dashboards.php
-lang/fr/dashboards.php
-lang/en/departments.php
-lang/fr/departments.php
-lang/en/menu.php
-lang/fr/menu.php
-tests/Feature/Departments
-```
-
-Inspect the existing dashboard inspiration:
-
-```text
-resources/views/admin/dashboards/admin.blade.php
-resources/views/admin/dashboards/doctor.blade.php
-resources/views/admin/dashboards/staff.blade.php
-```
-
-Use them as inspiration:
-
-```text
-admin dashboard = executive / KPI / trend / finance / system overview
-doctor dashboard = queue-first / action-first / clinical workflow
-staff dashboard = generic fallback / simple stats and lists
-```
-
-Do not introduce Tailwind.
-
-Do not introduce a new frontend framework.
-
-Use Bootstrap 5, existing UI components, Tabler Icons, and the already-bundled ApexCharts asset.
-
----
-
-## 2. Problem To Fix
-
-Currently, the department dashboards are too similar because they share mostly the same layout.
-
-They likely share:
-
-```text
-same hero structure
-same KPI card grid
-same chart area
-same services/stock blocks
-same quick actions style
-same layout order
-same generic page title
-```
-
-This creates a weak user experience.
-
-Emergency should not feel like Pharmacy.
-
-Pharmacy should not feel like Records.
-
-Finance should not feel like Radiology.
-
-Laboratory and X-Ray may share a diagnostics family, but they must still have different dashboard identity and department-specific content.
-
-Fix this by creating dashboard layout personalities.
-
-Do not only change colors.
-
-Each department type must have:
-
-```text
-unique dashboard name
-unique hero wording
-actual department name personalisation
-unique layout family
-unique primary visual emphasis
-unique metric order
-unique main work area
-unique side panels
-department-type-specific empty states
-department-type-specific icons
-department-specific menu heading
-department-specific quick actions where useful
-```
-
----
-
-## 3. Dashboard Naming Strategy
-
-Dashboard titles must come from the department type.
-
-Add translated dashboard names for all 19 department types.
-
-Required dashboard names:
-
-```text
-Consultation Dashboard
-Emergency Dashboard
-Investigation Dashboard
-Radiology Dashboard
-Procedure Dashboard
-Theatre Dashboard
-Treatment Dashboard
-Nursing Dashboard
-Pharmacy Dashboard
-Inpatient Dashboard
-Maternity Dashboard
-Blood Bank Dashboard
-Mortuary Dashboard
-Ambulance Dashboard
-Records Dashboard
-Finance Dashboard
-Stores Dashboard
-Support Dashboard
-Administrative Dashboard
-```
-
-The page subtitle must include the actual department name and department type.
-
-Examples:
-
-```text
-Laboratory Department · Investigation
-X-Ray Unit · Radiology
-Main Pharmacy · Pharmacy
-Emergency / Casualty · Emergency
-Billing Office · Finance
-```
-
-Do not use one generic “My Dashboard” title for all department dashboards.
-
-Do not hardcode English dashboard names in Blade.
-
-Use lang files.
-
----
-
-## 4. Department Name Personalisation
-
-Every department dashboard must feel like it belongs to the actual department.
-
-The rule is:
-
-```text
-Department Type = dashboard design/personality
-Department Name = dashboard identity/personalisation
-Department ID = dashboard data scope
-```
-
-Every department dashboard must show:
-
-```text
-department-type dashboard name
-actual department name
-department type label
-current department badge
-scoped-to-department message
-department-specific menu heading
-department-specific quick action labels where useful
-```
-
-Examples:
-
-```text
-Radiology Dashboard
-X-Ray Unit · Radiology
-Welcome to X-Ray Unit
-Showing metrics scoped to X-Ray Unit only
-X-Ray Unit Workbench
-```
-
-```text
-Investigation Dashboard
-Laboratory Department · Investigation
-Welcome to Laboratory Department
-Showing metrics scoped to Laboratory Department only
-Laboratory Department Workbench
-```
-
-```text
-Pharmacy Dashboard
-Main Pharmacy · Pharmacy
-Welcome to Main Pharmacy
-Showing pharmacy data scoped to Main Pharmacy only
-Main Pharmacy Operations
-```
-
-```text
-Emergency Dashboard
-Emergency / Casualty · Emergency
-Welcome to Emergency / Casualty
-Showing emergency activity scoped to Emergency / Casualty only
-Emergency / Casualty Command Center
-```
-
-Avoid overloading every tiny label with the department name.
-
-The department name must be very visible in:
-
-```text
-hero
-subtitle
-scope badge
-menu heading
-major card titles where useful
-```
-
----
-
-## 5. Hero Section Personalisation
-
-Update the hero section so it does not use generic copy only.
-
-The hero must include:
-
-```text
-dashboard name from department type
-department name from current department
-department type label
-logged-in user name
-date
-current scope message
-theme icon
-switcher if user has multiple departments
-global preview badge when applicable
-```
-
-Suggested hero display for normal department user:
-
-```text
-Emergency Dashboard
-Emergency / Casualty · Emergency
-
-Welcome, Dr. Mensah
-You are viewing Emergency / Casualty data only.
-```
-
-Suggested hero display for Laboratory user:
-
-```text
-Investigation Dashboard
-Laboratory Department · Investigation
-
-Welcome, Ama
-You are viewing Laboratory Department data only.
-```
-
-Suggested hero display for X-Ray user:
-
-```text
-Radiology Dashboard
-X-Ray Unit · Radiology
-
-Welcome, Kofi
-You are viewing X-Ray Unit data only.
-```
-
-For users without a department:
-
-```text
-Use role/global fallback title.
-Show clear no-department assigned message.
-Do not pretend the dashboard is scoped.
-```
-
-For admin/global preview:
-
-```text
-Show Global Preview or Viewing as {Department Name}.
-Make it visually clear this is preview/global mode.
-```
-
----
-
-## 6. KPI and Card Personalisation
-
-Where useful, cards should reference the department name.
-
-Examples:
-
-```text
-Pending requests in Laboratory Department
-X-Ray Unit imaging queue
-Main Pharmacy low stock
-Emergency / Casualty active cases
-Billing Office collections
-Stores Department stock requests
-```
-
-Rules:
-
-```text
-Use department name on major card titles or subtitles.
-Avoid noisy repetition on every small metric.
-Do not hardcode English labels.
-All labels must be localised.
-```
-
-For ordinary users, every card must remain scoped to the current department ID.
-
-For switched-context users, every card must be scoped to the selected current department ID.
-
-For admin/global preview, wider scope is allowed only with explicit permission.
-
----
-
-## 7. Dashboard Layout Families
-
-Create layout families, not 19 fully duplicated dashboards.
-
-Recommended layout families:
-
-```text
-clinical_queue
-emergency_command
-diagnostic_workbench
-imaging_workbench
-surgery_board
-ward_board
-dispensing_stock
-finance_control
-stores_inventory
-records_office
-generic_department
-```
-
-Map department types:
-
-```text
-consultation => clinical_queue
-emergency => emergency_command
-investigation => diagnostic_workbench
-radiology => imaging_workbench
-procedure => clinical_queue or surgery_board_light
-theatre => surgery_board
-treatment => clinical_queue
-nursing => ward_board
-pharmacy => dispensing_stock
-inpatient => ward_board
-maternity => ward_board with maternity emphasis
-blood_bank => diagnostic_workbench with blood-bank emphasis
-mortuary => generic_department with mortuary emphasis
-ambulance => emergency_command with ambulance emphasis
-records => records_office
-finance => finance_control
-stores => stores_inventory
-support => generic_department
-administrative => generic_department or admin_control
-```
-
-The layout family controls:
-
-```text
-card order
-main content area
-right sidebar content
-chart style
-table/list style
-quick actions
-empty-state language
-visual rhythm
-```
-
----
-
-## 8. Department Dashboard Layout Registry
-
-Create or extend:
-
-```text
-DepartmentDashboardLayoutRegistry
-```
-
-or extend the existing department dashboard registry cleanly.
-
-Each department type should define:
-
-```text
-dashboard_name_key
-layout_family
-theme_key
-hero_variant
-primary_cards
-secondary_cards
-main_panel
-side_panels
-chart_panels
-quick_actions
-empty_state_key
-menu_heading_key
-personalisation_variant
-```
-
-Example for investigation:
-
-```php
-'investigation' => [
-    'name_key' => 'departments.dashboards.investigation.name',
-    'layout_family' => 'diagnostic_workbench',
-    'hero_variant' => 'diagnostic',
-    'primary_cards' => [
-        'pending_requests',
-        'samples_awaiting_acceptance',
-        'completed_results_today',
-        'services_count',
-    ],
-    'main_panel' => 'requests_queue',
-    'side_panels' => ['services', 'stock_usage', 'recent_results'],
-    'menu_heading_key' => 'departments.menu_profiles.investigation.heading',
-]
-```
-
-Example for radiology:
-
-```php
-'radiology' => [
-    'name_key' => 'departments.dashboards.radiology.name',
-    'layout_family' => 'imaging_workbench',
-    'hero_variant' => 'imaging',
-    'primary_cards' => [
-        'pending_imaging',
-        'scheduled_imaging',
-        'completed_imaging_today',
-        'services_count',
-    ],
-    'main_panel' => 'imaging_queue',
-    'side_panels' => ['radiology_services', 'consumables', 'recent_imaging'],
-    'menu_heading_key' => 'departments.menu_profiles.radiology.heading',
-]
-```
-
-Radiology must not look exactly like investigation.
-
-Laboratory and X-Ray can share some diagnostic logic, but the layout family, naming, labels, and data scope must differ where appropriate.
-
----
-
-## 9. Distinct Dashboard Personalities
-
-### Consultation Dashboard
-
-Style:
-
-```text
-queue-first
-patient-flow focused
-doctor/clinic action buttons
-```
-
-Main sections:
-
-```text
-Today’s consultation queue
-Waiting / consulting / completed
+Patients waiting
+Patients in consultation
+Consultations completed today
 Follow-ups due
-Recent consultations
-Clinical quick actions
 ```
 
-### Emergency Dashboard
-
-Style:
+**Secondary KPIs**
 
 ```text
-command-center
-alert-first
-triage-focused
-urgent visual priority
+Average waiting time
+Average consultation time
+New vs returning patients
+No-show appointments
+Pending lab/radiology requests
+Pending prescriptions
+Consultation revenue, if permitted
 ```
 
-Main sections:
+**Charts**
 
 ```text
-active emergency cases
-triage status
-critical/urgent counters
-emergency queue
-rapid actions
-emergency alerts
+Consultations by day
+Waiting vs consulting vs completed
+Follow-up trend
+Patient type breakdown
 ```
 
-### Investigation Dashboard
-
-Style:
+**Main dashboard personality**
 
 ```text
-laboratory workbench
-sample/results focused
-technical workflow layout
+Queue-first, patient-flow dashboard.
 ```
 
-Main sections:
+---
+
+## 2. Emergency Dashboard
+
+Best for Emergency / Casualty.
+
+**Primary KPIs**
 
 ```text
-pending lab requests
-samples awaiting acceptance
-completed results
-lab services
-lab stock usage
-recent results
+Active emergency cases
+Critical/urgent cases
+Pending triage
+Emergency cases completed today
 ```
 
-### Radiology Dashboard
-
-Style:
+**Secondary KPIs**
 
 ```text
-imaging workbench
-schedule/results focused
-visual scan/imaging identity
+Average triage time
+Average emergency stay time
+Unbilled emergency services
+Emergency admissions
+Emergency referrals
+Emergency consumables used
+Emergency revenue, if permitted
 ```
 
-Main sections:
+**Charts**
 
 ```text
-pending imaging requests
-scheduled imaging
-completed imaging
-radiology services
-radiology consumables
-recent imaging
+Cases by priority
+Cases by status
+Emergency volume by hour/day
+Triage status breakdown
 ```
 
-### Procedure Dashboard
-
-Style:
+**Main dashboard personality**
 
 ```text
-minor procedure board
-task/procedure focused
+Command-center, alert-first dashboard.
 ```
 
-Main sections:
+---
+
+## 3. Investigation Dashboard
+
+Best for Laboratory.
+
+**Primary KPIs**
 
 ```text
-pending procedures
-completed procedures
-procedure consumables
-procedure services
-patient procedure queue
+Pending lab requests
+Samples awaiting acceptance
+Results pending validation
+Results completed today
 ```
 
-### Theatre Dashboard
-
-Style:
+**Secondary KPIs**
 
 ```text
-surgery board
-timeline/schedule focused
-pre-op to post-op flow
+Rejected samples
+Urgent requests
+Average turnaround time
+Tests performed today
+Laboratory services count
+Laboratory consumables used
+Laboratory revenue, if permitted
 ```
 
-Main sections:
+**Charts**
 
 ```text
-scheduled surgeries
-pre-op
-in-progress
-post-op
-theatre consumables
-surgery schedule
+Requests by status
+Samples accepted vs rejected
+Results completed trend
+Top requested lab tests
 ```
 
-### Treatment Dashboard
-
-Style:
+**Main dashboard personality**
 
 ```text
-treatment room board
-care-task focused
+Laboratory workbench, sample/results dashboard.
 ```
 
-Main sections:
+---
+
+## 4. Radiology Dashboard
+
+Best for X-Ray, Ultrasound, Imaging.
+
+**Primary KPIs**
 
 ```text
-pending treatments
-completed treatments
-treatment tasks
-treatment services
-treatment room usage
+Pending imaging requests
+Scheduled imaging
+Imaging completed today
+Reports pending
 ```
 
-### Nursing Dashboard
-
-Style:
+**Secondary KPIs**
 
 ```text
-ward care board
-observations/vitals focused
+Urgent imaging requests
+Average imaging turnaround time
+Cancelled imaging
+Radiology services count
+Radiology consumables used
+Radiology revenue, if permitted
 ```
 
-Main sections:
+**Charts**
 
 ```text
-nursing tasks
-vitals due
-vitals recorded
-ward observations
-patient care queue
+Imaging requests by status
+Scheduled vs completed imaging
+Urgent imaging trend
+Top imaging services
 ```
 
-### Pharmacy Dashboard
-
-Style:
+**Main dashboard personality**
 
 ```text
-dispensing + stock control
-prescription queue focused
+Imaging schedule/results dashboard.
 ```
 
-Main sections:
+Important: radiology should not feel like laboratory. It should show scheduling, imaging reports, scan completion, and imaging workload.
+
+---
+
+## 5. Procedure Dashboard
+
+Best for minor procedure rooms.
+
+**Primary KPIs**
 
 ```text
-pending prescriptions
-dispensed today
-low stock
-near expiry
-pharmacy products
-pharmacy stock usage
+Pending procedures
+Procedures completed today
+Procedures in progress
+Procedure consumables used
 ```
 
-### Inpatient Dashboard
-
-Style:
+**Secondary KPIs**
 
 ```text
-ward board
-bed/admission focused
+Cancelled procedures
+Average procedure duration
+Procedure services count
+Unbilled procedures
+Procedure revenue, if permitted
 ```
 
-Main sections:
+**Charts**
 
 ```text
-active admissions
-bed occupancy
-discharges pending
-ward patients
-vitals overview
+Procedures by status
+Procedures by day
+Consumables usage trend
+Top procedures
 ```
 
-### Maternity Dashboard
-
-Style:
+**Main dashboard personality**
 
 ```text
-maternity ward board
-antenatal/delivery/postnatal focused
+Task/procedure board.
 ```
 
-Main sections:
+---
+
+## 6. Theatre Dashboard
+
+Best for operating theatre / surgery.
+
+**Primary KPIs**
 
 ```text
-antenatal visits
-delivery cases
-postnatal follow-ups
-maternity admissions
-maternity ward activity
+Scheduled surgeries today
+Pre-op cases
+Surgery in progress
+Post-op cases
 ```
 
-### Blood Bank Dashboard
-
-Style:
+**Secondary KPIs**
 
 ```text
-blood inventory and request board
-availability/safety focused
+Cancelled surgeries
+Completed surgeries today
+Average surgery duration
+Theatre occupancy/utilisation
+Theatre consumables used
+Unbilled theatre procedures
+Theatre revenue, if permitted
 ```
 
-Main sections:
+**Charts**
 
 ```text
-available blood units
-reserved blood units
-near expiry units
-pending crossmatches
-blood requests
+Surgery schedule trend
+Pre-op / in-progress / post-op breakdown
+Theatre utilisation
+Consumables usage
 ```
 
-### Mortuary Dashboard
-
-Style:
+**Main dashboard personality**
 
 ```text
-controlled registry board
-storage/release focused
+Surgery board with timeline/schedule feeling.
 ```
 
-Main sections:
+---
+
+## 7. Treatment Dashboard
+
+Best for dressing, injections, physiotherapy, treatment rooms.
+
+**Primary KPIs**
 
 ```text
-active mortuary cases
-storage occupancy
-pending releases
-mortuary records
+Pending treatments
+Treatments completed today
+Patients waiting
+Treatment tasks overdue
 ```
 
-### Ambulance Dashboard
-
-Style:
+**Secondary KPIs**
 
 ```text
-dispatch command board
-movement/transport focused
+Treatment services count
+Consumables used
+Repeat treatments
+Average treatment time
+Treatment revenue, if permitted
 ```
 
-Main sections:
+**Charts**
 
 ```text
-active dispatches
-transport requests
-completed transports
-ambulance availability
+Treatments by status
+Treatments by day
+Treatment service usage
+Consumables trend
 ```
 
-### Records Dashboard
-
-Style:
+**Main dashboard personality**
 
 ```text
-records office
-folder/patient-file focused
+Care-task dashboard.
 ```
 
-Main sections:
+---
+
+## 8. Nursing Dashboard
+
+Best for nursing stations and ward nursing.
+
+**Primary KPIs**
 
 ```text
-new records
-folder requests
-merge requests
-archive activity
-patient file actions
+Nursing tasks pending
+Vitals due
+Vitals recorded today
+Patients under nursing care
 ```
 
-### Finance Dashboard
-
-Style:
+**Secondary KPIs**
 
 ```text
-control-room
-money/reconciliation focused
+Overdue observations
+Medication administration pending, if module exists
+Shift handover notes
+Ward incidents
+Nursing task completion rate
 ```
 
-Main sections:
+**Charts**
 
 ```text
-collections
-unpaid invoices
+Vitals recorded trend
+Tasks pending vs completed
+Patient observation trend
+Nursing workload by shift
+```
+
+**Main dashboard personality**
+
+```text
+Ward care and observation board.
+```
+
+---
+
+## 9. Pharmacy Dashboard
+
+Best for pharmacy/dispensary.
+
+**Primary KPIs**
+
+```text
+Pending prescriptions
+Dispensed prescriptions today
+Low stock items
+Near-expiry items
+```
+
+**Secondary KPIs**
+
+```text
+Out-of-stock items
+Returned prescriptions
+Top dispensed products
+Pharmacy stock value, if permitted
+Pharmacy sales/revenue, if permitted
+Stock adjustments
+```
+
+**Charts**
+
+```text
+Prescription status breakdown
+Dispensing trend
+Low stock trend
+Near-expiry trend
+Top dispensed medicines
+```
+
+**Main dashboard personality**
+
+```text
+Dispensing + stock-control dashboard.
+```
+
+---
+
+## 10. Inpatient Dashboard
+
+Best for wards/admissions.
+
+**Primary KPIs**
+
+```text
+Active admissions
+Occupied beds
+Available beds
+Discharges pending
+```
+
+**Secondary KPIs**
+
+```text
+Admissions today
+Discharges today
+Average length of stay
+Bed occupancy rate
+Patients awaiting transfer
+Ward revenue, if permitted
+```
+
+**Charts**
+
+```text
+Admissions vs discharges
+Bed occupancy trend
+Length of stay trend
+Ward workload by day
+```
+
+**Main dashboard personality**
+
+```text
+Ward board, bed/admission focused.
+```
+
+---
+
+## 11. Maternity Dashboard
+
+Best for maternity ward, antenatal, delivery, postnatal.
+
+**Primary KPIs**
+
+```text
+Antenatal visits today
+Active maternity admissions
+Deliveries today
+Postnatal follow-ups
+```
+
+**Secondary KPIs**
+
+```text
+Labour cases
+High-risk pregnancy cases
+C-section cases, if theatre linked
+Newborn cases
+Maternity bed occupancy
+Maternity revenue, if permitted
+```
+
+**Charts**
+
+```text
+Antenatal trend
+Deliveries trend
+Postnatal follow-up trend
+Maternity admissions vs discharges
+```
+
+**Main dashboard personality**
+
+```text
+Maternity care board.
+```
+
+---
+
+## 12. Blood Bank Dashboard
+
+Best for blood bank / blood storage.
+
+**Primary KPIs**
+
+```text
+Available blood units
+Reserved blood units
+Pending blood requests
+Near-expiry blood units
+```
+
+**Secondary KPIs**
+
+```text
+Expired units
+Crossmatch pending
+Units issued today
+Units received today
+Blood group availability
+Critical stock blood groups
+```
+
+**Charts**
+
+```text
+Blood units by status
+Blood group distribution
+Blood requests trend
+Near-expiry trend
+```
+
+**Main dashboard personality**
+
+```text
+Blood inventory and request board.
+```
+
+---
+
+## 13. Mortuary Dashboard
+
+Best for mortuary.
+
+**Primary KPIs**
+
+```text
+Active mortuary cases
+Storage occupied
+Pending releases
+Released cases today
+```
+
+**Secondary KPIs**
+
+```text
+New admissions today
+Overdue storage cases
+Mortuary capacity
+Documentation pending
+Mortuary charges, if permitted
+```
+
+**Charts**
+
+```text
+Mortuary admissions trend
+Storage occupancy trend
+Cases by status
+Releases by period
+```
+
+**Main dashboard personality**
+
+```text
+Controlled registry/storage dashboard.
+```
+
+If the mortuary module is not fully built yet, show generic cards plus “not configured” states.
+
+---
+
+## 14. Ambulance Dashboard
+
+Best for ambulance/transport.
+
+**Primary KPIs**
+
+```text
+Active dispatches
+Pending transport requests
+Available ambulances
+Completed transports today
+```
+
+**Secondary KPIs**
+
+```text
+Ambulances under maintenance
+Average response time
+Emergency transfers
+Inter-facility transfers
+Fuel/usage logs, if available
+Ambulance charges, if permitted
+```
+
+**Charts**
+
+```text
+Dispatches by status
+Response time trend
+Transport requests trend
+Ambulance utilisation
+```
+
+**Main dashboard personality**
+
+```text
+Dispatch command dashboard.
+```
+
+If ambulance module is not built yet, use generic fallback with clear “module unavailable” states.
+
+---
+
+## 15. Records Dashboard
+
+Best for patient records, folders, archives.
+
+**Primary KPIs**
+
+```text
+New patient records today
+Folder requests pending
+Records updated today
+Merge requests pending
+```
+
+**Secondary KPIs**
+
+```text
+Archived records
+Duplicate patient alerts
+Records awaiting verification
+Folder movements
+Patient search activity
+```
+
+**Charts**
+
+```text
+New records trend
+Folder request trend
+Merge request status
+Records activity by day
+```
+
+**Main dashboard personality**
+
+```text
+Records office / patient-file dashboard.
+```
+
+---
+
+## 16. Finance Dashboard
+
+Best for billing, cashier, accounts, claims.
+
+**Primary KPIs**
+
+```text
+Collections today
+Unpaid invoices
+Outstanding balance
+Open cashier sessions
+```
+
+**Secondary KPIs**
+
+```text
+AR aging total
+Pending claims
+Credit notes issued
+Write-offs
+Discounts given
+Corporate sponsor balances
+Patient statement balances
+Revenue by department, if permitted
+```
+
+**Charts**
+
+```text
+Collections trend
+Invoice aging breakdown
+Claims status breakdown
+Payment method breakdown
+Revenue trend
+```
+
+**Main dashboard personality**
+
+```text
+Financial control-room dashboard.
+```
+
+Important: finance KPIs are permission-sensitive. Ordinary users should not see revenue, balances, AR aging, claim values, write-offs, or stock cost unless permitted.
+
+---
+
+## 17. Stores Dashboard
+
+Best for stores, inventory, procurement.
+
+**Primary KPIs**
+
+```text
+Stock requests pending
+Stock issues today
+Low stock items
+Purchase requests pending
+```
+
+**Secondary KPIs**
+
+```text
+Goods received today
+Supplier pending deliveries
+Stock transfers
+Stock adjustments
+Near-expiry stock
+Inventory value, if permitted
+Supplier payables, if permitted
+```
+
+**Charts**
+
+```text
+Stock requests trend
+Stock issues trend
+Low stock trend
+Purchase request status
+Top issued items
+```
+
+**Main dashboard personality**
+
+```text
+Inventory operations dashboard.
+```
+
+---
+
+## 18. Support Dashboard
+
+Best for IT, maintenance, laundry, security, housekeeping.
+
+**Primary KPIs**
+
+```text
+Open support tasks
+Tasks completed today
+Overdue tasks
+Assigned staff
+```
+
+**Secondary KPIs**
+
+```text
+Requests by category
+Pending maintenance
+Equipment issues
+Housekeeping tasks
+Average resolution time
+```
+
+**Charts**
+
+```text
+Support tasks by status
+Requests by category
+Resolution trend
+Workload by staff
+```
+
+**Main dashboard personality**
+
+```text
+Support operations dashboard.
+```
+
+If the support module is not mature, show generic fallback metrics.
+
+---
+
+## 19. Administrative Dashboard
+
+Best for admin/management/settings/HR-like department.
+
+**Primary KPIs**
+
+```text
+Active users
+Active departments
+Pending approvals
+System activity today
+```
+
+**Secondary KPIs**
+
+```text
+New users
+Role/permission changes
+Inactive users
+Department assignments
+Audit events
+Configuration changes
+```
+
+**Charts**
+
+```text
+User activity trend
+Department activity trend
+Audit event trend
+Administrative workload
+```
+
+**Main dashboard personality**
+
+```text
+Admin control dashboard.
+```
+
+---
+
+# The 4 top cards I would use for each
+
+This is the simplest version for your UI registry.
+
+| Department Type | Top KPI 1             | Top KPI 2         | Top KPI 3            | Top KPI 4             |
+| --------------- | --------------------- | ----------------- | -------------------- | --------------------- |
+| Consultation    | Waiting patients      | Consulting now    | Completed today      | Follow-ups due        |
+| Emergency       | Active cases          | Critical/urgent   | Pending triage       | Completed today       |
+| Investigation   | Pending requests      | Samples awaiting  | Results pending      | Completed today       |
+| Radiology       | Pending imaging       | Scheduled imaging | Reports pending      | Completed today       |
+| Procedure       | Pending procedures    | In progress       | Completed today      | Consumables used      |
+| Theatre         | Scheduled surgeries   | Pre-op            | In progress          | Post-op               |
+| Treatment       | Pending treatments    | Completed today   | Overdue tasks        | Consumables used      |
+| Nursing         | Nursing tasks         | Vitals due        | Vitals recorded      | Patients under care   |
+| Pharmacy        | Pending prescriptions | Dispensed today   | Low stock            | Near expiry           |
+| Inpatient       | Active admissions     | Occupied beds     | Available beds       | Pending discharges    |
+| Maternity       | Antenatal visits      | Active admissions | Deliveries today     | Postnatal follow-ups  |
+| Blood Bank      | Available units       | Reserved units    | Pending requests     | Near-expiry units     |
+| Mortuary        | Active cases          | Storage occupied  | Pending releases     | Released today        |
+| Ambulance       | Active dispatches     | Pending requests  | Available ambulances | Completed transports  |
+| Records         | New records           | Folder requests   | Updated records      | Merge requests        |
+| Finance         | Collections today     | Unpaid invoices   | Outstanding balance  | Open cashier sessions |
+| Stores          | Stock requests        | Stock issues      | Low stock            | Purchase requests     |
+| Support         | Open tasks            | Completed today   | Overdue tasks        | Assigned staff        |
+| Administrative  | Active users          | Departments       | Pending approvals    | Audit activity        |
+
+---
+
+# Important permission-sensitive KPIs
+
+These must **not** show for everyone:
+
+```text
+Revenue
+Collections
+Outstanding balance
 AR aging
-claims
-cashier sessions
-credit notes/write-offs where permitted
+Claims value
+Credit notes
+Write-offs
+Discount totals
+Stock value
+Supplier payables
+Inventory cost
+Product cost
+Patient financial balances
 ```
 
-### Stores Dashboard
-
-Style:
-
-```text
-inventory operations
-stock movement focused
-```
-
-Main sections:
-
-```text
-stock requests
-stock issues
-low stock
-purchase requests
-supplier activity
-store usage
-```
-
-### Support Dashboard
-
-Style:
-
-```text
-support operations
-requests/task focused
-```
-
-Main sections:
-
-```text
-support requests
-maintenance tasks
-general activity
-assets placeholder if available
-```
-
-### Administrative Dashboard
-
-Style:
-
-```text
-admin control
-system/user/department focused
-```
-
-Main sections:
-
-```text
-users
-departments
-settings
-HR/admin activity
-system overview
-```
-
-### Generic Department Dashboard
-
-Style:
-
-```text
-simple department profile
-```
-
-Main sections:
-
-```text
-department profile
-assigned users
-services count
-recent activity
-quick links
-```
+Use restricted cards or hide them before querying, like Phase 7/8 already established for revenue/stock datasets and drilldowns. 
 
 ---
 
-## 10. Menu Management Correction
+# How this should enter the code
 
-The menu must be managed through department menu profiles, not hardcoded Blade.
-
-Current rule remains:
-
-```text
-Permissions/modules filter first.
-Department menu profile only reorders and enriches allowed sections.
-```
-
-Now improve menu identity and department personalisation.
-
-Each department type profile should define:
-
-```text
-dashboard label
-department-personalised menu heading
-primary section names
-quick links
-department-scoped links
-optional badges
-menu group heading
-```
-
-Examples:
-
-### Investigation / Laboratory
-
-```text
-Menu heading: Laboratory Department Workbench
-Dashboard: Investigation Dashboard
-Quick links:
-- Pending Requests
-- Sample Acceptance
-- Results Entry
-- Laboratory Services
-- Laboratory Stock Usage
-```
-
-### Radiology
-
-```text
-Menu heading: X-Ray Unit Workbench
-Dashboard: Radiology Dashboard
-Quick links:
-- Imaging Requests
-- Scheduled Imaging
-- Imaging Results
-- Radiology Services
-- Radiology Stock Usage
-```
-
-### Pharmacy
-
-```text
-Menu heading: Main Pharmacy Operations
-Dashboard: Pharmacy Dashboard
-Quick links:
-- Dispensing Queue
-- Prescriptions
-- Products
-- Low Stock
-- Near Expiry
-```
-
-### Emergency
-
-```text
-Menu heading: Emergency / Casualty Command Center
-Dashboard: Emergency Dashboard
-Quick links:
-- Active Emergency Cases
-- Triage
-- Emergency Queue
-- Rapid Billing
-- Emergency Stock Usage
-```
-
-Rules:
-
-```text
-Menu links must include department_id/current scope where the destination supports it.
-Missing routes must be skipped.
-User permissions/modules must still be checked.
-Department type must not grant access.
-Department name personalisation must not grant access.
-```
-
----
-
-## 11. Actual Department Scope
-
-All dashboard panels and menu drilldowns must be scoped to actual department_id.
-
-For ordinary users:
-
-```text
-current department_id only
-```
-
-For switched context users:
-
-```text
-selected current_department_id only
-```
-
-For Admin/Super Admin/global preview:
-
-```text
-allow wider scope only with explicit permission
-```
-
-Examples:
-
-```text
-Laboratory user must not see X-Ray services.
-X-Ray user must not see Laboratory services.
-Main Pharmacy user must not see Stores stock unless permitted.
-Finance user must not see clinical lists unless permitted.
-```
-
-Both Laboratory and X-Ray may share diagnostic-related code, but their data scope must differ.
-
----
-
-## 12. Blade Refactor
-
-Refactor:
-
-```text
-resources/views/admin/dashboards/department/show.blade.php
-```
-
-so it switches layout family, not just theme.
-
-Suggested layout partials:
-
-```text
-resources/views/admin/dashboards/department/partials/layouts/clinical-queue.blade.php
-resources/views/admin/dashboards/department/partials/layouts/emergency-command.blade.php
-resources/views/admin/dashboards/department/partials/layouts/diagnostic-workbench.blade.php
-resources/views/admin/dashboards/department/partials/layouts/imaging-workbench.blade.php
-resources/views/admin/dashboards/department/partials/layouts/surgery-board.blade.php
-resources/views/admin/dashboards/department/partials/layouts/ward-board.blade.php
-resources/views/admin/dashboards/department/partials/layouts/dispensing-stock.blade.php
-resources/views/admin/dashboards/department/partials/layouts/finance-control.blade.php
-resources/views/admin/dashboards/department/partials/layouts/stores-inventory.blade.php
-resources/views/admin/dashboards/department/partials/layouts/records-office.blade.php
-resources/views/admin/dashboards/department/partials/layouts/generic-department.blade.php
-```
-
-Keep common components:
-
-```text
-hero
-kpi-card
-mini-kpi-card
-chart-card
-work-queue-card
-quick-actions
-services-card
-stock-usage-card
-empty-card
-restricted-card
-unavailable-card
-```
-
-Do not duplicate low-level card markup everywhere.
-
-The low-level card components should remain reusable.
-
-The layout families should decide placement, emphasis, and section order.
-
----
-
-## 13. Layout Family Differences
-
-At minimum, make these visibly different:
-
-```text
-consultation
-emergency
-investigation
-radiology
-theatre
-pharmacy
-inpatient / nursing / maternity
-finance
-stores
-records
-generic
-```
-
-Examples:
-
-```text
-Emergency:
-alert strip, priority cards, queue first, rapid actions side rail
-
-Investigation:
-sample/request pipeline, results table, service/stock cards in side column
-
-Radiology:
-schedule board, imaging request list, scan-result emphasis, different iconography
-
-Pharmacy:
-dispensing queue, stock alerts, near-expiry, prescription actions
-
-Finance:
-collections/AR/claims cards, money trend, reconciliation table
-
-Stores:
-stock request/issue cards, low-stock table, procurement panel
-
-Records:
-folder/request list, merge requests, archives, patient-file actions
-```
-
-Do not let every type render the exact same sequence:
-
-```text
-hero → 4 KPI cards → chart → services → stock → activity
-```
-
-That sequence can exist as fallback only.
-
----
-
-## 14. Dashboard Data Payload
-
-Update `DepartmentDashboardDataService` or layout payload builder so each layout receives the data it needs.
-
-Payload should include:
-
-```text
-context
-theme
-layout
-dashboard_name
-department_name
-department_type_label
-scope_message
-primary_cards
-secondary_cards
-main_panel
-side_panels
-chart_panels
-quick_actions
-services
-stock_usage
-activities
-empty_states
-restricted_states
-```
-
-The dashboard name should come from department type.
-
-The department name should come from the current department.
-
-The scope message should clearly say what department data is being viewed.
-
----
-
-## 15. Department-Specific Menu Headings
-
-Extend `DepartmentMenuProfileService` so it can return a menu heading.
-
-Suggested method:
+I would add a KPI registry like this:
 
 ```php
-public function headingForContext(DepartmentContext $context): string
+DepartmentDashboardLayoutRegistry
+DepartmentDashboardKpiRegistry
+DepartmentDashboardDataService
 ```
 
-or equivalent.
-
-It should produce labels like:
-
-```text
-Laboratory Department Workbench
-X-Ray Unit Workbench
-Emergency / Casualty Command Center
-Main Pharmacy Operations
-Billing Office Control Room
-Stores Department Inventory
-Records Office
-```
-
-Use translation templates and inject department name.
-
-Examples:
+Each type should define:
 
 ```php
-__('departments.menu_profiles.workbench', ['department' => $department->name])
-__('departments.menu_profiles.command_center', ['department' => $department->name])
-__('departments.menu_profiles.operations', ['department' => $department->name])
-__('departments.menu_profiles.control_room', ['department' => $department->name])
+[
+    'dashboard_name_key' => 'departments.dashboards.pharmacy.name',
+    'layout_family' => 'dispensing_stock',
+    'primary_kpis' => [
+        'pending_prescriptions',
+        'dispensed_today',
+        'low_stock',
+        'near_expiry',
+    ],
+    'secondary_kpis' => [
+        'out_of_stock',
+        'top_dispensed_products',
+        'stock_adjustments',
+        'pharmacy_revenue',
+    ],
+    'charts' => [
+        'prescription_status_breakdown',
+        'dispensing_trend',
+        'low_stock_trend',
+    ],
+]
 ```
 
-Do not hardcode English in service or Blade.
+Then the dashboard layout decides **where** to display them, while the data service decides **how** to calculate them safely.
 
----
-
-## 16. Localisation
-
-Extend:
-
-```text
-lang/en/departments.php
-lang/fr/departments.php
-lang/en/dashboards.php
-lang/fr/dashboards.php
-lang/en/menu.php
-lang/fr/menu.php
-lang/en/common.php
-lang/fr/common.php
-```
-
-Add keys for:
-
-```text
-dashboard names
-dashboard subtitles
-layout family labels
-menu profile headings
-quick action labels
-department-specific empty states
-department-specific section titles
-scope messages
-personalised welcome messages
-```
-
-Required keys include:
-
-```text
-departments.dashboards.consultation.name
-departments.dashboards.emergency.name
-departments.dashboards.investigation.name
-departments.dashboards.radiology.name
-departments.dashboards.procedure.name
-departments.dashboards.theatre.name
-departments.dashboards.treatment.name
-departments.dashboards.nursing.name
-departments.dashboards.pharmacy.name
-departments.dashboards.inpatient.name
-departments.dashboards.maternity.name
-departments.dashboards.blood_bank.name
-departments.dashboards.mortuary.name
-departments.dashboards.ambulance.name
-departments.dashboards.records.name
-departments.dashboards.finance.name
-departments.dashboards.stores.name
-departments.dashboards.support.name
-departments.dashboards.administrative.name
-
-departments.dashboard.subtitle
-departments.dashboard.welcome_to_department
-departments.dashboard.scoped_to_department_name
-departments.dashboard.viewing_department_data_only
-departments.dashboard.viewing_as_department
-departments.dashboard.global_preview_mode
-departments.dashboard.no_department_assigned_dashboard
-
-departments.menu_profiles.workbench
-departments.menu_profiles.command_center
-departments.menu_profiles.operations
-departments.menu_profiles.control_room
-departments.menu_profiles.inventory
-departments.menu_profiles.records_office
-departments.menu_profiles.generic
-
-departments.sections.samples
-departments.sections.imaging_schedule
-departments.sections.dispensing_queue
-departments.sections.bed_occupancy
-departments.sections.triage_status
-departments.sections.surgery_schedule
-departments.sections.stock_movements
-departments.sections.folder_requests
-departments.sections.cashier_sessions
-```
-
-Maintain EN/FR parity.
-
-Run:
-
-```bash
-php scripts/localisation-audit.php
-php scripts/localisation-parity-check.php
-```
-
-Required:
-
-```text
-Active runtime candidates: 0
-EN/FR parity OK
-```
-
----
-
-## 17. Tests To Add
-
-Add focused tests only.
-
-Required tests:
-
-```text
-all 19 department types have translated dashboard names
-all 19 department types resolve a layout family
-consultation uses clinical_queue layout
-emergency uses emergency_command layout
-investigation uses diagnostic_workbench layout
-radiology uses imaging_workbench layout
-theatre uses surgery_board layout
-pharmacy uses dispensing_stock layout
-finance uses finance_control layout
-stores uses stores_inventory layout
-records uses records_office layout
-generic/support/mortuary fallback safely
-dashboard title is department-type specific
-dashboard subtitle includes actual department name
-dashboard hero shows actual department name
-scope badge shows current department name
-lab user sees Investigation Dashboard and Laboratory Department identity
-radiology user sees Radiology Dashboard and X-Ray/Radiology department identity
-lab user does not see radiology services
-radiology user does not see laboratory services
-menu heading includes department name
-menu heading changes by department type
-menu links remain permission filtered
-menu links remain module filtered
-missing quick-link routes are skipped
-admin/global preview shows preview badge instead of normal scoped message
-user with no department gets safe fallback title/message
-view cache compiles for every layout family
-localisation audit remains 0 active candidates
-```
-
-Allowed focused command:
-
-```bash
-php artisan test tests/Feature/Departments/DepartmentDashboardDesignDifferentiationTest.php
-```
-
-Also run:
-
-```bash
-php artisan test tests/Feature/Departments
-php artisan test tests/Feature/DepartmentDashboardTest.php
-```
-
-Do not run the wide full suite unless explicitly instructed.
-
----
-
-## 18. Verification
-
-Run:
-
-```bash
-php artisan route:list
-php artisan view:cache
-php artisan view:clear
-php scripts/localisation-audit.php
-php scripts/localisation-parity-check.php
-php artisan permissions:audit --strict
-git diff --check
-```
-
-Also lint changed PHP files:
-
-```bash
-find app database routes lang resources/views tests -name "*.php" -print0 | xargs -0 -n1 php -l
-```
-
-Do not apply department backfill.
-
-Do not run the wide full suite.
-
----
-
-## 19. Documentation
-
-Create:
-
-```text
-docs/DEPARTMENT_DASHBOARD_UI_PHASE_8_1_DESIGN_DIFFERENTIATION_REPORT.md
-```
-
-Include:
-
-```text
-summary
-problem fixed
-dashboard naming strategy
-department name personalisation strategy
-layout family registry
-department type to layout family mapping
-distinct dashboard personalities
-menu management strategy
-department-scoped data behavior
-Blade layout family changes
-localisation changes
-tests added
-focused tests run
-minimal verification commands run
-known limitations
-next recommended phase
-```
-
-Known limitations should mention:
-
-```text
-some highly specialised department dashboards may still need deeper module-specific widgets later
-drag-and-drop custom dashboard builder is deferred
-predictive analytics are deferred
-wide full-suite regression remains deferred unless explicitly run
-department backfill apply was not run unless explicitly instructed
-```
-
----
-
-## 20. Acceptance Criteria
-
-This correction phase is complete only when:
-
-```text
-department dashboards no longer all look alike
-all 19 department types have translated dashboard names
-all 19 department types resolve to layout families
-major dashboard families have visibly different layouts
-consultation, emergency, investigation, radiology, theatre, pharmacy, inpatient/ward, finance, stores, records feel different
-dashboard title is based on department type
-dashboard subtitle shows actual department name
-dashboard hero welcomes the user to the actual department
-scope badge shows actual department name
-dashboard data remains scoped by department_id
-lab user sees Laboratory Department identity and not Radiology services
-radiology user sees Radiology identity and not Laboratory services
-menu heading/profile changes by department type
-menu heading includes actual department name where possible
-menu remains permission/module safe
-view cache compiles
-localisation audit Active runtime candidates = 0
-EN/FR parity passes
-focused tests pass
-documentation report is created
-department backfill is not applied
-wide full suite is not run
-```
-
-Proceed with Department Dashboard UI Phase 8.1 now.
+That way Emergency, Pharmacy, Finance, Laboratory, Records, and Stores will finally stop looking like copy-paste dashboards.

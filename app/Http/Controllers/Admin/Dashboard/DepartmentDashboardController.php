@@ -85,6 +85,15 @@ class DepartmentDashboardController extends Controller
                 ->all()
             : [];
 
-        return view('admin.dashboards.department.show', $data);
+        return view($this->viewForDashboard($key), $data);
+    }
+
+    private function viewForDashboard(string $key): string
+    {
+        $view = 'admin.dashboards.department.types.'.$key;
+
+        return view()->exists($view)
+            ? $view
+            : 'admin.dashboards.department.types.generic';
     }
 }
