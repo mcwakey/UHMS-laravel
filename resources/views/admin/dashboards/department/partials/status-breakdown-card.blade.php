@@ -3,6 +3,7 @@
     $values = $chart['datasets'][0]['data'] ?? [];
     $total = array_sum($values ?: [0]);
 @endphp
+@php $chartId = 'dept_status_chart_'.\Illuminate\Support\Str::random(8); @endphp
 <div class="card shadow-sm mb-3">
     <div class="card-header">
         <h6 class="fw-bold mb-0"><i class="ti ti-chart-pie me-1"></i>{{ $chart['title'] ?? __('dashboards.department.charts.queue_status_breakdown') }}</h6>
@@ -13,6 +14,13 @@
         @elseif(empty($labels) || $total <= 0)
             @include('admin.dashboards.department.partials.empty-card', ['message' => __('dashboards.department.no_chart_data'), 'icon' => 'ti-chart-pie'])
         @else
+            <div
+                id="{{ $chartId }}"
+                class="department-apex-chart"
+                style="min-height: 210px;"
+                data-chart='@json($chart)'
+                data-accent="{{ $theme['chart_accent'] ?? '#6c757d' }}">
+            </div>
             <div class="vstack gap-2">
                 @foreach($labels as $index => $label)
                     @php

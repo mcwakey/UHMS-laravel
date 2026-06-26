@@ -18,6 +18,7 @@ class DepartmentDashboardDataService
     public function __construct(
         private DepartmentDashboardLayoutRegistry $layouts,
         private DepartmentDashboardChartService $charts,
+        private DepartmentDashboardDrilldownUrlBuilder $drilldowns,
     ) {}
 
     public function build(DepartmentDashboardContext $context): array
@@ -61,7 +62,7 @@ class DepartmentDashboardDataService
 
     private function metricCard(string $key, bool $compact = false): ?array
     {
-        $route = null;
+        $route = $this->drilldowns->build($this->context, $key);
         $format = 'number';
         $variant = $compact ? 'secondary' : $this->context->theme['accent_class'];
         $icon = $compact ? 'ti-circle-dot' : ($this->context->theme['icon'] ?? 'ti-layout-dashboard');

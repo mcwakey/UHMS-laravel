@@ -94,6 +94,11 @@ return [
         'departments_count' => ':count départements',
         'no_departments' => 'Aucun département ne correspond aux filtres sélectionnés.',
         'metric_group' => 'Groupe de métriques',
+        'comparison_presets' => 'Préréglages de comparaison',
+        'today' => 'Aujourd’hui',
+        'this_week' => 'Cette semaine',
+        'this_month' => 'Ce mois',
+        'last_30_days' => '30 derniers jours',
     ],
 
     /* ------------------------------------------------------------------ */

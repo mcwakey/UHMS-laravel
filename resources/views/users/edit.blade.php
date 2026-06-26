@@ -13,6 +13,11 @@
             <i class="ti ti-shield-half me-1"></i>{{ __('users.direct_permissions') }}
         </a>
         @endcan
+        @can('users.departments.view')
+        <a href="{{ route('admin.users.departments.index', $user) }}" class="btn btn-outline-primary btn-md me-1">
+            <i class="ti ti-building-hospital me-1"></i>{{ __('users.department_assignments') }}
+        </a>
+        @endcan
         <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary btn-md">
             <i class="ti ti-arrow-left me-1"></i>{{ __('users.back_to_users') }}
         </a>

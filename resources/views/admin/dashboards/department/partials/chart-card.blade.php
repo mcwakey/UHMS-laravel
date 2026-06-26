@@ -6,6 +6,7 @@
     $title = $chart['title'] ?? ($trends['title'] ?? __('dashboards.department.seven_day_activity'));
     $max = max($values ?: [0]);
 @endphp
+@php $chartId = 'dept_chart_'.\Illuminate\Support\Str::random(8); @endphp
 <div class="card shadow-sm mb-3">
     <div class="card-header d-flex align-items-center justify-content-between">
         <h6 class="fw-bold mb-0"><i class="ti ti-chart-line me-1"></i>{{ $title }}</h6>
@@ -19,6 +20,13 @@
         @elseif(empty($labels) || !empty($chart['empty_state']))
             @include('admin.dashboards.department.partials.empty-card', ['message' => __('dashboards.department.metric_unavailable'), 'icon' => 'ti-chart-line'])
         @else
+            <div
+                id="{{ $chartId }}"
+                class="department-apex-chart mb-2"
+                style="min-height: 230px;"
+                data-chart='@json($chart)'
+                data-accent="{{ $theme['chart_accent'] ?? '#6c757d' }}">
+            </div>
             <div class="d-flex align-items-end gap-2" style="height: 140px;">
                 @foreach($labels as $index => $label)
                     @php
@@ -44,3 +52,40 @@
         @endif
     </div>
 </div>
+
+@once
+    @push('scripts')
+        <script src="{{ asset('build/plugins/apexchart/apexcharts.min.js') }}"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                if (!window.ApexCharts) return;
+
+                document.querySelectorAll('.department-apex-chart').forEach(function (el) {
+                    if (el.dataset.rendered) return;
+                    const payload = JSON.parse(el.dataset.chart || '{}');
+                    const first = (payload.datasets || [])[0] || {};
+                    const type = payload.type === 'doughnut' ? 'donut' : (payload.type || 'bar');
+                    const labels = payload.labels || [];
+                    const values = first.data || [];
+                    if (!labels.length || !values.length) return;
+
+                    const options = {
+                        chart: { type: type, height: 230, toolbar: { show: false }, sparkline: { enabled: false } },
+                        labels: labels,
+                        series: type === 'donut' ? values : [{ name: first.label || payload.title || '', data: values }],
+                        colors: first.backgroundColor && Array.isArray(first.backgroundColor) ? first.backgroundColor : [el.dataset.accent || '#6c757d'],
+                        stroke: { curve: 'smooth', width: 2 },
+                        dataLabels: { enabled: false },
+                        xaxis: { categories: labels, labels: { rotate: -35 } },
+                        yaxis: { labels: { formatter: function (value) { return Math.round(value).toString(); } } },
+                        legend: { position: 'bottom' },
+                        grid: { strokeDashArray: 4 },
+                    };
+
+                    new ApexCharts(el, options).render();
+                    el.dataset.rendered = '1';
+                });
+            });
+        </script>
+    @endpush
+@endonce

@@ -1,45 +1,51 @@
-# UHMS Department Type UI Expansion — Phase 7: Advanced Charts, Department Comparison & Multi-Department Context Switching
+# UHMS Department Type UI Expansion — Phase 8: Dashboard Drilldowns, Assignment Management & Chart Rendering Polish
 
 ## Goal
 
-Enhance the modern department dashboards with advanced visual analytics, department comparison tools, and a controlled multi-department context switcher.
+Polish the department dashboard experience after Phase 7.
 
-Phase 6 delivered:
+Phase 7 delivered:
 
-```text id="wh2gnm"
-DepartmentContextResolver
-DepartmentDashboardThemeRegistry
-DepartmentDashboardDataService
-modern reusable department dashboard layout
-department-scoped dashboard metrics
-department services/prices/usage cards
-department-oriented menu loading
-login redirect to the user's department dashboard
-localisation audit cleanup with active runtime candidates = 0
+```text id="sjnmve"
+multi-department user support through department_user
+session-based current department switching
+dashboard/menu context switching
+department-scoped chart datasets
+department comparison report
+permission-safe comparison CSV export
+all 19 department types have chart fallbacks
+localisation audit Active runtime candidates = 0
 ```
 
-Phase 7 must now add:
+Phase 8 must now improve the user-facing operational experience:
 
-```text id="e1ioji"
-advanced department dashboard charts
-department comparison view
-department performance trends
-department type rollups
-multi-department user support foundation
-current department context switcher
-admin/global preview improvements
-chart-ready datasets
-exportable comparison data
-permission-safe analytics
+```text id="92wp6o"
+dashboard drilldowns
+clickable KPI cards
+richer chart rendering
+department assignment management UI
+user department assignment screens
+department context switcher polish
+comparison report UI polish
+saved filters / date presets
+empty states and restricted states polish
+final dashboard responsiveness polish
 ```
 
-Do not break Phase 6 department scoping.
+Do not change the Phase 7 scoping model.
 
-Do not expose department data a user should not see.
+The core rule remains:
 
-Do not introduce a new frontend framework.
+```text id="x52aea"
+Department Type = layout / theme / menu / workflow family
+Department ID = actual data scope
+```
 
-Use Bootstrap 5, existing UI components, Tabler Icons, and existing chart tooling if already present.
+Do not expose cross-department data to ordinary users.
+
+Do not use department type as a permission layer.
+
+Permissions and modules remain the security layer.
 
 ---
 
@@ -47,7 +53,7 @@ Use Bootstrap 5, existing UI components, Tabler Icons, and existing chart toolin
 
 Read:
 
-```text id="pe9rj7"
+```text id="0dtp5k"
 docs/DEPARTMENT_TYPE_EXPANSION_GAP_ANALYSIS_REPORT.md
 docs/DEPARTMENT_TYPE_EXPANSION_PHASE_1_CANONICALISATION_REPORT.md
 docs/DEPARTMENT_TYPE_EXPANSION_PHASE_2_DASHBOARD_REGISTRY_REPORT.md
@@ -55,23 +61,26 @@ docs/DEPARTMENT_TYPE_EXPANSION_PHASE_3_MENU_PROFILES_REPORT.md
 docs/DEPARTMENT_TYPE_EXPANSION_PHASE_4_WORKFLOW_ROUTING_REPORT.md
 docs/DEPARTMENT_TYPE_EXPANSION_PHASE_5_METRICS_REPORTS_REPORT.md
 docs/DEPARTMENT_DASHBOARD_UI_PHASE_6_REPORT.md
+docs/DEPARTMENT_DASHBOARD_UI_PHASE_7_ADVANCED_CHARTS_CONTEXT_REPORT.md
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
 
 Inspect:
 
-```text id="qo76t3"
+```text id="7z68ra"
 app/Services/Department/DepartmentContextResolver.php
-app/Services/Department/DepartmentDashboardThemeRegistry.php
+app/Services/Department/DepartmentContextSwitcherService.php
 app/Services/Department/DepartmentDashboardDataService.php
-app/Services/Department/DepartmentMetricsRegistry.php
+app/Services/Department/DepartmentDashboardChartService.php
+app/Services/Department/DepartmentDashboardThemeRegistry.php
 app/Services/Department/DepartmentMenuProfileService.php
-app/Services/Dashboard/DepartmentDashboardRegistry.php
+app/Services/Department/DepartmentMetricsRegistry.php
 app/Http/Controllers/Admin/Dashboard/DepartmentDashboardController.php
-app/Http/Controllers/Auth/LoginController.php
-resources/views/admin/dashboards/department/show.blade.php
-resources/views/admin/dashboards/department/partials
+app/Http/Controllers/Admin/Reports/DepartmentComparisonController.php
+resources/views/admin/dashboards/department
 resources/views/admin/reports
+resources/views/admin/settings
+resources/views/admin/users
 routes/web.php
 lang/en
 lang/fr
@@ -80,653 +89,467 @@ tests/Feature/Departments
 
 Testing instruction:
 
-```text id="l128vg"
+```text id="zke3xa"
 Do not run the wide full application test suite after this phase.
-Run focused dashboard/chart/context/localisation tests only.
+Run focused dashboard/UI/assignment/localisation tests only.
 The wide full-suite test remains deferred unless explicitly requested.
 ```
 
 ---
 
-## 2. Core Rule
+## 2. Main Deliverables
 
-The most important rule remains:
+Implement:
 
-```text id="ljl2ug"
-Department Type = dashboard layout / theme / workflow family
-Department ID = actual data scope
+```text id="j9m251"
+clickable dashboard KPI drilldowns
+department-scoped drilldown routes
+richer Chart.js rendering for Phase 7 datasets
+department assignment management UI
+user department assignment UI
+department switcher UI polish
+comparison report UI polish
+saved date presets
+department dashboard responsive polish
+restricted/unavailable state polish
+documentation
+focused tests
 ```
 
-For ordinary users:
+Do not apply department backfill.
 
-```text id="lnm4rb"
-All dashboard data must be scoped to the selected/current department_id.
-```
+Do not rewrite the full dashboard system.
 
-For Admin/Super Admin or authorised global users:
+Do not introduce a new frontend framework.
 
-```text id="mj4z5i"
-Allow global and comparison views only through explicit permissions.
-```
-
-Permissions and modules remain the security layer.
-
-Department type must never grant access by itself.
+Use Bootstrap 5, existing components, Tabler Icons, and existing Chart.js usage if already present.
 
 ---
 
-## 3. Multi-Department User Support
+## 3. Clickable KPI Drilldowns
 
-Currently UHMS uses:
+Make dashboard KPI cards actionable where safe.
 
-```text id="6j4zec"
-users.department_id
+Each KPI card should support:
+
+```text id="ncnmjx"
+title
+value
+subtitle
+icon
+theme
+route/action URL nullable
+permission nullable
+module nullable
+filters
+restricted state
+empty state
 ```
 
-for a single department.
+Examples:
 
-Add a controlled multi-department foundation.
-
-Create a pivot table if it does not already exist:
-
-```text id="zop7ec"
-department_user
-```
-
-Suggested fields:
-
-```text id="fvh0t4"
-id
-user_id
-department_id
-is_primary
-role_context nullable
-starts_at nullable
-ends_at nullable
-created_at
-updated_at
+```text id="v77qmk"
+pending_lab_requests → lab requests index filtered by current department
+completed_results_today → results filtered by current department and today
+pending_prescriptions → prescription queue filtered by pharmacy department
+low_stock_items → stock alerts filtered by current department/location
+active_admissions → admissions filtered by ward/department
+collections_today → payments report filtered by current department/date if permitted
 ```
 
 Rules:
 
-```text id="g4lcce"
-Do not remove users.department_id yet.
-Keep users.department_id as the primary/default department for backward compatibility.
-department_user adds optional additional departments.
-A user can have one primary department.
-A user can belong to multiple departments.
-If no pivot rows exist, fallback to users.department_id.
+```text id="j6bp4w"
+Do not create a drilldown link if the route does not exist.
+Do not show drilldown link if user lacks permission.
+Do not leak filters for departments the user cannot access.
+Use current_department_id for ordinary users.
+Use selected/admin preview department only when authorised.
 ```
-
-Migration must be additive and safe.
-
-Do not change existing login behavior for users with only one department.
 
 ---
 
-## 4. Department Context Switcher
+## 4. Drilldown Filter Convention
 
-Add current department context switching.
+Create a consistent filter convention.
 
-Create service:
+Suggested query parameters:
 
-```text id="q1pa4w"
-DepartmentContextSwitcherService
+```text id="socnkl"
+department_id
+department_type
+date_from
+date_to
+status
+scope=current_department
+```
+
+But respect existing route filter names if the module already uses a different convention.
+
+Add helper:
+
+```text id="mo35ad"
+DepartmentDashboardDrilldownUrlBuilder
 ```
 
 Responsibilities:
 
-```text id="umcgkt"
-list departments available to the user
-set current department context
-store current department context in session
-validate selected department belongs to user or user has global permission
-fallback to primary department
-clear invalid session department
-```
-
-Session key suggestion:
-
-```text id="3f2zm3"
-current_department_id
-```
-
-Rules:
-
-```text id="5qx0gn"
-Ordinary users may switch only between their assigned departments.
-Admin/Super Admin may preview departments if permission allows.
-Switching department changes dashboard scope and menu priority.
-Switching department does not grant route permission.
-```
-
-Routes:
-
-```text id="em2sni"
-POST admin/my-dashboard/context
-DELETE admin/my-dashboard/context
-```
-
-or follow project route conventions.
-
----
-
-## 5. Context Resolver Update
-
-Update:
-
-```text id="53c4j0"
-DepartmentContextResolver
-```
-
-to resolve in this order:
-
-```text id="z4cfjg"
-1. Valid session current_department_id
-2. User primary department from department_user pivot
-3. users.department_id fallback
-4. role/global fallback
-```
-
-Context object should now include:
-
-```text id="tjv7fx"
-available_departments
-current_department
-current_department_id
-current_department_type
-is_switched_context
-can_switch_department
-can_use_global_context
-```
-
-If user has multiple departments:
-
-```text id="gz259v"
-show department switcher in the dashboard hero
-```
-
-If user has only one department:
-
-```text id="q89wzb"
-do not clutter UI with switcher
+```text id="n6f07h"
+build route URLs safely
+skip missing routes
+inject department_id/date/status filters
+check permission/module before returning URL
+avoid exposing inaccessible department IDs
 ```
 
 ---
 
-## 6. Dashboard Hero Switcher
+## 5. Chart Rendering Polish
 
-Update the modern dashboard hero partial.
+Phase 7 created chart-ready datasets.
 
-Add:
+Now render them cleanly.
 
-```text id="mlij74"
-current department badge
-department type badge
-department switcher dropdown if user has multiple departments
-global preview badge if admin/global mode
+Use existing Chart.js if already used.
+
+Add or update partial:
+
+```text id="22nyam"
+resources/views/admin/dashboards/department/partials/chart-card.blade.php
 ```
 
-Switcher should show:
+Support chart types:
 
-```text id="qol2n9"
-department name
-department type
-primary badge
+```text id="zlycol"
+line
+bar
+doughnut
+area-style line if already supported
 ```
 
-Rules:
+Charts to render:
 
-```text id="qxqu9h"
-Switch action must be POST, not GET, unless project convention says otherwise.
-CSRF protection required.
-Do not expose departments not available to the user.
-```
-
----
-
-## 7. Department-Oriented Menu After Switch
-
-When context switches:
-
-```text id="zbg48y"
-menu should reorder based on selected department type
-dashboard shortcut should reflect selected department type
-quick links should use selected department context where useful
-```
-
-Update:
-
-```text id="bw7ehf"
-DepartmentMenuProfileService
-SidebarMenuBuilder
-```
-
-if needed so they use `DepartmentContextResolver`, not only `auth()->user()->department`.
-
-Rules:
-
-```text id="n6gzxt"
-Permissions/modules filter first.
-Department profile only reorders/enriches allowed menu items.
-Missing routes are skipped safely.
-```
-
----
-
-## 8. Advanced Chart Data Service
-
-Create:
-
-```text id="qgy4ex"
-DepartmentDashboardChartService
-```
-
-or add a clean chart layer inside `DepartmentDashboardDataService`.
-
-Charts should return JSON/chart-ready arrays.
-
-Do not hardcode chart JavaScript data in Blade manually.
-
-Recommended chart datasets:
-
-```text id="25y4ok"
+```text id="9thhzy"
 activity_trend
-revenue_trend
+revenue_trend if permitted
 request_status_breakdown
 service_usage_trend
-stock_usage_trend
+stock_usage_trend if permitted
 queue_status_breakdown
 department_workload_by_day
 ```
 
-Each dataset must include:
-
-```text id="ixylho"
-labels
-datasets
-format
-empty_state
-permission/module requirements
-```
-
----
-
-## 9. Per-Type Chart Suggestions
-
-### consultation
-
-```text id="5k9ad1"
-consultations by day
-waiting vs consulting vs completed
-follow-ups due trend
-```
-
-### emergency
-
-```text id="xxgttg"
-emergency cases by priority
-active vs completed cases
-triage status breakdown
-```
-
-### investigation
-
-```text id="4ajm6p"
-lab requests by status
-samples accepted vs pending
-results completed trend
-```
-
-### radiology
-
-```text id="2isauc"
-imaging requests by status
-scheduled vs completed imaging
-urgent imaging trend
-```
-
-### procedure
-
-```text id="kz53dq"
-procedures by status
-consumables usage trend
-procedure revenue if permitted
-```
-
-### theatre
-
-```text id="5idms1"
-surgery schedule trend
-pre-op/in-progress/post-op breakdown
-theatre consumables trend
-```
-
-### pharmacy
-
-```text id="x9z9wl"
-prescriptions pending vs dispensed
-low stock trend
-near-expiry stock trend
-pharmacy sales if permitted
-```
-
-### inpatient / nursing / maternity
-
-```text id="w8a4du"
-bed occupancy trend
-admissions vs discharges
-vitals recorded trend
-```
-
-### blood_bank
-
-```text id="shiqto"
-blood units by status
-near-expiry units
-blood requests trend
-```
-
-### finance
-
-```text id="dl2ny6"
-collections trend
-invoice aging breakdown
-claim status breakdown
-```
-
-### stores
-
-```text id="zn7xr0"
-stock requests trend
-stock issues trend
-low stock trend
-```
-
-Generic types should get:
-
-```text id="hzidxn"
-activity trend
-services count
-assigned users
-available/unavailable states
-```
-
----
-
-## 10. Department Comparison View
-
-Add a department comparison screen.
-
-Suggested route:
-
-```text id="utf95x"
-admin.reports.department-comparison.index
-```
-
-or place under existing department reports route group.
-
-Purpose:
-
-```text id="hv9zdi"
-compare departments side-by-side by type, workload, service usage, revenue if permitted, stock usage if permitted, and activity.
-```
-
-Filters:
-
-```text id="8mzijt"
-date_from
-date_to
-department_type
-department_ids[]
-metric_group
-branch/facility if supported
-include_inactive
-```
-
-Comparison cards:
-
-```text id="dzdwbs"
-total departments
-total activity
-total services
-total revenue if permitted
-total pending requests
-```
-
-Comparison table:
-
-```text id="jrk754"
-department
-type
-assigned users
-services
-activity
-pending work
-completed work
-revenue if permitted
-stock alerts if permitted
-```
-
 Rules:
 
-```text id="6s56ng"
-Only show departments the user can view.
-Only show revenue/cost data with financial permissions.
-Do not show clinical details in comparison view, only aggregate counts.
-```
-
----
-
-## 11. Department Type Comparison
-
-Add rollup comparison by type.
-
-Example:
-
-```text id="le3jxx"
-investigation vs radiology
-procedure vs theatre
-inpatient vs maternity
-finance vs pharmacy revenue where permitted
-```
-
-Use:
-
-```text id="sveq6y"
-DepartmentMetricsRegistry
-```
-
-where possible.
-
-Do not duplicate calculations.
-
----
-
-## 12. Export Support
-
-Add CSV export for comparison if existing export style supports it.
-
-Route suggestion:
-
-```text id="dh0ysy"
-admin.reports.department-comparison.export
-```
-
-Rules:
-
-```text id="osk17l"
-Export respects filters.
-Export respects permissions.
-Export never includes restricted financial/stock-cost columns if user lacks permission.
-```
-
----
-
-## 13. Chart UI Components
-
-Add reusable chart partials/components:
-
-```text id="n4pqe6"
-resources/views/admin/dashboards/department/partials/chart-card.blade.php
-resources/views/admin/dashboards/department/partials/status-breakdown-card.blade.php
-resources/views/admin/dashboards/department/partials/comparison-table.blade.php
-```
-
-If Chart.js is already loaded globally or used in dashboards, reuse it.
-
-If Chart.js is only locally loaded in admin dashboard, load it safely for this dashboard only.
-
-Do not add a new chart package.
-
-If JavaScript is disabled:
-
-```text id="70hkrk"
-show table fallback or empty chart card
-```
-
----
-
-## 14. Theme-Aware Charts
-
-Charts should use department theme accents.
-
-Example:
-
-```text id="0zv897"
-primary dataset uses theme chart_accent
-secondary dataset uses neutral color
-danger/warning states use Bootstrap semantic classes
-```
-
-Keep CSS minimal.
-
+```text id="5vnn5l"
+If no data, show empty state.
+If restricted, show restricted state.
+If module disabled, show unavailable state.
 No hardcoded English labels in JS.
-
-Pass translated labels from Blade to JS via `@json(__('...'))`.
+Use @json(__('...')) for labels.
+Use theme chart accent from DepartmentDashboardThemeRegistry.
+Do not add a new chart package.
+```
 
 ---
 
-## 15. Permissions
+## 6. Department Assignment Management UI
 
-Add only if needed:
+Phase 7 added the `department_user` pivot.
 
-```text id="77t9cq"
-departments.context.switch
-reports.department_comparison.view
-reports.department_comparison.export
-dashboards.department.global_preview
+Now create management screens.
+
+Add UI under user management or department settings.
+
+Suggested screens:
+
+```text id="yphyai"
+User profile → Departments tab
+Department show/edit → Assigned Users tab
 ```
 
-Suggested access:
+Features:
 
-```text id="xxgnxa"
-Super Admin/Admin: all
-Department heads: switch between assigned departments and view assigned comparison
-Finance Manager: comparison with revenue where permitted
-Clinical staff: own department only unless assigned to multiple departments
+```text id="2csgmy"
+view assigned departments for a user
+assign user to additional department
+set primary department
+remove department assignment
+set role_context optional
+set starts_at / ends_at optional
+show expired/future assignments clearly
+sync users.department_id when primary changes, if appropriate
 ```
 
-Do not give ordinary users global comparison by default.
+Rules:
+
+```text id="f5s690"
+Do not remove users.department_id yet.
+Keep users.department_id as backward-compatible primary/default.
+One primary department per user.
+Prevent duplicate active user-department assignment.
+Expired/future assignments should not be available for context switching.
+Do not allow ordinary users to assign themselves departments.
+```
+
+Permissions:
+
+```text id="7klfdv"
+users.departments.view
+users.departments.manage
+departments.users.view
+departments.users.manage
+```
+
+Grant to Admin/Super Admin only by default unless project role rules say otherwise.
 
 ---
 
-## 16. Localisation
+## 7. Department Switcher UI Polish
+
+Improve the hero switcher.
+
+Show:
+
+```text id="t9dgts"
+current department name
+current department type badge
+primary department badge
+switched context indicator
+department search if many departments
+clear switch option if user has fallback
+```
+
+Rules:
+
+```text id="4u45ou"
+One-department users should not see unnecessary switcher clutter.
+Multi-department users should clearly see the active department.
+Admin/global preview users should see a clear global preview warning/badge.
+```
+
+---
+
+## 8. Department Comparison UI Polish
+
+Improve the Phase 7 comparison report.
+
+Add:
+
+```text id="zoxjps"
+date presets: Today, This Week, This Month, Last 30 Days
+department type filter
+department multi-select if existing UI supports it
+summary cards
+comparison table sticky header if existing style supports it
+restricted column indicators
+export button only when permitted
+empty state
+```
+
+Do not expose financial/stock-cost columns without permission.
+
+Do not show patient-level details in comparison.
+
+---
+
+## 9. Saved Dashboard Filters
+
+Add lightweight saved filter support only if simple.
+
+Preferred minimum:
+
+```text id="adxs6k"
+remember last selected date range in session
+remember selected chart tab in session
+remember comparison filters in session
+```
+
+Do not create a heavy saved-report builder in this phase.
+
+If adding database persistence is too large, defer it.
+
+---
+
+## 10. Department Dashboard Responsiveness
+
+Review the modern dashboard on:
+
+```text id="p6h4hf"
+desktop
+tablet
+mobile
+```
+
+Fix:
+
+```text id="ltle18"
+KPI card wrapping
+hero switcher overflow
+chart height on mobile
+table responsiveness
+quick action stacking
+badge wrapping
+comparison filters layout
+```
+
+Use Bootstrap responsive utilities.
+
+Do not add Tailwind.
+
+---
+
+## 11. Restricted / Unavailable State Polish
+
+Create consistent components:
+
+```text id="hwzm9n"
+restricted-card
+unavailable-card
+empty-metric-card
+```
+
+States:
+
+```text id="0ljpgg"
+restricted because permission missing
+unavailable because module disabled
+empty because no data
+not configured because department has no matching service/workflow
+```
+
+Do not confuse restricted with empty.
+
+Restricted means the user may not view it.
+
+Empty means there is nothing to show.
+
+Unavailable means the feature/module is absent or disabled.
+
+---
+
+## 12. Localisation
 
 Extend:
 
-```text id="m4fgn7"
+```text id="e0dc8j"
 lang/en/dashboards.php
 lang/fr/dashboards.php
 lang/en/departments.php
 lang/fr/departments.php
 lang/en/reports.php
 lang/fr/reports.php
-lang/en/menu.php
-lang/fr/menu.php
+lang/en/users.php
+lang/fr/users.php
+lang/en/common.php
+lang/fr/common.php
 ```
 
 Add keys:
 
-```text id="7xu5rp"
-switch_department
-current_department
-primary_department
-available_departments
-department_context_switched
-department_context_cleared
-global_department_view
-department_comparison
-compare_departments
-comparison_filters
-metric_group
-activity_trend
-revenue_trend
-request_status_breakdown
-service_usage_trend
-stock_usage_trend
-queue_status_breakdown
-workload_by_day
-no_chart_data
-chart_unavailable
-comparison_export
+```text id="0ks0fx"
+view_details
+drilldown
+filtered_by_department
+current_department_scope
+restricted_data
+module_unavailable
+not_configured
+no_department_data
 assigned_departments
+assign_department
+remove_department_assignment
+primary_department
+set_primary_department
+department_assignment
+department_assignments
+role_context
+starts_at
+ends_at
+expired_assignment
+future_assignment
+active_assignment
+switch_context
+clear_department_context
+comparison_presets
+today
+this_week
+this_month
+last_30_days
 ```
 
 Maintain EN/FR parity.
 
 Run:
 
-```bash id="wvyubf"
+```bash id="0t3e4k"
 php scripts/localisation-audit.php
 php scripts/localisation-parity-check.php
 ```
 
 Required:
 
-```text id="q18rps"
+```text id="1dyyi9"
 Active runtime candidates: 0
 EN/FR parity OK
 ```
 
 ---
 
-## 17. Tests To Add
+## 13. Audit Logging
+
+Use `ActivityLogService`.
+
+Audit:
+
+```text id="t7flx8"
+USER_DEPARTMENT_ASSIGNED
+USER_DEPARTMENT_REMOVED
+USER_DEPARTMENT_PRIMARY_SET
+DEPARTMENT_CONTEXT_SWITCHED
+DEPARTMENT_CONTEXT_CLEARED
+DEPARTMENT_COMPARISON_EXPORTED
+```
+
+Do not log sensitive metric values.
+
+---
+
+## 14. Tests To Add
 
 Add focused tests only.
 
 Required tests:
 
-```text id="ljxcbd"
-user with one department does not see switcher
-user with multiple departments sees switcher
-user can switch only to assigned department
-user cannot switch to unassigned department
-admin can preview/global switch if permitted
-context resolver uses session department when valid
-invalid session department is cleared safely
-menu profile changes after department switch
-dashboard data scope changes after department switch
-lab/radiology switch shows correct department-specific services
-chart service returns datasets scoped to department_id
-chart service hides revenue datasets without permission
-comparison route is permission protected
-comparison view lists only allowed departments
-comparison export respects filters
-comparison export hides restricted columns
-all 19 department types have chart fallback
-localisation audit remains 0 active candidates
+```text id="ctqhr1"
+KPI card drilldown uses current department_id filter.
+KPI drilldown is hidden when route is missing.
+KPI drilldown is hidden when permission is missing.
+Chart card renders empty state for no data.
+Chart card renders restricted state for restricted dataset.
+Multi-department switcher shows only for users with multiple available departments.
+Department assignment UI is permission protected.
+Admin can assign user to department.
+Admin can set primary department.
+Duplicate active assignment is blocked.
+Expired assignment is not available for switching.
+Future assignment is not available for switching.
+User cannot assign themselves a department.
+Comparison report date presets work.
+Comparison export button hidden without permission.
+Responsive dashboard view compiles.
+Localisation audit remains 0 active candidates.
 ```
 
 Allowed focused command:
 
-```bash id="le9u7z"
-php artisan test tests/Feature/Departments/DepartmentDashboardAdvancedUiPhase7Test.php
+```bash id="zqmnbe"
+php artisan test tests/Feature/Departments/DepartmentDashboardUiPhase8Test.php
 ```
 
 Also run:
 
-```bash id="a9uekj"
+```bash id="cjtxue"
 php artisan test tests/Feature/Departments
 php artisan test tests/Feature/DepartmentDashboardTest.php
 ```
@@ -735,12 +558,13 @@ Do not run the wide full suite unless explicitly instructed.
 
 ---
 
-## 18. Minimal Verification Commands
+## 15. Minimal Verification Commands
 
 Run:
 
-```bash id="hqq3a1"
+```bash id="8f0vo2"
 php artisan migrate --force
+php artisan db:seed --class=RoleSeeder --force
 php artisan route:list
 php artisan view:cache
 php artisan view:clear
@@ -752,7 +576,7 @@ git diff --check
 
 Also run PHP lint on changed PHP files if practical:
 
-```bash id="d8f1h6"
+```bash id="bb42qm"
 find app database routes lang resources/views tests -name "*.php" -print0 | xargs -0 -n1 php -l
 ```
 
@@ -762,29 +586,29 @@ Do not run the wide full suite.
 
 ---
 
-## 19. Documentation
+## 16. Documentation
 
 Create:
 
-```text id="zk4akt"
-docs/DEPARTMENT_DASHBOARD_UI_PHASE_7_ADVANCED_CHARTS_CONTEXT_REPORT.md
+```text id="lqo9b3"
+docs/DEPARTMENT_DASHBOARD_UI_PHASE_8_DRILLDOWNS_ASSIGNMENTS_POLISH_REPORT.md
 ```
 
 Include:
 
-```text id="u7b2q1"
+```text id="9kjvch"
 summary
-multi-department support design
-department_user pivot behavior
-context switcher behavior
-context resolver changes
-menu behavior after switching
-chart service design
-chart datasets added
-department comparison view
-department type comparison behavior
-export behavior
-permission/module safety
+KPI drilldown behavior
+drilldown URL builder design
+chart rendering polish
+assignment management UI
+primary department behavior
+department switcher polish
+comparison report polish
+saved filter/session behavior
+responsive UI fixes
+restricted/unavailable/empty states
+audit logging
 localisation changes
 tests added
 focused tests run
@@ -795,34 +619,32 @@ next recommended phase
 
 Known limitations:
 
-```text id="cny4d2"
-advanced predictive analytics are deferred
-custom user dashboard widgets are deferred
-full wide-suite regression is still deferred unless explicitly run
+```text id="u84q5l"
+full custom dashboard widget builder is deferred
+predictive analytics are deferred
+wide full-suite regression remains deferred unless explicitly run
 department backfill apply was not run unless explicitly instructed
 ```
 
 ---
 
-## 20. Acceptance Criteria
+## 17. Acceptance Criteria
 
-Phase 7 is complete only when:
+Phase 8 is complete only when:
 
-```text id="a3xz9z"
-users can have multiple departments through safe additive structure
-users can switch only between allowed departments
-dashboard context changes after switch
-menu profile changes after switch
-dashboard data remains scoped to current department_id
-charts are department-scoped
-comparison view is permission protected
-comparison export respects permissions
-all chart labels are localised
-all 19 department types have chart fallback
-restricted revenue/stock-cost data is hidden before querying
-view cache compiles
-localisation audit Active runtime candidates = 0
+```text id="j8xi94"
+dashboard KPI cards have permission-safe drilldowns
+chart cards render using Phase 7 chart datasets
+empty/restricted/unavailable states are visually consistent
+department assignment management UI exists and is permission protected
+primary department management works
+department switcher UI is polished
+comparison report UI is improved
+comparison export remains permission safe
+responsive layout compiles and behaves cleanly
+ActivityLogService audits assignment/context/export actions
 EN/FR parity passes
+localisation audit Active runtime candidates = 0
 focused tests pass
 permissions audit is clean
 documentation report is created
@@ -830,4 +652,4 @@ department backfill is not applied unless explicitly instructed
 wide full suite is intentionally deferred
 ```
 
-Proceed with Department Type UI Expansion Phase 7 now.
+Proceed with Department Type UI Expansion Phase 8 now.

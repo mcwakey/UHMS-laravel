@@ -8,6 +8,15 @@
     icon="ti-chart-bar" />
 
 <x-filter-bar :action="route('admin.reports.department-comparison.index')" method="GET" data-auto-filter-form="department-comparison">
+    <div class="col-12">
+        <div class="btn-group flex-wrap" role="group" aria-label="{{ __('reports.department_comparison.comparison_presets') }}">
+            @foreach(['today', 'this_week', 'this_month', 'last_30_days'] as $preset)
+                <button type="submit" name="preset" value="{{ $preset }}" class="btn btn-outline-secondary btn-sm @if(($filters['preset'] ?? '') === $preset) active @endif">
+                    {{ __("reports.department_comparison.$preset") }}
+                </button>
+            @endforeach
+        </div>
+    </div>
     <div class="col-md-2">
         <label class="form-label small">{{ __('reports.date_from') }}</label>
         <input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}">

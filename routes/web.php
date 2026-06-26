@@ -266,6 +266,18 @@ Route::middleware('auth')->group(function () {
             Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit')->middleware('can:users.edit');
             Route::put('users/{user}', [UserController::class, 'update'])->name('users.update')->middleware('can:users.edit');
             Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status')->middleware('can:users.disable');
+            Route::get('users/{user}/departments', [\App\Http\Controllers\Admin\Settings\UserDepartmentAssignmentController::class, 'index'])
+                ->name('users.departments.index')
+                ->middleware('can:users.departments.view');
+            Route::post('users/{user}/departments', [\App\Http\Controllers\Admin\Settings\UserDepartmentAssignmentController::class, 'store'])
+                ->name('users.departments.store')
+                ->middleware('can:users.departments.manage');
+            Route::patch('users/{user}/departments/{department}/primary', [\App\Http\Controllers\Admin\Settings\UserDepartmentAssignmentController::class, 'setPrimary'])
+                ->name('users.departments.primary')
+                ->middleware('can:users.departments.manage');
+            Route::delete('users/{user}/departments/{department}', [\App\Http\Controllers\Admin\Settings\UserDepartmentAssignmentController::class, 'destroy'])
+                ->name('users.departments.destroy')
+                ->middleware('can:users.departments.manage');
         });
 
         // Roles & Permissions

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin\Reporting;
 
 use App\Enums\DepartmentType;
+use App\Enums\LogModule;
 use App\Http\Controllers\Controller;
+use App\Services\ActivityLogService;
 use App\Services\Department\DepartmentComparisonService;
 use App\Services\Department\DepartmentContextSwitcherService;
 use Illuminate\Http\Request;
@@ -14,6 +16,7 @@ class DepartmentComparisonController extends Controller
     public function __construct(
         private DepartmentComparisonService $comparison,
         private DepartmentContextSwitcherService $switcher,
+        private ActivityLogService $activityLog,
     ) {}
 
     public function index(Request $request)
@@ -34,6 +37,15 @@ class DepartmentComparisonController extends Controller
         $payload = $this->comparison->build($request->user(), $filters);
         $canViewRevenue = $payload['can_view_revenue'];
         $canViewStock = $payload['can_view_stock'];
+
+        $this->activityLog->log(LogModule::SYSTEM, 'DEPARTMENT_COMPARISON_EXPORTED', [
+            'metadata' => [
+                'filters' => $filters,
+                'row_count' => count($payload['rows']),
+                'includes_revenue' => $canViewRevenue,
+                'includes_stock' => $canViewStock,
+            ],
+        ]);
 
         return response()->streamDownload(function () use ($payload, $canViewRevenue, $canViewStock) {
             $handle = fopen('php://output', 'w');
@@ -79,14 +91,41 @@ class DepartmentComparisonController extends Controller
 
     private function filters(Request $request): array
     {
-        return $request->validate([
+        $hasFilterInput = $request->query->count() > 0;
+        $filters = $hasFilterInput ? $request->validate([
             'date_from' => ['nullable', 'date'],
             'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'preset' => ['nullable', 'in:today,this_week,this_month,last_30_days'],
             'department_type' => ['nullable', 'string'],
             'department_ids' => ['nullable', 'array'],
             'department_ids.*' => ['integer'],
             'metric_group' => ['nullable', 'string'],
             'include_inactive' => ['nullable', 'boolean'],
-        ]);
+        ]) : $request->session()->get('department_comparison_filters', []);
+
+        $filters = $this->applyPreset($filters);
+        $request->session()->put('department_comparison_filters', $filters);
+
+        return $filters;
+    }
+
+    private function applyPreset(array $filters): array
+    {
+        $preset = $filters['preset'] ?? null;
+        if (! $preset) {
+            return $filters;
+        }
+
+        [$from, $to] = match ($preset) {
+            'today' => [today(), today()],
+            'this_week' => [today()->startOfWeek(), today()->endOfWeek()],
+            'this_month' => [today()->startOfMonth(), today()->endOfMonth()],
+            'last_30_days' => [today()->subDays(29), today()],
+        };
+
+        $filters['date_from'] = $from->toDateString();
+        $filters['date_to'] = $to->toDateString();
+
+        return $filters;
     }
 }

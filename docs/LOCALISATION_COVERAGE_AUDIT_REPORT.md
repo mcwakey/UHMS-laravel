@@ -1,15 +1,15 @@
 # UHMS Localisation Coverage Audit Report
 
-Date: 2026-06-26 18:32:14 +02:00
+Date: 2026-06-26 18:49:53 +02:00
 
 ## Summary
 
-- Total files scanned: 1365
+- Total files scanned: 1370
 - Total files with possible hardcoded strings: 208
 - Total hardcoded candidates found: 4039
 - Modules affected: 39
-- Direct active route/controller Blade views: 306
-- Active Blade views including resolved dependencies: 399
+- Direct active route/controller Blade views: 307
+- Active Blade views including resolved dependencies: 400
 
 ### Candidate Classification
 
@@ -2972,7 +2972,7 @@ Date: 2026-06-26 18:32:14 +02:00
 
 ### `lang/en/common.php`
 
-- Line 70 [medium, language_file_candidates]: `Description`
+- Line 71 [medium, language_file_candidates]: `Description`
   - Context: `'description' => 'Description',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -3082,237 +3082,237 @@ Date: 2026-06-26 18:32:14 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: compare_department_workload_services_pending_work_`
-- Line 191 [medium, language_file_candidates]: `Management Overview`
+- Line 196 [medium, language_file_candidates]: `Management Overview`
   - Context: `'title'       => 'Management Overview',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: management_overview`
-- Line 192 [medium, language_file_candidates]: `Hospital-wide activity, financial position, and risk summary.`
+- Line 197 [medium, language_file_candidates]: `Hospital-wide activity, financial position, and risk summary.`
   - Context: `'description' => 'Hospital-wide activity, financial position, and risk summary.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: hospital_wide_activity_financial_position_and_risk`
-- Line 209 [medium, language_file_candidates]: `Consultation Report`
+- Line 214 [medium, language_file_candidates]: `Consultation Report`
   - Context: `'title'       => 'Consultation Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: consultation_report`
-- Line 210 [medium, language_file_candidates]: `Department sessions, doctors, linked services, and session statuses.`
+- Line 215 [medium, language_file_candidates]: `Department sessions, doctors, linked services, and session statuses.`
   - Context: `'description' => 'Department sessions, doctors, linked services, and session statuses.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: department_sessions_doctors_linked_services_and_se`
-- Line 217 [medium, language_file_candidates]: `Diagnosis Report`
+- Line 222 [medium, language_file_candidates]: `Diagnosis Report`
   - Context: `'title'       => 'Diagnosis Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: diagnosis_report`
-- Line 218 [medium, language_file_candidates]: `Clinical diagnoses by visit, department, doctor, ICD code, and type.`
+- Line 223 [medium, language_file_candidates]: `Clinical diagnoses by visit, department, doctor, ICD code, and type.`
   - Context: `'description' => 'Clinical diagnoses by visit, department, doctor, ICD code, and type.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: clinical_diagnoses_by_visit_department_doctor_icd_`
-- Line 224 [medium, language_file_candidates]: `Complaints Report`
+- Line 229 [medium, language_file_candidates]: `Complaints Report`
   - Context: `'title'       => 'Complaints Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: complaints_report`
-- Line 225 [medium, language_file_candidates]: `Complaints and presenting history captured during clinical care.`
+- Line 230 [medium, language_file_candidates]: `Complaints and presenting history captured during clinical care.`
   - Context: `'description' => 'Complaints and presenting history captured during clinical care.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: complaints_and_presenting_history_captured_during_`
-- Line 232 [medium, language_file_candidates]: `Patient Report`
+- Line 237 [medium, language_file_candidates]: `Patient Report`
   - Context: `'title'             => 'Patient Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: patient_report`
-- Line 233 [medium, language_file_candidates]: `Registered patients, demographics, and registration activity.`
+- Line 238 [medium, language_file_candidates]: `Registered patients, demographics, and registration activity.`
   - Context: `'description'       => 'Registered patients, demographics, and registration activity.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: registered_patients_demographics_and_registration_`
-- Line 245 [medium, language_file_candidates]: `Visit Report`
+- Line 250 [medium, language_file_candidates]: `Visit Report`
   - Context: `'title'             => 'Visit Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: visit_report`
-- Line 246 [medium, language_file_candidates]: `Outpatient visits by type, department, doctor, and status.`
+- Line 251 [medium, language_file_candidates]: `Outpatient visits by type, department, doctor, and status.`
   - Context: `'description'       => 'Outpatient visits by type, department, doctor, and status.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: outpatient_visits_by_type_department_doctor_and_st`
-- Line 260 [medium, language_file_candidates]: `Emergency Report`
+- Line 265 [medium, language_file_candidates]: `Emergency Report`
   - Context: `'title'             => 'Emergency Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: emergency_report`
-- Line 261 [medium, language_file_candidates]: `Emergency attendance, triage, disposition, and operational status.`
+- Line 266 [medium, language_file_candidates]: `Emergency attendance, triage, disposition, and operational status.`
   - Context: `'description'       => 'Emergency attendance, triage, disposition, and operational status.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: emergency_attendance_triage_disposition_and_operat`
-- Line 275 [medium, language_file_candidates]: `Admission Register`
+- Line 280 [medium, language_file_candidates]: `Admission Register`
   - Context: `'title'              => 'Admission Register',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: admission_register`
-- Line 276 [medium, language_file_candidates]: `Inpatient admissions, ward/bed, length of stay, and discharge status.`
+- Line 281 [medium, language_file_candidates]: `Inpatient admissions, ward/bed, length of stay, and discharge status.`
   - Context: `'description'        => 'Inpatient admissions, ward/bed, length of stay, and discharge status.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: inpatient_admissions_ward_bed_length_of_stay_and_d`
-- Line 290 [medium, language_file_candidates]: `MAR Report`
+- Line 295 [medium, language_file_candidates]: `MAR Report`
   - Context: `'title'       => 'MAR Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: mar_report`
-- Line 291 [medium, language_file_candidates]: `Medication administration, overdue tasks, missed/held/refused doses, and nurse activity.`
+- Line 296 [medium, language_file_candidates]: `Medication administration, overdue tasks, missed/held/refused doses, and nurse activity.`
   - Context: `'description' => 'Medication administration, overdue tasks, missed/held/refused doses, and nurse activity.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: medication_administration_overdue_tasks_missed_hel`
-- Line 302 [medium, language_file_candidates]: `Pharmacy Report`
+- Line 307 [medium, language_file_candidates]: `Pharmacy Report`
   - Context: `'title'              => 'Pharmacy Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: pharmacy_report`
-- Line 303 [medium, language_file_candidates]: `Prescriptions, dispensing activity, and supplied quantities.`
+- Line 308 [medium, language_file_candidates]: `Prescriptions, dispensing activity, and supplied quantities.`
   - Context: `'description'        => 'Prescriptions, dispensing activity, and supplied quantities.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: prescriptions_dispensing_activity_and_supplied_qua`
-- Line 321 [medium, language_file_candidates]: `Investigation Report`
+- Line 326 [medium, language_file_candidates]: `Investigation Report`
   - Context: `'title'            => 'Investigation Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: investigation_report`
-- Line 322 [medium, language_file_candidates]: `Requests, target departments, urgency, and result workflow status.`
+- Line 327 [medium, language_file_candidates]: `Requests, target departments, urgency, and result workflow status.`
   - Context: `'description'      => 'Requests, target departments, urgency, and result workflow status.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: requests_target_departments_urgency_and_result_wor`
-- Line 341 [medium, language_file_candidates]: `Procedure Report`
+- Line 346 [medium, language_file_candidates]: `Procedure Report`
   - Context: `'title'       => 'Procedure Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: procedure_report`
-- Line 342 [medium, language_file_candidates]: `Procedure requests, billing, acceptance, scheduling, and completion state.`
+- Line 347 [medium, language_file_candidates]: `Procedure requests, billing, acceptance, scheduling, and completion state.`
   - Context: `'description' => 'Procedure requests, billing, acceptance, scheduling, and completion state.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: procedure_requests_billing_acceptance_scheduling_a`
-- Line 345 [medium, language_file_candidates]: `Theatre Report`
+- Line 350 [medium, language_file_candidates]: `Theatre Report`
   - Context: `'title'       => 'Theatre Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: theatre_report`
-- Line 346 [medium, language_file_candidates]: `Theatre/procedure workload and operative workflow status.`
+- Line 351 [medium, language_file_candidates]: `Theatre/procedure workload and operative workflow status.`
   - Context: `'description' => 'Theatre/procedure workload and operative workflow status.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: theatre_procedure_workload_and_operative_workflow_`
-- Line 357 [medium, language_file_candidates]: `Billing Report`
+- Line 362 [medium, language_file_candidates]: `Billing Report`
   - Context: `'title'              => 'Billing Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: billing_report`
-- Line 358 [medium, language_file_candidates]: `Invoices, payments, outstanding balances, and billed-not-rendered risk.`
+- Line 363 [medium, language_file_candidates]: `Invoices, payments, outstanding balances, and billed-not-rendered risk.`
   - Context: `'description'        => 'Invoices, payments, outstanding balances, and billed-not-rendered risk.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: invoices_payments_outstanding_balances_and_billed_`
-- Line 397 [medium, language_file_candidates]: `Claims Report`
+- Line 402 [medium, language_file_candidates]: `Claims Report`
   - Context: `'title'             => 'Claims Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: claims_report`
-- Line 398 [medium, language_file_candidates]: `Insurance claims by workflow, provider, status, and financial outcome.`
+- Line 403 [medium, language_file_candidates]: `Insurance claims by workflow, provider, status, and financial outcome.`
   - Context: `'description'       => 'Insurance claims by workflow, provider, status, and financial outcome.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: insurance_claims_by_workflow_provider_status_and_f`
-- Line 415 [medium, language_file_candidates]: `Accounting Reports`
+- Line 420 [medium, language_file_candidates]: `Accounting Reports`
   - Context: `'title'              => 'Accounting Reports',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: accounting_reports`
-- Line 416 [medium, language_file_candidates]: `Financial statements, ledger, journals, and posting integrity.`
+- Line 421 [medium, language_file_candidates]: `Financial statements, ledger, journals, and posting integrity.`
   - Context: `'description'        => 'Financial statements, ledger, journals, and posting integrity.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: financial_statements_ledger_journals_and_posting_i`
-- Line 431 [medium, language_file_candidates]: `Receivables Reports`
+- Line 436 [medium, language_file_candidates]: `Receivables Reports`
   - Context: `'title'       => 'Receivables Reports',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: receivables_reports`
-- Line 432 [medium, language_file_candidates]: `AR aging, patient and insurance receivables, overdue balances.`
+- Line 437 [medium, language_file_candidates]: `AR aging, patient and insurance receivables, overdue balances.`
   - Context: `'description' => 'AR aging, patient and insurance receivables, overdue balances.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: ar_aging_patient_and_insurance_receivables_overdue`
-- Line 443 [medium, language_file_candidates]: `Payables Reports`
+- Line 448 [medium, language_file_candidates]: `Payables Reports`
   - Context: `'title'          => 'Payables Reports',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: payables_reports`
-- Line 444 [medium, language_file_candidates]: `AP aging, supplier balances and payments.`
+- Line 449 [medium, language_file_candidates]: `AP aging, supplier balances and payments.`
   - Context: `'description'    => 'AP aging, supplier balances and payments.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: ap_aging_supplier_balances_and_payments`
-- Line 454 [medium, language_file_candidates]: `Stock Report`
+- Line 459 [medium, language_file_candidates]: `Stock Report`
   - Context: `'title'              => 'Stock Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: stock_report`
-- Line 455 [medium, language_file_candidates]: `Product stock movement and expiry-sensitive inventory activity.`
+- Line 460 [medium, language_file_candidates]: `Product stock movement and expiry-sensitive inventory activity.`
   - Context: `'description'        => 'Product stock movement and expiry-sensitive inventory activity.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: product_stock_movement_and_expiry_sensitive_invent`
-- Line 492 [medium, language_file_candidates]: `Blood Bank Report`
+- Line 497 [medium, language_file_candidates]: `Blood Bank Report`
   - Context: `'title'       => 'Blood Bank Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: blood_bank_report`
-- Line 493 [medium, language_file_candidates]: `Blood inventory, requests, issue, transfusion, expiry, and wastage.`
+- Line 498 [medium, language_file_candidates]: `Blood inventory, requests, issue, transfusion, expiry, and wastage.`
   - Context: `'description' => 'Blood inventory, requests, issue, transfusion, expiry, and wastage.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: blood_inventory_requests_issue_transfusion_expiry_`
-- Line 500 [medium, language_file_candidates]: `Activity Log Report`
+- Line 505 [medium, language_file_candidates]: `Activity Log Report`
   - Context: `'title'       => 'Activity Log Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: activity_log_report`
-- Line 501 [medium, language_file_candidates]: `User actions, high-risk events, and system activity.`
+- Line 506 [medium, language_file_candidates]: `User actions, high-risk events, and system activity.`
   - Context: `'description' => 'User actions, high-risk events, and system activity.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: user_actions_high_risk_events_and_system_activity`
-- Line 508 [medium, language_file_candidates]: `Patient Statement`
+- Line 513 [medium, language_file_candidates]: `Patient Statement`
   - Context: `'title'              => 'Patient Statement',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: patient_statement`
-- Line 509 [medium, language_file_candidates]: `Financial statement for a patient across a date range.`
+- Line 514 [medium, language_file_candidates]: `Financial statement for a patient across a date range.`
   - Context: `'description'        => 'Financial statement for a patient across a date range.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: financial_statement_for_a_patient_across_a_date_ra`
-- Line 708 [medium, language_file_candidates]: `Description`
+- Line 713 [medium, language_file_candidates]: `Description`
   - Context: `'description'        => 'Description',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: description`
-- Line 858 [medium, language_file_candidates]: `Printed Report`
+- Line 863 [medium, language_file_candidates]: `Printed Report`
   - Context: `'title'              => 'Printed Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: printed_report`
-- Line 1140 [medium, language_file_candidates]: `Accounts Receivable Aging`
+- Line 1145 [medium, language_file_candidates]: `Accounts Receivable Aging`
   - Context: `'title'          => 'Accounts Receivable Aging',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -3407,7 +3407,7 @@ Date: 2026-06-26 18:32:14 +02:00
 
 ### `lang/fr/common.php`
 
-- Line 70 [medium, language_file_candidates]: `Description`
+- Line 71 [medium, language_file_candidates]: `Description`
   - Context: `'description' => 'Description',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -3499,232 +3499,232 @@ Date: 2026-06-26 18:32:14 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: comparez_la_charge_les_services_les_travaux_en_att`
-- Line 191 [medium, language_file_candidates]: `Vue d\`
+- Line 196 [medium, language_file_candidates]: `Vue d\`
   - Context: `'title'       => 'Vue d\'ensemble Direction',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: vue_d`
-- Line 192 [medium, language_file_candidates]: `Activité hospitalière globale, position financière et résumé des risques.`
+- Line 197 [medium, language_file_candidates]: `Activité hospitalière globale, position financière et résumé des risques.`
   - Context: `'description' => 'Activité hospitalière globale, position financière et résumé des risques.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: activit_hospitali_re_globale_position_financi_re_e`
-- Line 209 [medium, language_file_candidates]: `Rapport de consultations`
+- Line 214 [medium, language_file_candidates]: `Rapport de consultations`
   - Context: `'title'       => 'Rapport de consultations',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_de_consultations`
-- Line 210 [medium, language_file_candidates]: `Sessions par service, médecin, prestations liées et statuts.`
+- Line 215 [medium, language_file_candidates]: `Sessions par service, médecin, prestations liées et statuts.`
   - Context: `'description' => 'Sessions par service, médecin, prestations liées et statuts.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: sessions_par_service_m_decin_prestations_li_es_et_`
-- Line 217 [medium, language_file_candidates]: `Rapport de diagnostics`
+- Line 222 [medium, language_file_candidates]: `Rapport de diagnostics`
   - Context: `'title'       => 'Rapport de diagnostics',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_de_diagnostics`
-- Line 218 [medium, language_file_candidates]: `Diagnostics cliniques par visite, service, médecin, code CIM et type.`
+- Line 223 [medium, language_file_candidates]: `Diagnostics cliniques par visite, service, médecin, code CIM et type.`
   - Context: `'description' => 'Diagnostics cliniques par visite, service, médecin, code CIM et type.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: diagnostics_cliniques_par_visite_service_m_decin_c`
-- Line 224 [medium, language_file_candidates]: `Rapport de plaintes`
+- Line 229 [medium, language_file_candidates]: `Rapport de plaintes`
   - Context: `'title'       => 'Rapport de plaintes',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_de_plaintes`
-- Line 225 [medium, language_file_candidates]: `Plaintes et antécédents recueillis lors des soins.`
+- Line 230 [medium, language_file_candidates]: `Plaintes et antécédents recueillis lors des soins.`
   - Context: `'description' => 'Plaintes et antécédents recueillis lors des soins.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: plaintes_et_ant_c_dents_recueillis_lors_des_soins`
-- Line 232 [medium, language_file_candidates]: `Rapport patients`
+- Line 237 [medium, language_file_candidates]: `Rapport patients`
   - Context: `'title'             => 'Rapport patients',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_patients`
-- Line 233 [medium, language_file_candidates]: `Patients enregistrés, données démographiques et activité d\`
+- Line 238 [medium, language_file_candidates]: `Patients enregistrés, données démographiques et activité d\`
   - Context: `'description'       => 'Patients enregistrés, données démographiques et activité d\'enregistrement.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: patients_enregistr_s_donn_es_d_mographiques_et_act`
-- Line 245 [medium, language_file_candidates]: `Rapport de visites`
+- Line 250 [medium, language_file_candidates]: `Rapport de visites`
   - Context: `'title'             => 'Rapport de visites',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_de_visites`
-- Line 246 [medium, language_file_candidates]: `Visites ambulatoires par type, service, médecin et statut.`
+- Line 251 [medium, language_file_candidates]: `Visites ambulatoires par type, service, médecin et statut.`
   - Context: `'description'       => 'Visites ambulatoires par type, service, médecin et statut.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: visites_ambulatoires_par_type_service_m_decin_et_s`
-- Line 260 [medium, language_file_candidates]: `Rapport urgences`
+- Line 265 [medium, language_file_candidates]: `Rapport urgences`
   - Context: `'title'             => 'Rapport urgences',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_urgences`
-- Line 261 [medium, language_file_candidates]: `Présence aux urgences, triage, orientation et statut opérationnel.`
+- Line 266 [medium, language_file_candidates]: `Présence aux urgences, triage, orientation et statut opérationnel.`
   - Context: `'description'       => 'Présence aux urgences, triage, orientation et statut opérationnel.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: pr_sence_aux_urgences_triage_orientation_et_statut`
-- Line 275 [medium, language_file_candidates]: `Registre des admissions`
+- Line 280 [medium, language_file_candidates]: `Registre des admissions`
   - Context: `'title'              => 'Registre des admissions',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: registre_des_admissions`
-- Line 276 [medium, language_file_candidates]: `Admissions en hospitalisation, unité/lit, durée de séjour et statut de sortie.`
+- Line 281 [medium, language_file_candidates]: `Admissions en hospitalisation, unité/lit, durée de séjour et statut de sortie.`
   - Context: `'description'        => 'Admissions en hospitalisation, unité/lit, durée de séjour et statut de sortie.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: admissions_en_hospitalisation_unit_lit_dur_e_de_s_`
-- Line 290 [medium, language_file_candidates]: `Rapport MAR`
+- Line 295 [medium, language_file_candidates]: `Rapport MAR`
   - Context: `'title'       => 'Rapport MAR',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_mar`
-- Line 291 [medium, language_file_candidates]: `Administration des médicaments, tâches en retard, doses omises/retenues/refusées et activité infirmière.`
+- Line 296 [medium, language_file_candidates]: `Administration des médicaments, tâches en retard, doses omises/retenues/refusées et activité infirmière.`
   - Context: `'description' => 'Administration des médicaments, tâches en retard, doses omises/retenues/refusées et activité infirmière.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: administration_des_m_dicaments_t_ches_en_retard_do`
-- Line 302 [medium, language_file_candidates]: `Rapport pharmacie`
+- Line 307 [medium, language_file_candidates]: `Rapport pharmacie`
   - Context: `'title'              => 'Rapport pharmacie',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_pharmacie`
-- Line 303 [medium, language_file_candidates]: `Ordonnances, activité de délivrance et quantités fournies.`
+- Line 308 [medium, language_file_candidates]: `Ordonnances, activité de délivrance et quantités fournies.`
   - Context: `'description'        => 'Ordonnances, activité de délivrance et quantités fournies.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: ordonnances_activit_de_d_livrance_et_quantit_s_fou`
-- Line 321 [medium, language_file_candidates]: `Rapport d\`
+- Line 326 [medium, language_file_candidates]: `Rapport d\`
   - Context: `'title'            => 'Rapport d\'examens',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_d`
-- Line 322 [medium, language_file_candidates]: `Demandes, services cibles, urgence et statut du flux de résultats.`
+- Line 327 [medium, language_file_candidates]: `Demandes, services cibles, urgence et statut du flux de résultats.`
   - Context: `'description'      => 'Demandes, services cibles, urgence et statut du flux de résultats.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: demandes_services_cibles_urgence_et_statut_du_flux`
-- Line 341 [medium, language_file_candidates]: `Rapport des procédures`
+- Line 346 [medium, language_file_candidates]: `Rapport des procédures`
   - Context: `'title'       => 'Rapport des procédures',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_des_proc_dures`
-- Line 342 [medium, language_file_candidates]: `Demandes de procédures, facturation, acceptation, planification et état de réalisation.`
+- Line 347 [medium, language_file_candidates]: `Demandes de procédures, facturation, acceptation, planification et état de réalisation.`
   - Context: `'description' => 'Demandes de procédures, facturation, acceptation, planification et état de réalisation.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: demandes_de_proc_dures_facturation_acceptation_pla`
-- Line 345 [medium, language_file_candidates]: `Rapport bloc opératoire`
+- Line 350 [medium, language_file_candidates]: `Rapport bloc opératoire`
   - Context: `'title'       => 'Rapport bloc opératoire',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_bloc_op_ratoire`
-- Line 346 [medium, language_file_candidates]: `Charge de travail du bloc opératoire et statut du flux opératoire.`
+- Line 351 [medium, language_file_candidates]: `Charge de travail du bloc opératoire et statut du flux opératoire.`
   - Context: `'description' => 'Charge de travail du bloc opératoire et statut du flux opératoire.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: charge_de_travail_du_bloc_op_ratoire_et_statut_du_`
-- Line 357 [medium, language_file_candidates]: `Rapport de facturation`
+- Line 362 [medium, language_file_candidates]: `Rapport de facturation`
   - Context: `'title'              => 'Rapport de facturation',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_de_facturation`
-- Line 358 [medium, language_file_candidates]: `Factures, paiements, soldes impayés et risque de prestation non rendue.`
+- Line 363 [medium, language_file_candidates]: `Factures, paiements, soldes impayés et risque de prestation non rendue.`
   - Context: `'description'        => 'Factures, paiements, soldes impayés et risque de prestation non rendue.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: factures_paiements_soldes_impay_s_et_risque_de_pre`
-- Line 397 [medium, language_file_candidates]: `Rapport des réclamations`
+- Line 402 [medium, language_file_candidates]: `Rapport des réclamations`
   - Context: `'title'             => 'Rapport des réclamations',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_des_r_clamations`
-- Line 398 [medium, language_file_candidates]: `Réclamations d\`
+- Line 403 [medium, language_file_candidates]: `Réclamations d\`
   - Context: `'description'       => 'Réclamations d\'assurance par flux, prestataire, statut et résultat financier.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: r_clamations_d`
-- Line 415 [medium, language_file_candidates]: `Rapports comptabilité`
+- Line 420 [medium, language_file_candidates]: `Rapports comptabilité`
   - Context: `'title'              => 'Rapports comptabilité',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapports_comptabilit`
-- Line 431 [medium, language_file_candidates]: `Rapports débiteurs`
+- Line 436 [medium, language_file_candidates]: `Rapports débiteurs`
   - Context: `'title'       => 'Rapports débiteurs',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapports_d_biteurs`
-- Line 432 [medium, language_file_candidates]: `Balance âgée, débiteurs patients et assurances, soldes en retard.`
+- Line 437 [medium, language_file_candidates]: `Balance âgée, débiteurs patients et assurances, soldes en retard.`
   - Context: `'description' => 'Balance âgée, débiteurs patients et assurances, soldes en retard.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: balance_g_e_d_biteurs_patients_et_assurances_solde`
-- Line 443 [medium, language_file_candidates]: `Rapports créanciers`
+- Line 448 [medium, language_file_candidates]: `Rapports créanciers`
   - Context: `'title'          => 'Rapports créanciers',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapports_cr_anciers`
-- Line 444 [medium, language_file_candidates]: `Balance âgée fournisseurs, soldes et paiements.`
+- Line 449 [medium, language_file_candidates]: `Balance âgée fournisseurs, soldes et paiements.`
   - Context: `'description'    => 'Balance âgée fournisseurs, soldes et paiements.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: balance_g_e_fournisseurs_soldes_et_paiements`
-- Line 454 [medium, language_file_candidates]: `Rapport de stock`
+- Line 459 [medium, language_file_candidates]: `Rapport de stock`
   - Context: `'title'              => 'Rapport de stock',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_de_stock`
-- Line 455 [medium, language_file_candidates]: `Mouvements de stock et inventaire sensible aux dates de péremption.`
+- Line 460 [medium, language_file_candidates]: `Mouvements de stock et inventaire sensible aux dates de péremption.`
   - Context: `'description'        => 'Mouvements de stock et inventaire sensible aux dates de péremption.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: mouvements_de_stock_et_inventaire_sensible_aux_dat`
-- Line 492 [medium, language_file_candidates]: `Rapport banque de sang`
+- Line 497 [medium, language_file_candidates]: `Rapport banque de sang`
   - Context: `'title'       => 'Rapport banque de sang',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_banque_de_sang`
-- Line 493 [medium, language_file_candidates]: `Inventaire du sang, demandes, distribution, transfusion, expiration et gaspillage.`
+- Line 498 [medium, language_file_candidates]: `Inventaire du sang, demandes, distribution, transfusion, expiration et gaspillage.`
   - Context: `'description' => 'Inventaire du sang, demandes, distribution, transfusion, expiration et gaspillage.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: inventaire_du_sang_demandes_distribution_transfusi`
-- Line 500 [medium, language_file_candidates]: `Rapport journal d\`
+- Line 505 [medium, language_file_candidates]: `Rapport journal d\`
   - Context: `'title'       => 'Rapport journal d\'activité',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_journal_d`
-- Line 501 [medium, language_file_candidates]: `Actions des utilisateurs, événements à haut risque et activité système.`
+- Line 506 [medium, language_file_candidates]: `Actions des utilisateurs, événements à haut risque et activité système.`
   - Context: `'description' => 'Actions des utilisateurs, événements à haut risque et activité système.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: actions_des_utilisateurs_v_nements_haut_risque_et_`
-- Line 508 [medium, language_file_candidates]: `Relevé patient`
+- Line 513 [medium, language_file_candidates]: `Relevé patient`
   - Context: `'title'              => 'Relevé patient',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: relev_patient`
-- Line 509 [medium, language_file_candidates]: `Relevé financier d\`
+- Line 514 [medium, language_file_candidates]: `Relevé financier d\`
   - Context: `'description'        => 'Relevé financier d\'un patient sur une période.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: relev_financier_d`
-- Line 708 [medium, language_file_candidates]: `Description`
+- Line 713 [medium, language_file_candidates]: `Description`
   - Context: `'description'        => 'Description',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: description`
-- Line 858 [medium, language_file_candidates]: `Rapport imprimé`
+- Line 863 [medium, language_file_candidates]: `Rapport imprimé`
   - Context: `'title'              => 'Rapport imprimé',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_imprim`
-- Line 1140 [medium, language_file_candidates]: `Balance âgée des débiteurs`
+- Line 1145 [medium, language_file_candidates]: `Balance âgée des débiteurs`
   - Context: `'title'          => 'Balance âgée des débiteurs',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive

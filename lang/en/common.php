@@ -55,6 +55,7 @@ return [
     'loading' => 'Loading…',
     'mark_all_read' => 'Mark all read',
     'view_all' => 'View All',
+    'view_details' => 'View Details',
     'view_all_notifications' => 'View All Notifications',
     'reschedule' => 'Reschedule',
 

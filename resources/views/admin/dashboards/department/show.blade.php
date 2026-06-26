@@ -56,3 +56,16 @@
     </div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+    .department-kpi-link { transition: transform .15s ease, box-shadow .15s ease; }
+    .department-kpi-link:hover { transform: translateY(-1px); box-shadow: 0 .35rem 1rem rgba(15, 23, 42, .12) !important; }
+    .department-apex-chart { width: 100%; }
+    @media (max-width: 575.98px) {
+        .department-apex-chart { min-height: 190px !important; }
+        .department-kpi-link .card-body,
+        .card .card-body { overflow-wrap: anywhere; }
+    }
+</style>
+@endpush

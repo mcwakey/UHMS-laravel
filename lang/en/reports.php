@@ -94,6 +94,11 @@ return [
         'departments_count' => ':count departments',
         'no_departments' => 'No departments match the selected filters.',
         'metric_group' => 'Metric Group',
+        'comparison_presets' => 'Comparison Presets',
+        'today' => 'Today',
+        'this_week' => 'This Week',
+        'this_month' => 'This Month',
+        'last_30_days' => 'Last 30 Days',
     ],
 
     /* ------------------------------------------------------------------ */

@@ -34,8 +34,11 @@
                         <i class="ti ti-building-hospital me-1"></i>{{ __('dashboards.department.switch_department') }}
                     </button>
                     <div class="dropdown-menu dropdown-menu-end p-2" style="min-width: 280px;">
+                        @if($context->available_departments->count() > 8)
+                            <input type="search" class="form-control form-control-sm mb-2" data-department-switch-search placeholder="{{ __('dashboards.department.available_departments') }}">
+                        @endif
                         @foreach($context->available_departments as $availableDepartment)
-                            <form method="POST" action="{{ route('admin.my-dashboard.context.store') }}" class="mb-1">
+                            <form method="POST" action="{{ route('admin.my-dashboard.context.store') }}" class="mb-1" data-department-switch-item>
                                 @csrf
                                 <input type="hidden" name="department_id" value="{{ $availableDepartment->id }}">
                                 <button type="submit" class="dropdown-item rounded d-flex justify-content-between align-items-start gap-2 @if($context->current_department_id === $availableDepartment->id) active @endif">
@@ -77,3 +80,20 @@
         </div>
     </div>
 </div>
+
+@once
+@push('scripts')
+<script>
+document.addEventListener('input', function (event) {
+    const search = event.target.closest('[data-department-switch-search]');
+    if (!search) return;
+
+    const menu = search.closest('.dropdown-menu');
+    const term = search.value.toLowerCase();
+    menu.querySelectorAll('[data-department-switch-item]').forEach(function (item) {
+        item.classList.toggle('d-none', !item.textContent.toLowerCase().includes(term));
+    });
+});
+</script>
+@endpush
+@endonce
