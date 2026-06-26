@@ -60,20 +60,15 @@ class LoginController extends Controller
                 ->withProperties(['ip' => $request->ip(), 'user_agent' => $request->userAgent()])
                 ->log('logged in');
 
-            // Redirect based on role
+            if ($user->department_id) {
+                return redirect()->intended(route('admin.my-dashboard'));
+            }
+
             if ($user->hasRole('Super Admin') || $user->hasRole('Admin')) {
                 return redirect()->intended(route('admin.dashboard'));
             }
 
-            if ($user->hasRole('Doctor')) {
-                return redirect()->intended(route('doctor.dashboard'));
-            }
-
-            if ($user->hasRole('Nurse') || $user->hasRole('Receptionist')) {
-                return redirect()->intended(route('admin.dashboard'));
-            }
-
-            return redirect()->intended(route('dashboard'));
+            return redirect()->intended(route('admin.my-dashboard'));
         }
 
         RateLimiter::hit($throttleKey, 60);

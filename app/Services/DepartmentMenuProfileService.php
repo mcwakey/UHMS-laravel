@@ -53,6 +53,11 @@ class DepartmentMenuProfileService
         return self::PROFILES[$type->value] ?? [];
     }
 
+    public function profileKeyForType(?DepartmentType $type): string
+    {
+        return $type && isset(self::PROFILES[$type->value]) ? $type->value : 'generic';
+    }
+
     /**
      * Reorder already-finalised (permission/module-filtered) sidebar sections so
      * the user's department-relevant sections come first, after "Main Menu".

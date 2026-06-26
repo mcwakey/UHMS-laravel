@@ -1,63 +1,63 @@
 # UHMS Localisation Coverage Audit Report
 
-Date: 2026-06-24 01:45:30 +02:00
+Date: 2026-06-26 17:58:27 +02:00
 
 ## Summary
 
-- Total files scanned: 1300
-- Total files with possible hardcoded strings: 211
-- Total hardcoded candidates found: 3971
-- Modules affected: 38
-- Direct active route/controller Blade views: 303
-- Active Blade views including resolved dependencies: 368
+- Total files scanned: 1357
+- Total files with possible hardcoded strings: 216
+- Total hardcoded candidates found: 4127
+- Modules affected: 39
+- Direct active route/controller Blade views: 305
+- Active Blade views including resolved dependencies: 396
 
 ### Candidate Classification
 
 - Active runtime candidates: 23
-- Demo/template candidates: 2203
+- Demo/template candidates: 2358
 - Backup-only candidates: 0
 - Language-file candidates: 142
-- Known false positives: 1159
-- Service-title manual-review candidates: 444
+- Known false positives: 1158
+- Service-title manual-review candidates: 446
 
 ### Service Candidate Review Classes
 
 - A - User-facing service output: 63
-- B - Internal audit/event text: 25
-- C - Stored canonical event/title: 66
+- B - Internal audit/event text: 26
+- C - Stored canonical event/title: 67
 - D - SQL/internal expression: 0
 - E - Translated downstream: 290
 
 ### Modules Affected
 
-- components: 1905
-- app: 444
+- components: 1916
+- app: 446
 - patterns: 208
 - accounting: 175
 - store: 157
 - admin: 153
-- consultations: 151
+- dashboard: 153
+- consultations: 150
 - lang: 142
 - billing: 95
-- javascript: 59
+- javascript: 65
 - insurance: 56
 - theatre: 50
 - investigations: 44
 - hr: 39
 - lab: 29
-- patients: 28
 - blood-bank: 27
 - complaints: 23
 - accounts: 21
+- patients: 20
 - departments: 19
-- layouts: 15
-- visits: 15
+- layouts: 16
 - designations: 13
 - admissions: 12
 - emergency: 12
 - settings: 12
+- visits: 12
 - vitals: 12
-- partials: 10
 - queue: 10
 - notifications: 8
 
@@ -67,6 +67,8 @@ Date: 2026-06-24 01:45:30 +02:00
 - resources/views/consultations/show.blade.php: 140
 - resources/views/patterns/create.blade.php: 94
 - resources/views/patterns/edit.blade.php: 92
+- resources/views/dashboard/patient-dashboard.blade.php: 81
+- resources/views/dashboard/doctor-dashboard.blade.php: 72
 - resources/views/theatre/show.blade.php: 48
 - resources/views/accounting/fixed-assets/index.blade.php: 42
 - resources/views/components/settings-sidebar.blade.php: 42
@@ -91,8 +93,6 @@ Date: 2026-06-24 01:45:30 +02:00
 - resources/views/departments/index.blade.php: 19
 - resources/views/store/purchase-orders/show.blade.php: 19
 - resources/views/blood-bank/donor-profile.blade.php: 17
-- resources/views/hr/employees/create.blade.php: 17
-- resources/views/accounting/payable/statement.blade.php: 16
 
 ### Medium Priority Files
 
@@ -125,7 +125,7 @@ Date: 2026-06-24 01:45:30 +02:00
 - app/Services/StatementService.php: 2
 - app/Services/TaxReturnService.php: 2
 - app/Services/VisitPreviewService.php: 2
-- lang/en/accounting.php: 2
+- app/Services/VisitStatusFlowService.php: 2
 
 ### Likely False Positives
 
@@ -900,7 +900,7 @@ Date: 2026-06-24 01:45:30 +02:00
 
 ### `app/Services/ServiceRenderingService.php`
 
-- Line 438 [medium, service_title_manual_review_candidates]: `Service rendering required`
+- Line 445 [medium, service_title_manual_review_candidates]: `Service rendering required`
   - Context: `'title' => 'Service rendering required',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
@@ -909,1741 +909,1741 @@ Date: 2026-06-24 01:45:30 +02:00
 
 ### `app/Services/SidebarMenuBuilder.php`
 
-- Line 33 [medium, service_title_manual_review_candidates]: `Main Menu`
+- Line 34 [medium, service_title_manual_review_candidates]: `Main Menu`
   - Context: `'title' => 'Main Menu',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: main_menu`
-- Line 36 [medium, service_title_manual_review_candidates]: `Dashboard`
+- Line 37 [medium, service_title_manual_review_candidates]: `Dashboard`
   - Context: `'label' => 'Dashboard',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: dashboard`
-- Line 42 [medium, service_title_manual_review_candidates]: `Other Dashboards`
+- Line 43 [medium, service_title_manual_review_candidates]: `Other Dashboards`
   - Context: `'label' => 'Other Dashboards',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: other_dashboards`
-- Line 50 [medium, service_title_manual_review_candidates]: `Patient Services`
+- Line 51 [medium, service_title_manual_review_candidates]: `Patient Services`
   - Context: `'title' => 'Patient Services',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: patient_services`
-- Line 53 [medium, service_title_manual_review_candidates]: `Patients`
+- Line 54 [medium, service_title_manual_review_candidates]: `Patients`
   - Context: `'label' => 'Patients',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: patients`
-- Line 61 [medium, service_title_manual_review_candidates]: `Folder Merge`
+- Line 62 [medium, service_title_manual_review_candidates]: `Folder Merge`
   - Context: `//     'label' => 'Folder Merge',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: folder_merge`
-- Line 69 [medium, service_title_manual_review_candidates]: `Appointments`
+- Line 70 [medium, service_title_manual_review_candidates]: `Appointments`
   - Context: `'label' => 'Appointments',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: appointments`
-- Line 77 [medium, service_title_manual_review_candidates]: `All Appointments`
+- Line 78 [medium, service_title_manual_review_candidates]: `All Appointments`
   - Context: `//         'label' => 'All Appointments',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: all_appointments`
-- Line 83 [medium, service_title_manual_review_candidates]: `Calendar View`
+- Line 84 [medium, service_title_manual_review_candidates]: `Calendar View`
   - Context: `//         'label' => 'Calendar View',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: calendar_view`
-- Line 89 [medium, service_title_manual_review_candidates]: `Schedule New`
+- Line 90 [medium, service_title_manual_review_candidates]: `Schedule New`
   - Context: `//         'label' => 'Schedule New',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: schedule_new`
-- Line 97 [medium, service_title_manual_review_candidates]: `Visits / OPD`
+- Line 98 [medium, service_title_manual_review_candidates]: `Visits / OPD`
   - Context: `'label' => 'Visits / OPD',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: visits_opd`
-- Line 105 [medium, service_title_manual_review_candidates]: `Queue`
+- Line 106 [medium, service_title_manual_review_candidates]: `Queue`
   - Context: `'label' => 'Queue',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: queue`
-- Line 111 [medium, service_title_manual_review_candidates]: `Manage Queue`
+- Line 112 [medium, service_title_manual_review_candidates]: `Manage Queue`
   - Context: `'label' => 'Manage Queue',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: manage_queue`
-- Line 117 [medium, service_title_manual_review_candidates]: `Queue Board`
+- Line 118 [medium, service_title_manual_review_candidates]: `Queue Board`
   - Context: `'label' => 'Queue Board',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: queue_board`
-- Line 127 [medium, service_title_manual_review_candidates]: `Clinical`
+- Line 128 [medium, service_title_manual_review_candidates]: `Clinical`
   - Context: `'title' => 'Clinical',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: clinical`
-- Line 130 [medium, service_title_manual_review_candidates]: `Emergency`
+- Line 131 [medium, service_title_manual_review_candidates]: `Emergency`
   - Context: `//     'label' => 'Emergency',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: emergency`
-- Line 136 [medium, service_title_manual_review_candidates]: `Emergency Board`
+- Line 137 [medium, service_title_manual_review_candidates]: `Emergency Board`
   - Context: `//             'label' => 'Emergency Board',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: emergency_board`
-- Line 142 [medium, service_title_manual_review_candidates]: `New Emergency Case`
+- Line 143 [medium, service_title_manual_review_candidates]: `New Emergency Case`
   - Context: `//             'label' => 'New Emergency Case',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: new_emergency_case`
-- Line 148 [medium, service_title_manual_review_candidates]: `Emergency MAR`
+- Line 149 [medium, service_title_manual_review_candidates]: `Emergency MAR`
   - Context: `//             'label' => 'Emergency MAR',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: emergency_mar`
-- Line 154 [medium, service_title_manual_review_candidates]: `Emergency Bays`
+- Line 155 [medium, service_title_manual_review_candidates]: `Emergency Bays`
   - Context: `//             'label' => 'Emergency Bays',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: emergency_bays`
-- Line 160 [medium, service_title_manual_review_candidates]: `Reports`
+- Line 161 [medium, service_title_manual_review_candidates]: `Reports`
   - Context: `//             'label' => 'Reports',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: reports`
-- Line 168 [medium, service_title_manual_review_candidates]: `Vitals / Triage`
+- Line 169 [medium, service_title_manual_review_candidates]: `Vitals / Triage`
   - Context: `//     'label' => 'Vitals / Triage',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: vitals_triage`
-- Line 176 [medium, service_title_manual_review_candidates]: `Vitals / Triage`
+- Line 177 [medium, service_title_manual_review_candidates]: `Vitals / Triage`
   - Context: `'label' => 'Vitals / Triage',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: vitals_triage`
-- Line 184 [medium, service_title_manual_review_candidates]: `Consultations`
+- Line 185 [medium, service_title_manual_review_candidates]: `Consultations`
   - Context: `'label' => 'Consultations',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: consultations`
-- Line 192 [medium, service_title_manual_review_candidates]: `Service Rendering`
+- Line 193 [medium, service_title_manual_review_candidates]: `Service Rendering`
   - Context: `'label' => 'Service Rendering',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: service_rendering`
-- Line 199 [medium, service_title_manual_review_candidates]: `Procedures`
+- Line 200 [medium, service_title_manual_review_candidates]: `Procedures`
   - Context: `//     'label' => 'Procedures',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: procedures`
-- Line 205 [medium, service_title_manual_review_candidates]: `Procedure Catalog`
+- Line 206 [medium, service_title_manual_review_candidates]: `Procedure Catalog`
   - Context: `//             'label' => 'Procedure Catalog',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: procedure_catalog`
-- Line 211 [medium, service_title_manual_review_candidates]: `Scheduled Procedures`
+- Line 212 [medium, service_title_manual_review_candidates]: `Scheduled Procedures`
   - Context: `//             'label' => 'Scheduled Procedures',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: scheduled_procedures`
-- Line 219 [medium, service_title_manual_review_candidates]: `Theatre / Procedures`
+- Line 220 [medium, service_title_manual_review_candidates]: `Theatre / Procedures`
   - Context: `//     'label' => 'Theatre / Procedures',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: theatre_procedures`
-- Line 225 [medium, service_title_manual_review_candidates]: `Procedure Catalogue`
+- Line 226 [medium, service_title_manual_review_candidates]: `Procedure Catalogue`
   - Context: `//             'label' => 'Procedure Catalogue',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: procedure_catalogue`
-- Line 231 [medium, service_title_manual_review_candidates]: `Procedure Consumables`
+- Line 232 [medium, service_title_manual_review_candidates]: `Procedure Consumables`
   - Context: `//             'label' => 'Procedure Consumables',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: procedure_consumables`
-- Line 237 [medium, service_title_manual_review_candidates]: `Scheduled Procedures`
+- Line 238 [medium, service_title_manual_review_candidates]: `Scheduled Procedures`
   - Context: `//         //     'label' => 'Scheduled Procedures',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: scheduled_procedures`
-- Line 243 [medium, service_title_manual_review_candidates]: `Scheduled Procedures`
+- Line 244 [medium, service_title_manual_review_candidates]: `Scheduled Procedures`
   - Context: `//             'label' => 'Scheduled Procedures',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: scheduled_procedures`
-- Line 250 [medium, service_title_manual_review_candidates]: `Scheduled`
+- Line 251 [medium, service_title_manual_review_candidates]: `Scheduled`
   - Context: `//         //     'label' => 'Scheduled',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: scheduled`
-- Line 257 [medium, service_title_manual_review_candidates]: `In Theatre`
+- Line 258 [medium, service_title_manual_review_candidates]: `In Theatre`
   - Context: `//         //     'label' => 'In Theatre',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: in_theatre`
-- Line 264 [medium, service_title_manual_review_candidates]: `Recovery`
+- Line 265 [medium, service_title_manual_review_candidates]: `Recovery`
   - Context: `//         //     'label' => 'Recovery',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: recovery`
-- Line 282 [medium, service_title_manual_review_candidates]: `Ward / Emergency`
+- Line 283 [medium, service_title_manual_review_candidates]: `Ward / Emergency`
   - Context: `'title' => 'Ward / Emergency',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: ward_emergency`
-- Line 285 [medium, service_title_manual_review_candidates]: `Emergency`
+- Line 286 [medium, service_title_manual_review_candidates]: `Emergency`
   - Context: `//     'label' => 'Emergency',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: emergency`
-- Line 294 [medium, service_title_manual_review_candidates]: `Vitals / Triage`
+- Line 295 [medium, service_title_manual_review_candidates]: `Vitals / Triage`
   - Context: `//     'label' => 'Vitals / Triage',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: vitals_triage`
-- Line 303 [medium, service_title_manual_review_candidates]: `Emergency Board`
+- Line 304 [medium, service_title_manual_review_candidates]: `Emergency Board`
   - Context: `'label' => 'Emergency Board',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: emergency_board`
-- Line 311 [medium, service_title_manual_review_candidates]: `Emergency Consumables`
+- Line 312 [medium, service_title_manual_review_candidates]: `Emergency Consumables`
   - Context: `'label' => 'Emergency Consumables',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: emergency_consumables`
-- Line 319 [medium, service_title_manual_review_candidates]: `New Emergency Case`
+- Line 320 [medium, service_title_manual_review_candidates]: `New Emergency Case`
   - Context: `//     'label' => 'New Emergency Case',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: new_emergency_case`
-- Line 327 [medium, service_title_manual_review_candidates]: `Emergency Medication Board`
+- Line 328 [medium, service_title_manual_review_candidates]: `Emergency Medication Board`
   - Context: `'label' => 'Emergency Medication Board',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: emergency_medication_board`
-- Line 335 [medium, service_title_manual_review_candidates]: `Emergency Bays`
+- Line 336 [medium, service_title_manual_review_candidates]: `Emergency Bays`
   - Context: `'label' => 'Emergency Bays',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: emergency_bays`
-- Line 345 [medium, service_title_manual_review_candidates]: `Reports`
+- Line 346 [medium, service_title_manual_review_candidates]: `Reports`
   - Context: `//     'label' => 'Reports',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: reports`
-- Line 355 [medium, service_title_manual_review_candidates]: `Vitals / Triage`
+- Line 356 [medium, service_title_manual_review_candidates]: `Vitals / Triage`
   - Context: `//     'label' => 'Vitals / Triage',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: vitals_triage`
-- Line 363 [medium, service_title_manual_review_candidates]: `Consultations`
+- Line 364 [medium, service_title_manual_review_candidates]: `Consultations`
   - Context: `//     'label' => 'Consultations',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: consultations`
-- Line 371 [medium, service_title_manual_review_candidates]: `Procedures`
+- Line 372 [medium, service_title_manual_review_candidates]: `Procedures`
   - Context: `//     'label' => 'Procedures',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: procedures`
-- Line 377 [medium, service_title_manual_review_candidates]: `Procedure Catalog`
+- Line 378 [medium, service_title_manual_review_candidates]: `Procedure Catalog`
   - Context: `//             'label' => 'Procedure Catalog',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: procedure_catalog`
-- Line 383 [medium, service_title_manual_review_candidates]: `Scheduled Procedures`
+- Line 384 [medium, service_title_manual_review_candidates]: `Scheduled Procedures`
   - Context: `//             'label' => 'Scheduled Procedures',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: scheduled_procedures`
-- Line 391 [medium, service_title_manual_review_candidates]: `Theatre / Procedures`
+- Line 392 [medium, service_title_manual_review_candidates]: `Theatre / Procedures`
   - Context: `//     'label' => 'Theatre / Procedures',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: theatre_procedures`
-- Line 397 [medium, service_title_manual_review_candidates]: `Procedure Catalogue`
+- Line 398 [medium, service_title_manual_review_candidates]: `Procedure Catalogue`
   - Context: `//             'label' => 'Procedure Catalogue',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: procedure_catalogue`
-- Line 403 [medium, service_title_manual_review_candidates]: `Procedure Consumables`
+- Line 404 [medium, service_title_manual_review_candidates]: `Procedure Consumables`
   - Context: `//             'label' => 'Procedure Consumables',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: procedure_consumables`
-- Line 409 [medium, service_title_manual_review_candidates]: `Scheduled Procedures`
+- Line 410 [medium, service_title_manual_review_candidates]: `Scheduled Procedures`
   - Context: `//         //     'label' => 'Scheduled Procedures',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: scheduled_procedures`
-- Line 415 [medium, service_title_manual_review_candidates]: `Scheduled Procedures`
+- Line 416 [medium, service_title_manual_review_candidates]: `Scheduled Procedures`
   - Context: `//             'label' => 'Scheduled Procedures',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: scheduled_procedures`
-- Line 422 [medium, service_title_manual_review_candidates]: `Scheduled`
+- Line 423 [medium, service_title_manual_review_candidates]: `Scheduled`
   - Context: `//         //     'label' => 'Scheduled',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: scheduled`
-- Line 429 [medium, service_title_manual_review_candidates]: `In Theatre`
+- Line 430 [medium, service_title_manual_review_candidates]: `In Theatre`
   - Context: `//         //     'label' => 'In Theatre',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: in_theatre`
-- Line 436 [medium, service_title_manual_review_candidates]: `Recovery`
+- Line 437 [medium, service_title_manual_review_candidates]: `Recovery`
   - Context: `//         //     'label' => 'Recovery',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: recovery`
-- Line 454 [medium, service_title_manual_review_candidates]: `Ward / Inpatient`
+- Line 455 [medium, service_title_manual_review_candidates]: `Ward / Inpatient`
   - Context: `'title' => 'Ward / Inpatient',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: ward_inpatient`
-- Line 457 [medium, service_title_manual_review_candidates]: `Admissions Requests`
+- Line 458 [medium, service_title_manual_review_candidates]: `Admissions Requests`
   - Context: `'label' => 'Admissions Requests',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: admissions_requests`
-- Line 465 [medium, service_title_manual_review_candidates]: `Admissions Board`
+- Line 466 [medium, service_title_manual_review_candidates]: `Admissions Board`
   - Context: `'label' => 'Admissions Board',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: admissions_board`
-- Line 473 [medium, service_title_manual_review_candidates]: `Medication Board`
+- Line 474 [medium, service_title_manual_review_candidates]: `Medication Board`
   - Context: `'label' => 'Medication Board',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: medication_board`
-- Line 481 [medium, service_title_manual_review_candidates]: `Ward Consumables`
+- Line 482 [medium, service_title_manual_review_candidates]: `Ward Consumables`
   - Context: `'label' => 'Ward Consumables',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: ward_consumables`
-- Line 489 [medium, service_title_manual_review_candidates]: `Emergency Meds`
+- Line 490 [medium, service_title_manual_review_candidates]: `Emergency Meds`
   - Context: `//     'label' => 'Emergency Meds',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: emergency_meds`
-- Line 497 [medium, service_title_manual_review_candidates]: `Bed Map`
+- Line 498 [medium, service_title_manual_review_candidates]: `Bed Map`
   - Context: `//     'label' => 'Bed Map',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: bed_map`
-- Line 504 [medium, service_title_manual_review_candidates]: `Wards / Bed Management`
+- Line 505 [medium, service_title_manual_review_candidates]: `Wards / Bed Management`
   - Context: `'label' => 'Wards / Bed Management',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: wards_bed_management`
-- Line 512 [medium, service_title_manual_review_candidates]: `Bed Management`
+- Line 513 [medium, service_title_manual_review_candidates]: `Bed Management`
   - Context: `//     'label' => 'Bed Management',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: bed_management`
-- Line 521 [medium, service_title_manual_review_candidates]: `Blood Bank`
+- Line 522 [medium, service_title_manual_review_candidates]: `Blood Bank`
   - Context: `'title' => 'Blood Bank',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: blood_bank`
-- Line 524 [medium, service_title_manual_review_candidates]: `Blood Bank Dashboard`
+- Line 525 [medium, service_title_manual_review_candidates]: `Blood Bank Dashboard`
   - Context: `'label' => 'Blood Bank Dashboard',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: blood_bank_dashboard`
-- Line 532 [medium, service_title_manual_review_candidates]: `Donors`
+- Line 533 [medium, service_title_manual_review_candidates]: `Donors`
   - Context: `'label' => 'Donors',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: donors`
-- Line 540 [medium, service_title_manual_review_candidates]: `Donations`
+- Line 541 [medium, service_title_manual_review_candidates]: `Donations`
   - Context: `'label' => 'Donations',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: donations`
-- Line 548 [medium, service_title_manual_review_candidates]: `Units`
+- Line 549 [medium, service_title_manual_review_candidates]: `Units`
   - Context: `'label' => 'Units',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: units`
-- Line 556 [medium, service_title_manual_review_candidates]: `Requests`
+- Line 557 [medium, service_title_manual_review_candidates]: `Requests`
   - Context: `'label' => 'Requests',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: requests`
-- Line 564 [medium, service_title_manual_review_candidates]: `Reports`
+- Line 565 [medium, service_title_manual_review_candidates]: `Reports`
   - Context: `'label' => 'Reports',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: reports`
-- Line 572 [medium, service_title_manual_review_candidates]: `Blood Bank`
+- Line 573 [medium, service_title_manual_review_candidates]: `Blood Bank`
   - Context: `//     'label' => 'Blood Bank',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: blood_bank`
-- Line 578 [medium, service_title_manual_review_candidates]: `Dashboard`
+- Line 579 [medium, service_title_manual_review_candidates]: `Dashboard`
   - Context: `//         ['label' => 'Dashboard', 'route' => 'admin.blood-bank.dashboard', 'active_patterns' => ['admin.blood-bank.dashboard'], 'permission' => 'blood_bank.view', 'module' => 'blood_bank'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: dashboard`
-- Line 579 [medium, service_title_manual_review_candidates]: `Donors`
+- Line 580 [medium, service_title_manual_review_candidates]: `Donors`
   - Context: `//         ['label' => 'Donors', 'route' => 'admin.blood-bank.donors.index', 'active_patterns' => ['admin.blood-bank.donors.*'], 'permission' => 'blood_bank.donors.manage', 'module' => 'blood_bank'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: donors`
-- Line 580 [medium, service_title_manual_review_candidates]: `Donations`
+- Line 581 [medium, service_title_manual_review_candidates]: `Donations`
   - Context: `//         ['label' => 'Donations', 'route' => 'admin.blood-bank.donations.index', 'active_patterns' => ['admin.blood-bank.donations.*'], 'permission' => 'blood_bank.donations.record', 'module' => 'blood_bank'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: donations`
-- Line 581 [medium, service_title_manual_review_candidates]: `Units`
+- Line 582 [medium, service_title_manual_review_candidates]: `Units`
   - Context: `//         ['label' => 'Units', 'route' => 'admin.blood-bank.units.index', 'active_patterns' => ['admin.blood-bank.units.*'], 'permission' => 'blood_bank.units.view', 'module' => 'blood_bank'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: units`
-- Line 582 [medium, service_title_manual_review_candidates]: `Requests`
+- Line 583 [medium, service_title_manual_review_candidates]: `Requests`
   - Context: `//         ['label' => 'Requests', 'route' => 'admin.blood-bank.requests.index', 'active_patterns' => ['admin.blood-bank.requests.*'], 'permission' => 'blood_bank.requests.view', 'module' => 'blood_bank'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: requests`
-- Line 583 [medium, service_title_manual_review_candidates]: `Reports`
+- Line 584 [medium, service_title_manual_review_candidates]: `Reports`
   - Context: `//         ['label' => 'Reports', 'route' => 'admin.blood-bank.reports.index', 'active_patterns' => ['admin.blood-bank.reports.*'], 'permission' => 'blood_bank.reports.view', 'module' => 'blood_bank'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: reports`
-- Line 589 [medium, service_title_manual_review_candidates]: `Pharmacy`
+- Line 590 [medium, service_title_manual_review_candidates]: `Pharmacy`
   - Context: `'title' => 'Pharmacy',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: pharmacy`
-- Line 592 [medium, service_title_manual_review_candidates]: `Prescriptions`
+- Line 593 [medium, service_title_manual_review_candidates]: `Prescriptions`
   - Context: `'label' => 'Prescriptions',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: prescriptions`
-- Line 600 [medium, service_title_manual_review_candidates]: `Dispensing`
+- Line 601 [medium, service_title_manual_review_candidates]: `Dispensing`
   - Context: `'label' => 'Dispensing',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: dispensing`
-- Line 608 [medium, service_title_manual_review_candidates]: `Drug Catalog`
+- Line 609 [medium, service_title_manual_review_candidates]: `Drug Catalog`
   - Context: `'label' => 'Drug Catalog',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: drug_catalog`
-- Line 618 [medium, service_title_manual_review_candidates]: `Investigations`
+- Line 619 [medium, service_title_manual_review_candidates]: `Investigations`
   - Context: `'title' => 'Investigations',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: investigations`
-- Line 621 [medium, service_title_manual_review_candidates]: `Tests`
+- Line 622 [medium, service_title_manual_review_candidates]: `Tests`
   - Context: `'label' => 'Tests',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: tests`
-- Line 629 [medium, service_title_manual_review_candidates]: `Results`
+- Line 630 [medium, service_title_manual_review_candidates]: `Results`
   - Context: `'label' => 'Results',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: results`
-- Line 637 [medium, service_title_manual_review_candidates]: `Tests Catalogue`
+- Line 638 [medium, service_title_manual_review_candidates]: `Tests Catalogue`
   - Context: `'label' => 'Tests Catalogue',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: tests_catalogue`
-- Line 645 [medium, service_title_manual_review_candidates]: `Items Usage`
+- Line 646 [medium, service_title_manual_review_candidates]: `Items Usage`
   - Context: `'label' => 'Items Usage',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: items_usage`
-- Line 653 [medium, service_title_manual_review_candidates]: `Investigation Stock`
+- Line 654 [medium, service_title_manual_review_candidates]: `Investigation Stock`
   - Context: `//     'label' => 'Investigation Stock',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: investigation_stock`
-- Line 663 [medium, service_title_manual_review_candidates]: `Theatre / Procedures`
+- Line 664 [medium, service_title_manual_review_candidates]: `Theatre / Procedures`
   - Context: `'title' => 'Theatre / Procedures',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: theatre_procedures`
-- Line 666 [medium, service_title_manual_review_candidates]: `Procedure Requests`
+- Line 667 [medium, service_title_manual_review_candidates]: `Procedure Requests`
   - Context: `'label' => 'Procedure Requests',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: procedure_requests`
-- Line 674 [medium, service_title_manual_review_candidates]: `Theatre Calendar`
+- Line 675 [medium, service_title_manual_review_candidates]: `Theatre Calendar`
   - Context: `'label' => 'Theatre Calendar',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: theatre_calendar`
-- Line 682 [medium, service_title_manual_review_candidates]: `Investigation Results`
+- Line 683 [medium, service_title_manual_review_candidates]: `Investigation Results`
   - Context: `//     'label' => 'Investigation Results',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: investigation_results`
-- Line 690 [medium, service_title_manual_review_candidates]: `Procedure Catalogue`
+- Line 691 [medium, service_title_manual_review_candidates]: `Procedure Catalogue`
   - Context: `'label' => 'Procedure Catalogue',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: procedure_catalogue`
-- Line 698 [medium, service_title_manual_review_candidates]: `Procedure Consumables`
+- Line 699 [medium, service_title_manual_review_candidates]: `Procedure Consumables`
   - Context: `'label' => 'Procedure Consumables',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: procedure_consumables`
-- Line 706 [medium, service_title_manual_review_candidates]: `Theatre Rooms`
+- Line 707 [medium, service_title_manual_review_candidates]: `Theatre Rooms`
   - Context: `'label' => 'Theatre Rooms',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: theatre_rooms`
-- Line 714 [medium, service_title_manual_review_candidates]: `Investigation Stock`
+- Line 715 [medium, service_title_manual_review_candidates]: `Investigation Stock`
   - Context: `//     'label' => 'Investigation Stock',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: investigation_stock`
-- Line 722 [medium, service_title_manual_review_candidates]: `Analyzers`
+- Line 723 [medium, service_title_manual_review_candidates]: `Analyzers`
   - Context: `//     'label' => 'Analyzers',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: analyzers`
-- Line 730 [medium, service_title_manual_review_candidates]: `Analyzer Messages`
+- Line 731 [medium, service_title_manual_review_candidates]: `Analyzer Messages`
   - Context: `//     'label' => 'Analyzer Messages',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: analyzer_messages`
-- Line 740 [medium, service_title_manual_review_candidates]: `Claims & Insurance`
+- Line 741 [medium, service_title_manual_review_candidates]: `Claims & Insurance`
   - Context: `'title' => 'Claims & Insurance',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: claims_insurance`
-- Line 743 [medium, service_title_manual_review_candidates]: `Claims`
+- Line 744 [medium, service_title_manual_review_candidates]: `Claims`
   - Context: `'label' => 'Claims',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: claims`
-- Line 751 [medium, service_title_manual_review_candidates]: `Eligible Visits`
+- Line 752 [medium, service_title_manual_review_candidates]: `Eligible Visits`
   - Context: `'label' => 'Eligible Visits',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: eligible_visits`
-- Line 759 [medium, service_title_manual_review_candidates]: `NHIA Claims`
+- Line 760 [medium, service_title_manual_review_candidates]: `NHIA Claims`
   - Context: `'label' => 'NHIA Claims',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: nhia_claims`
-- Line 767 [medium, service_title_manual_review_candidates]: `New Claim`
+- Line 768 [medium, service_title_manual_review_candidates]: `New Claim`
   - Context: `//     'label' => 'New Claim',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: new_claim`
-- Line 777 [medium, service_title_manual_review_candidates]: `Store & Procurement`
+- Line 778 [medium, service_title_manual_review_candidates]: `Store & Procurement`
   - Context: `'title' => 'Store & Procurement',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: store_procurement`
-- Line 780 [medium, service_title_manual_review_candidates]: `Products`
+- Line 781 [medium, service_title_manual_review_candidates]: `Products`
   - Context: `'label' => 'Products',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: products`
-- Line 788 [medium, service_title_manual_review_candidates]: `Suppliers`
+- Line 789 [medium, service_title_manual_review_candidates]: `Suppliers`
   - Context: `'label' => 'Suppliers',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: suppliers`
-- Line 796 [medium, service_title_manual_review_candidates]: `Purchase Orders`
+- Line 797 [medium, service_title_manual_review_candidates]: `Purchase Orders`
   - Context: `'label' => 'Purchase Orders',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: purchase_orders`
-- Line 804 [medium, service_title_manual_review_candidates]: `Purchase Returns`
+- Line 805 [medium, service_title_manual_review_candidates]: `Purchase Returns`
   - Context: `'label' => 'Purchase Returns',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: purchase_returns`
-- Line 812 [medium, service_title_manual_review_candidates]: `Stock Requisitions`
+- Line 813 [medium, service_title_manual_review_candidates]: `Stock Requisitions`
   - Context: `'label' => 'Stock Requisitions',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: stock_requisitions`
-- Line 820 [medium, service_title_manual_review_candidates]: `Stock Ledger`
+- Line 821 [medium, service_title_manual_review_candidates]: `Stock Ledger`
   - Context: `'label' => 'Stock Ledger',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: stock_ledger`
-- Line 828 [medium, service_title_manual_review_candidates]: `Stock Balances`
+- Line 829 [medium, service_title_manual_review_candidates]: `Stock Balances`
   - Context: `'label' => 'Stock Balances',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: stock_balances`
-- Line 836 [medium, service_title_manual_review_candidates]: `Inventory Valuation`
+- Line 837 [medium, service_title_manual_review_candidates]: `Inventory Valuation`
   - Context: `'label' => 'Inventory Valuation',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: inventory_valuation`
-- Line 844 [medium, service_title_manual_review_candidates]: `Stock Locations`
+- Line 845 [medium, service_title_manual_review_candidates]: `Stock Locations`
   - Context: `'label' => 'Stock Locations',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: stock_locations`
-- Line 852 [medium, service_title_manual_review_candidates]: `Stock Transfers`
+- Line 853 [medium, service_title_manual_review_candidates]: `Stock Transfers`
   - Context: `'label' => 'Stock Transfers',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: stock_transfers`
-- Line 860 [medium, service_title_manual_review_candidates]: `Stock Adjustments`
+- Line 861 [medium, service_title_manual_review_candidates]: `Stock Adjustments`
   - Context: `'label' => 'Stock Adjustments',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: stock_adjustments`
-- Line 868 [medium, service_title_manual_review_candidates]: `Stock Returns`
+- Line 869 [medium, service_title_manual_review_candidates]: `Stock Returns`
   - Context: `'label' => 'Stock Returns',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: stock_returns`
-- Line 878 [medium, service_title_manual_review_candidates]: `Accounts & Finance`
+- Line 879 [medium, service_title_manual_review_candidates]: `Accounts & Finance`
   - Context: `'title' => 'Accounts & Finance',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: accounts_finance`
-- Line 881 [medium, service_title_manual_review_candidates]: `Billing Dashboard`
+- Line 882 [medium, service_title_manual_review_candidates]: `Billing Dashboard`
   - Context: `'label' => 'Billing Dashboard',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: billing_dashboard`
-- Line 889 [medium, service_title_manual_review_candidates]: `Accounting Dashboard`
+- Line 890 [medium, service_title_manual_review_candidates]: `Accounting Dashboard`
   - Context: `'label' => 'Accounting Dashboard',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: accounting_dashboard`
-- Line 896 [medium, service_title_manual_review_candidates]: `Chart of Accounts`
+- Line 897 [medium, service_title_manual_review_candidates]: `Chart of Accounts`
   - Context: `'label' => 'Chart of Accounts',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: chart_of_accounts`
-- Line 903 [medium, service_title_manual_review_candidates]: `Journal Entries`
+- Line 904 [medium, service_title_manual_review_candidates]: `Journal Entries`
   - Context: `'label' => 'Journal Entries',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: journal_entries`
-- Line 910 [medium, service_title_manual_review_candidates]: `General Ledger`
+- Line 911 [medium, service_title_manual_review_candidates]: `General Ledger`
   - Context: `'label' => 'General Ledger',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: general_ledger`
-- Line 917 [medium, service_title_manual_review_candidates]: `Trial Balance`
+- Line 918 [medium, service_title_manual_review_candidates]: `Trial Balance`
   - Context: `'label' => 'Trial Balance',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: trial_balance`
-- Line 924 [medium, service_title_manual_review_candidates]: `Profit & Loss`
+- Line 925 [medium, service_title_manual_review_candidates]: `Profit & Loss`
   - Context: `'label' => 'Profit & Loss',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: profit_loss`
-- Line 931 [medium, service_title_manual_review_candidates]: `Balance Sheet`
+- Line 932 [medium, service_title_manual_review_candidates]: `Balance Sheet`
   - Context: `'label' => 'Balance Sheet',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: balance_sheet`
-- Line 938 [medium, service_title_manual_review_candidates]: `Cashbook`
+- Line 939 [medium, service_title_manual_review_candidates]: `Cashbook`
   - Context: `'label' => 'Cashbook',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: cashbook`
-- Line 945 [medium, service_title_manual_review_candidates]: `Cash Flow`
+- Line 946 [medium, service_title_manual_review_candidates]: `Cash Flow`
   - Context: `'label' => 'Cash Flow',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: cash_flow`
-- Line 952 [medium, service_title_manual_review_candidates]: `Revenue by Dept`
+- Line 953 [medium, service_title_manual_review_candidates]: `Revenue by Dept`
   - Context: `'label' => 'Revenue by Dept',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: revenue_by_dept`
-- Line 959 [medium, service_title_manual_review_candidates]: `Expense by Dept`
+- Line 960 [medium, service_title_manual_review_candidates]: `Expense by Dept`
   - Context: `'label' => 'Expense by Dept',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: expense_by_dept`
-- Line 966 [medium, service_title_manual_review_candidates]: `Budgets`
+- Line 967 [medium, service_title_manual_review_candidates]: `Budgets`
   - Context: `'label' => 'Budgets',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: budgets`
-- Line 974 [medium, service_title_manual_review_candidates]: `Commitments`
+- Line 975 [medium, service_title_manual_review_candidates]: `Commitments`
   - Context: `'label' => 'Commitments',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: commitments`
-- Line 982 [medium, service_title_manual_review_candidates]: `Fixed Assets`
+- Line 983 [medium, service_title_manual_review_candidates]: `Fixed Assets`
   - Context: `'label' => 'Fixed Assets',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: fixed_assets`
-- Line 990 [medium, service_title_manual_review_candidates]: `Tax Accounting`
+- Line 991 [medium, service_title_manual_review_candidates]: `Tax Accounting`
   - Context: `'label' => 'Tax Accounting',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: tax_accounting`
-- Line 998 [medium, service_title_manual_review_candidates]: `Receivables Workbench`
+- Line 999 [medium, service_title_manual_review_candidates]: `Receivables Workbench`
   - Context: `'label' => 'Receivables Workbench',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: receivables_workbench`
-- Line 1006 [medium, service_title_manual_review_candidates]: `Fiscal Years`
+- Line 1007 [medium, service_title_manual_review_candidates]: `Fiscal Years`
   - Context: `'label' => 'Fiscal Years',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: fiscal_years`
-- Line 1013 [medium, service_title_manual_review_candidates]: `Accounting Periods`
+- Line 1014 [medium, service_title_manual_review_candidates]: `Accounting Periods`
   - Context: `'label' => 'Accounting Periods',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: accounting_periods`
-- Line 1020 [medium, service_title_manual_review_candidates]: `Accounting Settings`
+- Line 1021 [medium, service_title_manual_review_candidates]: `Accounting Settings`
   - Context: `'label' => 'Accounting Settings',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: accounting_settings`
-- Line 1028 [medium, service_title_manual_review_candidates]: `Basic Posting Bridge`
+- Line 1029 [medium, service_title_manual_review_candidates]: `Basic Posting Bridge`
   - Context: `'label' => 'Basic Posting Bridge',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: basic_posting_bridge`
-- Line 1036 [medium, service_title_manual_review_candidates]: `Posting Templates`
+- Line 1037 [medium, service_title_manual_review_candidates]: `Posting Templates`
   - Context: `'label' => 'Posting Templates',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: posting_templates`
-- Line 1052 [medium, service_title_manual_review_candidates]: `Subledger Reconciliation`
+- Line 1053 [medium, service_title_manual_review_candidates]: `Subledger Reconciliation`
   - Context: `'label' => 'Subledger Reconciliation',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: subledger_reconciliation`
-- Line 1060 [medium, service_title_manual_review_candidates]: `Payroll Posting`
+- Line 1061 [medium, service_title_manual_review_candidates]: `Payroll Posting`
   - Context: `'label' => 'Payroll Posting',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: payroll_posting`
-- Line 1068 [medium, service_title_manual_review_candidates]: `Bank Accounts`
+- Line 1069 [medium, service_title_manual_review_candidates]: `Bank Accounts`
   - Context: `'label' => 'Bank Accounts',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: bank_accounts`
-- Line 1076 [medium, service_title_manual_review_candidates]: `Statement Imports`
+- Line 1077 [medium, service_title_manual_review_candidates]: `Statement Imports`
   - Context: `'label' => 'Statement Imports',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: statement_imports`
-- Line 1084 [medium, service_title_manual_review_candidates]: `Bank Reconciliation`
+- Line 1085 [medium, service_title_manual_review_candidates]: `Bank Reconciliation`
   - Context: `'label' => 'Bank Reconciliation',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: bank_reconciliation`
-- Line 1092 [medium, service_title_manual_review_candidates]: `Receive Payments`
+- Line 1093 [medium, service_title_manual_review_candidates]: `Receive Payments`
   - Context: `'label' => 'Receive Payments',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: receive_payments`
-- Line 1100 [medium, service_title_manual_review_candidates]: `Income`
+- Line 1101 [medium, service_title_manual_review_candidates]: `Income`
   - Context: `'label' => 'Income',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: income`
-- Line 1107 [medium, service_title_manual_review_candidates]: `Expenses`
+- Line 1108 [medium, service_title_manual_review_candidates]: `Expenses`
   - Context: `'label' => 'Expenses',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: expenses`
-- Line 1114 [medium, service_title_manual_review_candidates]: `Invoices`
+- Line 1115 [medium, service_title_manual_review_candidates]: `Invoices`
   - Context: `'label' => 'Invoices',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: invoices`
-- Line 1122 [medium, service_title_manual_review_candidates]: `Counter Sale`
+- Line 1123 [medium, service_title_manual_review_candidates]: `Counter Sale`
   - Context: `'label' => 'Counter Sale',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: counter_sale`
-- Line 1130 [medium, service_title_manual_review_candidates]: `Payments`
+- Line 1131 [medium, service_title_manual_review_candidates]: `Payments`
   - Context: `'label' => 'Payments',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: payments`
-- Line 1138 [medium, service_title_manual_review_candidates]: `Credit Notes`
+- Line 1139 [medium, service_title_manual_review_candidates]: `Credit Notes`
   - Context: `'label' => 'Credit Notes',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: credit_notes`
-- Line 1146 [medium, service_title_manual_review_candidates]: `Corporate Sponsors`
+- Line 1147 [medium, service_title_manual_review_candidates]: `Corporate Sponsors`
   - Context: `'label' => 'Corporate Sponsors',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: corporate_sponsors`
-- Line 1154 [medium, service_title_manual_review_candidates]: `AR Aging`
+- Line 1155 [medium, service_title_manual_review_candidates]: `AR Aging`
   - Context: `'label' => 'AR Aging',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: ar_aging`
-- Line 1162 [medium, service_title_manual_review_candidates]: `Supplier Payables`
+- Line 1163 [medium, service_title_manual_review_candidates]: `Supplier Payables`
   - Context: `'label' => 'Supplier Payables',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: supplier_payables`
-- Line 1169 [medium, service_title_manual_review_candidates]: `Supplier Payments`
+- Line 1170 [medium, service_title_manual_review_candidates]: `Supplier Payments`
   - Context: `'label' => 'Supplier Payments',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: supplier_payments`
-- Line 1176 [medium, service_title_manual_review_candidates]: `AP Aging`
+- Line 1177 [medium, service_title_manual_review_candidates]: `AP Aging`
   - Context: `'label' => 'AP Aging',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: ap_aging`
-- Line 1183 [medium, service_title_manual_review_candidates]: `Discount Report`
+- Line 1184 [medium, service_title_manual_review_candidates]: `Discount Report`
   - Context: `'label' => 'Discount Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: discount_report`
-- Line 1191 [medium, service_title_manual_review_candidates]: `Patient Statements`
+- Line 1192 [medium, service_title_manual_review_candidates]: `Patient Statements`
   - Context: `'label' => 'Patient Statements',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: patient_statements`
-- Line 1199 [medium, service_title_manual_review_candidates]: `Daily Collection`
+- Line 1200 [medium, service_title_manual_review_candidates]: `Daily Collection`
   - Context: `'label' => 'Daily Collection',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: daily_collection`
-- Line 1206 [medium, service_title_manual_review_candidates]: `Reconciliation`
+- Line 1207 [medium, service_title_manual_review_candidates]: `Reconciliation`
   - Context: `'label' => 'Reconciliation',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: reconciliation`
-- Line 1213 [medium, service_title_manual_review_candidates]: `Account Categories`
+- Line 1214 [medium, service_title_manual_review_candidates]: `Account Categories`
   - Context: `'label' => 'Account Categories',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: account_categories`
-- Line 1222 [medium, service_title_manual_review_candidates]: `HR & Payroll`
+- Line 1223 [medium, service_title_manual_review_candidates]: `HR & Payroll`
   - Context: `'title' => 'HR & Payroll',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: hr_payroll`
-- Line 1225 [medium, service_title_manual_review_candidates]: `Employees`
+- Line 1226 [medium, service_title_manual_review_candidates]: `Employees`
   - Context: `'label' => 'Employees',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: employees`
-- Line 1233 [medium, service_title_manual_review_candidates]: `Attendance`
+- Line 1234 [medium, service_title_manual_review_candidates]: `Attendance`
   - Context: `'label' => 'Attendance',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: attendance`
-- Line 1241 [medium, service_title_manual_review_candidates]: `Leave Requests`
+- Line 1242 [medium, service_title_manual_review_candidates]: `Leave Requests`
   - Context: `'label' => 'Leave Requests',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: leave_requests`
-- Line 1249 [medium, service_title_manual_review_candidates]: `Payroll`
+- Line 1250 [medium, service_title_manual_review_candidates]: `Payroll`
   - Context: `'label' => 'Payroll',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: payroll`
-- Line 1257 [medium, service_title_manual_review_candidates]: `HR Configuration`
+- Line 1258 [medium, service_title_manual_review_candidates]: `HR Configuration`
   - Context: `'label' => 'HR Configuration',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: hr_configuration`
-- Line 1267 [medium, service_title_manual_review_candidates]: `Reports`
+- Line 1268 [medium, service_title_manual_review_candidates]: `Reports`
   - Context: `'title' => 'Reports',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: reports`
-- Line 1270 [medium, service_title_manual_review_candidates]: `Reports Hub`
+- Line 1271 [medium, service_title_manual_review_candidates]: `Reports Hub`
   - Context: `'label' => 'Reports Hub',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: reports_hub`
-- Line 1278 [medium, service_title_manual_review_candidates]: `Statistical Reports`
+- Line 1279 [medium, service_title_manual_review_candidates]: `Statistical Reports`
   - Context: `'label' => 'Statistical Reports',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: statistical_reports`
-- Line 1284 [medium, service_title_manual_review_candidates]: `Analytics Dashboard`
+- Line 1285 [medium, service_title_manual_review_candidates]: `Analytics Dashboard`
   - Context: `['label' => 'Analytics Dashboard', 'route' => 'admin.statistics.dashboard', 'active_patterns' => ['admin.statistics.dashboard'], 'permission' => 'statistics.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: analytics_dashboard`
-- Line 1285 [medium, service_title_manual_review_candidates]: `Hospital Activity`
+- Line 1286 [medium, service_title_manual_review_candidates]: `Hospital Activity`
   - Context: `['label' => 'Hospital Activity', 'route' => 'admin.statistics.activity', 'active_patterns' => ['admin.statistics.activity'], 'permission' => 'statistics.activity.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: hospital_activity`
-- Line 1286 [medium, service_title_manual_review_candidates]: `Diagnosis Statistics`
+- Line 1287 [medium, service_title_manual_review_candidates]: `Diagnosis Statistics`
   - Context: `['label' => 'Diagnosis Statistics', 'route' => 'admin.statistics.diagnoses', 'active_patterns' => ['admin.statistics.diagnoses'], 'permission' => 'statistics.diagnosis.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: diagnosis_statistics`
-- Line 1287 [medium, service_title_manual_review_candidates]: `Complaint Statistics`
+- Line 1288 [medium, service_title_manual_review_candidates]: `Complaint Statistics`
   - Context: `['label' => 'Complaint Statistics', 'route' => 'admin.statistics.complaints', 'active_patterns' => ['admin.statistics.complaints'], 'permission' => 'statistics.complaints.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: complaint_statistics`
-- Line 1288 [medium, service_title_manual_review_candidates]: `Consultation Statistics`
+- Line 1289 [medium, service_title_manual_review_candidates]: `Consultation Statistics`
   - Context: `['label' => 'Consultation Statistics', 'route' => 'admin.statistics.consultations', 'active_patterns' => ['admin.statistics.consultations'], 'permission' => 'statistics.consultation.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: consultation_statistics`
-- Line 1289 [medium, service_title_manual_review_candidates]: `Pharmacy Statistics`
+- Line 1290 [medium, service_title_manual_review_candidates]: `Pharmacy Statistics`
   - Context: `['label' => 'Pharmacy Statistics', 'route' => 'admin.statistics.pharmacy', 'active_patterns' => ['admin.statistics.pharmacy'], 'permission' => 'statistics.pharmacy.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: pharmacy_statistics`
-- Line 1290 [medium, service_title_manual_review_candidates]: `Investigation Statistics`
+- Line 1291 [medium, service_title_manual_review_candidates]: `Investigation Statistics`
   - Context: `['label' => 'Investigation Statistics', 'route' => 'admin.statistics.investigations', 'active_patterns' => ['admin.statistics.investigations'], 'permission' => 'statistics.investigations.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: investigation_statistics`
-- Line 1291 [medium, service_title_manual_review_candidates]: `Procedure / Theatre`
+- Line 1292 [medium, service_title_manual_review_candidates]: `Procedure / Theatre`
   - Context: `['label' => 'Procedure / Theatre', 'route' => 'admin.statistics.procedures', 'active_patterns' => ['admin.statistics.procedures'], 'permission' => 'statistics.procedures.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: procedure_theatre`
-- Line 1292 [medium, service_title_manual_review_candidates]: `Emergency Statistics`
+- Line 1293 [medium, service_title_manual_review_candidates]: `Emergency Statistics`
   - Context: `['label' => 'Emergency Statistics', 'route' => 'admin.statistics.emergency', 'active_patterns' => ['admin.statistics.emergency'], 'permission' => 'statistics.emergency.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: emergency_statistics`
-- Line 1293 [medium, service_title_manual_review_candidates]: `Admission Statistics`
+- Line 1294 [medium, service_title_manual_review_candidates]: `Admission Statistics`
   - Context: `['label' => 'Admission Statistics', 'route' => 'admin.statistics.admission', 'active_patterns' => ['admin.statistics.admission'], 'permission' => 'statistics.admission.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: admission_statistics`
-- Line 1294 [medium, service_title_manual_review_candidates]: `MAR Statistics`
+- Line 1295 [medium, service_title_manual_review_candidates]: `MAR Statistics`
   - Context: `['label' => 'MAR Statistics', 'route' => 'admin.statistics.mar', 'active_patterns' => ['admin.statistics.mar'], 'permission' => 'statistics.mar.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: mar_statistics`
-- Line 1295 [medium, service_title_manual_review_candidates]: `Billing Statistics`
+- Line 1296 [medium, service_title_manual_review_candidates]: `Billing Statistics`
   - Context: `['label' => 'Billing Statistics', 'route' => 'admin.statistics.billing', 'active_patterns' => ['admin.statistics.billing'], 'permission' => 'statistics.billing.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: billing_statistics`
-- Line 1296 [medium, service_title_manual_review_candidates]: `Claims Statistics`
+- Line 1297 [medium, service_title_manual_review_candidates]: `Claims Statistics`
   - Context: `['label' => 'Claims Statistics', 'route' => 'admin.statistics.claims', 'active_patterns' => ['admin.statistics.claims'], 'permission' => 'statistics.claims.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: claims_statistics`
-- Line 1297 [medium, service_title_manual_review_candidates]: `Stock Statistics`
+- Line 1298 [medium, service_title_manual_review_candidates]: `Stock Statistics`
   - Context: `['label' => 'Stock Statistics', 'route' => 'admin.statistics.stock', 'active_patterns' => ['admin.statistics.stock'], 'permission' => 'statistics.stock.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: stock_statistics`
-- Line 1298 [medium, service_title_manual_review_candidates]: `Blood Bank Statistics`
+- Line 1299 [medium, service_title_manual_review_candidates]: `Blood Bank Statistics`
   - Context: `['label' => 'Blood Bank Statistics', 'route' => 'admin.statistics.blood-bank', 'active_patterns' => ['admin.statistics.blood-bank'], 'permission' => 'statistics.blood_bank.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: blood_bank_statistics`
-- Line 1299 [medium, service_title_manual_review_candidates]: `Staff Performance`
+- Line 1300 [medium, service_title_manual_review_candidates]: `Staff Performance`
   - Context: `['label' => 'Staff Performance', 'route' => 'admin.statistics.staff-performance', 'active_patterns' => ['admin.statistics.staff-performance'], 'permission' => 'statistics.staff_performance.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: staff_performance`
-- Line 1303 [medium, service_title_manual_review_candidates]: `Financial Reports`
+- Line 1304 [medium, service_title_manual_review_candidates]: `Financial Reports`
   - Context: `'label' => 'Financial Reports',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: financial_reports`
-- Line 1318 [medium, service_title_manual_review_candidates]: `Reports Hub`
+- Line 1319 [medium, service_title_manual_review_candidates]: `Reports Hub`
   - Context: `['label' => 'Reports Hub', 'route' => 'admin.reports.index', 'active_patterns' => ['admin.reports.index'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: reports_hub`
-- Line 1319 [medium, service_title_manual_review_candidates]: `Reports Dashboard`
+- Line 1320 [medium, service_title_manual_review_candidates]: `Reports Dashboard`
   - Context: `['label' => 'Reports Dashboard', 'route' => 'admin.reports.dashboard', 'active_patterns' => ['admin.reports.dashboard'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: reports_dashboard`
-- Line 1320 [medium, service_title_manual_review_candidates]: `Income Report`
+- Line 1321 [medium, service_title_manual_review_candidates]: `Income Report`
   - Context: `['label' => 'Income Report', 'route' => 'admin.reports.income', 'active_patterns' => ['admin.reports.income'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: income_report`
-- Line 1321 [medium, service_title_manual_review_candidates]: `Daily Collection`
+- Line 1322 [medium, service_title_manual_review_candidates]: `Daily Collection`
   - Context: `['label' => 'Daily Collection', 'route' => 'admin.reports.daily-collection', 'active_patterns' => ['admin.reports.daily-collection'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: daily_collection`
-- Line 1322 [medium, service_title_manual_review_candidates]: `Insurance Claims Report`
+- Line 1323 [medium, service_title_manual_review_candidates]: `Insurance Claims Report`
   - Context: `['label' => 'Insurance Claims Report', 'route' => 'admin.reports.insurance-claims', 'active_patterns' => ['admin.reports.insurance-claims'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: insurance_claims_report`
-- Line 1323 [medium, service_title_manual_review_candidates]: `Billing Operations`
+- Line 1324 [medium, service_title_manual_review_candidates]: `Billing Operations`
   - Context: `['label' => 'Billing Operations', 'route' => 'admin.reports.billing', 'active_patterns' => ['admin.reports.billing'], 'permission' => 'reports.billing', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: billing_operations`
-- Line 1324 [medium, service_title_manual_review_candidates]: `Claims Report`
+- Line 1325 [medium, service_title_manual_review_candidates]: `Claims Report`
   - Context: `['label' => 'Claims Report', 'route' => 'admin.reports.claims', 'active_patterns' => ['admin.reports.claims'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: claims_report`
-- Line 1325 [medium, service_title_manual_review_candidates]: `Patient Statement`
+- Line 1326 [medium, service_title_manual_review_candidates]: `Patient Statement`
   - Context: `['label' => 'Patient Statement', 'route' => 'admin.reports.statement-search', 'active_patterns' => ['admin.reports.statement-search', 'admin.reports.patient-statement'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: patient_statement`
-- Line 1329 [medium, service_title_manual_review_candidates]: `Clinical Reports`
+- Line 1330 [medium, service_title_manual_review_candidates]: `Clinical Reports`
   - Context: `'label' => 'Clinical Reports',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: clinical_reports`
-- Line 1351 [medium, service_title_manual_review_candidates]: `Patient Report`
+- Line 1352 [medium, service_title_manual_review_candidates]: `Patient Report`
   - Context: `['label' => 'Patient Report', 'route' => 'admin.reports.patients', 'active_patterns' => ['admin.reports.patients'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: patient_report`
-- Line 1352 [medium, service_title_manual_review_candidates]: `Visit Report`
+- Line 1353 [medium, service_title_manual_review_candidates]: `Visit Report`
   - Context: `['label' => 'Visit Report', 'route' => 'admin.reports.visits', 'active_patterns' => ['admin.reports.visits'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: visit_report`
-- Line 1353 [medium, service_title_manual_review_candidates]: `Consultations`
+- Line 1354 [medium, service_title_manual_review_candidates]: `Consultations`
   - Context: `['label' => 'Consultations', 'route' => 'admin.reports.consultations', 'active_patterns' => ['admin.reports.consultations'], 'permission' => 'reports.consultations', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: consultations`
-- Line 1354 [medium, service_title_manual_review_candidates]: `Diagnoses`
+- Line 1355 [medium, service_title_manual_review_candidates]: `Diagnoses`
   - Context: `['label' => 'Diagnoses', 'route' => 'admin.reports.diagnoses', 'active_patterns' => ['admin.reports.diagnoses'], 'permission' => 'reports.diagnoses', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: diagnoses`
-- Line 1355 [medium, service_title_manual_review_candidates]: `Complaints`
+- Line 1356 [medium, service_title_manual_review_candidates]: `Complaints`
   - Context: `['label' => 'Complaints', 'route' => 'admin.reports.complaints', 'active_patterns' => ['admin.reports.complaints'], 'permission' => 'reports.complaints', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: complaints`
-- Line 1356 [medium, service_title_manual_review_candidates]: `Consultation Stats`
+- Line 1357 [medium, service_title_manual_review_candidates]: `Consultation Stats`
   - Context: `['label' => 'Consultation Stats', 'route' => 'admin.reports.consultation-stats', 'active_patterns' => ['admin.reports.consultation-stats'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: consultation_stats`
-- Line 1357 [medium, service_title_manual_review_candidates]: `Investigations`
+- Line 1358 [medium, service_title_manual_review_candidates]: `Investigations`
   - Context: `['label' => 'Investigations', 'route' => 'admin.reports.investigations', 'active_patterns' => ['admin.reports.investigations'], 'permission' => 'reports.investigations', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: investigations`
-- Line 1358 [medium, service_title_manual_review_candidates]: `Procedures`
+- Line 1359 [medium, service_title_manual_review_candidates]: `Procedures`
   - Context: `['label' => 'Procedures', 'route' => 'admin.reports.procedures', 'active_patterns' => ['admin.reports.procedures'], 'permission' => 'reports.procedures', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: procedures`
-- Line 1359 [medium, service_title_manual_review_candidates]: `Theatre`
+- Line 1360 [medium, service_title_manual_review_candidates]: `Theatre`
   - Context: `['label' => 'Theatre', 'route' => 'admin.reports.theatre', 'active_patterns' => ['admin.reports.theatre'], 'permission' => 'reports.theatre', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: theatre`
-- Line 1360 [medium, service_title_manual_review_candidates]: `Emergency`
+- Line 1361 [medium, service_title_manual_review_candidates]: `Emergency`
   - Context: `['label' => 'Emergency', 'route' => 'admin.reports.emergency', 'active_patterns' => ['admin.reports.emergency'], 'permission' => 'reports.emergency', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: emergency`
-- Line 1361 [medium, service_title_manual_review_candidates]: `Admissions Report`
+- Line 1362 [medium, service_title_manual_review_candidates]: `Admissions Report`
   - Context: `['label' => 'Admissions Report', 'route' => 'admin.reports.admissions', 'active_patterns' => ['admin.reports.admissions'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: admissions_report`
-- Line 1362 [medium, service_title_manual_review_candidates]: `Admission Operations`
+- Line 1363 [medium, service_title_manual_review_candidates]: `Admission Operations`
   - Context: `['label' => 'Admission Operations', 'route' => 'admin.reports.admission', 'active_patterns' => ['admin.reports.admission'], 'permission' => 'reports.admission', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: admission_operations`
-- Line 1363 [medium, service_title_manual_review_candidates]: `Medication Administration`
+- Line 1364 [medium, service_title_manual_review_candidates]: `Medication Administration`
   - Context: `['label' => 'Medication Administration', 'route' => 'admin.reports.mar', 'active_patterns' => ['admin.reports.mar'], 'permission' => 'reports.mar', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: medication_administration`
-- Line 1364 [medium, service_title_manual_review_candidates]: `Discharges Report`
+- Line 1365 [medium, service_title_manual_review_candidates]: `Discharges Report`
   - Context: `['label' => 'Discharges Report', 'route' => 'admin.reports.discharges', 'active_patterns' => ['admin.reports.discharges'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: discharges_report`
-- Line 1365 [medium, service_title_manual_review_candidates]: `Investigation Revenue`
+- Line 1366 [medium, service_title_manual_review_candidates]: `Investigation Revenue`
   - Context: `['label' => 'Investigation Revenue', 'route' => 'admin.reports.investigation-revenue', 'active_patterns' => ['admin.reports.investigation-revenue'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: investigation_revenue`
-- Line 1369 [medium, service_title_manual_review_candidates]: `Pharmacy & HR`
+- Line 1370 [medium, service_title_manual_review_candidates]: `Pharmacy & HR`
   - Context: `'label' => 'Pharmacy & HR',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: pharmacy_hr`
-- Line 1385 [medium, service_title_manual_review_candidates]: `Pharmacy Operations`
+- Line 1386 [medium, service_title_manual_review_candidates]: `Pharmacy Operations`
   - Context: `['label' => 'Pharmacy Operations', 'route' => 'admin.reports.pharmacy', 'active_patterns' => ['admin.reports.pharmacy'], 'permission' => 'reports.pharmacy', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: pharmacy_operations`
-- Line 1386 [medium, service_title_manual_review_candidates]: `Pharmacy Sales`
+- Line 1387 [medium, service_title_manual_review_candidates]: `Pharmacy Sales`
   - Context: `['label' => 'Pharmacy Sales', 'route' => 'admin.reports.pharmacy-sales', 'active_patterns' => ['admin.reports.pharmacy-sales'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: pharmacy_sales`
-- Line 1387 [medium, service_title_manual_review_candidates]: `Sales Summary`
+- Line 1388 [medium, service_title_manual_review_candidates]: `Sales Summary`
   - Context: `['label' => 'Sales Summary', 'route' => 'admin.reports.pharmacy-sales-summary', 'active_patterns' => ['admin.reports.pharmacy-sales-summary'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: sales_summary`
-- Line 1388 [medium, service_title_manual_review_candidates]: `Stock Operations`
+- Line 1389 [medium, service_title_manual_review_candidates]: `Stock Operations`
   - Context: `['label' => 'Stock Operations', 'route' => 'admin.reports.stock', 'active_patterns' => ['admin.reports.stock'], 'permission' => 'reports.stock', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: stock_operations`
-- Line 1389 [medium, service_title_manual_review_candidates]: `Blood Bank`
+- Line 1390 [medium, service_title_manual_review_candidates]: `Blood Bank`
   - Context: `['label' => 'Blood Bank', 'route' => 'admin.reports.blood-bank', 'active_patterns' => ['admin.reports.blood-bank'], 'permission' => 'reports.blood_bank', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: blood_bank`
-- Line 1390 [medium, service_title_manual_review_candidates]: `Stock Valuation`
+- Line 1391 [medium, service_title_manual_review_candidates]: `Stock Valuation`
   - Context: `['label' => 'Stock Valuation', 'route' => 'admin.reports.stock-valuation', 'active_patterns' => ['admin.reports.stock-valuation'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: stock_valuation`
-- Line 1391 [medium, service_title_manual_review_candidates]: `Expired Stock`
+- Line 1392 [medium, service_title_manual_review_candidates]: `Expired Stock`
   - Context: `['label' => 'Expired Stock', 'route' => 'admin.reports.expired-stock', 'active_patterns' => ['admin.reports.expired-stock'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: expired_stock`
-- Line 1392 [medium, service_title_manual_review_candidates]: `Leave Report`
+- Line 1393 [medium, service_title_manual_review_candidates]: `Leave Report`
   - Context: `['label' => 'Leave Report', 'route' => 'admin.reports.leave', 'active_patterns' => ['admin.reports.leave'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: leave_report`
-- Line 1393 [medium, service_title_manual_review_candidates]: `Payroll Report`
+- Line 1394 [medium, service_title_manual_review_candidates]: `Payroll Report`
   - Context: `['label' => 'Payroll Report', 'route' => 'admin.reports.payroll', 'active_patterns' => ['admin.reports.payroll'], 'permission' => 'reports.view', 'module' => 'reports'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: payroll_report`
-- Line 1399 [medium, service_title_manual_review_candidates]: `Administration`
+- Line 1400 [medium, service_title_manual_review_candidates]: `Administration`
   - Context: `'title' => 'Administration',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: administration`
-- Line 1402 [medium, service_title_manual_review_candidates]: `Users`
+- Line 1403 [medium, service_title_manual_review_candidates]: `Users`
   - Context: `'label' => 'Users',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: users`
-- Line 1408 [medium, service_title_manual_review_candidates]: `All Users`
+- Line 1409 [medium, service_title_manual_review_candidates]: `All Users`
   - Context: `['label' => 'All Users', 'route' => 'admin.users.index', 'active_patterns' => ['admin.users.index'], 'permission' => 'users.view', 'module' => 'users'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: all_users`
-- Line 1409 [medium, service_title_manual_review_candidates]: `Add User`
+- Line 1410 [medium, service_title_manual_review_candidates]: `Add User`
   - Context: `['label' => 'Add User', 'route' => 'admin.users.create', 'active_patterns' => ['admin.users.create'], 'permission' => 'users.view', 'module' => 'users'],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: add_user`
-- Line 1413 [medium, service_title_manual_review_candidates]: `Roles & Permissions`
+- Line 1414 [medium, service_title_manual_review_candidates]: `Roles & Permissions`
   - Context: `'label' => 'Roles & Permissions',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: roles_permissions`
-- Line 1421 [medium, service_title_manual_review_candidates]: `Permissions Dashboard`
+- Line 1422 [medium, service_title_manual_review_candidates]: `Permissions Dashboard`
   - Context: `'label' => 'Permissions Dashboard',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: permissions_dashboard`
-- Line 1429 [medium, service_title_manual_review_candidates]: `Departments`
+- Line 1430 [medium, service_title_manual_review_candidates]: `Departments`
   - Context: `'label' => 'Departments',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: departments`
-- Line 1437 [medium, service_title_manual_review_candidates]: `Designations`
+- Line 1438 [medium, service_title_manual_review_candidates]: `Designations`
   - Context: `'label' => 'Designations',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: designations`
-- Line 1447 [medium, service_title_manual_review_candidates]: `Configurations`
+- Line 1448 [medium, service_title_manual_review_candidates]: `Configurations`
   - Context: `'title' => 'Configurations',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: configurations`
-- Line 1450 [medium, service_title_manual_review_candidates]: `Services`
+- Line 1451 [medium, service_title_manual_review_candidates]: `Services`
   - Context: `'label' => 'Services',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: services`
-- Line 1458 [medium, service_title_manual_review_candidates]: `Specialties`
+- Line 1459 [medium, service_title_manual_review_candidates]: `Specialties`
   - Context: `'label' => 'Specialties',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: specialties`
-- Line 1466 [medium, service_title_manual_review_candidates]: `Insurance Providers`
+- Line 1467 [medium, service_title_manual_review_candidates]: `Insurance Providers`
   - Context: `'label' => 'Insurance Providers',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: insurance_providers`
-- Line 1474 [medium, service_title_manual_review_candidates]: `Medical Patterns`
+- Line 1475 [medium, service_title_manual_review_candidates]: `Medical Patterns`
   - Context: `'label' => 'Medical Patterns',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: medical_patterns`
-- Line 1482 [medium, service_title_manual_review_candidates]: `ICD-10 Codes`
+- Line 1483 [medium, service_title_manual_review_candidates]: `ICD-10 Codes`
   - Context: `'label' => 'ICD-10 Codes',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: icd_10_codes`
-- Line 1489 [medium, service_title_manual_review_candidates]: `Analyzers`
+- Line 1490 [medium, service_title_manual_review_candidates]: `Analyzers`
   - Context: `'label' => 'Analyzers',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: analyzers`
-- Line 1497 [medium, service_title_manual_review_candidates]: `Analyzer Messages`
+- Line 1498 [medium, service_title_manual_review_candidates]: `Analyzer Messages`
   - Context: `'label' => 'Analyzer Messages',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: analyzer_messages`
-- Line 1507 [medium, service_title_manual_review_candidates]: `Integrations`
+- Line 1508 [medium, service_title_manual_review_candidates]: `Integrations`
   - Context: `'title' => 'Integrations',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: integrations`
-- Line 1510 [medium, service_title_manual_review_candidates]: `SMS Gateway`
+- Line 1511 [medium, service_title_manual_review_candidates]: `SMS Gateway`
   - Context: `'label' => 'SMS Gateway',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: sms_gateway`
-- Line 1518 [medium, service_title_manual_review_candidates]: `Payment Gateway`
+- Line 1519 [medium, service_title_manual_review_candidates]: `Payment Gateway`
   - Context: `'label' => 'Payment Gateway',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: payment_gateway`
-- Line 1526 [medium, service_title_manual_review_candidates]: `Payment Reconciliation`
+- Line 1527 [medium, service_title_manual_review_candidates]: `Payment Reconciliation`
   - Context: `'label' => 'Payment Reconciliation',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: payment_reconciliation`
-- Line 1534 [medium, service_title_manual_review_candidates]: `SMS Queue`
+- Line 1535 [medium, service_title_manual_review_candidates]: `SMS Queue`
   - Context: `'label' => 'SMS Queue',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: sms_queue`
-- Line 1542 [medium, service_title_manual_review_candidates]: `SMS Events`
+- Line 1543 [medium, service_title_manual_review_candidates]: `SMS Events`
   - Context: `'label' => 'SMS Events',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: sms_events`
-- Line 1550 [medium, service_title_manual_review_candidates]: `Provider Health`
+- Line 1551 [medium, service_title_manual_review_candidates]: `Provider Health`
   - Context: `'label' => 'Provider Health',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: provider_health`
-- Line 1557 [medium, service_title_manual_review_candidates]: `Go-Live Checklists`
+- Line 1558 [medium, service_title_manual_review_candidates]: `Go-Live Checklists`
   - Context: `'label' => 'Go-Live Checklists',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: go_live_checklists`
-- Line 1564 [medium, service_title_manual_review_candidates]: `Scheduler Status`
+- Line 1565 [medium, service_title_manual_review_candidates]: `Scheduler Status`
   - Context: `'label' => 'Scheduler Status',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: scheduler_status`
-- Line 1576 [medium, service_title_manual_review_candidates]: `Notifications`
+- Line 1577 [medium, service_title_manual_review_candidates]: `Notifications`
   - Context: `//             'label' => 'Notifications',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: notifications`
-- Line 1588 [medium, service_title_manual_review_candidates]: `Settings`
+- Line 1589 [medium, service_title_manual_review_candidates]: `Settings`
   - Context: `'title' => 'Settings',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: settings`
-- Line 1591 [medium, service_title_manual_review_candidates]: `Settings`
+- Line 1592 [medium, service_title_manual_review_candidates]: `Settings`
   - Context: `'label' => 'Settings',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: settings`
-- Line 1596 [medium, service_title_manual_review_candidates]: `Organization`
+- Line 1597 [medium, service_title_manual_review_candidates]: `Organization`
   - Context: `'label' => 'Organization',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: organization`
-- Line 1604 [medium, service_title_manual_review_candidates]: `Invoice Settings`
+- Line 1605 [medium, service_title_manual_review_candidates]: `Invoice Settings`
   - Context: `'label' => 'Invoice Settings',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: invoice_settings`
-- Line 1612 [medium, service_title_manual_review_candidates]: `Payment Methods`
+- Line 1613 [medium, service_title_manual_review_candidates]: `Payment Methods`
   - Context: `'label' => 'Payment Methods',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: payment_methods`
-- Line 1620 [medium, service_title_manual_review_candidates]: `Activity Log`
+- Line 1621 [medium, service_title_manual_review_candidates]: `Activity Log`
   - Context: `'label' => 'Activity Log',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: activity_log`
-- Line 1628 [medium, service_title_manual_review_candidates]: `Complaint Catalogue`
+- Line 1629 [medium, service_title_manual_review_candidates]: `Complaint Catalogue`
   - Context: `'label' => 'Complaint Catalogue',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: complaint_catalogue`
-- Line 1636 [medium, service_title_manual_review_candidates]: `Modules`
+- Line 1637 [medium, service_title_manual_review_candidates]: `Modules`
   - Context: `'label' => 'Modules',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: modules`
-- Line 1685 [medium, service_title_manual_review_candidates]: `Billing & Collections`
+- Line 1690 [medium, service_title_manual_review_candidates]: `Billing & Collections`
   - Context: `'title' => 'Billing & Collections',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: billing_collections`
-- Line 1699 [medium, service_title_manual_review_candidates]: `Payment API Transactions`
+- Line 1704 [medium, service_title_manual_review_candidates]: `Payment API Transactions`
   - Context: `'label' => 'Payment API Transactions',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: payment_api_transactions`
-- Line 1707 [medium, service_title_manual_review_candidates]: `Payment Request Links`
+- Line 1712 [medium, service_title_manual_review_candidates]: `Payment Request Links`
   - Context: `'label' => 'Payment Request Links',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: payment_request_links`
-- Line 1725 [medium, service_title_manual_review_candidates]: `Cashier Handover`
+- Line 1730 [medium, service_title_manual_review_candidates]: `Cashier Handover`
   - Context: `'label' => 'Cashier Handover',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: cashier_handover`
-- Line 1732 [medium, service_title_manual_review_candidates]: `Basic Accounting`
+- Line 1737 [medium, service_title_manual_review_candidates]: `Basic Accounting`
   - Context: `$result[] = ['title' => 'Basic Accounting', 'items' => $basic];`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: basic_accounting`
-- Line 1735 [medium, service_title_manual_review_candidates]: `Advanced Accounting`
+- Line 1740 [medium, service_title_manual_review_candidates]: `Advanced Accounting`
   - Context: `'title' => 'Advanced Accounting',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: advanced_accounting`
-- Line 1788 [medium, service_title_manual_review_candidates]: `Main Menu`
+- Line 1793 [medium, service_title_manual_review_candidates]: `Main Menu`
   - Context: `'title' => 'Main Menu',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: main_menu`
-- Line 1791 [medium, service_title_manual_review_candidates]: `Dashboard`
+- Line 1796 [medium, service_title_manual_review_candidates]: `Dashboard`
   - Context: `'label' => 'Dashboard',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: dashboard`
-- Line 1799 [medium, service_title_manual_review_candidates]: `Consultation Queue`
+- Line 1804 [medium, service_title_manual_review_candidates]: `Consultation Queue`
   - Context: `'title' => 'Consultation Queue',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: consultation_queue`
-- Line 1802 [medium, service_title_manual_review_candidates]: `Consultation Queue`
+- Line 1807 [medium, service_title_manual_review_candidates]: `Consultation Queue`
   - Context: `'label' => 'Consultation Queue',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: consultation_queue`
-- Line 1809 [medium, service_title_manual_review_candidates]: `My Appointments`
+- Line 1814 [medium, service_title_manual_review_candidates]: `My Appointments`
   - Context: `'label' => 'My Appointments',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: my_appointments`
-- Line 1818 [medium, service_title_manual_review_candidates]: `Clinical Work`
+- Line 1823 [medium, service_title_manual_review_candidates]: `Clinical Work`
   - Context: `'title' => 'Clinical Work',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: clinical_work`
-- Line 1821 [medium, service_title_manual_review_candidates]: `Patients`
+- Line 1826 [medium, service_title_manual_review_candidates]: `Patients`
   - Context: `'label' => 'Patients',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: patients`
-- Line 1828 [medium, service_title_manual_review_candidates]: `Consultations`
+- Line 1833 [medium, service_title_manual_review_candidates]: `Consultations`
   - Context: `'label' => 'Consultations',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: consultations`
-- Line 1835 [medium, service_title_manual_review_candidates]: `Vitals`
+- Line 1840 [medium, service_title_manual_review_candidates]: `Vitals`
   - Context: `'label' => 'Vitals',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: vitals`
-- Line 1842 [medium, service_title_manual_review_candidates]: `Visits / OPD`
+- Line 1847 [medium, service_title_manual_review_candidates]: `Visits / OPD`
   - Context: `'label' => 'Visits / OPD',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: visits_opd`
-- Line 1849 [medium, service_title_manual_review_candidates]: `Admissions`
+- Line 1854 [medium, service_title_manual_review_candidates]: `Admissions`
   - Context: `'label' => 'Admissions',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: admissions`
-- Line 1858 [medium, service_title_manual_review_candidates]: `Requests & Results`
+- Line 1863 [medium, service_title_manual_review_candidates]: `Requests & Results`
   - Context: `'title' => 'Requests & Results',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: requests_results`
-- Line 1861 [medium, service_title_manual_review_candidates]: `Prescriptions`
+- Line 1866 [medium, service_title_manual_review_candidates]: `Prescriptions`
   - Context: `'label' => 'Prescriptions',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: prescriptions`
-- Line 1868 [medium, service_title_manual_review_candidates]: `Lab Requests`
+- Line 1873 [medium, service_title_manual_review_candidates]: `Lab Requests`
   - Context: `'label' => 'Lab Requests',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: lab_requests`
-- Line 1875 [medium, service_title_manual_review_candidates]: `Lab Results`
+- Line 1880 [medium, service_title_manual_review_candidates]: `Lab Results`
   - Context: `'label' => 'Lab Results',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: lab_results`
-- Line 1882 [medium, service_title_manual_review_candidates]: `Procedures`
+- Line 1887 [medium, service_title_manual_review_candidates]: `Procedures`
   - Context: `'label' => 'Procedures',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: procedures`
-- Line 1891 [medium, service_title_manual_review_candidates]: `Clinical Tools`
+- Line 1896 [medium, service_title_manual_review_candidates]: `Clinical Tools`
   - Context: `'title' => 'Clinical Tools',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: clinical_tools`
-- Line 1894 [medium, service_title_manual_review_candidates]: `ICD-10 Codes`
+- Line 1899 [medium, service_title_manual_review_candidates]: `ICD-10 Codes`
   - Context: `'label' => 'ICD-10 Codes',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: icd_10_codes`
-- Line 1901 [medium, service_title_manual_review_candidates]: `Procedure Catalogue`
+- Line 1906 [medium, service_title_manual_review_candidates]: `Procedure Catalogue`
   - Context: `'label' => 'Procedure Catalogue',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: procedure_catalogue`
-- Line 1908 [medium, service_title_manual_review_candidates]: `Investigation Catalogue`
+- Line 1913 [medium, service_title_manual_review_candidates]: `Investigation Catalogue`
   - Context: `'label' => 'Investigation Catalogue',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: investigation_catalogue`
-- Line 1915 [medium, service_title_manual_review_candidates]: `Medical Patterns`
+- Line 1920 [medium, service_title_manual_review_candidates]: `Medical Patterns`
   - Context: `'label' => 'Medical Patterns',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: medical_patterns`
-- Line 1924 [medium, service_title_manual_review_candidates]: `Reports`
+- Line 1929 [medium, service_title_manual_review_candidates]: `Reports`
   - Context: `'title' => 'Reports',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: reports`
-- Line 1927 [medium, service_title_manual_review_candidates]: `Clinical Reports`
+- Line 1932 [medium, service_title_manual_review_candidates]: `Clinical Reports`
   - Context: `'label' => 'Clinical Reports',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: clinical_reports`
-- Line 1939 [medium, service_title_manual_review_candidates]: `Notifications`
+- Line 1944 [medium, service_title_manual_review_candidates]: `Notifications`
   - Context: `//             'label' => 'Notifications',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: notifications`
-- Line 1950 [medium, service_title_manual_review_candidates]: `Profile`
+- Line 1955 [medium, service_title_manual_review_candidates]: `Profile`
   - Context: `'title' => 'Profile',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: E - Translated downstream
   - Suggested key: `lang/{en,fr}/app.php :: profile`
-- Line 1953 [medium, service_title_manual_review_candidates]: `My Profile`
+- Line 1958 [medium, service_title_manual_review_candidates]: `My Profile`
   - Context: `'label' => 'My Profile',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
@@ -2850,40 +2850,55 @@ Date: 2026-06-24 01:45:30 +02:00
 
 ### `app/Services/VisitService.php`
 
-- Line 148 [medium, service_title_manual_review_candidates]: `Visit registered`
+- Line 149 [medium, service_title_manual_review_candidates]: `Visit registered`
   - Context: `'title' => 'Visit registered',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: visit_registered`
-- Line 239 [medium, service_title_manual_review_candidates]: `Consultation route created`
+- Line 246 [medium, service_title_manual_review_candidates]: `Consultation route created`
   - Context: `'title' => 'Consultation route created',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: consultation_route_created`
-- Line 590 [medium, service_title_manual_review_candidates]: `Triage completed`
+- Line 597 [medium, service_title_manual_review_candidates]: `Triage completed`
   - Context: `'title' => 'Triage completed',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: triage_completed`
 
+### `app/Services/VisitStatusFlowService.php`
+
+- Line 151 [medium, service_title_manual_review_candidates]: `Visit status changed`
+  - Context: `'title' => 'Visit status changed',`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: manual review
+  - Service review class: C - Stored canonical event/title
+  - Suggested key: `lang/{en,fr}/app.php :: visit_status_changed`
+- Line 227 [medium, service_title_manual_review_candidates]: `Visit scheduled`
+  - Context: `return 'Visit scheduled';`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: manual review
+  - Service review class: B - Internal audit/event text
+  - Suggested key: `lang/{en,fr}/app.php :: visit_scheduled`
+
 ### `app/Services/VisitWorkflowService.php`
 
-- Line 131 [medium, service_title_manual_review_candidates]: `Billing ready`
+- Line 151 [medium, service_title_manual_review_candidates]: `Billing ready`
   - Context: `'title' => 'Billing ready',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: billing_ready`
-- Line 141 [medium, service_title_manual_review_candidates]: `Payment completed`
+- Line 161 [medium, service_title_manual_review_candidates]: `Payment completed`
   - Context: `'title' => 'Payment completed',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: payment_completed`
-- Line 169 [medium, service_title_manual_review_candidates]: `Visit status changed`
+- Line 189 [medium, service_title_manual_review_candidates]: `Visit status changed`
   - Context: `'title' => 'Visit status changed',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
@@ -2959,7 +2974,7 @@ Date: 2026-06-24 01:45:30 +02:00
 
 ### `lang/en/common.php`
 
-- Line 66 [medium, language_file_candidates]: `Description`
+- Line 68 [medium, language_file_candidates]: `Description`
   - Context: `'description' => 'Description',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -3384,7 +3399,7 @@ Date: 2026-06-24 01:45:30 +02:00
 
 ### `lang/fr/common.php`
 
-- Line 66 [medium, language_file_candidates]: `Description`
+- Line 68 [medium, language_file_candidates]: `Description`
   - Context: `'description' => 'Description',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -3800,6 +3815,39 @@ Date: 2026-06-24 01:45:30 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/javascript.php :: from`
+
+### `resources/js/inertia.js`
+
+- Line 40 [high, known_false_positive_candidates]: `Close`
+  - Context: `<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/javascript.php :: close`
+- Line 225 [medium, known_false_positive_candidates]: `Cancel this invoice?`
+  - Context: `// Lets us migrate `onsubmit="return confirm('Cancel this invoice?')"` to a`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/javascript.php :: cancel_this_invoice`
+- Line 226 [high, known_false_positive_candidates]: `Cancel this invoice?`
+  - Context: `// drop-in `data-confirm="Cancel this invoice?"` attribute. The delegated`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/javascript.php :: cancel_this_invoice`
+- Line 231 [high, known_false_positive_candidates]: `Question shown as the message`
+  - Context: `//   data-confirm="Question shown as the message"`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/javascript.php :: question_shown_as_the_message`
+- Line 232 [high, known_false_positive_candidates]: `Heading (default:`
+  - Context: `//   data-confirm-title="Heading (default: 'Confirm action')"`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/javascript.php :: heading_default`
+- Line 312 [medium, known_false_positive_candidates]: `msg`
+  - Context: `// Walks the DOM and rewrites any inline `confirm('msg')` handlers to the`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/javascript.php :: msg`
 
 ### `resources/js/jquery.dataTables.min.js`
 
@@ -5102,7 +5150,7 @@ Date: 2026-06-24 01:45:30 +02:00
 
 ### `resources/views/admin/dashboards/index.blade.php`
 
-- Line 10 [high, known_false_positive_candidates]: `Preview dashboard`
+- Line 10 [high, demo_template_candidates]: `Preview dashboard`
   - Context: `<select name="as" class="form-select form-select-sm d-inline-block" style="width:auto" onchange="this.form.submit()" aria-label="Preview dashboard">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -6744,9 +6792,17 @@ Date: 2026-06-24 01:45:30 +02:00
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/complaints.php :: description`
 
+### `resources/views/components/consultation-preview.blade.php`
+
+- Line 258 [high, known_false_positive_candidates]: `SpO2:`
+  - Context: `<div><span class="lbl">SpO2:</span> {{ $latestVitals->spo2 ?? '-' }} %</div>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/common.php :: spo2`
+
 ### `resources/views/components/footer.blade.php`
 
-- Line 3 [high, known_false_positive_candidates]: `Preclinic`
+- Line 3 [high, demo_template_candidates]: `Preclinic`
   - Context: `<p class="text-dark mb-0"> <script>document.write(new Date().getFullYear())</script> &copy; <a href="javascript:void(0);" class="link-primary">Preclinic</a>, All Rights Reserved</p>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -16065,6 +16121,68 @@ Date: 2026-06-24 01:45:30 +02:00
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/common.php :: yes_delete`
 
+### `resources/views/components/patient-address-information-card.blade.php`
+
+- Line 56 [high, known_false_positive_candidates]: `Use device location`
+  - Context: `<button class="btn btn-outline-secondary" type="button" id="detectDigitalAddressBtn" title="Use device location">`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/common.php :: use_device_location`
+
+### `resources/views/components/patient-card.blade.php`
+
+- Line 81 [high, known_false_positive_candidates]: `Allergies`
+  - Context: `<small class="fw-semibold d-block">Allergies</small>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/common.php :: allergies`
+- Line 90 [high, known_false_positive_candidates]: `Chronic Conditions`
+  - Context: `<small class="fw-semibold d-block">Chronic Conditions</small>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/common.php :: chronic_conditions`
+- Line 110 [high, known_false_positive_candidates]: `Expired`
+  - Context: `<span class="badge bg-danger fs-11">Expired</span>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/common.php :: expired`
+- Line 138 [high, known_false_positive_candidates]: `Cash & Carry`
+  - Context: `<span class="fw-semibold">Cash &amp; Carry</span>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/common.php :: cash_carry`
+- Line 139 [high, known_false_positive_candidates]: `No active insurance for this visit`
+  - Context: `<small class="text-muted d-block">No active insurance for this visit</small>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/common.php :: no_active_insurance_for_this_visit`
+
+### `resources/views/components/patient-emergency-contacts-card.blade.php`
+
+- Line 42 [high, known_false_positive_candidates]: `Delete`
+  - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ec {{ $index === 0 ? 'd-none' : '' }}"><i class="ti ti-trash"></i></button>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/common.php :: delete`
+- Line 42 [high, known_false_positive_candidates]: `Delete`
+  - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ec {{ $index === 0 ? 'd-none' : '' }}"><i class="ti ti-trash"></i></button>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/common.php :: delete`
+
+### `resources/views/components/patient-registration-insurance-card.blade.php`
+
+- Line 26 [high, known_false_positive_candidates]: `Delete`
+  - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ins d-none"><i class="ti ti-trash"></i></button>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/common.php :: delete`
+- Line 26 [high, known_false_positive_candidates]: `Delete`
+  - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ins d-none"><i class="ti ti-trash"></i></button>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/common.php :: delete`
+
 ### `resources/views/components/settings-sidebar.blade.php`
 
 - Line 8 [high, demo_template_candidates]: `Account Settings`
@@ -16278,14 +16396,6 @@ Date: 2026-06-24 01:45:30 +02:00
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/common.php :: system_update`
 
-### `resources/views/consultations/history.blade.php`
-
-- Line 245 [high, known_false_positive_candidates]: `SpO2:`
-  - Context: `<div><span class="lbl">SpO2:</span> {{ $latestVitals->spo2 ?? '-' }} %</div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/consultations.php :: spo2`
-
 ### `resources/views/consultations/partials/summary-sections.blade.php`
 
 - Line 3 [high, known_false_positive_candidates]: `Department Session:`
@@ -16316,731 +16426,1502 @@ Date: 2026-06-24 01:45:30 +02:00
 
 ### `resources/views/consultations/show.blade.php`
 
-- Line 335 [high, known_false_positive_candidates]: `Read only`
+- Line 334 [high, known_false_positive_candidates]: `Read only`
   - Context: `<span class="badge bg-secondary">Read only</span>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: read_only`
-- Line 348 [high, known_false_positive_candidates]: `Chief Complaint`
+- Line 347 [high, known_false_positive_candidates]: `Chief Complaint`
   - Context: `<div class="text-muted small">Chief Complaint</div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: chief_complaint`
-- Line 352 [high, known_false_positive_candidates]: `Main Doctor`
+- Line 351 [high, known_false_positive_candidates]: `Main Doctor`
   - Context: `<div class="text-muted small">Main Doctor</div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: main_doctor`
-- Line 356 [high, known_false_positive_candidates]: `Primary Nurse`
+- Line 355 [high, known_false_positive_candidates]: `Primary Nurse`
   - Context: `<div class="text-muted small">Primary Nurse</div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: primary_nurse`
-- Line 360 [high, known_false_positive_candidates]: `Medical Record`
+- Line 359 [high, known_false_positive_candidates]: `Medical Record`
   - Context: `<div class="text-muted small">Medical Record</div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: medical_record`
-- Line 396 [high, known_false_positive_candidates]: `No emergency notes recorded.`
+- Line 395 [high, known_false_positive_candidates]: `No emergency notes recorded.`
   - Context: `<div class="col-12 small text-muted">No emergency notes recorded.</div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: no_emergency_notes_recorded`
-- Line 413 [high, known_false_positive_candidates]: `No emergency medications ordered.`
+- Line 412 [high, known_false_positive_candidates]: `No emergency medications ordered.`
   - Context: `<div class="small text-muted">No emergency medications ordered.</div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: no_emergency_medications_ordered`
-- Line 423 [high, known_false_positive_candidates]: `No investigations requested.`
+- Line 422 [high, known_false_positive_candidates]: `No investigations requested.`
   - Context: `<div class="small text-muted">No investigations requested.</div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: no_investigations_requested`
-- Line 433 [high, known_false_positive_candidates]: `No procedures requested.`
+- Line 432 [high, known_false_positive_candidates]: `No procedures requested.`
   - Context: `<div class="small text-muted">No procedures requested.</div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: no_procedures_requested`
-- Line 505 [high, known_false_positive_candidates]: `SpO₂`
+- Line 504 [high, known_false_positive_candidates]: `SpO₂`
   - Context: `<div class="vitals-label">SpO₂</div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: spo`
-- Line 789 [high, known_false_positive_candidates]: `Search catalogue or type a custom complaint...`
+- Line 788 [high, known_false_positive_candidates]: `Search catalogue or type a custom complaint...`
   - Context: `<input type="text" name="description" id="complaintDescInput" class="form-control" required placeholder="Search catalogue or type a custom complaint..." autocomplete="off" list="complaintSuggestions">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: search_catalogue_or_type_a_custom_complaint`
-- Line 793 [high, known_false_positive_candidates]: `Duration`
+- Line 792 [high, known_false_positive_candidates]: `Duration`
   - Context: `<label class="form-label small">Duration</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: duration`
-- Line 797 [high, known_false_positive_candidates]: `Duration Unit`
+- Line 796 [high, known_false_positive_candidates]: `Duration Unit`
   - Context: `<label class="form-label small">Duration Unit</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: duration_unit`
-- Line 809 [high, known_false_positive_candidates]: `Severity`
+- Line 808 [high, known_false_positive_candidates]: `Severity`
   - Context: `<label class="form-label small">Severity</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: severity`
-- Line 819 [high, known_false_positive_candidates]: `Notes`
+- Line 818 [high, known_false_positive_candidates]: `Notes`
   - Context: `<label class="form-label small">Notes</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: notes`
-- Line 820 [high, known_false_positive_candidates]: `Clinical context or related notes`
+- Line 819 [high, known_false_positive_candidates]: `Clinical context or related notes`
   - Context: `<textarea name="notes" class="form-control" rows="2" placeholder="Clinical context or related notes"></textarea>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: clinical_context_or_related_notes`
-- Line 825 [high, known_false_positive_candidates]: `Cancel`
+- Line 824 [high, known_false_positive_candidates]: `Cancel`
   - Context: `<button type="button" class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#addComplaintForm">Cancel</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: cancel`
-- Line 872 [high, known_false_positive_candidates]: `Edit`
+- Line 871 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 872 [high, known_false_positive_candidates]: `Edit`
+- Line 871 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 940 [high, known_false_positive_candidates]: `Detailed story behind the complaints...`
+- Line 939 [high, known_false_positive_candidates]: `Detailed story behind the complaints...`
   - Context: `<textarea name="content" class="form-control" rows="4" placeholder="Detailed story behind the complaints..." required></textarea>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: detailed_story_behind_the_complaints`
-- Line 942 [high, known_false_positive_candidates]: `Onset`
+- Line 941 [high, known_false_positive_candidates]: `Onset`
   - Context: `<div class="col-md-3"><input name="onset" class="form-control form-control-sm" placeholder="Onset"></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: onset`
-- Line 943 [high, known_false_positive_candidates]: `Duration`
+- Line 942 [high, known_false_positive_candidates]: `Duration`
   - Context: `<div class="col-md-3"><input name="duration" class="form-control form-control-sm" placeholder="Duration"></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: duration`
-- Line 944 [high, known_false_positive_candidates]: `Location`
+- Line 943 [high, known_false_positive_candidates]: `Location`
   - Context: `<div class="col-md-3"><input name="location" class="form-control form-control-sm" placeholder="Location"></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: location`
-- Line 945 [high, known_false_positive_candidates]: `Severity`
+- Line 944 [high, known_false_positive_candidates]: `Severity`
   - Context: `<div class="col-md-3"><input name="severity" class="form-control form-control-sm" placeholder="Severity"></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: severity`
-- Line 946 [high, known_false_positive_candidates]: `Aggravating factors`
+- Line 945 [high, known_false_positive_candidates]: `Aggravating factors`
   - Context: `<div class="col-md-6"><input name="aggravating_factors" class="form-control form-control-sm" placeholder="Aggravating factors"></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: aggravating_factors`
-- Line 947 [high, known_false_positive_candidates]: `Relieving factors`
+- Line 946 [high, known_false_positive_candidates]: `Relieving factors`
   - Context: `<div class="col-md-6"><input name="relieving_factors" class="form-control form-control-sm" placeholder="Relieving factors"></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: relieving_factors`
-- Line 948 [high, known_false_positive_candidates]: `Associated symptoms`
+- Line 947 [high, known_false_positive_candidates]: `Associated symptoms`
   - Context: `<div class="col-12"><input name="associated_symptoms" class="form-control form-control-sm" placeholder="Associated symptoms"></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: associated_symptoms`
-- Line 952 [high, known_false_positive_candidates]: `Cancel`
+- Line 951 [high, known_false_positive_candidates]: `Cancel`
   - Context: `<button type="button" class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#addHopcForm">Cancel</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: cancel`
-- Line 987 [high, known_false_positive_candidates]: `Edit`
+- Line 986 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 987 [high, known_false_positive_candidates]: `Edit`
+- Line 986 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 1038 [high, known_false_positive_candidates]: `Overall examination findings...`
+- Line 1037 [high, known_false_positive_candidates]: `Overall examination findings...`
   - Context: `<textarea name="findings" class="form-control" rows="3" required placeholder="Overall examination findings..."></textarea>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: overall_examination_findings`
-- Line 1040 [high, known_false_positive_candidates]: `General examination`
+- Line 1039 [high, known_false_positive_candidates]: `General examination`
   - Context: `<div class="col-md-6"><textarea name="general_examination" class="form-control form-control-sm" rows="2" placeholder="General examination"></textarea></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: general_examination`
-- Line 1041 [high, known_false_positive_candidates]: `Systemic examination`
+- Line 1040 [high, known_false_positive_candidates]: `Systemic examination`
   - Context: `<div class="col-md-6"><textarea name="systemic_examination" class="form-control form-control-sm" rows="2" placeholder="Systemic examination"></textarea></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: systemic_examination`
-- Line 1043 [high, known_false_positive_candidates]: `Respiratory`
+- Line 1042 [high, known_false_positive_candidates]: `Respiratory`
   - Context: `<div class="col-md-6"><textarea name="respiratory" class="form-control form-control-sm" rows="2" placeholder="Respiratory"></textarea></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: respiratory`
-- Line 1044 [high, known_false_positive_candidates]: `Gastrointestinal`
+- Line 1043 [high, known_false_positive_candidates]: `Gastrointestinal`
   - Context: `<div class="col-md-6"><textarea name="gastrointestinal" class="form-control form-control-sm" rows="2" placeholder="Gastrointestinal"></textarea></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: gastrointestinal`
-- Line 1045 [high, known_false_positive_candidates]: `Central nervous system`
+- Line 1044 [high, known_false_positive_candidates]: `Central nervous system`
   - Context: `<div class="col-md-6"><textarea name="central_nervous_system" class="form-control form-control-sm" rows="2" placeholder="Central nervous system"></textarea></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: central_nervous_system`
-- Line 1046 [high, known_false_positive_candidates]: `ENT / eye / dental / specialty`
+- Line 1045 [high, known_false_positive_candidates]: `ENT / eye / dental / specialty`
   - Context: `<div class="col-md-6"><textarea name="specialty_examination" class="form-control form-control-sm" rows="2" placeholder="ENT / eye / dental / specialty"></textarea></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: ent_eye_dental_specialty`
-- Line 1047 [high, known_false_positive_candidates]: `Local examination`
+- Line 1046 [high, known_false_positive_candidates]: `Local examination`
   - Context: `<div class="col-md-6"><textarea name="local_examination" class="form-control form-control-sm" rows="2" placeholder="Local examination"></textarea></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: local_examination`
-- Line 1051 [high, known_false_positive_candidates]: `Cancel`
+- Line 1050 [high, known_false_positive_candidates]: `Cancel`
   - Context: `<button type="button" class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#addExaminationForm">Cancel</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: cancel`
-- Line 1083 [high, known_false_positive_candidates]: `Edit`
+- Line 1082 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 1083 [high, known_false_positive_candidates]: `Edit`
+- Line 1082 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 1141 [high, known_false_positive_candidates]: `Type diagnosis or search ICD-10 above...`
+- Line 1140 [high, known_false_positive_candidates]: `Type diagnosis or search ICD-10 above...`
   - Context: `<input type="text" name="description" id="diagnosis_description" class="form-control" required placeholder="Type diagnosis or search ICD-10 above..." autocomplete="off" list="diagnosisSuggestions">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: type_diagnosis_or_search_icd_10_above`
-- Line 1145 [high, known_false_positive_candidates]: `ICD-10 Code (Manual)`
+- Line 1144 [high, known_false_positive_candidates]: `ICD-10 Code (Manual)`
   - Context: `<label class="form-label small">ICD-10 Code (Manual)</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: icd_10_code_manual`
-- Line 1149 [high, known_false_positive_candidates]: `Type`
+- Line 1148 [high, known_false_positive_candidates]: `Type`
   - Context: `<label class="form-label small">Type</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: type`
-- Line 1156 [high, known_false_positive_candidates]: `Notes`
+- Line 1155 [high, known_false_positive_candidates]: `Notes`
   - Context: `<label class="form-label small">Notes</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: notes`
-- Line 1157 [high, known_false_positive_candidates]: `Additional notes...`
+- Line 1156 [high, known_false_positive_candidates]: `Additional notes...`
   - Context: `<input type="text" name="notes" class="form-control" placeholder="Additional notes...">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: additional_notes`
-- Line 1162 [high, known_false_positive_candidates]: `Cancel`
+- Line 1161 [high, known_false_positive_candidates]: `Cancel`
   - Context: `<button type="button" class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#addDiagnosisForm">Cancel</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: cancel`
-- Line 1205 [high, known_false_positive_candidates]: `Edit`
+- Line 1204 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 1205 [high, known_false_positive_candidates]: `Edit`
+- Line 1204 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 1280 [high, known_false_positive_candidates]: `No investigation departments configured.`
+- Line 1279 [high, known_false_positive_candidates]: `No investigation departments configured.`
   - Context: `<small class="text-muted">No investigation departments configured.</small>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: no_investigation_departments_configured`
-- Line 1284 [high, known_false_positive_candidates]: `Urgency`
+- Line 1283 [high, known_false_positive_candidates]: `Urgency`
   - Context: `<label class="form-label small">Urgency</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: urgency`
-- Line 1295 [high, known_false_positive_candidates]: `Select a department first to load services`
+- Line 1294 [high, known_false_positive_candidates]: `Select a department first to load services`
   - Context: `<span class="text-muted small">Select a department first to load services</span>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: select_a_department_first_to_load_services`
-- Line 1300 [high, known_false_positive_candidates]: `Notes`
+- Line 1299 [high, known_false_positive_candidates]: `Notes`
   - Context: `<label class="form-label small">Notes</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: notes`
-- Line 1301 [high, known_false_positive_candidates]: `Clinical notes...`
+- Line 1300 [high, known_false_positive_candidates]: `Clinical notes...`
   - Context: `<input type="text" name="notes" class="form-control" placeholder="Clinical notes...">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: clinical_notes`
-- Line 1306 [high, known_false_positive_candidates]: `Cancel`
+- Line 1305 [high, known_false_positive_candidates]: `Cancel`
   - Context: `<button type="button" class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#addInvestigationForm">Cancel</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: cancel`
-- Line 1362 [high, known_false_positive_candidates]: `Edit`
+- Line 1361 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 1362 [high, known_false_positive_candidates]: `Edit`
+- Line 1361 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 1382 [high, known_false_positive_candidates]: `Unverified`
+- Line 1381 [high, known_false_positive_candidates]: `Unverified`
   - Context: `<span class="badge bg-warning ms-1">Unverified</span>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: unverified`
-- Line 1393 [high, known_false_positive_candidates]: `View Result`
+- Line 1392 [high, known_false_positive_candidates]: `View Result`
   - Context: `title="View Result"><i class="ti ti-eye"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: view_result`
-- Line 1396 [high, known_false_positive_candidates]: `Print`
+- Line 1395 [high, known_false_positive_candidates]: `Print`
   - Context: `<a data-no-inertia href="{{ route('admin.lab.results.print', $item) }}" target="_blank" class="btn btn-xs btn-outline-secondary" title="Print"><i class="ti ti-printer"></i></a>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: print`
-- Line 1457 [high, known_false_positive_candidates]: `Treatment details...`
+- Line 1456 [high, known_false_positive_candidates]: `Treatment details...`
   - Context: `<textarea name="description" class="form-control" rows="2" required placeholder="Treatment details..."></textarea>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: treatment_details`
-- Line 1462 [high, known_false_positive_candidates]: `Cancel`
+- Line 1461 [high, known_false_positive_candidates]: `Cancel`
   - Context: `<button type="button" class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#addTreatmentForm">Cancel</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: cancel`
-- Line 1497 [high, known_false_positive_candidates]: `Edit`
+- Line 1496 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 1497 [high, known_false_positive_candidates]: `Edit`
+- Line 1496 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 1586 [high, known_false_positive_candidates]: `Route`
+- Line 1585 [high, known_false_positive_candidates]: `Route`
   - Context: `<label class="form-label small">Route</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: route`
-- Line 1597 [high, known_false_positive_candidates]: `Instructions`
+- Line 1596 [high, known_false_positive_candidates]: `Instructions`
   - Context: `<label class="form-label small">Instructions</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: instructions`
-- Line 1598 [high, known_false_positive_candidates]: `Special instructions...`
+- Line 1597 [high, known_false_positive_candidates]: `Special instructions...`
   - Context: `<input type="text" name="items[0][instructions]" class="form-control form-control-sm" placeholder="Special instructions...">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: special_instructions`
-- Line 1608 [high, known_false_positive_candidates]: `Rx Notes...`
+- Line 1607 [high, known_false_positive_candidates]: `Rx Notes...`
   - Context: `<input type="text" name="notes" class="form-control form-control-sm" style="width:170px" placeholder="Rx Notes...">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: rx_notes`
-- Line 1645 [high, known_false_positive_candidates]: `Edit`
+- Line 1644 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 1645 [high, known_false_positive_candidates]: `Edit`
+- Line 1644 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 1658 [high, known_false_positive_candidates]: `Delete prescription`
+- Line 1657 [high, known_false_positive_candidates]: `Delete prescription`
   - Context: `<button type="submit" class="btn btn-xs btn-outline-danger" title="Delete prescription">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: delete_prescription`
-- Line 1667 [high, known_false_positive_candidates]: `Drug`
+- Line 1666 [high, known_false_positive_candidates]: `Drug`
   - Context: `<thead><tr class="text-muted small"><th>Drug</th><th>Dosage</th><th>Freq</th><th>Duration</th><th>Qty</th><th>Route</th></tr></thead>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: drug`
-- Line 1667 [high, known_false_positive_candidates]: `Dosage`
+- Line 1666 [high, known_false_positive_candidates]: `Dosage`
   - Context: `<thead><tr class="text-muted small"><th>Drug</th><th>Dosage</th><th>Freq</th><th>Duration</th><th>Qty</th><th>Route</th></tr></thead>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: dosage`
-- Line 1667 [high, known_false_positive_candidates]: `Freq`
+- Line 1666 [high, known_false_positive_candidates]: `Freq`
   - Context: `<thead><tr class="text-muted small"><th>Drug</th><th>Dosage</th><th>Freq</th><th>Duration</th><th>Qty</th><th>Route</th></tr></thead>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: freq`
-- Line 1667 [high, known_false_positive_candidates]: `Duration`
+- Line 1666 [high, known_false_positive_candidates]: `Duration`
   - Context: `<thead><tr class="text-muted small"><th>Drug</th><th>Dosage</th><th>Freq</th><th>Duration</th><th>Qty</th><th>Route</th></tr></thead>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: duration`
-- Line 1667 [high, known_false_positive_candidates]: `Qty`
+- Line 1666 [high, known_false_positive_candidates]: `Qty`
   - Context: `<thead><tr class="text-muted small"><th>Drug</th><th>Dosage</th><th>Freq</th><th>Duration</th><th>Qty</th><th>Route</th></tr></thead>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: qty`
-- Line 1667 [high, known_false_positive_candidates]: `Route`
+- Line 1666 [high, known_false_positive_candidates]: `Route`
   - Context: `<thead><tr class="text-muted small"><th>Drug</th><th>Dosage</th><th>Freq</th><th>Duration</th><th>Qty</th><th>Route</th></tr></thead>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: route`
-- Line 1738 [high, known_false_positive_candidates]: `Preferred date/time (optional)`
+- Line 1737 [high, known_false_positive_candidates]: `Preferred date/time (optional)`
   - Context: `<label class="form-label small">Preferred date/time (optional)</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: preferred_date_time_optional`
-- Line 1743 [high, known_false_positive_candidates]: `Clinical indication for the procedure...`
+- Line 1742 [high, known_false_positive_candidates]: `Clinical indication for the procedure...`
   - Context: `<textarea name="indication" class="form-control form-control-sm" rows="2" required placeholder="Clinical indication for the procedure..."></textarea>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: clinical_indication_for_the_procedure`
-- Line 1746 [high, known_false_positive_candidates]: `Notes`
+- Line 1745 [high, known_false_positive_candidates]: `Notes`
   - Context: `<label class="form-label small">Notes</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: notes`
-- Line 1747 [high, known_false_positive_candidates]: `Additional notes...`
+- Line 1746 [high, known_false_positive_candidates]: `Additional notes...`
   - Context: `<textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Additional notes..."></textarea>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: additional_notes`
-- Line 1752 [high, known_false_positive_candidates]: `Cancel`
+- Line 1751 [high, known_false_positive_candidates]: `Cancel`
   - Context: `<button type="button" class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#addProcedureForm">Cancel</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: cancel`
-- Line 1806 [high, known_false_positive_candidates]: `Notes:`
+- Line 1805 [high, known_false_positive_candidates]: `Notes:`
   - Context: `<div><small class="text-muted"><strong>Notes:</strong> {{ $pr->notes }}</small></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: notes`
-- Line 1809 [high, known_false_positive_candidates]: `Rejected:`
+- Line 1808 [high, known_false_positive_candidates]: `Rejected:`
   - Context: `<div><small class="text-danger"><strong>Rejected:</strong> {{ $pr->rejection_reason }}</small></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: rejected`
-- Line 1812 [high, known_false_positive_candidates]: `Cancelled:`
+- Line 1811 [high, known_false_positive_candidates]: `Cancelled:`
   - Context: `<div><small class="text-warning"><strong>Cancelled:</strong> {{ $pr->cancellation_reason }}</small></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: cancelled`
-- Line 1820 [high, known_false_positive_candidates]: `Edit`
+- Line 1819 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-sm btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 1820 [high, known_false_positive_candidates]: `Edit`
+- Line 1819 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-sm btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 1833 [high, known_false_positive_candidates]: `Report`
+- Line 1832 [high, known_false_positive_candidates]: `Report`
   - Context: `<a data-no-inertia class="btn btn-sm btn-outline-secondary" href="{{ route('admin.theatre.report', $pr) }}" target="_blank">Report</a>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: report`
-- Line 1914 [high, known_false_positive_candidates]: `Search patterns by complaint...`
+- Line 1913 [high, known_false_positive_candidates]: `Search patterns by complaint...`
   - Context: `<input type="text" id="patternSearchInput" class="form-control" placeholder="Search patterns by complaint..." minlength="3">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: search_patterns_by_complaint`
-- Line 1915 [high, known_false_positive_candidates]: `Search`
+- Line 1914 [high, known_false_positive_candidates]: `Search`
   - Context: `<button type="button" class="btn btn-primary" id="patternSearchBtn">Search</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: search`
-- Line 1999 [high, known_false_positive_candidates]: `Edit`
+- Line 1998 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 1999 [high, known_false_positive_candidates]: `Edit`
+- Line 1998 [high, known_false_positive_candidates]: `Edit`
   - Context: `<button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 2007 [medium, known_false_positive_candidates]: `Delete this task?`
+- Line 2006 [medium, known_false_positive_candidates]: `Delete this task?`
   - Context: `<form method="POST" action="{{ route('admin.consultations.tasks.destroy', $task) }}" class="d-inline" onsubmit="return confirm('Delete this task?') && saveTabBeforeSubmit('tasks-section')">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: delete_this_task`
-- Line 2009 [high, known_false_positive_candidates]: `Close`
+- Line 2008 [high, known_false_positive_candidates]: `Close`
   - Context: `<button aria-label="Close" title="Close" type="submit" class="btn btn-xs btn-outline-danger"><i class="ti ti-x"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: close`
-- Line 2009 [high, known_false_positive_candidates]: `Close`
+- Line 2008 [high, known_false_positive_candidates]: `Close`
   - Context: `<button aria-label="Close" title="Close" type="submit" class="btn btn-xs btn-outline-danger"><i class="ti ti-x"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: close`
-- Line 2404 [high, known_false_positive_candidates]: `Start`
+- Line 2403 [high, known_false_positive_candidates]: `Start`
   - Context: `<button class="btn btn-xs btn-primary" type="submit">Start</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: start`
-- Line 2410 [high, known_false_positive_candidates]: `Complete`
+- Line 2409 [high, known_false_positive_candidates]: `Complete`
   - Context: `<button class="btn btn-xs btn-success" type="submit" onclick="return confirm('Complete this session?')">Complete</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: complete`
-- Line 2410 [medium, known_false_positive_candidates]: `Complete this session?`
+- Line 2409 [medium, known_false_positive_candidates]: `Complete this session?`
   - Context: `<button class="btn btn-xs btn-success" type="submit" onclick="return confirm('Complete this session?')">Complete</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: complete_this_session`
-- Line 2416 [high, known_false_positive_candidates]: `Cancel`
+- Line 2415 [high, known_false_positive_candidates]: `Cancel`
   - Context: `<button class="btn btn-xs btn-outline-danger" type="submit" onclick="return confirm('Cancel this queued session?')">Cancel</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: cancel`
-- Line 2416 [medium, known_false_positive_candidates]: `Cancel this queued session?`
+- Line 2415 [medium, known_false_positive_candidates]: `Cancel this queued session?`
   - Context: `<button class="btn btn-xs btn-outline-danger" type="submit" onclick="return confirm('Cancel this queued session?')">Cancel</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: cancel_this_queued_session`
-- Line 2449 [high, known_false_positive_candidates]: `Close`
+- Line 2448 [high, known_false_positive_candidates]: `Close`
   - Context: `<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: close`
-- Line 2474 [high, known_false_positive_candidates]: `Description`
+- Line 2473 [high, known_false_positive_candidates]: `Description`
   - Context: `<label class="form-label">Description</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: description`
-- Line 2479 [high, known_false_positive_candidates]: `Priority`
+- Line 2478 [high, known_false_positive_candidates]: `Priority`
   - Context: `<label class="form-label">Priority</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: priority`
-- Line 2487 [high, known_false_positive_candidates]: `Due Date`
+- Line 2486 [high, known_false_positive_candidates]: `Due Date`
   - Context: `<label class="form-label">Due Date</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: due_date`
-- Line 2492 [high, known_false_positive_candidates]: `Assign To`
+- Line 2491 [high, known_false_positive_candidates]: `Assign To`
   - Context: `<label class="form-label">Assign To</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: assign_to`
-- Line 2504 [high, known_false_positive_candidates]: `Cancel`
+- Line 2503 [high, known_false_positive_candidates]: `Cancel`
   - Context: `<button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: cancel`
-- Line 2524 [high, known_false_positive_candidates]: `Edit Entry`
+- Line 2523 [high, known_false_positive_candidates]: `Edit Entry`
   - Context: `<h5 class="modal-title"><i class="ti ti-edit me-2"></i><span id="editEntryTitle">Edit Entry</span></h5>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit_entry`
-- Line 2532 [high, known_false_positive_candidates]: `Cancel`
+- Line 2531 [high, known_false_positive_candidates]: `Cancel`
   - Context: `<button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: cancel`
-- Line 2563 [high, known_false_positive_candidates]: `Scope`
+- Line 2562 [high, known_false_positive_candidates]: `Scope`
   - Context: `<label class="form-label">Scope</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: scope`
-- Line 2571 [high, known_false_positive_candidates]: `Cancel`
+- Line 2570 [high, known_false_positive_candidates]: `Cancel`
   - Context: `<button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: cancel`
-- Line 2632 [high, known_false_positive_candidates]: `Services are linked under the target department session and billed once.`
+- Line 2631 [high, known_false_positive_candidates]: `Services are linked under the target department session and billed once.`
   - Context: `<small class="text-muted">Services are linked under the target department session and billed once.</small>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: services_are_linked_under_the_target_department_se`
-- Line 2635 [high, known_false_positive_candidates]: `Doctor optional`
+- Line 2634 [high, known_false_positive_candidates]: `Doctor optional`
   - Context: `<label class="form-label fw-semibold">Doctor optional</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: doctor_optional`
-- Line 2639 [high, known_false_positive_candidates]: `Doctors are loaded from specialties linked to the selected department.`
+- Line 2638 [high, known_false_positive_candidates]: `Doctors are loaded from specialties linked to the selected department.`
   - Context: `<small class="text-muted">Doctors are loaded from specialties linked to the selected department.</small>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: doctors_are_loaded_from_specialties_linked_to_the_`
-- Line 2642 [high, known_false_positive_candidates]: `Reason / Notes`
+- Line 2641 [high, known_false_positive_candidates]: `Reason / Notes`
   - Context: `<label class="form-label">Reason / Notes</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: reason_notes`
-- Line 2643 [high, known_false_positive_candidates]: `Reason for this consultation session...`
+- Line 2642 [high, known_false_positive_candidates]: `Reason for this consultation session...`
   - Context: `<textarea name="notes" class="form-control" rows="3" placeholder="Reason for this consultation session..."></textarea>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: reason_for_this_consultation_session`
-- Line 2647 [high, known_false_positive_candidates]: `Create and activate now`
+- Line 2646 [high, known_false_positive_candidates]: `Create and activate now`
   - Context: `<label class="form-check-label" for="activateNewSessionNow">Create and activate now</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: create_and_activate_now`
-- Line 2661 [high, known_false_positive_candidates]: `Cancel`
+- Line 2660 [high, known_false_positive_candidates]: `Cancel`
   - Context: `<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: cancel`
-- Line 2722 [high, known_false_positive_candidates]: `Urgency`
+- Line 2721 [high, known_false_positive_candidates]: `Urgency`
   - Context: `<label class="form-label fw-semibold">Urgency</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: urgency`
-- Line 2730 [high, known_false_positive_candidates]: `Clinical Notes`
+- Line 2729 [high, known_false_positive_candidates]: `Clinical Notes`
   - Context: `<label class="form-label fw-semibold">Clinical Notes</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: clinical_notes`
-- Line 2731 [high, known_false_positive_candidates]: `Clinical indication / notes...`
+- Line 2730 [high, known_false_positive_candidates]: `Clinical indication / notes...`
   - Context: `<input type="text" name="clinical_info" class="form-control" placeholder="Clinical indication / notes...">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: clinical_indication_notes`
-- Line 2749 [high, known_false_positive_candidates]: `Cancel`
+- Line 2748 [high, known_false_positive_candidates]: `Cancel`
   - Context: `<button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: cancel`
-- Line 2753 [high, known_false_positive_candidates]: `You don't have permission to create lab requests.`
+- Line 2752 [high, known_false_positive_candidates]: `You don't have permission to create lab requests.`
   - Context: `<div class="alert alert-warning">You don't have permission to create lab requests.</div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: you_don_t_have_permission_to_create_lab_requests`
-- Line 2771 [high, known_false_positive_candidates]: `Notes`
+- Line 2770 [high, known_false_positive_candidates]: `Notes`
   - Context: `<label class="form-label">Notes</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: notes`
-- Line 2772 [high, known_false_positive_candidates]: `Investigation notes...`
+- Line 2771 [high, known_false_positive_candidates]: `Investigation notes...`
   - Context: `<textarea name="notes" class="form-control" rows="3" placeholder="Investigation notes..."></textarea>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: investigation_notes`
-- Line 2834 [high, known_false_positive_candidates]: `Close`
+- Line 2861 [high, known_false_positive_candidates]: `Close`
   - Context: `<button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: close`
-- Line 3302 [high, known_false_positive_candidates]: `Select a department first to load services`
+- Line 3329 [high, known_false_positive_candidates]: `Select a department first to load services`
   - Context: `if (sc) sc.innerHTML = '<span class="text-muted small">Select a department first to load services</span>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: select_a_department_first_to_load_services`
-- Line 3386 [high, known_false_positive_candidates]: `This entry type cannot be edited here.`
+- Line 3413 [high, known_false_positive_candidates]: `This entry type cannot be edited here.`
   - Context: `return '<p class="text-muted mb-0">This entry type cannot be edited here.</p>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: this_entry_type_cannot_be_edited_here`
-- Line 3661 [high, known_false_positive_candidates]: `Select a department first to load services`
+- Line 3688 [high, known_false_positive_candidates]: `Select a department first to load services`
   - Context: `if (!deptId) { container.innerHTML = '<span class="text-muted small">Select a department first to load services</span>'; return; }`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: select_a_department_first_to_load_services`
-- Line 3669 [high, known_false_positive_candidates]: `No active services found.`
+- Line 3696 [high, known_false_positive_candidates]: `No active services found.`
   - Context: `if (!services.length) { container.innerHTML = '<span class="text-muted small">No active services found.</span>'; return; }`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: no_active_services_found`
-- Line 3676 [high, known_false_positive_candidates]: `GH₵' + parseFloat(s.price).toFixed(2) + '`
+- Line 3703 [high, known_false_positive_candidates]: `GH₵' + parseFloat(s.price).toFixed(2) + '`
   - Context: `html += ' <span class="text-muted small">GH₵' + parseFloat(s.price).toFixed(2) + '</span>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: gh_parsefloat_s_price_tofixed_2`
-- Line 3686 [high, known_false_positive_candidates]: `Failed to load services.`
+- Line 3713 [high, known_false_positive_candidates]: `Failed to load services.`
   - Context: `.catch(function () { container.innerHTML = '<span class="text-danger small">Failed to load services.</span>'; });`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: failed_to_load_services`
-- Line 3813 [high, known_false_positive_candidates]: `No active lab tests configured.`
+- Line 3840 [high, known_false_positive_candidates]: `No active lab tests configured.`
   - Context: `if (!data.lab_tests.length) { body.innerHTML = '<span class="text-warning small">No active lab tests configured.</span>'; return; }`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: no_active_lab_tests_configured`
-- Line 3835 [high, known_false_positive_candidates]: `Failed to load items.`
+- Line 3862 [high, known_false_positive_candidates]: `Failed to load items.`
   - Context: `.catch(function () { body.innerHTML = '<span class="text-danger small">Failed to load items.</span>'; });`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: failed_to_load_items`
-- Line 3843 [high, known_false_positive_candidates]: `Close`
+- Line 3870 [high, known_false_positive_candidates]: `Close`
   - Context: `(idx > 0 ? '<button aria-label="Close" title="Close" type="button" class="btn btn-outline-danger" onclick="document.getElementById(\'freeItem' + idx + '\').remove()"><i class="ti ti-x"></i></button>' : '') +`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: close`
-- Line 3843 [high, known_false_positive_candidates]: `Close`
+- Line 3870 [high, known_false_positive_candidates]: `Close`
   - Context: `(idx > 0 ? '<button aria-label="Close" title="Close" type="button" class="btn btn-outline-danger" onclick="document.getElementById(\'freeItem' + idx + '\').remove()"><i class="ti ti-x"></i></button>' : '') +`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: close`
-- Line 4114 [high, known_false_positive_candidates]: `Complaints`
+- Line 4141 [high, known_false_positive_candidates]: `Complaints`
   - Context: `html += '<h6 class="fw-bold small text-muted border-bottom pb-1 mb-2">Complaints</h6>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: complaints`
-- Line 4118 [high, known_false_positive_candidates]: `Diagnoses`
+- Line 4145 [high, known_false_positive_candidates]: `Diagnoses`
   - Context: `html += '<h6 class="fw-bold small text-muted border-bottom pb-1 mb-2 mt-3">Diagnoses</h6>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: diagnoses`
-- Line 4128 [high, known_false_positive_candidates]: `Investigations`
+- Line 4155 [high, known_false_positive_candidates]: `Investigations`
   - Context: `html += '<h6 class="fw-bold small text-muted border-bottom pb-1 mb-2 mt-3">Investigations</h6>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: investigations`
-- Line 4137 [high, known_false_positive_candidates]: `Treatments`
+- Line 4164 [high, known_false_positive_candidates]: `Treatments`
   - Context: `html += '<h6 class="fw-bold small text-muted border-bottom pb-1 mb-2 mt-3">Treatments</h6>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: treatments`
-- Line 4144 [high, known_false_positive_candidates]: `No clinical data recorded for this visit.`
+- Line 4171 [high, known_false_positive_candidates]: `No clinical data recorded for this visit.`
   - Context: `html = '<div class="text-center text-muted py-3">No clinical data recorded for this visit.</div>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: no_clinical_data_recorded_for_this_visit`
-- Line 4185 [medium, known_false_positive_candidates]: `Failed to apply pattern.`
+- Line 4212 [medium, known_false_positive_candidates]: `Failed to apply pattern.`
   - Context: `else { alert('Failed to apply pattern.'); self.disabled = false; self.innerHTML = '<i class="ti ti-check me-1"></i>Apply'; }`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: failed_to_apply_pattern`
-- Line 4187 [medium, known_false_positive_candidates]: `Failed.`
+- Line 4214 [medium, known_false_positive_candidates]: `Failed.`
   - Context: `.catch(function () { alert('Failed.'); self.disabled = false; self.innerHTML = '<i class="ti ti-check me-1"></i>Apply'; });`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: failed`
-- Line 4199 [high, known_false_positive_candidates]: `Enter at least 3 characters.`
+- Line 4226 [high, known_false_positive_candidates]: `Enter at least 3 characters.`
   - Context: `if (q.length < 3) { psRes.innerHTML = '<div class="alert alert-warning py-2">Enter at least 3 characters.</div>'; psRes.style.display = 'block'; return; }`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: enter_at_least_3_characters`
-- Line 4218 [high, known_false_positive_candidates]: `No patterns found.`
+- Line 4245 [high, known_false_positive_candidates]: `No patterns found.`
   - Context: `} else { psRes.innerHTML = '<div class="alert alert-info py-2 mb-0">No patterns found.</div>'; }`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: no_patterns_found`
-- Line 4220 [high, known_false_positive_candidates]: `Search failed.`
+- Line 4247 [high, known_false_positive_candidates]: `Search failed.`
   - Context: `.catch(function () { psRes.innerHTML = '<div class="alert alert-danger py-2 mb-0">Search failed.</div>'; });`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: search_failed`
+
+### `resources/views/dashboard/doctor-dashboard.blade.php`
+
+- Line 17 [high, demo_template_candidates]: `Doctor Dashboard`
+  - Context: `<h4 class="fw-bold mb-0">Doctor Dashboard</h4>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: doctor_dashboard`
+- Line 35 [high, demo_template_candidates]: `Total Appointments`
+  - Context: `<p class="mb-1">Total Appointments</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: total_appointments`
+- Line 59 [high, demo_template_candidates]: `Online Consultations`
+  - Context: `<p class="mb-1">Online Consultations</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: online_consultations`
+- Line 83 [high, demo_template_candidates]: `Cancelled Appointments`
+  - Context: `<p class="mb-1">Cancelled Appointments</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: cancelled_appointments`
+- Line 112 [high, demo_template_candidates]: `Upcoming Appointments`
+  - Context: `<h5 class="fw-bold mb-0 text-truncate">Upcoming Appointments</h5>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: upcoming_appointments`
+- Line 119 [high, demo_template_candidates]: `Today`
+  - Context: `<a class="dropdown-item" href="#">Today</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: today`
+- Line 122 [high, demo_template_candidates]: `This Week`
+  - Context: `<a class="dropdown-item" href="#">This Week</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: this_week`
+- Line 125 [high, demo_template_candidates]: `This Month`
+  - Context: `<a class="dropdown-item" href="#">This Month</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: this_month`
+- Line 136 [high, demo_template_candidates]: `Andrew Billard`
+  - Context: `<h6 class="fs-14 mb-1 text-truncate"><a href="javascript:void(0);" class="fw-semibold">Andrew Billard</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: andrew_billard`
+- Line 140 [high, demo_template_candidates]: `General Visit`
+  - Context: `<h6 class="fs-14 fw-semibold mb-1">General Visit</h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: general_visit`
+- Line 147 [high, demo_template_candidates]: `Department`
+  - Context: `<h6 class="fs-13 fw-semibold mb-1">Department</h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: department`
+- Line 151 [high, demo_template_candidates]: `Type`
+  - Context: `<h6 class="fs-13 fw-semibold mb-1">Type</h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: type`
+- Line 152 [high, demo_template_candidates]: `Online Consultation`
+  - Context: `<p class="text-truncate">Online Consultation</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: online_consultation`
+- Line 156 [high, demo_template_candidates]: `Start Appointment`
+  - Context: `<a href="javascript:void(0);" class="btn btn-primary w-100">Start Appointment</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: start_appointment`
+- Line 173 [high, demo_template_candidates]: `Appointments`
+  - Context: `<h5 class="fw-bold mb-0">Appointments</h5>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: appointments`
+- Line 180 [high, demo_template_candidates]: `Monthly`
+  - Context: `<a class="dropdown-item" href="#">Monthly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: monthly`
+- Line 183 [high, demo_template_candidates]: `Weekly`
+  - Context: `<a class="dropdown-item" href="#">Weekly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: weekly`
+- Line 186 [high, demo_template_candidates]: `Yearly`
+  - Context: `<a class="dropdown-item" href="#">Yearly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: yearly`
+- Line 213 [high, demo_template_candidates]: `Total Patient`
+  - Context: `<p class="mb-1 text-truncate">Total Patient</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: total_patient`
+- Line 226 [high, demo_template_candidates]: `Video Consultation`
+  - Context: `<p class="mb-1 text-truncate">Video Consultation</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: video_consultation`
+- Line 239 [high, demo_template_candidates]: `Rescheduled`
+  - Context: `<p class="mb-1 text-truncate">Rescheduled</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: rescheduled`
+- Line 252 [high, demo_template_candidates]: `Pre Visit Bookings`
+  - Context: `<p class="mb-1 text-truncate">Pre Visit Bookings</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: pre_visit_bookings`
+- Line 265 [high, demo_template_candidates]: `Walkin Bookings`
+  - Context: `<p class="mb-1 text-truncate">Walkin Bookings</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: walkin_bookings`
+- Line 278 [high, demo_template_candidates]: `Follow Ups`
+  - Context: `<p class="mb-1 text-truncate">Follow Ups</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: follow_ups`
+- Line 294 [high, demo_template_candidates]: `Recent Appointments`
+  - Context: `<h5 class="fw-bold mb-0">Recent Appointments</h5>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: recent_appointments`
+- Line 301 [high, demo_template_candidates]: `Monthly`
+  - Context: `<a class="dropdown-item" href="#">Monthly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: monthly`
+- Line 304 [high, demo_template_candidates]: `Weekly`
+  - Context: `<a class="dropdown-item" href="#">Weekly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: weekly`
+- Line 307 [high, demo_template_candidates]: `Yearly`
+  - Context: `<a class="dropdown-item" href="#">Yearly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: yearly`
+- Line 318 [high, demo_template_candidates]: `Patient`
+  - Context: `<th>Patient</th>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: patient`
+- Line 319 [high, demo_template_candidates]: `Date & Time`
+  - Context: `<th>Date & Time</th>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: date_time`
+- Line 320 [high, demo_template_candidates]: `Mode`
+  - Context: `<th>Mode</th>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: mode`
+- Line 322 [high, demo_template_candidates]: `Consultation Fees`
+  - Context: `<th>Consultation Fees</th>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: consultation_fees`
+- Line 334 [high, demo_template_candidates]: `Alberto Ripley`
+  - Context: `<h6 class="fs-14 mb-1"><a href="javascript:void(0);" class="fw-medium">Alberto Ripley</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: alberto_ripley`
+- Line 340 [high, demo_template_candidates]: `Online`
+  - Context: `<td>Online</td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: online`
+- Line 341 [high, demo_template_candidates]: `Checked Out`
+  - Context: `<td><span class="badge bg-success fw-medium">Checked Out</span></td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: checked_out`
+- Line 367 [high, demo_template_candidates]: `Susan Babin`
+  - Context: `<h6 class="fs-14 mb-1"><a href="javascript:void(0);" class="fw-medium">Susan Babin</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: susan_babin`
+- Line 373 [high, demo_template_candidates]: `Online`
+  - Context: `<td>Online</td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: online`
+- Line 374 [high, demo_template_candidates]: `Checked in`
+  - Context: `<td><span class="badge bg-warning fw-medium">Checked in</span></td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: checked_in`
+- Line 400 [high, demo_template_candidates]: `Carol Lam`
+  - Context: `<h6 class="fs-14 mb-1"><a href="javascript:void(0);" class="fw-medium">Carol Lam</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: carol_lam`
+- Line 406 [high, demo_template_candidates]: `In-Person`
+  - Context: `<td>In-Person</td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: in_person`
+- Line 433 [high, demo_template_candidates]: `Marsha Noland`
+  - Context: `<h6 class="fs-14 mb-1"><a href="javascript:void(0);" class="fw-medium">Marsha Noland</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: marsha_noland`
+- Line 439 [high, demo_template_candidates]: `In-Person`
+  - Context: `<td>In-Person</td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: in_person`
+- Line 440 [high, demo_template_candidates]: `Schedule`
+  - Context: `<td><span class="badge bg-info fw-medium">Schedule</span></td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: schedule`
+- Line 466 [high, demo_template_candidates]: `John Elsass`
+  - Context: `<h6 class="fs-14 mb-1"><a href="javascript:void(0);" class="fw-medium">John Elsass</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: john_elsass`
+- Line 472 [high, demo_template_candidates]: `Online`
+  - Context: `<td>Online</td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: online`
+- Line 473 [high, demo_template_candidates]: `Schedule`
+  - Context: `<td><span class="badge bg-info fw-medium">Schedule</span></td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: schedule`
+- Line 509 [high, demo_template_candidates]: `Availability`
+  - Context: `<h5 class="fw-bold mb-0">Availability</h5>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: availability`
+- Line 516 [high, demo_template_candidates]: `CureWell Medical Hub`
+  - Context: `<a class="dropdown-item" href="javascript:void(0);">CureWell Medical Hub</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: curewell_medical_hub`
+- Line 519 [high, demo_template_candidates]: `Trustcare Clinic`
+  - Context: `<a class="dropdown-item" href="javascript:void(0);">Trustcare Clinic</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: trustcare_clinic`
+- Line 522 [high, demo_template_candidates]: `NovaCare Medical`
+  - Context: `<a class="dropdown-item" href="javascript:void(0);">NovaCare Medical</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: novacare_medical`
+- Line 525 [high, demo_template_candidates]: `Greeny Medical Clinic`
+  - Context: `<a class="dropdown-item" href="javascript:void(0);">Greeny Medical Clinic</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: greeny_medical_clinic`
+- Line 532 [high, demo_template_candidates]: `Mon`
+  - Context: `<p class="text-dark fw-semibold mb-0">Mon</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: mon`
+- Line 536 [high, demo_template_candidates]: `Tue`
+  - Context: `<p class="text-dark fw-semibold mb-0">Tue</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: tue`
+- Line 540 [high, demo_template_candidates]: `Wed`
+  - Context: `<p class="text-dark fw-semibold mb-0">Wed</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: wed`
+- Line 544 [high, demo_template_candidates]: `Thu`
+  - Context: `<p class="text-dark fw-semibold mb-0">Thu</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: thu`
+- Line 548 [high, demo_template_candidates]: `Fri`
+  - Context: `<p class="text-dark fw-semibold mb-0">Fri</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: fri`
+- Line 552 [high, demo_template_candidates]: `Sat`
+  - Context: `<p class="text-dark fw-semibold mb-0">Sat</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: sat`
+- Line 556 [high, demo_template_candidates]: `Sun`
+  - Context: `<p class="text-dark fw-semibold mb-0">Sun</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: sun`
+- Line 559 [high, demo_template_candidates]: `Edit Availability`
+  - Context: `<a href="javascript:void(0);" class="btn btn-light w-100 mt-2 fs-13">Edit Availability</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: edit_availability`
+- Line 569 [high, demo_template_candidates]: `Appointment Statistics`
+  - Context: `<h5 class="fw-bold mb-0 text-truncate">Appointment Statistics</h5>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: appointment_statistics`
+- Line 576 [high, demo_template_candidates]: `Monthly`
+  - Context: `<a class="dropdown-item" href="#">Monthly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: monthly`
+- Line 579 [high, demo_template_candidates]: `Weekly`
+  - Context: `<a class="dropdown-item" href="#">Weekly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: weekly`
+- Line 582 [high, demo_template_candidates]: `Yearly`
+  - Context: `<a class="dropdown-item" href="#">Yearly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: yearly`
+- Line 612 [high, demo_template_candidates]: `Top Patients`
+  - Context: `<h5 class="fw-bold mb-0">Top Patients</h5>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: top_patients`
+- Line 619 [high, demo_template_candidates]: `Monthly`
+  - Context: `<a class="dropdown-item" href="#">Monthly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: monthly`
+- Line 622 [high, demo_template_candidates]: `Weekly`
+  - Context: `<a class="dropdown-item" href="#">Weekly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: weekly`
+- Line 625 [high, demo_template_candidates]: `Yearly`
+  - Context: `<a class="dropdown-item" href="#">Yearly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: yearly`
+- Line 637 [high, demo_template_candidates]: `Alberto Ripley`
+  - Context: `<h6 class="fs-14 mb-1 text-truncate"><a href="javascript:void(0);" class="fw-medium">Alberto Ripley</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: alberto_ripley`
+- Line 649 [high, demo_template_candidates]: `Susan Babin`
+  - Context: `<h6 class="fs-14 mb-1 text-truncate"><a href="javascript:void(0);" class="fw-medium">Susan Babin</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: susan_babin`
+- Line 661 [high, demo_template_candidates]: `Carol Lam`
+  - Context: `<h6 class="fs-14 mb-1 text-truncate"><a href="javascript:void(0);" class="fw-medium">Carol Lam</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: carol_lam`
+- Line 673 [high, demo_template_candidates]: `Marsha Noland`
+  - Context: `<h6 class="fs-14 mb-1 text-truncate"><a href="javascript:void(0);" class="fw-medium">Marsha Noland</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: marsha_noland`
+- Line 685 [high, demo_template_candidates]: `Irma Armstrong`
+  - Context: `<h6 class="fs-14 mb-1 text-truncate"><a href="javascript:void(0);" class="fw-medium">Irma Armstrong</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: irma_armstrong`
+
+### `resources/views/dashboard/patient-dashboard.blade.php`
+
+- Line 17 [high, demo_template_candidates]: `Patient Dashboard`
+  - Context: `<h4 class="fw-bold mb-0">Patient Dashboard</h4>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: patient_dashboard`
+- Line 35 [high, demo_template_candidates]: `Total Appointments`
+  - Context: `<p class="mb-1 text-truncate">Total Appointments</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: total_appointments`
+- Line 55 [high, demo_template_candidates]: `Online Consultations`
+  - Context: `<p class="mb-1 text-truncate">Online Consultations</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: online_consultations`
+- Line 74 [high, demo_template_candidates]: `Blood Pressure`
+  - Context: `<p class="mb-1 text-truncate">Blood Pressure</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: blood_pressure`
+- Line 94 [high, demo_template_candidates]: `Heart Rate`
+  - Context: `<p class="mb-1 text-truncate">Heart Rate</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: heart_rate`
+- Line 118 [high, demo_template_candidates]: `My Doctors`
+  - Context: `<h5 class="fw-bold mb-0">My Doctors</h5>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: my_doctors`
+- Line 127 [high, demo_template_candidates]: `Dr. Mick Thompson`
+  - Context: `<h6 class="fs-14 mb-1 text-truncate"><a href="javascript:void(0);" class="fw-semibold">Dr. Mick Thompson</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dr_mick_thompson`
+- Line 139 [high, demo_template_candidates]: `Dr. Sarah Johnson`
+  - Context: `<h6 class="fs-14 mb-1 text-truncate"><a href="javascript:void(0);" class="fw-semibold">Dr. Sarah Johnson</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dr_sarah_johnson`
+- Line 140 [high, demo_template_candidates]: `Orthopedic Surgeon`
+  - Context: `<p class="mb-0 fs-13 text-truncate">Orthopedic Surgeon</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: orthopedic_surgeon`
+- Line 151 [high, demo_template_candidates]: `Dr. Emily Carter`
+  - Context: `<h6 class="fs-14 mb-1 text-truncate"><a href="javascript:void(0);" class="fw-semibold">Dr. Emily Carter</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dr_emily_carter`
+- Line 152 [high, demo_template_candidates]: `Pediatrician`
+  - Context: `<p class="mb-0 fs-13 text-truncate">Pediatrician</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: pediatrician`
+- Line 163 [high, demo_template_candidates]: `Dr. David Lee`
+  - Context: `<h6 class="fs-14 mb-1 text-truncate"><a href="javascript:void(0);" class="fw-semibold">Dr. David Lee</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dr_david_lee`
+- Line 164 [high, demo_template_candidates]: `Gynecologist`
+  - Context: `<p class="mb-0 fs-13 text-truncate">Gynecologist</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: gynecologist`
+- Line 175 [high, demo_template_candidates]: `Dr. Anna Kim`
+  - Context: `<h6 class="fs-14 mb-1 text-truncate"><a href="javascript:void(0);" class="fw-semibold">Dr. Anna Kim</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dr_anna_kim`
+- Line 176 [high, demo_template_candidates]: `Psychiatrist`
+  - Context: `<p class="mb-0 fs-13 text-truncate">Psychiatrist</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: psychiatrist`
+- Line 190 [high, demo_template_candidates]: `Prescriptions`
+  - Context: `<h5 class="fw-bold mb-0">Prescriptions</h5>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: prescriptions`
+- Line 215 [high, demo_template_candidates]: `Dentist Prescription`
+  - Context: `<h6 class="fs-14 mb-1 text-truncate"><a href="javascript:void(0);" class="fw-semibold">Dentist Prescription</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dentist_prescription`
+- Line 230 [high, demo_template_candidates]: `Dentist Prescription`
+  - Context: `<h6 class="fs-14 mb-1 text-truncate"><a href="javascript:void(0);" class="fw-semibold">Dentist Prescription</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dentist_prescription`
+- Line 245 [high, demo_template_candidates]: `Dentist Prescription`
+  - Context: `<h6 class="fs-14 mb-1 text-truncate"><a href="javascript:void(0);" class="fw-semibold">Dentist Prescription</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dentist_prescription`
+- Line 279 [high, demo_template_candidates]: `Recent Activity`
+  - Context: `<h5 class="fw-bold mb-0">Recent Activity</h5>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: recent_activity`
+- Line 286 [high, demo_template_candidates]: `Primary Care Physician`
+  - Context: `<p class="mb-1 text-truncate">Appointment with <a href="javascript:void(0);" class="fw-semibold">Primary Care Physician</a></p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: primary_care_physician`
+- Line 293 [high, demo_template_candidates]: `Blood Pressure Check`
+  - Context: `<p class="mb-1 text-truncate"><a href="javascript:void(0);" class="fw-semibold">Blood Pressure Check</a> (Home Monitoring)</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: blood_pressure_check`
+- Line 300 [high, demo_template_candidates]: `Physical Therapy Session`
+  - Context: `<p class="mb-1"><a href="javascript:void(0);" class="fw-semibold">Physical Therapy Session</a> Knee strengthening exercises</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: physical_therapy_session`
+- Line 307 [high, demo_template_candidates]: `Discuss dietary changes`
+  - Context: `<p class="mb-1"><a href="javascript:void(0);" class="fw-semibold">Discuss dietary changes</a> to manage blood sugar levels and weight</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: discuss_dietary_changes`
+- Line 323 [high, demo_template_candidates]: `Vitals`
+  - Context: `<h5 class="fw-bold mb-0">Vitals</h5>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: vitals`
+- Line 336 [high, demo_template_candidates]: `Weight`
+  - Context: `<p class="mb-1">Weight</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: weight`
+- Line 350 [high, demo_template_candidates]: `Height`
+  - Context: `<p class="mb-1">Height</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: height`
+- Line 378 [high, demo_template_candidates]: `Pulse`
+  - Context: `<p class="mb-1">Pulse</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: pulse`
+- Line 406 [high, demo_template_candidates]: `Temprature`
+  - Context: `<p class="mb-1 text-truncate">Temprature</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: temprature`
+- Line 428 [high, demo_template_candidates]: `Consultation By Department`
+  - Context: `<h5 class="fw-bold mb-0">Consultation By Department</h5>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: consultation_by_department`
+- Line 435 [high, demo_template_candidates]: `Monthly`
+  - Context: `<a class="dropdown-item" href="#">Monthly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: monthly`
+- Line 438 [high, demo_template_candidates]: `Weekly`
+  - Context: `<a class="dropdown-item" href="#">Weekly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: weekly`
+- Line 441 [high, demo_template_candidates]: `Yearly`
+  - Context: `<a class="dropdown-item" href="#">Yearly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: yearly`
+- Line 457 [high, demo_template_candidates]: `Recent Transactions`
+  - Context: `<h5 class="fw-bold mb-0">Recent Transactions</h5>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: recent_transactions`
+- Line 464 [high, demo_template_candidates]: `Monthly`
+  - Context: `<a class="dropdown-item" href="#">Monthly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: monthly`
+- Line 467 [high, demo_template_candidates]: `Weekly`
+  - Context: `<a class="dropdown-item" href="#">Weekly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: weekly`
+- Line 470 [high, demo_template_candidates]: `Yearly`
+  - Context: `<a class="dropdown-item" href="#">Yearly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: yearly`
+- Line 488 [high, demo_template_candidates]: `Dr. John Smith`
+  - Context: `<h6 class="fs-14 mb-1"><a href="javascript:void(0);" class="fw-semibold">Dr. John Smith</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dr_john_smith`
+- Line 489 [high, demo_template_candidates]: `Neurosurgeon`
+  - Context: `<p class="mb-0 fs-13">Neurosurgeon</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: neurosurgeon`
+- Line 494 [high, demo_template_candidates]: `Consultation Fees`
+  - Context: `<h6 class="fs-14 fw-semibold">Consultation Fees</h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: consultation_fees`
+- Line 497 [high, demo_template_candidates]: `Success`
+  - Context: `<td class="pe-0 text-end"><span class="badge fs-13 py-1 badge-soft-success border border-success rounded text-success fw-medium">Success</span></td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: success`
+- Line 506 [high, demo_template_candidates]: `Dr. Lisa White`
+  - Context: `<h6 class="fs-14 mb-1"><a href="javascript:void(0);" class="fw-semibold">Dr. Lisa White</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dr_lisa_white`
+- Line 507 [high, demo_template_candidates]: `Oncologist`
+  - Context: `<p class="mb-0 fs-13">Oncologist</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: oncologist`
+- Line 512 [high, demo_template_candidates]: `Consultation Fees`
+  - Context: `<h6 class="fs-14 fw-semibold">Consultation Fees</h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: consultation_fees`
+- Line 515 [high, demo_template_candidates]: `Success`
+  - Context: `<td class="pe-0 text-end"><span class="badge fs-13 py-1 badge-soft-success border border-success rounded text-success fw-medium">Success</span></td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: success`
+- Line 524 [high, demo_template_candidates]: `Dr. Patricia Brown`
+  - Context: `<h6 class="fs-14 mb-1"><a href="javascript:void(0);" class="fw-semibold">Dr. Patricia Brown</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dr_patricia_brown`
+- Line 525 [high, demo_template_candidates]: `Pulmonologist`
+  - Context: `<p class="mb-0 fs-13">Pulmonologist</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: pulmonologist`
+- Line 530 [high, demo_template_candidates]: `Consultation Fees`
+  - Context: `<h6 class="fs-14 fw-semibold">Consultation Fees</h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: consultation_fees`
+- Line 542 [high, demo_template_candidates]: `Dr. Rachel Green`
+  - Context: `<h6 class="fs-14 mb-1"><a href="javascript:void(0);" class="fw-semibold">Dr. Rachel Green</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dr_rachel_green`
+- Line 543 [high, demo_template_candidates]: `Urologist`
+  - Context: `<p class="mb-0 fs-13">Urologist</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: urologist`
+- Line 548 [high, demo_template_candidates]: `Consultation Fees`
+  - Context: `<h6 class="fs-14 fw-semibold">Consultation Fees</h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: consultation_fees`
+- Line 551 [high, demo_template_candidates]: `Success`
+  - Context: `<td class="pe-0 text-end"><span class="badge fs-13 py-1 badge-soft-success border border-success rounded text-success fw-medium">Success</span></td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: success`
+- Line 560 [high, demo_template_candidates]: `Dr. Michael Smith`
+  - Context: `<h6 class="fs-14 mb-1"><a href="javascript:void(0);" class="fw-semibold">Dr. Michael Smith</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dr_michael_smith`
+- Line 566 [high, demo_template_candidates]: `Consultation Fees`
+  - Context: `<h6 class="fs-14 fw-semibold">Consultation Fees</h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: consultation_fees`
+- Line 569 [high, demo_template_candidates]: `Success`
+  - Context: `<td class="pe-0 text-end"><span class="badge fs-13 py-1 badge-soft-success border border-success rounded text-success fw-medium">Success</span></td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: success`
+- Line 587 [high, demo_template_candidates]: `Recent Appointments`
+  - Context: `<h5 class="fw-bold mb-0">Recent Appointments</h5>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: recent_appointments`
+- Line 594 [high, demo_template_candidates]: `Monthly`
+  - Context: `<a class="dropdown-item" href="#">Monthly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: monthly`
+- Line 597 [high, demo_template_candidates]: `Weekly`
+  - Context: `<a class="dropdown-item" href="#">Weekly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: weekly`
+- Line 600 [high, demo_template_candidates]: `Yearly`
+  - Context: `<a class="dropdown-item" href="#">Yearly</a>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: yearly`
+- Line 611 [high, demo_template_candidates]: `Name & Designation`
+  - Context: `<th>Name & Designation</th>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: name_designation`
+- Line 612 [high, demo_template_candidates]: `Date & Time`
+  - Context: `<th>Date & Time</th>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: date_time`
+- Line 613 [high, demo_template_candidates]: `Consultation Fees`
+  - Context: `<th>Consultation Fees</th>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: consultation_fees`
+- Line 614 [high, demo_template_candidates]: `Mode`
+  - Context: `<th>Mode</th>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: mode`
+- Line 627 [high, demo_template_candidates]: `Dr. Mick Thompson`
+  - Context: `<h6 class="fs-14 mb-1"><a href="javascript:void(0);" class="fw-semibold">Dr. Mick Thompson</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dr_mick_thompson`
+- Line 634 [high, demo_template_candidates]: `Online`
+  - Context: `<td>Online</td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: online`
+- Line 635 [high, demo_template_candidates]: `Checked Out`
+  - Context: `<td><span class="badge bg-success fw-medium">Checked Out</span></td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: checked_out`
+- Line 660 [high, demo_template_candidates]: `Dr. Sarah Johnson`
+  - Context: `<h6 class="fs-14 mb-1"><a href="javascript:void(0);" class="fw-semibold">Dr. Sarah Johnson</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dr_sarah_johnson`
+- Line 661 [high, demo_template_candidates]: `Orthopedic Surgeon`
+  - Context: `<p class="mb-0 fs-13">Orthopedic Surgeon</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: orthopedic_surgeon`
+- Line 667 [high, demo_template_candidates]: `Online`
+  - Context: `<td>Online</td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: online`
+- Line 668 [high, demo_template_candidates]: `Checked in`
+  - Context: `<td><span class="badge bg-warning fw-medium">Checked in</span></td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: checked_in`
+- Line 693 [high, demo_template_candidates]: `Dr. Emily Carter`
+  - Context: `<h6 class="fs-14 mb-1"><a href="javascript:void(0);" class="fw-semibold">Dr. Emily Carter</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dr_emily_carter`
+- Line 694 [high, demo_template_candidates]: `Pediatrician`
+  - Context: `<p class="mb-0 fs-13">Pediatrician</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: pediatrician`
+- Line 700 [high, demo_template_candidates]: `In-Person`
+  - Context: `<td>In-Person</td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: in_person`
+- Line 726 [high, demo_template_candidates]: `Dr. David Lee`
+  - Context: `<h6 class="fs-14 mb-1"><a href="javascript:void(0);" class="fw-semibold">Dr. David Lee</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dr_david_lee`
+- Line 727 [high, demo_template_candidates]: `Gynecologist`
+  - Context: `<p class="mb-0 fs-13">Gynecologist</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: gynecologist`
+- Line 733 [high, demo_template_candidates]: `In-Person`
+  - Context: `<td>In-Person</td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: in_person`
+- Line 734 [high, demo_template_candidates]: `Schedule`
+  - Context: `<td><span class="badge bg-info fw-medium">Schedule</span></td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: schedule`
+- Line 759 [high, demo_template_candidates]: `Dr. Anna Kim`
+  - Context: `<h6 class="fs-14 mb-1"><a href="javascript:void(0);" class="fw-semibold">Dr. Anna Kim</a></h6>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: dr_anna_kim`
+- Line 760 [high, demo_template_candidates]: `Psychiatrist`
+  - Context: `<p class="mb-0 fs-13">Psychiatrist</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: psychiatrist`
+- Line 766 [high, demo_template_candidates]: `Online`
+  - Context: `<td>Online</td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: online`
+- Line 767 [high, demo_template_candidates]: `Schedule`
+  - Context: `<td><span class="badge bg-info fw-medium">Schedule</span></td>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/dashboard.php :: schedule`
 
 ### `resources/views/department-consumables/index.blade.php`
 
@@ -18227,37 +19108,42 @@ Date: 2026-06-24 01:45:30 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/common.php :: next`
-- Line 43 [high, known_false_positive_candidates]: `Search`
+- Line 58 [high, known_false_positive_candidates]: `Search`
   - Context: `<button aria-label="Search" title="Search" class="topbar-link btn btn-icon" data-bs-toggle="modal" data-bs-target="#searchModal" type="button">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/common.php :: search`
-- Line 43 [high, known_false_positive_candidates]: `Search`
+- Line 58 [high, known_false_positive_candidates]: `Search`
   - Context: `<button aria-label="Search" title="Search" class="topbar-link btn btn-icon" data-bs-toggle="modal" data-bs-target="#searchModal" type="button">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/common.php :: search`
-- Line 50 [high, known_false_positive_candidates]: `Moon`
+- Line 65 [high, known_false_positive_candidates]: `Moon`
   - Context: `<button aria-label="Moon" title="Moon" class="topbar-link btn btn-icon topbar-link" id="light-dark-mode" type="button">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/common.php :: moon`
-- Line 50 [high, known_false_positive_candidates]: `Moon`
+- Line 65 [high, known_false_positive_candidates]: `Moon`
   - Context: `<button aria-label="Moon" title="Moon" class="topbar-link btn btn-icon topbar-link" id="light-dark-mode" type="button">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/common.php :: moon`
-- Line 137 [high, known_false_positive_candidates]: `English`
+- Line 152 [high, known_false_positive_candidates]: `English`
   - Context: `<span class="align-middle">English</span>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/common.php :: english`
-- Line 146 [high, known_false_positive_candidates]: `Français`
+- Line 161 [high, known_false_positive_candidates]: `Français`
   - Context: `<span class="align-middle">Français</span>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/common.php :: fran_ais`
-- Line 177 [high, known_false_positive_candidates]: `Close`
+- Line 236 [high, known_false_positive_candidates]: `Unable to load queue board.`
+  - Context: `content.innerHTML = '<div class="alert alert-danger m-3">Unable to load queue board.</div>';`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/common.php :: unable_to_load_queue_board`
+- Line 265 [high, known_false_positive_candidates]: `Close`
   - Context: `<button type="button" class="btn p-0" data-bs-dismiss="modal" aria-label="Close"><i class="ti ti-x fs-22"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -18383,115 +19269,41 @@ Date: 2026-06-24 01:45:30 +02:00
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/common.php :: select_date_range`
 
-### `resources/views/partials/patient-card.blade.php`
-
-- Line 73 [high, known_false_positive_candidates]: `Allergies`
-  - Context: `<small class="fw-semibold d-block">Allergies</small>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/common.php :: allergies`
-- Line 82 [high, known_false_positive_candidates]: `Chronic Conditions`
-  - Context: `<small class="fw-semibold d-block">Chronic Conditions</small>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/common.php :: chronic_conditions`
-- Line 102 [high, known_false_positive_candidates]: `Expired`
-  - Context: `<span class="badge bg-danger fs-11">Expired</span>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/common.php :: expired`
-- Line 128 [high, known_false_positive_candidates]: `Cash & Carry`
-  - Context: `<span class="fw-semibold">Cash &amp; Carry</span>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/common.php :: cash_carry`
-- Line 129 [high, known_false_positive_candidates]: `No active insurance for this visit`
-  - Context: `<small class="text-muted d-block">No active insurance for this visit</small>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/common.php :: no_active_insurance_for_this_visit`
-
 ### `resources/views/patients/create.blade.php`
 
-- Line 216 [high, known_false_positive_candidates]: `Use device location`
-  - Context: `<button class="btn btn-outline-secondary" type="button" id="detectDigitalAddressBtn" title="Use device location">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/patients.php :: use_device_location`
-- Line 239 [high, known_false_positive_candidates]: `Delete`
-  - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ec d-none"><i class="ti ti-trash"></i></button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/patients.php :: delete`
-- Line 239 [high, known_false_positive_candidates]: `Delete`
-  - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ec d-none"><i class="ti ti-trash"></i></button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/patients.php :: delete`
-- Line 320 [high, known_false_positive_candidates]: `Delete`
-  - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ins d-none"><i class="ti ti-trash"></i></button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/patients.php :: delete`
-- Line 320 [high, known_false_positive_candidates]: `Delete`
-  - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ins d-none"><i class="ti ti-trash"></i></button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/patients.php :: delete`
-- Line 431 [high, known_false_positive_candidates]: `Delete`
+- Line 116 [high, known_false_positive_candidates]: `Delete`
   - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ec"><i class="ti ti-trash"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: delete`
-- Line 431 [high, known_false_positive_candidates]: `Delete`
+- Line 116 [high, known_false_positive_candidates]: `Delete`
   - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ec"><i class="ti ti-trash"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: delete`
-- Line 637 [high, known_false_positive_candidates]: `Delete`
+- Line 322 [high, known_false_positive_candidates]: `Delete`
   - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ins"><i class="ti ti-trash"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: delete`
-- Line 637 [high, known_false_positive_candidates]: `Delete`
+- Line 322 [high, known_false_positive_candidates]: `Delete`
   - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ins"><i class="ti ti-trash"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: delete`
-
-### `resources/views/patients/edit.blade.php`
-
-- Line 220 [high, known_false_positive_candidates]: `Use device location`
-  - Context: `<button class="btn btn-outline-secondary" type="button" id="detectDigitalAddressBtn" title="Use device location">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/patients.php :: use_device_location`
 
 ### `resources/views/patients/index.blade.php`
 
-- Line 141 [high, known_false_positive_candidates]: `Actions`
+- Line 149 [high, known_false_positive_candidates]: `Actions`
   - Context: `<a aria-label="Actions" title="Actions" href="javascript:void(0);" class="btn btn-sm btn-light" data-bs-toggle="dropdown">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: actions`
-- Line 141 [high, known_false_positive_candidates]: `Actions`
+- Line 149 [high, known_false_positive_candidates]: `Actions`
   - Context: `<a aria-label="Actions" title="Actions" href="javascript:void(0);" class="btn btn-sm btn-light" data-bs-toggle="dropdown">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: actions`
-
-### `resources/views/patients/merge/index.blade.php`
-
-- Line 36 [high, known_false_positive_candidates]: `Close`
-  - Context: `<a aria-label="Close" title="Close" class="btn btn-outline-secondary" href="{{ route('admin.patients.merge.index') }}"><i class="ti ti-x"></i></a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/patients.php :: close`
-- Line 36 [high, known_false_positive_candidates]: `Close`
-  - Context: `<a aria-label="Close" title="Close" class="btn btn-outline-secondary" href="{{ route('admin.patients.merge.index') }}"><i class="ti ti-x"></i></a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/patients.php :: close`
 
 ### `resources/views/patients/partials/registration-input-scripts.blade.php`
 
@@ -19656,34 +20468,6 @@ Date: 2026-06-24 01:45:30 +02:00
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/prescriptions.php :: gh_0_00`
 
-### `resources/views/queue/board.blade.php`
-
-- Line 67 [high, known_false_positive_candidates]: `Now Assessing`
-  - Context: `<small class="text-info fw-bold text-uppercase">Now Assessing</small>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/queue.php :: now_assessing`
-- Line 117 [high, known_false_positive_candidates]: `Now Serving`
-  - Context: `<small class="text-primary fw-bold text-uppercase">Now Serving</small>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/queue.php :: now_serving`
-- Line 147 [high, known_false_positive_candidates]: `No patients in queue`
-  - Context: `<div class="p-3 text-center text-muted">No patients in queue</div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/queue.php :: no_patients_in_queue`
-- Line 159 [high, known_false_positive_candidates]: `All queues are empty`
-  - Context: `<h4 class="text-muted">All queues are empty</h4>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/queue.php :: all_queues_are_empty`
-- Line 160 [high, known_false_positive_candidates]: `No patients are currently waiting`
-  - Context: `<p class="text-muted">No patients are currently waiting</p>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/queue.php :: no_patients_are_currently_waiting`
-
 ### `resources/views/queue/manage.blade.php`
 
 - Line 8 [high, known_false_positive_candidates]: `Queue Management`
@@ -19712,6 +20496,34 @@ Date: 2026-06-24 01:45:30 +02:00
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/queue.php :: select_a_department_to_manage_its_queue`
 
+### `resources/views/queue/partials/board-content.blade.php`
+
+- Line 36 [high, known_false_positive_candidates]: `Now Assessing`
+  - Context: `<small class="text-info fw-bold text-uppercase">Now Assessing</small>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/queue.php :: now_assessing`
+- Line 85 [high, known_false_positive_candidates]: `Now Serving`
+  - Context: `<small class="text-primary fw-bold text-uppercase">Now Serving</small>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/queue.php :: now_serving`
+- Line 114 [high, known_false_positive_candidates]: `No patients in queue`
+  - Context: `<div class="p-3 text-center text-muted">No patients in queue</div>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/queue.php :: no_patients_in_queue`
+- Line 126 [high, known_false_positive_candidates]: `All queues are empty`
+  - Context: `<h4 class="text-muted">All queues are empty</h4>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/queue.php :: all_queues_are_empty`
+- Line 127 [high, known_false_positive_candidates]: `No patients are currently waiting`
+  - Context: `<p class="text-muted">No patients are currently waiting</p>`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/queue.php :: no_patients_are_currently_waiting`
+
 ### `resources/views/reports/patients.blade.php`
 
 - Line 80 [high, known_false_positive_candidates]: `Name or ID...`
@@ -19722,7 +20534,7 @@ Date: 2026-06-24 01:45:30 +02:00
 
 ### `resources/views/service-renderings/index.blade.php`
 
-- Line 171 [high, known_false_positive_candidates]: `Bill a service to a patient's visit — a rendering task is created for the department automatically.`
+- Line 172 [high, known_false_positive_candidates]: `Bill a service to a patient's visit — a rendering task is created for the department automatically.`
   - Context: `<small class="text-muted">Bill a service to a patient's visit — a rendering task is created for the department automatically.</small>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -20932,37 +21744,22 @@ Date: 2026-06-24 01:45:30 +02:00
 
 ### `resources/views/visits/create.blade.php`
 
-- Line 104 [high, known_false_positive_candidates]: `Close`
-  - Context: `<button aria-label="Close" title="Close" type="button" class="btn btn-sm btn-outline-danger" onclick="clearPatient()">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/visits.php :: close`
-- Line 104 [high, known_false_positive_candidates]: `Close`
-  - Context: `<button aria-label="Close" title="Close" type="button" class="btn btn-sm btn-outline-danger" onclick="clearPatient()">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/visits.php :: close`
-- Line 382 [high, known_false_positive_candidates]: `Close`
-  - Context: `<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/visits.php :: close`
-- Line 1396 [high, known_false_positive_candidates]: `Delete`
+- Line 993 [high, known_false_positive_candidates]: `Delete`
   - Context: `html += '<td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="' + idx + '"><i class="ti ti-trash"></i></button></td>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/visits.php :: delete`
-- Line 1396 [high, known_false_positive_candidates]: `Delete`
+- Line 993 [high, known_false_positive_candidates]: `Delete`
   - Context: `html += '<td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="' + idx + '"><i class="ti ti-trash"></i></button></td>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/visits.php :: delete`
-- Line 1556 [high, known_false_positive_candidates]: `Member:`
+- Line 1153 [high, known_false_positive_candidates]: `Member:`
   - Context: `// if (data.member_name)    parts.push('<div><strong>Member:</strong> ' + escapeHtml(data.member_name) + '</div>');`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/visits.php :: member`
-- Line 1558 [high, known_false_positive_candidates]: `Expires:`
+- Line 1155 [high, known_false_positive_candidates]: `Expires:`
   - Context: `// if (data.expires_at)     parts.push('<div><strong>Expires:</strong> ' + escapeHtml(data.expires_at) + '</div>');`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -20970,22 +21767,22 @@ Date: 2026-06-24 01:45:30 +02:00
 
 ### `resources/views/visits/edit.blade.php`
 
-- Line 432 [high, known_false_positive_candidates]: `Add`
+- Line 321 [high, known_false_positive_candidates]: `Add`
   - Context: `<button aria-label="Add" title="Add" type="button" class="btn btn-sm btn-outline-primary add-service-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/visits.php :: add`
-- Line 432 [high, known_false_positive_candidates]: `Add`
+- Line 321 [high, known_false_positive_candidates]: `Add`
   - Context: `<button aria-label="Add" title="Add" type="button" class="btn btn-sm btn-outline-primary add-service-btn"`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/visits.php :: add`
-- Line 503 [high, known_false_positive_candidates]: `Delete`
+- Line 385 [high, known_false_positive_candidates]: `Delete`
   - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="${idx}">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/visits.php :: delete`
-- Line 503 [high, known_false_positive_candidates]: `Delete`
+- Line 385 [high, known_false_positive_candidates]: `Delete`
   - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="${idx}">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -20993,12 +21790,12 @@ Date: 2026-06-24 01:45:30 +02:00
 
 ### `resources/views/visits/index.blade.php`
 
-- Line 188 [high, known_false_positive_candidates]: `Actions`
+- Line 213 [high, known_false_positive_candidates]: `Actions`
   - Context: `<button aria-label="Actions" title="Actions" class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/visits.php :: actions`
-- Line 188 [high, known_false_positive_candidates]: `Actions`
+- Line 213 [high, known_false_positive_candidates]: `Actions`
   - Context: `<button aria-label="Actions" title="Actions" class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -21006,12 +21803,12 @@ Date: 2026-06-24 01:45:30 +02:00
 
 ### `resources/views/visits/show.blade.php`
 
-- Line 250 [high, known_false_positive_candidates]: `SpO₂`
+- Line 249 [high, known_false_positive_candidates]: `SpO₂`
   - Context: `<div class="text-muted" style="font-size:0.72rem">SpO₂</div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/visits.php :: spo`
-- Line 1039 [high, known_false_positive_candidates]: `Close`
+- Line 876 [high, known_false_positive_candidates]: `Close`
   - Context: `<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive

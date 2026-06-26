@@ -1,37 +1,55 @@
-# UHMS Department Type Expansion — Phase 5: Department Metrics & Reports Registry
+# UHMS Department Type UI Expansion — Phase 6: Modern Department Dashboards, Department Context & Scoped Menus
 
 ## Goal
 
-Implement a department-type metrics and reporting registry for UHMS.
+Upgrade UHMS from technically department-aware to visually and operationally department-oriented.
 
-Phase 0 completed department type gap analysis.
-
-Phase 1 completed department type canonicalisation and safety.
-
-Phase 2 completed the department-aware dashboard registry.
-
-Phase 3 completed department-aware menu profiles.
-
-Phase 4 completed workflow routing cleanup and type groups.
-
-Phase 5 must now provide department-type reporting and metrics so UHMS can produce meaningful operational statistics across the new department types.
-
-This phase should answer questions like:
+The system already supports:
 
 ```text
-How many patients passed through Emergency today?
-How many lab/radiology requests are pending?
-How many procedures/theatre cases were completed?
-How many inpatient admissions are active?
-How much revenue came from Pharmacy, Finance, Radiology, Theatre, etc.?
-Which departments have pending tasks, requests, queue items, stock requests, billing items, or unresolved work?
+19 department types
+department dashboard registry
+department menu profiles
+workflow routing type groups
+department metrics registry
 ```
 
-Do not create a parallel reporting system.
+Now build a modern department dashboard experience where:
 
-Do not duplicate existing accounting, billing, dashboard, or report services.
+```text
+when a user logs in, their department-type dashboard loads
+the sidebar/menu is department-oriented
+the dashboard theme matches the department type
+all dashboard content is scoped to the user's actual department
+metrics, services, stock, prices, requests and usages are department-specific
+```
 
-Use a central registry so new department metrics can be added cleanly later.
+Important distinction:
+
+```text
+Department Type = dashboard layout / menu profile / workflow family
+Department ID = actual data scope
+```
+
+Example:
+
+```text
+A lab technician belongs to Laboratory department.
+Laboratory department type is investigation.
+They get the Investigation dashboard layout and investigation menu profile.
+But all services, stock, prices, requests and usages shown must be Laboratory-only.
+
+An X-ray technician belongs to X-Ray/Radiology department.
+They get the Radiology dashboard layout if department_type is radiology.
+If still grouped under investigation, they may share the diagnostic dashboard layout.
+But all content must still be scoped to X-Ray/Radiology department_id only.
+```
+
+Do not show all department-type data to every user of that type.
+
+Do not use department type as a permission system.
+
+Permissions and modules remain the security layer.
 
 ---
 
@@ -45,764 +63,650 @@ docs/DEPARTMENT_TYPE_EXPANSION_PHASE_1_CANONICALISATION_REPORT.md
 docs/DEPARTMENT_TYPE_EXPANSION_PHASE_2_DASHBOARD_REGISTRY_REPORT.md
 docs/DEPARTMENT_TYPE_EXPANSION_PHASE_3_MENU_PROFILES_REPORT.md
 docs/DEPARTMENT_TYPE_EXPANSION_PHASE_4_WORKFLOW_ROUTING_REPORT.md
+docs/DEPARTMENT_TYPE_EXPANSION_PHASE_5_METRICS_REPORTS_REPORT.md
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
 
-Inspect:
+Also inspect these dashboard inspiration files if present in the project or supplied separately:
 
 ```text
-app/Enums/DepartmentType.php
-app/Models/Department.php
-app/Services/Dashboard
-app/Services/SidebarMenuBuilder.php
-app/Services/Reports
-app/Services/Accounting
-app/Services/Billing
-app/Services/VisitService.php
-app/Services/Department
-app/Http/Controllers/Admin/Reports
-app/Http/Controllers/Admin/Dashboard
-app/Http/Controllers/Admin/Departments
-resources/views/admin/reports
-resources/views/admin/dashboard
-resources/views/admin/departments
-routes/web.php
-lang/en
-lang/fr
-tests
+resources/views/dashboard/doctor-dashboard.blade.php
+resources/views/dashboard/patient-dashboard.blade.php
+resources/views/admin/dashboards/index.blade.php
 ```
 
-Search for existing department reports:
+Use their design direction:
 
 ```text
-department revenue
-department expense
-department report
-department statistics
-department dashboard
-department_id
-department_type
-service_catalog.department_type
-revenue by department
-expense by department
+modern KPI cards
+department-themed accents
+SVG/card background accents
+compact secondary metrics
+queue/list tables
+quick action buttons
+chart-ready cards
+stock/usage alert cards
+empty states
 ```
 
-Testing instruction:
+Do not introduce Tailwind.
+
+Do not introduce a new frontend framework.
+
+Use Bootstrap 5, existing components and Tabler Icons.
+
+---
+
+## 2. Main Deliverables
+
+Implement:
 
 ```text
-Do not run the wide full application test suite after this phase.
-Run focused department metrics/reporting/localisation checks only.
-The wide full-suite test remains deferred until the current implementation batch is complete.
+DepartmentContextResolver
+DepartmentDashboardThemeRegistry
+DepartmentDashboardDataService
+modern reusable department dashboard components
+department-scoped dashboard metrics
+department-scoped services/prices/stock/usage cards
+department-oriented quick actions
+department login redirect behavior
+department-oriented menu context
+modern dashboard Blade layout
+focused tests
+documentation report
 ```
 
 ---
 
-## 2. Core Design
-
-Create a central department metrics registry.
-
-Recommended service:
-
-```text
-DepartmentMetricsRegistry
-```
-
-Recommended supporting services:
-
-```text
-DepartmentMetricsService
-DepartmentTypeReportService
-DepartmentOperationalSummaryService
-DepartmentMetricExportService
-```
-
-If existing report/export services already exist, extend them instead of creating duplicates.
-
-The registry should map:
-
-```text
-department_type
-metric keys
-metric labels
-metric calculators
-required permissions
-required modules
-fallback behavior
-export support
-```
-
-The goal is a declarative structure, not scattered hardcoded report logic.
-
----
-
-## 3. Supported Department Types
-
-Support all 19 canonical types:
-
-```php
-CONSULTATION = 'consultation';
-EMERGENCY = 'emergency';
-INVESTIGATION = 'investigation';
-RADIOLOGY = 'radiology';
-PROCEDURE = 'procedure';
-THEATRE = 'theatre';
-TREATMENT = 'treatment';
-NURSING = 'nursing';
-PHARMACY = 'pharmacy';
-INPATIENT = 'inpatient';
-MATERNITY = 'maternity';
-BLOOD_BANK = 'blood_bank';
-MORTUARY = 'mortuary';
-AMBULANCE = 'ambulance';
-RECORDS = 'records';
-FINANCE = 'finance';
-STORES = 'stores';
-SUPPORT = 'support';
-ADMINISTRATIVE = 'administrative';
-```
-
-Every type must have at least a safe generic metrics profile.
-
-Dedicated metrics should be added only where reliable data exists.
-
-Do not fake numbers.
-
-If a metric cannot be calculated safely, return an unavailable/empty state with a reason.
-
----
-
-## 4. DepartmentMetricsRegistry
+## 3. Department Context Resolver
 
 Create:
 
 ```text
-App\Services\Department\DepartmentMetricsRegistry
+App\Services\Department\DepartmentContextResolver
 ```
 
-Suggested structure:
+Responsibilities:
 
-```php
-[
-    'emergency' => [
-        'label_key' => 'departments.metrics.emergency',
-        'dashboard_key' => 'emergency',
-        'metrics' => [
-            'active_emergency_cases',
-            'pending_triage',
-            'emergency_visits_today',
-            'emergency_revenue',
-        ],
-    ],
-]
+```text
+resolve current user
+resolve user's department
+resolve department_id
+resolve department_type
+resolve dashboard key from DepartmentDashboardRegistry
+resolve menu profile from DepartmentMenuProfileService
+resolve theme from DepartmentDashboardThemeRegistry
+resolve whether user is global/admin
+resolve fallback context
 ```
 
-Each metric definition should support:
+Context object should include:
+
+```text
+user
+department nullable
+department_id nullable
+department_type nullable
+department_type_label
+dashboard_key
+menu_profile_key
+theme
+is_global_context
+can_preview_departments
+```
+
+Rules:
+
+```text
+If user has one department:
+    dashboard context = that department
+
+If user has no department:
+    fallback to role/global dashboard
+
+If user is Admin/Super Admin:
+    allow global dashboard and department preview
+
+If department type is null:
+    fallback safely
+
+If department type is unknown:
+    fallback safely
+```
+
+Do not implement multi-department switcher yet unless the project already has department_user pivot.
+
+Document multi-department switcher as future.
+
+---
+
+## 4. Login Redirect
+
+Inspect current login/auth redirect flow.
+
+Update safely so that after login:
+
+```text
+if user has department:
+    redirect to /admin/my-dashboard or existing department dashboard route
+else:
+    redirect to role/global dashboard
+```
+
+The dashboard route itself must use DepartmentContextResolver.
+
+Do not create duplicate dashboard routes unless needed.
+
+Admin/Super Admin should keep access to global/admin dashboard.
+
+---
+
+## 5. Department Dashboard Theme Registry
+
+Create:
+
+```text
+App\Services\Department\DepartmentDashboardThemeRegistry
+```
+
+Every department type must have a theme.
+
+Theme fields:
 
 ```text
 key
-label_key
-description_key
-calculator
-permission optional
-module optional
-type
-format
-default_value
-unavailable_reason
+accent_class
+soft_bg_class
+icon
+hero_icon
+bg_asset optional
+chart_accent optional
+badge_class
+empty_state_icon
 ```
 
-Metric formats:
+Suggested themes:
 
 ```text
-number
-money
-percentage
-duration
-status
-table
-chart_data
+consultation: blue, ti-stethoscope
+emergency: red, ti-ambulance
+investigation: indigo/purple, ti-test-pipe
+radiology: cyan, ti-scan
+procedure: orange, ti-tools
+theatre: violet, ti-surgical-mask
+treatment: teal, ti-first-aid-kit
+nursing: green, ti-nurse
+pharmacy: emerald, ti-pill
+inpatient: blue-gray, ti-bed
+maternity: pink, ti-baby-carriage
+blood_bank: red, ti-droplet
+mortuary: slate, ti-building-warehouse
+ambulance: red-orange, ti-ambulance
+records: gray-blue, ti-folder
+finance: green, ti-cash-banknote
+stores: amber, ti-packages
+support: dark, ti-tool
+administrative: navy, ti-settings
+generic: secondary, ti-layout-dashboard
 ```
 
-Do not introduce new chart libraries.
+Use only Tabler icons already available.
 
-If charting exists, use existing tooling.
-
-Otherwise return chart-ready data only.
+No hard failure if an icon is unavailable; fallback to dashboard icon.
 
 ---
 
-## 5. Generic Metrics Profile
+## 6. Modern Reusable Dashboard Components
 
-Create a safe generic profile for any department type.
+Create reusable components/partials instead of duplicating Blade.
 
-Generic metrics:
-
-```text
-department_count
-active_departments
-assigned_users
-services_count
-today_activity_count if safely available
-open_queue_items if safely available
-revenue_today if user has billing/report permission
-pending_tasks if safely available
-```
-
-Rules:
+Suggested components:
 
 ```text
-If department has no services, show 0.
-If activity source is unavailable, show unavailable.
-If user lacks permission, hide restricted metric.
-If module is disabled, hide module metric.
+resources/views/admin/dashboards/department/partials/hero.blade.php
+resources/views/admin/dashboards/department/partials/kpi-card.blade.php
+resources/views/admin/dashboards/department/partials/mini-kpi-card.blade.php
+resources/views/admin/dashboards/department/partials/work-queue-card.blade.php
+resources/views/admin/dashboards/department/partials/quick-actions.blade.php
+resources/views/admin/dashboards/department/partials/activity-list.blade.php
+resources/views/admin/dashboards/department/partials/stock-usage-card.blade.php
+resources/views/admin/dashboards/department/partials/services-card.blade.php
+resources/views/admin/dashboards/department/partials/chart-card.blade.php
+resources/views/admin/dashboards/department/partials/empty-card.blade.php
+resources/views/admin/dashboards/department/partials/restricted-card.blade.php
 ```
+
+Design direction:
+
+```text
+top hero with department name/type/user/date
+4 large KPI cards using background SVG accents
+secondary compact metrics row
+main work queue / request list
+right-side quick actions and alerts
+department services/prices card
+stock and usage card where applicable
+trend/chart-ready card
+recent activity table
+```
+
+Use current Bootstrap design style.
+
+Do not add new JS chart library if Chart.js is already used.
+
+If no chart data exists, render an empty-state card.
 
 ---
 
-## 6. Metrics By Department Type
+## 7. Department Dashboard Data Service
 
-### consultation
-
-Metrics:
+Create:
 
 ```text
-consultations_today
-waiting_consultations
-completed_consultations
-followups_due
-consultation_revenue
-average_wait_time if available
+App\Services\Department\DepartmentDashboardDataService
 ```
 
-### emergency
-
-Metrics:
+Responsibilities:
 
 ```text
-active_emergency_cases
-emergency_cases_today
-pending_emergency_triage
-emergency_sessions_today
-emergency_revenue
-emergency_unbilled_items if available
+build dashboard payload for context
+load department-scoped metrics
+load department-scoped work queues
+load department services
+load department prices if permitted
+load department stock/usage if permitted
+load quick actions
+load activity lists
+load chart-ready trend data
+hide restricted metrics before querying sensitive data
 ```
 
-### investigation
-
-Metrics:
+All data methods must receive or use:
 
 ```text
-lab_requests_today
-pending_lab_requests
-samples_awaiting_acceptance
-completed_lab_results
-urgent_lab_requests
-lab_revenue
-```
-
-### radiology
-
-Metrics:
-
-```text
-radiology_requests_today
-pending_radiology_requests
-completed_radiology_results
-scheduled_imaging
-urgent_radiology_requests
-radiology_revenue
-```
-
-If radiology workflow is still shared with investigation, use diagnostic-safe queries and document limitation.
-
-### procedure
-
-Metrics:
-
-```text
-minor_procedures_today
-pending_procedures
-completed_procedures
-procedure_consumables_used
-procedure_revenue
-```
-
-### theatre
-
-Metrics:
-
-```text
-scheduled_surgeries
-surgeries_today
-preop_pending
-postop_pending
-theatre_consumables_used
-theatre_revenue
-```
-
-### treatment
-
-Metrics:
-
-```text
-treatment_tasks_today
-pending_treatments
-completed_treatments
-treatment_revenue
-```
-
-### nursing
-
-Metrics:
-
-```text
-nursing_tasks_pending
-vitals_due
-vitals_recorded_today
-ward_observations
-medication_tasks_placeholder
-```
-
-Do not expose medication administration data unless a reliable source exists.
-
-### pharmacy
-
-Metrics:
-
-```text
-prescriptions_pending
-prescriptions_dispensed_today
-pharmacy_sales_today
-low_stock_items
-out_of_stock_items
-near_expiry_items
-```
-
-Respect stock-cost permissions.
-
-### inpatient
-
-Metrics:
-
-```text
-active_admissions
-occupied_beds
-available_beds
-discharges_pending
-inpatient_revenue
-average_length_of_stay if available
-```
-
-### maternity
-
-Metrics:
-
-```text
-antenatal_visits_today
-maternity_admissions
-delivery_cases
-postnatal_followups
-maternity_revenue
-```
-
-If dedicated maternity workflow does not exist, use admissions/visits safely and document limitation.
-
-### blood_bank
-
-Metrics:
-
-```text
-available_blood_units
-reserved_blood_units
-expired_units
-near_expiry_units
-pending_crossmatches
-blood_requests_pending
-```
-
-### mortuary
-
-Metrics:
-
-```text
-active_mortuary_cases
-body_storage_occupancy
-pending_releases
-mortuary_revenue
-```
-
-If mortuary module is not available, generic/unavailable metrics only.
-
-### ambulance
-
-Metrics:
-
-```text
-ambulance_requests_today
-active_transports
-completed_transports
-available_vehicles
-ambulance_revenue
-```
-
-If ambulance module is not available, generic/unavailable metrics only.
-
-### records
-
-Metrics:
-
-```text
-new_patient_records_today
-record_merge_requests
-folder_requests_pending
-archived_records_activity
-```
-
-### finance
-
-Metrics:
-
-```text
-collections_today
-unpaid_invoices
-ar_aging_total
-pending_claims
-credit_notes_today
-writeoffs_today
-cashier_sessions_open
-```
-
-Respect financial permissions.
-
-### stores
-
-Metrics:
-
-```text
-stock_requests_pending
-stock_issues_today
-low_stock_items
-pending_purchase_requests
-supplier_payables_if_permitted
-```
-
-Respect stock-cost and procurement permissions.
-
-### support
-
-Metrics:
-
-```text
-support_requests_open
-maintenance_requests_open
-asset_issues_placeholder
-general_support_activity
-```
-
-If no support module exists, generic/unavailable metrics only.
-
-### administrative
-
-Metrics:
-
-```text
-active_users
-departments_count
-pending_admin_tasks
-hr_pending_items_if_available
-system_activity
-```
-
-Respect admin permissions.
-
----
-
-## 7. Department Type Report Screen
-
-Add or extend report screen:
-
-```text
-Admin > Reports > Department Type Reports
-```
-
-Suggested route:
-
-```text
-admin.reports.department-types.index
-```
-
-or use existing reports route naming convention.
-
-Filters:
-
-```text
-date_from
-date_to
-department_type
 department_id
-branch/facility if supported
-module
-status
-include_unavailable
-```
-
-Report should show:
-
-```text
-summary cards
-department type rollups
-department-level drill-down
-metric availability status
-export buttons where permitted
-```
-
-Do not expose restricted clinical/financial/stock-cost data.
-
----
-
-## 8. Department Drill-down
-
-For each department type, allow drill-down to departments of that type.
-
-Columns:
-
-```text
-department
-department type
-assigned users
-services count
-activity count
-revenue if permitted
-pending items if available
-last activity if available
-```
-
-If user lacks permission for revenue, omit revenue.
-
-If module disabled, omit module-specific metrics.
-
----
-
-## 9. Export Support
-
-Use existing export/report tooling.
-
-Supported first:
-
-```text
-CSV
-print view
-PDF only if existing tooling already supports it
-```
-
-Do not introduce a new export library.
-
-Exports must respect:
-
-```text
+department_type
+user
 permissions
-modules
-filters
+enabled modules
 date range
-data visibility rules
 ```
 
-Add permission if needed:
+Critical rule:
 
 ```text
-reports.department_types.view
-reports.department_types.export
+Every operational metric must be scoped to department_id unless user is explicitly in global/admin preview mode.
 ```
 
-Do not grant broadly to clinical roles unless appropriate.
+Do not use only department_type for normal users.
 
 ---
 
-## 10. Dashboard Integration
+## 8. Department-Specific Content Rules
 
-Do not rebuild dashboards.
+### Investigation / Laboratory
 
-But expose registry data so dashboards can use it later.
-
-Add helper:
+For a user in Laboratory department:
 
 ```text
-DepartmentMetricsService::summaryForDepartmentType()
-DepartmentMetricsService::summaryForDepartment()
+show pending lab requests for Laboratory only
+show samples awaiting acceptance for Laboratory only
+show completed lab results for Laboratory only
+show Laboratory services only
+show Laboratory prices only if permitted
+show Laboratory stock/consumable usage only if permitted
 ```
 
-DepartmentDashboardService may use these helpers for generic widgets if safe.
+### Radiology / X-Ray
 
-Do not rewrite all dashboard widgets in this phase unless needed.
+For a user in X-Ray/Radiology department:
+
+```text
+show pending imaging requests for that radiology department only
+show completed imaging results for that department only
+show radiology services only
+show radiology prices only if permitted
+show radiology consumables/usage only if permitted
+```
+
+### Pharmacy
+
+```text
+show pending prescriptions routed to pharmacy
+show dispensing queue
+show pharmacy stock for that department/location where available
+show low stock/near expiry/out of stock if permitted
+show product prices/sales only if permitted
+```
+
+### Emergency
+
+```text
+show active emergency cases
+show emergency triage queue
+show emergency sessions
+show emergency services/billing only if permitted
+show emergency stock/consumables only if permitted
+```
+
+### Inpatient / Nursing / Maternity
+
+```text
+show active admissions/ward patients for that department
+show beds/occupancy if department maps to ward/bed data
+show vitals due/recorded
+show discharges pending
+show nursing/treatment tasks if available
+```
+
+### Finance
+
+```text
+show collections, invoices, receivables, claims only if financial permissions allow
+department context should not bypass financial permissions
+```
+
+### Stores
+
+```text
+show stock requests, stock issues, procurement, low stock if permitted
+stock cost must remain permission protected
+```
+
+### Generic / Unsupported
+
+```text
+show department profile
+assigned staff
+services count
+recent activity if available
+quick links
+empty states for unavailable module-specific metrics
+```
 
 ---
 
-## 11. Permission and Module Safety
+## 9. Department Services / Prices / Usage Cards
 
-Each metric must define access requirements.
-
-Examples:
+Add cards for:
 
 ```text
-finance collections_today:
-permission: billing.payments.view or accounting.reports.view
-module: billing or accounting_basic
-
-pharmacy low_stock_items:
-permission: inventory.view or pharmacy.view
-module: pharmacy/inventory
-
-stock cost values:
-permission: inventory.costs.view or accounting.reports.view
-
-clinical counts:
-permission: related module view permission
+department services
+department prices
+department stock/consumables
+department usage
 ```
 
 Rules:
 
 ```text
-Check permission before querying sensitive data.
-Check module before querying module tables.
-Unavailable metric should not crash if module table is absent.
-Do not leak financial totals to users without permission.
-Do not leak clinical details to finance/support users.
+services are filtered by department_id
+prices are shown only if user has permission
+stock/usage shown only if user has inventory/stock permission
+stock cost shown only if user has stock-cost/finance permission
+do not expose prices/costs to users without permission
+do not change service pricing logic
+do not alter invoice totals
+```
+
+This is important for the lab/x-ray case:
+
+```text
+Lab sees Laboratory services/prices/usage.
+X-ray sees X-ray services/prices/usage.
+They must not see each other's department content unless permitted globally.
 ```
 
 ---
 
-## 12. Metric Calculator Pattern
+## 10. Department-Oriented Menu Load
 
-Create metric calculators as small classes or methods.
-
-Suggested approaches:
+Update menu/profile integration so that when the user logs in:
 
 ```text
-DepartmentMetricCalculatorInterface
+the department menu profile is applied
+department dashboard shortcut is visible
+quick links are department-relevant
+links can carry department_id filters where useful
+```
+
+Example:
+
+```text
+Lab:
+My Dashboard
+Lab Requests
+Samples
+Results
+Laboratory Services
+Laboratory Stock Usage
+Reports
+
+X-ray:
+My Dashboard
+Radiology Requests
+Imaging Results
+Radiology Services
+Radiology Stock Usage
+Reports
+```
+
+Rules:
+
+```text
+Permissions/modules still filter the menu first.
+Department profile only reorders/enriches allowed items.
+Missing routes must be skipped safely.
+No menu item should grant access.
+```
+
+---
+
+## 11. Dashboard Route / Controller
+
+Update the department dashboard controller to use:
+
+```text
+DepartmentContextResolver
+DepartmentDashboardThemeRegistry
+DepartmentDashboardDataService
+DepartmentDashboardRegistry
+DepartmentMenuProfileService
+```
+
+Controller should pass to Blade:
+
+```text
+context
+theme
+dashboard
+metrics
+primary_cards
+secondary_cards
+work_queue
+quick_actions
+services
+stock_usage
+trends
+activities
+empty_states
+```
+
+Keep controller thin.
+
+No complex queries in controller.
+
+No complex queries in Blade.
+
+---
+
+## 12. Blade Layout
+
+Create or update:
+
+```text
+resources/views/admin/dashboards/department/show.blade.php
+```
+
+The layout should include:
+
+```text
+hero section
+primary KPI cards row
+secondary compact metrics row
+main work queue / requests section
+quick actions
+services/prices/usage cards
+trend/chart area
+recent activity
+empty/restricted states
+```
+
+Use the uploaded dashboard inspiration:
+
+```text
+admin-style KPI cards with background SVG accents
+doctor-style operational queue
+staff-style generic stats/lists fallback
+```
+
+No hardcoded English labels.
+
+All labels must use lang files.
+
+---
+
+## 13. Department Type Specific Layout Profiles
+
+Add layout profile definitions.
+
+Each type defines:
+
+```text
+primary cards
+secondary cards
+queue/list blocks
+service/usage blocks
+quick actions
+trend blocks
+fallback blocks
 ```
 
 Example:
 
 ```php
-interface DepartmentMetricCalculatorInterface
-{
-    public function calculate(DepartmentMetricContext $context): DepartmentMetricResult;
-}
+'investigation' => [
+    'primary_cards' => [
+        'pending_requests',
+        'samples_awaiting_acceptance',
+        'completed_results_today',
+        'department_revenue_today',
+    ],
+    'main_queue' => 'lab_requests',
+    'side_cards' => ['services', 'stock_usage', 'recent_results'],
+]
 ```
 
-Or keep simple closures/methods if project style prefers services.
+Radiology can use:
 
-Metric context should include:
-
-```text
-user
-department_type
-department_id nullable
-date_from
-date_to
-filters
-permissions
-modules
+```php
+'radiology' => [
+    'primary_cards' => [
+        'pending_imaging',
+        'scheduled_imaging',
+        'completed_imaging_today',
+        'department_revenue_today',
+    ],
+    'main_queue' => 'radiology_requests',
+    'side_cards' => ['services', 'stock_usage', 'recent_results'],
+]
 ```
-
-Metric result should include:
-
-```text
-key
-label
-value
-format
-available
-unavailable_reason
-meta
-```
-
-Do not return raw query builders to views.
 
 ---
 
-## 13. DepartmentMetrics Diagnostic Command
+## 14. Permission and Data Safety
 
-Add command:
-
-```bash
-php artisan departments:metrics-map
-```
-
-Output:
+Before querying any restricted metric:
 
 ```text
-department_type
-metric_key
-label
-calculator
-permission
-module
-available?
-fallback?
+check permission
+check module enabled
+check department scope
 ```
 
-The command must not modify data.
+Restricted examples:
 
-It should help confirm every department type has metrics.
+```text
+prices
+revenue
+invoice balances
+stock cost
+sales
+claims
+clinical details
+patient identifiable lists
+```
+
+Rules:
+
+```text
+If user lacks permission:
+    do not query sensitive data
+    hide card or show restricted state
+
+If module disabled:
+    show unavailable module state or hide card
+
+If department_id missing:
+    use fallback/global only when user has admin/global permission
+```
 
 ---
 
-## 14. Localisation
+## 15. Localisation
 
 Extend:
 
 ```text
+lang/en/dashboards.php
+lang/fr/dashboards.php
 lang/en/departments.php
 lang/fr/departments.php
-lang/en/reports.php
-lang/fr/reports.php
+lang/en/menu.php
+lang/fr/menu.php
 ```
 
-Add keys:
+Add keys for:
 
 ```text
-department_type_reports
-department_metrics
-metrics_registry
+department_dashboard
+my_department_dashboard
+department_context
+department_services
+department_prices
+department_usage
+department_stock
+department_work_queue
+department_activity
+department_quick_actions
+scoped_to_department
+global_preview
+restricted_metric
 metric_unavailable
-metric_restricted
-metric_module_disabled
-department_type_rollup
-department_drilldown
-include_unavailable_metrics
-active_departments
-assigned_users
-services_count
-activity_count
-revenue_today
-pending_items
-collections_today
-unpaid_invoices
-ar_aging_total
-pending_claims
-low_stock_items
-out_of_stock_items
-available_beds
-occupied_beds
-active_admissions
-active_emergency_cases
-pending_lab_requests
-pending_radiology_requests
-scheduled_surgeries
-available_blood_units
-active_mortuary_cases
-ambulance_requests
+no_department_assigned
+no_department_activity
+view_services
+view_requests
+view_results
+view_stock
+view_prices
 ```
+
+Add type-specific dashboard titles/subtitles for all 19 types.
 
 Maintain EN/FR parity.
 
-Run:
-
-```bash
-php scripts/localisation-audit.php
-php scripts/localisation-parity-check.php
-```
+Run localisation audit and parity checks.
 
 Active runtime candidates must remain:
 
@@ -812,50 +716,54 @@ Active runtime candidates must remain:
 
 ---
 
-## 15. Tests To Add
+## 16. Tests To Add
 
 Add focused tests only.
 
 Required tests:
 
 ```text
-all 19 department types have a metrics profile
-generic metrics profile works for support/mortuary/ambulance
-metric registry does not throw for any department type
-metric service hides restricted finance metrics without permission
-metric service hides stock-cost metrics without permission
-module-disabled metric returns unavailable instead of crashing
-department type report route is permission protected
-department type report filters by date range
-department type report filters by department type
-department drill-down lists departments of selected type
-CSV export requires export permission
-CSV export respects selected filters
-departments:metrics-map lists all 19 department types
-EN/FR metric labels exist
+DepartmentContextResolver resolves user department_id and department_type.
+User with laboratory department gets investigation dashboard context.
+Laboratory dashboard data is scoped to Laboratory department_id only.
+X-ray/radiology user does not see Laboratory services/stock/usage.
+Radiology dashboard data is scoped to Radiology department_id only.
+User with pharmacy department gets pharmacy dashboard context.
+Pharmacy dashboard data is scoped to Pharmacy department_id only.
+User with no department falls back safely.
+Admin can preview department dashboards if permitted.
+Non-admin cannot bypass department scope through preview.
+Department dashboard route redirects/loads after login.
+Menu profile applies after login for user department.
+Department services card only shows services for current department.
+Department prices card is hidden/restricted without price permission.
+Stock usage card is hidden/restricted without inventory permission.
+Finance metrics are hidden without finance permission.
+All 19 department types have theme definitions.
+All 19 department types have layout profiles or safe fallback.
+Modern department dashboard view compiles.
+EN/FR dashboard labels exist.
 ```
 
 Allowed focused command:
 
 ```bash
-php artisan test tests/Feature/Departments/DepartmentMetricsRegistryPhase5Test.php
+php artisan test tests/Feature/Departments/DepartmentDashboardUiPhase6Test.php
 ```
 
-Also run any small focused reports tests if touched.
-
-Do not run:
+Also run focused dashboard/menu tests if touched:
 
 ```bash
-php artisan test
+php artisan test tests/Feature/Departments
 ```
 
-unless explicitly instructed.
+Do not run the wide full suite unless explicitly instructed.
 
 ---
 
-## 16. Minimal Verification Commands
+## 17. Minimal Verification Commands
 
-Run only:
+Run:
 
 ```bash
 php artisan route:list
@@ -879,27 +787,28 @@ Do not run the wide full suite.
 
 ---
 
-## 17. Documentation
+## 18. Documentation
 
 Create:
 
 ```text
-docs/DEPARTMENT_TYPE_EXPANSION_PHASE_5_METRICS_REPORTS_REPORT.md
+docs/DEPARTMENT_DASHBOARD_UI_PHASE_6_REPORT.md
 ```
 
 Include:
 
 ```text
 summary
-metrics registry design
-department type to metrics mapping
-generic fallback metrics
-metric permission/module safety
-department type report route/screen
-department drill-down behavior
-export behavior
-dashboard integration points
-diagnostic command output
+department context resolver design
+login redirect behavior
+theme registry
+dashboard data service
+layout profile design
+department-scoped metrics
+department services/prices/usage behavior
+menu behavior after login
+permission/module safety
+Blade/components added
 localisation changes
 tests added
 focused tests run
@@ -911,37 +820,36 @@ next recommended phase
 Known limitations should mention:
 
 ```text
-multi-department user context switcher is deferred
-some department types use generic metrics until dedicated modules exist
+multi-department user switcher is deferred
+some department types use generic themed fallback until dedicated modules exist
+advanced charts can be improved later
 department backfill apply was not run unless explicitly instructed
-wide full-suite regression remains deferred
 ```
 
 ---
 
-## 18. Acceptance Criteria
+## 19. Acceptance Criteria
 
-Phase 5 is complete only when:
+This phase is complete only when:
 
 ```text
-all 19 department types have metrics profiles
-generic fallback metrics exist
-metrics do not crash for unsupported modules
-restricted metrics are hidden before sensitive queries run
-department type report screen exists
-department drill-down works
-CSV/export support works where existing tooling permits
-dashboard integration helper exists
-departments:metrics-map command exists
+login loads the user's department-type dashboard
+sidebar/menu is department-oriented after login
+dashboard theme matches department type
+dashboard data is scoped to actual department_id
+lab user sees only laboratory services/stock/prices/usage
+radiology/x-ray user sees only radiology services/stock/prices/usage
+all 19 department types have theme/layout fallback
+services/prices/stock/usage cards are permission-safe
+finance/stock-cost sensitive data is not leaked
+admin/global preview remains controlled
+user with no department falls back safely
+modern dashboard view compiles
 EN/FR localisation parity is maintained
 active runtime localisation candidates remain 0
-route list works
-view cache compiles
-permissions audit is clean
-documentation report is created
 focused tests pass
-full test suite is intentionally deferred
-department backfill is not applied unless explicitly instructed
+documentation report is created
+wide full suite is intentionally deferred
 ```
 
-Proceed with Department Type Expansion Phase 5 now.
+Proceed with Department Type UI Expansion Phase 6 now.
