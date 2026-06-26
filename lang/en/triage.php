@@ -31,6 +31,7 @@ return [
     'triage_notes'          => 'Triage Notes',
     'assign_priority'       => 'Assign Priority',
     'complete_triage'       => 'Complete Triage',
+    'update_triage'         => 'Update Triage',
     'send_to_department'    => 'Send to Department',
     'target_department'     => 'Target Department',
     'no_triage_found'       => 'No triage records found.',
@@ -93,11 +94,13 @@ return [
 
     // JS AJAX feedback strings
     'js_completed_successfully'      => 'Triage completed successfully.',
+    'js_updated_successfully'        => 'Triage updated successfully.',
     'js_triage_score_label'          => 'Triage score:',
     'js_department_label'            => 'Department:',
     'js_view_visit'                  => 'View Visit',
     'js_open_consultation_queue'     => 'Open Consultation Queue',
     'js_open_visit'                  => 'Open visit',
     'js_failed_to_complete'          => 'Failed to complete triage. Please try again.',
+    'js_failed_to_update'            => 'Failed to update triage. Please try again.',
     'js_network_error'               => 'Network error while completing triage. Please try again.',
 ];

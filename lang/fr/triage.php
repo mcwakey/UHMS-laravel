@@ -31,6 +31,7 @@ return [
     'triage_notes'          => 'Notes de triage',
     'assign_priority'       => 'Attribuer une priorité',
     'complete_triage'       => 'Terminer le triage',
+    'update_triage'         => 'Mettre à jour le triage',
     'send_to_department'    => 'Envoyer au département',
     'target_department'     => 'Département cible',
     'no_triage_found'       => 'Aucun enregistrement de triage trouvé.',
@@ -93,11 +94,13 @@ return [
 
     // JS AJAX feedback strings
     'js_completed_successfully'      => 'Triage terminé avec succès.',
+    'js_updated_successfully'        => 'Triage mis à jour avec succès.',
     'js_triage_score_label'          => 'Score de triage :',
     'js_department_label'            => 'Département :',
     'js_view_visit'                  => 'Voir la visite',
     'js_open_consultation_queue'     => 'Ouvrir la file de consultation',
     'js_open_visit'                  => 'Ouvrir la visite',
     'js_failed_to_complete'          => 'Impossible de terminer le triage. Veuillez réessayer.',
+    'js_failed_to_update'            => 'Impossible de mettre à jour le triage. Veuillez réessayer.',
     'js_network_error'               => 'Erreur réseau lors du triage. Veuillez réessayer.',
 ];

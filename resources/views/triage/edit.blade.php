@@ -1,19 +1,19 @@
 @extends('layouts.app')
-@section('title', __('triage.assessment') . ' — ' . $visit->patient->full_name)
+@section('title', __('triage.edit_triage') . ' — ' . $visit->patient->full_name)
 
 @section('content')
 <x-page-header-back
-        :title="__('triage.assessment')"
-        :href="route('admin.triage.index')"
+        :title="__('triage.edit_triage')"
+        :href="route('admin.triage.show', $visit)"
     />
 
 <!-- Page Header -->
 <!-- <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"><i class="ti ti-stethoscope me-2 text-info"></i>{{ __('triage.assessment') }}</h4>
+        <h4 class="fw-bold mb-0"><i class="ti ti-stethoscope me-2 text-info"></i>{{ __('triage.edit_triage') }}</h4>
         <small class="text-muted">{{ $visit->patient->full_name }} &bull; {{ $visit->visit_number }}</small>
     </div>
-    <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
+    <a href="{{ route('admin.triage.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
         <i class="ti ti-arrow-left me-1"></i>{{ __('triage.back_to_visit') }}
     </a>
 </div> -->
@@ -30,8 +30,9 @@
 <div class="row">
     <!-- Left: Triage Form -->
     <div class="col-lg-8">
-        <form method="POST" action="{{ route('admin.triage.store', $visit) }}" id="triageForm">
+        <form method="POST" action="{{ route('admin.triage.update', $visit) }}" id="triageForm">
             @csrf
+            @method('PUT')
 
             <!-- Vitals Card -->
             <div class="card mb-3">
@@ -148,48 +149,9 @@
             <!-- Outcome Card -->
             <div class="card mb-3">
                 <div class="card-header">
-                    <h6 class="fw-bold mb-0"><i class="ti ti-arrows-transfer-up me-1"></i>{{ __('triage.triage_action') }}</h6>
+                    <h6 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>{{ __('triage.triage_notes') }}</h6>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label">{{ __('triage.assign_route') }} <span class="text-danger">*</span></label>
-                        @if($pendingRoutes->isEmpty())
-                            <div class="alert alert-warning py-2 mb-2 small">
-                                {{ __('triage.no_pending_routes') }}
-                            </div>
-                        @else
-                            @php $selectedRouteId = old('consultation_route_id', $pendingRoutes->first()?->id); @endphp
-                            <div class="list-group">
-                                @foreach($pendingRoutes as $route)
-                                    @php
-                                        $serviceNames = $route->routeServices
-                                            ->map(fn ($routeService) => $routeService->service?->name)
-                                            ->filter()
-                                            ->values();
-                                        if ($serviceNames->isEmpty() && $route->service) {
-                                            $serviceNames = collect([$route->service->name]);
-                                        }
-                                    @endphp
-                                    <label class="list-group-item d-flex gap-2 align-items-start">
-                                        <input class="form-check-input mt-1 flex-shrink-0"
-                                               type="radio"
-                                               name="consultation_route_id"
-                                               value="{{ $route->id }}"
-                                               {{ (string) $selectedRouteId === (string) $route->id ? 'checked' : '' }}>
-                                        <div>
-                                            <div class="fw-semibold">{{ $route->department?->name ?? '—' }}</div>
-                                            <div class="text-muted small">
-                                                <i class="ti ti-stethoscope me-1"></i>{{ $serviceNames->implode(', ') ?: __('triage.consultation_services_pending') }}
-                                            </div>
-                                        </div>
-                                    </label>
-                                @endforeach
-                            </div>
-                            @error('consultation_route_id')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                            <div class="form-text">{{ __('triage.route_activated_note') }}</div>
-                        @endif
-                    </div>
-
                     <div class="mb-3">
                         <label class="form-label">{{ __('common.notes') }}</label>
                         <textarea name="notes" class="form-control" rows="3"
@@ -200,9 +162,9 @@
 
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary px-4" id="triageSubmitBtn">
-                    <i class="ti ti-stethoscope me-1"></i><span id="triageSubmitLabel">{{ __('triage.complete_triage') }}</span>
+                    <i class="ti ti-device-floppy me-1"></i><span id="triageSubmitLabel">{{ __('triage.update_triage') }}</span>
                 </button>
-                <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary">{{ __('common.cancel') }}</a>
+                <a href="{{ route('admin.triage.show', $visit) }}" class="btn btn-outline-secondary">{{ __('common.cancel') }}</a>
             </div>
         </form>
     </div>
@@ -320,17 +282,17 @@
 
     // Blade-rendered translatable strings used in JS
     const i18n = {
-        completeTriage:         @json(__('triage.complete_triage')),
+        completeTriage:         @json(__('triage.update_triage')),
         saving:                 @json(__('triage.saving')),
         completed:              @json(__('triage.triage_completed_label')),
         correctFields:          @json(__('common.something_went_wrong')),
-        completedSuccessfully:  @json(__('triage.js_completed_successfully')),
+        completedSuccessfully:  @json(__('triage.js_updated_successfully')),
         triageScoreLabel:       @json(__('triage.js_triage_score_label')),
         departmentLabel:        @json(__('triage.js_department_label')),
         viewVisit:              @json(__('triage.js_view_visit')),
         openConsultationQueue:  @json(__('triage.js_open_consultation_queue')),
         openVisit:              @json(__('triage.js_open_visit')),
-        failedToComplete:       @json(__('triage.js_failed_to_complete')),
+        failedToComplete:       @json(__('triage.js_failed_to_update')),
         networkError:           @json(__('triage.js_network_error')),
     };
 

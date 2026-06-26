@@ -1094,6 +1094,7 @@ Route::middleware('auth')->group(function () {
             Route::get('triage/{visit}', [TriageController::class, 'show'])->name('triage.show');
             Route::get('triage/{visit}/assess', [TriageController::class, 'create'])->name('triage.create')->middleware('can:vitals.create');
             Route::post('triage/{visit}', [TriageController::class, 'store'])->name('triage.store')->middleware('can:vitals.create');
+            Route::put('triage/{visit}/assess', [TriageController::class, 'update'])->name('triage.update')->middleware('can:vitals.create');
         });
 
         // Vitals (Nurse Triage)

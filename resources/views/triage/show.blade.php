@@ -2,7 +2,12 @@
 @section('title', __('triage.summary') . ' — ' . $visit->visit_number)
 
 @section('content')
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
+<x-page-header-back
+        :title="__('triage.summary')"
+        :href="route('admin.triage.index')"
+    />
+
+<!-- <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0"><i class="ti ti-stethoscope me-2 text-info"></i>{{ __('triage.summary') }}</h4>
         <small class="text-muted">{{ $visit->patient->full_name }} &bull; {{ $visit->visit_number }}</small>
@@ -10,7 +15,7 @@
     <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
         <i class="ti ti-arrow-left me-1"></i>{{ __('triage.back_to_visit') }}
     </a>
-</div>
+</div> -->
 
 @if($visit->triage)
     @php $triage = $visit->triage; @endphp
@@ -28,55 +33,56 @@
             @endif
 
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center gap-2">
                     <h6 class="fw-bold mb-0"><i class="ti ti-heart-rate-monitor me-1"></i>{{ __('triage.recorded_vitals') }}</h6>
+                    <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="ti ti-pencil me-1"></i>{{ __('common.edit') }}
+                    </a>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-6 col-md-4">
+                        <div class="col-6 col-md-2">
                             <div class="p-3 rounded bg-light text-center">
                                 <div class="text-muted small mb-1">{{ __('triage.blood_pressure') }}</div>
                                 <div class="fw-bold fs-5">{{ $triage->blood_pressure ?? '—' }}</div>
                                 <div class="text-muted" style="font-size:0.75rem">mmHg</div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-4">
+                        <div class="col-6 col-md-2">
                             <div class="p-3 rounded bg-light text-center">
                                 <div class="text-muted small mb-1">{{ __('triage.heart_rate') }}</div>
                                 <div class="fw-bold fs-5">{{ $triage->heart_rate ?? '—' }}</div>
                                 <div class="text-muted" style="font-size:0.75rem">bpm</div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-4">
+                        <div class="col-6 col-md-2">
                             <div class="p-3 rounded bg-light text-center">
                                 <div class="text-muted small mb-1">{{ __('triage.temperature') }}</div>
                                 <div class="fw-bold fs-5">{{ $triage->temperature ?? '—' }}</div>
                                 <div class="text-muted" style="font-size:0.75rem">°C</div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-4">
+                        <div class="col-6 col-md-2">
                             <div class="p-3 rounded bg-light text-center">
                                 <div class="text-muted small mb-1">{{ __('triage.respiratory_rate') }}</div>
                                 <div class="fw-bold fs-5">{{ $triage->respiratory_rate ?? '—' }}</div>
                                 <div class="text-muted" style="font-size:0.75rem">/min</div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-4">
+                        <div class="col-6 col-md-2">
                             <div class="p-3 rounded bg-light text-center">
                                 <div class="text-muted small mb-1">{{ __('triage.spo2') }}</div>
                                 <div class="fw-bold fs-5">{{ $triage->spo2 ? $triage->spo2 . '%' : '—' }}</div>
                                 <div class="text-muted" style="font-size:0.75rem">{{ __('triage.oxygen_sat') }}</div>
                             </div>
                         </div>
-                        @if($triage->bmi)
-                        <div class="col-6 col-md-4">
+                        <div class="col-6 col-md-2">
                             <div class="p-3 rounded bg-light text-center">
                                 <div class="text-muted small mb-1">{{ __('triage.bmi') }}</div>
-                                <div class="fw-bold fs-5">{{ $triage->bmi }}</div>
+                                <div class="fw-bold fs-5">{{ $triage->bmi ?? '—' }}</div>
                                 <div class="text-muted" style="font-size:0.75rem">kg/m²</div>
                             </div>
                         </div>
-                        @endif
                     </div>
                     @if($triage->notes)
                         <div class="mt-3">
@@ -103,6 +109,32 @@
         </div>
 
         <div class="col-lg-4">
+            <x-patient-card :patient="$visit->patient" :visit="$visit" />
+
+            <x-visit-information-card :visit="$visit" />
+
+            @if ($visit->chief_complaint)
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>{{ __('triage.chief_complaint') }}</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ $visit->chief_complaint ?? '—' }}</p>
+                </div>
+            </div>
+            @endif
+
+            @if ($visit->notes)
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>{{ __('triage.notes') }}</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ $visit->notes ?? '—' }}</p>
+                </div>
+            </div>
+            @endif
+
             <!-- Re-triage option if still in TRIAGE status -->
             @if($visit->status === \App\Enums\VisitStatus::TRIAGE)
                 <div class="card mb-3">
@@ -114,15 +146,42 @@
                 </div>
             @endif
 
+            <!-- Triage Score Guide -->
             <div class="card">
                 <div class="card-header">
-                    <h6 class="fw-bold mb-0">{{ __('triage.visit_status') }}</h6>
+                    <h6 class="fw-bold mb-0"><i class="ti ti-info-circle me-1"></i>{{ __('triage.score_guide') }}</h6>
                 </div>
-                <div class="card-body text-center">
-                    <x-status-badge :status="$visit->status" class="fs-6 px-3 py-2" />
-                    @if($visit->currentDepartment)
-                        <div class="text-muted small mt-2">{{ __('triage.at_department', ['name' => $visit->currentDepartment->name]) }}</div>
-                    @endif
+                <div class="card-body p-0">
+                    <div class="table-responsive"><table class="table table-sm mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>{{ __('common.status') }}</th>
+                                <th>{{ __('triage.spo2') }}</th>
+                                <th>{{ __('triage.temperature') }}</th>
+                                <th>{{ __('triage.heart_rate') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge bg-success">{{ __('triage.score_routine') }}</span></td>
+                                <td>≥95%</td>
+                                <td>36–38.5°C</td>
+                                <td>50–110</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-warning text-dark">{{ __('triage.urgent') }}</span></td>
+                                <td>92–94%</td>
+                                <td>36–38.5°C</td>
+                                <td>50–110</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-danger">{{ __('triage.emergency') }}</span></td>
+                                <td>&lt;92%</td>
+                                <td>&lt;35 / &gt;39.5°C</td>
+                                <td>&lt;40 / &gt;130</td>
+                            </tr>
+                        </tbody>
+                    </table></div>
                 </div>
             </div>
         </div>

@@ -127,6 +127,9 @@
                 :visit="$appointment->visit"
                 :visit-insurance="$appointment->visitInsurance"
             />
+            @if($appointment->visit)
+            <x-visit-information-card :visit="$appointment->visit" />
+            @endif
 
             @can('appointments.create')
             <div class="card">

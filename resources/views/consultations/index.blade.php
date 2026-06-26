@@ -2,20 +2,7 @@
 @section('title', __('consultations.title'))
 
 @section('content')
-<x-page-header :title="__('consultations.title')" :description="__('consultations.description')" icon="ti-stethoscope">
-    <x-slot:actions>
-        <div class="bg-white border shadow-sm rounded px-1 pb-0 text-center d-flex align-items-center justify-content-center">
-            <a aria-label="{{ __('consultations.queue_view') }}" title="{{ __('consultations.queue_view') }}" href="{{ route('admin.consultations.index') }}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center">
-                <i class="ti ti-list fs-14 text-body"></i>
-            </a>
-            @can('appointments.view')
-            <a aria-label="{{ __('consultations.appointment_calendar') }}" title="{{ __('consultations.appointment_calendar') }}" href="{{ route('admin.appointments.calendar') }}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center">
-                <i class="ti ti-calendar-event fs-14 text-body"></i>
-            </a>
-            @endcan
-        </div>
-    </x-slot:actions>
-</x-page-header>
+<x-page-header :title="__('consultations.title')" icon="ti-stethoscope" />
 
 <div class="card mb-3">
     <div class="card-body">

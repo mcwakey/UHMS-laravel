@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin\Patients;
 
 use App\Enums\DepartmentType;
+use App\Enums\TriageScore;
 use App\Enums\VisitStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\QueueEntry;
+use App\Models\Vital;
 use App\Models\Visit;
 use App\Services\ConsultationRouteService;
 use App\Services\Billing\BillingPolicyService;
@@ -26,24 +28,6 @@ class TriageController extends Controller
      */
     public function create(Visit $visit)
     {
-        if (! in_array($visit->status, [VisitStatus::QUEUED, VisitStatus::TRIAGE])) {
-            return redirect()
-                ->route('admin.visits.show', $visit)
-                ->with('error', __('messages.triage.not_awaiting'));
-        }
-
-        // Auto-transition WAITING → TRIAGE when nurse opens the form
-        if ($visit->status === VisitStatus::QUEUED) {
-            $visit->update(['status' => VisitStatus::TRIAGE->value]);
-            $visit->statusLogs()->create([
-                'from_status' => VisitStatus::QUEUED->value,
-                'to_status' => VisitStatus::TRIAGE->value,
-                'changed_by' => auth()->id(),
-                'notes' => 'Triage assessment started',
-            ]);
-            $visit = $visit->fresh();
-        }
-
         $visit->load([
             'patient',
             'triage',
@@ -57,8 +41,43 @@ class TriageController extends Controller
             'activeConsultationRoute.routeServices.service',
         ]);
 
+        $isEdit = $visit->triage !== null;
+
+        if (! $isEdit && ! in_array($visit->status, [VisitStatus::QUEUED, VisitStatus::TRIAGE])) {
+            return redirect()
+                ->route('admin.visits.show', $visit)
+                ->with('error', __('messages.triage.not_awaiting'));
+        }
+
+        // Auto-transition QUEUED to TRIAGE when nurse opens a new assessment.
+        if (! $isEdit && $visit->status === VisitStatus::QUEUED) {
+            $visit->update(['status' => VisitStatus::TRIAGE->value]);
+            $visit->statusLogs()->create([
+                'from_status' => VisitStatus::QUEUED->value,
+                'to_status' => VisitStatus::TRIAGE->value,
+                'changed_by' => auth()->id(),
+                'notes' => 'Triage assessment started',
+            ]);
+            $visit = $visit->fresh([
+                'patient',
+                'triage',
+                'currentDepartment',
+                'visitServices.department',
+                'pendingConsultationRoutes.department',
+                'pendingConsultationRoutes.service',
+                'pendingConsultationRoutes.routeServices.service',
+                'activeConsultationRoute.department',
+                'activeConsultationRoute.service',
+                'activeConsultationRoute.routeServices.service',
+            ]);
+        }
+
         $consultationDepts = $this->billableConsultationDepartmentsForVisit($visit);
-        $pendingRoutes = $visit->pendingConsultationRoutes;
+        $pendingRoutes = $isEdit ? collect() : $visit->pendingConsultationRoutes;
+
+        if ($isEdit) {
+            return view('triage.edit', compact('visit', 'consultationDepts'));
+        }
 
         return view('triage.create', compact('visit', 'consultationDepts', 'pendingRoutes'));
     }
@@ -172,6 +191,56 @@ class TriageController extends Controller
             ->with('success', $message);
     }
 
+    public function update(Request $request, Visit $visit)
+    {
+        $visit->load(['patient', 'triage']);
+        abort_unless($visit->triage, 404);
+
+        $validated = $request->validate($this->vitalRules());
+
+        if (! empty($validated['weight']) && ! empty($validated['height'])) {
+            $heightM = $validated['height'] / 100;
+            if ($heightM > 0) {
+                $validated['bmi'] = round($validated['weight'] / ($heightM * $heightM), 1);
+            }
+        }
+
+        $score = TriageScore::compute($validated);
+        $triage = $visit->triage;
+
+        $triage->update(array_merge($validated, [
+            'patient_id' => $visit->patient_id,
+            'triage_score' => $score->value,
+            'triaged_by' => $request->user()?->id,
+            'triaged_at' => now(),
+        ]));
+
+        $this->syncTriageVitalRecord($triage->fresh(), $validated);
+        $visit->update(['triage_score' => $score->value]);
+        $visit = $visit->fresh(['triage', 'currentDepartment']);
+
+        $message = __('triage.js_updated_successfully');
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+                'visit_id' => $visit->id,
+                'visit_number' => $visit->visit_number,
+                'status' => $visit->status->value,
+                'status_label' => $visit->status->label(),
+                'triage_score' => $visit->triage_score?->value,
+                'triage_score_label' => $visit->triage_score?->label(),
+                'department' => $visit->currentDepartment?->name,
+                'redirect_url' => route('admin.triage.show', $visit),
+                'queue_url' => route('admin.consultations.index'),
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.triage.show', $visit)
+            ->with('success', $message);
+    }
+
     /**
      * Show triage summary for a visit (read-only).
      */
@@ -230,6 +299,49 @@ class TriageController extends Controller
             ->unique('id')
             ->sortBy('name')
             ->values();
+    }
+
+    private function vitalRules(): array
+    {
+        return [
+            'blood_pressure_systolic' => ['nullable', 'integer', 'min:40', 'max:300'],
+            'blood_pressure_diastolic' => ['nullable', 'integer', 'min:20', 'max:200'],
+            'heart_rate' => ['nullable', 'integer', 'min:20', 'max:300'],
+            'temperature' => ['nullable', 'numeric', 'min:30', 'max:45'],
+            'respiratory_rate' => ['nullable', 'integer', 'min:4', 'max:60'],
+            'spo2' => ['nullable', 'integer', 'min:50', 'max:100'],
+            'weight' => ['nullable', 'numeric', 'min:0.5', 'max:500'],
+            'height' => ['nullable', 'numeric', 'min:20', 'max:250'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ];
+    }
+
+    private function syncTriageVitalRecord($triage, array $data): void
+    {
+        $vitalFields = [
+            'blood_pressure_systolic',
+            'blood_pressure_diastolic',
+            'heart_rate',
+            'temperature',
+            'respiratory_rate',
+            'spo2',
+            'weight',
+            'height',
+            'bmi',
+            'notes',
+        ];
+
+        $vitals = array_intersect_key($data, array_flip($vitalFields));
+
+        Vital::updateOrCreate(
+            ['triage_id' => $triage->id],
+            array_merge($vitals, [
+                'visit_id' => $triage->visit_id,
+                'patient_id' => $triage->patient_id,
+                'recorded_by' => $triage->triaged_by,
+                'recorded_at' => $triage->triaged_at ?? now(),
+            ])
+        );
     }
 
     private function assertRouteServicesSettled($route, BillingPolicyService $billingPolicy, $user): void

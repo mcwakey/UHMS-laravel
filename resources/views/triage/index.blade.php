@@ -2,20 +2,7 @@
 @section('title', __('triage.queue'))
 
 @section('content')
-<x-page-header :title="__('triage.queue')" icon="ti-heart-broken">
-    <x-slot:actions>
-        <!-- @can('queue.view')
-        <a href="{{ route('admin.queue.board') }}" class="btn btn-outline-info btn-md">
-            <i class="ti ti-list-numbers me-1"></i>{{ __('visits.queue_board') }}
-        </a>
-        @endcan -->
-        <!-- @can('visits.create')
-        <a href="{{ route('admin.visits.create') }}" class="btn btn-primary btn-md">
-            <i class="ti ti-plus me-1"></i>{{ __('visits.new_visit') }}
-        </a>
-        @endcan -->
-    </x-slot:actions>
-</x-page-header>
+<x-page-header :title="__('triage.queue')" icon="ti-heart-broken"/>
 
 <!-- Page Header -->
 <!-- <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">

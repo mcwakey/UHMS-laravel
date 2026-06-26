@@ -110,6 +110,7 @@
         @include('partials.date-range-filter', [
             'id' => 'visitDateRangePicker',
             'value' => $filters['date_range'] ?? '',
+            'submitOnApply' => true,
         ])
     </div>
     <x-slot:actions>
