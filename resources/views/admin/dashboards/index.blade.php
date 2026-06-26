@@ -5,25 +5,10 @@
 <x-page-header :title="$title" icon="ti-layout-dashboard"
     :description="$department?->name ? ($department->name . ' · ' . now()->format('D, d M Y')) : now()->format('D, d M Y')">
     <x-slot:actions>
-        @if(auth()->user()?->hasAnyRole(['Super Admin', 'Admin']))
+        @if(!empty($available_dashboards))
         <form method="GET" class="d-inline-block">
             <select name="as" class="form-select form-select-sm d-inline-block" style="width:auto" onchange="this.form.submit()" aria-label="Preview dashboard">
-                @foreach([
-                    'management' => 'Management',
-                    'consultation' => 'Consultation / OPD',
-                    'emergency' => 'Emergency / Casualty',
-                    'admission' => 'Admission / Ward',
-                    'pharmacy' => 'Pharmacy',
-                    'investigation' => 'Investigations',
-                    'theatre' => 'Theatre & Procedures',
-                    'billing' => 'Billing / Cashier',
-                    'claims' => 'Insurance / Claims',
-                    'stock' => 'Stock & Store',
-                    'blood_bank' => 'Blood Bank',
-                    'accounting' => 'Accounting',
-                    'hr' => 'HR / Payroll',
-                    'reception' => 'Reception / Front Desk',
-                ] as $value => $label)
+                @foreach($available_dashboards as $value => $label)
                     <option value="{{ $value }}" @selected(($key ?? '') === $value)>{{ $label }}</option>
                 @endforeach
             </select>

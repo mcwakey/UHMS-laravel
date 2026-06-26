@@ -2,7 +2,6 @@
 
 namespace App\Services\Dashboard;
 
-use App\Enums\DepartmentType;
 use App\Models\User;
 use Illuminate\Support\Facades\Lang;
 
@@ -35,6 +34,10 @@ class DepartmentDashboardResolver
     public const RECEPTION = 'reception';
     public const GENERIC = 'generic';
 
+    public function __construct(
+        private DepartmentDashboardRegistry $registry,
+    ) {}
+
     /**
      * @return array{key:string, label:string}
      */
@@ -52,28 +55,11 @@ class DepartmentDashboardResolver
             return self::MANAGEMENT;
         }
 
-        // 2. Department type, when the user is assigned to a department.
-        $type = $user->department?->type;
-        if ($type instanceof DepartmentType) {
-            $byType = match ($type) {
-                DepartmentType::CONSULTATION, DepartmentType::TREATMENT => self::CONSULTATION,
-                DepartmentType::EMERGENCY => self::EMERGENCY,
-                DepartmentType::PHARMACY => self::PHARMACY,
-                DepartmentType::INVESTIGATION, DepartmentType::RADIOLOGY => self::INVESTIGATION,
-                DepartmentType::PROCEDURE, DepartmentType::THEATRE => self::THEATRE,
-                DepartmentType::INPATIENT, DepartmentType::MATERNITY, DepartmentType::NURSING => self::ADMISSION,
-                DepartmentType::BLOOD_BANK => self::BLOOD_BANK,
-                DepartmentType::RECORDS => self::RECEPTION,
-                DepartmentType::FINANCE => self::ACCOUNTING,
-                DepartmentType::STORES => self::STOCK,
-                DepartmentType::ADMINISTRATIVE => self::MANAGEMENT,
-                // support, mortuary, ambulance, and any future type fall through
-                // to the role-based fallback, then the generic dashboard.
-                default => null,
-            };
-            if ($byType) {
-                return $byType;
-            }
+        // 2. Department type → dashboard (declared in the registry). Types with
+        //    no dedicated dashboard return null and fall through.
+        $byType = $this->registry->keyForType($user->department?->type);
+        if ($byType) {
+            return $byType;
         }
 
         // 3. Role-based fallback for finance/stock/clinical roles whose
