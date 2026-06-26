@@ -214,9 +214,7 @@ Route::middleware(['throttle:public-payments', 'module:payment_gateway'])
 
 Route::middleware('auth')->group(function () {
 
-    // Generic dashboard entry — routes every user to their resolved
-    // department-type dashboard. The legacy admin/doctor/staff dashboards
-    // remain available directly for anyone who needs them.
+    // Generic dashboard entry — routes every user to their resolved department dashboard.
     Route::get('dashboard', fn () => redirect()->route('admin.my-dashboard'))->name('dashboard');
 
     // Shared staff dashboard — role-aware content

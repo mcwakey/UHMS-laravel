@@ -4,12 +4,32 @@ namespace App\Enums;
 
 enum DepartmentType: string
 {
+    // case CONSULTATION = 'consultation';
+    // case INVESTIGATION = 'investigation';
+    // case PROCEDURE = 'procedure';
+    // case TREATMENT = 'treatment';
+    // case PHARMACY = 'pharmacy';
+    // case RADIOLOGY = 'radiology';
+    // case SUPPORT = 'support';
+    // case ADMINISTRATIVE = 'administrative';
+
     case CONSULTATION = 'consultation';
+    case EMERGENCY = 'emergency';
     case INVESTIGATION = 'investigation';
-    case PROCEDURE = 'procedure';
-    case TREATMENT = 'treatment';
-    case PHARMACY = 'pharmacy';
     case RADIOLOGY = 'radiology';
+    case PROCEDURE = 'procedure';
+    case THEATRE = 'theatre';
+    case TREATMENT = 'treatment';
+    case NURSING = 'nursing';
+    case PHARMACY = 'pharmacy';
+    case INPATIENT = 'inpatient';
+    case MATERNITY = 'maternity';
+    case BLOOD_BANK = 'blood_bank';
+    case MORTUARY = 'mortuary';
+    case AMBULANCE = 'ambulance';
+    case RECORDS = 'records';
+    case FINANCE = 'finance';
+    case STORES = 'stores';
     case SUPPORT = 'support';
     case ADMINISTRATIVE = 'administrative';
 
