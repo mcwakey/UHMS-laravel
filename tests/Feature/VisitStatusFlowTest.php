@@ -135,18 +135,30 @@ class VisitStatusFlowTest extends TestCase
 
         $this->assertNotNull($visit);
         $this->assertSame('appointment', $visit->visit_source);
-        // No consultation service attached → stops at checked_in (not queued).
+        // First-ever appointment patient, no service attached → null → created → checked_in.
+        $this->assertSame('first_ever', $visit->attendance_class);
         $this->assertSame(VisitStatus::CHECKED_IN, $visit->status);
         $this->assertDatabaseHas('visit_status_logs', [
             'visit_id' => $visit->id,
             'from_status' => null,
-            'to_status' => VisitStatus::SCHEDULED->value,
+            'to_status' => VisitStatus::CREATED->value,
         ]);
         $this->assertDatabaseHas('visit_status_logs', [
             'visit_id' => $visit->id,
-            'from_status' => VisitStatus::SCHEDULED->value,
+            'from_status' => VisitStatus::CREATED->value,
             'to_status' => VisitStatus::CHECKED_IN->value,
         ]);
+    }
+
+    // ── 4b. Appointment initial status is attendance-class driven ────────
+
+    public function test_appointment_initial_status_follows_attendance_class(): void
+    {
+        $flow = $this->flow();
+
+        $this->assertSame(VisitStatus::CREATED, $flow->resolveInitialStatus('appointment', 'first_ever'));
+        $this->assertSame(VisitStatus::REGISTERED, $flow->resolveInitialStatus('appointment', 'first_attendance_of_year'));
+        $this->assertSame(VisitStatus::SCHEDULED, $flow->resolveInitialStatus('appointment', 'subsequent_attendance'));
     }
 
     // ── 5. Invalid transition rejected unless privileged ─────────────────

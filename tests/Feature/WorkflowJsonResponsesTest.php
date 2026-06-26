@@ -336,15 +336,15 @@ class WorkflowJsonResponsesTest extends TestCase
         $this->assertNotNull($visit);
         $this->assertSame(VisitStatus::QUEUED, $visit->status);
         $this->assertSame('appointment', $visit->visit_source);
-        // Appointment check-in walks the full chain: null → scheduled → checked_in → queued.
+        // First-ever appointment patient walks: null → created → checked_in → queued.
         $this->assertDatabaseHas('visit_status_logs', [
             'visit_id' => $visit->id,
             'from_status' => null,
-            'to_status' => VisitStatus::SCHEDULED->value,
+            'to_status' => VisitStatus::CREATED->value,
         ]);
         $this->assertDatabaseHas('visit_status_logs', [
             'visit_id' => $visit->id,
-            'from_status' => VisitStatus::SCHEDULED->value,
+            'from_status' => VisitStatus::CREATED->value,
             'to_status' => VisitStatus::CHECKED_IN->value,
         ]);
         $this->assertDatabaseHas('visit_status_logs', [

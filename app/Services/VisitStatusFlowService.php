@@ -24,16 +24,6 @@ use Illuminate\Support\Facades\Auth;
  */
 class VisitStatusFlowService
 {
-    /** Pre-queue arrival states, mapped to the next hop toward QUEUED. */
-    private const QUEUE_CHAIN = [
-        'created'    => VisitStatus::WALKED_IN,
-        'registered' => VisitStatus::WALKED_IN,
-        'walked_in'  => VisitStatus::QUEUED,
-        'scheduled'  => VisitStatus::CHECKED_IN,
-        'confirmed'  => VisitStatus::CHECKED_IN,
-        'checked_in' => VisitStatus::QUEUED,
-    ];
-
     /** Visit statuses that do NOT count as an actual attendance. */
     private const NON_ATTENDANCE = [
         'cancelled',
@@ -68,23 +58,26 @@ class VisitStatusFlowService
     }
 
     /**
-     * Resolve the initial visit_status for a new visit.
+     * Resolve the initial visit_status for a new visit. The attendance class
+     * drives the first status for BOTH direct and appointment visits:
      *
-     *  - appointment / scheduled-for-future  → SCHEDULED
-     *  - direct first_ever                   → CREATED
-     *  - direct first_attendance_of_year     → REGISTERED
-     *  - direct subsequent_attendance        → WALKED_IN
+     *  - first_ever (direct OR appointment)        → CREATED
+     *  - first_attendance_of_year (direct OR appt) → REGISTERED
+     *  - subsequent + appointment                  → SCHEDULED
+     *  - subsequent + direct walk-in               → WALKED_IN
+     *  - future-scheduled direct visit             → SCHEDULED (any class)
      */
     public function resolveInitialStatus(string $source, string $attendanceClass, bool $isScheduled = false): VisitStatus
     {
-        if ($source === 'appointment' || $isScheduled) {
+        // A direct visit booked for a future date is just a schedule.
+        if ($isScheduled && $source !== 'appointment') {
             return VisitStatus::SCHEDULED;
         }
 
         return match ($attendanceClass) {
             'first_ever' => VisitStatus::CREATED,
             'first_attendance_of_year' => VisitStatus::REGISTERED,
-            default => VisitStatus::WALKED_IN,
+            default => $source === 'appointment' ? VisitStatus::SCHEDULED : VisitStatus::WALKED_IN,
         };
     }
 
@@ -163,37 +156,81 @@ class VisitStatusFlowService
     }
 
     /**
-     * Walk a visit forward, hop by hop, until it reaches the triage QUEUED state.
+     * The "patient present" arrival state for a visit, by source:
+     * appointment → CHECKED_IN, otherwise (direct/walk-in) → WALKED_IN.
+     */
+    public function arrivalStatusFor(Visit $visit): VisitStatus
+    {
+        return $visit->visit_source === 'appointment'
+            ? VisitStatus::CHECKED_IN
+            : VisitStatus::WALKED_IN;
+    }
+
+    /**
+     * The next hop toward the queue from the visit's current status. Routing is
+     * source-aware: direct visits pass through WALKED_IN, appointment visits
+     * through CHECKED_IN. Returns null once there is no further automatic hop.
+     */
+    private function nextHop(Visit $visit): ?VisitStatus
+    {
+        return match ($visit->status) {
+            VisitStatus::CREATED, VisitStatus::REGISTERED => $this->arrivalStatusFor($visit),
+            VisitStatus::SCHEDULED, VisitStatus::CONFIRMED => VisitStatus::CHECKED_IN,
+            VisitStatus::WALKED_IN, VisitStatus::CHECKED_IN => VisitStatus::QUEUED,
+            default => null,
+        };
+    }
+
+    /**
+     * Walk a visit forward, hop by hop, until it reaches $stopAt (or runs out of
+     * automatic hops). Used to advance to the arrival state or all the way to the
+     * triage queue.
+     */
+    private function advanceTo(Visit $visit, VisitStatus $stopAt): Visit
+    {
+        $guard = 0;
+        while (
+            $visit->status !== $stopAt
+            && ($next = $this->nextHop($visit)) !== null
+            && $guard++ < 8
+        ) {
+            $visit = $this->transition($visit, $next, 'Advancing visit status');
+        }
+
+        return $visit;
+    }
+
+    /**
+     * Walk a freshly-created visit to its arrival state (walked_in / checked_in).
+     */
+    public function advanceToArrival(Visit $visit): Visit
+    {
+        return $this->advanceTo($visit, $this->arrivalStatusFor($visit));
+    }
+
+    /**
+     * Walk a visit all the way to the triage QUEUED state.
      * Direct path: created/registered → walked_in → queued.
-     * Appointment path: scheduled/confirmed → checked_in → queued.
+     * Appointment path: created/registered/scheduled → checked_in → queued.
      *
      * Does NOT create the queue entry — that stays the caller's responsibility
      * (see VisitWorkflowService::queueForTriage).
      */
     public function advanceToQueue(Visit $visit): Visit
     {
-        $guard = 0;
-        while (
-            $visit->status !== VisitStatus::QUEUED
-            && isset(self::QUEUE_CHAIN[$visit->status->value])
-            && $guard++ < count(self::QUEUE_CHAIN)
-        ) {
-            $visit = $this->transition($visit, self::QUEUE_CHAIN[$visit->status->value], 'Advancing to triage queue');
-        }
-
-        return $visit;
+        return $this->advanceTo($visit, VisitStatus::QUEUED);
     }
 
     private function initialNote(string $source, string $attendanceClass, bool $isScheduled): string
     {
-        if ($isScheduled || $source === 'appointment') {
+        if ($isScheduled && $source !== 'appointment') {
             return 'Visit scheduled';
         }
 
         return match ($attendanceClass) {
             'first_ever' => 'First-ever attendance — visit created',
             'first_attendance_of_year' => 'First attendance of the year — registered',
-            default => 'Returning patient — walked in',
+            default => $source === 'appointment' ? 'Appointment scheduled' : 'Returning patient — walked in',
         };
     }
 }

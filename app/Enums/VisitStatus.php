@@ -117,12 +117,13 @@ enum VisitStatus: string
     public function allowedTransitions(): array
     {
         return match ($this) {
-            self::CREATED => [self::WALKED_IN, self::CANCELLED, self::ABANDONED],
+            // Direct visits arrive via WALKED_IN; appointment visits via CHECKED_IN.
+            self::CREATED => [self::WALKED_IN, self::CHECKED_IN, self::CANCELLED, self::ABANDONED],
             self::SCHEDULED => [self::CONFIRMED, self::REGISTERED, self::CHECKED_IN, self::CANCELLED, self::RESCHEDULED, self::NO_SHOW],
             self::CONFIRMED => [self::REGISTERED, self::CHECKED_IN, self::CANCELLED, self::RESCHEDULED, self::NO_SHOW],
             // Arrival states may go straight to ADMITTED for a direct admission
             // (elective / transfer) that bypasses OPD triage.
-            self::REGISTERED => [self::WALKED_IN, self::QUEUED, self::ADMITTED, self::CANCELLED, self::ABANDONED],
+            self::REGISTERED => [self::WALKED_IN, self::CHECKED_IN, self::QUEUED, self::ADMITTED, self::CANCELLED, self::ABANDONED],
             self::WALKED_IN => [self::QUEUED, self::ADMITTED, self::CANCELLED, self::ABANDONED],
             self::CHECKED_IN => [self::QUEUED, self::ADMITTED, self::CANCELLED, self::ABANDONED],
             self::QUEUED => [self::TRIAGE, self::CANCELLED, self::ABANDONED, self::RESCHEDULED],

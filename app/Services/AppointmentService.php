@@ -188,10 +188,11 @@ class AppointmentService
                 'created_by'         => Auth::id(),
             ]);
 
-            // visit_source = appointment; compute attendance_class; log null → scheduled.
+            // visit_source = appointment; compute attendance_class; set the
+            // class-driven initial status (created / registered / scheduled).
             $visit = $this->flowService->classifyAndInitialize($visit, 'appointment');
-            // scheduled → checked_in (patient is now present).
-            $visit = $this->flowService->transition($visit, VisitStatus::CHECKED_IN, 'Patient checked in from appointment');
+            // Walk to the arrival state — created/registered/scheduled → checked_in.
+            $visit = $this->flowService->advanceToArrival($visit);
 
             // Attach pre-selected appointment services to the new visit
             if ($appointment->services->isNotEmpty()) {

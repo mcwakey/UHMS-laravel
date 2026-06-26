@@ -36,7 +36,13 @@ transition map).
 | direct | first_ever | `created` | created → walked_in → queued |
 | direct | first_attendance_of_year | `registered` | registered → walked_in → queued |
 | direct | subsequent_attendance | `walked_in` | walked_in → queued |
-| appointment | (any) | `scheduled` | scheduled → checked_in → queued |
+| appointment | first_ever | `created` | created → checked_in → queued |
+| appointment | first_attendance_of_year | `registered` | registered → checked_in → queued |
+| appointment | subsequent_attendance | `scheduled` | scheduled → checked_in → queued |
+
+The attendance class drives the **initial** status for both sources; only the
+arrival hop differs (direct → `walked_in`, appointment → `checked_in`). A direct
+visit booked for a future date stays `scheduled` regardless of class.
 
 Attendance is classified by the visit **year** (not server date): `first_ever`
 (no prior attendances), `first_attendance_of_year` (priors, none this year),
