@@ -11,6 +11,7 @@ use App\Services\Dashboard\DepartmentDashboardResolver;
 use App\Services\Dashboard\DepartmentDashboardService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\View;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -72,6 +73,20 @@ class DepartmentDashboardTest extends TestCase
                 View::exists('admin.dashboards.department.types.'.$key),
                 "Missing separated dashboard view for {$key}",
             );
+        }
+    }
+
+    public function test_every_previewable_dashboard_has_personalization_copy(): void
+    {
+        $registry = app(DepartmentDashboardRegistry::class);
+        $copyKeys = ['eyebrow', 'headline', 'brief', 'rhythm', 'focus_1', 'focus_2', 'focus_3'];
+
+        foreach ($registry->previewableKeys() as $key) {
+            foreach ($copyKeys as $copyKey) {
+                $translationKey = "dashboards.department.personalization.{$key}.{$copyKey}";
+
+                $this->assertTrue(Lang::has($translationKey), "Missing personalization copy for {$translationKey}");
+            }
         }
     }
 

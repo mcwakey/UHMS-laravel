@@ -1,5 +1,7 @@
 @include('admin.dashboards.department.partials.hero', compact('context', 'theme', 'dashboard', 'available_dashboards', 'key'))
 
+@includeWhen(!empty($dashboardPersonalization), 'admin.dashboards.department.partials.personalized-command-strip')
+
 @if(!empty($is_preview))
 <div class="alert alert-info d-flex align-items-center gap-2 py-2">
     <i class="ti ti-eye"></i>

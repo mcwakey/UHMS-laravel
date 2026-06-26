@@ -1,15 +1,15 @@
 # UHMS Localisation Coverage Audit Report
 
-Date: 2026-06-26 18:49:53 +02:00
+Date: 2026-06-26 23:48:37 +02:00
 
 ## Summary
 
-- Total files scanned: 1370
+- Total files scanned: 1401
 - Total files with possible hardcoded strings: 208
 - Total hardcoded candidates found: 4039
 - Modules affected: 39
-- Direct active route/controller Blade views: 307
-- Active Blade views including resolved dependencies: 400
+- Direct active route/controller Blade views: 306
+- Active Blade views including resolved dependencies: 387
 
 ### Candidate Classification
 
