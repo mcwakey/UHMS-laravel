@@ -31,6 +31,7 @@ class ServiceRenderingController extends Controller
             'date_range',
             'date_from',
             'date_to',
+            'per_page',
         ]);
 
         // Departments that actually have rendering-tracked services (for the "Add Service" modal).
@@ -42,7 +43,7 @@ class ServiceRenderingController extends Controller
             ->pluck('department_id');
 
         return view('service-renderings.index', [
-            'renderings' => $this->queries->paginate($filters, $request->user()),
+            'renderings' => $this->queries->paginate($filters, $request->user(), (int) ($filters['per_page'] ?? 25)),
             'summary' => $this->reports->summary($filters, $request->user()),
             'filters' => $filters,
             'statuses' => ServiceRendering::statuses(),
@@ -183,7 +184,12 @@ class ServiceRenderingController extends Controller
             $filters['date_range'] = $filters['date_from'].' to '.$filters['date_to'];
         }
 
-        return array_filter($filters, fn ($value) => $value !== null && $value !== '');
+        $filters = array_filter($filters, fn ($value) => $value !== null && $value !== '');
+        $filters['per_page'] = in_array((int) ($filters['per_page'] ?? 25), [10, 15, 25, 50, 100], true)
+            ? (int) ($filters['per_page'] ?? 25)
+            : 25;
+
+        return $filters;
     }
 
     private function normalizeDate(?string $value): ?string

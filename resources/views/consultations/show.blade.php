@@ -66,6 +66,8 @@
     #sessionsDrawer.is-collapsed #sessionsDrawerHandle .ti-chevron-up { transform: rotate(180deg); }
     #sessionsDrawerBody { overflow-y: auto; flex: 1; }
     body.has-sessions-drawer { padding-bottom: 46px; }
+    .consultation-preview-offcanvas { width: min(100vw, 1120px) !important; }
+    .consultation-preview-offcanvas .offcanvas-body { background: #f8fafc; }
 </style>
 @endpush
 
@@ -680,9 +682,9 @@
                     </div>
                     <div class="card-body p-2">
                         <div class="d-grid gap-2">
-                            <a href="{{ route('admin.consultations.history', $visit) }}" class="btn btn-outline-info btn-sm">
+                            <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="offcanvas" data-bs-target="#consultationPreviewOffcanvas" aria-controls="consultationPreviewOffcanvas">
                                 <i class="ti ti-history me-1"></i>{{ __('consultations.workspace.preview') }}
-                            </a>
+                            </button>
                             <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
                                 <i class="ti ti-eye me-1"></i>{{ __('consultations.workspace.view_visit') }}
                             </a>
@@ -2780,6 +2782,34 @@
     </div>
 </div>
 @endif
+
+<div class="offcanvas offcanvas-end consultation-preview-offcanvas" tabindex="-1" id="consultationPreviewOffcanvas" aria-labelledby="consultationPreviewOffcanvasLabel">
+    <div class="offcanvas-header border-bottom">
+        <div>
+            <h5 class="offcanvas-title fw-bold mb-0" id="consultationPreviewOffcanvasLabel">
+                <i class="ti ti-history me-1"></i>{{ __('consultations.workspace.preview') }}
+            </h5>
+            <div class="text-muted small">{{ $visit->visit_number }} &middot; {{ $visit->patient?->full_name }}</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-primary btn-sm" onclick="window.print()">
+                <i class="ti ti-printer me-1"></i>{{ __('consultations.history.print_summary') }}
+            </button>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{{ __('common.close') }}"></button>
+        </div>
+    </div>
+    <div class="offcanvas-body">
+        <x-consultation-preview
+            :visit="$consultationPreview['visit']"
+            :generated-at="$consultationPreview['generatedAt']"
+            :sessions="$consultationPreview['sessions']"
+            :contributors="$consultationPreview['contributors']"
+            :session-summaries="$consultationPreview['sessionSummaries']"
+            :lab-requests="$consultationPreview['labRequests']"
+            :procedure-requests="$consultationPreview['procedureRequests']"
+        />
+    </div>
+</div>
 
 {{-- ============================================================ --}}
 {{-- VISIT HISTORY JSON + JS CONFIG --}}

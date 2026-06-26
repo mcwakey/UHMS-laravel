@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use Illuminate\Support\Facades\Lang;
+
 enum MaritalStatus: string
 {
     case SINGLE = 'single';
@@ -21,6 +23,8 @@ enum MaritalStatus: string
 
     public function translatedLabel(): string
     {
-        return __('statuses.default.' . $this->value);
+        $key = 'statuses.default.' . $this->value;
+
+        return Lang::has($key) ? __($key) : $this->label();
     }
 }

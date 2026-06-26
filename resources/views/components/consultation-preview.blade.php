@@ -16,7 +16,6 @@
 @endphp
 
 @once
-@push('styles')
 <style>
     .consult-doc {
         max-width: 1000px;
@@ -145,7 +144,6 @@
         a { color: #000 !important; text-decoration: none !important; }
     }
 </style>
-@endpush
 @endonce
 
 @php
@@ -180,10 +178,19 @@
         ? __('consultations.history.detail.'.$detailKeyMap[$name])
         : $name;
     $translateDetailValue = function ($value) {
-        $key = strtolower(trim((string) $value));
-        return \Illuminate\Support\Facades\Lang::has('consultations.history.value.'.$key)
-            ? __('consultations.history.value.'.$key)
-            : $value;
+        $raw = trim((string) $value);
+        $key = strtolower($raw);
+        if (\Illuminate\Support\Facades\Lang::has('consultations.history.value.'.$key)) {
+            return __('consultations.history.value.'.$key);
+        }
+        if (\Illuminate\Support\Facades\Lang::has('statuses.default.'.$key)) {
+            return __('statuses.default.'.$key);
+        }
+        if (\Illuminate\Support\Facades\Lang::has('statuses.default.'.$raw)) {
+            return __('statuses.default.'.$raw);
+        }
+
+        return str_replace('_', ' ', $raw);
     };
 @endphp
 
@@ -194,7 +201,7 @@
         <div>
             <h1 class="doc-title">{{ mb_strtoupper(__('consultations.history.consultation_summary')) }}</h1>
             <div class="doc-meta">
-                {{ __('consultations.history.header_meta', ['visit' => $visit->visit_number, 'date' => $generatedAt->translatedFormat('d M Y, h:i A')]) }}
+                {{ __('consultations.history.header_meta', ['visit' => $visit->visit_number, 'date' => $visit->visit_date?->format('d M Y h:i A') ?? $visit->created_at?->format('d M Y h:i A')]) }}
                 @if($visit->visit_type) &middot; {{ is_object($visit->visit_type) && method_exists($visit->visit_type, 'translatedLabel') ? $visit->visit_type->translatedLabel() : $visit->visit_type }} @endif
             </div>
         </div>
@@ -217,6 +224,19 @@
             @if($patient->occupation)<div><span class="lbl">{{ __('consultations.label_occupation') }}:</span> {{ $patient->occupation }}</div>@endif
             @if($patient->marital_status)<div><span class="lbl">{{ __('consultations.label_marital_status') }}:</span> {{ is_object($patient->marital_status) && method_exists($patient->marital_status, 'translatedLabel') ? $patient->marital_status->translatedLabel() : $patient->marital_status }}</div>@endif
             @if($patient->religion)<div><span class="lbl">{{ __('consultations.label_religion') }}:</span> {{ $patient->religion }}</div>@endif
+            </div>
+    </div>
+
+    {{-- Visit information --}}
+    <div class="doc-section">
+        <h2>{{ __('consultations.visit_information') }}</h2>
+        <div class="info-grid">
+            <div><span class="lbl">{{ __('consultations.label_visit_no') }}:</span> {{ $visit->visit_number }}</div>
+            <div><span class="lbl">{{ __('consultations.visit_type') }}:</span> {{ is_object($visit->visit_type) && method_exists($visit->visit_type, 'translatedLabel') ? $visit->visit_type->translatedLabel() : ($visit->visit_type ?? '-') }}</div>
+            <!-- <div><span class="lbl">{{ __('common.status') }}:</span> {{ is_object($visit->status) && method_exists($visit->status, 'translatedLabel') ? $visit->status->translatedLabel() : ($visit->status ?? '-') }}</div> -->
+            <div><span class="lbl">{{ __('common.visit_date') }}:</span> {{ $visit->visit_date?->format('d M Y H:i') ?? $visit->created_at?->format('d M Y H:i') }}</div>
+            <!-- <div><span class="lbl">{{ __('common.department') }}:</span> {{ $visit->department?->name ?? '-' }}</div> -->
+            <!-- <div><span class="lbl">{{ __('consultations.label_sessions') }}:</span> {{ $sessions->count() ?: 1 }}</div> -->
             <div style="grid-column: 1 / -1;">
                 <span class="lbl">{{ __('consultations.label_insurance') }}:</span>
                 @if($insurance)
@@ -227,19 +247,6 @@
                     {{ __('consultations.cash_self_pay') }}
                 @endif
             </div>
-        </div>
-    </div>
-
-    {{-- Visit information --}}
-    <div class="doc-section">
-        <h2>{{ __('consultations.visit_information') }}</h2>
-        <div class="info-grid">
-            <div><span class="lbl">{{ __('consultations.label_visit_no') }}:</span> {{ $visit->visit_number }}</div>
-            <div><span class="lbl">{{ __('consultations.visit_type') }}:</span> {{ is_object($visit->visit_type) && method_exists($visit->visit_type, 'translatedLabel') ? $visit->visit_type->translatedLabel() : ($visit->visit_type ?? '-') }}</div>
-            <div><span class="lbl">{{ __('common.status') }}:</span> {{ is_object($visit->status) && method_exists($visit->status, 'translatedLabel') ? $visit->status->translatedLabel() : ($visit->status ?? '-') }}</div>
-            <div><span class="lbl">{{ __('common.visit_date') }}:</span> {{ $visit->visit_date?->format('d M Y H:i') ?? $visit->created_at?->format('d M Y H:i') }}</div>
-            <div><span class="lbl">{{ __('common.department') }}:</span> {{ $visit->department?->name ?? '-' }}</div>
-            <div><span class="lbl">{{ __('consultations.label_sessions') }}:</span> {{ $sessions->count() ?: 1 }}</div>
         </div>
 
         @if($latestVitals)

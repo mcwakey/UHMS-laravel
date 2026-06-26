@@ -435,6 +435,7 @@ class ConsultationController extends Controller
         $nextPatientInLine = ($selectedRoute && Auth::user()?->can('consultations.create'))
             ? app(ConsultationNextPatientService::class)->preview($selectedRoute, Auth::user())
             : null;
+        $consultationPreview = $this->buildConsultationPreviewData($visit);
 
         return view('consultations.show', [
             'visit' => $data['visit'],
@@ -459,6 +460,7 @@ class ConsultationController extends Controller
             'followUpAppointment' => $followUpAppointment,
             'nextPatientInLine' => $nextPatientInLine,
             'consultationSummary' => $consultationSummary,
+            'consultationPreview' => $consultationPreview,
             'entryPermissions' => $this->entryPermissions,
         ]);
     }
@@ -467,6 +469,14 @@ class ConsultationController extends Controller
      * Show the visit's full clinical consultation summary as a document.
      */
     public function history(Visit $visit)
+    {
+        return view('consultations.history', $this->buildConsultationPreviewData($visit));
+    }
+
+    /**
+     * Build the reusable consultation preview payload.
+     */
+    private function buildConsultationPreviewData(Visit $visit): array
     {
         $visit->load([
             'patient',
@@ -514,7 +524,7 @@ class ConsultationController extends Controller
         // Visit-wide contributor roll-up across all sessions + lab/procedure owners.
         $contributors = $this->buildVisitContributors($sessionSummaries, $sessions, $labRequests, $procedureRequests);
 
-        return view('consultations.history', [
+        return [
             'visit' => $visit,
             'sessions' => $sessions,
             'sessionSummaries' => $sessionSummaries,
@@ -522,7 +532,7 @@ class ConsultationController extends Controller
             'procedureRequests' => $procedureRequests,
             'contributors' => $contributors,
             'generatedAt' => now(),
-        ]);
+        ];
     }
 
     /**

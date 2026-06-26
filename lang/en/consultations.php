@@ -214,7 +214,7 @@ return [
         'back_to_consultation' => 'Back to Consultation',
         'print_summary' => 'Print Summary',
         'consultation_summary' => 'Consultation Summary',
-        'header_meta' => 'Visit :visit · Generated :date',
+        'header_meta' => 'Visit :visit · :date',
         'age_gender' => ':agey · :gender',
         'recorded_by' => 'Recorded :date by :name',
         'blood_pressure_short' => 'BP',

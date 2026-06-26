@@ -214,7 +214,7 @@ return [
         'back_to_consultation' => 'Retour à la consultation',
         'print_summary' => 'Imprimer le résumé',
         'consultation_summary' => 'Résumé de consultation',
-        'header_meta' => 'Visite :visit · Généré le :date',
+        'header_meta' => 'Visite :visit · :date',
         'age_gender' => ':age ans · :gender',
         'recorded_by' => 'Enregistré le :date par :name',
         'blood_pressure_short' => 'TA',
