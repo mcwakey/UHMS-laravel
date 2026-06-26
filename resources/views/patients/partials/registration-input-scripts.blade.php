@@ -265,17 +265,17 @@
     if (detectBtn) {
         detectBtn.addEventListener('click', function () {
             if (!navigator.geolocation) {
-                alert('Device location is not available in this browser.');
+                alert(@json(__('patients.device_location_unavailable')));
                 return;
             }
 
             navigator.geolocation.getCurrentPosition(
                 function () {
                     const provider = setupCountryCode === 'GH' ? 'GhanaPostGPS/address provider' : 'address provider';
-                    alert('Location was detected, but converting coordinates to a digital address requires an ' + provider + ' API. Please enter the digital address manually.');
+                    alert(@json(__('patients.digital_address_api_required_prefix')) + ' ' + provider + ' ' + @json(__('patients.digital_address_api_required_suffix')));
                 },
                 function () {
-                    alert('Unable to read device location. Please enter the digital address manually.');
+                    alert(@json(__('patients.unable_to_read_device_location')));
                 },
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
             );

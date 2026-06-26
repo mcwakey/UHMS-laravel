@@ -29,6 +29,8 @@ return [
     'upload' => 'Upload',
     'refresh' => 'Refresh',
     'actions' => 'Actions',
+    'invoice' => 'Invoice',
+    'not_available' => 'N/A',
     'select' => 'Select',
     'choose' => 'Choose',
     'browse' => 'Browse',

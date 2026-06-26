@@ -29,6 +29,8 @@ return [
     'upload' => 'Téléverser',
     'refresh' => 'Actualiser',
     'actions' => 'Actions',
+    'invoice' => 'Facture',
+    'not_available' => 'N/D',
     'select' => 'Sélectionner',
     'choose' => 'Choisir',
     'browse' => 'Parcourir',
