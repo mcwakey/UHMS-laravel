@@ -1350,6 +1350,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware(['module:reports', 'can:reports.view'])->prefix('reports')->name('reports.')->group(function () {
             Route::get('/', [ReportsHubController::class, 'index'])->name('index');
             Route::get('/dashboard', [OperationalReportController::class, 'dashboard'])->name('dashboard');
+            Route::get('department-metrics', [\App\Http\Controllers\Admin\Reporting\DepartmentMetricsController::class, 'index'])->name('department-metrics');
             foreach ([
                 'consultations',
                 'diagnoses',

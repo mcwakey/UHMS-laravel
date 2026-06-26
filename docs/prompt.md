@@ -1,44 +1,37 @@
-# UHMS Department Type Expansion — Phase 4: Workflow Routing Cleanup & Department Type Groups
+# UHMS Department Type Expansion — Phase 5: Department Metrics & Reports Registry
 
 ## Goal
 
-Clean up UHMS workflow routing so the new department types do not accidentally disappear from queues, selectors, sessions, requests, service routing, billing screens, or operational workflows.
+Implement a department-type metrics and reporting registry for UHMS.
 
-Phase 0 identified the gap.
+Phase 0 completed department type gap analysis.
 
-Phase 1 made `DepartmentType` safe and canonical.
+Phase 1 completed department type canonicalisation and safety.
 
-Phase 2 made dashboards department-type aware.
+Phase 2 completed the department-aware dashboard registry.
 
-Phase 3 made sidebar menu profiles department-aware.
+Phase 3 completed department-aware menu profiles.
 
-Phase 4 must now address the dangerous part:
+Phase 4 completed workflow routing cleanup and type groups.
 
-```text
-hardcoded workflow filters like where('type', DepartmentType::CONSULTATION->value)
-where('type', DepartmentType::INVESTIGATION->value)
-where('type', DepartmentType::PROCEDURE->value)
-where('type', DepartmentType::TREATMENT->value)
-```
+Phase 5 must now provide department-type reporting and metrics so UHMS can produce meaningful operational statistics across the new department types.
 
-These filters were safe when UHMS had only 8 broad department types, but they can become wrong after precise retyping.
-
-Example:
+This phase should answer questions like:
 
 ```text
-Emergency / Casualty used to be consultation.
-If it becomes emergency, old consultation-only filters may no longer show it.
-
-Radiology used to be investigation.
-If it becomes radiology, lab-only filters may behave correctly, but shared diagnostic selectors may need both.
-
-Theatre used to be procedure.
-If it becomes theatre, minor procedure screens and theatre screens must be separated intentionally.
+How many patients passed through Emergency today?
+How many lab/radiology requests are pending?
+How many procedures/theatre cases were completed?
+How many inpatient admissions are active?
+How much revenue came from Pharmacy, Finance, Radiology, Theatre, etc.?
+Which departments have pending tasks, requests, queue items, stock requests, billing items, or unresolved work?
 ```
 
-The goal is not to blindly include all new types everywhere.
+Do not create a parallel reporting system.
 
-The goal is to replace old single-type assumptions with explicit, named, testable workflow groups.
+Do not duplicate existing accounting, billing, dashboard, or report services.
+
+Use a central registry so new department metrics can be added cleanly later.
 
 ---
 
@@ -51,6 +44,7 @@ docs/DEPARTMENT_TYPE_EXPANSION_GAP_ANALYSIS_REPORT.md
 docs/DEPARTMENT_TYPE_EXPANSION_PHASE_1_CANONICALISATION_REPORT.md
 docs/DEPARTMENT_TYPE_EXPANSION_PHASE_2_DASHBOARD_REGISTRY_REPORT.md
 docs/DEPARTMENT_TYPE_EXPANSION_PHASE_3_MENU_PROFILES_REPORT.md
+docs/DEPARTMENT_TYPE_EXPANSION_PHASE_4_WORKFLOW_ROUTING_REPORT.md
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
 
@@ -59,662 +53,746 @@ Inspect:
 ```text
 app/Enums/DepartmentType.php
 app/Models/Department.php
+app/Services/Dashboard
+app/Services/SidebarMenuBuilder.php
+app/Services/Reports
+app/Services/Accounting
+app/Services/Billing
 app/Services/VisitService.php
-app/Services/ConsultationRouteService.php
-app/Services/ConsultationFollowUpService.php
-app/Http/Controllers/Doctor/ConsultationController.php
-app/Http/Controllers/Admin/Visits/VisitController.php
-app/Http/Controllers/Admin/Patients/TriageController.php
-app/Http/Controllers/Admin/AdmissionsWard/VitalController.php
-app/Http/Controllers/Admin/Lab
-app/Http/Controllers/Admin/Radiology
-app/Http/Controllers/Admin/Procedures
-app/Http/Controllers/Admin/Theatre
-app/Http/Controllers/Admin/Emergency
-app/Http/Controllers/Admin/Store
-app/Http/Requests/Concerns/ValidatesVisitServiceRoutes.php
-app/Console/Commands
-database/seeders
-resources/views
+app/Services/Department
+app/Http/Controllers/Admin/Reports
+app/Http/Controllers/Admin/Dashboard
+app/Http/Controllers/Admin/Departments
+resources/views/admin/reports
+resources/views/admin/dashboard
+resources/views/admin/departments
+routes/web.php
+lang/en
+lang/fr
 tests
 ```
 
-Search the full codebase for:
+Search for existing department reports:
 
 ```text
-DepartmentType::CONSULTATION
-DepartmentType::INVESTIGATION
-DepartmentType::RADIOLOGY
-DepartmentType::PROCEDURE
-DepartmentType::THEATRE
-DepartmentType::TREATMENT
-DepartmentType::PHARMACY
-DepartmentType::SUPPORT
-DepartmentType::ADMINISTRATIVE
-where('type'
-whereIn('type'
+department revenue
+department expense
+department report
+department statistics
+department dashboard
+department_id
 department_type
 service_catalog.department_type
+revenue by department
+expense by department
 ```
 
 Testing instruction:
 
 ```text
 Do not run the wide full application test suite after this phase.
-Run focused workflow-routing tests only.
+Run focused department metrics/reporting/localisation checks only.
 The wide full-suite test remains deferred until the current implementation batch is complete.
 ```
 
 ---
 
-## 2. Core Rule
+## 2. Core Design
 
-Do not confuse department type with service type.
+Create a central department metrics registry.
+
+Recommended service:
 
 ```text
-Service type = what is being billed/rendered.
-Department type = operational owner / workflow destination.
+DepartmentMetricsRegistry
 ```
 
-A consultation service can be routed to a consultation department.
+Recommended supporting services:
 
-An emergency consultation may be routed to an emergency department.
+```text
+DepartmentMetricsService
+DepartmentTypeReportService
+DepartmentOperationalSummaryService
+DepartmentMetricExportService
+```
 
-A radiology service may still be an investigation-like clinical request, but the destination is a radiology department.
+If existing report/export services already exist, extend them instead of creating duplicates.
 
-A theatre case may include procedures, but theatre is not the same workflow as minor procedure.
+The registry should map:
 
-Do not replace service category logic with department type logic.
+```text
+department_type
+metric keys
+metric labels
+metric calculators
+required permissions
+required modules
+fallback behavior
+export support
+```
+
+The goal is a declarative structure, not scattered hardcoded report logic.
 
 ---
 
-## 3. Create Explicit Workflow Type Groups
+## 3. Supported Department Types
 
-Extend `DepartmentType` or create a dedicated helper such as:
-
-```text
-DepartmentTypeGroup
-DepartmentWorkflowTypes
-DepartmentRoutingProfile
-```
-
-Use one clean place.
-
-Recommended if keeping inside enum:
+Support all 19 canonical types:
 
 ```php
-public static function consultationWorkflowTypes(): array
-public static function emergencyWorkflowTypes(): array
-public static function diagnosticRequestTypes(): array
-public static function labWorkflowTypes(): array
-public static function radiologyWorkflowTypes(): array
-public static function procedureWorkflowTypes(): array
-public static function theatreWorkflowTypes(): array
-public static function treatmentWorkflowTypes(): array
-public static function nursingWorkflowTypes(): array
-public static function inpatientWorkflowTypes(): array
-public static function pharmacyWorkflowTypes(): array
-public static function stockIssueDestinationTypes(): array
-public static function billableClinicalDestinationTypes(): array
-public static function operationalDestinationTypes(): array
+CONSULTATION = 'consultation';
+EMERGENCY = 'emergency';
+INVESTIGATION = 'investigation';
+RADIOLOGY = 'radiology';
+PROCEDURE = 'procedure';
+THEATRE = 'theatre';
+TREATMENT = 'treatment';
+NURSING = 'nursing';
+PHARMACY = 'pharmacy';
+INPATIENT = 'inpatient';
+MATERNITY = 'maternity';
+BLOOD_BANK = 'blood_bank';
+MORTUARY = 'mortuary';
+AMBULANCE = 'ambulance';
+RECORDS = 'records';
+FINANCE = 'finance';
+STORES = 'stores';
+SUPPORT = 'support';
+ADMINISTRATIVE = 'administrative';
 ```
 
-Each method must return enum values or string values consistently.
+Every type must have at least a safe generic metrics profile.
 
-Pick one convention and use it everywhere.
+Dedicated metrics should be added only where reliable data exists.
 
-Recommended:
+Do not fake numbers.
 
-```php
-public static function consultationWorkflowValues(): array
-{
-    return [
-        self::CONSULTATION->value,
-    ];
-}
-```
-
-Then use:
-
-```php
-DepartmentType::consultationWorkflowValues()
-```
-
-in Eloquent queries.
+If a metric cannot be calculated safely, return an unavailable/empty state with a reason.
 
 ---
 
-## 4. Initial Type Group Definitions
+## 4. DepartmentMetricsRegistry
 
-Start conservative.
-
-### consultationWorkflowTypes
+Create:
 
 ```text
-consultation
+App\Services\Department\DepartmentMetricsRegistry
 ```
 
-Do not include emergency by default unless the current OPD consultation workflow truly handles emergency sessions safely.
+Suggested structure:
 
-Emergency should have its own explicit flow.
+```php
+[
+    'emergency' => [
+        'label_key' => 'departments.metrics.emergency',
+        'dashboard_key' => 'emergency',
+        'metrics' => [
+            'active_emergency_cases',
+            'pending_triage',
+            'emergency_visits_today',
+            'emergency_revenue',
+        ],
+    ],
+]
+```
 
-### emergencyWorkflowTypes
+Each metric definition should support:
 
 ```text
-emergency
+key
+label_key
+description_key
+calculator
+permission optional
+module optional
+type
+format
+default_value
+unavailable_reason
 ```
 
-Use this for emergency cases, emergency sessions, emergency/casualty selectors, emergency queues, and emergency billing mapping.
-
-### diagnosticRequestTypes
+Metric formats:
 
 ```text
-investigation
-radiology
-blood_bank
+number
+money
+percentage
+duration
+status
+table
+chart_data
 ```
 
-Use this only where the workflow is a general diagnostic request selector.
+Do not introduce new chart libraries.
 
-### labWorkflowTypes
+If charting exists, use existing tooling.
 
-```text
-investigation
-```
-
-Use for lab-only sample/result workflows.
-
-### radiologyWorkflowTypes
-
-```text
-radiology
-```
-
-Use for imaging-only request/result workflows.
-
-### procedureWorkflowTypes
-
-```text
-procedure
-```
-
-Use for minor procedure workflows outside full operating theatre.
-
-### theatreWorkflowTypes
-
-```text
-theatre
-```
-
-Use for surgery, anaesthesia, pre-op, intra-op, post-op, theatre scheduling.
-
-### treatmentWorkflowTypes
-
-```text
-treatment
-nursing
-```
-
-Use carefully for dressing, injection, treatment room, nursing treatment tasks only where existing workflow supports nursing.
-
-### inpatientWorkflowTypes
-
-```text
-inpatient
-nursing
-maternity
-```
-
-Use for admissions, ward, bed, inpatient observations, ward vitals where appropriate.
-
-### pharmacyWorkflowTypes
-
-```text
-pharmacy
-```
-
-Use for dispensing/prescription pharmacy workflows.
-
-### stockIssueDestinationTypes
-
-```text
-pharmacy
-stores
-procedure
-theatre
-treatment
-nursing
-inpatient
-maternity
-blood_bank
-emergency
-support
-```
-
-Use for stock/consumable issue destinations, not for clinical request routing.
-
-### financeWorkflowTypes
-
-```text
-finance
-```
-
-Use for cashier, billing, claims, receivables, accounting-owner departments.
-
-### storesWorkflowTypes
-
-```text
-stores
-```
-
-Use for procurement, general stores, stock warehouse.
-
-### recordsWorkflowTypes
-
-```text
-records
-```
-
-Use for patient records/folders/archive workflows.
+Otherwise return chart-ready data only.
 
 ---
 
-## 5. Replace Hardcoded Single-Type Filters
+## 5. Generic Metrics Profile
 
-Replace old filters only when the workflow intent is clear.
+Create a safe generic profile for any department type.
+
+Generic metrics:
+
+```text
+department_count
+active_departments
+assigned_users
+services_count
+today_activity_count if safely available
+open_queue_items if safely available
+revenue_today if user has billing/report permission
+pending_tasks if safely available
+```
+
+Rules:
+
+```text
+If department has no services, show 0.
+If activity source is unavailable, show unavailable.
+If user lacks permission, hide restricted metric.
+If module is disabled, hide module metric.
+```
+
+---
+
+## 6. Metrics By Department Type
+
+### consultation
+
+Metrics:
+
+```text
+consultations_today
+waiting_consultations
+completed_consultations
+followups_due
+consultation_revenue
+average_wait_time if available
+```
+
+### emergency
+
+Metrics:
+
+```text
+active_emergency_cases
+emergency_cases_today
+pending_emergency_triage
+emergency_sessions_today
+emergency_revenue
+emergency_unbilled_items if available
+```
+
+### investigation
+
+Metrics:
+
+```text
+lab_requests_today
+pending_lab_requests
+samples_awaiting_acceptance
+completed_lab_results
+urgent_lab_requests
+lab_revenue
+```
+
+### radiology
+
+Metrics:
+
+```text
+radiology_requests_today
+pending_radiology_requests
+completed_radiology_results
+scheduled_imaging
+urgent_radiology_requests
+radiology_revenue
+```
+
+If radiology workflow is still shared with investigation, use diagnostic-safe queries and document limitation.
+
+### procedure
+
+Metrics:
+
+```text
+minor_procedures_today
+pending_procedures
+completed_procedures
+procedure_consumables_used
+procedure_revenue
+```
+
+### theatre
+
+Metrics:
+
+```text
+scheduled_surgeries
+surgeries_today
+preop_pending
+postop_pending
+theatre_consumables_used
+theatre_revenue
+```
+
+### treatment
+
+Metrics:
+
+```text
+treatment_tasks_today
+pending_treatments
+completed_treatments
+treatment_revenue
+```
+
+### nursing
+
+Metrics:
+
+```text
+nursing_tasks_pending
+vitals_due
+vitals_recorded_today
+ward_observations
+medication_tasks_placeholder
+```
+
+Do not expose medication administration data unless a reliable source exists.
+
+### pharmacy
+
+Metrics:
+
+```text
+prescriptions_pending
+prescriptions_dispensed_today
+pharmacy_sales_today
+low_stock_items
+out_of_stock_items
+near_expiry_items
+```
+
+Respect stock-cost permissions.
+
+### inpatient
+
+Metrics:
+
+```text
+active_admissions
+occupied_beds
+available_beds
+discharges_pending
+inpatient_revenue
+average_length_of_stay if available
+```
+
+### maternity
+
+Metrics:
+
+```text
+antenatal_visits_today
+maternity_admissions
+delivery_cases
+postnatal_followups
+maternity_revenue
+```
+
+If dedicated maternity workflow does not exist, use admissions/visits safely and document limitation.
+
+### blood_bank
+
+Metrics:
+
+```text
+available_blood_units
+reserved_blood_units
+expired_units
+near_expiry_units
+pending_crossmatches
+blood_requests_pending
+```
+
+### mortuary
+
+Metrics:
+
+```text
+active_mortuary_cases
+body_storage_occupancy
+pending_releases
+mortuary_revenue
+```
+
+If mortuary module is not available, generic/unavailable metrics only.
+
+### ambulance
+
+Metrics:
+
+```text
+ambulance_requests_today
+active_transports
+completed_transports
+available_vehicles
+ambulance_revenue
+```
+
+If ambulance module is not available, generic/unavailable metrics only.
+
+### records
+
+Metrics:
+
+```text
+new_patient_records_today
+record_merge_requests
+folder_requests_pending
+archived_records_activity
+```
+
+### finance
+
+Metrics:
+
+```text
+collections_today
+unpaid_invoices
+ar_aging_total
+pending_claims
+credit_notes_today
+writeoffs_today
+cashier_sessions_open
+```
+
+Respect financial permissions.
+
+### stores
+
+Metrics:
+
+```text
+stock_requests_pending
+stock_issues_today
+low_stock_items
+pending_purchase_requests
+supplier_payables_if_permitted
+```
+
+Respect stock-cost and procurement permissions.
+
+### support
+
+Metrics:
+
+```text
+support_requests_open
+maintenance_requests_open
+asset_issues_placeholder
+general_support_activity
+```
+
+If no support module exists, generic/unavailable metrics only.
+
+### administrative
+
+Metrics:
+
+```text
+active_users
+departments_count
+pending_admin_tasks
+hr_pending_items_if_available
+system_activity
+```
+
+Respect admin permissions.
+
+---
+
+## 7. Department Type Report Screen
+
+Add or extend report screen:
+
+```text
+Admin > Reports > Department Type Reports
+```
+
+Suggested route:
+
+```text
+admin.reports.department-types.index
+```
+
+or use existing reports route naming convention.
+
+Filters:
+
+```text
+date_from
+date_to
+department_type
+department_id
+branch/facility if supported
+module
+status
+include_unavailable
+```
+
+Report should show:
+
+```text
+summary cards
+department type rollups
+department-level drill-down
+metric availability status
+export buttons where permitted
+```
+
+Do not expose restricted clinical/financial/stock-cost data.
+
+---
+
+## 8. Department Drill-down
+
+For each department type, allow drill-down to departments of that type.
+
+Columns:
+
+```text
+department
+department type
+assigned users
+services count
+activity count
+revenue if permitted
+pending items if available
+last activity if available
+```
+
+If user lacks permission for revenue, omit revenue.
+
+If module disabled, omit module-specific metrics.
+
+---
+
+## 9. Export Support
+
+Use existing export/report tooling.
+
+Supported first:
+
+```text
+CSV
+print view
+PDF only if existing tooling already supports it
+```
+
+Do not introduce a new export library.
+
+Exports must respect:
+
+```text
+permissions
+modules
+filters
+date range
+data visibility rules
+```
+
+Add permission if needed:
+
+```text
+reports.department_types.view
+reports.department_types.export
+```
+
+Do not grant broadly to clinical roles unless appropriate.
+
+---
+
+## 10. Dashboard Integration
+
+Do not rebuild dashboards.
+
+But expose registry data so dashboards can use it later.
+
+Add helper:
+
+```text
+DepartmentMetricsService::summaryForDepartmentType()
+DepartmentMetricsService::summaryForDepartment()
+```
+
+DepartmentDashboardService may use these helpers for generic widgets if safe.
+
+Do not rewrite all dashboard widgets in this phase unless needed.
+
+---
+
+## 11. Permission and Module Safety
+
+Each metric must define access requirements.
 
 Examples:
 
-### Before
-
-```php
-Department::where('type', DepartmentType::INVESTIGATION->value)
-```
-
-### After for lab-only screen
-
-```php
-Department::whereIn('type', DepartmentType::labWorkflowValues())
-```
-
-### After for diagnostic request destination selector
-
-```php
-Department::whereIn('type', DepartmentType::diagnosticRequestValues())
-```
-
-### Before
-
-```php
-Department::where('type', DepartmentType::PROCEDURE->value)
-```
-
-### After for minor procedure
-
-```php
-Department::whereIn('type', DepartmentType::procedureWorkflowValues())
-```
-
-### After for operating theatre
-
-```php
-Department::whereIn('type', DepartmentType::theatreWorkflowValues())
-```
-
-Do not use broad groups just to make tests pass.
-
-Each replacement must match the workflow purpose.
-
----
-
-## 6. Consultation / Emergency Routing Cleanup
-
-Inspect:
-
 ```text
-VisitService
-ConsultationRouteService
-ConsultationFollowUpService
-Doctor\ConsultationController
-Admin\Visits\VisitController
-Admin\Patients\TriageController
-ValidatesVisitServiceRoutes
+finance collections_today:
+permission: billing.payments.view or accounting.reports.view
+module: billing or accounting_basic
+
+pharmacy low_stock_items:
+permission: inventory.view or pharmacy.view
+module: pharmacy/inventory
+
+stock cost values:
+permission: inventory.costs.view or accounting.reports.view
+
+clinical counts:
+permission: related module view permission
 ```
 
 Rules:
 
 ```text
-General OPD consultation routing should use consultationWorkflowTypes().
-Emergency/casualty routing should use emergencyWorkflowTypes().
-Emergency visit type must create or route to Emergency/Casualty department/service when configured.
-Emergency must not depend on a department still being typed consultation.
-```
-
-If existing emergency workflow still depends on consultation route tables, add a controlled bridge:
-
-```text
-emergency consultation session may reuse consultation session model,
-but department selection must come from emergencyWorkflowTypes().
-```
-
-Do not hardcode a department name.
-
-Do not hardcode an Emergency/Casualty service ID.
-
-Use existing service/dept configuration or document missing configuration.
-
----
-
-## 7. Lab / Radiology Cleanup
-
-Inspect:
-
-```text
-Admin\Lab\LabTestController
-Admin\Lab\InvestigationItemController
-Radiology controllers if present
-LinkInvestigationItemsToProductsCommand
-service/request destination selectors
-```
-
-Rules:
-
-```text
-Lab-only screens use labWorkflowTypes().
-Radiology-only screens use radiologyWorkflowTypes().
-Generic diagnostic selectors use diagnosticRequestTypes().
-Investigation item/product links may include investigation + radiology if they truly represent diagnostic items.
-```
-
-Expected behavior:
-
-```text
-Retyping Radiology from investigation to radiology should not remove it from diagnostic selectors.
-Retyping Radiology to radiology should remove it from lab-only sample screens where appropriate.
+Check permission before querying sensitive data.
+Check module before querying module tables.
+Unavailable metric should not crash if module table is absent.
+Do not leak financial totals to users without permission.
+Do not leak clinical details to finance/support users.
 ```
 
 ---
 
-## 8. Procedure / Theatre Cleanup
+## 12. Metric Calculator Pattern
 
-Inspect:
+Create metric calculators as small classes or methods.
 
-```text
-Admin\Procedures
-Admin\Theatre
-Emergency procedure selectors
-ProcedureConsumablesController
-Theatre procedure scheduling
-```
-
-Rules:
+Suggested approaches:
 
 ```text
-Minor procedure workflows use procedureWorkflowTypes().
-Operating theatre workflows use theatreWorkflowTypes().
-Generic procedure/service selectors may include procedure + theatre only if the screen supports both.
-Emergency procedure picker should be intentionally reviewed:
-    if it is minor emergency procedure, use procedureWorkflowTypes()
-    if it can refer to theatre surgery, include theatreWorkflowTypes()
+DepartmentMetricCalculatorInterface
 ```
 
-Expected behavior:
-
-```text
-Retyping Theatre from procedure to theatre should not break theatre screens.
-Minor procedure screens should not accidentally show theatre departments unless intended.
-```
-
----
-
-## 9. Treatment / Nursing / Inpatient Cleanup
-
-Inspect:
-
-```text
-VitalController
-Admissions/Ward controllers
-treatment controllers
-nursing task controllers if present
-ward vitals
-MAR / observations if present
-DepartmentConsumablesController
-```
-
-Rules:
-
-```text
-Ward/admission screens should use inpatientWorkflowTypes().
-Treatment room screens should use treatmentWorkflowTypes().
-Nursing station workflows should use nursingWorkflowTypes() or inpatientWorkflowTypes() depending on purpose.
-Vitals recorded in ward context should not require consultation department type.
-```
-
-Expected behavior:
-
-```text
-Retyping wards from administrative to inpatient must not break vitals/admission screens.
-Maternity may share inpatient/admission routing until a dedicated maternity workflow exists.
-```
-
----
-
-## 10. Pharmacy Cleanup
-
-Inspect:
-
-```text
-pharmacy controllers
-prescription controllers
-dispensing controllers
-LinkDrugsToProductsCommand
-```
-
-Rules:
-
-```text
-Pharmacy workflow remains pharmacyWorkflowTypes().
-Do not mix stores/general inventory with pharmacy dispensing unless the screen is truly general stock.
-```
-
----
-
-## 11. Stores / Stock / Consumables Cleanup
-
-Inspect:
-
-```text
-Admin\Store
-inventory controllers
-stock issue destinations
-department consumables
-procedure consumables
-purchase/procurement destination selectors
-```
-
-Rules:
-
-```text
-Stores/procurement owner departments use storesWorkflowTypes().
-Stock issue destinations can use stockIssueDestinationTypes().
-Consumable request destination should include treatment, procedure, theatre, nursing, inpatient, maternity, emergency where appropriate.
-```
-
-Do not expose stock-cost data to users without permission.
-
----
-
-## 12. Finance / Records / Administrative Cleanup
-
-Inspect:
-
-```text
-billing
-claims
-accounting
-cashier
-patient records
-folder management
-merge services
-admin settings
-HR
-```
-
-Rules:
-
-```text
-Finance/cashier/billing/claims owner departments use financeWorkflowTypes().
-Patient folder/records workflows use recordsWorkflowTypes().
-System administration workflows use administrativeWorkflowTypes().
-```
-
-Do not make financial access depend only on department type.
-
-Permissions remain the security layer.
-
----
-
-## 13. Department Model Scopes
-
-Update or add model scopes in:
-
-```text
-App\Models\Department
-```
-
-Existing scopes may include:
+Example:
 
 ```php
-scopeConsultation()
-scopeAcceptsRequests()
+interface DepartmentMetricCalculatorInterface
+{
+    public function calculate(DepartmentMetricContext $context): DepartmentMetricResult;
+}
 ```
 
-Add safe scopes:
+Or keep simple closures/methods if project style prefers services.
 
-```php
-scopeOfTypes($query, array $types)
-scopeConsultationWorkflow($query)
-scopeEmergencyWorkflow($query)
-scopeDiagnosticRequestWorkflow($query)
-scopeLabWorkflow($query)
-scopeRadiologyWorkflow($query)
-scopeProcedureWorkflow($query)
-scopeTheatreWorkflow($query)
-scopeTreatmentWorkflow($query)
-scopeInpatientWorkflow($query)
-scopePharmacyWorkflow($query)
-scopeStockIssueDestination($query)
-scopeFinanceWorkflow($query)
-scopeStoresWorkflow($query)
-scopeRecordsWorkflow($query)
+Metric context should include:
+
+```text
+user
+department_type
+department_id nullable
+date_from
+date_to
+filters
+permissions
+modules
 ```
 
-Make scopes use the canonical type group methods.
+Metric result should include:
 
-Do not remove existing scopes if other code depends on them.
+```text
+key
+label
+value
+format
+available
+unavailable_reason
+meta
+```
 
-Instead, update internals safely or add new scopes and migrate callers gradually.
+Do not return raw query builders to views.
 
 ---
 
-## 14. Service Catalog Sync and Routing
+## 13. DepartmentMetrics Diagnostic Command
 
-Inspect `service_catalog`.
-
-Rules:
-
-```text
-service_catalog.department_type must remain synced with department.type when department is retyped.
-Service category/type remains independent.
-Department type helps route the service to workflow destination.
-```
-
-Add or confirm helper methods:
-
-```text
-service belongs to department type
-service is routable to department type group
-service destination department matches expected workflow group
-```
-
-Do not create duplicate service records.
-
-Do not change prices.
-
-Do not alter invoice totals.
-
----
-
-## 15. Backfill Safety After Routing Cleanup
-
-Do not automatically apply the backfill in this phase unless explicitly instructed.
-
-But add a readiness command or option:
+Add command:
 
 ```bash
-php artisan departments:backfill-types --dry-run --with-routing-check
+php artisan departments:metrics-map
 ```
 
-or a new command:
-
-```bash
-php artisan departments:routing-readiness
-```
-
-Report:
+Output:
 
 ```text
-department id
-department name
-current type
-suggested new type
-affected workflows
-risk level
-recommended action
+department_type
+metric_key
+label
+calculator
+permission
+module
+available?
+fallback?
 ```
 
-Risk examples:
+The command must not modify data.
 
-```text
-Emergency retype affects consultation filters.
-Radiology retype affects lab/investigation filters.
-Theatre retype affects procedure filters.
-Ward retype affects admissions/vitals filters.
-```
-
-This helps decide when to run:
-
-```bash
-php artisan departments:backfill-types --apply
-```
-
-after the routing cleanup is safe.
+It should help confirm every department type has metrics.
 
 ---
 
-## 16. Localisation
-
-Only add labels if needed for new diagnostics/readiness screens or command output.
+## 14. Localisation
 
 Extend:
 
 ```text
 lang/en/departments.php
 lang/fr/departments.php
+lang/en/reports.php
+lang/fr/reports.php
 ```
 
-Potential keys:
+Add keys:
 
 ```text
-workflow_groups
-routing_readiness
-affected_workflows
-risk_level
-low_risk
-medium_risk
-high_risk
-safe_to_retype
-manual_review_required
+department_type_reports
+department_metrics
+metrics_registry
+metric_unavailable
+metric_restricted
+metric_module_disabled
+department_type_rollup
+department_drilldown
+include_unavailable_metrics
+active_departments
+assigned_users
+services_count
+activity_count
+revenue_today
+pending_items
+collections_today
+unpaid_invoices
+ar_aging_total
+pending_claims
+low_stock_items
+out_of_stock_items
+available_beds
+occupied_beds
+active_admissions
+active_emergency_cases
+pending_lab_requests
+pending_radiology_requests
+scheduled_surgeries
+available_blood_units
+active_mortuary_cases
+ambulance_requests
 ```
 
 Maintain EN/FR parity.
@@ -734,49 +812,36 @@ Active runtime candidates must remain:
 
 ---
 
-## 17. Tests To Add
+## 15. Tests To Add
 
 Add focused tests only.
 
 Required tests:
 
 ```text
-DepartmentType workflow group methods return expected values.
-Department model workflow scopes return correct departments.
-Consultation selectors still show consultation departments.
-Emergency selectors show emergency departments after retype.
-Lab-only selectors do not include radiology unless intended.
-Diagnostic selectors include investigation and radiology.
-Radiology selectors show radiology departments.
-Minor procedure selectors show procedure departments.
-Theatre selectors show theatre departments after retype.
-Inpatient/admission selectors show inpatient and maternity/ward-safe departments where intended.
-Pharmacy selectors still show pharmacy only.
-Stock issue destinations include stores plus operational destinations where intended.
-Finance selectors show finance departments.
-Records selectors show records departments.
-Service catalog sync remains intact after department retype.
-Routing readiness command flags emergency/radiology/theatre/ward retype risks.
-No workflow selector crashes when department type is null.
+all 19 department types have a metrics profile
+generic metrics profile works for support/mortuary/ambulance
+metric registry does not throw for any department type
+metric service hides restricted finance metrics without permission
+metric service hides stock-cost metrics without permission
+module-disabled metric returns unavailable instead of crashing
+department type report route is permission protected
+department type report filters by date range
+department type report filters by department type
+department drill-down lists departments of selected type
+CSV export requires export permission
+CSV export respects selected filters
+departments:metrics-map lists all 19 department types
+EN/FR metric labels exist
 ```
 
 Allowed focused command:
 
 ```bash
-php artisan test tests/Feature/Departments/DepartmentWorkflowRoutingPhase4Test.php
+php artisan test tests/Feature/Departments/DepartmentMetricsRegistryPhase5Test.php
 ```
 
-Also run any existing focused tests that directly cover changed workflows, such as:
-
-```bash
-php artisan test tests/Feature/Consultations
-php artisan test tests/Feature/Emergency
-php artisan test tests/Feature/Investigations
-php artisan test tests/Feature/Pharmacy
-php artisan test tests/Feature/Inventory
-```
-
-Run only the focused subset needed for changed files.
+Also run any small focused reports tests if touched.
 
 Do not run:
 
@@ -788,7 +853,7 @@ unless explicitly instructed.
 
 ---
 
-## 18. Minimal Verification Commands
+## 16. Minimal Verification Commands
 
 Run only:
 
@@ -814,30 +879,28 @@ Do not run the wide full suite.
 
 ---
 
-## 19. Documentation
+## 17. Documentation
 
 Create:
 
 ```text
-docs/DEPARTMENT_TYPE_EXPANSION_PHASE_4_WORKFLOW_ROUTING_REPORT.md
+docs/DEPARTMENT_TYPE_EXPANSION_PHASE_5_METRICS_REPORTS_REPORT.md
 ```
 
 Include:
 
 ```text
 summary
-workflow type group design
-DepartmentType group methods added/updated
-Department model scopes added/updated
-consultation/emergency routing changes
-lab/radiology routing changes
-procedure/theatre routing changes
-treatment/nursing/inpatient routing changes
-pharmacy routing changes
-stores/stock routing changes
-finance/records/admin routing changes
-service catalog sync behavior
-routing readiness command output
+metrics registry design
+department type to metrics mapping
+generic fallback metrics
+metric permission/module safety
+department type report route/screen
+department drill-down behavior
+export behavior
+dashboard integration points
+diagnostic command output
+localisation changes
 tests added
 focused tests run
 minimal verification commands run
@@ -848,41 +911,37 @@ next recommended phase
 Known limitations should mention:
 
 ```text
-department metrics/reporting registry is Phase 5
 multi-department user context switcher is deferred
+some department types use generic metrics until dedicated modules exist
 department backfill apply was not run unless explicitly instructed
-some workflows may still share generic routes until dedicated modules exist
+wide full-suite regression remains deferred
 ```
 
 ---
 
-## 20. Acceptance Criteria
+## 18. Acceptance Criteria
 
-Phase 4 is complete only when:
+Phase 5 is complete only when:
 
 ```text
-workflow type groups exist and are named clearly
-old hardcoded single-type filters are replaced where workflow intent is clear
-consultation and emergency routing are separated safely
-lab and radiology routing are separated safely
-procedure and theatre routing are separated safely
-inpatient/nursing/maternity routing no longer depends on administrative/consultation hacks
-pharmacy routing remains stable
-stores/stock routing remains stable
-finance/records/admin routing remains permission-safe
-department model scopes support workflow groups
-service_catalog.department_type sync remains safe
-routing readiness command/report exists
-no selector crashes on null/new department types
-focused workflow tests pass
-active runtime localisation candidates remain 0
+all 19 department types have metrics profiles
+generic fallback metrics exist
+metrics do not crash for unsupported modules
+restricted metrics are hidden before sensitive queries run
+department type report screen exists
+department drill-down works
+CSV/export support works where existing tooling permits
+dashboard integration helper exists
+departments:metrics-map command exists
 EN/FR localisation parity is maintained
+active runtime localisation candidates remain 0
 route list works
 view cache compiles
 permissions audit is clean
 documentation report is created
+focused tests pass
 full test suite is intentionally deferred
 department backfill is not applied unless explicitly instructed
 ```
 
-Proceed with Department Type Expansion Phase 4 now.
+Proceed with Department Type Expansion Phase 5 now.
