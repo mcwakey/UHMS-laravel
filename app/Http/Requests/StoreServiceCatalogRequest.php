@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\DepartmentType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreServiceCatalogRequest extends FormRequest
 {
@@ -22,7 +24,7 @@ class StoreServiceCatalogRequest extends FormRequest
             'price' => ['required', 'numeric', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
             'department_id' => ['nullable', 'exists:departments,id'],
-            'department_type' => ['nullable', 'string', 'in:consultation,investigation,procedure,treatment,pharmacy,radiology,support,administrative'],
+            'department_type' => ['nullable', Rule::enum(DepartmentType::class)],
             'specialties' => ['nullable', 'array'],
             'specialties.*' => ['exists:specialties,id'],
         ];

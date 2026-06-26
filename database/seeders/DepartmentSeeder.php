@@ -36,34 +36,36 @@ class DepartmentSeeder extends Seeder
             ['name' => 'ENT',                     'code' => 'ENT', 'type' => DepartmentType::CONSULTATION->value],
             ['name' => 'Dental',                  'code' => 'DEN', 'type' => DepartmentType::CONSULTATION->value],
             ['name' => 'Psychiatry',              'code' => 'PSY', 'type' => DepartmentType::CONSULTATION->value],
-            ['name' => 'Emergency / Casualty',    'code' => 'EMR', 'type' => DepartmentType::CONSULTATION->value],
+            ['name' => 'Emergency / Casualty',    'code' => 'EMR', 'type' => DepartmentType::EMERGENCY->value],
             ['name' => 'Antenatal / Postnatal',   'code' => 'ANC', 'type' => DepartmentType::CONSULTATION->value],
             ['name' => 'Family Planning',         'code' => 'FPL', 'type' => DepartmentType::CONSULTATION->value],
 
             // ── Investigation departments ──
             ['name' => 'Laboratory',              'code' => 'LAB', 'type' => DepartmentType::INVESTIGATION->value, 'result_type' => ResultType::PARAMETERS->value],
-            ['name' => 'Radiology / X-Ray',       'code' => 'RAD', 'type' => DepartmentType::INVESTIGATION->value, 'result_type' => ResultType::RICHTEXT->value],
-            ['name' => 'Ultrasound',              'code' => 'USG', 'type' => DepartmentType::INVESTIGATION->value, 'result_type' => ResultType::RICHTEXT->value],
+            ['name' => 'Radiology / X-Ray',       'code' => 'RAD', 'type' => DepartmentType::RADIOLOGY->value, 'result_type' => ResultType::RICHTEXT->value],
+            ['name' => 'Ultrasound',              'code' => 'USG', 'type' => DepartmentType::RADIOLOGY->value, 'result_type' => ResultType::RICHTEXT->value],
 
-            // ── Treatment / procedure ──
+            // ── Treatment ──
             ['name' => 'Physiotherapy',           'code' => 'PHY', 'type' => DepartmentType::TREATMENT->value],
-            ['name' => 'Theatre / Procedures',    'code' => 'THT', 'type' => DepartmentType::PROCEDURE->value],
+
+            // ── Theatre / procedure ──
+            ['name' => 'Theatre / Procedures',    'code' => 'THT', 'type' => DepartmentType::THEATRE->value],
 
             // ── Pharmacy ──
             ['name' => 'Pharmacy',                'code' => 'PHR', 'type' => DepartmentType::PHARMACY->value, 'is_stock_managed' => true],
 
-            // ── Support / admin ──
-            ['name' => 'Records',                 'code' => 'REC', 'type' => DepartmentType::ADMINISTRATIVE->value],
-            ['name' => 'Billing',                 'code' => 'BIL', 'type' => DepartmentType::ADMINISTRATIVE->value],
+            // ── Records / finance ──
+            ['name' => 'Records',                 'code' => 'REC', 'type' => DepartmentType::RECORDS->value],
+            ['name' => 'Billing',                 'code' => 'BIL', 'type' => DepartmentType::FINANCE->value],
 
             // ── Ward / Inpatient departments ──
-            ['name' => 'Male Medical Ward',       'code' => 'MMW', 'type' => DepartmentType::ADMINISTRATIVE->value],
-            ['name' => 'Female Medical Ward',     'code' => 'FMW', 'type' => DepartmentType::ADMINISTRATIVE->value],
-            ['name' => 'Maternity Ward',          'code' => 'MAT', 'type' => DepartmentType::ADMINISTRATIVE->value],
-            ['name' => 'Paediatric Ward',         'code' => 'PCW', 'type' => DepartmentType::ADMINISTRATIVE->value],
-            ['name' => 'Surgical Ward',           'code' => 'SRW', 'type' => DepartmentType::ADMINISTRATIVE->value],
-            ['name' => 'ICU',                     'code' => 'ICU', 'type' => DepartmentType::ADMINISTRATIVE->value],
-            ['name' => 'NICU',                    'code' => 'NIC', 'type' => DepartmentType::ADMINISTRATIVE->value],
+            ['name' => 'Male Medical Ward',       'code' => 'MMW', 'type' => DepartmentType::INPATIENT->value],
+            ['name' => 'Female Medical Ward',     'code' => 'FMW', 'type' => DepartmentType::INPATIENT->value],
+            ['name' => 'Maternity Ward',          'code' => 'MAT', 'type' => DepartmentType::MATERNITY->value],
+            ['name' => 'Paediatric Ward',         'code' => 'PCW', 'type' => DepartmentType::INPATIENT->value],
+            ['name' => 'Surgical Ward',           'code' => 'SRW', 'type' => DepartmentType::INPATIENT->value],
+            ['name' => 'ICU',                     'code' => 'ICU', 'type' => DepartmentType::INPATIENT->value],
+            ['name' => 'NICU',                    'code' => 'NIC', 'type' => DepartmentType::INPATIENT->value],
         ];
 
         foreach ($departments as $dept) {

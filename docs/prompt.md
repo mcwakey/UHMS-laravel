@@ -5,40 +5,80 @@ There is currently no `docs/UHMS_IMPLEMENTATION_SKILL.md` file in this project.
 Do not try to read it.
 Follow this prompt directly.
 
-# UHMS Department Type Expansion — Phase 0 Gap Analysis & Adaptation Plan
+# UHMS Department Type Expansion — Phase 1: Canonicalisation, Safety Fixes & Safe Backfill
 
 ## Goal
 
-Perform a full-system gap analysis for UHMS department types.
+Implement the first safe technical phase of the UHMS department type expansion.
 
-The current department type list is incomplete and must be expanded so the system can understand hospital departments better and later build dashboards, menus, workflows, queues, reports, and permissions based on department types.
+The Phase 0 gap analysis has confirmed:
 
-This is an analysis/planning phase only.
+```text id="ld3fnk"
+UHMS already has one canonical source of truth:
+App\Enums\DepartmentType
 
-Do not implement the changes yet.
+The departments.type column is already a plain string.
+No destructive schema change is needed.
 
-Do not run the full test suite.
+The new 19 department types already exist in the enum.
 
-Create a clear report showing:
+However, several enum consumers are incomplete and can throw UnhandledMatchError / HTTP 500 when new department types are used.
+```
 
-```text
-where department types are currently defined
-where they are used
-what will break if we change them
-what database fields need updates
-what seeders/enums/constants need updates
-what dashboards and menus depend on them
-how to migrate old department types safely
-what implementation phases should follow
+This phase must make the department type system safe, exhaustive, translated, validated, seedable, and ready for controlled backfill.
+
+Do not build dashboards yet.
+
+Do not build department-aware menus yet.
+
+Do not rework all workflow routing yet.
+
+This phase is about **canonicalisation and safety first**.
+
+---
+
+# 1. Required Context
+
+Read:
+
+```text id="0qg1f5"
+docs/DEPARTMENT_TYPE_EXPANSION_GAP_ANALYSIS_REPORT.md
+docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
+```
+
+Also inspect:
+
+```text id="12e4tw"
+app/Enums/DepartmentType.php
+app/Models/Department.php
+app/Services/Dashboard/DepartmentDashboardResolver.php
+app/Services/Dashboard/DepartmentDashboardService.php
+app/Services/SidebarMenuBuilder.php
+database/seeders/DepartmentSeeder.php
+database/factories/DepartmentFactory.php
+resources/views/admin/services/index.blade.php
+resources/views/vitals/record.blade.php
+resources/views/components/department-services-card.blade.php
+lang/en
+lang/fr
+tests
+```
+
+Important testing instruction:
+
+```text id="msivpo"
+Do not run the wide full application test suite after this phase.
+Run only focused department/localisation safety checks and minimal verification.
+The wide full-suite test remains deferred until the current implementation batch is complete.
 ```
 
 ---
 
-# 1. New Department Type List
+# 2. New Canonical Department Type List
 
-The new proposed department type list is:
+The final canonical list is:
 
-```php
+```php id="o13hhj"
 CONSULTATION = 'consultation';
 EMERGENCY = 'emergency';
 INVESTIGATION = 'investigation';
@@ -60,737 +100,339 @@ SUPPORT = 'support';
 ADMINISTRATIVE = 'administrative';
 ```
 
-Old/current list likely includes:
+Do not remove any of these.
 
-```php
-CONSULTATION = 'consultation';
-INVESTIGATION = 'investigation';
-PROCEDURE = 'procedure';
-TREATMENT = 'treatment';
-PHARMACY = 'pharmacy';
-RADIOLOGY = 'radiology';
-SUPPORT = 'support';
-ADMINISTRATIVE = 'administrative';
-```
+Do not rename values.
 
-The gap is that many real hospital operational departments are currently forced into generic types like `support`, `administrative`, `procedure`, or `treatment`.
+Do not use database enum columns.
+
+Store the values as strings.
 
 ---
 
-# 2. Core Design Direction
+# 3. Critical Breakages To Fix First
 
-UHMS must understand department behavior from the department record itself.
+The Phase 0 gap analysis found these high-risk breakages:
 
-The system should eventually use:
-
-```text
-departments.department_type
+```text id="qokx8m"
+DepartmentType::label() is not exhaustive.
+DepartmentType::color() is not exhaustive.
+DepartmentType::toVisitStatus() is not exhaustive.
+DepartmentDashboardResolver::resolveKey() has a non-exhaustive match.
+resources/views/admin/services/index.blade.php can 500 because it loops over DepartmentType::cases() and calls label().
+resources/views/vitals/record.blade.php can 500 when a department has one of the new types.
 ```
 
-as the first-level operational classification.
+Fix these before any backfill or seeder changes.
 
-The system should not rely only on hardcoded module names, route names, or dashboard assumptions.
-
-Department type should support:
-
-```text
-department-specific dashboards
-department-aware menu sections
-department-specific queue/session behavior
-department-based service routing
-department-based billing/service mapping
-department-based reports
-department-specific permissions
-department-based statistics
-department-specific operational widgets
-```
-
-But this prompt is only for the gap analysis and adaptation plan.
+No department type should be able to crash the UI.
 
 ---
 
-# 3. Important Rules
+# 4. DepartmentType Enum Requirements
 
-Do not implement now.
+Update:
 
-Do not change production data.
+```text id="8deadm"
+app/Enums/DepartmentType.php
+```
 
-Do not rename existing values yet.
+Make every method safe and exhaustive.
 
-Do not delete old values.
+Required methods:
 
-Do not run the wide full test suite.
+```php id="9rawz2"
+public function label(): string
+public function translatedLabel(): string
+public function color(): string
+public function toVisitStatus(): ?string
+public static function values(): array
+public static function options(): array
+public static function clinicalTypes(): array
+public static function diagnosticTypes(): array
+public static function procedureTypes(): array
+public static function inpatientTypes(): array
+public static function administrativeTypes(): array
+public static function operationalTypes(): array
+public static function serviceRoutingTypes(): array
+```
 
-Do not create a parallel department system.
+Rules:
 
-Do not hardcode dashboard logic directly inside Blade.
+```text id="hrj2u6"
+label() must support all 19 types.
+translatedLabel() must use departments.types.{value}.
+color() must support all 19 types or use a safe default.
+toVisitStatus() must not throw for any type. Return null or a safe default for types that do not map to a visit status.
+Never leave a match() expression without either all 19 cases or a default arm.
+```
 
-Do not hardcode menu visibility directly inside Blade.
+Recommended grouping:
 
-Do not make clinical workflows depend on incomplete department mapping.
+```php id="r0spry"
+clinicalTypes():
+- consultation
+- emergency
+- procedure
+- theatre
+- treatment
+- nursing
+- inpatient
+- maternity
 
-Do not break existing visits, consultations, pharmacy, theatre, emergency, billing, stock, admissions, or reports.
+diagnosticTypes():
+- investigation
+- radiology
+- blood_bank
 
-Use services/config/enums where appropriate.
+procedureTypes():
+- procedure
+- theatre
+
+inpatientTypes():
+- inpatient
+- nursing
+- maternity
+
+administrativeTypes():
+- records
+- finance
+- administrative
+
+operationalTypes():
+- pharmacy
+- stores
+- support
+- ambulance
+- mortuary
+
+serviceRoutingTypes():
+- consultation
+- emergency
+- investigation
+- radiology
+- procedure
+- theatre
+- treatment
+- nursing
+- pharmacy
+- inpatient
+- maternity
+- blood_bank
+- mortuary
+- ambulance
+```
+
+Do not use these groups yet to rewrite every workflow. They are for safe future phases.
 
 ---
 
-# 4. Search Areas
+# 5. Translations
 
-Inspect the entire codebase for department type usage.
+Create or update:
 
-Search for:
-
-```text
-department_type
-department type
-DepartmentType
-departmentTypes
-department_types
-consultation
-investigation
-procedure
-treatment
-pharmacy
-radiology
-support
-administrative
-departments
-DepartmentSeeder
-DepartmentTypeSeeder
-department dashboard
-department menu
-```
-
-Also inspect:
-
-```text
-app/Enums
-app/Models
-app/Services
-app/Http/Controllers
-database/migrations
-database/seeders
-resources/views
-routes
-lang/en
-lang/fr
-tests
-config
-```
-
----
-
-# 5. Find Current Source of Truth
-
-Identify where department types are currently defined.
-
-Check whether they are defined in:
-
-```text
-PHP enum
-model constants
-config file
-database lookup table
-migration enum/string validation
-form request validation
-Seeder
-Blade select options
-JavaScript arrays
-translation files
-tests/factories
-```
-
-Report whether the system has one source of truth or multiple conflicting sources.
-
-Recommended future direction:
-
-```text
-Use one canonical DepartmentType enum/service/config source.
-Store values as strings in database.
-Avoid database enum columns.
-Expose translated labels through lang files.
-```
-
----
-
-# 6. Database Gap Analysis
-
-Inspect department-related tables.
-
-Look for:
-
-```text
-departments
-services
-department_services
-visit_sessions
-consultation_routes
-queues
-outpatient_sessions
-emergency_cases
-admissions
-wards
-beds
-pharmacy
-lab/investigations
-radiology
-theatre/procedures
-billing
-stock/store
-users/staff assignments
-roles/permissions
-```
-
-Answer:
-
-```text
-Which tables store department_id?
-Which tables store department_type?
-Which tables infer department type from module?
-Which tables should be department-aware but are not?
-Which records would need migration or backfill?
-Which old department type values exist in seeders or demo data?
-```
-
-Do not alter schema in this phase.
-
----
-
-# 7. New Type Meaning
-
-For the gap report, document the operational meaning of each new type.
-
-Use this interpretation:
-
-```text
-consultation:
-OPD/doctor consultation rooms, specialist consultation, general clinical consultation.
-
-emergency:
-Emergency / casualty department, emergency triage, emergency sessions, emergency bays.
-
-investigation:
-Laboratory and diagnostic investigation requests/results that are not radiology.
-
-radiology:
-X-ray, ultrasound, CT, MRI, imaging department.
-
-procedure:
-Minor procedures and procedure services outside full theatre workflow.
-
-theatre:
-Operating theatre, surgery workflow, anaesthesia, pre-op, post-op, surgical scheduling.
-
-treatment:
-Treatment room, injections, wound dressing, physiotherapy-like treatment services where applicable.
-
-nursing:
-Nursing station, nursing tasks, MAR, observations, ward nursing workflows.
-
-pharmacy:
-Dispensing, prescription fulfilment, medicine sales, medication stock.
-
-inpatient:
-Admission, wards, beds, inpatient care, inpatient billing.
-
-maternity:
-Antenatal, delivery, postnatal, maternity-specific workflows.
-
-blood_bank:
-Blood donation, screening, storage, crossmatch, blood issue/transfusion support.
-
-mortuary:
-Mortuary registration, body storage, release, mortuary billing.
-
-ambulance:
-Ambulance dispatch, transport requests, ambulance billing.
-
-records:
-Medical records, folder management, patient records office, file merge, archives.
-
-finance:
-Cashier, billing, collections, insurance claims, accounting, sponsors, receivables.
-
-stores:
-General store, procurement, stock issue, inventory, non-pharmacy stores.
-
-support:
-Maintenance, biomedical, IT, security, laundry, housekeeping, CSSD, general support.
-
-administrative:
-HR, management, administration, settings, user management, governance.
-```
-
-Flag any ambiguity discovered in the current code.
-
----
-
-# 8. Workflow Impact Analysis
-
-For each type, identify whether UHMS already has matching workflows.
-
-Produce a table:
-
-```text
-Department Type | Existing module/workflow found? | Current mapping | Gap | Suggested action
-```
-
-Expected examples:
-
-```text
-emergency:
-Existing emergency module exists.
-Gap: emergency may currently be hidden under consultation/treatment/support.
-Action: add explicit department type and map Emergency/Casualty departments.
-
-theatre:
-Existing theatre/procedure workflow likely exists.
-Gap: theatre may currently be mixed with procedure.
-Action: separate theatre from procedure.
-
-inpatient:
-Admissions/wards/beds exist.
-Gap: inpatient may not be a department type.
-Action: map wards/admissions to inpatient.
-
-blood_bank:
-Blood workflows exist.
-Gap: no explicit department type.
-Action: add blood_bank.
-
-finance:
-Billing/accounting exists.
-Gap: finance may be administrative/support.
-Action: add finance.
-
-stores:
-Stock/procurement exists.
-Gap: stores may be support/admin.
-Action: add stores.
-
-records:
-Patient records/folder merge exists.
-Gap: no explicit records type.
-Action: add records.
-```
-
----
-
-# 9. Dashboard Impact Analysis
-
-We want dashboards based on department types.
-
-Analyse current dashboards:
-
-```text
-admin dashboard
-doctor dashboard
-nurse dashboard
-reception dashboard
-billing dashboard
-pharmacy dashboard
-lab dashboard
-radiology dashboard
-emergency dashboard
-theatre dashboard
-accounting dashboard
-stock dashboard
-admissions dashboard
-```
-
-Report:
-
-```text
-Which dashboards already exist?
-Which dashboards are role-based only?
-Which dashboards are module-based only?
-Which dashboards can become department-type dashboards?
-Which department types need new dashboards?
-Which department types can share a generic dashboard at first?
-```
-
-Recommended future direction:
-
-```text
-Create DepartmentDashboardRegistry or DepartmentDashboardService.
-Map department_type to dashboard widgets.
-Do not hardcode dashboards in controllers.
-```
-
-Example future mapping:
-
-```php
-consultation => ConsultationDashboard
-emergency => EmergencyDashboard
-investigation => LabDashboard
-radiology => RadiologyDashboard
-procedure => ProcedureDashboard
-theatre => TheatreDashboard
-treatment => TreatmentDashboard
-nursing => NursingDashboard
-pharmacy => PharmacyDashboard
-inpatient => InpatientDashboard
-maternity => MaternityDashboard
-blood_bank => BloodBankDashboard
-mortuary => MortuaryDashboard
-ambulance => AmbulanceDashboard
-records => RecordsDashboard
-finance => FinanceDashboard
-stores => StoresDashboard
-support => SupportDashboard
-administrative => AdminDashboard
-```
-
----
-
-# 10. Menu Impact Analysis
-
-We may customise menu lists based on department type.
-
-Analyse current menu generation.
-
-Find:
-
-```text
-SidebarMenuBuilder
-menu config
-role-based menu logic
-module-based menu logic
-permission-based menu logic
-department-specific menu logic if any
-```
-
-Report:
-
-```text
-Is menu currently role-based?
-Is menu module-based?
-Is menu permission-based?
-Does it know user department?
-Can a user belong to multiple departments?
-Can a department have a type?
-Can menu visibility be filtered by department type safely?
-```
-
-Recommended future direction:
-
-```text
-Keep permission and module checks as the primary security layer.
-Use department type only to organise/prioritise menus, not to replace permissions.
-Add DepartmentMenuProfileService or extend SidebarMenuBuilder cleanly.
-Do not hide permitted routes only because department mapping is missing.
-```
-
-Possible menu strategy:
-
-```text
-User role + permissions decide access.
-Enabled modules decide availability.
-User department type decides preferred/visible dashboard/menu grouping.
-Super Admin/Admin can see all.
-Clinical users see their department-type menu first.
-Finance users see finance/billing/accounting first.
-Stores users see procurement/stock first.
-```
-
----
-
-# 11. Service Routing Impact Analysis
-
-Department type may affect service routing.
-
-Inspect how UHMS routes:
-
-```text
-visit sessions
-consultation queues
-lab requests
-radiology requests
-procedures
-theatre cases
-pharmacy prescriptions
-emergency sessions
-admissions
-service rendering
-billing items
-```
-
-Report:
-
-```text
-Which workflows already use department?
-Which use service type?
-Which use module name?
-Which use hardcoded department names?
-Which should move to department_type?
-```
-
-Important:
-
-```text
-Do not replace service type with department type.
-A service remains the billable item.
-A department is the operational owner/location.
-Department type helps route the service to the correct workflow/dashboard.
-```
-
----
-
-# 12. Billing Impact Analysis
-
-Inspect billing and service configuration.
-
-Find:
-
-```text
-services
-service_categories
-department_id on services
-department_type on services if any
-billing routing
-invoice item source modules
-cashier/payment workflows
-insurance/sponsor billing
-```
-
-Report:
-
-```text
-Can a billable service be assigned to a department?
-Can a billable service be assigned to a department type?
-Does emergency billing depend on a hardcoded consultation service?
-Does theatre/procedure billing know the difference between procedure and theatre?
-Does radiology billing differ from lab/investigation?
-Does pharmacy use product billing rather than service billing?
-```
-
-Recommended future direction:
-
-```text
-Services should map to departments or department types.
-Emergency/Casualty consultation should be configured, not hardcoded.
-Radiology should be separated from laboratory investigation.
-Theatre should be separated from minor procedure.
-Pharmacy should remain product/dispensing-aware.
-Finance should not be a clinical billable service department unless needed for cashier work.
-```
-
----
-
-# 13. Permissions and User Department Impact
-
-Inspect:
-
-```text
-users
-staff
-employees
-roles
-permissions
-departments
-department_user
-staff department assignments
-```
-
-Answer:
-
-```text
-Can users be assigned to departments?
-Can users have multiple departments?
-Can department type affect dashboard?
-Can department type affect menu priority?
-Can department type affect queue visibility?
-What should happen if user has no department?
-What should happen if user belongs to multiple departments?
-```
-
-Suggested logic:
-
-```text
-If user has one department:
-    use that department_type as dashboard/menu context.
-
-If user has multiple departments:
-    allow switching current department context.
-
-If user is admin/super admin:
-    allow all department dashboards.
-
-If user has no department:
-    fall back to role-based dashboard/menu.
-```
-
----
-
-# 14. Reporting and Statistics Impact
-
-Analyse how department-based reporting currently works.
-
-Find:
-
-```text
-department reports
-department revenue
-department expense
-department service count
-department visit count
-department queue count
-department stock issue
-department staff performance
-department dashboards
-```
-
-Report gaps for:
-
-```text
-consultation stats
-emergency stats
-investigation stats
-radiology stats
-procedure stats
-theatre stats
-treatment stats
-nursing stats
-pharmacy stats
-inpatient stats
-maternity stats
-blood bank stats
-mortuary stats
-ambulance stats
-records stats
-finance stats
-stores stats
-support stats
-administrative stats
-```
-
-Recommended future direction:
-
-```text
-Build DepartmentMetricsRegistry.
-Each department type should provide widget definitions and metrics.
-Start with generic metrics for types without dedicated modules.
-```
-
----
-
-# 15. Localisation Impact
-
-New department type labels must be translated.
-
-Report where labels should go:
-
-```text
+```text id="3xpzkc"
 lang/en/departments.php
 lang/fr/departments.php
-or existing lang/en/app.php / lang/fr/app.php if project convention uses those
 ```
 
-Required labels:
+Add:
 
-```text
-consultation
-emergency
-investigation
-radiology
-procedure
-theatre
-treatment
-nursing
-pharmacy
-inpatient
-maternity
-blood_bank
-mortuary
-ambulance
-records
-finance
-stores
-support
-administrative
+```php id="hfzrr2"
+return [
+    'types' => [
+        'consultation' => 'Consultation',
+        'emergency' => 'Emergency',
+        'investigation' => 'Investigation',
+        'radiology' => 'Radiology',
+        'procedure' => 'Procedure',
+        'theatre' => 'Theatre',
+        'treatment' => 'Treatment',
+        'nursing' => 'Nursing',
+        'pharmacy' => 'Pharmacy',
+        'inpatient' => 'Inpatient',
+        'maternity' => 'Maternity',
+        'blood_bank' => 'Blood Bank',
+        'mortuary' => 'Mortuary',
+        'ambulance' => 'Ambulance',
+        'records' => 'Records',
+        'finance' => 'Finance',
+        'stores' => 'Stores',
+        'support' => 'Support',
+        'administrative' => 'Administrative',
+    ],
+];
 ```
 
-Also add dashboard/menu labels later.
+French labels should be natural and clear:
 
-Do not implement translation in this phase.
+```php id="jt5blb"
+'consultation' => 'Consultation',
+'emergency' => 'Urgences',
+'investigation' => 'Examens / Analyses',
+'radiology' => 'Radiologie',
+'procedure' => 'Actes / Procédures',
+'theatre' => 'Bloc opératoire',
+'treatment' => 'Soins / Traitement',
+'nursing' => 'Soins infirmiers',
+'pharmacy' => 'Pharmacie',
+'inpatient' => 'Hospitalisation',
+'maternity' => 'Maternité',
+'blood_bank' => 'Banque de sang',
+'mortuary' => 'Morgue',
+'ambulance' => 'Ambulance',
+'records' => 'Archives médicales',
+'finance' => 'Finance',
+'stores' => 'Magasin / Stocks',
+'support' => 'Support',
+'administrative' => 'Administration',
+```
 
-Only report exact files that need changes.
+Run EN/FR parity checks.
+
+Active runtime localisation candidates must remain:
+
+```text id="5fdwuy"
+0
+```
 
 ---
 
-# 16. Migration and Backward Compatibility Plan
+# 6. Dashboard Resolver Safety
 
-Produce a proposed safe migration/backfill plan.
+Update:
 
-The plan must include:
-
-```text
-how to add new department types without breaking old values
-how to map existing departments to new department types
-how to handle unknown/missing department types
-how to update seeders
-how to update validation
-how to update tests/factories
-how to preserve historical data
-how to avoid destructive migrations
+```text id="w7bkmj"
+app/Services/Dashboard/DepartmentDashboardResolver.php
 ```
 
-Recommended migration approach:
+Make the department type to dashboard key mapping exhaustive and safe.
 
-```text
-1. Ensure department_type column is string, not DB enum.
-2. Add canonical DepartmentType enum/config.
-3. Add translations.
-4. Update validation to use canonical values.
-5. Update seeders.
-6. Add mapping/backfill command with dry-run.
-7. Backfill known departments by name/module/service mapping.
-8. Leave unknown departments unchanged or classify as support/admin only with explicit review.
-9. Add report for unmapped departments.
+Suggested mapping:
+
+```php id="6gctrq"
+consultation => consultation
+emergency => emergency
+investigation => investigation
+radiology => investigation
+procedure => theatre or generic
+theatre => theatre
+treatment => generic
+nursing => admission
+pharmacy => pharmacy
+inpatient => admission
+maternity => admission
+blood_bank => blood_bank
+mortuary => generic
+ambulance => generic
+records => reception
+finance => accounting
+stores => stock
+support => generic
+administrative => management
 ```
 
-Backfill command proposal:
+Rules:
 
-```bash
-php artisan departments:backfill-types --dry-run
-php artisan departments:backfill-types --apply
+```text id="uh7i3l"
+No department type should crash /admin/my-dashboard.
+Unknown or null department type must fall back to role-based dashboard or generic dashboard.
+Admin/Super Admin must retain broad access.
+Do not build new dashboards in this phase.
+Only map the new types safely to existing dashboard keys or generic fallback.
 ```
 
-Command should output:
-
-```text
-department id
-department name
-old type
-suggested new type
-confidence
-reason
-action
-```
-
-Do not auto-apply low-confidence mappings.
+If `DepartmentDashboardService::build()` already has default fallback, keep it.
 
 ---
 
-# 17. Suggested Mapping Rules
+# 7. Views Safety
 
-Propose mapping rules but do not apply them.
+Fix all views that call:
 
-Examples:
+```php id="544xro"
+$type->label()
+$department->type->label()
+```
 
-```text
+Known files:
+
+```text id="7ryp9s"
+resources/views/admin/services/index.blade.php
+resources/views/vitals/record.blade.php
+resources/views/components/department-services-card.blade.php
+```
+
+Rules:
+
+```text id="98v7ax"
+Use translatedLabel() where possible.
+Guard null department type.
+No view should crash if department type is null or unknown.
+No hardcoded English-only labels in Blade.
+```
+
+Example safe display:
+
+```php id="avb3zv"
+$department->type?->translatedLabel() ?? __('common.not_specified')
+```
+
+---
+
+# 8. Validation
+
+Current department validation uses:
+
+```php id="nvx8wj"
+Rule::enum(DepartmentType::class)
+```
+
+Keep it.
+
+Also inspect service forms that accept:
+
+```text id="24hlic"
+department_type
+```
+
+If any service form accepts raw strings, validate against:
+
+```php id="q8em1s"
+Rule::enum(DepartmentType::class)
+```
+
+or against `DepartmentType::values()` depending on existing Laravel version compatibility.
+
+Do not introduce database enum validation.
+
+---
+
+# 9. Seeder Updates
+
+Update:
+
+```text id="wdq0fn"
+database/seeders/DepartmentSeeder.php
+database/factories/DepartmentFactory.php
+```
+
+Use precise department types.
+
+Required mappings:
+
+```text id="p8gfna"
 Emergency / Casualty => emergency
 OPD / Consultation / Consulting Room => consultation
 Laboratory / Lab => investigation
 Radiology / X-Ray / Ultrasound / Imaging => radiology
 Theatre / Surgery / Operating Room => theatre
 Procedure Room / Minor Procedure => procedure
-Treatment Room / Dressing / Injection => treatment
-Nursing Station / MAR / Ward Nursing => nursing
+Treatment Room / Dressing / Injection / Physiotherapy => treatment
+Nursing Station / Ward Nursing => nursing
 Pharmacy / Dispensary => pharmacy
-Ward / Admission / Inpatient => inpatient
-Maternity / Delivery / Antenatal / Postnatal => maternity
+Ward / Admission / ICU / NICU / Inpatient => inpatient
+Maternity / Delivery / Antenatal / Postnatal / Family Planning => maternity
 Blood Bank / Blood Storage => blood_bank
 Mortuary => mortuary
 Ambulance / Transport => ambulance
@@ -801,147 +443,286 @@ Maintenance / IT / Laundry / Security / CSSD / Housekeeping => support
 HR / Admin / Management / Settings => administrative
 ```
 
-Report conflicts:
+Important:
 
-```text
-Department name matches more than one type.
-Department has services from multiple types.
-Department has no obvious workflow.
-Department currently has invalid/blank type.
+```text id="2tqzsr"
+If a seeded department name combines two meanings, do not guess silently.
+Example: Theatre / Procedures may need to become theatre, or the seeder may need separate Theatre and Minor Procedures departments.
+Document the decision.
+```
+
+Do not reseed production data automatically.
+
+---
+
+# 10. Backfill Command
+
+Create a safe command:
+
+```bash id="bx898w"
+php artisan departments:backfill-types --dry-run
+php artisan departments:backfill-types --apply
+```
+
+Command class suggestion:
+
+```text id="edj5mt"
+App\Console\Commands\BackfillDepartmentTypesCommand
+```
+
+Behavior:
+
+```text id="56lpqo"
+Inspect existing departments.
+Suggest a precise new department type from department name/code/current type.
+Assign confidence: high, medium, low.
+Explain the reason.
+Dry-run by default.
+Apply only when --apply is provided.
+Only auto-apply high-confidence mappings.
+Medium/low confidence must be reported for manual review unless --force is explicitly provided.
+Re-sync service_catalog.department_type for updated departments.
+Do not delete departments.
+Do not alter historical records.
+Do not change department_id references.
+```
+
+Output columns:
+
+```text id="4l8u72"
+id
+name
+code
+old_type
+suggested_type
+confidence
+reason
+action
+```
+
+Rules:
+
+```text id="1o9zwo"
+Unknown departments stay unchanged.
+Blank types can be suggested but not force-applied unless high confidence.
+Generic old values can be suggested for precision.
+Log summary counts.
+```
+
+Suggested matching rules:
+
+```text id="6azgdn"
+emergency|casualty => emergency
+opd|consultation|clinic|consulting => consultation
+laboratory|lab => investigation
+radiology|x-ray|xray|ultrasound|imaging|ct|mri => radiology
+theatre|surgery|operating => theatre
+procedure|minor procedure => procedure
+treatment|dressing|injection|physio|physiotherapy => treatment
+nursing|nurse station|mar => nursing
+pharmacy|dispensary => pharmacy
+ward|admission|inpatient|icu|nicu => inpatient
+maternity|delivery|antenatal|postnatal|family planning => maternity
+blood bank|blood storage|blood => blood_bank
+mortuary|morgue => mortuary
+ambulance|transport => ambulance
+records|folder|archive => records
+billing|cashier|accounts|claims|finance => finance
+stores|store|procurement|inventory|warehouse => stores
+maintenance|it|laundry|security|cssd|housekeeping|biomedical => support
+hr|admin|management|settings => administrative
 ```
 
 ---
 
-# 18. Future Implementation Phases To Recommend
+# 11. Unmapped / Ambiguous Report Command
 
-At the end of the report, recommend implementation phases.
+Add either a second command or an option:
 
-Suggested:
+```bash id="i9p7kv"
+php artisan departments:types-report
+```
 
-```text
-Phase 1 — Department Type Canonicalisation
-- enum/config
-- validation
-- translations
-- seeders
-- safe migration/backfill command
-- unmapped department report
+or:
 
-Phase 2 — Department-Aware Dashboard Registry
-- dashboard mapping by department type
-- generic fallback widgets
-- role/admin override
-- current department context for multi-department users
+```bash id="9xha05"
+php artisan departments:backfill-types --report
+```
 
-Phase 3 — Department-Aware Menu Profiles
-- menu grouping/prioritisation by department type
-- keep permissions/modules as security
-- department context switcher
+Report:
 
-Phase 4 — Workflow Routing Cleanup
-- emergency/session routing
-- radiology vs investigation
-- theatre vs procedure
-- inpatient/nursing/maternity/blood bank/mortuary/ambulance workflows
+```text id="c15fx0"
+departments with null type
+departments with old generic type that could be made more precise
+departments with ambiguous name
+departments whose service_catalog.department_type differs from departments.type
+departments with no services
+departments with services across multiple department types
+```
 
-Phase 5 — Department Metrics and Reports
-- metrics registry
-- department-type reports
-- dashboard widgets
-- export/print
+This report will help before Phase 4 workflow routing cleanup.
+
+---
+
+# 12. Service Catalog Sync
+
+Because `service_catalog.department_type` is a denormalised copy, add safe sync logic.
+
+When department type is updated through:
+
+```text id="4xgbxw"
+DepartmentController
+departments:backfill-types command
+```
+
+then related services should be synced:
+
+```text id="u7bjj5"
+service_catalog.department_type = departments.type
+```
+
+Only if:
+
+```text id="4e0991"
+service_catalog.department_id = departments.id
+```
+
+Do not overwrite service category/type.
+
+Do not replace billable service type.
+
+Remember:
+
+```text id="jeqdgt"
+department type is operational owner/routing
+service type is billable/service category
 ```
 
 ---
 
-# 19. Minimal Verification Only
+# 13. Tests To Add
 
-For this gap analysis phase, run only safe inspection commands.
+Add focused tests only.
 
-Allowed:
+Do not run the full suite.
 
-```bash
+Required tests:
+
+```text id="ls7hpt"
+DepartmentType label supports all 19 cases.
+DepartmentType translatedLabel supports all 19 cases.
+DepartmentType color supports all 19 cases.
+DepartmentType toVisitStatus does not throw for any case.
+Department dashboard resolver does not throw for any department type.
+Services index page renders with all department types.
+Vitals record page renders with a new department type.
+Department form accepts all 19 enum values.
+Invalid department type is rejected.
+Backfill dry-run does not change data.
+Backfill high-confidence emergency mapping works with --apply.
+Backfill low-confidence mapping is not auto-applied.
+Service catalog department_type is synced after department retype.
+Unmapped report lists null/ambiguous department types.
+EN/FR department labels exist.
+```
+
+Allowed focused commands:
+
+```bash id="g1lndv"
+php artisan test tests/Feature/Departments/DepartmentTypeExpansionPhase1Test.php
+```
+
+Do not run:
+
+```bash id="xzcqsy"
+php artisan test
+```
+
+unless explicitly instructed.
+
+---
+
+# 14. Minimal Verification Commands
+
+Run only:
+
+```bash id="6gr44m"
 php artisan route:list
 php artisan view:cache
 php artisan view:clear
 php scripts/localisation-audit.php
+php scripts/localisation-parity-check.php
 php artisan permissions:audit --strict
 git diff --check
 ```
 
-Also run grep/search commands as needed.
+Also run PHP lint on changed PHP files if practical:
 
-Do not run:
-
-```bash
-php artisan test
+```bash id="z94kfn"
+find app database routes lang resources/views tests -name "*.php" -print0 | xargs -0 -n1 php -l
 ```
 
-Do not run migrations.
+Do not run migrations unless you add a table/column, which should not be necessary in this phase.
 
-Do not alter data.
-
-Do not modify implementation code except to create the report if necessary.
+Do not run the wide full suite.
 
 ---
 
-# 20. Deliverable
+# 15. Documentation
 
 Create:
 
-```text
-docs/DEPARTMENT_TYPE_EXPANSION_GAP_ANALYSIS_REPORT.md
+```text id="cd7ihr"
+docs/DEPARTMENT_TYPE_EXPANSION_PHASE_1_CANONICALISATION_REPORT.md
 ```
 
-The report must include:
+Include:
 
-```text
-executive summary
-current department type source of truth
-current department type list found in code
-new proposed department type list
-files/classes/controllers/services/views using department types
-database tables affected
-seeders affected
-validation affected
-forms/views affected
-dashboard impact
-menu impact
-workflow routing impact
-billing impact
-permissions/user-department impact
-reporting/statistics impact
-localisation impact
-backward compatibility risks
-proposed safe migration/backfill plan
-suggested department mapping rules
-unmapped/ambiguous department list if discoverable
-recommended implementation phases
+```text id="w301w5"
+summary
+enum changes
+translation files added
+dashboard resolver changes
+view safety changes
+validation changes
+seeder/factory changes
+backfill command behavior
+unmapped report behavior
+service_catalog sync behavior
+tests added
 minimal verification commands run
+known limitations
+next recommended phase
 ```
 
 ---
 
-# 21. Acceptance Criteria
+# 16. Acceptance Criteria
 
-This analysis phase is complete only when:
+Phase 1 is complete only when:
 
-```text
-all current department type definitions are identified
-all direct department_type usages are listed
-current source-of-truth problems are documented
-database impact is documented
-dashboard impact is documented
-menu impact is documented
-workflow routing impact is documented
-billing impact is documented
-permissions/user-department impact is documented
-reporting impact is documented
-localisation impact is documented
-safe migration/backfill strategy is proposed
-implementation phases are recommended
-no production data is changed
-no full test suite is run
-report file is created
+```text id="oqb18l"
+DepartmentType supports all 19 types safely.
+No DepartmentType match expression can throw for the 19 canonical values.
+Department labels are localised EN/FR.
+DepartmentDashboardResolver handles all 19 types safely.
+Services settings page no longer crashes.
+Vitals record page no longer crashes for new department types.
+Department forms accept all 19 values and reject invalid values.
+Seeder/factory mappings use the precise new department types.
+Backfill command exists and defaults to dry-run.
+Backfill command can apply high-confidence mappings.
+Low-confidence mappings require manual review or explicit force.
+Service catalog department_type can be synced safely after department retype.
+Unmapped/ambiguous department report exists.
+Active runtime localisation candidates remain 0.
+EN/FR localisation parity is maintained.
+Route list works.
+View cache compiles.
+Permissions audit is clean.
+Documentation report is created.
+No production data is changed unless the explicit --apply command is run.
+Full test suite is intentionally deferred.
 ```
 
-Proceed with the Department Type Expansion Gap Analysis now.
+Proceed with Department Type Expansion Phase 1 now.

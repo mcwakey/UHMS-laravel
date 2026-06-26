@@ -57,11 +57,19 @@ class DepartmentDashboardResolver
         if ($type instanceof DepartmentType) {
             $byType = match ($type) {
                 DepartmentType::CONSULTATION, DepartmentType::TREATMENT => self::CONSULTATION,
+                DepartmentType::EMERGENCY => self::EMERGENCY,
                 DepartmentType::PHARMACY => self::PHARMACY,
                 DepartmentType::INVESTIGATION, DepartmentType::RADIOLOGY => self::INVESTIGATION,
-                DepartmentType::PROCEDURE => self::THEATRE,
+                DepartmentType::PROCEDURE, DepartmentType::THEATRE => self::THEATRE,
+                DepartmentType::INPATIENT, DepartmentType::MATERNITY, DepartmentType::NURSING => self::ADMISSION,
+                DepartmentType::BLOOD_BANK => self::BLOOD_BANK,
+                DepartmentType::RECORDS => self::RECEPTION,
+                DepartmentType::FINANCE => self::ACCOUNTING,
+                DepartmentType::STORES => self::STOCK,
                 DepartmentType::ADMINISTRATIVE => self::MANAGEMENT,
-                DepartmentType::SUPPORT => null,
+                // support, mortuary, ambulance, and any future type fall through
+                // to the role-based fallback, then the generic dashboard.
+                default => null,
             };
             if ($byType) {
                 return $byType;
