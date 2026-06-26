@@ -53,6 +53,11 @@ class DepartmentMenuProfileService
         return self::PROFILES[$type->value] ?? [];
     }
 
+    public function prioritySectionTitlesForType(?DepartmentType $type): array
+    {
+        return $type ? (self::PROFILES[$type->value] ?? []) : [];
+    }
+
     public function profileKeyForType(?DepartmentType $type): string
     {
         return $type && isset(self::PROFILES[$type->value]) ? $type->value : 'generic';
@@ -69,6 +74,26 @@ class DepartmentMenuProfileService
     public function prioritise(array $sections, ?User $user): array
     {
         $priority = $this->prioritySectionTitles($user);
+
+        return $this->prioritiseByTitles($sections, $priority);
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $sections
+     * @return array<int, array<string, mixed>>
+     */
+    public function prioritiseForType(array $sections, ?DepartmentType $type): array
+    {
+        return $this->prioritiseByTitles($sections, $this->prioritySectionTitlesForType($type));
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $sections
+     * @param  list<string>  $priority
+     * @return array<int, array<string, mixed>>
+     */
+    private function prioritiseByTitles(array $sections, array $priority): array
+    {
 
         if ($priority === []) {
             return $sections;

@@ -42,6 +42,18 @@ class ReportRegistryService
                 'printable'   => false,
                 'icon'        => 'ti-chart-bar',
             ],
+            [
+                'key'         => 'management.department_comparison',
+                'section'     => 'management',
+                'title'       => __('reports.department_comparison.title'),
+                'description' => __('reports.department_comparison.description'),
+                'permission'  => 'reports.department_comparison.view',
+                'module'      => 'reports',
+                'route'       => 'admin.reports.department-comparison.index',
+                'exportable'  => true,
+                'printable'   => false,
+                'icon'        => 'ti-building-hospital',
+            ],
 
             /* ---------------------------------------------------------- */
             /* Clinical                                                     */

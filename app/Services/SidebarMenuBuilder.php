@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Services\Department\DepartmentContextSwitcherService;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -12,6 +13,7 @@ class SidebarMenuBuilder
     public function __construct(
         protected ModuleService $moduleService,
         protected DepartmentMenuProfileService $menuProfile,
+        protected DepartmentContextSwitcherService $departmentContextSwitcher,
     ) {}
 
     public function build(?User $user, string $currentRouteName = '', int $unreadNotifications = 0): array
@@ -1276,6 +1278,14 @@ class SidebarMenuBuilder
                         'module' => 'reports',
                     ],
                     [
+                        'label' => 'Department Comparison',
+                        'icon' => 'ti ti-building-hospital',
+                        'route' => 'admin.reports.department-comparison.index',
+                        'active_patterns' => ['admin.reports.department-comparison.*'],
+                        'permission' => 'reports.department_comparison.view',
+                        'module' => 'reports',
+                    ],
+                    [
                         'label' => 'Statistical Reports',
                         'icon' => 'ti ti-chart-histogram',
                         'permission' => 'statistics.view',
@@ -1653,7 +1663,10 @@ class SidebarMenuBuilder
 
         // Department-aware ordering: float the user's department-relevant sections
         // to the top. Presentation only — security filtering already happened.
-        return $this->menuProfile->prioritise($sections, $user);
+        $currentDepartment = $this->departmentContextSwitcher->currentDepartment($user, request());
+        $currentType = $currentDepartment?->type instanceof \App\Enums\DepartmentType ? $currentDepartment->type : null;
+
+        return $this->menuProfile->prioritiseForType($sections, $currentType);
     }
 
     /**

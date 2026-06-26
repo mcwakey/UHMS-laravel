@@ -14,7 +14,13 @@
                         {{ now()->translatedFormat('l, d M Y') }}
                     </div>
                     <div class="mt-2">
+                        @if($context->current_department)
+                            <span class="badge bg-light text-dark border">{{ __('dashboards.department.current_department') }}: {{ $context->current_department->name }}</span>
+                        @endif
                         <span class="badge {{ $theme['badge_class'] ?? 'bg-secondary' }}">{{ $context->department_type_label }}</span>
+                        @if($context->is_switched_context)
+                            <span class="badge bg-warning text-dark">{{ __('dashboards.department.switched_context') }}</span>
+                        @endif
                         @if($context->is_global_context)
                             <span class="badge bg-dark-subtle text-dark">{{ __('dashboards.department.global_context') }}</span>
                         @endif
@@ -22,6 +28,39 @@
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2">
+                @if($context->can_switch_department)
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="ti ti-building-hospital me-1"></i>{{ __('dashboards.department.switch_department') }}
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-2" style="min-width: 280px;">
+                        @foreach($context->available_departments as $availableDepartment)
+                            <form method="POST" action="{{ route('admin.my-dashboard.context.store') }}" class="mb-1">
+                                @csrf
+                                <input type="hidden" name="department_id" value="{{ $availableDepartment->id }}">
+                                <button type="submit" class="dropdown-item rounded d-flex justify-content-between align-items-start gap-2 @if($context->current_department_id === $availableDepartment->id) active @endif">
+                                    <span>
+                                        <span class="d-block fw-medium">{{ $availableDepartment->name }}</span>
+                                        <small>{{ $availableDepartment->type?->translatedLabel() ?? __('dashboards.department.generic_type') }}</small>
+                                    </span>
+                                    @if((bool) ($availableDepartment->pivot?->is_primary ?? false) || $context->user->department_id === $availableDepartment->id)
+                                        <span class="badge bg-light text-dark">{{ __('dashboards.department.primary_department') }}</span>
+                                    @endif
+                                </button>
+                            </form>
+                        @endforeach
+                        @if($context->is_switched_context)
+                            <form method="POST" action="{{ route('admin.my-dashboard.context.destroy') }}" class="border-top pt-2 mt-2">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="dropdown-item rounded text-muted">
+                                    <i class="ti ti-restore me-1"></i>{{ __('dashboards.department.clear_department_context') }}
+                                </button>
+                            </form>
+                        @endif
+                    </div>
+                </div>
+                @endif
                 @if(!empty($available_dashboards))
                 <form method="GET" class="d-flex align-items-center gap-2">
                     <select name="as" class="form-select form-select-sm" onchange="this.form.submit()" aria-label="{{ __('dashboards.department.preview_dashboard') }}">

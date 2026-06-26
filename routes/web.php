@@ -235,6 +235,12 @@ Route::middleware('auth')->group(function () {
 
         // Department-type dashboard — resolves the right dashboard for the user.
         Route::get('my-dashboard', [\App\Http\Controllers\Admin\Dashboard\DepartmentDashboardController::class, 'index'])->name('my-dashboard');
+        Route::post('my-dashboard/context', [\App\Http\Controllers\Admin\Dashboard\DepartmentContextController::class, 'store'])
+            ->name('my-dashboard.context.store')
+            ->middleware('can:departments.context.switch');
+        Route::delete('my-dashboard/context', [\App\Http\Controllers\Admin\Dashboard\DepartmentContextController::class, 'destroy'])
+            ->name('my-dashboard.context.destroy')
+            ->middleware('can:departments.context.switch');
 
         // Complaint catalogue and patient complaint endpoints
         Route::get('complaints/search', ComplaintSearchController::class)->name('complaints.search')->middleware('can:complaints.view');
@@ -1351,6 +1357,12 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [ReportsHubController::class, 'index'])->name('index');
             Route::get('/dashboard', [OperationalReportController::class, 'dashboard'])->name('dashboard');
             Route::get('department-metrics', [\App\Http\Controllers\Admin\Reporting\DepartmentMetricsController::class, 'index'])->name('department-metrics');
+            Route::get('department-comparison', [\App\Http\Controllers\Admin\Reporting\DepartmentComparisonController::class, 'index'])
+                ->name('department-comparison.index')
+                ->middleware('can:reports.department_comparison.view');
+            Route::get('department-comparison/export', [\App\Http\Controllers\Admin\Reporting\DepartmentComparisonController::class, 'export'])
+                ->name('department-comparison.export')
+                ->middleware('can:reports.department_comparison.export');
             foreach ([
                 'consultations',
                 'diagnoses',

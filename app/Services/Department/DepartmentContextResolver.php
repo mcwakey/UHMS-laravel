@@ -16,17 +16,19 @@ class DepartmentContextResolver
         private DepartmentDashboardResolver $dashboardResolver,
         private DepartmentMenuProfileService $menuProfiles,
         private DepartmentDashboardThemeRegistry $themes,
+        private DepartmentContextSwitcherService $switcher,
     ) {}
 
     public function resolve(User $user, ?Request $request = null): DepartmentDashboardContext
     {
-        $user->loadMissing('department');
+        $user->loadMissing(['department', 'departments']);
 
-        $department = $user->department;
+        $availableDepartments = $this->switcher->availableDepartments($user);
+        $department = $this->switcher->currentDepartment($user, $request);
         $type = $department?->type instanceof DepartmentType ? $department->type : null;
-        $isAdmin = $user->hasAnyRole(['Super Admin', 'Admin']);
-        $canPreview = $isAdmin;
-        $globalRequested = $isAdmin && $request?->boolean('global');
+        $canUseGlobal = $this->switcher->canUseGlobalContext($user);
+        $canPreview = $canUseGlobal;
+        $globalRequested = $canUseGlobal && $request?->boolean('global');
         $requestedDashboard = (string) ($request?->query('as', '') ?? '');
 
         $isGlobal = $globalRequested || ! $department;
@@ -55,6 +57,13 @@ class DepartmentContextResolver
             theme: $theme,
             is_global_context: $isGlobal,
             can_preview_departments: $canPreview,
+            available_departments: $availableDepartments,
+            current_department: $isGlobal ? null : $department,
+            current_department_id: $isGlobal ? null : $department?->id,
+            current_department_type: $isGlobal ? null : $type,
+            is_switched_context: ! $isGlobal && $this->switcher->isSwitched($user, $department),
+            can_switch_department: $this->switcher->canSwitch($user),
+            can_use_global_context: $canUseGlobal,
             is_preview: $isPreview,
             requested_dashboard_key: $requestedDashboard !== '' ? $requestedDashboard : null,
         );

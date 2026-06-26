@@ -639,6 +639,10 @@ class RoleSeeder extends Seeder
             'reports.stock_cost.view',
             'reports.clinical_sensitive.view',
             'reports.blood_bank',
+            'departments.context.switch',
+            'reports.department_comparison.view',
+            'reports.department_comparison.export',
+            'dashboards.department.global_preview',
 
             // ── Statistical Reports / Analytics ───────────────────────────
             'statistics.view',
@@ -1359,5 +1363,11 @@ class RoleSeeder extends Seeder
             'reports.view',
             'notifications.view',
         ]);
+
+        // Safe for all roles: the service still limits switching to departments
+        // explicitly assigned to the user. This does not grant global preview.
+        Role::query()->each(function (Role $role) {
+            $role->givePermissionTo('departments.context.switch');
+        });
     }
 }

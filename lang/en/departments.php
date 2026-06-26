@@ -6,6 +6,10 @@
 */
 
 return [
+    'switch_department' => 'Switch Department',
+    'current_department' => 'Current Department',
+    'primary_department' => 'Primary Department',
+    'available_departments' => 'Available Departments',
 
     'types' => [
         'consultation' => 'Consultation',

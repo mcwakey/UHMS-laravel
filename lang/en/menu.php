@@ -154,6 +154,7 @@ return [
     'staff_performance' => 'Staff Performance',
     'financial_reports' => 'Financial Reports',
     'reports_dashboard' => 'Reports Dashboard',
+    'department_comparison' => 'Department Comparison',
     'income_report' => 'Income Report',
     'insurance_claims_report' => 'Insurance Claims Report',
     'billing_operations' => 'Billing Operations',

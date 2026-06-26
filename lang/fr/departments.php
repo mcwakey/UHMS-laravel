@@ -6,6 +6,10 @@
 */
 
 return [
+    'switch_department' => 'Changer de département',
+    'current_department' => 'Département actuel',
+    'primary_department' => 'Département principal',
+    'available_departments' => 'Départements disponibles',
 
     'types' => [
         'consultation' => 'Consultation',

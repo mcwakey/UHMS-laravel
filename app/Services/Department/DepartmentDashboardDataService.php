@@ -17,6 +17,7 @@ class DepartmentDashboardDataService
 
     public function __construct(
         private DepartmentDashboardLayoutRegistry $layouts,
+        private DepartmentDashboardChartService $charts,
     ) {}
 
     public function build(DepartmentDashboardContext $context): array
@@ -37,6 +38,7 @@ class DepartmentDashboardDataService
             'services' => $services,
             'stock_usage' => $stockUsage,
             'trends' => $this->trends(),
+            'charts' => $this->charts->build($context),
             'activities' => $this->activities(),
             'restricted' => $this->restrictedCards(),
             'empty_states' => [],

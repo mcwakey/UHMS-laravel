@@ -148,6 +148,7 @@ return [
     'staff_performance' => 'Performance du personnel',
     'financial_reports' => 'Rapports financiers',
     'reports_dashboard' => 'Tableau de bord des rapports',
+    'department_comparison' => 'Comparaison des départements',
     'income_report' => 'Rapport des revenus',
     'insurance_claims_report' => 'Rapport des sinistres d\'assurance',
     'billing_operations' => 'Opérations de facturation',

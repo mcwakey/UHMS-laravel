@@ -35,7 +35,15 @@
 <div class="row g-3">
     <div class="col-xl-8">
         @include('admin.dashboards.department.partials.work-queue-card', ['queue' => $work_queue, 'theme' => $theme])
-        @include('admin.dashboards.department.partials.chart-card', ['trends' => $trends, 'theme' => $theme])
+        @include('admin.dashboards.department.partials.chart-card', ['chart' => $charts['activity_trend'] ?? null, 'trends' => $trends, 'theme' => $theme])
+        <div class="row g-3">
+            <div class="col-lg-6">
+                @include('admin.dashboards.department.partials.status-breakdown-card', ['chart' => $charts['queue_status_breakdown'] ?? [], 'theme' => $theme])
+            </div>
+            <div class="col-lg-6">
+                @include('admin.dashboards.department.partials.status-breakdown-card', ['chart' => $charts['request_status_breakdown'] ?? [], 'theme' => $theme])
+            </div>
+        </div>
         @include('admin.dashboards.department.partials.activity-list', ['activities' => $activities])
     </div>
     <div class="col-xl-4">
