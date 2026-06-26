@@ -68,7 +68,32 @@ class Department extends Model
 
     public function scopeConsultation($query)
     {
-        return $query->where('type', DepartmentType::CONSULTATION->value);
+        return $query->whereIn('type', DepartmentType::valuesFor(DepartmentType::consultationTypes()));
+    }
+
+    /**
+     * Filter by a list of DepartmentType cases (or raw string values).
+     *
+     * @param  array<int, DepartmentType|string>  $types
+     */
+    public function scopeOfTypes($query, array $types)
+    {
+        $values = array_map(
+            fn ($type) => $type instanceof DepartmentType ? $type->value : $type,
+            $types,
+        );
+
+        return $query->whereIn('type', $values);
+    }
+
+    public function scopeInvestigation($query)
+    {
+        return $query->whereIn('type', DepartmentType::valuesFor(DepartmentType::investigationTypes()));
+    }
+
+    public function scopeProcedureCapable($query)
+    {
+        return $query->whereIn('type', DepartmentType::valuesFor(DepartmentType::procedureTypes()));
     }
 
     public function scopeStockManaged($query)
@@ -81,10 +106,7 @@ class Department extends Model
         // Include departments that have an explicit result_type set,
         // OR departments whose DepartmentType implies investigation work
         // (so existing departments don't disappear before result_type is configured).
-        $investigationTypes = [
-            DepartmentType::INVESTIGATION->value,
-            DepartmentType::RADIOLOGY->value,
-        ];
+        $investigationTypes = DepartmentType::valuesFor(DepartmentType::investigationTypes());
 
         return $query->where('status', 'active')
             ->where(function ($q) use ($investigationTypes) {

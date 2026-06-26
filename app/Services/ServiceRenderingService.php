@@ -60,12 +60,19 @@ class ServiceRenderingService
         'consumables',
     ];
 
+    // Department types tracked by a dedicated workflow (consultation routes, lab
+    // requests, theatre/procedure, dispensing, emergency sessions) — their invoice
+    // items must NOT also create a generic service-rendering entry. EMERGENCY and
+    // THEATRE are explicit here so the department-type split preserves the prior
+    // behaviour (they were previously excluded as consultation / procedure).
     private const EXCLUDED_DEPARTMENT_TYPES = [
         DepartmentType::CONSULTATION->value,
+        DepartmentType::EMERGENCY->value,
         DepartmentType::INVESTIGATION->value,
-        DepartmentType::PROCEDURE->value,
-        DepartmentType::PHARMACY->value,
         DepartmentType::RADIOLOGY->value,
+        DepartmentType::PROCEDURE->value,
+        DepartmentType::THEATRE->value,
+        DepartmentType::PHARMACY->value,
         DepartmentType::ADMINISTRATIVE->value,
     ];
 

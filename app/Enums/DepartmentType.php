@@ -120,4 +120,66 @@ enum DepartmentType: string
             default => \App\Enums\VisitStatus::ACTIVE,
         };
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Routing groups
+    |--------------------------------------------------------------------------
+    | Canonical type GROUPS for workflow routing. Use these (not single-value
+    | comparisons) so reclassifying a department can't silently empty a queue.
+    | Consumers should filter with whereIn(type, valuesFor(group)).
+    */
+
+    /** Departments that host a billable doctor consultation (OPD-style). */
+    public static function consultationTypes(): array
+    {
+        return [self::CONSULTATION];
+    }
+
+    /** Departments that fulfil investigation / diagnostic requests (lab + imaging). */
+    public static function investigationTypes(): array
+    {
+        return [self::INVESTIGATION, self::RADIOLOGY];
+    }
+
+    /** Departments that can perform procedures (procedure rooms + theatres). */
+    public static function procedureTypes(): array
+    {
+        return [self::PROCEDURE, self::THEATRE];
+    }
+
+    /** Ward / inpatient-style departments. */
+    public static function wardTypes(): array
+    {
+        return [self::INPATIENT, self::NURSING, self::MATERNITY];
+    }
+
+    /**
+     * @param  array<int, self>  $types
+     * @return array<int, string>
+     */
+    public static function valuesFor(array $types): array
+    {
+        return array_map(fn (self $type) => $type->value, $types);
+    }
+
+    public function isConsultation(): bool
+    {
+        return in_array($this, self::consultationTypes(), true);
+    }
+
+    public function isInvestigation(): bool
+    {
+        return in_array($this, self::investigationTypes(), true);
+    }
+
+    public function isProcedureCapable(): bool
+    {
+        return in_array($this, self::procedureTypes(), true);
+    }
+
+    public function isWard(): bool
+    {
+        return in_array($this, self::wardTypes(), true);
+    }
 }

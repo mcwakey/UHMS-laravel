@@ -50,12 +50,12 @@ class ProcedureConsumablesController extends Controller
             ->where('is_active', true)
             ->where(function ($q) {
                 $q->whereIn('type', ['theatre', 'procedure'])
-                  ->orWhereHas('department', fn ($dq) => $dq->where('type', DepartmentType::PROCEDURE->value));
+                  ->orWhereHas('department', fn ($dq) => $dq->whereIn('type', DepartmentType::valuesFor(DepartmentType::procedureTypes())));
             })
             ->pluck('id');
 
         $products = $this->productService
-            ->queryProductsForDepartmentTypes([DepartmentType::PROCEDURE], $allowedProductTypes)
+            ->queryProductsForDepartmentTypes(DepartmentType::procedureTypes(), $allowedProductTypes)
             ->when($request->search, function ($q, $s) {
                 $q->where(function ($qq) use ($s) {
                     $qq->where('name', 'like', "%{$s}%")->orWhere('code', 'like', "%{$s}%");

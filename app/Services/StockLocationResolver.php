@@ -29,9 +29,14 @@ class StockLocationResolver
 
             $byType = match ($type) {
                 DepartmentType::PHARMACY->value      => 'pharmacy',
-                DepartmentType::INVESTIGATION->value => 'lab',
-                DepartmentType::PROCEDURE->value     => 'theatre',
-                DepartmentType::TREATMENT->value     => 'ward',
+                DepartmentType::INVESTIGATION->value,
+                DepartmentType::RADIOLOGY->value     => 'lab',
+                DepartmentType::PROCEDURE->value,
+                DepartmentType::THEATRE->value       => 'theatre',
+                DepartmentType::TREATMENT->value,
+                DepartmentType::INPATIENT->value,
+                DepartmentType::NURSING->value,
+                DepartmentType::MATERNITY->value     => 'ward',
                 default                              => null,
             };
             if ($byType) {

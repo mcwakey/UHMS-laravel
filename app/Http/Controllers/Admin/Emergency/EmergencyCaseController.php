@@ -161,7 +161,7 @@ class EmergencyCaseController extends Controller
         ]);
 
         $investigationDepartments = Department::acceptsRequests()->orderBy('name')->get();
-        $procedureDepartments = Department::where('type', DepartmentType::PROCEDURE->value)->where('status', 'active')->orderBy('name')->get();
+        $procedureDepartments = Department::procedureCapable()->where('status', 'active')->orderBy('name')->get();
         $emergencyDepartmentId = $this->emergencyDepartmentId($emergencyCase);
 
         return view('emergency.show', [

@@ -40,10 +40,7 @@ class InvestigationItemController extends Controller
         // surfaces products that have been linked to the Investigation /
         // Laboratory / Radiology departments and whose type makes them a
         // lab consumable (reagent, consumable, medical supply, general).
-        $departmentTypes = [
-            DepartmentType::INVESTIGATION->value,
-            DepartmentType::RADIOLOGY->value,
-        ];
+        $departmentTypes = DepartmentType::valuesFor(DepartmentType::investigationTypes());
         $allowedProductTypes = [
             ProductType::REAGENT->value,
             ProductType::CONSUMABLE->value,
@@ -157,7 +154,7 @@ class InvestigationItemController extends Controller
     public function search(Request $request)
     {
         $term = (string) $request->q;
-        $departmentTypes = [DepartmentType::INVESTIGATION->value, DepartmentType::RADIOLOGY->value];
+        $departmentTypes = DepartmentType::valuesFor(DepartmentType::investigationTypes());
         $allowedProductTypes = [
             ProductType::REAGENT->value,
             ProductType::CONSUMABLE->value,
@@ -231,7 +228,7 @@ class InvestigationItemController extends Controller
 
         // Attach to investigation / radiology departments.
         $deptIds = Department::query()
-            ->whereIn('type', [DepartmentType::INVESTIGATION->value, DepartmentType::RADIOLOGY->value])
+            ->whereIn('type', DepartmentType::valuesFor(DepartmentType::investigationTypes()))
             ->pluck('id')
             ->all();
         foreach ($deptIds as $deptId) {

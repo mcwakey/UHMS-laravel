@@ -29,12 +29,12 @@ class DepartmentConsumablesController extends Controller
         $locationIds = StockLocation::active()
             ->where(function ($query) {
                 $query->where('type', 'ward')
-                    ->orWhereHas('department', fn ($department) => $department->where('type', DepartmentType::TREATMENT->value));
+                    ->orWhereHas('department', fn ($department) => $department->whereIn('type', DepartmentType::valuesFor([...DepartmentType::wardTypes(), DepartmentType::TREATMENT])));
             })
             ->pluck('id');
 
         $products = $this->products
-            ->queryProductsForDepartmentTypes([DepartmentType::TREATMENT], $allowedProductTypes)
+            ->queryProductsForDepartmentTypes([...DepartmentType::wardTypes(), DepartmentType::TREATMENT], $allowedProductTypes)
             ->when($request->search, $this->searchFilter())
             ->when($request->product_type, fn ($query, $type) => $query->where('product_type', $type))
             ->orderBy('name')
