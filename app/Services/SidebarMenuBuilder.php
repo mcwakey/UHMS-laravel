@@ -11,6 +11,7 @@ class SidebarMenuBuilder
 {
     public function __construct(
         protected ModuleService $moduleService,
+        protected DepartmentMenuProfileService $menuProfile,
     ) {}
 
     public function build(?User $user, string $currentRouteName = '', int $unreadNotifications = 0): array
@@ -1648,7 +1649,11 @@ class SidebarMenuBuilder
 
         $sections = $this->splitAccountingSections($sections);
 
-        return $this->finaliseSections($sections, $user, $currentRouteName);
+        $sections = $this->finaliseSections($sections, $user, $currentRouteName);
+
+        // Department-aware ordering: float the user's department-relevant sections
+        // to the top. Presentation only — security filtering already happened.
+        return $this->menuProfile->prioritise($sections, $user);
     }
 
     /**

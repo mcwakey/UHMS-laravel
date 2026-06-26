@@ -1,36 +1,30 @@
-You are working on UHMS — Ultimate Hospital Management System.
-
-# UHMS Department Type Expansion — Phase 2: Department-Aware Dashboard Registry
+# UHMS Department Type Expansion — Phase 3: Department-Aware Menu Profiles
 
 ## Goal
 
-Implement a department-aware dashboard registry for UHMS.
+Implement department-aware menu profiles for UHMS.
 
-Phase 0 completed the gap analysis.
+Phase 0 completed department type gap analysis.
 
-Phase 1 completed department type canonicalisation and safety:
+Phase 1 completed department type canonicalisation and safety.
+
+Phase 2 completed the department-aware dashboard registry:
 
 ```text
-DepartmentType now supports all 19 canonical values.
-DepartmentType label/color/toVisitStatus/translatedLabel are safe.
-DepartmentDashboardResolver no longer crashes on new types.
-EN/FR department type labels exist.
-Service catalog validation accepts the full enum.
-DepartmentSeeder uses precise department types.
-departments:backfill-types exists and defaults to dry-run.
-service_catalog.department_type can be re-synced.
-Full suite remains deferred.
+DepartmentDashboardRegistry now maps department types to dashboard keys.
+DepartmentDashboardResolver uses the registry.
+Admin "view as" dashboard switcher is registry-driven.
+All department types resolve safely.
+Unknown preview keys fall back safely.
 ```
 
-Phase 2 must now make dashboards properly department-type aware.
+Phase 3 must now make the sidebar/menu experience department-aware.
 
-Do not apply `departments:backfill-types --apply` in this phase unless explicitly instructed.
+The menu should adapt to the user's department type by prioritising, grouping, and surfacing the most relevant menu sections first.
 
-Do not rework workflow routing yet.
+Do not use department type as a security layer.
 
-Do not customise sidebar menu profiles yet.
-
-Do not run the wide full suite.
+Permissions and modules remain the real access-control system.
 
 ---
 
@@ -41,6 +35,7 @@ Read:
 ```text
 docs/DEPARTMENT_TYPE_EXPANSION_GAP_ANALYSIS_REPORT.md
 docs/DEPARTMENT_TYPE_EXPANSION_PHASE_1_CANONICALISATION_REPORT.md
+docs/DEPARTMENT_TYPE_EXPANSION_PHASE_2_DASHBOARD_REGISTRY_REPORT.md
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
 
@@ -50,32 +45,123 @@ Inspect:
 app/Enums/DepartmentType.php
 app/Models/User.php
 app/Models/Department.php
-app/Services/Dashboard/DepartmentDashboardResolver.php
-app/Services/Dashboard/DepartmentDashboardService.php
-app/Http/Controllers/Dashboard/DepartmentDashboardController.php
 app/Services/SidebarMenuBuilder.php
-resources/views/admin/dashboard
-resources/views/dashboard
-resources/views/admin/my-dashboard*
-routes/web.php
-lang/en
-lang/fr
+app/Services/Dashboard/DepartmentDashboardRegistry.php
+app/Services/Dashboard/DepartmentDashboardResolver.php
+resources/views/layouts
+resources/views/components
+resources/views/partials
+resources/views/admin
+lang/en/menu.php
+lang/fr/menu.php
+lang/en/departments.php
+lang/fr/departments.php
+routes
 tests
 ```
 
-Important testing instruction:
+Important project behaviour to remember:
+
+```text
+Some Blade responses may be rewritten through ConvertBladeViewsToInertia middleware.
+Avoid fragile assertViewHas HTTP tests where this middleware interferes.
+Use status/assertSee/structure checks, or controller/service-level assertions when needed.
+```
+
+Testing instruction:
 
 ```text
 Do not run the wide full application test suite after this phase.
-Run only focused dashboard/department/localisation checks and minimal verification.
+Run only focused menu/department/localisation checks and minimal verification.
 The wide full-suite test remains deferred until the current implementation batch is complete.
 ```
 
 ---
 
-## 2. Canonical Department Types
+## 2. Core Design
 
-The dashboard registry must support all 19 department types:
+Create a department-aware menu profile layer.
+
+The menu system should be based on:
+
+```text
+enabled modules
+permissions
+roles
+user department type
+dashboard registry
+menu profile registry
+```
+
+Security rule:
+
+```text
+Permissions and module middleware decide whether a route is accessible.
+Department type only decides menu grouping, ordering, highlighting, and recommended shortcuts.
+```
+
+Do not hide a permitted route only because department mapping is missing.
+
+Do not expose a route just because department type matches.
+
+Do not bypass existing permission checks.
+
+Do not move route/security logic into Blade.
+
+---
+
+## 3. Menu Profile Service
+
+Create:
+
+```text
+DepartmentMenuProfileRegistry
+```
+
+or, if cleaner, extend the existing `SidebarMenuBuilder` through a separate helper:
+
+```text
+DepartmentMenuProfileService
+```
+
+Recommended responsibilities:
+
+```text
+resolve user's department type
+resolve department menu profile
+prioritise menu sections
+inject department dashboard shortcut
+inject department quick links
+group relevant menu items
+preserve existing permission/module filtering
+provide fallback profile
+provide admin/global profile
+```
+
+The service should be declarative, not scattered inside Blade.
+
+Suggested structure:
+
+```php
+[
+    'pharmacy' => [
+        'primary_sections' => ['pharmacy', 'prescriptions', 'inventory'],
+        'secondary_sections' => ['billing', 'patients', 'reports'],
+        'dashboard_key' => 'pharmacy',
+        'quick_links' => [
+            'pharmacy.prescriptions.index',
+            'pharmacy.dispensing.index',
+            'inventory.stock-alerts.index',
+        ],
+    ],
+]
+```
+
+---
+
+## 4. Department Type Menu Profiles
+
+Support all 19 canonical types:
 
 ```php
 CONSULTATION = 'consultation';
@@ -99,560 +185,546 @@ SUPPORT = 'support';
 ADMINISTRATIVE = 'administrative';
 ```
 
-No dashboard request should crash for any of these values.
+Every type must resolve to a profile.
+
+If a dedicated profile is not ready, use the generic profile safely.
 
 ---
 
-## 3. Core Design Rules
+## 5. Initial Profile Mapping
 
-Dashboard access must remain secure through:
+Use these initial menu priorities.
 
-```text
-roles
-permissions
-enabled modules
-existing route middleware
-```
+### consultation
 
-Department type should control:
+Prioritise:
 
 ```text
-dashboard context
-dashboard widget set
-dashboard labels
-dashboard grouping
-dashboard fallback
+My Dashboard
+Visits
+Consultations
+Patients
+Appointments
+Investigations
+Prescriptions
+Reports
 ```
 
-Department type must not replace permissions.
+### emergency
+
+Prioritise:
+
+```text
+My Dashboard
+Emergency Cases
+Triage
+Visits
+Patients
+Procedures
+Billing
+Reports
+```
+
+### investigation
+
+Prioritise:
+
+```text
+My Dashboard
+Laboratory
+Investigation Requests
+Samples
+Results
+Patients
+Billing
+Reports
+```
+
+### radiology
+
+Prioritise:
+
+```text
+My Dashboard
+Radiology
+Imaging Requests
+Results
+Patients
+Billing
+Reports
+```
+
+If radiology still shares investigation routes, group it under diagnostics but label it clearly.
+
+### procedure
+
+Prioritise:
+
+```text
+My Dashboard
+Procedures
+Treatment
+Patients
+Consumables
+Billing
+Reports
+```
+
+### theatre
+
+Prioritise:
+
+```text
+My Dashboard
+Theatre
+Surgery Schedule
+Pre-op
+Anaesthesia
+Post-op
+Procedures
+Consumables
+Reports
+```
+
+### treatment
+
+Prioritise:
+
+```text
+My Dashboard
+Treatment
+Visits
+Patients
+Procedures
+Nursing Tasks
+Billing
+Reports
+```
+
+### nursing
+
+Prioritise:
+
+```text
+My Dashboard
+Admissions
+Wards
+Vitals
+Nursing Tasks
+Medication Administration
+Patients
+Reports
+```
+
+Only show medication-administration routes if they exist and the user has permission.
+
+### pharmacy
+
+Prioritise:
+
+```text
+My Dashboard
+Pharmacy
+Prescriptions
+Dispensing
+Products
+Stock
+Low Stock
+Reports
+```
+
+### inpatient
+
+Prioritise:
+
+```text
+My Dashboard
+Admissions
+Wards
+Beds
+Vitals
+Discharges
+Patients
+Billing
+Reports
+```
+
+### maternity
+
+Prioritise:
+
+```text
+My Dashboard
+Maternity
+Antenatal
+Delivery
+Postnatal
+Admissions
+Patients
+Reports
+```
+
+If dedicated maternity routes do not exist, use admissions/visits safely and document limitation.
+
+### blood_bank
+
+Prioritise:
+
+```text
+My Dashboard
+Blood Bank
+Blood Storage
+Blood Requests
+Crossmatch
+Issue Blood
+Reports
+```
+
+### mortuary
+
+Prioritise:
+
+```text
+My Dashboard
+Mortuary
+Cases
+Storage
+Release
+Billing
+Reports
+```
+
+If mortuary routes do not exist, use generic profile and document limitation.
+
+### ambulance
+
+Prioritise:
+
+```text
+My Dashboard
+Ambulance
+Dispatch
+Transport Requests
+Vehicles
+Billing
+Reports
+```
+
+If ambulance routes do not exist, use generic profile and document limitation.
+
+### records
+
+Prioritise:
+
+```text
+My Dashboard
+Patients
+Patient Records
+Folders
+Record Merge
+Appointments
+Reports
+```
+
+### finance
+
+Prioritise:
+
+```text
+My Dashboard
+Billing & Collections
+Invoices
+Payments
+Receivables
+Claims
+Accounting
+Reports
+```
+
+Only show accounting sections when the user has accounting permissions and modules are enabled.
+
+### stores
+
+Prioritise:
+
+```text
+My Dashboard
+Stores
+Inventory
+Stock Requests
+Stock Issues
+Procurement
+Suppliers
+Reports
+```
+
+### support
+
+Prioritise:
+
+```text
+My Dashboard
+Support
+Requests
+Maintenance
+Assets
+Reports
+```
+
+Use generic if dedicated support routes do not exist.
+
+### administrative
+
+Prioritise:
+
+```text
+My Dashboard
+Administration
+Users & Roles
+Departments
+Settings
+HR
+Reports
+```
+
+---
+
+## 6. Existing SidebarMenuBuilder Integration
+
+Inspect the current:
+
+```text
+SidebarMenuBuilder
+```
+
+Determine whether it returns:
+
+```text
+flat menu array
+grouped menu sections
+permission-filtered sections
+module-filtered sections
+role-based sections
+```
+
+Integrate department menu profiles without breaking existing output.
+
+Recommended strategy:
+
+```text
+1. Build the existing menu exactly as before.
+2. Apply permission/module filters exactly as before.
+3. Pass the filtered menu to DepartmentMenuProfileService.
+4. Reorder/prioritise visible sections based on department profile.
+5. Add department dashboard shortcut where safe.
+6. Return final menu.
+```
+
+Do not change route access logic.
+
+Do not remove existing permission checks.
+
+Do not make menu profile the source of permission truth.
+
+---
+
+## 7. Dashboard Shortcut
+
+Add a safe department dashboard shortcut at the top of the menu when useful.
+
+Example:
+
+```text
+My Department Dashboard
+```
+
+The shortcut should point to:
+
+```text
+/admin/my-dashboard
+```
+
+or the existing dashboard route.
+
+The label should include the department type if helpful:
+
+```text
+Pharmacy Dashboard
+Emergency Dashboard
+Finance Dashboard
+```
+
+Use `DepartmentDashboardRegistry` for title/label where possible.
 
 Rules:
 
 ```text
-Do not expose financial data to clinical users without permission.
-Do not expose clinical data to finance/support users without permission.
-Do not hide admin/super-admin dashboards.
-Do not hardcode dashboard cards directly in Blade.
-Do not move complex dashboard logic into controllers.
-Do not build a parallel dashboard system.
-```
-
----
-
-## 4. Department Dashboard Registry
-
-Create or formalise:
-
-```text
-DepartmentDashboardRegistry
-```
-
-or extend the existing:
-
-```text
-DepartmentDashboardService
-DepartmentDashboardResolver
-```
-
-The registry should map:
-
-```text
-department_type → dashboard_key
-department_type → dashboard_title
-department_type → dashboard_description
-department_type → widget group definitions
-department_type → fallback behavior
-```
-
-Suggested structure:
-
-```php
-[
-    'consultation' => [
-        'key' => 'consultation',
-        'title_key' => 'departments.dashboards.consultation.title',
-        'description_key' => 'departments.dashboards.consultation.description',
-        'widgets' => ['visits_today', 'waiting_patients', 'completed_consultations'],
-    ],
-]
-```
-
-Keep it service/config based.
-
-Do not scatter mapping across Blade files.
-
----
-
-## 5. Dashboard Key Mapping
-
-Use this initial mapping:
-
-```text
-consultation => consultation
-emergency => emergency
-investigation => investigation
-radiology => investigation
-procedure => theatre or generic_procedure
-theatre => theatre
-treatment => treatment or generic_clinical
-nursing => nursing or admission
-pharmacy => pharmacy
-inpatient => admission
-maternity => maternity or admission
-blood_bank => blood_bank
-mortuary => mortuary or generic
-ambulance => ambulance or generic
-records => reception
-finance => accounting
-stores => stock
-support => support or generic
-administrative => management
-```
-
-If dedicated builders do not exist yet, map to the nearest safe existing builder.
-
-Required minimum:
-
-```text
-Every department type must resolve to a dashboard key.
-Every dashboard key must build successfully.
-Unknown/null department type must fall back safely.
-```
-
-Do not build all advanced widgets now if the source modules are not ready.
-
-Use generic placeholders where needed.
-
----
-
-## 6. Existing Dashboard Builders
-
-Audit existing builders in:
-
-```text
-DepartmentDashboardService
-```
-
-Identify which are already available, likely:
-
-```text
-management
-consultation
-pharmacy
-investigation
-theatre
-billing
-stock
-accounting
-emergency
-admission
-blood_bank
-claims
-hr
-reception
-generic
-```
-
-Add missing lightweight builders only where useful:
-
-```text
-treatment
-nursing
-maternity
-mortuary
-ambulance
-records
-finance
-stores
-support
-administrative
-```
-
-These builders can initially use generic widgets but must have correct labels and safe data.
-
-Do not overbuild clinical workflows in this phase.
-
----
-
-## 7. Generic Dashboard Fallback
-
-Implement a strong generic department dashboard.
-
-Generic dashboard should show safe widgets such as:
-
-```text
-department name
-department type
-assigned users count
-today's visits/requests if safely available
-open tasks if safely available
-recent department activity if safely available
-quick links permitted for user
-```
-
-If metrics are unavailable:
-
-```text
-show empty-state widget
-do not crash
-do not fake numbers
+Only show shortcut if the route exists and user can access it.
+Do not duplicate existing dashboard link if already present.
 ```
 
 ---
 
 ## 8. User Department Context
 
-Current system has:
+Current system has one department per user.
+
+Implement:
 
 ```text
-users.department_id
-```
-
-One user belongs to one department.
-
-Implement dashboard context logic:
-
-```text
-If user has a department:
-    use user's department.type as department dashboard context.
+If user has one department:
+    use that department type for menu profile.
 
 If user has no department:
-    use role-based dashboard fallback.
+    use role/global fallback profile.
 
 If user is Admin/Super Admin:
-    allow role/global dashboard and optional department preview.
+    use administrative/global profile by default,
+    but allow all existing admin menu sections as before.
 
-If department type is null/unknown:
-    use role-based fallback or generic dashboard.
+If department type is null:
+    fallback safely.
+
+If department type is unknown:
+    fallback safely.
 ```
 
-Do not implement multi-department switching yet unless the system already has a clean structure for it.
+Do not implement multi-department switcher yet.
 
-Document multi-department context switcher as future.
+Document it as future.
 
 ---
 
-## 9. Admin Preview
+## 9. Admin Preview / Debug
 
-If not already present, add or improve an admin-safe preview.
+Add a diagnostic command:
 
-Suggested query parameter:
-
-```text
-/admin/my-dashboard?as=department_type
+```bash
+php artisan departments:menu-profiles
 ```
 
-or:
+Output:
 
 ```text
-/admin/my-dashboard?department_type=pharmacy
+department_type
+translated label
+dashboard_key
+primary sections
+secondary sections
+fallback?
+missing route names
+missing permissions
 ```
+
+The command must not modify data.
+
+Optionally add admin-only debug output in development, but not required.
+
+---
+
+## 10. Menu Profile Route Safety
+
+Because profiles may list route names that may not exist yet, the system must handle missing routes safely.
 
 Rules:
 
 ```text
-Only Admin/Super Admin or users with dashboard preview permission can use this.
-Preview must not grant access to data the user is not permitted to see.
-Preview is for layout/widget testing, not permission bypass.
-Invalid department_type falls back safely with a warning.
-```
+If a configured route does not exist:
+    skip it
+    record it in diagnostic command
+    do not crash sidebar rendering
 
-Add permission if needed:
+If user lacks permission:
+    do not show link
 
-```text
-dashboard.department_preview
+If module is disabled:
+    do not show link
+
+If route exists but menu item is not in current menu:
+    do not invent access unless explicitly defined as a permitted quick link
 ```
 
 ---
 
-## 10. Widget Permission Safety
+## 11. Quick Links
 
-Each widget must define or check its required permission/module.
+Support quick links in the profile.
+
+Quick links must include:
+
+```text
+label key
+route name
+permission optional
+module optional
+icon optional
+```
 
 Example:
 
 ```php
 [
-    'key' => 'billing_today',
-    'permission' => 'billing.view',
-    'module' => 'billing',
+    'label_key' => 'menu.prescriptions',
+    'route' => 'admin.pharmacy.prescriptions.index',
+    'permission' => 'pharmacy.prescriptions.view',
+    'module' => 'pharmacy',
+    'icon' => 'ti-prescription',
 ]
 ```
 
 Rules:
 
 ```text
-If user lacks permission, hide widget or show restricted placeholder.
-If module is disabled, hide widget or show module-disabled placeholder.
-Do not query sensitive data before permission/module check.
-```
-
-This is especially important for:
-
-```text
-finance
-billing
-accounting
-claims
-clinical summaries
-pharmacy stock cost
-stores stock cost
+Quick links are optional.
+Quick links must be permission/module filtered.
+Missing routes must be skipped.
+Do not add too many quick links.
 ```
 
 ---
 
-## 11. Department Dashboard Widgets
-
-Start with safe widget groups by type.
-
-### consultation
-
-```text
-today's consultations
-waiting patients
-completed consultations
-follow-ups due
-```
-
-### emergency
-
-```text
-active emergency cases
-pending triage
-emergency sessions
-critical cases placeholder if available
-```
-
-### investigation
-
-```text
-pending lab requests
-samples awaiting acceptance
-completed results
-urgent investigations
-```
-
-### radiology
-
-```text
-pending imaging requests
-scheduled imaging
-completed imaging
-urgent imaging
-```
-
-If radiology has no separate workflow yet, use investigation-safe widgets and document limitation.
-
-### procedure
-
-```text
-pending procedures
-scheduled procedures
-completed procedures
-consumable usage if safe
-```
-
-### theatre
-
-```text
-scheduled surgeries
-pre-op pending
-in-progress surgeries
-post-op pending
-```
-
-### treatment
-
-```text
-pending treatment tasks
-completed treatments
-open treatment sessions
-```
-
-### nursing
-
-```text
-ward observations due
-nursing tasks
-medication administration placeholder
-```
-
-### pharmacy
-
-```text
-pending prescriptions
-dispensed today
-low stock alerts
-sales/dispensing summary where permitted
-```
-
-### inpatient
-
-```text
-current admissions
-occupied beds
-available beds
-discharges pending
-```
-
-### maternity
-
-```text
-antenatal visits
-delivery cases
-postnatal follow-up
-maternity admissions
-```
-
-Use existing admission/visit widgets if dedicated maternity workflow is not available.
-
-### blood_bank
-
-```text
-available blood units
-reserved blood units
-expired/near-expiry units
-pending crossmatch
-```
-
-### mortuary
-
-```text
-active mortuary cases
-body storage occupancy
-pending release
-mortuary billing placeholder
-```
-
-If mortuary module is not available, generic dashboard with clear limitation.
-
-### ambulance
-
-```text
-active ambulance requests
-completed transports
-vehicle availability placeholder
-```
-
-If ambulance module is not available, generic dashboard with clear limitation.
-
-### records
-
-```text
-new patient records
-record merge requests
-folder requests
-archives activity
-```
-
-### finance
-
-```text
-today's collections
-unpaid invoices
-AR aging summary
-pending claims
-```
-
-Respect financial permissions.
-
-### stores
-
-```text
-stock requests
-pending issues
-low stock
-purchase requests
-```
-
-### support
-
-```text
-support tasks
-maintenance requests placeholder
-department activity
-```
-
-### administrative
-
-```text
-user/admin overview
-HR/admin tasks
-system activity
-```
-
----
-
-## 12. Dashboard Views
-
-Use existing dashboard design/components.
-
-Do not create a completely separate visual style.
-
-If widget system exists, reuse it.
-
-If not, create reusable dashboard partials:
-
-```text
-resources/views/admin/dashboard/partials/widget-card.blade.php
-resources/views/admin/dashboard/partials/metric-card.blade.php
-resources/views/admin/dashboard/partials/empty-widget.blade.php
-```
-
-Keep UI Bootstrap 5 + Tabler Icons.
-
-No Tailwind.
-
-No new frontend framework.
-
----
-
-## 13. Localisation
+## 12. Localisation
 
 Extend:
 
 ```text
+lang/en/menu.php
+lang/fr/menu.php
 lang/en/departments.php
 lang/fr/departments.php
 ```
 
-Add dashboard labels:
-
-```php
-'dashboards' => [
-    'consultation' => [
-        'title' => 'Consultation Dashboard',
-        'description' => 'Overview of consultation activity.',
-    ],
-]
-```
-
-Required dashboard title keys for all 19 types:
+Add labels:
 
 ```text
-consultation
-emergency
-investigation
-radiology
-procedure
-theatre
-treatment
-nursing
-pharmacy
-inpatient
-maternity
-blood_bank
-mortuary
-ambulance
-records
-finance
-stores
-support
-administrative
-generic
+my_department_dashboard
+department_menu_profile
+menu_profile
+primary_menu
+secondary_menu
+quick_links
+department_shortcuts
+consultation_menu
+emergency_menu
+investigation_menu
+radiology_menu
+procedure_menu
+theatre_menu
+treatment_menu
+nursing_menu
+pharmacy_menu
+inpatient_menu
+maternity_menu
+blood_bank_menu
+mortuary_menu
+ambulance_menu
+records_menu
+finance_menu
+stores_menu
+support_menu
+administrative_menu
+generic_menu
 ```
-
-Also add common widget labels where used.
 
 Maintain EN/FR parity.
 
@@ -671,61 +743,35 @@ Active runtime candidates must remain:
 
 ---
 
-## 14. Dashboard Report / Diagnostics
-
-Add a diagnostic command:
-
-```bash
-php artisan departments:dashboard-map
-```
-
-Output:
-
-```text
-department_type
-translated label
-dashboard_key
-builder exists?
-fallback?
-module dependencies
-permission notes
-```
-
-This helps confirm all 19 types are mapped.
-
-The command must not modify data.
-
----
-
-## 15. Tests To Add
+## 13. Tests To Add
 
 Add focused tests only.
 
 Required tests:
 
 ```text
-all 19 department types resolve to a dashboard key
-all 19 department dashboard keys build without exception
+all 19 department types resolve to a menu profile
 unknown department type falls back safely
 null department type falls back safely
-user with department gets matching department dashboard
-user without department gets role/generic fallback
-admin can preview a department type dashboard if permitted
-non-admin cannot bypass permissions through preview
-finance dashboard does not expose finance widgets without permission
-pharmacy dashboard hides restricted stock-cost widgets without permission
-radiology maps safely even if using investigation builder
-maternity maps safely even if using admission builder
-mortuary generic fallback does not crash
-ambulance generic fallback does not crash
-departments:dashboard-map lists all 19 types
-EN/FR dashboard labels exist
+user with pharmacy department sees pharmacy-prioritised menu
+user with finance department sees finance-prioritised menu
+user with emergency department sees emergency-prioritised menu
+user without department gets fallback menu
+admin retains full/global menu behaviour
+department menu profile does not bypass permissions
+department menu profile does not bypass disabled modules
+missing profile route is skipped without crashing
+department dashboard shortcut appears when allowed
+department dashboard shortcut is not duplicated
+quick links are permission filtered
+departments:menu-profiles command lists all 19 types
+EN/FR menu labels exist
 ```
 
 Allowed focused command:
 
 ```bash
-php artisan test tests/Feature/Departments/DepartmentDashboardRegistryPhase2Test.php
+php artisan test tests/Feature/Departments/DepartmentMenuProfilesPhase3Test.php
 ```
 
 Do not run:
@@ -736,9 +782,11 @@ php artisan test
 
 unless explicitly instructed.
 
+Remember: because Blade responses may be converted by middleware, avoid fragile `assertViewHas` assertions where the middleware rewrites the response. Prefer service-level tests, controller-level tests, `assertStatus`, `assertSee`, or structure assertions.
+
 ---
 
-## 16. Minimal Verification Commands
+## 14. Minimal Verification Commands
 
 Run only:
 
@@ -766,25 +814,26 @@ Do not run the wide full suite.
 
 ---
 
-## 17. Documentation
+## 15. Documentation
 
 Create:
 
 ```text
-docs/DEPARTMENT_TYPE_EXPANSION_PHASE_2_DASHBOARD_REGISTRY_REPORT.md
+docs/DEPARTMENT_TYPE_EXPANSION_PHASE_3_MENU_PROFILES_REPORT.md
 ```
 
 Include:
 
 ```text
 summary
-dashboard registry design
-department type to dashboard key mapping
-new/updated services
-new/updated views
-admin preview behavior
-widget permission behavior
-generic fallback behavior
+menu profile design
+department type to menu profile mapping
+SidebarMenuBuilder integration
+dashboard shortcut behavior
+quick link behavior
+permission/module safety
+admin/global fallback behavior
+missing-route handling
 localisation changes
 diagnostic command output
 tests added
@@ -796,30 +845,31 @@ next recommended phase
 Known limitations should mention:
 
 ```text
-department-aware menu profiles are Phase 3
 workflow routing cleanup is Phase 4
 department metrics/reporting registry is Phase 5
-backfill apply was not run unless explicitly instructed
+multi-department user context switcher is deferred
+department backfill apply was not run unless explicitly instructed
 ```
 
 ---
 
-## 18. Acceptance Criteria
+## 16. Acceptance Criteria
 
-Phase 2 is complete only when:
+Phase 3 is complete only when:
 
 ```text
-all 19 department types resolve safely to dashboard keys
-all dashboard keys build without exception
-/admin/my-dashboard no longer risks crashing from department type
-user department type controls dashboard context
-role fallback still works
-admin preview is permission controlled
-generic fallback exists and is safe
-widget permissions/modules are respected
-no sensitive finance/clinical/stock-cost data leaks
-dashboard labels are localised EN/FR
-departments:dashboard-map command exists
+all 19 department types resolve safely to menu profiles
+SidebarMenuBuilder integrates menu profiles without breaking existing permission/module filtering
+department type prioritises and groups menu items
+department dashboard shortcut works where allowed
+quick links are permission/module filtered
+missing routes do not crash menu rendering
+admin/global fallback still works
+users without department still get a usable menu
+department menu profile does not grant unauthorised access
+department menu profile does not expose disabled modules
+menu labels are localised EN/FR
+departments:menu-profiles command exists
 active runtime localisation candidates remain 0
 EN/FR localisation parity is maintained
 route list works
@@ -830,4 +880,4 @@ full test suite is intentionally deferred
 department backfill is not applied unless explicitly instructed
 ```
 
-Proceed with Department Type Expansion Phase 2 now.
+Proceed with Department Type Expansion Phase 3 now.
