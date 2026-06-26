@@ -4,69 +4,70 @@
 @section('content')
 <x-page-header :title="__('consultations.title')" icon="ti-stethoscope" />
 
-<div class="card mb-3">
-    <div class="card-body">
-        <form method="GET" class="row g-2 align-items-end" data-auto-filter-form="consultations-index">
-            <div class="col-md-3">
-                <label class="form-label small">{{ __('common.search') }}</label>
-                <input type="text" name="search" class="form-control" placeholder="{{ __('consultations.search_placeholder') }}" value="{{ $filters['search'] ?? '' }}">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">{{ __('consultations.visit_type') }}</label>
-                <select name="visit_type" class="form-select">
-                    <option value="">{{ __('consultations.all_types') }}</option>
-                    @foreach(\App\Enums\VisitType::cases() as $type)
-                        <option value="{{ $type->value }}" @selected(($filters['visit_type'] ?? '') == $type->value)>{{ $type->translatedLabel() }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-2">
-                @include('partials.date-range-filter', [
-                    'id' => 'consultationDateRangePicker',
-                    'value' => $filters['date_range'] ?? '',
-                    'labelClass' => 'small',
-                    'submitOnApply' => true,
-                ])
-            </div>
-            <div class="col-md-2">
-                <div class="form-check mt-4">
-                    <input class="form-check-input" type="checkbox" name="my_patients" value="1" id="myPatients" @checked(request('my_patients'))>
-                    <label class="form-check-label" for="myPatients">{{ __('consultations.my_patients_only') }}</label>
-                </div>
-            </div>
-            {{-- <div class="col-md-1"> --}}
-            <div class="col-md-auto">
-                <div class="d-flex gap-1">
-                    <button aria-label="{{ __('common.filter') }}" title="{{ __('common.filter') }}" type="submit" class="btn btn-primary"><i class="ti ti-filter"></i> {{ __('common.filter') }}</button>
-                    <a aria-label="{{ __('common.close') }}" title="{{ __('common.close') }}" href="{{ route('admin.consultations.index') }}" class="btn btn-outline-secondary"><i class="ti ti-x"></i></a>
-                </div>
-                {{-- </div> --}}
-                {{-- <button type="submit" class="btn btn-primary"><i class="ti ti-search me-1"></i>Filter</button>
-                <a href="{{ route('admin.consultations.index') }}" class="btn btn-outline-secondary ms-1">Clear</a> --}}
-            </div>
-        </form>
-    </div>
-</div>
+<x-filter-bar
+    :action="route('admin.consultations.index')"
+    :reset-url="route('admin.consultations.index')"
+    ajax
+    ajax-target="#consultationsIndexResults"
+>
+    <input type="hidden" name="per_page" value="{{ $filters['per_page'] ?? $routes->perPage() }}" data-filter-per-page-input>
 
-<div class="card">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>{{ __('consultations.queue_number') }}</th>
-                        <th>{{ __('consultations.visit_number') }}</th>
-                        <th>{{ __('common.patient') }}</th>
-                        <th>{{ __('common.department') }}</th>
-                        <th>{{ __('consultations.services') }}</th>
-                        <th>{{ __('common.priority') }}</th>
-                        <th>{{ __('common.doctor') }}</th>
-                        <th>{{ __('common.status') }}</th>
-                        <th>{{ __('consultations.waiting_time') }}</th>
-                        <th>{{ __('common.action') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
+    <div class="col-md-3">
+        <label class="form-label small">{{ __('common.search') }}</label>
+        <input type="text" name="search" class="form-control" placeholder="{{ __('consultations.search_placeholder') }}" value="{{ $filters['search'] ?? '' }}">
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small">{{ __('consultations.visit_type') }}</label>
+        <select name="visit_type" class="form-select">
+            <option value="">{{ __('consultations.all_types') }}</option>
+            @foreach(\App\Enums\VisitType::cases() as $type)
+                <option value="{{ $type->value }}" @selected(($filters['visit_type'] ?? '') == $type->value)>{{ $type->translatedLabel() }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div class="col-md-2">
+        @include('partials.date-range-filter', [
+            'id' => 'consultationDateRangePicker',
+            'value' => $filters['date_range'] ?? '',
+            'labelClass' => 'small',
+            'submitOnApply' => true,
+        ])
+    </div>
+    <div class="col-md-2">
+        <div class="form-check mt-4">
+            <input class="form-check-input" type="checkbox" name="my_patients" value="1" id="myPatients" @checked(request('my_patients'))>
+            <label class="form-check-label" for="myPatients">{{ __('consultations.my_patients_only') }}</label>
+        </div>
+    </div>
+    <x-slot:actions>
+        <a aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" href="{{ route('admin.consultations.index') }}" class="btn btn-outline-secondary btn-icon" data-filter-reset><i class="ti ti-x"></i></a>
+    </x-slot:actions>
+</x-filter-bar>
+
+<div id="consultationsIndexResults">
+<x-data-table
+    id="consultationsDataTable"
+    :paginator="$routes"
+    show-summary
+    show-per-page
+    :current-per-page="$filters['per_page'] ?? $routes->perPage()"
+    :per-page-options="[10, 15, 25, 50, 100]"
+>
+    <x-slot:head>
+        <tr>
+            <th>{{ __('consultations.queue_number') }}</th>
+            <th>{{ __('consultations.visit_number') }}</th>
+            <th>{{ __('common.patient') }}</th>
+            <th>{{ __('common.department') }}</th>
+            <th>{{ __('consultations.services') }}</th>
+            <th>{{ __('common.priority') }}</th>
+            <th>{{ __('common.doctor') }}</th>
+            <th>{{ __('common.status') }}</th>
+            <th>{{ __('consultations.waiting_time') }}</th>
+            <th>{{ __('common.action') }}</th>
+        </tr>
+    </x-slot:head>
+
                     @forelse($routes as $route)
                     @php
                         $visit = $route->visit;
@@ -162,43 +163,10 @@
                         </td>
                     </tr>
                     @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<div class="d-flex justify-content-center mt-3">
-    {{ $routes->withQueryString()->links() }}
+</x-data-table>
 </div>
 @endsection
 
 @push('scripts')
     @include('partials.date-range-filter-scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const filterForm = document.querySelector('[data-auto-filter-form="consultations-index"]');
-            if (!filterForm) {
-                return;
-            }
-
-            let searchTimer = null;
-            const searchInput = filterForm.querySelector('input[name="search"]');
-
-            filterForm.querySelectorAll('select, input[type="checkbox"]').forEach(function (field) {
-                field.addEventListener('change', function () {
-                    filterForm.requestSubmit();
-                });
-            });
-
-            if (searchInput) {
-                searchInput.addEventListener('input', function () {
-                    window.clearTimeout(searchTimer);
-                    searchTimer = window.setTimeout(function () {
-                        filterForm.requestSubmit();
-                    }, 400);
-                });
-            }
-        });
-    </script>
 @endpush

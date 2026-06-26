@@ -71,12 +71,9 @@
 
 @section('content')
 
-{{-- ============================================================ --}}
-{{-- PATIENT HEADER BAR --}}
-{{-- ============================================================ --}}
-@include('partials.patient-visit-header', ['visit' => $visit, 'showAlerts' => true])
+<x-patient-long-card :visit="$visit" :show-alerts="true" />
 
-@can('patients.edit'))
+@can('patients.edit')
 {{-- <div class="card mb-3 border-danger-subtle"> --}}
     {{-- <div class="card-header d-flex align-items-center justify-content-between">
         <h6 class="fw-bold mb-0">
@@ -689,12 +686,12 @@
                             <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
                                 <i class="ti ti-eye me-1"></i>{{ __('consultations.workspace.view_visit') }}
                             </a>
-                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#followUpAppointmentModal" @disabled(! $selectedRoute) title="{{ $selectedRoute ? __('consultations.workspace.set_next_appointment') : __('consultations.workspace.select_session_first') }}">
+                            <!-- <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#followUpAppointmentModal" @disabled(! $selectedRoute) title="{{ $selectedRoute ? __('consultations.workspace.set_next_appointment') : __('consultations.workspace.select_session_first') }}">
                                 <i class="ti ti-calendar-plus me-1"></i>{{ $followUpAppointment ? __('consultations.workspace.update_next_appointment') : __('consultations.workspace.next_appointment') }}
                                 @if($followUpAppointment)
                                     <span class="badge bg-primary-subtle text-primary ms-1">{{ __('consultations.workspace.set') }}</span>
                                 @endif
-                            </button>
+                            </button> -->
                             @can('consultations.create')
                             <button type="button" class="btn btn-outline-purple btn-sm" data-bs-toggle="modal" data-bs-target="#savePatternModal">
                                 <i class="ti ti-template me-1"></i>{{ __('consultations.workspace.save_pattern') }}

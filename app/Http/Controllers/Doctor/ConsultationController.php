@@ -313,7 +313,7 @@ class ConsultationController extends Controller
             ->orderBy('consultation_queue_created_at')
             ->orderByRaw("CASE {$routeTable}.status WHEN 'PENDING' THEN 0 WHEN 'ACTIVE' THEN 1 WHEN 'PAUSED' THEN 2 ELSE 3 END")
             ->orderBy("{$routeTable}.created_at")
-            ->paginate(15);
+            ->paginate((int) ($filters['per_page'] ?? 15));
 
         return view('consultations.index', compact('routes', 'filters'));
     }
