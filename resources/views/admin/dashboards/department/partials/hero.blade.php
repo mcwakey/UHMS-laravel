@@ -13,6 +13,12 @@
                         <span class="mx-1">&bull;</span>
                         {{ now()->translatedFormat('l, d M Y') }}
                     </div>
+                    @if(!empty($dashboard['welcome']) || !empty($dashboard['scope_message']))
+                        <div class="mt-1 small">
+                            @if(!empty($dashboard['welcome']))<span class="fw-medium">{{ $dashboard['welcome'] }}</span>@endif
+                            @if(!empty($dashboard['scope_message']))<span class="text-muted">@if(!empty($dashboard['welcome'])) — @endif{{ $dashboard['scope_message'] }}</span>@endif
+                        </div>
+                    @endif
                     <div class="mt-2">
                         @if($context->current_department)
                             <span class="badge bg-light text-dark border">{{ __('dashboards.department.current_department') }}: {{ $context->current_department->name }}</span>

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\DepartmentType;
 use App\Models\User;
+use App\Services\Department\DepartmentDashboardLayoutRegistry;
 
 /**
  * Department-type menu profiles.
@@ -38,6 +39,26 @@ class DepartmentMenuProfileService
         'stores'        => ['Store & Procurement'],
         // administrative, support, mortuary, ambulance → default order (no profile).
     ];
+
+    public function __construct(
+        private DepartmentDashboardLayoutRegistry $layouts,
+    ) {}
+
+    /**
+     * Personalised menu / dashboard heading for a department type, e.g.
+     * "Laboratory Department Workbench", "Emergency / Casualty Command Center".
+     * The department NAME is identity-only — it never grants access.
+     */
+    public function headingForType(?DepartmentType $type, ?string $departmentName): string
+    {
+        if ($departmentName === null || $departmentName === '') {
+            return __('departments.dashboards.'.($type?->value ?? 'generic').'.name');
+        }
+
+        $template = $this->layouts->menuHeadingTemplateFor($type);
+
+        return __('departments.menu_profiles.'.$template, ['department' => $departmentName]);
+    }
 
     /**
      * @return list<string> section titles to prioritise for this user (may be empty).
