@@ -141,6 +141,115 @@ class DepartmentDashboardDesignDifferentiationTest extends TestCase
         $this->assertSame(__('departments.dashboard.no_department_assigned_dashboard'), $data['dashboard']['scope_message']);
     }
 
+    public function test_primary_cards_carry_a_sparkline_and_delta_when_recent_data_exists(): void
+    {
+        $opd = $this->department(DepartmentType::CONSULTATION, 'General OPD', 'OPD');
+        // Create the viewing user first so patient/visit factory FKs (registered_by) resolve.
+        $user = User::factory()->create(['department_id' => $opd->id]);
+        $column = \Illuminate\Support\Facades\Schema::hasColumn('visits', 'current_department_id')
+            ? 'current_department_id'
+            : 'department_id';
+
+        // Seed visits spread across the trailing 7 days, scoped to this department.
+        foreach ([6 => 1, 4 => 2, 2 => 2, 0 => 4] as $daysAgo => $count) {
+            \App\Models\Visit::factory()->count($count)->create([
+                $column => $opd->id,
+                'created_at' => now()->subDays($daysAgo),
+            ]);
+        }
+        $cards = collect($this->payloadFor($user)['primary_cards'] ?? []);
+
+        $visitsCard = $cards->firstWhere('key', 'visits_today');
+        $this->assertNotNull($visitsCard, 'Expected a visits_today primary card for a consultation department');
+        $this->assertArrayHasKey('spark', $visitsCard, 'visits_today card should carry a sparkline series');
+        $this->assertCount(7, $visitsCard['spark']);
+        $this->assertGreaterThan(0, array_sum($visitsCard['spark']));
+        $this->assertArrayHasKey('delta', $visitsCard);
+        $this->assertContains($visitsCard['delta_dir'], ['up', 'down']);
+
+        // Static metrics (no time series) must NOT get a sparkline.
+        $staticCard = $cards->firstWhere('key', 'waiting_queue');
+        if ($staticCard !== null) {
+            $this->assertArrayNotHasKey('spark', $staticCard);
+        }
+    }
+
+    public function test_consultation_showcase_renders_with_rich_widgets(): void
+    {
+        $opd = $this->department(DepartmentType::CONSULTATION, 'General OPD', 'OPD');
+        $user = User::factory()->create(['department_id' => $opd->id]);
+        $this->service($opd, 'CONS', 'General Consultation');
+
+        $data = $this->payloadFor($user);
+
+        // Render the bespoke showcase body (no app layout / auth chrome needed).
+        $html = view('admin.dashboards.department.partials.layouts.clinical_showcase', $data)->render();
+
+        $this->assertNotEmpty($html);
+        // Rich list card header (the live queue) renders even when the queue is empty.
+        $this->assertStringContainsString($data['work_queue']['title'], $html);
+        // Department service surfaced in the services card.
+        $this->assertStringContainsString('General Consultation', $html);
+    }
+
+    public function test_pharmacy_showcase_renders_with_stock_alert_donut(): void
+    {
+        $pharmacy = $this->department(DepartmentType::PHARMACY, 'Main Pharmacy', 'PHARM');
+        $user = User::factory()->create(['department_id' => $pharmacy->id]);
+
+        $data = $this->payloadFor($user);
+
+        // Stock-alert donut chart is present in the payload (restricted without stock perms).
+        $this->assertArrayHasKey('stock_status_breakdown', $data['charts']);
+        $this->assertSame('doughnut', $data['charts']['stock_status_breakdown']['type']);
+
+        $html = view('admin.dashboards.department.partials.layouts.dispensing_showcase', $data)->render();
+
+        $this->assertNotEmpty($html);
+        $this->assertStringContainsString($data['work_queue']['title'], $html);
+        // The stock-status card header renders its title.
+        $this->assertStringContainsString(__('dashboards.department.charts.stock_status'), $html);
+    }
+
+    public function test_emergency_showcase_renders_with_priority_alert(): void
+    {
+        $er = $this->department(DepartmentType::EMERGENCY, 'Casualty', 'ER');
+        $user = User::factory()->create(['department_id' => $er->id]);
+
+        $data = $this->payloadFor($user);
+        $html = view('admin.dashboards.department.partials.layouts.emergency_showcase', $data)->render();
+
+        $this->assertNotEmpty($html);
+        $this->assertStringContainsString('department-emergency-alert', $html);
+        $this->assertStringContainsString(__('departments.sections.priority_alerts'), $html);
+        $this->assertStringContainsString($data['work_queue']['title'], $html);
+    }
+
+    public function test_all_bespoke_showcases_render(): void
+    {
+        $cases = [
+            ['investigation_showcase', DepartmentType::INVESTIGATION, 'LAB2'],
+            ['blood_bank_showcase', DepartmentType::BLOOD_BANK, 'BB'],
+            ['surgery_showcase', DepartmentType::THEATRE, 'OT'],
+            ['ward_showcase', DepartmentType::INPATIENT, 'WARD'],
+            ['finance_showcase', DepartmentType::FINANCE, 'FIN'],
+            ['stores_showcase', DepartmentType::STORES, 'STR'],
+            ['records_showcase', DepartmentType::RECORDS, 'REC'],
+            ['generic_showcase', DepartmentType::SUPPORT, 'SUP'],
+        ];
+
+        foreach ($cases as [$showcase, $type, $code]) {
+            $dept = $this->department($type, $code.' Department', $code);
+            $user = User::factory()->create(['department_id' => $dept->id]);
+            $data = $this->payloadFor($user);
+
+            $html = view('admin.dashboards.department.partials.layouts.'.$showcase, $data)->render();
+
+            $this->assertNotEmpty($html, "{$showcase} rendered empty");
+            $this->assertStringContainsString($data['work_queue']['title'], $html, "{$showcase} missing queue title");
+        }
+    }
+
     private function service(Department $department, string $code, string $name): void
     {
         ServiceCatalog::create([

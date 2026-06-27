@@ -30,6 +30,10 @@ class DepartmentDashboardDataService
         $services = $this->departmentServices();
         $stockUsage = $this->stockUsage();
 
+        $charts = $this->charts->build($context);
+        // Stock-bearing dashboards (pharmacy/stores) get an In-stock vs Low-stock donut.
+        $charts['stock_status_breakdown'] = $this->stockStatusBreakdown();
+
         return [
             'layout_profile' => $layout,
             'primary_cards' => $this->cards($layout['primary_cards'] ?? []),
@@ -39,10 +43,43 @@ class DepartmentDashboardDataService
             'services' => $services,
             'stock_usage' => $stockUsage,
             'trends' => $this->trends(),
-            'charts' => $this->charts->build($context),
+            'charts' => $charts,
             'activities' => $this->activities(),
             'restricted' => $this->restrictedCards(),
             'empty_states' => [],
+        ];
+    }
+
+    /**
+     * In-stock vs low-stock donut for stock-bearing departments. Reuses stockCount();
+     * restricted when the user can't view stock, empty when there are no items.
+     *
+     * @return array<string, mixed>
+     */
+    private function stockStatusBreakdown(): array
+    {
+        $title = __('dashboards.department.charts.stock_status');
+
+        if (! ($this->user->can('store.purchase.view') || $this->user->can('pharmacy.stock.manage'))) {
+            return ['key' => 'stock_status_breakdown', 'title' => $title, 'type' => 'doughnut', 'restricted' => true, 'labels' => [], 'datasets' => []];
+        }
+
+        $items = $this->stockCount('items');
+        $low = min($this->stockCount('low'), $items);
+        $ok = max($items - $low, 0);
+
+        return [
+            'key' => 'stock_status_breakdown',
+            'title' => $title,
+            'type' => 'doughnut',
+            'total_label' => __('dashboards.department.charts.stock_items'),
+            'labels' => [__('dashboards.department.charts.in_stock'), __('dashboards.department.charts.low_stock')],
+            'datasets' => [[
+                'label' => $title,
+                'data' => [$ok, $low],
+                'backgroundColor' => ['#198754', '#dc3545'],
+            ]],
+            'empty_state' => $items <= 0,
         ];
     }
 
@@ -102,7 +139,7 @@ class DepartmentDashboardDataService
             $variant = 'success';
         }
 
-        return [
+        $card = [
             'key' => $key,
             'title' => __("dashboards.department.metrics.$key"),
             'value' => $value,
@@ -112,6 +149,64 @@ class DepartmentDashboardDataService
             'format' => $format,
             'restricted' => is_array($value) && ($value['restricted'] ?? false),
         ];
+
+        // Primary cards get an inline 7-day sparkline + delta (admin-template style).
+        if (! $compact && ! $card['restricted']) {
+            $spark = $this->metricSpark($key);
+            if ($spark !== null && array_sum($spark) > 0) {
+                $first = (float) ($spark[0] ?? 0);
+                $last = (float) (end($spark) ?: 0);
+                $card['spark'] = $spark;
+                $card['delta'] = $first > 0 ? (int) round((($last - $first) / $first) * 100) : ($last > 0 ? 100 : 0);
+                $card['delta_dir'] = $last >= $first ? 'up' : 'down';
+            }
+        }
+
+        return $card;
+    }
+
+    /**
+     * A 7-day daily series for a time-based metric (for KPI sparklines); null for
+     * static metrics (staff/services counts, bed occupancy, …).
+     *
+     * @return array<int, int>|null
+     */
+    private function metricSpark(string $key): ?array
+    {
+        $spec = match ($key) {
+            'visits_today' => ['visits', $this->visitsDepartmentColumn(), 'created_at', 'count', null],
+            'activity_today' => ['invoice_items', 'department_id', 'created_at', 'count', null],
+            'appointments_today' => ['appointments', 'department_id', 'appointment_date', 'count', null],
+            'department_revenue_today', 'revenue_today' => ['invoice_items', 'department_id', 'created_at', 'sum', 'total_price'],
+            'pending_requests', 'pending_imaging', 'completed_results_today', 'completed_imaging_today' => ['lab_requests', 'target_department_id', 'created_at', 'count', null],
+            'dispensed_today' => ['prescriptions', null, 'updated_at', 'count', null],
+            'invoices_today' => ['invoices', null, 'created_at', 'count', null],
+            'stock_issues' => ['stock_movements', null, 'created_at', 'count', null],
+            default => null,
+        };
+
+        if ($spec === null || ! Schema::hasTable($spec[0]) || ! Schema::hasColumn($spec[0], $spec[2])) {
+            return null;
+        }
+
+        [$table, $column, $dateColumn, $agg, $aggColumn] = $spec;
+        $series = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $date = today()->subDays($i);
+            try {
+                $q = DB::table($table);
+                if ($column) {
+                    $q = $this->scopeDepartment($q, $column);
+                }
+                $q->whereDate($dateColumn, $date);
+                $series[] = (int) round($agg === 'sum' ? (float) $q->sum($aggColumn) : (float) $q->count());
+            } catch (Throwable) {
+                $series[] = 0;
+            }
+        }
+
+        return $series;
     }
 
     private function workQueue(string $key): array

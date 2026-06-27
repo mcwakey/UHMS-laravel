@@ -2,5 +2,10 @@
 @section('title', $dashboard['title'] ?? __('dashboards.department.department_dashboard'))
 
 @section('content')
-@include('admin.dashboards.department.partials.dashboard-shell', ['dashboardPersonality' => 'emergency'])
+@php
+    // Bespoke, fully-customised emergency dashboard (per-type showcase).
+    $dashboardPersonalization = ['key' => 'emergency'];
+@endphp
+@include('admin.dashboards.department.partials._chrome')
+@include('admin.dashboards.department.partials.layouts.emergency_showcase')
 @endsection

@@ -76,8 +76,19 @@
                         fill: type === 'area'
                             ? { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.05, stops: [0, 90, 100] } }
                             : { opacity: 1 },
-                        plotOptions: { bar: { borderRadius: 4, columnWidth: '55%' } },
-                        dataLabels: { enabled: false },
+                        plotOptions: {
+                            bar: { borderRadius: 4, columnWidth: '55%' },
+                            pie: { donut: { size: '70%', labels: {
+                                show: true,
+                                value: { fontSize: '20px', fontWeight: 700 },
+                                total: {
+                                    show: true,
+                                    label: payload.total_label || @json(__('dashboards.department.total')),
+                                    formatter: function (w) { return w.globals.seriesTotals.reduce(function (a, b) { return a + b; }, 0); },
+                                },
+                            } } },
+                        },
+                        dataLabels: { enabled: (type === 'donut' || type === 'pie') },
                         xaxis: { categories: labels, labels: { rotate: -35, style: { fontSize: '11px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
                         yaxis: { labels: { formatter: function (value) { return Math.round(value).toString(); } } },
                         legend: { position: 'bottom' },

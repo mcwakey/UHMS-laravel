@@ -2,5 +2,7 @@
 @section('title', $dashboard['title'] ?? __('dashboards.department.department_dashboard'))
 
 @section('content')
-@include('admin.dashboards.department.partials.dashboard-shell', ['dashboardPersonality' => 'blood_bank'])
+@php $dashboardPersonalization = ['key' => 'blood_bank']; @endphp
+@include('admin.dashboards.department.partials._chrome')
+@include('admin.dashboards.department.partials.layouts.blood_bank_showcase')
 @endsection
