@@ -53,18 +53,18 @@ return new class extends Migration
             }
         }
 
-        $this->index('payments_invoice_receivable_id_index', 'CREATE INDEX payments_invoice_receivable_id_index ON payments (invoice_receivable_id)');
-        $this->index('payments_payer_index', 'CREATE INDEX payments_payer_index ON payments (payer_type, payer_id)');
-        $this->index('payments_sponsor_id_index', 'CREATE INDEX payments_sponsor_id_index ON payments (sponsor_id)');
-        $this->index('payments_insurance_provider_id_index', 'CREATE INDEX payments_insurance_provider_id_index ON payments (insurance_provider_id)');
-        $this->index('payments_corporate_client_id_index', 'CREATE INDEX payments_corporate_client_id_index ON payments (corporate_client_id)');
-        $this->index('payments_claim_id_index', 'CREATE INDEX payments_claim_id_index ON payments (claim_id)');
+        $this->index('payments', 'payments_invoice_receivable_id_index', 'CREATE INDEX payments_invoice_receivable_id_index ON payments (invoice_receivable_id)');
+        $this->index('payments', 'payments_payer_index', 'CREATE INDEX payments_payer_index ON payments (payer_type, payer_id)');
+        $this->index('payments', 'payments_sponsor_id_index', 'CREATE INDEX payments_sponsor_id_index ON payments (sponsor_id)');
+        $this->index('payments', 'payments_insurance_provider_id_index', 'CREATE INDEX payments_insurance_provider_id_index ON payments (insurance_provider_id)');
+        $this->index('payments', 'payments_corporate_client_id_index', 'CREATE INDEX payments_corporate_client_id_index ON payments (corporate_client_id)');
+        $this->index('payments', 'payments_claim_id_index', 'CREATE INDEX payments_claim_id_index ON payments (claim_id)');
 
-        $this->foreign('payments_invoice_receivable_id_foreign', 'ALTER TABLE payments ADD CONSTRAINT payments_invoice_receivable_id_foreign FOREIGN KEY (invoice_receivable_id) REFERENCES invoice_receivables(id) ON DELETE SET NULL');
-        $this->foreign('payments_insurance_provider_id_foreign', 'ALTER TABLE payments ADD CONSTRAINT payments_insurance_provider_id_foreign FOREIGN KEY (insurance_provider_id) REFERENCES insurance_providers(id) ON DELETE SET NULL');
-        $this->foreign('payments_sponsor_id_foreign', 'ALTER TABLE payments ADD CONSTRAINT payments_sponsor_id_foreign FOREIGN KEY (sponsor_id) REFERENCES sponsors(id) ON DELETE SET NULL');
-        $this->foreign('payments_corporate_client_id_foreign', 'ALTER TABLE payments ADD CONSTRAINT payments_corporate_client_id_foreign FOREIGN KEY (corporate_client_id) REFERENCES corporate_clients(id) ON DELETE SET NULL');
-        $this->foreign('payments_claim_id_foreign', 'ALTER TABLE payments ADD CONSTRAINT payments_claim_id_foreign FOREIGN KEY (claim_id) REFERENCES claims(id) ON DELETE SET NULL');
+        $this->foreign('payments', 'invoice_receivable_id', 'payments_invoice_receivable_id_foreign', 'ALTER TABLE payments ADD CONSTRAINT payments_invoice_receivable_id_foreign FOREIGN KEY (invoice_receivable_id) REFERENCES invoice_receivables(id) ON DELETE SET NULL');
+        $this->foreign('payments', 'insurance_provider_id', 'payments_insurance_provider_id_foreign', 'ALTER TABLE payments ADD CONSTRAINT payments_insurance_provider_id_foreign FOREIGN KEY (insurance_provider_id) REFERENCES insurance_providers(id) ON DELETE SET NULL');
+        $this->foreign('payments', 'sponsor_id', 'payments_sponsor_id_foreign', 'ALTER TABLE payments ADD CONSTRAINT payments_sponsor_id_foreign FOREIGN KEY (sponsor_id) REFERENCES sponsors(id) ON DELETE SET NULL');
+        $this->foreign('payments', 'corporate_client_id', 'payments_corporate_client_id_foreign', 'ALTER TABLE payments ADD CONSTRAINT payments_corporate_client_id_foreign FOREIGN KEY (corporate_client_id) REFERENCES corporate_clients(id) ON DELETE SET NULL');
+        $this->foreign('payments', 'claim_id', 'payments_claim_id_foreign', 'ALTER TABLE payments ADD CONSTRAINT payments_claim_id_foreign FOREIGN KEY (claim_id) REFERENCES claims(id) ON DELETE SET NULL');
     }
 
     public function down(): void
@@ -136,35 +136,41 @@ return new class extends Migration
         return $row && (int) $row->cnt > 0;
     }
 
-    private function index(string $name, string $statement): void
+    private function index(string $table, string $name, string $statement): void
     {
-        if (! $this->indexExists($name)) {
+        if (! $this->indexExists($table, $name)) {
             DB::statement($statement);
         }
     }
 
-    private function foreign(string $name, string $statement): void
+    private function foreign(string $table, string $column, string $name, string $statement): void
     {
-        if (! $this->foreignExists($name)) {
+        if (! $this->foreignExists($table, $column, $name)) {
             DB::statement($statement);
         }
     }
 
-    private function indexExists(string $index): bool
+    private function indexExists(string $table, string $index): bool
     {
         $row = DB::selectOne(
-            "SELECT COUNT(*) AS cnt FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND INDEX_NAME = ?",
-            [$index]
+            "SELECT COUNT(*) AS cnt FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ?",
+            [$table, $index]
         );
 
         return $row && (int) $row->cnt > 0;
     }
 
-    private function foreignExists(string $foreign): bool
+    private function foreignExists(string $table, string $column, string $foreign): bool
     {
         $row = DB::selectOne(
-            "SELECT COUNT(*) AS cnt FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = DATABASE() AND CONSTRAINT_NAME = ?",
-            [$foreign]
+            "SELECT COUNT(*) AS cnt
+             FROM information_schema.KEY_COLUMN_USAGE
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = ?
+               AND COLUMN_NAME = ?
+               AND CONSTRAINT_NAME = ?
+               AND REFERENCED_TABLE_NAME IS NOT NULL",
+            [$table, $column, $foreign]
         );
 
         return $row && (int) $row->cnt > 0;

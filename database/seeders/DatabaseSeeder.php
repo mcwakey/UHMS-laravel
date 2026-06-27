@@ -46,9 +46,6 @@ class DatabaseSeeder extends Seeder
             // ── Demo users (doctors, nurses, lab, pharmacy …) ────────────
             DemoUserSeeder::class,
 
-            // ── One department + login user per department type (manual dashboard testing) ──
-            DepartmentTypeShowcaseSeeder::class,
-
             // ── Wards / Lab / Analyzers / Patterns ───────────────────────
             WardAndBedSeeder::class,
             LabCatalogSeeder::class,
