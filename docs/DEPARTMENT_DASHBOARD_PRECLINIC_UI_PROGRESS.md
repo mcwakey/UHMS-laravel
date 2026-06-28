@@ -141,9 +141,19 @@ data had Pharmacy stored as `investigation`, Emergency as `consultation`, Billin
 as `administrative`, wards as `administrative`, etc.).
 
 ```
-php artisan db:seed --class=DepartmentTypeShowcaseSeeder
-php artisan optimize:clear     # serve fresh views
+php artisan db:seed --class=DepartmentTypeShowcaseSeeder   # 1 dept + user per type
+php artisan db:seed --class=DepartmentShowcaseDemoSeeder   # 7-day demo data so widgets fill
+php artisan optimize:clear                                 # serve fresh views
 ```
+
+`DepartmentShowcaseDemoSeeder` populates **department-scoped** demo data over the
+last 7 days so the widgets actually draw: stock balances (some below reorder →
+Low Stock + stock donut + usage), visits (queues + visit KPIs + sparklines),
+invoices/items (activity-trend area chart), and prescriptions (pharmacy KPIs +
+dispensing queue). Both seeders resolve departments **by type** and are
+re-runnable. Neither is wired into `DatabaseSeeder` (they're dev tools); add them
+there if you want them in the default seed. Revenue stays `Restricted` unless the
+login's role can view invoices — that's the permission layer, not a bug.
 
 - Login: **`<type>@uhms.local`** / **`password`** (e.g. `pharmacy@uhms.local`).
 - Then open **`/dashboard`** (→ `admin.my-dashboard`). The dashboard you see is

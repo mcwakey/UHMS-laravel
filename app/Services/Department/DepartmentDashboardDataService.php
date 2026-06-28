@@ -217,12 +217,19 @@ class DepartmentDashboardDataService
                     ->whereIn('status', ['pending', 'requested', 'processing', 'sample_collected'])
                     ->latest('id');
             }, 'request_number', 'status', 'admin.lab.requests.show'),
-            'visit_queue', 'department_activity' => $this->tableRows('visits', function ($q) {
+            'visit_queue', 'department_activity', 'emergency_queue', 'procedure_queue', 'financial_queue' => $this->tableRows('visits', function ($q) {
                 return $this->scopeDepartment($q, $this->visitsDepartmentColumn())->latest('id');
             }, 'visit_number', 'status', 'admin.visits.show'),
+            'pharmacy_queue' => $this->tableRows('prescriptions', function ($q) {
+                return $this->scopeDepartment($q, 'department_id')
+                    ->whereIn('status', ['pending', 'billed', 'partially_billed'])
+                    ->latest('id');
+            }, 'prescription_number', 'status', null),
             'admissions_queue' => $this->tableRows('admissions', fn ($q) => $q->where('status', 'admitted')->latest('id'), 'admission_number', 'status', 'admin.admissions.show'),
             'stock_queue' => $this->tableRows('stock_requisitions', fn ($q) => $this->scopeDepartment($q, 'department_id')->latest('id'), 'requisition_number', 'status', 'admin.store.stock-requisitions.show'),
-            default => [],
+            default => $this->tableRows('visits', function ($q) {
+                return $this->scopeDepartment($q, $this->visitsDepartmentColumn())->latest('id');
+            }, 'visit_number', 'status', 'admin.visits.show'),
         };
 
         return [

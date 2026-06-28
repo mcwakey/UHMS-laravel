@@ -54,23 +54,23 @@ class DepartmentTypeShowcaseSeeder extends Seeder
         foreach ($map as $typeValue => [$name, $code, $role, $first, $last]) {
             $i++;
 
-            // Resolve the canonical department for this type by its code, and make
-            // sure its `type` is correct (existing dev data had several mis-typed,
-            // e.g. Pharmacy stored as "investigation"). We only fix the type, never
-            // rename an existing department.
-            $department = Department::where('code', $code)->first();
-            if ($department) {
-                if ($hasType && $department->getRawOriginal('type') !== $typeValue) {
-                    $retyped[] = "{$code}: ".($department->getRawOriginal('type') ?? 'NULL')." → {$typeValue}";
-                    $department->forceFill(['type' => $typeValue])->save();
-                }
-            } else {
+            // Prefer an existing department of this type (department data is keyed by
+            // type, not by our codes). Fall back to a code match, then create one for
+            // any type that has no department yet (ambulance, blood bank, mortuary, …).
+            $department = ($hasType ? Department::where('type', $typeValue)->orderBy('id')->first() : null)
+                ?? Department::where('code', $code)->first();
+
+            if (! $department) {
                 $department = Department::create(array_filter([
                     'name' => $name,
                     'code' => $code,
                     'type' => $hasType ? $typeValue : null,
                     'status' => 'active',
                 ], fn ($value) => $value !== null));
+                $retyped[] = "created {$typeValue} ({$department->name})";
+            } elseif ($hasType && $department->getRawOriginal('type') !== $typeValue) {
+                $retyped[] = "{$department->code}: ".($department->getRawOriginal('type') ?? 'NULL')." → {$typeValue}";
+                $department->forceFill(['type' => $typeValue])->save();
             }
 
             // Make sure the role exists before assigning it.
@@ -108,7 +108,7 @@ class DepartmentTypeShowcaseSeeder extends Seeder
 
         $this->command?->info('Seeded '.count($map).' department-type departments + login users (<type>@uhms.local / password).');
         if ($retyped !== []) {
-            $this->command?->warn('Corrected mis-typed departments: '.implode(', ', $retyped));
+            $this->command?->warn('Created/corrected departments: '.implode(', ', $retyped));
         }
     }
 }

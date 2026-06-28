@@ -10,8 +10,8 @@
 <div class="card shadow-sm mb-3">
     <div class="card-header d-flex align-items-center justify-content-between">
         <h6 class="fw-bold mb-0"><i class="ti ti-chart-line me-1"></i>{{ $title }}</h6>
-        @if(!empty($chart['format']))
-            <span class="badge bg-light text-dark">{{ $chart['format'] }}</span>
+        @if(($chart['format'] ?? null) === 'currency')
+            <span class="badge bg-light text-dark"><i class="ti ti-currency-cedi"></i></span>
         @endif
     </div>
     <div class="card-body">
