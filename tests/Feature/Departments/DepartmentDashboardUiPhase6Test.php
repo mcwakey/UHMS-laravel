@@ -81,9 +81,11 @@ class DepartmentDashboardUiPhase6Test extends TestCase
         $this->assertSame(['Chest X-Ray'], array_column($payload['services']['rows'], 'name'));
     }
 
-    public function test_prices_and_stock_are_restricted_without_permissions(): void
+    public function test_prices_and_stock_are_restricted_without_capability(): void
     {
-        $department = Department::create(['name' => 'Pharmacy', 'code' => 'PHA', 'type' => DepartmentType::PHARMACY->value, 'status' => 'active']);
+        // A consultation user has neither financial nor stock capability (no
+        // permission and the department type doesn't own those domains).
+        $department = Department::create(['name' => 'General OPD', 'code' => 'OPD9', 'type' => DepartmentType::CONSULTATION->value, 'status' => 'active']);
         $user = User::factory()->create(['department_id' => $department->id]);
 
         $payload = app(DepartmentDashboardDataService::class)->build(app(DepartmentContextResolver::class)->resolve($user));

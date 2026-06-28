@@ -19,19 +19,23 @@
                 $initials = \Illuminate\Support\Str::of($label)->squish()->explode(' ')
                     ->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('');
                 $variant = $row['badge_variant'] ?? $accent;
+                $isPriority = (bool) ($row['priority'] ?? false);
             @endphp
-            <div class="d-flex align-items-center gap-3 px-3 py-2 border-bottom department-list-row">
+            <div class="d-flex align-items-center gap-3 px-3 py-2 border-bottom department-list-row @if($isPriority) department-list-row--priority @endif">
                 <span class="avatar rounded-circle bg-{{ $variant }}-subtle text-{{ $variant }} flex-shrink-0">{{ $initials !== '' ? $initials : '#' }}</span>
                 <div class="flex-fill min-w-0">
-                    @if(!empty($row['url']))
-                        <a href="{{ $row['url'] }}" class="fw-semibold text-dark text-decoration-none d-block text-truncate">{{ $label }}</a>
-                    @else
-                        <span class="fw-semibold text-dark d-block text-truncate">{{ $label }}</span>
-                    @endif
+                    <span class="d-flex align-items-center gap-1">
+                        @if($isPriority)<i class="ti ti-flag-filled text-danger flex-shrink-0" title="{{ __('dashboards.department.priority') }}"></i>@endif
+                        @if(!empty($row['url']))
+                            <a href="{{ $row['url'] }}" class="fw-semibold text-dark text-decoration-none text-truncate">{{ $label }}</a>
+                        @else
+                            <span class="fw-semibold text-dark text-truncate">{{ $label }}</span>
+                        @endif
+                    </span>
                     @if(!empty($row['meta']))<div class="small text-muted text-truncate">{{ $row['meta'] }}</div>@endif
                 </div>
                 @if(!empty($row['badge']))
-                    <span class="badge bg-{{ $variant }}-subtle text-{{ $variant }} flex-shrink-0">{{ $row['badge'] }}</span>
+                    <span class="badge bg-{{ $variant }}-subtle text-{{ $variant }} flex-shrink-0">@if(!empty($row['badge_icon']))<i class="ti {{ $row['badge_icon'] }} me-1"></i>@endif{{ $row['badge'] }}</span>
                 @endif
             </div>
         @empty

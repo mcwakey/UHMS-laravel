@@ -7,6 +7,9 @@
                     <i class="ti {{ $theme['hero_icon'] ?? 'ti-layout-dashboard' }} fs-28"></i>
                 </span>
                 <div>
+                    @if(!empty($dashboard['menu_heading']))
+                        <div class="text-uppercase small fw-semibold mb-1 text-{{ $theme['accent_class'] ?? 'secondary' }}" style="letter-spacing:.04em;">{{ $dashboard['menu_heading'] }}</div>
+                    @endif
                     <h3 class="fw-bold mb-1">{{ $dashboard['title'] ?? __('dashboards.department.department_dashboard') }}</h3>
                     <div class="text-muted">
                         {{ $dashboard['subtitle'] ?? '' }}
@@ -24,6 +27,15 @@
                             <span class="badge bg-light text-dark border">{{ __('dashboards.department.current_department') }}: {{ $context->current_department->name }}</span>
                         @endif
                         <span class="badge {{ $theme['badge_class'] ?? 'bg-secondary' }}">{{ $context->department_type_label }}</span>
+                        @if(!empty($operational_status))
+                            <span class="badge bg-{{ $operational_status['variant'] }} d-inline-flex align-items-center gap-1"><i class="ti ti-pulse"></i>{{ $operational_status['label'] }}</span>
+                        @endif
+                        @if(!empty($dashboard['shift']))
+                            <span class="badge bg-light text-dark border"><i class="ti ti-clock-hour-9 me-1"></i>{{ $dashboard['shift'] }}</span>
+                        @endif
+                        @if(!empty($dashboard['last_updated']))
+                            <span class="text-muted small ms-1"><i class="ti ti-refresh me-1"></i>{{ __('dashboards.department.last_updated', ['time' => $dashboard['last_updated']->isoFormat('HH:mm')]) }}</span>
+                        @endif
                         @if($context->is_switched_context)
                             <span class="badge bg-warning text-dark">{{ __('dashboards.department.switched_context') }}</span>
                         @endif

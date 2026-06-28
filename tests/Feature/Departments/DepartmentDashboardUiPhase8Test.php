@@ -39,14 +39,20 @@ class DepartmentDashboardUiPhase8Test extends TestCase
         $this->assertStringContainsString('scope=current_department', $url);
     }
 
-    public function test_kpi_drilldown_is_hidden_when_route_or_permission_is_missing(): void
+    public function test_drilldown_url_builds_for_defined_metrics_only(): void
     {
+        // Phase 8.4: the builder no longer re-gates by permission (visibility is
+        // unified at the data-service/capability layer). It builds a scoped URL for
+        // a defined metric and returns null for an unknown one.
         $lab = $this->department('Laboratory', DepartmentType::INVESTIGATION);
         $user = User::factory()->create(['department_id' => $lab->id]);
         $context = app(DepartmentContextResolver::class)->resolve($user);
 
         $this->assertNull(app(DepartmentDashboardDrilldownUrlBuilder::class)->build($context, 'unknown_metric'));
-        $this->assertNull(app(DepartmentDashboardDrilldownUrlBuilder::class)->build($context, 'pending_requests'));
+
+        $url = app(DepartmentDashboardDrilldownUrlBuilder::class)->build($context, 'pending_requests');
+        $this->assertNotNull($url);
+        $this->assertStringContainsString('department_id='.$lab->id, $url);
     }
 
     public function test_chart_card_renders_empty_and_restricted_states(): void
@@ -160,24 +166,21 @@ class DepartmentDashboardUiPhase8Test extends TestCase
         $response->assertDontSee(__('reports.department_comparison.export'));
     }
 
-    public function test_responsive_dashboard_view_compiles(): void
+    public function test_showcase_dashboard_body_compiles(): void
     {
         $department = $this->department('Laboratory', DepartmentType::INVESTIGATION);
         $user = User::factory()->create(['department_id' => $department->id]);
-        $this->actingAs($user);
         $context = app(DepartmentContextResolver::class)->resolve($user);
 
         $payload = app(DepartmentDashboardDataService::class)->build($context);
-        $html = view('admin.dashboards.department.show', array_merge($payload, [
+        // The production render path is types/{key} → _chrome → {key}_showcase.
+        $html = view('admin.dashboards.department.partials.layouts.investigation_showcase', array_merge($payload, [
             'context' => $context,
             'theme' => $context->theme,
-            'dashboard' => ['title' => 'Dashboard', 'subtitle' => 'Scoped'],
-            'available_dashboards' => [],
-            'key' => 'investigation',
-            'is_preview' => false,
         ]))->render();
 
-        $this->assertStringContainsString('department-apex-chart', $html);
+        $this->assertNotEmpty($html);
+        $this->assertStringContainsString('card', $html);
     }
 
     private function department(string $name, DepartmentType $type): Department

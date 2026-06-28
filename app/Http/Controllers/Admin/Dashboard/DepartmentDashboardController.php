@@ -23,6 +23,7 @@ class DepartmentDashboardController extends Controller
         private DepartmentDashboardResolver $resolver,
         private DepartmentDashboardRegistry $registry,
         private DepartmentMenuProfileService $menuProfiles,
+        private \App\Services\Department\DepartmentDashboardCacheService $dashboardCache,
     ) {}
 
     public function index(Request $request)
@@ -31,7 +32,8 @@ class DepartmentDashboardController extends Controller
         $key = $context->dashboard_key;
         $resolvedKey = $this->resolver->resolveKey($request->user());
 
-        $data = $this->dashboardData->build($context);
+        // Short-TTL, per-department + per-user cache of the assembled payload.
+        $data = $this->dashboardCache->remember($context, fn () => $this->dashboardData->build($context));
         $layout = $data['layout_profile'];
 
         // Identity / personality / scope (the Phase 8.1 core rule):
@@ -61,9 +63,16 @@ class DepartmentDashboardController extends Controller
 
         $data['context'] = $context;
         $data['theme'] = $context->theme;
-        $data['layout_family'] = $layout['layout_family'];
         $data['dashboard_name'] = $dashboardName;
         $data['menu_heading'] = $menuHeading;
+        // Active shift from the wall clock (no query); last refresh = now.
+        $hour = now()->hour;
+        $shift = match (true) {
+            $hour >= 6 && $hour < 14 => __('dashboards.department.shift.morning'),
+            $hour >= 14 && $hour < 22 => __('dashboards.department.shift.afternoon'),
+            default => __('dashboards.department.shift.night'),
+        };
+
         $data['dashboard'] = [
             'key' => $key,
             'title' => $dashboardName,
@@ -71,6 +80,10 @@ class DepartmentDashboardController extends Controller
             'menu_heading' => $menuHeading,
             'welcome' => __('departments.dashboard.welcome_user', ['name' => $context->user->first_name ?? $context->user->name ?? '']),
             'scope_message' => $scopeMessage,
+            'department_name' => $departmentName,
+            'type_label' => $typeLabel,
+            'shift' => $shift,
+            'last_updated' => now(),
         ];
         $data['key'] = $key;
         $data['title'] = $dashboardName;

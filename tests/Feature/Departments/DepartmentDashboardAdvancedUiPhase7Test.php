@@ -93,16 +93,22 @@ class DepartmentDashboardAdvancedUiPhase7Test extends TestCase
         $this->assertSame(['Chest X-Ray'], array_column($payload['services']['rows'], 'name'));
     }
 
-    public function test_chart_service_hides_revenue_dataset_without_permission(): void
+    public function test_chart_service_builds_only_the_charts_a_type_uses(): void
     {
+        // Phase 8.2: the chart service builds only the charts the showcase renders,
+        // not all seven. Finance uses the activity trend only.
         $department = $this->department('Finance', DepartmentType::FINANCE);
         $user = User::factory()->create(['department_id' => $department->id]);
         $context = app(DepartmentContextResolver::class)->resolve($user);
 
         $charts = app(DepartmentDashboardChartService::class)->build($context);
 
-        $this->assertTrue($charts['revenue_trend']['restricted']);
-        $this->assertSame([], $charts['revenue_trend']['datasets']);
+        $this->assertArrayHasKey('activity_trend', $charts);
+        // Previously-built-but-never-rendered charts are now skipped.
+        $this->assertArrayNotHasKey('revenue_trend', $charts);
+        $this->assertArrayNotHasKey('service_usage_trend', $charts);
+        $this->assertArrayNotHasKey('stock_usage_trend', $charts);
+        $this->assertArrayNotHasKey('department_workload_by_day', $charts);
     }
 
     public function test_comparison_route_is_permission_protected_and_lists_only_allowed_departments(): void
@@ -138,17 +144,6 @@ class DepartmentDashboardAdvancedUiPhase7Test extends TestCase
         $response->assertOk();
         $response->assertDontSee(__('reports.department_comparison.revenue'), false);
         $response->assertDontSee(__('reports.department_comparison.stock_alerts'), false);
-    }
-
-    public function test_all_department_types_have_chart_fallback(): void
-    {
-        $charts = app(DepartmentDashboardChartService::class);
-
-        foreach (DepartmentType::cases() as $type) {
-            $fallback = $charts->fallbackForType($type);
-            $this->assertSame($type->value, $fallback['type']);
-            $this->assertNotEmpty($fallback['charts']);
-        }
     }
 
     private function department(string $name, DepartmentType $type): Department

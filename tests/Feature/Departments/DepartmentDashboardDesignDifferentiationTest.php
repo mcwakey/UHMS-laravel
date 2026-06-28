@@ -43,37 +43,15 @@ class DepartmentDashboardDesignDifferentiationTest extends TestCase
         }
     }
 
-    public function test_every_type_resolves_a_known_layout_family(): void
+    public function test_every_type_resolves_a_card_profile_and_name(): void
     {
         $registry = app(DepartmentDashboardLayoutRegistry::class);
-        $this->assertTrue($registry->hasLayoutFamilyForEveryDepartmentType());
+        $this->assertTrue($registry->hasProfileForEveryDepartmentType());
 
-        $expected = [
-            'consultation' => 'clinical_queue',
-            'emergency' => 'emergency_command',
-            'investigation' => 'diagnostic_workbench',
-            'radiology' => 'imaging_workbench',
-            'theatre' => 'surgery_board',
-            'pharmacy' => 'dispensing_stock',
-            'finance' => 'finance_control',
-            'stores' => 'stores_inventory',
-            'records' => 'records_office',
-            'inpatient' => 'ward_board',
-            'mortuary' => 'generic_department',
-            'support' => 'generic_department',
-        ];
-        foreach ($expected as $type => $family) {
-            $this->assertSame($family, $registry->layoutFamilyFor(DepartmentType::from($type)));
-        }
-    }
-
-    public function test_every_layout_family_has_a_blade_partial(): void
-    {
-        foreach (DepartmentDashboardLayoutRegistry::LAYOUT_FAMILIES as $family) {
-            $this->assertTrue(
-                View::exists('admin.dashboards.department.partials.layouts.'.$family),
-                "Missing layout partial for {$family}",
-            );
+        foreach (DepartmentType::cases() as $type) {
+            $profile = $registry->for($type);
+            $this->assertNotEmpty($profile['primary_cards']);
+            $this->assertStringContainsString('Dashboard', __($profile['name_key']));
         }
     }
 
@@ -98,7 +76,6 @@ class DepartmentDashboardDesignDifferentiationTest extends TestCase
         $data = $this->payloadFor($user);
 
         $this->assertSame('Investigation Dashboard', $data['dashboard']['title']);
-        $this->assertSame('diagnostic_workbench', $data['layout_family']);
         $this->assertStringContainsString('Laboratory Department', $data['dashboard']['subtitle']);
         $this->assertStringContainsString('Laboratory Department', $data['dashboard']['scope_message']);
         $this->assertSame('Laboratory Department Workbench', $data['menu_heading']);
@@ -112,7 +89,6 @@ class DepartmentDashboardDesignDifferentiationTest extends TestCase
         $data = $this->payloadFor($user);
 
         $this->assertSame('Radiology Dashboard', $data['dashboard']['title']);
-        $this->assertSame('imaging_workbench', $data['layout_family']);
         $this->assertStringContainsString('X-Ray Unit', $data['dashboard']['subtitle']);
     }
 
@@ -136,7 +112,6 @@ class DepartmentDashboardDesignDifferentiationTest extends TestCase
 
         $data = $this->payloadFor($user);
 
-        $this->assertSame('generic_department', $data['layout_family']);
         $this->assertNotEmpty($data['dashboard']['title']);
         $this->assertSame(__('departments.dashboard.no_department_assigned_dashboard'), $data['dashboard']['scope_message']);
     }
@@ -248,6 +223,41 @@ class DepartmentDashboardDesignDifferentiationTest extends TestCase
             $this->assertNotEmpty($html, "{$showcase} rendered empty");
             $this->assertStringContainsString($data['work_queue']['title'], $html, "{$showcase} missing queue title");
         }
+    }
+
+    public function test_visit_metrics_scope_to_the_users_department(): void
+    {
+        $a = $this->department(DepartmentType::CONSULTATION, 'OPD A', 'OPDA');
+        $b = $this->department(DepartmentType::CONSULTATION, 'OPD B', 'OPDB');
+        $user = User::factory()->create(['department_id' => $a->id]);
+
+        \App\Models\Visit::factory()->count(3)->create(['current_department_id' => $a->id, 'created_by' => $user->id, 'created_at' => now()]);
+        \App\Models\Visit::factory()->count(5)->create(['current_department_id' => $b->id, 'created_by' => $user->id, 'created_at' => now()]);
+
+        $cards = collect($this->payloadFor($user)['primary_cards'])->keyBy('key');
+
+        // Scoped to dept A only — not the 8 total.
+        $this->assertSame(3, $cards['visits_today']['value']);
+    }
+
+    public function test_critical_cases_counts_only_emergency_triaged_active_cases(): void
+    {
+        $er = $this->department(DepartmentType::EMERGENCY, 'Casualty', 'ER');
+        $user = User::factory()->create(['department_id' => $er->id]);
+        $visit = \App\Models\Visit::factory()->create(['current_department_id' => $er->id, 'created_by' => $user->id]);
+
+        $base = ['visit_id' => $visit->id, 'patient_id' => $visit->patient_id, 'arrival_mode' => 'walk_in', 'arrival_time' => now(), 'created_at' => now(), 'updated_at' => now()];
+        \Illuminate\Support\Facades\DB::table('emergency_cases')->insert([
+            ['emergency_number' => 'EM-1', 'emergency_status' => 'IN_TREATMENT', 'final_triage_category' => 'emergency'] + $base,
+            ['emergency_number' => 'EM-2', 'emergency_status' => 'TRIAGED', 'final_triage_category' => 'routine'] + $base,
+            ['emergency_number' => 'EM-3', 'emergency_status' => 'DISCHARGED', 'final_triage_category' => 'emergency'] + $base,
+        ]);
+
+        $cards = collect($this->payloadFor($user)['primary_cards'])->keyBy('key');
+
+        $this->assertSame(2, $cards['active_cases']['value'], 'active = still in the ER');
+        $this->assertSame(1, $cards['critical_cases']['value'], 'critical = active AND emergency-triaged');
+        $this->assertNotSame($cards['active_cases']['value'], $cards['critical_cases']['value']);
     }
 
     private function service(Department $department, string $code, string $name): void

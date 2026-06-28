@@ -6,53 +6,38 @@ use App\Enums\DepartmentType;
 
 /**
  * Resolves the dashboard *personality* for a department type:
- *   - layout_family  → which Blade layout (structure / emphasis) renders
  *   - card profile   → which metric cards + main queue + side cards appear
  *   - name_key       → the department-type dashboard name (departments.dashboards.{type}.name)
- *   - hero_variant   → hero styling hint
  *   - menu heading   → the personalised menu-heading template
  *
  * Keyed on DEPARTMENT TYPE (not the coarser dashboard key) so e.g. radiology gets
- * its own "Radiology Dashboard" / imaging_workbench, distinct from investigation.
+ * its own "Radiology Dashboard", distinct from investigation. The actual body is a
+ * per-key `types/{key}.blade.php` showcase; this registry no longer chooses a Blade
+ * "layout family" (those were retired in Phase 8.6).
  */
 class DepartmentDashboardLayoutRegistry
 {
-    /** All layout family partials under partials/layouts/{family}.blade.php. */
-    public const LAYOUT_FAMILIES = [
-        'clinical_queue',
-        'emergency_command',
-        'diagnostic_workbench',
-        'imaging_workbench',
-        'surgery_board',
-        'ward_board',
-        'dispensing_stock',
-        'finance_control',
-        'stores_inventory',
-        'records_office',
-        'generic_department',
-    ];
-
-    /** type value → [layout_family, hero_variant, menu_heading_template]. Covers all 19 types. */
-    private const FAMILIES = [
-        'consultation'   => ['clinical_queue', 'clinical', 'operations'],
-        'emergency'      => ['emergency_command', 'emergency', 'command_center'],
-        'investigation'  => ['diagnostic_workbench', 'diagnostic', 'workbench'],
-        'radiology'      => ['imaging_workbench', 'imaging', 'workbench'],
-        'procedure'      => ['clinical_queue', 'procedure', 'workbench'],
-        'theatre'        => ['surgery_board', 'surgery', 'workbench'],
-        'treatment'      => ['clinical_queue', 'clinical', 'operations'],
-        'nursing'        => ['ward_board', 'ward', 'operations'],
-        'pharmacy'       => ['dispensing_stock', 'pharmacy', 'operations'],
-        'inpatient'      => ['ward_board', 'ward', 'operations'],
-        'maternity'      => ['ward_board', 'maternity', 'operations'],
-        'blood_bank'     => ['diagnostic_workbench', 'blood_bank', 'workbench'],
-        'mortuary'       => ['generic_department', 'mortuary', 'generic'],
-        'ambulance'      => ['emergency_command', 'ambulance', 'command_center'],
-        'records'        => ['records_office', 'records', 'records_office'],
-        'finance'        => ['finance_control', 'finance', 'control_room'],
-        'stores'         => ['stores_inventory', 'stores', 'inventory'],
-        'support'        => ['generic_department', 'support', 'generic'],
-        'administrative' => ['generic_department', 'admin', 'generic'],
+    /** type value → personalised menu-heading template. Covers all 19 types. */
+    private const MENU_HEADINGS = [
+        'consultation'   => 'operations',
+        'emergency'      => 'command_center',
+        'investigation'  => 'workbench',
+        'radiology'      => 'workbench',
+        'procedure'      => 'workbench',
+        'theatre'        => 'workbench',
+        'treatment'      => 'operations',
+        'nursing'        => 'operations',
+        'pharmacy'       => 'operations',
+        'inpatient'      => 'operations',
+        'maternity'      => 'operations',
+        'blood_bank'     => 'workbench',
+        'mortuary'       => 'generic',
+        'ambulance'      => 'command_center',
+        'records'        => 'records_office',
+        'finance'        => 'control_room',
+        'stores'         => 'inventory',
+        'support'        => 'generic',
+        'administrative' => 'generic',
     ];
 
     private const DEFAULT_PROFILE = [
@@ -83,41 +68,22 @@ class DepartmentDashboardLayoutRegistry
 
     /**
      * Full personality profile for a department type: card layout merged with the
-     * layout family / hero variant / name key / menu-heading template.
+     * name key and menu-heading template.
      */
     public function for(?DepartmentType $type): array
     {
         $value = $type?->value ?? '';
         $cards = self::PROFILES[$value] ?? self::DEFAULT_PROFILE;
-        $family = self::FAMILIES[$value] ?? ['generic_department', 'generic', 'generic'];
 
         return array_merge($cards, [
-            'layout_family' => $family[0],
-            'hero_variant' => $family[1],
-            'menu_heading_template' => $family[2],
+            'menu_heading_template' => $this->menuHeadingTemplateFor($type),
             'name_key' => $this->nameKeyFor($type),
         ]);
     }
 
-    public function layoutFamilyFor(?DepartmentType $type): string
-    {
-        $family = self::FAMILIES[$type?->value ?? ''] ?? null;
-
-        return $family[0] ?? 'generic_department';
-    }
-
-    public function heroVariantFor(?DepartmentType $type): string
-    {
-        $family = self::FAMILIES[$type?->value ?? ''] ?? null;
-
-        return $family[1] ?? 'generic';
-    }
-
     public function menuHeadingTemplateFor(?DepartmentType $type): string
     {
-        $family = self::FAMILIES[$type?->value ?? ''] ?? null;
-
-        return $family[2] ?? 'generic';
+        return self::MENU_HEADINGS[$type?->value ?? ''] ?? 'generic';
     }
 
     public function nameKeyFor(?DepartmentType $type): string
@@ -125,20 +91,15 @@ class DepartmentDashboardLayoutRegistry
         return 'departments.dashboards.'.($type?->value ?? 'generic').'.name';
     }
 
-    public function hasLayoutFamilyForEveryDepartmentType(): bool
+    /** Every department type resolves a card profile (the default covers the rest). */
+    public function hasProfileForEveryDepartmentType(): bool
     {
         foreach (DepartmentType::cases() as $type) {
-            if (! in_array($this->layoutFamilyFor($type), self::LAYOUT_FAMILIES, true)) {
+            if (empty($this->for($type)['primary_cards'])) {
                 return false;
             }
         }
 
         return true;
-    }
-
-    /** Back-compat with the Phase 6 test. */
-    public function hasProfileForEveryDepartmentType(): bool
-    {
-        return $this->hasLayoutFamilyForEveryDepartmentType();
     }
 }

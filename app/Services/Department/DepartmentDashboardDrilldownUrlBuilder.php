@@ -14,9 +14,9 @@ class DepartmentDashboardDrilldownUrlBuilder
             return null;
         }
 
-        if (($definition['permission'] ?? null) && ! $context->user->can($definition['permission'])) {
-            return null;
-        }
+        // Unified visibility: the data service only calls this once the metric's
+        // capability check has passed, so the drilldown follows the card (no separate
+        // re-gating that could hide a link under a visible value).
 
         $filters = $definition['filters'] ?? [];
         if ($context->department_id) {
@@ -29,6 +29,7 @@ class DepartmentDashboardDrilldownUrlBuilder
 
         return route($definition['route'], $filters);
     }
+
 
     private function definition(string $metricKey): ?array
     {

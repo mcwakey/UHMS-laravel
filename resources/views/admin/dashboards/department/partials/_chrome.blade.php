@@ -2,6 +2,10 @@
      Included by dashboard-body (family layouts) and by bespoke per-type showcases. --}}
 @include('admin.dashboards.department.partials.hero', compact('context', 'theme', 'dashboard', 'available_dashboards', 'key'))
 
+@include('admin.dashboards.department.partials.priority-banner')
+
+@include('admin.dashboards.department.partials.identity-widget')
+
 @includeWhen(!empty($dashboardPersonalization), 'admin.dashboards.department.partials.personalized-command-strip')
 
 @if(!empty($is_preview))
@@ -21,6 +25,8 @@
     .department-list-row { transition: background-color .12s ease; }
     .department-list-row:last-child { border-bottom: 0 !important; }
     .department-list-row:hover { background-color: rgba(15, 23, 42, .03); }
+    .department-list-row--priority { border-left: 3px solid var(--bs-danger); background-color: rgba(220, 53, 69, .04); }
+    .department-identity-widget { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
     @media (max-width: 575.98px) {
         .department-apex-chart { min-height: 190px !important; }
         .department-kpi-link .card-body,
