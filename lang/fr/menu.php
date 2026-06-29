@@ -31,6 +31,8 @@ return [
     // Items
     'dashboard' => 'Tableau de bord',
     'other_dashboards' => 'Autres tableaux de bord',
+    'journey_worklist' => 'Liste de travail',
+    'flow_analytics' => 'Analytique du flux',
     'patients' => 'Patients',
     'appointments' => 'Rendez-vous',
     'my_appointments' => 'Mes rendez-vous',

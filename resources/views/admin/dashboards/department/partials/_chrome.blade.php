@@ -4,6 +4,8 @@
 
 @include('admin.dashboards.department.partials.priority-banner')
 
+@include('admin.dashboards.department.partials.journey-insight')
+
 @include('admin.dashboards.department.partials.identity-widget')
 
 @includeWhen(!empty($dashboardPersonalization), 'admin.dashboards.department.partials.personalized-command-strip')

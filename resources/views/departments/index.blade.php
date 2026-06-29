@@ -175,6 +175,24 @@
                             <option value="inactive" {{ $dept->status === 'inactive' ? 'selected' : '' }}>Inactive</option>
                         </select>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ __('journey.supervisor.supervisor') }}</label>
+                        <select name="supervisor_user_id" class="form-select">
+                            <option value="">{{ __('journey.supervisor.none') }}</option>
+                            @foreach($supervisorCandidates as $candidate)
+                                <option value="{{ $candidate->id }}" {{ (int) $dept->supervisor_user_id === $candidate->id ? 'selected' : '' }}>{{ trim($candidate->first_name.' '.$candidate->last_name) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ __('journey.supervisor.escalation_user') }}</label>
+                        <select name="escalation_user_id" class="form-select">
+                            <option value="">{{ __('journey.supervisor.none') }}</option>
+                            @foreach($supervisorCandidates as $candidate)
+                                <option value="{{ $candidate->id }}" {{ (int) $dept->escalation_user_id === $candidate->id ? 'selected' : '' }}>{{ trim($candidate->first_name.' '.$candidate->last_name) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>

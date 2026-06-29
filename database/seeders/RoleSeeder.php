@@ -765,6 +765,16 @@ class RoleSeeder extends Seeder
             // ── User account admin (extra) ───────────────────────────────
             'users.disable',
             'users.reset_password',
+
+            // ── Journey coordination oversight (Phase 9.7) ───────────────
+            // Cross-department coordination oversight: critical escalation
+            // recipients + oversight worklist. Intended for hospital administrator,
+            // operations manager, medical director, matron/nursing supervisor.
+            // Super Admin & Admin receive it via syncPermissions(all); grant to
+            // specific oversight roles as needed.
+            'journey.oversight',
+            // Phase 9.9 — view explainable breach-risk predictions.
+            'journey.predictions.view',
         ];
 
         // Create all permissions

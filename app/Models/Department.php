@@ -21,6 +21,8 @@ class Department extends Model
         'status',
         'result_type',
         'is_stock_managed',
+        'supervisor_user_id',
+        'escalation_user_id',
     ];
 
     protected function casts(): array
@@ -35,6 +37,18 @@ class Department extends Model
     public function designations(): HasMany
     {
         return $this->hasMany(Designation::class);
+    }
+
+    /** Primary escalation supervisor (Phase 9.7). */
+    public function supervisor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'supervisor_user_id');
+    }
+
+    /** Secondary escalation contact (Phase 9.7). */
+    public function escalationUser(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'escalation_user_id');
     }
 
     public function users(): HasMany

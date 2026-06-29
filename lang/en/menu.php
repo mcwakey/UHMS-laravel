@@ -37,6 +37,8 @@ return [
     // Items
     'dashboard' => 'Dashboard',
     'other_dashboards' => 'Other Dashboards',
+    'journey_worklist' => 'Journey Worklist',
+    'flow_analytics' => 'Flow Analytics',
     'patients' => 'Patients',
     'appointments' => 'Appointments',
     'my_appointments' => 'My Appointments',

@@ -20,6 +20,10 @@ class DepartmentSeeder extends Seeder
             DB::table('departments')
                 ->where('result_type', 'rich_text')
                 ->update(['result_type' => ResultType::RICHTEXT->value]);
+
+            DB::table('departments')
+                ->where('result_type', 'structured')
+                ->update(['result_type' => ResultType::PARAMETERS->value]);
         }
 
         // type drives clinical routing (consultation / investigation / pharmacy / etc.).

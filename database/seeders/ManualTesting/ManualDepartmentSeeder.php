@@ -2,6 +2,8 @@
 
 namespace Database\Seeders\ManualTesting;
 
+use App\Enums\ResultType;
+
 class ManualDepartmentSeeder extends ManualTestingSeederBase
 {
     public function run(): void
@@ -36,7 +38,11 @@ class ManualDepartmentSeeder extends ManualTestingSeederBase
                 'description' => "{$name} Dashboard - manual test department for {$type} workflows.",
                 'type' => $type,
                 'status' => 'active',
-                'result_type' => in_array($type, ['investigation', 'radiology'], true) ? 'structured' : 'none',
+                'result_type' => match ($type) {
+                    'investigation' => ResultType::PARAMETERS->value,
+                    'radiology' => ResultType::RICHTEXT->value,
+                    default => ResultType::NONE->value,
+                },
                 'is_stock_managed' => in_array($type, ['pharmacy', 'stores', 'theatre', 'procedure', 'investigation'], true),
                 'created_at' => $this->now(),
                 'updated_at' => $this->now(),

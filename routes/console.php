@@ -19,3 +19,29 @@ Schedule::command('permissions:export')
     ->cron('0 3 1 1,4,7,10 *')
     ->withoutOverlapping()
     ->onOneServer();
+
+// Phase 9.6 — proactive journey handoff escalation + stale cleanup. Idempotent and
+// bounded; gated by config and protected against overlapping runs.
+if (config('journey.handoff_escalation.enabled', true)) {
+    $journeyEvent = Schedule::command('journey:handoffs:escalate')
+        ->withoutOverlapping()
+        ->onOneServer();
+    $frequency = (string) config('journey.handoff_escalation.frequency', 'everyFiveMinutes');
+    method_exists($journeyEvent, $frequency) ? $journeyEvent->{$frequency}() : $journeyEvent->everyFiveMinutes();
+}
+
+// Phase 9.8 — daily aggregate analytics snapshot. Idempotent + non-overlapping.
+if (config('journey.analytics_snapshot.enabled', true)) {
+    Schedule::command('journey:analytics:snapshot')
+        ->dailyAt((string) config('journey.analytics_snapshot.daily_time', '00:30'))
+        ->withoutOverlapping()
+        ->onOneServer();
+}
+
+// Phase 9.10 — capture predictions hourly, evaluate them daily (idempotent).
+if (config('journey.prediction_accuracy.enabled', true)) {
+    Schedule::command('journey:predictions:evaluate --capture')
+        ->hourly()->withoutOverlapping()->onOneServer();
+    Schedule::command('journey:predictions:evaluate --evaluate')
+        ->dailyAt('01:00')->withoutOverlapping()->onOneServer();
+}

@@ -28,6 +28,8 @@
     </x-slot:actions>
 </x-page-header-back>
 
+@include('partials.patient-journey-widget', ['visit' => $visit])
+
 <!-- Page Header -->
 <!-- <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
     <h6 class="fw-bold mb-0 d-flex align-items-center">

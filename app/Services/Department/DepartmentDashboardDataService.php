@@ -30,6 +30,9 @@ class DepartmentDashboardDataService
         private DepartmentDashboardCapabilityService $capabilities,
         private DepartmentMetricDefinitionService $metricDefinitions,
         private DepartmentAlertService $alerts,
+        private \App\Services\Journey\JourneyBottleneckService $journeyBottlenecks,
+        private \App\Services\Journey\JourneyHandoffWorklistService $journeyHandoffs,
+        private \App\Services\Journey\JourneyPredictionAccuracyService $journeyAccuracy,
     ) {}
 
     /** A short, localized relative/clock time for queue & activity rows. */
@@ -105,6 +108,14 @@ class DepartmentDashboardDataService
             'identity_widget' => $this->identityWidgets->build($context->department_type, $cardValue),
             'alerts' => $alerts,
             'operational_status' => $this->alerts->statusFor($context->department_type, $cardValue, $alerts),
+            // Phase 9.2: optional journey bottleneck insight (null unless flow-relevant
+            // + permitted). One scoped query, cached with the payload.
+            'journey_insight' => $this->journeyBottlenecks->insightForUser($this->user, $context->department_id, $context->department_type?->value),
+            'journey_handoff' => $this->journeyHandoffs->summaryForContext($context->department_id, $context->department_type?->value, $this->user),
+            'journey_my_assignments' => $this->journeyHandoffs->myActiveAssignmentCount($this->user),
+            'journey_prediction_accuracy' => $this->user->can('journey.predictions.view')
+                ? $this->journeyAccuracy->dashboardAccuracy($context->department_type?->value)
+                : null,
             'work_queue' => $this->workQueue((string) ($layout['main_queue'] ?? 'department_activity')),
             'quick_actions' => $this->quickActions(),
             'services' => $services,

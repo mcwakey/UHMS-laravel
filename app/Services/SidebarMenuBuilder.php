@@ -47,6 +47,20 @@ class SidebarMenuBuilder
                         'route' => 'admin.my-dashboard',
                         'active_patterns' => ['admin.my-dashboard'],
                     ],
+                    [
+                        'label' => 'Journey Worklist',
+                        'icon' => 'ti ti-list-check',
+                        'route' => 'admin.journey.worklist',
+                        'active_patterns' => ['admin.journey.worklist'],
+                        'visible' => fn (User $user) => app(\App\Services\Department\DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== [],
+                    ],
+                    [
+                        'label' => 'Flow Analytics',
+                        'icon' => 'ti ti-chart-histogram',
+                        'route' => 'admin.journey.analytics',
+                        'active_patterns' => ['admin.journey.analytics'],
+                        'visible' => fn (User $user) => $user->can('journey.oversight') || app(\App\Services\Department\DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== [],
+                    ],
                 ],
             ],
             [
@@ -1811,6 +1825,13 @@ class SidebarMenuBuilder
                         'route' => 'admin.my-dashboard',
                         'active_patterns' => ['admin.my-dashboard', 'dashboard'],
                     ],
+                    [
+                        'label' => 'Journey Worklist',
+                        'icon' => 'ti ti-list-check',
+                        'route' => 'admin.journey.worklist',
+                        'active_patterns' => ['admin.journey.worklist'],
+                        'visible' => fn (User $user) => app(\App\Services\Department\DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== [],
+                    ],
                 ],
             ],
             [
@@ -2064,6 +2085,11 @@ class SidebarMenuBuilder
         }
 
         if (! empty($item['roles_any']) && ! $user->hasAnyRole($item['roles_any'])) {
+            return false;
+        }
+
+        // Custom visibility callback (e.g. capability-based gating that isn't a Spatie permission).
+        if (isset($item['visible']) && is_callable($item['visible']) && ! ($item['visible'])($user)) {
             return false;
         }
 
