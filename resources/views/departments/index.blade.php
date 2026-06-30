@@ -42,7 +42,9 @@
                         <td class="fw-medium">{{ $dept->name }}</td>
                         <td>
                             @if($dept->type)
-                                <x-status-badge :status="$dept->type" />
+                                <span class="badge bg-{{ $dept->type->color() }}">
+                                    {{ $dept->type->translatedLabel() }}
+                                </span>
                             @else
                                 <span class="text-muted small">—</span>
                             @endif
@@ -50,10 +52,10 @@
                         <td>
                             @if($dept->result_type && $dept->result_type->value !== 'none')
                                 <span class="badge bg-{{ $dept->result_type->color() }}">
-                                    <i class="ti {{ $dept->result_type->icon() }} me-1"></i>{{ $dept->result_type->label() }}
+                                    <i class="ti {{ $dept->result_type->icon() }} me-1"></i>{{ $dept->result_type->translatedLabel() }}
                                 </span>
                             @else
-                                <span class="text-muted small">None</span>
+                                <span class="text-muted small">{{ __('departments.result_types.none') }}</span>
                             @endif
                         </td>
                         <td class="text-center">
@@ -138,7 +140,7 @@
                                 <option value="">— Select Type —</option>
                                 @foreach($departmentTypes as $type)
                                     <option value="{{ $type->value }}" {{ $dept->type?->value === $type->value ? 'selected' : '' }}>
-                                        {{ $type->label() }}
+                                        {{ $type->translatedLabel() }}
                                     </option>
                                 @endforeach
                             </select>
@@ -149,7 +151,7 @@
                         <select name="result_type" class="form-select" required>
                             @foreach($resultTypes as $rt)
                             <option value="{{ $rt->value }}" {{ $dept->result_type?->value === $rt->value ? 'selected' : '' }}>
-                                {{ $rt->label() }}
+                                {{ $rt->translatedLabel() }}
                             </option>
                             @endforeach
                         </select>
@@ -229,7 +231,7 @@
                             <select name="type" class="form-select">
                                 <option value="">— Select Type —</option>
                                 @foreach($departmentTypes as $type)
-                                    <option value="{{ $type->value }}">{{ $type->label() }}</option>
+                                    <option value="{{ $type->value }}">{{ $type->translatedLabel() }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -238,7 +240,7 @@
                         <label class="form-label fw-medium">Result Type <span class="text-danger">*</span></label>
                         <select name="result_type" class="form-select" required>
                             @foreach($resultTypes as $rt)
-                            <option value="{{ $rt->value }}" {{ $rt->value === 'none' ? 'selected' : '' }}>{{ $rt->label() }}</option>
+                            <option value="{{ $rt->value }}" {{ $rt->value === 'none' ? 'selected' : '' }}>{{ $rt->translatedLabel() }}</option>
                             @endforeach
                         </select>
                         <div class="form-text">Determines what type of report/result this department sends back.</div>

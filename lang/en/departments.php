@@ -33,6 +33,15 @@ return [
         'administrative' => 'Administrative',
     ],
 
+    'result_types' => [
+        'none' => 'No Result',
+        'parameters' => 'Parameters',
+        'structured' => 'Parameters',
+        'richtext' => 'Rich Text Report',
+        'image' => 'Image Upload',
+        'document' => 'Document Upload',
+    ],
+
     // Department-type dashboard names (keyed by DepartmentType value).
     'dashboards' => [
         'consultation' => ['name' => 'Consultation Dashboard'],

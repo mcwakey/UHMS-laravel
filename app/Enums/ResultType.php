@@ -25,7 +25,15 @@ enum ResultType: string
 
     public function translatedLabel(): string
     {
-        return __('statuses.default.' . $this->value);
+        $key = 'departments.result_types.' . ($this === self::STRUCTURED ? self::PARAMETERS->value : $this->value);
+
+        if (\Illuminate\Support\Facades\Lang::has($key)) {
+            return __($key);
+        }
+
+        $statusKey = 'statuses.default.' . $this->value;
+
+        return \Illuminate\Support\Facades\Lang::has($statusKey) ? __($statusKey) : $this->label();
     }
 
     public function icon(): string

@@ -32,6 +32,14 @@ return [
         'support' => 'Support',
         'administrative' => 'Administration',
     ],
+    'result_types' => [
+        'none' => 'Aucun résultat',
+        'parameters' => 'Paramètres',
+        'structured' => 'Paramètres',
+        'richtext' => 'Rapport texte enrichi',
+        'image' => 'Image',
+        'document' => 'Document',
+    ],
 
     // Noms des tableaux de bord par type de département.
     'dashboards' => [

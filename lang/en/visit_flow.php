@@ -20,7 +20,9 @@ return [
 
     'attendance_class' => [
         'first_ever' => 'First Ever',
+        'first_year' => 'First Attendance of Year',
         'first_attendance_of_year' => 'First Attendance of Year',
+        'subsequent' => 'Subsequent Attendance',
         'subsequent_attendance' => 'Subsequent Attendance',
         'emergency_attendance' => 'Emergency Attendance',
         'referral_attendance' => 'Referral Attendance',

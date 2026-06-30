@@ -20,7 +20,9 @@ return [
 
     'attendance_class' => [
         'first_ever' => 'Première venue',
+        'first_year' => 'Première venue de l\'année',
         'first_attendance_of_year' => 'Première venue de l\'année',
+        'subsequent' => 'Venue ultérieure',
         'subsequent_attendance' => 'Venue ultérieure',
         'emergency_attendance' => 'Venue en urgence',
         'referral_attendance' => 'Venue sur référence',
