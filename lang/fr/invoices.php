@@ -74,6 +74,8 @@ return [
     'pricing'               => 'Tarification',
     'price'                 => 'Prix',
     'covered'               => 'Couvert',
+    'selected_insurance_price' => 'Prix assurance selectionne',
+    'coverage_percent'      => ':percent% couvert',
     'patient_payable'       => 'Part patient',
     'paid'                  => 'Payé',
     'gross_total'           => 'Total brut',

@@ -48,6 +48,23 @@ class ReceivableAccountingService
         };
     }
 
+    public function accountForPatientResponsibility(Invoice $invoice): Account
+    {
+        $billingType = $invoice->billing_type instanceof BillingType
+            ? $invoice->billing_type->value
+            : (string) $invoice->billing_type;
+
+        if ($invoice->sponsor_id) {
+            return $this->requiredAccount('sponsor_receivable_account_id');
+        }
+
+        if ($billingType === BillingType::CORPORATE->value && $invoice->corporate_client_id) {
+            return $this->requiredAccount('corporate_receivable_account_id');
+        }
+
+        return $this->requiredAccount('patient_receivable_account_id');
+    }
+
     public function accountForPayment(Payment $payment): Account
     {
         if ($payment->receivable) {

@@ -33,6 +33,10 @@ class InvoiceReceivableService
             if ($invoice->receivables->isEmpty()) {
                 $this->seedReceivables($invoice);
                 $invoice->load('receivables');
+            } elseif ($this->canRebuildSystemReceivables($invoice)) {
+                $invoice->receivables()->delete();
+                $this->seedReceivables($invoice);
+                $invoice->load('receivables');
             }
 
             $this->attachClaimToInsuranceReceivables($invoice);
@@ -189,29 +193,20 @@ class InvoiceReceivableService
         $groups = [];
 
         foreach ($invoice->items as $item) {
-            $amount = round((float) $item->patient_payable, 2);
-            if ($amount <= 0) {
-                continue;
+            $patientAmount = round((float) $item->patient_payable, 2);
+            if ($patientAmount > 0) {
+                $this->addReceivableGroup(
+                    $groups,
+                    $this->identityForItem($invoice, $item),
+                    $patientAmount,
+                    (float) $item->discount_amount
+                );
             }
 
-            $identity = $this->identityForItem($invoice, $item);
-            $key = implode('|', [
-                $identity['payer_type'],
-                $identity['payer_id'] ?? '',
-                $identity['insurance_provider_id'] ?? '',
-                $identity['sponsor_id'] ?? '',
-                $identity['corporate_client_id'] ?? '',
-            ]);
-
-            $groups[$key] ??= array_merge($identity, [
-                'original_amount' => 0.0,
-                'allocated_amount' => 0.0,
-                'discount_amount' => 0.0,
-            ]);
-
-            $groups[$key]['original_amount'] += $amount;
-            $groups[$key]['allocated_amount'] += $amount;
-            $groups[$key]['discount_amount'] += (float) $item->discount_amount;
+            $insuranceAmount = round((float) $item->insurance_covered, 2);
+            if ($insuranceAmount > 0 && $identity = $this->identityForInsuranceCoverage($invoice, $item)) {
+                $this->addReceivableGroup($groups, $identity, $insuranceAmount, 0.0);
+            }
         }
 
         if (empty($groups) && (float) $invoice->total_amount > 0) {
@@ -246,22 +241,69 @@ class InvoiceReceivableService
     private function identityForItem(Invoice $invoice, InvoiceItem $item): array
     {
         $itemPayer = $this->normalizePayerType($item->payer_type);
-        if ($itemPayer === InvoiceReceivable::PAYER_INSURANCE) {
-            $providerId = $item->insurance_provider_id ?? $invoice->visit?->visitInsurance?->insurance_provider_id;
-
-            return [
-                'payer_type' => InvoiceReceivable::PAYER_INSURANCE,
-                'payer_id' => $providerId,
-                'insurance_provider_id' => $providerId,
-                'sponsor_id' => null,
-                'corporate_client_id' => null,
-                'claim_id' => $invoice->claim?->id,
-                'sponsor_authorization_id' => null,
-                'corporate_account_id' => null,
-            ];
+        if ($itemPayer === InvoiceReceivable::PAYER_SPONSOR && $invoice->sponsor_id) {
+            return $this->identityForInvoice($invoice);
         }
 
+        if ($itemPayer === InvoiceReceivable::PAYER_CORPORATE && $invoice->corporate_client_id) {
+            return $this->identityForInvoice($invoice);
+        }
+
+        // Insurance coverage reduces the bill, but the remaining patient_payable
+        // balance is still collected from the patient unless it is explicitly
+        // reallocated to a sponsor/corporate payer.
         return $this->identityForInvoice($invoice);
+    }
+
+    private function identityForInsuranceCoverage(Invoice $invoice, InvoiceItem $item): ?array
+    {
+        $providerId = $item->insurance_provider_id ?? $invoice->visit?->visitInsurance?->insurance_provider_id;
+        if (! $providerId) {
+            return null;
+        }
+
+        return [
+            'payer_type' => InvoiceReceivable::PAYER_INSURANCE,
+            'payer_id' => $providerId,
+            'insurance_provider_id' => $providerId,
+            'sponsor_id' => null,
+            'corporate_client_id' => null,
+            'claim_id' => $invoice->claim?->id,
+            'sponsor_authorization_id' => null,
+            'corporate_account_id' => null,
+        ];
+    }
+
+    private function addReceivableGroup(array &$groups, array $identity, float $amount, float $discount): void
+    {
+        $key = implode('|', [
+            $identity['payer_type'],
+            $identity['payer_id'] ?? '',
+            $identity['insurance_provider_id'] ?? '',
+            $identity['sponsor_id'] ?? '',
+            $identity['corporate_client_id'] ?? '',
+        ]);
+
+        $groups[$key] ??= array_merge($identity, [
+            'original_amount' => 0.0,
+            'allocated_amount' => 0.0,
+            'discount_amount' => 0.0,
+        ]);
+
+        $groups[$key]['original_amount'] += $amount;
+        $groups[$key]['allocated_amount'] += $amount;
+        $groups[$key]['discount_amount'] += $discount;
+    }
+
+    private function canRebuildSystemReceivables(Invoice $invoice): bool
+    {
+        return $invoice->receivables->isNotEmpty()
+            && $invoice->receivables->every(fn (InvoiceReceivable $row) => $row->allocation_source === 'system'
+                && (float) $row->paid_amount <= 0
+                && (float) $row->credit_note_amount <= 0
+                && (float) $row->write_off_amount <= 0
+                && (float) $row->refund_amount <= 0
+                && $row->journal_entry_id === null);
     }
 
     private function identityForInvoice(Invoice $invoice): array

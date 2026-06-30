@@ -156,15 +156,13 @@ class InsuranceService
         // ── Coverage of payer-specific price ───────────────────────────────────
         // IMPORTANT: $incomingAmount is already the payer-specific (insurance) price
         // resolved via ServicePriceResolver / ServiceCatalog::getPriceForInsurance().
-        // The insurance therefore pays the FULL incoming amount, subject only to
-        // the hard caps above (per-visit / monthly / annual). We do NOT re-apply
-        // any coverage_percentage on top — that would be a double discount.
-        //
-        // The legacy `coverage_percentage` field on insurance_tiers is kept for
-        // backward compatibility but is no longer used to recompute the bill.
-        $requestedCoverage = round($incomingAmount, 2);
+        // The tier coverage percentage applies to that selected amount, subject to
+        // the hard caps above (per-visit / monthly / annual). Cash/base price is
+        // not used to calculate the covered amount.
+        $coveragePercent = min(100.0, max(0.0, (float) ($constraints['coverage_percentage'] ?? 100)));
+        $requestedCoverage = round($incomingAmount * ($coveragePercent / 100), 2);
 
-        $finalCovered = min($requestedCoverage, $capacityByLimits);
+        $finalCovered = min($requestedCoverage, $capacityByLimits, $incomingAmount);
         $finalCovered = round(max(0.0, $finalCovered), 2);
         $patientPays  = round($incomingAmount - $finalCovered, 2);
 

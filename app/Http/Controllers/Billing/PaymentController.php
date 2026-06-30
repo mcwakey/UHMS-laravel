@@ -27,8 +27,9 @@ class PaymentController extends Controller
     public function receive(Request $request)
     {
         $query = Invoice::with(['patient', 'visit.department'])
+            ->withSum(['items as cashier_balance' => fn ($q) => $q->where('balance', '>', 0)], 'balance')
             ->unpaid()
-            ->where('balance', '>', 0);
+            ->whereHas('items', fn ($q) => $q->where('balance', '>', 0));
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -56,7 +57,7 @@ class PaymentController extends Controller
 
         $stats = [
             'waiting_invoices' => (clone $query)->count(),
-            'outstanding_balance' => (clone $query)->sum('balance'),
+            'outstanding_balance' => (clone $query)->get()->sum(fn ($invoice) => (float) $invoice->cashier_balance),
             'cashier_today' => Payment::where('received_by', $request->user()->id)
                 ->whereDate('paid_at', today())
                 ->sum('amount'),
@@ -138,14 +139,23 @@ class PaymentController extends Controller
             return back()->with('error', __('messages.payments.cannot_record'));
         }
 
-        if ((float) $validated['amount'] > (float) $invoice->balance) {
+        $collectableBalance = (float) $invoice->balance;
+        if ($request->input('return_to') === 'receive') {
+            $validated['payer_type'] = 'patient';
+            $validated['payer_id'] = $invoice->patient_id;
+            $collectableBalance = (float) $invoice->items()
+                ->where('balance', '>', 0)
+                ->sum('balance');
+        }
+
+        if ((float) $validated['amount'] > $collectableBalance) {
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => __('messages.payments.exceeds_balance', ['balance' => '₵' . number_format($invoice->balance, 2)]),
+                    'message' => __('messages.payments.exceeds_balance', ['balance' => '₵' . number_format($collectableBalance, 2)]),
                 ], 422);
             }
 
-            return back()->with('error', __('messages.payments.exceeds_balance', ['balance' => '₵' . number_format($invoice->balance, 2)]));
+            return back()->with('error', __('messages.payments.exceeds_balance', ['balance' => '₵' . number_format($collectableBalance, 2)]));
         }
 
         if ($validated['payment_method'] === PaymentMethod::CASH->value && ! $this->accountingService->getOpenShift()) {

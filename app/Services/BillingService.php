@@ -40,9 +40,9 @@ class BillingService
      *   cash_price        = service base price
      *   insurance_price   = resolved insurance rate (null for cash & carry)
      *   selected_price    = insurance_price when insurance applies, else cash_price
-     *   insurance_covered = (cash_price - insurance_price) * quantity   (INFO ONLY)
+     *   insurance_covered = selected insurance line total * tier coverage %
      *   discount_amount   = 0 on creation (set later via applyDiscount)
-     *   patient_payable   = (selected_price * quantity) - discount_amount
+     *   patient_payable   = (selected_price * quantity) - insurance_covered - discount_amount
      *   paid_amount       = 0
      *   balance           = patient_payable - paid_amount
      *
@@ -129,22 +129,15 @@ class BillingService
                 $isInsurance = false;
             }
 
-            // Canonical formulas (per UHMS billing rules).
-            $insurancePrice = $isInsurance ? $selectedPrice : null;
+            $hasSelectedInsurancePrice = $this->hasSelectedInsurancePrice($payerType, $pricingSrc);
+            $insurancePrice = $hasSelectedInsurancePrice ? $selectedPrice : null;
             $lineTotal = round($selectedPrice * $quantity, 2);
-            $insuranceCovered = $isInsurance
-                ? max(0.0, round(($cashPrice - $selectedPrice) * $quantity, 2))
-                : 0.0;
             $discountAmount = 0.0; // discounts are applied later via applyDiscount()
-            $patientPayable = max(0.0, round($lineTotal - $discountAmount, 2));
+            $coverage = $this->evaluateLineCoverage($visit, $lineTotal, $payerType, $pricingSrc);
+            $insuranceCovered = $coverage['covered'];
+            $patientPayable = max(0.0, round($coverage['patient_payable'] - $discountAmount, 2));
             $balance = $patientPayable;
             $paymentStatus = $patientPayable <= 0.0 ? 'paid' : 'unpaid';
-
-            // Resolve visit insurance link (for audit only; no longer reduces payable).
-            $visit->loadMissing('visitInsurance.insuranceProvider');
-            $visitIns = $visit->visitInsurance;
-            $hasIns = $visitIns && $visitIns->is_active && ! $visitIns->is_expired
-                && $visitIns->insuranceProvider && ! $visitIns->insuranceProvider->is_default;
 
             $item = InvoiceItem::create([
                 'invoice_id' => $invoice->id,
@@ -171,7 +164,7 @@ class BillingService
                 'total_price' => $lineTotal,
                 'payer_type' => $payerType,
                 'insurance_provider_id' => $providerId,
-                'patient_insurance_id' => $hasIns ? $visitIns->id : null,
+                'patient_insurance_id' => $coverage['has_insurance'] ? $coverage['insurance']->id : null,
                 'insurance_type' => $insType,
                 'pricing_source' => $pricingSrc,
                 'created_by' => Auth::id(),
@@ -422,20 +415,15 @@ class BillingService
             $pricingSrc = $snap['pricing_source'] ?? 'cash_price';
             $isInsurance = $payerType === 'insurance';
 
-            $insurancePrice = $isInsurance ? $selectedPrice : null;
+            $hasSelectedInsurancePrice = $this->hasSelectedInsurancePrice($payerType, $pricingSrc);
+            $insurancePrice = $hasSelectedInsurancePrice ? $selectedPrice : null;
             $lineTotal = round($selectedPrice * $quantity, 2);
-            $insuranceCovered = $isInsurance
-                ? max(0.0, round(($cashPrice - $selectedPrice) * $quantity, 2))
-                : 0.0;
             $discountAmount = 0.0;
-            $patientPayable = max(0.0, round($lineTotal - $discountAmount, 2));
+            $coverage = $this->evaluateLineCoverage($visit, $lineTotal, $payerType, $pricingSrc);
+            $insuranceCovered = $coverage['covered'];
+            $patientPayable = max(0.0, round($coverage['patient_payable'] - $discountAmount, 2));
             $balance = $patientPayable;
             $paymentStatus = $patientPayable <= 0.0 ? 'paid' : 'unpaid';
-
-            $visit->loadMissing('visitInsurance.insuranceProvider');
-            $visitIns = $visit->visitInsurance;
-            $hasIns = $visitIns && $visitIns->is_active && ! $visitIns->is_expired
-                && $visitIns->insuranceProvider && ! $visitIns->insuranceProvider->is_default;
 
             $item = InvoiceItem::create([
                 'invoice_id' => $invoice->id,
@@ -461,7 +449,7 @@ class BillingService
                 'total_price' => $lineTotal,
                 'payer_type' => $payerType,
                 'insurance_provider_id' => $providerId,
-                'patient_insurance_id' => $hasIns ? $visitIns->id : null,
+                'patient_insurance_id' => $coverage['has_insurance'] ? $coverage['insurance']->id : null,
                 'insurance_type' => $insType,
                 'pricing_source' => $pricingSrc,
                 'created_by' => Auth::id(),
@@ -519,9 +507,7 @@ class BillingService
                 $unitPrice = $item['selected_price'] ?? $item['unit_price'] ?? $item['cash_price'] ?? 0;
                 $lineTotal = $unitPrice * ($item['quantity'] ?? 1);
                 $subtotal += $lineTotal;
-                if (! empty($item['is_nhis_covered']) && ! empty($item['nhis_approved_amount'])) {
-                    $insuranceAmount += $item['nhis_approved_amount'];
-                }
+                $insuranceAmount += $this->incomingCoverageAmount($item);
             }
 
             $taxAmount = $data['tax_amount'] ?? 0;
@@ -558,13 +544,19 @@ class BillingService
                 $selectedPrice = (float) ($item['selected_price'] ?? $item['unit_price'] ?? $cashPrice);
                 $payerType = $item['payer_type'] ?? 'cash';
                 $isInsurance = $payerType === 'insurance';
-                $insurancePrice = $isInsurance ? $selectedPrice : null;
+                $pricingSource = $item['pricing_source'] ?? null;
+                $hasSelectedInsurancePrice = $this->hasSelectedInsurancePrice($payerType, $pricingSource);
+                $insurancePrice = $hasSelectedInsurancePrice ? $selectedPrice : null;
                 $lineTotal = round($selectedPrice * $quantity, 2);
-                $insCovered = $isInsurance
-                    ? max(0.0, round(($cashPrice - $selectedPrice) * $quantity, 2))
-                    : 0.0;
                 $discount = (float) ($item['discount_amount'] ?? 0);
-                $payable = max(0.0, round($lineTotal - $discount, 2));
+                $coverage = $visit
+                    ? $this->evaluateLineCoverage($visit, $lineTotal, $payerType, $pricingSource)
+                    : ['covered' => 0.0, 'patient_payable' => $lineTotal, 'has_insurance' => false, 'insurance' => null, 'reason' => null];
+                $manualCoverage = array_key_exists('insurance_covered', $item)
+                    ? min($lineTotal, $this->incomingCoverageAmount($item))
+                    : null;
+                $insCovered = $manualCoverage ?? $coverage['covered'];
+                $payable = max(0.0, round($lineTotal - $insCovered - $discount, 2));
 
                 $invoiceItem = InvoiceItem::create([
                     'invoice_id' => $invoice->id,
@@ -589,9 +581,9 @@ class BillingService
                     'total_price' => $lineTotal,
                     'payer_type' => $payerType,
                     'insurance_provider_id' => $item['insurance_provider_id'] ?? null,
-                    'patient_insurance_id' => $item['patient_insurance_id'] ?? null,
+                    'patient_insurance_id' => $item['patient_insurance_id'] ?? ($coverage['has_insurance'] ? $coverage['insurance']->id : null),
                     'insurance_type' => $item['insurance_type'] ?? null,
-                    'pricing_source' => $item['pricing_source'] ?? null,
+                    'pricing_source' => $pricingSource,
                     'created_by' => $actorId,
                 ]);
 
@@ -606,13 +598,15 @@ class BillingService
                     $this->insuranceService->recordUsage(
                         $item['_insurance'],
                         Visit::find($data['visit_id']),
-                        $item['nhis_approved_amount'] ?? 0,
-                        $lineTotal - ($item['nhis_approved_amount'] ?? 0),
-                        $item['_coverage_reason'] ?? null,
+                        $insCovered,
+                        $lineTotal - $insCovered,
+                        $item['_coverage_reason'] ?? $coverage['reason'] ?? null,
                         $invoice->id
                     );
                 }
             }
+
+            $invoice = $this->invoiceService->recalculateTotals($invoice->fresh('items'));
 
             // Link any existing visit_service usage records to this invoice
             if ($visit?->visitInsurance) {
@@ -707,8 +701,7 @@ class BillingService
                 'description' => $catalog ? $catalog->name : 'Service',
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
-                'is_nhis_covered' => $insuredAmount > 0,
-                'nhis_approved_amount' => $insuredAmount,
+                'insurance_covered' => $insuredAmount,
                 'cash_price' => $cashPrice,
                 'discount_amount' => $discount,
                 'payer_type' => $payerType,
@@ -733,7 +726,9 @@ class BillingService
                 $unitPrice = $snap['selected_price'];
                 [$coveredAmt, $sessionOffset] = $this->evalAndOffset(
                     $hasInsurance, $visitInsurance, $visit,
-                    $unitPrice, $sessionOffset
+                    $unitPrice, $sessionOffset,
+                    $snap['payer_type'] ?? null,
+                    $snap['pricing_source'] ?? null
                 );
 
                 $items[] = [
@@ -741,8 +736,7 @@ class BillingService
                     'description' => $consultationService->name,
                     'quantity' => 1,
                     'unit_price' => $unitPrice,
-                    'is_nhis_covered' => $coveredAmt > 0,
-                    'nhis_approved_amount' => $coveredAmt,
+                    'insurance_covered' => $coveredAmt,
                     'cash_price' => $snap['cash_price'],
                     'discount_amount' => $snap['discount_amount'],
                     'payer_type' => $snap['payer_type'],
@@ -772,7 +766,9 @@ class BillingService
                     $unitPrice = $snap['selected_price'];
                     [$coveredAmt, $sessionOffset] = $this->evalAndOffset(
                         $hasInsurance, $visitInsurance, $visit,
-                        $unitPrice, $sessionOffset
+                        $unitPrice, $sessionOffset,
+                        $snap['payer_type'] ?? null,
+                        $snap['pricing_source'] ?? null
                     );
 
                     $items[] = [
@@ -780,8 +776,7 @@ class BillingService
                         'description' => $item->labTest->name,
                         'quantity' => 1,
                         'unit_price' => $unitPrice,
-                        'is_nhis_covered' => $coveredAmt > 0,
-                        'nhis_approved_amount' => $coveredAmt,
+                        'insurance_covered' => $coveredAmt,
                         'cash_price' => $snap['cash_price'],
                         'discount_amount' => $snap['discount_amount'],
                         'payer_type' => $snap['payer_type'],
@@ -811,7 +806,9 @@ class BillingService
 
                     [$coveredAmt, $sessionOffset] = $this->evalAndOffset(
                         $hasInsurance, $visitInsurance, $visit,
-                        $linePrice, $sessionOffset
+                        $linePrice, $sessionOffset,
+                        $snap['payer_type'] ?? null,
+                        $snap['pricing_source'] ?? null
                     );
 
                     $items[] = [
@@ -819,8 +816,7 @@ class BillingService
                         'description' => $prescItem->drug->name.' ('.$prescItem->quantity.')',
                         'quantity' => $prescItem->quantity,
                         'unit_price' => $unitPrice,
-                        'is_nhis_covered' => $coveredAmt > 0,
-                        'nhis_approved_amount' => $coveredAmt,
+                        'insurance_covered' => $coveredAmt,
                         'cash_price' => $snap['cash_price'],
                         'discount_amount' => max(0.0, round(($snap['cash_price'] - $unitPrice) * $prescItem->quantity, 2)),
                         'payer_type' => $snap['payer_type'],
@@ -861,9 +857,11 @@ class BillingService
         $visitInsurance,
         Visit $visit,
         float $price,
-        float $sessionOffset
+        float $sessionOffset,
+        ?string $payerType = null,
+        ?string $pricingSource = null
     ): array {
-        if (! $hasInsurance || ! $visitInsurance) {
+        if (! $hasInsurance || ! $visitInsurance || ! $this->hasSelectedInsurancePrice($payerType, $pricingSource)) {
             return [0.0, $sessionOffset];
         }
 
@@ -872,5 +870,62 @@ class BillingService
         $newOffset = $sessionOffset + $covered;
 
         return [$covered, $newOffset];
+    }
+
+    private function evaluateLineCoverage(Visit $visit, float $lineTotal, ?string $payerType, ?string $pricingSource): array
+    {
+        $visit->loadMissing('visitInsurance.insuranceProvider');
+        $visitInsurance = $visit->visitInsurance;
+        $hasInsurance = $visitInsurance
+            && $visitInsurance->is_active
+            && ! $visitInsurance->is_expired
+            && $visitInsurance->insuranceProvider
+            && ! $visitInsurance->insuranceProvider->is_default;
+
+        if (! $hasInsurance || ! $this->hasSelectedInsurancePrice($payerType, $pricingSource)) {
+            return [
+                'covered' => 0.0,
+                'patient_payable' => round($lineTotal, 2),
+                'has_insurance' => (bool) $hasInsurance,
+                'insurance' => $visitInsurance,
+                'reason' => null,
+            ];
+        }
+
+        $evaluation = $this->insuranceService->evaluateCoverage($visitInsurance, $visit, $lineTotal);
+
+        return [
+            'covered' => round((float) $evaluation['covered_amount'], 2),
+            'patient_payable' => round((float) $evaluation['patient_amount'], 2),
+            'has_insurance' => true,
+            'insurance' => $visitInsurance,
+            'reason' => $evaluation['reason'] ?? null,
+        ];
+    }
+
+    private function hasSelectedInsurancePrice(?string $payerType, ?string $pricingSource): bool
+    {
+        if ($payerType !== 'insurance') {
+            return false;
+        }
+
+        return ! in_array($pricingSource, [
+            null,
+            '',
+            'base_price',
+            'cash_price',
+            'cash_and_carry',
+            'fallback_cash_no_insurance_price',
+            'manual_override',
+        ], true);
+    }
+
+    private function incomingCoverageAmount(array $item): float
+    {
+        if (array_key_exists('insurance_covered', $item)) {
+            return max(0.0, round((float) $item['insurance_covered'], 2));
+        }
+
+        return 0.0;
     }
 }

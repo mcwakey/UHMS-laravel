@@ -218,8 +218,15 @@ class VisitService
                 [
                     'department_id' => $catalog->department_id,
                     'quantity' => $quantity,
-                    'unit_price' => $catalog->price ?? 0,
-                    'total_price' => ($catalog->price ?? 0) * $quantity,
+                    'unit_price' => $invoiceItem?->selected_price ?? $catalog->price ?? 0,
+                    'insurance_price' => $invoiceItem?->insurance_price,
+                    'insurance_covered' => $invoiceItem?->insurance_covered ?? 0,
+                    'patient_payable' => $invoiceItem?->patient_payable ?? (($catalog->price ?? 0) * $quantity),
+                    'payment_type' => $invoiceItem?->payer_type,
+                    'insurance_type' => $invoiceItem?->insurance_type,
+                    'patient_insurance_id' => $invoiceItem?->patient_insurance_id,
+                    'pricing_source' => $invoiceItem?->pricing_source,
+                    'total_price' => $invoiceItem?->total_price ?? (($catalog->price ?? 0) * $quantity),
                     'notes' => $serviceData['notes'] ?? null,
                 ]
             );

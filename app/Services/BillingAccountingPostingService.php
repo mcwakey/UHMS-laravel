@@ -47,7 +47,7 @@ class BillingAccountingPostingService
         ]);
 
         $items = $invoice->items
-            ->filter(fn (InvoiceItem $item) => (float) $item->patient_payable > 0)
+            ->filter(fn (InvoiceItem $item) => (float) $item->patient_payable > 0 || (float) $item->insurance_covered > 0)
             ->reject(fn (InvoiceItem $item) => in_array((string) $item->accounting_status, [self::STATUS_POSTED, self::STATUS_REVERSED], true))
             ->values();
 
@@ -311,29 +311,51 @@ class BillingAccountingPostingService
         $credits = [];
 
         foreach ($items as $item) {
-            $amount = round((float) $item->patient_payable, 2);
-            if ($amount <= 0) {
+            $patientAmount = round((float) $item->patient_payable, 2);
+            $insuranceAmount = round((float) $item->insurance_covered, 2);
+            $lineRevenue = round($patientAmount + $insuranceAmount, 2);
+
+            if ($lineRevenue <= 0) {
                 continue;
             }
 
-            $receivable = $this->receivables->accountForInvoiceItem($item);
             $revenue = $this->revenueResolver->accountForInvoiceItem($item);
 
-            $debitKey = implode('|', [
-                $receivable->id,
-                $invoice->sponsor_id,
-                $item->insurance_provider_id,
-            ]);
             $creditKey = implode('|', [
                 $revenue->id,
                 $item->department_id,
             ]);
 
-            $debits[$debitKey] ??= $this->line($receivable, "Receivable {$invoice->invoice_number}", 0, 0, $item);
             $credits[$creditKey] ??= $this->line($revenue, "Revenue {$invoice->invoice_number}", 0, 0, $item);
 
-            $debits[$debitKey]['debit'] = round($debits[$debitKey]['debit'] + $amount, 2);
-            $credits[$creditKey]['credit'] = round($credits[$creditKey]['credit'] + $amount, 2);
+            if ($patientAmount > 0) {
+                $receivable = $this->receivables->accountForPatientResponsibility($invoice);
+                $debitKey = implode('|', [
+                    'patient',
+                    $receivable->id,
+                    $invoice->patient_id,
+                    $invoice->sponsor_id,
+                    $invoice->corporate_client_id,
+                ]);
+
+                $debits[$debitKey] ??= $this->line($receivable, "Patient receivable {$invoice->invoice_number}", 0, 0, $item);
+                $debits[$debitKey]['insurance_provider_id'] = null;
+                $debits[$debitKey]['debit'] = round($debits[$debitKey]['debit'] + $patientAmount, 2);
+            }
+
+            if ($insuranceAmount > 0) {
+                $receivable = $this->receivables->accountForInvoiceItem($item);
+                $debitKey = implode('|', [
+                    'insurance',
+                    $receivable->id,
+                    $item->insurance_provider_id,
+                ]);
+
+                $debits[$debitKey] ??= $this->line($receivable, "Insurance receivable {$invoice->invoice_number}", 0, 0, $item);
+                $debits[$debitKey]['debit'] = round($debits[$debitKey]['debit'] + $insuranceAmount, 2);
+            }
+
+            $credits[$creditKey]['credit'] = round($credits[$creditKey]['credit'] + $lineRevenue, 2);
         }
 
         return array_values(array_merge($debits, $credits));

@@ -148,6 +148,9 @@
                 </thead>
                 <tbody>
                     @forelse($invoices as $invoice)
+                    @php
+                        $cashierBalance = (float) ($invoice->cashier_balance ?? $invoice->balance);
+                    @endphp
                     <tr>
                         <td>
                             <a href="{{ route('admin.billing.invoices.show', $invoice) }}" class="fw-bold text-primary">{{ $invoice->invoice_number }}</a>
@@ -164,26 +167,32 @@
                             <small class="text-muted">{{ $invoice->visit?->department?->name ?? __('payments.no_department') }}</small>
                         </td>
                         <td class="text-end">
-                            <div>&#8373;{{ number_format($invoice->total_amount, 2) }}</div>
+                            @php
+                                $insuranceShare = (float) $invoice->nhis_amount;
+                                $patientShare = (float) $invoice->total_amount;
+                                $combinedResponsibility = $insuranceShare + $patientShare;
+                            @endphp
+                            <div>&#8373;{{ number_format($combinedResponsibility, 2) }}</div>
                             @if($invoice->nhis_amount > 0)
-                                @php $patientShare = max(0, $invoice->total_amount - $invoice->nhis_amount); @endphp
-                                <small class="text-success d-block"><i class="ti ti-shield-check me-1"></i>Ins: &#8373;{{ number_format($invoice->nhis_amount, 2) }}</small>
+                                <small class="text-success d-block"><i class="ti ti-shield-check me-1"></i>Ins: &#8373;{{ number_format($insuranceShare, 2) }}</small>
                                 <small class="text-muted d-block"><i class="ti ti-user me-1"></i>Pt: &#8373;{{ number_format($patientShare, 2) }}</small>
                             @else
                                 <small class="text-muted d-block"><i class="ti ti-cash me-1"></i>{{ __('payments.cash_and_carry') }}</small>
                             @endif
                         </td>
                         <td class="text-end text-success">&#8373;{{ number_format($invoice->amount_paid, 2) }}</td>
-                        <td class="text-end fw-bold text-danger">&#8373;{{ number_format($invoice->balance, 2) }}</td>
+                        <td class="text-end fw-bold text-danger">&#8373;{{ number_format($cashierBalance, 2) }}</td>
                         <td>
                             <form method="POST" action="{{ route('admin.billing.payments.store', $invoice) }}" class="payment-inline-form"
                                 @if($paymentGatewayAvailable) data-gateway-charge="{{ route('admin.integrations.payments.invoices.charge', $invoice) }}" @endif>
                                 @csrf
                                 <input type="hidden" name="return_to" value="receive">
+                                <input type="hidden" name="payer_type" value="patient">
+                                <input type="hidden" name="payer_id" value="{{ $invoice->patient_id }}">
                                 <div class="row g-2 align-items-end">
                                     <div class="col-sm-3">
                                         <label class="form-label small">{{ __('payments.amount_lbl') }}</label>
-                                        <input type="number" name="amount" class="form-control form-control-sm" value="{{ number_format($invoice->balance, 2, '.', '') }}" min="0.01" max="{{ $invoice->balance }}" step="0.01" required>
+                                        <input type="number" name="amount" class="form-control form-control-sm" value="{{ number_format($cashierBalance, 2, '.', '') }}" min="0.01" max="{{ $cashierBalance }}" step="0.01" required>
                                     </div>
                                     <div class="col-sm-3">
                                         <label class="form-label small">{{ __('payments.method_lbl') }}</label>

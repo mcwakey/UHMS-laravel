@@ -303,6 +303,11 @@
                                 $src       = $item->pricing_source ?? 'cash_and_carry';
                                 $meta      = $sourceLabels[$src] ?? [__('statuses.default.' . $src), 'light text-dark'];
                                 $payer     = $item->payer_type ?? 'cash';
+                                $lineTotalForCoverage = round($selectedPrice * max(1, (int) $item->quantity), 2);
+                                $coverageAmount = (float) $item->insurance_covered;
+                                $coveragePercent = $lineTotalForCoverage > 0 && $coverageAmount > 0
+                                    ? round(($coverageAmount / $lineTotalForCoverage) * 100, 2)
+                                    : null;
                                 $rawSourceKey  = $item->source_type ?: ($item->service_catalog_id ? 'service_catalog' : 'other');
                                 $sourceKey  = $sourceTypeGroups[$rawSourceKey] ?? $rawSourceKey;
                                 $departmentKey = $item->department_id ? 'department_'.$item->department_id : 'department_none';
@@ -341,11 +346,30 @@
                                     <div class="small text-muted text-decoration-line-through">&#8373;{{ number_format($item->cash_price, 2) }}</div>
                                     @endif
                                     <span class="fw-semibold">&#8373;{{ number_format($selectedPrice, 2) }}</span>
+                                    <!-- @if($item->insurance_price !== null)
+                                    <div class="small text-muted">{{ __('invoices.selected_insurance_price') }}</div>
+                                    @endif -->
                                 </td>
+                                <!-- <td class="text-end">
+                                    @if($item->cash_price > $selectedPrice)
+                                    <div class="small text-muted text-decoration-line-through">&#8373;{{ number_format($item->cash_price, 2) }}</div>
+                                    @endif
+                                    <span class="fw-semibold">&#8373;{{ number_format($selectedPrice, 2) }}</span>
+                                    @if($item->insurance_price !== null)
+                                    <div class="small text-muted">{{ __('invoices.selected_insurance_price') }}</div>
+                                    @endif
+                                </td> -->
                                 {{-- <td class="text-end fw-medium">&#8373;{{ number_format($item->total_price, 2) }}</td> --}}
                                 <td class="text-end">
+                                    @if($item->cash_price > $selectedPrice)
+                                    <div class="small text-warning text-decoration-line-through">&#8373;{{ number_format(($item->cash_price - $selectedPrice), 2) }}</div>
+                                    @endif
+
                                     @if((float) $item->insurance_covered > 0)
                                     <span class="text-success">&#8373;{{ number_format($item->insurance_covered, 2) }}</span>
+                                    @if($coveragePercent !== null)
+                                    <div class="small text-muted">{{ __('invoices.coverage_percent', ['percent' => number_format($coveragePercent, 2)]) }}</div>
+                                    @endif
                                     @else
                                     —
                                     @endif

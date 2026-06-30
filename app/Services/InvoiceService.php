@@ -80,12 +80,12 @@ class InvoiceService
      * Canonical formulas (UHMS billing rules):
      *   subtotal           = sum(selected_price * quantity)         [== sum(total_price)]
      *   total_discount     = sum(items.discount_amount)
-     *   insurance_total    = sum(items.insurance_covered)            (informational only)
-     *   total_amount       = sum(items.patient_payable)              (what the patient owes)
+     *   insurance_total    = sum(items.insurance_covered)            (insurer responsibility)
+     *   total_amount       = sum(items.patient_payable)              (patient responsibility)
      *   amount_paid        = sum(items.paid_amount)                  (ONLY from real payments)
      *   balance            = sum(items.balance)
      *
-     * IMPORTANT: insurance_covered is NEVER added to amount_paid.
+     * IMPORTANT: insurance_covered is a payer responsibility, not a patient payment.
      * Does NOT modify any item rows.
      */
     public function recalculateTotals(Invoice $invoice): Invoice

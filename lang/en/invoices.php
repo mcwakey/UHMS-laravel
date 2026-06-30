@@ -74,6 +74,8 @@ return [
     'pricing'               => 'Pricing',
     'price'                 => 'Price',
     'covered'               => 'Covered',
+    'selected_insurance_price' => 'Selected insurance price',
+    'coverage_percent'      => ':percent% coverage',
     'patient_payable'       => 'Patient Payable',
     'paid'                  => 'Paid',
     'gross_total'           => 'Gross Total',
