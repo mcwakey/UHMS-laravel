@@ -58,14 +58,12 @@
     .owner-group-header { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 0.45rem; padding: 0.45rem 0.65rem; margin-bottom: 0.55rem; }
     .owner-group .ehr-item { margin-left: 0.45rem; }
     .entry-actions { min-width: max-content; }
-    /* ── Fixed-bottom sessions drawer (left/width matched to col-lg-10 by JS) ── */
-    #sessionsDrawer { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1040; background: #fff; border-top: 2px solid #0d6efd; box-shadow: 0 -4px 18px rgba(0,0,0,.12); max-height: 60vh; display: flex; flex-direction: column; transition: transform .25s ease; }
-    #sessionsDrawer.is-collapsed { transform: translateY(calc(100% - 42px)); }
-    #sessionsDrawerHandle { cursor: pointer; user-select: none; padding: .45rem 1rem; background: #0d6efd; color: #fff; display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
+    #sessionsDrawer { background: #fff; border: 1px solid #d9e5ff; border-top: 3px solid #0d6efd; border-radius: 0.5rem; box-shadow: 0 0.125rem 0.35rem rgba(15, 23, 42, .05); margin-bottom: 1rem; overflow: hidden; }
+    #sessionsDrawer.is-collapsed #sessionsDrawerBody { display: none; }
+    #sessionsDrawerHandle { cursor: pointer; user-select: none; padding: .55rem .8rem; background: #f8fbff; color: #0d6efd; display: flex; align-items: center; gap: .5rem; flex-shrink: 0; border-bottom: 1px solid #e8eefc; }
     #sessionsDrawerHandle .ti-chevron-up { transition: transform .25s; }
     #sessionsDrawer.is-collapsed #sessionsDrawerHandle .ti-chevron-up { transform: rotate(180deg); }
-    #sessionsDrawerBody { overflow-y: auto; flex: 1; }
-    body.has-sessions-drawer { padding-bottom: 46px; }
+    #sessionsDrawerBody { overflow-x: auto; }
     .consultation-preview-offcanvas { width: min(100vw, 1120px) !important; }
     .consultation-preview-offcanvas .offcanvas-body { background: #f8fafc; }
 </style>
@@ -543,6 +541,96 @@
 </div>
 
 {{-- ============================================================ --}}
+{{-- CONSULTATION SESSIONS --}}
+{{-- ============================================================ --}}
+<div id="sessionsDrawer">
+    <div id="sessionsDrawerHandle" role="button" aria-expanded="true" aria-controls="sessionsDrawerBody" data-sessions-drawer-toggle>
+        <i class="ti ti-route fs-5"></i>
+        <span class="fw-semibold small">{{ __('consultations.workspace.sessions_for_visit') }}</span>
+        <span class="badge bg-white text-primary rounded-pill ms-1">{{ $sessions->count() }}</span>
+        <i class="ti ti-chevron-up ms-auto fs-5"></i>
+    </div>
+    <div id="sessionsDrawerBody">
+        <div class="table-responsive">
+            <table class="table table-sm mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>{{ __('common.department') }}</th>
+                        <th>{{ __('consultations.linked_services') }}</th>
+                        <th>{{ __('common.doctor') }}</th>
+                        <th>{{ __('common.status') }}</th>
+                        <th>{{ __('consultations.started') }}</th>
+                        <th>{{ __('common.actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($sessions as $session)
+                    @php
+                        $rowClass = $selectedRoute && $selectedRoute->id === $session->id ? 'is-current' : '';
+                        $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_COMPLETED ? ' is-completed' : '';
+                        $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_CANCELLED ? ' is-cancelled' : '';
+                        $sessionServiceNames = $routeServiceNames($session);
+                        $sessionLabel = $session->isEmergencySession() ? __('consultations.emergency_department_session') : ($session->department?->name ?? '-');
+                    @endphp
+                    <tr class="session-route-row {{ trim($rowClass) }}">
+                        <td class="fw-medium">
+                            {{ $sessionLabel }}
+                            @if($session->isEmergencySession())
+                                <span class="badge bg-danger ms-1">{{ __('consultations.workspace.emergency') }}</span>
+                            @endif
+                        </td>
+                        <td>
+                            {{ $sessionServiceNames->implode(', ') ?: '-' }}
+                            @if($selectedRoute && $selectedRoute->id === $session->id)
+                                <span class="badge bg-primary ms-1">{{ __('consultations.workspace.current') }}</span>
+                            @endif
+                        </td>
+                        <td>{{ $session->doctor ? 'Dr. ' . $session->doctor->full_name : __('consultations.unassigned') }}</td>
+                        <td><x-status-badge :status="$session->status" domain="consultation_session" /></td>
+                        <td>
+                            <div class="small">{{ $session->started_at?->format('d M, h:i A') ?? '—' }}</div>
+                            @if($session->completed_at)<div class="small text-muted">{{ $session->completed_at->format('d M, h:i A') }}</div>@endif
+                        </td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                <a href="{{ route('admin.consultations.routes.show', [$visit, $session]) }}" class="btn btn-xs btn-outline-primary">
+                                    <i class="ti ti-eye"></i> Open
+                                </a>
+                                @can('consultations.create')
+                                @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
+                                    <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $session]) }}">
+                                        @csrf
+                                        <button class="btn btn-xs btn-primary" type="submit">Start</button>
+                                    </form>
+                                @endif
+                                @if($session->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
+                                    <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $session]) }}">
+                                        @csrf
+                                        <button class="btn btn-xs btn-success" type="submit" onclick="return confirm('Complete this session?')">Complete</button>
+                                    </form>
+                                @endif
+                                @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
+                                    <form method="POST" action="{{ route('admin.consultations.routes.cancel', [$visit, $session]) }}">
+                                        @csrf
+                                        <button class="btn btn-xs btn-outline-danger" type="submit" onclick="return confirm('Cancel this queued session?')">Cancel</button>
+                                    </form>
+                                @endif
+                                @endcan
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6"><x-empty-state message="No consultation sessions routed for this visit." /></td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{{-- ============================================================ --}}
 {{-- CONSULTATION GATING — Start Consultation banner --}}
 {{-- ============================================================ --}}
 @php
@@ -974,7 +1062,9 @@
                                                 <div>
                                                     <p class="mb-1">{{ $hopc->content }}</p>
                                                     @if($hopc->complaint)
-                                                        <small class="text-muted d-block">Complaint: {{ $hopc->complaint->description }}</small>
+                                                        <small class="badge bg-secondary">Complaint: {{ $hopc->complaint->description }}</small>
+                                                    @else
+                                                        <small class="badge bg-primary">General Narrative</small>
                                                     @endif
                                                     @if($entryFooter($hopc))<small class="text-muted">{{ $entryFooter($hopc) }}</small>@endif
                                                 </div>
@@ -1189,9 +1279,9 @@
                                                             <i class="ti ti-star-filled me-1"></i>Primary
                                                         </span>
                                                     </p>
-                                                    <small class="text-muted">
-                                                        @if($diagnosis->icdCodeEntry) ICD-10: <code>{{ $diagnosis->icdCodeEntry->code }}</code> &middot;
-                                                        @elseif($diagnosis->icd_code) ICD-10: <code>{{ $diagnosis->icd_code }}</code> &middot; @endif
+                                                    <small class="badge bg-light text-muted">
+                                                        @if($diagnosis->icdCodeEntry) ICD-10: <code class="fs-6">{{ $diagnosis->icdCodeEntry->code }}</code> &middot;
+                                                        @elseif($diagnosis->icd_code) ICD-10: <code class="fs-6">{{ $diagnosis->icd_code }}</code> &middot; @endif
                                                         @if($diagnosis->notes) {{ $diagnosis->notes }} @endif
                                                     </small>
                                                     @if($entryFooter($diagnosis))<small class="text-muted d-block">{{ $entryFooter($diagnosis) }}</small>@endif
@@ -1207,13 +1297,14 @@
                                                             data-entry='@json($editEntryPayload)'>
                                                         <i class="ti ti-edit"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-xs btn-outline-secondary toggle-type-btn"
-                                                            title="Mark as {{ $diagnosis->type === 'provisional' ? 'Final' : 'Provisional' }}"
+                                                    @if($diagnosis->type === 'provisional')
+                                                    <button type="button" class="btn btn-xs btn-outline-success mark-final-btn"
+                                                            title="Mark as Final"
                                                             data-id="{{ $diagnosis->id }}"
-                                                            data-current="{{ $diagnosis->type }}"
                                                             data-url="{{ route('admin.consultations.diagnoses.update', $diagnosis) }}">
-                                                        <i class="ti ti-switch-2 me-1"></i><span class="toggle-type-label">{{ $diagnosis->type === 'provisional' ? 'Final' : 'Provisional' }}</span>
+                                                        <i class="ti ti-check me-1"></i>Final
                                                     </button>
+                                                    @endif
                                                     <button type="button" class="btn btn-xs btn-outline-warning set-primary-btn {{ $diagnosis->is_primary ? 'd-none' : '' }}"
                                                             title="{{ __('consultations.set_primary_diagnosis') }}"
                                                             id="set-primary-{{ $diagnosis->id }}"
@@ -2339,96 +2430,6 @@
             </div>
         </div>
 
-<div class="row g-3">
-{{-- ============================================================ --}}
-{{-- CONSULTATION SESSIONS — STICKY-BOTTOM DRAWER --}}
-{{-- ============================================================ --}}
-<div id="sessionsDrawer" class="is-collapsed">
-    <div id="sessionsDrawerHandle" role="button" aria-expanded="false" aria-controls="sessionsDrawerBody" data-sessions-drawer-toggle>
-        <i class="ti ti-route fs-5"></i>
-        <span class="fw-semibold small">{{ __('consultations.workspace.sessions_for_visit') }}</span>
-        <span class="badge bg-white text-primary rounded-pill ms-1">{{ $sessions->count() }}</span>
-        <i class="ti ti-chevron-up ms-auto fs-5"></i>
-    </div>
-    <div id="sessionsDrawerBody">
-        <div class="table-responsive">
-            <table class="table table-sm mb-0 align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>{{ __('common.department') }}</th>
-                        <th>{{ __('consultations.linked_services') }}</th>
-                        <th>{{ __('common.doctor') }}</th>
-                        <th>{{ __('common.status') }}</th>
-                        <th>{{ __('consultations.started') }}</th>
-                        <th>{{ __('common.actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($sessions as $session)
-                    @php
-                        $rowClass = $selectedRoute && $selectedRoute->id === $session->id ? 'is-current' : '';
-                        $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_COMPLETED ? ' is-completed' : '';
-                        $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_CANCELLED ? ' is-cancelled' : '';
-                        $sessionServiceNames = $routeServiceNames($session);
-                        $sessionLabel = $session->isEmergencySession() ? __('consultations.emergency_department_session') : ($session->department?->name ?? '-');
-                    @endphp
-                    <tr class="session-route-row {{ trim($rowClass) }}">
-                        <td class="fw-medium">
-                            {{ $sessionLabel }}
-                            @if($session->isEmergencySession())
-                                <span class="badge bg-danger ms-1">{{ __('consultations.workspace.emergency') }}</span>
-                            @endif
-                        </td>
-                        <td>
-                            {{ $sessionServiceNames->implode(', ') ?: '-' }}
-                            @if($selectedRoute && $selectedRoute->id === $session->id)
-                                <span class="badge bg-primary ms-1">{{ __('consultations.workspace.current') }}</span>
-                            @endif
-                        </td>
-                        <td>{{ $session->doctor ? 'Dr. ' . $session->doctor->full_name : __('consultations.unassigned') }}</td>
-                        <td><x-status-badge :status="$session->status" domain="consultation_session" /></td>
-                        <td>
-                            <div class="small">{{ $session->started_at?->format('d M, h:i A') ?? '—' }}</div>
-                            @if($session->completed_at)<div class="small text-muted">{{ $session->completed_at->format('d M, h:i A') }}</div>@endif
-                        </td>
-                        <td>
-                            <div class="d-flex flex-wrap gap-1">
-                                <a href="{{ route('admin.consultations.routes.show', [$visit, $session]) }}" class="btn btn-xs btn-outline-primary">
-                                    <i class="ti ti-eye"></i> Open
-                                </a>
-                                @can('consultations.create')
-                                @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
-                                    <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $session]) }}">
-                                        @csrf
-                                        <button class="btn btn-xs btn-primary" type="submit">Start</button>
-                                    </form>
-                                @endif
-                                @if($session->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
-                                    <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $session]) }}">
-                                        @csrf
-                                        <button class="btn btn-xs btn-success" type="submit" onclick="return confirm('Complete this session?')">Complete</button>
-                                    </form>
-                                @endif
-                                @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
-                                    <form method="POST" action="{{ route('admin.consultations.routes.cancel', [$visit, $session]) }}">
-                                        @csrf
-                                        <button class="btn btn-xs btn-outline-danger" type="submit" onclick="return confirm('Cancel this queued session?')">Cancel</button>
-                                    </form>
-                                @endif
-                                @endcan
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="6"><x-empty-state message="No consultation sessions routed for this visit." /></td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
 
 </div>
 </div>{{-- end main row --}}
@@ -2959,16 +2960,7 @@ function runWhenConsultationReady(callback) {
     }
 }
 
-/* ── Sessions drawer: always-visible, anchored to col-lg-10 ──── */
-function positionSessionsDrawer() {
-    const col = document.querySelector('.col-lg-10');
-    const drawer = document.getElementById('sessionsDrawer');
-    if (!col || !drawer) return;
-    const r = col.getBoundingClientRect();
-    drawer.style.left  = r.left + 'px';
-    drawer.style.right = 'auto';
-    drawer.style.width = r.width + 'px';
-}
+/* Consultation sessions card */
 function toggleSessionsDrawer() {
     const drawer = document.getElementById('sessionsDrawer');
     const handle = document.getElementById('sessionsDrawerHandle');
@@ -2983,15 +2975,7 @@ function bindSessionsDrawer() {
     const handle = document.getElementById('sessionsDrawerHandle');
     if (!drawer || !handle) return;
 
-    document.body.classList.add('has-sessions-drawer');
-    positionSessionsDrawer();
     addConsultationListenerOnce(handle, 'uhmsBound', 'click', toggleSessionsDrawer);
-    if (window.ResizeObserver && !window.uhmsConsultationDrawerResizeObserver) {
-        window.uhmsConsultationDrawerResizeObserver = new ResizeObserver(positionSessionsDrawer);
-        window.uhmsConsultationDrawerResizeObserver.observe(document.documentElement);
-    } else if (!window.ResizeObserver) {
-        addConsultationListenerOnce(window, 'uhmsResizeBound', 'resize', positionSessionsDrawer);
-    }
 }
 /* ────────────────────────────────────────────────────────────── */
 
@@ -3202,7 +3186,11 @@ var summaryFragmentUrl = window.summaryFragmentUrl;
 
     document.querySelectorAll('#consultationTabs .nav-link').forEach(function (link) {
         addConsultationListenerOnce(link, 'uhmsTabBound', 'shown.bs.tab', function (e) {
-            localStorage.setItem(tabStorageKey, e.target.getAttribute('href'));
+            var selector = e.target.getAttribute('href');
+            localStorage.setItem(tabStorageKey, selector);
+            if (selector && window.history && window.history.replaceState) {
+                window.history.replaceState(null, '', selector);
+            }
         });
     });
 }());
@@ -3213,6 +3201,9 @@ function activateConsultationTab(tabSelector) {
     var el = document.querySelector('#consultationTabs .nav-link[href="' + tabSelector + '"]');
     if (el) {
         new bootstrap.Tab(el).show();
+        if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', tabSelector);
+        }
         return true;
     }
     return false;
@@ -3222,6 +3213,17 @@ function saveTabBeforeSubmit(tabId) {
     activateConsultationTab('#' + tabId);
     return true;
 }
+
+addConsultationListenerOnce(document, 'uhmsPreserveActiveTabOnSubmit', 'submit', function () {
+    var activeTab = document.querySelector('#consultationTabs .nav-link.active');
+    var selector = activeTab ? activeTab.getAttribute('href') : null;
+    if (selector) {
+        localStorage.setItem(tabStorageKey, selector);
+        if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', selector);
+        }
+    }
+}, { capture: true });
 
 /* ================================================================
    UTILITIES
@@ -3428,8 +3430,10 @@ function sectionForEntryType(type) {
 }
 
 function bindEditEntryButtons() {
-    document.querySelectorAll('.edit-entry-btn').forEach(function (btn) {
-        addConsultationListenerOnce(btn, 'uhmsBound', 'click', function () {
+    addConsultationListenerOnce(document, 'uhmsEditEntryDelegated', 'click', function (event) {
+            var btn = event.target.closest('.edit-entry-btn');
+            if (!btn) return;
+            event.preventDefault();
             var modalEl = document.getElementById('editEntryModal');
             var form = document.getElementById('editEntryForm');
             var fields = document.getElementById('editEntryFields');
@@ -3437,10 +3441,10 @@ function bindEditEntryButtons() {
             var errors = document.getElementById('editEntryErrors');
             if (!modalEl || !form || !fields) return;
 
-            var type = this.dataset.entryType;
+            var type = btn.dataset.entryType;
             var entry = {};
-            try { entry = JSON.parse(this.dataset.entry || '{}'); } catch (e) { entry = {}; }
-            form.action = this.dataset.url;
+            try { entry = JSON.parse(btn.dataset.entry || '{}'); } catch (e) { entry = {}; }
+            form.action = btn.dataset.url;
             form.dataset.entryType = type;
             title.textContent = 'Edit ' + type.replace('-', ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
             fields.innerHTML = buildEditFields(type, entry);
@@ -3448,7 +3452,6 @@ function bindEditEntryButtons() {
             errors.innerHTML = '';
 
             bootstrap.Modal.getOrCreateInstance(modalEl).show();
-        });
     });
 }
 
@@ -3604,13 +3607,12 @@ function onFormSuccess(section, data, form) {
    DIAGNOSIS — TYPE TOGGLE & SET PRIMARY
    ================================================================ */
 function bindDiagnosisButtons() {
-    document.querySelectorAll('.toggle-type-btn').forEach(function (btn) {
+    document.querySelectorAll('.mark-final-btn').forEach(function (btn) {
         addConsultationListenerOnce(btn, 'uhmsBound', 'click', function () {
-            var id      = this.dataset.id;
-            var current = this.dataset.current;
-            var newType = current === 'provisional' ? 'final' : 'provisional';
-            var self    = this;
-            if (!confirm('Change type to ' + capFirst(newType) + '?')) return;
+            var id = this.dataset.id;
+            var newType = 'final';
+            var self = this;
+            if (!confirm('Mark this diagnosis as final?')) return;
             self.disabled = true;
 
             var fd = new FormData();
@@ -3628,10 +3630,7 @@ function bindDiagnosisButtons() {
                         badge.textContent = capFirst(newType);
                         badge.className = 'badge bg-' + (newType === 'final' ? 'success' : 'warning') + ' ms-1 diagnosis-type-badge';
                     }
-                    self.dataset.current = newType;
-                    self.title = 'Mark as ' + (newType === 'provisional' ? 'Final' : 'Provisional');
-                    var label = self.querySelector('.toggle-type-label');
-                    if (label) label.textContent = newType === 'provisional' ? 'Final' : 'Provisional';
+                    self.remove();
                     refreshConsultationSummary();
                     showToast('Type set to ' + capFirst(newType) + '.');
                 }
@@ -4207,7 +4206,28 @@ function bindApplyButtons() {
             .then(function (d) {
                 if (d.success) {
                     saveTabBeforeSubmit('patterns-section');
-                    window.location.reload();
+                    var normalizePatternSection = function (section) {
+                        return {
+                            complaint: 'complaints',
+                            diagnosis: 'diagnoses',
+                            investigation: 'investigations',
+                            treatment: 'treatments',
+                            prescription: 'prescriptions',
+                            procedure: 'procedures',
+                            task: 'tasks'
+                        }[section] || section;
+                    };
+                    var refreshSections = (selectedSections.length ? selectedSections : available)
+                        .map(normalizePatternSection)
+                        .filter(function (section, index, all) { return section && all.indexOf(section) === index; });
+
+                    Promise.all(refreshSections.map(refreshConsultationSection).concat([refreshConsultationSummary()]))
+                        .then(function () {
+                            activateConsultationTab('#patterns-section');
+                            showToast('Pattern applied successfully.');
+                            self.disabled = false;
+                            self.innerHTML = '<i class="ti ti-check me-1"></i>Apply';
+                        });
                 }
                 else { alert('Failed to apply pattern.'); self.disabled = false; self.innerHTML = '<i class="ti ti-check me-1"></i>Apply'; }
             })

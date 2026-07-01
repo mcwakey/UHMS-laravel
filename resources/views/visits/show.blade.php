@@ -201,7 +201,7 @@
         @endphp
 
 
-        @include('partials.patient-journey-widget', ['visit' => $visit])
+        <!-- @include('partials.patient-journey-widget', ['visit' => $visit]) -->
 
         <!-- Visit Details Card -->
         <x-visit-summary-card :visit="$visit" />
