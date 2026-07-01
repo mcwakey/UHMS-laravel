@@ -990,7 +990,7 @@ class VisitService
             ->where('visit_date', '>=', today())
             ->orderBy('visit_date')
             ->orderBy('start_time')
-            ->with(['activeConsultationRoute.doctor', 'pendingConsultationRoutes.doctor'])
+            ->with(['appointments', 'activeConsultationRoute.doctor', 'pendingConsultationRoutes.doctor'])
             ->get();
     }
 

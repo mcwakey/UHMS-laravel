@@ -49,6 +49,7 @@ return [
     'awaiting_triage'                => 'En attente de triage',
     'on_assessment'                  => 'En cours d\'évaluation',
     'start_triage'                   => 'Démarrer le triage',
+    'pay_bill_before_triage'         => 'Le patient doit payer la facture restante (:amount) avant de démarrer le triage.',
     'continue_triage'                => 'Continuer',
     'no_patients_awaiting'           => 'Aucun patient en attente de triage',
     'no_patients_on_assessment'      => 'Aucun patient actuellement en cours d\'évaluation',

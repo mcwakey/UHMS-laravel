@@ -68,10 +68,16 @@
                 <div class="col-md-4">
                     <div class="text-muted small text-uppercase">{{ __('journey.widget.current_stage') }}</div>
                     <div class="fw-bold"><i class="ti {{ $snapshot['current_stage']->icon() }} me-1 text-{{ $delayVariant }}"></i>{{ $snapshot['current_stage']->translatedLabel() }}</div>
+                    @if($snapshot['next_stage'] !== null)
+                        <div class="small text-muted"><i class="ti ti-arrow-right me-1"></i>{{ __('journey.widget.next_step') }}: <strong>{{ $snapshot['next_stage']->translatedLabel() }}</strong></div>
+                    @endif
                 </div>
                 <div class="col-md-4">
                     <div class="text-muted small text-uppercase">{{ __('journey.widget.elapsed') }}</div>
                     <div class="fw-bold text-{{ $delayVariant }}">{{ $elapsedH }}h {{ $elapsedM }}m</div>
+                    @if($durations['total_minutes'] > 0)
+                        <div class="small text-muted"><i class="ti ti-clock me-1"></i>{{ __('journey.widget.total_duration') }}: {{ $totalH }}h {{ $totalM }}m</div>
+                    @endif
                 </div>
                 <div class="col-md-4">
                     <div class="text-muted small text-uppercase">{{ __('journey.widget.currently_in') }}</div>
@@ -84,11 +90,18 @@
 
             {{-- Root cause + next action + deep link (only when delayed/critical). --}}
             @if($action)
-                <div class="alert alert-{{ $delayVariant }} d-flex flex-column gap-1 py-2 mb-3">
-                    <div><i class="ti {{ $action->cause->icon() }} me-1"></i><strong>{{ __('journey.widget.delay_reason') }}:</strong> {{ $action->cause->translatedLabel() }}</div>
-                    <div class="small"><i class="ti ti-building-hospital me-1"></i>{{ __('journey.widget.responsible') }}: {{ $action->ownerDepartmentName ?? \Illuminate\Support\Str::headline((string) $action->ownerType) }}</div>
-                    <div class="small d-flex flex-wrap align-items-center gap-2">
-                        <span><i class="ti ti-arrow-right me-1"></i><strong>{{ __('journey.widget.next_action') }}:</strong> {{ $action->actionLabel }}</span>
+                <div class="row alert alert-{{ $delayVariant }}">
+                    <div class="col-md-4">
+                        <div><i class="ti {{ $action->cause->icon() }} me-1"></i><strong>{{ __('journey.widget.delay_reason') }}:</strong> {{ $action->cause->translatedLabel() }}</div>
+                        <div class="small"><i class="ti ti-building-hospital me-1"></i>{{ __('journey.widget.responsible') }}: {{ $action->ownerDepartmentName ?? \Illuminate\Support\Str::headline((string) $action->ownerType) }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="small d-flex flex-wrap align-items-center gap-2">
+                            <span><i class="ti ti-arrow-right me-1"></i><strong>{{ __('journey.widget.next_action') }}:</strong> {{ $action->actionLabel }}</span>
+
+                        </div>
+                    </div>
+                    <div class="col-md-4">
                         @if($action->actionUrl)
                             <a href="{{ $action->actionUrl }}" class="btn btn-sm btn-{{ $delayVariant }}"><i class="ti ti-external-link me-1"></i>{{ __('journey.worklist.open_action') }}</a>
                         @endif
@@ -135,12 +148,5 @@
                 @if(! $loop->last)<i class="ti ti-chevron-right text-muted fs-12"></i>@endif
             @endforeach
         </div>
-
-        @if($snapshot['next_stage'] !== null)
-            <div class="small text-muted mt-3"><i class="ti ti-arrow-right me-1"></i>{{ __('journey.widget.next_step') }}: <strong>{{ $snapshot['next_stage']->translatedLabel() }}</strong></div>
-        @endif
-        @if($durations['total_minutes'] > 0)
-            <div class="small text-muted mt-1"><i class="ti ti-clock me-1"></i>{{ __('journey.widget.total_duration') }}: {{ $totalH }}h {{ $totalM }}m</div>
-        @endif
     </div>
 </div>

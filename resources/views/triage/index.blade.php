@@ -2,7 +2,7 @@
 @section('title', __('triage.queue'))
 
 @section('content')
-<x-page-header :title="__('triage.queue')" icon="ti-heart-broken"/>
+<x-page-header :title="__('triage.queue')" :description="__('triage.patients_awaiting_today')" icon="ti-heart-broken"/>
 
 <!-- Page Header -->
 <!-- <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
@@ -40,7 +40,13 @@
             </div>
             <div class="card-body p-0">
                 @forelse($waiting as $visit)
-                    @php $queueEntry = $visit->queueEntries->first(); @endphp
+                    @php
+                        $queueEntry = $visit->queueEntries->first();
+                        $patientBillBalance = (float) $visit->invoices
+                            ->flatMap->items
+                            ->sum(fn ($item) => (float) $item->balance);
+                        $hasUnpaidBill = $patientBillBalance > 0;
+                    @endphp
                     <div class="d-flex align-items-center px-3 py-2 border-bottom hover-bg-light">
                         <div class="flex-shrink-0 text-center me-3">
                             @if($queueEntry)
@@ -62,9 +68,15 @@
                                 <div class="text-muted" style="font-size:0.78rem;">{{ Str::limit($visit->chief_complaint, 60) }}</div>
                             @endif
                         </div>
-                        <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-warning btn-sm ms-2">
-                            <i class="ti ti-stethoscope me-1"></i>{{ __('triage.start_triage') }}
-                        </a>
+                        @if($hasUnpaidBill)
+                        @else
+                        @endif
+                            <button type="button" class="btn btn-outline-muted btn-sm ms-2" disabled title="{{ __('triage.pay_bill_before_triage', ['amount' => '₵'.number_format($patientBillBalance, 2)]) }}">
+                                <i class="ti ti-lock me-1"></i>{{ __('triage.start_triage') }}
+                            </button>
+                            <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-warning btn-sm ms-2">
+                                <i class="ti ti-stethoscope me-1"></i>{{ __('triage.start_triage') }}
+                            </a>
                     </div>
                 @empty
                     <div class="text-center text-muted py-2 small">
@@ -87,7 +99,13 @@
             </div>
             <div class="card-body p-0">
                 @forelse($onAssessment as $visit)
-                    @php $queueEntry = $visit->queueEntries->first(); @endphp
+                    @php
+                        $queueEntry = $visit->queueEntries->first();
+                        $patientBillBalance = (float) $visit->invoices
+                            ->flatMap->items
+                            ->sum(fn ($item) => (float) $item->balance);
+                        $hasUnpaidBill = $patientBillBalance > 0;
+                    @endphp
                     <div class="d-flex align-items-center px-3 py-2 border-bottom hover-bg-light">
                         <div class="flex-shrink-0 text-center me-3">
                             @if($queueEntry)
@@ -109,9 +127,15 @@
                                 <div class="text-muted" style="font-size:0.78rem;">{{ Str::limit($visit->chief_complaint, 60) }}</div>
                             @endif
                         </div>
+                        @if($hasUnpaidBill)
+                            <button type="button" class="btn btn-outline-muted btn-sm ms-2" disabled title="{{ __('triage.pay_bill_before_triage', ['amount' => '₵'.number_format($patientBillBalance, 2)]) }}">
+                                <i class="ti ti-lock me-1"></i>{{ __('triage.continue_triage') }}
+                            </button>
+                        @else
                         <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-info btn-sm ms-2">
                             <i class="ti ti-arrow-right me-1"></i>{{ __('triage.continue_triage') }}
                         </a>
+                        @endif
                     </div>
                 @empty
                     <div class="text-center text-muted py-2 small">

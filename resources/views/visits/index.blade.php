@@ -2,7 +2,7 @@
 @section('title', __('visits.title'))
 
 @section('content')
-<x-page-header :title="__('visits.title')" icon="ti-calendar-check">
+<x-page-header :title="__('visits.title')" :description="__('visits.description')" icon="ti-calendar-check">
     <x-slot:actions>
         @can('queue.view')
         <a href="{{ route('admin.queue.board') }}" class="btn btn-outline-info btn-md">
@@ -170,11 +170,11 @@
                                     && ! $provider->is_default;
                             @endphp
                             <span class="badge bg-{{ $hasInsurance ? ($provider->type?->color() ?? 'info') : 'secondary' }}">
-                                <i class="ti ti-{{ $hasInsurance ? 'shield-check' : 'cash' }} me-1"></i>{{ $hasInsurance ? $provider->name : ($provider?->name ?? __('visits.cash_and_carry')) }}
+                                <i class="ti ti-{{ $hasInsurance ? 'shield-check' : 'cash' }} me-1"></i>{{ $hasInsurance ? $provider->short_name  . " - " . $visitInsurance->insuranceTier->name : ($provider?->short_name ?? __('visits.cash_and_carry')) }}
                             </span>
-                            @if($hasInsurance && $visitInsurance->insuranceTier?->name)
+                            <!-- @if($hasInsurance && $visitInsurance->insuranceTier?->name)
                                 <small class="text-muted d-block mt-1">{{ $visitInsurance->insuranceTier->name }}</small>
-                            @endif
+                            @endif -->
                         </td>
                         <!-- <td>{{ $visit->patient_age ?? $visit->patient->age }}y</td> -->
                         <td>

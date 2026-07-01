@@ -23,6 +23,7 @@ return [
     'back' => 'Back',
     'next' => 'Next',
     'previous' => 'Previous',
+    'pagination' => 'Pagination',
     'print' => 'Print',
     'export' => 'Export',
     'download' => 'Download',

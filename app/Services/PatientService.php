@@ -15,7 +15,12 @@ class PatientService
 
     public function list(array $filters = []): LengthAwarePaginator
     {
-        $query = Patient::with(['registeredBy', 'primaryInsurance.insuranceProvider'])
+        $query = Patient::with([
+            'registeredBy',
+            'primaryInsurance.insuranceProvider',
+            'insurances.insuranceProvider',
+            'insurances.insuranceTier',
+        ])
             ->select('patients.*')
             ->addSelect(['last_visit_date' => \App\Models\Visit::select('visit_date')
                 ->whereColumn('patient_id', 'patients.id')
@@ -31,6 +36,8 @@ class PatientService
 
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
+        } else {
+            $query->where('status', '!=', 'archived');
         }
 
         if (!empty($filters['city'])) {
@@ -119,6 +126,7 @@ class PatientService
         }
 
         $patient->status = $patient->status === 'active' ? 'inactive' : 'active';
+        $patient->is_active = $patient->status === 'active';
         $patient->save();
         return $patient;
     }

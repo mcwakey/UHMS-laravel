@@ -49,6 +49,7 @@ return [
     'awaiting_triage'                => 'Awaiting Triage',
     'on_assessment'                  => 'On Assessment',
     'start_triage'                   => 'Start Triage',
+    'pay_bill_before_triage'         => 'Patient must pay the outstanding bill (:amount) before triage can start.',
     'continue_triage'                => 'Continue',
     'no_patients_awaiting'           => 'No patients awaiting triage',
     'no_patients_on_assessment'      => 'No patients currently on assessment',

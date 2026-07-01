@@ -7,7 +7,7 @@
     <h6 class="fw-bold mb-0 d-flex align-items-center">
         <a href="{{ route('admin.patients.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>{{ __('patients.title') }}</a>
     </h6>
-    
+
     @can('patients.mark_deceased')
     @if(!$patient->is_deceased)
     <button type="button" class="btn btn-outline-danger btn-md ms-auto" data-bs-toggle="modal" data-bs-target="#markDeceasedModal">
@@ -55,13 +55,16 @@
                         <span class="badge badge-soft-success fs-13 px-3 py-2">{{ __('common.active') }}</span>
                     @elseif($patient->status === 'inactive')
                         <span class="badge badge-soft-warning fs-13 px-3 py-2">{{ __('common.inactive') }}</span>
+                    @elseif($patient->status === 'archived')
+                        <span class="badge badge-soft-secondary fs-13 px-3 py-2">{{ __('patients.archived') }}</span>
                     @else
                         <span class="badge badge-soft-dark fs-13 px-3 py-2">{{ __('patients.deceased') }}</span>
                     @endif
                 </div>
                 <div class="d-flex gap-2 justify-content-lg-end flex-wrap">
+                    @if(!$patient->isMerged() && !$patient->is_deceased && $patient->status === 'active')
                     @can('visits.create')
-                    @if($patient->is_deceased)
+                    @if(($lastVisitDate && $lastVisitDate->toDateString() === today()->toDateString()))
                     <button type="button" class="btn btn-success btn-md" disabled title="{{ __('patients.cannot_visit_deceased') }}">
                         <i class="ti ti-plus me-1"></i>{{ __('patients.new_visit') }}
                     </button>
@@ -69,6 +72,8 @@
                     <a href="{{ route('admin.visits.create') }}?patient_id={{ $patient->id }}" class="btn btn-success btn-md"><i class="ti ti-plus me-1"></i>{{ __('patients.new_visit') }}</a>
                     @endif
                     @endcan
+                    @endif
+
                     @can('patients.edit')
                     <a href="{{ route('admin.patients.edit', $patient) }}" class="btn btn-primary btn-md"><i class="ti ti-edit me-1"></i>{{ __('patients.edit_patient') }}</a>
                     @endcan
@@ -201,13 +206,13 @@
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">{{ __('patients.primary_insurance') }}</h6>
                                 <p class="mb-0">{{ $patient->insurances->where('is_primary', true)->first()?->insuranceProvider?->name ?? 'Cash & Carry' }}</p>
-                                
+
                                 {{-- <h6 class="fs-13 fw-bold mb-1">{{ $patient->insurances->where('is_primary', true)->first()?->insuranceProvider?->name ?? 'Cash & Carry' }}</h6>
                                 <p class="mb-0">{{ $patient->insurances->where('is_primary', true)->first()?->membershipNumber ?? '—' }}</p> --}}
                             </div>
                         </div>
                     </div>
-                    @endif                    
+                    @endif
                     <div class="col-sm-4">
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-building-community fs-16"></i></span>
@@ -225,7 +230,7 @@
                                 <p class="mb-0">{{ $patient->digital_address ?? '—' }}</p>
                             </div>
                         </div>
-                    </div>                   
+                    </div>
                     @php $primaryContact = $patient->emergencyContacts->where('is_primary', true)->first() ?? $patient->emergencyContacts->first(); @endphp
                     <div class="col-sm-4">
                         <div class="d-flex align-items-center mb-3">
@@ -253,70 +258,40 @@
                                 <p class="mb-0">{{ $patient->address ?? '—' }}</p>
                             </div>
                         </div>
-                    </div> 
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+
+
+<!-- Medical Notes -->
+@if($patient->allergies || $patient->chronic_conditions)
 <div class="row">
+    @if($patient->allergies)
     <div class="col-md-6 d-flex">
         <div class="card shadow-sm flex-fill">
-            <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <p class="mb-0">{{ $patient->allergies }}</p>
                 <h5 class="fw-bold mb-0 text-danger"><i class="ti ti-alert-triangle me-1"></i>{{ __('patients.allergies') }}</h5>
-                @if(auth()->user()?->can('patients.edit') || auth()->user()?->can('consultation.view_patient'))
-                    <span class="badge bg-danger-transparent text-danger">{{ __('patients.clinical_summary') }}</span>
-                @endif
-            </div>
-            <div class="card-body">
-                @if(auth()->user()?->can('patients.edit') || auth()->user()?->can('consultation.view_patient'))
-                    <form method="POST" action="{{ route('admin.patients.medical-summary.update', $patient) }}">
-                        @csrf
-                        @method('PATCH')
-                        <div class="mb-3">
-                            <label class="form-label">{{ __('patients.known_allergies') }}</label>
-                            <textarea name="allergies" class="form-control @error('allergies') is-invalid @enderror" rows="4" placeholder="{{ __('patients.known_allergies_ph') }}">{{ old('allergies', $patient->allergies) }}</textarea>
-                            @error('allergies')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <input type="hidden" name="chronic_conditions" value="{{ old('chronic_conditions', $patient->chronic_conditions) }}">
-                        <button type="submit" class="btn btn-sm btn-primary">
-                            <i class="ti ti-device-floppy me-1"></i>{{ __('patients.save_medical_summary') }}
-                        </button>
-                    </form>
-                @else
-                    <p class="mb-0">{{ $patient->allergies ?: __('patients.no_known_allergies') }}</p>
-                @endif
             </div>
         </div>
     </div>
+    @endif
+    @if($patient->chronic_conditions)
     <div class="col-md-6 d-flex">
         <div class="card shadow-sm flex-fill">
-            <div class="card-header">
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <p class="mb-0">{{ $patient->chronic_conditions }}</p>
                 <h5 class="fw-bold mb-0 text-warning"><i class="ti ti-heartbeat me-1"></i>{{ __('patients.chronic_conditions') }}</h5>
             </div>
-            <div class="card-body">
-                @if(auth()->user()?->can('patients.edit') || auth()->user()?->can('consultation.view_patient'))
-                    <form method="POST" action="{{ route('admin.patients.medical-summary.update', $patient) }}">
-                        @csrf
-                        @method('PATCH')
-                        <input type="hidden" name="allergies" value="{{ old('allergies', $patient->allergies) }}">
-                        <div class="mb-3">
-                            <label class="form-label">{{ __('patients.chronic_conditions') }}</label>
-                            <textarea name="chronic_conditions" class="form-control @error('chronic_conditions') is-invalid @enderror" rows="4" placeholder="{{ __('patients.chronic_conditions_ph') }}">{{ old('chronic_conditions', $patient->chronic_conditions) }}</textarea>
-                            @error('chronic_conditions')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <button type="submit" class="btn btn-sm btn-primary">
-                            <i class="ti ti-device-floppy me-1"></i>{{ __('patients.save_medical_summary') }}
-                        </button>
-                    </form>
-                @else
-                    <p class="mb-0">{{ $patient->chronic_conditions ?: __('patients.no_chronic_conditions') }}</p>
-                @endif
-            </div>
         </div>
     </div>
+    @endif
 </div>
+@endif
 
 <!-- Tabs -->
 <ul class="nav nav-tabs nav-bordered mb-3">
@@ -348,42 +323,42 @@
             <div class="card-header bg-info bg-opacity-10">
                 <h6 class="fw-bold mb-0 text-info"><i class="ti ti-calendar-plus me-1"></i>{{ __('patients.upcoming_appointments') }}</h6>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>{{ __('patients.col_date') }}</th>
-                                <th>{{ __('patients.col_department') }}</th>
-                                <th>{{ __('patients.col_doctor') }}</th>
-                                <th>{{ __('patients.col_reason') }}</th>
-                                <th>{{ __('patients.col_status') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($upcomingAppointments as $appointment)
-                            <tr>
-                                <td>
-                                    <span class="fw-medium">{{ $appointment->appointment_date?->format('d M Y') ?? '-' }}</span>
-                                    @if($appointment->start_time)
-                                        <small class="text-muted d-block">{{ \Carbon\Carbon::parse($appointment->start_time)->format('h:i A') }}</small>
-                                    @endif
-                                </td>
-                                <td>
-                                    {{ $appointment->department?->name ?? '-' }}
-                                    @if($appointment->services->isNotEmpty())
-                                        <small class="text-muted d-block">{{ $appointment->services->pluck('name')->implode(', ') }}</small>
-                                    @endif
-                                </td>
-                                <td>{{ $appointment->doctor?->full_name ? 'Dr. '.$appointment->doctor->full_name : '-' }}</td>
-                                <td>{{ Str::limit($appointment->reason ?: $appointment->notes ?: '-', 80) }}</td>
-                                <td><span class="badge bg-{{ $appointment->status?->color() ?? 'secondary' }}">{{ $appointment->status?->translatedLabel() ?? '-' }}</span></td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <x-data-table :card="false" local show-summary show-per-page>
+                <x-slot:head>
+                    <tr>
+                        <th>{{ __('patients.col_date') }}</th>
+                        <th>{{ __('patients.col_department') }}</th>
+                        <th>{{ __('patients.col_doctor') }}</th>
+                        <th>{{ __('patients.col_reason') }}</th>
+                        <th>{{ __('patients.col_status') }}</th>
+                        <th class="text-end">{{ __('common.actions') }}</th>
+                    </tr>
+                </x-slot:head>
+                @foreach($upcomingAppointments as $appointment)
+                <tr>
+                    <td>
+                        <span class="fw-medium">{{ $appointment->appointment_date?->format('d M Y') ?? '-' }}</span>
+                        @if($appointment->start_time)
+                            <small class="text-muted d-block">{{ \Carbon\Carbon::parse($appointment->start_time)->format('h:i A') }}</small>
+                        @endif
+                    </td>
+                    <td>
+                        {{ $appointment->department?->name ?? '-' }}
+                        @if($appointment->services->isNotEmpty())
+                            <small class="text-muted d-block">{{ $appointment->services->pluck('name')->implode(', ') }}</small>
+                        @endif
+                    </td>
+                    <td>{{ $appointment->doctor?->full_name ? 'Dr. '.$appointment->doctor->full_name : '-' }}</td>
+                    <td>{{ Str::limit($appointment->reason ?: $appointment->notes ?: '-', 80) }}</td>
+                    <td><span class="badge bg-{{ $appointment->status?->color() ?? 'secondary' }}">{{ $appointment->status?->translatedLabel() ?? '-' }}</span></td>
+                    <td class="text-end">
+                        <a href="{{ route('admin.appointments.show', $appointment) }}" class="btn btn-sm btn-outline-primary" title="{{ __('common.view') }}">
+                            <i class="ti ti-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                @endforeach
+            </x-data-table>
         </div>
         @endif
 
@@ -393,19 +368,17 @@
             <div class="card-header bg-primary bg-opacity-10">
                 <h6 class="fw-bold mb-0 text-primary"><i class="ti ti-calendar-plus me-1"></i>{{ __('patients.upcoming_visits') }}</h6>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
+            <x-data-table :card="false" local show-summary show-per-page>
+                <x-slot:head>
                             <tr>
                                 <th>{{ __('patients.col_date') }}</th>
                                 <th>{{ __('patients.col_time') }}</th>
                                 <th>{{ __('patients.col_department') }}</th>
                                 <th>{{ __('patients.col_doctor') }}</th>
                                 <th>{{ __('patients.col_status') }}</th>
+                                <th class="text-end">{{ __('common.actions') }}</th>
                             </tr>
-                        </thead>
-                        <tbody>
+                </x-slot:head>
                             @foreach($upcomingVisits as $uv)
                             <tr>
                                 <td>{{ $uv->visit_date->format('d M Y') }}</td>
@@ -413,12 +386,15 @@
                                 <td>{{ $uv->currentDepartment?->name ?? '—' }}</td>
                                 <td>{{ $uv->currentConsultationDoctor()?->full_name ?? '—' }}</td>
                                 <td><span class="badge" style="background-color: {{ $uv->status->color() }}">{{ $uv->status->translatedLabel() }}</span></td>
+                                <td class="text-end">
+                                    @php $linkedAppointment = $uv->appointments->first(); @endphp
+                                    <a href="{{ $linkedAppointment ? route('admin.appointments.show', $linkedAppointment) : route('admin.visits.show', $uv) }}" class="btn btn-sm btn-outline-primary" title="{{ __('common.view') }}">
+                                        <i class="ti ti-eye"></i>
+                                    </a>
+                                </td>
                             </tr>
                             @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            </x-data-table>
         </div>
         @endif
 
@@ -426,15 +402,22 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h6 class="fw-bold mb-0">{{ __('patients.visit_history') }}</h6>
+
+                @if(!$patient->isMerged() && !$patient->is_deceased && $patient->status === 'active')
                 @can('visits.create')
-                <a href="{{ route('admin.visits.create') }}?patient_id={{ $patient->id }}" class="btn btn-sm btn-primary"><i class="ti ti-plus me-1"></i>{{ __('patients.new_visit') }}</a>
+                @if(($lastVisitDate && $lastVisitDate->toDateString() === today()->toDateString()))
+                <button type="button" class="btn btn-success btn-md" disabled title="{{ __('patients.cannot_visit_deceased') }}">
+                    <i class="ti ti-plus me-1"></i>{{ __('patients.new_visit') }}
+                </button>
+                @else
+                <a href="{{ route('admin.visits.create') }}?patient_id={{ $patient->id }}" class="btn btn-sm btn-success"><i class="ti ti-plus me-1"></i>{{ __('patients.new_visit') }}</a>
+                @endif
                 @endcan
+                @endif
             </div>
             @if($patient->visits->isNotEmpty())
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
+            <x-data-table :card="false" local show-summary show-per-page>
+                <x-slot:head>
                             <tr>
                                 <th>{{ __('patients.col_visit_no') }}</th>
                                 <th>{{ __('patients.col_date') }}</th>
@@ -444,8 +427,7 @@
                                 <th>{{ __('patients.col_status') }}</th>
                                 <th>{{ __('patients.col_action') }}</th>
                             </tr>
-                        </thead>
-                        <tbody>
+                </x-slot:head>
                             @foreach($patient->visits as $visit)
                             <tr>
                                 <td><a href="{{ route('admin.visits.show', $visit) }}" class="fw-medium">{{ $visit->visit_number }}</a></td>
@@ -457,10 +439,7 @@
                                 <td><a aria-label="View" title="View" href="{{ route('admin.visits.show', $visit) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
                             </tr>
                             @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            </x-data-table>
             @else
             <div class="card-body text-center py-4 text-muted">
                 <i class="ti ti-calendar-off fs-1 d-block mb-2"></i>
@@ -481,9 +460,8 @@
             </div>
             <div class="card-body p-0">
                 @if($patient->insurances->isNotEmpty())
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
+                <x-data-table :card="false" local show-summary show-per-page>
+                    <x-slot:head>
                             <tr>
                                 <th>{{ __('patients.col_provider') }}</th>
                                 <th>{{ __('common.type') }}</th>
@@ -496,8 +474,7 @@
                                 <th>{{ __('patients.col_primary') }}</th>
                                 <th>{{ __('common.actions') }}</th>
                             </tr>
-                        </thead>
-                        <tbody>
+                    </x-slot:head>
                             @foreach($patient->insurances as $ins)
                             @php
                                 $insTier = $ins->insuranceTier;
@@ -587,9 +564,7 @@
                                 </td>
                             </tr>
                             @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                </x-data-table>
                 @else
                 <div class="text-center py-4 text-muted">
                     <i class="ti ti-shield-off fs-1 d-block mb-2"></i>
@@ -612,9 +587,8 @@
             </div>
             <div class="card-body p-0">
                 @if($patient->emergencyContacts->isNotEmpty())
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
+                <x-data-table :card="false" local show-summary show-per-page>
+                    <x-slot:head>
                             <tr>
                                 <th>{{ __('common.name') }}</th>
                                 <th>{{ __('common.phone') }}</th>
@@ -623,8 +597,7 @@
                                 <th>{{ __('patients.col_primary') }}</th>
                                 <th>{{ __('common.actions') }}</th>
                             </tr>
-                        </thead>
-                        <tbody>
+                    </x-slot:head>
                             @foreach($patient->emergencyContacts as $ec)
                             <tr>
                                 <td class="fw-medium">{{ $ec->name }}</td>
@@ -655,9 +628,7 @@
                                 </td>
                             </tr>
                             @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                </x-data-table>
                 @else
                 <div class="text-center py-4 text-muted">
                     <i class="ti ti-address-book-off fs-1 d-block mb-2"></i>
@@ -717,9 +688,8 @@
                     <h6 class="fw-bold mb-0">{{ __('patients.uninvoiced_services') }}</h6>
                     <span class="badge bg-warning text-dark">{{ $unbilledVisitServices->count() }} {{ __('patients.pending') }}</span>
                 </div>
-                <div class="table-responsive mb-4">
-                    <table class="table table-sm table-hover mb-0">
-                        <thead class="table-light">
+                <x-data-table :card="false" local show-summary show-per-page table-class="table-sm" class="mb-4">
+                    <x-slot:head>
                             <tr>
                                 <th>{{ __('patients.col_visit') }}</th>
                                 <th>{{ __('patients.col_service') }}</th>
@@ -727,8 +697,7 @@
                                 <th class="text-end">{{ __('patients.col_amount') }}</th>
                                 <th class="text-end">{{ __('patients.col_action') }}</th>
                             </tr>
-                        </thead>
-                        <tbody>
+                    </x-slot:head>
                             @foreach($unbilledVisitServices as $row)
                             <tr>
                                 <td>{{ $row['visit']->visit_number }}</td>
@@ -744,16 +713,13 @@
                                 </td>
                             </tr>
                             @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                </x-data-table>
                 @endif
 
                 @if($allInvoices->isNotEmpty())
                 <h6 class="fw-bold mb-2">{{ __('patients.recent_invoices') }}</h6>
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
+                <x-data-table :card="false" local show-summary show-per-page>
+                    <x-slot:head>
                             <tr>
                                 <th>{{ __('patients.col_invoice_no') }}</th>
                                 <th>{{ __('patients.col_visit') }}</th>
@@ -762,8 +728,7 @@
                                 <th>{{ __('patients.total_paid') }}</th>
                                 <th>{{ __('common.status') }}</th>
                             </tr>
-                        </thead>
-                        <tbody>
+                    </x-slot:head>
                             @foreach($allInvoices->sortByDesc('created_at')->take(10) as $inv)
                             <tr>
                                 <td><a href="{{ route('admin.billing.invoices.show', $inv) }}" class="fw-medium">{{ $inv->invoice_number }}</a></td>
@@ -774,9 +739,7 @@
                                 <td><span class="badge badge-soft-{{ ($inv->status instanceof \BackedEnum ? $inv->status->value : $inv->status) === 'paid' ? 'success' : (($inv->status instanceof \BackedEnum ? $inv->status->value : $inv->status) === 'partial' ? 'warning' : 'danger') }}">{{ $inv->status instanceof \BackedEnum ? $inv->status->translatedLabel() : ucfirst($inv->status) }}</span></td>
                             </tr>
                             @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                </x-data-table>
                 @else
                 <div class="text-center py-3 text-muted">
                     <p class="mb-0">{{ __('patients.no_billing') }}</p>

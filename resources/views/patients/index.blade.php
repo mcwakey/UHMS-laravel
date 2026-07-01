@@ -2,7 +2,7 @@
 @section('title', __('patients.title'))
 
 @section('content')
-<x-page-header :title="__('patients.title')" icon="ti-users">
+<x-page-header :title="__('patients.title')" :description="__('patients.description')" icon="ti-users">
     <!-- <span class="badge badge-soft-primary fw-medium border py-1 px-2 border-primary fs-13 ms-1">{{ __('common.total') }}: {{ $patients->total() }}</span> -->
     <x-slot:actions>
         @can('patients.merge.view')
@@ -43,6 +43,7 @@
             <option value="active" {{ ($filters['status'] ?? '') == 'active' ? 'selected' : '' }}>{{ __('common.active') }}</option>
             <option value="inactive" {{ ($filters['status'] ?? '') == 'inactive' ? 'selected' : '' }}>{{ __('common.inactive') }}</option>
             <option value="deceased" {{ ($filters['status'] ?? '') == 'deceased' ? 'selected' : '' }}>{{ __('patients.deceased') }}</option>
+            <option value="archived" {{ ($filters['status'] ?? '') == 'archived' ? 'selected' : '' }}>{{ __('patients.archived') }}</option>
         </select>
     </div>
     <div class="col-md-3">
@@ -112,12 +113,21 @@
                         <td>{{ $patient->date_of_birth ? \Carbon\Carbon::parse($patient->date_of_birth)->translatedFormat('d M Y') : '—' }}</td>
                         <td>{{ $patient->city ?? '—' }}</td>
                         <td>
-                            @if($patient->primaryInsurance?->insuranceProvider)
-                                <span class="badge bg-{{ $patient->primaryInsurance->insuranceProvider->type?->color() ?? 'secondary' }}">
-                                    {{ $patient->primaryInsurance->insuranceProvider->name }}
-                                </span>
+                            @php
+                                $displayInsurances = $patient->insurances
+                                    ->filter(fn ($insurance) => $insurance->insuranceProvider && ! $insurance->insuranceProvider->is_default)
+                                    ->sortByDesc('is_primary');
+                            @endphp
+                            @if($displayInsurances->isNotEmpty())
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach($displayInsurances as $insurance)
+                                        <span class="badge bg-{{ $insurance->is_valid ? ($insurance->insuranceProvider->type?->color() ?? 'secondary') : 'secondary' }}" title="{{ $insurance->insuranceTier?->name ?? '' }}">
+                                            {{ $insurance->insuranceProvider->short_name }}{{ $insurance->is_primary ? ' *' : '' }}
+                                        </span>
+                                    @endforeach
+                                </div>
                             @else
-                                <span class="text-muted small">—</span>
+                                <span class="text-muted small">-</span>
                             @endif
                         </td>
                         <td>
@@ -127,6 +137,8 @@
                                 <span class="badge badge-soft-success">{{ __('common.active') }}</span>
                             @elseif($patient->status === 'inactive')
                                 <span class="badge badge-soft-warning">{{ __('common.inactive') }}</span>
+                            @elseif($patient->status === 'archived')
+                                <span class="badge badge-soft-secondary">{{ __('patients.archived') }}</span>
                             @else
                                 <span class="badge badge-soft-dark">{{ __('patients.deceased') }}</span>
                             @endif
@@ -134,8 +146,9 @@
                         <td>{{ $patient->last_visit_date ? \Carbon\Carbon::parse($patient->last_visit_date)->translatedFormat('d M Y') : '—' }}</td>
                         <td class="text-end">
                             <div class="d-flex align-items-center justify-content-end gap-1">
+                                @if(!$patient->isMerged() && !$patient->is_deceased && $patient->status === 'active')
                                 @can('visits.create')
-                                @if($patient->isMerged() || $patient->status === 'deceased')
+                                @if($patient->last_visit_date === today()->toDateString())
                                 <button type="button" class="btn btn-sm btn-outline-secondary" title="{{ __('patients.merged_folder_no_visits') }}" disabled>
                                     <i class="ti ti-lock"></i>
                                 </button>
@@ -143,6 +156,7 @@
                                 <a href="{{ route('admin.visits.create', ['patient_id' => $patient->id]) }}" class="btn btn-sm btn-outline-success" title="{{ __('patients.new_visit') }}">
                                     <i class="ti ti-stethoscope"></i>
                                 </a>
+                                @endif
                                 @endif
                                 @endcan
                                 <div class="dropdown">

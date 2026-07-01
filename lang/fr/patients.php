@@ -11,6 +11,7 @@ return [
     'insurance_provider' => 'Assureur',
     'all_insurances' => 'Toutes les assurances',
     'all_status' => 'Tous les statuts',
+    'archived' => 'Archivé',
     'deceased' => 'Décédé',
     'last_visit_range' => 'Période de dernière visite',
     'patient_id' => 'ID patient',

@@ -202,6 +202,11 @@ class Patient extends Model
         return $this->hasMany(Appointment::class);
     }
 
+    public function archivedRecord()
+    {
+        return $this->hasOne(ArchivedPatient::class);
+    }
+
     public function latestVisit()
     {
         return $this->hasOne(Visit::class)->latestOfMany('visit_date');

@@ -269,6 +269,7 @@ class TriageController extends Controller
             'patient',
             'triage',
             'currentDepartment',
+            'invoices.items',
             'queueEntries' => fn ($query) => $query
                 ->whereNull('department_id')
                 ->today()

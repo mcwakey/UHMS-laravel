@@ -12,6 +12,7 @@ return [
     'all_insurances' => 'All Insurances',
     'all_status' => 'All Status',
     'deceased' => 'Deceased',
+    'archived' => 'Archived',
     'last_visit_range' => 'Last Visit Range',
     'patient_id' => 'Patient ID',
     'patient_name' => 'Patient Name',
