@@ -7,9 +7,12 @@ use App\Enums\PaymentMethod;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePaymentRequest;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\InvoiceReceivable;
 use App\Models\Payment;
 use App\Services\AccountingService;
 use App\Services\BillingService;
+use App\Services\InvoiceReceivableService;
 use App\Services\RefundService;
 use Illuminate\Http\Request;
 
@@ -19,6 +22,7 @@ class PaymentController extends Controller
         protected BillingService $billingService,
         protected AccountingService $accountingService,
         protected RefundService $refundService,
+        protected InvoiceReceivableService $receivableService,
     ) {}
 
     /**
@@ -26,10 +30,16 @@ class PaymentController extends Controller
      */
     public function receive(Request $request)
     {
+        $patientBalanceExpression = $this->patientOutstandingExpression();
+
         $query = Invoice::with(['patient', 'visit.department'])
-            ->withSum(['items as cashier_balance' => fn ($q) => $q->where('balance', '>', 0)], 'balance')
+            ->addSelect([
+                'cashier_balance' => InvoiceItem::query()
+                    ->selectRaw("COALESCE(SUM({$patientBalanceExpression}), 0)")
+                    ->whereColumn('invoice_id', 'invoices.id'),
+            ])
             ->unpaid()
-            ->whereHas('items', fn ($q) => $q->where('balance', '>', 0));
+            ->whereHas('items', fn ($q) => $q->whereRaw("{$patientBalanceExpression} > 0"));
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -143,9 +153,35 @@ class PaymentController extends Controller
         if ($request->input('return_to') === 'receive') {
             $validated['payer_type'] = 'patient';
             $validated['payer_id'] = $invoice->patient_id;
+
+            $patientBalanceExpression = $this->patientOutstandingExpression();
             $collectableBalance = (float) $invoice->items()
+                ->selectRaw("COALESCE(SUM({$patientBalanceExpression}), 0) as cashier_balance")
+                ->value('cashier_balance');
+
+            $patientReceivable = $this->receivableService
+                ->syncFromInvoice($invoice)
+                ->where('payer_type', InvoiceReceivable::PAYER_PATIENT)
+                ->when($invoice->patient_id, fn ($rows) => $rows->where('payer_id', (int) $invoice->patient_id))
                 ->where('balance', '>', 0)
-                ->sum('balance');
+                ->first();
+
+            if (! $patientReceivable && $collectableBalance > 0) {
+                $patientReceivable = $this->receivableService
+                    ->syncFromInvoice($invoice->fresh(['items', 'payments', 'creditNotes', 'receivables']))
+                    ->where('payer_type', InvoiceReceivable::PAYER_PATIENT)
+                    ->where('balance', '>', 0)
+                    ->first();
+            }
+
+            if (! $patientReceivable) {
+                $collectableBalance = 0.0;
+            } else {
+                $validated['invoice_receivable_id'] = $patientReceivable->id;
+                $validated['payer_type'] = InvoiceReceivable::PAYER_PATIENT;
+                $validated['payer_id'] = $patientReceivable->payer_id ?: $invoice->patient_id;
+                $collectableBalance = min($collectableBalance, (float) $patientReceivable->balance);
+            }
         }
 
         if ((float) $validated['amount'] > $collectableBalance) {
@@ -272,5 +308,15 @@ class PaymentController extends Controller
             'success',
             __('messages.payments.reversed', ['number' => $payment->payment_number, 'reversal' => $reversal->payment_number])
         );
+    }
+
+    private function patientOutstandingExpression(): string
+    {
+        return 'CASE '
+            . 'WHEN COALESCE(patient_payable, 0) <= 0 AND COALESCE(insurance_covered, 0) <= 0 AND COALESCE(balance, 0) > 0 '
+            . 'THEN COALESCE(balance, 0) '
+            . 'WHEN COALESCE(patient_payable, 0) - COALESCE(paid_amount, 0) > 0 '
+            . 'THEN COALESCE(patient_payable, 0) - COALESCE(paid_amount, 0) '
+            . 'ELSE 0 END';
     }
 }

@@ -116,6 +116,8 @@ class PaymentAccountingPostingService
 
     protected function line($account, string $description, float $debit, float $credit, Payment $payment): array
     {
+        $isInsuranceReceivable = ($payment->receivable?->payer_type ?? $payment->payer_type) === \App\Models\InvoiceReceivable::PAYER_INSURANCE;
+
         return [
             'account_id' => $account->id,
             'description' => $description,
@@ -126,7 +128,7 @@ class PaymentAccountingPostingService
             'visit_id' => $payment->invoice?->visit_id,
             'invoice_id' => $payment->invoice_id,
             'sponsor_id' => $payment->sponsor_id ?? $payment->invoice?->sponsor_id,
-            'insurance_provider_id' => $payment->insurance_provider_id ?? $payment->invoice?->visit?->visitInsurance?->insurance_provider_id,
+            'insurance_provider_id' => $isInsuranceReceivable ? ($payment->insurance_provider_id ?? $payment->receivable?->insurance_provider_id) : null,
             'reference_type' => Payment::class,
             'reference_id' => $payment->id,
         ];

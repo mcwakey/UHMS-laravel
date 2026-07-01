@@ -83,7 +83,7 @@ class InvoiceService
      *   insurance_total    = sum(items.insurance_covered)            (insurer responsibility)
      *   total_amount       = sum(items.patient_payable)              (patient responsibility)
      *   amount_paid        = sum(items.paid_amount)                  (ONLY from real payments)
-     *   balance            = sum(items.balance)
+     *   balance            = sum(max(items.patient_payable - items.paid_amount, 0))
      *
      * IMPORTANT: insurance_covered is a payer responsibility, not a patient payment.
      * Does NOT modify any item rows.
@@ -99,7 +99,10 @@ class InvoiceService
         $paidAmount = (float) $invoice->items->sum('paid_amount');
         // Non-cash adjustments (credit notes / write-offs) reduce the balance owed.
         $adjustment = (float) $invoice->adjustment_amount;
-        $balance = max(0.0, round((float) $invoice->items->sum('balance') - $adjustment, 2));
+        $settlement = app(\App\Services\Billing\InvoiceItemSettlementService::class);
+        $balance = max(0.0, round((float) $invoice->items->sum(
+            fn ($item) => $settlement->outstandingBalance($item)
+        ) - $adjustment, 2));
 
         $invoice->forceFill([
             'subtotal' => round($subtotal, 2),

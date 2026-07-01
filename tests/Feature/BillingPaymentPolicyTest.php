@@ -111,6 +111,31 @@ class BillingPaymentPolicyTest extends TestCase
         $this->assertSame('PARTIALLY_PAID', $s->settlementStatus($this->billItem($visit, ['paid_amount' => 40, 'balance' => 60])));
         $this->assertSame('WAIVED', $s->settlementStatus($this->billItem($visit, ['payment_status' => 'waived'])));
         $this->assertSame('COVERED_BY_INSURANCE', $s->settlementStatus($this->billItem($visit, ['patient_payable' => 0, 'insurance_covered' => 100, 'balance' => 0])));
+
+        $coveredWithStaleBalance = $this->billItem($visit, [
+            'patient_payable' => 0,
+            'insurance_covered' => 100,
+            'balance' => 100,
+        ]);
+        $this->assertSame('COVERED_BY_INSURANCE', $s->settlementStatus($coveredWithStaleBalance));
+        $this->assertSame(0.0, $s->outstandingBalance($coveredWithStaleBalance));
+
+        $paidWithStaleBalance = $this->billItem($visit, [
+            'patient_payable' => 100,
+            'paid_amount' => 100,
+            'balance' => 100,
+        ]);
+        $this->assertSame('PAID', $s->settlementStatus($paidWithStaleBalance));
+        $this->assertSame(0.0, $s->outstandingBalance($paidWithStaleBalance));
+
+        $legacyCashWithOnlyBalance = $this->billItem($visit, [
+            'patient_payable' => 0,
+            'insurance_covered' => 0,
+            'paid_amount' => 0,
+            'balance' => 100,
+        ]);
+        $this->assertSame('BILLED_UNPAID', $s->settlementStatus($legacyCashWithOnlyBalance));
+        $this->assertSame(100.0, $s->outstandingBalance($legacyCashWithOnlyBalance));
     }
 
     // ── OPD strict gate ─────────────────────────────────────────────

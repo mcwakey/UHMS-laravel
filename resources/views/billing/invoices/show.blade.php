@@ -55,7 +55,10 @@
         'cancelled' => 'secondary',
     ];
     $receivableStatusColor = fn ($status) => $receivableStatusColors[$status ?: 'pending'] ?? 'secondary';
-    $openReceivables = $invoice->receivables->filter(fn ($r) => (float) $r->balance > 0)->values();
+    $cashierReceivables = $invoice->receivables
+        ->reject(fn ($r) => $r->payer_type === \App\Models\InvoiceReceivable::PAYER_INSURANCE)
+        ->values();
+    $openReceivables = $cashierReceivables->filter(fn ($r) => (float) $r->balance > 0)->values();
     $selectedReceivableId = old('invoice_receivable_id');
     $defaultPaymentReceivable = $openReceivables->firstWhere('id', (int) $selectedReceivableId) ?: $openReceivables->first();
     $defaultPaymentAmount = $defaultPaymentReceivable
@@ -502,7 +505,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($invoice->receivables as $receivable)
+                            @forelse($cashierReceivables as $receivable)
                             @php
                                 $adjustments = (float) $receivable->credit_note_amount + (float) $receivable->write_off_amount;
                                 $agingReference = $receivable->due_date ?: $receivable->aging_start_date;
@@ -990,18 +993,8 @@
                         <label class="form-label">{{ __('invoices.move_to') }} <span class="text-danger">*</span></label>
                         <select name="target_payer_type" id="targetPayerTypeSelect" class="form-select" required>
                             <option value="patient">{{ __('common.patient') }}</option>
-                            <option value="insurance">{{ __('invoices.insurance') }}</option>
                             <option value="sponsor">{{ __('invoices.sponsor_label') ?? 'Sponsor' }}</option>
                             <option value="corporate">{{ __('invoices.corporate') }}</option>
-                        </select>
-                    </div>
-                    <div class="mb-3 payer-target-select d-none" data-payer-target="insurance">
-                        <label class="form-label">{{ __('invoices.insurance') }}</label>
-                        <select class="form-select target-payer-id" disabled>
-                            <option value="">{{ __('billing.select_provider') }}</option>
-                            @foreach(($receivablePayerOptions['insurance'] ?? []) as $provider)
-                            <option value="{{ $provider->id }}">{{ $provider->name }}</option>
-                            @endforeach
                         </select>
                     </div>
                     <div class="mb-3 payer-target-select d-none" data-payer-target="sponsor">

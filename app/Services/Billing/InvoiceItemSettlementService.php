@@ -37,11 +37,9 @@ class InvoiceItemSettlementService
             return self::WAIVED;
         }
 
-        $payable = (float) ($item->patient_payable ?? $item->balance ?? 0);
+        $payable = $this->patientPayable($item);
         $paid = (float) ($item->paid_amount ?? 0);
-        $balance = $item->balance !== null
-            ? (float) $item->balance
-            : max(0.0, round($payable - $paid, 2));
+        $balance = $this->outstandingBalance($item);
         $covered = (float) ($item->insurance_covered ?? 0);
 
         // Fully settled: explicit paid flag or zero remaining balance.
@@ -117,12 +115,22 @@ class InvoiceItemSettlementService
      */
     public function outstandingBalance(InvoiceItem $item): float
     {
-        if ($item->balance !== null) {
-            return max(0.0, (float) $item->balance);
-        }
-        $payable = (float) ($item->patient_payable ?? 0);
+        $payable = $this->patientPayable($item);
         $paid = (float) ($item->paid_amount ?? 0);
 
         return max(0.0, round($payable - $paid, 2));
+    }
+
+    private function patientPayable(InvoiceItem $item): float
+    {
+        $payable = (float) ($item->patient_payable ?? 0);
+        $covered = (float) ($item->insurance_covered ?? 0);
+        $legacyBalance = (float) ($item->balance ?? 0);
+
+        if ($payable <= self::EPS && $covered <= self::EPS && $legacyBalance > self::EPS) {
+            return $legacyBalance;
+        }
+
+        return $payable;
     }
 }

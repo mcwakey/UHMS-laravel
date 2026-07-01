@@ -168,6 +168,7 @@ return [
         'credit_note_cancelled'  => 'Note de crédit :number contrepassée.',
         'credit_note_reversed'   => 'Ajustement :number contrepassé avec la trace :reversal.',
         'receivable_reallocated' => 'Responsabilité du payeur réallouée avec succès.',
+        'insurance_receivable_not_cashier_collectable' => 'La responsabilite assurance doit etre traitee via le circuit des reclamations, pas a la caisse.',
         'sponsor_created'        => 'Sponsor :name créé.',
         'sponsor_updated'        => 'Sponsor :name mis à jour.',
         'sponsor_toggled'        => 'Sponsor :name :status.',

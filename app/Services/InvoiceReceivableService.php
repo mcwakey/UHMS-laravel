@@ -55,7 +55,29 @@ class InvoiceReceivableService
         $receivables = $this->syncFromInvoice($invoice);
 
         if (! empty($data['invoice_receivable_id'])) {
+            $payerType = $this->normalizePayerType($data['payer_type'] ?? null);
+            $payerId = $data['payer_id'] ?? null;
             $receivable = $receivables->firstWhere('id', (int) $data['invoice_receivable_id']);
+
+            if ($receivable && $payerType) {
+                $payerMatches = $receivable->payer_type === $payerType
+                    && ($payerId === null || (int) $receivable->payer_id === (int) $payerId);
+
+                if (! $payerMatches) {
+                    $receivable = null;
+                }
+            }
+
+            if (! $receivable) {
+                if ($payerType) {
+                    $receivable = $receivables
+                        ->where('payer_type', $payerType)
+                        ->when($payerId !== null, fn ($rows) => $rows->where('payer_id', (int) $payerId))
+                        ->where('balance', '>', 0)
+                        ->first();
+                }
+            }
+
             if (! $receivable) {
                 throw new \RuntimeException('Selected payer responsibility does not belong to this invoice.');
             }
@@ -297,7 +319,8 @@ class InvoiceReceivableService
 
     private function canRebuildSystemReceivables(Invoice $invoice): bool
     {
-        return $invoice->receivables->isNotEmpty()
+        return $invoice->payments->isEmpty()
+            && $invoice->receivables->isNotEmpty()
             && $invoice->receivables->every(fn (InvoiceReceivable $row) => $row->allocation_source === 'system'
                 && (float) $row->paid_amount <= 0
                 && (float) $row->credit_note_amount <= 0

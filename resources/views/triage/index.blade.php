@@ -28,6 +28,10 @@
     </div>
 @endif
 
+@php
+    $invoiceSettlement = app(\App\Services\Billing\InvoiceItemSettlementService::class);
+@endphp
+
 <div class="row g-3">
     {{-- ── Awaiting Triage (WAITING) ───────────────────────────────────────── --}}
     @php $waiting = $visits->where('status', \App\Enums\VisitStatus::QUEUED)->values(); @endphp
@@ -44,7 +48,7 @@
                         $queueEntry = $visit->queueEntries->first();
                         $patientBillBalance = (float) $visit->invoices
                             ->flatMap->items
-                            ->sum(fn ($item) => (float) $item->balance);
+                            ->sum(fn ($item) => $invoiceSettlement->outstandingBalance($item));
                         $hasUnpaidBill = $patientBillBalance > 0;
                     @endphp
                     <div class="d-flex align-items-center px-3 py-2 border-bottom hover-bg-light">
@@ -69,14 +73,14 @@
                             @endif
                         </div>
                         @if($hasUnpaidBill)
-                        @else
-                        @endif
                             <button type="button" class="btn btn-outline-muted btn-sm ms-2" disabled title="{{ __('triage.pay_bill_before_triage', ['amount' => '₵'.number_format($patientBillBalance, 2)]) }}">
                                 <i class="ti ti-lock me-1"></i>{{ __('triage.start_triage') }}
                             </button>
+                        @else
                             <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-warning btn-sm ms-2">
                                 <i class="ti ti-stethoscope me-1"></i>{{ __('triage.start_triage') }}
                             </a>
+                        @endif
                     </div>
                 @empty
                     <div class="text-center text-muted py-2 small">
@@ -103,7 +107,7 @@
                         $queueEntry = $visit->queueEntries->first();
                         $patientBillBalance = (float) $visit->invoices
                             ->flatMap->items
-                            ->sum(fn ($item) => (float) $item->balance);
+                            ->sum(fn ($item) => $invoiceSettlement->outstandingBalance($item));
                         $hasUnpaidBill = $patientBillBalance > 0;
                     @endphp
                     <div class="d-flex align-items-center px-3 py-2 border-bottom hover-bg-light">

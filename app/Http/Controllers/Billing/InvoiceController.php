@@ -7,7 +7,6 @@ use App\Enums\InvoiceStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Models\CorporateClient;
-use App\Models\InsuranceProvider;
 use App\Models\Invoice;
 use App\Models\Patient;
 use App\Models\ServiceCatalog;
@@ -152,7 +151,6 @@ class InvoiceController extends Controller
             'invoiceBalanceSummary' => $balanceService->summary($invoice),
             'adjustmentHistory' => $balanceService->history($invoice),
             'receivablePayerOptions' => [
-                'insurance' => InsuranceProvider::active()->orderBy('name')->get(['id', 'name']),
                 'sponsors' => Sponsor::active()->orderBy('name')->get(['id', 'name']),
                 'corporate' => CorporateClient::active()->orderBy('name')->get(['id', 'name']),
             ],

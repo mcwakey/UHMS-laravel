@@ -9,6 +9,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
 use App\Models\PaymentAllocation;
+use App\Services\Billing\InvoiceItemSettlementService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -23,6 +24,7 @@ class PaymentService
         protected InvoiceService $invoiceService,
         protected VisitWorkflowService $visitWorkflowService,
         protected InvoiceReceivableService $receivableService,
+        protected InvoiceItemSettlementService $settlement,
         protected ?ActivityLogService $logger = null,
     ) {
         $this->logger = $this->logger ?: app(ActivityLogService::class);
@@ -74,9 +76,10 @@ class PaymentService
                 if (in_array($item->payment_status, ['cancelled', 'voided'], true)) {
                     throw new \RuntimeException("Cannot pay against {$item->payment_status} line {$item->description}.");
                 }
-                if (round((float) $item->balance, 2) + 0.01 < round((float) $alloc['amount'], 2)) {
+                $itemOutstanding = $this->settlement->outstandingBalance($item);
+                if (round($itemOutstanding, 2) + 0.01 < round((float) $alloc['amount'], 2)) {
                     throw new \RuntimeException(
-                        "Allocation ₵{$alloc['amount']} exceeds remaining balance ₵{$item->balance} on '{$item->description}'."
+                        "Allocation {$alloc['amount']} exceeds remaining balance {$itemOutstanding} on '{$item->description}'."
                     );
                 }
                 if ((float) $alloc['amount'] <= 0) {
@@ -167,7 +170,7 @@ class PaymentService
     {
         $items = $invoice->items
             ->whereNotIn('payment_status', ['paid', 'cancelled', 'voided'])
-            ->where(fn ($i) => (float) $i->balance > 0)
+            ->filter(fn ($i) => $this->settlement->outstandingBalance($i) > 0)
             ->sortBy('id')
             ->values();
 
@@ -183,7 +186,7 @@ class PaymentService
         $out       = [];
         foreach ($items as $item) {
             if ($remaining <= 0) break;
-            $apply = min($remaining, (float) $item->balance);
+            $apply = min($remaining, $this->settlement->outstandingBalance($item));
             if ($apply <= 0) continue;
             $apply = round($apply, 2);
             $out[] = ['invoice_item_id' => $item->id, 'amount' => $apply];

@@ -168,6 +168,7 @@ return [
         'credit_note_cancelled'  => 'Credit note :number reversed.',
         'credit_note_reversed'   => 'Adjustment :number reversed with trace record :reversal.',
         'receivable_reallocated' => 'Payer responsibility reallocated successfully.',
+        'insurance_receivable_not_cashier_collectable' => 'Insurance responsibility must be handled through the claims workflow, not cashier collection.',
         'sponsor_created'        => 'Sponsor :name created.',
         'sponsor_updated'        => 'Sponsor :name updated.',
         'sponsor_toggled'        => 'Sponsor :name :status.',
