@@ -102,12 +102,12 @@
                                 <div>
                                     <a href="{{ route('admin.patients.show', $patient) }}" class="fw-medium text-dark">{{ $patient->full_name }}</a>
                                     @if($patient->email)
-                                    <br><small class="text-muted">{{ $patient->email }}</small>
+                                    <br><small class="text-muted"><x-patient-protected-field field="email" :value="$patient->email" /></small>
                                     @endif
                                 </div>
                             </div>
                         </td>
-                        <td>{{ $patient->phone }}</td>
+                        <td><x-patient-protected-field field="phone" :value="$patient->phone" /></td>
                         <td>{{ $patient->gender?->label() }}</td>
                         {{-- <td>{{ $patient->age }} yrs</td> --}}
                         <td>{{ $patient->date_of_birth ? \Carbon\Carbon::parse($patient->date_of_birth)->translatedFormat('d M Y') : '—' }}</td>

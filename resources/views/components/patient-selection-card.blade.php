@@ -104,7 +104,7 @@
                     <h6 class="mb-0" id="{{ $patientNameId }}">{{ $selectedPatient?->full_name }} &bull; {{ $selectedPatient?->gender }}</h6>
                     <small class="text-muted">
                         <span id="{{ $patientNumberId }}">{{ $selectedPatient?->patient_number }}</span>
-                        &bull; <span id="{{ $patientPhoneId }}">{{ $selectedPatient?->phone }}</span>
+                        &bull; <span id="{{ $patientPhoneId }}"><x-patient-protected-field field="phone" :value="$selectedPatient?->phone" /></span>
                         <span id="{{ $patientLastVisitId }}" class="{{ $lastVisitDate ? '' : 'd-none' }}">
                             &bull; {{ __('visits.last_visit') }} <strong>{{ $lastVisitDate ? \Carbon\Carbon::parse($lastVisitDate)->format('d M Y') : '' }}</strong>
                         </span>

@@ -66,7 +66,7 @@
                     <span><i class="ti ti-droplet fs-12 text-danger"></i> {{ $patient->blood_group?->value }}</span>
                 @endif
                 @if($patient->phone)
-                    <span><i class="ti ti-phone fs-12"></i> {{ $patient->phone }}</span>
+                    <span><i class="ti ti-phone fs-12"></i> <x-patient-protected-field field="phone" :value="$patient->phone" /></span>
                 @endif
             </div>
         </div>
@@ -84,7 +84,7 @@
             <i class="ti ti-alert-triangle"></i>
             <div>
                 <small class="fw-semibold d-block">Allergies</small>
-                <span class="fs-13">{{ $patient->allergies }}</span>
+                <span class="fs-13"><x-patient-protected-field field="allergies" :value="$patient->allergies" /></span>
             </div>
         </div>
         @endif
@@ -93,7 +93,7 @@
             <i class="ti ti-heart-rate-monitor"></i>
             <div>
                 <small class="fw-semibold d-block">Chronic Conditions</small>
-                <span class="fs-13">{{ $patient->chronic_conditions }}</span>
+                <span class="fs-13"><x-patient-protected-field field="chronic_conditions" :value="$patient->chronic_conditions" /></span>
             </div>
         </div>
         @endif
@@ -121,7 +121,7 @@
                     <small class="text-muted d-block">
                         @if($vTier?->name){{ $vTier->name }}@endif
                         {{-- @if($vTier?->coverage_percentage) · {{ $vTier->coverage_percentage }}% coverage @endif --}}
-                        @if($vIns->membership_number) · #{{ $vIns->membership_number }} @endif
+                        @if($vIns->membership_number) · #<x-patient-protected-field field="membership_number" :value="$vIns->membership_number" /> @endif
                     </small>
                         @can('visits.edit')
                         @if($visit)
@@ -210,7 +210,7 @@
                 </div>
                 <div>
                     <span class="fw-semibold">Cash &amp; Carry</span>
-                    <small class="text-muted d-block">No active insurance for this visit</small>
+                    <small class="text-muted d-block">{{ __('patients.no_active_insurance_for_visit') }}</small>
                 </div>
             </div>
         @endif

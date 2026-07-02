@@ -336,12 +336,12 @@
                                         <option value="IM">IM</option>
                                         <option value="SC">SC</option>
                                         <option value="topical">{{ __('consultations.medicine_route.topical') }}</option>
-                                        <option value="rectal">Rectal</option>
-                                        <option value="sublingual">Sublingual</option>
+                                        <option value="rectal">{{ __('consultations.medicine_route.rectal') }}</option>
+                                        <option value="sublingual">{{ __('consultations.medicine_route.sublingual') }}</option>
                                         <option value="inhaled">{{ __('consultations.medicine_route.inhaled') }}</option>
-                                        <option value="nasal">Nasal</option>
-                                        <option value="ophthalmic">Ophthalmic</option>
-                                        <option value="otic">Otic</option>
+                                        <option value="nasal">{{ __('consultations.medicine_route.nasal') }}</option>
+                                        <option value="ophthalmic">{{ __('consultations.medicine_route.ophthalmic') }}</option>
+                                        <option value="otic">{{ __('consultations.medicine_route.otic') }}</option>
                                     </select>
                                 </div>
                                 <div class="col-md-8">

@@ -11,6 +11,7 @@ use App\Models\InsuranceProvider;
 use App\Models\InsuranceTier;
 use App\Models\Patient;
 use App\Services\PatientService;
+use App\Services\PatientPrivacyService;
 use App\Services\VisitService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -158,6 +159,7 @@ class PatientController extends Controller
     {
         // AJAX: Return patient insurances as JSON
         if ($request->ajax() && $request->get('format') === 'insurances') {
+            $privacy = app(PatientPrivacyService::class);
             if ($patient->isMerged()) {
                 $patient = $patient->getFinalPatient();
             }
@@ -169,7 +171,9 @@ class PatientController extends Controller
                     ->map(fn($ins) => [
                         'id' => $ins->id,
                         'provider_name' => $ins->insuranceProvider->name,
-                        'membership_number' => $ins->membership_number,
+                        'membership_number' => $privacy->display('membership_number', $ins->membership_number),
+                        'policy_number' => $privacy->display('policy_number', $ins->policy_number),
+                        'ccc_code' => $privacy->display('ccc_code', $ins->ccc_code),
                         'is_primary' => $ins->is_primary,
                         'is_expired' => $ins->is_expired,
                     ])->values(),
@@ -224,6 +228,8 @@ class PatientController extends Controller
             ->orderBy('start_time')
             ->take(10)
             ->get();
+
+        app(PatientPrivacyService::class)->auditPatientProfileView($patient);
 
         return view('patients.show', compact('patient', 'insuranceProviders', 'upcomingVisits', 'upcomingAppointments', 'activityLogs'));
     }

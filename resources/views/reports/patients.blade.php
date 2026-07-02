@@ -128,7 +128,7 @@
                         <td>{{ $patient->full_name }}</td>
                         <td>{{ ucfirst($patient->gender?->value ?? '—') }}</td>
                         <td>{{ $patient->date_of_birth?->format('d M Y') ?? '—' }}</td>
-                        <td>{{ $patient->phone }}</td>
+                        <td><x-patient-protected-field field="phone" :value="$patient->phone" /></td>
                         <td><span class="badge bg-primary rounded-pill">{{ $patient->visits_count }}</span></td>
                         <td>{{ $patient->created_at->format('d M Y') }}</td>
                     </tr>

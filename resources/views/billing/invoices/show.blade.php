@@ -198,7 +198,7 @@
                         @if($invoice->patient)
                             <div class="fw-semibold">{{ $invoice->patient->full_name }}</div>
                             <div class="text-muted small">{{ $invoice->patient->patient_number }}</div>
-                            @if($invoice->patient->phone)<div class="text-muted small">{{ $invoice->patient->phone }}</div>@endif
+                            @if($invoice->patient->phone)<div class="text-muted small"><x-patient-protected-field field="phone" :value="$invoice->patient->phone" /></div>@endif
                         @else
                             <div class="fw-semibold">{{ $invoice->external_party_name ?? __('invoices.external_recipient') }}</div>
                             <div class="mt-1"><span class="badge bg-purple-lt">{{ __('billing.external_referral') }}</span></div>

@@ -11,9 +11,11 @@
     $moduleEnum = \App\Enums\LogModule::tryFrom($module);
     $sevEnum = \App\Enums\LogSeverity::tryFrom($severity);
     $action = $props['action'] ?? $activity->event ?? '—';
-    $old = $props['old'] ?? [];
-    $new = $props['attributes'] ?? [];
-    $metadata = $props['metadata'] ?? [];
+    $privacy = app(\App\Services\PatientPrivacyService::class);
+    $old = $privacy->protectArrayForDisplay((array) ($props['old'] ?? []));
+    $new = $privacy->protectArrayForDisplay((array) ($props['attributes'] ?? []));
+    $metadata = $privacy->protectArrayForDisplay((array) ($props['metadata'] ?? []));
+    $safeProps = $privacy->protectArrayForDisplay((array) $props);
     $contextKeys = ['patient_id','visit_id','admission_id','emergency_case_id','department_id','invoice_id','claim_id','payment_id','procedure_request_id','theatre_room_id'];
 @endphp
 
@@ -154,7 +156,7 @@
         <div class="card">
             <div class="card-header"><h6 class="card-title mb-0">{{ __('settings.raw_properties') }}</h6></div>
             <div class="card-body">
-                <pre class="bg-light p-2 rounded small mb-0">{{ json_encode($props, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
+                <pre class="bg-light p-2 rounded small mb-0">{{ json_encode($safeProps, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
             </div>
         </div>
     </div>

@@ -37,7 +37,7 @@
                             <dt class="col-5">{{ __('invoices.invoice') }}</dt><dd class="col-7">{{ $transaction->invoice?->invoice_number ?? '—' }}</dd>
                             <dt class="col-5">{{ __('payments.gateway.linked_payment') }}</dt>
                             <dd class="col-7">{{ $transaction->payment?->payment_number ?? '—' }}</dd>
-                            <dt class="col-5">{{ __('payments.gateway.payer_phone') }}</dt><dd class="col-7">{{ $transaction->payer_phone ?? '—' }}</dd>
+                            <dt class="col-5">{{ __('payments.gateway.payer_phone') }}</dt><dd class="col-7"><x-patient-protected-field field="phone" :value="$transaction->payer_phone" /></dd>
                             <dt class="col-5">{{ __('sms.created_at') }}</dt><dd class="col-7">{{ $transaction->created_at?->format('Y-m-d H:i') }}</dd>
                         </dl>
                         @if($transaction->error_message)

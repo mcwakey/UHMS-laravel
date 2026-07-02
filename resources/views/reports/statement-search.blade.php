@@ -47,7 +47,7 @@
                 <tr>
                     <td><code>{{ $patient->patient_number }}</code></td>
                     <td>{{ $patient->full_name }}</td>
-                    <td>{{ $patient->phone ?? '—' }}</td>
+                    <td><x-patient-protected-field field="phone" :value="$patient->phone" /></td>
                     <td>{{ $patient->gender?->label() ?? '—' }}</td>
                     <td>
                         <a href="{{ route('admin.reports.patient-statement', $patient) }}" class="btn btn-sm btn-primary">

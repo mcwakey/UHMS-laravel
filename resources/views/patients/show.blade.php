@@ -33,12 +33,23 @@
                 <div>
                     <p class="text-primary mb-1 fw-medium">{{ $patient->patient_number }}</p>
                     <h5 class="mb-1"><span class="fw-bold">{{ $patient->full_name }}</span></h5>
-                    <p class="mb-3">{{ $patient->address ? $patient->address . ', ' : '' }}{{ collect([$patient->city, $patient->town])->filter()->implode(', ') }}{{ $patient->region ? ', ' . $patient->region : '' }}</p>
+                    <p class="mb-3">
+                        @if($patient->address)
+                            <x-patient-protected-field field="address" :value="$patient->address" />{{ collect([$patient->city, $patient->town, $patient->region])->filter()->isNotEmpty() ? ', ' : '' }}
+                        @endif
+                        {{ collect([$patient->city, $patient->town])->filter()->implode(', ') }}{{ $patient->region ? ', ' . $patient->region : '' }}
+                    </p>
                     <div class="d-flex align-items-center flex-wrap gap-3">
-                        <p class="mb-0 d-inline-flex align-items-center"><i class="ti ti-phone me-1 text-dark"></i>{{ $patient->phone }} / {{ $patient->phone_secondary }}</p>
+                        <p class="mb-0 d-inline-flex align-items-center">
+                            <i class="ti ti-phone me-1 text-dark"></i>
+                            <x-patient-protected-field field="phone" :value="$patient->phone" />
+                            @if($patient->phone_secondary)
+                                / <x-patient-protected-field field="phone_secondary" :value="$patient->phone_secondary" />
+                            @endif
+                        </p>
                         @if($patient->email)
                         <span class="text-light">|</span>
-                        <p class="mb-0 d-inline-flex align-items-center"><i class="ti ti-mail me-1 text-dark"></i>{{ $patient->email }}</p>
+                        <p class="mb-0 d-inline-flex align-items-center"><i class="ti ti-mail me-1 text-dark"></i><x-patient-protected-field field="email" :value="$patient->email" /></p>
                         @endif
                     </div>
                 </div>
@@ -195,7 +206,7 @@
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-id-badge-2 fs-16"></i></span>
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">{{ __('patients.ghana_card') }}</h6>
-                                <p class="mb-0">{{ $patient->ghana_card_number ?? '—' }}</p>
+                                <p class="mb-0"><x-patient-protected-field field="ghana_card_number" :value="$patient->ghana_card_number" /></p>
                             </div>
                         </div>
                     </div>
@@ -227,7 +238,7 @@
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-map-pin-code fs-16"></i></span>
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">{{ __('patients.digital_address') }}</h6>
-                                <p class="mb-0">{{ $patient->digital_address ?? '—' }}</p>
+                                <p class="mb-0"><x-patient-protected-field field="digital_address" :value="$patient->digital_address" /></p>
                             </div>
                         </div>
                     </div>
@@ -246,7 +257,7 @@
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-phone-call fs-16"></i></span>
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">{{ __('patients.emergency_phone') }}</h6>
-                                <p class="mb-0">{{ $primaryContact?->phone ?? '—' }}</p>
+                                <p class="mb-0"><x-patient-protected-field field="emergency_contact_phone" :value="$primaryContact?->phone" /></p>
                             </div>
                         </div>
                     </div>
@@ -255,7 +266,7 @@
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-home fs-16"></i></span>
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">{{ __('patients.address') }}</h6>
-                                <p class="mb-0">{{ $patient->address ?? '—' }}</p>
+                                <p class="mb-0"><x-patient-protected-field field="address" :value="$patient->address" /></p>
                             </div>
                         </div>
                     </div>
@@ -274,7 +285,7 @@
     <div class="col-md-6 d-flex">
         <div class="card shadow-sm flex-fill">
             <div class="card-body d-flex align-items-center justify-content-center">
-                <p class="mb-0">{{ $patient->allergies }}</p>
+                <p class="mb-0"><x-patient-protected-field field="allergies" :value="$patient->allergies" /></p>
                 <h5 class="fw-bold mb-0 text-danger"><i class="ti ti-alert-triangle me-1"></i>{{ __('patients.allergies') }}</h5>
             </div>
         </div>
@@ -284,7 +295,7 @@
     <div class="col-md-6 d-flex">
         <div class="card shadow-sm flex-fill">
             <div class="card-body d-flex align-items-center justify-content-center">
-                <p class="mb-0">{{ $patient->chronic_conditions }}</p>
+                <p class="mb-0"><x-patient-protected-field field="chronic_conditions" :value="$patient->chronic_conditions" /></p>
                 <h5 class="fw-bold mb-0 text-warning"><i class="ti ti-heartbeat me-1"></i>{{ __('patients.chronic_conditions') }}</h5>
             </div>
         </div>
@@ -503,9 +514,9 @@
                                         <span class="badge bg-info">{{ __('patients.card_holder') }}</span>
                                     @endif
                                 </td>
-                                <td>{{ $ins->membership_number ?? '—' }}
+                                <td><x-patient-protected-field field="membership_number" :value="$ins->membership_number" />
                                     @if($ins->ccc_code)
-                                        <div class="small text-muted">CCC: {{ $ins->ccc_code }}</div>
+                                        <div class="small text-muted">CCC: <x-patient-protected-field field="ccc_code" :value="$ins->ccc_code" /></div>
                                     @endif
                                 </td>
                                 <td>
@@ -548,9 +559,9 @@
                                         data-tier-name="{{ $insTier?->name }}"
                                         data-member-type="{{ $insMemberType }}"
                                         data-card-holder="{{ $ins->card_holder_insurance_id }}"
-                                        data-membership="{{ $ins->membership_number }}"
-                                        data-policy="{{ $ins->policy_number }}"
-                                        data-ccc-code="{{ $ins->ccc_code }}"
+                                        data-membership="{{ app(\App\Services\PatientPrivacyService::class)->display('membership_number', $ins->membership_number) }}"
+                                        data-policy="{{ app(\App\Services\PatientPrivacyService::class)->display('policy_number', $ins->policy_number) }}"
+                                        data-ccc-code="{{ app(\App\Services\PatientPrivacyService::class)->display('ccc_code', $ins->ccc_code) }}"
                                         data-expiry="{{ $ins->expiry_date?->format('Y-m-d') }}"
                                         data-active="{{ $ins->is_active }}"
                                         data-bs-toggle="modal" data-bs-target="#editInsuranceModal" aria-label="{{ __('common.edit') }}" title="{{ __('common.edit') }}">
@@ -601,8 +612,8 @@
                             @foreach($patient->emergencyContacts as $ec)
                             <tr>
                                 <td class="fw-medium">{{ $ec->name }}</td>
-                                <td>{{ $ec->phone }}</td>
-                                <td>{{ $ec->phone_secondary ?? '—' }}</td>
+                                <td><x-patient-protected-field field="emergency_contact_phone" :value="$ec->phone" /></td>
+                                <td><x-patient-protected-field field="emergency_contact_phone" :value="$ec->phone_secondary" /></td>
                                 <td>{{ $ec->relationship ?? '—' }}</td>
                                 <td>
                                     @if($ec->is_primary)
@@ -614,8 +625,8 @@
                                     <button type="button" class="btn btn-sm btn-outline-secondary edit-ec-btn"
                                         data-id="{{ $ec->id }}"
                                         data-name="{{ $ec->name }}"
-                                        data-phone="{{ $ec->phone }}"
-                                        data-phone-secondary="{{ $ec->phone_secondary }}"
+                                        data-phone="{{ app(\App\Services\PatientPrivacyService::class)->display('emergency_contact_phone', $ec->phone) }}"
+                                        data-phone-secondary="{{ app(\App\Services\PatientPrivacyService::class)->display('emergency_contact_phone', $ec->phone_secondary) }}"
                                         data-relationship="{{ $ec->relationship }}"
                                         data-primary="{{ $ec->is_primary }}"
                                         data-bs-toggle="modal" data-bs-target="#editEmergencyContactModal" aria-label="{{ __('common.edit') }}" title="{{ __('common.edit') }}">

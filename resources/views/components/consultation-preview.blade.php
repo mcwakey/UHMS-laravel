@@ -218,9 +218,9 @@
             <div><span class="lbl">{{ __('common.name') }}:</span> <strong>{{ $patient->full_name }}</strong></div>
             <div><span class="lbl">{{ __('consultations.label_patient_no') }}:</span> {{ $patient->patient_number }}</div>
             <div><span class="lbl">{{ __('consultations.label_age_gender') }}:</span> {{ __('consultations.history.age_gender', ['age' => $patient->age, 'gender' => $patient->gender?->translatedLabel() ?? '-']) }}</div>
-            <div><span class="lbl">{{ __('common.phone') }}:</span> {{ $patient->phone ?? '-' }}</div>
+            <div><span class="lbl">{{ __('common.phone') }}:</span> <x-patient-protected-field field="phone" :value="$patient->phone" mode="export" /></div>
             <div><span class="lbl">{{ __('common.blood_group') }}:</span> {{ $patient->blood_group?->translatedLabel() ?? 'N/A' }}</div>
-            <div><span class="lbl">{{ __('consultations.label_ghana_card') }}:</span> {{ $patient->ghana_card_number ?? '-' }}</div>
+            <div><span class="lbl">{{ __('consultations.label_ghana_card') }}:</span> <x-patient-protected-field field="ghana_card_number" :value="$patient->ghana_card_number" mode="export" /></div>
             @if($patient->occupation)<div><span class="lbl">{{ __('consultations.label_occupation') }}:</span> {{ $patient->occupation }}</div>@endif
             @if($patient->marital_status)<div><span class="lbl">{{ __('consultations.label_marital_status') }}:</span> {{ is_object($patient->marital_status) && method_exists($patient->marital_status, 'translatedLabel') ? $patient->marital_status->translatedLabel() : $patient->marital_status }}</div>@endif
             @if($patient->religion)<div><span class="lbl">{{ __('consultations.label_religion') }}:</span> {{ $patient->religion }}</div>@endif

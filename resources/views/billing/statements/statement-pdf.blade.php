@@ -45,7 +45,7 @@
                 <h5>{{ __('common.patient') }}</h5>
                 <p style="font-weight:bold;">{{ trim($patient->first_name . ' ' . $patient->last_name) }}</p>
                 <p>{{ $patient->patient_number }}</p>
-                <p>{{ $patient->phone }}</p>
+                <p><x-patient-protected-field field="phone" :value="$patient->phone" mode="export" /></p>
             </td>
         </tr>
     </table>

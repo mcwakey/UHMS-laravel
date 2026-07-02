@@ -160,7 +160,12 @@
                         </td>
                         <td>
                             <div class="fw-medium">{{ $invoice->patient?->full_name ?? $invoice->external_party_name ?? '—' }}</div>
-                            <small class="text-muted">{{ $invoice->patient?->patient_number ?? __('payments.external_referral') }}{{ $invoice->patient?->phone ? ' | ' . $invoice->patient->phone : '' }}</small>
+                            <small class="text-muted">
+                                {{ $invoice->patient?->patient_number ?? __('payments.external_referral') }}
+                                @if($invoice->patient?->phone)
+                                    | <x-patient-protected-field field="phone" :value="$invoice->patient->phone" />
+                                @endif
+                            </small>
                         </td>
                         <td>
                             <div>{{ $invoice->visit?->visit_number ?? __('payments.direct_invoice') }}</div>

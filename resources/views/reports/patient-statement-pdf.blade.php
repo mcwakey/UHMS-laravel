@@ -42,7 +42,7 @@
             </tr>
             <tr>
                 <td class="label">{{ __('common.phone') }}:</td>
-                <td>{{ $patient->phone ?? '—' }}</td>
+                <td><x-patient-protected-field field="phone" :value="$patient->phone" mode="export" /></td>
                 <td class="label">{{ __('common.date_of_birth') }}:</td>
                 <td>{{ $patient->date_of_birth?->format('d/m/Y') ?? '—' }}</td>
             </tr>

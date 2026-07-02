@@ -8,6 +8,7 @@ use App\Models\PatientMergeLog;
 use App\Models\PatientMergeRequest;
 use App\Services\PatientMergePreviewService;
 use App\Services\PatientMergeService;
+use App\Services\PatientPrivacyService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -33,6 +34,7 @@ class PatientMergeController extends Controller
      */
     public function search(Request $request)
     {
+        $privacy = app(PatientPrivacyService::class);
         $term = (string) $request->get('q', '');
         if (mb_strlen($term) < 2) {
             return response()->json([]);
@@ -42,12 +44,12 @@ class PatientMergeController extends Controller
             ->search($term)
             ->limit(10)
             ->get()
-            ->map(function (Patient $patient) {
+            ->map(function (Patient $patient) use ($privacy) {
                 return [
                     'id' => $patient->id,
                     'patient_number' => $patient->patient_number,
                     'full_name' => $patient->full_name,
-                    'phone' => $patient->phone,
+                    'phone' => $privacy->display('phone', $patient->phone),
                     'is_deceased' => (bool) $patient->is_deceased,
                     'is_merged' => $patient->isMerged(),
                 ];

@@ -248,7 +248,9 @@ Route::middleware('auth')->group(function () {
         Route::get('journey/worklist/refresh', [\App\Http\Controllers\Admin\Journey\JourneyWorklistController::class, 'refresh'])->name('journey.worklist.refresh');
         // Phase 9.7 — per-user journey notification preferences.
         Route::get('settings/journey-notifications', [\App\Http\Controllers\Admin\Settings\JourneyNotificationPreferenceController::class, 'show'])->name('settings.journey-notifications');
-        Route::put('settings/journey-notifications', [\App\Http\Controllers\Admin\Settings\JourneyNotificationPreferenceController::class, 'update'])->name('settings.journey-notifications.update');
+        Route::put('settings/journey-notifications', [\App\Http\Controllers\Admin\Settings\JourneyNotificationPreferenceController::class, 'update'])
+            ->name('settings.journey-notifications.update')
+            ->middleware('can:settings.journey_notifications.update');
 
         // Phase 9.8 — journey SLA / operational performance analytics (capability-gated).
         Route::get('journey/analytics', [\App\Http\Controllers\Admin\Journey\JourneyAnalyticsController::class, 'index'])->name('journey.analytics');
@@ -256,10 +258,18 @@ Route::middleware('auth')->group(function () {
 
         // Phase 9.5 — handoff coordination actions (authorised in the service).
         Route::prefix('journey/handoffs')->name('journey.handoffs.')->group(function () {
-            Route::post('claim', [\App\Http\Controllers\Admin\Journey\JourneyHandoffAssignmentController::class, 'claim'])->name('claim');
-            Route::post('assign', [\App\Http\Controllers\Admin\Journey\JourneyHandoffAssignmentController::class, 'assign'])->name('assign');
-            Route::post('{assignment}/acknowledge', [\App\Http\Controllers\Admin\Journey\JourneyHandoffAssignmentController::class, 'acknowledge'])->name('acknowledge');
-            Route::post('{assignment}/resolve', [\App\Http\Controllers\Admin\Journey\JourneyHandoffAssignmentController::class, 'resolve'])->name('resolve');
+            Route::post('claim', [\App\Http\Controllers\Admin\Journey\JourneyHandoffAssignmentController::class, 'claim'])
+                ->name('claim')
+                ->middleware('can:journey.handoffs.claim');
+            Route::post('assign', [\App\Http\Controllers\Admin\Journey\JourneyHandoffAssignmentController::class, 'assign'])
+                ->name('assign')
+                ->middleware('can:journey.handoffs.assign');
+            Route::post('{assignment}/acknowledge', [\App\Http\Controllers\Admin\Journey\JourneyHandoffAssignmentController::class, 'acknowledge'])
+                ->name('acknowledge')
+                ->middleware('can:journey.handoffs.acknowledge');
+            Route::post('{assignment}/resolve', [\App\Http\Controllers\Admin\Journey\JourneyHandoffAssignmentController::class, 'resolve'])
+                ->name('resolve')
+                ->middleware('can:journey.handoffs.resolve');
         });
 
         // Complaint catalogue and patient complaint endpoints

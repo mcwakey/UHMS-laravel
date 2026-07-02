@@ -69,8 +69,8 @@
     $doctor = $prescription->doctor;
 @endphp
 <div class="print-toolbar">
-    <button type="button" class="secondary" onclick="window.close()">Close</button>
-    <button type="button" onclick="window.print()">Print</button>
+    <button type="button" class="secondary" onclick="window.close()">{{ __('common.close') }}</button>
+    <button type="button" onclick="window.print()">{{ __('common.print') }}</button>
 </div>
 
 <div class="receipt">
@@ -85,7 +85,7 @@
 
     <div class="kv"><span class="k">{{ __('common.patient') }}</span><span class="v">{{ $patient?->full_name ?? '-' }}</span></div>
     <div class="kv"><span class="k">{{ __('reports.print_templates.gender') }}</span><span class="v">{{ $patient?->gender?->label() ?? '-' }}</span></div>
-    <div class="kv"><span class="k">Folder</span><span class="v">{{ $patient?->patient_number ?? '-' }}</span></div>
+    <div class="kv"><span class="k">{{ __('common.patient_no') }}</span><span class="v">{{ $patient?->patient_number ?? '-' }}</span></div>
     <div class="kv"><span class="k">{{ __('reports.print_templates.visit_no') }}</span><span class="v">{{ $prescription->visit?->visit_number ?? '-' }}</span></div>
     <div class="kv"><span class="k">{{ __('reports.print_templates.prescriber') }}</span><span class="v">{{ $doctor?->full_name ?? $doctor?->name ?? '-' }}</span></div>
 

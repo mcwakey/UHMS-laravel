@@ -43,7 +43,7 @@
                             <h6 class="mb-0">{{ $visit->patient->full_name }}</h6>
                             <small class="text-muted">
                                 {{ $visit->patient->patient_number }}
-                                &bull; {{ $visit->patient->phone ?? __('visits.no_phone') }}
+                                &bull; <x-patient-protected-field field="phone" :value="$visit->patient->phone" :fallback="__('visits.no_phone')" />
                                 @if($visit->patient->date_of_birth)
                                     &bull; Age {{ $visit->patient->date_of_birth->age }}
                                 @endif

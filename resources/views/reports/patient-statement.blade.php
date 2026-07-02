@@ -26,7 +26,7 @@
         <div class="row">
             <div class="col-md-3"><strong>{{ __('reports.statement.patient_name') }}:</strong> {{ $patient->full_name }}</div>
             <div class="col-md-3"><strong>{{ __('reports.statement.patient_id') }}:</strong> {{ $patient->patient_number }}</div>
-            <div class="col-md-3"><strong>{{ __('reports.patients.phone') }}:</strong> {{ $patient->phone ?? '—' }}</div>
+            <div class="col-md-3"><strong>{{ __('reports.patients.phone') }}:</strong> <x-patient-protected-field field="phone" :value="$patient->phone" /></div>
             <div class="col-md-3"><strong>{{ __('reports.date') }}:</strong> {{ now()->format('d/m/Y') }}</div>
         </div>
     </div>

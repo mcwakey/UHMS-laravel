@@ -103,7 +103,7 @@
                 @if($invoice->patient)
                     <div class="meta-name">{{ $invoice->patient->full_name }}</div>
                     <div class="meta-line">{{ $invoice->patient->patient_number }}</div>
-                    @if($invoice->patient->phone)<div class="meta-line">{{ $invoice->patient->phone }}</div>@endif
+                    @if($invoice->patient->phone)<div class="meta-line"><x-patient-protected-field field="phone" :value="$invoice->patient->phone" mode="export" /></div>@endif
                 @else
                     <div class="meta-name">{{ $invoice->external_party_name ?? __('invoices.external_recipient') }}</div>
                     <div class="meta-line muted">{{ __('invoices.external_referral') }}</div>

@@ -52,7 +52,7 @@
                                         @foreach($events as $event)
                                             <tr>
                                                 <td><span class="badge badge-soft-secondary">{{ $event->event_type }}</span></td>
-                                                <td class="small">{{ $event->recipient_phone ?? '—' }}</td>
+                                                <td class="small"><x-patient-protected-field field="phone" :value="$event->recipient_phone" /></td>
                                                 <td>
                                                     <span class="badge bg-{{ $event->status === 'sent' ? 'success' : ($event->status === 'skipped' ? 'secondary' : ($event->status === 'failed' ? 'danger' : 'warning')) }}">{{ $event->status }}</span>
                                                     @if($event->error_message)<div class="text-muted small">{{ $event->error_message }}</div>@endif

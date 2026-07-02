@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Models\Visit;
 use App\Services\BillingService;
 use App\Services\InsuranceService;
+use App\Services\PatientPrivacyService;
 use App\Services\QueueService;
 use App\Services\VisitService;
 use App\Services\VisitStatusFlowService;
@@ -447,6 +448,7 @@ class VisitController extends Controller
 
     public function patientSearch(Request $request)
     {
+        $privacy = app(PatientPrivacyService::class);
         $term = $request->get('q', '');
         if (strlen($term) < 2) {
             return response()->json([]);
@@ -454,11 +456,11 @@ class VisitController extends Controller
 
         $patients = Patient::search($term)
             ->whereIn('status', ['active', 'inactive', 'deceased'])
-            ->select('id', 'patient_number', 'first_name', 'last_name', 'other_names', 'phone', 'status', 'is_deceased')
+            ->select('id', 'patient_number', 'first_name', 'last_name', 'other_names', 'date_of_birth', 'gender', 'phone', 'phone_secondary', 'email', 'ghana_card_number', 'status', 'is_deceased')
             ->with('activeAdmission.bed.ward')
             ->limit(10)
             ->get()
-            ->map(function ($p) {
+            ->map(function ($p) use ($privacy) {
                 $lastVisit = $p->visits()->latest('visit_date')->value('visit_date');
                 $activeAdmission = $p->activeAdmission;
 
@@ -467,7 +469,12 @@ class VisitController extends Controller
                     'text' => "{$p->patient_number} — {$p->full_name}",
                     'patient_number' => $p->patient_number,
                     'full_name' => $p->full_name,
-                    'phone' => $p->phone,
+                    'phone' => $privacy->display('phone', $p->phone),
+                    'phone_secondary' => $privacy->display('phone_secondary', $p->phone_secondary),
+                    'email' => $privacy->display('email', $p->email),
+                    'ghana_card_number' => $privacy->display('ghana_card_number', $p->ghana_card_number),
+                    'age' => $p->age,
+                    'gender' => $p->gender?->translatedLabel(),
                     'last_visit_date' => $lastVisit ? Carbon::parse($lastVisit)->format('d M Y') : null,
                     'is_deceased' => (bool) $p->is_deceased,
                     'active_admission' => $activeAdmission ? [

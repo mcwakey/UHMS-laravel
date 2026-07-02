@@ -1303,10 +1303,10 @@
                                                     </button>
                                                     @if($diagnosis->type === 'provisional')
                                                     <button type="button" class="btn btn-xs btn-outline-success mark-final-btn"
-                                                            title="Mark as Final"
+                                                            title="{{ __('consultations.mark_as_final') }}"
                                                             data-id="{{ $diagnosis->id }}"
                                                             data-url="{{ route('admin.consultations.diagnoses.update', $diagnosis) }}">
-                                                        <i class="ti ti-check me-1"></i>Final
+                                                        <i class="ti ti-check me-1"></i>{{ __('consultations.final') }}
                                                     </button>
                                                     @endif
                                                     <button type="button" class="btn btn-xs btn-outline-warning set-primary-btn {{ $diagnosis->is_primary ? 'd-none' : '' }}"
@@ -2450,7 +2450,7 @@
             </div>
             <div class="modal-body" id="visitPreviewContent"></div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('common.close') }}</button>
             </div>
         </div>
     </div>
@@ -2863,7 +2863,7 @@ $visitHistoryJson = $history['records']->map(function($r) {
                 <div class="text-center py-4 text-muted"><div class="spinner-border"></div></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.close') }}</button>
             </div>
         </div>
     </div>
@@ -3625,7 +3625,7 @@ function bindDiagnosisButtons() {
             var id = this.dataset.id;
             var newType = 'final';
             var self = this;
-            if (!confirm('Mark this diagnosis as final?')) return;
+            if (!confirm(@json(__('consultations.mark_this_diagnosis_as_final')))) return;
             self.disabled = true;
 
             var fd = new FormData();

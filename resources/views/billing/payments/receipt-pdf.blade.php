@@ -83,7 +83,7 @@
                 @if($payment->patient)
                     <div class="info-name">{{ $payment->patient->full_name }}</div>
                     <div class="info-line">{{ $payment->patient->patient_number }}</div>
-                    @if($payment->patient->phone)<div class="info-line">{{ $payment->patient->phone }}</div>@endif
+                    @if($payment->patient->phone)<div class="info-line"><x-patient-protected-field field="phone" :value="$payment->patient->phone" mode="export" /></div>@endif
                 @else
                     <div class="info-name">{{ $payment->invoice?->external_party_name ?? __('invoices.external_recipient') }}</div>
                     <div class="info-line muted">{{ __('payments.external_referral') }}</div>

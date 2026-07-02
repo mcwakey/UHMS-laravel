@@ -169,8 +169,8 @@
                                 <!-- <div class="small text-muted">{{ $appointment->patient->patient_number }}</div> -->
                                 @php
                                     $patientPhones = collect([
-                                        $appointment->patient?->phone,
-                                        $appointment->patient?->phone_secondary,
+                                        app(\App\Services\PatientPrivacyService::class)->display('phone', $appointment->patient?->phone),
+                                        app(\App\Services\PatientPrivacyService::class)->display('phone_secondary', $appointment->patient?->phone_secondary),
                                     ])->filter()->unique();
                                 @endphp
                                 @if($patientPhones->isNotEmpty())

@@ -30,6 +30,14 @@ class RoleSeeder extends Seeder
             'patients.merge.approve',
             'patients.merge.execute',
             'patients.merge.confirm_identity',
+            'patients.pii.view',
+            'patients.contact.view',
+            'patients.identity.view',
+            'patients.address.view',
+            'patients.insurance.view',
+            'patients.emergency_contact.view',
+            'patients.clinical_sensitive.view',
+            'patients.export_sensitive.view',
 
             // ── Visits ────────────────────────────────────────────────────
             'visits.view',
@@ -775,6 +783,11 @@ class RoleSeeder extends Seeder
             'journey.oversight',
             // Phase 9.9 — view explainable breach-risk predictions.
             'journey.predictions.view',
+            'settings.journey_notifications.update',
+            'journey.handoffs.claim',
+            'journey.handoffs.assign',
+            'journey.handoffs.acknowledge',
+            'journey.handoffs.resolve',
         ];
 
         // Create all permissions
@@ -797,6 +810,7 @@ class RoleSeeder extends Seeder
         // Full clinical access including consultation workflow
         $doctorPerms = [
             'patients.view',
+            'patients.contact.view',
             'visits.view', 'visits.transition', 'visits.preview',
             'consultations.view', 'consultations.create', 'consultations.edit',
             'consultation.access', 'consultation.dashboard', 'consultation.queue',
@@ -863,7 +877,7 @@ class RoleSeeder extends Seeder
         // Slightly reduced: no admit/discharge, no procedure recording
         $physicianAssistant = Role::firstOrCreate(['name' => 'Physician Assistant']);
         $physicianAssistant->syncPermissions([
-            'patients.view',
+            'patients.view', 'patients.contact.view',
             'visits.view', 'visits.transition', 'visits.preview',
             'consultation.access', 'consultation.dashboard', 'consultation.queue',
             'consultation.history', 'consultation.create', 'consultation.complete',
@@ -1086,6 +1100,19 @@ class RoleSeeder extends Seeder
         ]);
 
         // ── Lab Technician ────────────────────────────────────────────────
+        $medicalRecordsOfficer = Role::firstOrCreate(['name' => 'Medical Records Officer']);
+        $medicalRecordsOfficer->syncPermissions([
+            'patients.view', 'patients.create', 'patients.edit',
+            'patients.merge.view', 'patients.merge.request', 'patients.merge.confirm_identity',
+            'patients.pii.view', 'patients.contact.view', 'patients.identity.view',
+            'patients.address.view', 'patients.insurance.view', 'patients.emergency_contact.view',
+            'patients.clinical_sensitive.view', 'patients.export_sensitive.view',
+            'visits.view', 'visits.preview',
+            'appointments.view',
+            'reports.view',
+            'notifications.view',
+        ]);
+
         $labTech = Role::firstOrCreate(['name' => 'Lab Technician']);
         $labTech->syncPermissions([
             'patients.view',
@@ -1377,6 +1404,40 @@ class RoleSeeder extends Seeder
             'reports.view',
             'notifications.view',
         ]);
+
+        $journeyHandoffPermissions = [
+            'journey.handoffs.claim',
+            'journey.handoffs.assign',
+            'journey.handoffs.acknowledge',
+            'journey.handoffs.resolve',
+        ];
+
+        foreach ([
+            $doctor,
+            $consultant,
+            $specialist,
+            $physicianAssistant,
+            $nurse,
+            $wardNurse,
+            $emergencyDoctor,
+            $emergencyNurse,
+            $triageNurse,
+            $theatreNurse,
+            $anaesthetist,
+            $receptionist,
+            $cashier,
+            $medicalRecordsOfficer,
+            $labTech,
+            $labManager,
+            $radiologist,
+            $pharmacist,
+            $accountant,
+            $financeManager,
+            $claimsOfficer,
+            $bloodBankOfficer,
+        ] as $role) {
+            $role->givePermissionTo($journeyHandoffPermissions);
+        }
 
         // Safe for all roles: the service still limits switching to departments
         // explicitly assigned to the user. This does not grant global preview.

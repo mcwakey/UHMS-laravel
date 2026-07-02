@@ -271,6 +271,7 @@ class InsuranceService
 
     public function getPatientInsurances(Patient $patient): array
     {
+        $privacy = app(PatientPrivacyService::class);
         $insurances = $patient->insurances()
             ->with(['insuranceProvider', 'insuranceTier'])
             ->orderByDesc('is_primary')
@@ -278,7 +279,7 @@ class InsuranceService
 
         $hasCashAndCarry = false;
 
-        $rows = $insurances->map(function (PatientInsurance $ins) use (&$hasCashAndCarry) {
+        $rows = $insurances->map(function (PatientInsurance $ins) use (&$hasCashAndCarry, $privacy) {
             $provider    = $ins->insuranceProvider;
             $tier        = $ins->insuranceTier;
             $memberType  = $ins->member_type?->value ?? 'holder';
@@ -300,8 +301,8 @@ class InsuranceService
                 'member_type'              => $memberType,
                 'member_type_label'        => $ins->member_type?->label() ?? 'Card Holder',
                 'card_holder_insurance_id' => $ins->card_holder_insurance_id,
-                'membership_number'        => $ins->membership_number,
-                'policy_number'            => $ins->policy_number,
+                'membership_number'        => $privacy->display('membership_number', $ins->membership_number),
+                'policy_number'            => $privacy->display('policy_number', $ins->policy_number),
                 'start_date'               => $ins->start_date?->format('Y-m-d'),
                 'expiry_date'              => $ins->expiry_date?->format('Y-m-d'),
                 'is_primary'               => $ins->is_primary,

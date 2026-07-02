@@ -19,7 +19,7 @@ class Patient extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['first_name', 'last_name', 'phone', 'email', 'status'])
+            ->logOnly(['first_name', 'last_name', 'status'])
             ->logOnlyDirty()
             ->useLogName('patients')
             ->dontSubmitEmptyLogs();

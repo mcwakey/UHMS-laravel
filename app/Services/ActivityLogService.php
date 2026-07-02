@@ -40,6 +40,21 @@ class ActivityLogService
         'pin',
         'two_factor_secret',
         'two_factor_recovery_codes',
+        'phone',
+        'phone_secondary',
+        'email',
+        'address',
+        'digital_address',
+        'ghana_card_number',
+        'passport_number',
+        'driving_license_number',
+        'voter_id_number',
+        'membership_number',
+        'policy_number',
+        'ccc_code',
+        'allergies',
+        'chronic_conditions',
+        'confidential_clinical_notes',
     ];
 
     public function __construct(protected ?Request $request = null)

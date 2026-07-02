@@ -57,8 +57,8 @@
                                 <tbody>
                                     @foreach($message->recipients as $recipient)
                                         <tr>
-                                            <td>{{ $recipient->phone_number }}</td>
-                                            <td><code>{{ $recipient->normalized_phone_number }}</code></td>
+                                            <td><x-patient-protected-field field="phone" :value="$recipient->phone_number" /></td>
+                                            <td><code><x-patient-protected-field field="phone" :value="$recipient->normalized_phone_number" /></code></td>
                                             <td>
                                                 <x-status-badge :status="$recipient->status" domain="sms_recipient" size="sm" />
                                                 @if($recipient->error_message)<div class="text-danger small">{{ $recipient->error_message }}</div>@endif

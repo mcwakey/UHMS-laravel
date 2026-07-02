@@ -65,8 +65,8 @@
     $patient = $prescription?->patient;
 @endphp
 <div class="print-toolbar">
-    <button type="button" class="secondary" onclick="window.close()">Close</button>
-    <button type="button" onclick="window.print()">Print</button>
+    <button type="button" class="secondary" onclick="window.close()">{{ __('common.close') }}</button>
+    <button type="button" onclick="window.print()">{{ __('common.print') }}</button>
 </div>
 
 <div class="receipt">

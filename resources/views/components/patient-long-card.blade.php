@@ -34,7 +34,7 @@
                             {{ __('patients.age_years', ['age' => $patient->age]) }} &middot;
                             {{ $patient->gender->translatedLabel() }} &middot;
                             {{ __('patients.blood_group') }}: {{ $patient->blood_group?->translatedLabel() ?? 'N/A' }}
-                            @if($patient->phone) &middot; <i class="ti ti-phone me-1"></i>{{ $patient->phone }} @endif
+                            @if($patient->phone) &middot; <i class="ti ti-phone me-1"></i><x-patient-protected-field field="phone" :value="$patient->phone" /> @endif
                         </div>
                         <div class="text-muted small mt-1 d-flex flex-wrap gap-2">
                             @if($patient->occupation)
@@ -112,7 +112,7 @@
                                 <span class="text-muted fw-normal">/ {{ $insuranceTier->name }}</span>
                             @endif
                             @if($insurance->membership_number)
-                                <span class="badge bg-light text-dark border ms-1">#{{ $insurance->membership_number }}</span>
+                                <span class="badge bg-light text-dark border ms-1">#<x-patient-protected-field field="membership_number" :value="$insurance->membership_number" /></span>
                             @endif
                         </div>
                     </div>
@@ -146,7 +146,7 @@
                     <i class="ti ti-cash"></i>
                 </span>
                 <span class="fw-semibold text-dark">Cash &amp; Carry</span>
-                <span>No active insurance for this visit</span>
+                <span>{{ __('patients.no_active_insurance_for_visit') }}</span>
             </div>
         @endif
     </div>
@@ -158,7 +158,7 @@
     @if($patient->allergies)
     <div class="col-md-6">
         <div class="alert alert-danger h-100 mb-0 text-wrap">
-            <i class="ti ti-alert-triangle me-1"></i><strong>{{ __('patients.allergies') }}:</strong> {{ $patient->allergies }}
+            <i class="ti ti-alert-triangle me-1"></i><strong>{{ __('patients.allergies') }}:</strong> <x-patient-protected-field field="allergies" :value="$patient->allergies" />
         </div>
     </div>
     @endif
@@ -166,7 +166,7 @@
     @if($patient->chronic_conditions)
     <div class="col-md-6">
         <div class="alert alert-warning h-100 mb-0 text-wrap">
-            <i class="ti ti-heart-rate-monitor me-1"></i><strong>{{ __('patients.chronic_conditions') }}:</strong> {{ $patient->chronic_conditions }}
+            <i class="ti ti-heart-rate-monitor me-1"></i><strong>{{ __('patients.chronic_conditions') }}:</strong> <x-patient-protected-field field="chronic_conditions" :value="$patient->chronic_conditions" />
         </div>
     </div>
     @endif

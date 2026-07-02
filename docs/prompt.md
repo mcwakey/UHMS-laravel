@@ -1,365 +1,611 @@
-Yes. We should absolutely start with **Phase 8.1 — Data Integrity and Trustworthiness**.
+# UHMS Privacy & Patient Data Protection — Phase 1: Sensitive Patient Data Gap Analysis & Field-Level Permissions
 
-There is no point optimizing performance or adding advanced widgets if users cannot trust the numbers on the screen.
+## Goal
 
-This phase should focus entirely on:
+Perform a complete privacy and security gap analysis of patient data exposure throughout UHMS.
 
-* making every KPI correct
-* making every chart truthful
-* making every department truly scoped
-* eliminating fake values
+Introduce a new permission model for sensitive patient information so that users without the appropriate permission can still work with patients but cannot view confidential Personally Identifiable Information (PII).
 
-Here is the full implementation prompt.
-
----
-
-# UHMS Department Dashboard Phase 8.1
-
-# Data Integrity & Metric Correctness
-
-You are implementing **Phase 8.1 – Dashboard Data Integrity** for the UHMS Department Dashboard system.
-
-The dashboard architecture, themes, layouts, showcases, and department identities already exist and must remain unchanged.
-
-The objective of this phase is:
-
-> Every KPI, sparkline, chart, queue, and drilldown must accurately represent the data visible to the current department.
-
----
-
-## Rules
-
-* Do NOT redesign the UI.
-* Do NOT modify showcase layouts.
-* Do NOT introduce new visual widgets.
-* Do NOT change themes.
-* Do NOT modify dashboard identities.
-* Preserve all existing routes.
-* Preserve all existing cards.
-
-Only improve data correctness.
-
----
-
-# TASK 1 — Audit Every Metric
-
-Review every metric produced by:
-
-```php
-DepartmentDashboardDataService::metricCard()
-```
-
-Classify each metric as:
-
-* Department-scoped
-* Hospital-wide
-* User-specific
-* Unknown
-
-Add an internal definition table:
-
-```php
-protected array $metricDefinitions = [
-    'visits_today' => [
-        'scope' => 'department',
-    ],
-];
-```
-
----
-
-# TASK 2 — Fix Department Scoping
-
-The following metrics currently appear globally.
-
-Investigate and properly scope them.
-
-* pending_prescriptions
-* dispensed_today
-* active_cases
-* critical_cases
-* beds_occupied
-* stock_issues
-* in_theatre
-
-Use:
-
-* department_id
-* service_department_id
-* requesting_department_id
-* visit department
-* encounter department
-
-depending on the underlying model.
-
-If a metric genuinely cannot be scoped:
-
-```php
-[
-    'scope' => 'hospital'
-]
-```
-
-and expose:
-
-```php
-'is_hospital_wide' => true
-```
-
-for future UI badges.
-
----
-
-# TASK 3 — Fix Critical Cases
-
-Current implementation:
-
-```php
-active_cases == critical_cases
-```
-
-Implement proper critical filtering.
-
-Possible sources:
-
-* priority
-* severity
-* triage_level
-* urgency
-
-Investigate existing emergency models before implementing.
-
-Requirements:
-
-* active_cases != critical_cases
-* critical_cases <= active_cases
-
-Add tests.
-
----
-
-# TASK 4 — Eliminate Fake Metrics
-
-Remove all hardcoded values.
-
-Current:
-
-```php
-vitals_due => 0
-discharges_pending => 0
-default => 0
-```
-
-Replace with:
-
-```php
-null
-```
-
-or
-
-```php
-[
-    'available' => false
-]
-```
-
-Unimplemented metrics must never silently display zero.
-
----
-
-# TASK 5 — Metric Definition Validation
-
-Unknown metrics must fail loudly.
-
-Replace:
-
-```php
-default => 0
-```
-
-with:
-
-```php
-throw new InvalidArgumentException(
-    "Unknown department dashboard metric [$metric]"
-);
-```
-
-This prevents silent dashboard corruption.
-
----
-
-# TASK 6 — Fix Sparklines
-
-Review:
-
-```php
-metricSpark()
-```
-
-The sparkline dataset must use the exact same filters as the card.
-
-Examples:
-
-## dispensed_today
-
-Card:
-
-```php
-status = dispensed
-```
-
-Spark:
-
-must also use:
-
-```php
-status = dispensed
-```
-
----
-
-## completed_results_today
-
-Card:
-
-```php
-status = completed
-```
-
-Spark:
-
-must also filter:
-
-```php
-status = completed
-```
-
-Requirement:
-
-The headline number and sparkline trend must describe the same dataset.
-
----
-
-# TASK 7 — Introduce Metric Definitions
-
-Create:
-
-```php
-DepartmentMetricDefinitionService
-```
+This is **field-level authorization**, not page-level authorization.
 
 Example:
 
-```php
-return [
-    'waiting_queue' => [
-        'scope' => 'department',
-        'permission' => 'visits.view',
-        'sparkline' => true,
-    ],
-];
+```text
+Receptionist
+✓ Can search patient
+✓ Can register patient
+✓ Can create visit
+✓ Can identify patient
+
+✗ Cannot see full phone number
+✗ Cannot see full email
+✗ Cannot see national ID
+✗ Cannot see insurance/member numbers
 ```
 
-This service will become the single source of truth for:
+Meanwhile:
 
-* scope
-* permissions
-* chart eligibility
-* drilldown eligibility
+```text
+Medical Records Officer
 
-Future phases will reuse it.
+✓ Can view complete patient profile
+✓ Can see full phone number
+✓ Can see full email
+✓ Can see identifiers
+```
+
+The system must remain HIPAA/GDPR-inspired even if the deployment country has different regulations.
+
+Do not weaken existing permissions.
+
+Do not expose sensitive fields through Blade, APIs, exports, reports, audit logs, or search.
 
 ---
 
-# TASK 8 — Correct Activity Data
+# Phase 1 Scope
+
+This phase is an analysis plus infrastructure phase.
+
+Do NOT immediately hide fields everywhere.
+
+Instead:
+
+1. Discover every place sensitive patient data is exposed.
+2. Classify every sensitive field.
+3. Introduce reusable authorization helpers.
+4. Introduce masking helpers.
+5. Introduce permissions.
+6. Document every affected screen.
+7. Prepare for phased rollout.
+
+---
+
+# 1. Gap Analysis
+
+Search the entire project for patient information exposure.
+
+Include:
+
+```text
+Controllers
+Blade views
+Vue/Inertia pages if present
+API Resources
+Transformers
+Exports
+Imports
+Reports
+Dashboards
+Widgets
+Activity logs
+Notification templates
+SMS templates
+Emails
+PDFs
+Receipts
+Print views
+Autocomplete search
+Patient lookup
+Global search
+Ajax endpoints
+JSON responses
+Audit history
+```
+
+Produce an inventory of every place patient information is rendered.
+
+---
+
+# 2. Sensitive Data Classification
+
+Classify fields into security levels.
+
+## Level 0
+
+Safe
+
+Examples
+
+```text
+Patient ID
+Hospital Number
+Age
+Gender
+Visit Number
+Queue Number
+```
+
+---
+
+## Level 1
+
+Operational
+
+Examples
+
+```text
+Nationality
+Occupation
+Marital Status
+Religion
+Language
+```
+
+---
+
+## Level 2
+
+Personally Identifiable Information (PII)
+
+Examples
+
+```text
+Phone number
+Alternative phone
+Email
+Digital address
+Residential address
+Postal address
+GPS coordinates
+Emergency contact phone
+Emergency contact address
+National ID
+Passport
+Driving licence
+Voter ID
+NHIS number
+Insurance member number
+Corporate member number
+```
+
+---
+
+## Level 3
+
+Highly Sensitive
+
+Examples
+
+```text
+HIV indicators
+Mental health markers
+Sexual health
+Confidential clinical notes
+Genetic information
+Psychiatric history
+Domestic abuse flags
+Child protection flags
+Court restrictions
+```
+
+Do not expose these without explicit permission.
+
+---
+
+# 3. New Permissions
+
+Introduce granular permissions.
+
+Suggested:
+
+```text
+patients.pii.view
+patients.contact.view
+patients.identity.view
+patients.address.view
+patients.insurance.view
+patients.emergency_contact.view
+patients.clinical_sensitive.view
+patients.export_sensitive.view
+```
+
+Do NOT replace existing patient permissions.
+
+These permissions are additive.
+
+Example:
+
+```text
+patients.view
+
++
+
+patients.contact.view
+```
+
+---
+
+# 4. Default Role Behaviour
+
+Suggested defaults
+
+Reception
+
+```text
+patients.view
+
+NO
+
+patients.contact.view
+patients.identity.view
+```
+
+Doctor
+
+```text
+patients.view
+patients.contact.view
+
+NO
+
+patients.identity.view
+```
+
+Medical Records
+
+```text
+All patient permissions
+```
+
+Administrator
+
+```text
+All
+```
+
+System configuration must remain editable.
+
+---
+
+# 5. Data Masking Rules
+
+When permission is missing, mask data.
+
+Phone
+
+```text
+0241234567
+
+↓
+
+024****567
+```
+
+Email
+
+```text
+john.doe@gmail.com
+
+↓
+
+jo****@gmail.com
+```
+
+National ID
+
+```text
+GHA123456789
+
+↓
+
+GHA******789
+```
+
+Insurance Number
+
+```text
+ABC123456789
+
+↓
+
+ABC******789
+```
+
+Address
+
+```text
+House 12,
+Airport Residential Area
+
+↓
+
+Hidden
+```
+
+GPS
+
+```text
+Hidden
+```
+
+Never return NULL when data exists.
+
+Return masked values.
+
+This lets users identify records while protecting privacy.
+
+---
+
+# 6. Central Masking Service
+
+Create reusable services.
+
+Suggested:
+
+```php
+PatientPrivacyService
+
+PatientMaskingService
+
+PatientFieldAuthorizationService
+```
+
+Responsibilities
+
+```text
+Can view field?
+Return masked value
+Return full value
+Permission checks
+```
+
+Do NOT duplicate masking logic across Blade files.
+
+---
+
+# 7. Patient Resource Layer
 
 Review:
 
-```php
-activities()
+```text
+API Resources
+
+JSON Resources
+
+Transformers
 ```
 
-Current implementation uses:
+Ensure sensitive fields are masked before serialization.
 
-```php
-invoice_items.description
-```
-
-as department activity.
-
-Replace with actual operational activity.
-
-Examples:
-
-* patient checked in
-* prescription dispensed
-* result validated
-* investigation completed
-* procedure performed
-
-If no audit data exists, hide the section.
+Never rely only on Blade.
 
 ---
 
-# TASK 9 — Add Data Integrity Tests
+# 8. Search Behaviour
 
-Create:
+Patient search should remain usable.
+
+Suggested search result
 
 ```text
-tests/Feature/Departments/
-    DepartmentMetricScopingTest.php
-    DepartmentMetricCorrectnessTest.php
+Hospital Number
+Patient Name
+Gender
+Age
+
+024****567
+
+jo****@gmail.com
 ```
 
-Cover:
-
-* department A cannot see department B data
-* critical_cases differs from active_cases
-* hospital-wide metrics flagged correctly
-* unknown metrics throw exceptions
-* sparklines match card filters
+Do not expose complete contact information.
 
 ---
 
-# TASK 10 — Safety Validation
+# 9. Dashboard Review
 
-Run:
+Review all dashboards.
 
-* route:list
-* view compilation
-* dashboard rendering tests
-* existing department tests
+Examples
 
-Verify:
+```text
+Recent Patients
+Today's Patients
+Admissions
+Discharges
+Emergency
+Appointment lists
+```
 
-* no broken cards
-* no missing views
-* no theme regressions
-* no layout regressions
-
----
-
-# Deliverables
-
-Provide:
-
-1. Updated metric inventory.
-2. List of hospital-wide metrics.
-3. Metrics that remain unavailable.
-4. New tests added.
-5. Query count impact.
-6. Remaining Phase 8.2 tasks.
+Mask sensitive fields unless permission exists.
 
 ---
 
-# Important
+# 10. Reports
 
-The goal of Phase 8.1 is:
+Review reports.
 
-> Users must trust every number on the screen.
+Examples
 
-Performance optimization, permission enforcement, advanced widgets, caching, and dashboard intelligence belong to later phases.
+```text
+Patient Register
+Visit Register
+Admissions
+Discharges
+Claims
+Billing
+```
 
-A slower dashboard with correct numbers is preferable to a fast dashboard with incorrect numbers.
+Add masking where appropriate.
+
+Only export full information when:
+
+```text
+patients.export_sensitive.view
+```
+
+exists.
+
+---
+
+# 11. Print/PDF
+
+Review:
+
+```text
+Patient cards
+Receipts
+Reports
+Invoices
+PDF exports
+```
+
+Sensitive data should follow the same permission model.
+
+---
+
+# 12. Activity Logs
+
+Do not store masked values.
+
+Store actual values only where already required.
+
+However:
+
+Activity log UI should mask sensitive fields unless permission exists.
+
+---
+
+# 13. Audit
+
+Every access to highly sensitive patient information should be auditable.
+
+Suggested events
+
+```text
+PATIENT_PII_VIEWED
+PATIENT_IDENTITY_VIEWED
+PATIENT_ADDRESS_VIEWED
+PATIENT_CLINICAL_SENSITIVE_VIEWED
+```
+
+Do not flood logs.
+
+Only log meaningful access.
+
+---
+
+# 14. Helper Components
+
+Create reusable Blade helpers/components.
+
+Example
+
+```php
+<x-patient-phone />
+
+<x-patient-email />
+
+<x-patient-address />
+
+<x-patient-identity />
+```
+
+These automatically:
+
+```text
+check permission
+
+mask if needed
+
+show full value if allowed
+```
+
+---
+
+# 15. Localisation
+
+Add translations.
+
+Examples
+
+```text
+Hidden
+
+Sensitive Information
+
+Restricted
+
+Masked
+
+Insufficient Permission
+
+Protected Patient Data
+```
+
+Maintain EN/FR parity.
+
+---
+
+# 16. Deliverables
+
+Produce:
+
+```text
+PATIENT_DATA_PRIVACY_GAP_ANALYSIS_REPORT.md
+
+PATIENT_FIELD_CLASSIFICATION.md
+
+PATIENT_PRIVACY_IMPLEMENTATION_PLAN.md
+```
+
+Each must include:
+
+* affected files
+* exposed fields
+* risk level
+* recommended permission
+* masking strategy
+* rollout order
+
+---
+
+# 17. Rollout Plan
+
+Do NOT modify every page in this phase.
+
+Instead produce a prioritized rollout.
+
+Priority:
+
+```text
+Patient search
+
+Patient profile
+
+Patient header
+
+Visit pages
+
+Appointment pages
+
+Dashboards
+
+Reports
+
+Exports
+
+PDFs
+
+Notifications
+
+Remaining modules
+```
+
+---
+
+# 18. Acceptance Criteria
+
+This phase is complete only when:
+
+* Every patient field is classified.
+* Every exposure point is documented.
+* New permissions are designed.
+* Masking services are introduced.
+* No duplicate masking logic exists.
+* Reports identify every affected module.
+* Rollout order is documented.
+* Existing workflows remain unchanged.
+* No production behaviour is broken.
+
+Proceed with the patient privacy gap analysis and infrastructure implementation now.
