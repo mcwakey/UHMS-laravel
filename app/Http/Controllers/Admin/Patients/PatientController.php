@@ -192,6 +192,7 @@ class PatientController extends Controller
             'insurances.insuranceTier',
             'emergencyContacts',
             'markedDeceasedBy',
+            'activePrivacyDirectives.createdBy',
         ]);
 
         // All activity connected to this patient across EVERY module (not only
@@ -231,7 +232,13 @@ class PatientController extends Controller
 
         app(PatientPrivacyService::class)->auditPatientProfileView($patient);
 
-        return view('patients.show', compact('patient', 'insuranceProviders', 'upcomingVisits', 'upcomingAppointments', 'activityLogs'));
+        $activeBreakGlass = \App\Models\PatientPrivacyOverride::active()
+            ->where('patient_id', $patient->id)
+            ->where('user_id', $request->user()->id)
+            ->latest('expires_at')
+            ->first();
+
+        return view('patients.show', compact('patient', 'insuranceProviders', 'upcomingVisits', 'upcomingAppointments', 'activityLogs', 'activeBreakGlass'));
     }
 
     public function edit(Patient $patient)
@@ -255,7 +262,9 @@ class PatientController extends Controller
     public function updateMedicalSummary(Request $request, Patient $patient)
     {
         abort_unless(
-            $request->user()?->can('patients.edit') || $request->user()?->can('consultation.view_patient'),
+            ($request->user()?->can('patients.edit') || $request->user()?->can('consultation.view_patient'))
+            && app(PatientPrivacyService::class)->canEdit('allergies', $request->user())
+            && app(PatientPrivacyService::class)->canEdit('chronic_conditions', $request->user()),
             403
         );
 

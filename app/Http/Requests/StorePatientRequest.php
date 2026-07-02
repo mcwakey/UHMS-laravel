@@ -7,6 +7,7 @@ use App\Enums\Gender;
 use App\Enums\InsuranceType;
 use App\Enums\MaritalStatus;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 use Illuminate\Validation\Rules\Enum;
 
 class StorePatientRequest extends FormRequest
@@ -77,5 +78,40 @@ class StorePatientRequest extends FormRequest
             'insurances.*.ccc_code'               => ['nullable', 'string', 'max:64'],
             'insurances.*.expiry_date'            => ['nullable', 'date', 'after:today'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $privacy = app(\App\Services\PatientPrivacyService::class);
+
+            foreach (['phone', 'phone_secondary', 'email', 'address', 'digital_address', 'ghana_card_number', 'allergies', 'chronic_conditions'] as $field) {
+                if (! filled($this->input($field)) || $privacy->canCaptureOnCreate($field, $this->user())) {
+                    continue;
+                }
+
+                $validator->errors()->add($field, __('patients.privacy.privacy_edit_restricted'));
+            }
+
+            foreach ((array) $this->input('emergency_contacts', []) as $index => $contact) {
+                if (! filled($contact['phone'] ?? null) && ! filled($contact['phone_secondary'] ?? null)) {
+                    continue;
+                }
+
+                if (! $privacy->canCaptureOnCreate('emergency_contact_phone', $this->user())) {
+                    $validator->errors()->add("emergency_contacts.$index.phone", __('patients.privacy.privacy_edit_restricted'));
+                }
+            }
+
+            foreach ((array) $this->input('insurances', []) as $index => $insurance) {
+                foreach (['membership_number', 'policy_number', 'ccc_code'] as $field) {
+                    if (! filled($insurance[$field] ?? null) || $privacy->canCaptureOnCreate($field, $this->user())) {
+                        continue;
+                    }
+
+                    $validator->errors()->add("insurances.$index.$field", __('patients.privacy.privacy_edit_restricted'));
+                }
+            }
+        });
     }
 }

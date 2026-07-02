@@ -1,15 +1,15 @@
 # UHMS Localisation Coverage Audit Report
 
-Date: 2026-07-02 13:21:29 +02:00
+Date: 2026-07-02 14:47:11 +02:00
 
 ## Summary
 
-- Total files scanned: 1469
+- Total files scanned: 1474
 - Total files with possible hardcoded strings: 215
 - Total hardcoded candidates found: 4058
 - Modules affected: 40
-- Direct active route/controller Blade views: 312
-- Active Blade views including resolved dependencies: 395
+- Direct active route/controller Blade views: 314
+- Active Blade views including resolved dependencies: 397
 
 ### Candidate Classification
 
@@ -664,7 +664,7 @@ Date: 2026-07-02 13:21:29 +02:00
 
 ### `app/Services/PatientPrivacyService.php`
 
-- Line 159 [medium, service_title_manual_review_candidates]: `Sensitive patient profile access`
+- Line 283 [medium, service_title_manual_review_candidates]: `Sensitive patient profile access`
   - Context: `'description' => 'Sensitive patient profile access',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
@@ -2999,7 +2999,7 @@ Date: 2026-07-02 13:21:29 +02:00
 
 ### `lang/en/common.php`
 
-- Line 72 [medium, language_file_candidates]: `Description`
+- Line 73 [medium, language_file_candidates]: `Description`
   - Context: `'description' => 'Description',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -3472,7 +3472,7 @@ Date: 2026-07-02 13:21:29 +02:00
 
 ### `lang/fr/common.php`
 
-- Line 72 [medium, language_file_candidates]: `Description`
+- Line 73 [medium, language_file_candidates]: `Description`
   - Context: `'description' => 'Description',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -15763,8 +15763,8 @@ Date: 2026-07-02 13:21:29 +02:00
 
 ### `resources/views/components/patient-address-information-card.blade.php`
 
-- Line 56 [high, known_false_positive_candidates]: `Use device location`
-  - Context: `<button class="btn btn-outline-secondary" type="button" id="detectDigitalAddressBtn" title="Use device location">`
+- Line 67 [high, known_false_positive_candidates]: `Use device location`
+  - Context: `<button class="btn btn-outline-secondary" type="button" id="detectDigitalAddressBtn" title="Use device location" @unless($digitalCanEdit) disabled @endunless>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/common.php :: use_device_location`
@@ -15794,12 +15794,12 @@ Date: 2026-07-02 13:21:29 +02:00
 
 ### `resources/views/components/patient-emergency-contacts-card.blade.php`
 
-- Line 42 [high, known_false_positive_candidates]: `Delete`
+- Line 44 [high, known_false_positive_candidates]: `Delete`
   - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ec {{ $index === 0 ? 'd-none' : '' }}"><i class="ti ti-trash"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/common.php :: delete`
-- Line 42 [high, known_false_positive_candidates]: `Delete`
+- Line 44 [high, known_false_positive_candidates]: `Delete`
   - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ec {{ $index === 0 ? 'd-none' : '' }}"><i class="ti ti-trash"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -15815,12 +15815,12 @@ Date: 2026-07-02 13:21:29 +02:00
 
 ### `resources/views/components/patient-registration-insurance-card.blade.php`
 
-- Line 26 [high, known_false_positive_candidates]: `Delete`
+- Line 28 [high, known_false_positive_candidates]: `Delete`
   - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ins d-none"><i class="ti ti-trash"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/common.php :: delete`
-- Line 26 [high, known_false_positive_candidates]: `Delete`
+- Line 28 [high, known_false_positive_candidates]: `Delete`
   - Context: `<button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ins d-none"><i class="ti ti-trash"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -18930,62 +18930,62 @@ Date: 2026-07-02 13:21:29 +02:00
 
 ### `resources/views/patients/show.blade.php`
 
-- Line 450 [high, known_false_positive_candidates]: `View`
+- Line 536 [high, known_false_positive_candidates]: `View`
   - Context: `<td><a aria-label="View" title="View" href="{{ route('admin.visits.show', $visit) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: view`
-- Line 450 [high, known_false_positive_candidates]: `View`
+- Line 536 [high, known_false_positive_candidates]: `View`
   - Context: `<td><a aria-label="View" title="View" href="{{ route('admin.visits.show', $visit) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: view`
-- Line 844 [high, known_false_positive_candidates]: `No activity recorded yet.`
+- Line 930 [high, known_false_positive_candidates]: `No activity recorded yet.`
   - Context: `<p class="mb-0">No activity recorded yet.</p>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: no_activity_recorded_yet`
-- Line 870 [high, known_false_positive_candidates]: `Edit Insurance Plan`
+- Line 956 [high, known_false_positive_candidates]: `Edit Insurance Plan`
   - Context: `<h5 class="modal-title">Edit Insurance Plan</h5>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: edit_insurance_plan`
-- Line 877 [high, known_false_positive_candidates]: `Insurance`
+- Line 963 [high, known_false_positive_candidates]: `Insurance`
   - Context: `<label class="form-label">Insurance</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: insurance`
-- Line 886 [high, known_false_positive_candidates]: `Member Type`
+- Line 972 [high, known_false_positive_candidates]: `Member Type`
   - Context: `<label class="form-label">Member Type</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: member_type`
-- Line 897 [high, known_false_positive_candidates]: `Beneficiary`
+- Line 983 [high, known_false_positive_candidates]: `Beneficiary`
   - Context: `<span class="badge bg-warning text-dark">Beneficiary</span>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: beneficiary`
-- Line 903 [high, known_false_positive_candidates]: `Membership Number`
+- Line 989 [high, known_false_positive_candidates]: `Membership Number`
   - Context: `<label class="form-label">Membership Number</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: membership_number`
-- Line 907 [high, known_false_positive_candidates]: `Policy Number`
+- Line 993 [high, known_false_positive_candidates]: `Policy Number`
   - Context: `<label class="form-label">Policy Number</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: policy_number`
-- Line 915 [high, known_false_positive_candidates]: `Expiry Date`
+- Line 1001 [high, known_false_positive_candidates]: `Expiry Date`
   - Context: `<label class="form-label">Expiry Date</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: expiry_date`
-- Line 1037 [high, known_false_positive_candidates]: `Close`
+- Line 1123 [high, known_false_positive_candidates]: `Close`
   - Context: `<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/patients.php :: close`
-- Line 1076 [high, known_false_positive_candidates]: `Cancel`
+- Line 1162 [high, known_false_positive_candidates]: `Cancel`
   - Context: `<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -21457,7 +21457,7 @@ Date: 2026-07-02 13:21:29 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/visits.php :: spo`
-- Line 881 [high, known_false_positive_candidates]: `Close`
+- Line 887 [high, known_false_positive_candidates]: `Close`
   - Context: `<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive

@@ -64,6 +64,7 @@ use App\Http\Controllers\Admin\Patients\PatientController;
 use App\Http\Controllers\Admin\Patients\PatientComplaintController;
 use App\Http\Controllers\Admin\Patients\PatientInsuranceController;
 use App\Http\Controllers\Admin\Patients\PatientMergeController;
+use App\Http\Controllers\Admin\Patients\PatientPrivacyController;
 use App\Http\Controllers\Admin\Hr\PayrollController;
 use App\Http\Controllers\Admin\Procedures\ProcedureCatalogueController;
 use App\Http\Controllers\Admin\Procedures\ProcedureConsumablesController;
@@ -346,6 +347,15 @@ Route::middleware('auth')->group(function () {
             Route::post('patients', [PatientController::class, 'store'])->name('patients.store')->middleware('can:patients.create');
             Route::get('patients/{patient}', [PatientController::class, 'show'])->name('patients.show');
             Route::patch('patients/{patient}/medical-summary', [PatientController::class, 'updateMedicalSummary'])->name('patients.medical-summary.update');
+            Route::post('patients/{patient}/privacy/break-glass', [PatientPrivacyController::class, 'startBreakGlass'])
+                ->name('patients.privacy.break-glass.start')
+                ->middleware('can:patients.privacy.break_glass');
+            Route::post('patients/privacy/break-glass/{override}/revoke', [PatientPrivacyController::class, 'revokeBreakGlass'])
+                ->name('patients.privacy.break-glass.revoke')
+                ->middleware('can:patients.privacy.break_glass');
+            Route::post('patients/{patient}/privacy/directives', [PatientPrivacyController::class, 'storeDirective'])
+                ->name('patients.privacy-directives.store')
+                ->middleware('can:patients.privacy_directives.manage');
             Route::get('patients/{patient}/edit', [PatientController::class, 'edit'])->name('patients.edit')->middleware('can:patients.edit');
             Route::put('patients/{patient}', [PatientController::class, 'update'])->name('patients.update')->middleware('can:patients.edit');
             Route::patch('patients/{patient}/toggle-status', [PatientController::class, 'toggleStatus'])->name('patients.toggle-status')->middleware('can:patients.edit');
@@ -1495,6 +1505,11 @@ Route::middleware('auth')->group(function () {
             Route::get('{activityLog}', [ActivityLogController::class, 'show'])
                 ->middleware('can:logs.view')
                 ->name('show');
+        });
+
+        Route::prefix('patient-privacy')->name('patient-privacy.')->middleware('can:patients.privacy_audit.view')->group(function () {
+            Route::get('audit', [PatientPrivacyController::class, 'audit'])->name('audit');
+            Route::get('historical-log-dry-run', [PatientPrivacyController::class, 'historicalLogDryRun'])->name('historical-log-dry-run');
         });
 
         // Modules Management (Admin)

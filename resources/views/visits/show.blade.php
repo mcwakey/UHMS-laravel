@@ -695,7 +695,13 @@
                                     —
                                     @endif
                                 </td>
-                                <td class="text-end small">&#8373;{{ number_format($item->patient_payable, 2) }}</td>
+                                <td class="text-end small">
+                                    @if((float) $item->discount_amount > 0)
+                                    <!-- <span class="">-&#8373;{{ number_format($item->discount_amount, 2) }}</span> -->
+                                    <div class="small text-danger">-&#8373;{{ number_format($item->discount_amount, 2) }}</div>
+                                    @endif
+                                    &#8373;{{ number_format($item->patient_payable, 2) }}
+                                </td>
                                 <td class="text-end small {{ (float) $item->balance > 0 ? 'text-danger fw-semibold' : 'text-muted' }}">
                                     &#8373;{{ number_format($item->balance, 2) }}
                                 </td>

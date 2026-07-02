@@ -17,6 +17,92 @@
     @endcan
 </div>
 
+@if($activeBreakGlass)
+<div class="alert alert-warning d-flex justify-content-between align-items-center gap-2">
+    <div>
+        <i class="ti ti-alert-triangle me-1"></i>
+        <strong>{{ __('patients.privacy.break_glass_active') }}</strong>
+        <span class="small">{{ __('patients.privacy.break_glass_expires_at', ['time' => $activeBreakGlass->expires_at?->format('d M Y H:i')]) }}</span>
+    </div>
+    @can('patients.privacy.break_glass')
+    <form method="POST" action="{{ route('admin.patients.privacy.break-glass.revoke', $activeBreakGlass) }}">
+        @csrf
+        <button type="submit" class="btn btn-sm btn-outline-dark">{{ __('common.revoke') }}</button>
+    </form>
+    @endcan
+</div>
+@endif
+
+@if($patient->activePrivacyDirectives->isNotEmpty())
+<div class="alert alert-danger">
+    <div class="fw-semibold mb-1"><i class="ti ti-shield-lock me-1"></i>{{ __('patients.privacy.privacy_directives') }}</div>
+    @can('patients.privacy_directives.view')
+        <div class="d-flex flex-column gap-1">
+            @foreach($patient->activePrivacyDirectives as $directive)
+                <div>
+                    <span class="badge bg-danger-subtle text-danger">{{ __('patients.privacy.'.$directive->directive_type) !== 'patients.privacy.'.$directive->directive_type ? __('patients.privacy.'.$directive->directive_type) : $directive->directive_type }}</span>
+                    <span>{{ $directive->summary }}</span>
+                    @if($directive->details)
+                        <small class="text-muted d-block">{{ $directive->details }}</small>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    @else
+        <span>{{ __('patients.privacy.directive_details_hidden') }}</span>
+    @endcan
+</div>
+@endif
+
+@can('patients.privacy_directives.manage')
+<div class="card mb-3">
+    <div class="card-header">
+        <h6 class="fw-bold mb-0"><i class="ti ti-shield-lock me-1"></i>{{ __('patients.privacy.privacy_directive') }}</h6>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ route('admin.patients.privacy-directives.store', $patient) }}" class="row g-2 align-items-end">
+            @csrf
+            <div class="col-md-3">
+                <label class="form-label">{{ __('common.type') }}</label>
+                <select name="directive_type" class="form-select" required>
+                    @foreach(['do_not_disclose_contact', 'restricted_address', 'restricted_identity', 'restricted_emergency_contact', 'minor_or_guardian_required', 'court_restriction', 'confidential_patient', 'custom'] as $type)
+                        <option value="{{ $type }}">{{ __('patients.privacy.'.$type) !== 'patients.privacy.'.$type ? __('patients.privacy.'.$type) : str_replace('_', ' ', $type) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">{{ __('common.summary') }}</label>
+                <input type="text" name="summary" class="form-control" maxlength="255" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">{{ __('common.notes') }}</label>
+                <input type="text" name="details" class="form-control" maxlength="2000">
+            </div>
+            <div class="col-md-1 d-grid">
+                <button type="submit" class="btn btn-primary">{{ __('common.add') }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endcan
+
+@can('patients.privacy.break_glass')
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="POST" action="{{ route('admin.patients.privacy.break-glass.start', $patient) }}" class="row g-2 align-items-end">
+            @csrf
+            <div class="col-md-9">
+                <label class="form-label">{{ __('patients.privacy.break_glass_reason') }}</label>
+                <input type="text" name="reason" class="form-control" minlength="10" required>
+            </div>
+            <div class="col-md-3 d-grid">
+                <button type="submit" class="btn btn-warning"><i class="ti ti-shield-lock me-1"></i>{{ __('patients.privacy.start_break_glass_access') }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endcan
+
 <!-- Patient Header Card -->
 <div class="card">
     <div class="row align-items-end">
@@ -35,21 +121,21 @@
                     <h5 class="mb-1"><span class="fw-bold">{{ $patient->full_name }}</span></h5>
                     <p class="mb-3">
                         @if($patient->address)
-                            <x-patient-protected-field field="address" :value="$patient->address" />{{ collect([$patient->city, $patient->town, $patient->region])->filter()->isNotEmpty() ? ', ' : '' }}
+                            <x-patient-protected-field field="address" :value="$patient->address" :patient="$patient" />{{ collect([$patient->city, $patient->town, $patient->region])->filter()->isNotEmpty() ? ', ' : '' }}
                         @endif
                         {{ collect([$patient->city, $patient->town])->filter()->implode(', ') }}{{ $patient->region ? ', ' . $patient->region : '' }}
                     </p>
                     <div class="d-flex align-items-center flex-wrap gap-3">
                         <p class="mb-0 d-inline-flex align-items-center">
                             <i class="ti ti-phone me-1 text-dark"></i>
-                            <x-patient-protected-field field="phone" :value="$patient->phone" />
+                            <x-patient-protected-field field="phone" :value="$patient->phone" :patient="$patient" />
                             @if($patient->phone_secondary)
-                                / <x-patient-protected-field field="phone_secondary" :value="$patient->phone_secondary" />
+                                / <x-patient-protected-field field="phone_secondary" :value="$patient->phone_secondary" :patient="$patient" />
                             @endif
                         </p>
                         @if($patient->email)
                         <span class="text-light">|</span>
-                        <p class="mb-0 d-inline-flex align-items-center"><i class="ti ti-mail me-1 text-dark"></i><x-patient-protected-field field="email" :value="$patient->email" /></p>
+                        <p class="mb-0 d-inline-flex align-items-center"><i class="ti ti-mail me-1 text-dark"></i><x-patient-protected-field field="email" :value="$patient->email" :patient="$patient" /></p>
                         @endif
                     </div>
                 </div>
@@ -206,7 +292,7 @@
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-id-badge-2 fs-16"></i></span>
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">{{ __('patients.ghana_card') }}</h6>
-                                <p class="mb-0"><x-patient-protected-field field="ghana_card_number" :value="$patient->ghana_card_number" /></p>
+                                <p class="mb-0"><x-patient-protected-field field="ghana_card_number" :value="$patient->ghana_card_number" :patient="$patient" /></p>
                             </div>
                         </div>
                     </div>
@@ -238,7 +324,7 @@
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-map-pin-code fs-16"></i></span>
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">{{ __('patients.digital_address') }}</h6>
-                                <p class="mb-0"><x-patient-protected-field field="digital_address" :value="$patient->digital_address" /></p>
+                                <p class="mb-0"><x-patient-protected-field field="digital_address" :value="$patient->digital_address" :patient="$patient" /></p>
                             </div>
                         </div>
                     </div>
@@ -257,7 +343,7 @@
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-phone-call fs-16"></i></span>
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">{{ __('patients.emergency_phone') }}</h6>
-                                <p class="mb-0"><x-patient-protected-field field="emergency_contact_phone" :value="$primaryContact?->phone" /></p>
+                                <p class="mb-0"><x-patient-protected-field field="emergency_contact_phone" :value="$primaryContact?->phone" :patient="$patient" /></p>
                             </div>
                         </div>
                     </div>
@@ -266,7 +352,7 @@
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-home fs-16"></i></span>
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">{{ __('patients.address') }}</h6>
-                                <p class="mb-0"><x-patient-protected-field field="address" :value="$patient->address" /></p>
+                                <p class="mb-0"><x-patient-protected-field field="address" :value="$patient->address" :patient="$patient" /></p>
                             </div>
                         </div>
                     </div>
@@ -285,7 +371,7 @@
     <div class="col-md-6 d-flex">
         <div class="card shadow-sm flex-fill">
             <div class="card-body d-flex align-items-center justify-content-center">
-                <p class="mb-0"><x-patient-protected-field field="allergies" :value="$patient->allergies" /></p>
+                <p class="mb-0"><x-patient-protected-field field="allergies" :value="$patient->allergies" :patient="$patient" /></p>
                 <h5 class="fw-bold mb-0 text-danger"><i class="ti ti-alert-triangle me-1"></i>{{ __('patients.allergies') }}</h5>
             </div>
         </div>
@@ -295,7 +381,7 @@
     <div class="col-md-6 d-flex">
         <div class="card shadow-sm flex-fill">
             <div class="card-body d-flex align-items-center justify-content-center">
-                <p class="mb-0"><x-patient-protected-field field="chronic_conditions" :value="$patient->chronic_conditions" /></p>
+                <p class="mb-0"><x-patient-protected-field field="chronic_conditions" :value="$patient->chronic_conditions" :patient="$patient" /></p>
                 <h5 class="fw-bold mb-0 text-warning"><i class="ti ti-heartbeat me-1"></i>{{ __('patients.chronic_conditions') }}</h5>
             </div>
         </div>
@@ -514,9 +600,9 @@
                                         <span class="badge bg-info">{{ __('patients.card_holder') }}</span>
                                     @endif
                                 </td>
-                                <td><x-patient-protected-field field="membership_number" :value="$ins->membership_number" />
+                                <td><x-patient-protected-field field="membership_number" :value="$ins->membership_number" :patient="$patient" />
                                     @if($ins->ccc_code)
-                                        <div class="small text-muted">CCC: <x-patient-protected-field field="ccc_code" :value="$ins->ccc_code" /></div>
+                                        <div class="small text-muted">CCC: <x-patient-protected-field field="ccc_code" :value="$ins->ccc_code" :patient="$patient" /></div>
                                     @endif
                                 </td>
                                 <td>
@@ -612,8 +698,8 @@
                             @foreach($patient->emergencyContacts as $ec)
                             <tr>
                                 <td class="fw-medium">{{ $ec->name }}</td>
-                                <td><x-patient-protected-field field="emergency_contact_phone" :value="$ec->phone" /></td>
-                                <td><x-patient-protected-field field="emergency_contact_phone" :value="$ec->phone_secondary" /></td>
+                                <td><x-patient-protected-field field="emergency_contact_phone" :value="$ec->phone" :patient="$patient" /></td>
+                                <td><x-patient-protected-field field="emergency_contact_phone" :value="$ec->phone_secondary" :patient="$patient" /></td>
                                 <td>{{ $ec->relationship ?? '—' }}</td>
                                 <td>
                                     @if($ec->is_primary)

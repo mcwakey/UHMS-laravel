@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('full_name')->index();
             $table->string('status_before_archive', 30)->nullable();
             $table->timestamp('last_activity_at')->nullable()->index();
-            $table->timestamp('archived_at')->index();
+            $table->dateTime('archived_at')->index();
             $table->string('reason')->nullable();
             $table->json('payload')->nullable();
             $table->timestamps();

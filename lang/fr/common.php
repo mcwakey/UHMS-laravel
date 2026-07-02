@@ -12,6 +12,7 @@ return [
     'view' => 'Voir',
     'create' => 'Créer',
     'add' => 'Ajouter',
+    'revoke' => 'Revoquer',
     'update' => 'Mettre à jour',
     'confirm' => 'Confirmer',
     'submit' => 'Soumettre',
@@ -171,6 +172,7 @@ return [
     // Print layout
     'generated' => 'Généré le',
     'patient' => 'Patient',
+    'user' => 'Utilisateur',
     'patient_no' => 'N° patient',
     'gender_age' => 'Sexe / Âge',
     'visit_no' => 'N° de visite',

@@ -6,6 +6,8 @@
 ])
 
 @php
+    $privacy = app(\App\Services\PatientPrivacyService::class);
+    $canEditEmergencyContact = $privacy->canCaptureOnCreate('emergency_contact_phone');
     $oldContacts = old('emergency_contacts');
     $contacts = collect($oldContacts ?? $emergencyContacts ?? [[]])->values();
     if ($contacts->isEmpty()) {
@@ -16,7 +18,7 @@
 <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="fw-bold mb-0"><i class="ti ti-urgent me-1"></i>{{ __('patients.emergency_contacts') }}</h5>
-        <button type="button" class="btn btn-sm btn-outline-primary" id="add-ec-btn">
+        <button type="button" class="btn btn-sm btn-outline-primary" id="add-ec-btn" @unless($canEditEmergencyContact) disabled @endunless>
             <i class="ti ti-plus me-1"></i>{{ __('patients.add_another_ec') }}
         </button>
     </div>
@@ -49,12 +51,12 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label form-label-sm">{{ __('common.phone') }} <span class="text-danger">*</span></label>
-                            <input type="tel" name="emergency_contacts[{{ $index }}][phone]" class="form-control form-control-sm js-phone-mask @error($phoneError) is-invalid @enderror" value="{{ $phoneValue }}" placeholder="{{ $phonePlaceholder }}" inputmode="tel" @if($phonePattern) pattern="{{ $phonePattern }}" @endif>
+                            <input type="tel" @if($canEditEmergencyContact) name="emergency_contacts[{{ $index }}][phone]" @endif class="form-control form-control-sm js-phone-mask @error($phoneError) is-invalid @enderror" value="{{ $canEditEmergencyContact ? $phoneValue : __('patients.privacy.hidden_sensitive_patient_data') }}" placeholder="{{ $phonePlaceholder }}" inputmode="tel" @if($phonePattern && $canEditEmergencyContact) pattern="{{ $phonePattern }}" @endif @unless($canEditEmergencyContact) disabled @endunless>
                             @error($phoneError)<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-3">
                             <label class="form-label form-label-sm">{{ __('patients.secondary_phone') }}</label>
-                            <input type="tel" name="emergency_contacts[{{ $index }}][phone_secondary]" class="form-control form-control-sm" value="{{ $secondaryPhoneValue }}" placeholder="{{ __('common.optional') }}" inputmode="tel">
+                            <input type="tel" @if($canEditEmergencyContact) name="emergency_contacts[{{ $index }}][phone_secondary]" @endif class="form-control form-control-sm" value="{{ $canEditEmergencyContact ? $secondaryPhoneValue : __('patients.privacy.hidden_sensitive_patient_data') }}" placeholder="{{ __('common.optional') }}" inputmode="tel" @unless($canEditEmergencyContact) disabled @endunless>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label form-label-sm">{{ __('patients.relationship') }}</label>
@@ -69,6 +71,6 @@
                 </div>
             @endforeach
         </div>
-        <small class="text-muted"><i class="ti ti-info-circle me-1"></i>{{ __('patients.ec_first_contact_info') }}</small>
+        <small class="text-muted"><i class="ti ti-info-circle me-1"></i>{{ $canEditEmergencyContact ? __('patients.ec_first_contact_info') : __('patients.privacy.masked_value_not_submitted') }}</small>
     </div>
 </div>

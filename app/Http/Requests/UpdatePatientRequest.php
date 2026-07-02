@@ -8,12 +8,42 @@ use App\Enums\MaritalStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdatePatientRequest extends FormRequest
 {
     public function authorize(): bool
     {
         return $this->user()->can('patients.edit');
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $patient = $this->route('patient');
+        if (! $patient) {
+            return;
+        }
+
+        $privacy = app(\App\Services\PatientPrivacyService::class);
+        $merge = [];
+
+        foreach (array_keys(config('patient_privacy.fields', [])) as $field) {
+            if (! array_key_exists($field, $this->rules())) {
+                continue;
+            }
+
+            if ($privacy->canEdit($field, $this->user())) {
+                continue;
+            }
+
+            if (! $this->has($field)) {
+                $merge[$field] = $patient->{$field};
+            }
+        }
+
+        if ($merge !== []) {
+            $this->merge($merge);
+        }
     }
 
     public function rules(): array
@@ -45,5 +75,30 @@ class UpdatePatientRequest extends FormRequest
             'allergies' => ['nullable', 'string', 'max:1000'],
             'chronic_conditions' => ['nullable', 'string', 'max:1000'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $patient = $this->route('patient');
+            if (! $patient) {
+                return;
+            }
+
+            $privacy = app(\App\Services\PatientPrivacyService::class);
+            foreach (array_keys(config('patient_privacy.fields', [])) as $field) {
+                if (! array_key_exists($field, $this->rules()) || ! $this->has($field)) {
+                    continue;
+                }
+
+                if ($privacy->canEdit($field, $this->user())) {
+                    continue;
+                }
+
+                if ((string) ($this->input($field) ?? '') !== (string) ($patient->{$field} ?? '')) {
+                    $validator->errors()->add($field, __('patients.privacy.privacy_edit_restricted'));
+                }
+            }
+        });
     }
 }

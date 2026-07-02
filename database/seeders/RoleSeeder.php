@@ -38,6 +38,17 @@ class RoleSeeder extends Seeder
             'patients.emergency_contact.view',
             'patients.clinical_sensitive.view',
             'patients.export_sensitive.view',
+            'patients.pii.edit',
+            'patients.contact.edit',
+            'patients.identity.edit',
+            'patients.address.edit',
+            'patients.insurance.edit',
+            'patients.emergency_contact.edit',
+            'patients.clinical_sensitive.edit',
+            'patients.privacy.break_glass',
+            'patients.privacy_directives.view',
+            'patients.privacy_directives.manage',
+            'patients.privacy_audit.view',
 
             // ── Visits ────────────────────────────────────────────────────
             'visits.view',
@@ -1437,6 +1448,36 @@ class RoleSeeder extends Seeder
             $bloodBankOfficer,
         ] as $role) {
             $role->givePermissionTo($journeyHandoffPermissions);
+        }
+
+        $levelTwoPatientEditPermissions = [
+            'patients.pii.edit',
+            'patients.contact.edit',
+            'patients.identity.edit',
+            'patients.address.edit',
+            'patients.insurance.edit',
+            'patients.emergency_contact.edit',
+        ];
+
+        $medicalRecordsOfficer->givePermissionTo(array_merge($levelTwoPatientEditPermissions, [
+            'patients.privacy_directives.view',
+            'patients.privacy_directives.manage',
+            'patients.privacy_audit.view',
+        ]));
+
+        foreach ([$doctor, $consultant, $specialist, $physicianAssistant, $emergencyDoctor, $emergencyNurse, $triageNurse, $wardNurse] as $role) {
+            $role->givePermissionTo([
+                'patients.clinical_sensitive.edit',
+                'patients.privacy.break_glass',
+                'patients.privacy_directives.view',
+            ]);
+        }
+
+        foreach ([$accountant, $financeManager, $claimsOfficer] as $role) {
+            $role->givePermissionTo([
+                'patients.insurance.edit',
+                'patients.privacy_directives.view',
+            ]);
         }
 
         // Safe for all roles: the service still limits switching to departments

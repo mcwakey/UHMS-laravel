@@ -207,6 +207,21 @@ class Patient extends Model
         return $this->hasOne(ArchivedPatient::class);
     }
 
+    public function privacyOverrides()
+    {
+        return $this->hasMany(PatientPrivacyOverride::class);
+    }
+
+    public function privacyDirectives()
+    {
+        return $this->hasMany(PatientPrivacyDirective::class);
+    }
+
+    public function activePrivacyDirectives()
+    {
+        return $this->hasMany(PatientPrivacyDirective::class)->active();
+    }
+
     public function latestVisit()
     {
         return $this->hasOne(Visit::class)->latestOfMany('visit_date');
