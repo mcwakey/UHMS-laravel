@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\Department;
 use App\Models\FiscalYear;
+use App\Models\JournalEntryLine;
 use App\Services\AccountingReconciliationService;
 use App\Services\CashFlowStatementService;
 use App\Services\FinancialReportService;
@@ -106,7 +107,7 @@ class AccountingReportController extends Controller
     public function generalLedger(Request $request, GeneralLedgerService $service)
     {
         $accounts = Account::orderBy('code')->get();
-        $account = $request->account_id ? Account::find($request->account_id) : $accounts->first();
+        $account = $this->resolveGeneralLedgerAccount($request, $accounts);
         $report = $account ? $service->report($account, $request->all()) : null;
 
         return view('accounting.reports.general-ledger', [
@@ -134,7 +135,7 @@ class AccountingReportController extends Controller
     public function generalLedgerExport(Request $request, GeneralLedgerService $service)
     {
         $accounts = Account::orderBy('code')->get();
-        $account = $request->account_id ? Account::find($request->account_id) : $accounts->first();
+        $account = $this->resolveGeneralLedgerAccount($request, $accounts);
         $report = $account ? $service->report($account, $request->all()) : null;
 
         return $this->csv('general-ledger.csv', function ($handle) use ($report) {
@@ -196,6 +197,23 @@ class AccountingReportController extends Controller
                 fputcsv($handle, [$section['label'].' total', '', '', '', '', '', '', '', number_format((float) $section['inflows'], 2, '.', ''), number_format((float) $section['outflows'], 2, '.', ''), number_format((float) $section['net'], 2, '.', '')]);
             }
         });
+    }
+
+    private function resolveGeneralLedgerAccount(Request $request, $accounts): ?Account
+    {
+        if ($request->filled('account_id')) {
+            return Account::find($request->integer('account_id'));
+        }
+
+        $accountId = JournalEntryLine::query()
+            ->whereHas('journalEntry', fn ($query) => $query->ledgerAffecting())
+            ->join('accounts', 'journal_entry_lines.account_id', '=', 'accounts.id')
+            ->orderBy('accounts.code')
+            ->value('journal_entry_lines.account_id');
+
+        return $accountId
+            ? $accounts->firstWhere('id', (int) $accountId)
+            : $accounts->first();
     }
 
     private function csv(string $filename, callable $writer)

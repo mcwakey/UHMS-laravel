@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\InsuranceType;
 use App\Enums\BillingType;
 use App\Enums\InvoiceStatus;
+use App\Models\Account;
 use App\Models\Department;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
@@ -20,6 +21,7 @@ use App\Models\User;
 use App\Models\Visit;
 use App\Services\BillingService;
 use App\Services\InvoiceService;
+use Database\Seeders\AccountingChartSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -75,6 +77,44 @@ class InsuranceCoverageSelectedPriceTest extends TestCase
         $this->assertSame('fallback_cash_no_insurance_price', $item->pricing_source);
         $this->assertSame(0.0, (float) $item->insurance_covered);
         $this->assertSame(100.0, (float) $item->patient_payable);
+    }
+
+    public function test_fully_covered_invoice_posts_insurance_receivable_journal_entry(): void
+    {
+        $this->seed(AccountingChartSeeder::class);
+
+        [$visit, $provider] = $this->insuredVisitWithTier(100);
+        $service = $this->serviceWithProviderPrice($provider, cashPrice: 100, insurancePrice: 80);
+
+        $item = app(BillingService::class)->addItemToVisitInvoice(
+            visit: $visit,
+            service: $service,
+            sourceType: 'consultation',
+            sourceId: $service->id,
+        );
+
+        $invoice = $item->invoice()->with(['receivables', 'journalEntry.lines'])->first();
+        $insuranceReceivableAccountId = Account::where('code', '1220')->value('id');
+        $revenueAccountId = Account::where('code', '4100')->value('id');
+
+        $this->assertSame(0.0, (float) $item->patient_payable);
+        $this->assertSame(80.0, (float) $item->insurance_covered);
+        $this->assertSame(InvoiceStatus::PENDING, $invoice->status);
+        $this->assertNotNull($invoice->journal_entry_id);
+
+        $insuranceReceivable = $invoice->receivables
+            ->where('payer_type', InvoiceReceivable::PAYER_INSURANCE)
+            ->sole();
+
+        $this->assertSame($provider->id, (int) $insuranceReceivable->payer_id);
+        $this->assertSame(80.0, (float) $insuranceReceivable->allocated_amount);
+        $this->assertSame(80.0, (float) $insuranceReceivable->balance);
+
+        $insuranceDebit = $invoice->journalEntry->lines->firstWhere('account_id', $insuranceReceivableAccountId);
+        $revenueCredit = $invoice->journalEntry->lines->firstWhere('account_id', $revenueAccountId);
+
+        $this->assertEqualsWithDelta(80.0, (float) $insuranceDebit->debit, 0.001);
+        $this->assertEqualsWithDelta(80.0, (float) $revenueCredit->credit, 0.001);
     }
 
     public function test_usage_summary_counts_invoice_item_covered_amount_against_tier_limits(): void

@@ -213,10 +213,13 @@ class InvoiceService
         $balance = (float) $invoice->balance;
         $paid = (float) $invoice->amount_paid;
         $total = (float) $invoice->total_amount;
+        $insuranceCovered = (float) $invoice->items->sum('insurance_covered');
+        $grossResponsibility = round($total + $insuranceCovered, 2);
 
         $newStatus = match (true) {
             ! $hasItems => InvoiceStatus::DRAFT,
-            $total <= 0 => InvoiceStatus::DRAFT,
+            $grossResponsibility <= 0 => InvoiceStatus::DRAFT,
+            $total <= 0 && $insuranceCovered > 0 => InvoiceStatus::PENDING,
             $balance <= 0.0 => InvoiceStatus::PAID,
             $paid > 0.0 => InvoiceStatus::PARTIALLY_PAID,
             default => InvoiceStatus::PENDING,
