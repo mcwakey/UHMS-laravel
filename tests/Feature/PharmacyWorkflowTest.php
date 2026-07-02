@@ -159,7 +159,7 @@ class PharmacyWorkflowTest extends TestCase
         ]);
     }
 
-    public function test_dispensing_queue_only_lists_paid_ready_prescriptions(): void
+    public function test_dispensing_queue_lists_paid_prescriptions_even_after_dispensing(): void
     {
         $this->actingAs($this->user);
 
@@ -179,6 +179,12 @@ class PharmacyWorkflowTest extends TestCase
 
         $paidQueue = app(PharmacyService::class)->getPendingPrescriptions()->getCollection();
         $this->assertTrue($paidQueue->contains('id', $prescription->id));
+
+        app(PharmacyService::class)->dispenseItem($item->refresh(), 3);
+
+        $dispensedQueue = app(PharmacyService::class)->getPendingPrescriptions()->getCollection();
+        $this->assertTrue($dispensedQueue->contains('id', $prescription->id));
+        $this->assertSame(PrescriptionStatus::DISPENSED->value, $prescription->refresh()->status->value);
     }
 
     public function test_dispensing_uses_configured_pharmacy_department_location_when_type_is_not_pharmacy(): void

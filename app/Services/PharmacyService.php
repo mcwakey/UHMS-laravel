@@ -280,12 +280,13 @@ class PharmacyService
 
     public function getPendingPrescriptions(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = $this->readyForDispensingQuery()
+        $query = $this->paidPharmacyPrescriptionsQuery()
             ->with(['patient', 'doctor', 'visit', 'items.drug', 'items.dispensingRecords'])
             ->whereIn('status', [
                 PrescriptionStatus::PARTIALLY_BILLED->value,
                 PrescriptionStatus::BILLED->value,
                 PrescriptionStatus::PARTIALLY_DISPENSED->value,
+                PrescriptionStatus::DISPENSED->value,
             ]);
 
         if (! empty($filters['search'])) {
@@ -619,11 +620,12 @@ class PharmacyService
     public function getPharmacyStats(): array
     {
         return [
-            'pending_prescriptions' => $this->readyForDispensingQuery()
+            'pending_prescriptions' => $this->paidPharmacyPrescriptionsQuery()
                 ->whereIn('status', [
                     PrescriptionStatus::PARTIALLY_BILLED->value,
                     PrescriptionStatus::BILLED->value,
                     PrescriptionStatus::PARTIALLY_DISPENSED->value,
+                    PrescriptionStatus::DISPENSED->value,
                 ])
                 ->count(),
             'billed_prescriptions' => Prescription::whereIn('status', [
@@ -693,13 +695,12 @@ class PharmacyService
         return $ids->filter()->unique()->values();
     }
 
-    private function readyForDispensingQuery(): Builder
+    private function paidPharmacyPrescriptionsQuery(): Builder
     {
         return Prescription::query()
             ->whereHas('items.billingSelections', function (Builder $selectionQuery) {
                 $selectionQuery
                     ->where('status', '!=', PharmacyBillingSelection::STATUS_CANCELLED)
-                    ->whereColumn('dispensed_quantity', '<', 'billed_quantity')
                     ->whereHas('invoiceItem', function (Builder $invoiceItemQuery) {
                         $invoiceItemQuery->where(function (Builder $paidQuery) {
                             $paidQuery
