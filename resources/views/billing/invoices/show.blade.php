@@ -288,11 +288,11 @@
                                 <th>{{ __('invoices.pricing') }}</th>
                                 <th class="text-end">{{ __('invoices.price') }}</th>
                                 <th class="text-end">{{ __('invoices.covered') }}</th>
-                                <th class="text-end">{{ __('invoices.discount') }}</th>
+                                <!-- <th class="text-end">{{ __('invoices.discount') }}</th> -->
                                 <th class="text-end">{{ __('invoices.patient_payable') }}</th>
                                 <th class="text-end">{{ __('invoices.paid') }}</th>
                                 <th class="text-end">{{ __('invoices.balance') }}</th>
-                                <th class="text-center">{{ __('common.status') }}</th>
+                                <!-- <th class="text-center">{{ __('common.status') }}</th> -->
                                 @if($canDiscountActions)
                                 <th class="text-center" style="width:60px;">{{ __('common.actions') }}</th>
                                 @endif
@@ -341,7 +341,8 @@
                                 <td>
                                     <span class="badge bg-{{ $meta[1] }}">{{ $meta[0] }}</span>
                                     <div class="small text-muted mt-1">
-                                        <i class="ti ti-{{ $payer === 'insurance' ? 'shield-check' : 'cash' }} me-1"></i>{{ __('statuses.default.' . $payer) }}
+                                        <!-- <i class="ti ti-{{ $payer === 'insurance' ? 'shield-check' : 'cash' }} me-1"></i>{{ __('statuses.default.' . $payer) }} -->
+                                        <i class="ti ti-{{ $payer === 'insurance' ? 'shield-check' : 'cash' }} me-1"></i>{{ ucfirst($payer) }}
                                     </div>
                                 </td>
                                 {{-- <td class="text-end fw-semibold">&#8373;{{ number_format($selectedPrice, 2) }}</td> --}}
@@ -378,27 +379,36 @@
                                     —
                                     @endif
                                 </td>
-                                <td class="text-end">
+                                <!-- <td class="text-end">
                                     @if((float) $item->discount_amount > 0)
                                     <span class="text-danger">-&#8373;{{ number_format($item->discount_amount, 2) }}</span>
                                     @else
                                     —
                                     @endif
+                                </td> -->
+                                <td class="text-end">
+                                    @if((float) $item->discount_amount > 0)
+                                    <span class="text-danger">-&#8373;{{ number_format($item->discount_amount, 2) }}</span>
+                                    @endif
+                                    &#8373;{{ number_format($item->patient_payable, 2) }}
                                 </td>
-                                <td class="text-end">&#8373;{{ number_format($item->patient_payable, 2) }}</td>
                                 <td class="text-end">&#8373;{{ number_format($item->paid_amount, 2) }}</td>
                                 <td class="text-end {{ (float) $item->balance > 0 ? 'text-danger fw-semibold' : 'text-muted' }}">
+                                    @if((float) $item->balance > 0)
                                     &#8373;{{ number_format($item->balance, 2) }}
-                                </td>
-                                <td class="text-center">
+                                    @else
                                     <span class="badge bg-{{ $payColor }} text-uppercase">{{ str_replace('_',' ', $payStatus) }}</span>
+                                    @endif
                                 </td>
+                                <!-- <td class="text-center">
+                                    <span class="badge bg-{{ $payColor }} text-uppercase">{{ str_replace('_',' ', $payStatus) }}</span>
+                                </td> -->
                                 @if($canDiscountActions)
                                 <td class="text-center">
                                     @if(! in_array($payStatus, ['paid','cancelled','voided','waived']))
                                     @if($canApplyDiscount)
                                     <button type="button"
-                                            class="btn btn-sm btn-outline-warning"
+                                            class="btn btn-sm btn-outline-warning mb-1"
                                             title="{{ __('invoices.apply_discount') }}"
                                             data-bs-toggle="modal"
                                             data-bs-target="#discountModal"
@@ -412,7 +422,7 @@
                                     @endif
                                     @if($canRemoveDiscount && (float) $item->discount_amount > 0)
                                      <x-confirm-form :action="route('admin.billing.invoices.items.discount.remove', [$invoice, $item])" method="DELETE"
-                                         button-label="" button-class="btn btn-sm btn-outline-danger ms-1" icon="ti-x"
+                                         button-label="" button-class="btn btn-sm btn-outline-danger" icon="ti-x"
                                          :confirm-title="__('invoices.remove_discount_title')"
                                          :confirm-text="__('invoices.remove_discount_text')"
                                          :confirm-button="__('invoices.remove_discount_btn')"
@@ -554,12 +564,12 @@
                         <thead class="table-light">
                             <tr>
                                 <th>{{ __('common.date') }}</th>
-                                <th>{{ __('common.type') }}</th>
+                                <!-- <th>{{ __('common.type') }}</th> -->
                                 <th>{{ __('invoices.reference') }}</th>
                                 <th>{{ __('common.details') }}</th>
                                 <th class="text-end">{{ __('common.amount') }}</th>
                                 <th>{{ __('common.reason') }}</th>
-                                <th>{{ __('common.status') }}</th>
+                                <!-- <th>{{ __('common.status') }}</th> -->
                                 <th>{{ __('invoices.approved_by') }}</th>
                                 @if($canViewAccountingPosting)
                                 <th>{{ __('invoices.journal_entry') }}</th>
@@ -573,8 +583,9 @@
                             @forelse($adjustmentHistory as $history)
                             <tr>
                                 <td>{{ $history['date']?->format('d M Y H:i') ?? '—' }}</td>
-                                <td><span class="badge bg-{{ $history['badge'] }}">{{ $history['type'] }}</span></td>
+                                <!-- <td><span class="badge bg-{{ $history['badge'] }}">{{ $history['type'] }}</span></td> -->
                                 <td>
+                                    <span class="badge bg-{{ $history['badge'] }}">{{ $history['type'] }}</span>
                                     <span class="fw-medium">{{ $history['reference'] }}</span>
                                     @if($history['payment_reference'])
                                         <div class="small text-muted">{{ $history['payment_reference'] }}</div>
@@ -595,7 +606,7 @@
                                 </td>
                                 <td class="text-end">&#8373;{{ number_format($history['amount'], 2) }}</td>
                                 <td>{{ $history['reason'] ?: '—' }}</td>
-                                <td>{{ $history['status'] }}</td>
+                                <!-- <td>{{ $history['status'] }}</td> -->
                                 <td>{{ $history['actor'] ?: '—' }}</td>
                                 @if($canViewAccountingPosting)
                                 <td>
@@ -634,11 +645,22 @@
                                                 data-reverse-url="{{ $history['reverse_url'] }}"
                                                 data-reverse-reference="{{ $history['reference'] }}"
                                                 data-reverse-type="{{ $history['type'] }}">
-                                            <i class="ti ti-arrow-back-up me-1"></i>{{ __('invoices.reverse_entry') }}
+                                            <i class="ti ti-arrow-back-up me-1"></i>
                                         </button>
                                     @endif
                                     @if($history['receipt_url'])
-                                        <a data-no-inertia href="{{ $history['receipt_url'] }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="{{ __('payments.view_receipt') }}">
+                                    <div class="dropdown mt-1">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="btn btn-sm btn-light" data-bs-toggle="dropdown">
+                                            <i class="ti ti-dots-vertical"></i>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a data-no-inertia class="dropdown-item" href="{{ $history['receipt_url'] }}"><i class="ti ti-eye me-2"></i>{{ __('payments.view_receipt') }}</a></li>
+                                            <li><a data-no-inertia class="dropdown-item" href="{{ $history['receipt_thermal_url'] }}"><i class="ti ti-printer me-2"></i>{{ __('payments.print_receipt_80mm') }}</a></li>
+                                            <!-- <li><a class="dropdown-item" href="{{ $history['receipt_thermal_url'] }}"><i class="ti ti-edit me-2"></i>{{ __('common.edit') }}</a></li> -->
+                                            <li><a data-no-inertia class="dropdown-item" href="{{ $history['receipt_pdf_url'] }}"><i class="ti ti-file-type-pdf me-2"></i>{{ __('payments.download_pdf') }}</a></li>
+                                        </ul>
+                                    </div>
+                                        <!-- <a data-no-inertia href="{{ $history['receipt_url'] }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="{{ __('payments.view_receipt') }}">
                                             <i class="ti ti-eye"></i>
                                         </a>
                                         <a data-no-inertia href="{{ $history['receipt_thermal_url'] }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="{{ __('payments.print_receipt_80mm') }}">
@@ -646,7 +668,7 @@
                                         </a>
                                         <a data-no-inertia href="{{ $history['receipt_pdf_url'] }}" class="btn btn-sm btn-outline-secondary" title="{{ __('payments.download_pdf') }}">
                                             <i class="ti ti-file-type-pdf"></i>
-                                        </a>
+                                        </a> -->
                                     @endif
                                     @if($history['accounting_status'] === 'failed' && $canRetryAccountingPosting)
                                         <form method="POST" action="{{ route('admin.accounting.postings.retry') }}" class="d-inline">
@@ -654,7 +676,7 @@
                                             <input type="hidden" name="source_type" value="{{ $history['retry_source_type'] }}">
                                             <input type="hidden" name="source_id" value="{{ $history['retry_source_id'] }}">
                                             <button type="submit" class="btn btn-sm btn-outline-warning">
-                                                <i class="ti ti-refresh me-1"></i>{{ __('invoices.retry') }}
+                                                <i class="ti ti-refresh me-1"></i>
                                             </button>
                                         </form>
                                     @elseif(! $canReverseHistory && ! $history['receipt_url'])
