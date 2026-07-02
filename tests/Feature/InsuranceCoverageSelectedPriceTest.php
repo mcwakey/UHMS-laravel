@@ -3,17 +3,23 @@
 namespace Tests\Feature;
 
 use App\Enums\InsuranceType;
+use App\Enums\BillingType;
+use App\Enums\InvoiceStatus;
 use App\Models\Department;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\InsuranceProvider;
 use App\Models\InsuranceTier;
 use App\Models\InvoiceReceivable;
 use App\Models\Patient;
 use App\Models\PatientInsurance;
+use App\Models\Payment;
 use App\Models\ServiceCatalog;
 use App\Models\ServicePrice;
 use App\Models\User;
 use App\Models\Visit;
 use App\Services\BillingService;
+use App\Services\InvoiceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -69,6 +75,159 @@ class InsuranceCoverageSelectedPriceTest extends TestCase
         $this->assertSame('fallback_cash_no_insurance_price', $item->pricing_source);
         $this->assertSame(0.0, (float) $item->insurance_covered);
         $this->assertSame(100.0, (float) $item->patient_payable);
+    }
+
+    public function test_usage_summary_counts_invoice_item_covered_amount_against_tier_limits(): void
+    {
+        [$visit, $provider, $tier, $insurance] = $this->insuredVisitWithTier(80);
+        $tier->forceFill([
+            'annual_limit' => 100,
+            'max_per_month' => 60,
+        ])->save();
+        $service = $this->serviceWithProviderPrice($provider, cashPrice: 100, insurancePrice: 70);
+
+        app(BillingService::class)->addItemToVisitInvoice(
+            visit: $visit,
+            service: $service,
+            sourceType: 'service_catalog',
+            sourceId: $service->id,
+        );
+
+        $summary = app(\App\Services\InsuranceService::class)->getUsageSummary($insurance->fresh('insuranceTier'));
+
+        $this->assertSame(56.0, (float) $summary['used_this_year']);
+        $this->assertSame(56.0, (float) $summary['used_this_month']);
+        $this->assertSame(44.0, (float) $summary['remaining_annual']);
+        $this->assertSame(4.0, (float) $summary['remaining_monthly']);
+    }
+
+    public function test_item_added_after_visit_limit_is_exhausted_falls_back_to_cash(): void
+    {
+        [$visit, $provider, $tier] = $this->insuredVisitWithTier(80);
+        $tier->forceFill(['per_visit_limit' => 56])->save();
+
+        $first = $this->serviceWithProviderPrice($provider, cashPrice: 100, insurancePrice: 70);
+        app(BillingService::class)->addItemToVisitInvoice(
+            visit: $visit,
+            service: $first,
+            sourceType: 'service_catalog',
+            sourceId: $first->id,
+        );
+
+        $second = $this->serviceWithProviderPrice($provider, cashPrice: 100, insurancePrice: 70);
+        $item = app(BillingService::class)->addItemToVisitInvoice(
+            visit: $visit,
+            service: $second,
+            sourceType: 'service_catalog',
+            sourceId: $second->id,
+        );
+
+        $this->assertSame('cash', $item->payer_type);
+        $this->assertSame('cash_price', $item->pricing_source);
+        $this->assertSame(100.0, (float) $item->selected_price);
+        $this->assertSame(0.0, (float) $item->insurance_covered);
+        $this->assertSame(100.0, (float) $item->patient_payable);
+
+        $patientReceivable = InvoiceReceivable::where('invoice_id', $item->invoice_id)
+            ->where('payer_type', InvoiceReceivable::PAYER_PATIENT)
+            ->sole();
+
+        $this->assertSame(114.0, (float) $patientReceivable->allocated_amount);
+        $this->assertSame(114.0, (float) $patientReceivable->balance);
+    }
+
+    public function test_patient_receivable_reopens_when_new_items_are_added_after_payment(): void
+    {
+        [$visit, $provider, $tier] = $this->insuredVisitWithTier(80);
+        $tier->forceFill(['per_visit_limit' => 56])->save();
+
+        $first = $this->serviceWithProviderPrice($provider, cashPrice: 100, insurancePrice: 70);
+        $firstItem = app(BillingService::class)->addItemToVisitInvoice(
+            visit: $visit,
+            service: $first,
+            sourceType: 'service_catalog',
+            sourceId: $first->id,
+        );
+
+        $paidPatientReceivable = InvoiceReceivable::where('invoice_id', $firstItem->invoice_id)
+            ->where('payer_type', InvoiceReceivable::PAYER_PATIENT)
+            ->sole();
+        Payment::create([
+            'payment_number' => Payment::generateNumber('PAY', 'payments', 'payment_number'),
+            'invoice_id' => $firstItem->invoice_id,
+            'invoice_receivable_id' => $paidPatientReceivable->id,
+            'patient_id' => $visit->patient_id,
+            'payer_type' => InvoiceReceivable::PAYER_PATIENT,
+            'payer_id' => $visit->patient_id,
+            'amount' => 14.00,
+            'payment_method' => 'cash',
+            'received_by' => $visit->created_by,
+            'paid_at' => now(),
+        ]);
+
+        $second = $this->serviceWithProviderPrice($provider, cashPrice: 100, insurancePrice: 70);
+        $secondItem = app(BillingService::class)->addItemToVisitInvoice(
+            visit: $visit,
+            service: $second,
+            sourceType: 'service_catalog',
+            sourceId: $second->id,
+        );
+
+        $patientReceivable = InvoiceReceivable::where('invoice_id', $secondItem->invoice_id)
+            ->where('payer_type', InvoiceReceivable::PAYER_PATIENT)
+            ->sole();
+
+        $this->assertSame(114.0, (float) $patientReceivable->allocated_amount);
+        $this->assertSame(14.0, (float) $patientReceivable->paid_amount);
+        $this->assertSame(100.0, (float) $patientReceivable->balance);
+    }
+
+    public function test_recalculate_moves_visit_limit_excess_from_insurance_to_patient_payable(): void
+    {
+        [$visit, $provider, $tier, $insurance] = $this->insuredVisitWithTier(80);
+        $tier->forceFill(['per_visit_limit' => 200])->save();
+
+        $invoice = Invoice::create([
+            'invoice_number' => 'INV-LIMIT-001',
+            'visit_id' => $visit->id,
+            'patient_id' => $visit->patient_id,
+            'billing_type' => BillingType::INSURANCE->value,
+            'subtotal' => 416,
+            'tax_amount' => 0,
+            'discount_amount' => 0,
+            'nhis_amount' => 208,
+            'total_amount' => 208,
+            'amount_paid' => 0,
+            'balance' => 208,
+            'status' => InvoiceStatus::PENDING->value,
+            'created_by' => $visit->created_by,
+        ]);
+
+        $this->invoiceItem($invoice, $visit, $provider, $insurance, 'Consultation', 80, 40, 40);
+        $this->invoiceItem($invoice, $visit, $provider, $insurance, 'FBC', 64, 32, 32);
+        $this->invoiceItem($invoice, $visit, $provider, $insurance, 'Blood Group', 64, 32, 32);
+        $this->invoiceItem($invoice, $visit, $provider, $insurance, 'Widal', 48, 24, 24);
+        $ultrasound = $this->invoiceItem($invoice, $visit, $provider, $insurance, 'Ultrasound', 160, 80, 80);
+
+        app(InvoiceService::class)->recalculateTotals($invoice);
+
+        $ultrasound->refresh();
+        $invoice->refresh();
+
+        $this->assertSame(72.0, (float) $ultrasound->insurance_covered);
+        $this->assertSame(88.0, (float) $ultrasound->patient_payable);
+        $this->assertSame(200.0, (float) $invoice->nhis_amount);
+        $this->assertSame(216.0, (float) $invoice->total_amount);
+
+        $patientReceivable = InvoiceReceivable::where('invoice_id', $invoice->id)
+            ->where('payer_type', InvoiceReceivable::PAYER_PATIENT)
+            ->sole();
+        $insuranceReceivable = InvoiceReceivable::where('invoice_id', $invoice->id)
+            ->where('payer_type', InvoiceReceivable::PAYER_INSURANCE)
+            ->sole();
+
+        $this->assertSame(216.0, (float) $patientReceivable->allocated_amount);
+        $this->assertSame(200.0, (float) $insuranceReceivable->allocated_amount);
     }
 
     private function insuredVisitWithTier(float $coveragePercent): array
@@ -139,5 +298,39 @@ class InsuranceCoverageSelectedPriceTest extends TestCase
         }
 
         return $service;
+    }
+
+    private function invoiceItem(
+        Invoice $invoice,
+        Visit $visit,
+        InsuranceProvider $provider,
+        PatientInsurance $insurance,
+        string $description,
+        float $selectedPrice,
+        float $covered,
+        float $patientPayable,
+    ): InvoiceItem {
+        return InvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'visit_id' => $visit->id,
+            'patient_id' => $visit->patient_id,
+            'description' => $description,
+            'quantity' => 1,
+            'unit_price' => $selectedPrice,
+            'cash_price' => $selectedPrice,
+            'selected_price' => $selectedPrice,
+            'insurance_covered' => $covered,
+            'insurance_provider_id' => $provider->id,
+            'patient_insurance_id' => $insurance->id,
+            'discount_amount' => 0,
+            'patient_payable' => $patientPayable,
+            'paid_amount' => 0,
+            'balance' => $patientPayable,
+            'payment_status' => $patientPayable > 0 ? 'unpaid' : 'paid',
+            'total_price' => $selectedPrice,
+            'payer_type' => BillingType::INSURANCE->value,
+            'pricing_source' => 'provider_specific_price',
+            'created_by' => $visit->created_by,
+        ]);
     }
 }

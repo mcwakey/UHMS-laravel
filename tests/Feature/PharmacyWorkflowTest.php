@@ -159,6 +159,59 @@ class PharmacyWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_dispensing_queue_only_lists_paid_ready_prescriptions(): void
+    {
+        $this->actingAs($this->user);
+
+        $department = $this->pharmacyDepartment();
+        $location = $this->pharmacyLocation($department);
+        $this->drugProduct($department, $location, 'QUEUE', 10);
+        [$prescription, $item] = $this->prescriptionWithOneItem('QUEUE', 3);
+
+        app(PharmacyBillingSelectionService::class)->billSelectedItems($prescription, [
+            $item->id => ['selected' => true, 'quantity' => 3],
+        ]);
+
+        $unpaidQueue = app(PharmacyService::class)->getPendingPrescriptions()->getCollection();
+        $this->assertFalse($unpaidQueue->contains('id', $prescription->id));
+
+        $this->settleBilledItems($prescription);
+
+        $paidQueue = app(PharmacyService::class)->getPendingPrescriptions()->getCollection();
+        $this->assertTrue($paidQueue->contains('id', $prescription->id));
+    }
+
+    public function test_dispensing_uses_configured_pharmacy_department_location_when_type_is_not_pharmacy(): void
+    {
+        $this->actingAs($this->user);
+
+        $department = $this->pharmacyDepartment();
+        $location = StockLocation::create([
+            'name' => 'Pharmacy Counter',
+            'type' => 'other',
+            'department_id' => $department->id,
+            'is_active' => true,
+            'is_main' => false,
+        ]);
+        [$product] = $this->drugProduct($department, $location, 'ALTLOC', 200);
+        [$prescription, $item] = $this->prescriptionWithOneItem('ALTLOC', 30);
+
+        app(PharmacyBillingSelectionService::class)->billSelectedItems($prescription, [
+            $item->id => ['selected' => true, 'quantity' => 30],
+        ]);
+        $this->settleBilledItems($prescription);
+
+        app(PharmacyService::class)->dispenseItem($item->refresh(), 30);
+
+        $this->assertSame(170.0, $this->quantityFor($product, $location));
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $product->id,
+            'stock_location_id' => $location->id,
+            'movement_type' => StockMovementType::PHARMACY_DISPENSED->value,
+            'quantity' => 30,
+        ]);
+    }
+
     private function pharmacyDepartment(): Department
     {
         return Department::updateOrCreate(

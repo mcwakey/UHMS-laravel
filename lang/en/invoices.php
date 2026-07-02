@@ -225,4 +225,6 @@ return [
     'totals_row'                    => 'Totals',
     'no_transactions'               => 'No transactions.',
     'computer_generated_statement'  => 'UHMS · Computer-generated statement.',
+    'no_cashier_collectable_balance' => 'No cashier-collectable balance',
+    'insurance_claims_settled_elsewhere' => 'Only insurance responsibility remains. Settle it through insurance claims, not cashier collection.',
 ];

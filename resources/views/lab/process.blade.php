@@ -68,23 +68,25 @@
         </div>
         @endif
 
+@include('lab.partials.accept-bill')
+
 <!-- Investigation Items & Results -->
 @if($resultType === \App\Enums\ResultType::PARAMETERS)
 {{-- ======================= PARAMETERS (Lab Tests) ======================= --}}
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h6 class="fw-bold mb-0"><i class="ti ti-flask me-1"></i>{{ __('lab.test_items_results') }}</h6>
-        @if($request->status === 'processing')
+        <!-- @if($request->status === 'processing')
         @can('lab.results.create')
         <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#batchResultForm">
             <i class="ti ti-edit me-1"></i>{{ __('lab.batch_enter_results') }}
         </button>
         @endcan
-        @endif
+        @endif -->
     </div>
     <div class="card-body">
         {{-- Batch Entry Form --}}
-        @if($request->status === 'processing')
+        <!-- @if($request->status === 'processing')
         @can('lab.results.create')
         <div class="collapse mb-3" id="batchResultForm">
             <div class="card card-body bg-light">
@@ -140,7 +142,7 @@
             </div>
         </div>
         @endcan
-        @endif
+        @endif -->
 
         {{-- Items List --}}
         <div class="table-responsive">
@@ -160,6 +162,7 @@
                 </thead>
                 <tbody>
                     @foreach($request->items as $index => $item)
+                    @if($item->status === 'accepted' || $item->status === 'completed')
                     {{-- <tr class="{{ $item->result && $item->result->is_abnormal ? 'table-danger' : '' }}"> --}}
                     <tr>
                         <td>{{ $index + 1 }}</td>
@@ -225,6 +228,7 @@
                             @endif
                         </td>
                     </tr>
+                    @endif
                     @endforeach
                 </tbody>
             </table>
@@ -339,6 +343,7 @@
                 </thead>
                 <tbody>
                     @foreach($request->items as $idx => $item)
+                    @if($resultBlocked($item) )
                     <tr class="{{ $item->result?->is_abnormal ? 'table-warning' : '' }}">
                         <td>{{ $idx + 1 }}</td>
                         <td class="fw-medium">{{ $item->name ?? $item->labTest?->name ?? '—' }}</td>
@@ -376,6 +381,7 @@
                             @endif
                         </td>
                     </tr>
+                    @endif
                     @endforeach
                 </tbody>
             </table>
@@ -550,7 +556,6 @@
 
 {{-- Accept & bill pending items — available for EVERY investigation department
      (lab, radiology, scan, …), not only parameter/lab-test requests. --}}
-@include('lab.partials.accept-bill')
 
     </div>{{-- /col-lg-8 --}}
 

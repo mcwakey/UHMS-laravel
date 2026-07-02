@@ -40,6 +40,13 @@ class DispensingController extends Controller
         return view('pharmacy.dispense', compact('prescription'));
     }
 
+    public function printDosage(PrescriptionItem $item)
+    {
+        $item->load(['drug', 'prescription.patient', 'prescription.doctor', 'prescription.visit']);
+
+        return view('pharmacy.dosage-slip', ['item' => $item]);
+    }
+
     /**
      * Dispense a single prescription item.
      */

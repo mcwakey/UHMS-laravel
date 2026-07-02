@@ -35,6 +35,11 @@
 
     $gender = $patient?->gender?->translatedLabel() ?? '—';
     $age    = $patient?->age ?? '—';
+    $insuranceUsageSummary = null;
+    if ($hasRealIns) {
+        $vIns->loadMissing('insuranceTier');
+        $insuranceUsageSummary = app(\App\Services\InsuranceService::class)->getUsageSummary($vIns);
+    }
 @endphp
 
 @if($patient !== null)
@@ -127,6 +132,75 @@
                         @endcan
                         {{-- <span class="fw-semibold text-truncate">{{ $vProvider->name }}</span> --}}
                     </div>
+                    @if($insuranceUsageSummary)
+                    @php
+                        $annualLimit = (float) ($insuranceUsageSummary['annual_limit'] ?? 0);
+                        $monthlyLimit = (float) ($insuranceUsageSummary['max_per_month'] ?? 0);
+                        $perVisitLimit = (float) ($insuranceUsageSummary['per_visit_limit'] ?? 0);
+                        $usedThisYear = (float) ($insuranceUsageSummary['used_this_year'] ?? 0);
+                        $usedThisMonth = (float) ($insuranceUsageSummary['used_this_month'] ?? 0);
+                        $usedThisVisit = $visit ? (float) $vIns->usedForVisit($visit->id) : null;
+                        $perVisitLimitReached = $perVisitLimit > 0 && $usedThisVisit !== null && $usedThisVisit >= $perVisitLimit;
+                        $monthlyLimitReached = $monthlyLimit > 0 && $usedThisMonth >= $monthlyLimit;
+                        $annualLimitReached = $annualLimit > 0 && $usedThisYear >= $annualLimit;
+                        $perVisitLimitExceeded = $perVisitLimit > 0 && $usedThisVisit !== null && $usedThisVisit > $perVisitLimit;
+                        $monthlyLimitExceeded = $monthlyLimit > 0 && $usedThisMonth > $monthlyLimit;
+                        $annualLimitExceeded = $annualLimit > 0 && $usedThisYear > $annualLimit;
+                    @endphp
+                    @if($annualLimit > 0 || $monthlyLimit > 0 || $perVisitLimit > 0)
+                    <div class="patient-card__insurance-usage">
+                        @if($perVisitLimit > 0)
+                        <div @class([
+                            'patient-card__insurance-usage-item',
+                            'patient-card__insurance-usage-item--limit' => $perVisitLimitReached,
+                            'patient-card__insurance-usage-item--exceeded' => $perVisitLimitExceeded,
+                        ])>
+                            <span>{{ $visit ? __('patients.used_this_visit') : __('patients.per_visit_limit') }}</span>
+                            <strong>
+                                @if($visit)
+                                    &#8373;{{ number_format($usedThisVisit ?? 0, 2) }} / &#8373;{{ number_format($perVisitLimit, 2) }}
+                                @else
+                                    &#8373;{{ number_format($perVisitLimit, 2) }}
+                                @endif
+                                <!-- @if($perVisitLimitReached)
+                                    <small>{{ $perVisitLimitExceeded ? __('patients.limit_exceeded') : __('patients.limit_reached') }}</small>
+                                @endif -->
+                            </strong>
+                        </div>
+                        @endif
+                        @if($monthlyLimit > 0)
+                        <div @class([
+                            'patient-card__insurance-usage-item',
+                            'patient-card__insurance-usage-item--limit' => $monthlyLimitReached,
+                            'patient-card__insurance-usage-item--exceeded' => $monthlyLimitExceeded,
+                        ])>
+                            <span>{{ __('patients.used_this_month') }}</span>
+                            <strong>
+                                &#8373;{{ number_format($usedThisMonth, 2) }} / &#8373;{{ number_format($monthlyLimit, 2) }}
+                                    <!-- @if($monthlyLimitReached)
+                                        <small>{{ $monthlyLimitExceeded ? __('patients.limit_exceeded') : __('patients.limit_reached') }}</small>
+                                    @endif -->
+                            </strong>
+                        </div>
+                        @endif
+                        @if($annualLimit > 0)
+                        <div @class([
+                            'patient-card__insurance-usage-item',
+                            'patient-card__insurance-usage-item--limit' => $annualLimitReached,
+                            'patient-card__insurance-usage-item--exceeded' => $annualLimitExceeded,
+                        ])>
+                            <span>{{ __('patients.used_this_year') }}</span>
+                            <strong>
+                                &#8373;{{ number_format($usedThisYear, 2) }} / &#8373;{{ number_format($annualLimit, 2) }}
+                                <!-- @if($annualLimitReached)
+                                    <small>{{ $annualLimitExceeded ? __('patients.limit_exceeded') : __('patients.limit_reached') }}</small>
+                                @endif -->
+                            </strong>
+                        </div>
+                        @endif
+                    </div>
+                    @endif
+                    @endif
                 </div>
             </div>
         @else
@@ -223,6 +297,53 @@
         display: inline-flex; align-items: center; justify-content: center;
         font-size: 18px;
         flex-shrink: 0;
+    }
+    .patient-card__insurance-usage {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px 10px;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed rgba(25, 135, 84, .25);
+        font-size: 11px;
+    }
+    .patient-card__insurance-usage .patient-card__insurance-usage-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+        min-width: 0;
+    }
+    .patient-card__insurance-usage-item--limit {
+        border-radius: 6px;
+        background: rgba(220, 53, 69, .08);
+        padding: 2px 4px;
+    }
+    .patient-card__insurance-usage-item--exceeded {
+        background: rgba(220, 53, 69, .14);
+        box-shadow: inset 0 0 0 1px rgba(220, 53, 69, .2);
+    }
+    .patient-card__insurance-usage-item--limit span,
+    .patient-card__insurance-usage-item--limit strong {
+        color: #b02a37;
+    }
+    .patient-card__insurance-usage span {
+        color: var(--body-color, #6C7688);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .patient-card__insurance-usage strong {
+        color: var(--bs-body-color, #212529);
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .patient-card__insurance-usage strong small {
+        display: block;
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1.1;
+        text-align: right;
+        text-transform: uppercase;
     }
     .min-w-0 { min-width: 0; }
 </style>

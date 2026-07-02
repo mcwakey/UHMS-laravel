@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\BillingType;
 use App\Enums\CreditNoteType;
 use App\Enums\InvoiceStatus;
+use App\Enums\PaymentMethod;
 use App\Enums\LogModule;
 use App\Enums\LogSeverity;
 use App\Models\CreditNote;
@@ -39,6 +40,9 @@ class InvoiceReceivableService
                 $invoice->load('receivables');
             }
 
+            $this->ensureSystemReceivablesMatchItems($invoice);
+            $invoice->load('receivables');
+
             $this->attachClaimToInsuranceReceivables($invoice);
             $this->refreshReceivableAmounts($invoice);
 
@@ -53,6 +57,10 @@ class InvoiceReceivableService
     public function resolvePaymentReceivable(Invoice $invoice, array $data, float $amount): ?InvoiceReceivable
     {
         $receivables = $this->syncFromInvoice($invoice);
+        $paymentMethod = $data['payment_method'] instanceof PaymentMethod
+            ? $data['payment_method']->value
+            : (string) ($data['payment_method'] ?? '');
+        $allowInsuranceReceivable = $paymentMethod === PaymentMethod::INSURANCE->value;
 
         if (! empty($data['invoice_receivable_id'])) {
             $payerType = $this->normalizePayerType($data['payer_type'] ?? null);
@@ -78,8 +86,19 @@ class InvoiceReceivableService
                 }
             }
 
+            if (! $receivable && ! $allowInsuranceReceivable) {
+                $receivable = $receivables
+                    ->reject(fn (InvoiceReceivable $row) => $row->payer_type === InvoiceReceivable::PAYER_INSURANCE)
+                    ->where('balance', '>', 0)
+                    ->first();
+            }
+
             if (! $receivable) {
                 throw new \RuntimeException('Selected payer responsibility does not belong to this invoice.');
+            }
+
+            if ($receivable->payer_type === InvoiceReceivable::PAYER_INSURANCE && ! $allowInsuranceReceivable) {
+                throw new \RuntimeException('Insurance receivables must be settled through the claims workflow, not cashier payment collection.');
             }
 
             if ($amount > (float) $receivable->balance + 0.01) {
@@ -95,6 +114,10 @@ class InvoiceReceivableService
         $payerId = $data['payer_id'] ?? null;
 
         if ($payerType) {
+            if ($payerType === InvoiceReceivable::PAYER_INSURANCE && ! $allowInsuranceReceivable) {
+                throw new \RuntimeException('Insurance receivables must be settled through the claims workflow, not cashier payment collection.');
+            }
+
             $match = $receivables
                 ->where('payer_type', $payerType)
                 ->when($payerId !== null, fn ($rows) => $rows->where('payer_id', (int) $payerId))
@@ -106,8 +129,21 @@ class InvoiceReceivableService
             }
         }
 
-        return $receivables->where('balance', '>', 0)->first()
-            ?? $receivables->first();
+        $fallbacks = $receivables->where('balance', '>', 0);
+        if (! $allowInsuranceReceivable) {
+            $fallbacks = $fallbacks->reject(fn (InvoiceReceivable $row) => $row->payer_type === InvoiceReceivable::PAYER_INSURANCE);
+        }
+
+        $fallback = $fallbacks->first();
+        if ($fallback) {
+            return $fallback;
+        }
+
+        if (! $allowInsuranceReceivable) {
+            throw new \RuntimeException('There is no cashier-collectable payer balance for this invoice.');
+        }
+
+        return $receivables->first();
     }
 
     public function applyPayment(Payment $payment): void
@@ -126,6 +162,9 @@ class InvoiceReceivableService
             $receivable = $this->resolvePaymentReceivable($payment->invoice, [
                 'payer_type' => $payment->payer_type,
                 'payer_id' => $payment->payer_id,
+                'payment_method' => $payment->payment_method instanceof PaymentMethod
+                    ? $payment->payment_method->value
+                    : $payment->payment_method,
             ], abs((float) $payment->amount));
         }
 
@@ -212,6 +251,51 @@ class InvoiceReceivableService
 
     private function seedReceivables(Invoice $invoice): void
     {
+        $groups = $this->buildReceivableGroups($invoice);
+
+        foreach ($groups as $group) {
+            $this->createSystemReceivable($invoice, $group);
+        }
+    }
+
+    private function ensureSystemReceivablesMatchItems(Invoice $invoice): void
+    {
+        $invoice->loadMissing(['items', 'receivables']);
+        $groups = $this->buildReceivableGroups($invoice);
+
+        foreach ($groups as $group) {
+            $key = $this->receivableGroupKey($group);
+            $existing = $invoice->receivables->first(function (InvoiceReceivable $row) use ($key) {
+                return $row->allocation_source === 'system'
+                    && $this->receivableGroupKey($row) === $key;
+            });
+
+            if (! $existing) {
+                $this->createSystemReceivable($invoice, $group);
+                continue;
+            }
+
+            $allocated = round((float) $group['allocated_amount'], 2);
+            $floor = round(
+                (float) $existing->paid_amount
+                + (float) $existing->credit_note_amount
+                + (float) $existing->write_off_amount,
+                2
+            );
+
+            $existing->forceFill([
+                'original_amount' => max(round((float) $group['original_amount'], 2), $floor),
+                'allocated_amount' => max($allocated, $floor),
+                'discount_amount' => round((float) $group['discount_amount'], 2),
+                'accounting_status' => $invoice->accounting_status,
+                'accounting_posted_at' => $invoice->accounting_posted_at,
+                'updated_by' => Auth::id(),
+            ])->save();
+        }
+    }
+
+    private function buildReceivableGroups(Invoice $invoice): array
+    {
         $groups = [];
 
         foreach ($invoice->items as $item) {
@@ -240,24 +324,29 @@ class InvoiceReceivableService
             ]);
         }
 
-        foreach ($groups as $group) {
-            $allocated = round((float) $group['allocated_amount'], 2);
-            InvoiceReceivable::create(array_merge($group, [
-                'invoice_id' => $invoice->id,
-                'patient_id' => $invoice->patient_id,
-                'visit_id' => $invoice->visit_id,
-                'original_amount' => round((float) $group['original_amount'], 2),
-                'allocated_amount' => $allocated,
-                'balance' => $allocated,
-                'aging_start_date' => optional($invoice->created_at)->toDateString() ?: now()->toDateString(),
-                'due_date' => optional($invoice->due_date)->toDateString(),
-                'status' => $allocated > 0 ? InvoiceReceivable::STATUS_PENDING : InvoiceReceivable::STATUS_PAID,
-                'accounting_status' => $invoice->accounting_status,
-                'accounting_posted_at' => $invoice->accounting_posted_at,
-                'created_by' => Auth::id() ?? $invoice->created_by,
-                'updated_by' => Auth::id(),
-            ]));
-        }
+        return $groups;
+    }
+
+    private function createSystemReceivable(Invoice $invoice, array $group): InvoiceReceivable
+    {
+        $allocated = round((float) $group['allocated_amount'], 2);
+
+        return InvoiceReceivable::create(array_merge($group, [
+            'invoice_id' => $invoice->id,
+            'patient_id' => $invoice->patient_id,
+            'visit_id' => $invoice->visit_id,
+            'original_amount' => round((float) $group['original_amount'], 2),
+            'allocated_amount' => $allocated,
+            'balance' => $allocated,
+            'aging_start_date' => optional($invoice->created_at)->toDateString() ?: now()->toDateString(),
+            'due_date' => optional($invoice->due_date)->toDateString(),
+            'status' => $allocated > 0 ? InvoiceReceivable::STATUS_PENDING : InvoiceReceivable::STATUS_PAID,
+            'accounting_status' => $invoice->accounting_status,
+            'accounting_posted_at' => $invoice->accounting_posted_at,
+            'allocation_source' => 'system',
+            'created_by' => Auth::id() ?? $invoice->created_by,
+            'updated_by' => Auth::id(),
+        ]));
     }
 
     private function identityForItem(Invoice $invoice, InvoiceItem $item): array
@@ -298,13 +387,7 @@ class InvoiceReceivableService
 
     private function addReceivableGroup(array &$groups, array $identity, float $amount, float $discount): void
     {
-        $key = implode('|', [
-            $identity['payer_type'],
-            $identity['payer_id'] ?? '',
-            $identity['insurance_provider_id'] ?? '',
-            $identity['sponsor_id'] ?? '',
-            $identity['corporate_client_id'] ?? '',
-        ]);
+        $key = $this->receivableGroupKey($identity);
 
         $groups[$key] ??= array_merge($identity, [
             'original_amount' => 0.0,
@@ -315,6 +398,21 @@ class InvoiceReceivableService
         $groups[$key]['original_amount'] += $amount;
         $groups[$key]['allocated_amount'] += $amount;
         $groups[$key]['discount_amount'] += $discount;
+    }
+
+    private function receivableGroupKey(array|InvoiceReceivable $identity): string
+    {
+        $value = fn (string $key) => is_array($identity)
+            ? ($identity[$key] ?? '')
+            : ($identity->{$key} ?? '');
+
+        return implode('|', [
+            $value('payer_type'),
+            $value('payer_id'),
+            $value('insurance_provider_id'),
+            $value('sponsor_id'),
+            $value('corporate_client_id'),
+        ]);
     }
 
     private function canRebuildSystemReceivables(Invoice $invoice): bool

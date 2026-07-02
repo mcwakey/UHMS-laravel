@@ -55,6 +55,7 @@
         'cancelled' => 'secondary',
     ];
     $receivableStatusColor = fn ($status) => $receivableStatusColors[$status ?: 'pending'] ?? 'secondary';
+    $itemSettlement = app(\App\Services\Billing\InvoiceItemSettlementService::class);
     $cashierReceivables = $invoice->receivables
         ->reject(fn ($r) => $r->payer_type === \App\Models\InvoiceReceivable::PAYER_INSURANCE)
         ->values();
@@ -785,7 +786,7 @@
         </div>
         @endif
 
-        @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::PAID, \App\Enums\InvoiceStatus::CANCELLED, \App\Enums\InvoiceStatus::REFUNDED]))
+        @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::PAID, \App\Enums\InvoiceStatus::CANCELLED, \App\Enums\InvoiceStatus::REFUNDED]) && $openReceivables->isNotEmpty())
         <div class="card border-primary" id="recordPaymentCard">
             <div class="card-header bg-primary text-white">
                 <h6 class="fw-bold mb-0"><i class="ti ti-cash me-1"></i>{{ __('invoices.record_payment') }}</h6>
@@ -871,9 +872,9 @@
 
                     {{-- Per-line allocations: optional. If none ticked, payment auto-distributes oldest-first. --}}
                     @php
-                        $unpaidItems = $invoice->items->filter(function($i){
+                        $unpaidItems = $invoice->items->filter(function($i) use ($itemSettlement) {
                             return !in_array($i->payment_status, ['paid','cancelled','voided'])
-                                && (float) $i->balance > 0;
+                                && $itemSettlement->outstandingBalance($i) > 0;
                         })->values();
                     @endphp
                     @if($unpaidItems->isNotEmpty())
@@ -891,13 +892,14 @@
                                     </div>
                                     <div class="col">
                                         <div class="small fw-medium">{{ $uItem->description }}</div>
-                                        <div class="small text-muted">{{ __('invoices.balance_label_item') }}: &#8373;{{ number_format($uItem->balance, 2) }}</div>
+                                        @php $itemCashierBalance = $itemSettlement->outstandingBalance($uItem); @endphp
+                                        <div class="small text-muted">{{ __('invoices.balance_label_item') }}: &#8373;{{ number_format($itemCashierBalance, 2) }}</div>
                                         <input type="hidden" name="allocations[{{ $uIdx }}][invoice_item_id]" value="{{ $uItem->id }}" disabled class="alloc-id">
                                     </div>
                                     <div class="col-4">
-                                        <input type="number" step="0.01" min="0.01" max="{{ $uItem->balance }}"
+                                        <input type="number" step="0.01" min="0.01" max="{{ number_format($itemCashierBalance, 2, '.', '') }}"
                                             name="allocations[{{ $uIdx }}][amount]"
-                                            value="{{ number_format($uItem->balance, 2, '.', '') }}"
+                                            value="{{ number_format($itemCashierBalance, 2, '.', '') }}"
                                             class="form-control form-control-sm alloc-amount" disabled>
                                     </div>
                                 </div>
@@ -918,6 +920,14 @@
                     </button>
                     @endcan
                 </form>
+            </div>
+        </div>
+        @elseif(!in_array($invoice->status, [\App\Enums\InvoiceStatus::PAID, \App\Enums\InvoiceStatus::CANCELLED, \App\Enums\InvoiceStatus::REFUNDED]))
+        <div class="card">
+            <div class="card-body text-center py-4">
+                <i class="ti ti-shield-dollar text-primary fs-1 d-block mb-2"></i>
+                <h5 class="mb-1">{{ __('invoices.no_cashier_collectable_balance') }}</h5>
+                <p class="text-muted mb-0">{{ __('invoices.insurance_claims_settled_elsewhere') }}</p>
             </div>
         </div>
         @else

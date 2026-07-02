@@ -174,6 +174,10 @@ class PaymentController extends Controller
                     ->first();
             }
 
+            if ($collectableBalance > 0 && (! $patientReceivable || (float) $patientReceivable->balance + 0.01 < $collectableBalance)) {
+                $patientReceivable = $this->repairPatientReceivableForCashier($invoice, $patientReceivable, $collectableBalance);
+            }
+
             if (! $patientReceivable) {
                 $collectableBalance = 0.0;
             } else {
@@ -252,6 +256,59 @@ class PaymentController extends Controller
         return redirect()
             ->route('admin.billing.invoices.show', $invoice)
             ->with('success', $successMessage);
+    }
+
+    private function repairPatientReceivableForCashier(Invoice $invoice, ?InvoiceReceivable $receivable, float $collectableBalance): ?InvoiceReceivable
+    {
+        $collectableBalance = round($collectableBalance, 2);
+        if ($collectableBalance <= 0 || ! $invoice->patient_id) {
+            return $receivable;
+        }
+
+        if (! $receivable) {
+            $receivable = InvoiceReceivable::create([
+                'invoice_id' => $invoice->id,
+                'patient_id' => $invoice->patient_id,
+                'visit_id' => $invoice->visit_id,
+                'payer_type' => InvoiceReceivable::PAYER_PATIENT,
+                'payer_id' => $invoice->patient_id,
+                'original_amount' => $collectableBalance,
+                'allocated_amount' => $collectableBalance,
+                'paid_amount' => 0,
+                'discount_amount' => 0,
+                'credit_note_amount' => 0,
+                'write_off_amount' => 0,
+                'refund_amount' => 0,
+                'balance' => $collectableBalance,
+                'aging_start_date' => optional($invoice->created_at)->toDateString() ?: now()->toDateString(),
+                'due_date' => optional($invoice->due_date)->toDateString(),
+                'status' => InvoiceReceivable::STATUS_PENDING,
+                'accounting_status' => $invoice->accounting_status,
+                'accounting_posted_at' => $invoice->accounting_posted_at,
+                'allocation_source' => 'system',
+                'created_by' => auth()->id() ?? $invoice->created_by,
+                'updated_by' => auth()->id(),
+            ]);
+
+            return $receivable;
+        }
+
+        $alreadySettled = round(
+            (float) $receivable->paid_amount
+            + (float) $receivable->credit_note_amount
+            + (float) $receivable->write_off_amount,
+            2
+        );
+        $allocated = round($alreadySettled + $collectableBalance, 2);
+
+        $receivable->forceFill([
+            'original_amount' => max((float) $receivable->original_amount, $allocated),
+            'allocated_amount' => $allocated,
+            'balance' => $collectableBalance,
+            'updated_by' => auth()->id(),
+        ])->markFromBalance()->save();
+
+        return $receivable;
     }
 
     /**

@@ -90,7 +90,15 @@ class InvoiceService
      */
     public function recalculateTotals(Invoice $invoice): Invoice
     {
-        $invoice->loadMissing('items');
+        $invoice->loadMissing([
+            'items',
+            'visit.visitInsurance.insuranceProvider',
+            'visit.visitInsurance.insuranceTier',
+        ]);
+
+        if ($this->rebalanceCoverageAgainstVisitLimit($invoice)) {
+            $invoice->load('items');
+        }
 
         $subtotal = (float) $invoice->items->sum(fn ($i) => (float) $i->selected_price * (int) $i->quantity);
         $totalDiscount = (float) $invoice->items->sum('discount_amount');
@@ -126,6 +134,65 @@ class InvoiceService
         }
 
         return $invoice->refresh();
+    }
+
+    private function rebalanceCoverageAgainstVisitLimit(Invoice $invoice): bool
+    {
+        $insurance = $invoice->visit?->visitInsurance;
+        $provider = $insurance?->insuranceProvider;
+        $tier = $insurance?->insuranceTier;
+
+        if (! $insurance || ! $provider || $provider->is_default || ! $tier) {
+            return false;
+        }
+
+        $constraints = $tier->effectiveConstraints($insurance->member_type?->value ?? 'holder');
+        $limit = $constraints['per_visit_limit'] ?? null;
+
+        if ($limit === null || (float) $limit <= 0) {
+            return false;
+        }
+
+        $remaining = round((float) $limit, 2);
+        $changed = false;
+
+        foreach ($invoice->items->sortBy('id') as $item) {
+            if (in_array((string) $item->payment_status, ['cancelled', 'voided'], true)) {
+                continue;
+            }
+
+            $covered = round((float) $item->insurance_covered, 2);
+            if ($covered <= 0.0) {
+                continue;
+            }
+
+            $belongsToVisitInsurance = (int) $item->patient_insurance_id === (int) $insurance->id
+                || (
+                    $item->patient_insurance_id === null
+                    && (int) $item->insurance_provider_id === (int) $insurance->insurance_provider_id
+                );
+
+            if (! $belongsToVisitInsurance) {
+                continue;
+            }
+
+            $allowed = min($covered, max(0.0, $remaining));
+            $excess = round($covered - $allowed, 2);
+            $remaining = max(0.0, round($remaining - $allowed, 2));
+
+            if ($excess <= 0.0) {
+                continue;
+            }
+
+            $item->forceFill([
+                'insurance_covered' => round($allowed, 2),
+                'patient_payable' => round((float) $item->patient_payable + $excess, 2),
+            ])->save();
+            $item->refreshPaymentStatus();
+            $changed = true;
+        }
+
+        return $changed;
     }
 
     /**

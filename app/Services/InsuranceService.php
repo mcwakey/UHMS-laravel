@@ -93,29 +93,12 @@ class InsuranceService
         }
 
         // ── Collect current usage from insurance_usages ───────────────────────
-        $monthStart = now()->startOfMonth();
-        $yearStart  = now()->startOfYear();
+        $usedThisVisit = $insurance->usedForVisit($visit->id) + $sessionOffset;
+        $usedThisMonth = $insurance->usedThisMonth() + $sessionOffset;
+        $usedThisYear  = $insurance->usedThisYear() + $sessionOffset;
 
-        $usedThisVisit = (float) InsuranceUsage::where('patient_insurance_id', $insurance->id)
-            ->where('visit_id', $visit->id)
-            ->sum('amount_covered') + $sessionOffset;
-
-        $usedThisMonth = (float) InsuranceUsage::where('patient_insurance_id', $insurance->id)
-            ->where('created_at', '>=', $monthStart)
-            ->sum('amount_covered') + $sessionOffset;
-
-        $usedThisYear  = (float) InsuranceUsage::where('patient_insurance_id', $insurance->id)
-            ->where('created_at', '>=', $yearStart)
-            ->sum('amount_covered') + $sessionOffset;
-
-        // Distinct visits covered this month
-        $visitIdsThisMonth   = InsuranceUsage::where('patient_insurance_id', $insurance->id)
-            ->where('created_at', '>=', $monthStart)
-            ->distinct()
-            ->pluck('visit_id');
-
-        $visitsThisMonth     = $visitIdsThisMonth->count();
-        $visitAlreadyCounted = $visitIdsThisMonth->contains($visit->id);
+        $visitsThisMonth = $insurance->visitsThisMonth();
+        $visitAlreadyCounted = $insurance->usedForVisit($visit->id) > 0;
 
         // ── Constraint 4: max visits per month ────────────────────────────────
         $maxVisitsPerMonth = $constraints['max_visits_per_month'];

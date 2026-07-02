@@ -223,4 +223,78 @@ class BillingTest extends TestCase
         $this->assertSame(0.0, (float) $insuranceReceivable->fresh()->paid_amount);
         $this->assertSame(40.0, (float) $insuranceReceivable->fresh()->balance);
     }
+
+    public function test_invoice_payment_recovers_when_system_receivable_id_is_rebuilt(): void
+    {
+        $provider = InsuranceProvider::create([
+            'name' => 'National Health Insurance Scheme',
+            'short_name' => 'NHIS',
+            'code' => 'NHIS-REBUILD',
+            'type' => 'nhia',
+            'is_active' => true,
+            'is_default' => false,
+        ]);
+
+        $invoice = Invoice::create([
+            'invoice_number' => 'INV00003',
+            'visit_id' => $this->visit->id,
+            'patient_id' => $this->patient->id,
+            'billing_type' => BillingType::INSURANCE->value,
+            'subtotal' => 80.00,
+            'tax_amount' => 0,
+            'discount_amount' => 0,
+            'nhis_amount' => 40.00,
+            'total_amount' => 40.00,
+            'amount_paid' => 0,
+            'balance' => 40.00,
+            'status' => InvoiceStatus::PENDING,
+            'created_by' => $this->user->id,
+        ]);
+
+        InvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'visit_id' => $this->visit->id,
+            'patient_id' => $this->patient->id,
+            'description' => 'General Consultation',
+            'quantity' => 1,
+            'unit_price' => 80.00,
+            'cash_price' => 100.00,
+            'selected_price' => 80.00,
+            'insurance_covered' => 40.00,
+            'insurance_provider_id' => $provider->id,
+            'discount_amount' => 0,
+            'patient_payable' => 40.00,
+            'paid_amount' => 0,
+            'balance' => 40.00,
+            'payment_status' => 'unpaid',
+            'total_price' => 80.00,
+            'payer_type' => BillingType::INSURANCE->value,
+            'created_by' => $this->user->id,
+        ]);
+
+        $patientReceivable = app(\App\Services\InvoiceReceivableService::class)
+            ->syncFromInvoice($invoice)
+            ->firstWhere('payer_type', InvoiceReceivable::PAYER_PATIENT);
+
+        $response = $this->actingAs($this->user)->post(route('admin.billing.payments.store', $invoice), [
+            'amount' => 40.00,
+            'payment_method' => PaymentMethod::BANK_TRANSFER->value,
+            'invoice_receivable_id' => $patientReceivable->id,
+        ]);
+
+        $response->assertRedirect(route('admin.billing.invoices.show', $invoice));
+
+        $payment = $invoice->payments()->latest('id')->first();
+        $currentPatientReceivable = InvoiceReceivable::where('invoice_id', $invoice->id)
+            ->where('payer_type', InvoiceReceivable::PAYER_PATIENT)
+            ->sole();
+        $currentInsuranceReceivable = InvoiceReceivable::where('invoice_id', $invoice->id)
+            ->where('payer_type', InvoiceReceivable::PAYER_INSURANCE)
+            ->sole();
+
+        $this->assertSame(InvoiceReceivable::PAYER_PATIENT, $payment->payer_type);
+        $this->assertSame($currentPatientReceivable->id, (int) $payment->invoice_receivable_id);
+        $this->assertSame(0.0, (float) $currentPatientReceivable->balance);
+        $this->assertSame(40.0, (float) $currentInsuranceReceivable->balance);
+    }
 }

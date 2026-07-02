@@ -225,4 +225,6 @@ return [
     'totals_row'                    => 'Totaux',
     'no_transactions'               => 'Aucune transaction.',
     'computer_generated_statement'  => 'UHMS · Relevé généré par ordinateur.',
+    'no_cashier_collectable_balance' => 'Aucun solde encaissable par la caisse',
+    'insurance_claims_settled_elsewhere' => 'Seule la responsabilite assurance reste ouverte. Elle doit etre reglee via les reclamations assurance, pas par la caisse.',
 ];

@@ -135,6 +135,25 @@ class BillingService
             $discountAmount = 0.0; // discounts are applied later via applyDiscount()
             $coverage = $this->evaluateLineCoverage($visit, $lineTotal, $payerType, $pricingSrc);
             $insuranceCovered = $coverage['covered'];
+            if ($this->shouldFallbackToCashForCoverage($coverage)) {
+                $selectedPrice = $cashPrice;
+                $payerType = 'cash';
+                $providerId = null;
+                $insType = null;
+                $pricingSrc = 'cash_price';
+                $isInsurance = false;
+                $hasSelectedInsurancePrice = false;
+                $insurancePrice = null;
+                $lineTotal = round($selectedPrice * $quantity, 2);
+                $insuranceCovered = 0.0;
+                $coverage = [
+                    'covered' => 0.0,
+                    'patient_payable' => $lineTotal,
+                    'has_insurance' => false,
+                    'insurance' => null,
+                    'reason' => 'Cash fallback: insurance limit exhausted',
+                ];
+            }
             $patientPayable = max(0.0, round($coverage['patient_payable'] - $discountAmount, 2));
             $balance = $patientPayable;
             $paymentStatus = $patientPayable <= 0.0 ? 'paid' : 'unpaid';
@@ -421,6 +440,25 @@ class BillingService
             $discountAmount = 0.0;
             $coverage = $this->evaluateLineCoverage($visit, $lineTotal, $payerType, $pricingSrc);
             $insuranceCovered = $coverage['covered'];
+            if ($this->shouldFallbackToCashForCoverage($coverage)) {
+                $selectedPrice = $cashPrice;
+                $payerType = 'cash';
+                $providerId = null;
+                $insType = null;
+                $pricingSrc = 'cash_price';
+                $isInsurance = false;
+                $hasSelectedInsurancePrice = false;
+                $insurancePrice = null;
+                $lineTotal = round($selectedPrice * $quantity, 2);
+                $insuranceCovered = 0.0;
+                $coverage = [
+                    'covered' => 0.0,
+                    'patient_payable' => $lineTotal,
+                    'has_insurance' => false,
+                    'insurance' => null,
+                    'reason' => 'Cash fallback: insurance limit exhausted',
+                ];
+            }
             $patientPayable = max(0.0, round($coverage['patient_payable'] - $discountAmount, 2));
             $balance = $patientPayable;
             $paymentStatus = $patientPayable <= 0.0 ? 'paid' : 'unpaid';
@@ -724,12 +762,17 @@ class BillingService
             if ($consultationService) {
                 $snap = $this->priceResolver->resolveForVisit($consultationService, $visit);
                 $unitPrice = $snap['selected_price'];
-                [$coveredAmt, $sessionOffset] = $this->evalAndOffset(
+                [$coveredAmt, $sessionOffset, $coverageEval] = $this->evalAndOffset(
                     $hasInsurance, $visitInsurance, $visit,
                     $unitPrice, $sessionOffset,
                     $snap['payer_type'] ?? null,
                     $snap['pricing_source'] ?? null
                 );
+                $snap = $this->cashFallbackSnapshotIfLimitExhausted($snap, $coverageEval);
+                $unitPrice = $snap['selected_price'];
+                if ($snap['payer_type'] !== 'insurance') {
+                    $coveredAmt = 0.0;
+                }
 
                 $items[] = [
                     'service_catalog_id' => $consultationService->id,
@@ -744,7 +787,7 @@ class BillingService
                     'pricing_source' => $snap['pricing_source'],
                     '_record_usage' => $coveredAmt > 0,
                     '_insurance' => $visitInsurance,
-                    '_coverage_reason' => null,
+                    '_coverage_reason' => $coverageEval['reason'] ?? null,
                 ];
             }
         }
@@ -764,12 +807,17 @@ class BillingService
                 if ($labService) {
                     $snap = $this->priceResolver->resolveForVisit($labService, $visit);
                     $unitPrice = $snap['selected_price'];
-                    [$coveredAmt, $sessionOffset] = $this->evalAndOffset(
+                    [$coveredAmt, $sessionOffset, $coverageEval] = $this->evalAndOffset(
                         $hasInsurance, $visitInsurance, $visit,
                         $unitPrice, $sessionOffset,
                         $snap['payer_type'] ?? null,
                         $snap['pricing_source'] ?? null
                     );
+                    $snap = $this->cashFallbackSnapshotIfLimitExhausted($snap, $coverageEval);
+                    $unitPrice = $snap['selected_price'];
+                    if ($snap['payer_type'] !== 'insurance') {
+                        $coveredAmt = 0.0;
+                    }
 
                     $items[] = [
                         'service_catalog_id' => $labService->id,
@@ -784,7 +832,7 @@ class BillingService
                         'pricing_source' => $snap['pricing_source'],
                         '_record_usage' => $coveredAmt > 0,
                         '_insurance' => $visitInsurance,
-                        '_coverage_reason' => null,
+                        '_coverage_reason' => $coverageEval['reason'] ?? null,
                     ];
                 }
             }
@@ -804,12 +852,18 @@ class BillingService
                     $unitPrice = $snap['selected_price'];
                     $linePrice = $unitPrice * $prescItem->quantity;
 
-                    [$coveredAmt, $sessionOffset] = $this->evalAndOffset(
+                    [$coveredAmt, $sessionOffset, $coverageEval] = $this->evalAndOffset(
                         $hasInsurance, $visitInsurance, $visit,
                         $linePrice, $sessionOffset,
                         $snap['payer_type'] ?? null,
                         $snap['pricing_source'] ?? null
                     );
+                    $snap = $this->cashFallbackSnapshotIfLimitExhausted($snap, $coverageEval);
+                    $unitPrice = $snap['selected_price'];
+                    $linePrice = $unitPrice * $prescItem->quantity;
+                    if ($snap['payer_type'] !== 'insurance') {
+                        $coveredAmt = 0.0;
+                    }
 
                     $items[] = [
                         'service_catalog_id' => $drugService->id,
@@ -824,7 +878,7 @@ class BillingService
                         'pricing_source' => $snap['pricing_source'],
                         '_record_usage' => $coveredAmt > 0,
                         '_insurance' => $visitInsurance,
-                        '_coverage_reason' => null,
+                        '_coverage_reason' => $coverageEval['reason'] ?? null,
                     ];
                 }
             }
@@ -862,14 +916,19 @@ class BillingService
         ?string $pricingSource = null
     ): array {
         if (! $hasInsurance || ! $visitInsurance || ! $this->hasSelectedInsurancePrice($payerType, $pricingSource)) {
-            return [0.0, $sessionOffset];
+            return [0.0, $sessionOffset, [
+                'can_use' => false,
+                'covered_amount' => 0.0,
+                'patient_amount' => $price,
+                'reason' => null,
+            ]];
         }
 
         $eval = $this->insuranceService->evaluateCoverage($visitInsurance, $visit, $price, $sessionOffset);
         $covered = $eval['covered_amount'];
         $newOffset = $sessionOffset + $covered;
 
-        return [$covered, $newOffset];
+        return [$covered, $newOffset, $eval];
     }
 
     private function evaluateLineCoverage(Visit $visit, float $lineTotal, ?string $payerType, ?string $pricingSource): array
@@ -900,7 +959,37 @@ class BillingService
             'has_insurance' => true,
             'insurance' => $visitInsurance,
             'reason' => $evaluation['reason'] ?? null,
+            'can_use' => (bool) ($evaluation['can_use'] ?? false),
         ];
+    }
+
+    private function shouldFallbackToCashForCoverage(array $coverage): bool
+    {
+        $reason = (string) ($coverage['reason'] ?? '');
+
+        return (float) ($coverage['covered'] ?? $coverage['covered_amount'] ?? 0) <= 0.0
+            && (
+                str_contains($reason, 'Insurance limit exhausted')
+                || str_contains($reason, 'Monthly visit limit reached')
+            );
+    }
+
+    private function cashFallbackSnapshotIfLimitExhausted(array $snap, array $coverage): array
+    {
+        if (! $this->shouldFallbackToCashForCoverage($coverage)) {
+            return $snap;
+        }
+
+        $cash = (float) ($snap['cash_price'] ?? $snap['selected_price'] ?? 0);
+
+        return array_merge($snap, [
+            'selected_price' => $cash,
+            'discount_amount' => 0.0,
+            'payer_type' => 'cash',
+            'insurance_provider_id' => null,
+            'insurance_type' => null,
+            'pricing_source' => 'cash_price',
+        ]);
     }
 
     private function hasSelectedInsurancePrice(?string $payerType, ?string $pricingSource): bool

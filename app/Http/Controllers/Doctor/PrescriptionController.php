@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StorePrescriptionRequest;
+use App\Models\Drug;
 use App\Models\Prescription;
 use App\Services\PharmacyBillingSelectionService;
 use App\Services\PharmacyService;
@@ -33,6 +35,9 @@ class PrescriptionController extends Controller
     public function show(Prescription $prescription)
     {
         $prescription->load(['patient', 'doctor', 'visit', 'items', 'medicalRecord']);
+        $drugs = Drug::where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'generic_name', 'strength', 'dosage_form', 'unit']);
 
         // Enrich with pharmacy billing data so the prescription page can bill items.
         // Guarded: pharmacy may be unconfigured, or the prescription may have no visit.
@@ -45,7 +50,27 @@ class PrescriptionController extends Controller
             }
         }
 
-        return view('prescriptions.show', compact('prescription', 'billingError'));
+        return view('prescriptions.show', compact('prescription', 'billingError', 'drugs'));
+    }
+
+    public function print(Prescription $prescription)
+    {
+        $prescription->load(['patient', 'doctor', 'visit.patient', 'items.drug']);
+
+        return view('reports.print-prescription', compact('prescription'));
+    }
+
+    public function storeAnother(StorePrescriptionRequest $request, Prescription $prescription)
+    {
+        $prescription->loadMissing('medicalRecord');
+
+        abort_unless($prescription->medicalRecord, 422, 'This prescription is not linked to a medical record.');
+
+        $newPrescription = $this->prescriptionService->create($prescription->medicalRecord, $request->validated());
+
+        return redirect()
+            ->route('admin.prescriptions.show', $newPrescription)
+            ->with('success', __('messages.consultations.prescription_created', ['number' => $newPrescription->prescription_number]));
     }
 
     /**

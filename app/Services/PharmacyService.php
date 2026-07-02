@@ -17,6 +17,7 @@ use App\Models\PrescriptionItem;
 use App\Models\Product;
 use App\Models\StockLocation;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -186,8 +187,9 @@ class PharmacyService
 
     public function getStock(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        // Pharmacy stock is tracked in stock_balances at pharmacy-type locations.
-        $pharmacyLocIds = StockLocation::where('type', 'pharmacy')->pluck('id');
+        // Include the configured pharmacy department stock location, even when
+        // older data typed that location as "other" instead of "pharmacy".
+        $pharmacyLocIds = $this->pharmacyStockLocationIds();
 
         $query = \App\Models\StockBalance::with(['drug.category', 'product'])
             ->whereIn('stock_location_id', $pharmacyLocIds)
@@ -242,7 +244,7 @@ class PharmacyService
 
     public function getStockAlerts(): array
     {
-        $pharmacyLocIds = StockLocation::where('type', 'pharmacy')->pluck('id');
+        $pharmacyLocIds = $this->pharmacyStockLocationIds();
 
         $low_stock = \App\Models\StockBalance::with('drug')
             ->whereIn('stock_location_id', $pharmacyLocIds)
@@ -278,10 +280,9 @@ class PharmacyService
 
     public function getPendingPrescriptions(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = Prescription::with(['patient', 'doctor', 'visit', 'items.drug', 'items.dispensingRecords'])
+        $query = $this->readyForDispensingQuery()
+            ->with(['patient', 'doctor', 'visit', 'items.drug', 'items.dispensingRecords'])
             ->whereIn('status', [
-                PrescriptionStatus::PENDING->value,
-                PrescriptionStatus::PARTIALLY_SELECTED->value,
                 PrescriptionStatus::PARTIALLY_BILLED->value,
                 PrescriptionStatus::BILLED->value,
                 PrescriptionStatus::PARTIALLY_DISPENSED->value,
@@ -414,10 +415,10 @@ class PharmacyService
                 throw new \RuntimeException("Cannot dispense {$quantity}; only {$remainingBilled} billed quantity remains.");
             }
 
-            // ── Stock availability check (pharmacy locations only) ────────
-            // Dispensing draws exclusively from stock_balances at pharmacy-type
-            // locations. Use stock transfers to move stock from Main Store first.
-            $pharmacyLocIds = StockLocation::where('type', 'pharmacy')->pluck('id');
+            // Stock availability check. Dispensing draws from the configured
+            // pharmacy department location, plus legacy pharmacy-type locations.
+            // Use stock transfers to move stock from Main Store first.
+            $pharmacyLocIds = $this->pharmacyStockLocationIds();
 
             $productBalances = ($drug->product_id && $pharmacyLocIds->isNotEmpty())
                 ? \App\Models\StockBalance::where('product_id', $drug->product_id)
@@ -618,7 +619,13 @@ class PharmacyService
     public function getPharmacyStats(): array
     {
         return [
-            'pending_prescriptions' => Prescription::where('status', PrescriptionStatus::PENDING->value)->count(),
+            'pending_prescriptions' => $this->readyForDispensingQuery()
+                ->whereIn('status', [
+                    PrescriptionStatus::PARTIALLY_BILLED->value,
+                    PrescriptionStatus::BILLED->value,
+                    PrescriptionStatus::PARTIALLY_DISPENSED->value,
+                ])
+                ->count(),
             'billed_prescriptions' => Prescription::whereIn('status', [
                 PrescriptionStatus::BILLED->value,
                 PrescriptionStatus::PARTIALLY_BILLED->value,
@@ -626,14 +633,14 @@ class PharmacyService
             'partially_dispensed' => Prescription::where('status', PrescriptionStatus::PARTIALLY_DISPENSED->value)->count(),
             'dispensed_today' => DispensingRecord::whereDate('dispensed_at', today())->count(),
             'low_stock_count' => (function () {
-                $ids = StockLocation::where('type', 'pharmacy')->pluck('id');
+                $ids = $this->pharmacyStockLocationIds();
                 return \App\Models\StockBalance::whereIn('stock_location_id', $ids)
                     ->where('quantity_on_hand', '>', 0)
                     ->whereHas('drug', fn ($q) => $q->whereColumn('stock_balances.quantity_on_hand', '<=', 'drugs.reorder_level'))
                     ->count();
             })(),
             'expiring_soon_count' => (function () {
-                $ids = StockLocation::where('type', 'pharmacy')->pluck('id');
+                $ids = $this->pharmacyStockLocationIds();
                 return \App\Models\StockMovement::whereIn('stock_location_id', $ids)
                     ->whereNotNull('expiry_date')
                     ->whereDate('expiry_date', '<=', now()->addDays(30))
@@ -666,6 +673,40 @@ class PharmacyService
                     'price' => $drug->price,
                     'total_stock' => $drug->total_stock,
                 ];
+            });
+    }
+
+    private function pharmacyStockLocationIds(): Collection
+    {
+        $ids = StockLocation::query()
+            ->where('type', 'pharmacy')
+            ->where('is_active', true)
+            ->pluck('id');
+
+        try {
+            $ids->push($this->billingSelections->pharmacyLocation()->id);
+        } catch (\Throwable) {
+            // Stats can render before pharmacy stock setup is complete. Billing
+            // and dispensing still fail explicitly where the location is required.
+        }
+
+        return $ids->filter()->unique()->values();
+    }
+
+    private function readyForDispensingQuery(): Builder
+    {
+        return Prescription::query()
+            ->whereHas('items.billingSelections', function (Builder $selectionQuery) {
+                $selectionQuery
+                    ->where('status', '!=', PharmacyBillingSelection::STATUS_CANCELLED)
+                    ->whereColumn('dispensed_quantity', '<', 'billed_quantity')
+                    ->whereHas('invoiceItem', function (Builder $invoiceItemQuery) {
+                        $invoiceItemQuery->where(function (Builder $paidQuery) {
+                            $paidQuery
+                                ->where('payment_status', 'paid')
+                                ->orWhere('balance', '<=', 0);
+                        });
+                    });
             });
     }
 }

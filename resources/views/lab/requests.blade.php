@@ -107,10 +107,10 @@
                         <th>{{ __('lab.request_number_short') }}</th>
                         <th>{{ __('common.patient') }}</th>
                         <th>{{ __('common.department') }}</th>
-                        <th>{{ __('common.type') }}</th>
+                        <!-- <th>{{ __('common.type') }}</th> -->
                         <th>{{ __('lab.urgency') }}</th>
                         <th>{{ __('common.status') }}</th>
-                        <th>{{ __('lab.progress') }}</th>
+                        <!-- <th>{{ __('lab.progress') }}</th> -->
                         <th>{{ __('common.date') }}</th>
                         <th class="text-end">{{ __('common.actions') }}</th>
                     </tr>
@@ -119,7 +119,7 @@
                     @forelse($requests as $req)
                     <tr>
                         <td>
-                            <a href="{{ $req->status === 'pending' ? route('admin.lab.requests.show', $req) : route('admin.lab.results.show', $req) }}" class="fw-medium text-primary">
+                            <a href="{{ route('admin.lab.requests.show', $req) }}" class="fw-medium text-primary">
                                 {{ $req->request_number }}
                             </a>
                         </td>
@@ -132,34 +132,34 @@
                             <span class="fw-medium">{{ $req->targetDepartment->name }}</span>
                             @else <span class="text-muted">&mdash;</span> @endif
                         </td>
-                        <td>
+                        <!-- <td>
                             @php $rt = $req->result_type; @endphp
                             @if($rt && $rt->value !== 'none')
                             <span class="badge bg-{{ $rt->color() }}"><i class="ti {{ $rt->icon() }} me-1"></i>{{ $rt->translatedLabel() }}</span>
                             @else <span class="text-muted">&mdash;</span> @endif
-                        </td>
+                        </td> -->
                         <td><x-status-badge :status="$req->urgency" domain="priority" /></td>
                         <td><span class="badge bg-{{ $req->status_color }}">{{ \Illuminate\Support\Facades\Lang::has('statuses.default.'.$req->status) ? __('statuses.default.'.$req->status) : $req->status_label }}</span></td>
-                        <td>
+                        <!-- <td>
                             <div class="progress" style="height: 6px; width: 80px;">
                                 <div class="progress-bar bg-success" style="width: {{ $req->completion_percentage }}%"></div>
                             </div>
                             <small class="text-muted">{{ $req->completion_percentage }}%</small>
-                        </td>
+                        </td> -->
                         <td>
                             <small>{{ $req->created_at->translatedFormat('d M Y') }}</small><br>
                             <small class="text-muted">{{ $req->created_at->format('H:i') }}</small>
                         </td>
                         <td class="text-end">
-                            @if($req->status === 'pending')
                             <a href="{{ route('admin.lab.requests.show', $req) }}" class="btn btn-sm btn-outline-primary">
                                 <i class="ti ti-receipt me-1"></i>{{ __('lab.bill') }}
                             </a>
-                            @else
+                            <!-- @if($req->status === 'pending') -->
+                            <!-- @else
                             <a href="{{ route('admin.lab.results.show', $req) }}" class="btn btn-sm btn-outline-success">
                                 <i class="ti ti-report-medical me-1"></i>{{ __('lab.results') }}
                             </a>
-                            @endif
+                            @endif -->
                         </td>
                     </tr>
                     @empty

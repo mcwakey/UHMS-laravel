@@ -99,15 +99,18 @@
 @endif
 
 <!-- Batch Dispense Form -->
-@if($dispensableItems->count() > 0)
+@if($allItems->count() > 0)
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h6 class="fw-bold mb-0"><i class="ti ti-pill me-1"></i>{{ __('pharmacy.dispense_items') }}</h6>
+        @if($settledDispensable->count() > 0)
         <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#batchDispenseForm">
             <i class="ti ti-edit me-1"></i>{{ __('pharmacy.batch_dispense') }}
         </button>
+        @endif
     </div>
     <div class="card-body">
+        @if($settledDispensable->count() > 0)
         <div class="collapse mb-3" id="batchDispenseForm">
             <div class="card card-body bg-light">
                 <form method="POST" action="{{ route('admin.pharmacy.dispensing.batch', $prescription) }}">
@@ -168,6 +171,7 @@
                 </form>
             </div>
         </div>
+        @endif
 
         <!-- Items List with individual dispense buttons -->
         <div class="table-responsive">
@@ -187,7 +191,12 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($dispensableItems as $index => $item)
+                    @foreach($allItems as $index => $item)
+                    @php
+                        $billedQty = (float) ($item->billed_quantity ?? 0);
+                        $dispensedQty = (float) ($item->dispensed_billed_quantity ?? 0);
+                        $remainingBilled = (float) ($item->remaining_billed_to_dispense ?? 0);
+                    @endphp
                     <tr>
                         <td>{{ $index + 1 }}</td>
                         <td>
@@ -217,19 +226,34 @@
                             @endif
                         </td>
                         <td>
-                            @if($item->is_settled ?? false)
+                            @if($remainingBilled > 0 && ($item->is_settled ?? false))
                                 <span class="badge bg-primary">{{ __('pharmacy.ready') }}</span>
                                 <small class="d-block text-muted">{{ __('pharmacy.remaining_qty', ['qty' => $formatQty($item->remaining_billed_to_dispense ?? 0)]) }}</small>
-                            @else
+                            @elseif($remainingBilled > 0)
                                 <span class="badge bg-warning text-dark"><i class="ti ti-clock-dollar me-1"></i>{{ __('pharmacy.awaiting_payment') }}</span>
                                 <small class="d-block text-muted">{{ __('pharmacy.dispense_after_settled') }}</small>
+                            @elseif($billedQty > 0 && $dispensedQty >= $billedQty)
+                                <span class="badge bg-success"><i class="ti ti-check me-1"></i>{{ __('pharmacy.dispensed') }}</span>
+                                <small class="d-block text-muted">{{ __('pharmacy.qty_dispensed', ['qty' => $formatQty($dispensedQty)]) }}</small>
+                            @elseif(($item->remaining_prescribed_to_bill ?? 0) > 0)
+                                <span class="badge bg-info-subtle text-info"><i class="ti ti-receipt me-1"></i>{{ __('pharmacy.billed') }}</span>
+                                <small class="d-block text-muted">{{ __('pharmacy.still_need_billing') }}</small>
+                            @else
+                                <span class="badge bg-secondary">{{ __('common.status') }}</span>
                             @endif
                         </td>
                         <td class="text-end">
-                            @if($item->drug && ($item->is_settled ?? false))
-                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dispenseModal-{{ $item->id }}">
-                                <i class="ti ti-pill me-1"></i>{{ __('pharmacy.dispense') }}
-                            </button>
+                            @if($item->drug)
+                            <div class="d-inline-flex gap-1">
+                                <a data-no-inertia href="{{ route('admin.pharmacy.dispensing.print-dosage', $item) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Print dosage">
+                                    <i class="ti ti-printer"></i>
+                                </a>
+                                @if($remainingBilled > 0 && ($item->is_settled ?? false))
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dispenseModal-{{ $item->id }}">
+                                    <i class="ti ti-pill me-1"></i>{{ __('pharmacy.dispense') }}
+                                </button>
+                                @endif
+                            </div>
                             @else
                             <span class="text-muted small">—</span>
                             @endif
@@ -284,6 +308,9 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <a data-no-inertia href="{{ route('admin.pharmacy.dispensing.print-dosage', $item) }}" target="_blank" class="btn btn-outline-secondary">
+                        <i class="ti ti-printer me-1"></i>Print dosage
+                    </a>
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
                     <button type="submit" class="btn btn-primary">{{ __('pharmacy.dispense') }}</button>
                 </div>

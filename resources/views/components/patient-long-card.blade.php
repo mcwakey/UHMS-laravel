@@ -6,7 +6,17 @@
 @php
     $patient = $visit->patient;
     $department = $visit->relationLoaded('department') ? $visit->department : null;
-    $insurance = $visit->relationLoaded('visitInsurance') ? $visit->visitInsurance : null;
+    $insurance = $visit->visitInsurance;
+    $insurance?->loadMissing(['insuranceProvider', 'insuranceTier']);
+    $insuranceProvider = $insurance?->insuranceProvider;
+    $insuranceTier = $insurance?->insuranceTier;
+    $hasRealInsurance = $insurance
+        && $insurance->is_active
+        && $insuranceProvider
+        && ! $insuranceProvider->is_default;
+    $insuranceUsageSummary = $hasRealInsurance
+        ? app(\App\Services\InsuranceService::class)->getUsageSummary($insurance)
+        : null;
 @endphp
 
 <div {{ $attributes->merge(['class' => 'card mb-3 border-primary']) }}>
@@ -28,20 +38,20 @@
                         </div>
                         <div class="text-muted small mt-1 d-flex flex-wrap gap-2">
                             @if($patient->occupation)
-                                <span><i class="ti ti-briefcase me-1"></i>{{ $patient->occupation }}</span>
+                                <span class="me-3"><i class="ti ti-briefcase me-1"></i>{{ $patient->occupation }}</span>
                             @endif
                             @if($patient->religion)
-                                <span><i class="ti ti-book me-1"></i>{{ $patient->religion }}</span>
+                                <span class="me-3"><i class="ti ti-book me-1"></i>{{ $patient->religion }}</span>
                             @endif
                             @if($patient->marital_status)
-                                <span><i class="ti ti-heart me-1"></i>{{ is_object($patient->marital_status) ? $patient->marital_status->translatedLabel() : $patient->marital_status }}</span>
+                                <span class="me-3"><i class="ti ti-heart me-1"></i>{{ is_object($patient->marital_status) ? $patient->marital_status->translatedLabel() : $patient->marital_status }}</span>
                             @endif
                             @if($department)
-                                <span><i class="ti ti-building-hospital me-1"></i>{{ $department->name }}</span>
+                                <span class="me-3"><i class="ti ti-building-hospital me-1"></i>{{ $department->name }}</span>
                             @endif
-                            @if($insurance && $insurance->relationLoaded('insuranceProvider') && $insurance->insuranceProvider)
+                            <!-- @if($insurance && $insurance->relationLoaded('insuranceProvider') && $insurance->insuranceProvider)
                                 <span><i class="ti ti-shield-check me-1"></i>{{ $insurance->insuranceProvider->name }}</span>
-                            @endif
+                            @endif -->
                         </div>
                     </div>
                 </div>
@@ -74,6 +84,73 @@
             </div>
         </div>
     </div>
+
+    @module('insurance')
+    <div class="border-top px-3 py-2 bg-light bg-opacity-50">
+        @if($hasRealInsurance)
+            @php
+                $annualLimit = (float) ($insuranceUsageSummary['annual_limit'] ?? 0);
+                $monthlyLimit = (float) ($insuranceUsageSummary['max_per_month'] ?? 0);
+                $perVisitLimit = (float) ($insuranceUsageSummary['per_visit_limit'] ?? 0);
+                $usedThisYear = (float) ($insuranceUsageSummary['used_this_year'] ?? 0);
+                $usedThisMonth = (float) ($insuranceUsageSummary['used_this_month'] ?? 0);
+                $usedThisVisit = (float) $insurance->usedForVisit($visit->id);
+                $limitClass = function (float $used, float $limit) {
+                    if ($limit <= 0) return '';
+                    return $used > $limit ? 'text-danger fw-bold' : ($used >= $limit ? 'text-danger' : 'text-dark');
+                };
+            @endphp
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 small">
+                <div class="d-flex align-items-center gap-2 min-w-0">
+                    <span class="avatar avatar-sm bg-success-subtle text-success rounded d-inline-flex align-items-center justify-content-center" style="width:30px;height:30px;">
+                        <i class="ti ti-shield-check"></i>
+                    </span>
+                    <div class="min-w-0">
+                        <div class="fw-semibold text-truncate">
+                            {{ $insuranceProvider->name }}
+                            @if($insuranceTier?->name)
+                                <span class="text-muted fw-normal">/ {{ $insuranceTier->name }}</span>
+                            @endif
+                            @if($insurance->membership_number)
+                                <span class="badge bg-light text-dark border ms-1">#{{ $insurance->membership_number }}</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                @if($annualLimit > 0 || $monthlyLimit > 0 || $perVisitLimit > 0)
+                    <div class="d-flex flex-wrap gap-3">
+                        @if($perVisitLimit > 0)
+                            <span class="{{ $limitClass($usedThisVisit, $perVisitLimit) }}">
+                                {{ __('patients.used_this_visit') }}:
+                                <strong>&#8373;{{ number_format($usedThisVisit, 2) }}</strong> / &#8373;{{ number_format($perVisitLimit, 2) }}
+                            </span>
+                        @endif
+                        @if($monthlyLimit > 0)
+                            <span class="{{ $limitClass($usedThisMonth, $monthlyLimit) }}">
+                                {{ __('patients.used_this_month') }}:
+                                <strong>&#8373;{{ number_format($usedThisMonth, 2) }}</strong> / &#8373;{{ number_format($monthlyLimit, 2) }}
+                            </span>
+                        @endif
+                        @if($annualLimit > 0)
+                            <span class="{{ $limitClass($usedThisYear, $annualLimit) }}">
+                                {{ __('patients.used_this_year') }}:
+                                <strong>&#8373;{{ number_format($usedThisYear, 2) }}</strong> / &#8373;{{ number_format($annualLimit, 2) }}
+                            </span>
+                        @endif
+                    </div>
+                @endif
+            </div>
+        @else
+            <div class="d-flex align-items-center gap-2 small text-muted">
+                <span class="avatar avatar-sm bg-secondary-subtle text-secondary rounded d-inline-flex align-items-center justify-content-center" style="width:30px;height:30px;">
+                    <i class="ti ti-cash"></i>
+                </span>
+                <span class="fw-semibold text-dark">Cash &amp; Carry</span>
+                <span>No active insurance for this visit</span>
+            </div>
+        @endif
+    </div>
+    @endmodule
 </div>
 
 @if($showAlerts && ($patient->allergies || $patient->chronic_conditions))

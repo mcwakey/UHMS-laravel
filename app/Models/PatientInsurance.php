@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\MemberType;
+use App\Enums\InvoiceStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -160,31 +161,81 @@ class PatientInsurance extends Model
 
     public function usedThisYear(): float
     {
-        return (float) $this->usages()
+        $usageTotal = (float) $this->usages()
             ->where('created_at', '>=', now()->startOfYear())
             ->sum('amount_covered');
+
+        $billedTotal = (float) $this->coveredInvoiceItemsQuery()
+            ->where('invoice_items.created_at', '>=', now()->startOfYear())
+            ->sum('insurance_covered');
+
+        return max($usageTotal, $billedTotal);
     }
 
     public function usedThisMonth(): float
     {
-        return (float) $this->usages()
+        $usageTotal = (float) $this->usages()
             ->where('created_at', '>=', now()->startOfMonth())
             ->sum('amount_covered');
+
+        $billedTotal = (float) $this->coveredInvoiceItemsQuery()
+            ->where('invoice_items.created_at', '>=', now()->startOfMonth())
+            ->sum('insurance_covered');
+
+        return max($usageTotal, $billedTotal);
     }
 
     public function usedForVisit(int $visitId): float
     {
-        return (float) $this->usages()
+        $usageTotal = (float) $this->usages()
             ->where('visit_id', $visitId)
             ->sum('amount_covered');
+
+        $billedTotal = (float) $this->coveredInvoiceItemsQuery()
+            ->where('visit_id', $visitId)
+            ->sum('insurance_covered');
+
+        return max($usageTotal, $billedTotal);
     }
 
     public function visitsThisMonth(): int
     {
-        return $this->usages()
+        $usageVisitIds = $this->usages()
             ->where('created_at', '>=', now()->startOfMonth())
             ->distinct('visit_id')
-            ->count('visit_id');
+            ->pluck('visit_id');
+
+        $billedVisitIds = $this->coveredInvoiceItemsQuery()
+            ->where('invoice_items.created_at', '>=', now()->startOfMonth())
+            ->whereNotNull('visit_id')
+            ->distinct('visit_id')
+            ->pluck('visit_id');
+
+        return $usageVisitIds->merge($billedVisitIds)
+            ->filter()
+            ->unique()
+            ->count();
+    }
+
+    private function coveredInvoiceItemsQuery()
+    {
+        return InvoiceItem::query()
+            ->where('insurance_covered', '>', 0)
+            ->whereNotIn('payment_status', ['cancelled', 'voided'])
+            ->where(function ($query) {
+                $query->where('patient_insurance_id', $this->id)
+                    ->orWhere(function ($fallback) {
+                        $fallback->whereNull('patient_insurance_id')
+                            ->where('patient_id', $this->patient_id)
+                            ->where('insurance_provider_id', $this->insurance_provider_id);
+                    });
+            })
+            ->whereHas('invoice', function ($query) {
+                $query->whereNotIn('status', [
+                    InvoiceStatus::CANCELLED->value,
+                    InvoiceStatus::REFUNDED->value,
+                ]);
+            });
     }
 
     // ── Beneficiary helpers ───────────────────────────

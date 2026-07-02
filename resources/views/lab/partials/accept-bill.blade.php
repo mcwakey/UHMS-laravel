@@ -52,8 +52,8 @@
                     </tbody>
                     <tfoot>
                         <tr class="table-light">
-                            <td colspan="3" class="text-end fw-bold">{{ __('lab.selected_total') }}</td>
-                            <td class="text-end fw-bold" id="acceptSelectedTotal">GH₵ 0.00</td>
+                            <td colspan="3" class="text-end fw-bold text-dark">{{ __('lab.selected_total') }}</td>
+                            <td class="text-end fw-bold text-dark" id="acceptSelectedTotal">GH₵ 0.00</td>
                         </tr>
                     </tfoot>
                 </table>

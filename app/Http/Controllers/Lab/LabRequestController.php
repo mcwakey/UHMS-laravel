@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Lab;
 
 use App\Http\Controllers\Controller;
+use App\Models\LabRequest;
 use App\Services\InvestigationRequestService;
 use App\Services\LabService;
 use Illuminate\Http\Request;

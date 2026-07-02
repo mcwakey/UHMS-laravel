@@ -1146,6 +1146,8 @@ Route::middleware('auth')->group(function () {
         Route::middleware('can:prescriptions.view')->group(function () {
             Route::get('prescriptions', [PrescriptionController::class, 'index'])->name('prescriptions.index');
             Route::get('prescriptions/{prescription}', [PrescriptionController::class, 'show'])->name('prescriptions.show');
+            Route::get('prescriptions/{prescription}/print', [PrescriptionController::class, 'print'])->name('prescriptions.print');
+            Route::post('prescriptions/{prescription}/another', [PrescriptionController::class, 'storeAnother'])->name('prescriptions.another')->middleware('can:prescriptions.create');
             Route::post('prescriptions/{prescription}/bill', [PrescriptionController::class, 'bill'])->name('prescriptions.bill')->middleware('can:pharmacy.dispensing.create');
             Route::patch('prescriptions/{prescription}/cancel', [PrescriptionController::class, 'cancel'])->name('prescriptions.cancel')->middleware('can:prescriptions.create');
         });
@@ -1229,6 +1231,7 @@ Route::middleware('auth')->group(function () {
             Route::middleware('can:pharmacy.dispensing.view')->group(function () {
                 Route::get('dispensing', [DispensingController::class, 'index'])->name('dispensing.index');
                 Route::get('dispensing/{prescription}', [DispensingController::class, 'show'])->name('dispensing.show');
+                Route::get('dispensing/items/{item}/dosage-print', [DispensingController::class, 'printDosage'])->name('dispensing.print-dosage');
                 Route::post('dispensing/{item}/dispense', [DispensingController::class, 'dispenseItem'])->name('dispensing.dispense-item')->middleware('can:pharmacy.dispensing.create');
                 Route::post('dispensing/{prescription}/batch', [DispensingController::class, 'batchDispense'])->name('dispensing.batch')->middleware('can:pharmacy.dispensing.create');
                 Route::get('history', [DispensingController::class, 'history'])->name('history');

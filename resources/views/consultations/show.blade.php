@@ -206,9 +206,103 @@
 @endphp
 
 {{-- ============================================================ --}}
+{{-- CONSULTATION SESSIONS --}}
+{{-- ============================================================ --}}
+<div id="sessionsDrawer">
+    <div id="sessionsDrawerHandle" role="button" aria-expanded="true" aria-controls="sessionsDrawerBody" data-sessions-drawer-toggle>
+        <i class="ti ti-route fs-5"></i>
+        <span class="fw-semibold small">{{ __('consultations.workspace.sessions_for_visit') }}</span>
+        <span class="badge bg-white text-primary rounded-pill ms-1">{{ $sessions->count() }}</span>
+        <i class="ti ti-chevron-up ms-auto fs-5"></i>
+    </div>
+    <div id="sessionsDrawerBody">
+        <div class="table-responsive">
+            <table class="table table-sm mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>{{ __('common.department') }}</th>
+                        <th>{{ __('consultations.linked_services') }}</th>
+                        <th>{{ __('consultations.workspace.contributors') }}</th>
+                        <!-- <th>{{ __('common.status') }}</th> -->
+                        <!-- <th>{{ __('consultations.started') }}</th> -->
+                        <th>{{ __('common.actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($sessions as $session)
+                    @php
+                        $rowClass = $selectedRoute && $selectedRoute->id === $session->id ? 'is-current' : '';
+                        $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_COMPLETED ? ' is-completed' : '';
+                        $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_CANCELLED ? ' is-cancelled' : '';
+                        $sessionServiceNames = $routeServiceNames($session);
+                        $sessionLabel = $session->isEmergencySession() ? __('consultations.emergency_department_session') : ($session->department?->name ?? '-');
+                    @endphp
+                    <tr class="session-route-row {{ trim($rowClass) }}">
+                        <td class="fw-medium">
+                            {{ $sessionLabel }}
+                            @if($session->isEmergencySession())
+                                <span class="badge bg-danger ms-1">{{ __('consultations.workspace.emergency') }}</span>
+                            @endif
+                        </td>
+                        <td>
+                            {{ $sessionServiceNames->implode(', ') ?: '-' }}
+                            <x-status-badge :status="$session->status" domain="consultation_session" />
+                            @if($selectedRoute && $selectedRoute->id === $session->id)
+                                <span class="badge bg-primary ms-1">{{ __('consultations.workspace.current') }}</span>
+                            @endif
+                        </td>
+                        <!-- <td>{{ $session->doctor ? 'Dr. ' . $session->doctor->full_name : __('consultations.unassigned') }}</td> -->
+                        <td>{{ $contributors->isNotEmpty() ? $contributors->implode(', ') : __('consultations.workspace.no_contributors_yet') }}</td>
+                        <!-- <td><x-status-badge :status="$session->status" domain="consultation_session" /></td> -->
+                        <!-- <td>
+                            <div class="small">{{ $session->started_at?->format('d M, h:i A') ?? '—' }}</div>
+                            @if($session->completed_at)<div class="small text-muted">{{ $session->completed_at->format('d M, h:i A') }}</div>@endif
+                        </td> -->
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                <a href="{{ route('admin.consultations.routes.show', [$visit, $session]) }}" class="btn btn-xs btn-outline-primary">
+                                    <i class="ti ti-eye"></i> Open
+                                </a>
+                                @if($session->status !== \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
+                                @endif
+                                @can('consultations.create')
+                                @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
+                                    <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $session]) }}">
+                                        @csrf
+                                        <button class="btn btn-xs btn-primary" type="submit">Start</button>
+                                    </form>
+                                @endif
+                                @if($session->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
+                                    <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $session]) }}">
+                                        @csrf
+                                        <button class="btn btn-xs btn-success" type="submit" onclick="return confirm('{{ __('consultations.workspace.complete_current_session') }}')">{{ __('consultations.workspace.complete_current_session') }}</button>
+                                    </form>
+                                @endif
+                                @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
+                                    <form method="POST" action="{{ route('admin.consultations.routes.cancel', [$visit, $session]) }}">
+                                        @csrf
+                                        <button class="btn btn-xs btn-outline-danger" type="submit" onclick="return confirm('Cancel this queued session?')">Cancel</button>
+                                    </form>
+                                @endif
+                                @endcan
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6"><x-empty-state message="No consultation sessions routed for this visit." /></td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{{-- ============================================================ --}}
 {{-- CURRENT SESSION HEADER --}}
 {{-- ============================================================ --}}
-<div class="card mb-3">
+<!-- <div class="card mb-3">
     <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
         <div>
             <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-primary"></i>{{ __('consultations.workspace.current_session') }}</h6>
@@ -314,7 +408,7 @@
             @endcan
         </div> --}}
     {{-- </div> --}}
-</div>
+</div> -->
 
 @if($isEmergencyRoute && $emergencyCase)
 <div class="card mb-3 border-danger-subtle">
@@ -537,96 +631,6 @@
                 @endcan
             </div>
         @endif
-    </div>
-</div>
-
-{{-- ============================================================ --}}
-{{-- CONSULTATION SESSIONS --}}
-{{-- ============================================================ --}}
-<div id="sessionsDrawer">
-    <div id="sessionsDrawerHandle" role="button" aria-expanded="true" aria-controls="sessionsDrawerBody" data-sessions-drawer-toggle>
-        <i class="ti ti-route fs-5"></i>
-        <span class="fw-semibold small">{{ __('consultations.workspace.sessions_for_visit') }}</span>
-        <span class="badge bg-white text-primary rounded-pill ms-1">{{ $sessions->count() }}</span>
-        <i class="ti ti-chevron-up ms-auto fs-5"></i>
-    </div>
-    <div id="sessionsDrawerBody">
-        <div class="table-responsive">
-            <table class="table table-sm mb-0 align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>{{ __('common.department') }}</th>
-                        <th>{{ __('consultations.linked_services') }}</th>
-                        <th>{{ __('common.doctor') }}</th>
-                        <th>{{ __('common.status') }}</th>
-                        <th>{{ __('consultations.started') }}</th>
-                        <th>{{ __('common.actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($sessions as $session)
-                    @php
-                        $rowClass = $selectedRoute && $selectedRoute->id === $session->id ? 'is-current' : '';
-                        $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_COMPLETED ? ' is-completed' : '';
-                        $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_CANCELLED ? ' is-cancelled' : '';
-                        $sessionServiceNames = $routeServiceNames($session);
-                        $sessionLabel = $session->isEmergencySession() ? __('consultations.emergency_department_session') : ($session->department?->name ?? '-');
-                    @endphp
-                    <tr class="session-route-row {{ trim($rowClass) }}">
-                        <td class="fw-medium">
-                            {{ $sessionLabel }}
-                            @if($session->isEmergencySession())
-                                <span class="badge bg-danger ms-1">{{ __('consultations.workspace.emergency') }}</span>
-                            @endif
-                        </td>
-                        <td>
-                            {{ $sessionServiceNames->implode(', ') ?: '-' }}
-                            @if($selectedRoute && $selectedRoute->id === $session->id)
-                                <span class="badge bg-primary ms-1">{{ __('consultations.workspace.current') }}</span>
-                            @endif
-                        </td>
-                        <td>{{ $session->doctor ? 'Dr. ' . $session->doctor->full_name : __('consultations.unassigned') }}</td>
-                        <td><x-status-badge :status="$session->status" domain="consultation_session" /></td>
-                        <td>
-                            <div class="small">{{ $session->started_at?->format('d M, h:i A') ?? '—' }}</div>
-                            @if($session->completed_at)<div class="small text-muted">{{ $session->completed_at->format('d M, h:i A') }}</div>@endif
-                        </td>
-                        <td>
-                            <div class="d-flex flex-wrap gap-1">
-                                <a href="{{ route('admin.consultations.routes.show', [$visit, $session]) }}" class="btn btn-xs btn-outline-primary">
-                                    <i class="ti ti-eye"></i> Open
-                                </a>
-                                @can('consultations.create')
-                                @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
-                                    <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $session]) }}">
-                                        @csrf
-                                        <button class="btn btn-xs btn-primary" type="submit">Start</button>
-                                    </form>
-                                @endif
-                                @if($session->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
-                                    <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $session]) }}">
-                                        @csrf
-                                        <button class="btn btn-xs btn-success" type="submit" onclick="return confirm('Complete this session?')">Complete</button>
-                                    </form>
-                                @endif
-                                @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
-                                    <form method="POST" action="{{ route('admin.consultations.routes.cancel', [$visit, $session]) }}">
-                                        @csrf
-                                        <button class="btn btn-xs btn-outline-danger" type="submit" onclick="return confirm('Cancel this queued session?')">Cancel</button>
-                                    </form>
-                                @endif
-                                @endcan
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="6"><x-empty-state message="No consultation sessions routed for this visit." /></td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
     </div>
 </div>
 
@@ -3184,6 +3188,15 @@ var summaryFragmentUrl = window.summaryFragmentUrl;
     var saved = window.location.hash || localStorage.getItem(tabStorageKey);
     if (saved) activateConsultationTab(saved);
 
+    var params = new URLSearchParams(window.location.search || '');
+    if (params.get('newPrescription') === '1') {
+        activateConsultationTab('#prescriptions-section');
+        var rxForm = document.getElementById('addPrescriptionForm');
+        if (rxForm && window.bootstrap) {
+            new bootstrap.Collapse(rxForm, { show: true });
+        }
+    }
+
     document.querySelectorAll('#consultationTabs .nav-link').forEach(function (link) {
         addConsultationListenerOnce(link, 'uhmsTabBound', 'shown.bs.tab', function (e) {
             var selector = e.target.getAttribute('href');
@@ -4001,6 +4014,24 @@ function parseMg(str) {
     return isNaN(val) ? null : val;
 }
 
+function parseDoseUnits(str) {
+    if (!str) return null;
+    var text = String(str).toLowerCase().trim();
+    var unitDose = text.match(/^(\d+(?:\.\d+)?)\s*(tab|tabs|tablet|tablets|cap|caps|capsule|capsules|amp|amps|ampoule|ampoules|vial|vials|drop|drops|puff|puffs|sachet|sachets|unit|units)\b/);
+    if (unitDose) {
+        var unitValue = parseFloat(unitDose[1]);
+        return isNaN(unitValue) ? null : unitValue;
+    }
+
+    var plainNumber = text.match(/^(\d+(?:\.\d+)?)$/);
+    if (plainNumber) {
+        var plainValue = parseFloat(plainNumber[1]);
+        return isNaN(plainValue) ? null : plainValue;
+    }
+
+    return null;
+}
+
 function parseDays(str) {
     if (!str) return null;
     str = String(str).toLowerCase().trim();
@@ -4033,15 +4064,17 @@ function calcQty(row) {
 
     if (!daysVal) return; // can't compute without duration
 
-    var tabletsPerDose = 1;
+    var doseUnits = parseDoseUnits(dosage);
+    var tabletsPerDose = doseUnits || 1;
     var dMg = parseMg(dosage);
     var sMg = parseMg(strength);
-    if (dMg && sMg && sMg > 0) {
+    if (!doseUnits && dMg && sMg && sMg > 0) {
         tabletsPerDose = Math.ceil(dMg / sMg);
     }
 
     var total = tabletsPerDose * freqVal * daysVal;
     if (freq === 'STAT') total = tabletsPerDose; // one-off
+    total = Math.ceil(total);
     if (total > 0) {
         qtyInp.value = total;
         qtyInp.style.background = '#fffbe6'; // subtle highlight
@@ -4077,6 +4110,8 @@ addConsultationListenerOnce(document.getElementById('addItemBtn'), 'uhmsBound', 
     var source = cont.querySelector('.prescription-item');
     if (!source) return;
     var tpl  = source.cloneNode(true);
+    tpl.removeAttribute('data-uhms-rx-calc-bound');
+    delete tpl.dataset.uhmsRxCalcBound;
 
     tpl.querySelectorAll('.select2-container').forEach(function (container) { container.remove(); });
 
