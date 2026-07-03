@@ -1,11 +1,11 @@
 # UHMS Localisation Coverage Audit Report
 
-Date: 2026-07-02 14:47:11 +02:00
+Date: 2026-07-03 16:09:54 +00:00
 
 ## Summary
 
 - Total files scanned: 1474
-- Total files with possible hardcoded strings: 215
+- Total files with possible hardcoded strings: 216
 - Total hardcoded candidates found: 4058
 - Modules affected: 40
 - Direct active route/controller Blade views: 314
@@ -38,7 +38,7 @@ Date: 2026-07-02 14:47:11 +02:00
 - store: 157
 - admin: 153
 - dashboard: 153
-- consultations: 147
+- consultations: 145
 - javascript: 65
 - insurance: 56
 - theatre: 50
@@ -2881,13 +2881,13 @@ Date: 2026-07-02 14:47:11 +02:00
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: visit_registered`
-- Line 253 [medium, service_title_manual_review_candidates]: `Consultation route created`
+- Line 255 [medium, service_title_manual_review_candidates]: `Consultation route created`
   - Context: `'title' => 'Consultation route created',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
   - Service review class: C - Stored canonical event/title
   - Suggested key: `lang/{en,fr}/app.php :: consultation_route_created`
-- Line 604 [medium, service_title_manual_review_candidates]: `Triage completed`
+- Line 606 [medium, service_title_manual_review_candidates]: `Triage completed`
   - Context: `'title' => 'Triage completed',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: manual review
@@ -6144,6 +6144,19 @@ Date: 2026-07-02 14:47:11 +02:00
   - Suggested key: `lang/{en,fr}/billing.php :: actions`
 - Line 181 [high, known_false_positive_candidates]: `Actions`
   - Context: `<button aria-label="Actions" title="Actions" type="button" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/billing.php :: actions`
+
+### `resources/views/billing/invoices/show.blade.php`
+
+- Line 653 [high, known_false_positive_candidates]: `Actions`
+  - Context: `<a aria-label="Actions" title="Actions" href="javascript:void(0);" class="btn btn-sm btn-light" data-bs-toggle="dropdown">`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/billing.php :: actions`
+- Line 653 [high, known_false_positive_candidates]: `Actions`
+  - Context: `<a aria-label="Actions" title="Actions" href="javascript:void(0);" class="btn btn-sm btn-light" data-bs-toggle="dropdown">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/billing.php :: actions`
@@ -15786,7 +15799,7 @@ Date: 2026-07-02 14:47:11 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/common.php :: expired`
-- Line 212 [high, known_false_positive_candidates]: `Cash & Carry`
+- Line 213 [high, known_false_positive_candidates]: `Cash & Carry`
   - Context: `<span class="fw-semibold">Cash &amp; Carry</span>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -16075,15 +16088,10 @@ Date: 2026-07-02 14:47:11 +02:00
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: start`
 - Line 284 [high, known_false_positive_candidates]: `Cancel`
-  - Context: `<button class="btn btn-xs btn-outline-danger" type="submit" onclick="return confirm('Cancel this queued session?')">Cancel</button>`
+  - Context: `<button class="btn btn-xs btn-outline-danger" type="submit" onclick="return confirm(@js('Cancel this queued session?'))">Cancel</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: cancel`
-- Line 284 [medium, known_false_positive_candidates]: `Cancel this queued session?`
-  - Context: `<button class="btn btn-xs btn-outline-danger" type="submit" onclick="return confirm('Cancel this queued session?')">Cancel</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/consultations.php :: cancel_this_queued_session`
 - Line 426 [high, known_false_positive_candidates]: `Read only`
   - Context: `<span class="badge bg-secondary">Read only</span>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -16549,11 +16557,6 @@ Date: 2026-07-02 14:47:11 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: edit`
-- Line 2101 [medium, known_false_positive_candidates]: `Delete this task?`
-  - Context: `<form method="POST" action="{{ route('admin.consultations.tasks.destroy', $task) }}" class="d-inline" onsubmit="return confirm('Delete this task?') && saveTabBeforeSubmit('tasks-section')">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/consultations.php :: delete_this_task`
 - Line 2103 [high, known_false_positive_candidates]: `Close`
   - Context: `<button aria-label="Close" title="Close" type="submit" class="btn btn-xs btn-outline-danger"><i class="ti ti-x"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -16679,102 +16682,102 @@ Date: 2026-07-02 14:47:11 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: investigation_notes`
-- Line 3344 [high, known_false_positive_candidates]: `Select a department first to load services`
+- Line 3345 [high, known_false_positive_candidates]: `Select a department first to load services`
   - Context: `if (sc) sc.innerHTML = '<span class="text-muted small">Select a department first to load services</span>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: select_a_department_first_to_load_services`
-- Line 3428 [high, known_false_positive_candidates]: `This entry type cannot be edited here.`
+- Line 3429 [high, known_false_positive_candidates]: `This entry type cannot be edited here.`
   - Context: `return '<p class="text-muted mb-0">This entry type cannot be edited here.</p>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: this_entry_type_cannot_be_edited_here`
-- Line 3700 [high, known_false_positive_candidates]: `Select a department first to load services`
+- Line 3701 [high, known_false_positive_candidates]: `Select a department first to load services`
   - Context: `if (!deptId) { container.innerHTML = '<span class="text-muted small">Select a department first to load services</span>'; return; }`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: select_a_department_first_to_load_services`
-- Line 3708 [high, known_false_positive_candidates]: `No active services found.`
+- Line 3709 [high, known_false_positive_candidates]: `No active services found.`
   - Context: `if (!services.length) { container.innerHTML = '<span class="text-muted small">No active services found.</span>'; return; }`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: no_active_services_found`
-- Line 3715 [high, known_false_positive_candidates]: `GH₵' + parseFloat(s.price).toFixed(2) + '`
+- Line 3716 [high, known_false_positive_candidates]: `GH₵' + parseFloat(s.price).toFixed(2) + '`
   - Context: `html += ' <span class="text-muted small">GH₵' + parseFloat(s.price).toFixed(2) + '</span>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: gh_parsefloat_s_price_tofixed_2`
-- Line 3725 [high, known_false_positive_candidates]: `Failed to load services.`
+- Line 3726 [high, known_false_positive_candidates]: `Failed to load services.`
   - Context: `.catch(function () { container.innerHTML = '<span class="text-danger small">Failed to load services.</span>'; });`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: failed_to_load_services`
-- Line 3852 [high, known_false_positive_candidates]: `No active lab tests configured.`
+- Line 3862 [high, known_false_positive_candidates]: `No active lab tests configured.`
   - Context: `if (!data.lab_tests.length) { body.innerHTML = '<span class="text-warning small">No active lab tests configured.</span>'; return; }`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: no_active_lab_tests_configured`
-- Line 3874 [high, known_false_positive_candidates]: `Failed to load items.`
+- Line 3884 [high, known_false_positive_candidates]: `Failed to load items.`
   - Context: `.catch(function () { body.innerHTML = '<span class="text-danger small">Failed to load items.</span>'; });`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: failed_to_load_items`
-- Line 3882 [high, known_false_positive_candidates]: `Close`
+- Line 3892 [high, known_false_positive_candidates]: `Close`
   - Context: `(idx > 0 ? '<button aria-label="Close" title="Close" type="button" class="btn btn-outline-danger" onclick="document.getElementById(\'freeItem' + idx + '\').remove()"><i class="ti ti-x"></i></button>' : '') +`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: close`
-- Line 3882 [high, known_false_positive_candidates]: `Close`
+- Line 3892 [high, known_false_positive_candidates]: `Close`
   - Context: `(idx > 0 ? '<button aria-label="Close" title="Close" type="button" class="btn btn-outline-danger" onclick="document.getElementById(\'freeItem' + idx + '\').remove()"><i class="ti ti-x"></i></button>' : '') +`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: close`
-- Line 4175 [high, known_false_positive_candidates]: `Complaints`
+- Line 4185 [high, known_false_positive_candidates]: `Complaints`
   - Context: `html += '<h6 class="fw-bold small text-muted border-bottom pb-1 mb-2">Complaints</h6>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: complaints`
-- Line 4179 [high, known_false_positive_candidates]: `Diagnoses`
+- Line 4189 [high, known_false_positive_candidates]: `Diagnoses`
   - Context: `html += '<h6 class="fw-bold small text-muted border-bottom pb-1 mb-2 mt-3">Diagnoses</h6>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: diagnoses`
-- Line 4189 [high, known_false_positive_candidates]: `Investigations`
+- Line 4199 [high, known_false_positive_candidates]: `Investigations`
   - Context: `html += '<h6 class="fw-bold small text-muted border-bottom pb-1 mb-2 mt-3">Investigations</h6>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: investigations`
-- Line 4198 [high, known_false_positive_candidates]: `Treatments`
+- Line 4208 [high, known_false_positive_candidates]: `Treatments`
   - Context: `html += '<h6 class="fw-bold small text-muted border-bottom pb-1 mb-2 mt-3">Treatments</h6>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: treatments`
-- Line 4205 [high, known_false_positive_candidates]: `No clinical data recorded for this visit.`
+- Line 4215 [high, known_false_positive_candidates]: `No clinical data recorded for this visit.`
   - Context: `html = '<div class="text-center text-muted py-3">No clinical data recorded for this visit.</div>';`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: no_clinical_data_recorded_for_this_visit`
-- Line 4267 [medium, known_false_positive_candidates]: `Failed to apply pattern.`
+- Line 4277 [medium, known_false_positive_candidates]: `Failed to apply pattern.`
   - Context: `else { alert('Failed to apply pattern.'); self.disabled = false; self.innerHTML = '<i class="ti ti-check me-1"></i>Apply'; }`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: failed_to_apply_pattern`
-- Line 4269 [medium, known_false_positive_candidates]: `Failed.`
+- Line 4279 [medium, known_false_positive_candidates]: `Failed.`
   - Context: `.catch(function () { alert('Failed.'); self.disabled = false; self.innerHTML = '<i class="ti ti-check me-1"></i>Apply'; });`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: failed`
-- Line 4281 [high, known_false_positive_candidates]: `Enter at least 3 characters.`
+- Line 4291 [high, known_false_positive_candidates]: `Enter at least 3 characters.`
   - Context: `if (q.length < 3) { psRes.innerHTML = '<div class="alert alert-warning py-2">Enter at least 3 characters.</div>'; psRes.style.display = 'block'; return; }`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: enter_at_least_3_characters`
-- Line 4300 [high, known_false_positive_candidates]: `No patterns found.`
+- Line 4310 [high, known_false_positive_candidates]: `No patterns found.`
   - Context: `} else { psRes.innerHTML = '<div class="alert alert-info py-2 mb-0">No patterns found.</div>'; }`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/consultations.php :: no_patterns_found`
-- Line 4302 [high, known_false_positive_candidates]: `Search failed.`
+- Line 4312 [high, known_false_positive_candidates]: `Search failed.`
   - Context: `.catch(function () { psRes.innerHTML = '<div class="alert alert-danger py-2 mb-0">Search failed.</div>'; });`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
