@@ -31,6 +31,7 @@ class CounterSaleService
     public function __construct(
         private ProductStockMovementService $movements,
         private ActivityLogService $log,
+        private InvoiceService $invoices,
     ) {}
 
     /**
@@ -122,6 +123,8 @@ class CounterSaleService
                 'description' => "Counter sale {$invoice->invoice_number} for {$partyName} (₵{$grandTotal}).",
                 'causer' => $user,
             ], $invoice);
+
+            $this->invoices->recalculateTotals($invoice->fresh('items'));
 
             return $invoice->load('items');
         });

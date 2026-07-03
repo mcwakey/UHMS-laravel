@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Models\Visit;
 use App\Services\BillingService;
 use App\Services\InvoiceService;
+use App\Services\VisitService;
 use Database\Seeders\AccountingChartSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -115,6 +116,74 @@ class InsuranceCoverageSelectedPriceTest extends TestCase
 
         $this->assertEqualsWithDelta(80.0, (float) $insuranceDebit->debit, 0.001);
         $this->assertEqualsWithDelta(80.0, (float) $revenueCredit->credit, 0.001);
+    }
+
+    public function test_visit_service_attach_reposts_existing_fully_covered_invoice_item(): void
+    {
+        $this->seed(AccountingChartSeeder::class);
+
+        [$visit, $provider, , $insurance] = $this->insuredVisitWithTier(100);
+        $service = $this->serviceWithProviderPrice($provider, cashPrice: 100, insurancePrice: 80);
+
+        $invoice = Invoice::create([
+            'invoice_number' => 'INV-VISIT-INS-001',
+            'visit_id' => $visit->id,
+            'patient_id' => $visit->patient_id,
+            'billing_type' => BillingType::INSURANCE->value,
+            'subtotal' => 80,
+            'tax_amount' => 0,
+            'discount_amount' => 0,
+            'nhis_amount' => 80,
+            'total_amount' => 0,
+            'amount_paid' => 0,
+            'balance' => 0,
+            'status' => InvoiceStatus::DRAFT->value,
+            'created_by' => $visit->created_by,
+        ]);
+
+        InvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'visit_id' => $visit->id,
+            'patient_id' => $visit->patient_id,
+            'service_catalog_id' => $service->id,
+            'department_id' => $service->department_id,
+            'source_type' => 'service_catalog',
+            'source_id' => $service->id,
+            'description' => $service->name,
+            'quantity' => 1,
+            'unit_price' => 80,
+            'cash_price' => 100,
+            'insurance_price' => 80,
+            'selected_price' => 80,
+            'insurance_covered' => 80,
+            'discount_amount' => 0,
+            'patient_payable' => 0,
+            'paid_amount' => 0,
+            'balance' => 0,
+            'payment_status' => 'paid',
+            'total_price' => 80,
+            'payer_type' => BillingType::INSURANCE->value,
+            'insurance_provider_id' => $provider->id,
+            'patient_insurance_id' => $insurance->id,
+            'insurance_type' => $provider->type,
+            'pricing_source' => 'provider_specific_price',
+            'created_by' => $visit->created_by,
+        ]);
+
+        app(VisitService::class)->attachServices($visit, [
+            ['service_catalog_id' => $service->id, 'quantity' => 1],
+        ]);
+
+        $invoice = $invoice->fresh(['journalEntry.lines']);
+        $insuranceReceivableAccountId = Account::where('code', '1220')->value('id');
+
+        $this->assertSame(InvoiceStatus::PENDING, $invoice->status);
+        $this->assertNotNull($invoice->journal_entry_id);
+        $this->assertEqualsWithDelta(
+            80.0,
+            (float) $invoice->journalEntry->lines->firstWhere('account_id', $insuranceReceivableAccountId)->debit,
+            0.001
+        );
     }
 
     public function test_usage_summary_counts_invoice_item_covered_amount_against_tier_limits(): void

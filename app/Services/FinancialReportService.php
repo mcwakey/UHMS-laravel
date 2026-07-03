@@ -48,7 +48,7 @@ class FinancialReportService
     public function profitLoss(array $filters = []): array
     {
         $totals = $this->lineTotals($filters);
-        $accounts = Account::query()->whereIn('type', [AccountType::INCOME->value, AccountType::EXPENSE->value])
+        $accounts = Account::query()->whereRaw('UPPER(type) IN (?, ?)', [AccountType::INCOME->value, AccountType::EXPENSE->value])
             ->whereIn('id', $totals->keys())->orderBy('code')->get();
 
         $sections = [
@@ -66,8 +66,9 @@ class FinancialReportService
                 continue;
             }
 
+            $type = $this->accountType($account);
             $key = match (true) {
-                $account->type === AccountType::INCOME => 'revenue',
+                $type === AccountType::INCOME->value => 'revenue',
                 $account->subtype === 'COST_OF_SALES' => 'cogs',
                 $account->subtype === 'ADMIN_EXPENSE' => 'admin',
                 $account->subtype === 'FINANCE_COST' => 'finance',
@@ -109,7 +110,7 @@ class FinancialReportService
         $totals = $this->lineTotals(['date_to' => $asOf->toDateString()], cumulative: true);
 
         $accounts = Account::query()
-            ->whereIn('type', [AccountType::ASSET->value, AccountType::LIABILITY->value, AccountType::EQUITY->value])
+            ->whereRaw('UPPER(type) IN (?, ?, ?)', [AccountType::ASSET->value, AccountType::LIABILITY->value, AccountType::EQUITY->value])
             ->whereIn('id', $totals->keys())->orderBy('code')->get();
 
         $groups = [
@@ -124,9 +125,9 @@ class FinancialReportService
             if (abs($amount) < 0.005) {
                 continue;
             }
-            $key = match ($account->type) {
-                AccountType::ASSET => 'assets',
-                AccountType::LIABILITY => 'liabilities',
+            $key = match ($this->accountType($account)) {
+                AccountType::ASSET->value => 'assets',
+                AccountType::LIABILITY->value => 'liabilities',
                 default => 'equity',
             };
             $groups[$key]['rows'][] = ['code' => $account->code, 'name' => $account->name, 'subtype' => $account->subtype, 'amount' => $amount];
@@ -230,7 +231,7 @@ class FinancialReportService
     {
         $rows = JournalEntryLine::query()
             ->selectRaw('department_id, account_id, SUM(debit) as debit_total, SUM(credit) as credit_total')
-            ->whereHas('account', fn ($q) => $q->where('type', $accountType))
+            ->whereHas('account', fn ($q) => $q->whereRaw('UPPER(type) = ?', [strtoupper($accountType)]))
             ->whereHas('journalEntry', function ($q) use ($filters) {
                 $q->ledgerAffecting()
                     ->when($filters['date_from'] ?? null, fn ($q, $d) => $q->whereDate('entry_date', '>=', $d))
@@ -263,5 +264,14 @@ class FinancialReportService
         usort($byDept, fn ($a, $b) => $b['total'] <=> $a['total']);
 
         return ['departments' => array_values($byDept), 'grand_total' => $grand, 'date_from' => $filters['date_from'] ?? null, 'date_to' => $filters['date_to'] ?? null];
+    }
+
+    private function accountType(Account $account): string
+    {
+        $type = $account->getRawOriginal('type') ?? $account->type;
+
+        return $type instanceof AccountType
+            ? $type->value
+            : strtoupper((string) $type);
     }
 }

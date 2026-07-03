@@ -149,6 +149,8 @@ class ConsultationRouteService
                     ->where('service_catalog_id', $service->id)
                     ->orderBy('id')
                     ->first();
+
+                $this->billingService->recalculateInvoiceForItem($invoiceItem);
             }
 
             if ($invoiceItem) {

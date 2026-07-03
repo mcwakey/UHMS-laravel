@@ -185,6 +185,7 @@ class EmergencyCaseService
                 ->whereIn('source_type', ['emergency_service', 'service_catalog'])
                 ->orderBy('id')
                 ->first();
+            $this->billing->recalculateInvoiceForItem($invoiceItem);
         } catch (\Throwable $e) {
             return;
         }

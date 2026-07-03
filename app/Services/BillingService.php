@@ -517,12 +517,26 @@ class BillingService
             ->where('source_id', $sourceId)
             ->first();
         if ($existing) {
+            $this->recalculateInvoiceForItem($existing);
+
             return $existing;
         }
 
         return $this->addItemToVisitInvoice(
             $visit, $service, $sourceType, $sourceId, $quantity, $departmentId, $description
         );
+    }
+
+    public function recalculateInvoiceForItem(?InvoiceItem $item): void
+    {
+        if (! $item) {
+            return;
+        }
+
+        $invoice = $item->invoice()->with('items')->first();
+        if ($invoice) {
+            $this->invoiceService->recalculateTotals($invoice);
+        }
     }
 
     /**

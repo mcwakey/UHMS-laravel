@@ -19,6 +19,7 @@ class BloodRequestService
     public function __construct(
         private ActivityLogService $log,
         private NotificationService $notifier,
+        private InvoiceService $invoices,
     ) {}
 
     /** Create a request tied to a facility visit/patient. */
@@ -223,6 +224,8 @@ class BloodRequestService
             'description' => "Cash invoice {$invoice->invoice_number} raised for external blood request {$request->request_number} (₵{$lineTotal}).",
             'causer' => $user,
         ], $invoice);
+
+        $this->invoices->recalculateTotals($invoice->fresh('items'));
     }
 
     protected function notifyRequest(BloodRequest $request): void

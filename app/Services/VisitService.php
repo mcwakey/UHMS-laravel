@@ -206,6 +206,8 @@ class VisitService
                     ->where('service_catalog_id', $catalog->id)
                     ->orderBy('id')
                     ->first();
+
+                $this->billingService->recalculateInvoiceForItem($invoiceItem);
             }
 
             // Create / update visit_services row as an audit snapshot.
