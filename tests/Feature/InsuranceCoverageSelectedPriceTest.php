@@ -11,6 +11,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InsuranceProvider;
 use App\Models\InsuranceTier;
+use App\Models\InsuranceUsage;
 use App\Models\InvoiceReceivable;
 use App\Models\Patient;
 use App\Models\PatientInsurance;
@@ -208,6 +209,76 @@ class InsuranceCoverageSelectedPriceTest extends TestCase
         $this->assertSame(56.0, (float) $summary['used_this_month']);
         $this->assertSame(44.0, (float) $summary['remaining_annual']);
         $this->assertSame(4.0, (float) $summary['remaining_monthly']);
+    }
+
+    public function test_switching_visit_insurance_tracks_usage_against_responsible_cover(): void
+    {
+        [$visit, $oldProvider, $oldTier, $oldInsurance] = $this->insuredVisitWithTier(80);
+        $oldTier->forceFill(['per_visit_limit' => 56])->save();
+
+        $newProvider = InsuranceProvider::create([
+            'name' => 'New Cover Assurance',
+            'short_name' => 'NCA',
+            'code' => 'NCA',
+            'type' => InsuranceType::PRIVATE->value,
+            'is_active' => true,
+            'is_default' => false,
+        ]);
+        $newTier = InsuranceTier::create([
+            'insurance_provider_id' => $newProvider->id,
+            'name' => 'New Standard',
+            'code' => 'NEW-STD',
+            'coverage_percentage' => 80,
+            'per_visit_limit' => 56,
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+        $newInsurance = PatientInsurance::create([
+            'patient_id' => $visit->patient_id,
+            'insurance_provider_id' => $newProvider->id,
+            'insurance_tier_id' => $newTier->id,
+            'member_type' => 'holder',
+            'membership_number' => 'NCA-10001',
+            'start_date' => now()->subMonth()->toDateString(),
+            'expiry_date' => now()->addYear()->toDateString(),
+            'is_primary' => false,
+            'is_active' => true,
+        ]);
+
+        $oldService = $this->serviceWithProviderPrice($oldProvider, cashPrice: 100, insurancePrice: 70);
+        $oldItem = app(BillingService::class)->addItemToVisitInvoice(
+            visit: $visit,
+            service: $oldService,
+            sourceType: 'old_cover_service',
+            sourceId: $oldService->id,
+        );
+
+        $visit->forceFill(['visit_insurance_id' => $newInsurance->id])->save();
+
+        $newService = $this->serviceWithProviderPrice($newProvider, cashPrice: 100, insurancePrice: 70);
+        $newItem = app(BillingService::class)->addItemToVisitInvoice(
+            visit: $visit->fresh('visitInsurance.insuranceProvider'),
+            service: $newService,
+            sourceType: 'new_cover_service',
+            sourceId: $newService->id,
+        );
+
+        $this->assertSame($oldInsurance->id, (int) $oldItem->fresh()->patient_insurance_id);
+        $this->assertSame($newInsurance->id, (int) $newItem->fresh()->patient_insurance_id);
+        $this->assertSame(56.0, (float) $oldItem->fresh()->insurance_covered);
+        $this->assertSame(56.0, (float) $newItem->fresh()->insurance_covered);
+        $this->assertSame('insurance', $newItem->payer_type);
+
+        $this->assertSame(56.0, (float) InsuranceUsage::where('patient_insurance_id', $oldInsurance->id)->sum('amount_covered'));
+        $this->assertSame(56.0, (float) InsuranceUsage::where('patient_insurance_id', $newInsurance->id)->sum('amount_covered'));
+        $this->assertDatabaseHas('insurance_usages', [
+            'patient_insurance_id' => $oldInsurance->id,
+            'invoice_item_id' => $oldItem->id,
+        ]);
+        $this->assertDatabaseHas('insurance_usages', [
+            'patient_insurance_id' => $newInsurance->id,
+            'invoice_item_id' => $newItem->id,
+        ]);
     }
 
     public function test_item_added_after_visit_limit_is_exhausted_falls_back_to_cash(): void

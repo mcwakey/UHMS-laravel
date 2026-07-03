@@ -11,6 +11,7 @@ class InsuranceUsage extends Model
         'patient_insurance_id',
         'visit_id',
         'invoice_id',
+        'invoice_item_id',
         'amount_covered',
         'patient_amount',
         'reason',
@@ -39,6 +40,11 @@ class InsuranceUsage extends Model
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
+    }
+
+    public function invoiceItem(): BelongsTo
+    {
+        return $this->belongsTo(InvoiceItem::class);
     }
 
     // ── Scopes ───────────────────────────────────────

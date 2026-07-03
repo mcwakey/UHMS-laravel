@@ -100,6 +100,10 @@ class InvoiceService
             $invoice->load('items');
         }
 
+        foreach ($invoice->items as $item) {
+            app(InsuranceService::class)->syncUsageForInvoiceItem($item);
+        }
+
         $subtotal = (float) $invoice->items->sum(fn ($i) => (float) $i->selected_price * (int) $i->quantity);
         $totalDiscount = (float) $invoice->items->sum('discount_amount');
         $insuranceCovered = (float) $invoice->items->sum('insurance_covered');

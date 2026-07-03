@@ -189,6 +189,8 @@ class BillingService
                 'created_by' => Auth::id(),
             ]);
 
+            $this->syncInsuranceUsageForItem($item, $coverage['reason'] ?? null);
+
             // Update invoice header totals + status.
             $this->invoiceService->recalculateTotals($invoice->fresh('items'));
 
@@ -493,6 +495,8 @@ class BillingService
                 'created_by' => Auth::id(),
             ]);
 
+            $this->syncInsuranceUsageForItem($item, $coverage['reason'] ?? null);
+
             $this->invoiceService->recalculateTotals($invoice->fresh('items'));
 
             return $item->fresh();
@@ -610,6 +614,8 @@ class BillingService
                 $insCovered = $manualCoverage ?? $coverage['covered'];
                 $payable = max(0.0, round($lineTotal - $insCovered - $discount, 2));
 
+                $patientInsuranceId = $item['patient_insurance_id'] ?? ($coverage['has_insurance'] ? $coverage['insurance']->id : null);
+
                 $invoiceItem = InvoiceItem::create([
                     'invoice_id' => $invoice->id,
                     'visit_id' => $data['visit_id'],
@@ -632,8 +638,8 @@ class BillingService
                     'payment_status' => $payable > 0 ? 'unpaid' : 'paid',
                     'total_price' => $lineTotal,
                     'payer_type' => $payerType,
-                    'insurance_provider_id' => $item['insurance_provider_id'] ?? null,
-                    'patient_insurance_id' => $item['patient_insurance_id'] ?? ($coverage['has_insurance'] ? $coverage['insurance']->id : null),
+                    'insurance_provider_id' => $item['insurance_provider_id'] ?? $coverage['insurance']?->insurance_provider_id,
+                    'patient_insurance_id' => $patientInsuranceId,
                     'insurance_type' => $item['insurance_type'] ?? null,
                     'pricing_source' => $pricingSource,
                     'created_by' => $actorId,
@@ -644,18 +650,7 @@ class BillingService
                     Auth::user()
                 );
 
-                // Record usage for items that were evaluated at invoice time
-                // (lab / pharmacy — visit_services were already recorded in attachServices)
-                if (! empty($item['_record_usage']) && ! empty($item['_insurance'])) {
-                    $this->insuranceService->recordUsage(
-                        $item['_insurance'],
-                        Visit::find($data['visit_id']),
-                        $insCovered,
-                        $lineTotal - $insCovered,
-                        $item['_coverage_reason'] ?? $coverage['reason'] ?? null,
-                        $invoice->id
-                    );
-                }
+                $this->syncInsuranceUsageForItem($invoiceItem, $item['_coverage_reason'] ?? $coverage['reason'] ?? null);
             }
 
             $invoice = $this->invoiceService->recalculateTotals($invoice->fresh('items'));
@@ -732,9 +727,14 @@ class BillingService
         // 1. Visit Services ─────────────────────────────────────────────────
         // Coverage was already evaluated + recorded at attachServices() time.
         // Just read the stored amounts directly — do NOT re-evaluate.
-        $visit->loadMissing('visitServices.serviceCatalog.prices');
+        $visit->loadMissing('visitServices.serviceCatalog.prices', 'visitServices.patientInsurance.insuranceProvider');
         foreach ($visit->visitServices as $vs) {
             $catalog = $vs->serviceCatalog;
+            $responsibleInsurance = $vs->patientInsurance;
+            $responsibleProvider = $responsibleInsurance?->insuranceProvider;
+            $responsibleInsuranceType = $responsibleProvider?->type instanceof \BackedEnum
+                ? $responsibleProvider->type->value
+                : $responsibleProvider?->type;
             $insuredAmount = (float) $vs->insurance_covered;
             $cashPrice = $catalog ? (float) $catalog->price : (float) $vs->unit_price;
             $unitPrice = (float) $vs->unit_price;
@@ -757,7 +757,9 @@ class BillingService
                 'cash_price' => $cashPrice,
                 'discount_amount' => $discount,
                 'payer_type' => $payerType,
-                'insurance_provider_id' => $hasInsurance ? $visitInsurance->insurance_provider_id : null,
+                'insurance_provider_id' => $responsibleProvider?->id ?? ($hasInsurance ? $visitInsurance->insurance_provider_id : null),
+                'patient_insurance_id' => $responsibleInsurance?->id,
+                'insurance_type' => $responsibleInsuranceType,
                 'pricing_source' => $pricingSource,
                 '_record_usage' => false, // already recorded in attachServices()
             ];
@@ -1030,5 +1032,10 @@ class BillingService
         }
 
         return 0.0;
+    }
+
+    private function syncInsuranceUsageForItem(InvoiceItem $item, ?string $reason = null): void
+    {
+        $this->insuranceService->syncUsageForInvoiceItem($item->fresh(), $reason);
     }
 }

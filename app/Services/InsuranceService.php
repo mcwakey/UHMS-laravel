@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\InsuranceProvider;
 use App\Models\InsuranceUsage;
+use App\Models\InvoiceItem;
 use App\Models\Patient;
 use App\Models\PatientInsurance;
 use App\Models\Visit;
@@ -176,16 +177,77 @@ class InsuranceService
         float $coveredAmount,
         float $patientAmount,
         ?string $reason = null,
-        ?int $invoiceId = null
+        ?int $invoiceId = null,
+        ?int $invoiceItemId = null
     ): InsuranceUsage {
         return InsuranceUsage::create([
             'patient_insurance_id' => $insurance->id,
             'visit_id'             => $visit->id,
             'invoice_id'           => $invoiceId,
+            'invoice_item_id'      => $invoiceItemId,
             'amount_covered'       => $coveredAmount,
             'patient_amount'       => $patientAmount,
             'reason'               => $reason,
         ]);
+    }
+
+    public function syncUsageForInvoiceItem(InvoiceItem $item, ?string $reason = null): ?InsuranceUsage
+    {
+        $covered = round((float) $item->insurance_covered, 2);
+        $patientInsuranceId = $item->patient_insurance_id;
+
+        if ($covered <= 0.0 || ! $patientInsuranceId || ! $item->visit_id) {
+            if ($item->id) {
+                InsuranceUsage::where('invoice_item_id', $item->id)->delete();
+            }
+
+            return null;
+        }
+
+        $insurance = PatientInsurance::find($patientInsuranceId);
+        $visit = Visit::find($item->visit_id);
+
+        if (! $insurance || ! $visit) {
+            return null;
+        }
+
+        $patientAmount = round((float) $item->patient_payable, 2);
+
+        $usage = InsuranceUsage::where('invoice_item_id', $item->id)->first();
+        if (! $usage) {
+            $usage = InsuranceUsage::where('patient_insurance_id', $insurance->id)
+                ->where('visit_id', $visit->id)
+                ->whereNull('invoice_item_id')
+                ->where(function ($query) use ($item) {
+                    $query->whereNull('invoice_id')
+                        ->orWhere('invoice_id', $item->invoice_id);
+                })
+                ->where('amount_covered', $covered)
+                ->oldest('created_at')
+                ->first();
+        }
+
+        if ($usage) {
+            $usage->forceFill([
+                'invoice_id' => $item->invoice_id,
+                'invoice_item_id' => $item->id,
+                'amount_covered' => $covered,
+                'patient_amount' => $patientAmount,
+                'reason' => $reason,
+            ])->save();
+
+            return $usage;
+        }
+
+        return $this->recordUsage(
+            $insurance,
+            $visit,
+            $covered,
+            $patientAmount,
+            $reason,
+            $item->invoice_id,
+            $item->id
+        );
     }
 
     /**
