@@ -1465,6 +1465,10 @@ class ConsultationController extends Controller
             'indication' => ['required', 'string', 'max:2000'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'preferred_datetime' => ['nullable', 'date'],
+            'consultation_route_id' => [
+                'nullable',
+                Rule::exists('visit_consultation_routes', 'id')->where('visit_id', $visit->id),
+            ],
         ]);
         $data['visit_id'] = $visit->id;
 

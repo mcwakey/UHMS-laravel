@@ -275,13 +275,13 @@
                                 @if($session->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
                                     <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $session]) }}">
                                         @csrf
-                                        <button class="btn btn-xs btn-success" type="submit" onclick="return confirm('{{ __('consultations.workspace.complete_current_session') }}')">{{ __('consultations.workspace.complete_current_session') }}</button>
+                                        <button class="btn btn-xs btn-success" type="submit" onclick="return confirm(@js(__('consultations.workspace.complete_current_session')))">{{ __('consultations.workspace.complete_current_session') }}</button>
                                     </form>
                                 @endif
                                 @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
                                     <form method="POST" action="{{ route('admin.consultations.routes.cancel', [$visit, $session]) }}">
                                         @csrf
-                                        <button class="btn btn-xs btn-outline-danger" type="submit" onclick="return confirm('Cancel this queued session?')">Cancel</button>
+                                        <button class="btn btn-xs btn-outline-danger" type="submit" onclick="return confirm(@js('Cancel this queued session?'))">Cancel</button>
                                     </form>
                                 @endif
                                 @endcan
@@ -394,7 +394,7 @@
                     @can('consultations.create')
                     <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $selectedRoute]) }}">
                         @csrf
-                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Complete this consultation session?')">
+                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm(@js('Complete this consultation session?'))">
                             <i class="ti ti-check me-1"></i>Complete Current Session
                         </button>
                     </form>
@@ -2098,7 +2098,7 @@
                                                         </button>
                                                         @endif
                                                         @if($canDeleteEntry($task))
-                                                        <form method="POST" action="{{ route('admin.consultations.tasks.destroy', $task) }}" class="d-inline" onsubmit="return confirm('Delete this task?') && saveTabBeforeSubmit('tasks-section')">
+                                                        <form method="POST" action="{{ route('admin.consultations.tasks.destroy', $task) }}" class="d-inline" onsubmit="return confirm(@js('Delete this task?')) && saveTabBeforeSubmit('tasks-section')">
                                                             @csrf @method('DELETE')
                                                             <button aria-label="Close" title="Close" type="submit" class="btn btn-xs btn-outline-danger"><i class="ti ti-x"></i></button>
                                                         </form>
@@ -2887,7 +2887,8 @@ $visitHistoryJson = $history['records']->map(function($r) {
         'noProcedureServices' => __('consultations.no_procedure_services'),
     ];
 @endphp
-const consultationI18n = @json($consultationI18nData);
+window.consultationI18n = @json($consultationI18nData);
+var consultationI18n = window.consultationI18n;
 /* ================================================================
    PAGE GLOBALS
    The Inertia legacy bridge re-injects scripts from the pushed
@@ -3768,6 +3769,15 @@ function loadProcedureServices(deptId) {
         svc.disabled = true;
     });
 }
+
+runWhenConsultationReady(function () {
+    var dept = document.getElementById('procedureDeptSelect');
+    if (!dept) return;
+
+    addConsultationListenerOnce(dept, 'uhmsProcedureDeptBound', 'change', function () {
+        loadProcedureServices(this.value);
+    });
+});
 
 /* ================================================================
    LAB REQUEST — AJAX FORM SUBMISSION

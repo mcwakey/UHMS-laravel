@@ -9,6 +9,7 @@ use App\Enums\VisitType;
 use App\Models\Department;
 use App\Models\InvoiceItem;
 use App\Models\Patient;
+use App\Models\ProcedureRequest;
 use App\Models\ServiceCatalog;
 use App\Models\Specialty;
 use App\Models\User;
@@ -53,6 +54,7 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
             'visits.preview',
             'consultations.view',
             'consultations.create',
+            'procedure.request',
         ] as $permission) {
             $adminRole->givePermissionTo(Permission::findOrCreate($permission, 'web'));
         }
@@ -140,6 +142,66 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
             'id' => $completedRoute->id,
             'status' => VisitConsultationRoute::STATUS_COMPLETED,
         ]);
+    }
+
+    public function test_consultation_script_globals_are_reentrant(): void
+    {
+        $view = file_get_contents(resource_path('views/consultations/show.blade.php'));
+
+        $this->assertStringContainsString('window.consultationI18n =', $view);
+        $this->assertStringNotContainsString('const consultationI18n', $view);
+    }
+
+    public function test_consultation_can_request_procedure_from_theatre_department(): void
+    {
+        [$visit, $route] = $this->makeConsultingVisit();
+        $theatreDepartment = Department::factory()->create([
+            'name' => 'Main Theatre',
+            'type' => DepartmentType::THEATRE->value,
+            'status' => 'active',
+        ]);
+        $procedureService = ServiceCatalog::create([
+            'name' => 'Appendectomy',
+            'code' => 'PROC'.random_int(1000, 9999),
+            'category' => ServiceType::PROCEDURE->value,
+            'department_id' => $theatreDepartment->id,
+            'department_type' => DepartmentType::THEATRE->value,
+            'price' => 250,
+            'is_active' => true,
+            'is_billable' => true,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->getJson(route('admin.theatre.department-services', [
+                'department' => $theatreDepartment,
+                'visit_id' => $visit->id,
+            ]))
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => $procedureService->id,
+                'name' => 'Appendectomy',
+            ]);
+
+        $this->actingAs($this->admin)
+            ->withHeaders(['X-Requested-With' => 'XMLHttpRequest', 'Accept' => 'application/json'])
+            ->post(route('admin.consultations.procedures.store', $visit), [
+                'consultation_route_id' => $route->id,
+                'department_id' => $theatreDepartment->id,
+                'service_catalog_id' => $procedureService->id,
+                'priority' => 'routine',
+                'indication' => 'Needs operative review',
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('procedure_requests', [
+            'visit_id' => $visit->id,
+            'department_id' => $theatreDepartment->id,
+            'service_catalog_id' => $procedureService->id,
+            'consultation_route_id' => $route->id,
+            'status' => \App\Enums\ProcedureStatus::REQUESTED->value,
+        ]);
+        $this->assertSame(1, ProcedureRequest::where('visit_id', $visit->id)->count());
     }
 
     public function test_activating_another_session_keeps_visit_consulting_and_pauses_previous_active_route(): void

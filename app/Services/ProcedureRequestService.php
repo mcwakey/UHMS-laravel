@@ -105,7 +105,7 @@ class ProcedureRequestService
      */
     public function procedureDepartments()
     {
-        return Department::where('type', DepartmentType::PROCEDURE->value)
+        return Department::procedureCapable()
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
@@ -146,7 +146,10 @@ class ProcedureRequestService
 
     protected function isProcedureDepartment(Department $department): bool
     {
-        $type = $department->type instanceof DepartmentType ? $department->type->value : (string) $department->type;
-        return $type === DepartmentType::PROCEDURE->value;
+        if ($department->type instanceof DepartmentType) {
+            return $department->type->isProcedureCapable();
+        }
+
+        return in_array((string) $department->type, DepartmentType::valuesFor(DepartmentType::procedureTypes()), true);
     }
 }
