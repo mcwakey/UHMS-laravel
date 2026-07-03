@@ -15,6 +15,11 @@ use Illuminate\Support\Carbon;
  */
 class FinancialReportService
 {
+    private const REVENUE_TYPE_ALIASES = [
+        AccountType::INCOME->value,
+        'REVENUE',
+    ];
+
     /**
      * Net movement per account for a date range / fiscal year.
      * Returns Collection keyed by account_id => {debit, credit}.
@@ -38,7 +43,7 @@ class FinancialReportService
     /** Signed balance for an account given its type (revenue/equity/liability = credit-normal). */
     private function signedBalance(Account $account, float $debit, float $credit): float
     {
-        return $account->normal_balance->value === 'credit'
+        return $this->normalBalance($account) === 'credit'
             ? round($credit - $debit, 2)
             : round($debit - $credit, 2);
     }
@@ -48,7 +53,10 @@ class FinancialReportService
     public function profitLoss(array $filters = []): array
     {
         $totals = $this->lineTotals($filters);
-        $accounts = Account::query()->whereRaw('UPPER(type) IN (?, ?)', [AccountType::INCOME->value, AccountType::EXPENSE->value])
+        $accounts = Account::query()->whereRaw(
+            'UPPER(type) IN (?, ?, ?)',
+            [self::REVENUE_TYPE_ALIASES[0], self::REVENUE_TYPE_ALIASES[1], AccountType::EXPENSE->value],
+        )
             ->whereIn('id', $totals->keys())->orderBy('code')->get();
 
         $sections = [
@@ -68,7 +76,7 @@ class FinancialReportService
 
             $type = $this->accountType($account);
             $key = match (true) {
-                $type === AccountType::INCOME->value => 'revenue',
+                $this->isIncomeType($type) => 'revenue',
                 $account->subtype === 'COST_OF_SALES' => 'cogs',
                 $account->subtype === 'ADMIN_EXPENSE' => 'admin',
                 $account->subtype === 'FINANCE_COST' => 'finance',
@@ -229,16 +237,19 @@ class FinancialReportService
 
     public function byDepartment(string $accountType, array $filters = []): array
     {
+        $types = $this->reportTypeAliases($accountType);
+        $placeholders = implode(',', array_fill(0, count($types), '?'));
+
         $rows = JournalEntryLine::query()
             ->selectRaw('department_id, account_id, SUM(debit) as debit_total, SUM(credit) as credit_total')
-            ->whereHas('account', fn ($q) => $q->whereRaw('UPPER(type) = ?', [strtoupper($accountType)]))
+            ->whereHas('account', fn ($q) => $q->whereRaw("UPPER(type) IN ({$placeholders})", $types))
             ->whereHas('journalEntry', function ($q) use ($filters) {
                 $q->ledgerAffecting()
                     ->when($filters['date_from'] ?? null, fn ($q, $d) => $q->whereDate('entry_date', '>=', $d))
                     ->when($filters['date_to'] ?? null, fn ($q, $d) => $q->whereDate('entry_date', '<=', $d));
             })
             ->groupBy('department_id', 'account_id')
-            ->with('account:id,code,name,normal_balance')
+            ->with('account:id,code,name,type,normal_balance')
             ->get();
 
         $departments = Department::pluck('name', 'id');
@@ -270,8 +281,38 @@ class FinancialReportService
     {
         $type = $account->getRawOriginal('type') ?? $account->type;
 
-        return $type instanceof AccountType
+        $type = $type instanceof AccountType
             ? $type->value
             : strtoupper((string) $type);
+
+        return $type === 'REVENUE' ? AccountType::INCOME->value : $type;
+    }
+
+    private function isIncomeType(string $type): bool
+    {
+        return in_array($type, self::REVENUE_TYPE_ALIASES, true);
+    }
+
+    private function reportTypeAliases(string $accountType): array
+    {
+        $type = strtoupper($accountType);
+
+        return in_array($type, self::REVENUE_TYPE_ALIASES, true)
+            ? self::REVENUE_TYPE_ALIASES
+            : [$type];
+    }
+
+    private function normalBalance(Account $account): string
+    {
+        $type = $this->accountType($account);
+
+        if ($type === '') {
+            return $account->normal_balance?->value ?? 'debit';
+        }
+
+        return match ($type) {
+            AccountType::ASSET->value, AccountType::EXPENSE->value => 'debit',
+            default => 'credit',
+        };
     }
 }

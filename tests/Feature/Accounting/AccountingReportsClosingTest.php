@@ -16,6 +16,7 @@ use App\Services\TrialBalanceService;
 use App\Services\YearEndClosingService;
 use Database\Seeders\AccountingChartSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
@@ -118,6 +119,25 @@ class AccountingReportsClosingTest extends TestCase
 
         $this->assertTrue($bs['is_balanced'], 'Balance sheet should balance: '.json_encode($bs['difference']));
         $this->assertEqualsWithDelta(600, $bs['current_year_earnings'], 0.001);
+    }
+
+    public function test_balance_sheet_includes_legacy_revenue_type_in_current_year_earnings(): void
+    {
+        $this->postJournal([
+            ['account_id' => $this->accountId('1110'), 'debit' => 350, 'credit' => 0],
+            ['account_id' => $this->accountId('4100'), 'debit' => 0, 'credit' => 350],
+        ]);
+
+        DB::table('accounts')
+            ->whereIn('code', ['4000', '4100'])
+            ->update(['type' => 'REVENUE']);
+
+        $bs = app(FinancialReportService::class)->balanceSheet();
+
+        $this->assertTrue($bs['is_balanced'], 'Balance sheet should include REVENUE aliases in earnings.');
+        $this->assertEqualsWithDelta(350, $bs['total_assets'], 0.001);
+        $this->assertEqualsWithDelta(350, $bs['current_year_earnings'], 0.001);
+        $this->assertEqualsWithDelta(350, $bs['total_liabilities_equity'], 0.001);
     }
 
     public function test_closing_a_period_blocks_further_posting(): void
