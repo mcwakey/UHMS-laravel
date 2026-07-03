@@ -74,33 +74,48 @@
             overflow: hidden;
         }
         .notification-dropdown-menu .notification-body {
+            width: 100%;
             max-height: min(420px, calc(100vh - 220px));
             overflow-x: hidden;
             overflow-y: auto;
         }
         .notification-dropdown-menu .simplebar-content-wrapper,
         .notification-dropdown-menu .simplebar-mask {
+            width: 100% !important;
             max-height: min(420px, calc(100vh - 220px));
+            overflow-x: hidden !important;
+        }
+        .notification-dropdown-menu .simplebar-content {
+            min-width: 0 !important;
+            width: 100% !important;
         }
         .notification-dropdown-menu .notification-item {
-            max-width: 100%;
-            overflow: hidden;
-            white-space: normal;
+            display: block;
+            width: 100% !important;
+            min-width: 0;
+            max-width: 100% !important;
+            overflow: hidden !important;
+            white-space: normal !important;
         }
         .notification-dropdown-menu .notification-item .d-flex {
             min-width: 0;
             max-width: 100%;
+            width: 100%;
+        }
+        .notification-dropdown-menu .notification-item .flex-shrink-0 {
+            width: 42px;
         }
         .notification-dropdown-menu .notification-content {
             flex-basis: 0;
             min-width: 0;
-            max-width: 100%;
-            overflow: hidden;
+            max-width: calc(100% - 42px);
+            overflow: hidden !important;
         }
         .notification-dropdown-menu .notification-title,
         .notification-dropdown-menu .notification-message {
             display: block;
             max-width: 100%;
+            line-height: 1.35;
             overflow-wrap: anywhere;
             word-break: break-word;
             white-space: normal;
@@ -297,6 +312,9 @@
         const list = document.getElementById('notificationList');
         const noNotif = document.getElementById('noNotifications');
         const markAllBtn = document.getElementById('markAllReadBtn');
+        let lastUnreadCount = null;
+        let audioUnlocked = false;
+        let audioContext = null;
 
         if (!badge || !list || !noNotif || !markAllBtn) {
             return;
@@ -306,15 +324,74 @@
             clearInterval(window.uhmsNotificationInterval);
         }
 
+        function unlockNotificationAudio() {
+            if (audioUnlocked) {
+                return;
+            }
+
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) {
+                    return;
+                }
+
+                audioContext = audioContext || new AudioContext();
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                audioUnlocked = true;
+            } catch (error) {
+                audioUnlocked = false;
+            }
+        }
+
+        function playNotificationBeep() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioContext = audioContext || (AudioContext ? new AudioContext() : null);
+
+                if (!audioContext || audioContext.state === 'suspended') {
+                    return;
+                }
+
+                const now = audioContext.currentTime;
+                const gain = audioContext.createGain();
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+                gain.connect(audioContext.destination);
+
+                [880, 1175].forEach(function(frequency, index) {
+                    const osc = audioContext.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(frequency, now + (index * 0.11));
+                    osc.connect(gain);
+                    osc.start(now + (index * 0.11));
+                    osc.stop(now + 0.18 + (index * 0.11));
+                });
+            } catch (error) {
+                // Audio is best-effort; notification polling should never fail because of it.
+            }
+        }
+
+        document.addEventListener('click', unlockNotificationAudio, { once: true, passive: true });
+        document.addEventListener('keydown', unlockNotificationAudio, { once: true });
+
         function fetchNotifications() {
             $.ajax({
                 url: '{{ route("admin.notifications.recent") }}',
                 method: 'GET',
                 dataType: 'json',
                 success: function(data) {
+                    const unreadCount = Number(data.unread_count || 0);
+                    if (lastUnreadCount !== null && unreadCount > lastUnreadCount) {
+                        playNotificationBeep();
+                    }
+                    lastUnreadCount = unreadCount;
+
                     // Update badge
-                    if (data.unread_count > 0) {
-                        badge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+                    if (unreadCount > 0) {
+                        badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
                         badge.style.display = '';
                         markAllBtn.style.display = '';
                     } else {
