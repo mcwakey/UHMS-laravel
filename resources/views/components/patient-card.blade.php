@@ -118,11 +118,11 @@
                         @endif
                     </div>
                     <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
-                    <small class="text-muted d-block">
-                        @if($vTier?->name){{ $vTier->name }}@endif
-                        {{-- @if($vTier?->coverage_percentage) · {{ $vTier->coverage_percentage }}% coverage @endif --}}
-                        @if($vIns->membership_number) · #<x-patient-protected-field field="membership_number" :value="$vIns->membership_number" /> @endif
-                    </small>
+                        <small class="text-muted d-block">
+                            @if($vTier?->name){{ $vTier->name }}@endif
+                            {{-- @if($vTier?->coverage_percentage) · {{ $vTier->coverage_percentage }}% coverage @endif --}}
+                            @if($vIns->membership_number) · #<x-patient-protected-field field="membership_number" :value="$vIns->membership_number" /> @endif
+                        </small>
                         @can('visits.edit')
                         @if($visit)
                         <button type="button" class="btn btn-outline-primary btn-xs" data-bs-toggle="modal" data-bs-target="#changeVisitInsuranceModal">
@@ -204,6 +204,7 @@
                 </div>
             </div>
         @else
+
             <div class="patient-card__insurance-row">
                 <div class="patient-card__insurance-icon bg-secondary bg-opacity-10 text-secondary">
                     <i class="ti ti-cash"></i>
@@ -211,6 +212,18 @@
                 <div>
                     <span class="fw-semibold">Cash &amp; Carry</span>
                     <small class="text-muted d-block">{{ __('patients.no_active_insurance_for_visit') }}</small>
+
+                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                        <small class="text-muted d-block">{{ __('patients.no_active_insurance_for_visit') }}</small>
+                        @can('visits.edit')
+                        @if($visit)
+                        <button type="button" class="btn btn-outline-primary btn-xs" data-bs-toggle="modal" data-bs-target="#changeVisitInsuranceModal">
+                            <i class="ti ti-switch-horizontal me-1"></i>
+                        </button>
+                        @endif
+                        @endcan
+                        {{-- <span class="fw-semibold text-truncate">{{ $vProvider->name }}</span> --}}
+                    </div>
                 </div>
             </div>
         @endif
