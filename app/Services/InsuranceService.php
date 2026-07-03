@@ -8,6 +8,7 @@ use App\Models\InvoiceItem;
 use App\Models\Patient;
 use App\Models\PatientInsurance;
 use App\Models\Visit;
+use Illuminate\Support\Facades\Schema;
 
 class InsuranceService
 {
@@ -180,24 +181,30 @@ class InsuranceService
         ?int $invoiceId = null,
         ?int $invoiceItemId = null
     ): InsuranceUsage {
-        return InsuranceUsage::create([
+        $payload = [
             'patient_insurance_id' => $insurance->id,
             'visit_id'             => $visit->id,
             'invoice_id'           => $invoiceId,
-            'invoice_item_id'      => $invoiceItemId,
             'amount_covered'       => $coveredAmount,
             'patient_amount'       => $patientAmount,
             'reason'               => $reason,
-        ]);
+        ];
+
+        if ($this->insuranceUsageHasInvoiceItemColumn()) {
+            $payload['invoice_item_id'] = $invoiceItemId;
+        }
+
+        return InsuranceUsage::create($payload);
     }
 
     public function syncUsageForInvoiceItem(InvoiceItem $item, ?string $reason = null): ?InsuranceUsage
     {
+        $hasInvoiceItemColumn = $this->insuranceUsageHasInvoiceItemColumn();
         $covered = round((float) $item->insurance_covered, 2);
         $patientInsuranceId = $item->patient_insurance_id;
 
         if ($covered <= 0.0 || ! $patientInsuranceId || ! $item->visit_id) {
-            if ($item->id) {
+            if ($item->id && $hasInvoiceItemColumn) {
                 InsuranceUsage::where('invoice_item_id', $item->id)->delete();
             }
 
@@ -213,11 +220,14 @@ class InsuranceService
 
         $patientAmount = round((float) $item->patient_payable, 2);
 
-        $usage = InsuranceUsage::where('invoice_item_id', $item->id)->first();
+        $usage = $hasInvoiceItemColumn
+            ? InsuranceUsage::where('invoice_item_id', $item->id)->first()
+            : null;
+
         if (! $usage) {
             $usage = InsuranceUsage::where('patient_insurance_id', $insurance->id)
                 ->where('visit_id', $visit->id)
-                ->whereNull('invoice_item_id')
+                ->when($hasInvoiceItemColumn, fn ($query) => $query->whereNull('invoice_item_id'))
                 ->where(function ($query) use ($item) {
                     $query->whereNull('invoice_id')
                         ->orWhere('invoice_id', $item->invoice_id);
@@ -228,13 +238,18 @@ class InsuranceService
         }
 
         if ($usage) {
-            $usage->forceFill([
+            $payload = [
                 'invoice_id' => $item->invoice_id,
-                'invoice_item_id' => $item->id,
                 'amount_covered' => $covered,
                 'patient_amount' => $patientAmount,
                 'reason' => $reason,
-            ])->save();
+            ];
+
+            if ($hasInvoiceItemColumn) {
+                $payload['invoice_item_id'] = $item->id;
+            }
+
+            $usage->forceFill($payload)->save();
 
             return $usage;
         }
@@ -248,6 +263,18 @@ class InsuranceService
             $item->invoice_id,
             $item->id
         );
+    }
+
+    private function insuranceUsageHasInvoiceItemColumn(): bool
+    {
+        static $hasColumn = null;
+
+        if ($hasColumn === null) {
+            $hasColumn = Schema::hasTable('insurance_usages')
+                && Schema::hasColumn('insurance_usages', 'invoice_item_id');
+        }
+
+        return $hasColumn;
     }
 
     /**
