@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use App\Enums\DepartmentType;
 use App\Enums\ResultType;
 use App\Models\Department;
@@ -93,9 +94,6 @@ class DepartmentSeeder extends Seeder
 
     private function hasColumn(string $table, string $column): bool
     {
-        return (bool) DB::selectOne(
-            'select 1 from information_schema.columns where table_schema = database() and table_name = ? and column_name = ? limit 1',
-            [$table, $column]
-        );
+        return Schema::hasTable($table) && Schema::hasColumn($table, $column);
     }
 }

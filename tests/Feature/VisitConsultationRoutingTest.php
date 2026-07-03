@@ -253,6 +253,79 @@ class VisitConsultationRoutingTest extends TestCase
         $this->assertSame($newProvider->id, $secondItem->insurance_provider_id);
     }
 
+    public function test_visit_can_change_from_cash_and_carry_to_patient_insurance(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->admin->id]);
+        $cashProvider = InsuranceProvider::create([
+            'name' => 'Cash & Carry',
+            'short_name' => 'CASH',
+            'type' => InsuranceType::PRIVATE,
+            'is_active' => true,
+            'is_default' => true,
+        ]);
+        $newProvider = InsuranceProvider::create([
+            'name' => 'Corporate Health',
+            'short_name' => 'CORP',
+            'type' => InsuranceType::CORPORATE,
+            'is_active' => true,
+            'is_default' => false,
+        ]);
+        $cashInsurance = PatientInsurance::create([
+            'patient_id' => $patient->id,
+            'insurance_provider_id' => $cashProvider->id,
+            'member_type' => 'holder',
+            'is_primary' => false,
+            'is_active' => true,
+        ]);
+        $newInsurance = PatientInsurance::create([
+            'patient_id' => $patient->id,
+            'insurance_provider_id' => $newProvider->id,
+            'member_type' => 'holder',
+            'is_primary' => true,
+            'is_active' => true,
+        ]);
+        $service = $this->makeService($this->department);
+        $futureService = $this->makeService($this->department);
+
+        $payload = $this->visitPayload($patient, [[
+            'service_catalog_id' => $service->id,
+            'department_id' => $this->department->id,
+            'quantity' => 1,
+        ]]);
+        $payload['visit_insurance_id'] = $cashInsurance->id;
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.visits.store'), $payload)
+            ->assertRedirect();
+
+        $visit = Visit::where('patient_id', $patient->id)->firstOrFail();
+        $this->assertSame($cashInsurance->id, $visit->visit_insurance_id);
+
+        $this->actingAs($this->admin)
+            ->patch(route('admin.visits.insurance.update', $visit), [
+                'visit_insurance_id' => $newInsurance->id,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame($newInsurance->id, $visit->fresh()->visit_insurance_id);
+
+        app(BillingService::class)->addItemToVisitInvoice(
+            visit: $visit->fresh(),
+            service: $futureService,
+            sourceType: 'future_visit_service',
+            sourceId: $futureService->id,
+            departmentId: $this->department->id,
+        );
+
+        $futureItem = InvoiceItem::where('visit_id', $visit->id)
+            ->where('service_catalog_id', $futureService->id)
+            ->firstOrFail();
+
+        $this->assertSame($newInsurance->id, $futureItem->patient_insurance_id);
+        $this->assertSame($newProvider->id, $futureItem->insurance_provider_id);
+    }
+
     public function test_multiple_consultation_services_in_same_department_create_one_department_route(): void
     {
         $patient = Patient::factory()->create(['registered_by' => $this->admin->id]);

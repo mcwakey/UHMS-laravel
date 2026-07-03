@@ -310,8 +310,16 @@ class VisitController extends Controller
             ->get(['id', 'name', 'type']);
 
         $patientInsuranceOptions = $this->insuranceService->getPatientInsurances($visit->patient);
+        $insuranceProviders = InsuranceProvider::where('is_active', true)
+            ->where(function ($q) {
+                $q->where('is_default', false)->orWhereNull('is_default');
+            })
+            ->with('insuranceType')
+            ->with(['tiers' => fn ($t) => $t->orderBy('sort_order')->orderBy('name')])
+            ->orderBy('name')
+            ->get();
 
-        return view('visits.show', compact('visit', 'insuranceInfo', 'consultationDepartments', 'patientInsuranceOptions'));
+        return view('visits.show', compact('visit', 'insuranceInfo', 'consultationDepartments', 'patientInsuranceOptions', 'insuranceProviders'));
     }
 
     public function updateInsurance(Request $request, Visit $visit)

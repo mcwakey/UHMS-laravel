@@ -914,6 +914,13 @@
                 @error('visit_insurance_id')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
+                @can('patients.edit')
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="visitShowAddInsuranceBtn">
+                            <i class="ti ti-plus me-1"></i>{{ __('patients.add_insurance') }}
+                        </button>
+                    </div>
+                @endcan
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
@@ -925,9 +932,190 @@
     </div>
 </div>
 @endcan
+@can('patients.edit')
+<x-patient-insurance-form-modal
+    :insurance-providers="$insuranceProviders ?? collect()"
+    modal-id="visitShowInsuranceModal"
+    form-id="visitShowInsuranceForm"
+    patient-input-id="visitShowInsurancePatientId"
+    insurance-input-id="visitShowInsuranceId"
+    title-id="visitShowInsuranceModalTitle"
+    feedback-id="visitShowInsuranceFeedback"
+    provider-select-id="visitShowInsuranceProviderSelect"
+    tier-select-id="visitShowInsuranceTierSelect"
+    primary-checkbox-id="visitShowInsurancePrimary"
+    save-button-id="visitShowInsuranceSaveBtn"
+/>
+@endcan
 @endmodule
 
 @push('scripts')
+@can('patients.edit')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const addButton = document.getElementById('visitShowAddInsuranceBtn');
+    const addModalEl = document.getElementById('visitShowInsuranceModal');
+    const changeModalEl = document.getElementById('changeVisitInsuranceModal');
+    const form = document.getElementById('visitShowInsuranceForm');
+    const patientInput = document.getElementById('visitShowInsurancePatientId');
+    const insuranceInput = document.getElementById('visitShowInsuranceId');
+    const providerSelect = document.getElementById('visitShowInsuranceProviderSelect');
+    const tierSelect = document.getElementById('visitShowInsuranceTierSelect');
+    const feedback = document.getElementById('visitShowInsuranceFeedback');
+    const saveButton = document.getElementById('visitShowInsuranceSaveBtn');
+    const changeSelect = document.getElementById('visitInsuranceChangeSelect');
+
+    if (!addButton || !addModalEl || !form || !providerSelect || !tierSelect || !changeSelect) {
+        return;
+    }
+
+    const patientId = @json($visit->patient_id);
+    const storeUrl = @json(route('admin.patients.insurances.store', $visit->patient));
+    const insuranceListUrl = @json(route('admin.visits.patient-insurances'));
+    const addModal = window.bootstrap ? window.bootstrap.Modal.getOrCreateInstance(addModalEl) : null;
+    const changeModal = changeModalEl && window.bootstrap ? window.bootstrap.Modal.getOrCreateInstance(changeModalEl) : null;
+
+    function setFeedback(type, message) {
+        if (!feedback) return;
+        feedback.className = 'alert alert-' + type;
+        feedback.textContent = message;
+        feedback.classList.remove('d-none');
+    }
+
+    function resetFeedback() {
+        if (!feedback) return;
+        feedback.className = 'alert d-none';
+        feedback.textContent = '';
+    }
+
+    function clearValidation() {
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        form.querySelectorAll('.dynamic-invalid-feedback').forEach(el => el.remove());
+    }
+
+    function showValidation(errors) {
+        Object.entries(errors || {}).forEach(([field, messages]) => {
+            const input = form.querySelector('[name="' + field + '"]');
+            if (!input) return;
+            input.classList.add('is-invalid');
+            const error = document.createElement('div');
+            error.className = 'invalid-feedback d-block dynamic-invalid-feedback';
+            error.textContent = Array.isArray(messages) ? messages[0] : messages;
+            input.parentNode.insertBefore(error, input.nextSibling);
+        });
+    }
+
+    function populateTiers() {
+        tierSelect.innerHTML = '<option value="">{{ __('visits.tier_default') }}</option>';
+        const selected = providerSelect.options[providerSelect.selectedIndex];
+        if (!selected) return;
+        let tiers = [];
+        try {
+            tiers = JSON.parse(selected.dataset.tiers || '[]');
+        } catch (error) {
+            tiers = [];
+        }
+        tiers.forEach(tier => {
+            const option = document.createElement('option');
+            option.value = tier.id;
+            option.textContent = tier.name;
+            tierSelect.appendChild(option);
+        });
+    }
+
+    function optionText(insurance) {
+        const parts = [
+            insurance.type_label,
+            insurance.tier_name,
+            insurance.membership_number ? '#' + insurance.membership_number : null,
+            insurance.is_valid ? null : 'inactive/expired',
+        ].filter(Boolean);
+
+        return (insurance.provider_name || 'Insurance') + (parts.length ? ' - ' + parts.join(' - ') : '');
+    }
+
+    async function refreshInsuranceOptions(selectedId) {
+        const response = await fetch(insuranceListUrl + '?patient_id=' + encodeURIComponent(patientId), {
+            headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+        });
+        const data = await response.json();
+
+        changeSelect.innerHTML = '';
+        (data.insurances || []).forEach(insurance => {
+            const option = document.createElement('option');
+            option.value = insurance.id;
+            option.textContent = optionText(insurance);
+            option.disabled = !insurance.is_valid;
+            option.selected = String(insurance.id) === String(selectedId);
+            changeSelect.appendChild(option);
+        });
+    }
+
+    providerSelect.addEventListener('change', populateTiers);
+
+    addButton.addEventListener('click', () => {
+        form.reset();
+        clearValidation();
+        resetFeedback();
+        patientInput.value = patientId;
+        insuranceInput.value = '';
+        populateTiers();
+        changeModal?.hide();
+        addModal?.show();
+    });
+
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+        clearValidation();
+        resetFeedback();
+
+        const formData = new FormData(form);
+        formData.delete('_patient_id');
+        formData.delete('_insurance_id');
+
+        const originalLabel = saveButton?.innerHTML;
+        if (saveButton) {
+            saveButton.disabled = true;
+            saveButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>{{ __('common.save') }}';
+        }
+
+        try {
+            const response = await fetch(storeUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': @json(csrf_token()),
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+                body: formData,
+            });
+            const data = (response.headers.get('content-type') || '').includes('application/json')
+                ? await response.json()
+                : {};
+
+            if (response.ok) {
+                await refreshInsuranceOptions(data.insurance_id);
+                addModal?.hide();
+                changeModal?.show();
+                return;
+            }
+
+            if (response.status === 422 && data.errors) {
+                showValidation(data.errors);
+            }
+            setFeedback('danger', data.message || 'Unable to save insurance.');
+        } catch (error) {
+            setFeedback('danger', 'Network error while saving insurance.');
+        } finally {
+            if (saveButton) {
+                saveButton.disabled = false;
+                saveButton.innerHTML = originalLabel;
+            }
+        }
+    });
+});
+</script>
+@endcan
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const endpointTemplate = @json(route('admin.departments.visit-options', ['department' => '__ID__']));
