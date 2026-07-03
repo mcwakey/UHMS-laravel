@@ -1,791 +1,755 @@
-# UHMS Consultation View & Workflow — Full Gap Analysis, Repetitive JS Audit and Improvement Plan
+# UHMS Consultation Workflow Stabilisation — Phase 7: Prescription Safety Checks & Completion Readiness
 
 ## Goal
 
-Perform a full gap analysis of the consultation view page and the complete consultation workflow.
+Continue consultation workflow stabilisation after Phases 1–6.
 
-This is an **analysis-only phase**.
+Previous phases stabilised the consultation workspace technically:
 
-Do not implement fixes yet.
-
-The goal is to understand:
-
-```text id="offmdm"
-why the consultation page has repetitive JavaScript
-where the page is becoming fragile
-which clinical/workflow features are incomplete or risky
-which privacy/permission issues may exist
-which UI/UX improvements are needed
-how to ultimately refactor the page safely
+```text id="bfhxsj"
+Phase 1: server-side idempotency, action guard, route context safety
+Phase 2: JavaScript lifecycle and AJAX form refactor
+Phase 3: Blade/controller structure split
+Phase 4: controller extraction and FormRequest validation
+Phase 5: service extraction and E2E fixture strategy
+Phase 6: Playwright fixture auth, smoke enablement, and clinical-entry service cleanup
 ```
 
-Produce a clear technical and functional report before any implementation.
-
----
-
-## 1. Scope
-
-Analyse the consultation view page and all related partials, scripts, controllers, services, routes, requests, and tests.
+Phase 7 must now improve clinical safety and completion readiness.
 
 Focus on:
 
-```text id="xfdz1l"
-consultation show/view page
-consultation workspace
-patient header/summary section
-clinical notes
-diagnosis
-vitals display
-investigation requests
-radiology requests
-prescriptions
-procedures/treatments
-follow-ups/reviews
-referrals
-admissions/escalations
-billing links
-attachments/files if any
-print/PDF if any
-privacy masking
-permissions
-JavaScript interactions
-modals
-AJAX endpoints
-inline scripts
-duplicated logic
+```text id="zqgmce"
+prescription safety checks
+prescription override workflow
+consultation completion checklist
+minimum documentation requirements
+safe completion blocking
+clinical warning visibility
+audit trail for overrides and completion decisions
+broader browser smoke coverage for successful lab/procedure/prescription actions
 ```
 
-Do not limit the analysis to only what is visually broken.
+Do not redesign the full UI.
 
-Look for hidden architectural problems too.
+Do not change route names.
+
+Do not change middleware.
+
+Do not change the Phase 2 JavaScript contract.
+
+Do not change the default launch seed.
+
+Do not run the wide full suite unless explicitly instructed.
 
 ---
 
-## 2. Files To Inspect
+## 1. Required Context
 
-Start with likely files:
+Read:
 
-```text id="jkfjrn"
+```text id="csu771"
+docs/CONSULTATION_VIEW_GAP_ANALYSIS_REPORT.md
+docs/CONSULTATION_JS_REPETITION_AUDIT_REPORT.md
+docs/CONSULTATION_WORKFLOW_IMPROVEMENT_PLAN.md
+docs/CONSULTATION_WORKFLOW_STABILISATION_PHASE_1_SAFETY_REPORT.md
+docs/CONSULTATION_WORKFLOW_STABILISATION_PHASE_2_JS_LIFECYCLE_REPORT.md
+docs/CONSULTATION_WORKFLOW_STABILISATION_PHASE_3_STRUCTURE_REPORT.md
+docs/CONSULTATION_WORKFLOW_STABILISATION_PHASE_4_CONTROLLER_EXTRACTION_REPORT.md
+docs/CONSULTATION_WORKFLOW_STABILISATION_PHASE_5_SERVICE_EXTRACTION_BROWSER_FIXTURE_REPORT.md
+docs/CONSULTATION_WORKFLOW_STABILISATION_PHASE_6_BROWSER_SMOKE_REPORT.md
+```
+
+Inspect:
+
+```text id="z0b01j"
+app/Services/Consultation
+app/Services/PrescriptionService.php
+app/Services/ConsultationPrescriptionWorkflowService.php
+app/Services/ConsultationSessionWorkflowService.php
+app/Services/ConsultationCompletionService.php if present
+app/Models/Prescription.php
+app/Models/Patient.php
+app/Models/MedicalRecord.php
+app/Models/Diagnosis.php
+app/Models/MedicationOrder.php
+app/Http/Requests/Consultations
+app/Http/Controllers/Doctor/Consultations
 resources/views/consultations/show.blade.php
-resources/views/doctor/consultation/show.blade.php
-resources/views/admin/consultations/show.blade.php
 resources/views/consultations/partials
-resources/views/components/patient-card.blade.php
-resources/views/components/patient-long-card.blade.php
-resources/views/components/patient-protected-field.blade.php
-app/Http/Controllers/Doctor/ConsultationController.php
-app/Http/Controllers/Admin/Consultations
-app/Http/Controllers/Admin/Lab
-app/Http/Controllers/Admin/Pharmacy
-app/Http/Controllers/Admin/Procedures
-app/Services/Consultation*
-app/Services/PatientPrivacyService.php
-app/Services/Billing
-routes/web.php
-lang/en
-lang/fr
+resources/js/Pages/consultation-show.js
 tests/Feature/Consultations
-tests/Feature/PatientPrivacy*
-```
-
-Then search for all related files:
-
-```bash id="x0kjob"
-grep -R "consultation" resources app routes tests -n
-grep -R "doctor.consultation\|consultations.show\|consultation.show" resources app routes tests -n
-grep -R "@push('scripts')\|@section('scripts')\|<script" resources/views/consultations resources/views/doctor resources/views/admin -n
-```
-
-Also search for repeated JavaScript patterns:
-
-```bash id="mm290c"
-grep -R "DOMContentLoaded\|addEventListener\|fetch(\|axios\|$.ajax\|data-bs-toggle\|modal\|querySelector\|getElementById" resources/views app -n
+tests-e2e/tests/consultation-workspace.spec.ts
 ```
 
 ---
 
-## 3. Repetitive JavaScript Audit
+## 2. Main Deliverables
 
-Investigate why JS is repetitive.
+Implement:
 
-Look specifically for:
-
-```text id="2ijqj2"
-same script copied in multiple partials
-same event listener registered multiple times
-multiple DOMContentLoaded blocks
-inline AJAX repeated for lab/pharmacy/procedure/forms
-modal submit handlers repeated
-duplicated CSRF setup
-duplicated toast/alert handling
-duplicated validation handling
-duplicated select/search initialisation
-duplicate element IDs
-scripts inside Blade partials that can be rendered more than once
-handlers bound directly to dynamic elements instead of delegated events
-reinitialisation bugs after modal close/open
-scripts depending on Blade-generated IDs
-same route URLs hardcoded in many scripts
-business rules inside JavaScript instead of services/controllers
-```
-
-For each JS issue, document:
-
-```text id="mob693"
-file
-line or section
-duplicated logic
-risk
-recommended fix
-priority
-```
-
-Classify risks:
-
-```text id="nmqq2a"
-Low: messy but harmless
-Medium: maintainability issue
-High: can break workflow or submit wrong data
-Critical: can create wrong clinical/billing data or leak patient data
+```text id="i2l4u8"
+PrescriptionSafetyService
+PrescriptionSafetyResult / DTO if useful
+prescription warning and override workflow
+minimum consultation completion checklist
+CompletionReadinessService
+completion blocking with clear missing requirements
+audit logging for safety overrides and blocked completion
+Phase 7 feature tests
+updated Playwright smoke for successful prescription/lab/procedure paths where stable
+Phase 7 report
 ```
 
 ---
 
-## 4. Ultimate JS Solution
+# Part A — Prescription Safety Checks
 
-Design a proper long-term JS structure.
+## 3. Prescription Safety Service
 
-Do not implement yet.
+Create:
 
-Recommend how to move from repeated inline scripts to structured modules.
-
-Preferred approach:
-
-```text id="op9j5q"
-one consultation page JS entrypoint
-small feature modules
-event delegation
-shared AJAX helper
-shared form submit helper
-shared modal manager
-shared toast/notification helper
-shared route/data config
-no duplicated inline scripts in partials
+```text id="wyj64r"
+App\Services\Consultation\PrescriptionSafetyService
 ```
 
-Possible structure:
+or a namespace matching the project.
 
-```text id="v3nuc5"
-resources/js/pages/consultation-show.js
-resources/js/consultation/modules/diagnosis.js
-resources/js/consultation/modules/investigations.js
-resources/js/consultation/modules/prescriptions.js
-resources/js/consultation/modules/procedures.js
-resources/js/consultation/modules/followups.js
-resources/js/consultation/modules/vitals.js
-resources/js/consultation/modules/billing.js
-resources/js/consultation/shared/ajax.js
-resources/js/consultation/shared/forms.js
-resources/js/consultation/shared/modals.js
-resources/js/consultation/shared/toasts.js
+The service should check prescription payloads before prescription persistence.
+
+Required checks:
+
+```text id="vjj4sa"
+known allergy conflicts
+duplicate active medication
+missing dose
+missing frequency
+missing duration
+missing quantity
+missing route if route is required by current prescription model
+missing diagnosis if policy requires diagnosis before prescribing
+unsafe or unusual dose placeholder check if dose-range data does not exist yet
 ```
 
-If the project does not currently use a JS build pattern for page modules, propose a Blade-safe alternative:
+If drug-drug interaction data does not exist yet, implement the service hook and return no interaction warnings for now.
 
-```text id="d6zpnc"
-single pushed script file
-one global ConsultationPage object
-data attributes for route/config
-delegated handlers
-shared helpers
-no duplicated event binding
-```
+Do not fake medical interaction logic.
 
-Document which approach best fits the current UHMS frontend.
+Document the limitation clearly.
 
 ---
 
-## 5. Blade Structure Audit
+## 4. Allergy Conflict Check
 
-Analyse whether the consultation view has become too large.
+Use existing patient allergy data.
 
-Check for:
+Check against:
 
-```text id="zr8d13"
-too many responsibilities in one Blade file
-large inline conditionals
-duplicated cards/tables
-mixed clinical, billing, pharmacy, lab, and JS logic
-hardcoded English
-hardcoded permissions
-hardcoded routes
-complex calculations in Blade
-patient privacy fields rendered raw
+```text id="1cb3q8"
+patient allergies
+medicine/drug name
+generic name if available
+active ingredient if available
+drug class if available
 ```
 
-Recommend Blade decomposition.
+If only drug/product name exists, use conservative name matching.
 
-Suggested structure:
+Result should be:
 
-```text id="quaein"
-consultations/show.blade.php
-consultations/partials/header.blade.php
-consultations/partials/patient-summary.blade.php
-consultations/partials/clinical-notes.blade.php
-consultations/partials/diagnosis.blade.php
-consultations/partials/vitals.blade.php
-consultations/partials/investigations.blade.php
-consultations/partials/radiology.blade.php
-consultations/partials/prescriptions.blade.php
-consultations/partials/procedures.blade.php
-consultations/partials/treatment-plan.blade.php
-consultations/partials/follow-up.blade.php
-consultations/partials/billing-summary.blade.php
-consultations/partials/activity-timeline.blade.php
-consultations/partials/modals.blade.php
+```text id="7m0hqr"
+warning, not hard failure, unless policy says hard block
 ```
 
-But do not over-split if the current page is still manageable.
+Override should require reason.
 
 ---
 
-## 6. Consultation Workflow Gap Analysis
+## 5. Duplicate Active Medication Check
 
-Review the functional flow.
+Check whether the patient already has an active medication/order for the same drug.
 
-Expected consultation workflow:
+Scope:
 
-```text id="mj6pyo"
-open patient consultation
-review patient summary
-review vitals
-review history/previous visits
-record complaints
-record examination findings
-enter diagnosis
-request investigations/radiology
-prescribe medicines
-request procedures/treatments
-add clinical notes
-create follow-up/review
-refer/admit/escalate if needed
-complete consultation
-generate billing where appropriate
-show next workflow step
+```text id="g9gk40"
+same patient
+active/current visit or active medication window
+same drug/product
+not cancelled
+not completed/discontinued
 ```
 
-Check whether UHMS currently supports each step clearly.
+If duplicate found:
 
-For each step, document:
+```text id="xqfu9v"
+warn and require override reason
+```
 
-```text id="3cwi9e"
-exists / partial / missing
-current implementation
-issues
-data model/service involved
-permission needed
-improvement recommendation
-priority
+Do not block legitimate repeat prescription if override reason is provided.
+
+---
+
+## 6. Required Prescription Fields
+
+Before prescription creation, validate clinical completeness beyond basic form validation.
+
+Required baseline:
+
+```text id="c2wrs3"
+drug/product
+dose
+frequency
+duration
+quantity
+instructions if currently required by the system
+```
+
+If these are already FormRequest rules, keep them there.
+
+If they are clinical-safety checks, centralise in `PrescriptionSafetyService`.
+
+Do not duplicate validation in controller.
+
+---
+
+## 7. Diagnosis Requirement Policy
+
+Add configurable policy.
+
+Suggested config:
+
+```text id="ygm9tf"
+config/consultation.php
+
+'prescriptions' => [
+    'require_diagnosis_before_prescribing' => true,
+]
+```
+
+If diagnosis is required:
+
+```text id="0hxdwx"
+Prescription cannot be created unless consultation has at least one diagnosis or provisional diagnosis.
+```
+
+Emergency override may be allowed if existing emergency workflow requires it.
+
+If override is allowed:
+
+```text id="15x2jy"
+reason required
+audit event logged
 ```
 
 ---
 
-## 7. Clinical Safety Gaps
+## 8. Prescription Safety Result
 
-Look for risks that can affect clinical correctness.
+Return a structured result.
 
-Check:
+Example:
 
-```text id="ag9j6i"
-can consultation be completed without diagnosis?
-can prescription be added without diagnosis?
-can lab/radiology requests be duplicated accidentally?
-can a user submit the same form twice?
-are medication allergies visible/protected correctly?
-are chronic conditions shown with correct privacy permission?
-are urgent requests clearly marked?
-is there confirmation before finalising consultation?
-can finalised consultation still be edited?
-is edit-after-complete audited?
-are clinical notes versioned or overwritten?
-are abnormal vitals highlighted?
-are previous diagnoses visible?
-is there a clear audit trail of clinical changes?
+```php id="qmbi4j"
+PrescriptionSafetyResult {
+    public bool $passed;
+    public bool $requiresOverride;
+    public array $warnings;
+    public array $blockingErrors;
+}
 ```
 
-Document each issue and risk level.
+Warnings examples:
+
+```text id="8qipgf"
+allergy_conflict
+duplicate_active_medication
+missing_diagnosis
+unusual_dose_unverified
+```
+
+Blocking errors examples:
+
+```text id="4ruixl"
+missing_drug
+missing_dose
+missing_frequency
+missing_duration
+missing_quantity
+```
 
 ---
 
-## 8. Billing and Service Rendering Gaps
+## 9. Override Workflow
 
-Consultation workflows often create billable items.
+Add override support for warnings.
 
-Check:
+Required fields:
 
-```text id="lx79mw"
-consultation fee billing
-investigation billing
-radiology billing
-procedure billing
-prescription billing
-insurance pricing
-coverage calculation
-service rendering status
-duplicate billing prevention
-billing reversal/credit note relationship
-unbilled items visibility
-```
-
-Also verify the recent rule:
-
-```text id="dfmbnh"
-insurance coverage calculation must use selected insurance price, not cash/base price
-```
-
-Document if consultation-triggered billing respects this rule.
-
----
-
-## 9. Patient Privacy and Permission Audit
-
-The consultation page must respect patient privacy phases.
-
-Check for raw fields:
-
-```text id="pr2rf3"
-phone
-email
-address
-digital address
-Ghana Card / identity number
-insurance membership/policy number
-emergency contact
-allergies
-chronic conditions
-confidential clinical fields
+```text id="7t8pp3"
+safety_override_reason
+safety_override_codes[]
 ```
 
 Rules:
 
-```text id="oqrjmh"
-Level 2 PII requires granular privacy permission or patients.pii.view.
-Level 3 clinical-sensitive data requires patients.clinical_sensitive.view.
-patients.pii.view must not reveal Level 3 fields.
-Exports/prints require patients.export_sensitive.view.
+```text id="z3l580"
+warnings can be overridden with reason
+blocking errors cannot be overridden
+override reason is required when warnings exist
+override reason must be stored/audited
+override must not expose patient PII in logs
 ```
 
-Document any raw exposure.
+Add audit events:
 
-Use:
-
-```text id="53ai68"
-PatientPrivacyService
-<x-patient-protected-field>
+```text id="1drgd1"
+PRESCRIPTION_SAFETY_WARNING_TRIGGERED
+PRESCRIPTION_SAFETY_OVERRIDE_ACCEPTED
+PRESCRIPTION_SAFETY_BLOCKED
 ```
 
-Do not recommend inline masking.
+Use `ActivityLogService`.
+
+Do not log raw sensitive clinical payload unnecessarily.
 
 ---
 
-## 10. Permission and Role Gaps
+## 10. UI Integration For Prescription Warnings
 
-Check that every consultation action is permission protected.
+Keep the UI simple.
 
-Actions:
+When prescription submit returns warnings:
 
-```text id="drjzjg"
-view consultation
-start consultation
-update notes
-add diagnosis
-request lab
-request radiology
-prescribe medicines
-request procedure
-add follow-up
-refer patient
-admit patient
-complete consultation
-reopen/edit completed consultation
-print/export consultation summary
-view sensitive patient data
+```text id="6m3w98"
+show warning list near prescription form
+show override reason textarea
+allow resubmit with override reason
+do not create prescription until override reason is submitted
 ```
 
-For each action, document:
+The Phase 2 AJAX helper must handle this response without breaking.
 
-```text id="ckcesn"
-route
-controller method
-current middleware
-expected permission
-gap
-recommended permission
+Preferred response shape:
+
+```json id="ladzye"
+{
+  "success": false,
+  "requires_override": true,
+  "warnings": [
+    {"code": "allergy_conflict", "message": "..."}
+  ]
+}
 ```
 
-Run or inspect:
+If existing AJAX helper needs adjustment, keep it generic.
 
-```bash id="a9pxmr"
-php artisan route:list | grep consultation
-php artisan permissions:audit --strict
-```
+Do not hardcode safety logic in JavaScript.
+
+JavaScript only displays server-provided warnings and collects override reason.
 
 ---
 
-## 11. UI/UX Gap Analysis
+# Part B — Consultation Completion Checklist
 
-Review the usability of the consultation page.
+## 11. Completion Readiness Service
 
-Check:
+Create:
 
-```text id="fjlcsb"
-is the page too long?
-are sections clearly grouped?
-is clinical priority obvious?
-are actions easy to find?
-does the page work well on tablet?
-does it work on mobile?
-are modals too many?
-are empty states clear?
-are loading states clear?
-are errors shown near the affected form?
-are success messages consistent?
-are disabled/restricted states clear?
-are urgent/critical indicators visible?
+```text id="l9r3ds"
+App\Services\Consultation\ConsultationCompletionReadinessService
 ```
 
-Recommend a better layout.
+or equivalent.
 
-Possible improved layout:
+Purpose:
 
-```text id="ezjoxp"
-sticky patient/visit header
-left clinical timeline
-center active consultation workspace
-right quick actions/results/alerts panel
-tabbed or accordion sections for requests/prescriptions/procedures
-bottom completion/follow-up panel
+```text id="i6bghv"
+Before a consultation route/session can be completed, verify minimum clinical documentation exists.
 ```
 
-Or:
+Baseline requirements:
 
-```text id="4ljx0h"
-top patient banner
-clinical summary cards
-workflow tabs
-side action drawer
-timeline of clinical events
+```text id="n3r1zo"
+complaint or reason for visit
+examination or documented reason not examined
+diagnosis or provisional diagnosis
+treatment plan or disposition note
+orders/prescriptions reviewed
+follow-up/referral/admission/discharge decision
 ```
 
----
+Do not overcomplicate initially.
 
-## 12. Performance Audit
+Make checklist configurable per department type if practical.
 
-Check for:
+Suggested config:
 
-```text id="630ptd"
-N+1 queries
-too many relationships loaded
-too many AJAX calls on page load
-large Blade payload
-large inline JSON
-repeated chart/script initialisation
-unnecessary queries for hidden sections
-queries not scoped to current consultation/visit
-```
+```text id="zj1voc"
+config/consultation.php
 
-Recommend:
-
-```text id="y85uho"
-eager loading
-service layer payload builder
-lazy loading sections
-separate JSON endpoints for heavy tabs
-caching read-only dropdowns
-only querying permission-visible sections
+'completion_checklist' => [
+    'default' => [
+        'complaint',
+        'examination',
+        'diagnosis',
+        'plan_or_disposition',
+    ],
+    'emergency' => [
+        'triage',
+        'diagnosis_or_provisional',
+        'disposition',
+    ],
+]
 ```
 
 ---
 
-## 13. Data Integrity and Duplicate Submission Audit
+## 12. Completion Blocking
 
-Check if repeated JS can cause duplicate records.
+When user attempts to complete consultation:
 
-Risk examples:
-
-```text id="ju1k2j"
-same investigation request submitted twice
-same prescription submitted twice
-same procedure request submitted twice
-consultation completed twice
-billing line generated twice
-follow-up duplicated
-same modal handler fires multiple times
+```text id="rcw5xt"
+run ConsultationActionGuard
+run CompletionReadinessService
+if missing requirements exist, block completion
+return clear missing items
+do not change route/session status
 ```
 
-Recommend:
+Expected response for AJAX:
 
-```text id="7f11jg"
-server-side idempotency keys
-disable submit buttons after click
-unique request tokens
-transaction boundaries
-duplicate detection before billing/service creation
-audit logs for repeated actions
+```json id="g55tjq"
+{
+  "success": false,
+  "completion_blocked": true,
+  "missing_requirements": [
+    {"code": "diagnosis", "message": "Diagnosis is required before completion."}
+  ]
+}
 ```
 
----
+For normal redirect:
 
-## 14. Error Handling Audit
-
-Check:
-
-```text id="7s6jz3"
-AJAX error handling
-validation errors
-network failure states
-server exceptions
-permission denied responses
-session timeout
-CSRF token expiration
-partial form failures
-```
-
-Recommend unified error handling:
-
-```text id="kp3hya"
-show validation errors near fields
-toast generic failures
-modal-level errors
-redirect on session expiration
-clear 403 restricted messages
-retry only where safe
+```text id="9lw2pz"
+redirect back with translated error and missing checklist details
 ```
 
 ---
 
-## 15. Localisation Audit
+## 13. Completion Checklist UI
 
-Look for hardcoded English/French strings.
+Add a lightweight checklist panel or status indicator.
 
-Check:
+Location:
 
-```text id="3llf2g"
-Blade labels
-JS strings
-modal titles
-button text
-toasts
-validation messages
-empty states
-chart labels
-confirmation messages
+```text id="tx3ajo"
+right panel
+completion modal
+or near complete button
+```
+
+Show:
+
+```text id="t27v7t"
+Ready to complete / Missing requirements
+complaint
+examination
+diagnosis
+plan/disposition
+follow-up/referral/admission decision
+```
+
+Do not redesign the whole page.
+
+Use existing partials.
+
+Checklist should refresh after section updates if possible.
+
+---
+
+## 14. Completion Override
+
+Decide whether completion can be overridden.
+
+Recommended:
+
+```text id="4k4a1g"
+No override for standard users.
+Only users with consultations.complete_with_missing_requirements can override.
+Override requires reason.
+Override is audited.
+```
+
+Add permission only if needed:
+
+```text id="1wpwan"
+consultations.complete_with_missing_requirements
+```
+
+If not implemented in this phase, document as deferred.
+
+Do not silently allow incomplete completion.
+
+---
+
+## 15. Audit Events For Completion
+
+Add audit events:
+
+```text id="y4w146"
+CONSULTATION_COMPLETION_BLOCKED
+CONSULTATION_COMPLETION_REQUIREMENTS_MET
+CONSULTATION_COMPLETION_OVERRIDE_ACCEPTED
+```
+
+Do not log raw sensitive clinical text.
+
+Log only:
+
+```text id="1wglhx"
+visit_id
+consultation_route_id
+missing requirement codes
+user_id
+override reason if provided, but avoid sensitive clinical details
+```
+
+---
+
+# Part C — Browser Coverage
+
+## 16. Extend Playwright Smoke Carefully
+
+The Phase 6 smoke now passes.
+
+Extend only if stable.
+
+Add coverage for:
+
+```text id="6y7wcz"
+successful procedure request submit if fixture supports it
+successful lab request submit if fixture supports it
+prescription warning display path
+completion blocked when required checklist items are missing
+```
+
+Do not create a huge brittle E2E test.
+
+It is okay to add a second focused smoke spec if cleaner.
+
+---
+
+## 17. Tests To Add
+
+Add focused feature test file:
+
+```text id="w8y9cc"
+tests/Feature/Consultations/ConsultationClinicalSafetyPhase7Test.php
+```
+
+Required tests:
+
+```text id="f3xbg2"
+prescription is blocked when required fields are missing
+prescription warns when patient allergy conflicts with selected drug
+prescription warning requires override reason
+prescription with allergy warning and override reason is allowed
+duplicate active medication triggers warning
+duplicate active medication requires override reason
+missing diagnosis blocks or warns according to configured policy
+prescription safety override is audited
+blocking safety errors do not create prescriptions
+completion is blocked when complaint is missing
+completion is blocked when diagnosis is missing
+completion is blocked when plan/disposition is missing
+completion does not change route status when blocked
+completion succeeds when checklist is satisfied
+completion blocked event is audited
+completion readiness payload renders in consultation page
+```
+
+Add config-specific tests if department-specific rules are added.
+
+---
+
+## 18. Existing Tests To Re-run
+
+Run Phase 1–7 consultation tests:
+
+```bash id="ebzqax"
+php artisan test tests\Feature\Consultations\ConsultationWorkflowSafetyPhase1Test.php
+php artisan test tests\Feature\Consultations\ConsultationJavascriptLifecyclePhase2Test.php
+php artisan test tests\Feature\Consultations\ConsultationStructurePhase3Test.php
+php artisan test tests\Feature\Consultations\ConsultationControllerExtractionPhase4Test.php
+php artisan test tests\Feature\Consultations\ConsultationServiceExtractionPhase5Test.php
+php artisan test tests\Feature\Consultations\ConsultationBrowserFixturePhase6Test.php
+php artisan test tests\Feature\Consultations\ConsultationClinicalSafetyPhase7Test.php
+```
+
+Focused neighbouring workflow tests:
+
+```bash id="cnqyb3"
+php artisan test tests\Feature\ConsultationRouteSessionWorkflowTest.php tests\Feature\ConsultationClinicalSectionsTest.php tests\Feature\InsuranceAwareClinicalPricingTest.php tests\Feature\LabWorkflowTest.php tests\Feature\PharmacyWorkflowTest.php tests\Feature\ServiceRenderingWorkflowTest.php
+```
+
+Browser smoke:
+
+```bash id="4sl7bk"
+npx playwright test tests-e2e/tests/consultation-workspace.spec.ts
+```
+
+Do not run the wide full suite unless explicitly instructed.
+
+---
+
+## 19. Localisation
+
+Add EN/FR keys for:
+
+```text id="ee0e3h"
+consultation.safety.prescription_warning
+consultation.safety.override_required
+consultation.safety.override_reason
+consultation.safety.allergy_conflict
+consultation.safety.duplicate_active_medication
+consultation.safety.missing_diagnosis
+consultation.safety.unusual_dose_unverified
+consultation.completion.ready
+consultation.completion.not_ready
+consultation.completion.missing_requirements
+consultation.completion.requirement.complaint
+consultation.completion.requirement.examination
+consultation.completion.requirement.diagnosis
+consultation.completion.requirement.plan_or_disposition
+consultation.completion.blocked
+consultation.completion.override_reason
 ```
 
 Run:
 
-```bash id="wv4rwr"
+```bash id="pujdn5"
 php scripts/localisation-audit.php
 php scripts/localisation-parity-check.php
 ```
 
 Expected:
 
-```text id="dtlz0g"
+```text id="i9nhrp"
 Active runtime candidates: 0
 EN/FR parity OK
 ```
 
 ---
 
-## 16. Accessibility and Responsiveness
+## 20. Verification
 
-Check:
+Run:
 
-```text id="n5uz80"
-keyboard navigation
-modal focus
-form labels
-aria attributes
-color-only indicators
-button labels
-table responsiveness
-mobile consultation workflow
-doctor tablet workflow
-```
-
-Recommend improvements.
-
----
-
-## 17. Testing Gap Analysis
-
-Inspect existing consultation tests.
-
-Find missing tests for:
-
-```text id="jwed52"
-consultation page loads
-privacy masking on consultation page
-diagnosis creation
-investigation request
-radiology request
-prescription creation
-procedure request
-follow-up creation
-consultation completion
-duplicate submit protection
-permission protection
-billing generation
-insurance pricing/coverage
-finalised consultation edit restrictions
-localisation
-view cache
-JS behaviour if covered by Playwright
-```
-
-Recommend focused tests and E2E tests.
-
----
-
-## 18. Deliverables
-
-Create these documents:
-
-```text id="xxwua5"
-docs/CONSULTATION_VIEW_GAP_ANALYSIS_REPORT.md
-docs/CONSULTATION_JS_REPETITION_AUDIT_REPORT.md
-docs/CONSULTATION_WORKFLOW_IMPROVEMENT_PLAN.md
-```
-
-## CONSULTATION_VIEW_GAP_ANALYSIS_REPORT.md
-
-Include:
-
-```text id="vj88aa"
-summary
-files inspected
-current page structure
-functional workflow coverage
-privacy/permission gaps
-clinical safety gaps
-billing gaps
-UI/UX gaps
-performance gaps
-testing gaps
-risk matrix
-recommended phases
-```
-
-## CONSULTATION_JS_REPETITION_AUDIT_REPORT.md
-
-Include:
-
-```text id="6gm3ml"
-all inline scripts found
-duplicated JS patterns
-event listener risks
-modal duplication risks
-AJAX duplication risks
-duplicate ID risks
-route/config duplication
-recommended JS architecture
-quick wins
-long-term refactor plan
-```
-
-## CONSULTATION_WORKFLOW_IMPROVEMENT_PLAN.md
-
-Include:
-
-```text id="pne0re"
-ideal consultation workflow
-missing/partial features
-recommended UI layout
-recommended service architecture
-recommended permission model
-recommended tests
-implementation phases
-```
-
----
-
-## 19. Recommended Output Format
-
-Provide a final summary with:
-
-```text id="vtn3zh"
-Top 10 risks
-Top 10 quick wins
-Top 10 structural improvements
-Recommended implementation phases
-Files most likely needing refactor
-Whether any critical patient privacy issue was found
-Whether any duplicate-submission risk was found
-Whether repetitive JS is caused by inline scripts/partials/event binding
-```
-
----
-
-## 20. Do Not Implement Yet
-
-This phase is analysis only.
-
-Do not refactor the page.
-
-Do not change JavaScript.
-
-Do not change routes.
-
-Do not change billing logic.
-
-Do not change permissions.
-
-Do not change database schema.
-
-Only create reports and, if useful, small read-only analysis commands.
-
----
-
-## 21. Verification
-
-Run safe verification only:
-
-```bash id="u86le6"
+```bash id="iifusd"
+npm run build
+php artisan view:cache
+php artisan view:clear
 php artisan route:list | grep consultation
 php artisan permissions:audit --strict
 php scripts/localisation-audit.php
 php scripts/localisation-parity-check.php
-git diff --check
+php artisan test tests\Feature\Consultations\ConsultationWorkflowSafetyPhase1Test.php
+php artisan test tests\Feature\Consultations\ConsultationJavascriptLifecyclePhase2Test.php
+php artisan test tests\Feature\Consultations\ConsultationStructurePhase3Test.php
+php artisan test tests\Feature\Consultations\ConsultationControllerExtractionPhase4Test.php
+php artisan test tests\Feature\Consultations\ConsultationServiceExtractionPhase5Test.php
+php artisan test tests\Feature\Consultations\ConsultationBrowserFixturePhase6Test.php
+php artisan test tests\Feature\Consultations\ConsultationClinicalSafetyPhase7Test.php
+php artisan test tests\Feature\ConsultationRouteSessionWorkflowTest.php tests\Feature\ConsultationClinicalSectionsTest.php tests\Feature\InsuranceAwareClinicalPricingTest.php tests\Feature\LabWorkflowTest.php tests\Feature\PharmacyWorkflowTest.php tests\Feature\ServiceRenderingWorkflowTest.php
+npx playwright test tests-e2e/tests/consultation-workspace.spec.ts
+git diff --check -- app database docs resources routes scripts tests tests-e2e lang
 ```
 
-Do not run the wide full test suite.
+Also address the generated build artifact issue separately:
 
-Do not run migrations.
+```bash id="xc0vn5"
+git status --short public/build
+```
 
-Do not apply destructive changes.
+Either restore unintended generated deletions or document why they are intentional.
+
+Do not run the wide full suite unless explicitly instructed.
+
+---
+
+## 21. Documentation
+
+Create:
+
+```text id="7v6j53"
+docs/CONSULTATION_WORKFLOW_STABILISATION_PHASE_7_CLINICAL_SAFETY_COMPLETION_REPORT.md
+```
+
+Include:
+
+```text id="z0283p"
+summary
+PrescriptionSafetyService design
+checks implemented
+checks deferred because required data does not exist
+override workflow
+audit events
+CompletionReadinessService design
+completion requirements
+completion blocking behaviour
+completion checklist UI
+permissions added if any
+Playwright coverage added
+tests added
+verification commands run
+generated public/build artifact caveat status
+known limitations
+next recommended phase
+```
+
+Known limitations may include:
+
+```text id="wfu2uo"
+drug-drug interaction data not available yet
+dose-range database not available yet
+full UI redesign deferred
+duplicate permission-name advisory pending
+wide full suite not run
+```
 
 ---
 
 ## 22. Acceptance Criteria
 
-This analysis phase is complete only when:
+Phase 7 is complete only when:
 
-```text id="wuqz1r"
-consultation view structure is fully mapped
-all consultation-related JS is inventoried
-repetitive JS root causes are identified
-duplicate event/submission risks are documented
-privacy/permission gaps are documented
-clinical safety gaps are documented
-billing/workflow gaps are documented
-UI/UX improvements are documented
-performance issues are documented
-test gaps are documented
-recommended JS refactor architecture is proposed
-recommended implementation phases are proposed
-three reports are created
-no production code behaviour is changed
+```text id="j0rnpt"
+PrescriptionSafetyService exists and is tested
+prescription required-field safety is enforced
+allergy conflict warning is implemented where data exists
+duplicate active medication warning is implemented
+override reason is required for overrideable warnings
+blocking prescription errors do not create prescriptions
+prescription safety overrides are audited
+CompletionReadinessService exists and is tested
+completion is blocked when required checklist items are missing
+completion does not change route status when blocked
+completion succeeds when checklist is satisfied
+completion blocked events are audited
+completion checklist/status is visible in the consultation UI
+Phase 2 JS contract remains stable
+Phase 1 guard/idempotency remains preserved
+Phase 6 Playwright smoke still passes
+npm build passes
+view cache compiles
+permissions audit passes
+localisation audit Active runtime candidates = 0
+EN/FR parity passes
+Phase 1-7 consultation tests pass
+focused neighbouring workflow tests pass
+documentation report is created
+generated public/build artifact caveat is resolved or explicitly documented
+wide full suite is not run unless explicitly requested
 ```
 
-Proceed with the Consultation View & Workflow full gap analysis now.
+Proceed with Consultation Workflow Stabilisation Phase 7 now.

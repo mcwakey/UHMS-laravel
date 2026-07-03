@@ -264,6 +264,15 @@ return [
         'referred_activated'        => 'Patient envoyé à :department et session activée.',
         'referred_queued'           => 'Patient mis en file pour :department.',
         'sent_to_investigation'     => 'Patient envoyé à :department pour investigation.',
+        'consultation_locked'       => 'Cette session de consultation est verrouillée et ne peut pas être modifiée.',
+        'consultation_completed_readonly' => 'Cette session de consultation est terminée et en lecture seule.',
+        'consultation_cancelled_readonly' => 'Cette session de consultation est annulée et en lecture seule.',
+        'duplicate_action_ignored'  => 'Action de consultation dupliquée ignorée.',
+        'duplicate_action_replayed' => 'Action de consultation dupliquée rejouée.',
+        'duplicate_action_payload_mismatch' => 'Cette clé d\'idempotence a déjà été utilisée avec des détails différents.',
+        'invalid_consultation_route'=> 'La session de consultation sélectionnée n\'appartient pas à cette visite.',
+        'consultation_route_required' => 'Une session de consultation est requise pour cette action.',
+        'action_not_allowed_for_session' => 'Vous n\'êtes pas autorisé à effectuer cette action pour cette session de consultation.',
     ],
 
     /* ------------------------------------------------------------------ */

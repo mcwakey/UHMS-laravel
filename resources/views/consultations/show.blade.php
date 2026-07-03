@@ -205,434 +205,7 @@
         : ($selectedRoute?->department?->name ?? __('consultations.no_active_session'));
 @endphp
 
-{{-- ============================================================ --}}
-{{-- CONSULTATION SESSIONS --}}
-{{-- ============================================================ --}}
-<div id="sessionsDrawer">
-    <div id="sessionsDrawerHandle" role="button" aria-expanded="true" aria-controls="sessionsDrawerBody" data-sessions-drawer-toggle>
-        <i class="ti ti-route fs-5"></i>
-        <span class="fw-semibold small">{{ __('consultations.workspace.sessions_for_visit') }}</span>
-        <span class="badge bg-white text-primary rounded-pill ms-1">{{ $sessions->count() }}</span>
-        <i class="ti ti-chevron-up ms-auto fs-5"></i>
-    </div>
-    <div id="sessionsDrawerBody">
-        <div class="table-responsive">
-            <table class="table table-sm mb-0 align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>{{ __('common.department') }}</th>
-                        <th>{{ __('consultations.linked_services') }}</th>
-                        <th>{{ __('consultations.workspace.contributors') }}</th>
-                        <!-- <th>{{ __('common.status') }}</th> -->
-                        <!-- <th>{{ __('consultations.started') }}</th> -->
-                        <th>{{ __('common.actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($sessions as $session)
-                    @php
-                        $rowClass = $selectedRoute && $selectedRoute->id === $session->id ? 'is-current' : '';
-                        $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_COMPLETED ? ' is-completed' : '';
-                        $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_CANCELLED ? ' is-cancelled' : '';
-                        $sessionServiceNames = $routeServiceNames($session);
-                        $sessionLabel = $session->isEmergencySession() ? __('consultations.emergency_department_session') : ($session->department?->name ?? '-');
-                    @endphp
-                    <tr class="session-route-row {{ trim($rowClass) }}">
-                        <td class="fw-medium">
-                            {{ $sessionLabel }}
-                            @if($session->isEmergencySession())
-                                <span class="badge bg-danger ms-1">{{ __('consultations.workspace.emergency') }}</span>
-                            @endif
-                        </td>
-                        <td>
-                            {{ $sessionServiceNames->implode(', ') ?: '-' }}
-                            <x-status-badge :status="$session->status" domain="consultation_session" />
-                            @if($selectedRoute && $selectedRoute->id === $session->id)
-                                <span class="badge bg-primary ms-1">{{ __('consultations.workspace.current') }}</span>
-                            @endif
-                        </td>
-                        <!-- <td>{{ $session->doctor ? 'Dr. ' . $session->doctor->full_name : __('consultations.unassigned') }}</td> -->
-                        <td>{{ $contributors->isNotEmpty() ? $contributors->implode(', ') : __('consultations.workspace.no_contributors_yet') }}</td>
-                        <!-- <td><x-status-badge :status="$session->status" domain="consultation_session" /></td> -->
-                        <!-- <td>
-                            <div class="small">{{ $session->started_at?->format('d M, h:i A') ?? '—' }}</div>
-                            @if($session->completed_at)<div class="small text-muted">{{ $session->completed_at->format('d M, h:i A') }}</div>@endif
-                        </td> -->
-                        <td>
-                            <div class="d-flex flex-wrap gap-1">
-                                <a href="{{ route('admin.consultations.routes.show', [$visit, $session]) }}" class="btn btn-xs btn-outline-primary">
-                                    <i class="ti ti-eye"></i> Open
-                                </a>
-                                @if($session->status !== \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
-                                @endif
-                                @can('consultations.create')
-                                @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
-                                    <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $session]) }}">
-                                        @csrf
-                                        <button class="btn btn-xs btn-primary" type="submit">Start</button>
-                                    </form>
-                                @endif
-                                @if($session->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
-                                    <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $session]) }}">
-                                        @csrf
-                                        <button class="btn btn-xs btn-success" type="submit" onclick="return confirm(@js(__('consultations.workspace.complete_current_session')))">{{ __('consultations.workspace.complete_current_session') }}</button>
-                                    </form>
-                                @endif
-                                @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
-                                    <form method="POST" action="{{ route('admin.consultations.routes.cancel', [$visit, $session]) }}">
-                                        @csrf
-                                        <button class="btn btn-xs btn-outline-danger" type="submit" onclick="return confirm(@js('Cancel this queued session?'))">Cancel</button>
-                                    </form>
-                                @endif
-                                @endcan
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="6"><x-empty-state message="No consultation sessions routed for this visit." /></td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-{{-- ============================================================ --}}
-{{-- CURRENT SESSION HEADER --}}
-{{-- ============================================================ --}}
-<!-- <div class="card mb-3">
-    <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
-        <div>
-            <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-primary"></i>{{ __('consultations.workspace.current_session') }}</h6>
-            {{-- <small class="text-muted">Visit {{ $visit->visit_number }} · {{ $visit->patient->full_name }}</small> --}}
-            <div class="fw-semibold ms-2">
-                {{ $selectedRouteLabel }}
-                @if($isEmergencyRoute)
-                    <span class="badge bg-danger ms-1">{{ __('consultations.workspace.emergency') }}</span>
-                @endif
-            </div>
-        </div>
-            {{-- <div class="session-summary-item">
-                <div class="text-muted small">Department</div>
-                <div class="fw-semibold">{{ $selectedRoute?->department?->name ?? 'No active session' }}</div>
-            </div> --}}
-            <div>
-                <div class="text-muted small">{{ __('consultations.linked_services') }}</div>
-                <div class="fw-semibold">{{ $selectedRouteServiceNames->implode(', ') ?: '-' }}</div>
-            </div>
-            <div>
-                <div class="text-muted small">{{ __('consultations.workspace.contributors') }}</div>
-                {{-- <div class="fw-semibold">{{ $selectedRoute?->doctor ? 'Dr. '.$selectedRoute->doctor->full_name : 'Unassigned' }}</div> --}}
-                <div class="small text-muted">{{ $contributors->isNotEmpty() ? $contributors->implode(', ') : __('consultations.workspace.no_contributors_yet') }}</div>
-            </div>
-
-        <div class="d-flex flex-wrap gap-2">
-            {{-- <x-status-badge :status="$visit->status" />
-            @if($selectedRoute)
-                <span class="badge bg-{{ $routeBadge($selectedRoute->status) }}">{{ $selectedRoute->status }}</span>
-            @endif --}}
-            @if($selectedRoute)
-                @if(in_array($selectedRoute->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
-                    @can('consultations.create')
-                    <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $selectedRoute]) }}">
-                        @csrf
-                        <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-player-play me-1"></i>{{ __('consultations.workspace.start_session') }}</button>
-                    </form>
-                    @endcan
-                @endif
-                @if($selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
-                    @can('consultations.create')
-                    <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $selectedRoute]) }}">
-                        @csrf
-                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm(@js(__('consultations.workspace.complete_session_confirm')))">
-                            <i class="ti ti-check me-1"></i>{{ __('consultations.workspace.complete_current_session') }}
-                        </button>
-                    </form>
-                    @endcan
-                @endif
-            @endif
-        </div>
-    </div>
-    {{-- <div class="card-body"> --}}
-        {{-- @if($routeSelectorRequired)
-            <div class="alert alert-warning py-2 mb-3">
-                <strong>Select a consultation session.</strong>
-                This visit has multiple consultation routes and none is active yet.
-            </div>
-        @endif --}}
-        {{-- <div class="session-summary-grid">
-            <div class="session-summary-item">
-                <div class="text-muted small">Doctor</div>
-                <div class="fw-semibold">{{ $selectedRoute?->doctor ? 'Dr. ' . $selectedRoute->doctor->full_name : 'Unassigned' }}</div>
-            </div>
-            <div class="session-summary-item">
-                <div class="text-muted small">Medical Record</div>
-                <div class="fw-semibold">{{ $record ? 'MR-' . str_pad((string) $record->id, 5, '0', STR_PAD_LEFT) : '-' }}</div>
-            </div>
-            <div class="session-summary-item">
-                <div class="text-muted small">Visit Type</div>
-                <div class="fw-semibold">{{ $visit->visit_type?->translatedLabel() ?? '-' }}</div>
-            </div>
-            <div class="session-summary-item">
-                <div class="text-muted small">Insurance</div>
-                <div class="fw-semibold">{{ $insuranceLabel }}</div>
-            </div>
-        </div> --}}
-        {{-- <div class="d-flex flex-wrap gap-2 mt-3">
-            @if($selectedRoute)
-                @if(in_array($selectedRoute->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
-                    @can('consultations.create')
-                    <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $selectedRoute]) }}">
-                        @csrf
-                        <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-player-play me-1"></i>Start Session</button>
-                    </form>
-                    @endcan
-                @endif
-                @if($selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
-                    @can('consultations.create')
-                    <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $selectedRoute]) }}">
-                        @csrf
-                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm(@js('Complete this consultation session?'))">
-                            <i class="ti ti-check me-1"></i>Complete Current Session
-                        </button>
-                    </form>
-                    @endcan
-                @endif
-            @endif
-            @can('consultations.create')
-            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#sendSessionModal">
-                <i class="ti ti-transfer me-1"></i>Send to Another Session
-            </button>
-            @endcan
-        </div> --}}
-    {{-- </div> --}}
-</div> -->
-
-@if($isEmergencyRoute && $emergencyCase)
-<div class="card mb-3 border-danger-subtle">
-    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <div>
-            <h6 class="fw-bold mb-0"><i class="ti ti-urgent me-1 text-danger"></i>Emergency Department Session</h6>
-            <small class="text-muted">{{ $emergencyCase->emergency_number }} · {{ $emergencyCase->arrival_time?->format('d M Y, h:i A') ?? $emergencyCase->created_at?->format('d M Y, h:i A') }}</small>
-        </div>
-        <div class="d-flex flex-wrap gap-1">
-            <span class="badge bg-danger">{{ str_replace('_', ' ', $emergencyCase->emergency_status) }}</span>
-            @if($emergencyCase->current_triage_category)
-                <span class="badge {{ $emergencyCase->triage_badge_class }}">{{ $emergencyCase->current_triage_category }}</span>
-            @endif
-            @if($emergencyReadOnly)
-                <span class="badge bg-secondary">Read only</span>
-            @endif
-        </div>
-    </div>
-    <div class="card-body">
-        @if($emergencyReadOnly)
-            <div class="alert alert-secondary py-2 small mb-3">
-                This emergency session has been disposed or cancelled. Clinical details are shown as a completed session record.
-            </div>
-        @endif
-
-        <div class="session-summary-grid mb-3">
-            <div class="session-summary-item">
-                <div class="text-muted small">Chief Complaint</div>
-                <div class="fw-semibold">{{ $emergencyCase->chief_complaint ?: '-' }}</div>
-            </div>
-            <div class="session-summary-item">
-                <div class="text-muted small">Main Doctor</div>
-                <div class="fw-semibold">{{ $emergencySession?->mainDoctor?->full_name ?? $emergencyCase->assignedDoctor?->full_name ?? 'Unassigned' }}</div>
-            </div>
-            <div class="session-summary-item">
-                <div class="text-muted small">Primary Nurse</div>
-                <div class="fw-semibold">{{ $emergencySession?->primaryNurse?->full_name ?? $emergencyCase->assignedNurse?->full_name ?? 'Unassigned' }}</div>
-            </div>
-            <div class="session-summary-item">
-                <div class="text-muted small">Medical Record</div>
-                <div class="fw-semibold">{{ $emergencySession?->medical_record_id ? 'MR-'.str_pad((string) $emergencySession->medical_record_id, 5, '0', STR_PAD_LEFT) : '-' }}</div>
-            </div>
-        </div>
-
-        <div class="row g-3">
-            {{-- <div class="col-lg-4">
-                <div class="border rounded p-2 h-100">
-                    <div class="fw-semibold small mb-2"><i class="ti ti-heartbeat me-1 text-danger"></i>Triage & Vitals</div>
-                    @php $latestEmergencyVitals = $emergencyCase->latestVitals; @endphp
-                    <div class="small text-muted mb-1">Triaged by {{ $emergencyCase->triagedBy?->full_name ?? '-' }}</div>
-                    <div class="small mb-2">{{ $emergencyCase->triage_notes ?: 'No triage notes recorded.' }}</div>
-                    @if($latestEmergencyVitals)
-                        <div class="d-flex flex-wrap gap-1 small">
-                            @if($latestEmergencyVitals->blood_pressure)<span class="badge bg-light text-dark">BP {{ $latestEmergencyVitals->blood_pressure }}</span>@endif
-                            @if($latestEmergencyVitals->heart_rate)<span class="badge bg-light text-dark">HR {{ $latestEmergencyVitals->heart_rate }}</span>@endif
-                            @if($latestEmergencyVitals->respiratory_rate)<span class="badge bg-light text-dark">RR {{ $latestEmergencyVitals->respiratory_rate }}</span>@endif
-                            @if($latestEmergencyVitals->temperature)<span class="badge bg-light text-dark">Temp {{ $latestEmergencyVitals->temperature }}</span>@endif
-                            @if($latestEmergencyVitals->spo2)<span class="badge bg-light text-dark">SpO2 {{ $latestEmergencyVitals->spo2 }}%</span>@endif
-                        </div>
-                    @endif
-                </div>
-            </div> --}}
-            <div class="col-lg-12">
-                <div class="border rounded p-2 h-100">
-                    <div class="d-flex fw-semibold small mb-2"><i class="ti ti-notes me-1 text-primary"></i>Emergency Notes</div>
-                    <div class="row g-2">
-                        @forelse($emergencyCase->notes->take(3) as $note)
-                        <div class="col-lg-6">
-                            <div class="small border-bottom pb-1 mb-1 h-100">
-                                <span class="badge bg-light text-dark">{{ str_replace('_', ' ', $note->note_type) }}</span>
-                                {{ Str::limit($note->content, 90) }}
-                                <div class="text-muted">{{ $note->creator?->full_name ?? 'Unknown user' }} · {{ $note->created_at?->format('d M, h:i A') }}</div>
-                            </div>
-                        </div>
-                        @empty
-                        <div class="col-12 small text-muted">No emergency notes recorded.</div>
-                        @endforelse
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row g-3 mt-0">
-            <div class="col-lg-4">
-                <div class="border rounded p-2 h-100">
-                    <div class="fw-semibold small mb-2"><i class="ti ti-pill me-1 text-success"></i>Medication / MAR</div>
-                    @forelse($emergencyCase->medicationOrders->take(4) as $order)
-                        <div class="small border-bottom pb-1 mb-1">
-                            <div class="fw-semibold">{{ $order->display_name }}</div>
-                            <div class="text-muted">{{ trim(($order->dose ?: '').' '.($order->dose_unit ?: '').' '.($order->route ?: '')) ?: '-' }} · <x-status-badge :status="$order->status" domain="med_order" size="sm" /></div>
-                        </div>
-                    @empty
-                        <div class="small text-muted">No emergency medications ordered.</div>
-                    @endforelse
-                </div>
-            </div>
-            <div class="col-lg-4">
-                <div class="border rounded p-2 h-100">
-                    <div class="fw-semibold small mb-2"><i class="ti ti-microscope me-1 text-info"></i>Investigations</div>
-                    @forelse($emergencyCase->labRequests->take(4) as $request)
-                        <div class="small">{{ $request->items->map(fn($item) => $item->display_name ?? $item->name)->filter()->implode(', ') ?: $request->request_number }} <x-status-badge :status="$request->status" domain="lab" size="sm" /></div>
-                    @empty
-                        <div class="small text-muted">No investigations requested.</div>
-                    @endforelse
-                </div>
-            </div>
-            <div class="col-lg-4">
-                <div class="border rounded p-2 h-100">
-                    <div class="fw-semibold small mb-2"><i class="ti ti-activity me-1 text-warning"></i>Procedures</div>
-                    @forelse($emergencyCase->procedureRequests->take(4) as $procedure)
-                        <div class="small">{{ $procedure->service?->name ?? $procedure->procedure?->name ?? 'Procedure request' }} <span class="text-muted">{{ $procedure->status?->translatedLabel() ?? $procedure->status }}</span></div>
-                    @empty
-                        <div class="small text-muted">No procedures requested.</div>
-                    @endforelse
-                </div>
-            </div>
-            {{-- <div class="col-lg-4">
-                <div class="border rounded p-2 h-100">
-                    <div class="fw-semibold small mb-2"><i class="ti ti-package me-1 text-secondary"></i>Consumables</div>
-                    @forelse($emergencyCase->consumableUsages->take(4) as $usage)
-                        <div class="small">{{ $usage->product?->name ?? 'Consumable' }} x {{ (float) $usage->quantity_used }} @if($usage->invoice_item_id)<span class="badge bg-success-subtle text-success">Billed</span>@endif</div>
-                    @empty
-                        <div class="small text-muted">No consumables used.</div>
-                    @endforelse
-                </div>
-            </div> --}}
-        </div>
-
-        <div class="mt-3">
-            <a href="{{ route('admin.emergency.cases.show', $emergencyCase) }}" class="btn btn-sm btn-outline-danger">
-                <i class="ti ti-external-link me-1"></i>Open Emergency Control Sheet
-            </a>
-        </div>
-    </div>
-</div>
-@endif
-
-{{-- ============================================================ --}}
-{{-- VITALS — STATIC SECTION (always visible) --}}
-{{-- ============================================================ --}}
-<div class="card mb-3 vitals-static">
-    <div class="card-body py-2">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-            <h6 class="fw-bold mb-0 small"><i class="ti ti-heartbeat me-1 text-danger"></i>{{ __('consultations.latest_vitals') }}</h6>
-            @php
-                $triageScore = $visit->triage_score;
-                if (!$triageScore && $vitals->count() > 0) {
-                    $lv = $vitals->first();
-                    $triageScore = \App\Enums\TriageScore::compute([
-                        'temperature'      => $lv->temperature,
-                        'heart_rate'       => $lv->heart_rate,
-                        'respiratory_rate' => $lv->respiratory_rate,
-                        'spo2'             => $lv->spo2,
-                    ]);
-                }
-            @endphp
-            @if($triageScore)
-                <span class="badge bg-{{ $triageScore->color() }} triage-badge">
-                    <i class="ti {{ $triageScore->icon() }} me-1"></i>{{ $triageScore->translatedLabel() }}
-                </span>
-            @else
-                <span class="badge bg-secondary triage-badge"><i class="ti ti-help me-1"></i>{{ __('consultations.workspace.triage_not_available') }}</span>
-            @endif
-        </div>
-
-        @if($vitals->count() > 0)
-            @php $lv = $vitals->first(); @endphp
-            <div class="row g-2">
-                <div class="col-6 col-sm-4 col-md-2 text-center">
-                    <div class="vitals-label">{{ __('consultations.workspace.blood_pressure') }}</div>
-                    <div class="vitals-val">{{ $lv->blood_pressure ?? '—' }}</div>
-                    <div class="vitals-label">mmHg</div>
-                </div>
-                <div class="col-6 col-sm-4 col-md-2 text-center">
-                    <div class="vitals-label">{{ __('consultations.workspace.heart_rate') }}</div>
-                    <div class="vitals-val">{{ $lv->heart_rate ?? '—' }}</div>
-                    <div class="vitals-label">bpm</div>
-                </div>
-                <div class="col-6 col-sm-4 col-md-2 text-center">
-                    <div class="vitals-label">{{ __('consultations.workspace.temperature') }}</div>
-                    <div class="vitals-val">{{ $lv->temperature ?? '—' }}</div>
-                    <div class="vitals-label">°C</div>
-                </div>
-                <div class="col-6 col-sm-4 col-md-2 text-center">
-                    <div class="vitals-label">SpO₂</div>
-                    <div class="vitals-val">{{ $lv->spo2 ?? '—' }}</div>
-                    <div class="vitals-label">%</div>
-                </div>
-                <div class="col-6 col-sm-4 col-md-2 text-center">
-                    <div class="vitals-label">{{ __('consultations.workspace.respiratory_rate_short') }}</div>
-                    <div class="vitals-val">{{ $lv->respiratory_rate ?? '—' }}</div>
-                    <div class="vitals-label">/min</div>
-                </div>
-                <div class="col-6 col-sm-4 col-md-2 text-center">
-                    <div class="vitals-label">{{ __('consultations.workspace.bmi') }}</div>
-                    <div class="vitals-val {{ $lv->bmi ? ($lv->bmi < 18.5 ? 'text-warning' : ($lv->bmi < 25 ? 'text-success' : ($lv->bmi < 30 ? 'text-warning' : 'text-danger'))) : '' }}">
-                        {{ $lv->bmi ?? '—' }}
-                    </div>
-                    <div class="vitals-label">
-                        @if($lv->bmi)
-                            @if($lv->bmi < 18.5) {{ __('consultations.workspace.underweight') }}
-                            @elseif($lv->bmi < 25) {{ __('consultations.workspace.normal') }}
-                            @elseif($lv->bmi < 30) {{ __('consultations.workspace.overweight') }}
-                            @else {{ __('consultations.workspace.obese') }} @endif
-                        @else kg/m² @endif
-                    </div>
-                </div>
-            </div>
-            <div class="text-muted mt-1" style="font-size:0.7rem">
-                <i class="ti ti-clock me-1"></i>{{ __('consultations.workspace.recorded_by', ['time' => $lv->recorded_at->diffForHumans(), 'name' => $lv->recordedBy?->full_name ?? __('consultations.workspace.unknown')]) }}
-                @if($vitals->count() > 1)
-                    &middot; <span class="text-primary">{{ trans_choice('consultations.workspace.earlier_readings', $vitals->count() - 1, ['count' => $vitals->count() - 1]) }}</span>
-                @endif
-            </div>
-        @else
-            <div class="text-muted small py-1">
-                <i class="ti ti-heartbeat me-1"></i>{{ __('consultations.workspace.no_vitals') }}
-                @can('vitals.create')
-                    <a href="{{ route('admin.vitals.create', ['visit_id' => $visit->id]) }}" class="ms-2">{{ __('consultations.workspace.record_now') }}</a>
-                @endcan
-            </div>
-        @endif
-    </div>
-</div>
+@include('consultations.partials.session-context')
 
 {{-- ============================================================ --}}
 {{-- CONSULTATION GATING — Start Consultation banner --}}
@@ -692,166 +265,7 @@
     <div class="col-lg-12">
         <div class="row g-3">
 
-            {{-- =================== LEFT SIDEBAR =================== --}}
-            <div class="col-lg-12 consultation-side-column consultation-actions-column">
-                <div class="card mb-3">
-                    <div class="card-body p-2">
-                        <nav class="consultation-sidebar">
-                            <ul class="nav flex-column gap-1" id="consultationTabs" role="tablist">
-                                <li class="nav-item">
-                                    <a class="nav-link active" id="tab-complaints" href="#complaints-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-message-report me-1"></i>{{ __('consultations.workspace.presenting_complaints') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-complaints">{{ $record?->complaints?->count() ?? 0 }}</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-hopc" href="#hopc-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-file-description me-1"></i>{{ __('consultations.workspace.hopc') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-hopc">{{ $record?->historiesOfPresentingComplaint?->count() ?? 0 }}</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-examination" href="#examination-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-zoom-check me-1"></i>{{ __('consultations.workspace.examination') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-examination">{{ $record?->physicalExaminations?->count() ?? 0 }}</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-diagnoses" href="#diagnoses-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-report-medical me-1"></i>{{ __('consultations.workspace.diagnoses') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-diagnoses">{{ $record?->diagnoses?->count() ?? 0 }}</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-investigations" href="#investigations-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-test-pipe me-1"></i>{{ __('consultations.workspace.investigations') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-investigations">{{ $record?->investigations?->count() ?? 0 }}</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-treatments" href="#treatments-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-vaccine me-1"></i>{{ __('consultations.workspace.treatments') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-treatments">{{ $record?->treatments?->count() ?? 0 }}</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-prescriptions" href="#prescriptions-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-prescription me-1"></i>{{ __('consultations.workspace.prescriptions') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-prescriptions">{{ $record?->prescriptions?->count() ?? 0 }}</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-procedures" href="#procedures-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-activity-heartbeat me-1"></i>{{ __('consultations.workspace.procedures') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-procedures">{{ $procedureRequests->count() }}</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-tasks" href="#tasks-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-checklist me-1"></i>{{ __('consultations.workspace.tasks') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-tasks">{{ $record?->tasks?->count() ?? 0 }}</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-summary" href="#summary-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-notes me-1"></i>{{ __('consultations.workspace.notes_summary') }}
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-patterns" href="#patterns-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-template me-1"></i>{{ __('consultations.workspace.patterns') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $patterns->count() }}</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-
-                <div class="card consultation-quick-actions">
-                    <div class="card-header py-2">
-                        <h6 class="fw-bold mb-0 small">{{ __('consultations.workspace.quick_actions') }}</h6>
-                    </div>
-                    <div class="card-body p-2">
-                        <div class="d-grid gap-2">
-                            <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="offcanvas" data-bs-target="#consultationPreviewOffcanvas" aria-controls="consultationPreviewOffcanvas">
-                                <i class="ti ti-history me-1"></i>{{ __('consultations.workspace.preview') }}
-                            </button>
-                            <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
-                                <i class="ti ti-eye me-1"></i>{{ __('consultations.workspace.view_visit') }}
-                            </a>
-                            <!-- <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#followUpAppointmentModal" @disabled(! $selectedRoute) title="{{ $selectedRoute ? __('consultations.workspace.set_next_appointment') : __('consultations.workspace.select_session_first') }}">
-                                <i class="ti ti-calendar-plus me-1"></i>{{ $followUpAppointment ? __('consultations.workspace.update_next_appointment') : __('consultations.workspace.next_appointment') }}
-                                @if($followUpAppointment)
-                                    <span class="badge bg-primary-subtle text-primary ms-1">{{ __('consultations.workspace.set') }}</span>
-                                @endif
-                            </button> -->
-                            @can('consultations.create')
-                            <button type="button" class="btn btn-outline-purple btn-sm" data-bs-toggle="modal" data-bs-target="#savePatternModal">
-                                <i class="ti ti-template me-1"></i>{{ __('consultations.workspace.save_pattern') }}
-                            </button>
-                            @endcan
-                            @if($visit->status->allowedTransitions())
-                            <hr class="my-1">
-                            <small class="text-muted fw-bold px-1">{{ __('consultations.workspace.transition_visit') }}</small>
-                            @foreach($visit->status->allowedTransitions() as $nextStatus)
-                                @if($nextStatus === \App\Enums\VisitStatus::ADMITTING)
-                                {{-- Special admit button → go straight to admission form --}}
-                                <form method="POST" action="{{ route('admin.consultations.transition', $visit) }}">
-                                    @csrf @method('PATCH')
-                                    <input type="hidden" name="status" value="{{ $nextStatus->value }}">
-                                    <button type="submit" class="btn btn-warning btn-sm w-100"
-                                            onclick="return confirm(@js(__('consultations.confirm_admit_patient')))">
-                                        <i class="ti ti-bed me-1"></i>{{ __('consultations.workspace.admit_patient') }}
-                                    </button>
-                                </form>
-                                @elseif($nextStatus === \App\Enums\VisitStatus::COMPLETED)
-
-                                <form method="POST" action="{{ route('admin.consultations.transition', $visit) }}">
-                                    @csrf @method('PATCH')
-                                    <input type="hidden" name="status" value="{{ $nextStatus->value }}">
-                                    <button type="submit" class="btn btn-success btn-sm w-100"
-                                            onclick="return confirm(@js(__('consultations.confirm_complete')))">
-                                        <i class="ti ti-check me-1"></i>{{ __('consultations.workspace.complete_consultation') }}
-                                    </button>
-                                </form>
-                                @elseif($nextStatus === \App\Enums\VisitStatus::CANCELLED)
-
-                                <form method="POST" action="{{ route('admin.consultations.transition', $visit) }}">
-                                    @csrf @method('PATCH')
-                                    <input type="hidden" name="status" value="{{ $nextStatus->value }}">
-                                    <button type="submit" class="btn btn-danger btn-sm w-100"
-                                            onclick="return confirm(@js(__('consultations.confirm_cancel')))">
-                                        <i class="ti ti-trash me-1"></i>{{ __('consultations.workspace.cancel_consultation') }}
-                                    </button>
-                                </form>
-
-                                {{-- @else
-                                <form method="POST" action="{{ route('admin.consultations.transition', $visit) }}">
-                                    @csrf @method('PATCH')
-                                    <input type="hidden" name="status" value="{{ $nextStatus->value }}">
-                                    <button type="submit" class="btn btn-{{ $nextStatus->color() }} btn-sm w-100"
-                                            onclick="return confirm('Move to {{ $nextStatus->translatedLabel() }}?')">
-                                        <i class="ti ti-arrow-right me-1"></i>{{ $nextStatus->translatedLabel() }}
-                                    </button>
-                                </form> --}}
-                                @endif
-                            @endforeach
-                            @endif
-                            @if($visit->status === \App\Enums\VisitStatus::CONSULTING)
-                            <hr class="my-1">
-                            <small class="text-muted fw-bold px-1">{{ __('consultations.workspace.session_routing') }}</small>
-                            <button type="button" class="btn btn-outline-indigo btn-sm w-100 mb-1" data-bs-toggle="modal" data-bs-target="#sendSessionModal">
-                                <i class="ti ti-transfer me-1"></i>{{ __('consultations.workspace.transfer_session') }}
-                            </button>
-                            {{-- <button type="button" class="btn btn-outline-purple btn-sm w-100" data-bs-toggle="modal" data-bs-target="#investigationModal">
-                                <i class="ti ti-test-pipe me-1"></i>Send to Invest.
-                            </button> --}}
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
+            @include('consultations.partials.workflow-sidebar')
             {{-- =================== MAIN CONTENT =================== --}}
             <div class="col-lg-12 consultation-main-column">
                 <div class="tab-content" id="consultationTabContent">
@@ -871,8 +285,9 @@
                                 @can('consultations.create')
                                 <div class="collapse mb-3" id="addComplaintForm">
                                     <div class="card card-body bg-light">
-                                        <form data-ajax-form="complaints" action="{{ route('admin.consultations.complaints.store', $visit) }}" method="POST" onsubmit="saveTabBeforeSubmit('complaints-section')">
+                                        <form data-ajax-form="complaints" data-consultation-form="complaints" data-refresh-section="complaints" data-route-context-required="true" action="{{ route('admin.consultations.complaints.store', $visit) }}" method="POST">
                                             @csrf
+                                            <x-consultation-idempotency-key action="complaint.create" />
                                             <div class="row g-2">
                                                 <div class="col-12">
                                                     <label class="form-label small">Complaint <span class="text-danger">*</span></label>
@@ -961,6 +376,7 @@
                                                         ];
                                                     @endphp
                                                     <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                            data-consultation-action="edit-entry"
                                                             data-entry-type="complaint"
                                                             data-url="{{ route('admin.consultations.complaints.update', $complaint) }}"
                                                             data-entry='@json($editEntryPayload)'>
@@ -969,6 +385,7 @@
                                                     @endif
                                                     @if($canDeleteEntry($complaint))
                                                     <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                                            data-consultation-action="delete-entry"
                                                             data-url="{{ route('admin.consultations.complaints.destroy', $complaint) }}"
                                                             data-target="#complaint-{{ $complaint->id }}"
                                                             data-badge="badge-complaints"
@@ -1014,8 +431,9 @@
                                 @can('consultations.create')
                                 <div class="collapse mb-3" id="addHopcForm">
                                     <div class="card card-body bg-light">
-                                        <form data-ajax-form="hopc" action="{{ route('admin.consultations.hopc.store', $visit) }}" method="POST" onsubmit="saveTabBeforeSubmit('hopc-section')">
+                                        <form data-ajax-form="hopc" data-consultation-form="hopc" data-refresh-section="hopc" data-route-context-required="true" action="{{ route('admin.consultations.hopc.store', $visit) }}" method="POST">
                                             @csrf
+                                            <x-consultation-idempotency-key action="hopc.create" />
                                             <div class="row g-2">
                                                 <div class="col-12">
                                                     <label class="form-label small">Link to Complaint <small class="text-muted">(optional)</small></label>
@@ -1078,6 +496,7 @@
                                                         $editEntryPayload = ['content' => $hopc->content, 'complaint_id' => $hopc->complaint_id, 'onset' => $hopc->onset, 'duration' => $hopc->duration, 'location' => $hopc->location, 'severity' => $hopc->severity, 'aggravating_factors' => $hopc->aggravating_factors, 'relieving_factors' => $hopc->relieving_factors, 'associated_symptoms' => $hopc->associated_symptoms];
                                                     @endphp
                                                     <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                            data-consultation-action="edit-entry"
                                                             data-entry-type="hopc"
                                                             data-url="{{ route('admin.consultations.hopc.update', $hopc) }}"
                                                             data-entry='@json($editEntryPayload)'>
@@ -1086,6 +505,7 @@
                                                     @endif
                                                     @if($canDeleteEntry($hopc))
                                                     <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                                            data-consultation-action="delete-entry"
                                                             data-url="{{ route('admin.consultations.hopc.destroy', $hopc) }}"
                                                             data-target="#hopc-{{ $hopc->id }}"
                                                             data-badge="badge-hopc"
@@ -1123,8 +543,9 @@
                                 @can('consultations.create')
                                 <div class="collapse mb-3" id="addExaminationForm">
                                     <div class="card card-body bg-light">
-                                        <form data-ajax-form="examination" action="{{ route('admin.consultations.examinations.store', $visit) }}" method="POST" onsubmit="saveTabBeforeSubmit('examination-section')">
+                                        <form data-ajax-form="examination" data-consultation-form="examination" data-refresh-section="examination" data-route-context-required="true" action="{{ route('admin.consultations.examinations.store', $visit) }}" method="POST">
                                             @csrf
+                                            <x-consultation-idempotency-key action="examination.create" />
                                             <div class="row g-2">
                                                 <div class="col-12">
                                                     <label class="form-label small">Findings <span class="text-danger">*</span></label>
@@ -1174,6 +595,7 @@
                                                         $editEntryPayload = ['findings' => $exam->findings, 'general_examination' => $exam->general_examination, 'systemic_examination' => $exam->systemic_examination, 'cardiovascular' => $exam->cardiovascular, 'respiratory' => $exam->respiratory, 'gastrointestinal' => $exam->gastrointestinal, 'central_nervous_system' => $exam->central_nervous_system, 'specialty_examination' => $exam->specialty_examination, 'local_examination' => $exam->local_examination, 'notes' => $exam->notes];
                                                     @endphp
                                                     <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                            data-consultation-action="edit-entry"
                                                             data-entry-type="examination"
                                                             data-url="{{ route('admin.consultations.examinations.update', $exam) }}"
                                                             data-entry='@json($editEntryPayload)'>
@@ -1182,6 +604,7 @@
                                                     @endif
                                                     @if($canDeleteEntry($exam))
                                                     <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                                            data-consultation-action="delete-entry"
                                                             data-url="{{ route('admin.consultations.examinations.destroy', $exam) }}"
                                                             data-target="#examination-{{ $exam->id }}"
                                                             data-badge="badge-examination"
@@ -1219,8 +642,9 @@
                                 @can('consultations.create')
                                 <div class="collapse mb-3" id="addDiagnosisForm">
                                     <div class="card card-body bg-light">
-                                        <form data-ajax-form="diagnoses" action="{{ route('admin.consultations.diagnoses.store', $visit) }}" method="POST" onsubmit="saveTabBeforeSubmit('diagnoses-section')">
+                                        <form data-ajax-form="diagnoses" data-consultation-form="diagnoses" data-refresh-section="diagnoses" data-route-context-required="true" action="{{ route('admin.consultations.diagnoses.store', $visit) }}" method="POST">
                                             @csrf
+                                            <x-consultation-idempotency-key action="diagnosis.create" />
                                             <div class="row g-2">
                                                 <div class="col-12">
                                                     <label class="form-label small">ICD-10 <small class="text-muted">(optional search)</small></label>
@@ -1296,6 +720,7 @@
                                                         $editEntryPayload = ['description' => $diagnosis->description, 'icd_code' => $diagnosis->icd_code, 'icd_code_id' => $diagnosis->icd_code_id, 'type' => $diagnosis->type, 'notes' => $diagnosis->notes];
                                                     @endphp
                                                     <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                            data-consultation-action="edit-entry"
                                                             data-entry-type="diagnosis"
                                                             data-url="{{ route('admin.consultations.diagnoses.update', $diagnosis) }}"
                                                             data-entry='@json($editEntryPayload)'>
@@ -1303,6 +728,7 @@
                                                     </button>
                                                     @if($diagnosis->type === 'provisional')
                                                     <button type="button" class="btn btn-xs btn-outline-success mark-final-btn"
+                                                            data-consultation-action="mark-diagnosis-final"
                                                             title="{{ __('consultations.mark_as_final') }}"
                                                             data-id="{{ $diagnosis->id }}"
                                                             data-url="{{ route('admin.consultations.diagnoses.update', $diagnosis) }}">
@@ -1310,6 +736,7 @@
                                                     </button>
                                                     @endif
                                                     <button type="button" class="btn btn-xs btn-outline-warning set-primary-btn {{ $diagnosis->is_primary ? 'd-none' : '' }}"
+                                                            data-consultation-action="set-primary-diagnosis"
                                                             title="{{ __('consultations.set_primary_diagnosis') }}"
                                                             id="set-primary-{{ $diagnosis->id }}"
                                                             data-id="{{ $diagnosis->id }}"
@@ -1318,6 +745,7 @@
                                                     </button>
                                                     @if($canDeleteEntry($diagnosis))
                                                     <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                                            data-consultation-action="delete-entry"
                                                             data-url="{{ route('admin.consultations.diagnoses.destroy', $diagnosis) }}"
                                                             data-target="#diagnosis-{{ $diagnosis->id }}"
                                                             data-badge="badge-diagnoses"
@@ -1356,20 +784,21 @@
                                 @can('consultations.create')
                                 <div class="collapse mb-3" id="addInvestigationForm">
                                     <div class="card card-body bg-light">
-                                        <form data-ajax-form="investigations" action="{{ route('admin.consultations.investigations.store', $visit) }}" method="POST" onsubmit="saveTabBeforeSubmit('investigations-section')">
+                                        <form data-ajax-form="investigations" data-consultation-form="investigations" data-refresh-section="investigations" data-route-context-required="true" action="{{ route('admin.consultations.investigations.store', $visit) }}" method="POST">
                                             @csrf
+                                            <x-consultation-idempotency-key action="investigation.create" />
                                             <div class="row g-2">
                                                 <div class="col-md-6">
                                                     <label class="form-label small">Department <span class="text-danger">*</span></label>
                                                     @if($investigationDepts->isNotEmpty())
-                                                        <select name="department_id" id="investigationDeptSelect" class="form-select" required onchange="loadInvestigationServices(this.value)">
+                                                        <select name="department_id" id="investigationDeptSelect" class="form-select" required data-consultation-action="load-investigation-services">
                                                             <option value="">-- Select Department --</option>
                                                             @foreach($investigationDepts as $dept)
                                                                 <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                                                             @endforeach
                                                         </select>
                                                     @else
-                                                        <select id="investigationDeptSelect" class="form-select d-none"></select>
+                                                        <select id="investigationDeptFallbackSelect" class="form-select d-none"></select>
                                                         <input type="text" name="investigation_type" class="form-control" required placeholder="e.g., Blood Test, X-Ray...">
                                                         <small class="text-muted">No investigation departments configured.</small>
                                                     @endif
@@ -1454,6 +883,7 @@
                                                                         $editEntryPayload = ['urgency' => $req->urgency, 'clinical_info' => $req->clinical_info];
                                                                     @endphp
                                                                     <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                                            data-consultation-action="edit-entry"
                                                                             data-entry-type="lab-request"
                                                                             data-url="{{ route('admin.consultations.lab-request.update', $req) }}"
                                                                             data-entry='@json($editEntryPayload)'>
@@ -1483,6 +913,7 @@
                                                                 <div class="d-flex gap-1">
                                                                     @if($item->result)
                                                                     <button type="button" class="btn btn-xs btn-outline-info viewResultBtn"
+                                                                            data-consultation-action="view-result"
                                                                             data-url="{{ route('admin.lab.results.view', $item) }}"
                                                                             title="View Result"><i class="ti ti-eye"></i></button>
                                                                     @endif
@@ -1492,6 +923,7 @@
                                                                     @can('consultations.create')
                                                                     @if($item->isDeletable() && $canEdit)
                                                                     <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                                                            data-consultation-action="delete-entry"
                                                                             data-url="{{ route('admin.consultations.investigation-items.destroy', $item) }}"
                                                                             data-method="DELETE"
                                                                             data-target="#lab-item-{{ $item->id }}"
@@ -1533,8 +965,9 @@
                                 @can('consultations.create')
                                 <div class="collapse mb-3" id="addTreatmentForm">
                                     <div class="card card-body bg-light">
-                                        <form data-ajax-form="treatments" action="{{ route('admin.consultations.treatments.store', $visit) }}" method="POST" onsubmit="saveTabBeforeSubmit('treatments-section')">
+                                        <form data-ajax-form="treatments" data-consultation-form="treatments" data-refresh-section="treatments" data-route-context-required="true" action="{{ route('admin.consultations.treatments.store', $visit) }}" method="POST">
                                             @csrf
+                                            <x-consultation-idempotency-key action="treatment.create" />
                                             <div class="row g-2">
                                                 <div class="col-md-4">
                                                     <label class="form-label small">Type <span class="text-danger">*</span></label>
@@ -1589,6 +1022,7 @@
                                                         $editEntryPayload = ['type' => $treatment->type, 'description' => $treatment->description];
                                                     @endphp
                                                     <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                            data-consultation-action="edit-entry"
                                                             data-entry-type="treatment"
                                                             data-url="{{ route('admin.consultations.treatments.update', $treatment) }}"
                                                             data-entry='@json($editEntryPayload)'>
@@ -1597,6 +1031,7 @@
                                                     @endif
                                                     @if($canDeleteEntry($treatment))
                                                     <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                                            data-consultation-action="delete-entry"
                                                             data-url="{{ route('admin.consultations.treatments.destroy', $treatment) }}"
                                                             data-target="#treatment-{{ $treatment->id }}"
                                                             data-badge="badge-treatments"
@@ -1634,9 +1069,17 @@
                                 @can('prescriptions.create')
                                 <div class="collapse mb-3" id="addPrescriptionForm">
                                     <div class="card card-body bg-light">
-                                        <form data-ajax-form="prescriptions" method="POST" action="{{ route('admin.consultations.prescriptions.store', $visit) }}" id="prescriptionForm" onsubmit="preparePrescriptionSubmit()">
+                                        <form data-ajax-form="prescriptions" data-consultation-form="prescriptions" data-refresh-section="prescriptions" data-route-context-required="true" data-prepare="prescription" method="POST" action="{{ route('admin.consultations.prescriptions.store', $visit) }}" id="prescriptionForm">
                                             @csrf
+                                            <x-consultation-idempotency-key action="prescription.create" />
                                             <div id="prescriptionFormErrors" class="alert alert-danger d-none small py-2 mb-2"></div>
+                                            <div id="prescriptionSafetyOverride" class="alert alert-warning d-none small py-2 mb-2" data-prescription-safety-panel>
+                                                <div class="fw-semibold mb-1"><i class="ti ti-alert-triangle me-1"></i>{{ __('consultation.safety.prescription_warning') }}</div>
+                                                <ul class="mb-2 ps-3" data-prescription-safety-warnings></ul>
+                                                <div data-prescription-safety-codes></div>
+                                                <label class="form-label small fw-semibold" for="safety_override_reason">{{ __('consultation.safety.override_reason') }}</label>
+                                                <textarea id="safety_override_reason" name="safety_override_reason" class="form-control form-control-sm" rows="2" maxlength="1000" placeholder="{{ __('consultation.safety.override_required') }}"></textarea>
+                                            </div>
                                             <div id="prescriptionItems">
                                                 <div class="prescription-item border rounded p-2 mb-2">
                                                     <div class="row g-2">
@@ -1695,12 +1138,12 @@
                                                 </div>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center mt-2">
-                                                <button type="button" class="btn btn-outline-secondary btn-sm" id="addItemBtn">
+                                                <button type="button" class="btn btn-outline-secondary btn-sm" id="addItemBtn" data-consultation-action="add-prescription-item">
                                                     <i class="ti ti-plus me-1"></i>Add Medication
                                                 </button>
                                                 <div class="d-flex gap-2">
                                                     <input type="text" name="notes" class="form-control form-control-sm" style="width:170px" placeholder="Rx Notes...">
-                                                    <button type="submit" class="btn btn-primary btn-sm" onclick="saveTabBeforeSubmit('prescriptions-section')">
+                                                    <button type="submit" class="btn btn-primary btn-sm">
                                                         <i class="ti ti-check me-1"></i>Create Rx
                                                     </button>
                                                 </div>
@@ -1737,6 +1180,7 @@
                                                         $editEntryPayload = ['notes' => $prescription->notes];
                                                     @endphp
                                                     <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                            data-consultation-action="edit-entry"
                                                             data-entry-type="prescription"
                                                             data-url="{{ route('admin.consultations.prescriptions.update', $prescription) }}"
                                                             data-entry='@json($editEntryPayload)'>
@@ -1747,9 +1191,9 @@
                                                     @endif
                                                     @if($canDeleteEntry($prescription) && in_array($prescription->status->value, ['pending', 'active']))
                                                     <form method="POST" action="{{ route('admin.consultations.prescriptions.destroy', $prescription) }}"
-                                                        onsubmit="return confirm(@js(__('consultations.cancel_delete_prescription'))) &amp;&amp; saveTabBeforeSubmit('prescriptions-section')">
+                                                        data-preserve-tab="prescriptions-section">
                                                         @csrf @method('DELETE')
-                                                        <button type="submit" class="btn btn-xs btn-outline-danger" title="Delete prescription">
+                                                        <button type="submit" class="btn btn-xs btn-outline-danger" title="Delete prescription" data-confirm="{{ __('consultations.cancel_delete_prescription') }}">
                                                             <i class="ti ti-trash"></i>
                                                         </button>
                                                     </form>
@@ -1802,12 +1246,13 @@
                                 @can('procedure.request')
                                 <div class="collapse mb-3" id="addProcedureForm">
                                     <div class="card card-body bg-light">
-                                        <form data-ajax-form="procedures" method="POST" action="{{ route('admin.consultations.procedures.store', $visit) }}" onsubmit="return saveTabBeforeSubmit('procedures-section')">
+                                        <form data-ajax-form="procedures" data-consultation-form="procedures" data-refresh-section="procedures" data-route-context-required="true" method="POST" action="{{ route('admin.consultations.procedures.store', $visit) }}">
                                             @csrf
+                                            <x-consultation-idempotency-key action="procedure.create" />
                                             <div class="row g-2">
                                                 <div class="col-md-6">
                                                     <label class="form-label small">Theatre / Procedure Department <span class="text-danger">*</span></label>
-                                                    <select name="department_id" id="procedureDeptSelect" class="form-select form-select-sm" required onchange="loadProcedureServices(this.value)">
+                                                    <select name="department_id" id="procedureDeptSelect" class="form-select form-select-sm" required data-consultation-action="load-procedure-services">
                                                         <option value="">-- Select department --</option>
                                                         @foreach($procedureDepartments as $dept)
                                                             <option value="{{ $dept->id }}">{{ $dept->name }}</option>
@@ -1912,6 +1357,7 @@
                                                                 $editEntryPayload = ['priority' => $pr->priority, 'indication' => $pr->indication, 'notes' => $pr->notes, 'preferred_datetime' => optional($pr->preferred_datetime)->format('Y-m-d\TH:i')];
                                                             @endphp
                                                             <button aria-label="Edit" title="Edit" type="button" class="btn btn-sm btn-outline-primary edit-entry-btn"
+                                                                    data-consultation-action="edit-entry"
                                                                     data-entry-type="procedure"
                                                                     data-url="{{ route('admin.consultations.procedures.update', $pr) }}"
                                                                     data-entry='@json($editEntryPayload)'>
@@ -2006,7 +1452,7 @@
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="ti ti-search"></i></span>
                                         <input type="text" id="patternSearchInput" class="form-control" placeholder="Search patterns by complaint..." minlength="3">
-                                        <button type="button" class="btn btn-primary" id="patternSearchBtn">Search</button>
+                                        <button type="button" class="btn btn-primary" id="patternSearchBtn" data-consultation-action="search-patterns">Search</button>
                                     </div>
                                 </div>
                                 <div id="patternSearchResults" class="mb-3" style="display:none;"></div>
@@ -2028,6 +1474,7 @@
                                             </div>
                                             @can('consultations.create')
                                             <button type="button" class="btn btn-sm btn-success apply-pattern-btn"
+                                                    data-consultation-action="apply-pattern"
                                                     data-pattern-id="{{ $pattern->id }}" data-pattern-name="{{ $pattern->name }}"
                                                     data-pattern-types="{{ $pattern->items->pluck('type')->unique()->implode(',') }}">
                                                 <i class="ti ti-check me-1"></i>Apply
@@ -2075,7 +1522,7 @@
                                         @foreach($group as $task)
                                         <div class="d-flex align-items-start gap-2 mb-3 p-2 border rounded {{ $task->completed_at ? 'bg-light' : '' }}" id="task-{{ $task->id }}" data-owner-key="{{ $ownerKey($task) }}">
                                             @if($canEditEntry($task))
-                                            <form method="POST" action="{{ route('admin.consultations.tasks.toggle', $task) }}" onsubmit="saveTabBeforeSubmit('tasks-section')">
+                                            <form method="POST" action="{{ route('admin.consultations.tasks.toggle', $task) }}" data-preserve-tab="tasks-section">
                                                 @csrf @method('PATCH')
                                                 <button type="submit" class="btn btn-sm {{ $task->completed_at ? 'btn-success' : 'btn-outline-secondary' }} rounded-circle p-1" style="width:28px;height:28px;" title="{{ $task->completed_at ? 'Mark incomplete' : 'Mark complete' }}">
                                                     <i class="ti ti-check fs-14"></i>
@@ -2091,6 +1538,7 @@
                                                             $editEntryPayload = ['title' => $task->title, 'description' => $task->description, 'priority' => $task->priority, 'status' => $task->status, 'assigned_to' => $task->assigned_to, 'due_date' => optional($task->due_date)->format('Y-m-d')];
                                                         @endphp
                                                         <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                                data-consultation-action="edit-entry"
                                                                 data-entry-type="task"
                                                                 data-url="{{ route('admin.consultations.tasks.update', $task) }}"
                                                                 data-entry='@json($editEntryPayload)'>
@@ -2098,9 +1546,9 @@
                                                         </button>
                                                         @endif
                                                         @if($canDeleteEntry($task))
-                                                        <form method="POST" action="{{ route('admin.consultations.tasks.destroy', $task) }}" class="d-inline" onsubmit="return confirm(@js('Delete this task?')) && saveTabBeforeSubmit('tasks-section')">
+                                                        <form method="POST" action="{{ route('admin.consultations.tasks.destroy', $task) }}" class="d-inline" data-preserve-tab="tasks-section">
                                                             @csrf @method('DELETE')
-                                                            <button aria-label="Close" title="Close" type="submit" class="btn btn-xs btn-outline-danger"><i class="ti ti-x"></i></button>
+                                                            <button aria-label="Close" title="Close" type="submit" class="btn btn-xs btn-outline-danger" data-confirm="Delete this task?"><i class="ti ti-x"></i></button>
                                                         </form>
                                                         @endif
                                                     </div>
@@ -2306,2165 +1754,14 @@
                 </div>
             </div>
 
-            {{-- =================== RIGHT PANEL — PREVIOUS VISITS =================== --}}
-            <div class="col-lg-12 consultation-side-column">
-                <div class="card mb-3">
-                    <div class="card-header py-2 d-flex align-items-center justify-content-between">
-                        <h6 class="fw-bold mb-0 small"><i class="ti ti-user-forward me-1"></i>{{ __('consultations.workspace.next_patient_in_line') }}</h6>
-                        @if($nextPatientInLine)
-                            <span class="badge bg-{{ $nextPatientInLine['priority_color'] ?? 'secondary' }}">{{ $nextPatientInLine['priority'] ?? 'Normal' }}</span>
-                        @endif
-                    </div>
-                    <div class="card-body p-3">
-                        @if($nextPatientInLine)
-                            <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
-                                <div class="fw-semibold">{{ $nextPatientInLine['patient_name'] }}</div>
-                                <span class="badge bg-soft-primary text-primary flex-shrink-0">{{ __('consultations.workspace.queue_number', ['number' => $nextPatientInLine['queue_number']]) }}</span>
-                            </div>
-                            <div class="small text-muted mb-2">
-                                {{ $nextPatientInLine['patient_number'] ?: __('consultations.workspace.no_patient_number') }}
-                                @if($nextPatientInLine['visit_number'])
-                                    &middot; {{ $nextPatientInLine['visit_number'] }}
-                                @endif
-                            </div>
-                            <div class="small mb-2">
-                                @if($nextPatientInLine['age'])
-                                    <span class="badge bg-light text-dark border">{{ __('consultations.workspace.age_value', ['age' => $nextPatientInLine['age']]) }}</span>
-                                @endif
-                                @if($nextPatientInLine['gender'])
-                                    <span class="badge bg-light text-dark border">{{ __('common.gender_'.strtolower($nextPatientInLine['gender'])) }}</span>
-                                @endif
-                            </div>
-                            <div class="small text-muted">
-                                <div><i class="ti ti-clock me-1"></i>{{ __('consultations.workspace.waiting_minutes', ['count' => $nextPatientInLine['waiting_minutes'] ?? 0]) }}</div>
-                                <div><i class="ti ti-building-hospital me-1"></i>{{ $nextPatientInLine['department'] ?: __('consultations.workspace.consultation_department') }}</div>
-                                @if(! empty($nextPatientInLine['services']))
-                                    <div><i class="ti ti-stethoscope me-1"></i>{{ implode(', ', $nextPatientInLine['services']) }}</div>
-                                @endif
-                                @if($nextPatientInLine['doctor'])
-                                    <div><i class="ti ti-user-heart me-1"></i>{{ __('consultations.workspace.assigned_doctor', ['name' => $nextPatientInLine['doctor']]) }}</div>
-                                @endif
-                            </div>
-                            <div class="mt-2">
-                                <span class="badge bg-{{ $nextPatientInLine['payment_allowed'] ? 'success' : 'warning text-dark' }}">
-                                    <i class="ti ti-credit-card me-1"></i>{{ $nextPatientInLine['payment_message'] }}
-                                </span>
-                            </div>
-                            @can('consultations.create')
-                                <div class="d-grid gap-2 mt-3">
-                                    <form method="POST" action="{{ route('admin.consultations.routes.next-patient.open', [$visit, $selectedRoute]) }}">
-                                        @csrf
-                                        <button type="submit" class="btn btn-outline-primary btn-sm w-100" @disabled(! $nextPatientInLine['payment_allowed']) title="{{ $nextPatientInLine['payment_allowed'] ? __('consultations.workspace.open_next_patient') : $nextPatientInLine['payment_message'] }}">
-                                            <i class="ti ti-arrow-right me-1"></i>{{ __('consultations.workspace.open_next_patient') }}
-                                        </button>
-                                    </form>
-                                    <x-confirm-form
-                                        :action="route('admin.consultations.routes.next-patient.complete-open', [$visit, $selectedRoute])"
-                                        method="POST"
-                                        :button-label="__('consultations.workspace.complete_and_open_next')"
-                                        button-class="btn btn-success btn-sm w-100"
-                                        icon="ti-check"
-                                        :confirm-title="__('consultations.complete_open_next_confirm')"
-                                        :confirm-text="__('consultations.workspace.complete_and_open_help')"
-                                        :confirm-button="__('consultations.workspace.complete_and_open')"
-                                        :disabled="! $nextPatientInLine['payment_allowed']"
-                                        :disabled-reason="$nextPatientInLine['payment_message']"
-                                    />
-                                </div>
-                            @endcan
-                        @else
-                            <x-empty-state icon="ti-users-off" :title="__('consultations.no_patient_waiting')" :message="__('consultations.workspace.no_patient_waiting_help')" />
-                        @endif
-                    </div>
-                </div>
-
-                {{-- todo: next appointment card should also show up here if set, with option to cancel or reschedule if user has permission --}}
-                <div class="card">
-                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#followUpAppointmentModal" @disabled(! $selectedRoute) title="{{ $selectedRoute ? __('consultations.workspace.set_next_appointment') : __('consultations.workspace.select_session_first') }}">
-                        <i class="ti ti-calendar-plus me-1"></i>{{ $followUpAppointment ? __('consultations.workspace.update_next_appointment') : __('consultations.workspace.next_appointment') }}
-                        @if($followUpAppointment)
-                            <span class="badge bg-primary-subtle text-primary ms-1">{{ __('consultations.workspace.set') }}</span>
-                        @endif
-                    </button>
-                </div>
-
-                <div class="card">
-                    <div class="card-header py-2">
-                        <h6 class="fw-bold mb-0 small"><i class="ti ti-clock-history me-1"></i>{{ __('consultations.workspace.previous_visits') }}
-                            @if($history['total'] > 0) <span class="badge bg-secondary-subtle text-secondary ms-1">{{ $history['total'] }}</span> @endif
-                        </h6>
-                    </div>
-                    <div class="card-body p-2" style="max-height:600px;overflow-y:auto;">
-                        @if(count($history['records']) > 0)
-                            @foreach($history['records'] as $index => $pastRecord)
-                            <div class="prev-visit-card border rounded p-2 mb-2">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <div class="fw-bold small">{{ $pastRecord->visit?->visit_number ?? 'N/A' }}</div>
-                                        <small class="text-muted d-block">{{ $pastRecord->created_at->format('d M Y') }}</small>
-                                        @if($pastRecord->visit?->currentConsultationDoctor())
-                                            <small class="text-muted d-block">Dr. {{ Str::limit($pastRecord->visit->currentConsultationDoctor()->full_name, 18) }}</small>
-                                        @endif
-                                        <small class="text-muted d-block">
-                                            {{ trans_choice('consultations.workspace.complaint_count', $pastRecord->complaints->count(), ['count' => $pastRecord->complaints->count()]) }} &middot; {{ $pastRecord->diagnoses->count() }} dx
-                                        </small>
-                                    </div>
-                                    <button type="button" class="btn btn-xs btn-outline-primary flex-shrink-0"
-                                            onclick="window.location='{{ route('admin.consultations.history', $pastRecord->visit) }}'" aria-label="{{ __('common.view') }}" title="{{ __('common.view') }}">
-                                        <i class="ti ti-eye"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            @endforeach
-                            @if($history['total'] > 10)
-                            <div class="text-center mt-1">
-                                <a href="{{ route('admin.consultations.history', $visit) }}" class="btn btn-sm btn-outline-secondary w-100">
-                                    {{ trans_choice('consultations.workspace.more_visits', $history['total'] - 10, ['count' => $history['total'] - 10]) }}
-                                </a>
-                            </div>
-                            @endif
-                        @else
-                            <div class="text-center text-muted py-3">
-                                <i class="ti ti-clock fs-3 d-block mb-1"></i>
-                                <small>{{ __('consultations.no_previous_visits') }}</small>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
-
+            @include('consultations.partials.right-panel')
 
 </div>
 </div>{{-- end main row --}}
 
-{{-- ============================================================ --}}
-{{-- VISIT PREVIEW MODAL --}}
-{{-- ============================================================ --}}
-<div class="modal fade" id="visitPreviewModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="ti ti-clock-history me-2"></i>Visit Summary</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="visitPreviewContent"></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('common.close') }}</button>
-            </div>
-        </div>
-    </div>
-</div>
+@include('consultations.partials.modals')
 
-{{-- ============================================================ --}}
-{{-- ADD TASK MODAL --}}
-{{-- ============================================================ --}}
-@can('consultations.create')
-<div class="modal fade" id="addTaskModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form data-ajax-form="tasks" method="POST" action="{{ route('admin.consultations.tasks.store', $visit) }}" onsubmit="saveTabBeforeSubmit('tasks-section')">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="ti ti-checklist me-2"></i>Add Task</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Task Title <span class="text-danger">*</span></label>
-                        <input type="text" name="title" class="form-control" required placeholder="e.g., Follow up on lab results">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea name="description" class="form-control" rows="2"></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label">Priority</label>
-                            <select name="priority" class="form-select">
-                                <option value="low">{{ __('consultations.priority.low') }}</option>
-                                <option value="medium" selected>{{ __('consultations.priority.medium') }}</option>
-                                <option value="high">{{ __('consultations.priority.high') }}</option>
-                            </select>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label">Due Date</label>
-                            <input type="date" name="due_date" class="form-control">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Assign To</label>
-                        <select name="assigned_to" class="form-select">
-                            <option value="">{{ __('consultations.unassigned') }}</option>
-                            @if(isset($doctors))
-                                @foreach($doctors as $doc)
-                                    <option value="{{ $doc->id }}">Dr. {{ $doc->full_name }}</option>
-                                @endforeach
-                            @endif
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>Add Task</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-@endcan
-
-{{-- ============================================================ --}}
-{{-- EDIT CONSULTATION ENTRY MODAL --}}
-{{-- ============================================================ --}}
-@can('consultations.create')
-<div class="modal fade" id="editEntryModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form id="editEntryForm" method="POST">
-                @csrf
-                @method('PATCH')
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="ti ti-edit me-2"></i><span id="editEntryTitle">Edit Entry</span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="editEntryErrors" class="alert alert-danger d-none small py-2"></div>
-                    <div id="editEntryFields"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>Update</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-@endcan
-
-{{-- ============================================================ --}}
-{{-- SAVE AS PATTERN MODAL --}}
-{{-- ============================================================ --}}
-@can('consultations.create')
-<div class="modal fade" id="savePatternModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="POST" action="{{ route('admin.patterns.from-record', $visit) }}">
-                @csrf
-                @if($selectedRoute)
-                    <input type="hidden" name="consultation_route_id" value="{{ $selectedRoute->id }}">
-                @endif
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="ti ti-template me-2"></i>Save as Pattern</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Pattern Name <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control" required placeholder="e.g., Common Cold">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Scope</label>
-                        <select name="scope" class="form-select">
-                            <option value="personal">{{ __('consultations.pattern_scope_personal') }}</option>
-                            <option value="system">{{ __('consultations.pattern_scope_system') }}</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>Save Pattern</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-@endcan
-
-{{-- ============================================================ --}}
-{{-- SEND TO ANOTHER CONSULTATION SESSION MODAL --}}
-{{-- ============================================================ --}}
-@if($visit->status === \App\Enums\VisitStatus::CONSULTING)
-<div class="modal fade" id="sendSessionModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="POST" action="{{ route('admin.consultations.refer', $visit) }}">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="ti ti-transfer me-2"></i>Send to Another Consultation Session</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    @php
-                        $historyDeptIds = $visit->departmentHistory->pluck('department_id')->toArray();
-                        $currentDeptId  = $visit->current_department_id;
-                        $referralDepts  = \App\Models\Department::active()
-                            ->where('id', '!=', $currentDeptId)
-                            ->where('type', \App\Enums\DepartmentType::CONSULTATION->value)
-                            ->orderBy('name')->get();
-                        // Pre-load consultation services per referral department so the
-                        // service picker can react to the department dropdown without
-                        // an extra HTTP call.
-                        $referralServicesByDept = \App\Models\ServiceCatalog::where('is_active', true)
-                            ->where('category', \App\Enums\ServiceType::CONSULTATION->value)
-                            ->whereIn('department_id', $referralDepts->pluck('id'))
-                            ->orderBy('name')
-                            ->get()
-                            ->groupBy('department_id');
-                        $referralServicesPayloadByDept = $referralServicesByDept
-                            ->map(fn ($services) => $services->map(fn ($service) => [
-                                'id' => $service->id,
-                                'name' => $service->name,
-                                'category' => $service->category,
-                            ])->values())
-                            ->all();
-                    @endphp
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Target Consultation Department <span class="text-danger">*</span></label>
-                        <select name="department_id" class="form-select" required id="sendSessionDeptSelect">
-                            <option value="">— Select department —</option>
-                            @foreach($referralDepts as $dept)
-                                <option value="{{ $dept->id }}">{{ $dept->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Services to add / bill <small class="text-muted">(optional)</small></label>
-                        <select name="service_ids[]" class="form-select" id="sendSessionServiceSelect" disabled multiple size="4">
-                            <option value="" disabled>{{ __('consultations.select_department_first') }}</option>
-                        </select>
-                        <small class="text-muted">Services are linked under the target department session and billed once.</small>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Doctor optional</label>
-                        <select name="doctor_id" class="form-select" id="sendSessionDoctorSelect" disabled>
-                            <option value="">{{ __('consultations.select_department_first') }}</option>
-                        </select>
-                        <small class="text-muted">Doctors are loaded from specialties linked to the selected department.</small>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Reason / Notes</label>
-                        <textarea name="notes" class="form-control" rows="3" placeholder="Reason for this consultation session..."></textarea>
-                    </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" name="activate_now" value="1" id="activateNewSessionNow">
-                        <label class="form-check-label" for="activateNewSessionNow">Create and activate now</label>
-                    </div>
-                    @if($visit->departmentHistory->isNotEmpty())
-                        <div class="alert alert-info py-2 small">
-                            <strong>{{ __('consultations.department_history') }}:</strong><br>
-                            @foreach($visit->departmentHistory as $hist)
-                                <span class="badge bg-{{ $hist->typeColor() }}">{{ $hist->translatedTypeLabel() }}</span>
-                                {{ $hist->department?->name }}
-                                <span class="badge bg-{{ $hist->statusColor() }}">{{ $hist->translatedStatusLabel() }}</span><br>
-                            @endforeach
-                        </div>
-                    @endif
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" {{ $referralDepts->isEmpty() ? 'disabled' : '' }}>
-                        <i class="ti ti-transfer me-1"></i>Create Session
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="investigationModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="ti ti-microscope me-2"></i>Send Investigation Request</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                {{-- Tab navigation --}}
-                <ul class="nav nav-tabs mb-3" id="investModalTabs">
-                    <li class="nav-item">
-                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#investTabLabReq">
-                            <i class="ti ti-flask me-1"></i>Lab / Imaging Request
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#investTabRoute">
-                            <i class="ti ti-arrow-right me-1"></i>Route to Department
-                        </button>
-                    </li>
-                </ul>
-
-                <div class="tab-content">
-                    {{-- Tab 1: Lab Request --}}
-                    <div class="tab-pane fade show active" id="investTabLabReq">
-                        @can('lab.requests.create')
-                        <form id="labRequestForm" method="POST" action="{{ route('admin.consultations.lab-request.store', $visit) }}">
-                            @csrf
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold">Target Department <span class="text-danger">*</span></label>
-                                    @if($investigationDepts->isNotEmpty())
-                                    <select name="target_department_id" id="labReqDeptSelect" class="form-select" required
-                                        onchange="loadLabReqItems(this.value)">
-                                        <option value="">— Select department —</option>
-                                        @foreach($investigationDepts as $dept)
-                                        <option value="{{ $dept->id }}"
-                                            data-result-type="{{ $dept->result_type?->value }}"
-                                            data-uses-catalog="{{ $dept->result_type?->usesTestCatalog() ? 'true' : 'false' }}">
-                                            {{ $dept->name }}
-                                            <small>({{ $dept->result_type?->translatedLabel() }})</small>
-                                        </option>
-                                        @endforeach
-                                    </select>
-                                    @else
-                                    <div class="alert alert-warning py-2 mb-0">
-                                        <small>{{ __('consultations.no_investigation_departments') }}</small>
-                                    </div>
-                                    @endif
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold">Urgency</label>
-                                    <select name="urgency" class="form-select">
-                                        <option value="routine">{{ __('consultations.urgency.routine') }}</option>
-                                        <option value="urgent">{{ __('consultations.urgency.urgent') }}</option>
-                                        <option value="emergency">{{ __('consultations.urgency.emergency') }}</option>
-                                    </select>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label fw-semibold">Clinical Notes</label>
-                                    <input type="text" name="clinical_info" class="form-control" placeholder="Clinical indication / notes...">
-                                </div>
-                            </div>
-
-                            {{-- Items container — shown after dept selected --}}
-                            <div id="labReqItemsContainer" class="mt-3 d-none">
-                                <label class="form-label fw-semibold" id="labReqItemsLabel">Items <span class="text-danger">*</span></label>
-                                <div id="labReqItemsBody">
-                                    <span class="text-muted small"><span class="spinner-border spinner-border-sm me-1"></span>Loading...</span>
-                                </div>
-                            </div>
-
-                            <div id="labReqErrors" class="alert alert-danger py-2 d-none mt-3"></div>
-
-                            <div class="mt-3 d-flex gap-2">
-                                <button type="submit" class="btn btn-primary" id="labReqSubmitBtn">
-                                    <i class="ti ti-send me-1"></i>Send Request
-                                </button>
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                            </div>
-                        </form>
-                        @else
-                        <div class="alert alert-warning">You don't have permission to create lab requests.</div>
-                        @endcan
-                    </div>
-
-                    {{-- Tab 2: Route to Department --}}
-                    <div class="tab-pane fade" id="investTabRoute">
-                        <form id="routeInvestigationForm" method="POST" action="{{ route('admin.consultations.investigation', $visit) }}">
-                            @csrf
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Investigation Department <span class="text-danger">*</span></label>
-                                <select name="department_id" class="form-select" required>
-                                    <option value="">— Select department —</option>
-                                    @foreach($investigationDepts->isNotEmpty() ? $investigationDepts : \App\Models\Department::active()->orderBy('name')->get() as $dept)
-                                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Notes</label>
-                                <textarea name="notes" class="form-control" rows="3" placeholder="Investigation notes..."></textarea>
-                            </div>
-                            <div id="investRouteErrors" class="alert alert-danger py-2 d-none"></div>
-                            <button type="submit" class="btn btn-primary" id="investRouteSubmitBtn">
-                                <i class="ti ti-arrow-right me-1"></i>Route Patient to Department
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
-
-<div class="offcanvas offcanvas-end consultation-preview-offcanvas" tabindex="-1" id="consultationPreviewOffcanvas" aria-labelledby="consultationPreviewOffcanvasLabel">
-    <div class="offcanvas-header border-bottom">
-        <div>
-            <h5 class="offcanvas-title fw-bold mb-0" id="consultationPreviewOffcanvasLabel">
-                <i class="ti ti-history me-1"></i>{{ __('consultations.workspace.preview') }}
-            </h5>
-            <div class="text-muted small">{{ $visit->visit_number }} &middot; {{ $visit->patient?->full_name }}</div>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-            <button type="button" class="btn btn-primary btn-sm" onclick="window.print()">
-                <i class="ti ti-printer me-1"></i>{{ __('consultations.history.print_summary') }}
-            </button>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{{ __('common.close') }}"></button>
-        </div>
-    </div>
-    <div class="offcanvas-body">
-        <x-consultation-preview
-            :visit="$consultationPreview['visit']"
-            :generated-at="$consultationPreview['generatedAt']"
-            :sessions="$consultationPreview['sessions']"
-            :contributors="$consultationPreview['contributors']"
-            :session-summaries="$consultationPreview['sessionSummaries']"
-            :lab-requests="$consultationPreview['labRequests']"
-            :procedure-requests="$consultationPreview['procedureRequests']"
-        />
-    </div>
-</div>
-
-{{-- ============================================================ --}}
-{{-- VISIT HISTORY JSON + JS CONFIG --}}
-{{-- ============================================================ --}}
-@php
-$visitHistoryJson = $history['records']->map(function($r) {
-    return [
-        'visit_number'   => $r->visit?->visit_number ?? 'N/A',
-        'date'           => $r->created_at->format('d M Y'),
-        'doctor'         => $r->visit?->currentConsultationDoctor()?->full_name ?? null,
-        'complaints'     => $r->complaints->map(function($c) { return $c->description; })->values()->all(),
-        'diagnoses'      => $r->diagnoses->map(function($d) {
-            return [
-                'description' => $d->description,
-                'type'        => $d->type,
-                'is_primary'  => $d->is_primary ?? false,
-                'icd_code'    => $d->icd_code,
-            ];
-        })->values()->all(),
-        'investigations' => $r->investigations->map(function($i) {
-            return [
-                'type'        => $i->investigation_type,
-                'description' => $i->description,
-                'urgency'     => $i->urgency,
-            ];
-        })->values()->all(),
-        'treatments'     => $r->treatments->map(function($t) {
-            return [
-                'type'        => $t->type,
-                'description' => $t->description,
-            ];
-        })->values()->all(),
-    ];
-})->values();
-@endphp
-
-{{-- View Result Modal (used by investigations tab) --}}
-<div class="modal fade" id="viewResultModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="ti ti-clipboard-data me-1"></i>Investigation Result</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="viewResultBody">
-                <div class="text-center py-4 text-muted"><div class="spinner-border"></div></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.close') }}</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 @endsection
 
-@push('scripts')
-<script>
-@php
-    $consultationI18nData = [
-        'selectDepartmentFirst' => __('consultations.select_department_first'),
-        'loadingServices' => __('consultations.loading_services'),
-        'loadingDoctors' => __('consultations.loading_doctors'),
-        'unableLoadServices' => __('consultations.unable_load_services'),
-        'unableLoadDoctors' => __('consultations.unable_load_doctors'),
-        'deleteFailed' => __('consultations.delete_failed'),
-        'updateTypeFailed' => __('consultations.update_type_failed'),
-        'setPrimaryFailed' => __('consultations.set_primary_failed'),
-        'loading' => __('consultations.loading'),
-        'noProcedureServices' => __('consultations.no_procedure_services'),
-    ];
-@endphp
-window.consultationI18n = @json($consultationI18nData);
-var consultationI18n = window.consultationI18n;
-/* ================================================================
-   PAGE GLOBALS
-   The Inertia legacy bridge re-injects scripts from the pushed
-   scripts region (body script tags inside v-html are NOT executed),
-   so all page-scoped state must live here.
-   ================================================================ */
-window.visitHistoryData = @json($visitHistoryJson);
-window.csrfToken      = '{{ csrf_token() }}';
-window.tabStorageKey  = 'consult_tab_{{ $visit->id }}';
-window.destroyUrls    = {
-    complaint:     '{{ url("admin/consultations/complaints") }}',
-    hopc:          '{{ url("admin/consultations/history-of-presenting-complaints") }}',
-    examination:   '{{ url("admin/consultations/examinations") }}',
-    diagnosis:     '{{ url("admin/consultations/diagnoses") }}',
-    investigation: '{{ url("admin/consultations/investigations") }}',
-    treatment:     '{{ url("admin/consultations/treatments") }}',
-};
-window.diagnosisBaseUrl  = '{{ url("admin/consultations/diagnoses") }}';
-window.deptServicesBase  = '{{ url("admin/departments") }}';
-window.procedureDeptServicesBase = '{{ url("admin/theatre/departments") }}';
-window.currentVisitId = @json($visit->id);
-window.prescriptionDestroyBase = '{{ url("admin/consultations/prescriptions") }}';
-window.procedureRequestBase = '{{ url("admin/consultations/procedures") }}';
-window.labRequestBase = '{{ url("admin/consultations/lab-requests") }}';
-window.taskBase = '{{ url("admin/consultations/tasks") }}';
-window.canEditConsultation = @json($canEdit);
-window.currentConsultationRouteId = @json($selectedRoute?->id);
-window.currentUser = @json(auth()->user() ? ['id' => auth()->id(), 'full_name' => auth()->user()->full_name, 'roles' => auth()->user()->getRoleNames()->values()] : null);
-window.summaryFragmentUrl = '{{ route('admin.consultations.summary-fragment', $visit) }}';
-window.taskAssignableUsers = @json($doctors->map(fn($doctor) => ['id' => $doctor->id, 'name' => 'Dr. '.$doctor->full_name])->values());
-window.sendSessionServicesByDept = @json($referralServicesPayloadByDept ?? []);
-
-if (window.uhmsConsultationPageAbortController) {
-    window.uhmsConsultationPageAbortController.abort();
-}
-if (window.uhmsConsultationDrawerResizeObserver) {
-    window.uhmsConsultationDrawerResizeObserver.disconnect();
-    window.uhmsConsultationDrawerResizeObserver = null;
-}
-window.uhmsConsultationPageAbortController = new AbortController();
-var consultationPageSignal = window.uhmsConsultationPageAbortController.signal;
-var consultationPageBindCycle = Date.now().toString(36) + Math.random().toString(36).slice(2);
-
-function addConsultationListener(target, event, handler, options) {
-    if (!target) return;
-    var opts = Object.assign({}, options || {}, { signal: consultationPageSignal });
-    target.addEventListener(event, handler, opts);
-}
-
-function hasConsultationBinding(target, key) {
-    if (!target) return false;
-    if (target.__uhmsConsultationBindings && target.__uhmsConsultationBindings[key] === consultationPageBindCycle) return true;
-    return !!(target.dataset && target.dataset[key] === consultationPageBindCycle);
-}
-
-function markConsultationBinding(target, key) {
-    if (!target) return;
-    target.__uhmsConsultationBindings = target.__uhmsConsultationBindings || {};
-    target.__uhmsConsultationBindings[key] = consultationPageBindCycle;
-    if (target.dataset) target.dataset[key] = consultationPageBindCycle;
-}
-
-function addConsultationListenerOnce(target, key, event, handler, options) {
-    if (!target || hasConsultationBinding(target, key)) return;
-    markConsultationBinding(target, key);
-    addConsultationListener(target, event, handler, options);
-}
-
-function runWhenConsultationReady(callback) {
-    if (document.readyState === 'loading') {
-        addConsultationListener(document, 'DOMContentLoaded', callback);
-    } else {
-        callback();
-    }
-}
-
-/* Consultation sessions card */
-function toggleSessionsDrawer() {
-    const drawer = document.getElementById('sessionsDrawer');
-    const handle = document.getElementById('sessionsDrawerHandle');
-    if (!drawer) return;
-    const collapsed = drawer.classList.toggle('is-collapsed');
-    if (handle) handle.setAttribute('aria-expanded', String(!collapsed));
-}
-window.toggleSessionsDrawer = toggleSessionsDrawer;
-
-function bindSessionsDrawer() {
-    const drawer = document.getElementById('sessionsDrawer');
-    const handle = document.getElementById('sessionsDrawerHandle');
-    if (!drawer || !handle) return;
-
-    addConsultationListenerOnce(handle, 'uhmsBound', 'click', toggleSessionsDrawer);
-}
-/* ────────────────────────────────────────────────────────────── */
-
-function openSendSessionModalFallback() {
-    if (window.bootstrap && window.bootstrap.Modal) return false;
-    const modal = document.getElementById('sendSessionModal');
-    if (!modal) return false;
-    modal.style.display = 'block';
-    modal.removeAttribute('aria-hidden');
-    modal.setAttribute('aria-modal', 'true');
-    modal.classList.add('show');
-    document.body.classList.add('modal-open');
-    if (!document.querySelector('.uhms-session-modal-backdrop')) {
-        const backdrop = document.createElement('div');
-        backdrop.className = 'modal-backdrop fade show uhms-session-modal-backdrop';
-        document.body.appendChild(backdrop);
-    }
-    return true;
-}
-
-function closeSendSessionModalFallback() {
-    const modal = document.getElementById('sendSessionModal');
-    if (!modal) return;
-    modal.classList.remove('show');
-    modal.style.display = 'none';
-    modal.setAttribute('aria-hidden', 'true');
-    modal.removeAttribute('aria-modal');
-    document.body.classList.remove('modal-open');
-    document.querySelectorAll('.uhms-session-modal-backdrop').forEach(el => el.remove());
-}
-
-function initSendSessionPicker() {
-    const endpointTemplate = @json(route('admin.departments.visit-options', ['department' => '__ID__']));
-    const deptSel = document.getElementById('sendSessionDeptSelect');
-    const svcSel = document.getElementById('sendSessionServiceSelect');
-    const doctorSel = document.getElementById('sendSessionDoctorSelect');
-    if (!deptSel || !svcSel || !doctorSel || hasConsultationBinding(deptSel, 'uhmsBound')) return;
-    markConsultationBinding(deptSel, 'uhmsBound');
-
-    function setOptions(select, placeholder, list, labelFn, placeholderDisabled = false) {
-        select.innerHTML = '';
-        select.insertAdjacentHTML('beforeend', '<option value=""' + (placeholderDisabled ? ' disabled' : '') + '>' + placeholder + '</option>');
-        list.forEach(function (item) {
-            select.insertAdjacentHTML('beforeend', '<option value="' + item.id + '">' + labelFn(item) + '</option>');
-        });
-    }
-
-    function preloadedServicesFor(departmentId) {
-        const grouped = window.sendSessionServicesByDept || {};
-        return grouped[String(departmentId)] || grouped[departmentId] || [];
-    }
-
-    function showServices(services) {
-        svcSel.disabled = services.length === 0;
-        setOptions(
-            svcSel,
-            services.length ? 'Optional services to link/bill' : 'No consultation services available',
-            services,
-            function (s) { return s.name; },
-            true
-        );
-    }
-
-    addConsultationListener(deptSel, 'change', async function () {
-        svcSel.innerHTML = '';
-        doctorSel.innerHTML = '';
-        if (!this.value) {
-            svcSel.disabled = true;
-            doctorSel.disabled = true;
-            svcSel.innerHTML = '<option value="">' + consultationI18n.selectDepartmentFirst + '</option>';
-            doctorSel.innerHTML = '<option value="">' + consultationI18n.selectDepartmentFirst + '</option>';
-            return;
-        }
-        const fallbackServices = preloadedServicesFor(this.value);
-        svcSel.disabled = true;
-        doctorSel.disabled = true;
-        svcSel.innerHTML = '<option value="">' + consultationI18n.loadingServices + '</option>';
-        doctorSel.innerHTML = '<option value="">' + consultationI18n.loadingDoctors + '</option>';
-        if (fallbackServices.length) {
-            showServices(fallbackServices);
-        }
-        try {
-            const res = await fetch(endpointTemplate.replace('__ID__', this.value), {
-                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-            });
-            if (!res.ok) {
-                throw new Error('Options request failed');
-            }
-            const payload = await res.json();
-            const services = (payload.services || []).filter(function (service) {
-                return service.category === 'consultation';
-            });
-            const doctors = payload.doctors || [];
-            doctorSel.disabled = false;
-            showServices(services.length ? services : fallbackServices);
-            setOptions(doctorSel, doctors.length ? 'Optional doctor' : 'No doctor linked through specialty', doctors, function (d) { return d.name; });
-        } catch (error) {
-            showServices(fallbackServices);
-            doctorSel.disabled = true;
-            svcSel.innerHTML = '<option value="">' + consultationI18n.unableLoadServices + '</option>';
-            if (fallbackServices.length) {
-                showServices(fallbackServices);
-            }
-            doctorSel.innerHTML = '<option value="">' + consultationI18n.unableLoadDoctors + '</option>';
-        }
-    });
-}
-
-function bindSendSessionModalEvents() {
-    const modal = document.getElementById('sendSessionModal');
-    addConsultationListenerOnce(modal, 'uhmsBound', 'shown.bs.modal', initSendSessionPicker);
-}
-
-function initConsultationSessionUi() {
-    bindSessionsDrawer();
-    bindSendSessionModalEvents();
-    initSendSessionPicker();
-}
-
-runWhenConsultationReady(initConsultationSessionUi);
-
-function ensureCurrentRouteInput(form) {
-    const routeId = window.currentConsultationRouteId;
-    if (!routeId || !form || form.querySelector('input[name="consultation_route_id"]')) return;
-
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'consultation_route_id';
-    input.value = routeId;
-    form.appendChild(input);
-}
-
-function bindCurrentRouteInputs() {
-    document.querySelectorAll('form[action*="/consultations/{{ $visit->id }}"], form[data-ajax-form]').forEach(ensureCurrentRouteInput);
-}
-
-runWhenConsultationReady(bindCurrentRouteInputs);
-
-addConsultationListener(document, 'click', (e) => {
-    const openBtn = e.target.closest('[data-bs-target="#sendSessionModal"]');
-    if (openBtn) {
-        initSendSessionPicker();
-        if (openSendSessionModalFallback()) {
-            e.preventDefault();
-            return;
-        }
-    }
-
-    if (e.target.closest('#sendSessionModal [data-bs-dismiss="modal"]') || e.target.matches('#sendSessionModal')) {
-        if (!(window.bootstrap && window.bootstrap.Modal)) {
-            e.preventDefault();
-            closeSendSessionModalFallback();
-        }
-    }
-});
-@if(!$canEdit)
-runWhenConsultationReady(() => {
-    // Disable all clinical entry forms until consultation is started
-    document.querySelectorAll('[data-ajax-form]').forEach(form => {
-        form.querySelectorAll('input, select, textarea, button').forEach(el => { el.disabled = true; });
-        form.classList.add('opacity-50');
-    });
-    // Disable Add toggles (buttons that open clinical-entry collapses/modals)
-    document.querySelectorAll('button[data-bs-target^="#add"], button[data-bs-target="#investigationModal"], button[data-bs-target="#sendSessionModal"], button[data-bs-target="#savePatternModal"]').forEach(b => {
-        b.disabled = true; b.classList.add('disabled');
-    });
-});
-@endif
-
-/* View Investigation Result modal loader */
-addConsultationListener(document, 'click', async (e) => {
-    const btn = e.target.closest('.viewResultBtn');
-    if (!btn) return;
-    const modalEl = document.getElementById('viewResultModal');
-    if (!modalEl) return;
-    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-    const body  = document.getElementById('viewResultBody');
-    body.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border"></div></div>';
-    modal.show();
-    try {
-        const r = await fetch(btn.dataset.url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-        body.innerHTML = await r.text();
-    } catch (err) {
-        body.innerHTML = '<div class="alert alert-danger">' + err.message + '</div>';
-    }
-});
-
-var visitHistoryData = window.visitHistoryData;
-var csrfToken = window.csrfToken;
-var tabStorageKey = window.tabStorageKey;
-var destroyUrls = window.destroyUrls;
-var diagnosisBaseUrl = window.diagnosisBaseUrl;
-var deptServicesBase = window.deptServicesBase;
-var procedureDeptServicesBase = window.procedureDeptServicesBase;
-var currentVisitId = window.currentVisitId;
-var prescriptionDestroyBase = window.prescriptionDestroyBase;
-var procedureRequestBase = window.procedureRequestBase;
-var labRequestBase = window.labRequestBase;
-var taskBase = window.taskBase;
-var summaryFragmentUrl = window.summaryFragmentUrl;
-
-/* ================================================================
-   TAB PERSISTENCE
-   ================================================================ */
-(function () {
-    var saved = window.location.hash || localStorage.getItem(tabStorageKey);
-    if (saved) activateConsultationTab(saved);
-
-    var params = new URLSearchParams(window.location.search || '');
-    if (params.get('newPrescription') === '1') {
-        activateConsultationTab('#prescriptions-section');
-        var rxForm = document.getElementById('addPrescriptionForm');
-        if (rxForm && window.bootstrap) {
-            new bootstrap.Collapse(rxForm, { show: true });
-        }
-    }
-
-    document.querySelectorAll('#consultationTabs .nav-link').forEach(function (link) {
-        addConsultationListenerOnce(link, 'uhmsTabBound', 'shown.bs.tab', function (e) {
-            var selector = e.target.getAttribute('href');
-            localStorage.setItem(tabStorageKey, selector);
-            if (selector && window.history && window.history.replaceState) {
-                window.history.replaceState(null, '', selector);
-            }
-        });
-    });
-}());
-
-function activateConsultationTab(tabSelector) {
-    if (!tabSelector) return false;
-    localStorage.setItem(tabStorageKey, tabSelector);
-    var el = document.querySelector('#consultationTabs .nav-link[href="' + tabSelector + '"]');
-    if (el) {
-        new bootstrap.Tab(el).show();
-        if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, '', tabSelector);
-        }
-        return true;
-    }
-    return false;
-}
-
-function saveTabBeforeSubmit(tabId) {
-    activateConsultationTab('#' + tabId);
-    return true;
-}
-
-addConsultationListenerOnce(document, 'uhmsPreserveActiveTabOnSubmit', 'submit', function () {
-    var activeTab = document.querySelector('#consultationTabs .nav-link.active');
-    var selector = activeTab ? activeTab.getAttribute('href') : null;
-    if (selector) {
-        localStorage.setItem(tabStorageKey, selector);
-        if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, '', selector);
-        }
-    }
-}, { capture: true });
-
-/* ================================================================
-   UTILITIES
-   ================================================================ */
-function escapeHtml(s) {
-    if (s == null) return '';
-    var d = document.createElement('div');
-    d.appendChild(document.createTextNode(String(s)));
-    return d.innerHTML;
-}
-function capFirst(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
-
-function showToast(msg, type) {
-    var t = document.createElement('div');
-    t.className = 'alert alert-' + (type || 'success') + ' position-fixed bottom-0 end-0 m-3 shadow';
-    t.style.cssText = 'z-index:9999;max-width:280px;font-size:.84rem;';
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(function () { t.remove(); }, 3000);
-}
-
-function currentPageUrl() {
-    var url = new URL(window.location.href);
-    if (window.currentConsultationRouteId) {
-        url.searchParams.set('consultation_route_id', window.currentConsultationRouteId);
-    }
-    url.searchParams.set('_refresh', Date.now());
-    return url.toString();
-}
-
-function parseConsultationRefreshDocument(html) {
-    var doc = new DOMParser().parseFromString(html, 'text/html');
-    var inertiaPage = doc.querySelector('script[data-page="app"][type="application/json"]');
-
-    if (inertiaPage && inertiaPage.textContent) {
-        try {
-            var payload = JSON.parse(inertiaPage.textContent);
-            if (payload && payload.props && payload.props.html) {
-                return new DOMParser().parseFromString(payload.props.html, 'text/html');
-            }
-        } catch (e) {}
-    }
-
-    return doc;
-}
-
-function refreshConsultationSection(section) {
-    var target = document.getElementById(section + '-list');
-    if (!target) return Promise.resolve();
-
-    return fetch(currentPageUrl(), {
-        cache: 'no-store',
-        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
-    })
-    .then(function (r) { return r.text(); })
-    .then(function (html) {
-        var doc = parseConsultationRefreshDocument(html);
-        var fresh = doc.getElementById(section + '-list');
-        if (fresh) target.innerHTML = fresh.innerHTML;
-
-        var badge = document.getElementById('badge-' + section);
-        var freshBadge = doc.getElementById('badge-' + section);
-        if (badge && freshBadge) badge.textContent = freshBadge.textContent;
-
-        bindDeleteButtons();
-        bindDiagnosisButtons();
-        bindEditEntryButtons();
-    });
-}
-
-function refreshConsultationSummary() {
-    var target = document.getElementById('consultation-summary-body');
-    if (!target || !summaryFragmentUrl) return Promise.resolve();
-
-    var url = new URL(summaryFragmentUrl, window.location.origin);
-    if (window.currentConsultationRouteId) {
-        url.searchParams.set('consultation_route_id', window.currentConsultationRouteId);
-    }
-    url.searchParams.set('_refresh', Date.now());
-
-    return fetch(url.toString(), {
-        cache: 'no-store',
-        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
-    })
-    .then(function (r) { return r.text(); })
-    .then(function (html) { target.innerHTML = html; });
-}
-
-function resetAjaxForm(form, section) {
-    form.reset();
-    var col = form.closest('.collapse');
-    if (col) {
-        var bs = bootstrap.Collapse.getInstance(col) || bootstrap.Collapse.getOrCreateInstance(col, { toggle: false });
-        if (bs) bs.hide();
-    }
-    if (section === 'tasks') {
-        var modal = bootstrap.Modal.getInstance(document.getElementById('addTaskModal'));
-        if (modal) modal.hide();
-    }
-
-    var ds = document.getElementById('investigationDeptSelect');
-    if (ds) {
-        ds.value = '';
-        var sc = document.getElementById('investigationServicesContainer');
-        if (sc) sc.innerHTML = '<span class="text-muted small">Select a department first to load services</span>';
-    }
-}
-
-function editField(name, label, value, type, attrs) {
-    attrs = attrs || '';
-    type = type || 'text';
-    return '<div class="mb-3"><label class="form-label small">' + escapeHtml(label) + '</label>' +
-        '<input type="' + type + '" name="' + escapeHtml(name) + '" class="form-control" value="' + escapeHtml(value || '') + '" ' + attrs + '></div>';
-}
-
-function editTextarea(name, label, value, rows, attrs) {
-    return '<div class="mb-3"><label class="form-label small">' + escapeHtml(label) + '</label>' +
-        '<textarea name="' + escapeHtml(name) + '" class="form-control" rows="' + (rows || 3) + '" ' + (attrs || '') + '>' + escapeHtml(value || '') + '</textarea></div>';
-}
-
-function editSelect(name, label, value, options, attrs) {
-    var html = '<div class="mb-3"><label class="form-label small">' + escapeHtml(label) + '</label><select name="' + escapeHtml(name) + '" class="form-select" ' + (attrs || '') + '>';
-    options.forEach(function (opt) {
-        var selected = String(opt.value ?? '') === String(value ?? '') ? ' selected' : '';
-        html += '<option value="' + escapeHtml(opt.value) + '"' + selected + '>' + escapeHtml(opt.label) + '</option>';
-    });
-    return html + '</select></div>';
-}
-
-function buildEditFields(type, entry) {
-    entry = entry || {};
-    if (type === 'complaint') {
-        return '<input type="hidden" name="complaint_catalogue_id" value="' + escapeHtml(entry.complaint_catalogue_id || '') + '">' +
-            editField('description', 'Complaint', entry.description, 'text', 'required') +
-            '<div class="row"><div class="col-md-4">' + editField('duration', 'Duration', entry.duration) + '</div><div class="col-md-4">' +
-            editSelect('duration_unit', 'Duration Unit', entry.duration_unit, [
-                { value: '', label: '-- Select --' }, { value: 'minutes', label: 'Minutes' }, { value: 'hours', label: 'Hours' }, { value: 'days', label: 'Days' }, { value: 'weeks', label: 'Weeks' }, { value: 'months', label: 'Months' }, { value: 'years', label: 'Years' }
-            ]) + '</div><div class="col-md-4">' +
-            editSelect('severity', 'Severity', entry.severity, [
-                { value: '', label: '-- Select --' }, { value: 'mild', label: 'Mild' }, { value: 'moderate', label: 'Moderate' }, { value: 'severe', label: 'Severe' }, { value: 'critical', label: 'Critical' }
-            ]) + '</div></div>' + editTextarea('notes', 'Notes', entry.notes, 2);
-    }
-    if (type === 'hopc') {
-        return editTextarea('content', 'Narrative', entry.content, 4, 'required') +
-            '<div class="row"><div class="col-md-3">' + editField('onset', 'Onset', entry.onset) + '</div><div class="col-md-3">' + editField('duration', 'Duration', entry.duration) + '</div><div class="col-md-3">' + editField('location', 'Location', entry.location) + '</div><div class="col-md-3">' + editField('severity', 'Severity', entry.severity) + '</div></div>' +
-            editField('associated_symptoms', 'Associated Symptoms', entry.associated_symptoms) +
-            '<div class="row"><div class="col-md-6">' + editField('aggravating_factors', 'Aggravating Factors', entry.aggravating_factors) + '</div><div class="col-md-6">' + editField('relieving_factors', 'Relieving Factors', entry.relieving_factors) + '</div></div>';
-    }
-    if (type === 'examination') {
-        return editTextarea('findings', 'Findings', entry.findings, 3, 'required') +
-            '<div class="row"><div class="col-md-6">' + editTextarea('general_examination', 'General Examination', entry.general_examination, 2) + '</div><div class="col-md-6">' + editTextarea('systemic_examination', 'Systemic Examination', entry.systemic_examination, 2) + '</div></div>' +
-            '<div class="row"><div class="col-md-6">' + editTextarea('cardiovascular', 'Cardiovascular', entry.cardiovascular, 2) + '</div><div class="col-md-6">' + editTextarea('respiratory', 'Respiratory', entry.respiratory, 2) + '</div></div>' +
-            '<div class="row"><div class="col-md-6">' + editTextarea('gastrointestinal', 'Gastrointestinal', entry.gastrointestinal, 2) + '</div><div class="col-md-6">' + editTextarea('central_nervous_system', 'Central Nervous System', entry.central_nervous_system, 2) + '</div></div>' +
-            '<div class="row"><div class="col-md-6">' + editTextarea('specialty_examination', 'Specialty Examination', entry.specialty_examination, 2) + '</div><div class="col-md-6">' + editTextarea('local_examination', 'Local Examination', entry.local_examination, 2) + '</div></div>' +
-            editTextarea('notes', 'Notes', entry.notes, 2);
-    }
-    if (type === 'diagnosis') {
-        return editField('description', 'Description', entry.description, 'text', 'required') +
-            '<div class="row"><div class="col-md-6">' + editField('icd_code', 'ICD-10 Code', entry.icd_code) + '</div><div class="col-md-6">' +
-            editSelect('type', 'Type', entry.type, [{ value: 'provisional', label: 'Provisional' }, { value: 'final', label: 'Final' }]) + '</div></div>' +
-            editField('notes', 'Notes', entry.notes);
-    }
-    if (type === 'treatment') {
-        return editSelect('type', 'Type', entry.type, [
-            { value: 'medication', label: 'Medication' }, { value: 'procedure', label: 'Procedure' }, { value: 'referral', label: 'Referral' }, { value: 'advice', label: 'Advice' }
-        ], 'required') + editTextarea('description', 'Description', entry.description, 3, 'required');
-    }
-    if (type === 'prescription') {
-        return editTextarea('notes', 'Prescription Notes', entry.notes, 3);
-    }
-    if (type === 'lab-request') {
-        return editSelect('urgency', 'Urgency', entry.urgency, [
-            { value: 'routine', label: 'Routine' }, { value: 'urgent', label: 'Urgent' }, { value: 'emergency', label: 'Emergency' }
-        ]) + editTextarea('clinical_info', 'Clinical Notes', entry.clinical_info, 3);
-    }
-    if (type === 'procedure') {
-        return editSelect('priority', 'Priority', entry.priority, [
-            { value: 'routine', label: 'Routine' }, { value: 'urgent', label: 'Urgent' }, { value: 'emergency', label: 'Emergency' }
-        ], 'required') + editField('preferred_datetime', 'Preferred Date/Time', entry.preferred_datetime, 'datetime-local') +
-            editTextarea('indication', 'Indication / Reason', entry.indication, 3, 'required') + editTextarea('notes', 'Notes', entry.notes, 2);
-    }
-    if (type === 'task') {
-        var userOptions = [{ value: '', label: 'Unassigned' }].concat((window.taskAssignableUsers || []).map(function (u) { return { value: u.id, label: u.name }; }));
-        return editField('title', 'Task Title', entry.title, 'text', 'required') + editTextarea('description', 'Description', entry.description, 2) +
-            '<div class="row"><div class="col-md-4">' + editSelect('priority', 'Priority', entry.priority, [{ value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' }]) + '</div><div class="col-md-4">' +
-            editSelect('status', 'Status', entry.status, [{ value: 'pending', label: 'Pending' }, { value: 'in_progress', label: 'In Progress' }, { value: 'completed', label: 'Completed' }, { value: 'cancelled', label: 'Cancelled' }]) + '</div><div class="col-md-4">' + editField('due_date', 'Due Date', entry.due_date, 'date') + '</div></div>' +
-            editSelect('assigned_to', 'Assign To', entry.assigned_to, userOptions);
-    }
-    return '<p class="text-muted mb-0">This entry type cannot be edited here.</p>';
-}
-
-function sectionForEntryType(type) {
-    return {
-        complaint: 'complaints',
-        hopc: 'hopc',
-        examination: 'examination',
-        diagnosis: 'diagnoses',
-        treatment: 'treatments',
-        prescription: 'prescriptions',
-        'lab-request': 'investigations',
-        procedure: 'procedures',
-        task: 'tasks'
-    }[type] || type;
-}
-
-function bindEditEntryButtons() {
-    addConsultationListenerOnce(document, 'uhmsEditEntryDelegated', 'click', function (event) {
-            var btn = event.target.closest('.edit-entry-btn');
-            if (!btn) return;
-            event.preventDefault();
-            var modalEl = document.getElementById('editEntryModal');
-            var form = document.getElementById('editEntryForm');
-            var fields = document.getElementById('editEntryFields');
-            var title = document.getElementById('editEntryTitle');
-            var errors = document.getElementById('editEntryErrors');
-            if (!modalEl || !form || !fields) return;
-
-            var type = btn.dataset.entryType;
-            var entry = {};
-            try { entry = JSON.parse(btn.dataset.entry || '{}'); } catch (e) { entry = {}; }
-            form.action = btn.dataset.url;
-            form.dataset.entryType = type;
-            title.textContent = 'Edit ' + type.replace('-', ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
-            fields.innerHTML = buildEditFields(type, entry);
-            errors.classList.add('d-none');
-            errors.innerHTML = '';
-
-            bootstrap.Modal.getOrCreateInstance(modalEl).show();
-    });
-}
-
-var editEntryForm = document.getElementById('editEntryForm');
-if (editEntryForm && !hasConsultationBinding(editEntryForm, 'uhmsSubmitBound')) {
-    markConsultationBinding(editEntryForm, 'uhmsSubmitBound');
-    addConsultationListener(editEntryForm, 'submit', function (e) {
-        e.preventDefault();
-        var form = this;
-        var section = sectionForEntryType(form.dataset.entryType);
-        var btn = form.querySelector('[type="submit"]');
-        var origHtml = btn ? btn.innerHTML : '';
-        var errors = document.getElementById('editEntryErrors');
-        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>'; }
-        if (errors) { errors.classList.add('d-none'); errors.innerHTML = ''; }
-
-        fetch(form.action, {
-            method: 'POST',
-            body: new FormData(form),
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-        })
-        .then(function (r) {
-            if (!r.ok) return r.json().then(function (e) { throw e; });
-            return r.json();
-        })
-        .then(function (data) {
-            if (!data.success) throw data;
-            var modal = bootstrap.Modal.getInstance(document.getElementById('editEntryModal'));
-            if (modal) modal.hide();
-            Promise.all([refreshConsultationSection(section), refreshConsultationSummary()]).then(function () {
-                activateConsultationTab('#' + section + '-section');
-                showToast('Updated successfully.');
-            });
-        })
-        .catch(function (err) {
-            var msg = 'Update failed.';
-            if (err && err.errors) msg = Object.values(err.errors).flat().join('\n');
-            else if (err && err.message) msg = err.message;
-            if (errors) {
-                errors.classList.remove('d-none');
-                errors.innerHTML = escapeHtml(msg).replace(/\n/g, '<br>');
-            } else {
-                alert(msg);
-            }
-        })
-        .finally(function () { if (btn) { btn.disabled = false; btn.innerHTML = origHtml; } });
-    });
-}
-bindEditEntryButtons();
-
-/* ================================================================
-   AJAX DELETE
-   ================================================================ */
-function bindDeleteButtons() {
-    document.querySelectorAll('.ajax-delete').forEach(function (btn) {
-        addConsultationListenerOnce(btn, 'uhmsBound', 'click', function () {
-            if (!confirm(this.dataset.confirm || 'Remove this item?')) return;
-            var url    = this.dataset.url;
-            var target = this.dataset.target;
-            var badge  = this.dataset.badge;
-            var self   = this;
-            self.disabled = true;
-
-            var fd = new FormData();
-            fd.append('_method', 'DELETE');
-            fd.append('_token', csrfToken);
-
-            fetch(url, {
-                method: 'POST',
-                body: fd,
-                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-            })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (data.success) {
-                    var el = document.querySelector(target);
-                    if (el) el.remove();
-                    if (badge) {
-                        var b = document.getElementById(badge);
-                        if (b) b.textContent = Math.max(0, parseInt(b.textContent || 0) - 1);
-                    }
-                    if (badge) refreshConsultationSection(badge.replace('badge-', ''));
-                    refreshConsultationSummary();
-                }
-            })
-            .catch(function () { alert(consultationI18n.deleteFailed); self.disabled = false; });
-        });
-    });
-}
-bindDeleteButtons();
-
-/* ================================================================
-   AJAX FORM SUBMISSIONS (complaints, diagnoses, investigations, treatments)
-   ================================================================ */
-document.querySelectorAll('[data-ajax-form]').forEach(function (form) {
-    if (hasConsultationBinding(form, 'uhmsSubmitBound')) return;
-    markConsultationBinding(form, 'uhmsSubmitBound');
-    addConsultationListener(form, 'submit', function (e) {
-        e.preventDefault();
-        var section  = form.dataset.ajaxForm;
-        ensureCurrentRouteInput(form);
-        localStorage.setItem(tabStorageKey, '#' + section + '-section');
-        var btn      = form.querySelector('[type="submit"]');
-        var origHtml = btn ? btn.innerHTML : '';
-        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>'; }
-
-        fetch(form.action, {
-            method: 'POST',
-            body: new FormData(form),
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-        })
-        .then(function (r) {
-            if (!r.ok) return r.json().then(function (e) { throw e; });
-            return r.json();
-        })
-        .then(function (data) {
-            if (data.success) {
-                onFormSuccess(section, data, form);
-                showToast('Saved successfully.');
-            }
-        })
-        .catch(function (err) {
-            var msg = 'An error occurred.';
-            if (err && err.errors) msg = Object.values(err.errors).flat().join('\n');
-            else if (err && err.message) msg = err.message;
-            // Inline error display for prescription form (better UX than alert)
-            if (section === 'prescriptions') {
-                var errBox = document.getElementById('prescriptionFormErrors');
-                if (errBox) {
-                    errBox.classList.remove('d-none');
-                    errBox.innerHTML = '<i class="ti ti-alert-circle me-1"></i>' + escapeHtml(msg).replace(/\n/g, '<br>');
-                    errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    return;
-                }
-            }
-            alert(msg);
-        })
-        .finally(function () { if (btn) { btn.disabled = false; btn.innerHTML = origHtml; } });
-    });
-});
-
-function onFormSuccess(section, data, form) {
-    resetAjaxForm(form, section);
-    Promise.all([
-        refreshConsultationSection(section),
-        refreshConsultationSummary()
-    ]).then(function () {
-        activateConsultationTab('#' + section + '-section');
-    });
-}
-
-/* ================================================================
-   DIAGNOSIS — TYPE TOGGLE & SET PRIMARY
-   ================================================================ */
-function bindDiagnosisButtons() {
-    document.querySelectorAll('.mark-final-btn').forEach(function (btn) {
-        addConsultationListenerOnce(btn, 'uhmsBound', 'click', function () {
-            var id = this.dataset.id;
-            var newType = 'final';
-            var self = this;
-            if (!confirm(@json(__('consultations.mark_this_diagnosis_as_final')))) return;
-            self.disabled = true;
-
-            var fd = new FormData();
-            fd.append('_method', 'PATCH'); fd.append('_token', csrfToken); fd.append('type', newType);
-
-            fetch(this.dataset.url, {
-                method: 'POST', body: fd,
-                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-            })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (data.success) {
-                    var badge = document.getElementById('type-badge-' + id);
-                    if (badge) {
-                        badge.textContent = capFirst(newType);
-                        badge.className = 'badge bg-' + (newType === 'final' ? 'success' : 'warning') + ' ms-1 diagnosis-type-badge';
-                    }
-                    self.remove();
-                    refreshConsultationSummary();
-                    showToast('Type set to ' + capFirst(newType) + '.');
-                }
-            })
-            .catch(function () { alert(consultationI18n.updateTypeFailed); })
-            .finally(function () { self.disabled = false; });
-        });
-    });
-
-    document.querySelectorAll('.set-primary-btn').forEach(function (btn) {
-        addConsultationListenerOnce(btn, 'uhmsBound', 'click', function () {
-            var id   = this.dataset.id;
-            var self = this;
-            self.disabled = true;
-
-            var fd = new FormData();
-            fd.append('_method', 'PATCH'); fd.append('_token', csrfToken);
-
-            fetch(this.dataset.url, {
-                method: 'POST', body: fd,
-                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-            })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (data.success) {
-                    // Clear all primary markers
-                    document.querySelectorAll('.primary-indicator').forEach(function (b) { b.classList.add('d-none'); });
-                    document.querySelectorAll('.set-primary-btn').forEach(function (b) { b.classList.remove('d-none'); });
-                    document.querySelectorAll('#diagnoses-list .ehr-item').forEach(function (el) { el.classList.remove('is-primary'); });
-                    // Apply to this diagnosis
-                    var pb = document.getElementById('primary-badge-' + id);
-                    if (pb) pb.classList.remove('d-none');
-                    var sp = document.getElementById('set-primary-' + id);
-                    if (sp) sp.classList.add('d-none');
-                    var de = document.getElementById('diagnosis-' + id);
-                    if (de) de.classList.add('is-primary');
-                    refreshConsultationSummary();
-                    showToast('Primary diagnosis updated.');
-                }
-            })
-            .catch(function () { alert(consultationI18n.setPrimaryFailed); })
-            .finally(function () { self.disabled = false; });
-        });
-    });
-}
-bindDiagnosisButtons();
-
-/* ================================================================
-   INVESTIGATION DEPARTMENT → SERVICES
-   ================================================================ */
-function loadInvestigationServices(deptId) {
-    var container = document.getElementById('investigationServicesContainer');
-    if (!container) return;
-    if (!deptId) { container.innerHTML = '<span class="text-muted small">Select a department first to load services</span>'; return; }
-    container.innerHTML = '<div class="py-2 text-center"><span class="spinner-border spinner-border-sm text-primary"></span> Loading...</div>';
-
-    fetch(deptServicesBase + '/' + deptId + '/investigation-services?visit_id=' + encodeURIComponent(currentVisitId), {
-        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-    })
-    .then(function (r) { return r.json(); })
-    .then(function (services) {
-        if (!services.length) { container.innerHTML = '<span class="text-muted small">No active services found.</span>'; return; }
-        var html = '<div class="row g-1">';
-        services.forEach(function (s) {
-            html += '<div class="col-md-6"><div class="form-check">';
-            html += '<input type="checkbox" name="service_ids[]" value="' + s.id + '" class="form-check-input" id="svc' + s.id + '">';
-            html += '<label class="form-check-label small" for="svc' + s.id + '">' + escapeHtml(s.name);
-            if (s.price !== null && s.price !== undefined) {
-                html += ' <span class="text-muted small">GH₵' + parseFloat(s.price).toFixed(2) + '</span>';
-                if (s.pricing_source === 'fallback_cash_no_insurance_price') {
-                    html += ' <span class="badge bg-warning text-dark">cash fallback</span>';
-                }
-            }
-            html += '</label></div></div>';
-        });
-        html += '</div>';
-        container.innerHTML = html;
-    })
-    .catch(function () { container.innerHTML = '<span class="text-danger small">Failed to load services.</span>'; });
-}
-
-/* ================================================================
-   PROCEDURE DEPARTMENT → SERVICES (Theatre / Procedure Request)
-   ================================================================ */
-function loadProcedureServices(deptId) {
-    var svc = document.getElementById('procedureServiceSelect');
-    if (!svc) return;
-    if (!deptId) {
-        svc.innerHTML = '<option value="">' + consultationI18n.selectDepartmentFirst + '</option>';
-        svc.disabled = true;
-        return;
-    }
-    svc.innerHTML = '<option value="">' + consultationI18n.loading + '</option>';
-    svc.disabled = true;
-
-    fetch(procedureDeptServicesBase + '/' + deptId + '/services?visit_id=' + encodeURIComponent(currentVisitId), {
-        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-    })
-    .then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-    })
-    .then(function (items) {
-        if (!items || items.length === 0) {
-            svc.innerHTML = '<option value="">' + consultationI18n.noProcedureServices + '</option>';
-            svc.disabled = true;
-            return;
-        }
-        svc.innerHTML = '<option value="">-- Select service --</option>';
-        items.forEach(function (it) {
-            var opt = document.createElement('option');
-            opt.value = it.id;
-            var price = it.price ?? it.selling_price;
-            var fallback = it.pricing_source === 'fallback_cash_no_insurance_price' ? ' (cash fallback)' : '';
-            opt.textContent = it.name + (price !== null && price !== undefined ? (' — GH₵' + parseFloat(price).toFixed(2) + fallback) : '');
-            svc.appendChild(opt);
-        });
-        svc.disabled = false;
-    })
-    .catch(function () {
-        svc.innerHTML = '<option value="">Failed to load services</option>';
-        svc.disabled = true;
-    });
-}
-
-runWhenConsultationReady(function () {
-    var dept = document.getElementById('procedureDeptSelect');
-    if (!dept) return;
-
-    addConsultationListenerOnce(dept, 'uhmsProcedureDeptBound', 'change', function () {
-        loadProcedureServices(this.value);
-    });
-});
-
-/* ================================================================
-   LAB REQUEST — AJAX FORM SUBMISSION
-   ================================================================ */
-(function () {
-    var form = document.getElementById('labRequestForm');
-    if (!form || hasConsultationBinding(form, 'uhmsSubmitBound')) return;
-    markConsultationBinding(form, 'uhmsSubmitBound');
-
-    addConsultationListener(form, 'submit', function (e) {
-        e.preventDefault();
-
-        var errBox = document.getElementById('labReqErrors');
-        var btn    = document.getElementById('labReqSubmitBtn');
-        var orig   = btn ? btn.innerHTML : '';
-
-        if (errBox) errBox.classList.add('d-none');
-        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending...'; }
-        ensureCurrentRouteInput(form);
-
-        fetch(form.action, {
-            method: 'POST',
-            body: new FormData(form),
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-        })
-        .then(function (r) {
-            if (!r.ok) return r.json().then(function (body) { throw body; });
-            return r.json();
-        })
-        .then(function (data) {
-            if (data.success) {
-                // Close modal and show success
-                var modal = bootstrap.Modal.getInstance(document.getElementById('investigationModal'));
-                if (modal) modal.hide();
-                showToast('Investigation request sent successfully.');
-                // Reset form for next use
-                form.reset();
-                document.getElementById('labReqItemsContainer').classList.add('d-none');
-                // Refresh the investigations list and summary
-                Promise.all([
-                    refreshConsultationSection('investigations'),
-                    refreshConsultationSummary()
-                ]).then(function () {
-                    activateConsultationTab('#investigations-section');
-                });
-            }
-        })
-        .catch(function (err) {
-            var msg = 'Failed to send request.';
-            if (err && err.errors) {
-                msg = Object.values(err.errors).flat().join('<br>');
-            } else if (err && err.message) {
-                msg = err.message;
-            }
-            if (errBox) { errBox.innerHTML = msg; errBox.classList.remove('d-none'); }
-            else alert(msg);
-        })
-        .finally(function () { if (btn) { btn.disabled = false; btn.innerHTML = orig; } });
-    });
-})();
-
-
-function loadLabReqItems(deptId) {
-    var container = document.getElementById('labReqItemsContainer');
-    var body      = document.getElementById('labReqItemsBody');
-    var label     = document.getElementById('labReqItemsLabel');
-    if (!container || !body) return;
-
-    if (!deptId) { container.classList.add('d-none'); return; }
-    container.classList.remove('d-none');
-    body.innerHTML = '<span class="text-muted small"><span class="spinner-border spinner-border-sm me-1"></span>Loading items...</span>';
-
-    fetch(deptServicesBase + '/' + deptId + '/investigation-info', {
-        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-    })
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-        if (label) label.textContent = 'Items (' + data.label + ') *';
-
-        if (data.uses_catalog) {
-            // Show lab test checkboxes
-            if (!data.lab_tests.length) { body.innerHTML = '<span class="text-warning small">No active lab tests configured.</span>'; return; }
-            var html = '<div class="row g-1" style="max-height:250px;overflow-y:auto;">';
-            data.lab_tests.forEach(function (t) {
-                html += '<div class="col-md-6"><div class="form-check">';
-                html += '<input type="checkbox" name="items[]" value="' + t.id + '" class="form-check-input" id="lt' + t.id + '">';
-                html += '<label class="form-check-label small" for="lt' + t.id + '">' + escapeHtml(t.name);
-                if (t.code) html += ' <span class="text-muted">(' + escapeHtml(t.code) + ')</span>';
-                if (t.criteria && t.criteria.length) {
-                    html += '<br><span class="text-muted small">' + t.criteria.map(function (c) {
-                        return escapeHtml(c.name) + (c.normal_range ? ': ' + escapeHtml(c.normal_range) : '') + (c.unit ? ' ' + escapeHtml(c.unit) : '');
-                    }).join(' &middot; ') + '</span>';
-                }
-                html += '</label></div></div>';
-            });
-            html += '</div>';
-            body.innerHTML = html;
-        } else {
-            // Show free-text item rows
-            body.innerHTML = '<div id="labReqFreeItems">' + freeTextItemRow(0) + '</div>' +
-                '<button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addFreeTextItem()"><i class="ti ti-plus me-1"></i>Add Item</button>';
-        }
-    })
-    .catch(function () { body.innerHTML = '<span class="text-danger small">Failed to load items.</span>'; });
-}
-
-var _freeItemIdx = 0;
-function freeTextItemRow(idx) {
-    return '<div class="input-group mb-1" id="freeItem' + idx + '">' +
-        '<span class="input-group-text"><i class="ti ti-point"></i></span>' +
-        '<input type="text" name="items[]" class="form-control" placeholder="e.g. Chest X-Ray, Abdominal Scan..." required>' +
-        (idx > 0 ? '<button aria-label="Close" title="Close" type="button" class="btn btn-outline-danger" onclick="document.getElementById(\'freeItem' + idx + '\').remove()"><i class="ti ti-x"></i></button>' : '') +
-        '</div>';
-}
-function addFreeTextItem() {
-    _freeItemIdx++;
-    var ct = document.getElementById('labReqFreeItems');
-    if (ct) ct.insertAdjacentHTML('beforeend', freeTextItemRow(_freeItemIdx));
-}
-
-/* ================================================================
-   INVESTIGATION ROUTE — AJAX FORM SUBMISSION
-   ================================================================ */
-(function () {
-    var form = document.getElementById('routeInvestigationForm');
-    if (!form || hasConsultationBinding(form, 'uhmsSubmitBound')) return;
-    markConsultationBinding(form, 'uhmsSubmitBound');
-
-    addConsultationListener(form, 'submit', function (e) {
-        e.preventDefault();
-
-        var errBox = document.getElementById('investRouteErrors');
-        var btn = document.getElementById('investRouteSubmitBtn');
-        var original = btn ? btn.innerHTML : '';
-
-        if (errBox) {
-            errBox.classList.add('d-none');
-            errBox.innerHTML = '';
-        }
-
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Routing...';
-        }
-        ensureCurrentRouteInput(form);
-
-        fetch(form.action, {
-            method: 'POST',
-            body: new FormData(form),
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-        })
-        .then(function (r) {
-            if (!r.ok) return r.json().then(function (body) { throw body; });
-            return r.json();
-        })
-        .then(function (data) {
-            if (!data.success) return;
-
-            var modal = bootstrap.Modal.getInstance(document.getElementById('investigationModal'));
-            if (modal) modal.hide();
-
-            form.reset();
-            showToast(data.message || 'Patient routed successfully.');
-
-            // Refresh the investigations list and summary
-            Promise.all([
-                refreshConsultationSection('investigations'),
-                refreshConsultationSummary()
-            ]).then(function () {
-                activateConsultationTab('#investigations-section');
-            });
-        })
-        .catch(function (err) {
-            var msg = 'Failed to route patient.';
-            if (err && err.errors) {
-                msg = Object.values(err.errors).flat().join('<br>');
-            } else if (err && err.message) {
-                msg = err.message;
-            }
-
-            if (errBox) {
-                errBox.innerHTML = msg;
-                errBox.classList.remove('d-none');
-            } else {
-                alert(msg);
-            }
-        })
-        .finally(function () {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = original;
-            }
-        });
-    });
-})();
-
-/* ================================================================
-   PRESCRIPTIONS — DYNAMIC DRUG ROWS
-   ================================================================ */
-function initDrugSelect(select) {
-    if (!select || !window.jQuery || !window.jQuery.fn.select2) return;
-    var selectedValue = select.value;
-    var $select = window.jQuery(select);
-    if ($select.hasClass('select2-hidden-accessible')) {
-        $select.select2('destroy');
-    }
-    select.value = selectedValue;
-    $select.select2({
-        theme: 'default',
-        width: '100%',
-        placeholder: '-- Search drug --',
-        allowClear: true,
-    });
-}
-
-function syncDrugName(row) {
-    var drugSel = row.querySelector('.drug-select');
-    var hidden = row.querySelector('.drug-name-input');
-    if (!drugSel || !hidden) return;
-
-    var selected = drugSel.options[drugSel.selectedIndex];
-    hidden.value = selected && selected.value ? (selected.getAttribute('data-name') || selected.textContent.trim()) : '';
-}
-
-if (window.jQuery) {
-    window.jQuery('.drug-select').each(function () { initDrugSelect(this); });
-}
-
-/* ----------------------------------------------------------------
-   AUTO-CALCULATE QUANTITY
-   Formula: (dosage_mg / strength_mg) × doses_per_day × duration_days
-   If strength can't be parsed, falls back to: doses_per_day × days
-   ---------------------------------------------------------------- */
-var freqMap = { OD:1, BD:2, TDS:3, QDS:4, STAT:1, PRN:1 };
-
-function parseMg(str) {
-    if (!str) return null;
-    var m = String(str).match(/([\d.]+)\s*(mg|mcg|g|ml|iu|units?)?/i);
-    if (!m) return null;
-    var val = parseFloat(m[1]);
-    var unit = (m[2] || 'mg').toLowerCase();
-    if (unit === 'g') val *= 1000;
-    if (unit === 'mcg') val /= 1000;
-    return isNaN(val) ? null : val;
-}
-
-function parseDoseUnits(str) {
-    if (!str) return null;
-    var text = String(str).toLowerCase().trim();
-    var unitDose = text.match(/^(\d+(?:\.\d+)?)\s*(tab|tabs|tablet|tablets|cap|caps|capsule|capsules|amp|amps|ampoule|ampoules|vial|vials|drop|drops|puff|puffs|sachet|sachets|unit|units)\b/);
-    if (unitDose) {
-        var unitValue = parseFloat(unitDose[1]);
-        return isNaN(unitValue) ? null : unitValue;
-    }
-
-    var plainNumber = text.match(/^(\d+(?:\.\d+)?)$/);
-    if (plainNumber) {
-        var plainValue = parseFloat(plainNumber[1]);
-        return isNaN(plainValue) ? null : plainValue;
-    }
-
-    return null;
-}
-
-function parseDays(str) {
-    if (!str) return null;
-    str = String(str).toLowerCase().trim();
-    // "5 days", "1 week", "2 weeks", "3 months", plain number
-    var m = str.match(/^(\d+(?:\.\d+)?)\s*(day|days|week|weeks|month|months|wk|wks)?/);
-    if (!m) return null;
-    var n = parseFloat(m[1]);
-    var u = m[2] || 'day';
-    if (u.startsWith('week') || u === 'wk' || u === 'wks') n *= 7;
-    if (u.startsWith('month')) n *= 30;
-    return isNaN(n) ? null : Math.round(n);
-}
-
-function calcQty(row) {
-    var drugSel   = row.querySelector('.drug-select');
-    var dosageInp = row.querySelector('[name$="[dosage]"]');
-    var freqSel   = row.querySelector('[name$="[frequency]"]');
-    var durInp    = row.querySelector('[name$="[duration]"]');
-    var qtyInp    = row.querySelector('[name$="[quantity]"]');
-    if (!drugSel || !dosageInp || !freqSel || !durInp || !qtyInp) return;
-
-    var selOpt    = drugSel.options[drugSel.selectedIndex];
-    var strength  = selOpt ? selOpt.getAttribute('data-strength') : null;
-    var dosage    = dosageInp.value.trim();
-    var freq      = freqSel.value;
-    var dur       = durInp.value.trim();
-
-    var daysVal   = parseDays(dur);
-    var freqVal   = freqMap[freq] || 1;
-
-    if (!daysVal) return; // can't compute without duration
-
-    var doseUnits = parseDoseUnits(dosage);
-    var tabletsPerDose = doseUnits || 1;
-    var dMg = parseMg(dosage);
-    var sMg = parseMg(strength);
-    if (!doseUnits && dMg && sMg && sMg > 0) {
-        tabletsPerDose = Math.ceil(dMg / sMg);
-    }
-
-    var total = tabletsPerDose * freqVal * daysVal;
-    if (freq === 'STAT') total = tabletsPerDose; // one-off
-    total = Math.ceil(total);
-    if (total > 0) {
-        qtyInp.value = total;
-        qtyInp.style.background = '#fffbe6'; // subtle highlight
-        setTimeout(function(){ qtyInp.style.background = ''; }, 1200);
-    }
-}
-
-function bindRxCalc(row) {
-    if (!row || hasConsultationBinding(row, 'uhmsRxCalcBound')) return;
-    markConsultationBinding(row, 'uhmsRxCalcBound');
-
-    ['change','input'].forEach(function(evt) {
-        addConsultationListener(row.querySelector('[name$="[dosage]"]'), evt, function(){ calcQty(row); });
-        addConsultationListener(row.querySelector('[name$="[duration]"]'), evt, function(){ calcQty(row); });
-    });
-    addConsultationListener(row.querySelector('[name$="[frequency]"]'), 'change', function(){ calcQty(row); });
-    // Select2 fires a jQuery event
-    if (window.jQuery) {
-        window.jQuery(row).find('.drug-select').off('.uhmsRxCalc').on('select2:select.uhmsRxCalc select2:clear.uhmsRxCalc change.uhmsRxCalc', function(){ syncDrugName(row); calcQty(row); });
-    }
-}
-
-/* Bind on the first (pre-rendered) row */
-(function(){
-    var firstRow = document.querySelector('#prescriptionItems .prescription-item');
-    if (firstRow) bindRxCalc(firstRow);
-})();
-
-var rxIdx = 1;
-addConsultationListenerOnce(document.getElementById('addItemBtn'), 'uhmsBound', 'click', function () {
-    var cont = document.getElementById('prescriptionItems');
-    if (!cont) return;
-    var source = cont.querySelector('.prescription-item');
-    if (!source) return;
-    var tpl  = source.cloneNode(true);
-    tpl.removeAttribute('data-uhms-rx-calc-bound');
-    delete tpl.dataset.uhmsRxCalcBound;
-
-    tpl.querySelectorAll('.select2-container').forEach(function (container) { container.remove(); });
-
-    tpl.querySelectorAll('[name]').forEach(function (inp) {
-        inp.name = inp.name.replace(/items\[\d+\]/, 'items[' + rxIdx + ']');
-        if (inp.tagName === 'INPUT') inp.value = inp.type === 'number' ? '1' : '';
-        if (inp.tagName === 'SELECT' && inp.classList.contains('drug-select')) {
-            inp.value = '';
-            inp.classList.remove('select2-hidden-accessible');
-            inp.removeAttribute('data-select2-id');
-            inp.removeAttribute('aria-hidden');
-            inp.removeAttribute('tabindex');
-        }
-    });
-    tpl.querySelectorAll('option[data-select2-id]').forEach(function (opt) { opt.removeAttribute('data-select2-id'); });
-    tpl.style.position = 'relative';
-    var rm = document.createElement('button');
-    rm.type = 'button'; rm.className = 'btn btn-xs btn-outline-danger position-absolute top-0 end-0 m-1';
-    rm.innerHTML = '<i class="ti ti-x"></i>'; rm.onclick = function () { tpl.remove(); reindexPrescriptionRows(); };
-    tpl.appendChild(rm);
-    cont.appendChild(tpl);
-    /* Init Select2 on the new drug dropdown */
-    if (window.jQuery) {
-        window.jQuery(tpl).find('.drug-select').each(function () { initDrugSelect(this); });
-    }
-    /* Bind auto-calc on the new row */
-    bindRxCalc(tpl);
-    rxIdx++;
-});
-
-function reindexPrescriptionRows() {
-    document.querySelectorAll('#prescriptionItems .prescription-item').forEach(function (row, index) {
-        row.querySelectorAll('[name]').forEach(function (field) {
-            field.name = field.name.replace(/items\[\d+\]/, 'items[' + index + ']');
-        });
-        syncDrugName(row);
-    });
-    rxIdx = document.querySelectorAll('#prescriptionItems .prescription-item').length;
-}
-
-function preparePrescriptionSubmit() {
-    document.querySelectorAll('#prescriptionItems .prescription-item').forEach(function (row) {
-        syncDrugName(row);
-        calcQty(row);
-    });
-    reindexPrescriptionRows();
-    return true;
-}
-
-/* ================================================================
-   PREVIOUS VISIT PREVIEW MODAL
-   ================================================================ */
-function previewVisit(index) {
-    var vd = visitHistoryData[index];
-    if (!vd) return;
-    var html = '<p class="mb-3"><span class="fw-bold fs-6">' + escapeHtml(vd.visit_number) + '</span>'
-        + ' <span class="text-muted">' + escapeHtml(vd.date) + '</span>'
-        + (vd.doctor ? ' &middot; Dr. ' + escapeHtml(vd.doctor) : '') + '</p>';
-
-    if (vd.complaints && vd.complaints.length) {
-        html += '<h6 class="fw-bold small text-muted border-bottom pb-1 mb-2">Complaints</h6>';
-        vd.complaints.forEach(function (c) { html += '<div class="ehr-item py-1">' + escapeHtml(c) + '</div>'; });
-    }
-    if (vd.diagnoses && vd.diagnoses.length) {
-        html += '<h6 class="fw-bold small text-muted border-bottom pb-1 mb-2 mt-3">Diagnoses</h6>';
-        vd.diagnoses.forEach(function (d) {
-            html += '<div class="ehr-item py-1">' + escapeHtml(d.description);
-            html += ' <span class="badge bg-' + (d.type === 'final' ? 'success' : 'warning') + '">' + capFirst(d.type) + '</span>';
-            if (d.is_primary) html += ' <span class="badge bg-warning text-dark"><i class="ti ti-star-filled me-1"></i>Primary</span>';
-            if (d.icd_code) html += ' <code class="ms-1">' + escapeHtml(d.icd_code) + '</code>';
-            html += '</div>';
-        });
-    }
-    if (vd.investigations && vd.investigations.length) {
-        html += '<h6 class="fw-bold small text-muted border-bottom pb-1 mb-2 mt-3">Investigations</h6>';
-        vd.investigations.forEach(function (i) {
-            var ug = i.urgency === 'emergency' ? 'danger' : i.urgency === 'urgent' ? 'warning' : 'secondary';
-            html += '<div class="ehr-item py-1"><span class="badge bg-dark">' + escapeHtml(i.type) + '</span>';
-            if (i.description && i.description !== i.type) html += ' ' + escapeHtml(i.description);
-            html += ' <span class="badge bg-' + ug + '">' + capFirst(i.urgency || 'routine') + '</span></div>';
-        });
-    }
-    if (vd.treatments && vd.treatments.length) {
-        html += '<h6 class="fw-bold small text-muted border-bottom pb-1 mb-2 mt-3">Treatments</h6>';
-        vd.treatments.forEach(function (t) {
-            var tc = t.type === 'medication' ? 'primary' : t.type === 'procedure' ? 'info' : t.type === 'referral' ? 'warning' : 'secondary';
-            html += '<div class="ehr-item py-1"><span class="badge bg-' + tc + '">' + capFirst(t.type) + '</span> ' + escapeHtml(t.description) + '</div>';
-        });
-    }
-    if (!vd.complaints.length && !vd.diagnoses.length && !vd.investigations.length && !vd.treatments.length) {
-        html = '<div class="text-center text-muted py-3">No clinical data recorded for this visit.</div>';
-    }
-
-    document.getElementById('visitPreviewContent').innerHTML = html;
-    new bootstrap.Modal(document.getElementById('visitPreviewModal')).show();
-}
-
-/* ================================================================
-   PATTERN SEARCH & APPLY
-   ================================================================ */
-function bindApplyButtons() {
-    document.querySelectorAll('.apply-pattern-btn').forEach(function (btn) {
-        addConsultationListenerOnce(btn, 'uhmsBound', 'click', function () {
-            var pid  = this.dataset.patternId;
-            var pnm  = this.dataset.patternName;
-            var available = (this.dataset.patternTypes || '').split(',').filter(Boolean);
-            var self = this;
-            if (!confirm('Apply pattern "' + pnm + '"?')) return;
-            var sectionInput = prompt('Sections to apply (comma separated). Leave as-is to apply all shown sections.', available.join(','));
-            if (sectionInput === null) return;
-            var selectedSections = sectionInput.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-            self.disabled = true; self.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-
-            fetch('{{ url("admin/patterns") }}/' + pid + '/apply', {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json',
-                    'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken
-                },
-                body: JSON.stringify({
-                    visit_id: {{ $visit->id }},
-                    consultation_route_id: window.currentConsultationRouteId,
-                    sections: selectedSections
-                })
-            })
-            .then(function (r) { return r.json(); })
-            .then(function (d) {
-                if (d.success) {
-                    saveTabBeforeSubmit('patterns-section');
-                    var normalizePatternSection = function (section) {
-                        return {
-                            complaint: 'complaints',
-                            diagnosis: 'diagnoses',
-                            investigation: 'investigations',
-                            treatment: 'treatments',
-                            prescription: 'prescriptions',
-                            procedure: 'procedures',
-                            task: 'tasks'
-                        }[section] || section;
-                    };
-                    var refreshSections = (selectedSections.length ? selectedSections : available)
-                        .map(normalizePatternSection)
-                        .filter(function (section, index, all) { return section && all.indexOf(section) === index; });
-
-                    Promise.all(refreshSections.map(refreshConsultationSection).concat([refreshConsultationSummary()]))
-                        .then(function () {
-                            activateConsultationTab('#patterns-section');
-                            showToast('Pattern applied successfully.');
-                            self.disabled = false;
-                            self.innerHTML = '<i class="ti ti-check me-1"></i>Apply';
-                        });
-                }
-                else { alert('Failed to apply pattern.'); self.disabled = false; self.innerHTML = '<i class="ti ti-check me-1"></i>Apply'; }
-            })
-            .catch(function () { alert('Failed.'); self.disabled = false; self.innerHTML = '<i class="ti ti-check me-1"></i>Apply'; });
-        });
-    });
-}
-bindApplyButtons();
-
-var psBtn = document.getElementById('patternSearchBtn');
-var psInp = document.getElementById('patternSearchInput');
-var psRes = document.getElementById('patternSearchResults');
-if (psBtn && psInp && psRes) {
-    addConsultationListenerOnce(psBtn, 'uhmsBound', 'click', function () {
-        var q = psInp.value.trim();
-        if (q.length < 3) { psRes.innerHTML = '<div class="alert alert-warning py-2">Enter at least 3 characters.</div>'; psRes.style.display = 'block'; return; }
-        psRes.innerHTML = '<div class="text-center py-2"><span class="spinner-border spinner-border-sm text-primary"></span></div>';
-        psRes.style.display = 'block';
-        fetch('{{ route("admin.patterns.suggest") }}?query=' + encodeURIComponent(q), {
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-        })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-            if (d.patterns && d.patterns.length) {
-                var h = '';
-                d.patterns.forEach(function (p) {
-                    h += '<div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-center">';
-                    h += '<div><strong>' + escapeHtml(p.name) + '</strong> <small class="text-muted">(' + p.items.length + ' items)</small></div>';
-                    var patternTypes = (p.items || []).map(function (it) { return it.type; }).filter(function (value, index, arr) { return arr.indexOf(value) === index; }).join(',');
-                    h += '<button type="button" class="btn btn-sm btn-success apply-pattern-btn" data-pattern-id="' + p.id + '" data-pattern-name="' + escapeHtml(p.name) + '" data-pattern-types="' + escapeHtml(patternTypes) + '"><i class="ti ti-check me-1"></i>Apply</button>';
-                    h += '</div>';
-                });
-                psRes.innerHTML = h;
-                bindApplyButtons();
-            } else { psRes.innerHTML = '<div class="alert alert-info py-2 mb-0">No patterns found.</div>'; }
-        })
-        .catch(function () { psRes.innerHTML = '<div class="alert alert-danger py-2 mb-0">Search failed.</div>'; });
-    });
-    addConsultationListenerOnce(psInp, 'uhmsBound', 'keypress', function (e) { if (e.key === 'Enter') { e.preventDefault(); psBtn.click(); } });
-}
-
-/* ================================================================
-   COMPLAINT & DIAGNOSIS SUGGESTIONS (DB AUTOCOMPLETE)
-   ================================================================ */
-(function () {
-    var suggestUrls = {
-        complaint: '{{ route("admin.consultations.suggest.complaints") }}',
-        diagnosis:  '{{ route("admin.consultations.suggest.diagnoses") }}',
-    };
-    var timers = {};
-    var complaintSuggestionIndex = {};
-
-    function syncComplaintCatalogueId(value) {
-        var hidden = document.getElementById('complaintCatalogueIdInput');
-        if (!hidden) return;
-        var match = complaintSuggestionIndex[(value || '').toLowerCase()];
-        hidden.value = match ? match.id : '';
-    }
-
-    function bindSuggest(inputId, datalistId, type) {
-        var inp = document.getElementById(inputId);
-        var dl  = document.getElementById(datalistId);
-        if (!inp || !dl) return;
-        if (hasConsultationBinding(inp, 'uhms' + capFirst(type) + 'SuggestBound')) return;
-        markConsultationBinding(inp, 'uhms' + capFirst(type) + 'SuggestBound');
-
-        addConsultationListener(inp, 'input', function () {
-            var q = this.value.trim();
-            clearTimeout(timers[type]);
-            if (q.length < 2) { dl.innerHTML = ''; return; }
-            timers[type] = setTimeout(function () {
-                fetch(suggestUrls[type] + '?q=' + encodeURIComponent(q), {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-                })
-                .then(function (r) { return r.json(); })
-                .then(function (items) {
-                    if (type === 'complaint') {
-                        complaintSuggestionIndex = {};
-                        dl.innerHTML = items.map(function (item) {
-                            complaintSuggestionIndex[String(item.name || '').toLowerCase()] = item;
-                            var label = item.category ? item.category : 'Complaint catalogue';
-                            return '<option value="' + escapeHtml(item.name || '') + '" label="' + escapeHtml(label) + '">';
-                        }).join('');
-                        syncComplaintCatalogueId(inp.value);
-                        return;
-                    }
-
-                    dl.innerHTML = items.map(function (s) {
-                        return '<option value="' + escapeHtml(s) + '">';
-                    }).join('');
-                });
-            }, 280);
-        });
-        if (type === 'complaint') {
-            addConsultationListener(inp, 'change', function () { syncComplaintCatalogueId(this.value); });
-            addConsultationListener(inp, 'blur', function () { syncComplaintCatalogueId(this.value); });
-        }
-    }
-
-    bindSuggest('complaintDescInput', 'complaintSuggestions', 'complaint');
-    bindSuggest('diagnosis_description', 'diagnosisSuggestions', 'diagnosis');
-}());
-
-/* ================================================================
-   ICD-10 AUTOCOMPLETE
-   ================================================================ */
-runWhenConsultationReady(function () {
-    var $jq = window.jQuery;
-    if ($jq && $jq('#icd_code_select').length && $jq.fn.select2) {
-        var $icdSelect = $jq('#icd_code_select');
-        if ($icdSelect.hasClass('select2-hidden-accessible')) {
-            $icdSelect.select2('destroy');
-        }
-        $icdSelect.off('.uhmsIcd').select2({
-            placeholder: 'Type to search ICD-10 codes...',
-            allowClear: true,
-            minimumInputLength: 2,
-            ajax: {
-                url: '{{ route("admin.icd-search") }}',
-                dataType: 'json',
-                delay: 300,
-                data: function (p) { return { q: p.term }; },
-                processResults: function (d) { return { results: d.results }; },
-                cache: true
-            },
-            templateResult: function (i) {
-                if (i.loading) return i.text;
-                return $jq('<span>').html('<strong>' + escapeHtml(i.code) + '</strong> — ' + escapeHtml(i.description));
-            },
-            templateSelection: function (i) { return i.text || i.code; }
-        }).on('select2:select.uhmsIcd', function (e) {
-            var d = e.params.data;
-            $jq('#icd_code_id').val(d.id);
-            $jq('#icd_code_manual').val(d.code);
-            var desc = $jq('#diagnosis_description');
-            if (!desc.val().trim()) desc.val(d.description);
-        }).on('select2:clear.uhmsIcd', function () {
-            $jq('#icd_code_id').val('');
-            $jq('#icd_code_manual').val('');
-        });
-    }
-});
-
-runWhenConsultationReady(function () {
-    var dept = document.getElementById('followUpDepartmentSelect');
-    var service = document.getElementById('followUpServiceSelect');
-    if (!dept || !service) return;
-
-    function syncFollowUpServices() {
-        var selectedDepartment = dept.value;
-        Array.prototype.forEach.call(service.options, function (option) {
-            if (!option.value) {
-                option.hidden = false;
-                return;
-            }
-
-            var matches = !selectedDepartment || option.dataset.departmentId === selectedDepartment;
-            option.hidden = !matches;
-            if (!matches && option.selected) {
-                service.value = '';
-            }
-        });
-    }
-
-    addConsultationListenerOnce(dept, 'uhmsFollowUpBound', 'change', syncFollowUpServices);
-    syncFollowUpServices();
-
-    @if($errors->has('appointment_date') || $errors->has('start_time') || $errors->has('end_time') || $errors->has('department_id') || $errors->has('service_id') || $errors->has('doctor_id') || $errors->has('reason') || $errors->has('notes') || $errors->has('priority'))
-        var modal = document.getElementById('followUpAppointmentModal');
-        if (modal && window.bootstrap && window.bootstrap.Modal) {
-            window.bootstrap.Modal.getOrCreateInstance(modal).show();
-        }
-    @endif
-});
-
-/* ================================================================
-   EXPOSE TO GLOBAL SCOPE
-   The Inertia legacy bridge wraps each script block in its own
-   function context, so top-level `function` and `var` declarations
-   are NOT global. Inline event handlers (onclick / onchange /
-   onsubmit) resolve identifiers against window. Map them here so
-   inline handlers and other script blocks can reach them.
-   ================================================================ */
-(function () {
-    var fns = ['saveTabBeforeSubmit','activateConsultationTab','loadInvestigationServices',
-               'loadProcedureServices',
-               'loadLabReqItems','addFreeTextItem','freeTextItemRow','preparePrescriptionSubmit',
-               'previewVisit','escapeHtml','capFirst','showToast','reindexPrescriptionRows',
-               'initDrugSelect','syncDrugName','calcQty','bindRxCalc'];
-    fns.forEach(function (n) {
-        try { if (typeof eval(n) === 'function') window[n] = eval(n); } catch (e) {}
-    });
-})();
-</script>
-@endpush
+@include('consultations.partials.page-config')

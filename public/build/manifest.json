@@ -13,7 +13,7 @@
     "src": "resources/img/bg/generate-bg-02.png"
   },
   "resources/js/Pages/Legacy/BladePage.vue": {
-    "file": "js/BladePage.B2tC32nI.js",
+    "file": "js/BladePage.BCarCQJV.js",
     "name": "BladePage",
     "src": "resources/js/Pages/Legacy/BladePage.vue",
     "isDynamicEntry": true,
@@ -24,8 +24,14 @@
       "css/BladePage.min.css"
     ]
   },
+  "resources/js/Pages/consultation-show.js": {
+    "file": "js/consultation-show.C53beagX.bundle.js",
+    "name": "consultation-show",
+    "src": "resources/js/Pages/consultation-show.js",
+    "isEntry": true
+  },
   "resources/js/inertia.js": {
-    "file": "js/inertia.BuHPQT8m.bundle.js",
+    "file": "js/inertia.HLcUQBte.bundle.js",
     "name": "inertia",
     "src": "resources/js/inertia.js",
     "isEntry": true,

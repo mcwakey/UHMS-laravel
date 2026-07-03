@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -17,6 +17,24 @@ for (const [source, destination] of targets) {
     const to = resolve(root, destination);
 
     if (!existsSync(from)) {
+        continue;
+    }
+
+    if (source === 'resources/plugins') {
+        mkdirSync(to, { recursive: true });
+
+        for (const entry of readdirSync(from, { withFileTypes: true })) {
+            const sourceEntry = resolve(from, entry.name);
+            const destinationEntry = resolve(to, entry.name);
+
+            rmSync(destinationEntry, { recursive: true, force: true });
+            cpSync(sourceEntry, destinationEntry, {
+                recursive: true,
+                force: true,
+                errorOnExist: false,
+            });
+        }
+
         continue;
     }
 

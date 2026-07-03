@@ -264,6 +264,15 @@ return [
         'referred_activated'        => 'Patient sent to :department and session activated.',
         'referred_queued'           => 'Patient queued for :department.',
         'sent_to_investigation'     => 'Patient sent to :department for investigation.',
+        'consultation_locked'       => 'This consultation session is locked and cannot be changed.',
+        'consultation_completed_readonly' => 'This consultation session is completed and is read-only.',
+        'consultation_cancelled_readonly' => 'This consultation session is cancelled and is read-only.',
+        'duplicate_action_ignored'  => 'Duplicate consultation action ignored.',
+        'duplicate_action_replayed' => 'Duplicate consultation action replayed.',
+        'duplicate_action_payload_mismatch' => 'This idempotency key was already used with different details.',
+        'invalid_consultation_route'=> 'The selected consultation session does not belong to this visit.',
+        'consultation_route_required' => 'A consultation session is required for this action.',
+        'action_not_allowed_for_session' => 'You are not allowed to perform this action for this consultation session.',
     ],
 
     /* ------------------------------------------------------------------ */

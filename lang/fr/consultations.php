@@ -117,6 +117,22 @@ return [
     'set_primary_failed' => 'Échec de la définition du diagnostic principal.',
     'loading' => 'Chargement...',
     'no_procedure_services' => 'Aucun service de procédure trouvé pour ce service',
+    'ajax' => [
+        'validation_failed' => 'Veuillez corriger les champs mis en évidence.',
+        'session_expired' => 'Votre session a expiré. Veuillez actualiser puis réessayer.',
+        'forbidden' => 'Vous n\'êtes pas autorisé à effectuer cette action.',
+        'network_error' => 'Erreur réseau. Vérifiez votre connexion puis réessayez.',
+        'server_error' => 'L\'action n\'a pas pu être terminée. Veuillez réessayer.',
+        'section_refresh_failed' => 'Enregistré, mais cette section n\'a pas pu être actualisée.',
+        'duplicate_replayed' => 'Cette action a déjà été reçue et a été rejouée en toute sécurité.',
+        'route_context_missing' => 'Sélectionnez une session de consultation avant d\'enregistrer.',
+        'submit_in_progress' => 'Enregistrement...',
+        'saved_successfully' => 'Enregistré avec succès.',
+    ],
+    'modal' => [
+        'loading' => 'Chargement...',
+        'close_confirm' => 'Fermer cette fenêtre et ignorer les modifications non enregistrées ?',
+    ],
 
     'workspace' => [
         'page_title' => 'Consultation - :visit',

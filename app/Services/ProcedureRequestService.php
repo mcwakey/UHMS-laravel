@@ -50,6 +50,21 @@ class ProcedureRequestService
         return DB::transaction(function () use ($visit, $department, $service, $data, $doctor) {
             $now = now();
 
+            $duplicate = ProcedureRequest::query()
+                ->where('visit_id', $visit->id)
+                ->where('consultation_route_id', $data['consultation_route_id'] ?? null)
+                ->where('department_id', $department->id)
+                ->where('service_catalog_id', $service->id)
+                ->where('requested_by', $doctor->id)
+                ->where('indication', trim((string) $data['indication']))
+                ->where('created_at', '>=', $now->copy()->subMinute())
+                ->latest('id')
+                ->first();
+
+            if ($duplicate) {
+                return $duplicate->fresh(['service', 'department', 'requestingDoctor']);
+            }
+
             $request = ProcedureRequest::create([
                 'request_number'     => ProcedureRequest::generateNumber(),
                 'visit_id'           => $visit->id,

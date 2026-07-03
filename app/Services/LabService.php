@@ -179,6 +179,10 @@ class LabService
     public function createRequest(Visit $visit, array $items, array $data = []): LabRequest
     {
         return DB::transaction(function () use ($visit, $items, $data) {
+            if ($duplicate = $this->findNaturalDuplicateRequest($visit, $items, $data)) {
+                return $duplicate->fresh(['items.labTest', 'items.service', 'patient']);
+            }
+
             $request = LabRequest::create([
                 'request_number'       => LabRequest::generateRequestNumber(),
                 'visit_id'             => $visit->id,
@@ -247,6 +251,41 @@ class LabService
 
             return $request;
         });
+    }
+
+    private function findNaturalDuplicateRequest(Visit $visit, array $items, array $data): ?LabRequest
+    {
+        $signature = $this->requestItemsSignature($items);
+
+        return LabRequest::query()
+            ->with('items')
+            ->where('visit_id', $visit->id)
+            ->where('consultation_route_id', $data['consultation_route_id'] ?? null)
+            ->where('target_department_id', $data['target_department_id'] ?? null)
+            ->where('requested_by', Auth::id())
+            ->where('created_at', '>=', now()->subMinute())
+            ->latest('id')
+            ->get()
+            ->first(fn (LabRequest $request) => $this->requestItemsSignature($request->items->map->toArray()->all()) === $signature);
+    }
+
+    private function requestItemsSignature(array $items): array
+    {
+        return collect($items)
+            ->map(fn ($item) => is_array($item)
+                ? [
+                    'lab_test_id' => (int) ($item['lab_test_id'] ?? 0),
+                    'service_id' => (int) ($item['service_id'] ?? 0),
+                    'name' => mb_strtolower(trim((string) ($item['name'] ?? ''))),
+                ]
+                : [
+                    'lab_test_id' => is_numeric($item) ? (int) $item : 0,
+                    'service_id' => 0,
+                    'name' => is_numeric($item) ? '' : mb_strtolower(trim((string) $item)),
+                ])
+            ->sortBy(fn (array $item) => implode('|', $item))
+            ->values()
+            ->all();
     }
 
     public function getRequestDetails(LabRequest $request): LabRequest

@@ -8,6 +8,7 @@ use App\Models\Investigation;
 use App\Models\MedicalRecord;
 use App\Models\Treatment;
 use App\Models\Visit;
+use App\Models\VisitConsultationRoute;
 use Illuminate\Support\Facades\Auth;
 
 class ConsultationService
@@ -328,7 +329,10 @@ class ConsultationService
     private function assertRecordEditable(MedicalRecord $record): void
     {
         $route = $record->consultationRoute;
-        if (! $route || ! $route->locked_at) {
+        if (! $route || (! $route->locked_at && ! in_array($route->status, [
+            VisitConsultationRoute::STATUS_COMPLETED,
+            VisitConsultationRoute::STATUS_CANCELLED,
+        ], true))) {
             return;
         }
 
@@ -337,7 +341,7 @@ class ConsultationService
             return;
         }
 
-        throw new \RuntimeException('This outpatient consultation session is locked. Use correction permission to amend it.');
+        throw new \RuntimeException('This outpatient consultation session is locked or completed. Use correction permission to amend it.');
     }
 
     private function assertEntryEditable(object $entry): void

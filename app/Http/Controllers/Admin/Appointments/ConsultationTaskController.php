@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin\Appointments;
 use App\Http\Controllers\Controller;
 use App\Models\ConsultationTask;
 use App\Models\Visit;
+use App\Services\Consultation\ConsultationActionException;
+use App\Services\Consultation\ConsultationActionGuard;
+use App\Services\Consultation\ConsultationIdempotencyService;
 use App\Services\ConsultationContributorService;
 use App\Services\ConsultationService;
 use App\Services\MedicalRecordEntryLogService;
@@ -19,6 +22,8 @@ class ConsultationTaskController extends Controller
         protected ConsultationContributorService $contributors,
         protected MedicalRecordEntryLogService $entryLogs,
         protected MedicalRecordEntryPermissionService $permissions,
+        protected ConsultationActionGuard $actionGuard,
+        protected ConsultationIdempotencyService $idempotency,
     ) {}
 
     public function store(Request $request, Visit $visit)
@@ -31,23 +36,45 @@ class ConsultationTaskController extends Controller
             'due_date' => ['nullable', 'date'],
         ]);
 
-        $data['created_by'] = Auth::id();
-        $data['status'] = 'pending';
+        try {
+            $context = $this->actionGuard->editable(
+                $visit,
+                $request->integer('consultation_route_id') ?: null,
+                Auth::user(),
+                'task.create',
+                'consultations.create',
+            );
+            $task = $this->idempotency->run(
+                $request,
+                'task.create',
+                $visit,
+                $context->route,
+                $request->all(),
+                function () use ($data, $context) {
+                    $data['created_by'] = Auth::id();
+                    $data['status'] = 'pending';
 
-        $medicalRecord = $this->consultationService->getOrCreateRecord(
-            $visit,
-            $request->integer('consultation_route_id') ?: null,
-        );
-        $task = $medicalRecord->tasks()->create(array_merge($data, [
-            'consultation_route_id' => $medicalRecord->consultation_route_id,
-            'visit_id' => $medicalRecord->visit_id,
-            'patient_id' => $medicalRecord->patient_id,
-            'department_id' => $medicalRecord->department_id,
-        ]));
+                    $task = $context->medicalRecord->tasks()->create(array_merge($data, [
+                        'consultation_route_id' => $context->route->id,
+                        'visit_id' => $context->medicalRecord->visit_id,
+                        'patient_id' => $context->medicalRecord->patient_id,
+                        'department_id' => $context->medicalRecord->department_id,
+                    ]));
 
-        if ($user = Auth::user()) {
-            $this->contributors->recordContribution($medicalRecord, $user, 'Task');
-            $this->entryLogs->created($task, $user);
+                    if ($user = Auth::user()) {
+                        $this->contributors->recordContribution($context->medicalRecord, $user, 'Task');
+                        $this->entryLogs->created($task, $user);
+                    }
+
+                    return $task;
+                },
+            );
+        } catch (ConsultationActionException $e) {
+            if ($request->ajax() && ! $request->header('X-Inertia')) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], $e->status);
+            }
+
+            return back()->withInput()->with('error', $e->getMessage());
         }
 
         if ($request->ajax() && ! $request->header('X-Inertia')) {

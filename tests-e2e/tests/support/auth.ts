@@ -149,15 +149,19 @@ export async function submitLoginForm(page: Page) {
 
 export async function loginAs(page: Page, emailEnv: string, passwordEnv: string) {
   const credentials = requiredCredentials(emailEnv, passwordEnv);
-  clearLoginRateLimits(credentials.email);
+  await loginWithCredentials(page, credentials.email, credentials.password);
+}
+
+export async function loginWithCredentials(page: Page, email: string, password: string) {
+  clearLoginRateLimits(email);
 
   await gotoLogin(page);
   if (new URL(page.url()).pathname !== loginPath) {
     return;
   }
 
-  await page.getByRole('textbox', { name: /email address/i }).fill(credentials.email);
-  await page.locator('input[name="password"]').fill(credentials.password);
+  await page.getByRole('textbox', { name: /email address/i }).fill(email);
+  await page.locator('input[name="password"]').fill(password);
   await submitLoginForm(page);
   await expect.poll(() => page.url(), { timeout: 30_000 }).not.toMatch(/\/login(?:[?#].*)?$/);
 }

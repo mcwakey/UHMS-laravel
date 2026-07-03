@@ -117,6 +117,22 @@ return [
     'set_primary_failed' => 'Failed to set primary diagnosis.',
     'loading' => 'Loading...',
     'no_procedure_services' => 'No procedure services found for this department',
+    'ajax' => [
+        'validation_failed' => 'Please correct the highlighted fields.',
+        'session_expired' => 'Your session expired. Please refresh and try again.',
+        'forbidden' => 'You are not allowed to perform this action.',
+        'network_error' => 'Network error. Please check your connection and try again.',
+        'server_error' => 'The action could not be completed. Please try again.',
+        'section_refresh_failed' => 'Saved, but this section could not be refreshed.',
+        'duplicate_replayed' => 'This action was already received and has been safely replayed.',
+        'route_context_missing' => 'Select a consultation session before saving.',
+        'submit_in_progress' => 'Saving...',
+        'saved_successfully' => 'Saved successfully.',
+    ],
+    'modal' => [
+        'loading' => 'Loading...',
+        'close_confirm' => 'Close this dialog and discard unsaved changes?',
+    ],
 
     'workspace' => [
         'page_title' => 'Consultation - :visit',

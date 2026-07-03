@@ -144,11 +144,17 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
         ]);
     }
 
-    public function test_consultation_script_globals_are_reentrant(): void
+    public function test_consultation_script_lifecycle_uses_module_config(): void
     {
-        $view = file_get_contents(resource_path('views/consultations/show.blade.php'));
+        $partials = collect(glob(resource_path('views/consultations/partials/*.blade.php')) ?: [])
+            ->map(fn (string $file): string => file_get_contents($file))
+            ->implode("\n");
+        $view = file_get_contents(resource_path('views/consultations/show.blade.php'))."\n".$partials;
 
-        $this->assertStringContainsString('window.consultationI18n =', $view);
+        $this->assertStringContainsString('id="consultation-page-config"', $view);
+        $this->assertStringContainsString("@vite('resources/js/Pages/consultation-show.js')", $view);
+        $this->assertStringContainsString('currentRouteId', $view);
+        $this->assertStringNotContainsString('window.consultationI18n =', $view);
         $this->assertStringNotContainsString('const consultationI18n', $view);
     }
 
@@ -310,6 +316,7 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
     public function test_completing_current_session_does_not_close_visit_when_other_routes_remain(): void
     {
         [$visit, $activeRoute] = $this->makeConsultingVisit();
+        $this->addCompletionReadyRecord($activeRoute);
 
         VisitConsultationRoute::create([
             'visit_id' => $visit->id,
@@ -468,5 +475,23 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
             'is_active' => true,
             'is_billable' => true,
         ]);
+    }
+
+    private function addCompletionReadyRecord(VisitConsultationRoute $route): void
+    {
+        $record = app(ConsultationSessionService::class)->getOrCreateMedicalRecordForRoute($route, $this->admin);
+        $base = [
+            'consultation_route_id' => $route->id,
+            'visit_id' => $route->visit_id,
+            'patient_id' => $route->patient_id,
+            'department_id' => $route->department_id,
+            'doctor_id' => $this->admin->id,
+            'created_by' => $this->admin->id,
+        ];
+
+        $record->complaints()->create($base + ['description' => 'Dental pain']);
+        $record->physicalExaminations()->create($base + ['findings' => 'Dental tenderness']);
+        $record->diagnoses()->create($base + ['description' => 'Dental caries', 'type' => 'provisional', 'is_primary' => true]);
+        $record->treatments()->create($base + ['type' => 'advice', 'description' => 'Dental care plan']);
     }
 }

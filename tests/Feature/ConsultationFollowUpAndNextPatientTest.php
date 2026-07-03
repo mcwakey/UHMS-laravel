@@ -17,6 +17,7 @@ use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
 use App\Models\VisitConsultationRouteService;
+use App\Services\ConsultationSessionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -247,6 +248,7 @@ class ConsultationFollowUpAndNextPatientTest extends TestCase
     public function test_complete_and_open_next_patient_completes_current_route_then_opens_next(): void
     {
         [$visit, $route] = $this->makeConsultingVisit();
+        $this->addCompletionReadyRecord($route);
         [$nextVisit, $nextRoute] = $this->makeQueuedVisit('Efua', 'Owusu', 1);
 
         $this->actingAs($this->doctor)
@@ -288,6 +290,24 @@ class ConsultationFollowUpAndNextPatientTest extends TestCase
         ]);
 
         return [$visit, $route];
+    }
+
+    private function addCompletionReadyRecord(VisitConsultationRoute $route): void
+    {
+        $record = app(ConsultationSessionService::class)->getOrCreateMedicalRecordForRoute($route, $this->doctor);
+        $base = [
+            'consultation_route_id' => $route->id,
+            'visit_id' => $route->visit_id,
+            'patient_id' => $route->patient_id,
+            'department_id' => $route->department_id,
+            'doctor_id' => $this->doctor->id,
+            'created_by' => $this->doctor->id,
+        ];
+
+        $record->complaints()->create($base + ['description' => 'Routine consultation']);
+        $record->physicalExaminations()->create($base + ['findings' => 'Stable examination']);
+        $record->diagnoses()->create($base + ['description' => 'Well patient review', 'type' => 'provisional', 'is_primary' => true]);
+        $record->treatments()->create($base + ['type' => 'advice', 'description' => 'Continue routine care']);
     }
 
     private function makeQueuedVisit(

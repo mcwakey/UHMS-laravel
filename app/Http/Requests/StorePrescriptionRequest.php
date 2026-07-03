@@ -25,6 +25,9 @@ class StorePrescriptionRequest extends FormRequest
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.route' => ['required', 'string', 'in:oral,IV,IM,SC,topical,rectal,sublingual,inhaled,nasal,ophthalmic,otic'],
             'items.*.instructions' => ['nullable', 'string', 'max:2000'],
+            'safety_override_reason' => ['nullable', 'string', 'max:1000'],
+            'safety_override_codes' => ['nullable', 'array'],
+            'safety_override_codes.*' => ['string', 'max:80'],
         ];
     }
 

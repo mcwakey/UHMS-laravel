@@ -31,6 +31,7 @@ export default defineConfig({
                 'resources/css/style.css',
                 'resources/js/script.js',
                 'resources/js/inertia.js',
+                'resources/js/Pages/consultation-show.js',
             ],
             refresh: true,
         }),

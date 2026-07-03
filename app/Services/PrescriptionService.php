@@ -61,6 +61,10 @@ class PrescriptionService
      */
     public function create(MedicalRecord $record, array $data): Prescription
     {
+        if ($duplicate = $this->findNaturalDuplicate($record, $data)) {
+            return $duplicate;
+        }
+
         $prescription = $record->prescriptions()->create([
             'consultation_route_id' => $record->consultation_route_id,
             'visit_id' => $record->visit_id,
@@ -100,6 +104,40 @@ class PrescriptionService
         app(MedicationOrderService::class)->createOrdersForPrescription($prescription);
 
         return $prescription;
+    }
+
+    private function findNaturalDuplicate(MedicalRecord $record, array $data): ?Prescription
+    {
+        $signature = $this->itemsSignature($data['items'] ?? []);
+        if ($signature === []) {
+            return null;
+        }
+
+        return $record->prescriptions()
+            ->with('items')
+            ->where('consultation_route_id', $record->consultation_route_id)
+            ->where('created_by', Auth::id())
+            ->where('created_at', '>=', now()->subMinute())
+            ->latest('id')
+            ->get()
+            ->first(fn (Prescription $prescription) => $this->itemsSignature($prescription->items->map->toArray()->all()) === $signature);
+    }
+
+    private function itemsSignature(array $items): array
+    {
+        return collect($items)
+            ->map(fn (array $item) => [
+                'drug_id' => (int) ($item['drug_id'] ?? 0),
+                'drug_name' => mb_strtolower(trim((string) ($item['drug_name'] ?? ''))),
+                'dosage' => mb_strtolower(trim((string) ($item['dosage'] ?? ''))),
+                'frequency' => mb_strtolower(trim((string) ($item['frequency'] ?? ''))),
+                'duration' => mb_strtolower(trim((string) ($item['duration'] ?? ''))),
+                'quantity' => (int) ($item['quantity'] ?? 0),
+                'route' => mb_strtolower(trim((string) ($item['route'] ?? ''))),
+            ])
+            ->sortBy(fn (array $item) => implode('|', $item))
+            ->values()
+            ->all();
     }
 
     /**

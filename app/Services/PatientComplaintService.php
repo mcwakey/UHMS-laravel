@@ -7,6 +7,7 @@ use App\Models\ComplaintCatalogue;
 use App\Models\EmergencyCase;
 use App\Models\MedicalRecord;
 use App\Models\User;
+use App\Models\VisitConsultationRoute;
 use Illuminate\Support\Facades\Auth;
 
 class PatientComplaintService
@@ -197,7 +198,10 @@ class PatientComplaintService
         }
 
         $route = $record->consultationRoute;
-        if (! $route || ! $route->locked_at) {
+        if (! $route || (! $route->locked_at && ! in_array($route->status, [
+            VisitConsultationRoute::STATUS_COMPLETED,
+            VisitConsultationRoute::STATUS_CANCELLED,
+        ], true))) {
             return;
         }
 
@@ -205,6 +209,6 @@ class PatientComplaintService
             return;
         }
 
-        throw new \RuntimeException('This consultation session is locked. Use correction permission to amend it.');
+        throw new \RuntimeException('This consultation session is locked or completed. Use correction permission to amend it.');
     }
 }
