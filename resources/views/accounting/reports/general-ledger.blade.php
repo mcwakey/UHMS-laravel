@@ -54,6 +54,7 @@
                 <tr>
                     <th>{{ __('reports.col_date') }}</th>
                     <th>{{ __('reports.columns.journal_number') }}</th>
+                    <th>{{ __('reports.filters.account') }}</th>
                     <th>{{ __('reports.columns.description') }}</th>
                     <th>{{ __('common.reference') }}</th>
                     <th class="text-end">{{ __('reports.columns.debit') }}</th>
@@ -63,7 +64,7 @@
             </thead>
             <tbody>
                 <tr class="table-light">
-                    <td colspan="6" class="fw-semibold">{{ __('reports.columns.opening_balance') }}</td>
+                    <td colspan="7" class="fw-semibold">{{ __('reports.columns.opening_balance') }}</td>
                     <td class="text-end fw-semibold">GH₵ {{ number_format($report['opening_balance'], 2) }}</td>
                 </tr>
                 @forelse($report['rows'] as $row)
@@ -71,6 +72,7 @@
                     <tr>
                         <td>{{ $line->journalEntry->entry_date?->format('d M Y') }}</td>
                         <td><a href="{{ route('admin.accounting.journals.show', $line->journalEntry) }}">{{ $line->journalEntry->journal_number }}</a></td>
+                        <td>{{ $line->account?->display_name }}</td>
                         <td>{{ $line->description ?: $line->journalEntry->description }}</td>
                         <td>{{ $line->journalEntry->reference_number ?? '-' }}</td>
                         <td class="text-end">GH₵ {{ number_format((float) $line->debit, 2) }}</td>
@@ -78,7 +80,7 @@
                         <td class="text-end fw-semibold">GH₵ {{ number_format($row['running_balance'], 2) }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="text-center text-muted py-4">{{ __('reports.empty.no_ledger') }}</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-4">{{ __('reports.empty.no_ledger') }}</td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -10,16 +10,17 @@ class GeneralLedgerService
     public function report(Account $account, array $filters = []): array
     {
         $from = $filters['date_from'] ?? null;
+        $accountIds = $this->accountTreeIds($account);
 
         $opening = 0.0;
         if ($from) {
-            $opening = $this->balanceBefore($account, $from, $filters);
+            $opening = $this->balanceBefore($accountIds, $from, $filters);
         }
 
         $running = $opening;
         $lines = JournalEntryLine::query()
-            ->with(['journalEntry', 'department'])
-            ->where('account_id', $account->id)
+            ->with(['journalEntry', 'department', 'account'])
+            ->whereIn('account_id', $accountIds)
             ->whereHas('journalEntry', function ($query) use ($filters) {
                 $query->ledgerAffecting()
                     ->when($filters['date_from'] ?? null, fn ($q, $date) => $q->whereDate('entry_date', '>=', $date))
@@ -32,8 +33,8 @@ class GeneralLedgerService
             ->orderBy('journal_entry_lines.id')
             ->select('journal_entry_lines.*')
             ->get()
-            ->map(function ($line) use ($account, &$running) {
-                $running += $this->signedAmount($account, (float) $line->debit, (float) $line->credit);
+            ->map(function ($line) use (&$running) {
+                $running += $this->signedAmount($line->account, (float) $line->debit, (float) $line->credit);
 
                 return [
                     'line' => $line,
@@ -49,20 +50,32 @@ class GeneralLedgerService
         ];
     }
 
-    protected function balanceBefore(Account $account, string $date, array $filters): float
+    protected function balanceBefore(array $accountIds, string $date, array $filters): float
     {
         $rows = JournalEntryLine::query()
-            ->where('account_id', $account->id)
+            ->whereIn('account_id', $accountIds)
             ->whereHas('journalEntry', function ($query) use ($date, $filters) {
                 $query->ledgerAffecting()
                     ->whereDate('entry_date', '<', $date)
                     ->when($filters['source_module'] ?? null, fn ($q, $source) => $q->where('source_module', $source));
             })
             ->when($filters['department_id'] ?? null, fn ($q, $id) => $q->where('department_id', $id))
-            ->selectRaw('SUM(debit) as debit_total, SUM(credit) as credit_total')
-            ->first();
+            ->selectRaw('account_id, SUM(debit) as debit_total, SUM(credit) as credit_total')
+            ->groupBy('account_id')
+            ->get();
 
-        return $this->signedAmount($account, (float) ($rows->debit_total ?? 0), (float) ($rows->credit_total ?? 0));
+        $accounts = Account::query()
+            ->whereIn('id', $rows->pluck('account_id'))
+            ->get()
+            ->keyBy('id');
+
+        return $rows->sum(function ($row) use ($accounts) {
+            $account = $accounts->get($row->account_id);
+
+            return $account
+                ? $this->signedAmount($account, (float) $row->debit_total, (float) $row->credit_total)
+                : 0.0;
+        });
     }
 
     protected function signedAmount(Account $account, float $debit, float $credit): float
@@ -70,5 +83,29 @@ class GeneralLedgerService
         return $account->normal_balance->value === 'debit'
             ? $debit - $credit
             : $credit - $debit;
+    }
+
+    protected function accountTreeIds(Account $account): array
+    {
+        $ids = [$account->id];
+        $frontier = [$account->id];
+
+        while ($frontier !== []) {
+            $children = Account::query()
+                ->whereIn('parent_id', $frontier)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+
+            $children = array_values(array_diff($children, $ids));
+            if ($children === []) {
+                break;
+            }
+
+            $ids = array_merge($ids, $children);
+            $frontier = $children;
+        }
+
+        return $ids;
     }
 }

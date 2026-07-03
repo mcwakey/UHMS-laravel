@@ -151,7 +151,7 @@ class AccountingReportController extends Controller
                 fputcsv($handle, [
                     $line->journalEntry->entry_date?->toDateString(),
                     $line->journalEntry->journal_number,
-                    $report['account']->display_name,
+                    $line->account?->display_name ?? $report['account']->display_name,
                     $line->description ?: $line->journalEntry->description,
                     $line->journalEntry->reference_number,
                     number_format((float) $line->debit, 2, '.', ''),
