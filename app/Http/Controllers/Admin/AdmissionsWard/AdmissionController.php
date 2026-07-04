@@ -8,11 +8,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\DischargeRequest;
 use App\Http\Requests\StoreAdmissionRequest;
 use App\Models\Admission;
+use App\Models\AdmissionRequest;
 use App\Models\ServiceCatalog;
 use App\Models\Setting;
+use App\Models\User;
 use App\Models\Visit;
 use App\Models\Vital;
 use App\Models\Ward;
+use App\Services\Admissions\AdmissionCareOverviewService;
+use App\Services\Admissions\AdmissionDischargeReadinessService;
+use App\Services\Admissions\AdmissionRequestService;
 use App\Services\AdmissionMedicationBoardService;
 use App\Services\AdmissionService;
 use App\Services\ConsultationSummaryService;
@@ -28,7 +33,10 @@ class AdmissionController extends Controller
         private WardService $wardService,
         private VisitService $visitService,
         private ConsultationSummaryService $summaryService,
-        private AdmissionMedicationBoardService $medicationBoardService
+        private AdmissionMedicationBoardService $medicationBoardService,
+        private AdmissionRequestService $admissionRequests,
+        private AdmissionCareOverviewService $careOverviewService,
+        private AdmissionDischargeReadinessService $dischargeReadiness
     ) {}
 
     public function admissionRequests(Request $request)
@@ -64,8 +72,23 @@ class AdmissionController extends Controller
     public function create(Request $request)
     {
         $visitId = $request->query('visit_id');
+        $admissionRequestId = $request->query('admission_request_id');
         $preselectedBedId = (int) $request->query('bed_id', 0) ?: null;
         $preselectedVisit = null;
+        $preselectedAdmissionRequest = null;
+
+        if ($admissionRequestId) {
+            $preselectedAdmissionRequest = AdmissionRequest::with([
+                'patient.insurances.insuranceProvider',
+                'patient.insurances.insuranceTier',
+                'visit.visitInsurance.insuranceProvider',
+                'visit.visitInsurance.insuranceTier',
+                'reservedBed.ward',
+            ])->findOrFail($admissionRequestId);
+
+            $visitId = $preselectedAdmissionRequest->visit_id;
+            $preselectedBedId = $preselectedBedId ?: $preselectedAdmissionRequest->reserved_bed_id;
+        }
 
         if ($visitId) {
             $preselectedVisit = Visit::with([
@@ -90,6 +113,9 @@ class AdmissionController extends Controller
             ->get();
 
         $availableBeds = $this->wardService->getAvailableBeds();
+        if ($preselectedAdmissionRequest?->reservedBed && ! $availableBeds->contains('id', $preselectedAdmissionRequest->reserved_bed_id)) {
+            $availableBeds->push($preselectedAdmissionRequest->reservedBed);
+        }
         $wards = Ward::active()->orderBy('name')->get();
 
         // Services for admission/consumable fee mapping
@@ -101,14 +127,20 @@ class AdmissionController extends Controller
         $defaultConsumableFeeServiceId = (int) Setting::getValue('ward', 'consumable_fee_service_id', 0) ?: null;
 
         return view('admissions.create', compact(
-            'preselectedVisit', 'preselectedBedId', 'admittingVisits', 'availableBeds', 'wards', 'services',
+            'preselectedVisit', 'preselectedAdmissionRequest', 'preselectedBedId', 'admittingVisits', 'availableBeds', 'wards', 'services',
             'defaultAdmissionFeeServiceId', 'defaultDetentionFeeServiceId', 'defaultConsumableFeeServiceId'
         ));
     }
 
     public function store(StoreAdmissionRequest $request)
     {
-        $admission = $this->admissionService->admit($request->validated());
+        $data = $request->validated();
+        if (! empty($data['admission_request_id'])) {
+            $admissionRequest = AdmissionRequest::findOrFail($data['admission_request_id']);
+            $admission = $this->admissionRequests->convertToAdmission($admissionRequest, $data, $request->user());
+        } else {
+            $admission = $this->admissionService->admit($data);
+        }
 
         return redirect()
             ->route('admin.admissions.show', $admission)
@@ -120,6 +152,15 @@ class AdmissionController extends Controller
         $admission->load([
             'patient',
             'bed.ward',
+            'admissionRequest.requestedBy',
+            'admissionRequest.acceptedBy',
+            'admissionRequest.reservedBed.ward',
+            'bedReservations.reservedBy',
+            'locationHistories.fromWard',
+            'locationHistories.fromBed',
+            'locationHistories.toWard',
+            'locationHistories.toBed',
+            'locationHistories.movedBy',
             'admittedBy',
             'dischargedBy',
             'visit.visitServices.serviceCatalog',
@@ -134,26 +175,59 @@ class AdmissionController extends Controller
             'visit.medicalRecord.tasks.assignedUser',
             'visit.medicalRecord.doctor',
             'wardRounds.recordedBy',
+            'nursingNotes.nurse',
+            'nursingNotes.createdBy',
+            'nursingNotes.updatedBy',
+            'nursingTasks.assignedTo',
+            'nursingTasks.createdBy',
+            'nursingTasks.completedBy',
+            'dischargePlanningStartedBy',
+            'dischargeClearances.clearedBy',
+            'dischargeClearances.revokedBy',
+            'dischargeSummaryRecord.preparedBy',
+            'dischargeSummaryRecord.approvedBy',
         ]);
 
         $services = ServiceCatalog::where('is_active', true)->orderBy('name')->get();
+        $availableTransferBeds = $this->wardService->getAvailableBeds();
+        $nursingAssignableUsers = User::query()->orderBy('name')->limit(100)->get(['id', 'name']);
 
         $medicalRecord = $admission->visit->medicalRecord;
         $consultationSummary = $this->summaryService->forRecord($medicalRecord);
         $medicationBoard = $this->medicationBoardService->forAdmission($admission);
+        $careOverview = $this->careOverviewService->forAdmission($admission, $medicationBoard);
+        $dischargeReadiness = $this->dischargeReadiness->forAdmission($admission, $medicationBoard);
 
-        return view('admissions.show', compact('admission', 'services', 'medicalRecord', 'consultationSummary', 'medicationBoard'));
+        return view('admissions.show', compact('admission', 'services', 'medicalRecord', 'consultationSummary', 'medicationBoard', 'careOverview', 'dischargeReadiness', 'availableTransferBeds', 'nursingAssignableUsers'));
     }
 
     public function discharge(Admission $admission)
     {
-        $admission->load(['patient', 'bed.ward']);
+        $admission->load([
+            'patient',
+            'bed.ward',
+            'admittedBy',
+            'wardRounds',
+            'nursingTasks',
+            'visit.latestInvoice.items',
+            'visit.latestInvoice.payments',
+            'visit.vitals',
+            'dischargePlanningStartedBy',
+            'dischargeClearances.clearedBy',
+            'dischargeSummaryRecord.preparedBy',
+            'dischargeSummaryRecord.approvedBy',
+        ]);
+        $medicationBoard = $this->medicationBoardService->forAdmission($admission);
+        $dischargeReadiness = $this->dischargeReadiness->forAdmission($admission, $medicationBoard);
 
-        return view('admissions.discharge', compact('admission'));
+        return view('admissions.discharge', compact('admission', 'dischargeReadiness'));
     }
 
     public function processDischarge(DischargeRequest $request, Admission $admission)
     {
+        $medicationBoard = $this->medicationBoardService->forAdmission($admission);
+        $this->dischargeReadiness->assertCanDischarge($admission, $medicationBoard);
+
         $this->admissionService->discharge($admission, $request->validated());
 
         return redirect()

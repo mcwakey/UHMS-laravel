@@ -22,6 +22,9 @@ class ConsultationTask extends Model
         'status',
         'assigned_to',
         'due_date',
+        'frequency',
+        'scheduled_at',
+        'is_prn',
         'completed_at',
         'completed_by',
         'created_by',
@@ -32,6 +35,8 @@ class ConsultationTask extends Model
     {
         return [
             'due_date' => 'date',
+            'scheduled_at' => 'datetime',
+            'is_prn' => 'boolean',
             'completed_at' => 'datetime',
         ];
     }

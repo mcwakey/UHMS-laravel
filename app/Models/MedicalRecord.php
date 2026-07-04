@@ -16,7 +16,17 @@ class MedicalRecord extends Model
         'service_id',
         'department_id',
         'consultation_route_id',
+        'final_note',
+        'final_note_updated_by',
+        'final_note_updated_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'final_note_updated_at' => 'datetime',
+        ];
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -52,6 +62,11 @@ class MedicalRecord extends Model
     public function consultationRoute()
     {
         return $this->belongsTo(VisitConsultationRoute::class, 'consultation_route_id');
+    }
+
+    public function finalNoteUpdatedBy()
+    {
+        return $this->belongsTo(User::class, 'final_note_updated_by');
     }
 
     public function complaints()

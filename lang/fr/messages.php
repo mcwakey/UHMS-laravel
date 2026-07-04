@@ -280,6 +280,7 @@ return [
     /* ------------------------------------------------------------------ */
     'consultation_tasks' => [
         'created' => 'Tâche créée.',
+        'created_count' => '{1} Tâche créée.|[2,*] :count tâches créées.',
         'updated' => 'Tâche mise à jour.',
         'deleted' => 'Tâche supprimée.',
         'toggled' => 'Statut de la tâche modifié.',

@@ -215,6 +215,26 @@ class Visit extends Model
         return $this->hasOne(Admission::class);
     }
 
+    public function admissionRequests()
+    {
+        return $this->hasMany(AdmissionRequest::class);
+    }
+
+    public function pregnancyProfiles()
+    {
+        return $this->hasMany(PregnancyProfile::class);
+    }
+
+    public function maternityCases()
+    {
+        return $this->hasMany(MaternityCase::class);
+    }
+
+    public function bedReservations()
+    {
+        return $this->hasMany(BedReservation::class);
+    }
+
     public function billingOverrides()
     {
         return $this->hasMany(VisitBillingOverride::class);

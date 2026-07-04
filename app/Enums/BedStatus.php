@@ -8,6 +8,9 @@ enum BedStatus: string
     case OCCUPIED = 'occupied';
     case MAINTENANCE = 'maintenance';
     case RESERVED = 'reserved';
+    case CLEANING = 'cleaning';
+    case BLOCKED = 'blocked';
+    case ISOLATION = 'isolation';
 
     public function label(): string
     {
@@ -16,6 +19,9 @@ enum BedStatus: string
             self::OCCUPIED => 'Occupied',
             self::MAINTENANCE => 'Maintenance',
             self::RESERVED => 'Reserved',
+            self::CLEANING => 'Cleaning',
+            self::BLOCKED => 'Blocked',
+            self::ISOLATION => 'Isolation',
         };
     }
 
@@ -31,6 +37,9 @@ enum BedStatus: string
             self::OCCUPIED => 'danger',
             self::MAINTENANCE => 'warning',
             self::RESERVED => 'info',
+            self::CLEANING => 'cyan',
+            self::BLOCKED => 'dark',
+            self::ISOLATION => 'purple',
         };
     }
 }

@@ -96,6 +96,68 @@
     </div>
     @endcan
 
+    @can('admission.care_overview.view')
+    <div class="col-12">
+        <div class="card border-primary">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="card-title mb-0"><i class="ti ti-report-medical me-1"></i>{{ __('admissions.nursing_handover') }}</h5>
+                <a href="#tab-nursing" class="btn btn-sm btn-outline-primary" onclick="event.preventDefault();showTab('tab-nursing')">{{ __('admissions.open_nursing_care') }}</a>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-6 col-md-3">
+                        <div class="border rounded p-2 h-100">
+                            <div class="text-muted small">{{ __('admissions.last_vitals') }}</div>
+                            <div class="fw-semibold {{ ($careOverview['vitals_overdue'] ?? false) ? 'text-danger' : '' }}">
+                                {{ ($careOverview['latest_vitals'] ?? null)?->recorded_at?->diffForHumans() ?? __('admissions.not_recorded') }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="border rounded p-2 h-100">
+                            <div class="text-muted small">{{ __('admissions.last_ward_round') }}</div>
+                            <div class="fw-semibold {{ ($careOverview['ward_round_overdue'] ?? false) ? 'text-danger' : '' }}">
+                                {{ ($careOverview['latest_ward_round'] ?? null)?->round_date?->diffForHumans() ?? __('admissions.not_recorded') }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="border rounded p-2 h-100">
+                            <div class="text-muted small">{{ __('admissions.open_nursing_tasks') }}</div>
+                            <div class="fw-semibold">{{ ($careOverview['open_tasks'] ?? collect())->count() }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="border rounded p-2 h-100">
+                            <div class="text-muted small">{{ __('admissions.care_flags_label') }}</div>
+                            <div class="fw-semibold">{{ ($careOverview['care_flags'] ?? collect())->count() }}</div>
+                        </div>
+                    </div>
+                </div>
+                @if(($careOverview['care_flags'] ?? collect())->isNotEmpty())
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        @foreach($careOverview['care_flags'] as $flag)
+                            <span class="badge bg-{{ $flag->color() }}">{{ $flag->label() }}</span>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+    @endcan
+
+    @can('admission.nursing.view')
+    <div class="col-12">
+        @include('admissions.partials.nursing-care-tab')
+    </div>
+    @endcan
+
+    @can('admission.discharge.readiness.view')
+    <div class="col-12">
+        @include('admissions.partials.discharge-readiness-tab')
+    </div>
+    @endcan
+
     {{-- Vitals recording --}}
     @can('vitals.create')
     <div class="col-12">
@@ -270,6 +332,86 @@
             </div>
         </div>
 
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="card-title mb-0"><i class="ti ti-bed me-1"></i>{{ __('admissions.location_card') }}</h5>
+                <span class="badge badge-soft-{{ $admission->bed->status->color() }}">{{ $admission->bed->status->label() }}</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <div class="fw-semibold">{{ $admission->bed->ward->name }} / {{ __('admissions.bed') }} {{ $admission->bed->bed_number }}</div>
+                    <small class="text-muted">{{ $admission->bed->bed_type->label() }}</small>
+                </div>
+                @if($admission->bed->status_reason)
+                    <div class="alert alert-light border py-2 fs-12 mb-2">{{ $admission->bed->status_reason }}</div>
+                @endif
+                @if(in_array($admission->bed->status, [\App\Enums\BedStatus::CLEANING, \App\Enums\BedStatus::BLOCKED, \App\Enums\BedStatus::MAINTENANCE, \App\Enums\BedStatus::ISOLATION], true))
+                    <div class="alert alert-warning py-2 fs-12 mb-2">
+                        <i class="ti ti-alert-triangle me-1"></i>{{ __('admissions.current_bed_warning') }}
+                    </div>
+                @endif
+                @if($admission->status->value === 'admitted')
+                    <div class="alert alert-info py-2 fs-12 mb-2">
+                        <i class="ti ti-info-circle me-1"></i>
+                        {{ config('admissions.bed_release_after_discharge', 'available') === 'cleaning'
+                            ? __('admissions.discharge_release_preview_cleaning')
+                            : __('admissions.discharge_release_preview_available') }}
+                    </div>
+                @endif
+                @can('beds.transfer')
+                    @if($admission->status->value === 'admitted')
+                    <form method="POST" action="{{ route('admin.admissions.transfer-bed', $admission) }}" class="border rounded p-2">
+                        @csrf
+                        <label class="form-label small fw-semibold">{{ __('admissions.transfer_to_bed') }}</label>
+                        <select name="bed_id" class="form-select form-select-sm mb-2" required>
+                            <option value="">{{ __('admissions.select_available_bed') }}</option>
+                            @foreach($availableTransferBeds as $bed)
+                                @if($bed->id !== $admission->bed_id)
+                                    <option value="{{ $bed->id }}">{{ $bed->ward->name }} — {{ $bed->bed_number }} ({{ $bed->bed_type->label() }})</option>
+                                @endif
+                            @endforeach
+                        </select>
+                        <textarea name="reason" rows="2" class="form-control form-control-sm mb-2" placeholder="{{ __('admissions.transfer_reason_ph') }}" required></textarea>
+                        <button class="btn btn-sm btn-outline-primary w-100"><i class="ti ti-arrows-transfer-up me-1"></i>{{ __('admissions.transfer_patient') }}</button>
+                    </form>
+                    @endif
+                @endcan
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="ti ti-route me-1"></i>{{ __('admissions.location_history') }}</h5>
+            </div>
+            <div class="card-body p-0">
+                @if($admission->locationHistories->isNotEmpty())
+                    <div class="list-group list-group-flush">
+                        @foreach($admission->locationHistories->take(6) as $history)
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <div>
+                                        <div class="fw-semibold">{{ $history->event_type->label() }}</div>
+                                        <small class="text-muted">
+                                            @if($history->fromBed)
+                                                {{ $history->fromWard?->name }} / {{ $history->fromBed?->bed_number }} &rarr;
+                                            @endif
+                                            {{ $history->toBed ? ($history->toWard?->name . ' / ' . $history->toBed?->bed_number) : __('admissions.no_current_bed') }}
+                                        </small>
+                                        @if($history->reason)
+                                            <div class="fs-12 text-muted mt-1">{{ $history->reason }}</div>
+                                        @endif
+                                    </div>
+                                    <small class="text-muted text-end">{{ $history->moved_at?->diffForHumans() }}<br>{{ $history->movedBy?->name }}</small>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="p-3 text-muted">{{ __('admissions.no_location_history') }}</div>
+                @endif
+            </div>
+        </div>
+
         @if($admission->admitting_diagnosis)
         <div class="card mb-3">
             <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-stethoscope me-1"></i>{{ __('admissions.admitting_diagnosis_card') }}</h5></div>
@@ -320,6 +462,23 @@
     <div class="col-lg-8">
         <ul class="nav nav-tabs mb-3" id="admTabs" role="tablist">
             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-consult" type="button"><i class="ti ti-stethoscope me-1"></i>{{ __('admissions.tab_consultation') }}</button></li>
+            @can('admission.nursing.view')
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-nursing" type="button">
+                    <i class="ti ti-report-medical me-1"></i>{{ __('admissions.tab_nursing') }}
+                    @if(($careOverview['overdue_tasks'] ?? collect())->isNotEmpty())<span class="badge bg-danger ms-1">{{ $careOverview['overdue_tasks']->count() }}</span>
+                    @elseif(($careOverview['open_tasks'] ?? collect())->isNotEmpty())<span class="badge bg-warning text-dark ms-1">{{ $careOverview['open_tasks']->count() }}</span>@endif
+                </button>
+            </li>
+            @endcan
+            @can('admission.discharge.readiness.view')
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-discharge" type="button">
+                    <i class="ti ti-shield-check me-1"></i>{{ __('admissions.tab_discharge') }}
+                    <span class="badge bg-{{ $dischargeReadiness['overall_status']->color() }} ms-1">{{ $dischargeReadiness['overall_status']->label() }}</span>
+                </button>
+            </li>
+            @endcan
             @can('admission.medication_board.view')
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-medications" type="button"><i class="ti ti-pill me-1"></i>{{ __('admissions.tab_mar') }} @if(($medicationBoard['counts']['overdue'] ?? 0) > 0)<span class="badge bg-danger ms-1">{{ $medicationBoard['counts']['overdue'] }}</span>@elseif(($medicationBoard['counts']['due_now'] ?? 0) > 0)<span class="badge bg-info ms-1">{{ $medicationBoard['counts']['due_now'] }}</span>@endif</button></li>
             @endcan
@@ -339,6 +498,18 @@
         </ul>
 
         <div class="tab-content">
+
+            @can('admission.nursing.view')
+            <div class="tab-pane fade" id="tab-nursing" role="tabpanel">
+                @include('admissions.partials.nursing-care-tab')
+            </div>
+            @endcan
+
+            @can('admission.discharge.readiness.view')
+            <div class="tab-pane fade" id="tab-discharge" role="tabpanel">
+                @include('admissions.partials.discharge-readiness-tab')
+            </div>
+            @endcan
 
             @can('admission.medication_board.view')
             <div class="tab-pane fade" id="tab-medications" role="tabpanel">

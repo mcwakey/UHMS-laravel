@@ -5,15 +5,18 @@ namespace App\Http\Controllers\Admin\Appointments;
 use App\Http\Controllers\Controller;
 use App\Models\ConsultationTask;
 use App\Models\Visit;
+use App\Services\ClinicalFrequencyOptionService;
 use App\Services\Consultation\ConsultationActionException;
 use App\Services\Consultation\ConsultationActionGuard;
 use App\Services\Consultation\ConsultationIdempotencyService;
+use App\Services\Consultation\ConsultationTaskFrequencyExpansionService;
 use App\Services\ConsultationContributorService;
 use App\Services\ConsultationService;
 use App\Services\MedicalRecordEntryLogService;
 use App\Services\MedicalRecordEntryPermissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class ConsultationTaskController extends Controller
 {
@@ -24,16 +27,21 @@ class ConsultationTaskController extends Controller
         protected MedicalRecordEntryPermissionService $permissions,
         protected ConsultationActionGuard $actionGuard,
         protected ConsultationIdempotencyService $idempotency,
+        protected ClinicalFrequencyOptionService $frequencyOptions,
+        protected ConsultationTaskFrequencyExpansionService $taskExpansion,
     ) {}
 
     public function store(Request $request, Visit $visit)
     {
+        $allowedFrequencies = $this->frequencyOptions->values();
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'priority' => ['nullable', 'string', 'in:low,medium,high'],
             'assigned_to' => ['nullable', 'exists:users,id'],
             'due_date' => ['nullable', 'date'],
+            'start_at' => ['nullable', 'date'],
+            'frequency' => ['required', 'string', Rule::in($allowedFrequencies)],
         ]);
 
         try {
@@ -44,41 +52,34 @@ class ConsultationTaskController extends Controller
                 'task.create',
                 'consultations.create',
             );
-            $task = $this->idempotency->run(
+            $result = $this->idempotency->run(
                 $request,
                 'task.create',
                 $visit,
                 $context->route,
                 $request->all(),
-                function () use ($data, $context) {
-                    $data['created_by'] = Auth::id();
-                    $data['status'] = 'pending';
-
-                    $task = $context->medicalRecord->tasks()->create(array_merge($data, [
-                        'consultation_route_id' => $context->route->id,
-                        'visit_id' => $context->medicalRecord->visit_id,
-                        'patient_id' => $context->medicalRecord->patient_id,
-                        'department_id' => $context->medicalRecord->department_id,
-                    ]));
-
-                    if ($user = Auth::user()) {
-                        $this->contributors->recordContribution($context->medicalRecord, $user, 'Task');
-                        $this->entryLogs->created($task, $user);
-                    }
-
-                    return $task;
-                },
+                fn () => $this->taskExpansion->createTasks($context->medicalRecord, $context->route, $data, Auth::user()),
             );
+            $tasks = $result instanceof \Illuminate\Support\Collection
+                ? $result
+                : collect($result ? [$result] : []);
         } catch (ConsultationActionException $e) {
-            if ($request->ajax() && ! $request->header('X-Inertia')) {
+            if (($request->ajax() || $request->expectsJson()) && ! $request->header('X-Inertia')) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], $e->status);
             }
 
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        if ($request->ajax() && ! $request->header('X-Inertia')) {
-            return response()->json(['success' => true, 'task' => $task->load(['assignedUser', 'creator'])]);
+        if (($request->ajax() || $request->expectsJson()) && ! $request->header('X-Inertia')) {
+            $tasks->each(fn ($task) => $task instanceof ConsultationTask ? $task->load(['assignedUser', 'creator']) : null);
+
+            return response()->json([
+                'success' => true,
+                'count' => $tasks->count(),
+                'tasks' => $tasks->values(),
+                'message' => trans_choice('messages.consultation_tasks.created_count', max(1, $tasks->count()), ['count' => max(1, $tasks->count())]),
+            ]);
         }
 
         return back()->with('success', __('messages.consultation_tasks.created'));
@@ -93,6 +94,8 @@ class ConsultationTaskController extends Controller
             'status' => ['nullable', 'string', 'in:pending,in_progress,completed,cancelled'],
             'assigned_to' => ['nullable', 'exists:users,id'],
             'due_date' => ['nullable', 'date'],
+            'scheduled_at' => ['nullable', 'date'],
+            'frequency' => ['nullable', 'string', Rule::in($this->frequencyOptions->values())],
         ]);
 
         abort_unless(Auth::user() && $this->permissions->canEdit(Auth::user(), $task), 403);
@@ -106,7 +109,7 @@ class ConsultationTaskController extends Controller
         $task->update($data);
         $this->entryLogs->updated($task, $old, Auth::user());
 
-        if ($request->ajax() && ! $request->header('X-Inertia')) {
+        if (($request->ajax() || $request->expectsJson()) && ! $request->header('X-Inertia')) {
             return response()->json(['success' => true, 'task' => $task->fresh(['assignedUser', 'creator', 'completedBy'])]);
         }
 
@@ -125,7 +128,7 @@ class ConsultationTaskController extends Controller
         }
         $this->entryLogs->updated($task, $old, Auth::user());
 
-        if (request()->ajax() && ! request()->header('X-Inertia')) {
+        if ((request()->ajax() || request()->expectsJson()) && ! request()->header('X-Inertia')) {
             return response()->json(['success' => true, 'task' => $task->fresh(['assignedUser', 'creator', 'completedBy'])]);
         }
 
@@ -138,7 +141,7 @@ class ConsultationTaskController extends Controller
         $this->entryLogs->deleted($task, Auth::user());
         $task->delete();
 
-        if (request()->ajax() && ! request()->header('X-Inertia')) {
+        if ((request()->ajax() || request()->expectsJson()) && ! request()->header('X-Inertia')) {
             return response()->json(['success' => true]);
         }
 

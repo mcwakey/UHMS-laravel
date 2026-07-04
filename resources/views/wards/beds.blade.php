@@ -82,15 +82,30 @@
                                 <a href="{{ route('admin.admissions.show', $bed->currentAdmission) }}" class="text-decoration-none">
                                     {{ $bed->currentAdmission->patient->full_name }}
                                 </a>
+                            @elseif($bed->activeReservation)
+                                <a href="{{ route('admin.admissions.requests.show', $bed->activeReservation->admissionRequest) }}" class="text-decoration-none">
+                                    {{ $bed->activeReservation->admissionRequest?->patient?->full_name ?? __('statuses.default.reserved') }}
+                                </a>
+                                <div><small class="text-muted">{{ __('admissions.bed_reservation_statuses.active') }}</small></div>
                             @else
                                 <span class="text-muted">—</span>
                             @endif
                         </td>
-                        <td>{{ Str::limit($bed->notes, 30) ?? '—' }}</td>
+                        <td>
+                            {{ Str::limit($bed->notes, 30) ?? '—' }}
+                            @if($bed->status_reason)
+                                <div><small class="text-muted">{{ Str::limit($bed->status_reason, 45) }}</small></div>
+                            @endif
+                        </td>
                         <td class="text-end">
                             @can('beds.manage')
                             <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#editBedModal{{ $bed->id }}" aria-label="{{ __('common.edit') }}" title="{{ __('common.edit') }}">
                                 <i class="ti ti-pencil"></i>
+                            </button>
+                            @endcan
+                            @can('beds.status.manage')
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#bedStatusModal{{ $bed->id }}" aria-label="{{ __('common.status') }}" title="{{ __('common.status') }}">
+                                <i class="ti ti-adjustments"></i>
                             </button>
                             @endcan
                         </td>
@@ -211,6 +226,46 @@
                     <div class="mb-3">
                         <label class="form-label">{{ __('common.notes') }}</label>
                         <textarea name="notes" class="form-control" rows="2">{{ $bed->notes }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ __('admissions.reason') }}</label>
+                        <textarea name="status_reason" class="form-control" rows="2">{{ $bed->status_reason }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>{{ __('wards.update_bed') }}</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@endforeach
+@endcan
+
+@can('beds.status.manage')
+@foreach($beds as $bed)
+<div class="modal fade" id="bedStatusModal{{ $bed->id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('admin.wards.beds.status', $bed) }}">
+            @csrf @method('PATCH')
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ __('common.status') }} — {{ $bed->ward->name }} / {{ $bed->bed_number }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">{{ __('common.status') }}</label>
+                        <select name="status" class="form-select" required>
+                            @foreach(\App\Enums\BedStatus::cases() as $status)
+                                <option value="{{ $status->value }}" @selected($bed->status === $status)>{{ $status->translatedLabel() }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{{ __('admissions.reason') }}</label>
+                        <textarea name="reason" class="form-control" rows="3">{{ $bed->status_reason }}</textarea>
                     </div>
                 </div>
                 <div class="modal-footer">

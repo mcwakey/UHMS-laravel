@@ -143,7 +143,7 @@ trait HandlesConsultationClinicalEntries
     {
         $data = $request->validate([
             'complaint_id' => ['nullable', 'exists:complaints,id'],
-            'content' => ['required_without_all:onset,duration,location,character,radiation,associated_symptoms,aggravating_factors,relieving_factors,severity,timing,notes', 'nullable', 'string', 'max:8000'],
+            'content' => ['required_without_all:complaint_id,onset,duration,location,character,radiation,associated_symptoms,aggravating_factors,relieving_factors,severity,timing,notes', 'nullable', 'string', 'max:8000'],
             'onset' => ['nullable', 'string', 'max:191'],
             'duration' => ['nullable', 'string', 'max:191'],
             'location' => ['nullable', 'string', 'max:191'],
@@ -159,6 +159,7 @@ trait HandlesConsultationClinicalEntries
 
         try {
             $context = $this->consultationMutationContext($request, $visit, 'hopc.create', 'consultations.create');
+            $data = app(\App\Services\Consultation\HopcComplaintHydrationService::class)->hydrate($data);
             $entry = $this->clinicalEntryWorkflow->createHistoryOfPresentingComplaint($request, $visit, $context, $data, Auth::user());
         } catch (ConsultationActionException $e) {
             return $this->consultationActionFailureResponse($request, $e);
@@ -177,7 +178,7 @@ trait HandlesConsultationClinicalEntries
 
         $data = $request->validate([
             'complaint_id' => ['nullable', 'exists:complaints,id'],
-            'content' => ['required_without_all:onset,duration,location,character,radiation,associated_symptoms,aggravating_factors,relieving_factors,severity,timing,notes', 'nullable', 'string', 'max:8000'],
+            'content' => ['required_without_all:complaint_id,onset,duration,location,character,radiation,associated_symptoms,aggravating_factors,relieving_factors,severity,timing,notes', 'nullable', 'string', 'max:8000'],
             'onset' => ['nullable', 'string', 'max:191'],
             'duration' => ['nullable', 'string', 'max:191'],
             'location' => ['nullable', 'string', 'max:191'],
@@ -191,6 +192,7 @@ trait HandlesConsultationClinicalEntries
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
+        $data = app(\App\Services\Consultation\HopcComplaintHydrationService::class)->hydrate($data);
         $hopc = $this->clinicalEntryWorkflow->updateHistoryOfPresentingComplaint($hopc, $data, Auth::user());
 
         if ($this->shouldReturnJson($request)) {

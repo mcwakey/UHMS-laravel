@@ -45,3 +45,10 @@ if (config('journey.prediction_accuracy.enabled', true)) {
     Schedule::command('journey:predictions:evaluate --evaluate')
         ->dailyAt('01:00')->withoutOverlapping()->onOneServer();
 }
+
+if (config('admissions.reservations.auto_expiry_schedule_enabled', false)) {
+    Schedule::command('admissions:expire-bed-reservations')
+        ->everyFifteenMinutes()
+        ->withoutOverlapping()
+        ->onOneServer();
+}

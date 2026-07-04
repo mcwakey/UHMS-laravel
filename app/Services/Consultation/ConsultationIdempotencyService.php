@@ -10,6 +10,7 @@ use App\Services\ActivityLogService;
 use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -64,10 +65,14 @@ class ConsultationIdempotencyService
             ]);
 
             $result = $callback();
-            if ($result instanceof Model) {
+            $reference = $result instanceof Model
+                ? $result
+                : ($result instanceof Collection ? $result->first(fn ($item) => $item instanceof Model) : null);
+
+            if ($reference instanceof Model) {
                 $entry->update([
-                    'response_reference_type' => $result::class,
-                    'response_reference_id' => $result->getKey(),
+                    'response_reference_type' => $reference::class,
+                    'response_reference_id' => $reference->getKey(),
                 ]);
             }
 
@@ -137,4 +142,3 @@ class ConsultationIdempotencyService
         );
     }
 }
-

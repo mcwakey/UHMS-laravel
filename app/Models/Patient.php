@@ -105,6 +105,36 @@ class Patient extends Model
         return $this->hasMany(Admission::class);
     }
 
+    public function pregnancyProfiles()
+    {
+        return $this->hasMany(PregnancyProfile::class)->latest('created_at');
+    }
+
+    public function activePregnancyProfile()
+    {
+        return $this->hasOne(PregnancyProfile::class)
+            ->whereIn('profile_status', [
+                \App\Enums\PregnancyProfileStatus::ACTIVE->value,
+                \App\Enums\PregnancyProfileStatus::HIGH_RISK->value,
+            ])
+            ->latestOfMany();
+    }
+
+    public function maternityCases()
+    {
+        return $this->hasMany(MaternityCase::class)->latest('opened_at')->latest('id');
+    }
+
+    public function admissionRequests()
+    {
+        return $this->hasMany(AdmissionRequest::class);
+    }
+
+    public function bedReservations()
+    {
+        return $this->hasMany(BedReservation::class);
+    }
+
     public function activeAdmission()
     {
         return $this->hasOne(Admission::class)

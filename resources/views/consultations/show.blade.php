@@ -292,26 +292,17 @@
                                                 <div class="col-12">
                                                     <label class="form-label small">Complaint <span class="text-danger">*</span></label>
                                                     <input type="hidden" name="complaint_catalogue_id" id="complaintCatalogueIdInput">
-                                                    <input type="text" name="description" id="complaintDescInput" class="form-control" required placeholder="Search catalogue or type a custom complaint..." autocomplete="off" list="complaintSuggestions">
-                                                    <datalist id="complaintSuggestions"></datalist>
+                                                    <div class="position-relative">
+                                                        <input type="text" name="description" id="complaintDescInput" class="form-control" required placeholder="Search catalogue or type a custom complaint..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="complaintSuggestionMenu">
+                                                        <div id="complaintSuggestionMenu" class="list-group position-absolute w-100 shadow-sm d-none" style="z-index:1060;max-height:240px;overflow:auto;"></div>
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-4">
+                                                <div class="col-md-6">
                                                     <label class="form-label small">Duration</label>
                                                     <input type="text" name="duration" class="form-control" placeholder="e.g., 3">
+                                                    <input type="hidden" name="duration_unit" value="">
                                                 </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label small">Duration Unit</label>
-                                                    <select name="duration_unit" class="form-select">
-                                                        <option value="">-- Select --</option>
-                                                        <option value="minutes">{{ __('consultations.duration_units.minutes') }}</option>
-                                                        <option value="hours">{{ __('consultations.duration_units.hours') }}</option>
-                                                        <option value="days">{{ __('consultations.duration_units.days') }}</option>
-                                                        <option value="weeks">{{ __('consultations.duration_units.weeks') }}</option>
-                                                        <option value="months">{{ __('consultations.duration_units.months') }}</option>
-                                                        <option value="years">{{ __('consultations.duration_units.years') }}</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-4">
+                                                <div class="col-md-6">
                                                     <label class="form-label small">Severity</label>
                                                     <select name="severity" class="form-select">
                                                         <option value="">-- Select --</option>
@@ -437,21 +428,26 @@
                                             <div class="row g-2">
                                                 <div class="col-12">
                                                     <label class="form-label small">Link to Complaint <small class="text-muted">(optional)</small></label>
-                                                    <select name="complaint_id" class="form-select form-select-sm">
+                                                    <select name="complaint_id" id="hopcComplaintSelect" class="form-select form-select-sm" data-consultation-action="hydrate-hopc-complaint">
                                                         <option value="">{{ __('consultations.general_narrative') }}</option>
                                                         @foreach($record?->complaints ?? [] as $complaint)
-                                                            <option value="{{ $complaint->id }}">{{ Str::limit($complaint->description, 80) }}</option>
+                                                            <option value="{{ $complaint->id }}"
+                                                                data-description="{{ $complaint->description }}"
+                                                                data-duration="{{ trim($complaint->duration.' '.($complaint->duration_unit ?? '')) }}"
+                                                                data-severity="{{ $complaint->severity }}">
+                                                                {{ Str::limit($complaint->description, 80) }}
+                                                            </option>
                                                         @endforeach
                                                     </select>
                                                 </div>
                                                 <div class="col-12">
                                                     <label class="form-label small">Narrative <span class="text-danger">*</span></label>
-                                                    <textarea name="content" class="form-control" rows="4" placeholder="Detailed story behind the complaints..." required></textarea>
+                                                    <textarea name="content" id="hopcContentInput" class="form-control" rows="4" placeholder="Detailed story behind the complaints..."></textarea>
                                                 </div>
                                                 <div class="col-md-3"><input name="onset" class="form-control form-control-sm" placeholder="Onset"></div>
-                                                <div class="col-md-3"><input name="duration" class="form-control form-control-sm" placeholder="Duration"></div>
+                                                <div class="col-md-3"><input name="duration" id="hopcDurationInput" class="form-control form-control-sm" placeholder="Duration"></div>
                                                 <div class="col-md-3"><input name="location" class="form-control form-control-sm" placeholder="Location"></div>
-                                                <div class="col-md-3"><input name="severity" class="form-control form-control-sm" placeholder="Severity"></div>
+                                                <div class="col-md-3"><input name="severity" id="hopcSeverityInput" class="form-control form-control-sm" placeholder="Severity"></div>
                                                 <div class="col-md-6"><input name="aggravating_factors" class="form-control form-control-sm" placeholder="Aggravating factors"></div>
                                                 <div class="col-md-6"><input name="relieving_factors" class="form-control form-control-sm" placeholder="Relieving factors"></div>
                                                 <div class="col-12"><input name="associated_symptoms" class="form-control form-control-sm" placeholder="Associated symptoms"></div>
@@ -814,9 +810,8 @@
                                                 @if($investigationDepts->isNotEmpty())
                                                 <div class="col-12">
                                                     <label class="form-label small">Select Services <span class="text-danger">*</span></label>
-                                                    <div id="investigationServicesContainer" class="border rounded p-2" style="min-height:50px;">
-                                                        <span class="text-muted small">Select a department first to load services</span>
-                                                    </div>
+                                                    <select name="service_ids[]" id="investigationServicesSelect" class="form-select" multiple disabled data-placeholder="{{ __('consultations.search_services') }}"></select>
+                                                    <small id="investigationServicesHelp" class="text-muted">Select a department first to load services</small>
                                                 </div>
                                                 @endif
                                                 <div class="col-12">
@@ -1103,12 +1098,9 @@
                                                         <div class="col-md-2">
                                                             <label class="form-label small">Freq <span class="text-danger">*</span></label>
                                                             <select name="items[0][frequency]" class="form-select form-select-sm" required>
-                                                                <option value="OD">OD</option>
-                                                                <option value="BD">BD</option>
-                                                                <option value="TDS" selected>TDS</option>
-                                                                <option value="QDS">QDS</option>
-                                                                <option value="STAT">STAT</option>
-                                                                <option value="PRN">PRN</option>
+                                                                @foreach($prescriptionFrequencyOptions as $option)
+                                                                    <option value="{{ $option['value'] }}" @selected($option['value'] === 'TDS')>{{ $option['label'] }}</option>
+                                                                @endforeach
                                                             </select>
                                                         </div>
                                                         <div class="col-md-2">
@@ -1261,7 +1253,7 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label class="form-label small">Service <span class="text-danger">*</span></label>
-                                                    <select name="service_catalog_id" id="procedureServiceSelect" class="form-select form-select-sm" required disabled>
+                                                    <select name="service_catalog_id" id="procedureServiceSelect" class="form-select form-select-sm" required disabled data-placeholder="{{ __('consultations.search_procedure_service') }}">
                                                         <option value="">{{ __('consultations.select_department_first') }}</option>
                                                     </select>
                                                 </div>
@@ -1499,12 +1491,69 @@
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0"><i class="ti ti-checklist me-1"></i>Tasks</h6>
                                 @can('consultations.create')
-                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addTaskForm">
                                     <i class="ti ti-plus me-1"></i>Add Task
                                 </button>
                                 @endcan
                             </div>
                             <div class="card-body">
+                                @can('consultations.create')
+                                <div class="collapse mb-3" id="addTaskForm">
+                                    <div class="card card-body bg-light">
+                                        <form data-ajax-form="tasks" data-consultation-form="tasks" data-refresh-section="tasks" data-route-context-required="true" method="POST" action="{{ route('admin.consultations.tasks.store', $visit) }}">
+                                            @csrf
+                                            <x-consultation-idempotency-key action="task.create" />
+                                            <div class="row g-2">
+                                                <div class="col-md-6">
+                                                    <label class="form-label small">Task Title <span class="text-danger">*</span></label>
+                                                    <input type="text" name="title" class="form-control form-control-sm" required placeholder="e.g., Follow up on lab results">
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label small">{{ __('consultations.task_frequency') }} <span class="text-danger">*</span></label>
+                                                    <select name="frequency" class="form-select form-select-sm" required>
+                                                        @foreach($taskFrequencyOptions as $option)
+                                                            <option value="{{ $option['value'] }}" @selected($option['value'] === 'OD')>{{ $option['label'] }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label small">Priority</label>
+                                                    <select name="priority" class="form-select form-select-sm">
+                                                        <option value="low">{{ __('consultations.priority.low') }}</option>
+                                                        <option value="medium" selected>{{ __('consultations.priority.medium') }}</option>
+                                                        <option value="high">{{ __('consultations.priority.high') }}</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label small">Description</label>
+                                                    <textarea name="description" class="form-control form-control-sm" rows="2"></textarea>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label small">{{ __('consultations.task_start_at') }}</label>
+                                                    <input type="datetime-local" name="start_at" class="form-control form-control-sm">
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label class="form-label small">Due Date</label>
+                                                    <input type="date" name="due_date" class="form-control form-control-sm">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label small">Assign To</label>
+                                                    <select name="assigned_to" class="form-select form-select-sm">
+                                                        <option value="">{{ __('consultations.unassigned') }}</option>
+                                                        @foreach($doctors as $doc)
+                                                            <option value="{{ $doc->id }}">Dr. {{ $doc->full_name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2 d-flex gap-2">
+                                                <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-check me-1"></i>Save</button>
+                                                <button type="button" class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#addTaskForm">Cancel</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                                @endcan
                                 <div id="tasks-list">
                                 @if($record && $record->tasks && $record->tasks->count() > 0)
                                     @foreach($ownerGroups($record->tasks->sortBy(fn($t) => $t->completed_at ? 1 : 0)) as $group)
@@ -1558,6 +1607,8 @@
                                                     <small class="text-muted">
                                                         Created: {{ $task->created_at?->format('d M Y, h:i A') }}
                                                         @if($task->assignedUser) &middot; Assigned: {{ $task->assignedUser->full_name }} @endif
+                                                        @if($task->frequency) &middot; Frequency: {{ $task->frequency }} @endif
+                                                        @if($task->scheduled_at) &middot; Scheduled: {{ $task->scheduled_at->format('d M Y H:i') }} @endif
                                                         @if($task->due_date) &middot; Due: {{ $task->due_date->format('d M Y') }} @endif
                                                         @if($task->completed_at) &middot; Done: {{ $task->completed_at->format('d M Y H:i') }} @endif
                                                         @if($task->completedBy) &middot; Completed by: {{ $task->completedBy->full_name }} @endif
@@ -1743,7 +1794,27 @@
                     <div class="tab-pane fade" id="summary-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-notes me-1"></i>{{ __('consultations.workspace.notes_consultation_summary') }}</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-notes me-1"></i>{{ __('consultations.final_clinical_note') }}</h6>
+                            </div>
+                            <div class="card-body">
+                                @can('consultations.create')
+                                <form data-ajax-form="summary" data-consultation-form="final-note" data-route-context-required="true" data-preserve-values="true" method="POST" action="{{ route('admin.consultations.final-note.update', $visit) }}">
+                                    @csrf
+                                    @method('PATCH')
+                                    <textarea name="final_note" class="form-control" rows="4" placeholder="{{ __('consultations.final_note_placeholder') }}">{{ old('final_note', $record?->final_note) }}</textarea>
+                                    <div class="mt-2 d-flex justify-content-end">
+                                        <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-check me-1"></i>Save</button>
+                                    </div>
+                                </form>
+                                @else
+                                    <div class="border rounded p-3 bg-light">{{ $record?->final_note ?: __('consultations.no_clinicians_recorded') }}</div>
+                                @endcan
+                            </div>
+                        </div>
+
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>{{ __('consultations.generated_summary') }}</h6>
                             </div>
                             <div class="card-body" id="consultation-summary-body">
                                 @include('consultations.partials.summary-sections', ['consultationSummary' => $consultationSummary])

@@ -47,6 +47,7 @@ $visitHistoryJson = $history['records']->map(function($r) {
             'roles' => auth()->user()->getRoleNames()->values(),
         ] : null,
         'taskAssignableUsers' => $doctors->map(fn($doctor) => ['id' => $doctor->id, 'name' => 'Dr. '.$doctor->full_name])->values(),
+        'frequencyDoseMap' => $frequencyDoseMap ?? [],
         'sendSessionServicesByDept' => $referralServicesPayloadByDept ?? [],
         'visitHistoryData' => $visitHistoryJson,
         'openFollowUpModalOnLoad' => $errors->has('appointment_date') || $errors->has('start_time') || $errors->has('end_time') || $errors->has('department_id') || $errors->has('service_id') || $errors->has('doctor_id') || $errors->has('reason') || $errors->has('notes') || $errors->has('priority'),
@@ -74,6 +75,10 @@ $visitHistoryJson = $history['records']->map(function($r) {
             'setPrimaryFailed' => __('consultations.set_primary_failed'),
             'loading' => __('consultations.loading'),
             'noProcedureServices' => __('consultations.no_procedure_services'),
+            'searchServices' => __('consultations.search_services'),
+            'noResultsFound' => __('consultations.no_results_found'),
+            'searchProcedureService' => __('consultations.search_procedure_service'),
+            'searchIcd10' => __('consultations.search_icd10'),
             'markDiagnosisFinal' => __('consultations.mark_this_diagnosis_as_final'),
             'ajax' => [
                 'validation_failed' => __('consultations.ajax.validation_failed'),

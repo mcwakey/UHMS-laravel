@@ -17,65 +17,6 @@
 </div>
 
 {{-- ============================================================ --}}
-{{-- ADD TASK MODAL --}}
-{{-- ============================================================ --}}
-@can('consultations.create')
-<div class="modal fade" id="addTaskModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form data-ajax-form="tasks" data-consultation-form="tasks" data-refresh-section="tasks" data-route-context-required="true" method="POST" action="{{ route('admin.consultations.tasks.store', $visit) }}">
-                @csrf
-                <x-consultation-idempotency-key action="task.create" />
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="ti ti-checklist me-2"></i>Add Task</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Task Title <span class="text-danger">*</span></label>
-                        <input type="text" name="title" class="form-control" required placeholder="e.g., Follow up on lab results">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea name="description" class="form-control" rows="2"></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label">Priority</label>
-                            <select name="priority" class="form-select">
-                                <option value="low">{{ __('consultations.priority.low') }}</option>
-                                <option value="medium" selected>{{ __('consultations.priority.medium') }}</option>
-                                <option value="high">{{ __('consultations.priority.high') }}</option>
-                            </select>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label">Due Date</label>
-                            <input type="date" name="due_date" class="form-control">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Assign To</label>
-                        <select name="assigned_to" class="form-select">
-                            <option value="">{{ __('consultations.unassigned') }}</option>
-                            @if(isset($doctors))
-                                @foreach($doctors as $doc)
-                                    <option value="{{ $doc->id }}">Dr. {{ $doc->full_name }}</option>
-                                @endforeach
-                            @endif
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>Add Task</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-@endcan
-
-{{-- ============================================================ --}}
 {{-- EDIT CONSULTATION ENTRY MODAL --}}
 {{-- ============================================================ --}}
 @can('consultations.create')

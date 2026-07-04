@@ -73,6 +73,16 @@ class Department extends Model
         return $this->hasMany(Specialty::class);
     }
 
+    public function maternityCases(): HasMany
+    {
+        return $this->hasMany(MaternityCase::class);
+    }
+
+    public function pregnancyProfiles(): HasMany
+    {
+        return $this->hasMany(PregnancyProfile::class);
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';

@@ -6,6 +6,7 @@ enum LogModule: string
 {
     case EMERGENCY = 'EMERGENCY';
     case ADMISSION = 'ADMISSION';
+    case MATERNITY = 'MATERNITY';
     case CONSULTATION = 'CONSULTATION';
     case SERVICE_RENDERING = 'SERVICE_RENDERING';
     case MAR = 'MAR';
@@ -48,6 +49,7 @@ enum LogModule: string
     {
         return match ($this) {
             self::EMERGENCY, self::AUTH => 'danger',
+            self::MATERNITY => 'purple',
             self::BILLING, self::PAYMENTS, self::ACCOUNTING, self::CLAIMS, self::SUPPLIER_LEDGER, self::PURCHASE_ORDERS => 'warning',
             self::SERVICE_RENDERING => 'success',
             self::STOCK, self::PHARMACY => 'info',

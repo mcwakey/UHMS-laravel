@@ -448,6 +448,31 @@ class RoleSeeder extends Seeder
             'ward.manage',
             'ward.admit',
             'ward.discharge',
+            'admission.requests.view',
+            'admission.requests.create',
+            'admission.requests.accept',
+            'admission.requests.reject',
+            'admission.requests.cancel',
+            'admission.requests.convert',
+            'admission.requests.bed_pending',
+            'admission.requests.reserve_bed',
+            'admission.nursing.view',
+            'admission.nursing.notes.create',
+            'admission.nursing.notes.update',
+            'admission.nursing.tasks.create',
+            'admission.nursing.tasks.update',
+            'admission.nursing.tasks.complete',
+            'admission.care_flags.manage',
+            'admission.care_overview.view',
+            'admission.discharge.readiness.view',
+            'admission.discharge.plan',
+            'admission.discharge.clearance.view',
+            'admission.discharge.clearance.manage',
+            'admission.discharge.summary.view',
+            'admission.discharge.summary.create',
+            'admission.discharge.summary.update',
+            'admission.discharge.summary.approve',
+            'admission.discharge.enforced.override',
             'ward.consumable.use',          // record ward consumable usage
             'medication_orders.view',
             'medication_orders.manage',
@@ -498,6 +523,30 @@ class RoleSeeder extends Seeder
             'emergency.settings.manage',
             'beds.view',
             'beds.manage',
+            'beds.reserve',
+            'beds.release',
+            'beds.block',
+            'beds.transfer',
+            'beds.clean',
+            'beds.status.manage',
+            'beds.capacity.view',
+            'bed.reservations.expire',
+
+            // ── Maternity Foundation ─────────────────────────────────────
+            'maternity.view',
+            'maternity.dashboard.view',
+            'maternity.pregnancy.view',
+            'maternity.pregnancy.create',
+            'maternity.pregnancy.update',
+            'maternity.pregnancy.close',
+            'maternity.pregnancy.risk.manage',
+            'maternity.case.view',
+            'maternity.case.create',
+            'maternity.case.update',
+            'maternity.case.close',
+            'maternity.admission.request',
+            'maternity.reports.view',
+            'maternity.settings.manage',
 
             // ── HR & Payroll ──────────────────────────────────────────────
             'hr.employees.view',
@@ -855,6 +904,12 @@ class RoleSeeder extends Seeder
             'lab.results.view',
             'queue.view',
             'ward.view', 'ward.admit', 'ward.discharge',
+            'beds.transfer', 'beds.capacity.view',
+            'admission.requests.view', 'admission.requests.create',
+            'admission.nursing.view', 'admission.nursing.tasks.create', 'admission.care_overview.view',
+            'admission.discharge.readiness.view', 'admission.discharge.clearance.view',
+            'admission.discharge.summary.view', 'admission.discharge.summary.create',
+            'admission.discharge.summary.update', 'admission.discharge.summary.approve',
             'appointments.view', 'appointments.create', 'appointments.edit', 'appointments.update', 'appointments.cancel',
             'notifications.view',
             'procedures.view', 'procedures.create',
@@ -873,21 +928,45 @@ class RoleSeeder extends Seeder
             'reports.clinical_sensitive.view',
         ];
 
+        $maternityClinicalPerms = [
+            'maternity.view',
+            'maternity.dashboard.view',
+            'maternity.pregnancy.view',
+            'maternity.pregnancy.create',
+            'maternity.pregnancy.update',
+            'maternity.pregnancy.close',
+            'maternity.pregnancy.risk.manage',
+            'maternity.case.view',
+            'maternity.case.create',
+            'maternity.case.update',
+            'maternity.case.close',
+            'maternity.admission.request',
+            'maternity.reports.view',
+        ];
+
+        $maternityReceptionPerms = [
+            'maternity.view',
+            'maternity.dashboard.view',
+            'maternity.pregnancy.view',
+            'maternity.pregnancy.create',
+        ];
+
         $doctor = Role::firstOrCreate(['name' => 'Doctor']);
+        $doctor->syncPermissions(array_values(array_unique(array_merge($doctorPerms, $maternityClinicalPerms))));
 
         // ── Consultant ────────────────────────────────────────────────────
         // Same clinical depth as Doctor; specialised outpatient consultant
         $consultant = Role::firstOrCreate(['name' => 'Consultant']);
-        $consultant->syncPermissions($doctorPerms);
+        $consultant->syncPermissions(array_values(array_unique(array_merge($doctorPerms, $maternityClinicalPerms))));
 
         // ── Specialist ────────────────────────────────────────────────────
         $specialist = Role::firstOrCreate(['name' => 'Specialist']);
-        $specialist->syncPermissions($doctorPerms);
+        $specialist->syncPermissions(array_values(array_unique(array_merge($doctorPerms, $maternityClinicalPerms))));
 
         // ── Physician Assistant ───────────────────────────────────────────
         // Slightly reduced: no admit/discharge, no procedure recording
         $physicianAssistant = Role::firstOrCreate(['name' => 'Physician Assistant']);
-        $physicianAssistant->syncPermissions([
+        $physicianAssistant->syncPermissions(array_values(array_unique(array_merge([
             'patients.view', 'patients.contact.view',
             'visits.view', 'visits.transition', 'visits.preview',
             'consultation.access', 'consultation.dashboard', 'consultation.queue',
@@ -901,7 +980,11 @@ class RoleSeeder extends Seeder
             'lab.requests.view', 'lab.requests.create',
             'lab.results.view',
             'queue.view',
-            'ward.view',
+            'ward.view', 'admission.requests.view',
+            'admission.nursing.view', 'admission.care_overview.view',
+            'admission.discharge.readiness.view', 'admission.discharge.clearance.view',
+            'admission.discharge.summary.view', 'admission.discharge.summary.create',
+            'admission.discharge.summary.update',
             'appointments.view', 'appointments.create',
             'notifications.view',
             'procedures.view', 'procedure.request', 'procedure.view',
@@ -909,18 +992,24 @@ class RoleSeeder extends Seeder
             'investigation.catalogue.view',
             'icd.view',
             'product.view',
-        ]);
+        ], $maternityClinicalPerms))));
 
         // ── Nurse ─────────────────────────────────────────────────────────
         $nurse = Role::firstOrCreate(['name' => 'Nurse']);
-        $nurse->syncPermissions([
+        $nurse->syncPermissions(array_values(array_unique(array_merge([
             'patients.view',
             'visits.view', 'visits.transition', 'visits.preview',
             'complaints.view', 'complaints.create', 'complaints.edit_own', 'complaints.delete_own',
             'vitals.view', 'vitals.create',
             'queue.view', 'queue.manage',
             'prescriptions.view',
-            'ward.view', 'beds.view',
+            'ward.view', 'beds.view', 'admission.requests.view',
+            'admission.nursing.view', 'admission.nursing.notes.create',
+            'admission.nursing.tasks.create', 'admission.nursing.tasks.update', 'admission.nursing.tasks.complete',
+            'admission.care_overview.view',
+            'admission.discharge.readiness.view', 'admission.discharge.plan',
+            'admission.discharge.clearance.view', 'admission.discharge.clearance.manage',
+            'admission.discharge.summary.view',
             'medication_orders.view',
             'medication_administration.view', 'medication_administration.administer',
             'medication_administration.hold', 'medication_administration.mark_missed',
@@ -942,12 +1031,12 @@ class RoleSeeder extends Seeder
             'product.view', 'stock.view_balance',
             // Requisitions: nurses can request stock and acknowledge receipt
             'store.requisition.view', 'store.requisition.create', 'store.requisition.acknowledge',
-        ]);
+        ], $maternityClinicalPerms))));
 
         // ── Ward Nurse ────────────────────────────────────────────────────
         // Nurse with expanded inpatient and ward consumable access
         $wardNurse = Role::firstOrCreate(['name' => 'Ward Nurse']);
-        $wardNurse->syncPermissions([
+        $wardNurse->syncPermissions(array_values(array_unique(array_merge([
             'patients.view',
             'visits.view', 'visits.transition', 'visits.preview',
             'complaints.view', 'complaints.create', 'complaints.edit_own', 'complaints.delete_own',
@@ -955,7 +1044,19 @@ class RoleSeeder extends Seeder
             'queue.view', 'queue.manage',
             'prescriptions.view',
             'ward.view', 'ward.admit', 'ward.discharge', 'ward.manage',
-            'beds.view', 'beds.manage',
+            'admission.requests.view', 'admission.requests.create', 'admission.requests.accept',
+            'admission.requests.reject', 'admission.requests.cancel', 'admission.requests.convert',
+            'admission.requests.bed_pending', 'admission.requests.reserve_bed',
+            'admission.nursing.view', 'admission.nursing.notes.create', 'admission.nursing.notes.update',
+            'admission.nursing.tasks.create', 'admission.nursing.tasks.update', 'admission.nursing.tasks.complete',
+            'admission.care_flags.manage', 'admission.care_overview.view',
+            'admission.discharge.readiness.view', 'admission.discharge.plan',
+            'admission.discharge.clearance.view', 'admission.discharge.clearance.manage',
+            'admission.discharge.summary.view', 'admission.discharge.summary.create',
+            'admission.discharge.summary.update', 'admission.discharge.summary.approve',
+            'admission.discharge.enforced.override',
+            'beds.view', 'beds.manage', 'beds.reserve', 'beds.release', 'beds.block', 'beds.transfer',
+            'beds.clean', 'beds.status.manage', 'beds.capacity.view', 'bed.reservations.expire',
             'medication_orders.view', 'medication_orders.hold',
             'medication_administration.view', 'medication_administration.administer',
             'medication_administration.hold', 'medication_administration.mark_missed',
@@ -978,7 +1079,7 @@ class RoleSeeder extends Seeder
             'product.view', 'stock.view_balance',
             // Requisitions: ward nurses can request stock and acknowledge receipt
             'store.requisition.view', 'store.requisition.create', 'store.requisition.acknowledge',
-        ]);
+        ], $maternityClinicalPerms))));
 
         // ── Theatre Nurse ─────────────────────────────────────────────────
         // Scrub/circulating nurse: full procedure workflow + consumable recording
@@ -1073,7 +1174,7 @@ class RoleSeeder extends Seeder
 
         // ── Receptionist ──────────────────────────────────────────────────
         $receptionist = Role::firstOrCreate(['name' => 'Receptionist']);
-        $receptionist->syncPermissions([
+        $receptionist->syncPermissions(array_values(array_unique(array_merge([
             'patients.view', 'patients.create', 'patients.edit',
             'visits.view', 'visits.create', 'visits.edit', 'visits.transition', 'visits.preview',
             'queue.view', 'queue.manage',
@@ -1083,7 +1184,7 @@ class RoleSeeder extends Seeder
             'integrations.sms.view', 'integrations.sms.send', 'integrations.sms.reports.view',
             'integrations.sms.queue.view',
             'notifications.view',
-        ]);
+        ], $maternityReceptionPerms))));
 
         // ── Cashier ───────────────────────────────────────────────────────
         // Payment collection only; cannot modify invoices
@@ -1095,6 +1196,8 @@ class RoleSeeder extends Seeder
             'billing.discount.view', 'billing.discount.apply',
             'payments.view', 'payments.create',
             'receivables.view', 'receivables.payment.record',
+            'admission.discharge.readiness.view', 'admission.discharge.clearance.view',
+            'admission.discharge.clearance.manage',
             'receivables.workbench.view', 'receivables.cases.view',
             'receivables.followups.create', 'receivables.promises.manage',
             'reports.ar_aging.view',
@@ -1215,6 +1318,8 @@ class RoleSeeder extends Seeder
             'sponsors.view', 'sponsors.create', 'sponsors.edit', 'sponsors.authorize', 'sponsors.payment.record',
             'corporate_clients.view', 'corporate_clients.create', 'corporate_clients.edit', 'corporate_clients.payment.record',
             'receivables.view', 'receivables.allocate', 'receivables.reallocate', 'receivables.payment.record', 'receivables.write_off',
+            'admission.discharge.readiness.view', 'admission.discharge.clearance.view',
+            'admission.discharge.clearance.manage',
             'receivables.workbench.view', 'receivables.cases.view', 'receivables.cases.manage',
             'receivables.cases.assign', 'receivables.followups.create', 'receivables.promises.manage',
             'receivables.disputes.manage', 'receivables.dunning.generate', 'receivables.dunning.send',

@@ -27,6 +27,10 @@ class Bed extends Model
         'bed_number',
         'bed_type',
         'status',
+        'reserved_until',
+        'status_reason',
+        'status_changed_by',
+        'status_changed_at',
         'daily_rate',
         'notes',
     ];
@@ -36,6 +40,8 @@ class Bed extends Model
         return [
             'bed_type' => BedType::class,
             'status' => BedStatus::class,
+            'reserved_until' => 'datetime',
+            'status_changed_at' => 'datetime',
             'daily_rate' => 'decimal:2',
         ];
     }
@@ -54,6 +60,26 @@ class Bed extends Model
     public function admissions()
     {
         return $this->hasMany(Admission::class);
+    }
+
+    public function admissionRequests()
+    {
+        return $this->hasMany(AdmissionRequest::class, 'reserved_bed_id');
+    }
+
+    public function reservations()
+    {
+        return $this->hasMany(BedReservation::class);
+    }
+
+    public function activeReservation()
+    {
+        return $this->hasOne(BedReservation::class)->where('status', 'active')->latestOfMany();
+    }
+
+    public function statusChangedBy()
+    {
+        return $this->belongsTo(User::class, 'status_changed_by');
     }
 
     public function currentAdmission()
@@ -83,14 +109,30 @@ class Bed extends Model
     |--------------------------------------------------------------------------
     */
 
-    public function markOccupied(): void
+    public function markOccupied(?int $userId = null, ?string $reason = null): void
     {
-        $this->update(['status' => BedStatus::OCCUPIED]);
+        $this->updateStatus(BedStatus::OCCUPIED, $userId, $reason);
     }
 
-    public function markAvailable(): void
+    public function markAvailable(?int $userId = null, ?string $reason = null): void
     {
-        $this->update(['status' => BedStatus::AVAILABLE]);
+        $this->updateStatus(BedStatus::AVAILABLE, $userId, $reason);
+    }
+
+    public function markReserved(?int $userId = null, ?string $reason = null, $reservedUntil = null): void
+    {
+        $this->updateStatus(BedStatus::RESERVED, $userId, $reason, $reservedUntil);
+    }
+
+    public function updateStatus(BedStatus $status, ?int $userId = null, ?string $reason = null, $reservedUntil = null): void
+    {
+        $this->update([
+            'status' => $status,
+            'reserved_until' => $status === BedStatus::RESERVED ? $reservedUntil : null,
+            'status_reason' => $reason,
+            'status_changed_by' => $userId,
+            'status_changed_at' => now(),
+        ]);
     }
 
     public function getIsAvailableAttribute(): bool

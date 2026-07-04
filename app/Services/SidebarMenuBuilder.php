@@ -471,6 +471,14 @@ class SidebarMenuBuilder
                 'title' => 'Ward / Inpatient',
                 'items' => [
                     [
+                        'label' => 'Maternity',
+                        'icon' => 'ti ti-baby-carriage',
+                        'route' => 'admin.maternity.dashboard',
+                        'active_patterns' => ['admin.maternity.*'],
+                        'permission' => 'maternity.view',
+                        'module' => 'maternity',
+                    ],
+                    [
                         'label' => 'Admissions Requests',
                         'icon' => 'ti ti-bed',
                         'route' => 'admin.admissions.requests',

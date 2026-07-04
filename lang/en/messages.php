@@ -280,6 +280,7 @@ return [
     /* ------------------------------------------------------------------ */
     'consultation_tasks' => [
         'created' => 'Task created.',
+        'created_count' => '{1} Task created.|[2,*] :count tasks created.',
         'updated' => 'Task updated.',
         'deleted' => 'Task deleted.',
         'toggled' => 'Task status toggled.',

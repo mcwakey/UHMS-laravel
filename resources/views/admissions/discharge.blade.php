@@ -64,6 +64,12 @@
     </div>
 
     <div class="col-lg-4">
+        @can('admission.discharge.readiness.view')
+        <div class="mb-3">
+            @include('admissions.partials.discharge-readiness-tab')
+        </div>
+        @endcan
+
         <div class="card mb-3">
             <div class="card-header">
                 <h5 class="card-title mb-0">{{ __('admissions.admission_summary') }}</h5>

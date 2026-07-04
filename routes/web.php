@@ -3,7 +3,14 @@
 use App\Http\Controllers\Admin\Billing\AccountCategoryController;
 use App\Http\Controllers\Admin\Reporting\ActivityLogController;
 use App\Http\Controllers\Admin\AdmissionsWard\AdmissionController;
+use App\Http\Controllers\Admin\AdmissionsWard\AdmissionBedWorkflowController;
+use App\Http\Controllers\Admin\AdmissionsWard\AdmissionDischargeWorkflowController;
 use App\Http\Controllers\Admin\AdmissionsWard\AdmissionMedicationBoardController;
+use App\Http\Controllers\Admin\AdmissionsWard\AdmissionNursingCareController;
+use App\Http\Controllers\Admin\AdmissionsWard\AdmissionRequestController;
+use App\Http\Controllers\Admin\Maternity\MaternityCaseController;
+use App\Http\Controllers\Admin\Maternity\MaternityDashboardController;
+use App\Http\Controllers\Admin\Maternity\PregnancyProfileController;
 use App\Http\Controllers\Admin\Lab\AnalyzerController;
 use App\Http\Controllers\Admin\Appointments\AppointmentController;
 use App\Http\Controllers\Admin\Hr\AttendanceController;
@@ -479,12 +486,22 @@ Route::middleware('auth')->group(function () {
             Route::get('beds', [WardController::class, 'beds'])->name('wards.beds');
             Route::post('beds', [WardController::class, 'storeBed'])->name('wards.beds.store')->middleware('can:beds.manage');
             Route::put('beds/{bed}', [WardController::class, 'updateBed'])->name('wards.beds.update')->middleware('can:beds.manage');
+            Route::patch('beds/{bed}/status', [AdmissionBedWorkflowController::class, 'updateBedStatus'])->name('wards.beds.status')->middleware('can:beds.status.manage');
             Route::get('bed-map', [WardController::class, 'bedMap'])->name('wards.bed-map');
         });
 
         // Admissions
         Route::middleware('can:ward.view')->group(function () {
-            Route::get('admissions/requests', [AdmissionController::class, 'admissionRequests'])->name('admissions.requests');
+            Route::get('admissions/requests', [AdmissionRequestController::class, 'index'])->name('admissions.requests')->middleware('can:admission.requests.view');
+            Route::get('admissions/requests/create', [AdmissionRequestController::class, 'create'])->name('admissions.requests.create')->middleware('can:admission.requests.create');
+            Route::post('admissions/requests', [AdmissionRequestController::class, 'store'])->name('admissions.requests.store')->middleware('can:admission.requests.create');
+            Route::get('admissions/requests/{admissionRequest}', [AdmissionRequestController::class, 'show'])->name('admissions.requests.show')->middleware('can:admission.requests.view');
+            Route::patch('admissions/requests/{admissionRequest}/accept', [AdmissionRequestController::class, 'accept'])->name('admissions.requests.accept')->middleware('can:admission.requests.accept');
+            Route::patch('admissions/requests/{admissionRequest}/reject', [AdmissionRequestController::class, 'reject'])->name('admissions.requests.reject')->middleware('can:admission.requests.reject');
+            Route::patch('admissions/requests/{admissionRequest}/cancel', [AdmissionRequestController::class, 'cancel'])->name('admissions.requests.cancel')->middleware('can:admission.requests.cancel');
+            Route::patch('admissions/requests/{admissionRequest}/bed-pending', [AdmissionRequestController::class, 'bedPending'])->name('admissions.requests.bed-pending')->middleware('can:admission.requests.bed_pending');
+            Route::patch('admissions/requests/{admissionRequest}/reserve-bed', [AdmissionRequestController::class, 'reserveBed'])->name('admissions.requests.reserve-bed')->middleware('can:admission.requests.reserve_bed');
+            Route::post('admissions/requests/{admissionRequest}/convert', [AdmissionRequestController::class, 'convert'])->name('admissions.requests.convert')->middleware('can:admission.requests.convert');
             Route::get('admissions/medication-board', [AdmissionMedicationBoardController::class, 'index'])->name('admissions.medication-board')->middleware('can:admission.medication_board.view');
             Route::get('admissions', [AdmissionController::class, 'index'])->name('admissions.index');
             Route::get('admissions/create', [AdmissionController::class, 'create'])->name('admissions.create')->middleware('can:ward.admit');
@@ -497,6 +514,39 @@ Route::middleware('auth')->group(function () {
             Route::post('admissions/{admission}/rounds', [AdmissionController::class, 'storeRound'])->name('admissions.rounds.store');
             Route::post('admissions/{admission}/vitals', [AdmissionController::class, 'storeVital'])->name('admissions.vitals.store');
             Route::post('admissions/{admission}/services', [AdmissionController::class, 'storeService'])->name('admissions.services.store');
+            Route::post('admissions/{admission}/transfer-bed', [AdmissionBedWorkflowController::class, 'transfer'])->name('admissions.transfer-bed')->middleware('can:beds.transfer');
+            Route::post('admissions/{admission}/nursing-notes', [AdmissionNursingCareController::class, 'storeNote'])->name('admissions.nursing-notes.store')->middleware('can:admission.nursing.notes.create');
+            Route::patch('admissions/{admission}/nursing-notes/{nursingNote}', [AdmissionNursingCareController::class, 'updateNote'])->name('admissions.nursing-notes.update')->middleware('can:admission.nursing.notes.update');
+            Route::post('admissions/{admission}/nursing-tasks', [AdmissionNursingCareController::class, 'storeTask'])->name('admissions.nursing-tasks.store')->middleware('can:admission.nursing.tasks.create');
+            Route::patch('admissions/{admission}/nursing-tasks/{nursingTask}', [AdmissionNursingCareController::class, 'updateTask'])->name('admissions.nursing-tasks.update')->middleware('can:admission.nursing.tasks.update');
+            Route::patch('admissions/{admission}/nursing-tasks/{nursingTask}/complete', [AdmissionNursingCareController::class, 'completeTask'])->name('admissions.nursing-tasks.complete')->middleware('can:admission.nursing.tasks.complete');
+            Route::patch('admissions/{admission}/care-flags', [AdmissionNursingCareController::class, 'updateCareFlags'])->name('admissions.care-flags.update')->middleware('can:admission.care_flags.manage');
+            Route::post('admissions/{admission}/discharge-planning', [AdmissionDischargeWorkflowController::class, 'startPlanning'])->name('admissions.discharge-planning.start')->middleware('can:admission.discharge.plan');
+            Route::patch('admissions/{admission}/discharge-planning', [AdmissionDischargeWorkflowController::class, 'updatePlanning'])->name('admissions.discharge-planning.update')->middleware('can:admission.discharge.plan');
+            Route::patch('admissions/{admission}/discharge-clearances/{clearance}', [AdmissionDischargeWorkflowController::class, 'updateClearance'])->name('admissions.discharge-clearances.update')->middleware('can:admission.discharge.clearance.manage');
+            Route::patch('admissions/{admission}/discharge-clearances/{clearance}/revoke', [AdmissionDischargeWorkflowController::class, 'revokeClearance'])->name('admissions.discharge-clearances.revoke')->middleware('can:admission.discharge.clearance.manage');
+            Route::post('admissions/{admission}/discharge-summary', [AdmissionDischargeWorkflowController::class, 'saveSummary'])->name('admissions.discharge-summary.save')->middleware('can:admission.discharge.summary.create');
+            Route::patch('admissions/{admission}/discharge-summary', [AdmissionDischargeWorkflowController::class, 'saveSummary'])->name('admissions.discharge-summary.update')->middleware('can:admission.discharge.summary.update');
+            Route::patch('admissions/{admission}/discharge-summary/{summary}/prepare', [AdmissionDischargeWorkflowController::class, 'prepareSummary'])->name('admissions.discharge-summary.prepare')->middleware('can:admission.discharge.summary.update');
+            Route::patch('admissions/{admission}/discharge-summary/{summary}/approve', [AdmissionDischargeWorkflowController::class, 'approveSummary'])->name('admissions.discharge-summary.approve')->middleware('can:admission.discharge.summary.approve');
+            Route::get('admissions/{admission}/discharge-summary/{summary}/print', [AdmissionDischargeWorkflowController::class, 'printSummary'])->name('admissions.discharge-summary.print')->middleware('can:admission.discharge.summary.view');
+        });
+
+        // Maternity foundation
+        Route::middleware('can:maternity.view')->prefix('maternity')->name('maternity.')->group(function () {
+            Route::get('/', MaternityDashboardController::class)->name('dashboard')->middleware('can:maternity.dashboard.view');
+            Route::get('pregnancies', [PregnancyProfileController::class, 'index'])->name('pregnancies.index')->middleware('can:maternity.pregnancy.view');
+            Route::get('pregnancies/create', [PregnancyProfileController::class, 'create'])->name('pregnancies.create')->middleware('can:maternity.pregnancy.create');
+            Route::post('pregnancies', [PregnancyProfileController::class, 'store'])->name('pregnancies.store')->middleware('can:maternity.pregnancy.create');
+            Route::get('pregnancies/{pregnancyProfile}', [PregnancyProfileController::class, 'show'])->name('pregnancies.show')->middleware('can:maternity.pregnancy.view');
+            Route::get('pregnancies/{pregnancyProfile}/edit', [PregnancyProfileController::class, 'edit'])->name('pregnancies.edit')->middleware('can:maternity.pregnancy.update');
+            Route::patch('pregnancies/{pregnancyProfile}', [PregnancyProfileController::class, 'update'])->name('pregnancies.update')->middleware('can:maternity.pregnancy.update');
+            Route::patch('pregnancies/{pregnancyProfile}/status', [PregnancyProfileController::class, 'status'])->name('pregnancies.status')->middleware('can:maternity.pregnancy.risk.manage');
+            Route::post('cases', [MaternityCaseController::class, 'store'])->name('cases.store')->middleware('can:maternity.case.create');
+            Route::get('cases/{maternityCase}', [MaternityCaseController::class, 'show'])->name('cases.show')->middleware('can:maternity.case.view');
+            Route::patch('cases/{maternityCase}', [MaternityCaseController::class, 'update'])->name('cases.update')->middleware('can:maternity.case.update');
+            Route::patch('cases/{maternityCase}/close', [MaternityCaseController::class, 'close'])->name('cases.close')->middleware('can:maternity.case.close');
+            Route::post('cases/{maternityCase}/admission-request', [MaternityCaseController::class, 'admissionRequest'])->name('cases.admission-request')->middleware('can:maternity.admission.request');
         });
 
         Route::middleware('can:medication_administration.view')->group(function () {
@@ -1124,6 +1174,7 @@ Route::middleware('auth')->group(function () {
             });
 
             Route::get('consultations/{visit}/summary-fragment', [ConsultationWorkspaceController::class, 'summaryFragment'])->name('consultations.summary-fragment');
+            Route::patch('consultations/{visit}/final-note', [ConsultationWorkspaceController::class, 'updateFinalNote'])->name('consultations.final-note.update')->middleware('can:consultations.create');
 
             Route::get('departments/{department}/investigation-services', [ConsultationOrderController::class, 'getDepartmentServices'])->name('departments.investigation-services');
             Route::get('departments/{department}/investigation-info', [ConsultationOrderController::class, 'getDepartmentInvestigationInfo'])->name('departments.investigation-info');

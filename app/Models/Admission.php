@@ -25,6 +25,7 @@ class Admission extends Model
 
     protected $fillable = [
         'admission_number',
+        'admission_request_id',
         'visit_id',
         'patient_id',
         'bed_id',
@@ -36,6 +37,11 @@ class Admission extends Model
         'discharged_by',
         'discharge_summary',
         'discharge_instructions',
+        'care_flags',
+        'discharge_planning_started_at',
+        'discharge_planning_started_by',
+        'expected_discharge_at',
+        'discharge_planning_note',
         'status',
         'admission_type',
         'admission_fee_service_id',
@@ -49,6 +55,9 @@ class Admission extends Model
             'admission_date' => 'datetime',
             'expected_discharge_date' => 'date',
             'actual_discharge_date' => 'datetime',
+            'care_flags' => 'array',
+            'discharge_planning_started_at' => 'datetime',
+            'expected_discharge_at' => 'datetime',
         ];
     }
 
@@ -63,6 +72,11 @@ class Admission extends Model
         return $this->belongsTo(Visit::class);
     }
 
+    public function admissionRequest()
+    {
+        return $this->belongsTo(AdmissionRequest::class);
+    }
+
     public function patient()
     {
         return $this->belongsTo(Patient::class);
@@ -71,6 +85,16 @@ class Admission extends Model
     public function bed()
     {
         return $this->belongsTo(Bed::class);
+    }
+
+    public function locationHistories()
+    {
+        return $this->hasMany(AdmissionLocationHistory::class)->orderByDesc('moved_at')->orderByDesc('id');
+    }
+
+    public function bedReservations()
+    {
+        return $this->hasMany(BedReservation::class);
     }
 
     public function ward()
@@ -86,6 +110,11 @@ class Admission extends Model
     public function dischargedBy()
     {
         return $this->belongsTo(User::class, 'discharged_by');
+    }
+
+    public function dischargePlanningStartedBy()
+    {
+        return $this->belongsTo(User::class, 'discharge_planning_started_by');
     }
 
     public function wardRounds()
@@ -116,6 +145,41 @@ class Admission extends Model
     public function clinicalTasks()
     {
         return $this->hasMany(ClinicalTask::class);
+    }
+
+    public function nursingNotes()
+    {
+        return $this->hasMany(NursingNote::class)->latest('observed_at')->latest('id');
+    }
+
+    public function nursingTasks()
+    {
+        return $this->hasMany(NursingTask::class)->orderByRaw('completed_at is not null')->orderBy('due_at');
+    }
+
+    public function openNursingTasks()
+    {
+        return $this->hasMany(NursingTask::class)->open()->orderBy('due_at');
+    }
+
+    public function dischargeClearances()
+    {
+        return $this->hasMany(AdmissionDischargeClearance::class)->orderBy('clearance_type');
+    }
+
+    public function dischargeSummaryRecord()
+    {
+        return $this->hasOne(AdmissionDischargeSummary::class);
+    }
+
+    public function pregnancyProfiles()
+    {
+        return $this->hasMany(PregnancyProfile::class);
+    }
+
+    public function maternityCases()
+    {
+        return $this->hasMany(MaternityCase::class);
     }
 
     public function serviceRenderings()
@@ -212,6 +276,7 @@ class Admission extends Model
             'visit_id' => $this->visit_id,
             'admission_id' => $this->id,
             'bed_id' => $this->bed_id,
+            'ward_id' => $this->bed?->ward_id,
             'source_type' => 'admission',
             'source_id' => $this->id,
         ], fn ($v) => $v !== null);

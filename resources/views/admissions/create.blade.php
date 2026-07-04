@@ -27,6 +27,9 @@
 
 <form method="POST" action="{{ route('admin.admissions.store') }}" id="admissionForm">
     @csrf
+    @if($preselectedAdmissionRequest ?? null)
+        <input type="hidden" name="admission_request_id" value="{{ $preselectedAdmissionRequest->id }}">
+    @endif
 <div class="row g-3">
     {{-- ========== LEFT COLUMN ========== --}}
     <div class="col-lg-8">
@@ -46,6 +49,9 @@
                             <strong>{{ $preselectedVisit->patient->full_name }}</strong>
                             <span class="badge bg-secondary ms-2">{{ $preselectedVisit->patient->patient_number }}</span>
                             <span class="badge bg-primary ms-1">Visit: {{ $preselectedVisit->visit_number }}</span>
+                            @if($preselectedAdmissionRequest ?? null)
+                                <span class="badge bg-info ms-1">{{ __('admissions.request_ref', ['id' => $preselectedAdmissionRequest->id]) }}</span>
+                            @endif
                         </div>
                     </div>
                 @else
@@ -199,7 +205,7 @@
             </div>
             <div class="card-body">
                 <textarea name="admitting_diagnosis" class="form-control" rows="3"
-                          placeholder="{{ __('admissions.admitting_diagnosis_ph') }}">{{ old('admitting_diagnosis') }}</textarea>
+                          placeholder="{{ __('admissions.admitting_diagnosis_ph') }}">{{ old('admitting_diagnosis', $preselectedAdmissionRequest->provisional_diagnosis ?? '') }}</textarea>
             </div>
         </div>
 

@@ -292,6 +292,7 @@ trait HandlesConsultationWorkspace
 
         // Drugs for prescription dropdown
         $drugs = Drug::where('is_active', true)->orderBy('name')->get(['id', 'name', 'generic_name', 'strength', 'dosage_form', 'unit']);
+        $frequencyOptions = app(\App\Services\ClinicalFrequencyOptionService::class);
 
         $procedures = Procedure::with('department')->active()->orderBy('name')->get();
         $patientProcedures = PatientProcedure::with(['procedure.department', 'performedByUser'])
@@ -379,6 +380,9 @@ trait HandlesConsultationWorkspace
             'consultationSummary' => $consultationSummary,
             'consultationPreview' => $consultationPreview,
             'entryPermissions' => $this->entryPermissions,
+            'prescriptionFrequencyOptions' => $frequencyOptions->options(),
+            'taskFrequencyOptions' => $frequencyOptions->options(),
+            'frequencyDoseMap' => $frequencyOptions->doseMap(),
         ]);
     }
 
@@ -505,5 +509,38 @@ trait HandlesConsultationWorkspace
         $consultationSummary = $payload['consultationSummary'];
 
         return view('consultations.partials.summary-sections', compact('consultationSummary'));
+    }
+
+    public function updateFinalNote(Request $request, Visit $visit)
+    {
+        $data = $request->validate([
+            'final_note' => ['nullable', 'string', 'max:20000'],
+        ]);
+
+        try {
+            $context = $this->consultationMutationContext($request, $visit, 'final_note.update', 'consultations.create');
+        } catch (ConsultationActionException $e) {
+            return $this->consultationActionFailureResponse($request, $e);
+        }
+
+        $record = $context->medicalRecord;
+        $old = $record->getOriginal();
+        $record->forceFill([
+            'final_note' => $data['final_note'] ?? null,
+            'final_note_updated_by' => Auth::id(),
+            'final_note_updated_at' => now(),
+        ])->save();
+
+        app(MedicalRecordEntryLogService::class)->updated($record, $old, Auth::user());
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json([
+                'success' => true,
+                'message' => __('consultations.final_note_saved'),
+                'final_note' => $record->final_note,
+            ]);
+        }
+
+        return back()->withFragment('summary-section')->with('success', __('consultations.final_note_saved'));
     }
 }

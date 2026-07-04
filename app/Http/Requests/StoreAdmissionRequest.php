@@ -14,6 +14,7 @@ class StoreAdmissionRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'admission_request_id'      => ['nullable', 'exists:admission_requests,id'],
             'visit_id'                  => ['required', 'exists:visits,id'],
             'patient_id'                => ['required', 'exists:patients,id'],
             'bed_id'                    => ['required', 'exists:beds,id'],

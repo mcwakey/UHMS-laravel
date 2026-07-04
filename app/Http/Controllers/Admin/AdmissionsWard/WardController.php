@@ -9,13 +9,16 @@ use App\Http\Requests\UpdateWardRequest;
 use App\Models\Bed;
 use App\Models\Department;
 use App\Models\Ward;
+use App\Enums\BedStatus;
+use App\Services\Admissions\BedWorkflowService;
 use App\Services\WardService;
 use Illuminate\Http\Request;
 
 class WardController extends Controller
 {
     public function __construct(
-        private WardService $wardService
+        private WardService $wardService,
+        private BedWorkflowService $bedWorkflow
     ) {}
 
     public function index(Request $request)
@@ -77,19 +80,26 @@ class WardController extends Controller
             'status' => ['required', 'string'],
             'daily_rate' => ['required', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:500'],
+            'status_reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $this->wardService->updateBed($bed, $request->only(['bed_number', 'bed_type', 'status', 'daily_rate', 'notes']));
+        $this->wardService->updateBed($bed, $request->only(['bed_number', 'bed_type', 'daily_rate', 'notes']));
+        if ($bed->fresh()->status !== BedStatus::from($request->status)) {
+            $this->bedWorkflow->updateBedStatus($bed->fresh(), BedStatus::from($request->status), $request->user(), $request->status_reason ?? $request->notes);
+        }
 
         return redirect()
             ->route('admin.wards.beds')
             ->with('success', __('messages.wards.bed_updated'));
     }
 
-    public function bedMap()
+    public function bedMap(Request $request)
     {
-        $wards = $this->wardService->getBedMap();
+        $filters = $request->only(['ward_id', 'status', 'bed_type', 'search']);
+        $wards = $this->wardService->getBedMap($filters);
+        $capacity = $this->wardService->getBedCapacityStats($filters);
+        $allWards = Ward::active()->orderBy('name')->get();
 
-        return view('wards.bed-map', compact('wards'));
+        return view('wards.bed-map', compact('wards', 'capacity', 'allWards', 'filters'));
     }
 }

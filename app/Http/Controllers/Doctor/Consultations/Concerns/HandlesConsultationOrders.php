@@ -110,7 +110,7 @@ trait HandlesConsultationOrders
     {
         $data = $request->validate([
             'department_id' => ['nullable', 'exists:departments,id'],
-            'service_ids' => ['nullable', 'array'],
+            'service_ids' => ['required_without:investigation_type', 'array', 'min:1'],
             'service_ids.*' => ['exists:service_catalog,id'],
             'investigation_type' => ['nullable', 'string', 'max:191'],
             'description' => ['nullable', 'string', 'max:2000'],

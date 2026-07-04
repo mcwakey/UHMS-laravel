@@ -12,6 +12,7 @@ use App\Events\PatientDischarged;
 use App\Models\Admission;
 use App\Models\EmergencyCase;
 use App\Models\WardRound;
+use App\Services\Admissions\BedWorkflowService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,7 @@ class AdmissionService
         protected EmergencyBayService $emergencyBays,
         protected VisitStatusService $statuses,
         protected VisitPathwayService $pathway,
+        protected BedWorkflowService $bedWorkflow,
         protected ?ActivityLogService $logger = null,
     ) {
         $this->logger = $this->logger ?: app(ActivityLogService::class);
@@ -52,7 +54,7 @@ class AdmissionService
     {
         $admission = DB::transaction(function () use ($data) {
             $admissionFields = array_intersect_key($data, array_flip([
-                'admission_number', 'visit_id', 'patient_id', 'bed_id', 'admitted_by',
+                'admission_number', 'admission_request_id', 'visit_id', 'patient_id', 'bed_id', 'admitted_by',
                 'admitting_diagnosis', 'admission_date', 'expected_discharge_date',
                 'admission_type', 'admission_fee_service_id', 'consumable_fee_service_id',
             ]));
@@ -64,7 +66,7 @@ class AdmissionService
 
             // Mark bed as occupied
             $bed = $admission->bed;
-            $bed->markOccupied();
+            $bed->markOccupied(Auth::id(), 'Patient admitted');
 
             // Transition visit status to ADMITTED and update type to INPATIENT
             $visit = $admission->visit;
@@ -75,6 +77,8 @@ class AdmissionService
 
             $this->admissionBilling->createInitialCharges($admission, $data);
             $this->releaseEmergencyBedIfPresent($admission);
+            $this->bedWorkflow->recordAdmissionStart($admission, Auth::user());
+            $this->bedWorkflow->fulfillReservationForAdmission($admission, Auth::user());
 
             $this->pathway->record($visit->fresh(), 'ADMISSION_STARTED', [
                 'source' => $admission,
@@ -121,7 +125,7 @@ class AdmissionService
 
     public function discharge(Admission $admission, array $data): Admission
     {
-        return DB::transaction(function () use ($admission, $data) {
+        $admission = DB::transaction(function () use ($admission, $data) {
             $admission->update([
                 'actual_discharge_date' => now(),
                 'discharged_by' => Auth::id(),
@@ -130,8 +134,8 @@ class AdmissionService
                 'status' => AdmissionStatus::DISCHARGED,
             ]);
 
-            // Free up the bed
-            $admission->bed->markAvailable();
+            // Free up the bed and retain an auditable location-history record.
+            $this->bedWorkflow->releaseBedForDischarge($admission, Auth::user());
 
             // Transition visit to discharging (pending billing)
             $visit = $admission->visit;
