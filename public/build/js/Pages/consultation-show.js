@@ -4,6 +4,8 @@ const state = {
     freeItemIndex: 0,
     prescriptionIndex: 1,
     complaintSuggestionIndex: {},
+    complaintSuggestions: [],
+    complaintSuggestionActive: -1,
     timers: {},
 };
 
@@ -69,6 +71,42 @@ function escapeHtml(value) {
 
 function capFirst(value) {
     return value ? String(value).charAt(0).toUpperCase() + String(value).slice(1) : '';
+}
+
+function enhanceSelect(select, options = {}) {
+    if (!select || !window.jQuery?.fn?.select2) {
+        return;
+    }
+
+    const $select = window.jQuery(select);
+    const selected = Array.from(select.selectedOptions || []).map((option) => option.value);
+    if ($select.hasClass('select2-hidden-accessible')) {
+        $select.select2('destroy');
+    }
+
+    if (select.multiple) {
+        selected.forEach((value) => {
+            const option = Array.from(select.options).find((candidate) => candidate.value === value);
+            if (option) {
+                option.selected = true;
+            }
+        });
+    } else if (selected.length) {
+        select.value = selected[0];
+    }
+
+    const modal = select.closest('.modal');
+    const parent = modal ? window.jQuery(modal) : window.jQuery(select).closest('.card-body, form');
+    const settings = Object.assign({
+        theme: 'default',
+        width: '100%',
+        allowClear: true,
+        minimumResultsForSearch: 0,
+    }, options);
+    if (parent.length) {
+        settings.dropdownParent = parent;
+    }
+    $select.select2(settings);
 }
 
 function toast(message, type = 'success') {
@@ -503,7 +541,9 @@ const ajaxForms = {
     },
 
     reset(form, section) {
-        form.reset();
+        if (form.dataset.preserveValues !== 'true') {
+            form.reset();
+        }
         routeContext.ensure(form);
 
         const collapse = form.closest('.collapse');
@@ -561,38 +601,68 @@ const modalHelper = {
 
 const selectLoader = {
     loadInvestigation(departmentId) {
-        const container = document.getElementById('investigationServicesContainer');
-        if (!container) {
+        const select = document.getElementById('investigationServicesSelect');
+        const help = document.getElementById('investigationServicesHelp');
+        if (!select) {
             return;
         }
+
+        const reset = (message) => {
+            if (window.jQuery?.fn?.select2 && window.jQuery(select).hasClass('select2-hidden-accessible')) {
+                window.jQuery(select).select2('destroy');
+            }
+            select.innerHTML = '';
+            select.disabled = true;
+            if (help) {
+                help.textContent = message;
+                help.classList.remove('text-danger');
+                help.classList.add('text-muted');
+            }
+        };
 
         if (!departmentId) {
-            container.innerHTML = `<span class="text-muted small">${escapeHtml(t('selectDepartmentFirst', 'Select a department first to load services'))}</span>`;
+            reset(t('selectDepartmentFirst', 'Select a department first to load services'));
             return;
         }
 
-        container.innerHTML = `<div class="py-2 text-center"><span class="spinner-border spinner-border-sm text-primary"></span> ${escapeHtml(t('loading', 'Loading...'))}</div>`;
+        reset(t('loading', 'Loading...'));
 
         const url = `${state.config.routes.deptServicesBase}/${encodeURIComponent(departmentId)}/investigation-services?visit_id=${encodeURIComponent(state.config.visitId)}`;
         fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
             .then((response) => response.json())
             .then((services) => {
                 if (!services.length) {
-                    container.innerHTML = '<span class="text-muted small">No active services found.</span>';
+                    reset('No active services found.');
                     return;
                 }
 
-                container.innerHTML = `<div class="row g-1">${services.map((service) => {
-                    const price = service.price !== null && service.price !== undefined ? ` <span class="text-muted small">GHS ${Number(service.price).toFixed(2)}</span>` : '';
-                    const fallback = service.pricing_source === 'fallback_cash_no_insurance_price' ? ' <span class="badge bg-warning text-dark">cash fallback</span>' : '';
-                    return `<div class="col-md-6"><div class="form-check">
-                        <input type="checkbox" name="service_ids[]" value="${escapeHtml(service.id)}" class="form-check-input" id="investigation-service-${escapeHtml(service.id)}">
-                        <label class="form-check-label small" for="investigation-service-${escapeHtml(service.id)}">${escapeHtml(service.name)}${price}${fallback}</label>
-                    </div></div>`;
-                }).join('')}</div>`;
+                select.innerHTML = '';
+                services.forEach((service) => {
+                    const option = document.createElement('option');
+                    const price = service.price !== null && service.price !== undefined ? ` - GHS ${Number(service.price).toFixed(2)}` : '';
+                    const fallback = service.pricing_source === 'fallback_cash_no_insurance_price' ? ' (cash fallback)' : '';
+                    option.value = service.id;
+                    option.textContent = `${service.code ? `${service.code} - ` : ''}${service.name}${price}${fallback}`;
+                    select.appendChild(option);
+                });
+                select.disabled = false;
+                if (help) {
+                    help.textContent = t('searchServices', 'Search and select services');
+                    help.classList.remove('text-danger');
+                    help.classList.add('text-muted');
+                }
+                enhanceSelect(select, {
+                    placeholder: select.dataset.placeholder || t('searchServices', 'Search and select services'),
+                    closeOnSelect: false,
+                    language: { noResults: () => t('noResultsFound', 'No results found') },
+                });
             })
             .catch(() => {
-                container.innerHTML = '<span class="text-danger small">Failed to load services.</span>';
+                reset('Failed to load services.');
+                if (help) {
+                    help.classList.remove('text-muted');
+                    help.classList.add('text-danger');
+                }
             });
     },
 
@@ -605,6 +675,7 @@ const selectLoader = {
         if (!departmentId) {
             select.innerHTML = `<option value="">${escapeHtml(t('selectDepartmentFirst', 'Select a department first'))}</option>`;
             select.disabled = true;
+            enhanceSelect(select, { placeholder: t('searchProcedureService', 'Search procedure service') });
             return;
         }
 
@@ -623,6 +694,7 @@ const selectLoader = {
                 if (!items || items.length === 0) {
                     select.innerHTML = `<option value="">${escapeHtml(t('noProcedureServices', 'No procedure services found'))}</option>`;
                     select.disabled = true;
+                    enhanceSelect(select, { placeholder: t('searchProcedureService', 'Search procedure service') });
                     return;
                 }
 
@@ -636,10 +708,15 @@ const selectLoader = {
                     select.appendChild(option);
                 });
                 select.disabled = false;
+                enhanceSelect(select, {
+                    placeholder: select.dataset.placeholder || t('searchProcedureService', 'Search procedure service'),
+                    language: { noResults: () => t('noResultsFound', 'No results found') },
+                });
             })
             .catch(() => {
                 select.innerHTML = '<option value="">Failed to load services</option>';
                 select.disabled = true;
+                enhanceSelect(select, { placeholder: t('searchProcedureService', 'Search procedure service') });
             });
     },
 
@@ -715,12 +792,20 @@ const selectLoader = {
 
     resetInvestigation() {
         const select = document.getElementById('investigationDeptSelect');
-        const container = document.getElementById('investigationServicesContainer');
+        const services = document.getElementById('investigationServicesSelect');
+        const help = document.getElementById('investigationServicesHelp');
         if (select) {
             select.value = '';
         }
-        if (container) {
-            container.innerHTML = `<span class="text-muted small">${escapeHtml(t('selectDepartmentFirst', 'Select a department first'))}</span>`;
+        if (services) {
+            if (window.jQuery?.fn?.select2 && window.jQuery(services).hasClass('select2-hidden-accessible')) {
+                window.jQuery(services).select2('destroy');
+            }
+            services.innerHTML = '';
+            services.disabled = true;
+        }
+        if (help) {
+            help.textContent = t('selectDepartmentFirst', 'Select a department first');
         }
     },
 };
@@ -1102,11 +1187,10 @@ const prescriptions = {
             $select.select2('destroy');
         }
         select.value = selected;
-        $select.select2({
-            theme: 'default',
-            width: '100%',
+        enhanceSelect(select, {
             placeholder: '-- Search drug --',
             allowClear: true,
+            language: { noResults: () => t('noResultsFound', 'No results found') },
         });
     },
 
@@ -1190,7 +1274,7 @@ const prescriptions = {
         const selected = drug.options[drug.selectedIndex];
         const strength = selected?.getAttribute('data-strength');
         const days = prescriptions.parseDays(duration.value.trim());
-        const freqMap = { OD: 1, BD: 2, TDS: 3, QDS: 4, STAT: 1, PRN: 1 };
+        const freqMap = state.config.frequencyDoseMap || { OD: 1, BD: 2, TDS: 3, QDS: 4, STAT: 1, PRN: 1 };
         const frequencyValue = freqMap[frequency.value] || 1;
         if (!days) {
             return;
@@ -1436,7 +1520,7 @@ const patterns = {
 
 const suggestions = {
     init() {
-        suggestions.bind('complaintDescInput', 'complaintSuggestions', 'complaint');
+        suggestions.bindComplaint();
         suggestions.bind('diagnosis_description', 'diagnosisSuggestions', 'diagnosis');
     },
 
@@ -1448,6 +1532,127 @@ const suggestions = {
 
         const match = state.complaintSuggestionIndex[String(value || '').toLowerCase()];
         hidden.value = match ? match.id : '';
+    },
+
+    bindComplaint() {
+        const input = document.getElementById('complaintDescInput');
+        const menu = document.getElementById('complaintSuggestionMenu');
+        const hidden = document.getElementById('complaintCatalogueIdInput');
+        const url = state.config.routes?.suggest?.complaint;
+        if (!input || !menu || !hidden || !url || input.dataset.suggestBound === 'true') {
+            return;
+        }
+
+        input.dataset.suggestBound = 'true';
+
+        const hide = () => {
+            menu.classList.add('d-none');
+            input.setAttribute('aria-expanded', 'false');
+            state.complaintSuggestionActive = -1;
+        };
+
+        const markActive = () => {
+            menu.querySelectorAll('[data-complaint-suggestion-index]').forEach((item) => {
+                item.classList.toggle('active', Number(item.dataset.complaintSuggestionIndex) === state.complaintSuggestionActive);
+            });
+        };
+
+        const choose = (item) => {
+            if (!item) {
+                return;
+            }
+
+            input.value = item.name || '';
+            hidden.value = item.id || '';
+            suggestions.syncComplaint(input.value);
+            hide();
+        };
+
+        const render = (items, query) => {
+            state.complaintSuggestions = Array.isArray(items) ? items : [];
+            state.complaintSuggestionIndex = {};
+
+            if (!state.complaintSuggestions.length) {
+                menu.innerHTML = `<div class="list-group-item small text-muted">${escapeHtml(t('noResultsFound', 'No results found'))}. ${escapeHtml(query)} can still be saved as free text.</div>`;
+                menu.classList.remove('d-none');
+                input.setAttribute('aria-expanded', 'true');
+                hidden.value = '';
+                return;
+            }
+
+            menu.innerHTML = state.complaintSuggestions.map((item, index) => {
+                state.complaintSuggestionIndex[String(item.name || '').toLowerCase()] = item;
+                const meta = item.category ? `<small class="text-muted d-block">${escapeHtml(item.category)}</small>` : '';
+                return `<button type="button" class="list-group-item list-group-item-action py-2" data-complaint-suggestion-index="${index}">
+                    <span class="fw-semibold">${escapeHtml(item.name || '')}</span>${meta}
+                </button>`;
+            }).join('');
+            menu.classList.remove('d-none');
+            input.setAttribute('aria-expanded', 'true');
+            suggestions.syncComplaint(input.value);
+        };
+
+        on(input, 'input', () => {
+            const query = input.value.trim();
+            window.clearTimeout(state.timers.complaint);
+            hidden.value = '';
+
+            if (query.length < 2) {
+                menu.innerHTML = '';
+                hide();
+                return;
+            }
+
+            state.timers.complaint = window.setTimeout(() => {
+                fetch(`${url}?q=${encodeURIComponent(query)}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                })
+                    .then((response) => response.json())
+                    .then((items) => render(items, query))
+                    .catch(() => render([], query));
+            }, 280);
+        });
+
+        on(input, 'keydown', (event) => {
+            if (menu.classList.contains('d-none')) {
+                return;
+            }
+
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                state.complaintSuggestionActive = Math.min(state.complaintSuggestions.length - 1, state.complaintSuggestionActive + 1);
+                markActive();
+            }
+
+            if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                state.complaintSuggestionActive = Math.max(0, state.complaintSuggestionActive - 1);
+                markActive();
+            }
+
+            if (event.key === 'Enter' && state.complaintSuggestionActive >= 0) {
+                event.preventDefault();
+                choose(state.complaintSuggestions[state.complaintSuggestionActive]);
+            }
+
+            if (event.key === 'Escape') {
+                hide();
+            }
+        });
+
+        on(menu, 'mousedown', (event) => {
+            const item = event.target.closest('[data-complaint-suggestion-index]');
+            if (!item) {
+                return;
+            }
+            event.preventDefault();
+            choose(state.complaintSuggestions[Number(item.dataset.complaintSuggestionIndex)]);
+        });
+
+        on(input, 'blur', () => {
+            suggestions.syncComplaint(input.value);
+            window.setTimeout(hide, 140);
+        });
     },
 
     bind(inputId, datalistId, type) {
@@ -1508,9 +1713,10 @@ const icd = {
             $select.select2('destroy');
         }
         $select.off('.uhmsIcd').select2({
-            placeholder: 'Type to search ICD-10 codes...',
+            placeholder: t('searchIcd10', 'Search ICD-10 by code or description'),
             allowClear: true,
             minimumInputLength: 2,
+            minimumResultsForSearch: 0,
             ajax: {
                 url: state.config.routes.icdSearch,
                 dataType: 'json',
@@ -1540,6 +1746,44 @@ const icd = {
             $jq('#icd_code_id').val('');
             $jq('#icd_code_manual').val('');
         });
+    },
+};
+
+const hopcHydration = {
+    init() {
+        const select = document.getElementById('hopcComplaintSelect');
+        if (!select || select.dataset.hopcHydrationBound === 'true') {
+            return;
+        }
+
+        select.dataset.hopcHydrationBound = 'true';
+        enhanceSelect(select, {
+            placeholder: 'Link to complaint',
+            allowClear: true,
+            language: { noResults: () => t('noResultsFound', 'No results found') },
+        });
+        on(select, 'change', () => hopcHydration.apply(select));
+    },
+
+    apply(select) {
+        const option = select.options[select.selectedIndex];
+        if (!option || !option.value) {
+            return;
+        }
+
+        const content = document.getElementById('hopcContentInput');
+        const duration = document.getElementById('hopcDurationInput');
+        const severity = document.getElementById('hopcSeverityInput');
+
+        if (content && !content.value.trim() && option.dataset.description) {
+            content.value = option.dataset.description;
+        }
+        if (duration && option.dataset.duration) {
+            duration.value = option.dataset.duration;
+        }
+        if (severity && option.dataset.severity) {
+            severity.value = option.dataset.severity;
+        }
     },
 };
 
@@ -1767,7 +2011,12 @@ function init(root = document) {
         prescriptions.init(root);
         suggestions.init();
         icd.init();
+        hopcHydration.init();
         followUp.init();
+        enhanceSelect(document.getElementById('procedureServiceSelect'), {
+            placeholder: t('searchProcedureService', 'Search procedure service'),
+            language: { noResults: () => t('noResultsFound', 'No results found') },
+        });
         applyReadOnlyState();
     });
 }

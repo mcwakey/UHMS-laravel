@@ -428,7 +428,7 @@
                                             <div class="row g-2">
                                                 <div class="col-12">
                                                     <label class="form-label small">Link to Complaint <small class="text-muted">(optional)</small></label>
-                                                    <select name="complaint_id" id="hopcComplaintSelect" class="form-select form-select-sm" data-consultation-action="hydrate-hopc-complaint">
+                                                    <select name="complaint_id" id="hopcComplaintSelect" class="form-select form-select-sm" data-consultation-action="hydrate-hopc-complaint" data-consultation-refresh-control="true">
                                                         <option value="">{{ __('consultations.general_narrative') }}</option>
                                                         @foreach($record?->complaints ?? [] as $complaint)
                                                             <option value="{{ $complaint->id }}"

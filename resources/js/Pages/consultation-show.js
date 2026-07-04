@@ -399,6 +399,27 @@ function parseRefreshDocument(html) {
 }
 
 const sectionRefresh = {
+    syncControls(doc) {
+        document.querySelectorAll('[data-consultation-refresh-control][id]').forEach((control) => {
+            const fresh = doc.getElementById(control.id);
+            if (!fresh || document.activeElement === control) {
+                return;
+            }
+
+            const selected = control.value;
+            if (window.jQuery?.fn?.select2 && window.jQuery(control).hasClass('select2-hidden-accessible')) {
+                window.jQuery(control).select2('destroy');
+            }
+
+            control.innerHTML = fresh.innerHTML;
+            if (selected && Array.from(control.options || []).some((option) => option.value === selected)) {
+                control.value = selected;
+            }
+
+            delete control.dataset.hopcHydrationBound;
+        });
+    },
+
     refresh(section) {
         const target = document.getElementById(`${section}-list`);
         if (!target) {
@@ -425,9 +446,8 @@ const sectionRefresh = {
                     badge.textContent = freshBadge.textContent;
                 }
 
-                routeContext.syncAll(target);
-                diagnosis.init(target);
-                entries.init(rootOrDocument(target));
+                sectionRefresh.syncControls(doc);
+                rehydrate(target);
                 window.scrollTo({ top: scrollY, behavior: 'auto' });
             })
             .catch(() => {
@@ -455,6 +475,7 @@ const sectionRefresh = {
             .then((response) => response.text())
             .then((html) => {
                 target.innerHTML = html;
+                rehydrate(target);
             });
     },
 };
@@ -1995,6 +2016,23 @@ function applyReadOnlyState() {
     });
 }
 
+function rehydrate(root = document) {
+    routeContext.syncAll(root);
+    ajaxForms.init(root);
+    diagnosis.init(root);
+    entries.init(rootOrDocument(root));
+    prescriptions.init(root);
+    suggestions.init();
+    icd.init();
+    hopcHydration.init();
+    followUp.init();
+    enhanceSelect(document.getElementById('procedureServiceSelect'), {
+        placeholder: t('searchProcedureService', 'Search procedure service'),
+        language: { noResults: () => t('noResultsFound', 'No results found') },
+    });
+    applyReadOnlyState();
+}
+
 function init(root = document) {
     state.config = readConfig();
     destroy();
@@ -2004,20 +2042,9 @@ function init(root = document) {
         tabs.init();
         tabs.bindSubmitPreservation();
         bindDelegatedEvents();
-        routeContext.syncAll(root);
-        ajaxForms.init(root);
         modalHelper.init();
         sendSession.initPicker();
-        prescriptions.init(root);
-        suggestions.init();
-        icd.init();
-        hopcHydration.init();
-        followUp.init();
-        enhanceSelect(document.getElementById('procedureServiceSelect'), {
-            placeholder: t('searchProcedureService', 'Search procedure service'),
-            language: { noResults: () => t('noResultsFound', 'No results found') },
-        });
-        applyReadOnlyState();
+        rehydrate(root);
     });
 }
 
