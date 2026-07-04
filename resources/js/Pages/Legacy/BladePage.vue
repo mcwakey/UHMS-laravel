@@ -528,6 +528,9 @@ async function afterPageSwap() {
     // Patch forms AFTER scripts run (scripts may add dynamic forms).
     await nextTick();
     patchFormSubmitMethods();
+    // Notify page modules (Vite ES modules only execute once per session) that
+    // a fresh legacy DOM is mounted so they can re-initialise their bindings.
+    document.dispatchEvent(new CustomEvent('uhms:legacy-page-mounted'));
 }
 
 onMounted(afterPageSwap);

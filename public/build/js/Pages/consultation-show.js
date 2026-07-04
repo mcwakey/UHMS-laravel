@@ -399,6 +399,27 @@ function parseRefreshDocument(html) {
 }
 
 const sectionRefresh = {
+    syncControls(doc) {
+        document.querySelectorAll('[data-consultation-refresh-control][id]').forEach((control) => {
+            const fresh = doc.getElementById(control.id);
+            if (!fresh || document.activeElement === control) {
+                return;
+            }
+
+            const selected = control.value;
+            if (window.jQuery?.fn?.select2 && window.jQuery(control).hasClass('select2-hidden-accessible')) {
+                window.jQuery(control).select2('destroy');
+            }
+
+            control.innerHTML = fresh.innerHTML;
+            if (selected && Array.from(control.options || []).some((option) => option.value === selected)) {
+                control.value = selected;
+            }
+
+            delete control.dataset.hopcHydrationBound;
+        });
+    },
+
     refresh(section) {
         const target = document.getElementById(`${section}-list`);
         if (!target) {
@@ -425,9 +446,8 @@ const sectionRefresh = {
                     badge.textContent = freshBadge.textContent;
                 }
 
-                routeContext.syncAll(target);
-                diagnosis.init(target);
-                entries.init(rootOrDocument(target));
+                sectionRefresh.syncControls(doc);
+                rehydrate(target);
                 window.scrollTo({ top: scrollY, behavior: 'auto' });
             })
             .catch(() => {
@@ -455,6 +475,7 @@ const sectionRefresh = {
             .then((response) => response.text())
             .then((html) => {
                 target.innerHTML = html;
+                rehydrate(target);
             });
     },
 };
@@ -467,6 +488,11 @@ const ajaxForms = {
     init(root = document) {
         root.querySelectorAll('form[data-ajax-form], form[data-consultation-form][data-modal-form="true"]').forEach((form) => {
             form.dataset.consultationAjax = 'true';
+            // The Inertia legacy bridge (BladePage.vue) must never intercept
+            // these forms: the module owns their submission via fetch. Without
+            // this flag the bridge fires a competing Inertia POST that
+            // re-renders the whole page and destroys every JS binding.
+            form.setAttribute('data-no-inertia', '');
         });
     },
 
@@ -1933,6 +1959,9 @@ function bindDelegatedEvents() {
         }
     });
 
+    // Capture phase: this handler MUST run before the Inertia legacy bridge's
+    // bubble-phase submit handler (BladePage.vue) so that preventDefault() is
+    // visible to it and no duplicate Inertia POST/page re-render is fired.
     on(document, 'submit', (event) => {
         const form = event.target;
         if (!form) {
@@ -1954,7 +1983,7 @@ function bindDelegatedEvents() {
             event.preventDefault();
             ajaxForms.submit(form);
         }
-    });
+    }, { capture: true });
 }
 
 const modals = {
@@ -1995,6 +2024,23 @@ function applyReadOnlyState() {
     });
 }
 
+function rehydrate(root = document) {
+    routeContext.syncAll(root);
+    ajaxForms.init(root);
+    diagnosis.init(root);
+    entries.init(rootOrDocument(root));
+    prescriptions.init(root);
+    suggestions.init();
+    icd.init();
+    hopcHydration.init();
+    followUp.init();
+    enhanceSelect(document.getElementById('procedureServiceSelect'), {
+        placeholder: t('searchProcedureService', 'Search procedure service'),
+        language: { noResults: () => t('noResultsFound', 'No results found') },
+    });
+    applyReadOnlyState();
+}
+
 function init(root = document) {
     state.config = readConfig();
     destroy();
@@ -2004,20 +2050,9 @@ function init(root = document) {
         tabs.init();
         tabs.bindSubmitPreservation();
         bindDelegatedEvents();
-        routeContext.syncAll(root);
-        ajaxForms.init(root);
         modalHelper.init();
         sendSession.initPicker();
-        prescriptions.init(root);
-        suggestions.init();
-        icd.init();
-        hopcHydration.init();
-        followUp.init();
-        enhanceSelect(document.getElementById('procedureServiceSelect'), {
-            placeholder: t('searchProcedureService', 'Search procedure service'),
-            language: { noResults: () => t('noResultsFound', 'No results found') },
-        });
-        applyReadOnlyState();
+        rehydrate(root);
     });
 }
 
@@ -2041,4 +2076,33 @@ window.UHMSConsultation = {
     prescriptions,
 };
 
-init();
+// ── Inertia legacy-bridge lifecycle ─────────────────────────────────────────
+// The consultation page is served through the Inertia bridge (BladePage.vue),
+// which re-renders the whole Blade HTML via v-html on every navigation or
+// non-AJAX form submit. ES modules only execute once per browser session, so
+// this module must re-run init() whenever the bridge mounts a fresh DOM. The
+// bridge dispatches `uhms:legacy-page-mounted` after each swap; the config
+// node is recreated on every swap, so it doubles as an "already booted for
+// this DOM" marker to avoid double-initialisation on first load.
+function bootConsultationPage() {
+    const configNode = document.getElementById('consultation-page-config');
+    if (!configNode) {
+        // Navigated away from the consultation page: release all listeners so
+        // they do not leak into other legacy pages.
+        destroy();
+        return;
+    }
+
+    if (configNode.dataset.uhmsConsultationBooted === 'true') {
+        return;
+    }
+
+    configNode.dataset.uhmsConsultationBooted = 'true';
+    init();
+}
+
+// Module-scope listener: intentionally NOT tied to the abortable lifecycle so
+// it survives destroy() and can revive the page after any bridge swap.
+document.addEventListener('uhms:legacy-page-mounted', bootConsultationPage);
+
+bootConsultationPage();
