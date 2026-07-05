@@ -2,6 +2,7 @@
 
 namespace App\Services\Consultation\Specialty;
 
+use App\Data\Consultation\Specialty\ResolvedConsultationSpecialty;
 use App\Models\ConsultationSpecialtyFavorite;
 use App\Models\ConsultationSpecialtyProfile;
 use App\Services\ClinicalFrequencyOptionService;

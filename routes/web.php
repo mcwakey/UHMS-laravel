@@ -121,6 +121,7 @@ use App\Http\Controllers\Doctor\Consultations\ConsultationPlanningController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationPrescriptionController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationSessionController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationSpecialtyEntryController;
+use App\Http\Controllers\Doctor\Consultations\ConsultationSpecialtyOrderSetController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationWorkspaceController;
 use App\Http\Controllers\Accounting\AccountController as AccountingAccountController;
 use App\Http\Controllers\Accounting\AccountingDashboardController;
@@ -1256,6 +1257,10 @@ Route::middleware('auth')->group(function () {
 
                 Route::post('consultations/{visit}/specialty-entries/{sectionKey}', [ConsultationSpecialtyEntryController::class, 'store'])->name('consultations.specialty-entries.store');
                 Route::delete('consultations/{visit}/specialty-entries/{sectionKey}', [ConsultationSpecialtyEntryController::class, 'destroy'])->name('consultations.specialty-entries.destroy');
+
+                Route::get('consultations/{visit}/specialty-order-sets', [ConsultationSpecialtyOrderSetController::class, 'index'])->name('consultations.specialty-order-sets.index');
+                Route::get('consultations/{visit}/specialty-order-sets/{orderSet}/preview', [ConsultationSpecialtyOrderSetController::class, 'preview'])->name('consultations.specialty-order-sets.preview');
+                Route::post('consultations/{visit}/specialty-order-sets/{orderSet}/apply', [ConsultationSpecialtyOrderSetController::class, 'apply'])->name('consultations.specialty-order-sets.apply');
             });
 
             Route::get('consultations/{visit}/summary-fragment', [ConsultationWorkspaceController::class, 'summaryFragment'])->name('consultations.summary-fragment');

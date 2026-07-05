@@ -49,6 +49,7 @@ $visitHistoryJson = $history['records']->map(function($r) {
         'taskAssignableUsers' => $doctors->map(fn($doctor) => ['id' => $doctor->id, 'name' => 'Dr. '.$doctor->full_name])->values(),
         'frequencyDoseMap' => $frequencyDoseMap ?? [],
         'specialtyFavorites' => $specialtyFavorites ?? [],
+        'specialtyOrderSets' => $specialtyOrderSets ?? [],
         'sendSessionServicesByDept' => $referralServicesPayloadByDept ?? [],
         'visitHistoryData' => $visitHistoryJson,
         'openFollowUpModalOnLoad' => $errors->has('appointment_date') || $errors->has('start_time') || $errors->has('end_time') || $errors->has('department_id') || $errors->has('service_id') || $errors->has('doctor_id') || $errors->has('reason') || $errors->has('notes') || $errors->has('priority'),
