@@ -18,8 +18,11 @@
         ['label' => __('maternity.open_maternity_cases'), 'value' => $overview['open_cases'], 'icon' => 'ti-folder-open', 'class' => 'primary'],
         ['label' => __('maternity.maternity_admissions'), 'value' => $overview['maternity_admissions'], 'icon' => 'ti-bed', 'class' => 'info'],
         ['label' => __('maternity.expected_delivery_this_month'), 'value' => $overview['expected_delivery_this_month'], 'icon' => 'ti-calendar-due', 'class' => 'warning'],
+        ['label' => __('maternity.anc_visits_today'), 'value' => $overview['anc_today'], 'icon' => 'ti-stethoscope', 'class' => 'primary'],
+        ['label' => __('maternity.missed_anc_visits'), 'value' => $overview['missed_anc'], 'icon' => 'ti-calendar-x', 'class' => 'danger'],
+        ['label' => __('maternity.profiles_without_anc'), 'value' => $overview['profiles_without_anc'], 'icon' => 'ti-clipboard-off', 'class' => 'secondary'],
     ] as $card)
-    <div class="col-6 col-md-4 col-xl">
+    <div class="col-6 col-md-4 col-xl-3">
         <div class="card h-100">
             <div class="card-body py-3">
                 <div class="d-flex align-items-center gap-2">
@@ -59,6 +62,32 @@
                 @endif
             </div>
         </div>
+
+        <div class="card mt-3">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-stethoscope me-1"></i>{{ __('maternity.recent_anc_visits') }}</h5></div>
+            <div class="card-body p-0">
+                @if($overview['recent_anc_visits']->isNotEmpty())
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="bg-light"><tr><th>{{ __('maternity.patient') }}</th><th>{{ __('maternity.visit_date') }}</th><th>{{ __('maternity.gestational_age') }}</th><th>{{ __('maternity.status') }}</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach($overview['recent_anc_visits'] as $visit)
+                            <tr>
+                                <td><strong>{{ $visit->patient?->full_name }}</strong><br><small class="text-muted">{{ $visit->patient?->patient_number }}</small></td>
+                                <td>{{ $visit->visit_date?->format('d M Y') }}</td>
+                                <td>{{ $visit->gestational_age_weeks !== null ? $visit->gestational_age_weeks.'w '.($visit->gestational_age_days ?? 0).'d' : '—' }}</td>
+                                <td><span class="badge bg-{{ $visit->status?->color() ?? 'secondary' }}">{{ $visit->status?->label() }}</span></td>
+                                <td class="text-end"><a href="{{ route('admin.maternity.antenatal.show', $visit) }}" class="btn btn-sm btn-outline-primary">{{ __('common.view') }}</a></td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                <x-empty-state icon="ti-stethoscope" :title="__('maternity.no_anc_visits_yet')" />
+                @endif
+            </div>
+        </div>
     </div>
     <div class="col-lg-4">
         <div class="card">
@@ -66,7 +95,6 @@
             <div class="card-body">
                 <div class="list-group list-group-flush">
                     @foreach([
-                        __('maternity.future_anc_placeholder'),
                         __('maternity.future_labor_placeholder'),
                         __('maternity.future_delivery_placeholder'),
                         __('maternity.future_newborn_placeholder'),

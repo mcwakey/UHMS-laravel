@@ -97,6 +97,24 @@ class PregnancyProfile extends Model
         return $this->hasMany(MaternityCase::class)->latest('opened_at')->latest('id');
     }
 
+    public function antenatalVisits()
+    {
+        return $this->hasMany(AntenatalVisit::class)->latest('visit_date')->latest('id');
+    }
+
+    public function latestAntenatalVisit()
+    {
+        return $this->hasOne(AntenatalVisit::class)->latestOfMany('visit_date');
+    }
+
+    public function nextAntenatalVisit()
+    {
+        return $this->hasOne(AntenatalVisit::class)
+            ->whereNotNull('next_visit_date')
+            ->whereDate('next_visit_date', '>=', today())
+            ->oldestOfMany('next_visit_date');
+    }
+
     public function scopeActive($query)
     {
         return $query->whereIn('profile_status', [

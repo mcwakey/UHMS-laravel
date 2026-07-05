@@ -547,6 +547,14 @@ class RoleSeeder extends Seeder
             'maternity.admission.request',
             'maternity.reports.view',
             'maternity.settings.manage',
+            'maternity.anc.view',
+            'maternity.anc.record',
+            'maternity.anc.update',
+            'maternity.anc.cancel',
+            'maternity.anc.risk.manage',
+            'maternity.anc.referral.create',
+            'maternity.anc.admission.request',
+            'maternity.anc.reports.view',
 
             // ── HR & Payroll ──────────────────────────────────────────────
             'hr.employees.view',
@@ -942,6 +950,14 @@ class RoleSeeder extends Seeder
             'maternity.case.close',
             'maternity.admission.request',
             'maternity.reports.view',
+            'maternity.anc.view',
+            'maternity.anc.record',
+            'maternity.anc.update',
+            'maternity.anc.cancel',
+            'maternity.anc.risk.manage',
+            'maternity.anc.referral.create',
+            'maternity.anc.admission.request',
+            'maternity.anc.reports.view',
         ];
 
         $maternityReceptionPerms = [

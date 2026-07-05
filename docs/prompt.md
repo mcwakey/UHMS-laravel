@@ -1,6 +1,6 @@
 You are working inside the UHMS Laravel project.
 
-We have completed the Admission/Ward strengthening batch up to Phase 7:
+We have completed:
 
 * Phase 1: Emergency vs Admission gap analysis.
 * Phase 2: Admission Workflow Foundation.
@@ -8,445 +8,452 @@ We have completed the Admission/Ward strengthening batch up to Phase 7:
 * Phase 5: Ward Operations, Reservation Expiry, Cleaning Workflow, and Capacity Board.
 * Phase 6: Nursing and Inpatient Care Layer.
 * Phase 7: Discharge Readiness, Clearance, and Discharge Summary Workflow.
+* Phase 8: Maternity Foundation and Pregnancy Profile.
 
-Current Admission/Ward foundation now includes:
+Current maternity foundation now includes:
 
-* First-class `AdmissionRequest` lifecycle.
-* Emergency-to-admission request creation/reuse.
-* Admission request conversion through existing admission creation flow.
-* Durable bed reservations.
-* Admission location history.
-* Bed transfer workflow.
-* Reservation expiry command.
-* Ward capacity board.
-* Configurable bed release after discharge.
-* Nursing notes.
-* Nursing tasks.
-* Admission care flags.
-* Nursing handover/checklist.
-* Discharge planning.
-* Discharge clearances.
-* Structured discharge summary.
-* Advisory discharge readiness service.
-* Optional discharge enforcement config disabled by default.
+* `pregnancy_profiles`
+* `maternity_cases`
+* `PregnancyProfile`
+* `MaternityCase`
+* Pregnancy profile CRUD
+* Maternity dashboard shell
+* Maternity case detail page
+* Manual maternity admission request hook using `source_type=maternity`
+* Maternity permissions
+* Sidebar entry
+* Activity logging under `MATERNITY`
+* EN/FR maternity translations
+* Optional pregnancy workflow that does not affect general admissions
 
-Now implement Phase 8: Maternity Foundation and Pregnancy Profile.
+Now implement Phase 9: Antenatal Care Workflow.
 
 Goal:
-Introduce Maternity as a first-class optional clinical workflow foundation, starting with pregnancy profiles and maternity case structure, while safely integrating with the existing Patient, Visit, Admission, Department, Billing, Ward, Nursing, and Dashboard foundations.
+Build the first real maternity sub-workflow: Antenatal Care, linked to pregnancy profiles and maternity cases, without implementing labor, delivery, newborn, or postnatal workflows yet.
+
+This phase should make UHMS able to register and follow ANC visits, track pregnancy progress, identify risk/danger signs, schedule next ANC visits, and prepare safe referrals to admission, emergency, or later labor workflow.
 
 Important:
-This phase is the maternity foundation only.
-Do not implement the full Antenatal visit workflow yet.
-Do not implement labor/delivery workflow yet.
-Do not implement newborn records yet.
-Do not implement postnatal workflow yet.
-Do not implement maternity-specific discharge summaries yet.
-Do not force maternity workflow on every female patient.
+Do not implement labor episodes in this phase.
+Do not implement partograph observations in this phase.
+Do not implement delivery records in this phase.
+Do not implement newborn records in this phase.
+Do not implement postnatal care in this phase.
+Do not implement maternity package billing posting yet.
+Do not force ANC onto all pregnancy profiles.
+Do not force pregnancy profiles onto general admissions.
 Do not break existing Admission/Ward/Emergency/Visit/Consultation/Billing workflows.
 Do not run the full test suite.
 Do not touch `docs/prompt.md`; it was already modified in the working tree and should remain untouched unless explicitly instructed.
 
 Primary objectives:
 
-1. Audit existing maternity-related surfaces first
+1. Audit current Phase 8 maternity foundation first
 
-Before coding, review current project surfaces for:
+Before coding, review the current implementation for:
 
-* Department type `maternity`
-* Department dashboard routing for maternity
-* Ward-style routing for maternity departments
-* Existing seed data for maternity ward/department
-* Pregnancy-related complaints or ICD references
-* Emergency pregnancy/triage flags
-* Blood bank screening references
-* Admission request source compatibility for `maternity`
-* Existing patient demographics fields
-* Existing visit/admission relationships
-* Existing billing service mapping patterns
-* Existing permissions/localisation conventions
-* Existing dashboard registry and department capability services
+* `PregnancyProfile`
+* `MaternityCase`
+* Pregnancy profile service
+* Maternity case service
+* Maternity overview service
+* Maternity dashboard
+* Pregnancy profile show page
+* Maternity case show page
+* Maternity permissions
+* Maternity translations
+* Maternity admission request hook
+* Existing patient/visit/admission relationships
+* Existing investigation request patterns
+* Existing appointment/follow-up patterns
+* Existing activity logging patterns
+* Existing dashboard/service card patterns
 
 Document what already exists and avoid duplication.
 
-2. Add pregnancy profile model and migration
+2. Add Antenatal Visit model and migration
 
-Create a first-class pregnancy profile structure.
+Create a first-class antenatal visit record linked to pregnancy profile.
 
-Recommended table: `pregnancy_profiles`
+Recommended table: `antenatal_visits`
 
 Recommended fields:
 
 * id
+* pregnancy_profile_id
+* maternity_case_id nullable
 * patient_id
 * visit_id nullable
 * admission_id nullable
 * department_id nullable
-* created_by nullable user
-* updated_by nullable user if project convention supports it
-* gravida nullable integer
-* para nullable integer
-* abortions nullable integer
-* living_children nullable integer
-* last_menstrual_period nullable date
-* estimated_due_date nullable date
+* recorded_by nullable user
+* visit_number nullable integer
+* visit_date date or datetime
 * gestational_age_weeks nullable integer
 * gestational_age_days nullable integer
-* blood_group nullable string
-* rhesus_status nullable string
-* known_risks nullable json or text
-* allergies_snapshot nullable text/json if safe
-* previous_caesarean boolean default false
-* previous_postpartum_haemorrhage boolean default false
-* hypertensive_disorder_risk boolean default false
-* diabetes_risk boolean default false
-* multiple_pregnancy boolean default false
-* profile_status string
-* closed_at nullable timestamp
-* closed_by nullable user
-* closure_reason nullable text
-* timestamps
-* soft deletes if project convention supports it
-
-Recommended statuses:
-
-* active
-* high_risk
-* delivered
-* closed
-* transferred
-
-Important:
-
-* Do not store sensitive fields such as HIV status unless the project already has a safe policy and access model.
-* If HIV status or other sensitive screening is needed later, defer it or store through existing confidential clinical records.
-* Pregnancy profile must be optional.
-* Do not require pregnancy profile on general admission.
-* Do not require pregnancy profile for all female patients.
-
-3. Add maternity case model and migration
-
-Create a lightweight maternity case foundation that can later connect ANC, labor, delivery, newborn, and postnatal.
-
-Recommended table: `maternity_cases`
-
-Recommended fields:
-
-* id
-* pregnancy_profile_id nullable
-* patient_id
-* visit_id nullable
-* admission_id nullable
-* department_id nullable
-* source_type nullable string
-* source_id nullable
-* case_type nullable string
+* weight_kg nullable decimal
+* blood_pressure_systolic nullable integer
+* blood_pressure_diastolic nullable integer
+* pulse nullable integer
+* temperature nullable decimal
+* respiratory_rate nullable integer
+* fundal_height_cm nullable decimal
+* fetal_heart_rate nullable integer
+* fetal_movement nullable string
+* presentation nullable string
+* urine_protein nullable string
+* urine_glucose nullable string
+* oedema nullable string
+* haemoglobin nullable decimal
+* danger_signs nullable json
+* risk_flags nullable json
+* assessment nullable text
+* plan nullable text
+* counselling nullable text
+* supplements nullable json or text
+* immunisations nullable json or text
+* next_visit_date nullable date
+* referral_type nullable string
+* referral_reason nullable text
 * status string
-* priority nullable string
-* risk_level nullable string
-* opened_by nullable user
-* opened_at nullable timestamp
-* closed_by nullable user
-* closed_at nullable timestamp
-* reason nullable text
-* clinical_summary nullable text
+* created_by nullable user
+* updated_by nullable user if project convention supports it
 * timestamps
 * soft deletes if project convention supports it
 
-Recommended case types:
-
-* pregnancy_profile
-* antenatal
-* maternity_admission
-* labor_observation
-* postnatal_observation
-* emergency_referral
-
 Recommended statuses:
 
-* open
-* under_observation
-* admitted
+* recorded
+* follow_up_scheduled
 * referred
-* transferred
+* high_risk
 * closed
 * cancelled
 
 Important:
 
-* This is a foundation only.
-* Do not implement full labor/delivery/postnatal logic yet.
-* Do not duplicate admission episodes. A maternity admission should link to the existing admission spine.
+* Keep fields nullable where operationally safe.
+* Do not require every measurement for every ANC visit.
+* Do not store highly sensitive screening results unless the project already has an access policy for them.
+* If sensitive screening is required later, defer it to a confidential clinical record pattern.
 
-4. Add enums/constants
+3. Add ANC enums/constants
 
-Follow project convention and add enums/constants where appropriate:
+Follow project enum conventions.
 
-* `PregnancyProfileStatus`
-* `MaternityCaseStatus`
-* `MaternityCaseType`
-* `MaternityRiskLevel`
-* `MaternitySourceType` if not reusing existing source enum
+Add enums/constants such as:
 
-Suggested risk levels:
+* `AntenatalVisitStatus`
+* `AntenatalReferralType`
+* `AntenatalDangerSign`
+* `AntenatalRiskFlag`
+* `FetalPresentation`
+* `UrineProteinResult`
+* `UrineGlucoseResult`
 
-* low
-* moderate
-* high
+Suggested referral types:
+
+* none
+* consultation
 * emergency
+* admission
+* maternity_admission
+* external_referral
 
-Risk level should be advisory only in this phase.
+Suggested danger signs:
+
+* severe_headache
+* blurred_vision
+* vaginal_bleeding
+* severe_abdominal_pain
+* reduced_fetal_movement
+* convulsions
+* fever
+* swollen_face_hands
+* leaking_liquor
+* breathlessness
+* severe_vomiting
+
+Suggested risk flags:
+
+* high_blood_pressure
+* low_haemoglobin
+* previous_caesarean
+* previous_postpartum_haemorrhage
+* multiple_pregnancy
+* diabetes_risk
+* hypertensive_disorder_risk
+* young_mother
+* advanced_maternal_age
+* grand_multiparity
+* rhesus_negative
+* breech_or_abnormal_presentation
+
+Risk flags should be advisory in this phase.
 Do not enforce hard clinical rules yet.
 
-5. Add relationships
-
-Add relationships safely.
-
-Patient:
-
-* hasMany pregnancy profiles
-* hasMany maternity cases
-* activePregnancyProfile helper if safe
-
-Visit:
-
-* hasMany pregnancy profiles
-* hasMany maternity cases
-
-Admission:
-
-* hasMany pregnancy profiles or belongsTo active pregnancy profile if project style prefers
-* hasMany maternity cases
-* Do not require maternity data on admission.
-
-Department:
-
-* hasMany maternity cases if safe
+4. Add relationships
 
 PregnancyProfile:
 
-* belongsTo patient
-* belongsTo visit nullable
-* belongsTo admission nullable
-* hasMany maternity cases
+* hasMany antenatal visits
+* latestAntenatalVisit helper if useful
+* nextAntenatalVisit helper if useful
 
 MaternityCase:
 
-* belongsTo pregnancy profile nullable
+* hasMany antenatal visits where applicable
+
+Patient:
+
+* hasMany antenatal visits
+
+Visit:
+
+* hasMany antenatal visits if safe
+
+Admission:
+
+* hasMany antenatal visits if safe
+
+AntenatalVisit:
+
+* belongsTo pregnancy profile
+* belongsTo maternity case nullable
 * belongsTo patient
 * belongsTo visit nullable
 * belongsTo admission nullable
 * belongsTo department nullable
+* belongsTo recordedBy user
 
-6. Add maternity services
+5. Add ANC service layer
 
 Create services such as:
 
-* `app/Services/Maternity/PregnancyProfileService.php`
-* `app/Services/Maternity/MaternityCaseService.php`
-* `app/Services/Maternity/MaternityOverviewService.php`
+* `app/Services/Maternity/AntenatalVisitService.php`
+* `app/Services/Maternity/AntenatalRiskAssessmentService.php`
+* `app/Services/Maternity/AntenatalOverviewService.php`
 
-PregnancyProfileService should handle:
+AntenatalVisitService should handle:
 
-* Creating pregnancy profile
-* Updating pregnancy profile
-* Closing pregnancy profile
-* Marking high risk
-* Reopening only if safe and permitted
-* Calculating gestational age from LMP where practical
-* Calculating EDD from LMP where practical
-* Logging profile creation/update/status changes
+* Creating ANC visit
+* Updating ANC visit
+* Cancelling/closing ANC visit if needed
+* Scheduling next visit
+* Linking visit to pregnancy profile
+* Updating pregnancy profile gestational age/EDD only when safe
+* Creating or linking maternity case if needed
+* Logging ANC visit actions
 
-MaternityCaseService should handle:
+AntenatalRiskAssessmentService should:
 
-* Opening maternity case
-* Linking case to pregnancy profile
-* Linking case to admission or visit
-* Updating case priority/risk/status
-* Closing/cancelling case
-* Logging status changes
+* Review vitals and danger signs
+* Suggest risk level
+* Suggest danger warnings
+* Suggest referral/admission warning where appropriate
+* Mark the pregnancy profile high-risk only through explicit action or safe service rule
+* Avoid automatic hard clinical decisions
 
-MaternityOverviewService should compose:
+AntenatalOverviewService should compose:
 
-* active pregnancy profile
-* risk summary
-* latest maternity case
-* admission link if any
-* visit link if any
-* profile warnings
-* missing key data warnings
-* maternity dashboard counts if useful
+* ANC visit count
+* latest ANC visit
+* next ANC date
+* missed ANC indicator
+* high-risk indicator
+* danger sign summary
+* pending referral state
+* profile completeness warnings
+* dashboard counts
 
-Do not put business logic directly in controllers or Blade.
+Do not put risk logic directly into Blade.
 
-7. Add routes/controllers
+6. Add ANC routes/controllers
 
-Create protected routes under an admin maternity namespace.
+Add protected routes under maternity namespace.
 
 Suggested routes:
 
-* `GET admin/maternity`
-* `GET admin/maternity/pregnancies`
-* `GET admin/maternity/pregnancies/create`
-* `POST admin/maternity/pregnancies`
-* `GET admin/maternity/pregnancies/{pregnancyProfile}`
-* `GET admin/maternity/pregnancies/{pregnancyProfile}/edit`
-* `PATCH admin/maternity/pregnancies/{pregnancyProfile}`
-* `PATCH admin/maternity/pregnancies/{pregnancyProfile}/status`
-* `POST admin/maternity/cases`
-* `GET admin/maternity/cases/{maternityCase}`
-* `PATCH admin/maternity/cases/{maternityCase}`
+* `GET admin/maternity/pregnancies/{pregnancyProfile}/antenatal`
+* `GET admin/maternity/pregnancies/{pregnancyProfile}/antenatal/create`
+* `POST admin/maternity/pregnancies/{pregnancyProfile}/antenatal`
+* `GET admin/maternity/antenatal/{antenatalVisit}`
+* `GET admin/maternity/antenatal/{antenatalVisit}/edit`
+* `PATCH admin/maternity/antenatal/{antenatalVisit}`
+* `PATCH admin/maternity/antenatal/{antenatalVisit}/cancel`
+* `POST admin/maternity/antenatal/{antenatalVisit}/referral`
+* `POST admin/maternity/antenatal/{antenatalVisit}/admission-request` if safe
 
-Add route names consistent with project convention.
+Keep route names consistent with project convention.
 
-Do not remove or alter existing admission, emergency, visit, consultation, ward, bed, nursing, discharge, medication, or billing routes.
+Do not remove Phase 8 routes.
+Do not alter admission, emergency, ward, nursing, discharge, billing, or medication routes.
 
-8. Add basic maternity UI
+7. Add ANC UI
 
-Add safe, clear UI pages:
+Add ANC functionality into the maternity area.
 
-Maternity dashboard shell:
+Pregnancy profile show page should gain an ANC panel/tab:
 
-* Active pregnancy profiles
-* High-risk profiles
-* Open maternity cases
-* Maternity admissions if linked
-* Expected delivery this month if easy
-* Recent cases
-* Quick links
+* ANC visit count
+* latest ANC visit date
+* next scheduled ANC visit
+* missed visit warning
+* latest blood pressure
+* latest fetal heart rate
+* latest fundal height
+* latest risk level
+* danger sign warnings
+* quick action: record ANC visit
+* quick action: view ANC history
+* quick action: refer/admission request if permitted
 
-Pregnancy profile list:
+ANC visit list page:
 
-* Patient
-* Age/sex
-* Gravida/para
-* LMP
-* EDD
+* Visit number
+* Visit date
 * Gestational age
-* Risk level/status
-* Linked visit/admission
-* Last updated
+* BP
+* Weight
+* Fundal height
+* Fetal heart rate
+* Danger signs
+* Risk flags
+* Next visit date
+* Status
+* Recorded by
 * Actions
 
-Pregnancy profile create/edit:
+ANC create/edit form:
 
-* Patient search/select using existing patient lookup pattern if available
-* Gravida
-* Para
-* Abortions
-* Living children
-* LMP
-* EDD
+* Visit date
 * Gestational age
-* Blood group
-* Rhesus
-* Risk flags
-* Clinical notes/known risks
-* Status
+* Weight
+* BP
+* Pulse
+* Temperature
+* Fundal height
+* Fetal heart rate
+* Fetal movement
+* Presentation
+* Urine protein
+* Urine glucose
+* Oedema
+* Haemoglobin
+* Danger signs checklist
+* Risk flags checklist
+* Assessment
+* Plan
+* Counselling
+* Supplements
+* Immunisations
+* Next visit date
+* Referral type/reason
 
-Pregnancy profile show:
+ANC detail page:
 
 * Patient banner
 * Pregnancy summary
-* Risk flags
-* Linked visit/admission
-* Related maternity cases
-* Placeholder panels for future ANC, labor, delivery, newborn, and postnatal workflows
-* Activity/timeline if existing audit data can be displayed safely
-* Quick actions:
+* ANC observations
+* Danger signs
+* Risk assessment
+* Referral/admission request panel
+* Next visit plan
+* Related maternity case
+* Activity/timeline if safe
+* Placeholder for future lab/ultrasound results if integration is deferred
 
-  * Open maternity case
-  * Link to admission if already admitted
-  * Create admission request if safe
-  * Mark high risk
-  * Close profile
+Keep UI simple and clear.
+Do not build full partograph or delivery UI here.
 
-Maternity case show:
+8. Add ANC dashboard improvements
 
-* Patient banner
-* Pregnancy profile summary
-* Case type
-* Case status
-* Source
-* Risk/priority
-* Linked admission/visit
-* Clinical summary
-* Placeholder for future workflow-specific records
+Improve maternity dashboard with ANC metrics:
 
-Keep UI simple and safe.
-Do not build full ANC forms yet.
+* ANC visits today
+* ANC visits this week
+* High-risk pregnancies
+* Missed ANC visits
+* Expected deliveries this month
+* Danger signs flagged
+* Referrals pending
+* Profiles without ANC visits
+* Recent ANC visits
 
-9. Add admission/maternity integration hooks
+Keep queries safe.
+Use overview services where possible.
 
-Admission request already supports source type `maternity`.
+9. Add ANC referral/admission request hook
 
-Add safe integration:
+Add safe referral behavior.
 
-* From a pregnancy profile or maternity case, allow creating an admission request with source `maternity` if the user has permission.
-* Admission request should carry:
+From ANC visit, user should be able to:
 
-  * patient
-  * visit if available
-  * source_type = maternity
-  * source_id = maternity case or pregnancy profile ID depending on implementation
-  * requested ward if maternity ward is selected
-  * provisional diagnosis/clinical summary from maternity context where safe
+* Mark referral type and reason.
+* Create maternity admission request if referral type is `admission` or `maternity_admission`.
+* Create emergency-source handoff only if the existing emergency workflow supports safe creation; otherwise document as deferred.
+* Link the admission request to the maternity case or ANC visit using source fields where safe.
+
+Rules:
+
 * Do not auto-admit.
 * Do not auto-bill.
-* Do not force maternity admission into all pregnancies.
-* Do not create admission request without user action unless a very explicit workflow exists.
+* Do not create emergency case automatically unless existing emergency service supports it safely.
+* Do not force every danger sign into admission.
+* User action should be required for admission request creation.
+* Existing admission request lifecycle must remain unchanged.
 
-If direct integration is too risky, add the service method and document UI hook as deferred.
+10. Add investigation/ultrasound hooks only if safe
 
-10. Add department/dashboard integration
+ANC often needs lab and ultrasound requests.
 
-Maternity already exists as a department type and dashboard category.
+In this phase:
 
-Improve safely:
+* If the project has a safe, reusable investigation request pattern, add a simple “Request investigation/ultrasound” link or hook from ANC detail.
+* If not safe, show a placeholder panel and document it for a future phase.
 
-* Add maternity dashboard route/view if not present.
-* Ensure maternity department users can see maternity dashboard if permitted.
-* Add maternity cards to department dashboard registry only if consistent with existing architecture.
-* Show counts from pregnancy profiles and maternity cases:
+Do not build a new lab/radiology workflow.
+Do not post billing.
+Do not create service charges from ANC in this phase unless existing request flow already does that safely.
 
-  * active pregnancy profiles
-  * high-risk pregnancy profiles
-  * open maternity cases
-  * maternity-linked admissions
-  * expected delivery this month
+11. Add supplements/immunisation tracking
 
-Do not redesign the whole department dashboard system.
+Implement lightweight tracking inside ANC visit fields or JSON.
 
-11. Add billing/service mapping hooks only
+Suggested supplements:
 
-Do not post maternity billing in this phase.
+* iron_folate
+* calcium
+* multivitamin
+* other
 
-Add configuration placeholders or warning helpers only if safe:
+Suggested immunisations:
 
-Potential future service mappings:
+* tetanus_diphtheria_1
+* tetanus_diphtheria_2
+* malaria_prevention if locally appropriate and already supported by clinical policy
+* other
 
-* ANC registration/package
-* ANC follow-up
-* maternity admission fee
-* normal delivery
-* assisted delivery
-* caesarean/theatre handoff
-* postnatal package
-* newborn care
-* ultrasound
-* maternity consumables
-
-This phase may show “maternity billing mappings not configured” warnings only if the project already has a safe billing readiness pattern.
-
-Do not create invoices.
-Do not recalculate invoices.
-Do not post charges from pregnancy profile or maternity case creation.
+Keep it simple.
+Do not build a full immunisation module.
+Do not build pharmacy dispensing from supplements yet.
 
 12. Add permissions
 
 Add permissions additively.
 
 Suggested permissions:
+
+* `maternity.anc.view`
+* `maternity.anc.record`
+* `maternity.anc.update`
+* `maternity.anc.cancel`
+* `maternity.anc.risk.manage`
+* `maternity.anc.referral.create`
+* `maternity.anc.admission.request`
+* `maternity.anc.reports.view`
+
+Keep Phase 8 permissions:
 
 * `maternity.view`
 * `maternity.dashboard.view`
@@ -463,77 +470,75 @@ Suggested permissions:
 * `maternity.reports.view`
 * `maternity.settings.manage`
 
-Recommended role assignment:
+Recommended:
 
 * Admin/super admin gets all.
-* Doctor/physician assistant can view/create/update pregnancy profiles and cases.
-* Nurse/ward nurse/midwife role, if present, can view/create/update maternity profiles and cases.
-* Reception may view/create basic pregnancy profile only if project role conventions allow it.
-* Finance should not get clinical maternity permissions unless already conventionally allowed.
+* Doctor/physician assistant can view/create/update ANC.
+* Nurse/ward nurse/midwife can view/create/update ANC.
+* Reception should not get detailed ANC permissions unless project role convention allows it.
 
 Do not remove existing permissions.
 
 13. Add localisation
 
-Add EN/FR keys for all user-facing maternity text.
+Add EN/FR keys for all user-facing ANC text.
 
 Include keys for:
 
-* Maternity
-* Pregnancy profile
-* Maternity case
-* Gravida
-* Para
-* Abortions
-* Living children
-* LMP
-* EDD
+* Antenatal care
+* ANC visit
+* Record ANC visit
+* ANC history
+* Visit number
 * Gestational age
-* Blood group
-* Rhesus status
-* Known risks
-* Previous caesarean
-* Previous postpartum haemorrhage
-* Hypertensive disorder risk
-* Diabetes risk
-* Multiple pregnancy
-* Risk level
-* Profile status
-* Case type
-* Case status
-* Open maternity case
-* Close pregnancy profile
-* Mark high risk
-* Create maternity admission request
-* Expected delivery this month
-* Active pregnancies
-* High-risk pregnancies
-* Open maternity cases
-* Future ANC workflow placeholder
-* Future labor workflow placeholder
-* Future delivery workflow placeholder
-* Future newborn workflow placeholder
-* Future postnatal workflow placeholder
-* Success/error messages
-* Validation messages
+* Weight
+* Blood pressure
+* Pulse
+* Temperature
+* Fundal height
+* Fetal heart rate
+* Fetal movement
+* Presentation
+* Urine protein
+* Urine glucose
+* Oedema
+* Haemoglobin
+* Danger signs
+* Risk flags
+* Assessment
+* Plan
+* Counselling
+* Supplements
+* Immunisations
+* Next visit date
+* Missed ANC visit
+* High-risk ANC
+* Referral type
+* Referral reason
+* Create admission request
+* Investigation/ultrasound placeholder
+* No ANC visits yet
+* ANC visits today
+* ANC visits this week
+* Profiles without ANC
+* Danger signs flagged
+* Success/error/validation messages
 
 Maintain EN/FR localisation parity.
 
 14. Activity logging
 
-Log sensitive maternity foundation actions:
+Log ANC actions under the MATERNITY module:
 
-* pregnancy profile created
-* pregnancy profile updated
-* pregnancy profile marked high risk
-* pregnancy profile closed
-* maternity case opened
-* maternity case updated
-* maternity case closed/cancelled
-* maternity admission request created
+* ANC visit recorded
+* ANC visit updated
+* ANC visit cancelled
+* ANC referral recorded
+* ANC admission request created
+* Pregnancy profile risk level updated from ANC if implemented
 
-Do not copy long clinical notes into activity log metadata unless existing project convention allows it.
-Prefer IDs, statuses, actor, timestamps, and risk level.
+Do not copy long clinical notes into activity metadata unless project convention allows it.
+Prefer IDs, statuses, risk flags count, danger signs count, actor, and timestamps.
 
 15. Tests
 
@@ -541,38 +546,39 @@ Do not run the full test suite.
 
 Add targeted test file:
 
-`tests/Feature/MaternityFoundationPhase8Test.php`
+`tests/Feature/AntenatalCarePhase9Test.php`
 
 Recommended tests:
 
-* Pregnancy profile can be created by permitted user.
-* Pregnancy profile creation calculates EDD from LMP if implemented.
-* Pregnancy profile creation calculates gestational age if implemented.
-* Pregnancy profile can be updated.
-* Pregnancy profile can be marked high risk.
-* Pregnancy profile can be closed.
-* Non-permitted user cannot create pregnancy profile.
-* Maternity case can be opened from pregnancy profile.
-* Maternity case can link to patient/visit/admission where available.
-* Maternity case can be closed/cancelled.
-* Pregnancy profile page renders placeholders for future ANC/labor/delivery/newborn/postnatal.
-* Maternity dashboard renders.
-* Maternity admission request can be created from maternity case if implemented.
-* General admission still does not require pregnancy profile.
+* ANC visit can be recorded for pregnancy profile by permitted user.
+* ANC visit links to pregnancy profile, patient, visit/admission where available.
+* ANC visit can be updated.
+* ANC visit calculates or stores gestational age safely.
+* Danger signs can be stored.
+* Risk flags can be stored.
+* High-risk warning appears when risk flags/danger signs exist.
+* Next ANC visit date can be scheduled.
+* ANC visit appears on pregnancy profile show page.
+* ANC visit list renders.
+* ANC detail page renders.
+* Non-permitted user cannot record ANC visit.
+* ANC referral can be recorded.
+* ANC admission request can be created if implemented.
+* ANC dashboard metrics render.
+* General pregnancy profile creation still works.
+* General admission still does not require pregnancy profile or ANC visit.
+* Existing MaternityFoundationPhase8Test still passes.
 * Existing AdmissionDischargeReadinessPhase7Test still passes.
 * Existing AdmissionNursingCarePhase6Test still passes.
-* Existing AdmissionBedWorkflowPhase5Test still passes.
 * Existing AdmissionWorkflowFoundationTest still passes.
-* Existing WardAdmissionTest still passes.
 
 Run targeted checks only:
 
+* `php artisan test tests/Feature/AntenatalCarePhase9Test.php`
 * `php artisan test tests/Feature/MaternityFoundationPhase8Test.php`
 * `php artisan test tests/Feature/AdmissionDischargeReadinessPhase7Test.php`
 * `php artisan test tests/Feature/AdmissionNursingCarePhase6Test.php`
-* `php artisan test tests/Feature/AdmissionBedWorkflowPhase5Test.php`
 * `php artisan test tests/Feature/AdmissionWorkflowFoundationTest.php`
-* `php artisan test tests/Feature/WardAdmissionTest.php`
 * `php artisan route:list --name=maternity`
 * `php artisan route:list --name=admissions.requests`
 * `php artisan view:clear`
@@ -586,12 +592,12 @@ Do not run the full suite.
 
 Create:
 
-`docs/maternity/MATERNITY_FOUNDATION_PHASE_8_REPORT.md`
+`docs/maternity/ANTENATAL_CARE_PHASE_9_REPORT.md`
 
 The report must include:
 
 * What was implemented
-* Existing maternity surfaces audited
+* Existing maternity foundation audited
 * Files changed
 * New migrations/tables/columns
 * New models/enums
@@ -599,10 +605,12 @@ The report must include:
 * New routes/controllers
 * New permissions
 * New localisation keys
-* Pregnancy profile behavior
-* Maternity case behavior
-* Admission request integration behavior
-* Dashboard behavior
+* ANC visit behavior
+* ANC dashboard behavior
+* Risk/danger sign behavior
+* Referral/admission request behavior
+* Investigation/ultrasound hook behavior or deferral
+* Supplements/immunisation behavior
 * Billing behavior, especially confirming no billing is posted
 * Existing workflows protected
 * Tests/checks run
@@ -612,17 +620,18 @@ The report must include:
 
 17. Boundaries
 
-Do not implement ANC visit records yet.
-Do not implement labor episodes yet.
-Do not implement partograph observations yet.
-Do not implement delivery records yet.
-Do not implement newborn records yet.
-Do not implement postnatal records yet.
-Do not implement maternity-specific discharge summary sections yet.
-Do not implement maternity package billing posting yet.
-Do not implement ultrasound/lab ordering from ANC yet.
-Do not force maternity workflows on all female patients.
-Do not require pregnancy profile for general admission.
+Do not implement labor episodes.
+Do not implement partograph observations.
+Do not implement delivery records.
+Do not implement newborn records.
+Do not implement postnatal records.
+Do not implement maternity-specific discharge summaries.
+Do not implement maternity package billing posting.
+Do not build a new investigation/radiology workflow.
+Do not build a full immunisation module.
+Do not build pharmacy dispensing from supplements.
+Do not force ANC onto every pregnancy profile.
+Do not require pregnancy profile or ANC for general admission.
 Do not change existing admission billing.
 Do not change existing discharge readiness behavior.
 Do not change existing nursing/MAR behavior.
@@ -646,4 +655,4 @@ At the end, provide a concise completion report with:
 * Next phase recommendation
 
 Recommended next phase after this:
-Phase 9: Antenatal Care Workflow.
+Phase 10: Labor and Delivery Foundation.

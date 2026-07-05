@@ -230,6 +230,11 @@ class Visit extends Model
         return $this->hasMany(MaternityCase::class);
     }
 
+    public function antenatalVisits()
+    {
+        return $this->hasMany(AntenatalVisit::class);
+    }
+
     public function bedReservations()
     {
         return $this->hasMany(BedReservation::class);

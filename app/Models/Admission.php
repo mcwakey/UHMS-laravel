@@ -182,6 +182,11 @@ class Admission extends Model
         return $this->hasMany(MaternityCase::class);
     }
 
+    public function antenatalVisits()
+    {
+        return $this->hasMany(AntenatalVisit::class);
+    }
+
     public function serviceRenderings()
     {
         return $this->hasMany(ServiceRendering::class);

@@ -12,6 +12,8 @@ class MaternityOverviewService
 {
     public function dashboard(): array
     {
+        $anc = app(AntenatalOverviewService::class)->dashboard();
+
         return [
             'active_pregnancies' => PregnancyProfile::active()->count(),
             'high_risk_pregnancies' => PregnancyProfile::where('profile_status', PregnancyProfileStatus::HIGH_RISK->value)->count(),
@@ -25,23 +27,24 @@ class MaternityOverviewService
                 ->latest('id')
                 ->limit(8)
                 ->get(),
-        ];
+        ] + $anc;
     }
 
     public function forProfile(PregnancyProfile $profile): array
     {
-        $profile->loadMissing(['patient.activeAdmission', 'visit', 'admission', 'department', 'maternityCases.openedBy']);
+        $profile->loadMissing(['patient.activeAdmission', 'visit', 'admission', 'department', 'maternityCases.openedBy', 'antenatalVisits.recordedBy']);
         $latestCase = $profile->maternityCases->sortByDesc('opened_at')->first();
+        $anc = app(AntenatalOverviewService::class)->forProfile($profile);
 
         return [
             'active_profile' => $profile->profile_status && ! $profile->profile_status->isClosed(),
             'risk_summary' => $this->riskSummary($profile),
+            'anc' => $anc,
             'latest_case' => $latestCase,
             'admission' => $profile->admission ?: $profile->patient?->activeAdmission,
             'visit' => $profile->visit,
-            'warnings' => $this->warnings($profile),
+            'warnings' => array_values(array_unique(array_merge($this->warnings($profile), $anc['profile_warnings']))),
             'future_panels' => [
-                __('maternity.future_anc_placeholder'),
                 __('maternity.future_labor_placeholder'),
                 __('maternity.future_delivery_placeholder'),
                 __('maternity.future_newborn_placeholder'),

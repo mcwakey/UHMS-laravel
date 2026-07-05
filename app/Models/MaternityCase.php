@@ -79,6 +79,11 @@ class MaternityCase extends Model
         return $this->belongsTo(User::class, 'closed_by');
     }
 
+    public function antenatalVisits()
+    {
+        return $this->hasMany(AntenatalVisit::class)->latest('visit_date')->latest('id');
+    }
+
     public function scopeOpen($query)
     {
         return $query->whereNotIn('status', [

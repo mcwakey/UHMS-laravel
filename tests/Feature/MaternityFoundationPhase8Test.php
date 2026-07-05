@@ -193,7 +193,7 @@ class MaternityFoundationPhase8Test extends TestCase
             ->get(route('admin.maternity.dashboard'))
             ->assertOk()
             ->assertSee('Maternity Dashboard')
-            ->assertSee('ANC visit workflow will be added');
+            ->assertSee('ANC Visits Today');
 
         $this->actingAs($this->user)
             ->get(route('admin.maternity.pregnancies.show', $profile))

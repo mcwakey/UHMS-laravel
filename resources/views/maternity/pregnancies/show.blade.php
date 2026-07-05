@@ -71,6 +71,38 @@
             </div>
         </div>
 
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0"><i class="ti ti-stethoscope me-1"></i>{{ __('maternity.antenatal_care') }}</h5>
+                <div class="d-flex gap-2">
+                    @can('maternity.anc.record')
+                    <a href="{{ route('admin.maternity.pregnancies.antenatal.create', $profile) }}" class="btn btn-sm btn-primary"><i class="ti ti-plus me-1"></i>{{ __('maternity.record_anc_visit') }}</a>
+                    @endcan
+                    @can('maternity.anc.view')
+                    <a href="{{ route('admin.maternity.pregnancies.antenatal.index', $profile) }}" class="btn btn-sm btn-outline-primary">{{ __('maternity.anc_history') }}</a>
+                    @endcan
+                </div>
+            </div>
+            <div class="card-body">
+                @php($anc = $overview['anc'])
+                <div class="row g-3">
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.anc_visit_count') }}</small><strong>{{ $anc['visit_count'] }}</strong></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.latest_anc_visit') }}</small><strong>{{ $anc['latest_visit']?->visit_date?->format('d M Y') ?? __('common.none') }}</strong></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.next_visit_date') }}</small><strong>{{ $anc['next_visit_date']?->format('d M Y') ?? __('common.none') }}</strong>@if($anc['missed_visit']) <span class="badge bg-danger ms-1">{{ __('maternity.missed_anc_visit') }}</span>@endif</div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.high_risk_anc') }}</small><span class="badge bg-{{ $anc['high_risk'] ? 'danger' : 'success' }}">{{ $anc['high_risk'] ? __('common.yes') : __('common.no') }}</span></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.blood_pressure') }}</small><strong>{{ $anc['latest_visit']?->blood_pressure_systolic && $anc['latest_visit']?->blood_pressure_diastolic ? $anc['latest_visit']->blood_pressure_systolic.'/'.$anc['latest_visit']->blood_pressure_diastolic : __('common.not_available') }}</strong></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.fetal_heart_rate') }}</small><strong>{{ $anc['latest_visit']?->fetal_heart_rate ?? __('common.not_available') }}</strong></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.fundal_height') }}</small><strong>{{ $anc['latest_visit']?->fundal_height_cm ? $anc['latest_visit']->fundal_height_cm.' cm' : __('common.not_available') }}</strong></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.referral') }}</small><span class="badge bg-{{ $anc['pending_referral'] ? 'warning' : 'secondary' }}">{{ $anc['pending_referral'] ? __('maternity.referrals_pending') : __('common.none') }}</span></div>
+                </div>
+                @if($anc['danger_signs']->isNotEmpty() || $anc['risk_flags']->isNotEmpty())
+                <hr>
+                <div class="mb-2">@foreach($anc['danger_signs'] as $sign)<span class="badge bg-danger me-1">{{ __('maternity.anc_danger_signs.'.$sign) }}</span>@endforeach</div>
+                <div>@foreach($anc['risk_flags'] as $flag)<span class="badge bg-warning text-dark me-1">{{ __('maternity.anc_risk_flags.'.$flag) }}</span>@endforeach</div>
+                @endif
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-folders me-1"></i>{{ __('maternity.maternity_cases') }}</h5></div>
             <div class="card-body p-0">

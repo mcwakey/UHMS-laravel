@@ -93,7 +93,6 @@
             <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-clock me-1"></i>{{ __('maternity.future_workflows') }}</h5></div>
             <div class="card-body">
                 <div class="list-group list-group-flush">
-                    <div class="list-group-item px-0">{{ __('maternity.future_anc_placeholder') }}</div>
                     <div class="list-group-item px-0">{{ __('maternity.future_labor_placeholder') }}</div>
                     <div class="list-group-item px-0">{{ __('maternity.future_delivery_placeholder') }}</div>
                     <div class="list-group-item px-0">{{ __('maternity.future_newborn_placeholder') }}</div>
