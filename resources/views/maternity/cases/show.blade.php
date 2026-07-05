@@ -93,8 +93,10 @@
             <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-clock me-1"></i>{{ __('maternity.future_workflows') }}</h5></div>
             <div class="card-body">
                 <div class="list-group list-group-flush">
-                    <div class="list-group-item px-0">{{ __('maternity.future_labor_placeholder') }}</div>
-                    <div class="list-group-item px-0">{{ __('maternity.future_delivery_placeholder') }}</div>
+                    @if($case->pregnancyProfile)
+                    <a class="list-group-item px-0 d-flex justify-content-between align-items-center" href="{{ route('admin.maternity.pregnancies.labor.create', $case->pregnancyProfile) }}"><span>{{ __('maternity.start_labor_episode') }}</span><i class="ti ti-chevron-right"></i></a>
+                    <a class="list-group-item px-0 d-flex justify-content-between align-items-center" href="{{ route('admin.maternity.labor.index') }}"><span>{{ __('maternity.labor_and_delivery') }}</span><i class="ti ti-chevron-right"></i></a>
+                    @endif
                     <div class="list-group-item px-0">{{ __('maternity.future_newborn_placeholder') }}</div>
                     <div class="list-group-item px-0">{{ __('maternity.future_postnatal_placeholder') }}</div>
                 </div>

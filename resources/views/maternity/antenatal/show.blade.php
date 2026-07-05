@@ -65,6 +65,14 @@
             </div>
         </div>
 
+        @can('maternity.labor.start')
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-baby-carriage me-1"></i>{{ __('maternity.labor_and_delivery') }}</h5></div>
+            <div class="card-body text-muted">{{ __('maternity.start_labor_episode') }}</div>
+            <div class="card-footer text-end"><a href="{{ route('admin.maternity.pregnancies.antenatal.labor.create', [$ancVisit->pregnancyProfile, $ancVisit]) }}" class="btn btn-primary"><i class="ti ti-plus me-1"></i>{{ __('maternity.start_labor_episode') }}</a></div>
+        </div>
+        @endcan
+
         @can('maternity.anc.referral.create')
         <form method="POST" action="{{ route('admin.maternity.antenatal.referral', $ancVisit) }}" class="card mb-3">
             @csrf

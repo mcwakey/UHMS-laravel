@@ -115,6 +115,34 @@ class PregnancyProfile extends Model
             ->oldestOfMany('next_visit_date');
     }
 
+    public function laborEpisodes()
+    {
+        return $this->hasMany(LaborEpisode::class)->latest('started_at')->latest('id');
+    }
+
+    public function activeLaborEpisode()
+    {
+        return $this->hasOne(LaborEpisode::class)
+            ->whereNotIn('status', [
+                \App\Enums\LaborEpisodeStatus::DELIVERED->value,
+                \App\Enums\LaborEpisodeStatus::CANCELLED->value,
+                \App\Enums\LaborEpisodeStatus::CLOSED->value,
+                \App\Enums\LaborEpisodeStatus::REFERRED->value,
+                \App\Enums\LaborEpisodeStatus::TRANSFERRED->value,
+            ])
+            ->latestOfMany('started_at');
+    }
+
+    public function laborObservations()
+    {
+        return $this->hasMany(LaborObservation::class)->latest('observed_at')->latest('id');
+    }
+
+    public function deliveryRecords()
+    {
+        return $this->hasMany(DeliveryRecord::class)->latest('delivery_at')->latest('id');
+    }
+
     public function scopeActive($query)
     {
         return $query->whereIn('profile_status', [

@@ -21,6 +21,10 @@
         ['label' => __('maternity.anc_visits_today'), 'value' => $overview['anc_today'], 'icon' => 'ti-stethoscope', 'class' => 'primary'],
         ['label' => __('maternity.missed_anc_visits'), 'value' => $overview['missed_anc'], 'icon' => 'ti-calendar-x', 'class' => 'danger'],
         ['label' => __('maternity.profiles_without_anc'), 'value' => $overview['profiles_without_anc'], 'icon' => 'ti-clipboard-off', 'class' => 'secondary'],
+        ['label' => __('maternity.active_labor_episodes'), 'value' => $overview['active_labor_episodes'], 'icon' => 'ti-activity', 'class' => 'primary'],
+        ['label' => __('maternity.theatre_escalation_required'), 'value' => $overview['theatre_escalation_required'], 'icon' => 'ti-building-hospital', 'class' => 'warning'],
+        ['label' => __('maternity.emergency_escalation_required'), 'value' => $overview['emergency_escalation_required'], 'icon' => 'ti-alert-octagon', 'class' => 'danger'],
+        ['label' => __('maternity.deliveries_today'), 'value' => $overview['deliveries_today'], 'icon' => 'ti-confetti', 'class' => 'success'],
     ] as $card)
     <div class="col-6 col-md-4 col-xl-3">
         <div class="card h-100">
@@ -88,15 +92,56 @@
                 @endif
             </div>
         </div>
+
+        <div class="card mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center"><h5 class="card-title mb-0"><i class="ti ti-baby-carriage me-1"></i>{{ __('maternity.active_labor_episodes') }}</h5><a href="{{ route('admin.maternity.labor.index') }}" class="btn btn-sm btn-outline-primary">{{ __('common.view') }}</a></div>
+            <div class="card-body p-0">
+                @if($overview['active_labor_list']->isNotEmpty())
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="bg-light"><tr><th>{{ __('maternity.patient') }}</th><th>{{ __('maternity.labor_stage') }}</th><th>{{ __('maternity.latest_observation') }}</th><th>{{ __('maternity.status') }}</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach($overview['active_labor_list'] as $episode)
+                            <tr>
+                                <td><strong>{{ $episode->patient?->full_name }}</strong><br><small class="text-muted">{{ $episode->patient?->patient_number }}</small></td>
+                                <td>{{ $episode->labor_stage?->label() }}</td>
+                                <td>{{ $episode->latestObservation?->observed_at?->format('d M Y H:i') ?? __('common.none') }}</td>
+                                <td><span class="badge bg-{{ $episode->status?->color() ?? 'secondary' }}">{{ $episode->status?->label() }}</span></td>
+                                <td class="text-end"><a href="{{ route('admin.maternity.labor.show', $episode) }}" class="btn btn-sm btn-outline-primary">{{ __('common.view') }}</a></td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                <x-empty-state icon="ti-baby-carriage" :title="__('maternity.no_labor_episodes_yet')" />
+                @endif
+            </div>
+        </div>
     </div>
     <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-chart-line me-1"></i>{{ __('maternity.recent_labor_observations') }}</h5></div>
+            <div class="card-body p-0">
+                @if($overview['recent_labor_observations']->isNotEmpty())
+                <div class="list-group list-group-flush">
+                    @foreach($overview['recent_labor_observations'] as $observation)
+                    <a href="{{ route('admin.maternity.labor.observations.show', $observation) }}" class="list-group-item list-group-item-action">
+                        <div class="fw-semibold">{{ $observation->patient?->full_name }}</div>
+                        <small class="text-muted">{{ $observation->observed_at?->format('d M Y H:i') }} · {{ $observation->labor_stage?->label() ?? __('common.none') }}</small>
+                    </a>
+                    @endforeach
+                </div>
+                @else
+                <x-empty-state icon="ti-chart-line" :title="__('maternity.no_observations_yet')" />
+                @endif
+            </div>
+        </div>
         <div class="card">
             <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-info-circle me-1"></i>{{ __('maternity.foundation_scope') }}</h5></div>
             <div class="card-body">
                 <div class="list-group list-group-flush">
                     @foreach([
-                        __('maternity.future_labor_placeholder'),
-                        __('maternity.future_delivery_placeholder'),
                         __('maternity.future_newborn_placeholder'),
                         __('maternity.future_postnatal_placeholder'),
                     ] as $placeholder)

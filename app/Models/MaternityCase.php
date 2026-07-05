@@ -84,6 +84,16 @@ class MaternityCase extends Model
         return $this->hasMany(AntenatalVisit::class)->latest('visit_date')->latest('id');
     }
 
+    public function laborEpisodes()
+    {
+        return $this->hasMany(LaborEpisode::class)->latest('started_at')->latest('id');
+    }
+
+    public function deliveryRecords()
+    {
+        return $this->hasMany(DeliveryRecord::class)->latest('delivery_at')->latest('id');
+    }
+
     public function scopeOpen($query)
     {
         return $query->whereNotIn('status', [

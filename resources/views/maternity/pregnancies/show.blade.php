@@ -103,6 +103,43 @@
             </div>
         </div>
 
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0"><i class="ti ti-baby-carriage me-1"></i>{{ __('maternity.labor_and_delivery') }}</h5>
+                <div class="d-flex gap-2">
+                    @can('maternity.labor.start')
+                    <a href="{{ route('admin.maternity.pregnancies.labor.create', $profile) }}" class="btn btn-sm btn-primary"><i class="ti ti-plus me-1"></i>{{ __('maternity.start_labor_episode') }}</a>
+                    @endcan
+                    @can('maternity.labor.view')
+                    <a href="{{ route('admin.maternity.labor.index') }}" class="btn btn-sm btn-outline-primary">{{ __('maternity.labor_episodes') }}</a>
+                    @endcan
+                </div>
+            </div>
+            <div class="card-body">
+                @php($labor = $overview['labor'])
+                <div class="row g-3">
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.active_labor_episode') }}</small>
+                        @if($labor['active_episode'])
+                        <a href="{{ route('admin.maternity.labor.show', $labor['active_episode']) }}">{{ $labor['active_episode']->status?->label() }}</a>
+                        @else
+                        <strong>{{ __('common.none') }}</strong>
+                        @endif
+                    </div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.labor_history') }}</small><strong>{{ $labor['episode_count'] }}</strong></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.latest_labor_stage') }}</small><strong>{{ $labor['latest_episode']?->labor_stage?->label() ?? __('common.none') }}</strong></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.delivery_record_status') }}</small><strong>{{ $labor['latest_delivery_record']?->status?->label() ?? __('common.none') }}</strong></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.latest_observation') }}</small><strong>{{ $labor['latest_observation']?->observed_at?->format('d M Y H:i') ?? __('common.none') }}</strong></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.fetal_heart_rate') }}</small><strong>{{ $labor['latest_observation']?->fetal_heart_rate ?? __('common.none') }}</strong></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.blood_pressure') }}</small><strong>{{ $labor['latest_observation']?->blood_pressure_systolic && $labor['latest_observation']?->blood_pressure_diastolic ? $labor['latest_observation']->blood_pressure_systolic.'/'.$labor['latest_observation']->blood_pressure_diastolic : __('common.none') }}</strong></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.newborn_records_pending') }}</small><span class="badge bg-{{ $labor['newborn_records_pending'] ? 'warning' : 'secondary' }}">{{ $labor['newborn_records_pending'] ? __('common.yes') : __('common.no') }}</span></div>
+                </div>
+                @if($labor['warnings'])
+                <hr>
+                @foreach($labor['warnings'] as $warning)<span class="badge bg-warning text-dark me-1">{{ $warning }}</span>@endforeach
+                @endif
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-folders me-1"></i>{{ __('maternity.maternity_cases') }}</h5></div>
             <div class="card-body p-0">

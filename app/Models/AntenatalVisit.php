@@ -118,6 +118,16 @@ class AntenatalVisit extends Model
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    public function laborEpisodes()
+    {
+        return $this->hasMany(LaborEpisode::class)->latest('started_at')->latest('id');
+    }
+
+    public function latestLaborEpisode()
+    {
+        return $this->hasOne(LaborEpisode::class)->latestOfMany('started_at');
+    }
+
     public function toActivityContext(): array
     {
         return array_filter([
