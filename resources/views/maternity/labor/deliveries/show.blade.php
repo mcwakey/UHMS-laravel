@@ -93,5 +93,5 @@
         @endif
     </div>
 </div>
-<div class="alert alert-secondary"><i class="ti ti-receipt me-1"></i>{{ __('maternity.newborn_billing_placeholder') }}</div>
+@include('maternity.partials.billing-preview')
 @endsection

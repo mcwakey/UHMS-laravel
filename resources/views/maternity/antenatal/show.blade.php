@@ -73,6 +73,8 @@
         </div>
         @endcan
 
+        @include('maternity.partials.billing-preview')
+
         @can('maternity.anc.referral.create')
         <form method="POST" action="{{ route('admin.maternity.antenatal.referral', $ancVisit) }}" class="card mb-3">
             @csrf

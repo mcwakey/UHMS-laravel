@@ -73,7 +73,7 @@
         </div>
 
         <div class="alert alert-info"><i class="ti ti-chart-dots me-1"></i>{{ __('maternity.partograph_placeholder') }}</div>
-        <div class="alert alert-secondary"><i class="ti ti-receipt me-1"></i>{{ __('maternity.billing_hooks_placeholder') }}</div>
+        @include('maternity.partials.billing-preview')
     </div>
 
     <div class="col-xl-4">

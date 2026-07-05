@@ -830,4 +830,5 @@ return [
         'needs_immunisation_review' => 'Revue vaccination nécessaire',
         'follow_up_needed' => 'Suivi nécessaire',
     ],
-] + require __DIR__.'/maternity_phase13.php';
+] + (require __DIR__.'/maternity_phase13.php')
+  + (require __DIR__.'/maternity_phase14.php');

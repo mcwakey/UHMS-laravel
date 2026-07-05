@@ -91,7 +91,7 @@
             </div>
         </div>
 
-        <div class="alert alert-secondary"><i class="ti ti-receipt me-1"></i>{{ __('maternity.postnatal_billing_hooks_only') }}</div>
+        @include('maternity.partials.billing-preview')
     </div>
 
     <div class="col-xl-4">

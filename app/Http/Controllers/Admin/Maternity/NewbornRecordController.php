@@ -16,6 +16,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DeliveryRecord;
 use App\Models\NewbornRecord;
 use App\Models\Patient;
+use App\Services\Maternity\MaternityBillingPostingService;
 use App\Services\Maternity\NewbornOverviewService;
 use App\Services\Maternity\NewbornRecordService;
 use App\Services\Maternity\NewbornRiskAssessmentService;
@@ -30,6 +31,7 @@ class NewbornRecordController extends Controller
         private NewbornOverviewService $overview,
         private NewbornRiskAssessmentService $riskAssessment,
         private PostnatalOverviewService $postnatalOverview,
+        private MaternityBillingPostingService $billingPosting,
     ) {}
 
     public function index(DeliveryRecord $deliveryRecord)
@@ -69,6 +71,7 @@ class NewbornRecordController extends Controller
             'record' => $newbornRecord->load($this->newborns->relations()),
             'riskAssessment' => $this->riskAssessment->assess($newbornRecord),
             'postnatalOverview' => $this->postnatalOverview->forNewborn($newbornRecord),
+            'billingPreviews' => $this->billingPosting->previewManyForSource($newbornRecord),
             'patientCandidates' => Patient::query()
                 ->whereDate('date_of_birth', $newbornRecord->birth_time?->toDateString() ?? today())
                 ->orderBy('first_name')

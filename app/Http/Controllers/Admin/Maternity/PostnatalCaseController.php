@@ -22,6 +22,7 @@ use App\Models\NewbornRecord;
 use App\Models\PostnatalCase;
 use App\Models\PostnatalMotherObservation;
 use App\Models\PostnatalNewbornObservation;
+use App\Services\Maternity\MaternityBillingPostingService;
 use App\Services\Maternity\PostnatalCaseService;
 use App\Services\Maternity\PostnatalMotherObservationService;
 use App\Services\Maternity\PostnatalNewbornObservationService;
@@ -36,6 +37,7 @@ class PostnatalCaseController extends Controller
         private PostnatalMotherObservationService $motherObservations,
         private PostnatalNewbornObservationService $newbornObservations,
         private PostnatalOverviewService $overview,
+        private MaternityBillingPostingService $billingPosting,
     ) {}
 
     public function index()
@@ -62,6 +64,7 @@ class PostnatalCaseController extends Controller
         return view('maternity.postnatal.show', [
             'case' => $postnatalCase->load($this->cases->relations()),
             'overview' => $this->overview->forCase($postnatalCase),
+            'billingPreviews' => $this->billingPosting->previewManyForSource($postnatalCase),
             'statuses' => PostnatalCaseStatus::cases(),
             'riskLevels' => MaternityRiskLevel::cases(),
         ]);

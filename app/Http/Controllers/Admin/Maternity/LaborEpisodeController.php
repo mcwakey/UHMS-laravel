@@ -26,6 +26,7 @@ use App\Services\Maternity\LaborEpisodeService;
 use App\Services\Maternity\LaborObservationService;
 use App\Services\Maternity\LaborOverviewService;
 use App\Services\Maternity\LaborRiskAssessmentService;
+use App\Services\Maternity\MaternityBillingPostingService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -36,6 +37,7 @@ class LaborEpisodeController extends Controller
         private LaborObservationService $observations,
         private LaborOverviewService $overview,
         private LaborRiskAssessmentService $riskAssessment,
+        private MaternityBillingPostingService $billingPosting,
     ) {}
 
     public function index()
@@ -83,6 +85,7 @@ class LaborEpisodeController extends Controller
             'episode' => $laborEpisode,
             'laborOverview' => $this->overview->forEpisode($laborEpisode),
             'riskAssessment' => $this->riskAssessment->assess($laborEpisode->latestObservation ?: $laborEpisode),
+            'billingPreviews' => $this->billingPosting->previewManyForSource($laborEpisode),
             'observations' => $laborEpisode->observations()->with('recordedBy')->paginate(15),
             'wards' => Ward::active()
                 ->whereHas('department', fn ($query) => $query->where('type', DepartmentType::MATERNITY->value))

@@ -830,4 +830,5 @@ return [
         'needs_immunisation_review' => 'Needs immunisation review',
         'follow_up_needed' => 'Follow-up needed',
     ],
-] + require __DIR__.'/maternity_phase13.php';
+] + (require __DIR__.'/maternity_phase13.php')
+  + (require __DIR__.'/maternity_phase14.php');

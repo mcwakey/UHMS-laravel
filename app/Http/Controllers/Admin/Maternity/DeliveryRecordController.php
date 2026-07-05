@@ -12,6 +12,7 @@ use App\Models\DeliveryRecord;
 use App\Models\LaborEpisode;
 use App\Models\User;
 use App\Services\Maternity\DeliveryRecordService;
+use App\Services\Maternity\MaternityBillingPostingService;
 use App\Services\Maternity\NewbornOverviewService;
 use App\Services\Maternity\PostnatalOverviewService;
 use Illuminate\Http\Request;
@@ -23,6 +24,7 @@ class DeliveryRecordController extends Controller
         private DeliveryRecordService $deliveries,
         private NewbornOverviewService $newbornOverview,
         private PostnatalOverviewService $postnatalOverview,
+        private MaternityBillingPostingService $billingPosting,
     ) {}
 
     public function create(LaborEpisode $laborEpisode)
@@ -45,6 +47,7 @@ class DeliveryRecordController extends Controller
             'record' => $deliveryRecord->load($this->deliveries->relations()),
             'newbornOverview' => $this->newbornOverview->forDelivery($deliveryRecord),
             'postnatalOverview' => $this->postnatalOverview->forDelivery($deliveryRecord),
+            'billingPreviews' => $this->billingPosting->previewManyForSource($deliveryRecord),
         ]);
     }
 

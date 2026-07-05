@@ -598,6 +598,10 @@ class RoleSeeder extends Seeder
             'maternity.reports.export',
             'maternity.billing_readiness.view',
             'maternity.billing_readiness.manage',
+            'maternity.billing.preview',
+            'maternity.billing.post',
+            'maternity.billing.override',
+            'maternity.billing.audit.view',
             'maternity.manual_seed.run',
 
             // ── HR & Payroll ──────────────────────────────────────────────
@@ -1044,6 +1048,8 @@ class RoleSeeder extends Seeder
             'maternity.reports.view',
             'maternity.reports.export',
             'maternity.billing_readiness.view',
+            'maternity.billing.preview',
+            'maternity.billing.audit.view',
         ];
 
         $maternityReceptionPerms = [
@@ -1432,6 +1438,7 @@ class RoleSeeder extends Seeder
             'services.manage',
             'reports.view', 'reports.generate', 'reports.export', 'reports.print', 'reports.financial_values.view',
             'statistics.view', 'statistics.dashboard.view', 'statistics.billing.view', 'statistics.claims.view', 'statistics.export',
+            'maternity.billing.preview', 'maternity.billing.post', 'maternity.billing.audit.view',
             'claims.view',
             'accounts.manage',
             'accounts.entries.view', 'accounts.entries.create', 'accounts.entries.approve',
@@ -1508,6 +1515,7 @@ class RoleSeeder extends Seeder
                 'accounting.bank_reconciliation.reverse',
                 'accounting.bank_adjustments.approve',
                 'accounting.bank_adjustments.post',
+                'maternity.billing.override',
                 // External integrations — payment operations oversight
                 'integrations.payments.reconciliation.view',
                 'integrations.payments.reconciliation.verify',

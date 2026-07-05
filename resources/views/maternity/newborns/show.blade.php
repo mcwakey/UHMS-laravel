@@ -83,6 +83,7 @@
             </div>
         </div>
         <div class="alert alert-secondary"><i class="ti ti-file-description me-1"></i>{{ __('maternity.newborn_discharge_summary_placeholder') }}</div>
+        @include('maternity.partials.billing-preview')
     </div>
 
     <div class="col-xl-4">

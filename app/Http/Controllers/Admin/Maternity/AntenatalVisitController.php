@@ -19,6 +19,7 @@ use App\Models\Ward;
 use App\Services\Maternity\AntenatalOverviewService;
 use App\Services\Maternity\AntenatalRiskAssessmentService;
 use App\Services\Maternity\AntenatalVisitService;
+use App\Services\Maternity\MaternityBillingPostingService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -28,6 +29,7 @@ class AntenatalVisitController extends Controller
         private AntenatalVisitService $visits,
         private AntenatalOverviewService $overview,
         private AntenatalRiskAssessmentService $riskAssessment,
+        private MaternityBillingPostingService $billingPosting,
     ) {}
 
     public function index(PregnancyProfile $pregnancyProfile)
@@ -60,6 +62,7 @@ class AntenatalVisitController extends Controller
         return view('maternity.antenatal.show', [
             'ancVisit' => $antenatalVisit,
             'riskAssessment' => $this->riskAssessment->assess($antenatalVisit),
+            'billingPreviews' => $this->billingPosting->previewManyForSource($antenatalVisit),
             'wards' => Ward::active()
                 ->whereHas('department', fn ($query) => $query->where('type', DepartmentType::MATERNITY->value))
                 ->orderBy('name')
