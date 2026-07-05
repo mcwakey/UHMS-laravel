@@ -65,6 +65,7 @@ return [
         'inactive_profile' => 'Le profil specialise selectionne est inactif.',
         'profile_mismatch' => 'Le profil specialise selectionne ne correspond pas au profil actif.',
         'confirm_delete' => 'Effacer cette section specialisee ?',
+        'favorite_loaded' => 'Favori de specialite charge.',
     ],
 
     'forms' => [
@@ -177,5 +178,18 @@ return [
             'consent_type' => 'Type de consentement',
             'consent_notes' => 'Notes de consentement',
         ],
+    ],
+
+    'favorites' => [
+        'title' => 'Favoris',
+        'specialty_favorites' => 'Favoris de specialite',
+        'all_options' => 'Toutes les options',
+        'badge' => 'Favori',
+        'common_for_specialty' => 'Frequent pour :specialty',
+        'no_favorites' => 'Aucun favori de specialite configure.',
+        'insert_instruction' => 'Inserer la consigne',
+        'smart_defaults' => 'Valeurs par defaut intelligentes',
+        'frequency_defaults' => 'Frequences par defaut',
+        'use_global_search_hint' => 'Utilisez le champ de recherche/selection existant pour choisir les elements du catalogue.',
     ],
 ];

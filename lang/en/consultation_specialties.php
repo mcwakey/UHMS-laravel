@@ -65,6 +65,7 @@ return [
         'inactive_profile' => 'The selected specialist profile is inactive.',
         'profile_mismatch' => 'The selected specialist profile does not match the active consultation profile.',
         'confirm_delete' => 'Clear this specialist section?',
+        'favorite_loaded' => 'Specialty favorite loaded.',
     ],
 
     'forms' => [
@@ -177,5 +178,18 @@ return [
             'consent_type' => 'Consent type',
             'consent_notes' => 'Consent notes',
         ],
+    ],
+
+    'favorites' => [
+        'title' => 'Favorites',
+        'specialty_favorites' => 'Specialty favorites',
+        'all_options' => 'All options',
+        'badge' => 'Favorite',
+        'common_for_specialty' => 'Common for :specialty',
+        'no_favorites' => 'No specialty favorites configured.',
+        'insert_instruction' => 'Insert instruction',
+        'smart_defaults' => 'Smart defaults',
+        'frequency_defaults' => 'Frequency defaults',
+        'use_global_search_hint' => 'Use the existing search/select field to choose linked catalogue items.',
     ],
 ];

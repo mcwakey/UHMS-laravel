@@ -55,8 +55,9 @@ use App\Services\Consultation\ConsultationActionContext;
 use App\Services\Consultation\ConsultationActionException;
 use App\Services\Consultation\ConsultationActionGuard;
 use App\Services\Consultation\ConsultationIdempotencyService;
-use App\Services\Consultation\Specialty\ConsultationSpecialtyLayoutService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyEntryService;
+use App\Services\Consultation\Specialty\ConsultationSpecialtyFavoriteService;
+use App\Services\Consultation\Specialty\ConsultationSpecialtyLayoutService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyProfileResolver;
 use App\Services\HistoryOfPresentingComplaintService;
 use App\Services\LabService;
@@ -364,6 +365,8 @@ trait HandlesConsultationWorkspace
         $specialtyEntries = $selectedRoute
             ? app(ConsultationSpecialtyEntryService::class)->entriesAsArray($selectedRoute, $specialtyContext->profile)
             : [];
+        $specialtyFavorites = app(ConsultationSpecialtyFavoriteService::class)->getWorkspaceDefaults($specialtyContext->profile);
+        $frequencyDefaults = $specialtyFavorites['frequency_defaults'] ?? $frequencyOptions->options();
 
         return view('consultations.show', [
             'visit' => $data['visit'],
@@ -395,9 +398,10 @@ trait HandlesConsultationWorkspace
             'specialtyContext' => $specialtyContext->toArray(),
             'specialtyLayout' => $specialtyLayout,
             'specialtyEntries' => $specialtyEntries,
+            'specialtyFavorites' => $specialtyFavorites,
             'entryPermissions' => $this->entryPermissions,
-            'prescriptionFrequencyOptions' => $frequencyOptions->options(),
-            'taskFrequencyOptions' => $frequencyOptions->options(),
+            'prescriptionFrequencyOptions' => $frequencyDefaults,
+            'taskFrequencyOptions' => $frequencyDefaults,
             'frequencyDoseMap' => $frequencyOptions->doseMap(),
         ]);
     }

@@ -683,6 +683,21 @@
                                         <form data-ajax-form="diagnoses" data-consultation-form="diagnoses" data-refresh-section="diagnoses" data-route-context-required="true" action="{{ route('admin.consultations.diagnoses.store', $visit) }}" method="POST">
                                             @csrf
                                             <x-consultation-idempotency-key action="diagnosis.create" />
+                                            @php
+                                                $diagnosisFavorites = collect($specialtyFavorites['diagnosis'] ?? []);
+                                            @endphp
+                                            @if($diagnosisFavorites->isNotEmpty())
+                                                <div class="mb-2">
+                                                    <div class="small text-muted fw-semibold mb-1">{{ __('consultation_specialties.favorites.specialty_favorites') }}</div>
+                                                    <div class="d-flex flex-wrap gap-1">
+                                                        @foreach($diagnosisFavorites->take(8) as $favorite)
+                                                            <button type="button" class="btn btn-outline-primary btn-xs" onclick="document.getElementById('diagnosis_description').value = this.dataset.favoriteLabel" data-favorite-label="{{ $favorite['label'] }}">
+                                                                {{ $favorite['label'] }} <span class="badge bg-primary-subtle text-primary ms-1">{{ __('consultation_specialties.favorites.badge') }}</span>
+                                                            </button>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @endif
                                             <div class="row g-2">
                                                 <div class="col-12">
                                                     <label class="form-label small">ICD-10 <small class="text-muted">(optional search)</small></label>
@@ -694,7 +709,11 @@
                                                 <div class="col-12">
                                                     <label class="form-label small">Description <span class="text-danger">*</span></label>
                                                     <input type="text" name="description" id="diagnosis_description" class="form-control" required placeholder="Type diagnosis or search ICD-10 above..." autocomplete="off" list="diagnosisSuggestions">
-                                                    <datalist id="diagnosisSuggestions"></datalist>
+                                                    <datalist id="diagnosisSuggestions">
+                                                        @foreach($diagnosisFavorites as $favorite)
+                                                            <option value="{{ $favorite['label'] }}"></option>
+                                                        @endforeach
+                                                    </datalist>
                                                 </div>
                                                 <div class="col-6">
                                                     <label class="form-label small">ICD-10 Code (Manual)</label>
@@ -854,6 +873,17 @@
                                                     <label class="form-label small">Select Services <span class="text-danger">*</span></label>
                                                     <select name="service_ids[]" id="investigationServicesSelect" class="form-select" multiple disabled data-placeholder="{{ __('consultations.search_services') }}"></select>
                                                     <small id="investigationServicesHelp" class="text-muted">Select a department first to load services</small>
+                                                    @php
+                                                        $investigationFavorites = collect($specialtyFavorites['investigation'] ?? []);
+                                                    @endphp
+                                                    @if($investigationFavorites->isNotEmpty())
+                                                        <div class="mt-2 d-flex flex-wrap gap-1">
+                                                            @foreach($investigationFavorites->take(8) as $favorite)
+                                                                <span class="badge bg-info-subtle text-info">{{ $favorite['label'] }}</span>
+                                                            @endforeach
+                                                        </div>
+                                                        <small class="text-muted">{{ __('consultation_specialties.favorites.use_global_search_hint') }}</small>
+                                                    @endif
                                                 </div>
                                                 @endif
                                                 <div class="col-12">
@@ -1131,6 +1161,16 @@
                                                                         data-unit="{{ $drug->unit ?? '' }}">{{ $drug->name }}{{ $drug->generic_name ? ' ('.$drug->generic_name.')' : '' }}{{ $drug->strength ? ' - '.$drug->strength : '' }}{{ $drug->dosage_form ? ' ['.$drug->dosage_form.']' : '' }}</option>
                                                                 @endforeach
                                                             </select>
+                                                            @php
+                                                                $drugFavorites = collect($specialtyFavorites['drug'] ?? []);
+                                                            @endphp
+                                                            @if($drugFavorites->isNotEmpty())
+                                                                <div class="mt-1 d-flex flex-wrap gap-1">
+                                                                    @foreach($drugFavorites->take(6) as $favorite)
+                                                                        <span class="badge bg-primary-subtle text-primary">{{ $favorite['label'] }}</span>
+                                                                    @endforeach
+                                                                </div>
+                                                            @endif
                                                             <input type="hidden" name="items[0][drug_name]" class="drug-name-input">
                                                         </div>
                                                         <div class="col-md-2">
@@ -1141,7 +1181,7 @@
                                                             <label class="form-label small">Freq <span class="text-danger">*</span></label>
                                                             <select name="items[0][frequency]" class="form-select form-select-sm" required>
                                                                 @foreach($prescriptionFrequencyOptions as $option)
-                                                                    <option value="{{ $option['value'] }}" @selected($option['value'] === 'TDS')>{{ $option['label'] }}</option>
+                                                                    <option value="{{ $option['value'] }}" @selected($option['value'] === 'TDS')>{{ $option['label'] }}{{ ($option['is_favorite'] ?? false) ? ' - '.__('consultation_specialties.favorites.badge') : '' }}</option>
                                                                 @endforeach
                                                             </select>
                                                         </div>
@@ -1298,6 +1338,17 @@
                                                     <select name="service_catalog_id" id="procedureServiceSelect" class="form-select form-select-sm" required disabled data-placeholder="{{ __('consultations.search_procedure_service') }}">
                                                         <option value="">{{ __('consultations.select_department_first') }}</option>
                                                     </select>
+                                                    @php
+                                                        $procedureFavorites = collect($specialtyFavorites['procedure'] ?? []);
+                                                    @endphp
+                                                    @if($procedureFavorites->isNotEmpty())
+                                                        <div class="mt-2 d-flex flex-wrap gap-1">
+                                                            @foreach($procedureFavorites->take(8) as $favorite)
+                                                                <span class="badge bg-warning-subtle text-warning">{{ $favorite['label'] }}</span>
+                                                            @endforeach
+                                                        </div>
+                                                        <small class="text-muted">{{ __('consultation_specialties.favorites.use_global_search_hint') }}</small>
+                                                    @endif
                                                 </div>
                                                 <div class="col-md-4">
                                                     <label class="form-label small">Priority <span class="text-danger">*</span></label>
@@ -1553,13 +1604,28 @@
                                             <div class="row g-2">
                                                 <div class="col-md-6">
                                                     <label class="form-label small">Task Title <span class="text-danger">*</span></label>
-                                                    <input type="text" name="title" class="form-control form-control-sm" required placeholder="e.g., Follow up on lab results">
+                                                    @php
+                                                        $taskFavorites = collect($specialtyFavorites['task'] ?? []);
+                                                    @endphp
+                                                    <input type="text" name="title" id="taskTitleInput" class="form-control form-control-sm" required placeholder="e.g., Follow up on lab results" list="taskFavoriteSuggestions">
+                                                    <datalist id="taskFavoriteSuggestions">
+                                                        @foreach($taskFavorites as $favorite)
+                                                            <option value="{{ $favorite['label'] }}"></option>
+                                                        @endforeach
+                                                    </datalist>
+                                                    @if($taskFavorites->isNotEmpty())
+                                                        <div class="mt-1 d-flex flex-wrap gap-1">
+                                                            @foreach($taskFavorites->take(6) as $favorite)
+                                                                <button type="button" class="btn btn-outline-secondary btn-xs" onclick="document.getElementById('taskTitleInput').value = this.dataset.favoriteLabel" data-favorite-label="{{ $favorite['label'] }}">{{ $favorite['label'] }}</button>
+                                                            @endforeach
+                                                        </div>
+                                                    @endif
                                                 </div>
                                                 <div class="col-md-3">
                                                     <label class="form-label small">{{ __('consultations.task_frequency') }} <span class="text-danger">*</span></label>
                                                     <select name="frequency" class="form-select form-select-sm" required>
                                                         @foreach($taskFrequencyOptions as $option)
-                                                            <option value="{{ $option['value'] }}" @selected($option['value'] === 'OD')>{{ $option['label'] }}</option>
+                                                            <option value="{{ $option['value'] }}" @selected($option['value'] === 'OD')>{{ $option['label'] }}{{ ($option['is_favorite'] ?? false) ? ' - '.__('consultation_specialties.favorites.badge') : '' }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>
@@ -1810,8 +1876,20 @@
                                                 </div>
                                                 <div class="col-12">
                                                     <label class="form-label">{{ __('consultations.workspace.clinical_instruction') }}</label>
-                                                    <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" rows="2" placeholder="{{ __('consultations.workspace.clinical_instruction_placeholder') }}">{{ old('notes', $followUpAppointment?->notes) }}</textarea>
+                                                    <textarea name="notes" id="followUpInstructionInput" class="form-control @error('notes') is-invalid @enderror" rows="2" placeholder="{{ __('consultations.workspace.clinical_instruction_placeholder') }}">{{ old('notes', $followUpAppointment?->notes) }}</textarea>
                                                     @error('notes')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                                    @php
+                                                        $followUpFavorites = collect($specialtyFavorites['follow_up_instruction'] ?? []);
+                                                    @endphp
+                                                    @if($followUpFavorites->isNotEmpty())
+                                                        <div class="mt-2 d-flex flex-wrap gap-1">
+                                                            @foreach($followUpFavorites->take(6) as $favorite)
+                                                                <button type="button" class="btn btn-outline-info btn-xs" onclick="const target = document.getElementById('followUpInstructionInput'); target.value = target.value ? target.value + '\n' + this.dataset.favoriteLabel : this.dataset.favoriteLabel;" data-favorite-label="{{ $favorite['label'] }}">
+                                                                    {{ $favorite['label'] }}
+                                                                </button>
+                                                            @endforeach
+                                                        </div>
+                                                    @endif
                                                 </div>
                                                 <div class="col-12">
                                                     <div class="form-check">

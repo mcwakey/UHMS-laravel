@@ -49,6 +49,11 @@ class ConsultationSpecialtyProfile extends Model
         return $this->hasMany(ConsultationSpecialtyEntry::class);
     }
 
+    public function favorites(): HasMany
+    {
+        return $this->hasMany(ConsultationSpecialtyFavorite::class);
+    }
+
     public function mappings(): HasMany
     {
         return $this->hasMany(ConsultationSpecialtyProfileMapping::class);
