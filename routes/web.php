@@ -1,6 +1,13 @@
 <?php
 
 use App\Http\Controllers\Admin\Billing\AccountCategoryController;
+use App\Http\Controllers\Admin\ConsultationSpecialtyFavoriteController;
+use App\Http\Controllers\Admin\ConsultationSpecialtyMappingController;
+use App\Http\Controllers\Admin\ConsultationSpecialtyOrderSetController as AdminConsultationSpecialtyOrderSetController;
+use App\Http\Controllers\Admin\ConsultationSpecialtyOrderSetItemController;
+use App\Http\Controllers\Admin\ConsultationSpecialtyProfileController;
+use App\Http\Controllers\Admin\ConsultationSpecialtySectionController;
+use App\Http\Controllers\Admin\DoctorConsultationPreferenceAdminController;
 use App\Http\Controllers\Admin\Reporting\ActivityLogController;
 use App\Http\Controllers\Admin\AdmissionsWard\AdmissionController;
 use App\Http\Controllers\Admin\AdmissionsWard\AdmissionBedWorkflowController;
@@ -1537,6 +1544,54 @@ Route::middleware('auth')->group(function () {
             Route::post('specialties', [SpecialtyController::class, 'store'])->name('specialties.store');
             Route::put('specialties/{specialty}', [SpecialtyController::class, 'update'])->name('specialties.update');
             Route::patch('specialties/{specialty}/toggle', [SpecialtyController::class, 'toggle'])->name('specialties.toggle');
+        });
+
+        // Consultation specialty configuration
+        Route::middleware('can:consultation-specialties.view')->prefix('consultation-specialties')->name('consultation-specialties.')->group(function () {
+            Route::get('/', [ConsultationSpecialtyProfileController::class, 'index'])->name('index');
+            Route::get('create', [ConsultationSpecialtyProfileController::class, 'create'])->name('create')->middleware('can:consultation-specialties.create');
+            Route::post('/', [ConsultationSpecialtyProfileController::class, 'store'])->name('store')->middleware('can:consultation-specialties.create');
+            Route::post('reorder', [ConsultationSpecialtyProfileController::class, 'reorder'])->name('reorder')->middleware('can:consultation-specialties.configure');
+
+            Route::get('mappings', [ConsultationSpecialtyMappingController::class, 'index'])->name('mappings.index');
+            Route::post('mappings', [ConsultationSpecialtyMappingController::class, 'store'])->name('mappings.store')->middleware('can:consultation-specialties.configure');
+            Route::patch('mappings/{mapping}', [ConsultationSpecialtyMappingController::class, 'update'])->name('mappings.update')->middleware('can:consultation-specialties.configure');
+            Route::delete('mappings/{mapping}', [ConsultationSpecialtyMappingController::class, 'destroy'])->name('mappings.destroy')->middleware('can:consultation-specialties.delete');
+
+            Route::get('doctor-preferences', [DoctorConsultationPreferenceAdminController::class, 'index'])->name('doctor-preferences.index')->middleware('can:consultation-specialties.configure');
+            Route::delete('doctor-preferences/{preference}', [DoctorConsultationPreferenceAdminController::class, 'destroy'])->name('doctor-preferences.destroy')->middleware('can:consultation-specialties.configure');
+
+            Route::get('{profile}', [ConsultationSpecialtyProfileController::class, 'show'])->name('show');
+            Route::get('{profile}/edit', [ConsultationSpecialtyProfileController::class, 'edit'])->name('edit')->middleware('can:consultation-specialties.update');
+            Route::patch('{profile}', [ConsultationSpecialtyProfileController::class, 'update'])->name('update')->middleware('can:consultation-specialties.update');
+            Route::delete('{profile}', [ConsultationSpecialtyProfileController::class, 'destroy'])->name('destroy')->middleware('can:consultation-specialties.delete');
+
+            Route::get('{profile}/sections', [ConsultationSpecialtySectionController::class, 'index'])->name('sections.index');
+            Route::post('{profile}/sections', [ConsultationSpecialtySectionController::class, 'store'])->name('sections.store')->middleware('can:consultation-specialties.configure');
+            Route::patch('{profile}/sections/{section}', [ConsultationSpecialtySectionController::class, 'update'])->name('sections.update')->middleware('can:consultation-specialties.configure');
+            Route::delete('{profile}/sections/{section}', [ConsultationSpecialtySectionController::class, 'destroy'])->name('sections.destroy')->middleware('can:consultation-specialties.delete');
+            Route::post('{profile}/sections/reorder', [ConsultationSpecialtySectionController::class, 'reorder'])->name('sections.reorder')->middleware('can:consultation-specialties.configure');
+
+            Route::get('{profile}/favorites', [ConsultationSpecialtyFavoriteController::class, 'index'])->name('favorites.index');
+            Route::post('{profile}/favorites', [ConsultationSpecialtyFavoriteController::class, 'store'])->name('favorites.store')->middleware('can:consultation-specialties.configure');
+            Route::patch('{profile}/favorites/{favorite}', [ConsultationSpecialtyFavoriteController::class, 'update'])->name('favorites.update')->middleware('can:consultation-specialties.configure');
+            Route::delete('{profile}/favorites/{favorite}', [ConsultationSpecialtyFavoriteController::class, 'destroy'])->name('favorites.destroy')->middleware('can:consultation-specialties.delete');
+            Route::post('{profile}/favorites/reorder', [ConsultationSpecialtyFavoriteController::class, 'reorder'])->name('favorites.reorder')->middleware('can:consultation-specialties.configure');
+
+            Route::get('{profile}/order-sets', [AdminConsultationSpecialtyOrderSetController::class, 'index'])->name('order-sets.index');
+            Route::get('{profile}/order-sets/create', [AdminConsultationSpecialtyOrderSetController::class, 'create'])->name('order-sets.create')->middleware('can:consultation-specialties.configure');
+            Route::post('{profile}/order-sets', [AdminConsultationSpecialtyOrderSetController::class, 'store'])->name('order-sets.store')->middleware('can:consultation-specialties.configure');
+            Route::get('{profile}/order-sets/{orderSet}', [AdminConsultationSpecialtyOrderSetController::class, 'show'])->name('order-sets.show');
+            Route::get('{profile}/order-sets/{orderSet}/edit', [AdminConsultationSpecialtyOrderSetController::class, 'edit'])->name('order-sets.edit')->middleware('can:consultation-specialties.configure');
+            Route::patch('{profile}/order-sets/{orderSet}', [AdminConsultationSpecialtyOrderSetController::class, 'update'])->name('order-sets.update')->middleware('can:consultation-specialties.configure');
+            Route::delete('{profile}/order-sets/{orderSet}', [AdminConsultationSpecialtyOrderSetController::class, 'destroy'])->name('order-sets.destroy')->middleware('can:consultation-specialties.delete');
+            Route::post('{profile}/order-sets/reorder', [AdminConsultationSpecialtyOrderSetController::class, 'reorder'])->name('order-sets.reorder')->middleware('can:consultation-specialties.configure');
+
+            Route::get('{profile}/order-sets/{orderSet}/items', [ConsultationSpecialtyOrderSetItemController::class, 'index'])->name('order-sets.items.index');
+            Route::post('{profile}/order-sets/{orderSet}/items', [ConsultationSpecialtyOrderSetItemController::class, 'store'])->name('order-sets.items.store')->middleware('can:consultation-specialties.configure');
+            Route::patch('{profile}/order-sets/{orderSet}/items/{item}', [ConsultationSpecialtyOrderSetItemController::class, 'update'])->name('order-sets.items.update')->middleware('can:consultation-specialties.configure');
+            Route::delete('{profile}/order-sets/{orderSet}/items/{item}', [ConsultationSpecialtyOrderSetItemController::class, 'destroy'])->name('order-sets.items.destroy')->middleware('can:consultation-specialties.delete');
+            Route::post('{profile}/order-sets/{orderSet}/items/reorder', [ConsultationSpecialtyOrderSetItemController::class, 'reorder'])->name('order-sets.items.reorder')->middleware('can:consultation-specialties.configure');
         });
 
         // Statistical Reports / Analytics — per-page permission is enforced in the

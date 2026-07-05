@@ -1496,6 +1496,14 @@ class SidebarMenuBuilder
                         'module' => 'services',
                     ],
                     [
+                        'label' => 'Consultation Specialties',
+                        'icon' => 'ti ti-layout-board',
+                        'route' => 'admin.consultation-specialties.index',
+                        'active_patterns' => ['admin.consultation-specialties.*'],
+                        'permission' => 'consultation-specialties.view',
+                        'module' => 'consultation',
+                    ],
+                    [
                         'label' => 'Insurance Providers',
                         'icon' => 'ti ti-shield-check',
                         'route' => 'admin.insurance-providers.index',

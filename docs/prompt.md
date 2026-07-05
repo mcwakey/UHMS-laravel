@@ -10,34 +10,33 @@ We have completed:
 * Phase 6: Specialty Order Sets
 * Phase 7: Specialty Completion Readiness
 * Phase 8: Specialty Summary Builder
+* Phase 9: Doctor Personal Workspace
 
-Phase 8 added preview-only specialty summary generation. Generated summaries are not auto-saved; they only insert into the existing final-note textarea after doctor action, and the doctor must still use the existing Save action.
+Phase 9 added a compact doctor specialty workspace header with doctor-scoped payload, quick actions, pinned actions, compact mode preferences, lightweight metrics, readiness/order-set/summary alerts, and safe fallback behavior.
 
 Now implement:
 
-# Consultation Specialist Extension — Phase 9: Doctor Personal Workspace
+# Consultation Specialist Extension — Phase 10: Admin Configuration UI
 
-## Phase 9 Goal
+## Phase 10 Goal
 
-Make the consultation workspace feel personal to the doctor and their active specialty.
+Build admin-facing configuration screens for the specialist consultation system.
 
-When a doctor opens a consultation, UHMS should show a compact personal clinical workspace identity:
+Admins should be able to manage the configuration that currently exists mostly through seeders/code:
 
-```text id="nmxx13"
-Dr. Mensah
-Eye Clinic Workspace
-
-Today:
-- 12 waiting
-- 4 reviewed
-- 3 pending results
-- 2 follow-ups due
-
-Quick actions:
-Visual Acuity · IOP · Eye Examination · Generate Summary · Preview Order Set
+```text
+Specialty profiles
+Specialty sections
+Specialty mappings
+Specialty favorites
+Specialty order sets
+Order set items
+Doctor consultation preferences visibility/reset where safe
 ```
 
-This phase should not change clinical save behavior. It should personalize the workspace using existing specialty profile, department context, readiness, favorites, order sets, summary builder, and doctor preferences.
+This phase is about **configuration management**, not clinical workflow changes.
+
+The consultation workspace must continue working exactly as it does now.
 
 ---
 
@@ -45,714 +44,805 @@ This phase should not change clinical save behavior. It should personalize the w
 
 Do not rewrite the consultation module.
 
-Do not create separate doctor workspaces for physio, eye, dental, etc.
-
-Do not replace existing department dashboards.
+Do not create separate specialist consultation modules.
 
 Do not implement billing/service mapping yet.
 
-Do not build full admin configuration UI yet.
+Do not implement dashboard integration yet.
+
+Do not make readiness rules or summary templates fully database-driven yet unless it is already trivial and safe.
+
+Do not allow admins to edit raw unsafe PHP/template logic.
+
+Do not expose patient clinical data in admin configuration pages.
 
 Do not run the full test suite yet.
 
 Only run focused checks for this phase.
 
-The personal workspace must be additive and compact. Do not make the consultation page heavy or crowded.
-
-General medicine must remain clean and not overloaded.
-
-If doctor workspace data fails to load, the consultation page must still open normally.
+If admin configuration pages fail, the consultation workspace must still keep working from seeded/configured data.
 
 ---
 
 # Current Context
 
-Phase 1 created:
+Existing specialist consultation system includes:
 
-```text id="e753sv"
+```text
+consultation_specialty_profiles
+consultation_specialty_sections
+consultation_specialty_profile_mappings
+consultation_specialty_favorites
+consultation_specialty_order_sets
+consultation_specialty_order_set_items
 doctor_consultation_preferences
 ```
 
-Phase 2 added active specialty resolution.
+Existing permissions from Phase 1 include:
 
-Phase 3 added specialty layout and identity strip.
+```text
+consultation-specialties.view
+consultation-specialties.create
+consultation-specialties.update
+consultation-specialties.delete
+consultation-specialties.configure
+```
 
-Phase 4 added structured specialist forms.
+Phase 9 added preference routes:
 
-Phase 5 added specialty favorites and frequency defaults.
+```text
+PATCH admin/consultations/preferences/pinned-actions
+PATCH admin/consultations/preferences/layout
+```
 
-Phase 6 added specialty order sets.
-
-Phase 7 added specialty readiness.
-
-Phase 8 added specialty summary builder metadata and preview endpoint.
-
-Phase 9 should bring those pieces together into a personalized doctor-facing workspace layer.
+Use the project’s existing admin UI style, route naming style, permission middleware, validation style, flash/JSON response style, audit logging style, and localization conventions.
 
 ---
 
 # Required Deliverables
 
-## 1. Inspect Existing Doctor/User Context
+## 1. Inspect Existing Admin Setup Patterns
 
-Before coding, inspect existing code for:
+Before coding, inspect existing admin configuration screens for:
 
-```text id="i3b2ca"
-auth user model
-doctor/staff profile model if any
-department assignment
-primary department
-active dashboard/department context
-consultation route queue
-visit consultation route status
-today's consultations query
-appointments query
-pending investigation result query
-pending prescription query
-pending procedure/task query
-doctor_consultation_preferences from Phase 1
-current specialty identity strip from Phase 3
-right-panel structure
-page config JSON
-consultation-show JavaScript
+```text
+Departments
+Services
+Roles/permissions
+ICD codes if present
+Clinical setup/configuration pages
+Consultation routes/setup if present
+Frequency options if present
+Seeder/configuration management patterns
+Activity/audit logging patterns
 ```
 
-Do not guess model names.
+Identify:
+
+```text
+route groups
+controller namespaces
+Blade layout
+table/list style
+form style
+pagination/search/filter patterns
+permission middleware
+breadcrumb/menu patterns
+translation namespace
+delete/deactivate conventions
+ActivityLogService usage
+```
+
+Do not guess. Follow the actual project convention.
 
 Document findings in the phase report.
 
 ---
 
-## 2. Add Doctor Workspace DTO
+## 2. Add Admin Navigation Entry
 
-Create:
+Add a clean admin navigation entry under the most appropriate existing menu.
 
-```text id="7uge37"
-app/Data/Consultation/Specialty/DoctorSpecialtyWorkspace.php
+Suggested location:
+
+```text
+Admin / Clinical Setup / Consultation Specialties
 ```
 
-Or follow the project’s DTO/data convention.
+or if the project has a consultation setup area:
 
-It should contain:
-
-```php id="69tinc"
-doctor
-profile
-department
-specialty
-metrics
-quickActions
-pinnedActions
-alerts
-preferences
-todayContext
-summaryBuilder
-readiness
-orderSets
-isFallback
+```text
+Admin / Consultation Setup / Specialties
 ```
 
-Provide:
+Menu should be visible only to users with:
 
-```php id="gkzro3"
-toArray(): array
+```text
+consultation-specialties.view
 ```
 
-Payload must be Blade/JSON safe.
+Suggested sub-pages:
 
-Do not expose sensitive staff/private user data unnecessarily.
+```text
+Specialty Profiles
+Sections
+Mappings
+Favorites
+Order Sets
+```
+
+Do not overcrowd the sidebar.
 
 ---
 
-## 3. Add Doctor Workspace Service
+## 3. Specialty Profile Management
 
-Create:
+Create admin controller:
 
-```text id="i548g0"
-app/Services/Consultation/Specialty/DoctorSpecialtyWorkspaceService.php
+```text
+app/Http/Controllers/Admin/ConsultationSpecialtyProfileController.php
 ```
 
-Main method:
+Or follow the actual project namespace convention.
 
-```php id="47rz8y"
-public function build(
-    User $user,
-    $consultation,
-    ResolvedConsultationSpecialty|array $specialtyContext,
-    array $workspacePayload = []
-): DoctorSpecialtyWorkspace;
+Routes:
+
+```text
+GET    admin/consultation-specialties
+GET    admin/consultation-specialties/create
+POST   admin/consultation-specialties
+GET    admin/consultation-specialties/{profile}
+GET    admin/consultation-specialties/{profile}/edit
+PATCH  admin/consultation-specialties/{profile}
+DELETE admin/consultation-specialties/{profile}
 ```
 
-Responsibilities:
+Route names should follow project convention, for example:
 
-```text id="b0nmv9"
-Resolve doctor identity
-Resolve active specialty profile
-Resolve active department/context
-Load doctor consultation preferences
-Build specialty-specific metrics
-Build specialty-specific quick actions
-Build lightweight alerts
-Expose pinned actions
-Expose summary-builder availability
-Expose order-set availability
-Expose readiness status
-Return safe fallback when anything fails
+```text
+admin.consultation-specialties.index
+admin.consultation-specialties.create
+admin.consultation-specialties.store
+admin.consultation-specialties.show
+admin.consultation-specialties.edit
+admin.consultation-specialties.update
+admin.consultation-specialties.destroy
+```
+
+Fields:
+
+```text
+code
+name
+description
+department_type
+icon
+color
+is_active
+sort_order
+metadata
 ```
 
 Rules:
 
-* Keep queries light.
-* Scope metrics to the doctor, active department, active specialty, and current day where possible.
-* If exact scoping is not available, use safe approximate counts and document it.
-* Do not block page rendering if metrics fail.
-* Cache only if project convention supports it. If not, keep queries simple.
-* No patient-sensitive details in aggregate workspace metrics.
+* `code` must be unique and slug-like.
+* Prevent deleting `general_medicine`.
+* Prefer soft deactivate over destructive delete if project convention supports it.
+* If deleting a non-general profile, prevent delete when it has entries/applications unless project supports safe deletion.
+* Admin can activate/deactivate profiles.
+* Admin can reorder profiles.
+* Audit profile create/update/deactivate/delete.
+
+Views:
+
+```text
+index list with search/filter
+create form
+edit form
+show/details page
+```
+
+Index should show:
+
+```text
+name
+code
+department_type
+active status
+section count
+favorite count
+order set count
+mapping count
+sort order
+actions
+```
 
 ---
 
-## 4. Add Quick Action Registry
+## 4. Specialty Section Management
 
-Create:
+Create controller:
 
-```text id="v0675n"
-app/Services/Consultation/Specialty/ConsultationSpecialtyQuickActionRegistry.php
+```text
+app/Http/Controllers/Admin/ConsultationSpecialtySectionController.php
+```
+
+Routes can be nested under profile:
+
+```text
+GET    admin/consultation-specialties/{profile}/sections
+POST   admin/consultation-specialties/{profile}/sections
+PATCH  admin/consultation-specialties/{profile}/sections/{section}
+DELETE admin/consultation-specialties/{profile}/sections/{section}
+POST   admin/consultation-specialties/{profile}/sections/reorder
+```
+
+Fields:
+
+```text
+section_key
+label
+component
+display_order
+is_required
+is_visible
+config
+```
+
+Rules:
+
+* `section_key` must be unique per profile.
+* Existing known section keys should be selectable from a dropdown.
+* Allow custom future section keys but validate slug-like format.
+* `component` should not accept arbitrary unsafe file paths.
+* Prefer selecting from registered components returned by `ConsultationSpecialtySectionComponentRegistry`.
+* Unknown/custom section should use the generic shell.
+* Admin can mark visible/hidden.
+* Admin can mark required.
+* Admin can reorder sections.
+* Prevent deleting all visible sections from `general_medicine`.
+* If profile has no visible sections, warn admin that layout will fall back to general.
+
+Important:
+
+Do not make this screen capable of editing PHP/Blade templates.
+
+---
+
+## 5. Specialty Mapping Management
+
+Create controller:
+
+```text
+app/Http/Controllers/Admin/ConsultationSpecialtyMappingController.php
+```
+
+Routes:
+
+```text
+GET    admin/consultation-specialties/mappings
+POST   admin/consultation-specialties/mappings
+PATCH  admin/consultation-specialties/mappings/{mapping}
+DELETE admin/consultation-specialties/mappings/{mapping}
+```
+
+Manage:
+
+```text
+profile
+department
+consultation_route_id if applicable
+department_type
+source
+priority
+is_active
+metadata
+```
+
+Rules:
+
+* Admin can map department type to profile.
+* Admin can map department to profile.
+* Admin can map consultation route/session to profile if the project has a stable route/session model.
+* Do not require all mapping targets.
+* At least one of department, department_type, consultation_route_id, or user_id must be present.
+* Warn if mapping conflicts with a higher-priority mapping.
+* Sorting/priority should be clear.
+* Do not create or modify departments here.
+
+Index filters:
+
+```text
+profile
+department_type
+department
+active/inactive
+```
+
+---
+
+## 6. Specialty Favorites Management
+
+Create controller:
+
+```text
+app/Http/Controllers/Admin/ConsultationSpecialtyFavoriteController.php
+```
+
+Routes can be nested under profile:
+
+```text
+GET    admin/consultation-specialties/{profile}/favorites
+POST   admin/consultation-specialties/{profile}/favorites
+PATCH  admin/consultation-specialties/{profile}/favorites/{favorite}
+DELETE admin/consultation-specialties/{profile}/favorites/{favorite}
+POST   admin/consultation-specialties/{profile}/favorites/reorder
+```
+
+Fields:
+
+```text
+favorite_type
+favoritable_type
+favoritable_id
+code
+label
+description
+search_terms
+metadata
+sort_order
+is_active
+```
+
+Favorite types:
+
+```text
+diagnosis
+investigation
+procedure
+drug
+frequency
+task
+follow_up_instruction
+clinical_instruction
+```
+
+Rules:
+
+* Label is required.
+* Favorite type is required.
+* Profile is required.
+* If favoritable is selected, validate the linked model exists.
+* If linked model does not exist, allow label-only favorite.
+* Do not allow arbitrary unsafe class names for `favoritable_type`.
+* Use a controlled list of allowed favoritable model types based on existing project models:
+
+  * ICD/diagnosis model if present
+  * Service model for investigations/procedures if present
+  * Drug model if present
+  * Other safe catalogue models if present
+* Admin can activate/deactivate favorites.
+* Admin can reorder favorites.
+* Existing workspace behavior must continue: label-only favorites remain suggestions only.
+
+Index filters:
+
+```text
+type
+active status
+linked vs label-only
+search
+```
+
+---
+
+## 7. Specialty Order Set Management
+
+Create controller:
+
+```text
+app/Http/Controllers/Admin/ConsultationSpecialtyOrderSetController.php
+```
+
+Routes nested under profile:
+
+```text
+GET    admin/consultation-specialties/{profile}/order-sets
+GET    admin/consultation-specialties/{profile}/order-sets/create
+POST   admin/consultation-specialties/{profile}/order-sets
+GET    admin/consultation-specialties/{profile}/order-sets/{orderSet}
+GET    admin/consultation-specialties/{profile}/order-sets/{orderSet}/edit
+PATCH  admin/consultation-specialties/{profile}/order-sets/{orderSet}
+DELETE admin/consultation-specialties/{profile}/order-sets/{orderSet}
+POST   admin/consultation-specialties/{profile}/order-sets/reorder
+```
+
+Fields:
+
+```text
+code
+name
+description
+category
+icon
+color
+is_active
+sort_order
+metadata
+```
+
+Rules:
+
+* `code` unique per profile.
+* Prevent destructive delete if order set has application history, unless project convention allows it.
+* Prefer deactivate when application history exists.
+* Admin can activate/deactivate.
+* Admin can reorder.
+* Audit changes.
+
+Show page should list items and recent application count, but not patient-identifying details.
+
+---
+
+## 8. Order Set Item Management
+
+Create controller:
+
+```text
+app/Http/Controllers/Admin/ConsultationSpecialtyOrderSetItemController.php
+```
+
+Routes nested under order set:
+
+```text
+GET    admin/consultation-specialties/{profile}/order-sets/{orderSet}/items
+POST   admin/consultation-specialties/{profile}/order-sets/{orderSet}/items
+PATCH  admin/consultation-specialties/{profile}/order-sets/{orderSet}/items/{item}
+DELETE admin/consultation-specialties/{profile}/order-sets/{orderSet}/items/{item}
+POST   admin/consultation-specialties/{profile}/order-sets/{orderSet}/items/reorder
+```
+
+Fields:
+
+```text
+item_type
+label
+description
+target_section
+target_field
+favoritable_type
+favoritable_id
+code
+payload
+apply_mode
+is_required
+sort_order
+is_active
+metadata
+```
+
+Allowed `item_type` values:
+
+```text
+diagnosis
+investigation
+procedure
+drug
+prescription
+frequency
+task
+follow_up_instruction
+clinical_instruction
+specialty_entry_patch
+note
+```
+
+Allowed `apply_mode` values:
+
+```text
+suggest
+insert_text
+create_task
+patch_specialty_entry
+create_diagnosis_if_supported
+create_investigation_if_linked
+create_procedure_if_linked
+create_prescription_if_linked
+```
+
+Rules:
+
+* Do not allow unsafe arbitrary apply modes.
+* Validate `target_section` exists in the parent profile when apply mode is `patch_specialty_entry`.
+* Validate `target_field` against `ConsultationSpecialtySectionSchema` when possible.
+* Payload must be valid JSON.
+* For `patch_specialty_entry`, payload should include a safe `merge` object.
+* For `create_task`, payload should include a title or label.
+* Linked catalogue items should use controlled allowed model types.
+* Label-only catalogue-sensitive items must remain suggestion-only unless explicitly supported by existing safe workflow.
+* Admin UI should show warnings for unsafe/non-auto-applicable combinations.
+
+---
+
+## 9. Doctor Preference Visibility / Reset
+
+Do not build a full staff management module.
+
+Add a small admin view only if it fits cleanly:
+
+```text
+admin/consultation-specialties/doctor-preferences
 ```
 
 Purpose:
 
-Define quick actions per specialty.
+* See which doctors have pinned actions/default layouts/default specialty preferences.
+* Reset a doctor’s consultation preference if needed.
+* Do not expose private clinical data.
+* Do not allow editing another doctor’s pinned actions in detail unless project convention supports it.
 
-Method:
+Controller:
 
-```php id="z4dcxi"
-public function actionsForProfile(ConsultationSpecialtyProfile $profile): array;
-```
-
-Each action should include:
-
-```php id="bcut0i"
-[
-    'key' => 'visual_acuity',
-    'label' => __('consultation_specialties.quick_actions.visual_acuity'),
-    'type' => 'section_anchor',
-    'target' => '#specialty-section-visual_acuity',
-    'icon' => 'eye',
-    'priority' => 10,
-    'requires_section' => 'visual_acuity',
-]
-```
-
-Supported action types:
-
-```text id="v33tw8"
-section_anchor
-open_order_sets
-generate_summary
-insert_favorite
-open_readiness
-open_tasks
-open_prescription
-open_investigations
-```
-
-Do not create risky direct mutation actions in this phase. Quick actions should navigate, open UI panels, or prefill suggestions only.
-
----
-
-# Quick Actions to Implement
-
-## General Medicine
-
-Keep light:
-
-```text id="kdc691"
-Complaints
-Examination
-Diagnosis
-Prescription
-Generate Summary
-Readiness
-```
-
-## Physiotherapy
-
-```text id="gdbias"
-Presenting Problem
-Pain Assessment
-Physical Assessment
-Treatment Plan
-Therapy Session
-Home Exercise Plan
-Order Sets
-Generate Summary
-Readiness
-```
-
-## Ophthalmology
-
-```text id="h7z3ee"
-Eye Complaint
-Visual Acuity
-Refraction
-IOP
-Eye Examination
-Prescription
-Order Sets
-Generate Summary
-Readiness
-```
-
-## Dental
-
-```text id="f7ij2u"
-Dental Complaint
-Tooth Chart
-Oral Examination
-Dental Diagnosis
-Dental Procedure
-Consent
-Order Sets
-Generate Summary
-Readiness
-```
-
----
-
-## 5. Use Doctor Consultation Preferences
-
-Use existing table:
-
-```text id="uv4j4f"
-doctor_consultation_preferences
-```
-
-Support:
-
-```text id="k7ecau"
-pinned_actions
-preferred_layout
-compact_mode
-default_consultation_specialty_profile_id
-default_department_id
-metadata
-```
-
-Add service methods if needed:
-
-```php id="6wrylv"
-getOrCreatePreference(User $user): DoctorConsultationPreference;
-updatePinnedActions(User $user, array $actions): DoctorConsultationPreference;
-updateLayoutPreference(User $user, ?string $layout, bool $compactMode): DoctorConsultationPreference;
-```
-
-Suggested service:
-
-```text id="o8h224"
-app/Services/Consultation/Specialty/DoctorConsultationPreferenceService.php
-```
-
-If a service already exists, extend it.
-
----
-
-## 6. Add Preference Controller and Routes
-
-Create controller:
-
-```text id="pgfrwf"
-app/Http/Controllers/Doctor/Consultations/DoctorConsultationPreferenceController.php
+```text
+app/Http/Controllers/Admin/DoctorConsultationPreferenceAdminController.php
 ```
 
 Actions:
 
-```php id="7sieib"
-updatePinnedActions(Request $request)
-updateLayout(Request $request)
-```
-
-Routes should follow existing authenticated doctor/consultation route conventions.
-
-Suggested names:
-
-```text id="iub8ng"
-doctor.consultations.preferences.pinned-actions.update
-doctor.consultations.preferences.layout.update
-```
-
-Validation:
-
-```text id="8fqqvj"
-pinned_actions nullable array max 12
-pinned_actions.* string max 100
-preferred_layout nullable in:default,compact,expanded
-compact_mode boolean
+```text
+index
+destroy/reset
 ```
 
 Rules:
 
-* A doctor can only update their own preferences.
-* Do not allow arbitrary unsafe action keys. Validate action keys against quick action registry plus known workspace actions.
-* Return JSON for Ajax requests.
-* Redirect back with flash for normal post if project supports it.
+* Reset deletes or clears the preference row.
+* Audit reset action.
+* Must require `consultation-specialties.configure`.
+
+If this is too much for this phase, skip the UI and document as follow-up. Do not force it.
 
 ---
 
-## 7. Add Specialty Workspace Metrics
+## 10. Validation Layer
 
-Add a lightweight metrics provider:
+Use Form Requests if project convention supports them.
 
-```text id="o5opcu"
-app/Services/Consultation/Specialty/DoctorSpecialtyWorkspaceMetricService.php
+Suggested request classes:
+
+```text
+app/Http/Requests/Admin/ConsultationSpecialtyProfileRequest.php
+app/Http/Requests/Admin/ConsultationSpecialtySectionRequest.php
+app/Http/Requests/Admin/ConsultationSpecialtyMappingRequest.php
+app/Http/Requests/Admin/ConsultationSpecialtyFavoriteRequest.php
+app/Http/Requests/Admin/ConsultationSpecialtyOrderSetRequest.php
+app/Http/Requests/Admin/ConsultationSpecialtyOrderSetItemRequest.php
 ```
 
-Main method:
+Or controller validation if that is the project’s style.
 
-```php id="qnbjxy"
-public function metricsFor(
-    User $user,
-    $consultation,
-    ConsultationSpecialtyProfile $profile,
-    mixed $department = null
-): array;
+Validation must cover:
+
+```text
+required fields
+unique constraints
+slug-like codes/keys
+allowed enums
+safe model types
+valid JSON payload
+profile ownership
+section ownership
+order set ownership
+permission checks
 ```
-
-Suggested metrics:
-
-```text id="6vz17a"
-waiting_today
-reviewed_today
-pending_completion
-pending_readiness_blocks
-pending_results
-pending_tasks
-followups_due
-order_sets_available
-summary_available
-```
-
-Rules:
-
-* Use actual existing statuses/tables where available.
-* Keep counts scoped to today and active doctor/department where possible.
-* If a metric cannot be safely computed, return null and hide it.
-* Do not expose patient names/details in this compact header.
-* Do not add heavy joins that slow the consultation page.
-
-Specialty-specific labels:
-
-## Physiotherapy
-
-```text id="ko9ibo"
-Active therapy sessions
-Pending rehab plans
-Follow-ups due
-Readiness blocks
-```
-
-## Ophthalmology
-
-```text id="snx77c"
-Eye cases waiting
-Pending eye results
-Follow-ups due
-Readiness blocks
-```
-
-## Dental
-
-```text id="jva4hi"
-Dental cases waiting
-Procedures pending
-Consent blocks
-Follow-ups due
-```
-
-Keep implementation realistic based on available data. Do not invent records.
 
 ---
 
-## 8. Add Doctor Workspace Alerts
+## 11. Audit Logging
 
-Build small non-blocking alerts from existing payloads:
+Follow existing audit/activity convention.
 
-```text id="mzdbuw"
-readiness blocking count
-readiness warning count
-order sets available
-summary builder available
-pending tasks
-missing consent for dental
-missing visual acuity for eye
-missing treatment plan for physio
+Log admin configuration changes for:
+
+```text
+profile created/updated/deactivated/deleted
+section created/updated/reordered/deleted
+mapping created/updated/deactivated/deleted
+favorite created/updated/reordered/deactivated/deleted
+order set created/updated/reordered/deactivated/deleted
+order set item created/updated/reordered/deactivated/deleted
+doctor preference reset if implemented
 ```
 
-Rules:
-
-* Alerts should be advisory.
-* Do not duplicate the full readiness card.
-* Max 3 visible alerts in the header.
-* Link alerts to the related section if possible.
-* Do not show alarming language unless completion is actually blocked.
+Do not log excessive full JSON if project avoids it. Store concise before/after metadata where safe.
 
 ---
 
-## 9. Workspace UI Changes
+## 12. Localization
 
-Update the existing specialty identity strip from Phase 3 into a richer but compact **Doctor Specialty Workspace Header**.
+Add EN/FR keys for admin UI.
 
-It should include:
+Suggested namespace:
 
-```text id="obq9d5"
-Doctor display name
-Specialty workspace name
-Department/context name if available
-Current patient/route context label if appropriate
-Small metrics chips
-Pinned quick actions
-Compact alerts
-Preference controls
+```text
+consultation_specialties.php
 ```
 
-Suggested layout:
+or separate:
 
-```text id="ymkufd"
-[Dr. Mensah] [Eye Clinic Workspace] [Department: Ophthalmology]
-Waiting: 12 · Reviewed: 4 · Pending results: 3 · Readiness: 2 blocks
-
-Quick actions:
-[Visual Acuity] [IOP] [Eye Exam] [Order Sets] [Generate Summary]
+```text
+consultation_specialty_admin.php
 ```
 
-Rules:
+Use whichever matches project convention.
 
-* Must be responsive.
-* Must not dominate the page.
-* Must not break existing patient card.
-* General medicine should remain simple.
-* If compact mode is on, show fewer metrics/actions.
-* If no metrics are available, show only identity + quick actions.
+Keys should cover:
+
+```text
+admin.title
+admin.profiles
+admin.sections
+admin.mappings
+admin.favorites
+admin.order_sets
+admin.order_set_items
+admin.create
+admin.edit
+admin.update
+admin.delete
+admin.deactivate
+admin.activate
+admin.reorder
+admin.status
+admin.active
+admin.inactive
+admin.search
+admin.filters
+admin.no_records
+admin.confirm_delete
+admin.confirm_deactivate
+admin.saved
+admin.updated
+admin.deleted
+admin.deactivated
+admin.reordered
+admin.general_profile_locked
+admin.component_registry
+admin.generic_shell
+admin.label_only_suggestion
+admin.linked_catalogue_item
+admin.application_history_exists
+admin.unsafe_apply_mode_warning
+```
+
+No hardcoded visible admin text.
 
 ---
 
-## 10. Quick Action Behavior
+## 13. UI Quality Requirements
 
-Implement quick actions as safe UI/navigation actions:
+Admin pages should be clean and practical:
 
-```text id="xuu398"
-section anchors scroll to section
-order sets opens the order set panel/modal
-generate summary opens summary preview flow
-readiness scrolls to readiness card
-prescription scrolls to prescription section
-investigations scrolls to investigations section
+```text
+searchable lists
+filters where useful
+pagination
+active/inactive badges
+linked/label-only badges
+sort order display
+quick links from profile show page to sections/favorites/order sets
+clear warnings for risky config
+empty states
+responsive forms
 ```
 
-Rules:
+No huge one-page monster forms.
 
-* No direct clinical save.
-* No direct prescription/order/procedure creation.
-* Preserve existing JavaScript.
-* Keep selectors scoped.
-* If target section does not exist, hide the action or disable it safely.
+Keep forms moderate and aligned with existing UHMS UI.
 
 ---
 
-## 11. Add Workspace Payload
-
-Update consultation workspace controller/provider to pass:
-
-```text id="c418z3"
-doctorSpecialtyWorkspace
-```
-
-to Blade and page config JSON.
-
-Payload should include:
-
-```php id="0j3b55"
-[
-    'doctor' => [
-        'name' => ...,
-        'display_name' => ...,
-    ],
-    'profile' => [...],
-    'department' => [...],
-    'metrics' => [...],
-    'quick_actions' => [...],
-    'pinned_actions' => [...],
-    'alerts' => [...],
-    'preferences' => [...],
-]
-```
-
-Do not expose email/phone unless already visible elsewhere and needed.
-
----
-
-## 12. Localisation
-
-Add EN/FR keys.
-
-Suggested keys:
-
-```text id="gqxv5e"
-workspace.doctor_workspace
-workspace.department
-workspace.today
-workspace.quick_actions
-workspace.pinned_actions
-workspace.pin
-workspace.unpin
-workspace.compact_mode
-workspace.default_layout
-workspace.no_metrics
-workspace.alerts
-workspace.readiness_blocks
-workspace.readiness_warnings
-workspace.order_sets_available
-workspace.summary_available
-
-quick_actions.complaints
-quick_actions.examination
-quick_actions.diagnosis
-quick_actions.prescription
-quick_actions.investigations
-quick_actions.procedures
-quick_actions.tasks
-quick_actions.readiness
-quick_actions.generate_summary
-quick_actions.order_sets
-quick_actions.presenting_problem
-quick_actions.pain_assessment
-quick_actions.physical_assessment
-quick_actions.treatment_plan
-quick_actions.therapy_session
-quick_actions.home_exercise_plan
-quick_actions.eye_complaint
-quick_actions.visual_acuity
-quick_actions.refraction
-quick_actions.iop
-quick_actions.eye_examination
-quick_actions.dental_complaint
-quick_actions.tooth_chart
-quick_actions.oral_examination
-quick_actions.dental_diagnosis
-quick_actions.dental_procedure
-quick_actions.consent
-
-metrics.waiting_today
-metrics.reviewed_today
-metrics.pending_completion
-metrics.pending_results
-metrics.pending_tasks
-metrics.followups_due
-metrics.readiness_blocks
-metrics.order_sets_available
-metrics.summary_available
-```
-
-No new visible text should be hardcoded.
-
----
-
-## 13. Add Focused Tests
+## 14. Focused Tests
 
 Create:
 
-```text id="vykf15"
-tests/Feature/Consultations/DoctorSpecialtyWorkspaceTest.php
+```text
+tests/Feature/Consultations/ConsultationSpecialtyAdminConfigurationTest.php
 ```
 
 Suggested tests:
 
-### Workspace payload exists
+### Permission protection
 
-* Consultation workspace includes `doctorSpecialtyWorkspace`.
+* User without permission cannot access admin specialty pages.
+* User with `consultation-specialties.view` can view index.
+* Create/update/delete/configure permissions are respected.
 
-### General medicine remains light
+### Profile management
 
-* General workspace has only general quick actions and no specialist-only overload.
+* Admin can create profile.
+* Admin can update profile.
+* Cannot delete or deactivate `general_medicine` destructively.
+* Duplicate profile code rejected.
 
-### Physiotherapy quick actions
+### Section management
 
-* Physio profile includes pain assessment, treatment plan, therapy session, home exercise, order sets, summary, readiness.
+* Admin can add section to profile.
+* Duplicate section key per profile rejected.
+* Admin can reorder sections.
+* Invalid unsafe component rejected.
+* Unknown custom section uses generic shell behavior.
 
-### Ophthalmology quick actions
+### Mapping management
 
-* Eye profile includes visual acuity, refraction, IOP, eye examination, order sets, summary, readiness.
+* Admin can create department type mapping.
+* Mapping requires at least one target.
+* Inactive mapping does not affect resolver.
+* Higher priority mapping works if resolver supports priority.
 
-### Dental quick actions
+### Favorites management
 
-* Dental profile includes tooth chart, oral examination, dental diagnosis, dental procedure, consent, order sets, summary, readiness.
+* Admin can create label-only favorite.
+* Admin can create linked favorite using allowed model type.
+* Unsafe favoritable type rejected.
+* Favorite appears in workspace after creation.
+* Inactive favorite is hidden from workspace.
 
-### Quick actions only target available sections
+### Order set management
 
-* If section is missing from layout, action is hidden or disabled safely.
+* Admin can create order set.
+* Duplicate order set code per profile rejected.
+* Cannot delete order set with application history; can deactivate instead.
 
-### Pinned actions persist
+### Order set item management
 
-* Doctor can save pinned quick actions.
-* Reload workspace returns same pinned actions.
+* Admin can create suggestion item.
+* Admin can create `patch_specialty_entry` item with valid target section/field.
+* Invalid target field rejected.
+* Unsafe apply mode rejected.
+* Payload must be valid JSON.
+* Created order set item appears in workspace preview.
 
-### Invalid pinned actions rejected
+### Audit logging
 
-* Unknown action keys are rejected.
+* At least one admin config change writes activity/audit log if project convention supports assertion.
 
-### Compact mode preference persists
+### Localisation keys
 
-* Doctor can toggle compact mode.
-* Workspace payload reflects compact mode.
+* EN/FR keys exist.
 
-### Metrics are safe
+### Existing workspace regression
 
-* Metrics return numeric/null values only.
-* No patient names are exposed.
-
-### Alerts reflect readiness
-
-* Specialist readiness blocking count appears as alert.
-* Warning-only alerts do not block page.
-
-### Workspace degrades safely
-
-* If metrics service throws or lacks data, consultation workspace still renders.
-
-### Localisation keys exist
-
-* EN/FR keys exist for new workspace/quick action labels.
-
-### Existing Phase 1-8 behavior remains stable
-
-* At minimum, run the focused specialty tests and workspace stabilisation test.
+* Phase 1-9 focused tests still pass.
+* Workspace stabilisation still passes.
 
 ---
 
-## 14. Optional Browser Smoke Test
+## 15. Optional Browser Smoke Test
 
-If the existing Playwright consultation fixture is stable, add a light smoke test:
+Only if existing browser fixture is stable:
 
-```text id="9rhsym"
-Open specialist consultation
-Confirm doctor workspace header appears
-Click quick action Visual Acuity / Pain Assessment / Tooth Chart
-Confirm page scrolls to the correct section
-Toggle compact mode or save pinned action if UI supports it
+```text
+Admin opens Consultation Specialties
+Creates a small test favorite for ophthalmology
+Opens an ophthalmology consultation
+Confirms favorite appears
+Deactivates the favorite
+Confirms it no longer appears
 ```
-
-Only do this if the fixture is already stable.
 
 Do not create a heavy browser suite in this phase.
 
 ---
 
-## 15. Minimal Checks to Run
+## 16. Minimal Checks to Run
 
 Run:
 
-```bash id="uzsbfy"
+```bash
 php artisan migrate
 php artisan db:seed --class=ConsultationSpecialtySeeder
+php artisan test tests/Feature/Consultations/ConsultationSpecialtyAdminConfigurationTest.php
 php artisan test tests/Feature/Consultations/ConsultationSpecialtyFoundationTest.php
 php artisan test tests/Feature/Consultations/ConsultationSpecialtyResolverTest.php
 php artisan test tests/Feature/Consultations/ConsultationSpecialtyLayoutTest.php
@@ -770,36 +860,36 @@ php artisan view:clear
 
 Also run PHP lint on new/modified PHP files.
 
-If localisation keys were added and the project has a localisation parity/lock command, run it.
+If localization keys were added and the project has a localization parity/lock command, run it.
 
 Do not run the wide full-suite yet.
 
 ---
 
-## 16. Phase Report
+## 17. Phase Report
 
 Create:
 
-```text id="u5n7fw"
-docs/CONSULTATION_SPECIALIST_EXTENSION_PHASE_9_DOCTOR_PERSONAL_WORKSPACE_REPORT.md
+```text
+docs/CONSULTATION_SPECIALIST_EXTENSION_PHASE_10_ADMIN_CONFIGURATION_UI_REPORT.md
 ```
 
 If the repo convention has a consultation docs subfolder, use:
 
-```text id="80hklr"
-docs/consultation/CONSULTATION_SPECIALIST_EXTENSION_PHASE_9_DOCTOR_PERSONAL_WORKSPACE_REPORT.md
+```text
+docs/consultation/CONSULTATION_SPECIALIST_EXTENSION_PHASE_10_ADMIN_CONFIGURATION_UI_REPORT.md
 ```
 
 The report must include:
 
-```text id="rm0qac"
-# Consultation Specialist Extension — Phase 9 Doctor Personal Workspace Report
+```text
+# Consultation Specialist Extension — Phase 10 Admin Configuration UI Report
 
 ## Summary
 Explain what was implemented.
 
-## Existing Doctor/Context Findings
-Document user/doctor profile, department context, queue/status, preferences, and workspace UI structures discovered.
+## Existing Admin Pattern Findings
+Document route groups, controller style, Blade layout, permissions, forms, localization, and audit conventions discovered.
 
 ## Files Added
 List all new files.
@@ -807,67 +897,60 @@ List all new files.
 ## Files Modified
 List all modified files.
 
-## Doctor Workspace Design
-Explain DTO, workspace service, quick action registry, metrics service, preference service, fallback behavior, and scoping.
+## Admin Screens Added
+List profile, section, mapping, favorite, order set, order set item, and preference screens implemented.
 
-## Quick Actions Implemented
-List quick actions for:
-- General Medicine
-- Physiotherapy
-- Ophthalmology
-- Dental
+## Validation and Safety
+Explain slug validation, allowed components, allowed model types, allowed apply modes, JSON payload validation, ownership checks, and general profile protection.
 
-## Metrics and Alerts
-Explain available metrics, hidden/null metric behavior, and alert behavior.
+## Audit Logging
+Explain what admin configuration changes are logged.
 
 ## UI Changes
-Explain the doctor specialty workspace header, pinned actions, compact mode, quick action navigation, and responsive behavior.
-
-## Preferences
-Explain how pinned actions/layout/compact mode are stored and updated.
+Explain navigation, lists, filters, forms, badges, warnings, and responsive behavior.
 
 ## Backward Compatibility
-Confirm consultation clinical save behavior, specialist forms, order sets, readiness, and summary builder remain stable.
+Confirm consultation workspace behavior, specialist forms, favorites, order sets, readiness, summary builder, and doctor workspace remain stable.
 
 ## Tests Added
-List focused tests.
+List focused admin configuration tests.
 
 ## Checks Run
 Include commands and pass/fail summary.
 
 ## Known Issues / Follow-up
 List anything for:
-- Phase 10 admin configuration UI
-- Later billing/service mapping
+- Phase 11 billing/service mapping
 - Later dashboard integration
-- Later full-suite/browser testing
+- Later full browser testing
+- Later database-driven readiness/summary templates
 ```
 
 ---
 
 # Acceptance Criteria
 
-Phase 9 is complete only when:
+Phase 10 is complete only when:
 
-* `DoctorSpecialtyWorkspace` DTO exists.
-* `DoctorSpecialtyWorkspaceService` exists.
-* `ConsultationSpecialtyQuickActionRegistry` exists.
-* Doctor preference service/controller/routes exist or existing equivalents are extended.
-* Workspace payload includes `doctorSpecialtyWorkspace`.
-* Doctor workspace header appears compactly in consultation workspace.
-* Quick actions are specialty-aware and safe.
-* Quick actions navigate/open UI only; they do not directly mutate clinical records.
-* Pinned actions persist per doctor.
-* Compact mode/layout preference persists per doctor.
-* Metrics are lightweight and do not expose patient details.
-* Alerts reflect readiness/order-set/summary state without duplicating the full readiness card.
-* General medicine remains light and stable.
-* Specialist profiles show relevant actions.
-* Workspace degrades safely if metrics/preferences fail.
-* Focused doctor workspace tests pass.
-* Phase 1-8 focused tests still pass.
+* Admin can view consultation specialty profiles.
+* Admin can create/update/deactivate non-general profiles.
+* `general_medicine` is protected.
+* Admin can manage profile sections safely.
+* Admin can manage resolver mappings safely.
+* Admin can manage specialty favorites safely.
+* Admin can manage order sets safely.
+* Admin can manage order set items safely.
+* Unsafe component paths/model types/apply modes are rejected.
+* JSON payloads are validated.
+* Configuration changes are permission-protected.
+* Configuration changes are audited where project convention supports it.
+* Admin navigation entry exists.
+* EN/FR localization keys exist.
+* Existing consultation workspace behavior remains stable.
+* Focused admin configuration tests pass.
+* Phase 1-9 focused tests still pass.
 * Workspace stabilisation test still passes.
 * View cache/build check passes.
-* Phase 9 report is created.
+* Phase 10 report is created.
 
-Stop after Phase 9. Do not implement admin configuration UI, billing mapping, or dashboard integration yet.
+Stop after Phase 10. Do not implement billing/service mapping, dashboard integration, or full browser hardening yet.
