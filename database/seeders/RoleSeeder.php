@@ -121,6 +121,11 @@ class RoleSeeder extends Seeder
             'consultation.request_procedure', // request procedures
             'consultation.view_results',    // view lab/procedure results
             'consultation.view_patient',    // view full patient profile
+            'consultation-specialties.view',
+            'consultation-specialties.create',
+            'consultation-specialties.update',
+            'consultation-specialties.delete',
+            'consultation-specialties.configure',
 
             // ── Vitals ────────────────────────────────────────────────────
             'vitals.view',

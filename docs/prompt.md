@@ -1,396 +1,619 @@
-You are working inside the UHMS Laravel project.
+You are working on the UHMS Laravel codebase.
 
-We have completed and regression-verified the Admission/Ward/Maternity workflow batch through Phase 13.1.
+We have completed **Specialist Consultation Extension Phase 1 — Specialty Profile Foundation**.
 
-Completed chain:
+Phase 1 added:
 
-Pregnancy Profile
-→ ANC Visits
-→ Labor Episode
-→ Labor Observations
-→ Delivery Record
-→ Newborn Records
-→ Postnatal Care
-→ Reports / CSV Export / Billing Mapping Readiness / Manual Test Data
+* consultation specialty profile schema
+* specialty sections
+* specialty templates
+* specialty entries
+* doctor consultation preferences
+* default specialty profiles: general medicine, physiotherapy, ophthalmology, dental
+* EN/FR localisation
+* focused foundation tests
 
-Phase 13.1 also added a memory-safe broad regression command:
+Now implement:
 
-```bash
-composer test:wide
+# Consultation Specialist Extension — Phase 2: Specialty Resolver
+
+## Phase 2 Goal
+
+Build the resolver layer that determines which consultation specialty profile applies to a doctor/visit/consultation route/department context.
+
+This phase must still avoid changing the visible consultation UI behavior.
+
+The existing consultation page should continue to render exactly as before. This phase may pass resolved specialty context into the backend/view/Inertia payload for future use, but it must not reorder, hide, rename, or replace consultation sections yet.
+
+The layout engine comes in Phase 3.
+
+---
+
+# Important Rules
+
+Do not rewrite the consultation module.
+
+Do not create separate Physio Consultation, Eye Consultation, Dental Consultation modules.
+
+Do not change the visible consultation UI in this phase.
+
+Do not run the full test suite yet.
+
+Only run focused checks for migrations, resolver tests, route/view compilation if touched, localisation if touched, and linting of changed PHP files.
+
+Keep all changes backward compatible.
+
+The default fallback must always be `general_medicine`.
+
+If anything is ambiguous, prefer safe fallback to general medicine instead of throwing errors in the consultation flow.
+
+---
+
+# Required Deliverables
+
+## 1. Inspect Existing Consultation Context
+
+Before coding the resolver, inspect the existing project structure for:
+
+```text
+Consultation model/table
+Visit model/table
+Consultation route/session model/table
+Department model/table
+User department assignment / department_user pivot
+Current consultation controller(s)
+Current consultation workspace route(s)
+Current active department/dashboard context service, if any
+DoctorConsultationPreference model from Phase 1
+ConsultationSpecialtyProfile model from Phase 1
+ConsultationSpecialtySection model from Phase 1
 ```
 
-Important regression status:
+Use the actual existing model names and table names.
 
-* The required maternity/admission targeted suite passed.
-* The broad suite now runs to completion with the memory-safe command.
-* The broad suite currently has unrelated failures outside the Phase 6–13 admission/maternity chain.
-* Do not claim the entire project suite is green until those unrelated failures are triaged separately.
+Do not guess model names if the project already has equivalents.
 
-Now begin the next implementation batch:
+---
 
-Phase 14: Maternity Billing Posting, Theatre/Emergency Escalation Integration, Lab/Radiology Hooks, and Production Readiness Hardening.
+## 2. Add Specialty Context Mapping Support
 
-Goal:
-Safely move from maternity workflow capture into controlled operational integrations:
+The resolver needs a clean way to map departments/routes/types to specialty profiles.
 
-1. Billing posting through existing billing services.
-2. Theatre/procedure handoff for caesarean and delivery complications.
-3. Emergency handoff for maternity/labor/postnatal escalation.
-4. Lab/radiology request hooks from ANC and maternity workflows.
-5. Production readiness hardening.
+Create a migration and model for:
 
-Important:
-This batch must be implemented carefully and in smaller phases.
-Do not post billing until mapping readiness and duplicate-prevention rules are in place.
-Do not rewrite billing/accounting.
-Do not rewrite theatre.
-Do not rewrite emergency.
-Do not rewrite lab/radiology.
-Do not rewrite pharmacy or stock consumption.
-Do not modify default launch seeders.
-Do not touch `docs/prompt.md`.
-Do not run the full wide suite until the end of this batch; use targeted tests during phases.
+```text
+consultation_specialty_profile_mappings
+```
 
-Known broad-suite status:
-`composer test:wide` currently completes but has unrelated existing failures outside the maternity/admission chain. Keep that documented. If final wide regression is run at the end of this batch, distinguish new failures from existing unrelated failures.
+Suggested fields:
 
-Phase 14.1: Billing Posting Design and Safety Audit
+```text
+id
+consultation_specialty_profile_id foreign key cascade delete
+department_id nullable foreign key if departments table exists
+consultation_route_id nullable foreign key if a consultation route/session table exists
+department_type nullable string
+user_id nullable foreign key users if useful, but prefer doctor_consultation_preferences for user defaults
+source nullable string
+priority unsigned integer default 0
+is_active boolean default true
+metadata nullable json
+created_at
+updated_at
+```
 
-This first phase is audit/design-first. Do not implement broad billing posting yet.
+Suggested indexes:
 
-1. Audit existing billing architecture
+```text
+index consultation_specialty_profile_id
+index department_id
+index consultation_route_id
+index department_type
+index is_active
+index priority
+```
 
-Review existing billing/invoice/accounting patterns:
+Notes:
 
-* Invoice creation
-* Invoice item creation
-* Visit service billing
-* Admission billing
-* Emergency billing
-* Procedure/theatre billing
-* Investigation/radiology billing
-* Pharmacy billing
-* Service catalog
-* Service mapping patterns
-* Duplicate charge prevention patterns
-* Reversal/credit note/write-off behavior
-* Insurance/NHIS/cash pricing behavior
-* Activity logging
-* Billing permissions
-* Existing billing tests
+* If the project has a different route/session table name, adapt safely.
+* If adding a direct foreign key to consultation route is risky because table names vary, use nullable unsignedBigInteger plus indexed column and document why.
+* Do not make this table too rigid.
+* This table is for resolver hints, not billing. Billing mapping will come later.
 
-Document the safest existing billing service to reuse.
+Create model:
 
-2. Audit maternity billing readiness from Phase 13
+```text
+app/Models/ConsultationSpecialtyProfileMapping.php
+```
 
-Review:
-
-* `maternity_service_mappings`
-* `MaternityServiceMapping`
-* `MaternityBillingReadinessService`
-* Billing readiness UI
-* Mapping keys:
-
-  * ANC registration/package
-  * ANC follow-up
-  * Maternity admission
-  * Labor observation
-  * Normal delivery
-  * Assisted delivery
-  * Caesarean/theatre handoff
-  * Delivery consumables
-  * Newborn care
-  * Neonatal observation
-  * Newborn resuscitation
-  * Postnatal mother care
-  * Postnatal newborn care
-  * Immunisation placeholder
-  * Ultrasound placeholder
-  * Maternity consumables
-
-Confirm that readiness remains warning-only unless billing posting is explicitly triggered.
-
-3. Design maternity billing events
-
-Define which maternity events may eventually post charges.
-
-Suggested billable events:
-
-* ANC registration/package
-* ANC follow-up visit
-* Maternity admission
-* Labor observation/care
-* Normal delivery
-* Assisted delivery
-* Caesarean/theatre handoff
-* Delivery consumables
-* Newborn care
-* Neonatal observation
-* Newborn resuscitation
-* Postnatal mother care
-* Postnatal newborn care
-* Immunisation placeholder
-* Ultrasound placeholder
-* Maternity consumables
-
-For each event, define:
-
-* source model
-* source ID
-* mapping key
-* invoice context
-* patient responsible for charge
-* mother patient vs newborn patient policy
-* visit/admission context
-* duplicate prevention key
-* whether charge is automatic or manual
-* whether charge is allowed when mapping missing
-* audit log action
-
-4. Design billing posting service
-
-Create a design for a service such as:
-
-`app/Services/Maternity/MaternityBillingPostingService.php`
-
-The service should eventually support:
-
-* preview charge
-* post charge
-* skip if already posted
-* detect duplicate source charge
-* explain missing mapping
-* explain inactive service
-* log charge posting
-* return structured result
-
-Do not implement full posting yet unless safe and explicitly scoped.
-
-Recommended design structure:
-
-* `previewForSource($sourceModel, string $mappingKey)`
-* `postForSource($sourceModel, string $mappingKey, User $actor)`
-* `alreadyPosted($sourceModel, string $mappingKey)`
-* `resolveMapping(string $mappingKey)`
-* `resolveBillingContext($sourceModel)`
-* `buildInvoiceItemPayload(...)`
-
-5. Add billing posting ledger table if needed
-
-If existing invoice item metadata can safely store source references, reuse it.
-
-If not, propose a lightweight table such as:
-
-`maternity_billing_events`
-
-Recommended fields:
-
-* id
-* mapping_key
-* source_type
-* source_id
-* patient_id
-* visit_id nullable
-* admission_id nullable
-* invoice_id nullable
-* invoice_item_id nullable
-* service_id nullable
-* amount nullable decimal
-* status
-* posted_by nullable user
-* posted_at nullable timestamp
-* skipped_reason nullable text
-* metadata nullable json
-* timestamps
-
-Suggested statuses:
-
-* previewed
-* posted
-* skipped
-* failed
-* reversed
-
-Important:
-
-* This table must not replace the real invoice system.
-* It only tracks maternity source-to-billing linkage and duplicate prevention.
-* Do not create it if existing billing metadata already solves this safely.
-
-6. Define mother/newborn billing policy
-
-This is important.
-
-Design the default policy:
-
-* Pregnancy/ANC/labor/delivery/postnatal mother care charges bill to the mother’s visit/admission.
-* Newborn care charges may bill to:
-
-  * mother visit/admission by default, or
-  * newborn patient/visit if linked and site policy enables it.
-* Newborn patient billing must be configurable and disabled by default unless the hospital wants separate newborn accounts.
-* Stillbirth billing rules must be conservative and configurable.
-
-Suggested config:
+Relationships:
 
 ```php
-'maternity_billing' => [
-    'enabled' => env('MATERNITY_BILLING_ENABLED', false),
-    'auto_post' => env('MATERNITY_BILLING_AUTO_POST', false),
-    'newborn_billing_policy' => env('MATERNITY_NEWBORN_BILLING_POLICY', 'mother'),
+profile()
+department()
+consultationRoute()
+user()
+```
+
+Scopes:
+
+```php
+active()
+ordered()
+forDepartment($department)
+forConsultationRoute($route)
+forDepartmentType(?string $departmentType)
+```
+
+If exact relationships cannot be safely typed because table/model naming varies, keep the model defensive and document the adaptation.
+
+---
+
+## 3. Extend the Specialty Seeder Safely
+
+Update the existing `ConsultationSpecialtySeeder` to seed basic resolver mappings idempotently.
+
+Minimum mapping:
+
+```text
+department_type = consultation → general_medicine
+```
+
+Optional safe mappings:
+
+Only if matching departments already exist by code/name/type, map:
+
+```text
+physiotherapy / physio → physiotherapy
+ophthalmology / eye → ophthalmology
+dental → dental
+```
+
+Important:
+
+* Do not create fake departments in this phase.
+* Do not alter existing departments unexpectedly.
+* Use `updateOrCreate`.
+* These are configuration mappings only.
+
+---
+
+## 4. Add Specialty Resolver DTO / Value Object
+
+Create a lightweight value object:
+
+```text
+app/Data/Consultation/Specialty/ResolvedConsultationSpecialty.php
+```
+
+Or follow the project’s existing DTO/data namespace convention.
+
+It should contain:
+
+```php
+public ConsultationSpecialtyProfile $profile;
+public ?string $source;
+public ?string $reason;
+public ?object $department;
+public ?object $consultationRoute;
+public array $sections;
+public bool $isFallback;
+```
+
+If the project does not use DTO classes, create a simple immutable class.
+
+It should have:
+
+```php
+toArray(): array
+```
+
+The array should be safe for controller/view/Inertia payloads:
+
+```php
+[
+    'profile' => [
+        'id' => ...,
+        'code' => ...,
+        'name' => ...,
+        'translated_name' => ...,
+        'icon' => ...,
+        'color' => ...,
+    ],
+    'source' => ...,
+    'reason' => ...,
+    'is_fallback' => ...,
+    'sections' => [...]
 ]
 ```
 
-Allowed newborn policies:
+Sections should include:
 
-* `mother`
-* `newborn_if_linked`
-* `disabled`
+```php
+[
+    'key' => ...,
+    'label' => ...,
+    'translated_label' => ...,
+    'component' => ...,
+    'display_order' => ...,
+    'is_required' => ...,
+    'is_visible' => ...,
+    'config' => ...
+]
+```
 
-Defaults must avoid unexpected billing.
+Do not expose sensitive user data.
 
-7. Add UI preview only if safe
+---
 
-If safe, add a billing preview panel on relevant maternity pages.
-
-Pages:
-
-* ANC visit detail
-* Labor episode detail
-* Delivery record detail
-* Newborn record detail
-* Postnatal case detail
-
-Panel should show:
-
-* relevant mapping keys
-* configured/missing service
-* already posted or not
-* estimated amount if available
-* warning that posting is disabled unless enabled
-* future post button placeholder if not implemented
-
-Do not add active post buttons yet unless this phase explicitly implements posting.
-
-8. Permissions
-
-Add permissions additively if needed:
-
-* `maternity.billing.preview`
-* `maternity.billing.post`
-* `maternity.billing.override`
-* `maternity.billing.audit.view`
-
-Admin/super admin gets all.
-Billing/finance roles may get preview/post depending on existing role conventions.
-Clinical maternity roles may view preview but should not post unless project convention allows.
-
-Do not remove existing permissions.
-
-9. Localisation
-
-Add EN/FR keys for:
-
-* Maternity billing
-* Billing preview
-* Billing posting disabled
-* Mapping missing
-* Service inactive
-* Already posted
-* Ready to post
-* Duplicate prevented
-* Mother billing
-* Newborn billing
-* Newborn billing disabled
-* Newborn billing to mother
-* Newborn billing if linked
-* Billing event
-* Billing audit
-* Success/error messages
-
-Maintain localisation parity.
-
-10. Documentation
+## 5. Create the Resolver Service
 
 Create:
 
-`docs/maternity/MATERNITY_BILLING_POSTING_PHASE_14_1_DESIGN_REPORT.md`
+```text
+app/Services/Consultation/Specialty/ConsultationSpecialtyProfileResolver.php
+```
+
+Resolver method:
+
+```php
+public function resolve(
+    User $user,
+    mixed $visit = null,
+    mixed $consultation = null,
+    mixed $consultationRoute = null,
+    mixed $department = null,
+    array $options = []
+): ResolvedConsultationSpecialty
+```
+
+Use exact type hints where safe. Use `mixed` only if existing model names vary or circular dependencies make strict typing risky.
+
+## Resolution Priority
+
+Resolve in this order:
+
+### 1. Consultation route mapping
+
+If an active mapping exists for the current consultation route/session, use that profile.
+
+Source:
+
+```text
+consultation_route_mapping
+```
+
+### 2. Explicit department mapping
+
+If an active mapping exists for the active department, use that profile.
+
+Source:
+
+```text
+department_mapping
+```
+
+### 3. Active department type mapping
+
+If the active department has a type, and an active mapping exists for that department type, use that profile.
+
+Source:
+
+```text
+department_type_mapping
+```
+
+### 4. Doctor/user saved preference
+
+Use `doctor_consultation_preferences.default_consultation_specialty_profile_id` if:
+
+```text
+profile exists
+profile is active
+```
+
+Source:
+
+```text
+doctor_preference
+```
+
+### 5. User primary department / assigned department
+
+If the user has a primary/active department relation and that department maps to a profile, use that profile.
+
+Source:
+
+```text
+user_department_mapping
+```
+
+### 6. Existing consultation specialty entry
+
+If the current consultation already has a specialty entry with an active profile, use that profile.
+
+Source:
+
+```text
+existing_consultation_entry
+```
+
+This protects old specialist entries from changing context unexpectedly.
+
+### 7. Fallback
+
+Return `general_medicine`.
+
+Source:
+
+```text
+fallback
+```
+
+## Resolver Rules
+
+* Inactive profiles must never be selected.
+* Inactive mappings must be ignored.
+* Missing mappings must not throw.
+* Missing department/route context must not throw.
+* Invalid doctor preference must fall back safely.
+* Always return visible ordered sections for the selected profile.
+* If selected profile has no visible sections, fall back to `general_medicine`.
+
+---
+
+## 6. Add Helper Methods to Existing Phase 1 Service
+
+Extend:
+
+```text
+app/Services/Consultation/Specialty/ConsultationSpecialtyProfileService.php
+```
+
+Add or refine:
+
+```php
+getDefaultProfile(): ConsultationSpecialtyProfile
+getActiveProfileById(?int $id): ?ConsultationSpecialtyProfile
+getActiveProfileByCode(?string $code): ?ConsultationSpecialtyProfile
+getVisibleOrderedSections(ConsultationSpecialtyProfile $profile): Collection
+fallbackResolvedContext(...): ResolvedConsultationSpecialty
+```
+
+Keep backward compatibility with Phase 1 tests.
+
+---
+
+## 7. Add Read-Only Controller Integration
+
+Find the main consultation workspace controller/action.
+
+Add resolver call and pass read-only specialty context to the response payload.
+
+Example:
+
+```php
+$specialtyContext = $resolver->resolve(
+    user: $request->user(),
+    visit: $visit ?? null,
+    consultation: $consultation ?? null,
+    consultationRoute: $consultationRoute ?? null,
+    department: $activeDepartment ?? null,
+);
+```
+
+Add to payload as:
+
+```php
+'specialtyContext' => $specialtyContext->toArray()
+```
+
+or project naming convention equivalent.
+
+Important:
+
+* Do not make the UI consume it yet.
+* Do not change section rendering.
+* Do not change save behavior.
+* Do not change completion readiness.
+* Do not change prescription/investigation/procedure behavior.
+* The page should look the same after this phase.
+
+If controller integration is too risky because the consultation controller is complex, create a dedicated small provider/service and only add focused integration where safe. Document exactly what was done.
+
+---
+
+## 8. Add Focused Tests
+
+Create:
+
+```text
+tests/Feature/Consultations/ConsultationSpecialtyResolverTest.php
+```
+
+Test cases:
+
+### Resolver fallback
+
+When no department, route, preference, or mapping exists:
+
+```text
+resolver returns general_medicine
+is_fallback = true
+source = fallback
+```
+
+### Department type mapping
+
+When active department type maps to a profile:
+
+```text
+resolver returns mapped profile
+source = department_type_mapping
+```
+
+### Department mapping beats department type mapping
+
+When department maps to dental and department type maps to general:
+
+```text
+resolver returns dental
+source = department_mapping
+```
+
+### Route mapping beats department mapping
+
+When route maps to ophthalmology and department maps to general:
+
+```text
+resolver returns ophthalmology
+source = consultation_route_mapping
+```
+
+### Doctor preference works
+
+When no route/department mapping exists and doctor has preference physiotherapy:
+
+```text
+resolver returns physiotherapy
+source = doctor_preference
+```
+
+### Inactive profile ignored
+
+When mapping points to inactive profile:
+
+```text
+resolver falls back to next valid source or general
+```
+
+### Inactive mapping ignored
+
+When mapping is inactive:
+
+```text
+resolver ignores it
+```
+
+### Sections returned
+
+Resolved context includes visible ordered sections.
+
+### Controller payload smoke
+
+Where feasible, test that the consultation workspace response includes `specialtyContext` without changing the rendered page behavior.
+
+If existing consultation fixture setup is heavy, keep the controller payload smoke minimal and document if deferred.
+
+---
+
+## 9. Localisation
+
+If new source/reason labels are shown anywhere, add EN/FR keys.
+
+If source/reason is only internal and not displayed, localisation is not required.
+
+Do not add UI text unless necessary.
+
+---
+
+## 10. Minimal Checks to Run
+
+Run only focused checks:
+
+```bash
+php artisan migrate
+php artisan db:seed --class=ConsultationSpecialtySeeder
+php artisan test tests/Feature/Consultations/ConsultationSpecialtyFoundationTest.php
+php artisan test tests/Feature/Consultations/ConsultationSpecialtyResolverTest.php
+php artisan route:list
+```
+
+Also run PHP lint on new/modified PHP files.
+
+If the project has a localisation lock/parity command and translations were changed, run that focused command too.
+
+Do not run the wide full-suite yet.
+
+---
+
+## 11. Phase Report
+
+Create:
+
+```text
+docs/consultation/CONSULTATION_SPECIALIST_EXTENSION_PHASE_2_RESOLVER_REPORT.md
+```
+
+If the repo convention currently places consultation docs directly under `docs/`, use:
+
+```text
+docs/CONSULTATION_SPECIALIST_EXTENSION_PHASE_2_RESOLVER_REPORT.md
+```
 
 The report must include:
 
-* Existing billing architecture reviewed
-* Maternity billing mappings reviewed
-* Proposed billable events
-* Proposed duplicate-prevention strategy
-* Proposed mother/newborn billing policy
-* Proposed service design
-* Proposed tables/columns if any
-* Proposed config flags
-* UI preview behavior
-* What was implemented, if anything
-* What was intentionally deferred
-* Risks
-* Next phase recommendation
+```text
+# Consultation Specialist Extension — Phase 2 Resolver Report
 
-11. Tests/checks
+## Summary
+Explain what was implemented.
 
-Since this is design-first, tests depend on whether code changes are made.
+## Files Added
+List all new files.
 
-If code changes are made, add targeted tests.
+## Files Modified
+List all modified files.
 
-Recommended test file:
+## Database Changes
+List migration(s), table(s), and mapping fields.
 
-`tests/Feature/MaternityBillingPostingPhase14_1Test.php`
+## Resolver Priority
+Document the final implemented resolver priority.
 
-Recommended tests:
+## Seeded Mappings
+List any mappings seeded.
 
-* Billing readiness page still renders.
-* Billing preview shows missing mappings.
-* Billing preview shows configured mappings.
-* Billing preview does not post invoice items.
-* Maternity billing config defaults to disabled.
-* Newborn billing policy defaults to mother or disabled as chosen.
-* Existing Phase 13 billing readiness tests still pass.
+## Controller Integration
+Explain whether `specialtyContext` was added to consultation payload and where.
 
-Run targeted checks:
+## Tests Added
+List resolver tests.
 
-* `php artisan test tests/Feature/MaternityBillingPostingPhase14_1Test.php` if added
-* `php artisan test tests/Feature/MaternityReportsBillingReadinessPhase13Test.php`
-* `php artisan test tests/Feature/PostnatalCarePhase12Test.php`
-* `php artisan route:list --name=maternity`
-* `php artisan view:clear`
-* `php artisan config:clear`
-* `git diff --check -- . ':!docs/prompt.md'`
-* PHP syntax checks on changed PHP files
+## Checks Run
+Include commands and pass/fail summary.
 
-Do not run the full wide suite in this phase.
+## Backward Compatibility
+Confirm the visible consultation UI was not changed.
 
-12. Boundaries
+## Known Issues / Follow-up
+List anything to handle in Phase 3.
+```
 
-Do not enable automatic maternity billing.
-Do not post invoices unless explicitly scoped and safely tested.
-Do not recalculate historical invoices.
-Do not change accounting ledger behavior.
-Do not change credit note/write-off behavior.
-Do not change insurance pricing behavior.
-Do not post stock consumption.
-Do not dispense pharmacy items.
-Do not rewrite theatre/emergency/lab/radiology workflows.
-Do not touch `docs/prompt.md`.
-Do not run the full suite.
+---
 
-13. Final response
+# Acceptance Criteria
 
-At the end, provide a concise report with:
+Phase 2 is complete only when:
 
-* What was audited
-* What was designed
-* Files changed
-* Config/permissions added
-* Tests/checks run
-* What was intentionally not changed
-* Risks
-* Next phase recommendation
+* `ConsultationSpecialtyProfileResolver` exists.
+* Resolver always returns a valid active specialty profile.
+* Resolver falls back safely to `general_medicine`.
+* Resolver respects priority:
 
-Recommended next phase:
-Phase 14.2: Controlled Maternity Billing Posting for Manual Actions Only.
+  1. route mapping
+  2. department mapping
+  3. department type mapping
+  4. doctor preference
+  5. user department mapping
+  6. existing consultation entry
+  7. fallback
+* Resolved context includes visible ordered sections.
+* Basic mapping support exists.
+* Default mapping for consultation department type exists.
+* Focused resolver tests pass.
+* Phase 1 foundation tests still pass.
+* Existing consultation UI behavior remains visually unchanged.
+* Phase 2 report is created.
+
+Stop after Phase 2. Do not start the layout engine yet.

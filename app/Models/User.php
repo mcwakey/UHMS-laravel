@@ -105,6 +105,11 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    public function doctorConsultationPreference(): HasOne
+    {
+        return $this->hasOne(DoctorConsultationPreference::class);
+    }
+
     /* ── Scopes ───────────────────────────────────────── */
 
     public function scopeActive($query)
