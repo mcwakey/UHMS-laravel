@@ -7,10 +7,16 @@ use App\Enums\LogSeverity;
 use App\Models\User;
 use App\Models\VisitConsultationRoute;
 use App\Services\ActivityLogService;
+use App\Services\Consultation\Specialty\ConsultationSpecialtyProfileResolver;
+use App\Services\Consultation\Specialty\ConsultationSpecialtyReadinessService;
 
 class ConsultationCompletionReadinessService
 {
-    public function __construct(private readonly ActivityLogService $activityLog) {}
+    public function __construct(
+        private readonly ActivityLogService $activityLog,
+        private readonly ConsultationSpecialtyProfileResolver $specialtyResolver,
+        private readonly ConsultationSpecialtyReadinessService $specialtyReadiness,
+    ) {}
 
     public function forRoute(VisitConsultationRoute $route): ConsultationCompletionReadinessResult
     {
@@ -42,6 +48,7 @@ class ConsultationCompletionReadinessService
     public function assertReady(VisitConsultationRoute $route, User $user): ConsultationCompletionReadinessResult
     {
         $result = $this->forRoute($route);
+        $result = $this->withSpecialtyRequirements($route, $user, $result);
 
         if ($result->ready()) {
             return $result;
@@ -74,5 +81,37 @@ class ConsultationCompletionReadinessService
             ])
             ->values()
             ->all();
+    }
+
+    private function withSpecialtyRequirements(VisitConsultationRoute $route, User $user, ConsultationCompletionReadinessResult $base): ConsultationCompletionReadinessResult
+    {
+        try {
+            $route->loadMissing(['visit', 'department']);
+            $context = $this->specialtyResolver->resolve(
+                user: $user,
+                visit: $route->visit,
+                consultationRoute: $route,
+                department: $route->department,
+            );
+            $blockingItems = $this->specialtyReadiness->blockingItemsForCompletion($route, $context, $base);
+        } catch (\Throwable) {
+            return $base;
+        }
+
+        if ($blockingItems === []) {
+            return $base;
+        }
+
+        $requirements = collect($base->requirements())
+            ->concat(collect($blockingItems)->map(fn (array $item) => [
+                'code' => 'specialty_'.$item['key'],
+                'message' => $item['message'] ?: $item['label'],
+                'met' => false,
+            ]))
+            ->unique('code')
+            ->values()
+            ->all();
+
+        return new ConsultationCompletionReadinessResult($requirements);
     }
 }

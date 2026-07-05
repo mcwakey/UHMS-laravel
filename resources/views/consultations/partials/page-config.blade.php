@@ -50,6 +50,7 @@ $visitHistoryJson = $history['records']->map(function($r) {
         'frequencyDoseMap' => $frequencyDoseMap ?? [],
         'specialtyFavorites' => $specialtyFavorites ?? [],
         'specialtyOrderSets' => $specialtyOrderSets ?? [],
+        'specialtyReadiness' => isset($specialtyReadiness) && $specialtyReadiness ? $specialtyReadiness->toArray() : null,
         'sendSessionServicesByDept' => $referralServicesPayloadByDept ?? [],
         'visitHistoryData' => $visitHistoryJson,
         'openFollowUpModalOnLoad' => $errors->has('appointment_date') || $errors->has('start_time') || $errors->has('end_time') || $errors->has('department_id') || $errors->has('service_id') || $errors->has('doctor_id') || $errors->has('reason') || $errors->has('notes') || $errors->has('priority'),

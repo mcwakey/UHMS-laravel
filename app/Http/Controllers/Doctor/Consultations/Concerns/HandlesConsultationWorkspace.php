@@ -60,6 +60,7 @@ use App\Services\Consultation\Specialty\ConsultationSpecialtyFavoriteService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyLayoutService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyOrderSetService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyProfileResolver;
+use App\Services\Consultation\Specialty\ConsultationSpecialtyReadinessService;
 use App\Services\HistoryOfPresentingComplaintService;
 use App\Services\LabService;
 use App\Services\MedicalPatternService;
@@ -368,6 +369,9 @@ trait HandlesConsultationWorkspace
             : [];
         $specialtyFavorites = app(ConsultationSpecialtyFavoriteService::class)->getWorkspaceDefaults($specialtyContext->profile);
         $specialtyOrderSets = app(ConsultationSpecialtyOrderSetService::class)->getWorkspaceOrderSets($specialtyContext);
+        $specialtyReadiness = $selectedRoute
+            ? app(ConsultationSpecialtyReadinessService::class)->evaluate($selectedRoute, $specialtyContext, ['completionReadiness' => $completionReadiness])
+            : null;
         $frequencyDefaults = $specialtyFavorites['frequency_defaults'] ?? $frequencyOptions->options();
 
         return view('consultations.show', [
@@ -402,6 +406,7 @@ trait HandlesConsultationWorkspace
             'specialtyEntries' => $specialtyEntries,
             'specialtyFavorites' => $specialtyFavorites,
             'specialtyOrderSets' => $specialtyOrderSets,
+            'specialtyReadiness' => $specialtyReadiness,
             'entryPermissions' => $this->entryPermissions,
             'prescriptionFrequencyOptions' => $frequencyDefaults,
             'taskFrequencyOptions' => $frequencyDefaults,
