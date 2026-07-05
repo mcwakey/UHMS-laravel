@@ -372,6 +372,11 @@ trait HandlesConsultationWorkspace
         $specialtyReadiness = $selectedRoute
             ? app(ConsultationSpecialtyReadinessService::class)->evaluate($selectedRoute, $specialtyContext, ['completionReadiness' => $completionReadiness])
             : null;
+        $specialtySummaryBuilder = $selectedRoute ? [
+            'available' => true,
+            'profile_code' => $specialtyContext->profile->code,
+            'preview_url' => route('admin.consultations.specialty-summary.preview', $visit),
+        ] : ['available' => false];
         $frequencyDefaults = $specialtyFavorites['frequency_defaults'] ?? $frequencyOptions->options();
 
         return view('consultations.show', [
@@ -407,6 +412,7 @@ trait HandlesConsultationWorkspace
             'specialtyFavorites' => $specialtyFavorites,
             'specialtyOrderSets' => $specialtyOrderSets,
             'specialtyReadiness' => $specialtyReadiness,
+            'specialtySummaryBuilder' => $specialtySummaryBuilder,
             'entryPermissions' => $this->entryPermissions,
             'prescriptionFrequencyOptions' => $frequencyDefaults,
             'taskFrequencyOptions' => $frequencyDefaults,

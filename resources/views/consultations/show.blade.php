@@ -2058,11 +2058,29 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <h6 class="fw-bold mb-0"><i class="ti ti-notes me-1"></i>{{ $sectionLabel('notes', __('consultations.final_clinical_note')) }}</h6>
                             </div>
                             <div class="card-body">
+                                @if(! empty($specialtySummaryBuilder['available'] ?? false))
+                                    <div class="border rounded p-2 mb-3 bg-light">
+                                        <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                                            <div>
+                                                <div class="small fw-semibold">{{ __('consultation_specialties.summary_builder.title') }}</div>
+                                                <div class="small text-muted">{{ __('consultation_specialties.summary_builder.generated_from_recorded_data') }}</div>
+                                            </div>
+                                            <button type="button"
+                                                    class="btn btn-outline-primary btn-sm"
+                                                    id="generateSpecialtySummaryBtn"
+                                                    data-preview-url="{{ $specialtySummaryBuilder['preview_url'] ?? '' }}"
+                                                    data-route-id="{{ $selectedRoute?->id }}">
+                                                <i class="ti ti-sparkles me-1"></i>{{ __('consultation_specialties.summary_builder.generate') }}
+                                            </button>
+                                        </div>
+                                        <div class="small text-muted mt-1">{{ __('consultation_specialties.summary_builder.not_saved_yet') }}</div>
+                                    </div>
+                                @endif
                                 @can('consultations.create')
                                 <form data-ajax-form="summary" data-consultation-form="final-note" data-route-context-required="true" data-preserve-values="true" method="POST" action="{{ route('admin.consultations.final-note.update', $visit) }}">
                                     @csrf
                                     @method('PATCH')
-                                    <textarea name="final_note" class="form-control" rows="4" placeholder="{{ __('consultations.final_note_placeholder') }}">{{ old('final_note', $record?->final_note) }}</textarea>
+                                    <textarea name="final_note" id="finalNoteTextarea" class="form-control" rows="4" placeholder="{{ __('consultations.final_note_placeholder') }}">{{ old('final_note', $record?->final_note) }}</textarea>
                                     <div class="mt-2 d-flex justify-content-end">
                                         <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-check me-1"></i>Save</button>
                                     </div>
@@ -2082,6 +2100,81 @@ document.addEventListener('DOMContentLoaded', function () {
                             </div>
                         </div>
                     </div>
+
+                    @if(! empty($specialtySummaryBuilder['available'] ?? false))
+                    <div class="modal fade" id="specialtySummaryModal" tabindex="-1" aria-labelledby="specialtySummaryModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="specialtySummaryModalLabel">{{ __('consultation_specialties.summary_builder.preview') }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('common.close') }}"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="alert alert-info py-2 small">{{ __('consultation_specialties.summary_builder.not_saved_yet') }}</div>
+                                    <div id="specialtySummaryPreviewBody" class="border rounded p-3 bg-light"></div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">{{ __('consultation_specialties.summary_builder.close') }}</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="copySpecialtySummaryBtn">{{ __('consultation_specialties.summary_builder.copy') }}</button>
+                                    <button type="button" class="btn btn-primary btn-sm" id="insertSpecialtySummaryBtn">{{ __('consultation_specialties.summary_builder.insert') }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const generateBtn = document.getElementById('generateSpecialtySummaryBtn');
+                        const modalEl = document.getElementById('specialtySummaryModal');
+                        const previewBody = document.getElementById('specialtySummaryPreviewBody');
+                        const insertBtn = document.getElementById('insertSpecialtySummaryBtn');
+                        const copyBtn = document.getElementById('copySpecialtySummaryBtn');
+                        const finalNote = document.getElementById('finalNoteTextarea');
+                        let summaryText = '';
+
+                        if (!generateBtn || !modalEl || !previewBody) {
+                            return;
+                        }
+
+                        const modal = window.bootstrap ? new bootstrap.Modal(modalEl) : null;
+
+                        generateBtn.addEventListener('click', async function () {
+                            const url = new URL(generateBtn.dataset.previewUrl, window.location.origin);
+                            if (generateBtn.dataset.routeId) {
+                                url.searchParams.set('consultation_route_id', generateBtn.dataset.routeId);
+                            }
+                            previewBody.innerHTML = '<div class="text-muted small">{{ __('consultations.loading') }}</div>';
+                            modal?.show();
+
+                            const response = await fetch(url.toString(), {
+                                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                            });
+                            const json = await response.json();
+                            summaryText = json.summary?.plainText || '';
+                            previewBody.innerHTML = json.summary?.html || '<div class="text-muted small">{{ __('consultation_specialties.summary_builder.no_data_available') }}</div>';
+                        });
+
+                        insertBtn?.addEventListener('click', function () {
+                            if (!finalNote || !summaryText) {
+                                return;
+                            }
+                            const existing = finalNote.value.trim();
+                            if (existing && !confirm('{{ __('consultation_specialties.summary_builder.replace_existing_confirm') }}')) {
+                                finalNote.value = existing + "\n\n" + summaryText;
+                            } else {
+                                finalNote.value = summaryText;
+                            }
+                            finalNote.dispatchEvent(new Event('input', { bubbles: true }));
+                            modal?.hide();
+                        });
+
+                        copyBtn?.addEventListener('click', function () {
+                            if (summaryText && navigator.clipboard) {
+                                navigator.clipboard.writeText(summaryText);
+                            }
+                        });
+                    });
+                    </script>
+                    @endif
 
                 </div>
             </div>

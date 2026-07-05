@@ -8,51 +8,67 @@ We have completed:
 * Phase 4: Structured Specialist Forms
 * Phase 5: Specialty Favorites and Smart Defaults
 * Phase 6: Specialty Order Sets
+* Phase 7: Specialty Completion Readiness
 
-Phase 6 added preview-first specialty order sets with safe apply behavior, profile scoping, task creation, structured-entry patches, application audit records, and conservative catalogue suggestions.
+Phase 7 added specialty-aware completion readiness using the existing completion system. General medicine continues to use the existing readiness logic, while physiotherapy, ophthalmology, and dental now add specialist blocking/warning items from core consultation records and `consultation_specialty_entries`.
 
 Now implement:
 
-# Consultation Specialist Extension — Phase 7: Specialty Completion Readiness
+# Consultation Specialist Extension — Phase 8: Specialty Summary Builder
 
-## Phase 7 Goal
+## Phase 8 Goal
 
-Make the consultation completion/readiness system specialty-aware.
+Create a specialty-aware consultation summary builder that generates clean clinical summaries based on the active specialty profile.
 
-The current consultation workflow already has completion/readiness behavior. Phase 7 must extend that system so the required clinical checks change depending on the active specialty profile.
+The summary builder must use:
+
+```text id="o9g16l"
+existing core consultation data
+specialty structured entries
+diagnoses
+investigations
+procedures
+prescriptions
+tasks/follow-ups
+completion readiness result
+order-set applied patches where relevant
+```
+
+The goal is to help doctors produce a good final summary faster without overwriting their notes or forcing automatic text into the medical record.
 
 Examples:
 
-```text id="r8w6nx"
-General Medicine:
-- Complaint recorded
-- Examination recorded
-- Diagnosis recorded
-- Plan / summary present
+```text id="5nv2xg"
+Physiotherapy summary:
+- Presenting problem
+- Pain assessment
+- Functional limitation
+- Physical findings
+- Treatment plan
+- Therapy session details
+- Home exercise plan
+- Progress and next review
 
-Physiotherapy:
-- Presenting problem recorded
-- Pain assessment recorded
-- Physical assessment recorded
-- Treatment plan recorded
-- Session frequency or number of sessions recorded
+Ophthalmology summary:
+- Eye complaint
+- Visual acuity
+- Refraction
+- IOP
+- Eye examination
+- Diagnosis
+- Treatment / prescription
+- Follow-up warning signs
 
-Ophthalmology:
-- Eye complaint recorded
-- Visual acuity recorded
-- Eye examination recorded
-- Diagnosis recorded
-- Follow-up / plan recorded
-
-Dental:
-- Dental complaint recorded
-- Tooth chart or oral examination recorded
-- Dental diagnosis recorded
-- Procedure plan or clinical plan recorded
-- Consent obtained if consent is required
+Dental summary:
+- Dental complaint
+- Tooth/tooth chart findings
+- Oral examination
+- Dental diagnosis
+- X-ray findings
+- Procedure planned/performed
+- Consent status
+- Post-procedure instructions
 ```
-
-The goal is not just blocking completion. The doctor should see exactly what is complete, missing, optional, warning-only, or blocking.
 
 ---
 
@@ -60,754 +76,758 @@ The goal is not just blocking completion. The doctor should see exactly what is 
 
 Do not rewrite the consultation module.
 
-Do not create separate completion logic for separate Physio/Eye/Dental modules.
+Do not create separate Physio, Eye, or Dental consultation modules.
 
-Do not remove the existing general consultation readiness behavior.
+Do not overwrite doctor notes.
 
-Do not make general consultation stricter than it currently is unless existing behavior already requires it.
+Do not merge notes and summary. Notes and summary must remain decoupled.
 
-Do not implement specialty summary builder yet. That comes in Phase 8.
+Do not auto-save generated summaries into the final medical record without doctor action.
+
+Do not remove or weaken existing general consultation summary behavior.
 
 Do not implement doctor personal workspace yet. That comes later.
 
-Do not implement billing/service mapping yet. That comes later.
+Do not implement admin configuration UI yet.
 
-Do not build the admin configuration UI yet.
+Do not implement billing/service mapping yet.
 
 Do not run the full test suite yet.
 
 Only run focused checks for this phase.
 
-If specialty readiness fails or cannot resolve, fall back safely to the existing general readiness behavior.
+If specialty summary generation fails, the existing summary/notes workflow must continue working.
 
 ---
 
 # Current Context
 
-Phase 3 introduced specialty layout sections and required badges but did not enforce them.
+Phase 7 report confirms:
 
-Phase 4 introduced structured specialist forms stored in:
+* Existing readiness is implemented in `ConsultationCompletionReadinessService`.
+* General readiness is config-driven through `config/consultation.php`.
+* Route completion, visit completion, and complete-and-open-next call the existing readiness assertion.
+* The readiness card is `resources/views/consultations/partials/right-panel.blade.php`.
+* Specialty readiness now evaluates core records and `consultation_specialty_entries`.
+* The workspace passes `specialtyReadiness` to Blade and page config JSON.
+* Prescription safety remains separate from completion readiness.
 
-```text id="af1v02"
-consultation_specialty_entries
-```
-
-Phase 5 added specialty favorites and smart defaults.
-
-Phase 6 added order sets that can patch specialty entries and create safe tasks.
-
-Now readiness should read both:
-
-```text id="n4csh8"
-existing core consultation records
-specialty structured entries
-```
-
-and produce a single readiness result for the active consultation.
+Phase 8 should use those same sources to generate specialty summaries.
 
 ---
 
 # Required Deliverables
 
-## 1. Inspect Existing Completion Readiness
+## 1. Inspect Existing Notes and Summary Flow
 
-Before coding, inspect the current consultation completion/readiness implementation.
+Before coding, inspect how the current consultation workspace handles:
+
+```text id="lkfgmu"
+notes
+summary
+final note
+consultation completion summary
+visit summary
+disposition/plan
+print/export summary if any
+medical record entry logs
+activity logs
+Ajax save behavior
+Blade textarea/form structure
+```
 
 Identify:
 
-```text id="s7j8fo"
-existing readiness service(s)
-route completion logic
-visit completion logic
-complete-and-open-next logic
-readiness card/partial/view
-blocking reasons
-warning reasons
-prescription safety integration
-diagnosis/prescription/investigation/task requirements
-existing tests
-existing translation keys
-existing Ajax/refresh behavior
+```text id="0y943x"
+models/tables used
+controller actions
+routes
+request fields
+validation rules
+where summary is stored
+where notes are stored
+how notes and summary are displayed
+how completion reads plan/summary
+how audit logs are written
 ```
 
-Do not guess. Extend existing services where appropriate.
+Important:
+
+* Notes and summary must remain decoupled.
+* If the current implementation still mixes notes and summary anywhere, do not do a risky rewrite in this phase. Add the builder safely around the current structure and document follow-up.
 
 Document findings in the phase report.
 
 ---
 
-## 2. Add Specialty Readiness Rule Registry
+## 2. Add Summary Source Collector
 
 Create:
 
-```text id="0xpl8p"
-app/Services/Consultation/Specialty/ConsultationSpecialtyReadinessRuleRegistry.php
-```
-
-Purpose:
-
-Define readiness rules per specialty profile.
-
-The registry should return a normalized rule set for a profile code.
-
-Example method:
-
-```php id="d6j6wm"
-public function rulesForProfile(ConsultationSpecialtyProfile $profile): array;
-```
-
-Each rule should include:
-
-```php id="rsu4bl"
-[
-    'key' => 'visual_acuity_recorded',
-    'label' => __('consultation_specialties.readiness.visual_acuity_recorded'),
-    'section_key' => 'visual_acuity',
-    'source' => 'specialty_entry',
-    'severity' => 'blocking', // blocking | warning | optional
-    'fields' => ['right_eye_unaided', 'left_eye_unaided', 'right_eye_corrected', 'left_eye_corrected'],
-    'mode' => 'any', // any | all | custom
-    'message' => __('consultation_specialties.readiness.visual_acuity_missing'),
-]
-```
-
-Supported source types:
-
-```text id="4iaz5y"
-core_complaint
-core_hopc
-core_examination
-core_diagnosis
-core_prescription
-core_investigation
-core_procedure
-core_task
-core_summary
-specialty_entry
-specialty_entry_field
-specialty_entry_any
-custom
-```
-
-Keep this registry code/config-based for now. Do not add an admin UI in this phase.
-
----
-
-## 3. Add Specialty Readiness Result DTO
-
-Create:
-
-```text id="7v1sve"
-app/Data/Consultation/Specialty/ConsultationSpecialtyReadinessResult.php
-```
-
-Or follow the project’s DTO convention.
-
-It should contain:
-
-```php id="lwmkus"
-profile
-status
-score
-blockingItems
-warningItems
-optionalItems
-completedItems
-items
-canComplete
-isFallback
-summary
-```
-
-Suggested statuses:
-
-```text id="066v5j"
-ready
-needs_attention
-blocked
-fallback
-```
-
-Each item should include:
-
-```php id="0io3w0"
-[
-    'key' => ...,
-    'label' => ...,
-    'section_key' => ...,
-    'severity' => ...,
-    'status' => 'complete|missing|warning|optional',
-    'message' => ...,
-    'anchor' => ...,
-    'source' => ...,
-    'metadata' => ...,
-]
-```
-
-Provide:
-
-```php id="j1xo1h"
-toArray(): array
-```
-
-Use a shape safe for Blade/page config JSON.
-
----
-
-## 4. Add Specialty Readiness Service
-
-Create:
-
-```text id="vmf8u2"
-app/Services/Consultation/Specialty/ConsultationSpecialtyReadinessService.php
+```text id="ukd8i7"
+app/Services/Consultation/Specialty/ConsultationSpecialtySummarySourceCollector.php
 ```
 
 Responsibilities:
 
-```php id="3lopvr"
-evaluate(
+```php id="0lg40x"
+collect(
     $consultation,
     ResolvedConsultationSpecialty|array $specialtyContext,
     array $workspacePayload = []
-): ConsultationSpecialtyReadinessResult;
+): array;
 ```
 
-It must:
+It should collect a normalized source array:
 
-* Resolve active specialty profile.
-* Load visible specialty sections.
-* Load existing specialty entries for the active profile.
-* Inspect existing core consultation data.
-* Evaluate the active profile’s readiness rules.
-* Return normalized readiness result.
-* Fall back to existing general readiness if profile context is missing or invalid.
-* Never crash the consultation page.
-
----
-
-## 5. Readiness Rules to Implement
-
-## General Medicine
-
-General medicine should preserve existing readiness logic.
-
-If the project already has a general readiness service, use it as the source of truth.
-
-Do not duplicate or weaken existing readiness checks.
-
-The specialty readiness result for general medicine can wrap existing readiness output into the new normalized format.
-
-Minimum if no existing structured output is available:
-
-```text id="5sv70s"
-Complaint recorded
-Examination recorded
-Diagnosis recorded
-Plan/summary recorded
+```php id="268jzc"
+[
+    'profile' => [...],
+    'core' => [
+        'complaints' => [...],
+        'hopc' => [...],
+        'examination' => [...],
+        'diagnoses' => [...],
+        'investigations' => [...],
+        'procedures' => [...],
+        'prescriptions' => [...],
+        'tasks' => [...],
+        'notes' => ...,
+        'summary' => ...,
+        'plan' => ...,
+        'disposition' => ...,
+    ],
+    'specialty_entries' => [
+        'visual_acuity' => [...],
+        'pain_assessment' => [...],
+        ...
+    ],
+    'readiness' => [...],
+    'order_set_applications' => [...],
+]
 ```
-
-But only use this minimum if it matches the existing behavior.
-
----
-
-## Physiotherapy Rules
-
-Blocking rules:
-
-```text id="sv8et4"
-presenting_problem_recorded
-pain_assessment_recorded
-physical_assessment_recorded
-treatment_plan_recorded
-```
-
-Recommended field logic:
-
-### presenting_problem_recorded
-
-Section:
-
-```text id="6t1syu"
-presenting_problem
-```
-
-Complete if any of:
-
-```text id="ayraho"
-problem_description
-affected_area
-referral_reason
-mechanism_of_injury
-```
-
-### pain_assessment_recorded
-
-Section:
-
-```text id="ii8l5b"
-pain_assessment
-```
-
-Complete if any of:
-
-```text id="9uoe25"
-pain_score
-pain_location
-pain_character
-```
-
-### physical_assessment_recorded
-
-Section:
-
-```text id="cf1c5p"
-physical_assessment
-```
-
-Complete if any of:
-
-```text id="mviwdk"
-range_of_motion
-muscle_strength
-posture
-gait
-balance
-assessment_notes
-```
-
-### treatment_plan_recorded
-
-Section:
-
-```text id="wv6yoz"
-treatment_plan
-```
-
-Complete if any of:
-
-```text id="7pqrta"
-treatment_goals
-modalities
-session_frequency
-number_of_sessions
-expected_duration
-```
-
-Warning rules:
-
-```text id="437kev"
-session_schedule_missing
-home_exercise_plan_missing
-progress_notes_missing for follow-up visits if detectable
-```
-
-### session_schedule_missing
-
-Warn if treatment plan exists but both are empty:
-
-```text id="wvy8uv"
-session_frequency
-number_of_sessions
-```
-
----
-
-## Ophthalmology Rules
-
-Blocking rules:
-
-```text id="3qmdko"
-eye_complaint_recorded
-visual_acuity_recorded
-eye_examination_recorded
-diagnosis_recorded
-```
-
-### eye_complaint_recorded
-
-Use core complaint if `eye_complaint` aliases to the complaints section.
-
-Complete if the consultation has at least one complaint or an eye complaint entry if present.
-
-### visual_acuity_recorded
-
-Section:
-
-```text id="qz0wx4"
-visual_acuity
-```
-
-Complete if any of:
-
-```text id="8g5vl0"
-right_eye_unaided
-left_eye_unaided
-right_eye_corrected
-left_eye_corrected
-right_eye_pinhole
-left_eye_pinhole
-```
-
-### eye_examination_recorded
-
-Section:
-
-```text id="pv6x2d"
-eye_examination
-```
-
-Complete if any of:
-
-```text id="rxnnw6"
-lids
-conjunctiva
-cornea
-anterior_chamber
-pupil
-lens
-fundus
-retina
-optic_disc
-examination_notes
-```
-
-### diagnosis_recorded
-
-Use existing core diagnosis records.
-
-Warning rules:
-
-```text id="85lvh0"
-iop_missing
-follow_up_missing
-refraction_missing if diagnosis/favorite suggests refractive error where detectable
-```
-
-Keep conditional warnings simple and safe in this phase.
-
----
-
-## Dental Rules
-
-Blocking rules:
-
-```text id="t1s7az"
-dental_complaint_recorded
-oral_or_tooth_exam_recorded
-dental_diagnosis_recorded
-procedure_or_plan_recorded
-```
-
-### dental_complaint_recorded
-
-Use core complaint if `dental_complaint` aliases to the complaints section.
-
-Complete if consultation has at least one complaint or relevant dental complaint entry if present.
-
-### oral_or_tooth_exam_recorded
-
-Complete if either `tooth_chart` or `oral_examination` has meaningful data.
-
-Tooth chart fields:
-
-```text id="fb6fug"
-tooth_number
-condition
-mobility
-percussion
-notes
-```
-
-Oral exam fields:
-
-```text id="xxgq25"
-oral_hygiene
-gingiva
-mucosa
-occlusion
-swelling
-bleeding
-examination_notes
-```
-
-### dental_diagnosis_recorded
-
-Complete if either:
-
-```text id="b1l2fn"
-specialty entry dental_diagnosis.diagnosis_text exists
-or core diagnosis exists
-```
-
-### procedure_or_plan_recorded
-
-Complete if any of:
-
-```text id="nl1e1z"
-dental_procedures.procedure_planned
-dental_procedures.procedure_performed
-existing core procedure request exists
-summary/plan exists where project supports it
-```
-
-Consent conditional blocking rule:
-
-```text id="a6b9nk"
-consent_obtained_if_required
-```
-
-If `consent.consent_required = true`, then `consent.consent_obtained` must be true before readiness is complete.
-
-Warning rules:
-
-```text id="q4qysq"
-xray_missing_if_extraction_planned
-follow_up_missing
-```
-
-For extraction warning, if `procedure_planned` or `procedure_performed` contains extraction and no `dental_xray.xray_requested` or `xray_findings`, show a warning.
-
----
-
-## 6. Integrate With Existing Completion Readiness Card
-
-Update the existing readiness card/section so it can display specialty readiness.
 
 Rules:
 
-* Preserve existing general readiness display.
-* For specialist profiles, show a compact checklist grouped by:
+* Follow existing model relationships.
+* Avoid N+1 queries where practical.
+* Do not expose sensitive user data unnecessarily.
+* Return empty arrays safely when data does not exist.
+* Keep collector read-only.
 
-  * Blocking
-  * Warnings
-  * Completed
-  * Optional
-* Show a clear status:
+---
 
-  * Ready
-  * Needs attention
-  * Blocked
-* Each item should link/scroll to the relevant section anchor where possible.
-* Do not make the readiness card noisy.
-* Required badges from Phase 3 should align with blocking readiness where possible.
+## 3. Add Summary Template Registry
 
-Suggested UI labels:
+Create:
 
-```text id="bbm59g"
-Specialty readiness
-Ready to complete
-Needs attention
-Blocked
-Missing required specialist details
-Warnings
-Completed
+```text id="1504gr"
+app/Services/Consultation/Specialty/ConsultationSpecialtySummaryTemplateRegistry.php
+```
+
+Purpose:
+
+Define specialty-specific summary sections and formatting rules.
+
+Method:
+
+```php id="cmm6a4"
+public function templateForProfile(ConsultationSpecialtyProfile $profile): array;
+```
+
+Template structure:
+
+```php id="jossxi"
+[
+    'profile_code' => 'ophthalmology',
+    'title' => 'Ophthalmology Consultation Summary',
+    'sections' => [
+        [
+            'key' => 'eye_complaint',
+            'label' => __('consultation_specialties.summary.eye_complaint'),
+            'source' => 'core.complaints',
+            'formatter' => 'complaints',
+            'include_if_empty' => false,
+        ],
+    ],
+]
+```
+
+Do not add admin UI yet. Code registry is enough for this phase.
+
+---
+
+## 4. Add Summary Result DTO
+
+Create:
+
+```text id="j2rl4v"
+app/Data/Consultation/Specialty/ConsultationSpecialtySummaryResult.php
+```
+
+Suggested fields:
+
+```php id="9dhml0"
+profile
+title
+status
+sections
+plainText
+html
+warnings
+generatedAt
+isFallback
+sourceCompleteness
+```
+
+Each summary section should include:
+
+```php id="wgarxb"
+[
+    'key' => ...,
+    'label' => ...,
+    'content' => ...,
+    'is_empty' => true/false,
+    'source' => ...,
+    'warnings' => [...],
+]
+```
+
+Methods:
+
+```php id="uj3de8"
+toArray(): array
+plainText(): string
+html(): string
+```
+
+Use Blade/JSON-safe output.
+
+Do not store generated summary automatically unless the doctor explicitly saves/applies it.
+
+---
+
+## 5. Add Summary Builder Service
+
+Create:
+
+```text id="6p5wrk"
+app/Services/Consultation/Specialty/ConsultationSpecialtySummaryBuilder.php
+```
+
+Responsibilities:
+
+```php id="qq0gjm"
+build(
+    $consultation,
+    ResolvedConsultationSpecialty|array $specialtyContext,
+    array $workspacePayload = [],
+    array $options = []
+): ConsultationSpecialtySummaryResult;
+```
+
+Rules:
+
+* Resolve active profile.
+* Use source collector.
+* Use template registry.
+* Format each section cleanly.
+* Skip empty sections unless template says include.
+* Include warning when important readiness items are still missing.
+* Do not claim information that is not present.
+* Do not invent clinical findings.
+* Do not overwrite clinician text.
+* Fall back to general summary behavior if profile is invalid or unsupported.
+* Keep generated summary concise but useful.
+
+---
+
+# Specialty Summary Templates to Implement
+
+## General Medicine
+
+Preserve existing summary behavior as much as possible.
+
+If there is already a generated/general summary source, wrap or reuse it.
+
+Suggested sections only if aligned with current behavior:
+
+```text id="f6sx68"
+Chief complaint
+History
+Examination
+Diagnosis
+Investigations
+Treatment / Prescription
+Plan / Follow-up
+```
+
+Do not make general consultation noisier than it currently is.
+
+---
+
+## Physiotherapy Summary
+
+Sections:
+
+```text id="xukbx4"
+Presenting problem
+Pain assessment
+Functional limitation
+Physical assessment
+Treatment plan
+Therapy session
+Home exercise plan
+Progress / next review
+Tasks / follow-up
+Readiness warnings
+```
+
+Source mapping:
+
+```text id="1gt60i"
+presenting_problem       -> specialty_entries.presenting_problem
+pain_assessment          -> specialty_entries.pain_assessment
+functional_limitation    -> specialty_entries.functional_limitation
+physical_assessment      -> specialty_entries.physical_assessment
+treatment_plan           -> specialty_entries.treatment_plan
+therapy_session          -> specialty_entries.therapy_session
+home_exercise_plan       -> specialty_entries.home_exercise_plan
+progress_notes           -> specialty_entries.progress_notes
+tasks                    -> core.tasks
+readiness warnings       -> readiness.warningItems
+```
+
+Example output style:
+
+```text id="nh1c6j"
+Presenting problem: Lower back pain after lifting heavy object.
+Pain assessment: Pain score 7/10, located in the lower back, worse with bending.
+Physical assessment: Reduced lumbar range of motion; gait stable.
+Treatment plan: Therapeutic exercises three times weekly for 6 sessions.
+Home exercise plan: Continue stretching and strengthening exercises as instructed.
+Follow-up: Review pain score at next session.
 ```
 
 ---
 
-## 7. Integrate With Completion Blocking
+## Ophthalmology Summary
 
-Where the existing consultation route/visit completion is blocked today, extend it safely:
+Sections:
 
-* Existing general blocks remain.
-* Prescription safety blocks remain.
-* Specialty blocking items should block completion for specialist profiles.
-* Warning-only items should not block completion.
-* Optional items should not block completion.
-* If specialty readiness cannot evaluate, fall back to existing general completion behavior.
+```text id="cl1n32"
+Eye complaint
+Visual acuity
+Refraction
+Intraocular pressure
+Eye examination
+Diagnosis
+Investigations
+Treatment / prescription
+Follow-up and warning signs
+Readiness warnings
+```
 
-Important:
+Source mapping:
 
-Do not create double-blocking messages. Merge duplicate reasons.
+```text id="pn2tai"
+eye_complaint            -> core.complaints
+visual_acuity            -> specialty_entries.visual_acuity
+refraction               -> specialty_entries.refraction
+iop                      -> specialty_entries.iop
+eye_examination          -> specialty_entries.eye_examination
+diagnosis                -> core.diagnoses
+investigations           -> core.investigations
+prescriptions            -> core.prescriptions
+follow_up                -> specialty_entries.follow_up
+readiness warnings       -> readiness.warningItems
+```
+
+Example output style:
+
+```text id="zu0s4l"
+Eye complaint: Redness and discharge.
+Visual acuity: Right eye 6/9, left eye 6/6.
+IOP: Right 16 mmHg, left 15 mmHg by tonometry.
+Eye examination: Conjunctival injection noted; cornea clear.
+Diagnosis: Conjunctivitis.
+Treatment: Antibiotic eye drops QDS.
+Follow-up: Review in 3 days. Return immediately if vision worsens or severe pain develops.
+```
 
 ---
 
-## 8. Add Readiness Refresh After Specialist Saves
+## Dental Summary
 
-After saving a specialty structured form section, the readiness card should refresh or the page should return updated readiness data.
+Sections:
 
-Use existing section refresh conventions:
-
-```text id="69fvjl"
-data-refresh-section
-Ajax response sections
-page reload fallback
+```text id="mxtzdo"
+Dental complaint
+Tooth chart
+Oral examination
+Dental diagnosis
+X-ray / investigation
+Procedure plan / procedure performed
+Consent
+Prescription / medication
+Post-procedure instructions
+Readiness warnings
 ```
 
-At minimum, after save/reload, readiness state must reflect the saved specialist entry.
+Source mapping:
 
-Do not break existing Ajax behavior.
+```text id="zftmy6"
+dental_complaint         -> core.complaints
+tooth_chart              -> specialty_entries.tooth_chart
+oral_examination         -> specialty_entries.oral_examination
+dental_diagnosis         -> specialty_entries.dental_diagnosis + core.diagnoses
+dental_xray              -> specialty_entries.dental_xray + core.investigations
+dental_procedures        -> specialty_entries.dental_procedures + core.procedures
+consent                  -> specialty_entries.consent
+prescriptions            -> core.prescriptions
+follow_up/instructions   -> core.tasks or available instruction fields
+readiness warnings       -> readiness.warningItems
+```
+
+Example output style:
+
+```text id="nk966u"
+Dental complaint: Tooth pain.
+Tooth chart: Tooth 36, caries noted.
+Oral examination: Gingival swelling present.
+Diagnosis: Dental caries with suspected pulpitis.
+Procedure plan: Extraction planned.
+Consent: Dental extraction consent obtained.
+Medication: Oral analgesic prescribed.
+Instructions: Do not rinse mouth vigorously for 24 hours after extraction. Return if bleeding persists.
+```
 
 ---
 
-## 9. Localisation
+## 6. Add Formatter Helpers
 
-Add EN/FR keys for all new readiness labels/messages.
+Inside the summary builder or a dedicated formatter class, add small formatters for:
 
-Suggested namespace:
-
-```text id="x5xdd9"
-consultation_specialties.php
+```text id="vveyc3"
+core complaints
+diagnoses
+investigations
+procedures
+prescriptions
+tasks/follow-ups
+specialty entry key-value fields
+boolean fields
+dates
+arrays
+readiness warnings
 ```
+
+Rules:
+
+* Human-friendly labels.
+* Skip empty/null values.
+* Format booleans clearly: Yes / No.
+* Format arrays as comma-separated or bullet list.
+* Do not output raw JSON.
+* Avoid duplicated content.
+* Keep summaries concise.
+
+Suggested file if separate:
+
+```text id="0zw2kh"
+app/Services/Consultation/Specialty/ConsultationSpecialtySummaryFormatter.php
+```
+
+---
+
+## 7. Add Summary Preview Endpoint
+
+Create controller or extend existing specialist controller:
+
+```text id="6k43m5"
+app/Http/Controllers/Doctor/Consultations/ConsultationSpecialtySummaryController.php
+```
+
+Required action:
+
+```php id="8zzyy6"
+preview(Request $request, Consultation $consultation)
+```
+
+Optional action if safe:
+
+```php id="w2fk3h"
+apply(Request $request, Consultation $consultation)
+```
+
+## Preview
+
+* Builds the summary.
+* Returns JSON for Ajax requests.
+* Can also redirect back with flash if normal post is used.
+* Must use existing consultation mutation/read guard.
+* Must ensure user can access the consultation.
+
+## Apply
+
+Only implement apply if there is a safe existing summary/final-note save path.
+
+Apply behavior:
+
+* Doctor explicitly clicks “Use this summary”.
+* Summary text is inserted into the summary/final note textarea or saved through existing summary save endpoint.
+* Do not overwrite existing summary unless doctor confirms.
+* If existing summary already has content, append or ask/require explicit replace option.
+* Log activity/audit using existing convention.
+
+If safe apply is too risky, implement preview only and let UI insert text client-side into the textarea with doctor still needing to save. Document this decision.
+
+---
+
+## 8. Add Routes
+
+Add routes using existing consultation naming/middleware conventions.
+
+Suggested names:
+
+```text id="4j6u0e"
+doctor.consultations.specialty-summary.preview
+doctor.consultations.specialty-summary.apply
+```
+
+Use the same auth/permission/middleware pattern as existing consultation clinical read/mutation routes.
+
+---
+
+## 9. Add Workspace Payload
+
+Update the consultation workspace controller/provider to pass:
+
+```text id="q6pqv6"
+specialtySummaryPreview
+```
+
+or a lightweight metadata payload:
+
+```php id="zzb105"
+[
+    'available' => true,
+    'profile_code' => ...,
+    'preview_url' => ...,
+    'apply_url' => ...,
+]
+```
+
+Do not generate heavy summary payload on every page load unless cheap.
+
+Prefer lazy preview generation through endpoint.
+
+---
+
+## 10. UI: Specialty Summary Builder Panel
+
+Add a compact summary builder control near the existing notes/summary area.
+
+Rules:
+
+* Must not replace existing notes/summary UI.
+* Must clearly say it is generated from recorded clinical data.
+* Must allow doctor to preview before using.
+* Must not auto-save.
+* Must support “Insert into summary” or “Use this summary” only after doctor action.
+* Must not overwrite existing text silently.
+* If current summary textarea has content, confirm before replacing or append instead.
+* Keep general medicine behavior stable.
+
+Suggested UI:
+
+```text id="5g4tcf"
+[Generate specialty summary]
+
+Preview modal/drawer:
+- Generated summary
+- Missing data warnings
+- Copy / Insert into summary / Close
+```
+
+If modal infrastructure exists, use it. Otherwise use an inline reveal panel.
+
+---
+
+## 11. Readiness Integration
+
+The generated summary should show warnings if key readiness items are missing.
+
+Examples:
+
+```text id="s2v60s"
+This summary may be incomplete because visual acuity is missing.
+This summary may be incomplete because consent is required but not obtained.
+This summary may be incomplete because treatment plan is missing.
+```
+
+Do not block summary generation because readiness is incomplete.
+
+---
+
+## 12. Localisation
+
+Add EN/FR keys for summary builder labels/messages.
 
 Suggested keys:
 
-```text id="z60ocq"
-readiness.title
-readiness.ready
-readiness.needs_attention
-readiness.blocked
-readiness.blocking_items
-readiness.warning_items
-readiness.completed_items
-readiness.optional_items
-readiness.missing_required_details
-readiness.specialty_ready
-readiness.specialty_blocked
-readiness.specialty_warnings
-readiness.presenting_problem_recorded
-readiness.presenting_problem_missing
-readiness.pain_assessment_recorded
-readiness.pain_assessment_missing
-readiness.physical_assessment_recorded
-readiness.physical_assessment_missing
-readiness.treatment_plan_recorded
-readiness.treatment_plan_missing
-readiness.session_schedule_missing
-readiness.home_exercise_plan_missing
-readiness.eye_complaint_recorded
-readiness.eye_complaint_missing
-readiness.visual_acuity_recorded
-readiness.visual_acuity_missing
-readiness.eye_examination_recorded
-readiness.eye_examination_missing
-readiness.iop_missing
-readiness.follow_up_missing
-readiness.dental_complaint_recorded
-readiness.dental_complaint_missing
-readiness.oral_or_tooth_exam_recorded
-readiness.oral_or_tooth_exam_missing
-readiness.dental_diagnosis_recorded
-readiness.dental_diagnosis_missing
-readiness.procedure_or_plan_recorded
-readiness.procedure_or_plan_missing
-readiness.consent_required_missing
-readiness.xray_missing_if_extraction_planned
+```text id="pbu91a"
+summary_builder.title
+summary_builder.generate
+summary_builder.preview
+summary_builder.insert
+summary_builder.copy
+summary_builder.close
+summary_builder.generated_from_recorded_data
+summary_builder.may_be_incomplete
+summary_builder.no_data_available
+summary_builder.inserted
+summary_builder.not_saved_yet
+summary_builder.replace_existing_confirm
+summary_builder.append_to_existing
+summary_builder.sections.presenting_problem
+summary_builder.sections.pain_assessment
+summary_builder.sections.functional_limitation
+summary_builder.sections.physical_assessment
+summary_builder.sections.treatment_plan
+summary_builder.sections.therapy_session
+summary_builder.sections.home_exercise_plan
+summary_builder.sections.progress
+summary_builder.sections.eye_complaint
+summary_builder.sections.visual_acuity
+summary_builder.sections.refraction
+summary_builder.sections.iop
+summary_builder.sections.eye_examination
+summary_builder.sections.diagnosis
+summary_builder.sections.investigations
+summary_builder.sections.treatment_prescription
+summary_builder.sections.follow_up
+summary_builder.sections.dental_complaint
+summary_builder.sections.tooth_chart
+summary_builder.sections.oral_examination
+summary_builder.sections.dental_diagnosis
+summary_builder.sections.dental_xray
+summary_builder.sections.dental_procedures
+summary_builder.sections.consent
+summary_builder.sections.post_procedure_instructions
+summary_builder.sections.readiness_warnings
 ```
 
 No hardcoded visible strings.
 
 ---
 
-## 10. Add Focused Tests
+## 13. Add Focused Tests
 
 Create:
 
-```text id="4e3o0z"
-tests/Feature/Consultations/ConsultationSpecialtyReadinessTest.php
+```text id="2qasg6"
+tests/Feature/Consultations/ConsultationSpecialtySummaryBuilderTest.php
 ```
 
 Suggested tests:
 
-### General readiness fallback
+### General summary fallback
 
-* General medicine uses or wraps existing readiness logic.
-* General consultation behavior remains stable.
+* General medicine summary uses existing/general behavior or safe fallback.
+* General consultation remains stable.
 
-### Physio blocked when missing required entries
+### Physiotherapy summary includes structured fields
 
-* Empty physio consultation returns blocking items for presenting problem, pain assessment, physical assessment, and treatment plan.
+* Save presenting problem, pain assessment, physical assessment, treatment plan.
+* Build summary.
+* Assert summary contains pain score, affected area, treatment plan, session frequency.
 
-### Physio ready after required entries
+### Ophthalmology summary includes eye fields
 
-* Save required physio entries.
-* Readiness becomes ready or no longer blocked.
+* Save visual acuity, IOP, eye examination, follow-up.
+* Add diagnosis/prescription if fixture supports it.
+* Build summary.
+* Assert summary contains acuity, IOP, eye exam, follow-up warning signs.
 
-### Physio session schedule warning
+### Dental summary includes dental fields
 
-* Treatment plan exists without session frequency/number of sessions.
-* Warning appears but does not block if other required items are complete.
+* Save tooth chart, oral exam, dental diagnosis, dental procedure, consent.
+* Build summary.
+* Assert summary contains tooth number, diagnosis, procedure, consent status.
 
-### Ophthalmology blocked when visual acuity missing
+### Empty fields are skipped
 
-* Eye consultation with complaint/diagnosis but no visual acuity remains blocked.
+* Empty/null fields should not produce noisy labels.
 
-### Ophthalmology ready after visual acuity and eye exam
+### Booleans and arrays are formatted
 
-* Save visual acuity and eye examination.
-* Diagnosis exists.
-* Readiness no longer blocks.
+* Consent true/false formats clearly.
+* Modalities/exercises arrays format cleanly.
 
-### Ophthalmology IOP warning
+### Readiness warnings included
 
-* IOP missing returns warning, not blocking.
+* Missing required specialist fields appear as summary warnings.
+* Summary still generates.
 
-### Dental blocked when oral/tooth exam missing
+### Notes are not overwritten
 
-* Dental consultation without tooth chart/oral exam remains blocked.
+* Existing notes remain unchanged after preview.
+* Existing summary remains unchanged after preview.
 
-### Dental diagnosis can come from specialty entry
+### Preview endpoint returns JSON
 
-* Dental diagnosis entry satisfies dental diagnosis readiness.
+* Endpoint returns title, plain text/html, sections, warnings.
 
-### Dental consent conditional block
+### Insert/apply behavior
 
-* If consent_required = true and consent_obtained is false, readiness blocks.
-* If consent_obtained = true, block clears.
+Only if apply is implemented:
 
-### Dental X-ray extraction warning
+* Apply requires explicit doctor action.
+* Existing summary is not overwritten unless replace option is passed.
+* Audit/activity log is created if project convention supports it.
 
-* Extraction planned without X-ray creates warning only.
+If apply is preview-only/client-side, test that preview does not persist.
+
+### Workspace metadata exists
+
+* Workspace payload includes summary builder metadata/preview URL.
 
 ### Wrong profile isolation
 
-* Physio entries do not satisfy dental readiness.
-* Dental entries do not satisfy eye readiness.
-
-### Order set patches affect readiness
-
-* Apply dental extraction prep order set.
-* Consent required appears in readiness logic.
-* Apply physio low back pain order set.
-* Treatment plan patch contributes to readiness but does not falsely complete unrelated required items.
-
-### Workspace payload includes specialtyReadiness
-
-* Consultation workspace has `specialtyReadiness` payload/config.
-
-### Completion route blocks specialist missing requirements
-
-* Existing route/visit completion action is blocked when specialist readiness has blocking items.
-* Warning-only readiness does not block.
+* Physio entries do not appear in dental summary.
+* Dental entries do not appear in ophthalmology summary.
 
 ### Localisation keys exist
 
-* EN/FR keys exist for new readiness messages.
+* EN/FR summary keys exist.
 
 ---
 
-## 11. Optional Browser Smoke Test
+## 14. Optional Browser Smoke Test
 
-If the existing Playwright consultation fixture is stable, add a light smoke test:
+If the existing Playwright consultation fixture is stable, add one light smoke test:
 
-```text id="yv7p8u"
+```text id="oa8heo"
 Open specialist consultation
-Observe readiness blocked
-Save required specialty form section
-Observe readiness update
+Save one structured form section
+Click Generate specialty summary
+Confirm preview contains saved data
+Insert into summary textarea
+Confirm text appears but is not saved until doctor saves
 ```
 
-Only do this if existing fixture setup is already stable.
+Only do this if the existing fixture is stable.
 
 Do not create a heavy browser suite in this phase.
 
 ---
 
-## 12. Minimal Checks to Run
+## 15. Minimal Checks to Run
 
 Run:
 
-```bash id="vu6uo8"
+```bash id="miz5zh"
 php artisan migrate
 php artisan db:seed --class=ConsultationSpecialtySeeder
 php artisan test tests/Feature/Consultations/ConsultationSpecialtyFoundationTest.php
@@ -817,6 +837,7 @@ php artisan test tests/Feature/Consultations/ConsultationSpecialtyEntryTest.php
 php artisan test tests/Feature/Consultations/ConsultationSpecialtyFavoriteTest.php
 php artisan test tests/Feature/Consultations/ConsultationSpecialtyOrderSetTest.php
 php artisan test tests/Feature/Consultations/ConsultationSpecialtyReadinessTest.php
+php artisan test tests/Feature/Consultations/ConsultationSpecialtySummaryBuilderTest.php
 php artisan test tests/Feature/ConsultationWorkspaceStabilisationTest.php
 php artisan route:list
 php artisan view:cache
@@ -831,30 +852,30 @@ Do not run the wide full-suite yet.
 
 ---
 
-## 13. Phase Report
+## 16. Phase Report
 
 Create:
 
-```text id="6r6q2k"
-docs/CONSULTATION_SPECIALIST_EXTENSION_PHASE_7_COMPLETION_READINESS_REPORT.md
+```text id="b6h5zf"
+docs/CONSULTATION_SPECIALIST_EXTENSION_PHASE_8_SUMMARY_BUILDER_REPORT.md
 ```
 
 If the repo convention has a consultation docs subfolder, use:
 
-```text id="6n7w10"
-docs/consultation/CONSULTATION_SPECIALIST_EXTENSION_PHASE_7_COMPLETION_READINESS_REPORT.md
+```text id="swp298"
+docs/consultation/CONSULTATION_SPECIALIST_EXTENSION_PHASE_8_SUMMARY_BUILDER_REPORT.md
 ```
 
 The report must include:
 
-```text id="7eyyjv"
-# Consultation Specialist Extension — Phase 7 Completion Readiness Report
+```text id="zr5l9o"
+# Consultation Specialist Extension — Phase 8 Summary Builder Report
 
 ## Summary
 Explain what was implemented.
 
-## Existing Readiness Findings
-Document current completion readiness services, blockers, route/visit completion behavior, and UI card structure discovered.
+## Existing Notes/Summary Findings
+Document current notes, summary, final note, completion plan/disposition, storage, routes, save behavior, and audit patterns discovered.
 
 ## Files Added
 List all new files.
@@ -862,24 +883,28 @@ List all new files.
 ## Files Modified
 List all modified files.
 
-## Specialty Readiness Design
-Explain rule registry, result DTO, readiness service, source types, blocking/warning/optional statuses, and fallback behavior.
+## Summary Builder Design
+Explain source collector, template registry, result DTO, builder service, formatter behavior, and fallback behavior.
 
-## Specialty Rules Implemented
-List readiness rules for:
+## Specialty Templates Implemented
+List summary sections for:
 - General Medicine
 - Physiotherapy
 - Ophthalmology
 - Dental
 
-## Completion Blocking Integration
-Explain how specialty blocking items affect route/visit completion and how warning-only items behave.
-
 ## UI Changes
-Explain readiness checklist/card changes and anchors.
+Explain preview panel/modal, insert behavior, and how notes/summary remain decoupled.
+
+## Persistence Behavior
+Explain whether preview-only or apply/save was implemented.
+Confirm generated summary is not auto-saved.
+
+## Readiness Integration
+Explain how missing readiness items appear as summary warnings.
 
 ## Backward Compatibility
-Confirm general consultation readiness and existing prescription safety blocks remain stable.
+Confirm general consultation summary/notes behavior remains stable.
 
 ## Tests Added
 List focused tests.
@@ -889,36 +914,37 @@ Include commands and pass/fail summary.
 
 ## Known Issues / Follow-up
 List anything for:
-- Phase 8 specialty summary builder
 - Phase 9 doctor personal workspace
 - Later admin configuration UI
 - Later billing/service mapping
+- Later print/export formatting if needed
 ```
 
 ---
 
 # Acceptance Criteria
 
-Phase 7 is complete only when:
+Phase 8 is complete only when:
 
-* `ConsultationSpecialtyReadinessRuleRegistry` exists.
-* `ConsultationSpecialtyReadinessResult` exists.
-* `ConsultationSpecialtyReadinessService` exists.
-* Specialty readiness evaluates core consultation data and specialty entries.
-* General medicine preserves existing readiness behavior.
-* Physiotherapy readiness blocks only on defined required specialist gaps.
-* Ophthalmology readiness blocks only on defined required specialist gaps.
-* Dental readiness blocks only on defined required specialist gaps, including consent when required.
-* Warning-only items do not block completion.
-* Specialist blocking items block existing completion actions safely.
-* Existing prescription safety blocks remain active.
-* Readiness result is passed to the workspace as `specialtyReadiness`.
-* Readiness UI shows blocking/warning/completed status clearly.
-* Readiness refreshes or updates after specialty entry saves.
-* Focused readiness tests pass.
-* Phase 1-6 focused tests still pass.
+* `ConsultationSpecialtySummarySourceCollector` exists.
+* `ConsultationSpecialtySummaryTemplateRegistry` exists.
+* `ConsultationSpecialtySummaryResult` exists.
+* `ConsultationSpecialtySummaryBuilder` exists.
+* Specialty summaries build from core consultation data and active-profile specialty entries.
+* General medicine behavior remains stable.
+* Physiotherapy summary includes physio structured fields.
+* Ophthalmology summary includes eye structured fields.
+* Dental summary includes dental structured fields.
+* Missing readiness items appear as warnings but do not block summary generation.
+* Preview endpoint exists.
+* Workspace exposes summary builder metadata/control.
+* Generated summary is not auto-saved.
+* Notes and summary remain decoupled.
+* Existing summary is not overwritten silently.
+* Focused summary builder tests pass.
+* Phase 1-7 focused tests still pass.
 * Workspace stabilisation test still passes.
 * View cache/build check passes.
-* Phase 7 report is created.
+* Phase 8 report is created.
 
-Stop after Phase 7. Do not implement summary builder, personal workspace, admin UI, or billing mapping yet.
+Stop after Phase 8. Do not implement doctor personal workspace, admin UI, or billing mapping yet.
