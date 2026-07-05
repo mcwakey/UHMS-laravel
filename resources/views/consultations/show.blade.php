@@ -1473,8 +1473,8 @@
                     </div> --}}
 
                     {{-- ========================= PATTERNS ========================= --}}
-                    @foreach($layoutTabSections->filter(fn ($section) => ($section['component'] ?? null) === 'consultations.partials.specialty.generic-section') as $section)
-                        @include($section['component'], ['section' => $section, 'activeTabTarget' => $activeTabTarget])
+                    @foreach($layoutTabSections->filter(fn ($section) => ! in_array(($section['component'] ?? null), ['consultations.partials.specialty.core-section'], true)) as $section)
+                        @include($section['component'], ['section' => $section, 'activeTabTarget' => $activeTabTarget, 'specialtyEntries' => $specialtyEntries ?? []])
                     @endforeach
 
                     {{-- ========================= PATTERNS ========================= --}}

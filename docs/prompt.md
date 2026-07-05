@@ -4,30 +4,31 @@ We have completed:
 
 * Phase 1: Specialist Consultation Profile Foundation
 * Phase 2: Specialty Resolver
+* Phase 3: Specialty Layout Engine
 
-Phase 2 added `specialtyContext` as read-only data to the consultation workspace payload and confirmed that the visible consultation UI remained unchanged.
+Phase 3 added the specialty layout engine. The consultation workspace now consumes `specialtyLayout`, renders specialty-specific section ordering/labels, shows a compact specialty identity strip, and safely renders specialist-only sections through a generic shell.
 
 Now implement:
 
-# Consultation Specialist Extension — Phase 3: Specialty Layout Engine
+# Consultation Specialist Extension — Phase 4: Structured Specialist Forms
 
-## Phase 3 Goal
+## Phase 4 Goal
 
-Make the consultation workspace consume the resolved `specialtyContext` and render consultation sections according to the active specialty profile.
+Replace the generic specialist-only section shell with real structured clinical forms for the first three specialist profiles:
 
-This phase introduces the **layout engine** only.
+```text
+physiotherapy
+ophthalmology
+dental
+```
 
-The goal is to support:
+This phase must store structured specialist data using the Phase 1 table:
 
-* section ordering by specialty
-* section visibility by specialty
-* section labels by specialty
-* required badges by specialty
-* safe fallback for unknown specialty sections
-* unchanged general consultation behavior
-* no duplication of the consultation module
+```text
+consultation_specialty_entries
+```
 
-Do not implement full structured physiotherapy, ophthalmology, or dental forms yet. That comes in Phase 4.
+The goal is to make specialist consultations feel clinically useful while still preserving the shared consultation engine.
 
 ---
 
@@ -35,557 +36,815 @@ Do not implement full structured physiotherapy, ophthalmology, or dental forms y
 
 Do not rewrite the consultation module.
 
-Do not create separate consultation pages/modules for physio, eye, dental, etc.
+Do not create separate Physio Consultation, Eye Consultation, or Dental Consultation modules.
 
-Do not change backend save behavior for existing core consultation sections unless absolutely necessary.
+Do not change the existing general consultation behavior.
 
-Do not implement specialty completion readiness yet. That comes later.
+Do not implement specialty completion readiness yet. That comes in a later phase.
 
-Do not implement specialty summary builder yet. That comes later.
+Do not implement specialty summary builder yet. That comes in a later phase.
 
-Do not implement billing mapping yet. That comes later.
+Do not implement billing/service mapping yet. That comes later.
+
+Do not implement order sets yet unless absolutely necessary; that is a later phase.
 
 Do not run the full test suite yet.
 
-Run only focused checks for this phase.
+Only run focused checks for this phase.
 
-The general medicine profile must preserve the existing consultation workspace behavior and section order as much as possible.
+The existing core consultation forms, endpoints, IDs, anchors, badges, Ajax refresh, and JavaScript selectors must remain stable.
 
-If `specialtyContext` is missing, invalid, or incomplete, the page must fall back to the current general consultation layout.
+If a specialist structured form fails to load, the page must fall back to the generic specialist shell instead of breaking the consultation workspace.
 
 ---
 
 # Current Context
 
-Phase 2 report confirms:
+Phase 3 report confirms:
 
-* `ConsultationSpecialtyProfileResolver` exists.
-* `ResolvedConsultationSpecialty` DTO exists.
-* `specialtyContext` is passed read-only into `HandlesConsultationWorkspace::show`.
-* The UI does not consume `specialtyContext` yet.
-* The visible consultation UI was unchanged.
+* Main workspace view: `resources/views/consultations/show.blade.php`
+* Sidebar: `resources/views/consultations/partials/workflow-sidebar.blade.php`
+* Core panes are inline in `show.blade.php`
+* Existing JS depends on stable IDs, badge IDs, form `data-refresh-section` values, and list IDs
+* Generic specialist shell currently renders specialist-only sections
+* Existing save behavior for core sections remains unchanged
 
-Now consume this context safely.
+Use this architecture carefully.
 
 ---
 
 # Required Deliverables
 
-## 1. Inspect Current Consultation View Structure
+## 1. Inspect Existing Save Patterns
 
-Before coding, inspect the current consultation workspace Blade/Inertia/Vue structure.
+Before coding, inspect how the current consultation workspace saves:
+
+```text
+complaints
+HOPC
+examination
+diagnosis
+investigations
+prescriptions
+procedures
+tasks
+notes
+summary
+```
 
 Identify:
 
-```text id="ket9nq"
-Main consultation workspace view
-Existing section partials/components
-Current section order
-Current section save endpoints/actions
-Current section IDs/anchors
-Current accordion/hidden compartment behavior
-Current frontend JavaScript used by consultation sections
-Current payload variable names
+```text
+routes
+controllers
+request validation style
+Ajax/form conventions
+response format
+section refresh behavior
+error rendering
+audit logging patterns
+ActivityLog usage
+author attribution patterns
 ```
 
-Do not guess. Follow the existing project style.
+Follow the existing project convention. Do not invent a separate frontend pattern if the consultation workspace already has one.
 
-Document any key findings in the phase report.
+Document findings in the phase report.
 
 ---
 
-## 2. Add Consultation Section Component Registry
-
-Create a service/registry:
-
-```text id="b3mr7o"
-app/Services/Consultation/Specialty/ConsultationSpecialtySectionComponentRegistry.php
-```
-
-Purpose:
-
-Map specialty section keys to renderable components/partials.
-
-The registry should expose methods like:
-
-```php id="oxnnqw"
-public function resolveComponent(string $sectionKey, ?string $configuredComponent = null): string;
-public function isCoreSection(string $sectionKey): bool;
-public function fallbackComponent(): string;
-public function coreSectionKeys(): array;
-```
-
-Use the project’s Blade/Inertia conventions.
-
-Suggested core mappings:
-
-```text id="p4ry6r"
-patient_summary        -> existing patient summary section
-complaints             -> existing complaints section
-hopc                   -> existing HOPC/history section
-examination            -> existing examination section
-diagnosis              -> existing diagnosis section
-investigations         -> existing investigations section
-prescription           -> existing prescription section
-procedures             -> existing procedures section
-tasks                  -> existing tasks section
-notes                  -> existing notes section
-summary                -> existing summary section
-completion_readiness   -> existing completion readiness section
-```
-
-Specialty aliases for Phase 3:
-
-```text id="mavtuz"
-eye_complaint          -> existing complaints section if safe, otherwise generic specialty section shell
-dental_complaint       -> existing complaints section if safe, otherwise generic specialty section shell
-presenting_problem     -> existing complaints section if safe, otherwise generic specialty section shell
-progress_notes         -> existing notes section if safe, otherwise generic specialty section shell
-follow_up              -> existing tasks/follow-up section if safe, otherwise generic specialty section shell
-```
-
-Unknown/new specialty sections must render through a safe generic section shell.
-
-Do not crash because a configured component does not exist.
-
----
-
-## 3. Add Specialty Layout Service
+## 2. Add Specialist Entry Service
 
 Create:
 
-```text id="yfl410"
-app/Services/Consultation/Specialty/ConsultationSpecialtyLayoutService.php
+```text
+app/Services/Consultation/Specialty/ConsultationSpecialtyEntryService.php
 ```
 
 Responsibilities:
 
-```php id="w89x4i"
-buildLayout(array|ResolvedConsultationSpecialty $specialtyContext, array $existingWorkspacePayload = []): array
+```php
+getEntriesForConsultation($consultation, ?ConsultationSpecialtyProfile $profile = null): Collection;
+
+getEntry($consultation, ConsultationSpecialtyProfile $profile, string $sectionKey): ?ConsultationSpecialtyEntry;
+
+upsertEntry(
+    $consultation,
+    ConsultationSpecialtyProfile $profile,
+    string $sectionKey,
+    array $entry,
+    User $user
+): ConsultationSpecialtyEntry;
+
+deleteEntry(
+    ConsultationSpecialtyEntry $entry,
+    User $user
+): bool;
+
+entriesAsArray($consultation, ConsultationSpecialtyProfile $profile): array;
 ```
 
-It should return a normalized layout array:
+Rules:
 
-```php id="pcpv3f"
+* Use `updateOrCreate` or equivalent safe logic.
+* One consultation should have one latest structured entry per specialty profile and section key.
+* Store structured data in `entry` JSON.
+* Set `created_by` and `updated_by`.
+* Respect existing consultation ownership/authorization patterns.
+* Add audit/activity logging if the project logs consultation clinical changes.
+* Do not store empty useless entries unless the section intentionally has meaningful empty state.
+* Use DB transactions when saving multiple related pieces.
+
+---
+
+## 3. Add Specialist Entry Controller
+
+Create a controller following existing consultation controller conventions.
+
+Suggested path:
+
+```text
+app/Http/Controllers/Doctor/Consultations/ConsultationSpecialtyEntryController.php
+```
+
+or if the project has a different consultation controller namespace, follow it.
+
+Required actions:
+
+```php
+store(Request $request, Consultation $consultation)
+update(Request $request, Consultation $consultation, string $sectionKey)
+destroy(Request $request, Consultation $consultation, string $sectionKey)
+```
+
+Adapt route model binding to the actual existing consultation model and route style.
+
+Payload should include:
+
+```text
+specialty_profile_id
+section_key
+entry
+```
+
+Validation must be section-aware.
+
+Do not allow arbitrary unsafe sections. The section key must exist in the active specialty profile layout or seeded specialty sections.
+
+Do not allow saving to inactive profile.
+
+Do not allow saving to a profile that is not the resolved current profile unless the existing project explicitly supports profile override by permission.
+
+Return responses using the same convention as the existing consultation section saves:
+
+```text
+redirect back with flash
+JSON response for Ajax
+section refresh partial response
+```
+
+Use the current workspace pattern.
+
+---
+
+## 4. Add Routes
+
+Add routes using existing consultation route naming conventions.
+
+Suggested names, adapt to project convention:
+
+```text
+doctor.consultations.specialty-entries.store
+doctor.consultations.specialty-entries.update
+doctor.consultations.specialty-entries.destroy
+```
+
+Routes should be protected by the same auth/middleware/permission pattern as existing consultation clinical save routes.
+
+Do not expose these routes to unauthorized staff.
+
+---
+
+## 5. Add Request Validation
+
+Create request classes if the project uses Form Requests:
+
+```text
+app/Http/Requests/Consultation/StoreConsultationSpecialtyEntryRequest.php
+app/Http/Requests/Consultation/UpdateConsultationSpecialtyEntryRequest.php
+```
+
+Or use controller validation if that is the existing pattern.
+
+Validation must be section-aware.
+
+---
+
+# Section Validation Requirements
+
+## Physiotherapy Sections
+
+### presenting_problem
+
+Fields:
+
+```text
+problem_description        nullable|string|max:2000
+onset_date                 nullable|date
+onset_type                 nullable|string|max:100
+mechanism_of_injury        nullable|string|max:1000
+affected_area              nullable|string|max:255
+referral_reason            nullable|string|max:1000
+```
+
+### pain_assessment
+
+Fields:
+
+```text
+pain_score                 nullable|integer|min:0|max:10
+pain_location              nullable|string|max:255
+pain_character             nullable|string|max:255
+aggravating_factors        nullable|string|max:1000
+relieving_factors          nullable|string|max:1000
+pain_pattern               nullable|string|max:255
+```
+
+### functional_limitation
+
+Fields:
+
+```text
+mobility_limitation        nullable|string|max:1000
+work_limitation            nullable|string|max:1000
+self_care_limitation       nullable|string|max:1000
+walking_tolerance          nullable|string|max:255
+standing_tolerance         nullable|string|max:255
+functional_goal            nullable|string|max:1000
+```
+
+### physical_assessment
+
+Fields:
+
+```text
+range_of_motion            nullable|string|max:1000
+muscle_strength            nullable|string|max:1000
+posture                    nullable|string|max:1000
+gait                       nullable|string|max:1000
+balance                    nullable|string|max:1000
+special_tests              nullable|string|max:1000
+assessment_notes           nullable|string|max:2000
+```
+
+### treatment_plan
+
+Fields:
+
+```text
+treatment_goals            nullable|string|max:2000
+modalities                 nullable|array
+modalities.*               string|max:100
+session_frequency          nullable|string|max:100
+number_of_sessions         nullable|integer|min:1|max:100
+expected_duration          nullable|string|max:100
+precautions                nullable|string|max:1000
+```
+
+### therapy_session
+
+Fields:
+
+```text
+session_number             nullable|integer|min:1|max:100
+therapy_given              nullable|string|max:2000
+patient_response           nullable|string|max:1000
+post_session_pain_score    nullable|integer|min:0|max:10
+next_session_plan          nullable|string|max:1000
+```
+
+### home_exercise_plan
+
+Fields:
+
+```text
+exercises                  nullable|array
+exercises.*                string|max:255
+frequency                  nullable|string|max:100
+instructions               nullable|string|max:2000
+warnings                   nullable|string|max:1000
+```
+
+### progress_notes
+
+Fields:
+
+```text
+progress_summary           nullable|string|max:2000
+improvement_score          nullable|integer|min:0|max:100
+barriers                   nullable|string|max:1000
+next_review_date           nullable|date
+```
+
+---
+
+## Ophthalmology Sections
+
+### visual_acuity
+
+Fields:
+
+```text
+right_eye_unaided          nullable|string|max:50
+left_eye_unaided           nullable|string|max:50
+right_eye_pinhole          nullable|string|max:50
+left_eye_pinhole           nullable|string|max:50
+right_eye_corrected        nullable|string|max:50
+left_eye_corrected         nullable|string|max:50
+notes                      nullable|string|max:1000
+```
+
+### refraction
+
+Fields:
+
+```text
+right_sphere               nullable|numeric|min:-30|max:30
+right_cylinder             nullable|numeric|min:-20|max:20
+right_axis                 nullable|integer|min:0|max:180
+right_add                  nullable|numeric|min:0|max:10
+left_sphere                nullable|numeric|min:-30|max:30
+left_cylinder              nullable|numeric|min:-20|max:20
+left_axis                  nullable|integer|min:0|max:180
+left_add                   nullable|numeric|min:0|max:10
+refraction_notes           nullable|string|max:1000
+```
+
+### iop
+
+Fields:
+
+```text
+right_eye_iop              nullable|numeric|min:0|max:80
+left_eye_iop               nullable|numeric|min:0|max:80
+method                     nullable|string|max:100
+measured_at                nullable|date
+notes                      nullable|string|max:1000
+```
+
+### eye_examination
+
+Fields:
+
+```text
+lids                       nullable|string|max:1000
+conjunctiva                nullable|string|max:1000
+cornea                     nullable|string|max:1000
+anterior_chamber           nullable|string|max:1000
+pupil                      nullable|string|max:1000
+lens                       nullable|string|max:1000
+fundus                     nullable|string|max:1000
+retina                     nullable|string|max:1000
+optic_disc                 nullable|string|max:1000
+examination_notes          nullable|string|max:2000
+```
+
+### follow_up
+
+Fields:
+
+```text
+follow_up_date             nullable|date
+follow_up_reason           nullable|string|max:1000
+warning_signs              nullable|string|max:1000
+patient_instructions       nullable|string|max:2000
+```
+
+---
+
+## Dental Sections
+
+### tooth_chart
+
+Fields:
+
+```text
+tooth_number               nullable|string|max:20
+tooth_surface              nullable|string|max:100
+condition                  nullable|string|max:255
+mobility                   nullable|string|max:100
+percussion                 nullable|string|max:100
+notes                      nullable|string|max:1000
+```
+
+Important:
+
+* Keep this simple in Phase 4.
+* Do not build a complex graphical odontogram yet.
+* Use a structured table/list UI if possible.
+* The graphical tooth chart can come later.
+
+### oral_examination
+
+Fields:
+
+```text
+oral_hygiene               nullable|string|max:255
+gingiva                    nullable|string|max:1000
+mucosa                     nullable|string|max:1000
+occlusion                  nullable|string|max:1000
+swelling                   nullable|string|max:1000
+bleeding                   nullable|string|max:1000
+examination_notes          nullable|string|max:2000
+```
+
+### dental_diagnosis
+
+Fields:
+
+```text
+diagnosis_text             nullable|string|max:2000
+tooth_involved             nullable|string|max:100
+severity                   nullable|string|max:100
+differential_diagnosis     nullable|string|max:1000
+```
+
+### dental_xray
+
+Fields:
+
+```text
+xray_type                  nullable|string|max:100
+xray_requested             nullable|boolean
+xray_findings              nullable|string|max:2000
+attachment_reference       nullable|string|max:255
+```
+
+Do not implement file upload in this phase unless the existing consultation document upload pattern already makes it trivial and safe.
+
+### dental_procedures
+
+Fields:
+
+```text
+procedure_planned          nullable|string|max:1000
+procedure_performed        nullable|string|max:1000
+anaesthesia_used           nullable|string|max:255
+materials_used             nullable|string|max:1000
+post_procedure_notes       nullable|string|max:2000
+```
+
+Important:
+
+* Do not create billable procedure records yet.
+* This is clinical structured documentation only.
+* Procedure billing/service mapping comes later.
+
+### consent
+
+Fields:
+
+```text
+consent_required           nullable|boolean
+consent_obtained           nullable|boolean
+consent_type               nullable|string|max:255
+consent_notes              nullable|string|max:1000
+```
+
+Do not enforce blocking completion yet.
+
+---
+
+## 6. Add Structured Form Partials
+
+Create specialist section partials under the existing consultation partials convention.
+
+Suggested structure:
+
+```text
+resources/views/consultations/partials/specialty/forms/physiotherapy/
+resources/views/consultations/partials/specialty/forms/ophthalmology/
+resources/views/consultations/partials/specialty/forms/dental/
+```
+
+Suggested files:
+
+```text
+physiotherapy/presenting-problem.blade.php
+physiotherapy/pain-assessment.blade.php
+physiotherapy/functional-limitation.blade.php
+physiotherapy/physical-assessment.blade.php
+physiotherapy/treatment-plan.blade.php
+physiotherapy/therapy-session.blade.php
+physiotherapy/home-exercise-plan.blade.php
+physiotherapy/progress-notes.blade.php
+
+ophthalmology/visual-acuity.blade.php
+ophthalmology/refraction.blade.php
+ophthalmology/iop.blade.php
+ophthalmology/eye-examination.blade.php
+ophthalmology/follow-up.blade.php
+
+dental/tooth-chart.blade.php
+dental/oral-examination.blade.php
+dental/dental-diagnosis.blade.php
+dental/dental-xray.blade.php
+dental/dental-procedures.blade.php
+dental/consent.blade.php
+```
+
+Rules:
+
+* Use current UHMS form styling.
+* Keep forms compact and readable.
+* Use the same save UX pattern as current consultation sections.
+* Load existing saved `consultation_specialty_entries.entry` values back into the form.
+* Show last updated information if the project convention supports it.
+* Show validation errors using existing style.
+* Add “Save section” button or equivalent.
+* Do not introduce a modal unless existing consultation design requires it.
+* Specialist section should feel like the existing hidden/reveal compartment style.
+
+---
+
+## 7. Update Section Component Registry
+
+Update:
+
+```text
+app/Services/Consultation/Specialty/ConsultationSpecialtySectionComponentRegistry.php
+```
+
+Map specialist section keys to real structured form partials.
+
+### Physiotherapy mappings
+
+```text
+presenting_problem      -> physiotherapy presenting problem form
+pain_assessment         -> physiotherapy pain assessment form
+functional_limitation   -> physiotherapy functional limitation form
+physical_assessment     -> physiotherapy physical assessment form
+treatment_plan          -> physiotherapy treatment plan form
+therapy_session         -> physiotherapy therapy session form
+home_exercise_plan      -> physiotherapy home exercise plan form
+progress_notes          -> physiotherapy progress notes form
+```
+
+### Ophthalmology mappings
+
+```text
+visual_acuity           -> ophthalmology visual acuity form
+refraction              -> ophthalmology refraction form
+iop                     -> ophthalmology IOP form
+eye_examination         -> ophthalmology eye examination form
+follow_up               -> ophthalmology follow-up form
+```
+
+### Dental mappings
+
+```text
+tooth_chart             -> dental tooth chart form
+oral_examination        -> dental oral examination form
+dental_diagnosis        -> dental diagnosis form
+dental_xray             -> dental X-ray form
+dental_procedures       -> dental procedures form
+consent                 -> dental consent form
+```
+
+Important:
+
+* Keep generic fallback for unknown future sections.
+* Do not accidentally map core general sections to specialist forms.
+* Do not break aliases already created in Phase 3.
+
+---
+
+## 8. Pass Specialist Entries to the View
+
+Update the consultation workspace controller/provider to pass:
+
+```text
+specialtyEntries
+```
+
+as a normalized array keyed by section key.
+
+Example:
+
+```php
 [
-    'profile' => [
-        'id' => ...,
-        'code' => ...,
-        'name' => ...,
-        'translated_name' => ...,
-        'icon' => ...,
-        'color' => ...,
-    ],
-    'is_fallback' => true/false,
-    'source' => ...,
-    'sections' => [
-        [
-            'key' => ...,
-            'label' => ...,
-            'translated_label' => ...,
-            'component' => ...,
-            'display_order' => ...,
-            'is_required' => true/false,
-            'is_visible' => true/false,
-            'is_core' => true/false,
-            'config' => [...]
-        ],
+    'pain_assessment' => [
+        'pain_score' => 7,
+        'pain_location' => 'lower back',
     ],
 ]
 ```
 
-Rules:
+Only include entries for the resolved active specialty profile.
 
-* Only visible sections should be returned.
-* Sections must be ordered by `display_order`.
-* If no valid sections exist, return general medicine layout.
-* If the selected specialty has duplicate section keys, normalize defensively and keep the first ordered occurrence.
-* If a component is missing, use generic fallback component.
-* Required sections should be marked, but not enforced yet.
-* Do not mutate `specialtyContext`.
+Do not expose entries from another profile unless needed for audit/history later.
 
 ---
 
-## 4. Add Generic Specialty Section Shell
+## 9. Add Reusable Form Helpers If Useful
 
-Create a reusable generic section partial/component for specialty sections that do not yet have structured forms.
+If many partials become repetitive, add a small helper partial/component for:
 
-Suggested file path, adapt to project convention:
-
-```text id="kqkhg4"
-resources/views/doctor/consultations/partials/specialty-generic-section.blade.php
+```text
+text input
+textarea
+select
+number input
+date input
+checkbox/toggle
+array chips/simple repeated input
 ```
 
-or equivalent under the current consultation partials directory.
+But do not over-engineer.
 
-The generic section shell should:
-
-* render the section label
-* render a small “Specialist section” badge
-* show required badge if `is_required = true`
-* display a clean empty-state/help text
-* not break form submission
-* not require new save behavior in this phase
-* not claim structured fields exist yet
-
-Suggested text:
-
-```text id="hwpvbe"
-This specialist section is enabled for this consultation profile. Structured fields for this section will be added in the next phase.
-```
-
-If the project prefers no “coming next phase” UI text, use a neutral empty-state like:
-
-```text id="2na0j0"
-No structured data has been configured for this specialist section yet.
-```
-
-Do not add noisy development wording visible to hospital users.
+Keep Phase 4 practical.
 
 ---
 
-## 5. Add Specialty Workspace Header / Identity Strip
+## 10. Add Localisation Keys
 
-Add a small, non-intrusive specialty identity strip at the top of the consultation workspace.
+Add EN/FR keys for all new specialist form labels.
 
-It should show:
+Use existing namespace if appropriate:
 
-```text id="wzgiku"
-Specialty name
-Profile source/fallback indicator only if useful
-Icon/color if available
-```
-
-Examples:
-
-```text id="y2nuwk"
-General Medicine Workspace
-Physiotherapy Workspace
-Eye Clinic Workspace
-Dental Workspace
-```
-
-Rules:
-
-* Keep it visually consistent with current UHMS design.
-* Do not make it too large.
-* Do not disturb the main consultation workflow.
-* For general medicine, it should be subtle and not make the screen feel newly bloated.
-* If `specialtyContext.is_fallback = true`, do not show alarming warning text. General fallback is normal.
-
----
-
-## 6. Render Sections Through Layout Engine
-
-Update the main consultation workspace view to render sections from the normalized layout.
-
-Important:
-
-* Existing core section partials must still receive the same variables they currently receive.
-* Existing section forms/actions must keep working.
-* Existing JavaScript selectors/classes/data attributes should remain stable where possible.
-* Existing anchors/IDs should remain stable for core sections.
-* Do not break hidden compartment behavior.
-* Do not break modals/dropdowns/search inputs.
-* Do not break current complaint/HOPC/diagnosis/investigation/prescription/procedure/task behavior.
-
-Suggested approach:
-
-```php id="cp0hny"
-@foreach($specialtyLayout['sections'] as $section)
-    @include($section['component'], [
-        'section' => $section,
-        // existing consultation variables remain available
-    ])
-@endforeach
-```
-
-Adapt to actual project style.
-
-If the current view is too complex for a full switch in one step, use a safer wrapper:
-
-```text id="rxdpnl"
-- Keep current general layout untouched for general_medicine.
-- Use dynamic specialty layout only for non-general profiles.
-```
-
-But the preferred result is one layout engine that also renders general medicine correctly.
-
----
-
-## 7. Preserve Current General Consultation Layout
-
-This is critical.
-
-For the `general_medicine` profile:
-
-* section order must match current consultation order
-* labels should match current labels
-* core components should be the same existing components
-* behavior should remain unchanged
-
-Add a regression test specifically for this.
-
-If exact snapshot testing is not available, test that:
-
-```text id="35nhyv"
-general_medicine layout contains the expected current core section keys
-core sections resolve to existing components
-generic fallback is not used for normal general sections
-```
-
----
-
-## 8. Specialist Layout Behavior for Seeded Profiles
-
-For seeded non-general profiles, the screen should now reflect their section order and names.
-
-Expected profile sections:
-
-### Physiotherapy
-
-```text id="9ep1kj"
-patient_summary
-presenting_problem
-pain_assessment
-functional_limitation
-physical_assessment
-treatment_plan
-therapy_session
-home_exercise_plan
-tasks
-progress_notes
-summary
-completion_readiness
-```
-
-### Ophthalmology
-
-```text id="ysn9mg"
-patient_summary
-eye_complaint
-visual_acuity
-refraction
-iop
-eye_examination
-diagnosis
-investigations
-procedures
-prescription
-follow_up
-summary
-completion_readiness
-```
-
-### Dental
-
-```text id="256x7v"
-patient_summary
-dental_complaint
-tooth_chart
-oral_examination
-dental_diagnosis
-dental_xray
-dental_procedures
-consent
-prescription
-follow_up
-summary
-completion_readiness
-```
-
-For sections that do not have structured forms yet, use the generic specialty section shell.
-
----
-
-## 9. Add Localisation Keys If Needed
-
-If new UI labels are introduced, add EN/FR keys.
-
-Suggested namespace can remain:
-
-```text id="xkjozv"
+```text
 consultation_specialties.php
 ```
 
-Possible keys:
+Suggested groups:
 
-```text id="tzx4v1"
-workspace.title
-workspace.specialist_section
-workspace.required
-workspace.no_structured_data
-workspace.fallback_general
+```text
+forms.physiotherapy.*
+forms.ophthalmology.*
+forms.dental.*
+actions.save_section
+messages.section_saved
+messages.section_deleted
+messages.no_entry_yet
 ```
 
-Do not introduce untranslated strings in Blade/PHP where the project expects localisation.
+Do not leave hardcoded visible text unless the project allows it.
 
-Run localisation parity/lock check if the project has one.
+Run localisation parity/lock check if available.
 
 ---
 
-## 10. Add Focused Tests
+## 11. Add Focused Tests
 
 Create:
 
-```text id="ib7n5u"
-tests/Feature/Consultations/ConsultationSpecialtyLayoutTest.php
+```text
+tests/Feature/Consultations/ConsultationSpecialtyEntryTest.php
 ```
 
 Suggested tests:
 
-### General layout preserves core sections
+### Service upserts entry
 
-Assert the general medicine layout includes:
+* Saves structured entry for a consultation/profile/section.
+* Updates existing entry instead of creating duplicate.
+* Sets created_by and updated_by.
 
-```text id="us56rf"
-patient_summary
-complaints
-hopc
-examination
-diagnosis
-investigations
-prescription
-procedures
-tasks
-notes
-summary
-completion_readiness
-```
+### Entry validation rejects unknown section
 
-in correct order.
+* Cannot save a section not present in active specialty profile.
 
-### Core section registry resolves known sections
+### Entry validation rejects inactive profile
 
-Assert known general sections resolve to non-generic components.
+* Cannot save to inactive profile.
 
-### Unknown section uses generic fallback
+### Physiotherapy pain assessment save
 
-Add or simulate an unknown section and assert it resolves to generic shell.
+* Save `pain_score`, `pain_location`, etc.
+* Assert JSON stored correctly.
 
-### Physiotherapy layout order
+### Ophthalmology visual acuity save
 
-Assert physiotherapy layout returns the seeded physio section order.
+* Save right/left acuity values.
+* Assert JSON stored correctly.
 
-### Ophthalmology layout order
+### Ophthalmology refraction validation
 
-Assert ophthalmology layout returns the seeded ophthalmology section order.
+* Axis must be between 0 and 180.
+* Numeric ranges respected.
 
-### Dental layout order
+### Dental tooth chart save
 
-Assert dental layout returns the seeded dental section order.
+* Save tooth number/surface/condition.
+* Assert JSON stored correctly.
 
-### Required badge metadata
+### Consent section save
 
-Mark a section required and assert layout includes `is_required = true`.
+* Save consent required/obtained flags.
+* Assert JSON booleans stored correctly.
 
-### Invalid/missing context fallback
+### Workspace loads saved specialist entries
 
-If layout receives missing/invalid context, assert it falls back to general medicine layout.
+* Save an entry.
+* Open consultation workspace.
+* Assert saved value appears in the correct specialist form.
 
-### Consultation workspace smoke
+### General consultation unaffected
 
-Where feasible, request the consultation workspace as a user with a mapped specialty and assert:
-
-```text id="08auvh"
-specialty workspace title/strip appears
-expected specialty section labels appear
-general core behavior still renders
-```
-
-If the consultation workspace requires heavy fixtures, create a minimal fixture following existing project patterns. Do not build massive test data in this phase.
+* General medicine workspace still renders existing core sections.
+* Specialist form partials do not appear in general medicine.
 
 ---
 
-## 11. Keep Existing Consultation Actions Working
+## 12. Optional Browser Smoke Test
 
-After rendering through the layout engine, manually/focused-test the existing core actions if there are existing tests for them:
+If Playwright consultation workspace smoke has a light fixture already, add or extend one smoke test for:
 
-```text id="r7trhm"
-complaints
-HOPC
-diagnosis
-investigations
-prescription
-procedures
-tasks
-notes
-summary
+```text
+physiotherapy pain assessment save
+ophthalmology visual acuity save
+dental tooth chart save
 ```
 
-Do not run the full consultation suite unless required by project convention. Prefer targeted tests only.
+Only do this if the existing fixture is already stable.
+
+Do not create a massive Playwright suite in this phase.
 
 ---
 
-## 12. Minimal Checks to Run
+## 13. Minimal Checks to Run
 
 Run:
 
-```bash id="6xfg3b"
+```bash
 php artisan migrate
 php artisan db:seed --class=ConsultationSpecialtySeeder
 php artisan test tests/Feature/Consultations/ConsultationSpecialtyFoundationTest.php
 php artisan test tests/Feature/Consultations/ConsultationSpecialtyResolverTest.php
 php artisan test tests/Feature/Consultations/ConsultationSpecialtyLayoutTest.php
+php artisan test tests/Feature/Consultations/ConsultationSpecialtyEntryTest.php
+php artisan test tests/Feature/ConsultationWorkspaceStabilisationTest.php
 php artisan route:list
+php artisan view:cache
+php artisan view:clear
 ```
 
 Also run PHP lint on new/modified PHP files.
 
-If views were touched and the project has a view compile command/test, run the focused view compilation check.
-
-If localisation keys were added and the project has a localisation lock/parity command, run it.
+If localisation keys were added and the project has a localisation parity/lock command, run it.
 
 Do not run the wide full-suite yet.
 
 ---
 
-## 13. Phase Report
+## 14. Phase Report
 
 Create:
 
-```text id="7s5r0x"
-docs/CONSULTATION_SPECIALIST_EXTENSION_PHASE_3_LAYOUT_ENGINE_REPORT.md
+```text
+docs/CONSULTATION_SPECIALIST_EXTENSION_PHASE_4_STRUCTURED_FORMS_REPORT.md
 ```
 
 If the repo convention has a consultation docs subfolder, use:
 
-```text id="l7jv6v"
-docs/consultation/CONSULTATION_SPECIALIST_EXTENSION_PHASE_3_LAYOUT_ENGINE_REPORT.md
+```text
+docs/consultation/CONSULTATION_SPECIALIST_EXTENSION_PHASE_4_STRUCTURED_FORMS_REPORT.md
 ```
 
 The report must include:
 
-```text id="gp4owj"
-# Consultation Specialist Extension — Phase 3 Layout Engine Report
+```text
+# Consultation Specialist Extension — Phase 4 Structured Forms Report
 
 ## Summary
 Explain what was implemented.
 
-## Current Consultation View Findings
-List the existing view/partial structure discovered before implementation.
+## Existing Save Pattern Findings
+Document the consultation save/routes/Ajax/payload patterns discovered.
 
 ## Files Added
-List new files.
+List all new files.
 
 ## Files Modified
-List modified files.
+List all modified files.
 
-## Layout Engine Design
-Explain registry, layout service, fallback behavior, and generic section shell.
+## Specialist Entry Storage Design
+Explain how consultation_specialty_entries is used.
 
-## Specialty Layouts
-List the resulting section order for:
-- General Medicine
+## Structured Forms Added
+List forms by specialty:
 - Physiotherapy
 - Ophthalmology
 - Dental
 
+## Validation Rules
+Summarize section-aware validation.
+
 ## UI Changes
-Describe the specialty identity strip and dynamic section rendering.
+Explain how generic specialist sections were replaced with structured forms.
 
 ## Backward Compatibility
-Confirm existing general consultation behavior is preserved.
+Confirm general consultation behavior is unchanged.
 
 ## Tests Added
 List focused tests.
@@ -594,27 +853,33 @@ List focused tests.
 Include commands and pass/fail summary.
 
 ## Known Issues / Follow-up
-List items for Phase 4 structured forms.
+List anything for:
+- Phase 5 specialty favorites/smart defaults
+- Phase 6 order sets
+- Phase 7 completion readiness
+- Phase 8 summary builder
 ```
 
 ---
 
 # Acceptance Criteria
 
-Phase 3 is complete only when:
+Phase 4 is complete only when:
 
-* The consultation workspace consumes `specialtyContext`.
-* A section component registry exists.
-* A specialty layout service exists.
-* General medicine renders the expected current consultation section order.
-* Physiotherapy, ophthalmology, and dental render their seeded section orders.
-* Unknown/specialist-only sections render safely through a generic section shell.
-* Required section metadata is visible in the layout but not enforced yet.
-* A specialty identity strip appears in the consultation workspace.
-* Existing core consultation section behavior remains working.
-* Focused layout tests pass.
-* Phase 1 and Phase 2 tests still pass.
-* Visible general consultation behavior remains stable.
-* Phase 3 report is created.
+* `ConsultationSpecialtyEntryService` exists.
+* Specialist entry routes/controller exist and follow existing consultation save conventions.
+* Structured specialist entries save into `consultation_specialty_entries.entry`.
+* Entries are keyed by consultation, active specialty profile, and section key.
+* Saved entries reload into the consultation workspace.
+* Physiotherapy structured forms exist and save.
+* Ophthalmology structured forms exist and save.
+* Dental structured forms exist and save.
+* Unknown/future sections still fall back to the generic shell.
+* General consultation behavior remains unchanged.
+* Section-aware validation prevents unsafe/unknown section saves.
+* Focused entry tests pass.
+* Foundation, resolver, and layout tests still pass.
+* View cache/build check passes.
+* Phase 4 report is created.
 
-Stop after Phase 3. Do not implement structured specialist forms yet.
+Stop after Phase 4. Do not implement favorites, order sets, completion readiness, summary builder, or billing mapping yet.

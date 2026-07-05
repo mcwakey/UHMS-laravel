@@ -8,6 +8,8 @@ class ConsultationSpecialtySectionComponentRegistry
 
     private const CORE_COMPONENT = 'consultations.partials.specialty.core-section';
 
+    private const STRUCTURED_COMPONENT = 'consultations.partials.specialty.structured-section';
+
     private const CORE_SECTIONS = [
         'patient_summary',
         'complaints',
@@ -31,10 +33,18 @@ class ConsultationSpecialtySectionComponentRegistry
         'follow_up' => 'tasks',
     ];
 
+    public function __construct(
+        private readonly ConsultationSpecialtySectionSchema $schemas,
+    ) {}
+
     public function resolveComponent(string $sectionKey, ?string $configuredComponent = null): string
     {
         if ($configuredComponent && view()->exists($configuredComponent)) {
             return $configuredComponent;
+        }
+
+        if ($this->schemas->hasSchema($sectionKey)) {
+            return self::STRUCTURED_COMPONENT;
         }
 
         if ($this->isCoreSection($sectionKey) || isset(self::ALIASES[$sectionKey])) {
@@ -61,11 +71,19 @@ class ConsultationSpecialtySectionComponentRegistry
 
     public function canonicalSectionKey(string $sectionKey): string
     {
+        if ($this->schemas->hasSchema($sectionKey)) {
+            return $sectionKey;
+        }
+
         return self::ALIASES[$sectionKey] ?? $sectionKey;
     }
 
     public function tabTargetFor(string $sectionKey): ?string
     {
+        if ($this->schemas->hasSchema($sectionKey) && ! $this->isCoreSection($sectionKey)) {
+            return 'specialty-'.$sectionKey.'-section';
+        }
+
         return match ($this->canonicalSectionKey($sectionKey)) {
             'complaints' => 'complaints-section',
             'hopc' => 'hopc-section',

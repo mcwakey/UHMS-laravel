@@ -56,6 +56,7 @@ use App\Services\Consultation\ConsultationActionException;
 use App\Services\Consultation\ConsultationActionGuard;
 use App\Services\Consultation\ConsultationIdempotencyService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyLayoutService;
+use App\Services\Consultation\Specialty\ConsultationSpecialtyEntryService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyProfileResolver;
 use App\Services\HistoryOfPresentingComplaintService;
 use App\Services\LabService;
@@ -360,6 +361,9 @@ trait HandlesConsultationWorkspace
             department: $selectedRoute?->department ?? $visit->currentDepartment,
         );
         $specialtyLayout = app(ConsultationSpecialtyLayoutService::class)->buildLayout($specialtyContext);
+        $specialtyEntries = $selectedRoute
+            ? app(ConsultationSpecialtyEntryService::class)->entriesAsArray($selectedRoute, $specialtyContext->profile)
+            : [];
 
         return view('consultations.show', [
             'visit' => $data['visit'],
@@ -390,6 +394,7 @@ trait HandlesConsultationWorkspace
             'consultationPreview' => $consultationPreview,
             'specialtyContext' => $specialtyContext->toArray(),
             'specialtyLayout' => $specialtyLayout,
+            'specialtyEntries' => $specialtyEntries,
             'entryPermissions' => $this->entryPermissions,
             'prescriptionFrequencyOptions' => $frequencyOptions->options(),
             'taskFrequencyOptions' => $frequencyOptions->options(),

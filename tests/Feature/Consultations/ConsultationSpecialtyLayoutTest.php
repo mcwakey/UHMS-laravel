@@ -156,7 +156,7 @@ class ConsultationSpecialtyLayoutTest extends TestCase
         $this->assertSame('complaints', collect($layout['sections'])->pluck('key')->values()[1]);
     }
 
-    public function test_consultation_workspace_renders_specialty_identity_and_generic_sections(): void
+    public function test_consultation_workspace_renders_specialty_identity_and_structured_sections(): void
     {
         [$visit, $route, $department] = $this->consultationRouteFixture('Physiotherapy', 'PHY');
         ConsultationSpecialtyProfileMapping::query()->whereNotNull('department_id')->delete();
@@ -175,7 +175,8 @@ class ConsultationSpecialtyLayoutTest extends TestCase
         $response->assertOk();
         $response->assertSee('Physiotherapy Workspace');
         $response->assertSee('Pain Assessment');
-        $response->assertSee(__('consultation_specialties.workspace.no_structured_data'));
+        $response->assertSee(__('consultation_specialties.actions.save_section'));
+        $response->assertSee('name="pain_score"', false);
         $response->assertSee('id="complaints-section"', false);
     }
 

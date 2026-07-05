@@ -11,6 +11,7 @@ class ConsultationSpecialtyLayoutService
     public function __construct(
         private readonly ConsultationSpecialtyProfileService $profiles,
         private readonly ConsultationSpecialtySectionComponentRegistry $registry,
+        private readonly ConsultationSpecialtySectionSchema $schemas,
     ) {}
 
     public function buildLayout(array|ResolvedConsultationSpecialty $specialtyContext, array $existingWorkspacePayload = []): array
@@ -89,6 +90,7 @@ class ConsultationSpecialtyLayoutService
             'tab_target' => $this->registry->tabTargetFor($key),
             'icon' => $this->registry->iconFor($key),
             'config' => $section['config'] ?? [],
+            'form_fields' => $this->schemas->fieldsFor($key),
         ];
     }
 }

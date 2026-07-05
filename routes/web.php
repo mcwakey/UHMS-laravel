@@ -120,6 +120,7 @@ use App\Http\Controllers\Doctor\Consultations\ConsultationOrderController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationPlanningController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationPrescriptionController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationSessionController;
+use App\Http\Controllers\Doctor\Consultations\ConsultationSpecialtyEntryController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationWorkspaceController;
 use App\Http\Controllers\Accounting\AccountController as AccountingAccountController;
 use App\Http\Controllers\Accounting\AccountingDashboardController;
@@ -1252,6 +1253,9 @@ Route::middleware('auth')->group(function () {
                 Route::post('consultations/{visit}/treatments', [ConsultationClinicalEntryController::class, 'storeTreatment'])->name('consultations.treatments.store');
                 Route::patch('consultations/treatments/{treatment}', [ConsultationClinicalEntryController::class, 'updateTreatment'])->name('consultations.treatments.update');
                 Route::delete('consultations/treatments/{treatment}', [ConsultationClinicalEntryController::class, 'destroyTreatment'])->name('consultations.treatments.destroy');
+
+                Route::post('consultations/{visit}/specialty-entries/{sectionKey}', [ConsultationSpecialtyEntryController::class, 'store'])->name('consultations.specialty-entries.store');
+                Route::delete('consultations/{visit}/specialty-entries/{sectionKey}', [ConsultationSpecialtyEntryController::class, 'destroy'])->name('consultations.specialty-entries.destroy');
             });
 
             Route::get('consultations/{visit}/summary-fragment', [ConsultationWorkspaceController::class, 'summaryFragment'])->name('consultations.summary-fragment');
