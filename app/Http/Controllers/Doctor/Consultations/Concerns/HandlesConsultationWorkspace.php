@@ -61,6 +61,7 @@ use App\Services\Consultation\Specialty\ConsultationSpecialtyLayoutService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyOrderSetService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyProfileResolver;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyReadinessService;
+use App\Services\Consultation\Specialty\DoctorSpecialtyWorkspaceService;
 use App\Services\HistoryOfPresentingComplaintService;
 use App\Services\LabService;
 use App\Services\MedicalPatternService;
@@ -377,6 +378,16 @@ trait HandlesConsultationWorkspace
             'profile_code' => $specialtyContext->profile->code,
             'preview_url' => route('admin.consultations.specialty-summary.preview', $visit),
         ] : ['available' => false];
+        $doctorSpecialtyWorkspace = app(DoctorSpecialtyWorkspaceService::class)->build(
+            $request->user(),
+            $selectedRoute,
+            $specialtyContext,
+            [
+                'specialtyReadiness' => $specialtyReadiness,
+                'specialtyOrderSets' => $specialtyOrderSets,
+                'specialtySummaryBuilder' => $specialtySummaryBuilder,
+            ],
+        );
         $frequencyDefaults = $specialtyFavorites['frequency_defaults'] ?? $frequencyOptions->options();
 
         return view('consultations.show', [
@@ -413,6 +424,7 @@ trait HandlesConsultationWorkspace
             'specialtyOrderSets' => $specialtyOrderSets,
             'specialtyReadiness' => $specialtyReadiness,
             'specialtySummaryBuilder' => $specialtySummaryBuilder,
+            'doctorSpecialtyWorkspace' => $doctorSpecialtyWorkspace,
             'entryPermissions' => $this->entryPermissions,
             'prescriptionFrequencyOptions' => $frequencyDefaults,
             'taskFrequencyOptions' => $frequencyDefaults,

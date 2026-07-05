@@ -123,6 +123,7 @@ use App\Http\Controllers\Doctor\Consultations\ConsultationSessionController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationSpecialtyEntryController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationSpecialtyOrderSetController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationSpecialtySummaryController;
+use App\Http\Controllers\Doctor\Consultations\DoctorConsultationPreferenceController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationWorkspaceController;
 use App\Http\Controllers\Accounting\AccountController as AccountingAccountController;
 use App\Http\Controllers\Accounting\AccountingDashboardController;
@@ -1267,6 +1268,8 @@ Route::middleware('auth')->group(function () {
             Route::get('consultations/{visit}/summary-fragment', [ConsultationWorkspaceController::class, 'summaryFragment'])->name('consultations.summary-fragment');
             Route::get('consultations/{visit}/specialty-summary/preview', [ConsultationSpecialtySummaryController::class, 'preview'])->name('consultations.specialty-summary.preview');
             Route::patch('consultations/{visit}/final-note', [ConsultationWorkspaceController::class, 'updateFinalNote'])->name('consultations.final-note.update')->middleware('can:consultations.create');
+            Route::patch('consultations/preferences/pinned-actions', [DoctorConsultationPreferenceController::class, 'updatePinnedActions'])->name('consultations.preferences.pinned-actions.update')->middleware('can:consultations.create');
+            Route::patch('consultations/preferences/layout', [DoctorConsultationPreferenceController::class, 'updateLayout'])->name('consultations.preferences.layout.update')->middleware('can:consultations.create');
 
             Route::get('departments/{department}/investigation-services', [ConsultationOrderController::class, 'getDepartmentServices'])->name('departments.investigation-services');
             Route::get('departments/{department}/investigation-info', [ConsultationOrderController::class, 'getDepartmentInvestigationInfo'])->name('departments.investigation-info');

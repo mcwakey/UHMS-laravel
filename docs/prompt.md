@@ -9,66 +9,35 @@ We have completed:
 * Phase 5: Specialty Favorites and Smart Defaults
 * Phase 6: Specialty Order Sets
 * Phase 7: Specialty Completion Readiness
+* Phase 8: Specialty Summary Builder
 
-Phase 7 added specialty-aware completion readiness using the existing completion system. General medicine continues to use the existing readiness logic, while physiotherapy, ophthalmology, and dental now add specialist blocking/warning items from core consultation records and `consultation_specialty_entries`.
+Phase 8 added preview-only specialty summary generation. Generated summaries are not auto-saved; they only insert into the existing final-note textarea after doctor action, and the doctor must still use the existing Save action.
 
 Now implement:
 
-# Consultation Specialist Extension — Phase 8: Specialty Summary Builder
+# Consultation Specialist Extension — Phase 9: Doctor Personal Workspace
 
-## Phase 8 Goal
+## Phase 9 Goal
 
-Create a specialty-aware consultation summary builder that generates clean clinical summaries based on the active specialty profile.
+Make the consultation workspace feel personal to the doctor and their active specialty.
 
-The summary builder must use:
+When a doctor opens a consultation, UHMS should show a compact personal clinical workspace identity:
 
-```text id="o9g16l"
-existing core consultation data
-specialty structured entries
-diagnoses
-investigations
-procedures
-prescriptions
-tasks/follow-ups
-completion readiness result
-order-set applied patches where relevant
+```text id="nmxx13"
+Dr. Mensah
+Eye Clinic Workspace
+
+Today:
+- 12 waiting
+- 4 reviewed
+- 3 pending results
+- 2 follow-ups due
+
+Quick actions:
+Visual Acuity · IOP · Eye Examination · Generate Summary · Preview Order Set
 ```
 
-The goal is to help doctors produce a good final summary faster without overwriting their notes or forcing automatic text into the medical record.
-
-Examples:
-
-```text id="5nv2xg"
-Physiotherapy summary:
-- Presenting problem
-- Pain assessment
-- Functional limitation
-- Physical findings
-- Treatment plan
-- Therapy session details
-- Home exercise plan
-- Progress and next review
-
-Ophthalmology summary:
-- Eye complaint
-- Visual acuity
-- Refraction
-- IOP
-- Eye examination
-- Diagnosis
-- Treatment / prescription
-- Follow-up warning signs
-
-Dental summary:
-- Dental complaint
-- Tooth/tooth chart findings
-- Oral examination
-- Dental diagnosis
-- X-ray findings
-- Procedure planned/performed
-- Consent status
-- Post-procedure instructions
-```
+This phase should not change clinical save behavior. It should personalize the workspace using existing specialty profile, department context, readiness, favorites, order sets, summary builder, and doctor preferences.
 
 ---
 
@@ -76,649 +45,614 @@ Dental summary:
 
 Do not rewrite the consultation module.
 
-Do not create separate Physio, Eye, or Dental consultation modules.
+Do not create separate doctor workspaces for physio, eye, dental, etc.
 
-Do not overwrite doctor notes.
-
-Do not merge notes and summary. Notes and summary must remain decoupled.
-
-Do not auto-save generated summaries into the final medical record without doctor action.
-
-Do not remove or weaken existing general consultation summary behavior.
-
-Do not implement doctor personal workspace yet. That comes later.
-
-Do not implement admin configuration UI yet.
+Do not replace existing department dashboards.
 
 Do not implement billing/service mapping yet.
+
+Do not build full admin configuration UI yet.
 
 Do not run the full test suite yet.
 
 Only run focused checks for this phase.
 
-If specialty summary generation fails, the existing summary/notes workflow must continue working.
+The personal workspace must be additive and compact. Do not make the consultation page heavy or crowded.
+
+General medicine must remain clean and not overloaded.
+
+If doctor workspace data fails to load, the consultation page must still open normally.
 
 ---
 
 # Current Context
 
-Phase 7 report confirms:
+Phase 1 created:
 
-* Existing readiness is implemented in `ConsultationCompletionReadinessService`.
-* General readiness is config-driven through `config/consultation.php`.
-* Route completion, visit completion, and complete-and-open-next call the existing readiness assertion.
-* The readiness card is `resources/views/consultations/partials/right-panel.blade.php`.
-* Specialty readiness now evaluates core records and `consultation_specialty_entries`.
-* The workspace passes `specialtyReadiness` to Blade and page config JSON.
-* Prescription safety remains separate from completion readiness.
+```text id="e753sv"
+doctor_consultation_preferences
+```
 
-Phase 8 should use those same sources to generate specialty summaries.
+Phase 2 added active specialty resolution.
+
+Phase 3 added specialty layout and identity strip.
+
+Phase 4 added structured specialist forms.
+
+Phase 5 added specialty favorites and frequency defaults.
+
+Phase 6 added specialty order sets.
+
+Phase 7 added specialty readiness.
+
+Phase 8 added specialty summary builder metadata and preview endpoint.
+
+Phase 9 should bring those pieces together into a personalized doctor-facing workspace layer.
 
 ---
 
 # Required Deliverables
 
-## 1. Inspect Existing Notes and Summary Flow
+## 1. Inspect Existing Doctor/User Context
 
-Before coding, inspect how the current consultation workspace handles:
+Before coding, inspect existing code for:
 
-```text id="lkfgmu"
-notes
-summary
-final note
-consultation completion summary
-visit summary
-disposition/plan
-print/export summary if any
-medical record entry logs
-activity logs
-Ajax save behavior
-Blade textarea/form structure
+```text id="i3b2ca"
+auth user model
+doctor/staff profile model if any
+department assignment
+primary department
+active dashboard/department context
+consultation route queue
+visit consultation route status
+today's consultations query
+appointments query
+pending investigation result query
+pending prescription query
+pending procedure/task query
+doctor_consultation_preferences from Phase 1
+current specialty identity strip from Phase 3
+right-panel structure
+page config JSON
+consultation-show JavaScript
 ```
 
-Identify:
-
-```text id="0y943x"
-models/tables used
-controller actions
-routes
-request fields
-validation rules
-where summary is stored
-where notes are stored
-how notes and summary are displayed
-how completion reads plan/summary
-how audit logs are written
-```
-
-Important:
-
-* Notes and summary must remain decoupled.
-* If the current implementation still mixes notes and summary anywhere, do not do a risky rewrite in this phase. Add the builder safely around the current structure and document follow-up.
+Do not guess model names.
 
 Document findings in the phase report.
 
 ---
 
-## 2. Add Summary Source Collector
+## 2. Add Doctor Workspace DTO
 
 Create:
 
-```text id="ukd8i7"
-app/Services/Consultation/Specialty/ConsultationSpecialtySummarySourceCollector.php
+```text id="7uge37"
+app/Data/Consultation/Specialty/DoctorSpecialtyWorkspace.php
+```
+
+Or follow the project’s DTO/data convention.
+
+It should contain:
+
+```php id="69tinc"
+doctor
+profile
+department
+specialty
+metrics
+quickActions
+pinnedActions
+alerts
+preferences
+todayContext
+summaryBuilder
+readiness
+orderSets
+isFallback
+```
+
+Provide:
+
+```php id="gkzro3"
+toArray(): array
+```
+
+Payload must be Blade/JSON safe.
+
+Do not expose sensitive staff/private user data unnecessarily.
+
+---
+
+## 3. Add Doctor Workspace Service
+
+Create:
+
+```text id="i548g0"
+app/Services/Consultation/Specialty/DoctorSpecialtyWorkspaceService.php
+```
+
+Main method:
+
+```php id="47rz8y"
+public function build(
+    User $user,
+    $consultation,
+    ResolvedConsultationSpecialty|array $specialtyContext,
+    array $workspacePayload = []
+): DoctorSpecialtyWorkspace;
 ```
 
 Responsibilities:
 
-```php id="0lg40x"
-collect(
-    $consultation,
-    ResolvedConsultationSpecialty|array $specialtyContext,
-    array $workspacePayload = []
-): array;
-```
-
-It should collect a normalized source array:
-
-```php id="268jzc"
-[
-    'profile' => [...],
-    'core' => [
-        'complaints' => [...],
-        'hopc' => [...],
-        'examination' => [...],
-        'diagnoses' => [...],
-        'investigations' => [...],
-        'procedures' => [...],
-        'prescriptions' => [...],
-        'tasks' => [...],
-        'notes' => ...,
-        'summary' => ...,
-        'plan' => ...,
-        'disposition' => ...,
-    ],
-    'specialty_entries' => [
-        'visual_acuity' => [...],
-        'pain_assessment' => [...],
-        ...
-    ],
-    'readiness' => [...],
-    'order_set_applications' => [...],
-]
+```text id="b0nmv9"
+Resolve doctor identity
+Resolve active specialty profile
+Resolve active department/context
+Load doctor consultation preferences
+Build specialty-specific metrics
+Build specialty-specific quick actions
+Build lightweight alerts
+Expose pinned actions
+Expose summary-builder availability
+Expose order-set availability
+Expose readiness status
+Return safe fallback when anything fails
 ```
 
 Rules:
 
-* Follow existing model relationships.
-* Avoid N+1 queries where practical.
-* Do not expose sensitive user data unnecessarily.
-* Return empty arrays safely when data does not exist.
-* Keep collector read-only.
+* Keep queries light.
+* Scope metrics to the doctor, active department, active specialty, and current day where possible.
+* If exact scoping is not available, use safe approximate counts and document it.
+* Do not block page rendering if metrics fail.
+* Cache only if project convention supports it. If not, keep queries simple.
+* No patient-sensitive details in aggregate workspace metrics.
 
 ---
 
-## 3. Add Summary Template Registry
+## 4. Add Quick Action Registry
 
 Create:
 
-```text id="1504gr"
-app/Services/Consultation/Specialty/ConsultationSpecialtySummaryTemplateRegistry.php
+```text id="v0675n"
+app/Services/Consultation/Specialty/ConsultationSpecialtyQuickActionRegistry.php
 ```
 
 Purpose:
 
-Define specialty-specific summary sections and formatting rules.
+Define quick actions per specialty.
 
 Method:
 
-```php id="cmm6a4"
-public function templateForProfile(ConsultationSpecialtyProfile $profile): array;
+```php id="z4dcxi"
+public function actionsForProfile(ConsultationSpecialtyProfile $profile): array;
 ```
 
-Template structure:
+Each action should include:
 
-```php id="jossxi"
+```php id="bcut0i"
 [
-    'profile_code' => 'ophthalmology',
-    'title' => 'Ophthalmology Consultation Summary',
-    'sections' => [
-        [
-            'key' => 'eye_complaint',
-            'label' => __('consultation_specialties.summary.eye_complaint'),
-            'source' => 'core.complaints',
-            'formatter' => 'complaints',
-            'include_if_empty' => false,
-        ],
-    ],
+    'key' => 'visual_acuity',
+    'label' => __('consultation_specialties.quick_actions.visual_acuity'),
+    'type' => 'section_anchor',
+    'target' => '#specialty-section-visual_acuity',
+    'icon' => 'eye',
+    'priority' => 10,
+    'requires_section' => 'visual_acuity',
 ]
 ```
 
-Do not add admin UI yet. Code registry is enough for this phase.
+Supported action types:
+
+```text id="v33tw8"
+section_anchor
+open_order_sets
+generate_summary
+insert_favorite
+open_readiness
+open_tasks
+open_prescription
+open_investigations
+```
+
+Do not create risky direct mutation actions in this phase. Quick actions should navigate, open UI panels, or prefill suggestions only.
 
 ---
 
-## 4. Add Summary Result DTO
-
-Create:
-
-```text id="j2rl4v"
-app/Data/Consultation/Specialty/ConsultationSpecialtySummaryResult.php
-```
-
-Suggested fields:
-
-```php id="9dhml0"
-profile
-title
-status
-sections
-plainText
-html
-warnings
-generatedAt
-isFallback
-sourceCompleteness
-```
-
-Each summary section should include:
-
-```php id="wgarxb"
-[
-    'key' => ...,
-    'label' => ...,
-    'content' => ...,
-    'is_empty' => true/false,
-    'source' => ...,
-    'warnings' => [...],
-]
-```
-
-Methods:
-
-```php id="uj3de8"
-toArray(): array
-plainText(): string
-html(): string
-```
-
-Use Blade/JSON-safe output.
-
-Do not store generated summary automatically unless the doctor explicitly saves/applies it.
-
----
-
-## 5. Add Summary Builder Service
-
-Create:
-
-```text id="6p5wrk"
-app/Services/Consultation/Specialty/ConsultationSpecialtySummaryBuilder.php
-```
-
-Responsibilities:
-
-```php id="qq0gjm"
-build(
-    $consultation,
-    ResolvedConsultationSpecialty|array $specialtyContext,
-    array $workspacePayload = [],
-    array $options = []
-): ConsultationSpecialtySummaryResult;
-```
-
-Rules:
-
-* Resolve active profile.
-* Use source collector.
-* Use template registry.
-* Format each section cleanly.
-* Skip empty sections unless template says include.
-* Include warning when important readiness items are still missing.
-* Do not claim information that is not present.
-* Do not invent clinical findings.
-* Do not overwrite clinician text.
-* Fall back to general summary behavior if profile is invalid or unsupported.
-* Keep generated summary concise but useful.
-
----
-
-# Specialty Summary Templates to Implement
+# Quick Actions to Implement
 
 ## General Medicine
 
-Preserve existing summary behavior as much as possible.
+Keep light:
 
-If there is already a generated/general summary source, wrap or reuse it.
-
-Suggested sections only if aligned with current behavior:
-
-```text id="f6sx68"
-Chief complaint
-History
+```text id="kdc691"
+Complaints
 Examination
 Diagnosis
-Investigations
-Treatment / Prescription
-Plan / Follow-up
+Prescription
+Generate Summary
+Readiness
 ```
 
-Do not make general consultation noisier than it currently is.
+## Physiotherapy
 
----
-
-## Physiotherapy Summary
-
-Sections:
-
-```text id="xukbx4"
-Presenting problem
-Pain assessment
-Functional limitation
-Physical assessment
-Treatment plan
-Therapy session
-Home exercise plan
-Progress / next review
-Tasks / follow-up
-Readiness warnings
+```text id="gdbias"
+Presenting Problem
+Pain Assessment
+Physical Assessment
+Treatment Plan
+Therapy Session
+Home Exercise Plan
+Order Sets
+Generate Summary
+Readiness
 ```
 
-Source mapping:
+## Ophthalmology
 
-```text id="1gt60i"
-presenting_problem       -> specialty_entries.presenting_problem
-pain_assessment          -> specialty_entries.pain_assessment
-functional_limitation    -> specialty_entries.functional_limitation
-physical_assessment      -> specialty_entries.physical_assessment
-treatment_plan           -> specialty_entries.treatment_plan
-therapy_session          -> specialty_entries.therapy_session
-home_exercise_plan       -> specialty_entries.home_exercise_plan
-progress_notes           -> specialty_entries.progress_notes
-tasks                    -> core.tasks
-readiness warnings       -> readiness.warningItems
-```
-
-Example output style:
-
-```text id="nh1c6j"
-Presenting problem: Lower back pain after lifting heavy object.
-Pain assessment: Pain score 7/10, located in the lower back, worse with bending.
-Physical assessment: Reduced lumbar range of motion; gait stable.
-Treatment plan: Therapeutic exercises three times weekly for 6 sessions.
-Home exercise plan: Continue stretching and strengthening exercises as instructed.
-Follow-up: Review pain score at next session.
-```
-
----
-
-## Ophthalmology Summary
-
-Sections:
-
-```text id="cl1n32"
-Eye complaint
-Visual acuity
+```text id="h7z3ee"
+Eye Complaint
+Visual Acuity
 Refraction
-Intraocular pressure
-Eye examination
-Diagnosis
-Investigations
-Treatment / prescription
-Follow-up and warning signs
-Readiness warnings
+IOP
+Eye Examination
+Prescription
+Order Sets
+Generate Summary
+Readiness
 ```
 
-Source mapping:
+## Dental
 
-```text id="pn2tai"
-eye_complaint            -> core.complaints
-visual_acuity            -> specialty_entries.visual_acuity
-refraction               -> specialty_entries.refraction
-iop                      -> specialty_entries.iop
-eye_examination          -> specialty_entries.eye_examination
-diagnosis                -> core.diagnoses
-investigations           -> core.investigations
-prescriptions            -> core.prescriptions
-follow_up                -> specialty_entries.follow_up
-readiness warnings       -> readiness.warningItems
-```
-
-Example output style:
-
-```text id="zu0s4l"
-Eye complaint: Redness and discharge.
-Visual acuity: Right eye 6/9, left eye 6/6.
-IOP: Right 16 mmHg, left 15 mmHg by tonometry.
-Eye examination: Conjunctival injection noted; cornea clear.
-Diagnosis: Conjunctivitis.
-Treatment: Antibiotic eye drops QDS.
-Follow-up: Review in 3 days. Return immediately if vision worsens or severe pain develops.
-```
-
----
-
-## Dental Summary
-
-Sections:
-
-```text id="mxtzdo"
-Dental complaint
-Tooth chart
-Oral examination
-Dental diagnosis
-X-ray / investigation
-Procedure plan / procedure performed
+```text id="f7ij2u"
+Dental Complaint
+Tooth Chart
+Oral Examination
+Dental Diagnosis
+Dental Procedure
 Consent
-Prescription / medication
-Post-procedure instructions
-Readiness warnings
-```
-
-Source mapping:
-
-```text id="zftmy6"
-dental_complaint         -> core.complaints
-tooth_chart              -> specialty_entries.tooth_chart
-oral_examination         -> specialty_entries.oral_examination
-dental_diagnosis         -> specialty_entries.dental_diagnosis + core.diagnoses
-dental_xray              -> specialty_entries.dental_xray + core.investigations
-dental_procedures        -> specialty_entries.dental_procedures + core.procedures
-consent                  -> specialty_entries.consent
-prescriptions            -> core.prescriptions
-follow_up/instructions   -> core.tasks or available instruction fields
-readiness warnings       -> readiness.warningItems
-```
-
-Example output style:
-
-```text id="nk966u"
-Dental complaint: Tooth pain.
-Tooth chart: Tooth 36, caries noted.
-Oral examination: Gingival swelling present.
-Diagnosis: Dental caries with suspected pulpitis.
-Procedure plan: Extraction planned.
-Consent: Dental extraction consent obtained.
-Medication: Oral analgesic prescribed.
-Instructions: Do not rinse mouth vigorously for 24 hours after extraction. Return if bleeding persists.
+Order Sets
+Generate Summary
+Readiness
 ```
 
 ---
 
-## 6. Add Formatter Helpers
+## 5. Use Doctor Consultation Preferences
 
-Inside the summary builder or a dedicated formatter class, add small formatters for:
+Use existing table:
 
-```text id="vveyc3"
-core complaints
-diagnoses
-investigations
-procedures
-prescriptions
-tasks/follow-ups
-specialty entry key-value fields
-boolean fields
-dates
-arrays
-readiness warnings
+```text id="uv4j4f"
+doctor_consultation_preferences
 ```
 
-Rules:
+Support:
 
-* Human-friendly labels.
-* Skip empty/null values.
-* Format booleans clearly: Yes / No.
-* Format arrays as comma-separated or bullet list.
-* Do not output raw JSON.
-* Avoid duplicated content.
-* Keep summaries concise.
-
-Suggested file if separate:
-
-```text id="0zw2kh"
-app/Services/Consultation/Specialty/ConsultationSpecialtySummaryFormatter.php
+```text id="k7ecau"
+pinned_actions
+preferred_layout
+compact_mode
+default_consultation_specialty_profile_id
+default_department_id
+metadata
 ```
+
+Add service methods if needed:
+
+```php id="6wrylv"
+getOrCreatePreference(User $user): DoctorConsultationPreference;
+updatePinnedActions(User $user, array $actions): DoctorConsultationPreference;
+updateLayoutPreference(User $user, ?string $layout, bool $compactMode): DoctorConsultationPreference;
+```
+
+Suggested service:
+
+```text id="o8h224"
+app/Services/Consultation/Specialty/DoctorConsultationPreferenceService.php
+```
+
+If a service already exists, extend it.
 
 ---
 
-## 7. Add Summary Preview Endpoint
+## 6. Add Preference Controller and Routes
 
-Create controller or extend existing specialist controller:
+Create controller:
 
-```text id="6k43m5"
-app/Http/Controllers/Doctor/Consultations/ConsultationSpecialtySummaryController.php
+```text id="pgfrwf"
+app/Http/Controllers/Doctor/Consultations/DoctorConsultationPreferenceController.php
 ```
 
-Required action:
+Actions:
 
-```php id="8zzyy6"
-preview(Request $request, Consultation $consultation)
+```php id="7sieib"
+updatePinnedActions(Request $request)
+updateLayout(Request $request)
 ```
 
-Optional action if safe:
-
-```php id="w2fk3h"
-apply(Request $request, Consultation $consultation)
-```
-
-## Preview
-
-* Builds the summary.
-* Returns JSON for Ajax requests.
-* Can also redirect back with flash if normal post is used.
-* Must use existing consultation mutation/read guard.
-* Must ensure user can access the consultation.
-
-## Apply
-
-Only implement apply if there is a safe existing summary/final-note save path.
-
-Apply behavior:
-
-* Doctor explicitly clicks “Use this summary”.
-* Summary text is inserted into the summary/final note textarea or saved through existing summary save endpoint.
-* Do not overwrite existing summary unless doctor confirms.
-* If existing summary already has content, append or ask/require explicit replace option.
-* Log activity/audit using existing convention.
-
-If safe apply is too risky, implement preview only and let UI insert text client-side into the textarea with doctor still needing to save. Document this decision.
-
----
-
-## 8. Add Routes
-
-Add routes using existing consultation naming/middleware conventions.
+Routes should follow existing authenticated doctor/consultation route conventions.
 
 Suggested names:
 
-```text id="4j6u0e"
-doctor.consultations.specialty-summary.preview
-doctor.consultations.specialty-summary.apply
+```text id="iub8ng"
+doctor.consultations.preferences.pinned-actions.update
+doctor.consultations.preferences.layout.update
 ```
 
-Use the same auth/permission/middleware pattern as existing consultation clinical read/mutation routes.
+Validation:
 
----
-
-## 9. Add Workspace Payload
-
-Update the consultation workspace controller/provider to pass:
-
-```text id="q6pqv6"
-specialtySummaryPreview
+```text id="8fqqvj"
+pinned_actions nullable array max 12
+pinned_actions.* string max 100
+preferred_layout nullable in:default,compact,expanded
+compact_mode boolean
 ```
-
-or a lightweight metadata payload:
-
-```php id="zzb105"
-[
-    'available' => true,
-    'profile_code' => ...,
-    'preview_url' => ...,
-    'apply_url' => ...,
-]
-```
-
-Do not generate heavy summary payload on every page load unless cheap.
-
-Prefer lazy preview generation through endpoint.
-
----
-
-## 10. UI: Specialty Summary Builder Panel
-
-Add a compact summary builder control near the existing notes/summary area.
 
 Rules:
 
-* Must not replace existing notes/summary UI.
-* Must clearly say it is generated from recorded clinical data.
-* Must allow doctor to preview before using.
-* Must not auto-save.
-* Must support “Insert into summary” or “Use this summary” only after doctor action.
-* Must not overwrite existing text silently.
-* If current summary textarea has content, confirm before replacing or append instead.
-* Keep general medicine behavior stable.
-
-Suggested UI:
-
-```text id="5g4tcf"
-[Generate specialty summary]
-
-Preview modal/drawer:
-- Generated summary
-- Missing data warnings
-- Copy / Insert into summary / Close
-```
-
-If modal infrastructure exists, use it. Otherwise use an inline reveal panel.
+* A doctor can only update their own preferences.
+* Do not allow arbitrary unsafe action keys. Validate action keys against quick action registry plus known workspace actions.
+* Return JSON for Ajax requests.
+* Redirect back with flash for normal post if project supports it.
 
 ---
 
-## 11. Readiness Integration
+## 7. Add Specialty Workspace Metrics
 
-The generated summary should show warnings if key readiness items are missing.
+Add a lightweight metrics provider:
 
-Examples:
-
-```text id="s2v60s"
-This summary may be incomplete because visual acuity is missing.
-This summary may be incomplete because consent is required but not obtained.
-This summary may be incomplete because treatment plan is missing.
+```text id="o5opcu"
+app/Services/Consultation/Specialty/DoctorSpecialtyWorkspaceMetricService.php
 ```
 
-Do not block summary generation because readiness is incomplete.
+Main method:
+
+```php id="qnbjxy"
+public function metricsFor(
+    User $user,
+    $consultation,
+    ConsultationSpecialtyProfile $profile,
+    mixed $department = null
+): array;
+```
+
+Suggested metrics:
+
+```text id="6vz17a"
+waiting_today
+reviewed_today
+pending_completion
+pending_readiness_blocks
+pending_results
+pending_tasks
+followups_due
+order_sets_available
+summary_available
+```
+
+Rules:
+
+* Use actual existing statuses/tables where available.
+* Keep counts scoped to today and active doctor/department where possible.
+* If a metric cannot be safely computed, return null and hide it.
+* Do not expose patient names/details in this compact header.
+* Do not add heavy joins that slow the consultation page.
+
+Specialty-specific labels:
+
+## Physiotherapy
+
+```text id="ko9ibo"
+Active therapy sessions
+Pending rehab plans
+Follow-ups due
+Readiness blocks
+```
+
+## Ophthalmology
+
+```text id="snx77c"
+Eye cases waiting
+Pending eye results
+Follow-ups due
+Readiness blocks
+```
+
+## Dental
+
+```text id="jva4hi"
+Dental cases waiting
+Procedures pending
+Consent blocks
+Follow-ups due
+```
+
+Keep implementation realistic based on available data. Do not invent records.
+
+---
+
+## 8. Add Doctor Workspace Alerts
+
+Build small non-blocking alerts from existing payloads:
+
+```text id="mzdbuw"
+readiness blocking count
+readiness warning count
+order sets available
+summary builder available
+pending tasks
+missing consent for dental
+missing visual acuity for eye
+missing treatment plan for physio
+```
+
+Rules:
+
+* Alerts should be advisory.
+* Do not duplicate the full readiness card.
+* Max 3 visible alerts in the header.
+* Link alerts to the related section if possible.
+* Do not show alarming language unless completion is actually blocked.
+
+---
+
+## 9. Workspace UI Changes
+
+Update the existing specialty identity strip from Phase 3 into a richer but compact **Doctor Specialty Workspace Header**.
+
+It should include:
+
+```text id="obq9d5"
+Doctor display name
+Specialty workspace name
+Department/context name if available
+Current patient/route context label if appropriate
+Small metrics chips
+Pinned quick actions
+Compact alerts
+Preference controls
+```
+
+Suggested layout:
+
+```text id="ymkufd"
+[Dr. Mensah] [Eye Clinic Workspace] [Department: Ophthalmology]
+Waiting: 12 · Reviewed: 4 · Pending results: 3 · Readiness: 2 blocks
+
+Quick actions:
+[Visual Acuity] [IOP] [Eye Exam] [Order Sets] [Generate Summary]
+```
+
+Rules:
+
+* Must be responsive.
+* Must not dominate the page.
+* Must not break existing patient card.
+* General medicine should remain simple.
+* If compact mode is on, show fewer metrics/actions.
+* If no metrics are available, show only identity + quick actions.
+
+---
+
+## 10. Quick Action Behavior
+
+Implement quick actions as safe UI/navigation actions:
+
+```text id="xuu398"
+section anchors scroll to section
+order sets opens the order set panel/modal
+generate summary opens summary preview flow
+readiness scrolls to readiness card
+prescription scrolls to prescription section
+investigations scrolls to investigations section
+```
+
+Rules:
+
+* No direct clinical save.
+* No direct prescription/order/procedure creation.
+* Preserve existing JavaScript.
+* Keep selectors scoped.
+* If target section does not exist, hide the action or disable it safely.
+
+---
+
+## 11. Add Workspace Payload
+
+Update consultation workspace controller/provider to pass:
+
+```text id="c418z3"
+doctorSpecialtyWorkspace
+```
+
+to Blade and page config JSON.
+
+Payload should include:
+
+```php id="0j3b55"
+[
+    'doctor' => [
+        'name' => ...,
+        'display_name' => ...,
+    ],
+    'profile' => [...],
+    'department' => [...],
+    'metrics' => [...],
+    'quick_actions' => [...],
+    'pinned_actions' => [...],
+    'alerts' => [...],
+    'preferences' => [...],
+]
+```
+
+Do not expose email/phone unless already visible elsewhere and needed.
 
 ---
 
 ## 12. Localisation
 
-Add EN/FR keys for summary builder labels/messages.
+Add EN/FR keys.
 
 Suggested keys:
 
-```text id="pbu91a"
-summary_builder.title
-summary_builder.generate
-summary_builder.preview
-summary_builder.insert
-summary_builder.copy
-summary_builder.close
-summary_builder.generated_from_recorded_data
-summary_builder.may_be_incomplete
-summary_builder.no_data_available
-summary_builder.inserted
-summary_builder.not_saved_yet
-summary_builder.replace_existing_confirm
-summary_builder.append_to_existing
-summary_builder.sections.presenting_problem
-summary_builder.sections.pain_assessment
-summary_builder.sections.functional_limitation
-summary_builder.sections.physical_assessment
-summary_builder.sections.treatment_plan
-summary_builder.sections.therapy_session
-summary_builder.sections.home_exercise_plan
-summary_builder.sections.progress
-summary_builder.sections.eye_complaint
-summary_builder.sections.visual_acuity
-summary_builder.sections.refraction
-summary_builder.sections.iop
-summary_builder.sections.eye_examination
-summary_builder.sections.diagnosis
-summary_builder.sections.investigations
-summary_builder.sections.treatment_prescription
-summary_builder.sections.follow_up
-summary_builder.sections.dental_complaint
-summary_builder.sections.tooth_chart
-summary_builder.sections.oral_examination
-summary_builder.sections.dental_diagnosis
-summary_builder.sections.dental_xray
-summary_builder.sections.dental_procedures
-summary_builder.sections.consent
-summary_builder.sections.post_procedure_instructions
-summary_builder.sections.readiness_warnings
+```text id="gqxv5e"
+workspace.doctor_workspace
+workspace.department
+workspace.today
+workspace.quick_actions
+workspace.pinned_actions
+workspace.pin
+workspace.unpin
+workspace.compact_mode
+workspace.default_layout
+workspace.no_metrics
+workspace.alerts
+workspace.readiness_blocks
+workspace.readiness_warnings
+workspace.order_sets_available
+workspace.summary_available
+
+quick_actions.complaints
+quick_actions.examination
+quick_actions.diagnosis
+quick_actions.prescription
+quick_actions.investigations
+quick_actions.procedures
+quick_actions.tasks
+quick_actions.readiness
+quick_actions.generate_summary
+quick_actions.order_sets
+quick_actions.presenting_problem
+quick_actions.pain_assessment
+quick_actions.physical_assessment
+quick_actions.treatment_plan
+quick_actions.therapy_session
+quick_actions.home_exercise_plan
+quick_actions.eye_complaint
+quick_actions.visual_acuity
+quick_actions.refraction
+quick_actions.iop
+quick_actions.eye_examination
+quick_actions.dental_complaint
+quick_actions.tooth_chart
+quick_actions.oral_examination
+quick_actions.dental_diagnosis
+quick_actions.dental_procedure
+quick_actions.consent
+
+metrics.waiting_today
+metrics.reviewed_today
+metrics.pending_completion
+metrics.pending_results
+metrics.pending_tasks
+metrics.followups_due
+metrics.readiness_blocks
+metrics.order_sets_available
+metrics.summary_available
 ```
 
-No hardcoded visible strings.
+No new visible text should be hardcoded.
 
 ---
 
@@ -726,98 +660,87 @@ No hardcoded visible strings.
 
 Create:
 
-```text id="2qasg6"
-tests/Feature/Consultations/ConsultationSpecialtySummaryBuilderTest.php
+```text id="vykf15"
+tests/Feature/Consultations/DoctorSpecialtyWorkspaceTest.php
 ```
 
 Suggested tests:
 
-### General summary fallback
+### Workspace payload exists
 
-* General medicine summary uses existing/general behavior or safe fallback.
-* General consultation remains stable.
+* Consultation workspace includes `doctorSpecialtyWorkspace`.
 
-### Physiotherapy summary includes structured fields
+### General medicine remains light
 
-* Save presenting problem, pain assessment, physical assessment, treatment plan.
-* Build summary.
-* Assert summary contains pain score, affected area, treatment plan, session frequency.
+* General workspace has only general quick actions and no specialist-only overload.
 
-### Ophthalmology summary includes eye fields
+### Physiotherapy quick actions
 
-* Save visual acuity, IOP, eye examination, follow-up.
-* Add diagnosis/prescription if fixture supports it.
-* Build summary.
-* Assert summary contains acuity, IOP, eye exam, follow-up warning signs.
+* Physio profile includes pain assessment, treatment plan, therapy session, home exercise, order sets, summary, readiness.
 
-### Dental summary includes dental fields
+### Ophthalmology quick actions
 
-* Save tooth chart, oral exam, dental diagnosis, dental procedure, consent.
-* Build summary.
-* Assert summary contains tooth number, diagnosis, procedure, consent status.
+* Eye profile includes visual acuity, refraction, IOP, eye examination, order sets, summary, readiness.
 
-### Empty fields are skipped
+### Dental quick actions
 
-* Empty/null fields should not produce noisy labels.
+* Dental profile includes tooth chart, oral examination, dental diagnosis, dental procedure, consent, order sets, summary, readiness.
 
-### Booleans and arrays are formatted
+### Quick actions only target available sections
 
-* Consent true/false formats clearly.
-* Modalities/exercises arrays format cleanly.
+* If section is missing from layout, action is hidden or disabled safely.
 
-### Readiness warnings included
+### Pinned actions persist
 
-* Missing required specialist fields appear as summary warnings.
-* Summary still generates.
+* Doctor can save pinned quick actions.
+* Reload workspace returns same pinned actions.
 
-### Notes are not overwritten
+### Invalid pinned actions rejected
 
-* Existing notes remain unchanged after preview.
-* Existing summary remains unchanged after preview.
+* Unknown action keys are rejected.
 
-### Preview endpoint returns JSON
+### Compact mode preference persists
 
-* Endpoint returns title, plain text/html, sections, warnings.
+* Doctor can toggle compact mode.
+* Workspace payload reflects compact mode.
 
-### Insert/apply behavior
+### Metrics are safe
 
-Only if apply is implemented:
+* Metrics return numeric/null values only.
+* No patient names are exposed.
 
-* Apply requires explicit doctor action.
-* Existing summary is not overwritten unless replace option is passed.
-* Audit/activity log is created if project convention supports it.
+### Alerts reflect readiness
 
-If apply is preview-only/client-side, test that preview does not persist.
+* Specialist readiness blocking count appears as alert.
+* Warning-only alerts do not block page.
 
-### Workspace metadata exists
+### Workspace degrades safely
 
-* Workspace payload includes summary builder metadata/preview URL.
-
-### Wrong profile isolation
-
-* Physio entries do not appear in dental summary.
-* Dental entries do not appear in ophthalmology summary.
+* If metrics service throws or lacks data, consultation workspace still renders.
 
 ### Localisation keys exist
 
-* EN/FR summary keys exist.
+* EN/FR keys exist for new workspace/quick action labels.
+
+### Existing Phase 1-8 behavior remains stable
+
+* At minimum, run the focused specialty tests and workspace stabilisation test.
 
 ---
 
 ## 14. Optional Browser Smoke Test
 
-If the existing Playwright consultation fixture is stable, add one light smoke test:
+If the existing Playwright consultation fixture is stable, add a light smoke test:
 
-```text id="oa8heo"
+```text id="9rhsym"
 Open specialist consultation
-Save one structured form section
-Click Generate specialty summary
-Confirm preview contains saved data
-Insert into summary textarea
-Confirm text appears but is not saved until doctor saves
+Confirm doctor workspace header appears
+Click quick action Visual Acuity / Pain Assessment / Tooth Chart
+Confirm page scrolls to the correct section
+Toggle compact mode or save pinned action if UI supports it
 ```
 
-Only do this if the existing fixture is stable.
+Only do this if the fixture is already stable.
 
 Do not create a heavy browser suite in this phase.
 
@@ -827,7 +750,7 @@ Do not create a heavy browser suite in this phase.
 
 Run:
 
-```bash id="miz5zh"
+```bash id="uzsbfy"
 php artisan migrate
 php artisan db:seed --class=ConsultationSpecialtySeeder
 php artisan test tests/Feature/Consultations/ConsultationSpecialtyFoundationTest.php
@@ -838,6 +761,7 @@ php artisan test tests/Feature/Consultations/ConsultationSpecialtyFavoriteTest.p
 php artisan test tests/Feature/Consultations/ConsultationSpecialtyOrderSetTest.php
 php artisan test tests/Feature/Consultations/ConsultationSpecialtyReadinessTest.php
 php artisan test tests/Feature/Consultations/ConsultationSpecialtySummaryBuilderTest.php
+php artisan test tests/Feature/Consultations/DoctorSpecialtyWorkspaceTest.php
 php artisan test tests/Feature/ConsultationWorkspaceStabilisationTest.php
 php artisan route:list
 php artisan view:cache
@@ -856,26 +780,26 @@ Do not run the wide full-suite yet.
 
 Create:
 
-```text id="b6h5zf"
-docs/CONSULTATION_SPECIALIST_EXTENSION_PHASE_8_SUMMARY_BUILDER_REPORT.md
+```text id="u5n7fw"
+docs/CONSULTATION_SPECIALIST_EXTENSION_PHASE_9_DOCTOR_PERSONAL_WORKSPACE_REPORT.md
 ```
 
 If the repo convention has a consultation docs subfolder, use:
 
-```text id="swp298"
-docs/consultation/CONSULTATION_SPECIALIST_EXTENSION_PHASE_8_SUMMARY_BUILDER_REPORT.md
+```text id="80hklr"
+docs/consultation/CONSULTATION_SPECIALIST_EXTENSION_PHASE_9_DOCTOR_PERSONAL_WORKSPACE_REPORT.md
 ```
 
 The report must include:
 
-```text id="zr5l9o"
-# Consultation Specialist Extension — Phase 8 Summary Builder Report
+```text id="rm0qac"
+# Consultation Specialist Extension — Phase 9 Doctor Personal Workspace Report
 
 ## Summary
 Explain what was implemented.
 
-## Existing Notes/Summary Findings
-Document current notes, summary, final note, completion plan/disposition, storage, routes, save behavior, and audit patterns discovered.
+## Existing Doctor/Context Findings
+Document user/doctor profile, department context, queue/status, preferences, and workspace UI structures discovered.
 
 ## Files Added
 List all new files.
@@ -883,28 +807,27 @@ List all new files.
 ## Files Modified
 List all modified files.
 
-## Summary Builder Design
-Explain source collector, template registry, result DTO, builder service, formatter behavior, and fallback behavior.
+## Doctor Workspace Design
+Explain DTO, workspace service, quick action registry, metrics service, preference service, fallback behavior, and scoping.
 
-## Specialty Templates Implemented
-List summary sections for:
+## Quick Actions Implemented
+List quick actions for:
 - General Medicine
 - Physiotherapy
 - Ophthalmology
 - Dental
 
+## Metrics and Alerts
+Explain available metrics, hidden/null metric behavior, and alert behavior.
+
 ## UI Changes
-Explain preview panel/modal, insert behavior, and how notes/summary remain decoupled.
+Explain the doctor specialty workspace header, pinned actions, compact mode, quick action navigation, and responsive behavior.
 
-## Persistence Behavior
-Explain whether preview-only or apply/save was implemented.
-Confirm generated summary is not auto-saved.
-
-## Readiness Integration
-Explain how missing readiness items appear as summary warnings.
+## Preferences
+Explain how pinned actions/layout/compact mode are stored and updated.
 
 ## Backward Compatibility
-Confirm general consultation summary/notes behavior remains stable.
+Confirm consultation clinical save behavior, specialist forms, order sets, readiness, and summary builder remain stable.
 
 ## Tests Added
 List focused tests.
@@ -914,37 +837,37 @@ Include commands and pass/fail summary.
 
 ## Known Issues / Follow-up
 List anything for:
-- Phase 9 doctor personal workspace
-- Later admin configuration UI
+- Phase 10 admin configuration UI
 - Later billing/service mapping
-- Later print/export formatting if needed
+- Later dashboard integration
+- Later full-suite/browser testing
 ```
 
 ---
 
 # Acceptance Criteria
 
-Phase 8 is complete only when:
+Phase 9 is complete only when:
 
-* `ConsultationSpecialtySummarySourceCollector` exists.
-* `ConsultationSpecialtySummaryTemplateRegistry` exists.
-* `ConsultationSpecialtySummaryResult` exists.
-* `ConsultationSpecialtySummaryBuilder` exists.
-* Specialty summaries build from core consultation data and active-profile specialty entries.
-* General medicine behavior remains stable.
-* Physiotherapy summary includes physio structured fields.
-* Ophthalmology summary includes eye structured fields.
-* Dental summary includes dental structured fields.
-* Missing readiness items appear as warnings but do not block summary generation.
-* Preview endpoint exists.
-* Workspace exposes summary builder metadata/control.
-* Generated summary is not auto-saved.
-* Notes and summary remain decoupled.
-* Existing summary is not overwritten silently.
-* Focused summary builder tests pass.
-* Phase 1-7 focused tests still pass.
+* `DoctorSpecialtyWorkspace` DTO exists.
+* `DoctorSpecialtyWorkspaceService` exists.
+* `ConsultationSpecialtyQuickActionRegistry` exists.
+* Doctor preference service/controller/routes exist or existing equivalents are extended.
+* Workspace payload includes `doctorSpecialtyWorkspace`.
+* Doctor workspace header appears compactly in consultation workspace.
+* Quick actions are specialty-aware and safe.
+* Quick actions navigate/open UI only; they do not directly mutate clinical records.
+* Pinned actions persist per doctor.
+* Compact mode/layout preference persists per doctor.
+* Metrics are lightweight and do not expose patient details.
+* Alerts reflect readiness/order-set/summary state without duplicating the full readiness card.
+* General medicine remains light and stable.
+* Specialist profiles show relevant actions.
+* Workspace degrades safely if metrics/preferences fail.
+* Focused doctor workspace tests pass.
+* Phase 1-8 focused tests still pass.
 * Workspace stabilisation test still passes.
 * View cache/build check passes.
-* Phase 8 report is created.
+* Phase 9 report is created.
 
-Stop after Phase 8. Do not implement doctor personal workspace, admin UI, or billing mapping yet.
+Stop after Phase 9. Do not implement admin configuration UI, billing mapping, or dashboard integration yet.
