@@ -19,6 +19,7 @@ use App\Models\Patient;
 use App\Services\Maternity\NewbornOverviewService;
 use App\Services\Maternity\NewbornRecordService;
 use App\Services\Maternity\NewbornRiskAssessmentService;
+use App\Services\Maternity\PostnatalOverviewService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -28,6 +29,7 @@ class NewbornRecordController extends Controller
         private NewbornRecordService $newborns,
         private NewbornOverviewService $overview,
         private NewbornRiskAssessmentService $riskAssessment,
+        private PostnatalOverviewService $postnatalOverview,
     ) {}
 
     public function index(DeliveryRecord $deliveryRecord)
@@ -66,6 +68,7 @@ class NewbornRecordController extends Controller
         return view('maternity.newborns.show', [
             'record' => $newbornRecord->load($this->newborns->relations()),
             'riskAssessment' => $this->riskAssessment->assess($newbornRecord),
+            'postnatalOverview' => $this->postnatalOverview->forNewborn($newbornRecord),
             'patientCandidates' => Patient::query()
                 ->whereDate('date_of_birth', $newbornRecord->birth_time?->toDateString() ?? today())
                 ->orderBy('first_name')

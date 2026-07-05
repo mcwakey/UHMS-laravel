@@ -7,6 +7,7 @@ use App\Enums\AdmissionDischargeClearanceType;
 use App\Enums\AdmissionDischargeReadinessStatus;
 use App\Enums\LogModule;
 use App\Enums\LogSeverity;
+use App\Enums\PostnatalCaseStatus;
 use App\Models\Admission;
 use App\Services\ActivityLogService;
 use Illuminate\Support\Collection;
@@ -33,6 +34,7 @@ class AdmissionDischargeReadinessService
             'dischargeClearances.revokedBy',
             'dischargeSummaryRecord.preparedBy',
             'dischargeSummaryRecord.approvedBy',
+            'postnatalCases.deliveryRecord.newbornRecords',
             'nursingTasks',
             'visit.latestInvoice.items',
             'visit.latestInvoice.payments',
@@ -45,6 +47,7 @@ class AdmissionDischargeReadinessService
         $summary = $admission->dischargeSummaryRecord;
         $invoice = $admission->visit?->latestInvoice;
         $invoiceBalance = $invoice ? (float) $invoice->balance : null;
+        $postnatal = $this->postnatalArea($admission);
 
         $areas = collect([
             'clinical' => $this->area(AdmissionDischargeClearanceType::CLINICAL, $clearances, $care['ward_round_overdue'] ? AdmissionDischargeReadinessStatus::WARNING : AdmissionDischargeReadinessStatus::READY, $care['ward_round_overdue'] ? __('admissions.ward_round_review_pending') : __('admissions.clinical_ready')),
@@ -54,6 +57,7 @@ class AdmissionDischargeReadinessService
             'bed_release' => $this->area(AdmissionDischargeClearanceType::BED_RELEASE, $clearances, $admission->bed_id ? AdmissionDischargeReadinessStatus::READY : AdmissionDischargeReadinessStatus::UNAVAILABLE, $admission->bed_id ? __('admissions.bed_release_ready') : __('admissions.no_current_bed')),
             'documentation' => $this->area(AdmissionDischargeClearanceType::DOCUMENTATION, $clearances, $summary?->summary_status?->isApproved() ? AdmissionDischargeReadinessStatus::READY : AdmissionDischargeReadinessStatus::WARNING, $summary ? __('admissions.discharge_summary_status_label', ['status' => $summary->summary_status?->label()]) : __('admissions.missing_summary')),
             'follow_up' => $this->area(AdmissionDischargeClearanceType::FOLLOW_UP, $clearances, ($summary?->follow_up_date || $summary?->follow_up_instructions) ? AdmissionDischargeReadinessStatus::READY : AdmissionDischargeReadinessStatus::WARNING, ($summary?->follow_up_date || $summary?->follow_up_instructions) ? __('admissions.follow_up_ready') : __('admissions.follow_up_missing')),
+            'postnatal' => $postnatal,
         ]);
 
         $blockers = $this->enforcementBlockers($areas, $summary);
@@ -72,10 +76,12 @@ class AdmissionDischargeReadinessService
                 'clearance_required' => (bool) config('admissions.discharge.require_clearance_before_discharge', false),
                 'summary_required' => (bool) config('admissions.discharge.require_summary_before_discharge', false),
                 'billing_required' => (bool) config('admissions.discharge.require_billing_clearance_before_discharge', false),
+                'postnatal_required' => (bool) config('admissions.discharge.require_postnatal_ready_before_discharge', false),
                 'enabled' => (bool) (
                     config('admissions.discharge.require_clearance_before_discharge', false)
                     || config('admissions.discharge.require_summary_before_discharge', false)
                     || config('admissions.discharge.require_billing_clearance_before_discharge', false)
+                    || config('admissions.discharge.require_postnatal_ready_before_discharge', false)
                 ),
                 'blockers' => $blockers,
                 'can_discharge' => $blockers->isEmpty(),
@@ -98,6 +104,7 @@ class AdmissionDischargeReadinessService
                     'clearance_required' => $readiness['enforcement']['clearance_required'],
                     'summary_required' => $readiness['enforcement']['summary_required'],
                     'billing_required' => $readiness['enforcement']['billing_required'],
+                    'postnatal_required' => $readiness['enforcement']['postnatal_required'],
                 ],
             ], $admission, 'Final discharge blocked by readiness enforcement');
 
@@ -157,6 +164,47 @@ class AdmissionDischargeReadinessService
             }
         }
 
+        if (config('admissions.discharge.require_postnatal_ready_before_discharge', false)) {
+            $postnatal = $areas->get('postnatal');
+            if ($postnatal && $postnatal['status'] === AdmissionDischargeReadinessStatus::WARNING) {
+                $blockers->push(__('admissions.postnatal_required_blocker'));
+            }
+        }
+
         return $blockers->values();
+    }
+
+    private function postnatalArea(Admission $admission): array
+    {
+        $cases = $admission->postnatalCases;
+
+        if ($cases->isEmpty()) {
+            return [
+                'type' => null,
+                'label' => __('admissions.postnatal_readiness'),
+                'status' => AdmissionDischargeReadinessStatus::UNAVAILABLE,
+                'message' => __('admissions.postnatal_not_linked'),
+                'clearance' => null,
+                'meta' => ['case_count' => 0],
+            ];
+        }
+
+        $activeCases = $cases->filter(fn ($case) => ! $case->status?->isClosed());
+        $notReady = $activeCases->filter(fn ($case) => ! $case->readyForDischarge() || $case->referral_required);
+
+        return [
+            'type' => null,
+            'label' => __('admissions.postnatal_readiness'),
+            'status' => $notReady->isEmpty() ? AdmissionDischargeReadinessStatus::READY : AdmissionDischargeReadinessStatus::WARNING,
+            'message' => $notReady->isEmpty() ? __('admissions.postnatal_ready') : __('admissions.postnatal_warning'),
+            'clearance' => null,
+            'meta' => [
+                'case_count' => $cases->count(),
+                'active_count' => $activeCases->count(),
+                'not_ready_count' => $notReady->count(),
+                'referral_required' => $cases->contains(fn ($case) => (bool) $case->referral_required),
+                'closed_count' => $cases->filter(fn ($case) => in_array($case->status, [PostnatalCaseStatus::CLOSED, PostnatalCaseStatus::CANCELLED], true))->count(),
+            ],
+        ];
     }
 }

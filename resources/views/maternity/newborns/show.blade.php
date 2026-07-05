@@ -62,7 +62,26 @@
             </div>
         </div>
 
-        <div class="alert alert-info"><i class="ti ti-heart-handshake me-1"></i>{{ __('maternity.start_postnatal_care_placeholder') }}</div>
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-heart-handshake me-1"></i>{{ __('maternity.postnatal_care') }}</h5></div>
+            <div class="card-body">
+                @if($postnatalOverview['case'])
+                <div class="row g-3">
+                    <div class="col-md-4"><small class="text-muted d-block">{{ __('maternity.postnatal_case') }}</small><a href="{{ route('admin.maternity.postnatal.show', $postnatalOverview['case']) }}">{{ $postnatalOverview['case']->status?->label() }}</a></div>
+                    <div class="col-md-4"><small class="text-muted d-block">{{ __('maternity.latest_observation') }}</small><strong>{{ $postnatalOverview['latest_observation']?->observed_at?->format('d M Y H:i') ?? __('common.none') }}</strong></div>
+                    <div class="col-md-4"><small class="text-muted d-block">{{ __('maternity.newborn_ready') }}</small><span class="badge bg-{{ $postnatalOverview['ready'] ? 'success' : 'warning' }}">{{ $postnatalOverview['ready'] ? __('common.yes') : __('common.no') }}</span></div>
+                </div>
+                @if($postnatalOverview['observation_required'])
+                <hr>
+                @can('maternity.postnatal.newborn.record')<a href="{{ route('admin.maternity.postnatal.newborn-observations.create', [$postnatalOverview['case'], $record]) }}" class="btn btn-sm btn-primary">{{ __('maternity.record_newborn_observation') }}</a>@endcan
+                @else
+                <div class="text-muted">{{ __('maternity.postnatal_observation_not_required') }}</div>
+                @endif
+                @else
+                <div class="text-muted">{{ __('maternity.no_postnatal_case_yet') }}</div>
+                @endif
+            </div>
+        </div>
         <div class="alert alert-secondary"><i class="ti ti-file-description me-1"></i>{{ __('maternity.newborn_discharge_summary_placeholder') }}</div>
     </div>
 

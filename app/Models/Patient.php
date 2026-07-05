@@ -150,6 +150,26 @@ class Patient extends Model
         return $this->hasOne(NewbornRecord::class, 'newborn_patient_id');
     }
 
+    public function postnatalCasesAsMother()
+    {
+        return $this->hasMany(PostnatalCase::class, 'mother_patient_id')->latest('opened_at')->latest('id');
+    }
+
+    public function postnatalMotherObservations()
+    {
+        return $this->hasMany(PostnatalMotherObservation::class, 'mother_patient_id')->latest('observed_at')->latest('id');
+    }
+
+    public function postnatalNewbornObservationsAsMother()
+    {
+        return $this->hasMany(PostnatalNewbornObservation::class, 'mother_patient_id')->latest('observed_at')->latest('id');
+    }
+
+    public function postnatalNewbornObservations()
+    {
+        return $this->hasMany(PostnatalNewbornObservation::class, 'newborn_patient_id')->latest('observed_at')->latest('id');
+    }
+
     public function admissionRequests()
     {
         return $this->hasMany(AdmissionRequest::class);

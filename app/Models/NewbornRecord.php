@@ -145,6 +145,16 @@ class NewbornRecord extends Model
         return $this->belongsTo(User::class, 'closed_by');
     }
 
+    public function postnatalNewbornObservations()
+    {
+        return $this->hasMany(PostnatalNewbornObservation::class)->latest('observed_at')->latest('id');
+    }
+
+    public function latestPostnatalObservation()
+    {
+        return $this->hasOne(PostnatalNewbornObservation::class)->latestOfMany('observed_at');
+    }
+
     public function toActivityContext(): array
     {
         return array_filter([

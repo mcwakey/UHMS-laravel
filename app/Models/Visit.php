@@ -250,6 +250,21 @@ class Visit extends Model
         return $this->hasMany(NewbornRecord::class);
     }
 
+    public function postnatalCases()
+    {
+        return $this->hasMany(PostnatalCase::class);
+    }
+
+    public function postnatalMotherObservations()
+    {
+        return $this->hasMany(PostnatalMotherObservation::class);
+    }
+
+    public function postnatalNewbornObservations()
+    {
+        return $this->hasMany(PostnatalNewbornObservation::class);
+    }
+
     public function bedReservations()
     {
         return $this->hasMany(BedReservation::class);

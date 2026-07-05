@@ -581,4 +581,9 @@ return [
         'status_reason_required' => 'A reason is required for blocked, maintenance, or isolation beds.',
         'isolation_reason_required' => 'An isolation reason is required before using an isolation bed.',
     ],
+    'postnatal_readiness' => 'Postnatal Readiness',
+    'postnatal_not_linked' => 'No linked postnatal case was found for this admission.',
+    'postnatal_ready' => 'Linked postnatal case is ready for discharge.',
+    'postnatal_warning' => 'Linked postnatal case has mother/newborn readiness or referral warnings.',
+    'postnatal_required_blocker' => 'Postnatal readiness is required before discharge.',
 ];

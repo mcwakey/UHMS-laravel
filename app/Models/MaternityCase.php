@@ -99,6 +99,21 @@ class MaternityCase extends Model
         return $this->hasMany(NewbornRecord::class)->orderBy('birth_order')->orderBy('id');
     }
 
+    public function postnatalCases()
+    {
+        return $this->hasMany(PostnatalCase::class)->latest('opened_at')->latest('id');
+    }
+
+    public function postnatalMotherObservations()
+    {
+        return $this->hasMany(PostnatalMotherObservation::class)->latest('observed_at')->latest('id');
+    }
+
+    public function postnatalNewbornObservations()
+    {
+        return $this->hasMany(PostnatalNewbornObservation::class)->latest('observed_at')->latest('id');
+    }
+
     public function scopeOpen($query)
     {
         return $query->whereNotIn('status', [

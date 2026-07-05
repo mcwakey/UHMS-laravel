@@ -581,4 +581,9 @@ return [
         'status_reason_required' => 'Un motif est requis pour les lits bloqués, en maintenance ou en isolement.',
         'isolation_reason_required' => 'Un motif d\'isolement est requis avant d\'utiliser un lit d\'isolement.',
     ],
+    'postnatal_readiness' => 'Préparation postnatale',
+    'postnatal_not_linked' => 'Aucun dossier postnatal lié n’a été trouvé pour cette admission.',
+    'postnatal_ready' => 'Le dossier postnatal lié est prêt pour la sortie.',
+    'postnatal_warning' => 'Le dossier postnatal lié a des alertes de préparation mère/nouveau-né ou de référence.',
+    'postnatal_required_blocker' => 'La préparation postnatale est requise avant la sortie.',
 ];

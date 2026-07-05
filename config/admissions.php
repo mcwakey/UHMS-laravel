@@ -24,5 +24,6 @@ return [
         'require_clearance_before_discharge' => (bool) env('ADMISSION_REQUIRE_DISCHARGE_CLEARANCE', false),
         'require_summary_before_discharge' => (bool) env('ADMISSION_REQUIRE_DISCHARGE_SUMMARY', false),
         'require_billing_clearance_before_discharge' => (bool) env('ADMISSION_REQUIRE_BILLING_CLEARANCE', false),
+        'require_postnatal_ready_before_discharge' => (bool) env('ADMISSION_REQUIRE_POSTNATAL_READY_BEFORE_DISCHARGE', false),
     ],
 ];

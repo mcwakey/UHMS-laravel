@@ -66,7 +66,31 @@
     </div>
     <div class="card-footer d-flex justify-content-between">
         <a href="{{ route('admin.maternity.deliveries.newborns.index', $record) }}" class="btn btn-outline-primary">{{ __('maternity.newborn_records') }}</a>
-        <span class="text-muted">{{ __('maternity.start_postnatal_care_placeholder') }}</span>
+        @if($postnatalOverview['case'])
+        <a href="{{ route('admin.maternity.postnatal.show', $postnatalOverview['case']) }}" class="btn btn-outline-success">{{ __('maternity.postnatal_case') }}</a>
+        @else
+        @can('maternity.postnatal.open')
+        <form method="POST" action="{{ route('admin.maternity.deliveries.postnatal.store', $record) }}">@csrf<button class="btn btn-success">{{ __('maternity.open_postnatal_care') }}</button></form>
+        @else
+        <span class="text-muted">{{ __('maternity.no_postnatal_case_yet') }}</span>
+        @endcan
+        @endif
+    </div>
+</div>
+<div class="card mb-3">
+    <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-heart-handshake me-1"></i>{{ __('maternity.postnatal_care') }}</h5></div>
+    <div class="card-body">
+        @if($postnatalOverview['case'])
+        @php($postnatalCase = $postnatalOverview['case'])
+        <div class="row g-3">
+            <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.status') }}</small><span class="badge bg-{{ $postnatalCase->status?->color() ?? 'secondary' }}">{{ $postnatalCase->status?->label() }}</span></div>
+            <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.mother_ready') }}</small><span class="badge bg-{{ $postnatalOverview['mother_ready'] ? 'success' : 'warning' }}">{{ $postnatalOverview['mother_ready'] ? __('common.yes') : __('common.no') }}</span></div>
+            <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.newborn_ready') }}</small><span class="badge bg-{{ $postnatalOverview['newborn_ready'] ? 'success' : 'warning' }}">{{ $postnatalOverview['newborn_ready'] ? __('common.yes') : __('common.no') }}</span></div>
+            <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.latest_mother_observation') }}</small><strong>{{ $postnatalOverview['latest_mother_observation']?->observed_at?->format('d M Y H:i') ?? __('common.none') }}</strong></div>
+        </div>
+        @else
+        <x-empty-state icon="ti-heart-handshake" :title="__('maternity.no_postnatal_case_yet')" />
+        @endif
     </div>
 </div>
 <div class="alert alert-secondary"><i class="ti ti-receipt me-1"></i>{{ __('maternity.newborn_billing_placeholder') }}</div>

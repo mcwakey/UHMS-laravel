@@ -29,6 +29,11 @@
         ['label' => __('maternity.newborns_recorded_today'), 'value' => $overview['newborns_recorded_today'], 'icon' => 'ti-baby-bottle', 'class' => 'primary'],
         ['label' => __('maternity.live_births_today'), 'value' => $overview['live_births_today'], 'icon' => 'ti-heart', 'class' => 'success'],
         ['label' => __('maternity.stillbirths_today'), 'value' => $overview['stillbirths_today'], 'icon' => 'ti-alert-circle', 'class' => 'dark'],
+        ['label' => __('maternity.active_postnatal_cases'), 'value' => $overview['active_postnatal_cases'], 'icon' => 'ti-heart-handshake', 'class' => 'primary'],
+        ['label' => __('maternity.mother_observations_today'), 'value' => $overview['mother_observations_today'], 'icon' => 'ti-stethoscope', 'class' => 'info'],
+        ['label' => __('maternity.newborn_observations_today'), 'value' => $overview['newborn_observations_today'], 'icon' => 'ti-baby-bottle', 'class' => 'info'],
+        ['label' => __('maternity.postnatal_referrals_required'), 'value' => $overview['postnatal_referrals_required'], 'icon' => 'ti-alert-triangle', 'class' => 'warning'],
+        ['label' => __('maternity.postnatal_followups_due_this_week'), 'value' => $overview['postnatal_followups_due_this_week'], 'icon' => 'ti-calendar-due', 'class' => 'secondary'],
     ] as $card)
     <div class="col-6 col-md-4 col-xl-3">
         <div class="card h-100">
@@ -158,13 +163,29 @@
                 @endif
             </div>
         </div>
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center"><h5 class="card-title mb-0"><i class="ti ti-heart-handshake me-1"></i>{{ __('maternity.recent_postnatal_cases') }}</h5><a href="{{ route('admin.maternity.postnatal.index') }}" class="btn btn-sm btn-outline-primary">{{ __('common.view') }}</a></div>
+            <div class="card-body p-0">
+                @if($overview['recent_postnatal_cases']->isNotEmpty())
+                <div class="list-group list-group-flush">
+                    @foreach($overview['recent_postnatal_cases'] as $case)
+                    <a href="{{ route('admin.maternity.postnatal.show', $case) }}" class="list-group-item list-group-item-action">
+                        <div class="fw-semibold">{{ $case->mother?->full_name }}</div>
+                        <small class="text-muted">{{ $case->status?->label() }} · {{ $case->latestMotherObservation?->observed_at?->format('d M Y H:i') ?? __('maternity.no_mother_observations_yet') }}</small>
+                    </a>
+                    @endforeach
+                </div>
+                @else
+                <x-empty-state icon="ti-heart-handshake" :title="__('maternity.no_postnatal_cases_yet')" />
+                @endif
+            </div>
+        </div>
         <div class="card">
             <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-info-circle me-1"></i>{{ __('maternity.foundation_scope') }}</h5></div>
             <div class="card-body">
                 <div class="list-group list-group-flush">
                     @foreach([
-                        __('maternity.future_newborn_placeholder'),
-                        __('maternity.future_postnatal_placeholder'),
+                        __('maternity.postnatal_billing_hooks_only'),
                     ] as $placeholder)
                     <div class="list-group-item px-0"><i class="ti ti-clock text-muted me-1"></i>{{ $placeholder }}</div>
                     @endforeach

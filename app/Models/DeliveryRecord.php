@@ -104,6 +104,16 @@ class DeliveryRecord extends Model
         return $this->hasMany(NewbornRecord::class)->orderBy('birth_order')->orderBy('id');
     }
 
+    public function postnatalCase()
+    {
+        return $this->hasOne(PostnatalCase::class);
+    }
+
+    public function postnatalCases()
+    {
+        return $this->hasMany(PostnatalCase::class)->latest('opened_at')->latest('id');
+    }
+
     public function newbornCountExpected(): int
     {
         return max(0, (int) ($this->newborn_count ?? 0));

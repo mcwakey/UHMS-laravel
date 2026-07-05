@@ -167,6 +167,39 @@
             </div>
         </div>
 
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-heart-handshake me-1"></i>{{ __('maternity.postnatal_care') }}</h5></div>
+            <div class="card-body">
+                @php($postnatal = $overview['postnatal'])
+                @if($postnatal['latest_case'])
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.active_postnatal_cases') }}</small><strong>{{ $postnatal['active_count'] }}</strong></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.status') }}</small><a href="{{ route('admin.maternity.postnatal.show', $postnatal['latest_case']) }}">{{ $postnatal['latest_case']->status?->label() }}</a></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.latest_mother_observation') }}</small><strong>{{ $postnatal['latest_mother_observation']?->observed_at?->format('d M Y H:i') ?? __('common.none') }}</strong></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.latest_newborn_observation') }}</small><strong>{{ $postnatal['latest_newborn_observation']?->observed_at?->format('d M Y H:i') ?? __('common.none') }}</strong></div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="bg-light"><tr><th>{{ __('maternity.delivery_at') }}</th><th>{{ __('maternity.status') }}</th><th>{{ __('maternity.risk_level') }}</th><th>{{ __('maternity.follow_up_date') }}</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach($postnatal['cases'] as $case)
+                            <tr>
+                                <td>{{ $case->deliveryRecord?->delivery_at?->format('d M Y H:i') ?? __('common.none') }}</td>
+                                <td><span class="badge bg-{{ $case->status?->color() ?? 'secondary' }}">{{ $case->status?->label() }}</span></td>
+                                <td><span class="badge badge-soft-{{ $case->risk_level?->color() ?? 'secondary' }}">{{ $case->risk_level?->label() }}</span></td>
+                                <td>{{ $case->follow_up_date?->format('d M Y') ?? __('common.none') }}</td>
+                                <td class="text-end"><a href="{{ route('admin.maternity.postnatal.show', $case) }}" class="btn btn-sm btn-outline-primary">{{ __('common.view') }}</a></td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                <x-empty-state icon="ti-heart-handshake" :title="__('maternity.no_postnatal_case_yet')" />
+                @endif
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-folders me-1"></i>{{ __('maternity.maternity_cases') }}</h5></div>
             <div class="card-body p-0">

@@ -144,6 +144,11 @@ class LaborEpisode extends Model
         return $this->hasMany(NewbornRecord::class)->orderBy('birth_order')->orderBy('id');
     }
 
+    public function postnatalCases()
+    {
+        return $this->hasMany(PostnatalCase::class)->latest('opened_at')->latest('id');
+    }
+
     public function scopeOpen($query)
     {
         return $query->whereNotIn('status', [
