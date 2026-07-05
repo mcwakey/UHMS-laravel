@@ -43,4 +43,12 @@ return [
         'dental_procedures' => 'Dental Procedures',
         'consent' => 'Consent',
     ],
+
+    'workspace' => [
+        'title' => ':profile Workspace',
+        'specialist_section' => 'Specialist section',
+        'required' => 'Required',
+        'no_structured_data' => 'No structured data has been configured for this specialist section yet.',
+        'fallback_general' => 'General workspace',
+    ],
 ];

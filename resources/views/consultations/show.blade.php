@@ -66,6 +66,7 @@
     #sessionsDrawerBody { overflow-x: auto; }
     .consultation-preview-offcanvas { width: min(100vw, 1120px) !important; }
     .consultation-preview-offcanvas .offcanvas-body { background: #f8fafc; }
+    .specialty-workspace-strip { border-left: 4px solid var(--specialty-accent, #0d6efd); }
 </style>
 @endpush
 
@@ -203,9 +204,50 @@
     $selectedRouteLabel = $isEmergencyRoute
         ? __('consultations.emergency_department_session')
         : ($selectedRoute?->department?->name ?? __('consultations.no_active_session'));
+    $specialtyLayout = $specialtyLayout ?? ['sections' => [], 'profile' => []];
+    $layoutSections = collect($specialtyLayout['sections'] ?? []);
+    $specialtyAccentMap = [
+        'primary' => '#0d6efd',
+        'success' => '#198754',
+        'info' => '#0dcaf0',
+        'warning' => '#ffc107',
+        'danger' => '#dc3545',
+        'secondary' => '#6c757d',
+    ];
+    $specialtyColor = $specialtyLayout['profile']['color'] ?? 'primary';
+    $specialtyAccent = str_starts_with((string) $specialtyColor, '#')
+        ? $specialtyColor
+        : ($specialtyAccentMap[$specialtyColor] ?? $specialtyAccentMap['primary']);
+    $layoutTabSections = $layoutSections
+        ->filter(fn ($section) => ! empty($section['tab_target']))
+        ->unique('tab_target')
+        ->values();
+    $activeTabTarget = $layoutTabSections->first()['tab_target'] ?? 'complaints-section';
+    $tabActiveClass = fn (string $target) => $activeTabTarget === $target ? 'show active' : '';
+    $sectionLabel = function (string $key, string $fallback) use ($layoutSections) {
+        $section = $layoutSections->firstWhere('canonical_key', $key) ?? $layoutSections->firstWhere('key', $key);
+        return $section['translated_label'] ?? $fallback;
+    };
 @endphp
 
 @include('consultations.partials.session-context')
+
+<div class="card mb-3 specialty-workspace-strip" style="--specialty-accent: {{ $specialtyAccent }}">
+    <div class="card-body py-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <span class="avatar avatar-sm bg-light text-primary border">
+                <i class="ti {{ $specialtyLayout['profile']['icon'] ?? 'ti-stethoscope' }}"></i>
+            </span>
+            <div>
+                <div class="fw-semibold">{{ __('consultation_specialties.workspace.title', ['profile' => $specialtyLayout['profile']['translated_name'] ?? __('consultation_specialties.profiles.general_medicine')]) }}</div>
+                <small class="text-muted">{{ $selectedRouteLabel }}</small>
+            </div>
+        </div>
+        @if(! empty($specialtyLayout['sections']))
+            <span class="badge bg-light text-dark border">{{ $layoutTabSections->count() }} {{ Str::plural('section', $layoutTabSections->count()) }}</span>
+        @endif
+    </div>
+</div>
 
 {{-- ============================================================ --}}
 {{-- CONSULTATION GATING — Start Consultation banner --}}
@@ -271,10 +313,10 @@
                 <div class="tab-content" id="consultationTabContent">
 
                     {{-- ========================= COMPLAINTS ========================= --}}
-                    <div class="tab-pane fade show active" id="complaints-section" role="tabpanel">
+                    <div class="tab-pane fade {{ $tabActiveClass('complaints-section') }}" id="complaints-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-message-report me-1"></i>{{ __('consultations.workspace.complaints') }}</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-message-report me-1"></i>{{ $sectionLabel('complaints', __('consultations.workspace.complaints')) }}</h6>
                                 @can('consultations.create')
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addComplaintForm">
                                     <i class="ti ti-plus me-1"></i>{{ __('common.add') }}
@@ -400,10 +442,10 @@
                     </div>
 
                     {{-- ========================= HISTORY OF PRESENTING COMPLAINT ========================= --}}
-                    <div class="tab-pane fade" id="hopc-section" role="tabpanel">
+                    <div class="tab-pane fade {{ $tabActiveClass('hopc-section') }}" id="hopc-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-file-description me-1"></i>History of Presenting Complaint</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-file-description me-1"></i>{{ $sectionLabel('hopc', 'History of Presenting Complaint') }}</h6>
                                 <div>
                                     @can('consultations.create')
                                     @can('patients.edit')
@@ -525,10 +567,10 @@
                     </div>
 
                     {{-- ========================= EXAMINATION ========================= --}}
-                    <div class="tab-pane fade" id="examination-section" role="tabpanel">
+                    <div class="tab-pane fade {{ $tabActiveClass('examination-section') }}" id="examination-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-zoom-check me-1"></i>Examination / Physical Examination</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-zoom-check me-1"></i>{{ $sectionLabel('examination', 'Examination / Physical Examination') }}</h6>
                                 @can('consultations.create')
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addExaminationForm">
                                     <i class="ti ti-plus me-1"></i>Add
@@ -624,10 +666,10 @@
                     </div>
 
                     {{-- ========================= DIAGNOSES ========================= --}}
-                    <div class="tab-pane fade" id="diagnoses-section" role="tabpanel">
+                    <div class="tab-pane fade {{ $tabActiveClass('diagnoses-section') }}" id="diagnoses-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-report-medical me-1"></i>Diagnoses</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-report-medical me-1"></i>{{ $sectionLabel('diagnosis', 'Diagnoses') }}</h6>
                                 @can('consultations.create')
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addDiagnosisForm">
                                     <i class="ti ti-plus me-1"></i>Add
@@ -766,10 +808,10 @@
                     </div>
 
                     {{-- ========================= INVESTIGATIONS ========================= --}}
-                    <div class="tab-pane fade" id="investigations-section" role="tabpanel">
+                    <div class="tab-pane fade {{ $tabActiveClass('investigations-section') }}" id="investigations-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-test-pipe me-1"></i>Investigations</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-test-pipe me-1"></i>{{ $sectionLabel('investigations', 'Investigations') }}</h6>
                                 @can('consultations.create')
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addInvestigationForm">
                                     <i class="ti ti-plus me-1"></i>Add
@@ -946,7 +988,7 @@
                     </div>
 
                     {{-- ========================= TREATMENTS ========================= --}}
-                    <div class="tab-pane fade" id="treatments-section" role="tabpanel">
+                    <div class="tab-pane fade {{ $tabActiveClass('treatments-section') }}" id="treatments-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0"><i class="ti ti-vaccine me-1"></i>Treatments</h6>
@@ -1050,10 +1092,10 @@
                     </div>
 
                     {{-- ========================= PRESCRIPTIONS ========================= --}}
-                    <div class="tab-pane fade" id="prescriptions-section" role="tabpanel">
+                    <div class="tab-pane fade {{ $tabActiveClass('prescriptions-section') }}" id="prescriptions-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-prescription me-1"></i>Prescriptions</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-prescription me-1"></i>{{ $sectionLabel('prescription', 'Prescriptions') }}</h6>
                                 @can('prescriptions.create')
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addPrescriptionForm">
                                     <i class="ti ti-plus me-1"></i>New Rx
@@ -1224,10 +1266,10 @@
                     </div>
 
                     {{-- ========================= PROCEDURES ========================= --}}
-                    <div class="tab-pane fade" id="procedures-section" role="tabpanel">
+                    <div class="tab-pane fade {{ $tabActiveClass('procedures-section') }}" id="procedures-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-activity-heartbeat me-1"></i>Theatre / Procedure Requests</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-activity-heartbeat me-1"></i>{{ $sectionLabel('procedures', 'Theatre / Procedure Requests') }}</h6>
                                 @can('procedure.request')
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addProcedureForm">
                                     <i class="ti ti-plus me-1"></i>Request Procedure
@@ -1431,6 +1473,11 @@
                     </div> --}}
 
                     {{-- ========================= PATTERNS ========================= --}}
+                    @foreach($layoutTabSections->filter(fn ($section) => ($section['component'] ?? null) === 'consultations.partials.specialty.generic-section') as $section)
+                        @include($section['component'], ['section' => $section, 'activeTabTarget' => $activeTabTarget])
+                    @endforeach
+
+                    {{-- ========================= PATTERNS ========================= --}}
                     <div class="tab-pane fade" id="patterns-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
@@ -1486,10 +1533,10 @@
                     </div>
 
                     {{-- ========================= TASKS ========================= --}}
-                    <div class="tab-pane fade" id="tasks-section" role="tabpanel">
+                    <div class="tab-pane fade {{ $tabActiveClass('tasks-section') }}" id="tasks-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-checklist me-1"></i>Tasks</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-checklist me-1"></i>{{ $sectionLabel('tasks', 'Tasks') }}</h6>
                                 @can('consultations.create')
                                 <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addTaskForm">
                                     <i class="ti ti-plus me-1"></i>Add Task
@@ -1791,10 +1838,10 @@
                     </div>
 
                     {{-- ========================= NOTES / SUMMARY ========================= --}}
-                    <div class="tab-pane fade" id="summary-section" role="tabpanel">
+                    <div class="tab-pane fade {{ $tabActiveClass('summary-section') }}" id="summary-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-notes me-1"></i>{{ __('consultations.final_clinical_note') }}</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-notes me-1"></i>{{ $sectionLabel('notes', __('consultations.final_clinical_note')) }}</h6>
                             </div>
                             <div class="card-body">
                                 @can('consultations.create')

@@ -4,65 +4,40 @@
                     <div class="card-body p-2">
                         <nav class="consultation-sidebar">
                             <ul class="nav flex-column gap-1" id="consultationTabs" role="tablist">
+                                @php
+                                    $badgeForSection = function (array $section) use ($record, $procedureRequests) {
+                                        return match ($section['canonical_key'] ?? $section['key']) {
+                                            'complaints' => ['id' => 'badge-complaints', 'count' => $record?->complaints?->count() ?? 0],
+                                            'hopc' => ['id' => 'badge-hopc', 'count' => $record?->historiesOfPresentingComplaint?->count() ?? 0],
+                                            'examination' => ['id' => 'badge-examination', 'count' => $record?->physicalExaminations?->count() ?? 0],
+                                            'diagnosis' => ['id' => 'badge-diagnoses', 'count' => $record?->diagnoses?->count() ?? 0],
+                                            'investigations' => ['id' => 'badge-investigations', 'count' => $record?->investigations?->count() ?? 0],
+                                            'prescription' => ['id' => 'badge-prescriptions', 'count' => $record?->prescriptions?->count() ?? 0],
+                                            'procedures' => ['id' => 'badge-procedures', 'count' => $procedureRequests->count()],
+                                            'tasks' => ['id' => 'badge-tasks', 'count' => $record?->tasks?->count() ?? 0],
+                                            default => null,
+                                        };
+                                    };
+                                @endphp
+                                @foreach($layoutTabSections as $section)
+                                @php
+                                    $sectionTitle = (($specialtyLayout['profile']['code'] ?? null) === 'general_medicine' && ($section['tab_target'] ?? null) === 'summary-section')
+                                        ? __('consultations.workspace.notes_summary')
+                                        : ($section['translated_label'] ?? $section['label']);
+                                @endphp
                                 <li class="nav-item">
-                                    <a class="nav-link active" id="tab-complaints" href="#complaints-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-message-report me-1"></i>{{ __('consultations.workspace.presenting_complaints') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-complaints">{{ $record?->complaints?->count() ?? 0 }}</span>
+                                    <a class="nav-link {{ $activeTabTarget === $section['tab_target'] ? 'active' : '' }}" id="tab-{{ $section['key'] }}" href="#{{ $section['tab_target'] }}" data-bs-toggle="pill" role="tab">
+                                        <i class="ti {{ $section['icon'] ?? 'ti-layout-board' }} me-1"></i>{{ $sectionTitle }}
+                                        @if($section['is_required'] ?? false)
+                                            <span class="badge bg-warning-subtle text-warning ms-1">{{ __('consultation_specialties.workspace.required') }}</span>
+                                        @endif
+                                        @php($badge = $badgeForSection($section))
+                                        @if($badge)
+                                            <span class="badge bg-secondary-subtle text-secondary ms-auto" id="{{ $badge['id'] }}">{{ $badge['count'] }}</span>
+                                        @endif
                                     </a>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-hopc" href="#hopc-section" data-bs-toggle="pill" role="tab" aria-label="HOPC">
-                                        <i class="ti ti-file-description me-1"></i>{{ __('consultations.workspace.hopc') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-hopc">{{ $record?->historiesOfPresentingComplaint?->count() ?? 0 }}</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-examination" href="#examination-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-zoom-check me-1"></i>{{ __('consultations.workspace.examination') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-examination">{{ $record?->physicalExaminations?->count() ?? 0 }}</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-diagnoses" href="#diagnoses-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-report-medical me-1"></i>{{ __('consultations.workspace.diagnoses') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-diagnoses">{{ $record?->diagnoses?->count() ?? 0 }}</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-investigations" href="#investigations-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-test-pipe me-1"></i>{{ __('consultations.workspace.investigations') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-investigations">{{ $record?->investigations?->count() ?? 0 }}</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-treatments" href="#treatments-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-vaccine me-1"></i>{{ __('consultations.workspace.treatments') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-treatments">{{ $record?->treatments?->count() ?? 0 }}</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-prescriptions" href="#prescriptions-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-prescription me-1"></i>{{ __('consultations.workspace.prescriptions') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-prescriptions">{{ $record?->prescriptions?->count() ?? 0 }}</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-procedures" href="#procedures-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-activity-heartbeat me-1"></i>{{ __('consultations.workspace.procedures') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-procedures">{{ $procedureRequests->count() }}</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-tasks" href="#tasks-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-checklist me-1"></i>{{ __('consultations.workspace.tasks') }}
-                                        <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-tasks">{{ $record?->tasks?->count() ?? 0 }}</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="tab-summary" href="#summary-section" data-bs-toggle="pill" role="tab">
-                                        <i class="ti ti-notes me-1"></i>{{ __('consultations.workspace.notes_summary') }}
-                                    </a>
-                                </li>
+                                @endforeach
                                 <li class="nav-item">
                                     <a class="nav-link" id="tab-patterns" href="#patterns-section" data-bs-toggle="pill" role="tab">
                                         <i class="ti ti-template me-1"></i>{{ __('consultations.workspace.patterns') }}

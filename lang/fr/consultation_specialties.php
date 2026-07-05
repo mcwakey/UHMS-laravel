@@ -43,4 +43,12 @@ return [
         'dental_procedures' => 'Procedures dentaires',
         'consent' => 'Consentement',
     ],
+
+    'workspace' => [
+        'title' => 'Espace :profile',
+        'specialist_section' => 'Section specialisee',
+        'required' => 'Obligatoire',
+        'no_structured_data' => 'Aucune donnee structuree n est encore configuree pour cette section specialisee.',
+        'fallback_general' => 'Espace general',
+    ],
 ];
