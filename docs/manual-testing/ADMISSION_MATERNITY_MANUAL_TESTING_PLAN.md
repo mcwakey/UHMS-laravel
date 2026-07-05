@@ -165,6 +165,45 @@ Add dedicated manual seeders only after the related implementation phase exists:
 - Maternity admission in labor.
 - Postnatal mother and newborn.
 
+## Phase 13 Maternity Reports and Manual Data Tests
+
+Use `php artisan maternity:seed-manual-test-data --count=3 --fresh-manual --force` only in local/manual testing environments. Outside `testing`, set `UHMS_ALLOW_MANUAL_TEST_SEED=true` before running the command. The command creates records with the `MT-MAT-` prefix so they can be identified and cleared safely.
+
+### Maternity Reports
+
+- Open Maternity Reports.
+- Confirm summary cards link to ANC, Labor, Deliveries, Newborns, Postnatal, and Risk reports.
+- Open each report and filter by date range.
+- Filter by maternity department where departments exist.
+- Filter by recorded staff where staff exist.
+- Filter ANC by risk level and status.
+- Filter Labor by stage/status and admission-linked state.
+- Filter Deliveries by delivery mode and outcome.
+- Filter Newborns by newborn outcome.
+- Filter Postnatal by readiness and referral state.
+- Confirm each report shows operational totals and a recent-records table.
+- Export each report to CSV and confirm the file opens with the filter metadata and rows.
+
+### Billing Mapping Readiness
+
+- Open Maternity Billing Readiness.
+- Confirm missing mappings show warnings only.
+- Map one category to an active service.
+- Disable the mapped service and confirm the readiness page warns that the service is inactive.
+- Save a duplicate service mapping under two categories and confirm the duplicate advisory appears.
+- Confirm no invoice items are created when mappings are saved.
+- Confirm historical ANC, labor, delivery, newborn, and postnatal records are not billed automatically.
+
+### Manual Seed Data
+
+- Run `php artisan maternity:seed-manual-test-data --count=3 --fresh-manual --force`.
+- Confirm `MT-MAT-` patients appear in patient search.
+- Confirm those patients have pregnancy profiles.
+- Confirm at least one profile has ANC data.
+- Confirm labor, delivery, newborn, and postnatal records are visible in their reports.
+- Run the command again with `--fresh-manual` and confirm old `MT-MAT-` records are replaced, not duplicated endlessly.
+- Confirm default seeders do not create the mass maternity test data automatically.
+
 ## Acceptance Checklist
 
 - Existing emergency workflow still works.
@@ -176,3 +215,5 @@ Add dedicated manual seeders only after the related implementation phase exists:
 - Maternity workflows remain optional and do not disrupt general patients.
 - All new user-facing text has English and French keys.
 - Manual test users have the right roles and permissions.
+- Maternity report and export access is permission-protected.
+- Maternity billing mappings remain readiness-only until explicit billing implementation is approved.

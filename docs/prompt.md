@@ -1,6 +1,6 @@
 You are working inside the UHMS Laravel project.
 
-We have completed:
+We have completed the Admission/Ward/Maternity workflow strengthening batch up to Phase 12:
 
 * Phase 1: Emergency vs Admission gap analysis.
 * Phase 2: Admission Workflow Foundation.
@@ -12,8 +12,9 @@ We have completed:
 * Phase 9: Antenatal Care Workflow.
 * Phase 10: Labor and Delivery Foundation.
 * Phase 11: Newborn Records and Birth Outcome Workflow.
+* Phase 12: Postnatal Care Workflow.
 
-Current maternity chain now supports:
+Current clinical chain now supports:
 
 Pregnancy Profile
 → ANC Visits
@@ -21,685 +22,458 @@ Pregnancy Profile
 → Labor Observations
 → Delivery Record
 → Newborn Records
-→ Optional newborn patient linking
+→ Postnatal Care
 
-Now implement Phase 12: Postnatal Care Workflow.
+Now implement Phase 13: Maternity Reports, Billing Mapping Readiness, Manual Test Data, and Final Wide Regression.
 
 Goal:
-Add postnatal care for both mother and newborn after delivery, linked to delivery records, newborn records, pregnancy profiles, labor episodes, maternity cases, admissions, visits, patients, nursing care, and discharge readiness.
-
-This phase should support:
-
-* Opening a postnatal case after delivery.
-* Tracking mother postnatal observations.
-* Tracking newborn postnatal observations.
-* Mother/newborn danger signs.
-* Breastfeeding and feeding status.
-* Postnatal follow-up planning.
-* Mother and newborn readiness for discharge.
-* Referral/escalation notes.
-* Dashboard visibility.
-* Safe integration with existing admission discharge readiness without rewriting it.
+Close this implementation batch by adding reporting, operational visibility, safe billing-mapping readiness, rich manual test data, final documentation, and one wider regression pass.
 
 Important:
-Do not implement maternity package billing yet.
-Do not implement newborn billing yet.
-Do not implement official birth registration/civil registry integration.
-Do not rewrite admission discharge readiness.
-Do not rewrite newborn records.
-Do not rewrite labor/delivery records.
-Do not rewrite admission, nursing, MAR, billing, emergency, or theatre workflows.
-Do not force postnatal care onto every delivery automatically unless the action is explicit and safe.
-Do not run the full test suite.
-Do not touch `docs/prompt.md`; it was already modified in the working tree and should remain untouched unless explicitly instructed.
+This phase may run the wider regression/full-suite checks at the end because this is the batch-closing phase.
+Do not post real billing charges unless explicitly safe and already supported by existing billing services.
+Do not create invoices from maternity workflows unless this phase explicitly implements mapping readiness only.
+Do not rewrite existing billing, stock, pharmacy, emergency, theatre, admission, discharge, MAR, or nursing workflows.
+Do not touch `docs/prompt.md`; it was already dirty before this phase and should remain untouched unless explicitly instructed.
 
-1. Audit existing maternity/newborn foundation first
+1. Audit current completed maternity workflow first
 
-Before coding, review:
+Before implementation, review:
 
-* `PregnancyProfile`
-* `MaternityCase`
-* `AntenatalVisit`
-* `LaborEpisode`
-* `DeliveryRecord`
-* `NewbornRecord`
-* Delivery newborn pending/completion behavior
-* Newborn dashboard/profile summaries
-* Admission discharge readiness services
-* Nursing care services
-* Admission workspace tabs
-* Existing follow-up/appointment patterns
-* Existing activity logging
-* Existing permissions/localisation conventions
+* Pregnancy profiles
+* Maternity cases
+* ANC visits
+* Labor episodes
+* Labor observations
+* Delivery records
+* Newborn records
+* Postnatal cases
+* Mother observations
+* Newborn observations
+* Admission request integration
+* Admission discharge readiness integration
+* Maternity dashboard
+* Existing report patterns
+* Existing export patterns
+* Existing billing mapping/configuration patterns
+* Existing manual test seeder/fixture patterns
+* Existing role/permission seeders
+* Existing localisation conventions
 
-Document what exists and avoid duplicating it.
+Document what exists and avoid duplication.
 
-2. Add Postnatal Case model and migration
-
-Create a first-class postnatal case.
-
-Recommended table: `postnatal_cases`
-
-Recommended fields:
-
-* id
-* delivery_record_id
-* labor_episode_id nullable
-* pregnancy_profile_id
-* maternity_case_id nullable
-* mother_patient_id
-* visit_id nullable
-* admission_id nullable
-* department_id nullable
-* opened_by nullable user
-* opened_at nullable timestamp
-* status string
-* risk_level nullable string
-* mother_status nullable string
-* newborn_status nullable string
-* breastfeeding_status nullable string
-* discharge_readiness_status nullable string
-* follow_up_date nullable date
-* referral_required boolean default false
-* referral_reason nullable text
-* clinical_summary nullable text
-* closed_by nullable user
-* closed_at nullable timestamp
-* closure_reason nullable text
-* timestamps
-* soft deletes if project convention supports it
-
-Recommended statuses:
-
-* open
-* under_observation
-* mother_ready
-* newborn_ready
-* ready_for_discharge
-* referred
-* transferred
-* closed
-* cancelled
-
-3. Add Postnatal Mother Observation model
-
-Recommended table: `postnatal_mother_observations`
-
-Recommended fields:
-
-* id
-* postnatal_case_id
-* delivery_record_id nullable
-* pregnancy_profile_id
-* mother_patient_id
-* visit_id nullable
-* admission_id nullable
-* recorded_by nullable user
-* observed_at timestamp
-* blood_pressure_systolic nullable integer
-* blood_pressure_diastolic nullable integer
-* pulse nullable integer
-* temperature nullable decimal
-* respiratory_rate nullable integer
-* bleeding_status nullable string
-* uterus_condition nullable string
-* pain_score nullable integer
-* wound_condition nullable string
-* breastfeeding_status nullable string
-* mobility_status nullable string
-* urination_status nullable string
-* mental_wellbeing_note nullable text
-* danger_signs nullable json
-* risk_flags nullable json
-* assessment nullable text
-* plan nullable text
-* counselling nullable text
-* status string
-* timestamps
-* soft deletes if project convention supports it
-
-Suggested statuses:
-
-* recorded
-* reviewed
-* escalated
-* cancelled
-
-4. Add Postnatal Newborn Observation model
-
-Recommended table: `postnatal_newborn_observations`
-
-Recommended fields:
-
-* id
-* postnatal_case_id
-* newborn_record_id
-* delivery_record_id nullable
-* mother_patient_id
-* newborn_patient_id nullable
-* visit_id nullable
-* admission_id nullable
-* recorded_by nullable user
-* observed_at timestamp
-* temperature nullable decimal
-* weight_kg nullable decimal
-* feeding_status nullable string
-* breathing_status nullable string
-* cord_status nullable string
-* jaundice_status nullable string
-* stooling_status nullable string
-* urination_status nullable string
-* activity_status nullable string
-* danger_signs nullable json
-* risk_flags nullable json
-* immunisation_note nullable text
-* assessment nullable text
-* plan nullable text
-* counselling nullable text
-* status string
-* timestamps
-* soft deletes if project convention supports it
-
-Suggested statuses:
-
-* recorded
-* reviewed
-* escalated
-* cancelled
-
-5. Add enums/constants
-
-Follow project enum conventions.
-
-Suggested enums:
-
-* `PostnatalCaseStatus`
-* `PostnatalRiskLevel`
-* `PostnatalMotherObservationStatus`
-* `PostnatalNewbornObservationStatus`
-* `PostnatalMotherDangerSign`
-* `PostnatalNewbornDangerSign`
-* `PostnatalMotherRiskFlag`
-* `PostnatalNewbornRiskFlag`
-* `BleedingStatus`
-* `UterusCondition`
-* `WoundCondition`
-* `BreastfeedingStatus`
-* `JaundiceStatus`
-
-Suggested mother danger signs:
-
-* heavy_bleeding
-* severe_headache
-* blurred_vision
-* fever
-* severe_abdominal_pain
-* convulsions
-* foul_smelling_discharge
-* breathing_difficulty
-* severe_weakness
-* wound_infection_signs
-
-Suggested newborn danger signs:
-
-* difficulty_breathing
-* fever
-* hypothermia
-* poor_feeding
-* convulsions
-* jaundice
-* lethargy
-* cord_infection
-* cyanosis
-* bleeding
-
-Risk logic must remain advisory.
-
-6. Add relationships
-
-DeliveryRecord:
-
-* hasOne or hasMany postnatal cases depending on project convention
-
-PregnancyProfile:
-
-* hasMany postnatal cases
-
-MaternityCase:
-
-* hasMany postnatal cases
-
-NewbornRecord:
-
-* hasMany postnatal newborn observations
-* belongsTo postnatal case through observations where useful
-
-PostnatalCase:
-
-* belongsTo delivery record
-* belongsTo pregnancy profile
-* belongsTo maternity case nullable
-* belongsTo labor episode nullable
-* belongsTo mother patient
-* belongsTo visit nullable
-* belongsTo admission nullable
-* belongsTo department nullable
-* hasMany mother observations
-* hasMany newborn observations
-* hasMany newborn records through delivery record if useful
-
-PostnatalMotherObservation:
-
-* belongsTo postnatal case
-* belongsTo mother patient
-* belongsTo delivery record nullable
-* belongsTo admission nullable
-* belongsTo recordedBy user
-
-PostnatalNewbornObservation:
-
-* belongsTo postnatal case
-* belongsTo newborn record
-* belongsTo mother patient
-* belongsTo newborn patient nullable
-* belongsTo admission nullable
-* belongsTo recordedBy user
-
-7. Add postnatal services
+2. Add maternity report service layer
 
 Create services such as:
 
-* `app/Services/Maternity/PostnatalCaseService.php`
-* `app/Services/Maternity/PostnatalMotherObservationService.php`
-* `app/Services/Maternity/PostnatalNewbornObservationService.php`
-* `app/Services/Maternity/PostnatalRiskAssessmentService.php`
-* `app/Services/Maternity/PostnatalOverviewService.php`
+* `app/Services/Maternity/MaternityReportService.php`
+* `app/Services/Maternity/MaternityReportExportService.php`
+* `app/Services/Maternity/MaternityBillingReadinessService.php`
+* `app/Services/Maternity/MaternityManualTestDataService.php`
 
-PostnatalCaseService should handle:
+Reports should use service/query classes, not heavy Blade logic.
 
-* Opening postnatal case from delivery record
-* Linking delivery, labor, pregnancy, maternity case, admission, visit, mother patient, and department
-* Updating postnatal status
-* Marking mother ready
-* Marking newborn ready
-* Marking ready for discharge
-* Marking referral required
-* Closing/cancelling case
-* Logging actions
+3. Add maternity reports dashboard
 
-MotherObservationService should handle:
+Add a report area under maternity.
 
-* Recording mother observation
-* Updating/cancelling observation
-* Updating postnatal case risk/status where safe
-* Logging actions
+Suggested route group:
 
-NewbornObservationService should handle:
+* `GET admin/maternity/reports`
+* `GET admin/maternity/reports/antenatal`
+* `GET admin/maternity/reports/labor`
+* `GET admin/maternity/reports/deliveries`
+* `GET admin/maternity/reports/newborns`
+* `GET admin/maternity/reports/postnatal`
+* `GET admin/maternity/reports/risk`
+* `GET admin/maternity/reports/export`
 
-* Recording newborn observation
-* Updating/cancelling observation
-* Updating newborn/postnatal risk where safe
-* Logging actions
+Reports should support filters where practical:
 
-PostnatalRiskAssessmentService should:
+* date range
+* department
+* staff/recorded by
+* risk level
+* status
+* outcome
+* referral state
+* admission-linked vs outpatient
+* delivery mode
+* newborn outcome
+* postnatal readiness
 
-* Review mother and newborn danger signs/risk flags
-* Produce advisory warnings
-* Suggest referral/escalation visibility
-* Avoid hard blocking
+Keep queries safe and paginate where needed.
 
-PostnatalOverviewService should compose:
+4. Add antenatal reports
 
-* active postnatal cases
-* mother readiness
-* newborn readiness
-* latest mother observation
-* latest newborn observations
-* danger signs summary
-* discharge readiness summary
-* follow-up status
-* dashboard metrics
+ANC report should show:
 
-8. Add routes/controllers
+* ANC visits by period
+* New pregnancy profiles
+* Profiles without ANC
+* Missed ANC visits
+* High-risk pregnancies
+* Danger signs flagged
+* Referral counts
+* Maternity admission requests from ANC
+* Expected delivery due this month/week
+* Recent ANC visits
 
-Add protected routes under maternity namespace.
+5. Add labor reports
 
-Suggested routes:
+Labor report should show:
 
-Postnatal cases:
+* Active labor episodes
+* Labor episodes by stage
+* Labor observations count
+* Danger signs/risk flags
+* Theatre escalation required
+* Emergency escalation required
+* Labor admission requests
+* Delivered vs transferred/referred/cancelled
+* Recent observations
 
-* `GET admin/maternity/postnatal`
-* `POST admin/maternity/deliveries/{deliveryRecord}/postnatal`
-* `GET admin/maternity/postnatal/{postnatalCase}`
-* `PATCH admin/maternity/postnatal/{postnatalCase}`
-* `PATCH admin/maternity/postnatal/{postnatalCase}/status`
-* `PATCH admin/maternity/postnatal/{postnatalCase}/close`
-* `PATCH admin/maternity/postnatal/{postnatalCase}/cancel`
+6. Add delivery reports
 
-Mother observations:
+Delivery report should show:
 
-* `GET admin/maternity/postnatal/{postnatalCase}/mother-observations/create`
-* `POST admin/maternity/postnatal/{postnatalCase}/mother-observations`
-* `GET admin/maternity/postnatal/mother-observations/{observation}`
-* `GET admin/maternity/postnatal/mother-observations/{observation}/edit`
-* `PATCH admin/maternity/postnatal/mother-observations/{observation}`
-* `PATCH admin/maternity/postnatal/mother-observations/{observation}/cancel`
+* Deliveries by period
+* Delivery mode breakdown
+* Delivery outcome breakdown
+* Estimated blood loss warnings if available
+* Maternal condition summary
+* Newborn records pending
+* Deliveries missing newborn records
+* Caesarean/theatre handoff placeholders
+* Recent delivery records
 
-Newborn observations:
+7. Add newborn reports
 
-* `GET admin/maternity/postnatal/{postnatalCase}/newborns/{newbornRecord}/observations/create`
-* `POST admin/maternity/postnatal/{postnatalCase}/newborns/{newbornRecord}/observations`
-* `GET admin/maternity/postnatal/newborn-observations/{observation}`
-* `GET admin/maternity/postnatal/newborn-observations/{observation}/edit`
-* `PATCH admin/maternity/postnatal/newborn-observations/{observation}`
-* `PATCH admin/maternity/postnatal/newborn-observations/{observation}/cancel`
+Newborn report should show:
 
-Use route names consistent with project convention.
+* Newborns recorded by period
+* Live births
+* Stillbirths
+* Neonatal deaths if recorded
+* Multiple births
+* Low birth weight count
+* Resuscitation required count
+* Poor APGAR advisory count
+* Newborns under observation
+* Newborn records without linked patient
+* Newborn outcome summary
 
-Do not remove Phase 8/9/10/11 maternity routes.
+8. Add postnatal reports
 
-9. Add postnatal UI
-
-Add Postnatal workflow pages.
-
-Postnatal list/dashboard page:
-
-* Active postnatal cases
-* Mother patient
-* Delivery record
-* Newborn count
-* Mother status
-* Newborn status
-* Risk level
-* Follow-up date
-* Referral required
-* Latest observation time
-* Actions
-
-Postnatal case detail page:
-
-* Mother/patient banner
-* Delivery summary
-* Labor summary
-* Newborn summary
-* Mother observation summary
-* Newborn observation summary
-* Risk/danger warnings
-* Breastfeeding/feeding summary
-* Discharge readiness card
-* Follow-up/referral card
-* Quick action: record mother observation
-* Quick action: record newborn observation
-* Quick action: mark mother ready
-* Quick action: mark newborn ready
-* Quick action: mark ready for discharge
-* Quick action: close case
-* Placeholder for future maternity-specific discharge summary
-
-Mother observation form:
-
-* Observed at
-* BP
-* Pulse
-* Temperature
-* Respiratory rate
-* Bleeding status
-* Uterus condition
-* Pain score
-* Wound condition
-* Breastfeeding status
-* Mobility
-* Urination
-* Mental wellbeing note
-* Danger signs checklist
-* Risk flags checklist
-* Assessment
-* Plan
-* Counselling
-
-Newborn observation form:
-
-* Observed at
-* Newborn record selector/context
-* Temperature
-* Weight
-* Feeding status
-* Breathing status
-* Cord status
-* Jaundice status
-* Stooling
-* Urination
-* Activity
-* Danger signs checklist
-* Risk flags checklist
-* Immunisation note
-* Assessment
-* Plan
-* Counselling
-
-Delivery record detail page should show:
-
-* Start/open postnatal care action
-* Existing postnatal case link
-* Postnatal status summary
-
-Newborn detail page should show:
-
-* Latest postnatal observation
-* Postnatal case link
-* Postnatal readiness placeholder/status
-
-Pregnancy profile page should show:
-
-* Postnatal case summary after delivery
-* Latest mother/newborn observations
-
-10. Integrate with admission discharge readiness safely
-
-Do not rewrite existing discharge readiness.
-
-Add safe advisory hooks:
-
-* Admission discharge readiness may show postnatal case status if the admission has linked postnatal care.
-* If mother/newborn not ready, display warning.
-* Do not block admission discharge unless existing enforcement config is explicitly extended and disabled by default.
-
-Suggested config:
-
-```php
-'discharge' => [
-    'require_postnatal_ready_before_discharge' => env('ADMISSION_REQUIRE_POSTNATAL_READY_BEFORE_DISCHARGE', false),
-],
-```
-
-Default must be false.
-
-If too risky, add only a visible warning and document enforcement as deferred.
-
-11. Add maternity dashboard postnatal metrics
-
-Update maternity dashboard with:
+Postnatal report should show:
 
 * Active postnatal cases
-* Mother observations today
-* Newborn observations today
-* Mothers ready for discharge
-* Newborns ready for discharge
-* Postnatal danger signs flagged
+* Mother observations today/by period
+* Newborn observations today/by period
+* Mother ready for discharge
+* Newborn ready for discharge
+* Ready for discharge
 * Referrals required
 * Follow-ups due this week
+* Danger signs flagged
+* Cases without recent observations
 * Recent postnatal cases
 
-Keep queries safe.
+9. Add risk and safety report
 
-12. Add referral/follow-up behavior
+Add one cross-maternity risk report that combines:
 
-Add lightweight fields/actions:
+* High-risk pregnancy profiles
+* ANC danger signs
+* Labor escalation flags
+* Delivery complications
+* Newborn risk flags
+* Postnatal danger signs
+* Referrals required
+* Admission requests pending
+* Postnatal cases not ready for discharge
 
-* Mark referral required
-* Referral reason
-* Follow-up date
-* Follow-up instructions if simple
+This should be advisory and operational, not a clinical rule engine.
 
-If appointment module integration is safe:
+10. Add CSV export where safe
 
-* Add link/placeholder to create appointment.
-* Do not build a new appointment module.
+Add simple CSV export for reports if existing export patterns exist.
 
-If not safe:
+Suggested exports:
 
-* Store follow-up date and instructions on postnatal case.
-* Document appointment integration as deferred.
+* ANC report CSV
+* Labor report CSV
+* Delivery report CSV
+* Newborn report CSV
+* Postnatal report CSV
+* Risk report CSV
 
-13. Add billing hooks only
+Do not add heavy Excel/PDF dependency unless already used in the project.
+CSV is enough for this phase.
 
-Do not post billing.
+11. Add billing mapping readiness
 
-Add placeholders/warnings only for future mappings:
+Do not post charges in this phase unless existing billing service mapping patterns make it completely safe.
 
+Add a readiness/configuration view for maternity billing mappings.
+
+Suggested categories:
+
+* ANC registration/package
+* ANC follow-up
+* maternity admission
+* labor observation
+* normal delivery
+* assisted delivery
+* caesarean/theatre handoff
+* delivery consumables
+* newborn care
+* neonatal observation
+* newborn resuscitation
 * postnatal mother care
 * postnatal newborn care
-* neonatal observation
-* immunisation
-* newborn consumables
+* immunisation placeholder
+* ultrasound placeholder
+* maternity consumables
 
-Do not create invoices.
-Do not post charges.
-Do not recalculate invoices.
-Do not add pharmacy dispensing.
+The readiness view should show:
 
-14. Add permissions
+* mapping configured or missing
+* mapped service name/code if available
+* active/inactive service state if available
+* warning if missing
+* warning if service inactive
+* warning if duplicate mapping
+* last updated by/time if available
+
+Important:
+
+* Do not auto-bill historical records.
+* Do not recalculate invoices.
+* Do not post charges from ANC, labor, delivery, newborn, or postnatal records in this phase.
+* If mapping storage does not already exist, add config/table placeholders only.
+* Missing mappings should show warnings, not fatal errors.
+
+12. Add optional mapping configuration table if needed
+
+If project billing mapping already has a pattern, reuse it.
+
+If not, add a safe table such as:
+
+`maternity_service_mappings`
+
+Recommended fields:
+
+* id
+* mapping_key
+* service_id nullable
+* is_active boolean default true
+* description nullable
+* configured_by nullable user
+* configured_at nullable timestamp
+* timestamps
+
+Do not use this table to post charges yet.
+This is readiness/configuration only.
+
+13. Add manual test data command/seeder
+
+Add large manual test data for maternity without affecting default launch seeders.
+
+Create a dedicated command/seeder, for example:
+
+* `php artisan maternity:seed-manual-test-data`
+* or `php artisan uhms:seed-maternity-manual-data`
+
+The command should be explicit and never run from default seeders unless manually invoked.
+
+Seed realistic data for:
+
+* Low-risk pregnancy profile
+* High-risk pregnancy profile
+* Pregnancy with no ANC
+* Pregnancy with ANC visits
+* ANC danger sign/referral case
+* Maternity admission request from ANC
+* Labor episode from ANC
+* Labor episode linked to admission
+* Labor observations with normal progression
+* Labor observation with escalation flags
+* Delivery record normal vaginal delivery
+* Assisted delivery
+* Caesarean/theatre escalation placeholder
+* Twin delivery
+* Newborn live birth
+* Newborn stillbirth
+* Newborn low birth weight
+* Newborn resuscitation required
+* Postnatal mother/newborn stable
+* Postnatal danger sign/referral required
+* Postnatal follow-up due
+* Discharge readiness advisory warning
+
+Rules:
+
+* Do not affect default production seeders.
+* Use clearly identifiable fake/manual-test names.
+* Avoid overwriting real data.
+* Add option flags if useful:
+
+  * `--count=`
+  * `--fresh-manual`
+  * `--department=`
+* If deleting seeded test data, only delete records with a clear manual-test marker.
+
+14. Add manual testing guide update
+
+Update:
+
+`docs/manual-testing/ADMISSION_MATERNITY_MANUAL_TESTING_PLAN.md`
+
+Add end-to-end scenarios:
+
+* Pregnancy profile → ANC → referral → admission request
+* Pregnancy profile → ANC → labor
+* Labor → observations → delivery
+* Delivery → newborn records
+* Twin delivery
+* Stillbirth delivery
+* Newborn patient linking
+* Delivery → postnatal case
+* Postnatal mother observation
+* Postnatal newborn observation
+* Postnatal readiness → admission discharge readiness warning
+* Maternity reports and exports
+* Billing mapping readiness warnings
+* Manual seed command verification
+
+15. Add final batch summary documentation
+
+Create:
+
+`docs/maternity/MATERNITY_WORKFLOW_BATCH_CLOSURE_REPORT.md`
+
+Include:
+
+* Phases completed
+* Major models/tables added
+* Major services/controllers/routes added
+* Permissions added
+* Reports added
+* Billing readiness behavior
+* Manual seed command behavior
+* Existing workflows protected
+* Known risks
+* Deferred items
+* Recommended next batch
+
+16. Permissions
 
 Add permissions additively.
 
 Suggested permissions:
 
-* `maternity.postnatal.view`
-* `maternity.postnatal.open`
-* `maternity.postnatal.update`
-* `maternity.postnatal.close`
-* `maternity.postnatal.cancel`
-* `maternity.postnatal.mother.record`
-* `maternity.postnatal.mother.update`
-* `maternity.postnatal.newborn.record`
-* `maternity.postnatal.newborn.update`
-* `maternity.postnatal.risk.manage`
-* `maternity.postnatal.discharge.manage`
-* `maternity.postnatal.referral.manage`
-* `maternity.postnatal.reports.view`
+* `maternity.reports.view`
+* `maternity.reports.export`
+* `maternity.billing_readiness.view`
+* `maternity.billing_readiness.manage`
+* `maternity.manual_seed.run`
 
-Keep all Phase 8/9/10/11 permissions.
+Keep all previous maternity permissions.
 
 Recommended:
 
 * Admin/super admin gets all.
-* Doctor/physician assistant can view/update postnatal cases and manage referrals/readiness.
-* Nurse/ward nurse/midwife can record observations and update readiness where role convention allows.
-* Reception should not get clinical postnatal permissions unless explicitly appropriate.
+* Maternity clinical roles get reports view.
+* Finance/billing roles get billing readiness view/manage if existing roles support it.
+* Manual seed command should be admin-only or console-only.
 
 Do not remove existing permissions.
 
-15. Add localisation
+17. Localisation
 
-Add EN/FR keys for all user-facing postnatal text.
+Add EN/FR keys for:
 
-Include keys for:
-
-* Postnatal care
-* Postnatal case
-* Open postnatal care
-* Mother observation
-* Newborn observation
-* Mother ready
-* Newborn ready
-* Ready for discharge
-* Follow-up date
-* Referral required
-* Referral reason
-* Bleeding status
-* Uterus condition
-* Wound condition
-* Breastfeeding status
-* Jaundice status
-* Feeding status
-* Cord status
-* Mother danger signs
-* Newborn danger signs
-* Mother risk flags
-* Newborn risk flags
-* Record mother observation
-* Record newborn observation
-* No postnatal case yet
-* No mother observations yet
-* No newborn observations yet
-* Postnatal danger signs flagged
+* Maternity reports
+* ANC report
+* Labor report
+* Delivery report
+* Newborn report
+* Postnatal report
+* Risk report
+* Export CSV
+* Billing mapping readiness
+* Mapping configured
+* Mapping missing
+* Service inactive
+* Manual test data
+* Seed manual data
+* Report filters
+* Date range
+* No records found
+* Summary metrics
 * Follow-ups due
-* Success/error/validation messages
+* Records pending
+* Records complete
+* Success/error messages
 
 Maintain EN/FR localisation parity.
 
-16. Activity logging
+18. Activity logging
 
-Log postnatal actions under MATERNITY:
+Log actions under MATERNITY:
 
-* postnatal case opened
-* postnatal case updated
-* postnatal case closed/cancelled
-* mother observation recorded
-* mother observation updated/cancelled
-* newborn observation recorded
-* newborn observation updated/cancelled
-* mother marked ready
-* newborn marked ready
-* postnatal ready for discharge
-* referral required/updated
-* follow-up updated
+* report exported
+* billing mapping created/updated
+* manual test data seeded
+* manual test data cleared if implemented
 
-Do not copy long clinical notes into activity metadata unless project convention allows it.
-Prefer IDs, statuses, risk counts, actor, timestamps.
+Do not log clinical details unnecessarily.
 
-17. Tests
+19. Tests
 
-Do not run the full test suite.
+Add targeted tests first, then run wider regression at the end.
 
-Add targeted test file:
+Recommended new test file:
 
-`tests/Feature/PostnatalCarePhase12Test.php`
+`tests/Feature/MaternityReportsBillingReadinessPhase13Test.php`
 
-Recommended tests:
+Recommended targeted tests:
 
-* Postnatal case can be opened from delivery record by permitted user.
-* Postnatal case links delivery, pregnancy profile, mother patient, visit/admission where available.
-* Postnatal case lists newborn records from delivery.
-* Mother observation can be recorded.
-* Mother observation stores vitals and danger signs.
-* Newborn observation can be recorded for newborn record.
-* Newborn observation stores temperature, weight, feeding, jaundice, cord, and danger signs.
-* Postnatal case can mark mother ready.
-* Postnatal case can mark newborn ready.
-* Postnatal case can mark ready for discharge.
-* Referral required and follow-up date can be recorded.
-* Postnatal case appears on delivery detail page.
-* Newborn detail page shows postnatal observation summary.
-* Pregnancy profile page shows postnatal summary.
-* Maternity dashboard shows postnatal metrics.
-* Admission discharge readiness shows postnatal warning if implemented.
-* Non-permitted user cannot open postnatal case.
-* Stillbirth newborn records do not require newborn postnatal observation.
+* Maternity reports index renders.
+* ANC report renders.
+* Labor report renders.
+* Delivery report renders.
+* Newborn report renders.
+* Postnatal report renders.
+* Risk report renders.
+* CSV export returns expected response.
+* Billing readiness page renders missing mappings.
+* Billing readiness can save mapping if implemented.
+* No billing is posted from readiness view.
+* Manual seed command runs.
+* Manual seed command creates identifiable records.
+* Default seeders are not modified to call manual maternity seed.
+* Existing PostnatalCarePhase12Test still passes.
 * Existing NewbornBirthOutcomePhase11Test still passes.
 * Existing LaborDeliveryFoundationPhase10Test still passes.
 * Existing AntenatalCarePhase9Test still passes.
 * Existing MaternityFoundationPhase8Test still passes.
 * Existing AdmissionDischargeReadinessPhase7Test still passes.
+* Existing AdmissionNursingCarePhase6Test still passes.
+* Existing AdmissionWorkflowFoundationTest still passes.
 
-Run targeted checks only:
+Run targeted checks:
 
+* `php artisan test tests/Feature/MaternityReportsBillingReadinessPhase13Test.php`
 * `php artisan test tests/Feature/PostnatalCarePhase12Test.php`
 * `php artisan test tests/Feature/NewbornBirthOutcomePhase11Test.php`
 * `php artisan test tests/Feature/LaborDeliveryFoundationPhase10Test.php`
 * `php artisan test tests/Feature/AntenatalCarePhase9Test.php`
 * `php artisan test tests/Feature/MaternityFoundationPhase8Test.php`
 * `php artisan test tests/Feature/AdmissionDischargeReadinessPhase7Test.php`
+* `php artisan test tests/Feature/AdmissionNursingCarePhase6Test.php`
+* `php artisan test tests/Feature/AdmissionWorkflowFoundationTest.php`
 * `php artisan route:list --name=maternity`
 * `php artisan route:list --name=admissions`
 * `php artisan view:clear`
@@ -707,68 +481,49 @@ Run targeted checks only:
 * `git diff --check`
 * PHP syntax checks on new/changed PHP files
 
-Do not run the full suite.
+Then, because this is the batch-closing phase, run one wider regression pass.
 
-18. Documentation
+Use the project’s normal safe command for the wider test suite.
 
-Create:
+If a full suite is too large or environment-dependent, run the broadest practical project-safe suite and document what could not run.
 
-`docs/maternity/POSTNATAL_CARE_PHASE_12_REPORT.md`
+The final report must clearly say:
 
-The report must include:
+* Full suite run: yes/no
+* Command used
+* Passed/failed counts
+* Any failures
+* Whether failures are related to this batch or pre-existing
+* Recommended follow-up
 
-* What was implemented
-* Existing newborn/delivery foundation audited
-* Files changed
-* New migrations/tables/columns
-* New models/enums
-* New services
-* New routes/controllers
-* New permissions
-* New localisation keys
-* Postnatal case behavior
-* Mother observation behavior
-* Newborn observation behavior
-* Mother/newborn discharge readiness behavior
-* Referral/follow-up behavior
-* Admission discharge readiness integration behavior
-* Dashboard behavior
-* Billing behavior, especially confirming no billing is posted
-* Existing workflows protected
-* Tests/checks run
-* Known risks
-* Intentionally deferred items
-* Next recommended phase
+20. Boundaries
 
-19. Boundaries
-
-Do not implement maternity package billing.
+Do not implement maternity billing posting.
 Do not implement newborn billing.
 Do not implement pharmacy dispensing.
-Do not implement official birth registration/civil registry integration.
-Do not implement maternity-specific discharge summary sections unless very small and safe; prefer deferring.
+Do not implement stock consumption.
+Do not implement civil birth registry integration.
 Do not rewrite admission discharge readiness.
-Do not force postnatal readiness to block discharge unless config is explicitly added and default false.
-Do not rewrite newborn records.
-Do not rewrite labor/delivery records.
-Do not rewrite admission, nursing, MAR, billing, theatre, or emergency workflows.
-Do not alter default launch seeders for mass manual testing.
+Do not rewrite admission billing.
+Do not rewrite emergency/theatre workflows.
+Do not modify default launch seeders to include mass maternity data.
 Do not remove existing routes.
-Do not run the full test suite.
 Do not touch `docs/prompt.md`.
 
-20. Final response
+21. Final response
 
 At the end, provide a concise completion report with:
 
 * Summary of changes
 * Files changed
-* Migrations/routes/config added
+* Migrations/routes/config/commands added
 * Permissions added
+* Reports added
+* Billing readiness behavior
+* Manual seed behavior
 * Tests/checks run
+* Wide regression result
 * What was intentionally not changed
 * Known risks
-* Next phase recommendation
+* Recommended next batch
 
-Recommended next phase after this:
-Phase 13: Maternity Reports, Billing Mapping Readiness, Manual Test Data, and Final Wide Regression.

@@ -594,6 +594,11 @@ class RoleSeeder extends Seeder
             'maternity.postnatal.discharge.manage',
             'maternity.postnatal.referral.manage',
             'maternity.postnatal.reports.view',
+            'maternity.reports.view',
+            'maternity.reports.export',
+            'maternity.billing_readiness.view',
+            'maternity.billing_readiness.manage',
+            'maternity.manual_seed.run',
 
             // ── HR & Payroll ──────────────────────────────────────────────
             'hr.employees.view',
@@ -1036,6 +1041,9 @@ class RoleSeeder extends Seeder
             'maternity.postnatal.discharge.manage',
             'maternity.postnatal.referral.manage',
             'maternity.postnatal.reports.view',
+            'maternity.reports.view',
+            'maternity.reports.export',
+            'maternity.billing_readiness.view',
         ];
 
         $maternityReceptionPerms = [
