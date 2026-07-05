@@ -55,6 +55,7 @@ use App\Services\Consultation\ConsultationActionContext;
 use App\Services\Consultation\ConsultationActionException;
 use App\Services\Consultation\ConsultationActionGuard;
 use App\Services\Consultation\ConsultationIdempotencyService;
+use App\Services\Consultation\Specialty\ConsultationSpecialtyProfileResolver;
 use App\Services\HistoryOfPresentingComplaintService;
 use App\Services\LabService;
 use App\Services\MedicalPatternService;
@@ -351,6 +352,12 @@ trait HandlesConsultationWorkspace
             ? $this->completionReadiness->forRoute($selectedRoute)
             : null;
         $consultationPreview = $this->buildConsultationPreviewData($visit);
+        $specialtyContext = app(ConsultationSpecialtyProfileResolver::class)->resolve(
+            user: $request->user(),
+            visit: $visit,
+            consultationRoute: $selectedRoute,
+            department: $selectedRoute?->department ?? $visit->currentDepartment,
+        );
 
         return view('consultations.show', [
             'visit' => $data['visit'],
@@ -379,6 +386,7 @@ trait HandlesConsultationWorkspace
             'completionReadiness' => $completionReadiness,
             'consultationSummary' => $consultationSummary,
             'consultationPreview' => $consultationPreview,
+            'specialtyContext' => $specialtyContext->toArray(),
             'entryPermissions' => $this->entryPermissions,
             'prescriptionFrequencyOptions' => $frequencyOptions->options(),
             'taskFrequencyOptions' => $frequencyOptions->options(),

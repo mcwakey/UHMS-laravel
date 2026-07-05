@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use App\Enums\DepartmentType;
 use App\Models\ConsultationSpecialtyProfile;
+use App\Models\ConsultationSpecialtyProfileMapping;
+use App\Models\Department;
 use Illuminate\Database\Seeder;
 
 class ConsultationSpecialtySeeder extends Seeder
@@ -105,6 +107,8 @@ class ConsultationSpecialtySeeder extends Seeder
 
     public function run(): void
     {
+        $seededProfiles = [];
+
         foreach ($this->profiles as $code => $definition) {
             $profile = ConsultationSpecialtyProfile::query()->updateOrCreate(
                 ['code' => $code],
@@ -118,6 +122,7 @@ class ConsultationSpecialtySeeder extends Seeder
                     'sort_order' => $definition['sort_order'],
                 ],
             );
+            $seededProfiles[$code] = $profile;
 
             foreach ($definition['sections'] as $index => $sectionKey) {
                 $profile->sections()->updateOrCreate(
@@ -131,10 +136,78 @@ class ConsultationSpecialtySeeder extends Seeder
                 );
             }
         }
+
+        $this->seedMappings($seededProfiles);
     }
 
     private function labelFor(string $sectionKey): string
     {
         return str($sectionKey)->replace('_', ' ')->title()->toString();
+    }
+
+    /**
+     * @param  array<string, ConsultationSpecialtyProfile>  $profiles
+     */
+    private function seedMappings(array $profiles): void
+    {
+        $general = $profiles['general_medicine'] ?? null;
+        if ($general) {
+            ConsultationSpecialtyProfileMapping::query()->updateOrCreate(
+                [
+                    'department_type' => DepartmentType::CONSULTATION->value,
+                    'source' => 'seed_department_type',
+                ],
+                [
+                    'consultation_specialty_profile_id' => $general->id,
+                    'department_id' => null,
+                    'consultation_route_id' => null,
+                    'user_id' => null,
+                    'priority' => 0,
+                    'is_active' => true,
+                    'metadata' => ['phase' => 'specialist_consultation_phase_2'],
+                ],
+            );
+        }
+
+        $departmentHints = [
+            'physiotherapy' => ['codes' => ['PHY', 'PHT'], 'names' => ['physiotherapy', 'physio']],
+            'ophthalmology' => ['codes' => ['EYE', 'OPH'], 'names' => ['ophthalmology', 'eye']],
+            'dental' => ['codes' => ['DEN', 'DENT'], 'names' => ['dental']],
+        ];
+
+        foreach ($departmentHints as $profileCode => $hints) {
+            $profile = $profiles[$profileCode] ?? null;
+            if (! $profile) {
+                continue;
+            }
+
+            Department::query()
+                ->where(function ($query) use ($hints) {
+                    $query->whereIn('code', $hints['codes'])
+                        ->orWhere(function ($nameQuery) use ($hints) {
+                            foreach ($hints['names'] as $name) {
+                                $nameQuery->orWhereRaw('LOWER(name) LIKE ?', ['%' . $name . '%']);
+                            }
+                        });
+                })
+                ->get()
+                ->each(function (Department $department) use ($profile): void {
+                    ConsultationSpecialtyProfileMapping::query()->updateOrCreate(
+                        [
+                            'department_id' => $department->id,
+                            'source' => 'seed_department',
+                        ],
+                        [
+                            'consultation_specialty_profile_id' => $profile->id,
+                            'consultation_route_id' => null,
+                            'department_type' => $department->type instanceof \BackedEnum ? $department->type->value : $department->type,
+                            'user_id' => null,
+                            'priority' => 10,
+                            'is_active' => true,
+                            'metadata' => ['phase' => 'specialist_consultation_phase_2'],
+                        ],
+                    );
+                });
+        }
     }
 }
