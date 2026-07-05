@@ -140,6 +140,33 @@
             </div>
         </div>
 
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-baby-bottle me-1"></i>{{ __('maternity.newborn_records') }}</h5></div>
+            <div class="card-body">
+                @php($newborn = $overview['newborn'])
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.recorded_newborn_count') }}</small><strong>{{ $newborn['recorded_count'] }}</strong></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.newborn_records_pending') }}</small><span class="badge bg-{{ $newborn['pending_deliveries'] ? 'warning' : 'success' }}">{{ $newborn['pending_deliveries'] ? __('common.yes') : __('common.no') }}</span></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.live_births') }}</small><strong>{{ $newborn['live_births'] }}</strong></div>
+                    <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.stillbirths') }}</small><strong>{{ $newborn['stillbirths'] }}</strong></div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="bg-light"><tr><th>{{ __('maternity.birth_order') }}</th><th>{{ __('maternity.sex') }}</th><th>{{ __('maternity.birth_weight') }}</th><th>{{ __('maternity.newborn_outcome') }}</th><th>{{ __('maternity.status') }}</th><th></th></tr></thead>
+                        <tbody>
+                            @forelse($newborn['records'] as $record)
+                            <tr>
+                                <td>{{ $record->birth_order }}</td><td>{{ $record->sex?->label() ?? __('common.none') }}</td><td>{{ $record->birth_weight_kg ? $record->birth_weight_kg.' kg' : __('common.none') }}</td><td>{{ $record->outcome?->label() ?? __('common.none') }}</td><td><span class="badge bg-{{ $record->status?->color() ?? 'secondary' }}">{{ $record->status?->label() }}</span></td><td class="text-end"><a href="{{ route('admin.maternity.newborns.show', $record) }}" class="btn btn-sm btn-outline-primary">{{ __('common.view') }}</a></td>
+                            </tr>
+                            @empty
+                            <tr><td colspan="6"><x-empty-state icon="ti-baby-bottle" :title="__('maternity.no_newborn_records_yet')" /></td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-folders me-1"></i>{{ __('maternity.maternity_cases') }}</h5></div>
             <div class="card-body p-0">

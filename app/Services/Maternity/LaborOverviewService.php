@@ -30,11 +30,13 @@ class LaborOverviewService
 
     public function forEpisode(LaborEpisode $episode): array
     {
-        $episode->loadMissing(['latestObservation', 'deliveryRecords', 'admission.bed.ward']);
+        $episode->loadMissing(['latestObservation', 'deliveryRecords.newbornRecords', 'admission.bed.ward']);
+        $delivery = $episode->deliveryRecords->first();
 
         return [
             'latest_observation' => $episode->latestObservation,
-            'delivery_record' => $episode->deliveryRecords->first(),
+            'delivery_record' => $delivery,
+            'newborn_records' => $delivery?->newbornRecords ?? collect(),
             'warnings' => $this->warnings($episode),
             'admission' => $episode->admission,
             'partograph_ready' => $episode->observations()->exists(),

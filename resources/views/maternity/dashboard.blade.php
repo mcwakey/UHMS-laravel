@@ -25,6 +25,10 @@
         ['label' => __('maternity.theatre_escalation_required'), 'value' => $overview['theatre_escalation_required'], 'icon' => 'ti-building-hospital', 'class' => 'warning'],
         ['label' => __('maternity.emergency_escalation_required'), 'value' => $overview['emergency_escalation_required'], 'icon' => 'ti-alert-octagon', 'class' => 'danger'],
         ['label' => __('maternity.deliveries_today'), 'value' => $overview['deliveries_today'], 'icon' => 'ti-confetti', 'class' => 'success'],
+        ['label' => __('maternity.newborn_records_pending'), 'value' => $overview['newborn_records_pending'], 'icon' => 'ti-baby-bottle', 'class' => 'warning'],
+        ['label' => __('maternity.newborns_recorded_today'), 'value' => $overview['newborns_recorded_today'], 'icon' => 'ti-baby-bottle', 'class' => 'primary'],
+        ['label' => __('maternity.live_births_today'), 'value' => $overview['live_births_today'], 'icon' => 'ti-heart', 'class' => 'success'],
+        ['label' => __('maternity.stillbirths_today'), 'value' => $overview['stillbirths_today'], 'icon' => 'ti-alert-circle', 'class' => 'dark'],
     ] as $card)
     <div class="col-6 col-md-4 col-xl-3">
         <div class="card h-100">
@@ -134,6 +138,23 @@
                 </div>
                 @else
                 <x-empty-state icon="ti-chart-line" :title="__('maternity.no_observations_yet')" />
+                @endif
+            </div>
+        </div>
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-baby-bottle me-1"></i>{{ __('maternity.recent_newborn_records') }}</h5></div>
+            <div class="card-body p-0">
+                @if($overview['recent_newborn_records']->isNotEmpty())
+                <div class="list-group list-group-flush">
+                    @foreach($overview['recent_newborn_records'] as $newborn)
+                    <a href="{{ route('admin.maternity.newborns.show', $newborn) }}" class="list-group-item list-group-item-action">
+                        <div class="fw-semibold">{{ $newborn->mother?->full_name }}</div>
+                        <small class="text-muted">{{ __('maternity.birth_order') }} {{ $newborn->birth_order }} · {{ $newborn->outcome?->label() ?? __('common.none') }}</small>
+                    </a>
+                    @endforeach
+                </div>
+                @else
+                <x-empty-state icon="ti-baby-bottle" :title="__('maternity.no_newborn_records_yet')" />
                 @endif
             </div>
         </div>

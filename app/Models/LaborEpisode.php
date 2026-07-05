@@ -139,6 +139,11 @@ class LaborEpisode extends Model
         return $this->hasOne(DeliveryRecord::class)->latestOfMany('delivery_at');
     }
 
+    public function newbornRecords()
+    {
+        return $this->hasMany(NewbornRecord::class)->orderBy('birth_order')->orderBy('id');
+    }
+
     public function scopeOpen($query)
     {
         return $query->whereNotIn('status', [

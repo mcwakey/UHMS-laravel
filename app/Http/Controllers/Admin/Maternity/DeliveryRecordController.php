@@ -12,12 +12,16 @@ use App\Models\DeliveryRecord;
 use App\Models\LaborEpisode;
 use App\Models\User;
 use App\Services\Maternity\DeliveryRecordService;
+use App\Services\Maternity\NewbornOverviewService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class DeliveryRecordController extends Controller
 {
-    public function __construct(private DeliveryRecordService $deliveries) {}
+    public function __construct(
+        private DeliveryRecordService $deliveries,
+        private NewbornOverviewService $newbornOverview,
+    ) {}
 
     public function create(LaborEpisode $laborEpisode)
     {
@@ -37,6 +41,7 @@ class DeliveryRecordController extends Controller
     {
         return view('maternity.labor.deliveries.show', [
             'record' => $deliveryRecord->load($this->deliveries->relations()),
+            'newbornOverview' => $this->newbornOverview->forDelivery($deliveryRecord),
         ]);
     }
 

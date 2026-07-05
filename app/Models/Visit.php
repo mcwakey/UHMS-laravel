@@ -245,6 +245,11 @@ class Visit extends Model
         return $this->hasMany(DeliveryRecord::class);
     }
 
+    public function newbornRecords()
+    {
+        return $this->hasMany(NewbornRecord::class);
+    }
+
     public function bedReservations()
     {
         return $this->hasMany(BedReservation::class);

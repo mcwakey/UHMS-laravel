@@ -14,6 +14,7 @@ class MaternityOverviewService
     {
         $anc = app(AntenatalOverviewService::class)->dashboard();
         $labor = app(LaborOverviewService::class)->dashboard();
+        $newborn = app(NewbornOverviewService::class)->dashboard();
 
         return [
             'active_pregnancies' => PregnancyProfile::active()->count(),
@@ -28,27 +29,28 @@ class MaternityOverviewService
                 ->latest('id')
                 ->limit(8)
                 ->get(),
-        ] + $anc + $labor;
+        ] + $anc + $labor + $newborn;
     }
 
     public function forProfile(PregnancyProfile $profile): array
     {
-        $profile->loadMissing(['patient.activeAdmission', 'visit', 'admission', 'department', 'maternityCases.openedBy', 'antenatalVisits.recordedBy', 'laborEpisodes.latestObservation', 'deliveryRecords']);
+        $profile->loadMissing(['patient.activeAdmission', 'visit', 'admission', 'department', 'maternityCases.openedBy', 'antenatalVisits.recordedBy', 'laborEpisodes.latestObservation', 'deliveryRecords.newbornRecords', 'newbornRecords.newbornPatient']);
         $latestCase = $profile->maternityCases->sortByDesc('opened_at')->first();
         $anc = app(AntenatalOverviewService::class)->forProfile($profile);
         $labor = app(LaborOverviewService::class)->forProfile($profile);
+        $newborn = app(NewbornOverviewService::class)->forProfile($profile);
 
         return [
             'active_profile' => $profile->profile_status && ! $profile->profile_status->isClosed(),
             'risk_summary' => $this->riskSummary($profile),
             'anc' => $anc,
             'labor' => $labor,
+            'newborn' => $newborn,
             'latest_case' => $latestCase,
             'admission' => $profile->admission ?: $profile->patient?->activeAdmission,
             'visit' => $profile->visit,
-            'warnings' => array_values(array_unique(array_merge($this->warnings($profile), $anc['profile_warnings'], $labor['warnings']))),
+            'warnings' => array_values(array_unique(array_merge($this->warnings($profile), $anc['profile_warnings'], $labor['warnings'], $newborn['newborn_warnings']))),
             'future_panels' => [
-                __('maternity.future_newborn_placeholder'),
                 __('maternity.future_postnatal_placeholder'),
             ],
         ];

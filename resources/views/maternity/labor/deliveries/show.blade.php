@@ -30,5 +30,44 @@
     @endif
     @endcan
 </div>
-<div class="alert alert-info"><i class="ti ti-baby-bottle me-1"></i>{{ __('maternity.newborn_records_placeholder') }}</div>
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0"><i class="ti ti-baby-bottle me-1"></i>{{ __('maternity.newborn_records') }}</h5>
+        <div class="d-flex gap-2">
+            @can('maternity.newborn.record')
+            <form method="POST" action="{{ route('admin.maternity.deliveries.newborns.bulk-create', $record) }}">@csrf<button class="btn btn-sm btn-outline-primary">{{ __('maternity.bulk_create_newborn_records') }}</button></form>
+            <a href="{{ route('admin.maternity.deliveries.newborns.create', $record) }}" class="btn btn-sm btn-primary"><i class="ti ti-plus me-1"></i>{{ __('maternity.create_newborn_record') }}</a>
+            @endcan
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 mb-3">
+            <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.expected_newborn_count') }}</small><strong>{{ $newbornOverview['expected_count'] }}</strong></div>
+            <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.recorded_newborn_count') }}</small><strong>{{ $newbornOverview['recorded_count'] }}</strong></div>
+            <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.newborn_records_pending') }}</small><span class="badge bg-{{ $record->newborn_records_pending ? 'warning' : 'success' }}">{{ $record->newborn_records_pending ? __('common.yes') : __('common.no') }}</span></div>
+            <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.newborn_records_complete') }}</small><span class="badge bg-{{ $newbornOverview['complete'] ? 'success' : 'warning' }}">{{ $newbornOverview['complete'] ? __('common.yes') : __('common.no') }}</span></div>
+        </div>
+        @if($newbornOverview['missing_count'] > 0)<div class="alert alert-warning py-2">{{ __('maternity.missing_newborn_records_warning') }}</div>@endif
+        @if($newbornOverview['extra_count'] > 0)<div class="alert alert-info py-2">{{ __('maternity.extra_newborn_records_warning') }}</div>@endif
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light"><tr><th>{{ __('maternity.birth_order') }}</th><th>{{ __('maternity.sex') }}</th><th>{{ __('maternity.birth_weight') }}</th><th>{{ __('maternity.apgar_5_min') }}</th><th>{{ __('maternity.newborn_outcome') }}</th><th>{{ __('maternity.status') }}</th><th></th></tr></thead>
+                <tbody>
+                    @forelse($newbornOverview['records'] as $newborn)
+                    <tr>
+                        <td>{{ $newborn->birth_order }}</td><td>{{ $newborn->sex?->label() ?? __('common.none') }}</td><td>{{ $newborn->birth_weight_kg ? $newborn->birth_weight_kg.' kg' : __('common.none') }}</td><td>{{ $newborn->apgar_5_min ?? '—' }}</td><td>{{ $newborn->outcome?->label() ?? __('common.none') }}</td><td><span class="badge bg-{{ $newborn->status?->color() ?? 'secondary' }}">{{ $newborn->status?->label() }}</span></td><td class="text-end"><a href="{{ route('admin.maternity.newborns.show', $newborn) }}" class="btn btn-sm btn-outline-primary">{{ __('common.view') }}</a></td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="7"><x-empty-state icon="ti-baby-bottle" :title="__('maternity.no_newborn_records_yet')" /></td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer d-flex justify-content-between">
+        <a href="{{ route('admin.maternity.deliveries.newborns.index', $record) }}" class="btn btn-outline-primary">{{ __('maternity.newborn_records') }}</a>
+        <span class="text-muted">{{ __('maternity.start_postnatal_care_placeholder') }}</span>
+    </div>
+</div>
+<div class="alert alert-secondary"><i class="ti ti-receipt me-1"></i>{{ __('maternity.newborn_billing_placeholder') }}</div>
 @endsection

@@ -140,6 +140,16 @@ class Patient extends Model
         return $this->hasMany(DeliveryRecord::class)->latest('delivery_at')->latest('id');
     }
 
+    public function newbornRecordsAsMother()
+    {
+        return $this->hasMany(NewbornRecord::class, 'mother_patient_id')->orderBy('birth_order')->orderBy('id');
+    }
+
+    public function newbornRecord()
+    {
+        return $this->hasOne(NewbornRecord::class, 'newborn_patient_id');
+    }
+
     public function admissionRequests()
     {
         return $this->hasMany(AdmissionRequest::class);

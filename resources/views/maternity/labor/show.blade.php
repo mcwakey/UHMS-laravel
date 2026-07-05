@@ -104,6 +104,22 @@
         </div>
         @endcan
 
+        @can('maternity.newborn.view')
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-baby-bottle me-1"></i>{{ __('maternity.newborn_records') }}</h5></div>
+            <div class="card-body">
+                @forelse($laborOverview['newborn_records'] as $newborn)
+                <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                    <span>{{ __('maternity.birth_order') }} {{ $newborn->birth_order }} · {{ $newborn->outcome?->label() ?? __('common.none') }}</span>
+                    <a href="{{ route('admin.maternity.newborns.show', $newborn) }}" class="btn btn-sm btn-outline-primary">{{ __('common.view') }}</a>
+                </div>
+                @empty
+                <p class="text-muted mb-0">{{ __('maternity.no_newborn_records_yet') }}</p>
+                @endforelse
+            </div>
+        </div>
+        @endcan
+
         @can('maternity.labor.escalate')
         <div class="card mb-3">
             <div class="card-header"><h5 class="card-title mb-0">{{ __('maternity.theatre_escalation') }} / {{ __('maternity.emergency_escalation') }}</h5></div>

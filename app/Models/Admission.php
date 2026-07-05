@@ -197,6 +197,11 @@ class Admission extends Model
         return $this->hasMany(DeliveryRecord::class);
     }
 
+    public function newbornRecords()
+    {
+        return $this->hasMany(NewbornRecord::class);
+    }
+
     public function serviceRenderings()
     {
         return $this->hasMany(ServiceRendering::class);

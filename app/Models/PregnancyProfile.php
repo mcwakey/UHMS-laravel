@@ -143,6 +143,11 @@ class PregnancyProfile extends Model
         return $this->hasMany(DeliveryRecord::class)->latest('delivery_at')->latest('id');
     }
 
+    public function newbornRecords()
+    {
+        return $this->hasMany(NewbornRecord::class)->orderBy('birth_order')->orderBy('id');
+    }
+
     public function scopeActive($query)
     {
         return $query->whereIn('profile_status', [

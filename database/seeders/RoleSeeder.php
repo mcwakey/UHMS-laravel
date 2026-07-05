@@ -571,6 +571,16 @@ class RoleSeeder extends Seeder
             'maternity.delivery.complete',
             'maternity.labor.admission.request',
             'maternity.labor.reports.view',
+            'maternity.newborn.view',
+            'maternity.newborn.record',
+            'maternity.newborn.update',
+            'maternity.newborn.close',
+            'maternity.newborn.link_patient',
+            'maternity.newborn.create_patient',
+            'maternity.newborn.risk.manage',
+            'maternity.newborn.reports.view',
+            'maternity.birth_outcome.view',
+            'maternity.birth_outcome.manage',
 
             // ── HR & Payroll ──────────────────────────────────────────────
             'hr.employees.view',
@@ -990,6 +1000,16 @@ class RoleSeeder extends Seeder
             'maternity.delivery.complete',
             'maternity.labor.admission.request',
             'maternity.labor.reports.view',
+            'maternity.newborn.view',
+            'maternity.newborn.record',
+            'maternity.newborn.update',
+            'maternity.newborn.close',
+            'maternity.newborn.link_patient',
+            'maternity.newborn.create_patient',
+            'maternity.newborn.risk.manage',
+            'maternity.newborn.reports.view',
+            'maternity.birth_outcome.view',
+            'maternity.birth_outcome.manage',
         ];
 
         $maternityReceptionPerms = [
