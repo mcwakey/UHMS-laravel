@@ -70,6 +70,9 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "test:wide": [
+            "@php -d memory_limit=512M vendor/bin/phpunit --colors=never"
+        ],
         "ui:audit": [
             "@php artisan ui:audit"
         ],

@@ -1,20 +1,8 @@
 You are working inside the UHMS Laravel project.
 
-We have completed the Admission/Ward/Maternity workflow strengthening batch up to Phase 12:
+We have completed and regression-verified the Admission/Ward/Maternity workflow batch through Phase 13.1.
 
-* Phase 1: Emergency vs Admission gap analysis.
-* Phase 2: Admission Workflow Foundation.
-* Phase 4: Bed, Ward, Reservation, Transfer, and Location History Workflow.
-* Phase 5: Ward Operations, Reservation Expiry, Cleaning Workflow, and Capacity Board.
-* Phase 6: Nursing and Inpatient Care Layer.
-* Phase 7: Discharge Readiness, Clearance, and Discharge Summary Workflow.
-* Phase 8: Maternity Foundation and Pregnancy Profile.
-* Phase 9: Antenatal Care Workflow.
-* Phase 10: Labor and Delivery Foundation.
-* Phase 11: Newborn Records and Birth Outcome Workflow.
-* Phase 12: Postnatal Care Workflow.
-
-Current clinical chain now supports:
+Completed chain:
 
 Pregnancy Profile
 → ANC Visits
@@ -23,507 +11,386 @@ Pregnancy Profile
 → Delivery Record
 → Newborn Records
 → Postnatal Care
+→ Reports / CSV Export / Billing Mapping Readiness / Manual Test Data
 
-Now implement Phase 13: Maternity Reports, Billing Mapping Readiness, Manual Test Data, and Final Wide Regression.
+Phase 13.1 also added a memory-safe broad regression command:
+
+```bash
+composer test:wide
+```
+
+Important regression status:
+
+* The required maternity/admission targeted suite passed.
+* The broad suite now runs to completion with the memory-safe command.
+* The broad suite currently has unrelated failures outside the Phase 6–13 admission/maternity chain.
+* Do not claim the entire project suite is green until those unrelated failures are triaged separately.
+
+Now begin the next implementation batch:
+
+Phase 14: Maternity Billing Posting, Theatre/Emergency Escalation Integration, Lab/Radiology Hooks, and Production Readiness Hardening.
 
 Goal:
-Close this implementation batch by adding reporting, operational visibility, safe billing-mapping readiness, rich manual test data, final documentation, and one wider regression pass.
+Safely move from maternity workflow capture into controlled operational integrations:
+
+1. Billing posting through existing billing services.
+2. Theatre/procedure handoff for caesarean and delivery complications.
+3. Emergency handoff for maternity/labor/postnatal escalation.
+4. Lab/radiology request hooks from ANC and maternity workflows.
+5. Production readiness hardening.
 
 Important:
-This phase may run the wider regression/full-suite checks at the end because this is the batch-closing phase.
-Do not post real billing charges unless explicitly safe and already supported by existing billing services.
-Do not create invoices from maternity workflows unless this phase explicitly implements mapping readiness only.
-Do not rewrite existing billing, stock, pharmacy, emergency, theatre, admission, discharge, MAR, or nursing workflows.
-Do not touch `docs/prompt.md`; it was already dirty before this phase and should remain untouched unless explicitly instructed.
+This batch must be implemented carefully and in smaller phases.
+Do not post billing until mapping readiness and duplicate-prevention rules are in place.
+Do not rewrite billing/accounting.
+Do not rewrite theatre.
+Do not rewrite emergency.
+Do not rewrite lab/radiology.
+Do not rewrite pharmacy or stock consumption.
+Do not modify default launch seeders.
+Do not touch `docs/prompt.md`.
+Do not run the full wide suite until the end of this batch; use targeted tests during phases.
 
-1. Audit current completed maternity workflow first
+Known broad-suite status:
+`composer test:wide` currently completes but has unrelated existing failures outside the maternity/admission chain. Keep that documented. If final wide regression is run at the end of this batch, distinguish new failures from existing unrelated failures.
 
-Before implementation, review:
+Phase 14.1: Billing Posting Design and Safety Audit
 
-* Pregnancy profiles
-* Maternity cases
-* ANC visits
-* Labor episodes
-* Labor observations
-* Delivery records
-* Newborn records
-* Postnatal cases
-* Mother observations
-* Newborn observations
-* Admission request integration
-* Admission discharge readiness integration
-* Maternity dashboard
-* Existing report patterns
-* Existing export patterns
-* Existing billing mapping/configuration patterns
-* Existing manual test seeder/fixture patterns
-* Existing role/permission seeders
-* Existing localisation conventions
+This first phase is audit/design-first. Do not implement broad billing posting yet.
 
-Document what exists and avoid duplication.
+1. Audit existing billing architecture
 
-2. Add maternity report service layer
+Review existing billing/invoice/accounting patterns:
 
-Create services such as:
+* Invoice creation
+* Invoice item creation
+* Visit service billing
+* Admission billing
+* Emergency billing
+* Procedure/theatre billing
+* Investigation/radiology billing
+* Pharmacy billing
+* Service catalog
+* Service mapping patterns
+* Duplicate charge prevention patterns
+* Reversal/credit note/write-off behavior
+* Insurance/NHIS/cash pricing behavior
+* Activity logging
+* Billing permissions
+* Existing billing tests
 
-* `app/Services/Maternity/MaternityReportService.php`
-* `app/Services/Maternity/MaternityReportExportService.php`
-* `app/Services/Maternity/MaternityBillingReadinessService.php`
-* `app/Services/Maternity/MaternityManualTestDataService.php`
+Document the safest existing billing service to reuse.
 
-Reports should use service/query classes, not heavy Blade logic.
+2. Audit maternity billing readiness from Phase 13
 
-3. Add maternity reports dashboard
+Review:
 
-Add a report area under maternity.
+* `maternity_service_mappings`
+* `MaternityServiceMapping`
+* `MaternityBillingReadinessService`
+* Billing readiness UI
+* Mapping keys:
 
-Suggested route group:
+  * ANC registration/package
+  * ANC follow-up
+  * Maternity admission
+  * Labor observation
+  * Normal delivery
+  * Assisted delivery
+  * Caesarean/theatre handoff
+  * Delivery consumables
+  * Newborn care
+  * Neonatal observation
+  * Newborn resuscitation
+  * Postnatal mother care
+  * Postnatal newborn care
+  * Immunisation placeholder
+  * Ultrasound placeholder
+  * Maternity consumables
 
-* `GET admin/maternity/reports`
-* `GET admin/maternity/reports/antenatal`
-* `GET admin/maternity/reports/labor`
-* `GET admin/maternity/reports/deliveries`
-* `GET admin/maternity/reports/newborns`
-* `GET admin/maternity/reports/postnatal`
-* `GET admin/maternity/reports/risk`
-* `GET admin/maternity/reports/export`
+Confirm that readiness remains warning-only unless billing posting is explicitly triggered.
 
-Reports should support filters where practical:
+3. Design maternity billing events
 
-* date range
-* department
-* staff/recorded by
-* risk level
-* status
-* outcome
-* referral state
-* admission-linked vs outpatient
-* delivery mode
-* newborn outcome
-* postnatal readiness
+Define which maternity events may eventually post charges.
 
-Keep queries safe and paginate where needed.
-
-4. Add antenatal reports
-
-ANC report should show:
-
-* ANC visits by period
-* New pregnancy profiles
-* Profiles without ANC
-* Missed ANC visits
-* High-risk pregnancies
-* Danger signs flagged
-* Referral counts
-* Maternity admission requests from ANC
-* Expected delivery due this month/week
-* Recent ANC visits
-
-5. Add labor reports
-
-Labor report should show:
-
-* Active labor episodes
-* Labor episodes by stage
-* Labor observations count
-* Danger signs/risk flags
-* Theatre escalation required
-* Emergency escalation required
-* Labor admission requests
-* Delivered vs transferred/referred/cancelled
-* Recent observations
-
-6. Add delivery reports
-
-Delivery report should show:
-
-* Deliveries by period
-* Delivery mode breakdown
-* Delivery outcome breakdown
-* Estimated blood loss warnings if available
-* Maternal condition summary
-* Newborn records pending
-* Deliveries missing newborn records
-* Caesarean/theatre handoff placeholders
-* Recent delivery records
-
-7. Add newborn reports
-
-Newborn report should show:
-
-* Newborns recorded by period
-* Live births
-* Stillbirths
-* Neonatal deaths if recorded
-* Multiple births
-* Low birth weight count
-* Resuscitation required count
-* Poor APGAR advisory count
-* Newborns under observation
-* Newborn records without linked patient
-* Newborn outcome summary
-
-8. Add postnatal reports
-
-Postnatal report should show:
-
-* Active postnatal cases
-* Mother observations today/by period
-* Newborn observations today/by period
-* Mother ready for discharge
-* Newborn ready for discharge
-* Ready for discharge
-* Referrals required
-* Follow-ups due this week
-* Danger signs flagged
-* Cases without recent observations
-* Recent postnatal cases
-
-9. Add risk and safety report
-
-Add one cross-maternity risk report that combines:
-
-* High-risk pregnancy profiles
-* ANC danger signs
-* Labor escalation flags
-* Delivery complications
-* Newborn risk flags
-* Postnatal danger signs
-* Referrals required
-* Admission requests pending
-* Postnatal cases not ready for discharge
-
-This should be advisory and operational, not a clinical rule engine.
-
-10. Add CSV export where safe
-
-Add simple CSV export for reports if existing export patterns exist.
-
-Suggested exports:
-
-* ANC report CSV
-* Labor report CSV
-* Delivery report CSV
-* Newborn report CSV
-* Postnatal report CSV
-* Risk report CSV
-
-Do not add heavy Excel/PDF dependency unless already used in the project.
-CSV is enough for this phase.
-
-11. Add billing mapping readiness
-
-Do not post charges in this phase unless existing billing service mapping patterns make it completely safe.
-
-Add a readiness/configuration view for maternity billing mappings.
-
-Suggested categories:
+Suggested billable events:
 
 * ANC registration/package
-* ANC follow-up
-* maternity admission
-* labor observation
-* normal delivery
-* assisted delivery
-* caesarean/theatre handoff
-* delivery consumables
-* newborn care
-* neonatal observation
-* newborn resuscitation
-* postnatal mother care
-* postnatal newborn care
-* immunisation placeholder
-* ultrasound placeholder
-* maternity consumables
+* ANC follow-up visit
+* Maternity admission
+* Labor observation/care
+* Normal delivery
+* Assisted delivery
+* Caesarean/theatre handoff
+* Delivery consumables
+* Newborn care
+* Neonatal observation
+* Newborn resuscitation
+* Postnatal mother care
+* Postnatal newborn care
+* Immunisation placeholder
+* Ultrasound placeholder
+* Maternity consumables
 
-The readiness view should show:
+For each event, define:
 
-* mapping configured or missing
-* mapped service name/code if available
-* active/inactive service state if available
-* warning if missing
-* warning if service inactive
-* warning if duplicate mapping
-* last updated by/time if available
+* source model
+* source ID
+* mapping key
+* invoice context
+* patient responsible for charge
+* mother patient vs newborn patient policy
+* visit/admission context
+* duplicate prevention key
+* whether charge is automatic or manual
+* whether charge is allowed when mapping missing
+* audit log action
 
-Important:
+4. Design billing posting service
 
-* Do not auto-bill historical records.
-* Do not recalculate invoices.
-* Do not post charges from ANC, labor, delivery, newborn, or postnatal records in this phase.
-* If mapping storage does not already exist, add config/table placeholders only.
-* Missing mappings should show warnings, not fatal errors.
+Create a design for a service such as:
 
-12. Add optional mapping configuration table if needed
+`app/Services/Maternity/MaternityBillingPostingService.php`
 
-If project billing mapping already has a pattern, reuse it.
+The service should eventually support:
 
-If not, add a safe table such as:
+* preview charge
+* post charge
+* skip if already posted
+* detect duplicate source charge
+* explain missing mapping
+* explain inactive service
+* log charge posting
+* return structured result
 
-`maternity_service_mappings`
+Do not implement full posting yet unless safe and explicitly scoped.
+
+Recommended design structure:
+
+* `previewForSource($sourceModel, string $mappingKey)`
+* `postForSource($sourceModel, string $mappingKey, User $actor)`
+* `alreadyPosted($sourceModel, string $mappingKey)`
+* `resolveMapping(string $mappingKey)`
+* `resolveBillingContext($sourceModel)`
+* `buildInvoiceItemPayload(...)`
+
+5. Add billing posting ledger table if needed
+
+If existing invoice item metadata can safely store source references, reuse it.
+
+If not, propose a lightweight table such as:
+
+`maternity_billing_events`
 
 Recommended fields:
 
 * id
 * mapping_key
+* source_type
+* source_id
+* patient_id
+* visit_id nullable
+* admission_id nullable
+* invoice_id nullable
+* invoice_item_id nullable
 * service_id nullable
-* is_active boolean default true
-* description nullable
-* configured_by nullable user
-* configured_at nullable timestamp
+* amount nullable decimal
+* status
+* posted_by nullable user
+* posted_at nullable timestamp
+* skipped_reason nullable text
+* metadata nullable json
 * timestamps
 
-Do not use this table to post charges yet.
-This is readiness/configuration only.
+Suggested statuses:
 
-13. Add manual test data command/seeder
+* previewed
+* posted
+* skipped
+* failed
+* reversed
 
-Add large manual test data for maternity without affecting default launch seeders.
+Important:
 
-Create a dedicated command/seeder, for example:
+* This table must not replace the real invoice system.
+* It only tracks maternity source-to-billing linkage and duplicate prevention.
+* Do not create it if existing billing metadata already solves this safely.
 
-* `php artisan maternity:seed-manual-test-data`
-* or `php artisan uhms:seed-maternity-manual-data`
+6. Define mother/newborn billing policy
 
-The command should be explicit and never run from default seeders unless manually invoked.
+This is important.
 
-Seed realistic data for:
+Design the default policy:
 
-* Low-risk pregnancy profile
-* High-risk pregnancy profile
-* Pregnancy with no ANC
-* Pregnancy with ANC visits
-* ANC danger sign/referral case
-* Maternity admission request from ANC
-* Labor episode from ANC
-* Labor episode linked to admission
-* Labor observations with normal progression
-* Labor observation with escalation flags
-* Delivery record normal vaginal delivery
-* Assisted delivery
-* Caesarean/theatre escalation placeholder
-* Twin delivery
-* Newborn live birth
-* Newborn stillbirth
-* Newborn low birth weight
-* Newborn resuscitation required
-* Postnatal mother/newborn stable
-* Postnatal danger sign/referral required
-* Postnatal follow-up due
-* Discharge readiness advisory warning
+* Pregnancy/ANC/labor/delivery/postnatal mother care charges bill to the mother’s visit/admission.
+* Newborn care charges may bill to:
 
-Rules:
+  * mother visit/admission by default, or
+  * newborn patient/visit if linked and site policy enables it.
+* Newborn patient billing must be configurable and disabled by default unless the hospital wants separate newborn accounts.
+* Stillbirth billing rules must be conservative and configurable.
 
-* Do not affect default production seeders.
-* Use clearly identifiable fake/manual-test names.
-* Avoid overwriting real data.
-* Add option flags if useful:
+Suggested config:
 
-  * `--count=`
-  * `--fresh-manual`
-  * `--department=`
-* If deleting seeded test data, only delete records with a clear manual-test marker.
+```php
+'maternity_billing' => [
+    'enabled' => env('MATERNITY_BILLING_ENABLED', false),
+    'auto_post' => env('MATERNITY_BILLING_AUTO_POST', false),
+    'newborn_billing_policy' => env('MATERNITY_NEWBORN_BILLING_POLICY', 'mother'),
+]
+```
 
-14. Add manual testing guide update
+Allowed newborn policies:
 
-Update:
+* `mother`
+* `newborn_if_linked`
+* `disabled`
 
-`docs/manual-testing/ADMISSION_MATERNITY_MANUAL_TESTING_PLAN.md`
+Defaults must avoid unexpected billing.
 
-Add end-to-end scenarios:
+7. Add UI preview only if safe
 
-* Pregnancy profile → ANC → referral → admission request
-* Pregnancy profile → ANC → labor
-* Labor → observations → delivery
-* Delivery → newborn records
-* Twin delivery
-* Stillbirth delivery
-* Newborn patient linking
-* Delivery → postnatal case
-* Postnatal mother observation
-* Postnatal newborn observation
-* Postnatal readiness → admission discharge readiness warning
-* Maternity reports and exports
-* Billing mapping readiness warnings
-* Manual seed command verification
+If safe, add a billing preview panel on relevant maternity pages.
 
-15. Add final batch summary documentation
+Pages:
 
-Create:
+* ANC visit detail
+* Labor episode detail
+* Delivery record detail
+* Newborn record detail
+* Postnatal case detail
 
-`docs/maternity/MATERNITY_WORKFLOW_BATCH_CLOSURE_REPORT.md`
+Panel should show:
 
-Include:
+* relevant mapping keys
+* configured/missing service
+* already posted or not
+* estimated amount if available
+* warning that posting is disabled unless enabled
+* future post button placeholder if not implemented
 
-* Phases completed
-* Major models/tables added
-* Major services/controllers/routes added
-* Permissions added
-* Reports added
-* Billing readiness behavior
-* Manual seed command behavior
-* Existing workflows protected
-* Known risks
-* Deferred items
-* Recommended next batch
+Do not add active post buttons yet unless this phase explicitly implements posting.
 
-16. Permissions
+8. Permissions
 
-Add permissions additively.
+Add permissions additively if needed:
 
-Suggested permissions:
+* `maternity.billing.preview`
+* `maternity.billing.post`
+* `maternity.billing.override`
+* `maternity.billing.audit.view`
 
-* `maternity.reports.view`
-* `maternity.reports.export`
-* `maternity.billing_readiness.view`
-* `maternity.billing_readiness.manage`
-* `maternity.manual_seed.run`
-
-Keep all previous maternity permissions.
-
-Recommended:
-
-* Admin/super admin gets all.
-* Maternity clinical roles get reports view.
-* Finance/billing roles get billing readiness view/manage if existing roles support it.
-* Manual seed command should be admin-only or console-only.
+Admin/super admin gets all.
+Billing/finance roles may get preview/post depending on existing role conventions.
+Clinical maternity roles may view preview but should not post unless project convention allows.
 
 Do not remove existing permissions.
 
-17. Localisation
+9. Localisation
 
 Add EN/FR keys for:
 
-* Maternity reports
-* ANC report
-* Labor report
-* Delivery report
-* Newborn report
-* Postnatal report
-* Risk report
-* Export CSV
-* Billing mapping readiness
-* Mapping configured
+* Maternity billing
+* Billing preview
+* Billing posting disabled
 * Mapping missing
 * Service inactive
-* Manual test data
-* Seed manual data
-* Report filters
-* Date range
-* No records found
-* Summary metrics
-* Follow-ups due
-* Records pending
-* Records complete
+* Already posted
+* Ready to post
+* Duplicate prevented
+* Mother billing
+* Newborn billing
+* Newborn billing disabled
+* Newborn billing to mother
+* Newborn billing if linked
+* Billing event
+* Billing audit
 * Success/error messages
 
-Maintain EN/FR localisation parity.
+Maintain localisation parity.
 
-18. Activity logging
+10. Documentation
 
-Log actions under MATERNITY:
+Create:
 
-* report exported
-* billing mapping created/updated
-* manual test data seeded
-* manual test data cleared if implemented
+`docs/maternity/MATERNITY_BILLING_POSTING_PHASE_14_1_DESIGN_REPORT.md`
 
-Do not log clinical details unnecessarily.
+The report must include:
 
-19. Tests
+* Existing billing architecture reviewed
+* Maternity billing mappings reviewed
+* Proposed billable events
+* Proposed duplicate-prevention strategy
+* Proposed mother/newborn billing policy
+* Proposed service design
+* Proposed tables/columns if any
+* Proposed config flags
+* UI preview behavior
+* What was implemented, if anything
+* What was intentionally deferred
+* Risks
+* Next phase recommendation
 
-Add targeted tests first, then run wider regression at the end.
+11. Tests/checks
 
-Recommended new test file:
+Since this is design-first, tests depend on whether code changes are made.
 
-`tests/Feature/MaternityReportsBillingReadinessPhase13Test.php`
+If code changes are made, add targeted tests.
 
-Recommended targeted tests:
+Recommended test file:
 
-* Maternity reports index renders.
-* ANC report renders.
-* Labor report renders.
-* Delivery report renders.
-* Newborn report renders.
-* Postnatal report renders.
-* Risk report renders.
-* CSV export returns expected response.
-* Billing readiness page renders missing mappings.
-* Billing readiness can save mapping if implemented.
-* No billing is posted from readiness view.
-* Manual seed command runs.
-* Manual seed command creates identifiable records.
-* Default seeders are not modified to call manual maternity seed.
-* Existing PostnatalCarePhase12Test still passes.
-* Existing NewbornBirthOutcomePhase11Test still passes.
-* Existing LaborDeliveryFoundationPhase10Test still passes.
-* Existing AntenatalCarePhase9Test still passes.
-* Existing MaternityFoundationPhase8Test still passes.
-* Existing AdmissionDischargeReadinessPhase7Test still passes.
-* Existing AdmissionNursingCarePhase6Test still passes.
-* Existing AdmissionWorkflowFoundationTest still passes.
+`tests/Feature/MaternityBillingPostingPhase14_1Test.php`
+
+Recommended tests:
+
+* Billing readiness page still renders.
+* Billing preview shows missing mappings.
+* Billing preview shows configured mappings.
+* Billing preview does not post invoice items.
+* Maternity billing config defaults to disabled.
+* Newborn billing policy defaults to mother or disabled as chosen.
+* Existing Phase 13 billing readiness tests still pass.
 
 Run targeted checks:
 
+* `php artisan test tests/Feature/MaternityBillingPostingPhase14_1Test.php` if added
 * `php artisan test tests/Feature/MaternityReportsBillingReadinessPhase13Test.php`
 * `php artisan test tests/Feature/PostnatalCarePhase12Test.php`
-* `php artisan test tests/Feature/NewbornBirthOutcomePhase11Test.php`
-* `php artisan test tests/Feature/LaborDeliveryFoundationPhase10Test.php`
-* `php artisan test tests/Feature/AntenatalCarePhase9Test.php`
-* `php artisan test tests/Feature/MaternityFoundationPhase8Test.php`
-* `php artisan test tests/Feature/AdmissionDischargeReadinessPhase7Test.php`
-* `php artisan test tests/Feature/AdmissionNursingCarePhase6Test.php`
-* `php artisan test tests/Feature/AdmissionWorkflowFoundationTest.php`
 * `php artisan route:list --name=maternity`
-* `php artisan route:list --name=admissions`
 * `php artisan view:clear`
 * `php artisan config:clear`
-* `git diff --check`
-* PHP syntax checks on new/changed PHP files
+* `git diff --check -- . ':!docs/prompt.md'`
+* PHP syntax checks on changed PHP files
 
-Then, because this is the batch-closing phase, run one wider regression pass.
+Do not run the full wide suite in this phase.
 
-Use the project’s normal safe command for the wider test suite.
+12. Boundaries
 
-If a full suite is too large or environment-dependent, run the broadest practical project-safe suite and document what could not run.
-
-The final report must clearly say:
-
-* Full suite run: yes/no
-* Command used
-* Passed/failed counts
-* Any failures
-* Whether failures are related to this batch or pre-existing
-* Recommended follow-up
-
-20. Boundaries
-
-Do not implement maternity billing posting.
-Do not implement newborn billing.
-Do not implement pharmacy dispensing.
-Do not implement stock consumption.
-Do not implement civil birth registry integration.
-Do not rewrite admission discharge readiness.
-Do not rewrite admission billing.
-Do not rewrite emergency/theatre workflows.
-Do not modify default launch seeders to include mass maternity data.
-Do not remove existing routes.
+Do not enable automatic maternity billing.
+Do not post invoices unless explicitly scoped and safely tested.
+Do not recalculate historical invoices.
+Do not change accounting ledger behavior.
+Do not change credit note/write-off behavior.
+Do not change insurance pricing behavior.
+Do not post stock consumption.
+Do not dispense pharmacy items.
+Do not rewrite theatre/emergency/lab/radiology workflows.
 Do not touch `docs/prompt.md`.
+Do not run the full suite.
 
-21. Final response
+13. Final response
 
-At the end, provide a concise completion report with:
+At the end, provide a concise report with:
 
-* Summary of changes
+* What was audited
+* What was designed
 * Files changed
-* Migrations/routes/config/commands added
-* Permissions added
-* Reports added
-* Billing readiness behavior
-* Manual seed behavior
+* Config/permissions added
 * Tests/checks run
-* Wide regression result
 * What was intentionally not changed
-* Known risks
-* Recommended next batch
+* Risks
+* Next phase recommendation
 
+Recommended next phase:
+Phase 14.2: Controlled Maternity Billing Posting for Manual Actions Only.
