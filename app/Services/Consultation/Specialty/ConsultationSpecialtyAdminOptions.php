@@ -4,6 +4,7 @@ namespace App\Services\Consultation\Specialty;
 
 use App\Models\Drug;
 use App\Models\IcdCode;
+use App\Models\ConsultationSpecialtyServiceMapping;
 use App\Models\Product;
 use App\Models\ServiceCatalog;
 use Illuminate\Database\Eloquent\Model;
@@ -48,6 +49,16 @@ class ConsultationSpecialtyAdminOptions
         'create_procedure_if_linked',
         'create_prescription_if_linked',
     ];
+
+    public function billingContexts(): array
+    {
+        return ConsultationSpecialtyServiceMapping::CONTEXTS;
+    }
+
+    public function billingTriggers(): array
+    {
+        return ConsultationSpecialtyServiceMapping::TRIGGERS;
+    }
 
     public function __construct(
         private readonly ConsultationSpecialtySectionComponentRegistry $components,

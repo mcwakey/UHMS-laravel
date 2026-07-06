@@ -59,6 +59,16 @@ class ConsultationSpecialtyProfile extends Model
         return $this->hasMany(ConsultationSpecialtyOrderSet::class);
     }
 
+    public function serviceMappings(): HasMany
+    {
+        return $this->hasMany(ConsultationSpecialtyServiceMapping::class);
+    }
+
+    public function billingApplications(): HasMany
+    {
+        return $this->hasMany(ConsultationSpecialtyBillingApplication::class);
+    }
+
     public function mappings(): HasMany
     {
         return $this->hasMany(ConsultationSpecialtyProfileMapping::class);

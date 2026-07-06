@@ -13,6 +13,7 @@ use App\Models\ConsultationSpecialtyOrderSetItem;
 use App\Models\ConsultationSpecialtyProfile;
 use App\Models\ConsultationSpecialtyProfileMapping;
 use App\Models\ConsultationSpecialtySection;
+use App\Models\ConsultationSpecialtyServiceMapping;
 use App\Models\Department;
 use App\Models\Patient;
 use App\Models\ServiceCatalog;
@@ -280,6 +281,50 @@ class ConsultationSpecialtyAdminConfigurationTest extends TestCase
         [$visit, $route] = $this->consultationRouteFixture('Dental', 'DEN', 'dental');
         $preview = app(ConsultationSpecialtyOrderSetService::class)->previewOrderSet($route, $orderSet->fresh(['profile']), $this->admin);
         $this->assertTrue(collect($preview['items'])->pluck('label')->contains('Consent reminder'));
+    }
+
+    public function test_admin_can_manage_service_mappings_with_auto_bill_guard(): void
+    {
+        $profile = $this->profile('dental');
+        $service = ServiceCatalog::query()->create([
+            'name' => 'Dental Consultation',
+            'code' => 'DENT-BILL',
+            'category' => ServiceType::CONSULTATION->value,
+            'price' => 100,
+            'is_active' => true,
+            'is_billable' => true,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.consultation-specialties.service-mappings.index'))
+            ->assertOk()
+            ->assertSee(__('consultation_specialties.billing.admin.service_mappings'));
+
+        $payload = [
+            'consultation_specialty_profile_id' => $profile->id,
+            'service_id' => $service->id,
+            'mapping_context' => ConsultationSpecialtyServiceMapping::CONTEXT_CONSULTATION,
+            'billing_trigger' => ConsultationSpecialtyServiceMapping::TRIGGER_MANUAL,
+            'priority' => 5,
+            'is_default' => 1,
+            'auto_bill' => 1,
+            'requires_confirmation' => 1,
+            'is_active' => 1,
+        ];
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.consultation-specialties.service-mappings.store'), $payload)
+            ->assertSessionHasErrors('auto_bill_acknowledged');
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.consultation-specialties.service-mappings.store'), $payload + ['auto_bill_acknowledged' => 1])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('consultation_specialty_service_mappings', [
+            'consultation_specialty_profile_id' => $profile->id,
+            'service_id' => $service->id,
+            'auto_bill' => true,
+        ]);
     }
 
     public function test_order_set_with_history_deactivates_instead_of_deleting(): void

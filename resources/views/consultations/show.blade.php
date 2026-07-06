@@ -232,292 +232,17 @@
 
 @include('consultations.partials.session-context')
 
-@php
-    $doctorWorkspace = isset($doctorSpecialtyWorkspace) && $doctorSpecialtyWorkspace ? $doctorSpecialtyWorkspace->toArray() : [];
-    $workspaceActions = collect($doctorWorkspace['quick_actions'] ?? []);
-    $pinnedKeys = collect($doctorWorkspace['pinned_actions'] ?? []);
-    $compactWorkspace = (bool) data_get($doctorWorkspace, 'preferences.compact_mode', false);
-    $visibleMetrics = collect($doctorWorkspace['metrics'] ?? [])->take($compactWorkspace ? 3 : 6);
-    $visibleActions = $pinnedKeys->isNotEmpty()
-        ? $workspaceActions->filter(fn ($action) => $pinnedKeys->contains($action['key']))->concat($workspaceActions->reject(fn ($action) => $pinnedKeys->contains($action['key'])))->take($compactWorkspace ? 4 : 9)
-        : $workspaceActions->take($compactWorkspace ? 4 : 9);
-@endphp
+@include('consultations.partials.specialty-workspace-band')
 
-<div class="card mb-3 specialty-workspace-strip" style="--specialty-accent: {{ $specialtyAccent }}" id="doctor-specialty-workspace">
-    <div class="card-body py-2">
-        <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
-            <div class="d-flex align-items-center gap-2">
-                <span class="avatar avatar-sm bg-light text-primary border">
-                    <i class="ti {{ $specialtyLayout['profile']['icon'] ?? 'ti-stethoscope' }}"></i>
-                </span>
-                <div>
-                    <div class="fw-semibold">{{ data_get($doctorWorkspace, 'doctor.display_name', 'Dr. '.(auth()->user()?->full_name ?? '')) }}</div>
-                    <small class="text-muted">
-                        {{ data_get($doctorWorkspace, 'specialty.workspace_name', __('consultation_specialties.workspace.title', ['profile' => $specialtyLayout['profile']['translated_name'] ?? __('consultation_specialties.profiles.general_medicine')])) }}
-                        @if(data_get($doctorWorkspace, 'department.name'))
-                            &middot; {{ __('consultation_specialties.workspace.department') }}: {{ data_get($doctorWorkspace, 'department.name') }}
-                        @endif
-                        &middot; {{ $selectedRouteLabel }}
-                    </small>
-                </div>
-            </div>
-            <form method="POST" action="{{ route('admin.consultations.preferences.layout.update') }}" class="d-flex align-items-center gap-2">
-                @csrf
-                @method('PATCH')
-                <input type="hidden" name="preferred_layout" value="{{ $compactWorkspace ? 'default' : 'compact' }}">
-                <input type="hidden" name="compact_mode" value="{{ $compactWorkspace ? 0 : 1 }}">
-                <button type="submit" class="btn btn-outline-secondary btn-xs">
-                    <i class="ti ti-layout-sidebar-left-collapse me-1"></i>{{ __('consultation_specialties.workspace.compact_mode') }}
-                </button>
-            </form>
-        </div>
+@include('consultations.partials.specialty-order-sets')
 
-        <div class="d-flex flex-wrap gap-2 mt-2">
-            @forelse($visibleMetrics as $metric)
-                <span class="badge bg-light text-dark border">{{ $metric['label'] }}: {{ $metric['value'] }}</span>
-            @empty
-                <span class="small text-muted">{{ __('consultation_specialties.workspace.no_metrics') }}</span>
-            @endforelse
-        </div>
-
-        @if(! empty($doctorWorkspace['alerts'] ?? []))
-            <div class="d-flex flex-wrap gap-2 mt-2">
-                @foreach($doctorWorkspace['alerts'] as $alert)
-                    <a href="{{ $alert['target'] ?? '#' }}" class="badge bg-{{ ($alert['severity'] ?? 'info') === 'warning' ? 'warning text-dark' : 'info-subtle text-info' }} text-decoration-none">
-                        {{ $alert['message'] }}
-                    </a>
-                @endforeach
-            </div>
-        @endif
-
-        <div class="d-flex flex-wrap gap-2 mt-2">
-            <span class="small text-muted align-self-center">{{ __('consultation_specialties.workspace.quick_actions') }}:</span>
-            @foreach($visibleActions as $action)
-                <a href="{{ $action['target'] ?? '#' }}"
-                   class="btn btn-outline-primary btn-xs"
-                   data-doctor-workspace-action="{{ $action['type'] }}"
-                   data-target="{{ $action['target'] ?? '' }}">
-                    <i class="ti {{ $action['icon'] ?? 'ti-circle' }} me-1"></i>{{ $action['label'] }}
-                </a>
-            @endforeach
-        </div>
-    </div>
-</div>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('[data-doctor-workspace-action]').forEach(function (action) {
-        action.addEventListener('click', function (event) {
-            const type = action.dataset.doctorWorkspaceAction;
-            const targetSelector = action.dataset.target || action.getAttribute('href');
-            if (type === 'generate_summary') {
-                event.preventDefault();
-                document.querySelector(targetSelector)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                document.getElementById('generateSpecialtySummaryBtn')?.click();
-                return;
-            }
-            if (targetSelector && targetSelector.startsWith('#')) {
-                const target = document.querySelector(targetSelector);
-                if (target) {
-                    event.preventDefault();
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    if (target.classList.contains('tab-pane')) {
-                        const trigger = document.querySelector(`[data-bs-target="${targetSelector}"], [href="${targetSelector}"]`);
-                        trigger?.click();
-                    }
-                }
-            }
-        });
-    });
-});
-</script>
-
-@if(! empty($specialtyOrderSets ?? []))
-<div class="card mb-3" id="order-sets-panel">
-    <div class="card-header d-flex justify-content-between align-items-center py-2">
-        <h6 class="fw-bold mb-0"><i class="ti ti-packages me-1"></i>{{ __('consultation_specialties.order_sets.title') }}</h6>
-        <span class="badge bg-light text-dark border">{{ count($specialtyOrderSets) }} {{ __('consultation_specialties.order_sets.items') }}</span>
-    </div>
-    <div class="card-body py-2">
-        <div class="d-flex flex-wrap gap-2">
-            @foreach($specialtyOrderSets as $orderSet)
-                <div class="border rounded p-2 flex-grow-1" style="min-width:220px;max-width:320px;">
-                    <div class="d-flex justify-content-between gap-2">
-                        <div>
-                            <div class="fw-semibold small">{{ $orderSet['name'] }}</div>
-                            @if($orderSet['description'])
-                                <small class="text-muted d-block">{{ $orderSet['description'] }}</small>
-                            @endif
-                        </div>
-                        <span class="badge bg-{{ $orderSet['color'] ?? 'secondary' }}-subtle text-{{ $orderSet['color'] ?? 'secondary' }}">{{ $orderSet['items_count'] }}</span>
-                    </div>
-                    @can('consultations.create')
-                        <button type="button"
-                                class="btn btn-outline-primary btn-sm mt-2"
-                                data-order-set-preview
-                                data-preview-url="{{ route('admin.consultations.specialty-order-sets.preview', [$visit, $orderSet['id']]) }}"
-                                data-apply-url="{{ route('admin.consultations.specialty-order-sets.apply', [$visit, $orderSet['id']]) }}">
-                            <i class="ti ti-eye me-1"></i>{{ __('consultation_specialties.order_sets.preview') }}
-                        </button>
-                    @endcan
-                </div>
-            @endforeach
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="specialtyOrderSetModal" tabindex="-1" aria-labelledby="specialtyOrderSetModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="specialtyOrderSetModalLabel">{{ __('consultation_specialties.order_sets.preview') }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('common.close') }}"></button>
-            </div>
-            <div class="modal-body">
-                <div class="small text-muted mb-2" data-order-set-intro>{{ __('consultation_specialties.order_sets.preview_intro') }}</div>
-                <div data-order-set-errors class="alert alert-danger d-none"></div>
-                <div data-order-set-items></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
-                <button type="button" class="btn btn-primary" data-order-set-apply>
-                    <i class="ti ti-check me-1"></i>{{ __('consultation_specialties.order_sets.apply_selected') }}
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const panel = document.getElementById('order-sets-panel');
-    const modalEl = document.getElementById('specialtyOrderSetModal');
-    if (!panel || !modalEl) return;
-
-    const itemsEl = modalEl.querySelector('[data-order-set-items]');
-    const errorsEl = modalEl.querySelector('[data-order-set-errors]');
-    const applyBtn = modalEl.querySelector('[data-order-set-apply]');
-    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
-    let applyUrl = null;
-
-    const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
-    const routeInput = () => document.querySelector('input[name="consultation_route_id"]')?.value || '{{ $selectedRoute?->id }}';
-
-    function showError(message) {
-        errorsEl.textContent = message;
-        errorsEl.classList.remove('d-none');
-    }
-
-    function renderItems(items) {
-        itemsEl.innerHTML = items.map((item) => {
-            const badge = item.can_apply ? '{{ __('consultation_specialties.order_sets.can_apply') }}' : '{{ __('consultation_specialties.order_sets.manual_action') }}';
-            const checked = item.can_apply ? 'checked' : '';
-            const disabled = item.can_apply ? '' : 'disabled';
-            const warnings = (item.warnings || []).map((warning) => `<div class="small text-warning">${esc(warning)}</div>`).join('');
-            return `<label class="border rounded p-2 mb-2 d-flex gap-2 align-items-start">
-                <input type="checkbox" class="form-check-input mt-1" value="${esc(item.id)}" ${checked} ${disabled}>
-                <span class="flex-grow-1">
-                    <span class="fw-semibold">${esc(item.label)}</span>
-                    <span class="badge bg-light text-dark border ms-1">${esc(item.type)}</span>
-                    <span class="badge ${item.can_apply ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} ms-1">${badge}</span>
-                    ${warnings}
-                </span>
-            </label>`;
-        }).join('') || '<div class="text-muted">{{ __('consultation_specialties.order_sets.no_order_sets') }}</div>';
-    }
-
-    panel.addEventListener('click', function (event) {
-        const button = event.target.closest('[data-order-set-preview]');
-        if (!button) return;
-
-        applyUrl = button.dataset.applyUrl;
-        errorsEl.classList.add('d-none');
-        itemsEl.innerHTML = '<div class="text-center py-3"><span class="spinner-border spinner-border-sm"></span></div>';
-        window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
-
-        const url = new URL(button.dataset.previewUrl, window.location.origin);
-        url.searchParams.set('consultation_route_id', routeInput());
-        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
-            .then((response) => response.ok ? response.json() : response.json().then((json) => Promise.reject(json)))
-            .then((json) => {
-                modalEl.querySelector('#specialtyOrderSetModalLabel').textContent = json.preview.order_set.name;
-                renderItems(json.preview.items || []);
-            })
-            .catch((error) => showError(error.message || '{{ __('consultation_specialties.order_sets.failed') }}'));
-    });
-
-    applyBtn.addEventListener('click', function () {
-        if (!applyUrl) return;
-        const ids = Array.from(itemsEl.querySelectorAll('input[type="checkbox"]:checked')).map((input) => input.value);
-        if (!window.confirm('{{ __('consultation_specialties.order_sets.confirm_apply') }}')) return;
-
-        applyBtn.disabled = true;
-        fetch(applyUrl, {
-            method: 'POST',
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-            body: JSON.stringify({ consultation_route_id: routeInput(), selected_item_ids: ids }),
-        })
-            .then((response) => response.ok ? response.json() : response.json().then((json) => Promise.reject(json)))
-            .then(() => window.location.reload())
-            .catch((error) => showError(error.message || '{{ __('consultation_specialties.order_sets.failed') }}'))
-            .finally(() => { applyBtn.disabled = false; });
-    });
-});
-</script>
-@endpush
-@endif
-
-{{-- ============================================================ --}}
-{{-- CONSULTATION GATING — Start Consultation banner --}}
-{{-- ============================================================ --}}
 @php
     $canCorrectLocked = auth()->user()?->can('consultation.entries.correct_completed') || auth()->user()?->can('visits.reopen_locked_session');
     $isSelectedRouteLocked = $selectedRoute && $selectedRoute->locked_at;
-    $canEdit = in_array($visit->status, [\App\Enums\VisitStatus::CONSULTING, \App\Enums\VisitStatus::EMERGENCY], true)
-        && $selectedRoute
-        && $selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE
-        && (! $isSelectedRouteLocked || $canCorrectLocked);
-    $needsStart = $selectedRoute
-        && (
-            in_array($selectedRoute->status, [
-                \App\Models\VisitConsultationRoute::STATUS_PENDING,
-                \App\Models\VisitConsultationRoute::STATUS_PAUSED,
-            ], true)
-            || (
-                $selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE
-                && in_array($visit->status, [
-                    \App\Enums\VisitStatus::WAITING,
-                    \App\Enums\VisitStatus::ACTIVE,
-                ], true)
-            )
-        );
+    $canEdit = in_array($visit->status, [\App\Enums\VisitStatus::CONSULTING, \App\Enums\VisitStatus::EMERGENCY], true) && $selectedRoute && $selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE && (! $isSelectedRouteLocked || $canCorrectLocked);
+    $needsStart = $selectedRoute && (in_array($selectedRoute->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true) || ($selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE && in_array($visit->status, [\App\Enums\VisitStatus::WAITING, \App\Enums\VisitStatus::ACTIVE], true)));
 @endphp
-@if($needsStart)
-<div class="card border-warning mb-3">
-    <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <div>
-            <h6 class="fw-bold mb-1 text-warning"><i class="ti ti-player-play me-1"></i>{{ __('consultations.workspace.consultation_not_started') }}</h6>
-            <small class="text-muted">{{ __('consultations.workspace.start_instruction') }}</small>
-        </div>
-        @can('consultations.create')
-        <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $selectedRoute]) }}">
-            @csrf
-            <button type="submit" class="btn btn-warning"><i class="ti ti-player-play me-1"></i>{{ __('consultations.workspace.start_consultation') }}</button>
-        </form>
-        @endcan
-    </div>
-</div>
-@elseif($canEdit)
-<div class="alert alert-success py-2 mb-3 small d-flex align-items-center">
-    <i class="ti ti-pencil me-2"></i><strong>{{ __('consultations.workspace.consultation_in_progress') }}</strong>&nbsp;— {{ __('consultations.workspace.consultation_in_progress_help') }}
-</div>
-@endif
-@if($isSelectedRouteLocked && ! $canCorrectLocked)
-<div class="alert alert-secondary py-2 mb-3 small d-flex align-items-center">
-    <i class="ti ti-lock me-2"></i><strong>{{ __('consultations.workspace.session_locked') }}</strong>&nbsp;- {{ __('consultations.workspace.session_locked_help') }}
-</div>
-@endif
-
+@include('consultations.partials.consultation-gating')
 {{-- ============================================================ --}}
 {{-- MAIN 3-COLUMN LAYOUT --}}
 {{-- ============================================================ --}}
@@ -909,7 +634,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                                     <div class="small text-muted fw-semibold mb-1">{{ __('consultation_specialties.favorites.specialty_favorites') }}</div>
                                                     <div class="d-flex flex-wrap gap-1">
                                                         @foreach($diagnosisFavorites->take(8) as $favorite)
-                                                            <button type="button" class="btn btn-outline-primary btn-xs" onclick="document.getElementById('diagnosis_description').value = this.dataset.favoriteLabel" data-favorite-label="{{ $favorite['label'] }}">
+                                                            <button type="button" class="btn btn-outline-primary btn-xs" data-consultation-action="insert-favorite" data-target="#diagnosis_description" data-favorite-label="{{ $favorite['label'] }}">
                                                                 {{ $favorite['label'] }} <span class="badge bg-primary-subtle text-primary ms-1">{{ __('consultation_specialties.favorites.badge') }}</span>
                                                             </button>
                                                         @endforeach
@@ -1834,7 +1559,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                                     @if($taskFavorites->isNotEmpty())
                                                         <div class="mt-1 d-flex flex-wrap gap-1">
                                                             @foreach($taskFavorites->take(6) as $favorite)
-                                                                <button type="button" class="btn btn-outline-secondary btn-xs" onclick="document.getElementById('taskTitleInput').value = this.dataset.favoriteLabel" data-favorite-label="{{ $favorite['label'] }}">{{ $favorite['label'] }}</button>
+                                                                <button type="button" class="btn btn-outline-secondary btn-xs" data-consultation-action="insert-favorite" data-target="#taskTitleInput" data-favorite-label="{{ $favorite['label'] }}">{{ $favorite['label'] }}</button>
                                                             @endforeach
                                                         </div>
                                                     @endif
@@ -2102,7 +1827,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                                     @if($followUpFavorites->isNotEmpty())
                                                         <div class="mt-2 d-flex flex-wrap gap-1">
                                                             @foreach($followUpFavorites->take(6) as $favorite)
-                                                                <button type="button" class="btn btn-outline-info btn-xs" onclick="const target = document.getElementById('followUpInstructionInput'); target.value = target.value ? target.value + '\n' + this.dataset.favoriteLabel : this.dataset.favoriteLabel;" data-favorite-label="{{ $favorite['label'] }}">
+                                                                <button type="button" class="btn btn-outline-info btn-xs" data-consultation-action="insert-favorite" data-target="#followUpInstructionInput" data-insert-mode="append-line" data-favorite-label="{{ $favorite['label'] }}">
                                                                     {{ $favorite['label'] }}
                                                                 </button>
                                                             @endforeach

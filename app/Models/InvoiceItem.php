@@ -15,6 +15,8 @@ class InvoiceItem extends Model
      */
     public const SOURCE_CONSULTATION_SERVICE = 'consultation_service';
 
+    public const SOURCE_SPECIALTY_SERVICE_MAPPING = 'specialty_service_mapping';
+
     public const SOURCE_INVESTIGATION_SERVICE = 'investigation_service';
 
     public const SOURCE_PROCEDURE_SERVICE = 'procedure_service';
@@ -47,6 +49,7 @@ class InvoiceItem extends Model
     {
         return [
             self::SOURCE_CONSULTATION_SERVICE,
+            self::SOURCE_SPECIALTY_SERVICE_MAPPING,
             self::SOURCE_INVESTIGATION_SERVICE,
             self::SOURCE_PROCEDURE_SERVICE,
             self::SOURCE_PHARMACY_PRODUCT,

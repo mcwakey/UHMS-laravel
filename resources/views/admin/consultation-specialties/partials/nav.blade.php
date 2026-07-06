@@ -6,6 +6,11 @@
         <i class="ti ti-arrows-split me-1"></i>{{ __('consultation_specialties.admin.mappings') }}
     </a>
     @can('consultation-specialties.configure')
+        <a href="{{ route('admin.consultation-specialties.service-mappings.index') }}" class="btn btn-sm {{ request()->routeIs('admin.consultation-specialties.service-mappings.*') ? 'btn-primary' : 'btn-outline-primary' }}">
+            <i class="ti ti-receipt me-1"></i>{{ __('consultation_specialties.billing.admin.service_mappings') }}
+        </a>
+    @endcan
+    @can('consultation-specialties.configure')
         <a href="{{ route('admin.consultation-specialties.doctor-preferences.index') }}" class="btn btn-sm {{ request()->routeIs('admin.consultation-specialties.doctor-preferences.*') ? 'btn-primary' : 'btn-outline-primary' }}">
             <i class="ti ti-user-cog me-1"></i>{{ __('consultation_specialties.admin.doctor_preferences') }}
         </a>

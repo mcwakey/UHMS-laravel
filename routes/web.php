@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\ConsultationSpecialtyOrderSetController as AdminC
 use App\Http\Controllers\Admin\ConsultationSpecialtyOrderSetItemController;
 use App\Http\Controllers\Admin\ConsultationSpecialtyProfileController;
 use App\Http\Controllers\Admin\ConsultationSpecialtySectionController;
+use App\Http\Controllers\Admin\ConsultationSpecialtyServiceMappingController;
 use App\Http\Controllers\Admin\DoctorConsultationPreferenceAdminController;
 use App\Http\Controllers\Admin\Reporting\ActivityLogController;
 use App\Http\Controllers\Admin\AdmissionsWard\AdmissionController;
@@ -123,6 +124,7 @@ use App\Http\Controllers\Admin\Visits\VisitPreviewController;
 use App\Http\Controllers\Admin\AdmissionsWard\VitalController;
 use App\Http\Controllers\Admin\AdmissionsWard\WardController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationClinicalEntryController;
+use App\Http\Controllers\Doctor\Consultations\ConsultationSpecialtyBillingController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationOrderController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationPlanningController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationPrescriptionController;
@@ -1270,6 +1272,8 @@ Route::middleware('auth')->group(function () {
                 Route::get('consultations/{visit}/specialty-order-sets', [ConsultationSpecialtyOrderSetController::class, 'index'])->name('consultations.specialty-order-sets.index');
                 Route::get('consultations/{visit}/specialty-order-sets/{orderSet}/preview', [ConsultationSpecialtyOrderSetController::class, 'preview'])->name('consultations.specialty-order-sets.preview');
                 Route::post('consultations/{visit}/specialty-order-sets/{orderSet}/apply', [ConsultationSpecialtyOrderSetController::class, 'apply'])->name('consultations.specialty-order-sets.apply');
+                Route::get('consultations/{visit}/specialty-billing/preview', [ConsultationSpecialtyBillingController::class, 'preview'])->name('consultations.specialty-billing.preview');
+                Route::post('consultations/{visit}/specialty-billing/apply', [ConsultationSpecialtyBillingController::class, 'apply'])->name('consultations.specialty-billing.apply')->middleware('can:invoices.create');
             });
 
             Route::get('consultations/{visit}/summary-fragment', [ConsultationWorkspaceController::class, 'summaryFragment'])->name('consultations.summary-fragment');
@@ -1557,6 +1561,12 @@ Route::middleware('auth')->group(function () {
             Route::post('mappings', [ConsultationSpecialtyMappingController::class, 'store'])->name('mappings.store')->middleware('can:consultation-specialties.configure');
             Route::patch('mappings/{mapping}', [ConsultationSpecialtyMappingController::class, 'update'])->name('mappings.update')->middleware('can:consultation-specialties.configure');
             Route::delete('mappings/{mapping}', [ConsultationSpecialtyMappingController::class, 'destroy'])->name('mappings.destroy')->middleware('can:consultation-specialties.delete');
+
+            Route::get('service-mappings', [ConsultationSpecialtyServiceMappingController::class, 'index'])->name('service-mappings.index')->middleware('can:consultation-specialties.configure');
+            Route::post('service-mappings', [ConsultationSpecialtyServiceMappingController::class, 'store'])->name('service-mappings.store')->middleware('can:consultation-specialties.configure');
+            Route::patch('service-mappings/{mapping}', [ConsultationSpecialtyServiceMappingController::class, 'update'])->name('service-mappings.update')->middleware('can:consultation-specialties.configure');
+            Route::delete('service-mappings/{mapping}', [ConsultationSpecialtyServiceMappingController::class, 'destroy'])->name('service-mappings.destroy')->middleware('can:consultation-specialties.delete');
+            Route::post('service-mappings/reorder', [ConsultationSpecialtyServiceMappingController::class, 'reorder'])->name('service-mappings.reorder')->middleware('can:consultation-specialties.configure');
 
             Route::get('doctor-preferences', [DoctorConsultationPreferenceAdminController::class, 'index'])->name('doctor-preferences.index')->middleware('can:consultation-specialties.configure');
             Route::delete('doctor-preferences/{preference}', [DoctorConsultationPreferenceAdminController::class, 'destroy'])->name('doctor-preferences.destroy')->middleware('can:consultation-specialties.configure');

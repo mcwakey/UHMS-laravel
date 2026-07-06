@@ -140,6 +140,7 @@ class ConsultationSpecialtySeeder extends Seeder
         $this->seedMappings($seededProfiles);
         $this->call(ConsultationSpecialtyFavoriteSeeder::class);
         $this->call(ConsultationSpecialtyOrderSetSeeder::class);
+        $this->call(ConsultationSpecialtyServiceMappingSeeder::class);
     }
 
     private function labelFor(string $sectionKey): string

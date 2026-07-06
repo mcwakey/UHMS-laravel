@@ -1884,6 +1884,22 @@ function bindDelegatedEvents() {
             sendSession.initPicker();
             return;
         }
+        if (action === 'insert-favorite') {
+            const target = document.querySelector(actionButton.dataset.target || '');
+            if (!target) {
+                return;
+            }
+
+            const value = actionButton.dataset.favoriteLabel || '';
+            if (actionButton.dataset.insertMode === 'append-line' && target.value) {
+                target.value = `${target.value}\n${value}`;
+            } else {
+                target.value = value;
+            }
+            target.dispatchEvent(new Event('input', { bubbles: true }));
+            target.focus();
+            return;
+        }
         if (action === 'view-result') {
             modals.viewResult(actionButton);
             return;
