@@ -150,14 +150,17 @@ class BillingEnhancementsTest extends TestCase
         $response = $this->actingAs($this->user)
             ->get(route('admin.billing.invoices.show', $invoice));
 
+        $content = str_replace('\\/', '/', $response->getContent());
+
         $response->assertOk()
             ->assertSee(__('invoices.adjustments_settlements'))
             ->assertDontSee(__('invoices.payment_history'))
             ->assertSee($payment->payment_number)
-            ->assertSee('BANK-REF-001')
-            ->assertSee(route('admin.billing.payments.receipt', $payment), false);
+            ->assertSee('BANK-REF-001');
 
-        $this->assertSame(1, substr_count($response->getContent(), $payment->payment_number));
+        $this->assertStringContainsString(route('admin.billing.payments.receipt', $payment), $content);
+
+        $this->assertSame(1, substr_count($content, $payment->payment_number));
     }
 
     public function test_payment_reversal_requires_permission(): void

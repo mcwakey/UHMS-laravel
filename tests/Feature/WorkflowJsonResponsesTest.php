@@ -274,8 +274,12 @@ class WorkflowJsonResponsesTest extends TestCase
 
         $response->assertOk()
             ->assertSee($billedDepartment->name)
-            ->assertDontSee($unbilledDepartment->name)
-            ->assertDontSee($investigationDepartment->name);
+            ->assertDontSee($unbilledDepartment->name);
+
+        $content = str_replace(['\"', '\\/'], ['"', '/'], $response->getContent());
+        $this->assertStringContainsString('<div class="fw-semibold">'.$billedDepartment->name.'</div>', $content);
+        $this->assertStringNotContainsString('<div class="fw-semibold">'.$unbilledDepartment->name.'</div>', $content);
+        $this->assertStringNotContainsString('<div class="fw-semibold">'.$investigationDepartment->name.'</div>', $content);
     }
 
     public function test_invoice_create_prefills_selected_visit_services(): void

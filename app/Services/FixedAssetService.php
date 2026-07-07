@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\LogModule;
+use App\Enums\LogSeverity;
 use App\Models\Account;
 use App\Models\AccountingPeriod;
 use App\Models\AssetCategory;
@@ -10,6 +12,7 @@ use App\Models\AssetLocation;
 use App\Models\FixedAsset;
 use App\Models\JournalEntry;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -25,7 +28,7 @@ class FixedAssetService
             ? round((float) $data['residual_value'], 2)
             : round($cost * ((float) $category->default_residual_rate / 100), 2);
 
-        return FixedAsset::create([
+        $asset = FixedAsset::create([
             'asset_number' => $data['asset_number'] ?? $this->nextAssetNumber(),
             'asset_category_id' => $category->id,
             'asset_location_id' => $data['asset_location_id'] ?? null,
@@ -41,6 +44,16 @@ class FixedAssetService
             'status' => FixedAsset::STATUS_DRAFT,
             'created_by' => $user->id,
         ]);
+
+        $this->logAssetEvent('FIXED_ASSET_CREATED', $asset, $user, LogSeverity::INFO, [
+            'asset_number' => $asset->asset_number,
+            'asset_category_id' => $asset->asset_category_id,
+            'asset_location_id' => $asset->asset_location_id,
+            'cost' => (float) $asset->cost,
+            'status' => $asset->status,
+        ]);
+
+        return $asset;
     }
 
     public function capitalize(FixedAsset $asset, Account $creditAccount, User $user, ?string $date = null): FixedAsset
@@ -190,11 +203,18 @@ class FixedAssetService
 
     public function verify(FixedAsset $asset, array $data, User $user): void
     {
-        $asset->assetVerifications()->create([
+        $verification = $asset->assetVerifications()->create([
             'verification_date' => $data['verification_date'] ?? today()->toDateString(),
             'condition_status' => $data['condition_status'] ?? 'good',
             'notes' => $data['notes'] ?? null,
             'verified_by' => $user->id,
+        ]);
+
+        $this->logAssetEvent('FIXED_ASSET_VERIFIED', $asset->refresh(), $user, LogSeverity::WARNING, [
+            'asset_number' => $asset->asset_number,
+            'asset_verification_id' => $verification->id,
+            'verification_date' => $verification->verification_date,
+            'condition_status' => $verification->condition_status,
         ]);
     }
 
@@ -306,5 +326,37 @@ class FixedAssetService
         $next = $last ? ((int) substr($last, -6)) + 1 : 1;
 
         return 'DEP-' . str_pad((string) $next, 6, '0', STR_PAD_LEFT);
+    }
+
+    private function logAssetEvent(string $event, FixedAsset $asset, User $user, LogSeverity $severity, array $metadata = []): void
+    {
+        $this->logAccounting(
+            $event,
+            $asset,
+            'fixed_asset',
+            str_replace('_', ' ', ucfirst(strtolower($event))).': '.$asset->asset_number,
+            array_merge([
+                'fixed_asset_id' => $asset->id,
+                'asset_number' => $asset->asset_number,
+                'name' => $asset->name,
+            ], $metadata),
+            $severity,
+            $user
+        );
+    }
+
+    private function logAccounting(string $event, Model $subject, string $sourceType, string $description, array $metadata, LogSeverity $severity, User $user): void
+    {
+        try {
+            app(ActivityLogService::class)->log(LogModule::ACCOUNTING, $event, [
+                'causer' => $user,
+                'severity' => $severity,
+                'metadata' => $metadata,
+                'source_type' => $sourceType,
+                'source_id' => $subject->getKey(),
+            ], $subject, $description);
+        } catch (\Throwable) {
+            // Audit logging must never block the fixed-asset workflow.
+        }
     }
 }

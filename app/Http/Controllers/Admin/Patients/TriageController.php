@@ -73,7 +73,12 @@ class TriageController extends Controller
         }
 
         $consultationDepts = $this->billableConsultationDepartmentsForVisit($visit);
-        $pendingRoutes = $isEdit ? collect() : $visit->pendingConsultationRoutes;
+        $billableConsultationDepartmentIds = $consultationDepts->pluck('id');
+        $pendingRoutes = $isEdit
+            ? collect()
+            : $visit->pendingConsultationRoutes
+                ->filter(fn ($route) => $billableConsultationDepartmentIds->contains($route->department_id))
+                ->values();
 
         if ($isEdit) {
             return view('triage.edit', compact('visit', 'consultationDepts'));
@@ -101,7 +106,10 @@ class TriageController extends Controller
         }
 
         $consultationDeptIds = $this->billableConsultationDepartmentsForVisit($visit)->pluck('id')->all();
-        $pendingRouteIds = $visit->pendingConsultationRoutes()->pluck('id')->all();
+        $pendingRouteIds = $visit->pendingConsultationRoutes()
+            ->whereIn('department_id', $consultationDeptIds)
+            ->pluck('id')
+            ->all();
 
         $validated = $request->validate([
             'blood_pressure_systolic' => ['nullable', 'integer', 'min:40', 'max:300'],

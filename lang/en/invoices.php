@@ -105,7 +105,7 @@ return [
     'risk'                  => 'Risk',
     'user'                  => 'User',
     'no_discount_history'   => 'No discount history.',
-    'payment_history'       => 'Payment History',
+    'payment_history'       => 'Legacy Payment History',
     'payment_no'            => 'Payment #',
     'payer_col'             => 'Payer',
     'method'                => 'Method',

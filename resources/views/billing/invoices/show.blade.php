@@ -590,6 +590,11 @@
                                     @if($history['payment_reference'])
                                         <div class="small text-muted">{{ $history['payment_reference'] }}</div>
                                     @endif
+                                    @if($history['receipt_url'])
+                                        <div class="small">
+                                            <a data-no-inertia href="{{ url($history['receipt_url']) }}">{{ __('payments.view_receipt') }}</a>
+                                        </div>
+                                    @endif
                                 </td>
                                 <td>
                                     @if($history['payment_method'])
@@ -643,7 +648,7 @@
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#reverseSettlementModal"
                                                 data-reverse-url="{{ $history['reverse_url'] }}"
-                                                data-reverse-reference="{{ $history['reference'] }}"
+                                                data-reverse-reference="{{ $history['type'] }}"
                                                 data-reverse-type="{{ $history['type'] }}">
                                             <i class="ti ti-arrow-back-up me-1"></i>
                                         </button>
@@ -654,7 +659,7 @@
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu dropdown-menu-end">
-                                            <li><a data-no-inertia class="dropdown-item" href="{{ $history['receipt_url'] }}"><i class="ti ti-eye me-2"></i>{{ __('payments.view_receipt') }}</a></li>
+                                            <li><a data-no-inertia class="dropdown-item" href="{{ url($history['receipt_url']) }}"><i class="ti ti-eye me-2"></i>{{ __('payments.view_receipt') }}</a></li>
                                             <li><a data-no-inertia class="dropdown-item" href="{{ $history['receipt_thermal_url'] }}"><i class="ti ti-printer me-2"></i>{{ __('payments.print_receipt_80mm') }}</a></li>
                                             <!-- <li><a class="dropdown-item" href="{{ $history['receipt_thermal_url'] }}"><i class="ti ti-edit me-2"></i>{{ __('common.edit') }}</a></li> -->
                                             <li><a data-no-inertia class="dropdown-item" href="{{ $history['receipt_pdf_url'] }}"><i class="ti ti-file-type-pdf me-2"></i>{{ __('payments.download_pdf') }}</a></li>
@@ -1251,7 +1256,7 @@ $(function() {
         paymentNavigationStarted = true;
         const target = url || window.location.href;
 
-        window.location.href = target;
+        window.UhmsInertia.visit(target, { preserveScroll: true });
     }
 
     function syncReceivablePaymentLimit() {
@@ -1432,7 +1437,7 @@ $(function() {
         if (attempts++ >= max) { clearInterval(timer); return; }
         fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
             .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (d) { if (d && d.resolved) { clearInterval(timer); window.location.reload(); } })
+            .then(function (d) { if (d && d.resolved) { clearInterval(timer); window.UhmsInertia.reload({ preserveScroll: true, preserveState: true }); } })
             .catch(function () {});
     }, 6000);
 })();

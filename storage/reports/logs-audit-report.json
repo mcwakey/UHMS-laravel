@@ -1,13 +1,13 @@
 {
-    "generated_at": "2026-06-23T23:46:29+00:00",
-    "controllers_flagged": 94,
-    "logging_services_detected": 121,
+    "generated_at": "2026-07-07T10:44:05+00:00",
+    "controllers_flagged": 105,
+    "logging_services_detected": 156,
     "summary": {
         "MISSING_LOG": 0,
-        "NEEDS_REVIEW": 2,
-        "KNOWN_BACKLOG": 21,
+        "NEEDS_REVIEW": 0,
+        "KNOWN_BACKLOG": 19,
         "INTENTIONALLY_SKIPPED": 1,
-        "SERVICE_FUNNEL_COVERED": 70
+        "SERVICE_FUNNEL_COVERED": 85
     },
     "real_missing_logs": 0,
     "findings": [
@@ -206,26 +206,6 @@
             "in_baseline": true
         },
         {
-            "controller": "app/Http/Controllers/Admin/Settings/DepartmentController.php",
-            "unlogged_actions": [
-                "store",
-                "update",
-                "destroy"
-            ],
-            "actions": [
-                "store",
-                "update",
-                "destroy"
-            ],
-            "classification": "KNOWN_BACKLOG",
-            "severity": "CRITICAL",
-            "reason": "Deferred lower-priority gap (config backlog).",
-            "services": [
-                "StockLocationSyncService"
-            ],
-            "in_baseline": true
-        },
-        {
             "controller": "app/Http/Controllers/Admin/Settings/IcdCodeController.php",
             "unlogged_actions": [
                 "store",
@@ -311,13 +291,35 @@
             ],
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "CRITICAL",
-            "reason": "Delegates to AccountingService, BillingService, RefundService (logs direct).",
+            "reason": "Delegates to AccountingService, BillingService, InvoiceReceivableService, RefundService (logs direct).",
             "services": [
                 "AccountingService",
                 "BillingService",
+                "InvoiceReceivableService",
                 "RefundService"
             ],
             "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Doctor/Consultations/ConsultationSpecialtyEntryController.php",
+            "unlogged_actions": [
+                "store",
+                "destroy"
+            ],
+            "actions": [
+                "store",
+                "destroy"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "CRITICAL",
+            "reason": "Delegates to ConsultationSpecialtyEntryService (logs direct).",
+            "services": [
+                "ConsultationActionException",
+                "ConsultationSpecialtyEntryService",
+                "ConsultationSpecialtyProfileResolver",
+                "ConsultationSpecialtySectionSchema"
+            ],
+            "in_baseline": false
         },
         {
             "controller": "app/Http/Controllers/Doctor/MedicalPatternController.php",
@@ -399,28 +401,6 @@
             "in_baseline": false
         },
         {
-            "controller": "app/Http/Controllers/Accounting/BudgetController.php",
-            "unlogged_actions": [
-                "store",
-                "submit",
-                "approve"
-            ],
-            "actions": [
-                "store",
-                "submit",
-                "approve"
-            ],
-            "classification": "NEEDS_REVIEW",
-            "severity": "HIGH",
-            "reason": "Delegates to BudgetApprovalService, BudgetAvailabilityService, CommitmentService \u2014 not verified to log. Confirm or wire a funnel.",
-            "services": [
-                "BudgetApprovalService",
-                "BudgetAvailabilityService",
-                "CommitmentService"
-            ],
-            "in_baseline": false
-        },
-        {
             "controller": "app/Http/Controllers/Accounting/FixedAssetController.php",
             "unlogged_actions": [
                 "store",
@@ -430,9 +410,9 @@
                 "store",
                 "verify"
             ],
-            "classification": "NEEDS_REVIEW",
+            "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
-            "reason": "Delegates to FixedAssetService \u2014 not verified to log. Confirm or wire a funnel.",
+            "reason": "Delegates to FixedAssetService (logs direct).",
             "services": [
                 "FixedAssetService"
             ],
@@ -460,6 +440,22 @@
             "in_baseline": false
         },
         {
+            "controller": "app/Http/Controllers/Admin/AdmissionsWard/AdmissionBedWorkflowController.php",
+            "unlogged_actions": [
+                "transfer"
+            ],
+            "actions": [
+                "transfer"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to BedWorkflowService (logs direct).",
+            "services": [
+                "BedWorkflowService"
+            ],
+            "in_baseline": false
+        },
+        {
             "controller": "app/Http/Controllers/Admin/AdmissionsWard/AdmissionController.php",
             "unlogged_actions": [
                 "store",
@@ -471,8 +467,11 @@
             ],
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
-            "reason": "Delegates to AdmissionService, VisitService (logs direct).",
+            "reason": "Delegates to AdmissionDischargeReadinessService, AdmissionRequestService, AdmissionService, VisitService (logs direct).",
             "services": [
+                "AdmissionCareOverviewService",
+                "AdmissionDischargeReadinessService",
+                "AdmissionRequestService",
                 "AdmissionMedicationBoardService",
                 "AdmissionService",
                 "ConsultationSummaryService",
@@ -480,6 +479,26 @@
                 "WardService"
             ],
             "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/AdmissionsWard/AdmissionRequestController.php",
+            "unlogged_actions": [
+                "store",
+                "reject",
+                "cancel"
+            ],
+            "actions": [
+                "store",
+                "reject",
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to AdmissionRequestService (logs direct).",
+            "services": [
+                "AdmissionRequestService"
+            ],
+            "in_baseline": false
         },
         {
             "controller": "app/Http/Controllers/Admin/Appointments/AppointmentController.php",
@@ -495,9 +514,10 @@
             ],
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
-            "reason": "Delegates to AppointmentService (logs transitive).",
+            "reason": "Delegates to AppointmentService, VisitStatusFlowService (logs transitive).",
             "services": [
-                "AppointmentService"
+                "AppointmentService",
+                "VisitStatusFlowService"
             ],
             "in_baseline": true
         },
@@ -696,6 +716,77 @@
             "reason": "Delegates to PaymentGatewayService (logs direct).",
             "services": [
                 "PaymentGatewayService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/Maternity/AntenatalVisitController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "cancel"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to AntenatalVisitService (logs direct).",
+            "services": [
+                "AntenatalOverviewService",
+                "AntenatalRiskAssessmentService",
+                "AntenatalVisitService",
+                "MaternityBillingPostingService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/Maternity/LaborEpisodeController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "cancel"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to LaborEpisodeService, LaborObservationService (logs direct).",
+            "services": [
+                "LaborEpisodeService",
+                "LaborObservationService",
+                "LaborOverviewService",
+                "LaborRiskAssessmentService",
+                "MaternityBillingPostingService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/Maternity/PostnatalCaseController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "cancel"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to PostnatalCaseService, PostnatalMotherObservationService, PostnatalNewbornObservationService (logs direct).",
+            "services": [
+                "MaternityBillingPostingService",
+                "PostnatalCaseService",
+                "PostnatalMotherObservationService",
+                "PostnatalNewbornObservationService",
+                "PostnatalOverviewService"
             ],
             "in_baseline": false
         },
@@ -1017,10 +1108,11 @@
                 "update",
                 "toggle"
             ],
-            "classification": "KNOWN_BACKLOG",
+            "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
-            "reason": "Deferred lower-priority gap (config backlog).",
+            "reason": "Delegates to BedWorkflowService (logs direct).",
             "services": [
+                "BedWorkflowService",
                 "WardService"
             ],
             "in_baseline": true
@@ -1185,8 +1277,9 @@
             ],
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
-            "reason": "Delegates to EmergencyDispositionService (logs direct).",
+            "reason": "Delegates to AdmissionRequestService, EmergencyDispositionService (logs direct).",
             "services": [
+                "AdmissionRequestService",
                 "EmergencyDispositionService"
             ],
             "in_baseline": true
@@ -1413,6 +1506,23 @@
             "in_baseline": false
         },
         {
+            "controller": "app/Http/Controllers/Admin/Journey/JourneyHandoffAssignmentController.php",
+            "unlogged_actions": [
+                "assign"
+            ],
+            "actions": [
+                "assign"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to JourneyHandoffAssignmentService (logs direct).",
+            "services": [
+                "JourneyEscalationService",
+                "JourneyHandoffAssignmentService"
+            ],
+            "in_baseline": false
+        },
+        {
             "controller": "app/Http/Controllers/Admin/Lab/InvestigationItemController.php",
             "unlogged_actions": [
                 "store",
@@ -1435,6 +1545,104 @@
             "in_baseline": true
         },
         {
+            "controller": "app/Http/Controllers/Admin/Maternity/DeliveryRecordController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "complete"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "complete"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to DeliveryRecordService (logs direct).",
+            "services": [
+                "DeliveryRecordService",
+                "MaternityBillingPostingService",
+                "NewbornOverviewService",
+                "PostnatalOverviewService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/Maternity/MaternityBillingReadinessController.php",
+            "unlogged_actions": [
+                "update"
+            ],
+            "actions": [
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to MaternityBillingReadinessService (logs direct).",
+            "services": [
+                "MaternityBillingReadinessService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/Maternity/MaternityCaseController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ],
+            "actions": [
+                "store",
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to MaternityCaseService (logs direct).",
+            "services": [
+                "MaternityCaseService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/Maternity/NewbornRecordController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ],
+            "actions": [
+                "store",
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to NewbornRecordService (logs direct).",
+            "services": [
+                "MaternityBillingPostingService",
+                "NewbornOverviewService",
+                "NewbornRecordService",
+                "NewbornRiskAssessmentService",
+                "PostnatalOverviewService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/Maternity/PregnancyProfileController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ],
+            "actions": [
+                "store",
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to PregnancyProfileService (logs direct).",
+            "services": [
+                "MaternityOverviewService",
+                "PregnancyProfileService"
+            ],
+            "in_baseline": false
+        },
+        {
             "controller": "app/Http/Controllers/Admin/Patients/PatientMergeController.php",
             "unlogged_actions": [
                 "store"
@@ -1444,20 +1652,23 @@
             ],
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
-            "reason": "Delegates to PatientMergeService (logs direct).",
+            "reason": "Delegates to PatientMergeService, PatientPrivacyService (logs direct).",
             "services": [
                 "PatientMergePreviewService",
-                "PatientMergeService"
+                "PatientMergeService",
+                "PatientPrivacyService"
             ],
             "in_baseline": true
         },
         {
             "controller": "app/Http/Controllers/Admin/Patients/TriageController.php",
             "unlogged_actions": [
-                "store"
+                "store",
+                "update"
             ],
             "actions": [
-                "store"
+                "store",
+                "update"
             ],
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
@@ -1601,6 +1812,22 @@
                 "ComplaintCatalogueService"
             ],
             "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/Settings/JourneyNotificationPreferenceController.php",
+            "unlogged_actions": [
+                "update"
+            ],
+            "actions": [
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to JourneyNotificationPreferenceService (logs direct).",
+            "services": [
+                "JourneyNotificationPreferenceService"
+            ],
+            "in_baseline": false
         },
         {
             "controller": "app/Http/Controllers/Admin/Settings/ModuleController.php",

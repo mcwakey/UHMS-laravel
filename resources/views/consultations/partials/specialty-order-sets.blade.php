@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function () {
             body: JSON.stringify({ consultation_route_id: routeInput(), selected_item_ids: ids }),
         })
             .then((response) => response.ok ? response.json() : response.json().then((json) => Promise.reject(json)))
-            .then(() => window.location.reload())
+            .then(() => window.UhmsInertia.reload({ preserveScroll: true, preserveState: true }))
             .catch((error) => showError(error.message || '{{ __('consultation_specialties.order_sets.failed') }}'))
             .finally(() => { applyBtn.disabled = false; });
     });

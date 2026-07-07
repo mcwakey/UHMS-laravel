@@ -65,7 +65,7 @@ return [
     'reversal_reason'       => 'Reason for reversal',
 
     // payments/receive.blade.php
-    'payment_history_link'  => 'Payment History',
+    'payment_history_link'  => 'Payments',
     'cashier_handover'      => 'Cashier Handover',
     'invoices_waiting'      => 'Invoices Waiting',
     'outstanding_balance'   => 'Outstanding Balance',

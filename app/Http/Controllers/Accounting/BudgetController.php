@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Accounting;
 
+use App\Enums\LogModule;
+use App\Enums\LogSeverity;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\Budget;
 use App\Models\BudgetCommitment;
 use App\Models\Department;
 use App\Models\FiscalYear;
+use App\Services\ActivityLogService;
 use App\Services\BudgetApprovalService;
 use App\Services\BudgetAvailabilityService;
 use App\Services\CommitmentService;
@@ -44,6 +47,15 @@ class BudgetController extends Controller
         ]);
 
         $budget = Budget::create($data + ['created_by' => $request->user()?->id]);
+        app(ActivityLogService::class)->log(LogModule::ACCOUNTING, 'BUDGET_DRAFT_CREATED', [
+            'severity' => LogSeverity::INFO,
+            'metadata' => [
+                'budget_id' => $budget->id,
+                'fiscal_year_id' => $budget->fiscal_year_id,
+                'name' => $budget->name,
+                'enforcement_mode' => $budget->enforcement_mode,
+            ],
+        ], $budget, 'Budget draft created: '.$budget->name);
 
         return redirect()->route('admin.accounting.budgets.index', ['fiscal_year_id' => $budget->fiscal_year_id])
             ->with('success', __('messages.accounting.budget_draft_created'));

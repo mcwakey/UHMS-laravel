@@ -24,6 +24,7 @@
 
 <div class="row g-3 mb-2">
     <div class="col-md-6">
+        <div class="small text-muted mb-1">{{ __('patients.main_patient_number') }}: <span class="fw-semibold">{{ $mainPatient->patient_number }}</span></div>
         <x-patient-selection-card
             :selected-patient="$mainPatient"
             :show-search="false"
@@ -42,6 +43,7 @@
         />
     </div>
     <div class="col-md-6">
+        <div class="small text-muted mb-1">{{ __('patients.duplicate_patient_number') }}: <span class="fw-semibold">{{ $duplicatePatient->patient_number }}</span></div>
         <x-patient-selection-card
             :selected-patient="$duplicatePatient"
             :show-search="false"

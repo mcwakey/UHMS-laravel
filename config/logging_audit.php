@@ -79,6 +79,8 @@ return [
         'BloodCrossmatchService',
         // Accounting / HR / procurement-returns / insurance verification (Stage-2 wiring)
         'AccountingService',
+        'BudgetApprovalService',
+        'FixedAssetService',
         'PurchaseReturnService',
         'PayrollService',
         'HRService',

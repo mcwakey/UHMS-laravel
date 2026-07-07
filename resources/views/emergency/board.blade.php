@@ -16,7 +16,7 @@
 @section('content')
 <x-page-header :title="__('emergency.board')" :description="__('emergency.board_description')" icon="ti-ambulance">
     <x-slot:actions>
-        <button class="btn btn-outline-secondary btn-sm" type="button" onclick="location.reload()">
+        <button class="btn btn-outline-secondary btn-sm" type="button" onclick="window.UhmsInertia.reload({ preserveScroll: true })">
             <i class="ti ti-refresh me-1"></i>{{ __('emergency.refresh') }}
         </button>
         @can('emergency.case.create')
@@ -161,7 +161,7 @@
 @push('scripts')
 <script>
 setTimeout(function () {
-    location.reload();
+    window.UhmsInertia.reload({ preserveScroll: true, preserveState: true });
 }, 60000);
 </script>
 @endpush

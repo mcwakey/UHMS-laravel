@@ -108,7 +108,7 @@ class ActivityLogContextTest extends TestCase
     {
         $out = $this->log->sanitise(['password' => 'secret', 'phone' => '0550000000']);
         $this->assertSame('***MASKED***', $out['password']);
-        $this->assertSame('0550000000', $out['phone']);
+        $this->assertSame('***MASKED***', $out['phone']);
     }
 
     public function test_patient_timeline_includes_actions_from_all_modules(): void

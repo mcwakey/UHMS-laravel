@@ -388,7 +388,7 @@
                     <div class="tab-pane fade {{ $tabActiveClass('hopc-section') }}" id="hopc-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-file-description me-1"></i>{{ $sectionLabel('hopc', 'History of Presenting Complaint') }}</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-file-description me-1"></i>{{ $sectionLabel('hopc', 'History of Presenting Complaint') }} <span class="visually-hidden">HOPC</span></h6>
                                 <div>
                                     @can('consultations.create')
                                     @can('patients.edit')
@@ -612,7 +612,7 @@
                     <div class="tab-pane fade {{ $tabActiveClass('diagnoses-section') }}" id="diagnoses-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-report-medical me-1"></i>{{ $sectionLabel('diagnosis', 'Diagnoses') }}</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-report-medical me-1"></i>{{ $sectionLabel('diagnosis', 'Diagnoses') }} <span class="visually-hidden">Diagnoses</span></h6>
                                 @can('consultations.create')
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addDiagnosisForm">
                                     <i class="ti ti-plus me-1"></i>Add
@@ -1068,7 +1068,7 @@
                     <div class="tab-pane fade {{ $tabActiveClass('prescriptions-section') }}" id="prescriptions-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-prescription me-1"></i>{{ $sectionLabel('prescription', 'Prescriptions') }}</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-prescription me-1"></i>{{ $sectionLabel('prescription', 'Prescriptions') }} <span class="visually-hidden">Prescriptions</span></h6>
                                 @can('prescriptions.create')
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addPrescriptionForm">
                                     <i class="ti ti-plus me-1"></i>New Rx
@@ -1252,7 +1252,7 @@
                     <div class="tab-pane fade {{ $tabActiveClass('procedures-section') }}" id="procedures-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-activity-heartbeat me-1"></i>{{ $sectionLabel('procedures', 'Theatre / Procedure Requests') }}</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-activity-heartbeat me-1"></i>{{ $sectionLabel('procedures', 'Theatre / Procedure Requests') }} <span class="visually-hidden">Procedures</span></h6>
                                 @can('procedure.request')
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addProcedureForm">
                                     <i class="ti ti-plus me-1"></i>Request Procedure
@@ -1862,7 +1862,7 @@
                     <div class="tab-pane fade {{ $tabActiveClass('summary-section') }}" id="summary-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-notes me-1"></i>{{ $sectionLabel('notes', __('consultations.final_clinical_note')) }}</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-notes me-1"></i>{{ $sectionLabel('notes', __('consultations.final_clinical_note')) }} <span class="visually-hidden">Notes</span></h6>
                             </div>
                             <div class="card-body">
                                 @if(! empty($specialtySummaryBuilder['available'] ?? false))

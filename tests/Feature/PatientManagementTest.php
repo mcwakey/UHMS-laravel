@@ -25,7 +25,16 @@ class PatientManagementTest extends TestCase
 
         $this->user = User::factory()->create();
         $role = Role::create(['name' => 'Admin']);
-        foreach (['patients.view', 'patients.create', 'patients.edit', 'patients.delete'] as $p) {
+        foreach ([
+            'patients.view',
+            'patients.create',
+            'patients.edit',
+            'patients.delete',
+            'patients.contact.edit',
+            'patients.address.edit',
+            'patients.insurance.edit',
+            'patients.clinical_sensitive.edit',
+        ] as $p) {
             $perm = Permission::create(['name' => $p]);
             $role->givePermissionTo($perm);
         }
@@ -174,6 +183,7 @@ class PatientManagementTest extends TestCase
         $role->givePermissionTo([
             Permission::firstOrCreate(['name' => 'patients.view']),
             Permission::firstOrCreate(['name' => 'consultation.view_patient']),
+            Permission::firstOrCreate(['name' => 'patients.clinical_sensitive.edit']),
         ]);
         $doctor->assignRole($role);
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();

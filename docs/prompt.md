@@ -1,281 +1,468 @@
 You are working on the UHMS Laravel codebase.
 
-The personalised consultation workspace hardening phase passed focused consultation, workspace, frontend, and browser smoke checks.
+Phase 14A fixed the test runtime memory cap. The wide suite now completes without the old `Allowed memory size of 134217728 bytes exhausted` fatal error.
 
-However, the wide test suite could not complete because the local runtime repeatedly hit:
+Current full-suite result:
 
 ```text
-Allowed memory size of 134217728 bytes exhausted
+20 failed, 1395 passed, 7065 assertions
 ```
 
-while loading `routes/web.php`.
+The remaining failures are real application/test assertion failures, not runtime memory failures.
 
-This is now:
+This phase is:
 
-# Phase 14A — Test Runtime Memory Stabilisation and Wide Suite Recovery
+# Phase 14B — Wide Suite Failure Cleanup
 
 ## Goal
 
-Make the wide Laravel test suite executable again without changing clinical/business behavior.
+Fix the 20 remaining full-suite failures exposed after the test runtime memory issue was resolved.
 
-This is a test/runtime hardening phase, not a feature phase.
+This is a bug-fix and regression cleanup phase.
+
+Do not add new features.
+
+Do not rewrite modules.
+
+Do not skip or hide failing tests unless a test is proven obsolete and the report explains why.
+
+---
+
+# Remaining Failure Groups
+
+The Phase 14A report listed these remaining failures:
+
+```text
+ActivityLogContextTest
+AsyncPageBehaviorTest
+AuthTest
+BillingEnhancementsTest
+ConsultationClinicalSectionsTest
+InertiaBridgeLeakGuardTest
+LegacyInertiaBridgeTest
+PatientManagementTest
+PatientMergeTest
+Stage2NeedsReviewLogTest
+WorkflowJsonResponsesTest
+```
+
+Treat them in priority order.
 
 ---
 
 # Important Rules
 
-Do not rewrite the consultation module.
+Do not change personalised consultation workspace behavior unless a failure directly proves a regression.
 
-Do not change clinical workflow behavior.
+Do not weaken security, audit, masking, billing, or patient validation behavior just to satisfy tests.
 
-Do not remove routes.
+Do not remove route/middleware/permission protection.
 
-Do not remove permissions.
+Do not skip tests.
 
-Do not hide real test failures.
+Do not use broad snapshots as a shortcut.
 
-Do not mark failing tests as skipped unless the failure is proven unrelated and documented.
+Fix root causes.
 
-Do not use this phase to add new features.
-
-The goal is to identify why test runtime memory remains capped at 128 MB and fix the test execution environment or obvious route-loading memory issue.
+Where a test expectation is genuinely outdated because the intended behavior changed, update the test with a clear explanation in the report.
 
 ---
 
-# Current Known Issue
+# Required Work
 
-The hardening report recorded:
+## 1. Reproduce Failures Individually
 
-```text
-php artisan test tests/Feature
-php -d memory_limit=512M artisan test tests/Feature
-php -d memory_limit=-1 artisan test tests/Feature
-php artisan test
+Run each failing test class/file individually first.
+
+Suggested commands:
+
+```bash
+php artisan test tests/Feature/ActivityLogContextTest.php
+php artisan test tests/Feature/AsyncPageBehaviorTest.php
+php artisan test tests/Feature/AuthTest.php
+php artisan test tests/Feature/BillingEnhancementsTest.php
+php artisan test tests/Feature/Consultations/ConsultationClinicalSectionsTest.php
+php artisan test tests/Feature/InertiaBridgeLeakGuardTest.php
+php artisan test tests/Feature/LegacyInertiaBridgeTest.php
+php artisan test tests/Feature/PatientManagementTest.php
+php artisan test tests/Feature/PatientMergeTest.php
+php artisan test tests/Feature/Stage2NeedsReviewLogTest.php
+php artisan test tests/Feature/WorkflowJsonResponsesTest.php
 ```
 
-All eventually failed with the same 128 MB memory cap while loading `routes/web.php`.
+If file paths differ, locate them with `rg`.
 
-Focused consultation checks passed:
+Capture exact failing assertions/errors before fixing.
+
+---
+
+## 2. Fix User-Facing 500 First
+
+### AsyncPageBehaviorTest
+
+Reported issue:
 
 ```text
+appointment show page crashes when PatientJourneyService::snapshot() receives a null visit
+```
+
+Expected fix:
+
+* Inspect appointment show page/controller/view.
+* Inspect `PatientJourneyService::snapshot()`.
+* If appointment has no visit yet, page should not crash.
+* Return a safe empty journey snapshot or hide the journey widget.
+* Add/adjust test that appointment show page renders when visit is null.
+* Do not fabricate a visit just to avoid null.
+* Do not weaken patient journey behavior for real visits.
+
+Acceptance:
+
+```bash
+php artisan test tests/Feature/AsyncPageBehaviorTest.php
+```
+
+passes.
+
+---
+
+## 3. Fix Navigation/Auth Regression
+
+### AuthTest
+
+Reported issue:
+
+```text
+doctor login redirects to admin/my-dashboard instead of doctor.dashboard
+```
+
+Expected fix:
+
+* Inspect login redirect logic.
+* Inspect role/permission dashboard routing.
+* Decide intended behavior:
+
+  * If doctor should go to doctor dashboard, fix redirect logic.
+  * If UHMS now intentionally routes all clinical users to `admin/my-dashboard`, update the test only if the new behavior is documented and accepted.
+* Prefer preserving role-specific dashboard expectations unless the project already standardized on `admin/my-dashboard`.
+
+Acceptance:
+
+```bash
+php artisan test tests/Feature/AuthTest.php
+```
+
+passes.
+
+---
+
+## 4. Fix Inertia/Async Bridge Regressions
+
+### InertiaBridgeLeakGuardTest
+
+Reported issue:
+
+```text
+several Blade views still use direct location.reload() or window.location.href
+```
+
+Expected fix:
+
+* Locate direct uses of:
+
+  * `location.reload()`
+  * `window.location.reload()`
+  * `window.location.href`
+  * inline navigation patterns forbidden by the guard
+* Replace with existing project-safe bridge/helper pattern.
+* If some location usage is legitimate, update allowlist narrowly with explanation.
+* Do not introduce new inline event handlers.
+
+Acceptance:
+
+```bash
+php artisan test tests/Feature/InertiaBridgeLeakGuardTest.php
+```
+
+passes.
+
+### LegacyInertiaBridgeTest
+
+Reported issue:
+
+```text
+complaint, diagnosis, and treatment legacy submissions no longer match expected redirect/session/json behavior
+```
+
+Expected fix:
+
+* Inspect legacy submission endpoints.
+* Restore expected response behavior:
+
+  * normal form submit redirects with session flash/errors
+  * JSON/Ajax submit returns expected JSON payload/status
+  * route context is preserved
+* Do not break current consultation Ajax flows.
+* Add small regression coverage if needed.
+
+Acceptance:
+
+```bash
+php artisan test tests/Feature/LegacyInertiaBridgeTest.php
+```
+
+passes.
+
+---
+
+## 5. Fix Consultation Clinical Section Regression
+
+### ConsultationClinicalSectionsTest
+
+Reported issue:
+
+```text
+expected HOPC section ordering is missing
+```
+
+Expected fix:
+
+* Inspect consultation layout ordering after personalised workspace work.
+* Ensure general medicine still includes HOPC in the expected order.
+* Ensure sidebar/core section markers still expose HOPC where older tests expect it.
+* If test expects literal text/key that has been renamed, preserve backward-compatible alias.
+* Do not remove personalised section ordering.
+
+Acceptance:
+
+```bash
+php artisan test tests/Feature/Consultations/ConsultationClinicalSectionsTest.php
+php artisan test tests/Feature/Consultations
+```
+
+pass.
+
+---
+
+## 6. Fix Billing View Regression
+
+### BillingEnhancementsTest
+
+Reported issue:
+
+```text
+invoice page still renders Payment History
+```
+
+Expected fix:
+
+* Inspect intended billing UI from the test.
+* If “Payment History” should have been replaced/hidden, update the Blade view.
+* If it is still intended to display, update test only if accepted behavior changed and document it.
+* Make sure credit notes/write-offs/discount/sponsor behavior is not broken.
+
+Acceptance:
+
+```bash
+php artisan test tests/Feature/BillingEnhancementsTest.php
+```
+
+passes.
+
+---
+
+## 7. Fix Patient Management Regressions
+
+### PatientManagementTest
+
+Reported issues:
+
+```text
+patient create form fields
+patient creation flow
+insurance registration
+doctor summary update assertions
+```
+
+Expected fix:
+
+* Inspect patient create/edit/show forms.
+* Restore expected form field names/labels/inputs.
+* Fix patient creation validation/redirect/session behavior.
+* Fix insurance registration flow if field names or relationship changed.
+* Fix doctor summary update route or test expectation.
+* Do not break current patient registration behavior.
+
+Acceptance:
+
+```bash
+php artisan test tests/Feature/PatientManagementTest.php
+```
+
+passes.
+
+### PatientMergeTest
+
+Reported issue:
+
+```text
+merge index/compare page assertions fail
+```
+
+Expected fix:
+
+* Inspect patient merge index/compare views.
+* Restore expected content/links/forms.
+* Ensure merge pages render without crash.
+* Do not change merge semantics unless the current implementation is incorrect.
+
+Acceptance:
+
+```bash
+php artisan test tests/Feature/PatientMergeTest.php
+```
+
+passes.
+
+---
+
+## 8. Fix Audit/Logging Regressions
+
+### ActivityLogContextTest
+
+Reported issue:
+
+```text
+sensitive phone masking expectation changed
+```
+
+Expected fix:
+
+* Inspect masking helper/service.
+* Confirm intended masking policy.
+* For phone numbers, apply consistent masking in activity log context.
+* Do not expose full sensitive phone numbers.
+* Update test only if the new masking policy is better and documented.
+
+Acceptance:
+
+```bash
+php artisan test tests/Feature/ActivityLogContextTest.php
+```
+
+passes.
+
+### Stage2NeedsReviewLogTest
+
+Reported issue:
+
+```text
+logs audit still reports 2 NEEDS_REVIEW items
+```
+
+Expected fix:
+
+* Run the logs audit command/test.
+* Inspect the two remaining `NEEDS_REVIEW` log items.
+* Either:
+
+  * add proper module/action mapping, or
+  * add a justified allowlist entry if genuinely acceptable.
+* Do not suppress real audit gaps.
+
+Acceptance:
+
+```bash
+php artisan test tests/Feature/Stage2NeedsReviewLogTest.php
+```
+
+passes.
+
+---
+
+## 9. Fix Workflow JSON Regression
+
+### WorkflowJsonResponsesTest
+
+Reported issue:
+
+```text
+triage assessment page still exposes the unbilled Radiology department
+```
+
+Expected fix:
+
+* Inspect triage assessment JSON/page payload.
+* Ensure unbilled Radiology department is not exposed where test expects filtered departments.
+* Preserve legitimate radiology workflow elsewhere.
+* Do not globally hide Radiology.
+
+Acceptance:
+
+```bash
+php artisan test tests/Feature/WorkflowJsonResponsesTest.php
+```
+
+passes.
+
+---
+
+# 10. Run Focused Regression Matrix
+
+After fixing individual failures, run:
+
+```bash
+php artisan test tests/Feature/ActivityLogContextTest.php
+php artisan test tests/Feature/AsyncPageBehaviorTest.php
+php artisan test tests/Feature/AuthTest.php
+php artisan test tests/Feature/BillingEnhancementsTest.php
+php artisan test tests/Feature/Consultations/ConsultationClinicalSectionsTest.php
+php artisan test tests/Feature/InertiaBridgeLeakGuardTest.php
+php artisan test tests/Feature/LegacyInertiaBridgeTest.php
+php artisan test tests/Feature/PatientManagementTest.php
+php artisan test tests/Feature/PatientMergeTest.php
+php artisan test tests/Feature/Stage2NeedsReviewLogTest.php
+php artisan test tests/Feature/WorkflowJsonResponsesTest.php
+```
+
+Then run:
+
+```bash
 php artisan test tests/Feature/Consultations
 php artisan test tests/Feature/ConsultationWorkspaceStabilisationTest.php
-php artisan route:list
-php artisan view:cache && php artisan view:clear
-npm run build
-npx playwright test tests/consultation-workspace.spec.ts
-```
-
----
-
-# Required Deliverables
-
-## 1. Diagnose PHP Memory Configuration
-
-Inspect:
-
-```text
-php.ini used by CLI
-artisan runtime memory_limit
-Pest/PHPUnit configuration
-composer scripts
-.env.testing
-bootstrap/app.php
-tests/TestCase.php
-phpunit.xml
-pest.php if present
-any custom test runner config
-```
-
-Find why `php -d memory_limit=512M` and `php -d memory_limit=-1` still behave like 128 MB.
-
-Check and document:
-
-```bash
-php -i | grep memory_limit
-php -r "echo ini_get('memory_limit').PHP_EOL;"
-php -d memory_limit=512M -r "echo ini_get('memory_limit').PHP_EOL;"
-php -d memory_limit=-1 -r "echo ini_get('memory_limit').PHP_EOL;"
-php artisan about
-```
-
-If the memory cap is coming from Xdebug, Sail, Herd, Valet, PHPUnit process isolation, Composer script wrapper, or a local server/runtime wrapper, document it.
-
----
-
-## 2. Inspect Route Loading Memory Pressure
-
-Since the failure happens while loading `routes/web.php`, inspect:
-
-```text
-routes/web.php
-route files included from routes/web.php
-large inline closures
-large route arrays
-heavy service instantiation inside route files
-config/database access during route registration
-model queries during route registration
-permission checks executed at route-registration time
-controller imports that trigger heavy boot logic
-```
-
-Rules:
-
-* Route files should register routes only.
-* No database queries should run during route registration.
-* No heavy service should be instantiated during route registration.
-* No large closures should capture heavy objects.
-* Middleware strings/classes are fine.
-* Controllers should not be instantiated during route registration.
-
-If you find route-time heavy work, move it into controller/service runtime safely.
-
-Do not change route names or URLs unless absolutely necessary.
-
----
-
-## 3. Add A Route Load Memory Smoke Check
-
-Add a focused test or command if useful.
-
-Suggested command:
-
-```text
-php artisan uhms:route-memory-check
-```
-
-or a focused test:
-
-```text
-tests/Feature/System/RouteLoadMemoryTest.php
-```
-
-The check should:
-
-```text
-load application routes
-report memory usage
-assert route list can be generated
-```
-
-Do not make it brittle. Use a generous threshold.
-
-If adding a command is too much, document manual memory measurements instead.
-
----
-
-## 4. Try Safe Runtime Fixes
-
-Depending on findings, apply the safest fix.
-
-Possible fixes:
-
-### Option A — PHPUnit memory limit config
-
-If PHPUnit/Pest is forcing memory:
-
-```xml
-<ini name="memory_limit" value="512M"/>
-```
-
-or equivalent in `phpunit.xml`.
-
-### Option B — Test bootstrap memory limit
-
-If project convention allows, add to test bootstrap only:
-
-```php
-ini_set('memory_limit', '512M');
-```
-
-Do not put this in production runtime unless the project already does so.
-
-### Option C — Composer test script
-
-If Composer script wraps tests, update it to:
-
-```bash
-php -d memory_limit=512M artisan test
-```
-
-only if it actually works.
-
-### Option D — Remove route-registration heavy work
-
-Move heavy code out of `routes/web.php` into controller/service runtime.
-
-### Option E — Split loaded route files
-
-If `routes/web.php` is structurally huge, split into route files by domain:
-
-```text
-routes/admin.php
-routes/consultations.php
-routes/billing.php
-routes/reports.php
-```
-
-Then include them safely from `web.php`.
-
-Important: preserve route names, middleware, prefixes, and permissions.
-
----
-
-## 5. Re-run Test Matrix
-
-After fix, run:
-
-```bash
-php artisan test tests/Feature/Consultations
-php artisan test tests/Feature/ConsultationWorkspaceStabilisationTest.php
+php artisan test tests/Feature/System/RouteLoadMemoryTest.php
 php artisan route:list
 php artisan view:cache
 php artisan view:clear
 npm run build
 ```
 
-Then run:
-
-```bash
-php artisan test tests/Feature
-```
-
-Then run:
+Then run the wide suite:
 
 ```bash
 php artisan test
 ```
 
-If full suite still fails:
-
-* capture first failure
-* distinguish memory failure from real test failure
-* do not hide it
-* document exact command output
-
 ---
 
-## 6. Create Report
+# 11. Create Report
 
 Create:
 
 ```text
-docs/UHMS_TEST_RUNTIME_MEMORY_STABILISATION_REPORT.md
+docs/UHMS_WIDE_SUITE_FAILURE_CLEANUP_REPORT.md
 ```
 
-Report must include:
+The report must include:
 
 ```text
-# UHMS Test Runtime Memory Stabilisation Report
+# UHMS Wide Suite Failure Cleanup Report
 
 ## Summary
-Explain what was diagnosed and fixed.
+Explain what was fixed.
 
-## Memory Diagnosis
-Show CLI memory_limit findings and why 128 MB was still applied.
-
-## Route Loading Findings
-Document whether routes/web.php or included route files had heavy route-time work.
+## Initial Failure Baseline
+List the 20 failing tests/classes from Phase 14A.
 
 ## Files Added
 List new files.
@@ -283,40 +470,74 @@ List new files.
 ## Files Modified
 List modified files.
 
-## Fix Applied
-Explain the exact fix.
+## Fixes By Failure Group
+
+### ActivityLogContextTest
+Cause, fix, result.
+
+### AsyncPageBehaviorTest
+Cause, fix, result.
+
+### AuthTest
+Cause, fix, result.
+
+### BillingEnhancementsTest
+Cause, fix, result.
+
+### ConsultationClinicalSectionsTest
+Cause, fix, result.
+
+### InertiaBridgeLeakGuardTest
+Cause, fix, result.
+
+### LegacyInertiaBridgeTest
+Cause, fix, result.
+
+### PatientManagementTest
+Cause, fix, result.
+
+### PatientMergeTest
+Cause, fix, result.
+
+### Stage2NeedsReviewLogTest
+Cause, fix, result.
+
+### WorkflowJsonResponsesTest
+Cause, fix, result.
 
 ## Test Results
-List all commands run and results.
+List focused commands and results.
 
 ## Full Suite Result
-State whether php artisan test now completes.
-If failures remain, classify:
-- new regression
-- pre-existing failure
-- environment failure
+Include final `php artisan test` result.
 
 ## Backward Compatibility
-Confirm no consultation/billing/admin behavior was changed.
+Confirm personalised consultation workspace, billing mapping, admin configuration, patient management, auth, and audit behavior remain stable.
 
 ## Known Issues / Follow-up
-List remaining test/runtime concerns.
+List any remaining failures honestly.
 ```
 
 ---
 
 # Acceptance Criteria
 
-This phase is complete only when:
+Phase 14B is complete only when:
 
-* The 128 MB cap cause is diagnosed.
-* A safe runtime/config/route-loading fix is applied, or the blocker is clearly proven external.
-* Focused consultation suite still passes.
+* Each previously failing test class has been reproduced and addressed.
+* User-facing 500 is fixed.
+* Auth redirect behavior is corrected or documented.
+* Inertia bridge guard passes.
+* Patient management tests pass.
+* Patient merge tests pass.
+* Audit/masking tests pass.
+* Workflow JSON test passes.
+* Consultation focused tests still pass.
 * Workspace stabilisation still passes.
+* Route memory test still passes.
 * Route list and view cache pass.
-* Frontend build passes if frontend files are touched.
-* `php artisan test tests/Feature` is attempted and result documented.
-* `php artisan test` is attempted and result documented.
+* Frontend build passes.
+* `php artisan test` is run and result documented.
 * Report is created.
 
-Stop after this phase. Do not implement reporting/dashboard integration yet.
+Stop after Phase 14B and upload the report.

@@ -39,14 +39,14 @@
     $delayService = app(\App\Services\Journey\JourneyDelayService::class);
     $timelineBuilder = app(\App\Services\Journey\JourneyTimelineBuilder::class);
 
-    $snapshot = $journeyService->snapshot($visit);
-    $delay = $delayService->currentDelay($visit, $snapshot);
-    $timeline = $timelineBuilder->build($visit, $snapshot);
-    $durations = $delayService->durations($visit);
+    $snapshot = $visit ? $journeyService->snapshot($visit) : null;
+    $delay = $visit && $snapshot ? $delayService->currentDelay($visit, $snapshot) : null;
+    $timeline = $visit && $snapshot ? $timelineBuilder->build($visit, $snapshot) : [];
+    $durations = $visit ? $delayService->durations($visit) : ['total_minutes' => 0];
 
-    $delayVariant = ['normal' => 'success', 'delayed' => 'warning', 'critical' => 'danger'][$delay['status']] ?? 'secondary';
-    $elapsedH = intdiv($delay['minutes'], 60);
-    $elapsedM = $delay['minutes'] % 60;
+    $delayVariant = ['normal' => 'success', 'delayed' => 'warning', 'critical' => 'danger'][$delay['status'] ?? null] ?? 'secondary';
+    $elapsedH = intdiv($delay['minutes'] ?? 0, 60);
+    $elapsedM = ($delay['minutes'] ?? 0) % 60;
     $totalH = intdiv($durations['total_minutes'], 60);
     $totalM = $durations['total_minutes'] % 60;
 
@@ -58,7 +58,7 @@
     ];
 
     // Why is the patient delayed + where to act? Only resolve when delayed/critical.
-    $action = in_array($delay['status'], ['delayed', 'critical'], true)
+    $action = $visit && in_array($delay['status'] ?? null, ['delayed', 'critical'], true)
         ? app(\App\Services\Journey\JourneyActionResolver::class)->resolve($visit, auth()->user())
         : null;
 
@@ -92,7 +92,7 @@
             <i class="ti {{ $isAppointment ? 'ti-calendar' : 'ti-clipboard-text' }} me-1"></i>{{ $title }}
         </h6>
 
-        @if($snapshot['current_stage'] !== null && ! $snapshot['is_terminal'] && ! $snapshot['is_completed'])
+        @if($snapshot && $snapshot['current_stage'] !== null && ! $snapshot['is_terminal'] && ! $snapshot['is_completed'])
             <span class="badge bg-{{ $delayVariant }}"><i class="ti ti-alert-triangle me-1"></i>{{ __('journey.status.'.$delay['status']) }}</span>
         @endif
 
@@ -247,11 +247,11 @@
         <hr />
 
     <!-- <div class="card-body"> -->
-        @if($snapshot['is_terminal'])
+        @if($snapshot && $snapshot['is_terminal'])
             <div class="text-muted"><i class="ti ti-door-exit me-1"></i>{{ __('journey.widget.exited') }}</div>
-        @elseif($snapshot['is_completed'])
+        @elseif($snapshot && $snapshot['is_completed'])
             <div class="text-success fw-medium"><i class="ti ti-circle-check me-1"></i>{{ __('journey.widget.completed') }}</div>
-        @elseif($snapshot['current_stage'] !== null)
+        @elseif($snapshot && $snapshot['current_stage'] !== null)
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
                     <div class="text-muted small text-uppercase">{{ __('journey.widget.current_stage') }}</div>
@@ -327,15 +327,17 @@
         @endif
 
         {{-- Stage timeline --}}
-        <div class="d-flex flex-wrap align-items-center gap-2">
-            @foreach($timeline as $step)
-                @php $style = $stepStyle[$step['status']] ?? $stepStyle['waiting']; @endphp
-                <span class="badge bg-{{ $style['variant'] }}{{ $style['variant'] === 'light' ? ' text-muted text-decoration-line-through' : ($style['variant'] === 'secondary' ? '-subtle text-secondary' : '') }} d-inline-flex align-items-center gap-1">
-                    <i class="ti {{ $style['icon'] }}"></i>{{ $step['label'] }}@if(! is_null($step['minutes']) && $step['minutes'] > 0) <span class="opacity-75">· {{ $step['minutes'] }}m</span>@endif
-                </span>
-                @if(! $loop->last)<i class="ti ti-chevron-right text-muted fs-12"></i>@endif
-            @endforeach
-        </div>
+        @if($snapshot)
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                @foreach($timeline as $step)
+                    @php $style = $stepStyle[$step['status']] ?? $stepStyle['waiting']; @endphp
+                    <span class="badge bg-{{ $style['variant'] }}{{ $style['variant'] === 'light' ? ' text-muted text-decoration-line-through' : ($style['variant'] === 'secondary' ? '-subtle text-secondary' : '') }} d-inline-flex align-items-center gap-1">
+                        <i class="ti {{ $style['icon'] }}"></i>{{ $step['label'] }}@if(! is_null($step['minutes']) && $step['minutes'] > 0) <span class="opacity-75">· {{ $step['minutes'] }}m</span>@endif
+                    </span>
+                    @if(! $loop->last)<i class="ti ti-chevron-right text-muted fs-12"></i>@endif
+                @endforeach
+            </div>
+        @endif
     <!-- </div> -->
 
         @if($isAppointment && $appointment->status === \App\Enums\AppointmentStatus::CANCELLED)

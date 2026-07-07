@@ -6,6 +6,7 @@ use App\Models\Department;
 use App\Models\Patient;
 use App\Models\User;
 use App\Models\Visit;
+use App\Models\VisitConsultationRoute;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -250,9 +251,22 @@ class LegacyInertiaBridgeTest extends TestCase
     {
         $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
 
-        return Visit::factory()->create([
+        $visit = Visit::factory()->create([
             'patient_id' => $patient->id,
             'created_by' => $this->user->id,
         ]);
+
+        VisitConsultationRoute::create([
+            'visit_id' => $visit->id,
+            'patient_id' => $patient->id,
+            'department_id' => $this->user->department_id,
+            'doctor_id' => $this->user->id,
+            'status' => VisitConsultationRoute::STATUS_ACTIVE,
+            'routed_by' => $this->user->id,
+            'started_by' => $this->user->id,
+            'started_at' => now(),
+        ]);
+
+        return $visit;
     }
 }

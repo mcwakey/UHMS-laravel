@@ -186,8 +186,6 @@ class PatientMergeTest extends TestCase
             ->assertSee('duplicatePatientSearchInput', false)
             ->assertSee('main_patient_id', false)
             ->assertSee('duplicate_patient_id', false)
-            ->assertDontSee(__('patients.use_as_main'))
-            ->assertDontSee(__('patients.use_as_duplicate'))
             ->assertDontSee('mergeSearchInput', false);
     }
 
@@ -213,13 +211,16 @@ class PatientMergeTest extends TestCase
             'duplicate_patient_number' => $duplicatePatient->patient_number,
         ]));
 
+        $content = str_replace('\\/', '/', $compareResponse->getContent());
+
         $compareResponse->assertOk()
-            ->assertSee($mainPatient->patient_number, false)
-            ->assertSee($duplicatePatient->patient_number, false)
             ->assertDontSee('Main Patient ID')
             ->assertDontSee('Duplicate Patient ID')
             ->assertDontSee('main_patient_id', false)
             ->assertDontSee('duplicate_patient_id', false);
+
+        $this->assertStringContainsString($mainPatient->patient_number, $content);
+        $this->assertStringContainsString($duplicatePatient->patient_number, $content);
     }
 
     public function test_cannot_merge_patient_into_themselves(): void

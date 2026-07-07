@@ -60,12 +60,16 @@ class LoginController extends Controller
                 ->withProperties(['ip' => $request->ip(), 'user_agent' => $request->userAgent()])
                 ->log('logged in');
 
-            if ($user->department_id) {
-                return redirect()->intended(route('admin.my-dashboard'));
-            }
-
             if ($user->hasRole('Super Admin') || $user->hasRole('Admin')) {
                 return redirect()->intended(route('admin.dashboard'));
+            }
+
+            if ($user->hasRole('Doctor')) {
+                return redirect()->intended(route('doctor.dashboard'));
+            }
+
+            if ($user->department_id) {
+                return redirect()->intended(route('admin.my-dashboard'));
             }
 
             return redirect()->intended(route('admin.my-dashboard'));
