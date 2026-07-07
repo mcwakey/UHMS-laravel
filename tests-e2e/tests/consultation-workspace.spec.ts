@@ -99,12 +99,12 @@ async function exerciseLabRequestModalValidation(page: Page, fixture: Consultati
   await page.locator('#labReqDeptSelect').selectOption(String(fixture.lab_department_id));
   await expect(page.locator('#labReqItemsContainer')).toBeVisible();
 
-  await page.locator('#labRequestForm [data-bs-dismiss="modal"]').click();
+  await page.locator('#investigationModal .modal-header [data-bs-dismiss="modal"]').click();
   await expect(page.locator('#investigationModal.show')).toHaveCount(0);
 }
 
 async function exercisePrescriptionRows(page: Page) {
-  await page.locator('#tab-prescriptions').click();
+  await page.locator('#tab-prescription, #tab-prescriptions').first().click();
   await page.locator('#prescriptions-section [data-bs-target="#addPrescriptionForm"]').click();
 
   const rows = page.locator('#prescriptionItems .prescription-item');
@@ -118,7 +118,7 @@ async function exercisePrescriptionRows(page: Page) {
 }
 
 async function exercisePrescriptionSafetyWarning(page: Page, fixture: ConsultationWorkspaceFixture) {
-  await page.locator('#tab-prescriptions').click();
+  await page.locator('#tab-prescription, #tab-prescriptions').first().click();
   const addButton = page.locator('#prescriptions-section [data-bs-target="#addPrescriptionForm"]');
   if (!(await page.locator('#addPrescriptionForm').isVisible())) {
     await addButton.click();
@@ -155,7 +155,7 @@ async function exerciseSectionRefresh(page: Page) {
     await window.UHMSConsultation.sectionRefresh.refresh('prescriptions');
   });
 
-  await page.locator('#tab-prescriptions').click();
+  await page.locator('#tab-prescription, #tab-prescriptions').first().click();
   if (!(await page.locator('#addPrescriptionForm').isVisible())) {
     await page.locator('#prescriptions-section [data-bs-target="#addPrescriptionForm"]').click();
   }

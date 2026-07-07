@@ -125,6 +125,43 @@ class ConsultationSpecialtyFavoriteSeeder extends Seeder
                 'Maintain oral hygiene as advised.',
             ],
         ],
+        'obstetrics' => [
+            'diagnosis' => ['Normal pregnancy', 'High-risk pregnancy', 'Anaemia in pregnancy', 'Hypertension in pregnancy', 'Pre-eclampsia', 'Threatened miscarriage', 'Post-term pregnancy', 'Reduced fetal movement'],
+            'investigation' => ['Obstetric ultrasound', 'Full blood count', 'Blood group and rhesus', 'Urinalysis', 'HIV screening', 'HBsAg', 'Syphilis screening', 'Malaria test'],
+            'frequency' => [['label' => 'Review in 2 weeks', 'code' => 'REVIEW_2W'], ['label' => 'Review in 4 weeks', 'code' => 'REVIEW_4W']],
+            'follow_up_instruction' => ['Return immediately if bleeding occurs.', 'Return immediately if severe headache or blurred vision occurs.', 'Return immediately if fetal movement reduces.'],
+        ],
+        'gynecology' => [
+            'diagnosis' => ['Abnormal uterine bleeding', 'Pelvic inflammatory disease', 'Dysmenorrhea', 'Vaginal discharge', 'Infertility review', 'Contraception counselling'],
+            'investigation' => ['Pregnancy test', 'Pelvic ultrasound', 'Pap smear', 'STI screening'],
+            'procedure' => ['Pelvic examination', 'Contraception counselling'],
+        ],
+        'ent' => [
+            'diagnosis' => ['Otitis media', 'Otitis externa', 'Wax impaction', 'Tonsillitis', 'Sinusitis', 'Allergic rhinitis', 'Epistaxis', 'Hearing loss'],
+            'procedure' => ['Ear syringing', 'Audiometry', 'Nasal packing', 'Throat examination'],
+            'investigation' => ['Audiometry', 'Tympanometry'],
+        ],
+        'pediatrics' => [
+            'diagnosis' => ['Fever in child', 'Acute respiratory infection', 'Diarrhea', 'Dehydration', 'Malnutrition', 'Immunization review'],
+            'procedure' => ['Growth monitoring', 'Danger signs counselling'],
+            'follow_up_instruction' => ['ORS instructions', 'Review in 48 hours', 'Return immediately if child is unable to feed or convulses.'],
+        ],
+        'emergency' => [
+            'diagnosis' => ['Trauma assessment', 'Chest pain', 'Severe asthma', 'Seizure', 'Hypoglycemia', 'Dehydration', 'Shock'],
+            'investigation' => ['Urgent FBC', 'Urgent malaria test', 'Urgent X-ray'],
+            'procedure' => ['Oxygen therapy', 'IV fluids'],
+            'task' => ['Repeat vital signs', 'Prepare handover'],
+        ],
+        'orthopedics' => [
+            'diagnosis' => ['Fracture', 'Sprain', 'Dislocation', 'Back pain', 'Knee pain', 'Shoulder pain'],
+            'investigation' => ['X-ray'],
+            'procedure' => ['Cast application', 'Splinting', 'Physiotherapy referral'],
+        ],
+        'surgery' => [
+            'diagnosis' => ['Wound infection', 'Abscess', 'Hernia', 'Appendicitis review', 'Post-operative review'],
+            'procedure' => ['Wound dressing', 'Incision and drainage', 'Theatre referral'],
+            'clinical_instruction' => ['Consent required'],
+        ],
         'general_medicine' => [
             'frequency' => [
                 ['label' => 'Review in 1 week', 'code' => 'REVIEW_1W'],

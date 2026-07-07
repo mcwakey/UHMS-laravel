@@ -255,6 +255,7 @@ Important payloads passed to the view:
 - `specialtyContext`
 - `specialtyLayout`
 - `specialtyEntries`
+- `specialtyEntryGroups`
 - `specialtyFavorites`
 - `specialtyOrderSets`
 - `specialtyReadiness`
@@ -334,6 +335,128 @@ The doctor sees dental-specific sections and actions:
 - follow-up
 
 Dental favorites, dental order sets, dental readiness, dental summary generation, and mapped dental service billing become available when configured.
+
+## Specialty Helper Panels In The Workspace
+
+Specialist workspaces show helper panels above the clinical-entry sections. These panels are not separate consultation pages and they are not the main clinical record forms. They are context, shortcuts, billing awareness, and reusable clinical bundles for the active specialty profile.
+
+### Doctor Specialty Workspace Strip
+
+This is the compact card at the top of the specialist workspace. It confirms the resolved doctor/specialty context.
+
+Example:
+
+`Dr. System Administrator`
+
+`Dental Workspace · Department: Dental · Dental`
+
+This means:
+
+- the current authenticated user is opening the consultation as the displayed doctor
+- the resolver selected the Dental specialty profile
+- the active route/department context is Dental
+- the same consultation page has been personalised into a Dental workspace
+
+The strip can show metrics such as:
+
+- `Waiting`: patients or route work still waiting in the doctor's workspace context
+- `Reviewed`: route work already reviewed in that context
+- `Pending completion`: active consultation work that has not been completed
+
+It can also show alerts such as:
+
+- readiness blockers
+- readiness warnings
+- available order sets
+- summary builder availability
+
+Example:
+
+`4 readiness block(s)` means the consultation is missing required clinical items before completion is allowed.
+
+`2 order set(s) available` means two profile-specific order sets are configured for the active specialty.
+
+`Summary builder available` means the specialty summary builder can generate a preview summary from the active consultation data.
+
+The `Quick actions` buttons are shortcuts into the active specialty sections or tools. For Dental, examples include:
+
+- Dental Complaint
+- Tooth Chart
+- Oral Examination
+- Dental Diagnosis
+
+Clicking a quick action should jump to the matching tab/section or trigger the configured workspace action.
+
+The `Compact` button toggles the doctor's workspace preference. It makes the strip show fewer metrics/actions and saves that preference for the user.
+
+### Specialty Billing Panel
+
+The specialty billing panel tells the user whether the active specialty has a mapped billing service.
+
+Example:
+
+`No mapped billing service`
+
+This means the active specialty profile was resolved successfully, but no service-catalog mapping has been configured for billing that specialty consultation.
+
+Expected behavior:
+
+- If a mapped service exists, the panel shows the service name/code.
+- If the service has not been billed yet, authorized billing users can apply the charge.
+- If it has already been billed, the panel shows the billed status.
+- If no mapping exists, the consultation must still work normally.
+- Billing controls are only useful/visible to authorized users such as users with invoice/billing permissions.
+
+The panel is advisory unless a future policy makes billing readiness enforceable. Its purpose is to prevent silent billing gaps while keeping clinical consultation work unblocked.
+
+To configure it, map the specialty profile or department context to an existing active billable service catalog item.
+
+Relevant admin area:
+
+- Consultation Specialties -> Service Mappings
+
+Relevant code:
+
+- `ConsultationSpecialtyBillingMappingService`
+- `ConsultationSpecialtyBillingApplicationService`
+
+### Order Sets Panel
+
+Order sets are reusable specialty-specific care bundles.
+
+For example, Dental may show:
+
+- Dental Extraction Preparation
+- Dental Abscess Care
+
+The small number on each card is the number of items configured inside that order set.
+
+Expected workflow:
+
+1. Doctor clicks `Preview`.
+2. The system opens a preview modal.
+3. The modal lists the order-set items.
+4. Items that are safe to apply automatically can be selected.
+5. Items that require clinical judgement or catalogue selection remain manual suggestions.
+6. Doctor applies selected items.
+7. The consultation reloads with the applied safe items.
+
+Order sets are intentionally preview-first. They should not silently add high-risk clinical data.
+
+Automatically safe items can include:
+
+- consultation tasks
+- structured specialty-entry patches
+
+Manual/suggestion-only items can include:
+
+- diagnoses
+- investigations
+- procedures
+- prescriptions/drugs
+- label-only reminders
+
+This protects the doctor from accidental clinical ordering while still making common specialist workflows faster.
 
 ## Simple Example End To End
 

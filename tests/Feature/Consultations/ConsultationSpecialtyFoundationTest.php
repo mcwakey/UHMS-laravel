@@ -22,6 +22,13 @@ class ConsultationSpecialtyFoundationTest extends TestCase
         'physiotherapy',
         'ophthalmology',
         'dental',
+        'obstetrics',
+        'gynecology',
+        'ent',
+        'pediatrics',
+        'emergency',
+        'orthopedics',
+        'surgery',
     ];
 
     public function test_seeder_creates_default_specialty_profiles(): void
@@ -35,7 +42,7 @@ class ConsultationSpecialtyFoundationTest extends TestCase
             ]);
         }
 
-        $this->assertSame(4, ConsultationSpecialtyProfile::query()->count());
+        $this->assertSame(11, ConsultationSpecialtyProfile::query()->count());
     }
 
     public function test_general_medicine_exists_and_is_active(): void

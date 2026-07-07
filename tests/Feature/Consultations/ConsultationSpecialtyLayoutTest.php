@@ -90,6 +90,18 @@ class ConsultationSpecialtyLayoutTest extends TestCase
         $this->assertSame('ti-mood-sick', $registry->iconFor('pain_assessment'));
         $this->assertSame('ti-eye-check', $registry->iconFor('visual_acuity'));
         $this->assertSame('ti-dental-broken', $registry->iconFor('tooth_chart'));
+        $this->assertSame('ti-baby-carriage', $registry->iconFor('fetal_assessment'));
+        $this->assertSame('ti-ear', $registry->iconFor('ear_assessment'));
+        $this->assertSame('ti-urgent', $registry->iconFor('emergency_complaint'));
+    }
+
+    public function test_new_specialty_sections_resolve_to_structured_components(): void
+    {
+        $registry = app(ConsultationSpecialtySectionComponentRegistry::class);
+
+        foreach (['current_pregnancy', 'pelvic_examination', 'ear_assessment', 'growth_assessment', 'primary_survey', 'neurovascular_status', 'wound_assessment'] as $key) {
+            $this->assertSame('consultations.partials.specialty.structured-section', $registry->resolveComponent($key));
+        }
     }
 
     public function test_seeded_specialist_layout_orders_are_preserved(): void

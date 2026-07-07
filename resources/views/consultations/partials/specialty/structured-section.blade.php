@@ -3,7 +3,9 @@
     $entries = collect(($specialtyEntryGroups ?? [])[$section['key']] ?? []);
     $entryCount = $entries->count();
     $formId = 'add-specialty-'.$section['key'].'-form';
-    $fieldLabel = fn (string $name) => __('consultation_specialties.forms.fields.'.$name);
+    $fieldLabel = fn (string $name) => \Illuminate\Support\Facades\Lang::has('consultation_specialties.forms.fields.'.$name)
+        ? __('consultation_specialties.forms.fields.'.$name)
+        : str($name)->replace('_', ' ')->title()->toString();
     $displayValue = function ($value): string {
         if (is_bool($value)) {
             return $value ? __('common.yes') : __('common.no');

@@ -39,6 +39,55 @@ class ConsultationSpecialtyReadinessRuleRegistry
                 $this->custom('xray_missing_if_extraction_planned', 'dental_xray', 'warning'),
                 $this->custom('follow_up_missing', 'follow_up', 'warning'),
             ],
+            'obstetrics' => [
+                $this->entryAny('obstetric_history_recorded', 'obstetric_history', ['gravida', 'para', 'previous_complications']),
+                $this->entryAny('current_pregnancy_recorded', 'current_pregnancy', ['pregnancy_confirmed', 'booking_status', 'current_complaints']),
+                $this->entryAny('fetal_assessment_recorded', 'fetal_assessment', ['fundal_height', 'fetal_heart_rate', 'fetal_movement', 'presentation']),
+                $this->entryAny('risk_assessment_recorded', 'risk_assessment', ['risk_level', 'risk_factors', 'action_plan']),
+                $this->entryAny('birth_plan_recorded', 'birth_plan', ['planned_place', 'delivery_plan', 'next_visit_date']),
+                $this->custom('follow_up_missing', 'follow_up', 'warning'),
+            ],
+            'gynecology' => [
+                $this->entryAny('gyne_complaint_recorded', 'gyne_complaint', ['complaint_text', 'duration']),
+                $this->entryAny('menstrual_history_recorded', 'menstrual_history', ['lmp', 'cycle_length', 'bleeding_pattern', 'menopause_status']),
+                $this->entryAny('pelvic_examination_recorded', 'pelvic_examination', ['external_findings', 'speculum_findings', 'bimanual_findings', 'exam_notes']),
+                $this->core('diagnosis_recorded', 'core_diagnosis'),
+                $this->custom('follow_up_missing', 'follow_up', 'warning'),
+            ],
+            'ent' => [
+                $this->entryAny('ent_complaint_recorded', 'ent_complaint', ['complaint_text', 'duration', 'side']),
+                $this->entryAny('ent_assessment_recorded', 'ear_assessment', ['ear_pain', 'ear_discharge', 'hearing_loss', 'otoscopy_right', 'otoscopy_left']),
+                $this->core('diagnosis_recorded', 'core_diagnosis'),
+                $this->custom('follow_up_missing', 'follow_up', 'warning'),
+            ],
+            'pediatrics' => [
+                $this->entryAny('pediatric_complaint_recorded', 'pediatric_complaint', ['complaint_text', 'duration', 'danger_signs']),
+                $this->entryAny('growth_assessment_recorded', 'growth_assessment', ['weight', 'height', 'muac', 'growth_concern']),
+                $this->entryAny('pediatric_examination_recorded', 'pediatric_examination', ['general_appearance', 'hydration', 'respiratory', 'cardiovascular', 'exam_notes']),
+                $this->entryAny('caregiver_instructions_recorded', 'caregiver_instructions', ['instructions', 'danger_signs', 'follow_up_date']),
+                $this->core('diagnosis_recorded', 'core_diagnosis'),
+            ],
+            'emergency' => [
+                $this->entryAny('triage_summary_recorded', 'triage_summary', ['triage_category', 'arrival_mode', 'chief_risk']),
+                $this->entryAny('primary_survey_recorded', 'primary_survey', ['airway', 'breathing', 'circulation', 'disability', 'gcs']),
+                $this->entryAny('vitals_monitoring_recorded', 'vitals_monitoring', ['blood_pressure', 'pulse', 'respiratory_rate', 'spo2']),
+                $this->entryAny('disposition_recorded', 'disposition', ['disposition', 'admit_to', 'refer_to', 'disposition_notes']),
+                $this->custom('handover_missing', 'handover', 'warning'),
+            ],
+            'orthopedics' => [
+                $this->entryAny('ortho_complaint_recorded', 'ortho_complaint', ['complaint_text', 'affected_limb', 'duration']),
+                $this->entryAny('joint_limb_examination_recorded', 'joint_limb_examination', ['deformity', 'swelling', 'tenderness', 'range_of_motion', 'exam_notes']),
+                $this->entryAny('neurovascular_status_recorded', 'neurovascular_status', ['pulse_present', 'capillary_refill', 'sensation', 'motor_function']),
+                $this->entryAny('procedure_plan_recorded', 'procedure_plan', ['procedure_planned', 'procedure_done', 'notes']),
+                $this->custom('follow_up_missing', 'follow_up', 'warning'),
+            ],
+            'surgery' => [
+                $this->entryAny('surgical_complaint_recorded', 'surgical_complaint', ['complaint_text', 'duration', 'associated_symptoms']),
+                $this->entryAny('surgical_examination_recorded', 'local_or_abdominal_exam', ['inspection', 'palpation', 'tenderness', 'mass', 'exam_notes']),
+                $this->entryAny('procedure_plan_recorded', 'procedure_plan', ['procedure_planned', 'procedure_done', 'anaesthesia_plan', 'notes']),
+                $this->custom('consent_obtained_if_required', 'consent', 'blocking', 'consent_required_missing'),
+                $this->custom('follow_up_missing', 'follow_up', 'warning'),
+            ],
         ];
     }
 

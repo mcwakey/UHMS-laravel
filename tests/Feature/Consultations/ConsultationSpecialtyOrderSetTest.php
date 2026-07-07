@@ -57,6 +57,9 @@ class ConsultationSpecialtyOrderSetTest extends TestCase
         $this->assertDatabaseHas('consultation_specialty_order_sets', ['code' => 'eye_glaucoma_review']);
         $this->assertDatabaseHas('consultation_specialty_order_sets', ['code' => 'dental_extraction_prep']);
         $this->assertDatabaseHas('consultation_specialty_order_sets', ['code' => 'dental_abscess']);
+        $this->assertDatabaseHas('consultation_specialty_order_sets', ['code' => 'obstetrics_antenatal_booking']);
+        $this->assertDatabaseHas('consultation_specialty_order_sets', ['code' => 'emergency_primary_survey']);
+        $this->assertDatabaseHas('consultation_specialty_order_sets', ['code' => 'surgery_wound_review']);
     }
 
     public function test_order_sets_are_scoped_by_active_profile(): void
@@ -65,11 +68,13 @@ class ConsultationSpecialtyOrderSetTest extends TestCase
 
         $eye = collect($service->getWorkspaceOrderSets($this->context('ophthalmology')))->pluck('code');
         $dental = collect($service->getWorkspaceOrderSets($this->context('dental')))->pluck('code');
+        $obstetrics = collect($service->getWorkspaceOrderSets($this->context('obstetrics')))->pluck('code');
         $general = collect($service->getWorkspaceOrderSets($this->context('general_medicine')))->pluck('code');
 
         $this->assertTrue($eye->contains('eye_conjunctivitis'));
         $this->assertFalse($eye->contains('dental_extraction_prep'));
         $this->assertTrue($dental->contains('dental_extraction_prep'));
+        $this->assertTrue($obstetrics->contains('obstetrics_antenatal_booking'));
         $this->assertEmpty($general);
     }
 

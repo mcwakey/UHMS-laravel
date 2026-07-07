@@ -127,6 +127,7 @@ class ConsultationSpecialtyReadinessService
                 || (bool) data_get($entries->get('consent') ?? [], 'consent_obtained'),
             'xray_missing_if_extraction_planned' => ! $this->containsExtraction($entries->get('dental_procedures') ?? [])
                 || $this->entryHasFields($entries->get('dental_xray') ?? [], ['xray_requested', 'xray_findings'], 'any'),
+            'handover_missing' => $this->entryHasFields($entries->get('handover') ?? [], ['handover_to', 'handover_notes'], 'any'),
             default => false,
         };
     }

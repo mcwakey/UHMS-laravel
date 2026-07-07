@@ -121,6 +121,121 @@ class ConsultationSpecialtyOrderSetSeeder extends Seeder
                 ],
             ],
         ],
+        'obstetrics' => [
+            [
+                'code' => 'obstetrics_antenatal_booking',
+                'name' => 'Antenatal Booking Review',
+                'description' => 'Starter antenatal review bundle with screening and risk prompts.',
+                'category' => 'antenatal',
+                'icon' => 'ti-baby-carriage',
+                'color' => 'danger',
+                'items' => [
+                    ['investigation', 'Full blood count'],
+                    ['investigation', 'Blood group and rhesus'],
+                    ['investigation', 'Obstetric ultrasound'],
+                    ['specialty_entry_patch', 'Pregnancy confirmed', 'patch_specialty_entry', ['section_key' => 'current_pregnancy', 'merge' => ['pregnancy_confirmed' => true]]],
+                    ['specialty_entry_patch', 'Danger signs counselling', 'patch_specialty_entry', ['section_key' => 'birth_plan', 'merge' => ['danger_signs_counseling' => true]]],
+                    ['task', 'Review antenatal screening results', 'create_task', ['title' => 'Review antenatal screening results', 'frequency' => 'REVIEW_2W', 'priority' => 'medium']],
+                ],
+            ],
+        ],
+        'gynecology' => [
+            [
+                'code' => 'gyne_abnormal_bleeding',
+                'name' => 'Abnormal Uterine Bleeding Review',
+                'description' => 'Gynecology review bundle for abnormal bleeding.',
+                'category' => 'gyne_review',
+                'icon' => 'ti-calendar-heart',
+                'color' => 'danger',
+                'items' => [
+                    ['diagnosis', 'Abnormal uterine bleeding'],
+                    ['investigation', 'Pregnancy test'],
+                    ['investigation', 'Pelvic ultrasound'],
+                    ['specialty_entry_patch', 'Bleeding pattern prompt', 'patch_specialty_entry', ['section_key' => 'menstrual_history', 'merge' => ['bleeding_pattern' => 'Document bleeding pattern and severity']]],
+                    ['task', 'Review investigation results', 'create_task', ['title' => 'Review gynecology investigation results', 'frequency' => 'REVIEW_1W', 'priority' => 'medium']],
+                ],
+            ],
+        ],
+        'ent' => [
+            [
+                'code' => 'ent_ear_pain',
+                'name' => 'Ear Pain Assessment',
+                'description' => 'ENT review bundle for ear pain and discharge.',
+                'category' => 'ent_ear',
+                'icon' => 'ti-ear',
+                'color' => 'info',
+                'items' => [
+                    ['diagnosis', 'Otitis media'],
+                    ['procedure', 'Ear examination'],
+                    ['specialty_entry_patch', 'Ear pain present', 'patch_specialty_entry', ['section_key' => 'ear_assessment', 'merge' => ['ear_pain' => true]]],
+                    ['task', 'Review ear symptoms', 'create_task', ['title' => 'Review ear symptoms', 'frequency' => 'REVIEW_1W', 'priority' => 'medium']],
+                ],
+            ],
+        ],
+        'pediatrics' => [
+            [
+                'code' => 'peds_fever_review',
+                'name' => 'Pediatric Fever Review',
+                'description' => 'Pediatric review bundle for fever and danger signs.',
+                'category' => 'acute_child',
+                'icon' => 'ti-baby-bottle',
+                'color' => 'success',
+                'items' => [
+                    ['diagnosis', 'Fever in child'],
+                    ['investigation', 'Malaria test'],
+                    ['specialty_entry_patch', 'Caregiver danger signs', 'patch_specialty_entry', ['section_key' => 'caregiver_instructions', 'merge' => ['danger_signs' => 'Return immediately if convulsions, poor feeding, lethargy, or breathing difficulty occur.']]],
+                    ['task', 'Review child in 48 hours', 'create_task', ['title' => 'Review child in 48 hours', 'frequency' => 'REVIEW_48H', 'priority' => 'medium']],
+                ],
+            ],
+        ],
+        'emergency' => [
+            [
+                'code' => 'emergency_primary_survey',
+                'name' => 'Primary Survey Stabilisation',
+                'description' => 'Emergency bundle for ABCDE review and stabilisation tasks.',
+                'category' => 'emergency',
+                'icon' => 'ti-urgent',
+                'color' => 'danger',
+                'items' => [
+                    ['specialty_entry_patch', 'ABCDE prompt', 'patch_specialty_entry', ['section_key' => 'primary_survey', 'merge' => ['airway' => 'Assess airway', 'breathing' => 'Assess breathing', 'circulation' => 'Assess circulation']]],
+                    ['procedure', 'Oxygen therapy'],
+                    ['procedure', 'IV fluids'],
+                    ['task', 'Repeat vital signs', 'create_task', ['title' => 'Repeat vital signs', 'frequency' => 'Q15MIN', 'priority' => 'high']],
+                ],
+            ],
+        ],
+        'orthopedics' => [
+            [
+                'code' => 'ortho_fracture_review',
+                'name' => 'Fracture Review',
+                'description' => 'Orthopedic bundle for suspected fracture review.',
+                'category' => 'orthopedics',
+                'icon' => 'ti-bone',
+                'color' => 'secondary',
+                'items' => [
+                    ['diagnosis', 'Fracture'],
+                    ['investigation', 'X-ray'],
+                    ['specialty_entry_patch', 'Neurovascular check', 'patch_specialty_entry', ['section_key' => 'neurovascular_status', 'merge' => ['neurovascular_notes' => 'Document distal pulse, sensation, motor function, and capillary refill']]],
+                    ['task', 'Review X-ray', 'create_task', ['title' => 'Review X-ray', 'frequency' => 'REVIEW_1D', 'priority' => 'medium']],
+                ],
+            ],
+        ],
+        'surgery' => [
+            [
+                'code' => 'surgery_wound_review',
+                'name' => 'Wound Review',
+                'description' => 'Surgical OPD bundle for wound assessment and dressing review.',
+                'category' => 'surgical_opd',
+                'icon' => 'ti-scalpel',
+                'color' => 'primary',
+                'items' => [
+                    ['diagnosis', 'Wound infection'],
+                    ['procedure', 'Wound dressing'],
+                    ['specialty_entry_patch', 'Wound care instructions', 'patch_specialty_entry', ['section_key' => 'post_op_instructions', 'merge' => ['wound_care' => 'Keep wound clean and dry. Return if redness, swelling, fever, or discharge worsens.']]],
+                    ['task', 'Review wound', 'create_task', ['title' => 'Review wound', 'frequency' => 'REVIEW_1W', 'priority' => 'medium']],
+                ],
+            ],
+        ],
     ];
 
     public function run(): void
