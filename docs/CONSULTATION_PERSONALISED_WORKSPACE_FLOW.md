@@ -201,7 +201,7 @@ Example:
 - Dr. Mensah defaults to `ophthalmology`.
 - Dr. Aidoo defaults to `physiotherapy`.
 
-Doctor preference is lower priority than a direct route or department mapping, so a specific routed consultation can still override it.
+Doctor preference is lower priority than a direct consultation route mapping, but higher priority than department mappings. This means a doctor explicitly set to General Medicine gets the general workspace even if they are temporarily viewing a patient routed through a department that has an ophthalmology, physiotherapy, or dental fallback mapping.
 
 ### Step 5: Optional Specialty Tools
 
@@ -226,10 +226,10 @@ When the consultation page opens, the controller calls the resolver with:
 The resolver priority is:
 
 1. Consultation route mapping
-2. Department mapping
-3. Department type mapping
-4. Doctor preference
-5. User primary/assigned department mapping
+2. Doctor preference
+3. User primary/assigned department mapping
+4. Department mapping
+5. Department type mapping
 6. Existing specialty entry for that route
 7. General medicine fallback
 
@@ -354,15 +354,17 @@ Dental favorites, dental order sets, dental readiness, dental summary generation
 
 1. Admin maps Eye Clinic or Ophthalmology department to `ophthalmology`.
 2. Patient is routed to Eye Clinic.
-3. Eye doctor opens the consultation.
+3. Eye doctor has default profile `ophthalmology`, or no doctor default is set and the department mapping applies.
 4. Resolver returns `ophthalmology`.
 5. The page shows eye complaint, visual acuity, refraction, IOP, eye examination, and related tools.
 
 ### General Doctor Example
 
-1. No specific physiotherapy, eye, dental, or route mapping matches.
-2. Department type or fallback resolves to `general_medicine`.
+1. Doctor has default profile `general_medicine`, or no specific physiotherapy, eye, dental, or route mapping matches.
+2. Resolver returns `general_medicine`.
 3. The doctor sees the general consulting page.
+
+If a general doctor still sees Ophthalmology, check whether there is an explicit consultation route mapping to Ophthalmology. Route mappings are intentionally highest priority because they represent a deliberate per-consultation override.
 
 ## Safety And Fallback Rules
 
@@ -428,6 +430,48 @@ Use this checklist when setting up a new personalised consultation workspace:
 7. Add service mappings if the specialty consultation should show billing awareness.
 8. Open a test consultation route for that department.
 9. Confirm the workspace header, quick actions, sections, readiness, summary, and billing context match the specialty.
+
+## Access And Troubleshooting
+
+### I cannot configure specialty profiles or mappings
+
+Specialty configuration is protected by these permissions:
+
+- `consultation-specialties.view`
+- `consultation-specialties.create`
+- `consultation-specialties.update`
+- `consultation-specialties.delete`
+- `consultation-specialties.configure`
+
+The seeded `Doctor`, `Consultant`, and `Specialist` roles are clinical roles. They can open and work in consultations, but they do not configure the specialty system by default.
+
+Use a `Super Admin` or `Admin` account to configure the system, or explicitly grant a configuration role those permissions.
+
+### I cannot access other dashboards
+
+Dashboard access is also permission-based. For example:
+
+- Doctors have `consultation.dashboard`.
+- Admin and Super Admin receive all permissions.
+- Finance, accounting, statistics, maternity, claims, and billing dashboards use their own permissions.
+
+So if you log in as a doctor, you should expect the consultation dashboard and doctor workflow, not every admin dashboard.
+
+### A general doctor is getting the Ophthalmology workspace
+
+Check these in order:
+
+1. Does the consultation route have an explicit specialty route mapping? Route mapping wins intentionally.
+2. Does the doctor have a `DoctorConsultationPreference` default profile set to `general_medicine`?
+3. If no doctor preference is set, does the route department map to Ophthalmology? Department mapping is used as fallback.
+4. Is the doctor assigned to an Eye Clinic department as their primary/assigned department?
+
+The expected configuration for a general doctor is:
+
+- default profile: `general_medicine`
+- no explicit route mapping to `ophthalmology` for that consultation
+
+After the resolver update, doctor preference wins over department fallback mappings. That means a doctor configured as General Medicine will get the general workspace even if the department fallback says Eye Clinic, unless the consultation itself has an explicit route-level mapping.
 
 ## Mental Model
 

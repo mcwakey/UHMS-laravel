@@ -69,8 +69,19 @@ class ConsultationSpecialtyEntryController extends ConsultationWorkflowControlle
         $validated = $request->validate($schemas->rulesFor($sectionKey));
         $entry = $schemas->sanitizedEntry($sectionKey, $validated);
 
+        $entryId = $request->integer('consultation_specialty_entry_id');
+        $existing = $entryId
+            ? $entries->getEntryById($context->route, $resolved->profile, $sectionKey, $entryId)
+            : null;
+
+        if ($entryId && ! $existing) {
+            throw ValidationException::withMessages([
+                'consultation_specialty_entry_id' => __('consultation_specialties.messages.invalid_section'),
+            ]);
+        }
+
         if ($entry === []) {
-            if ($existing = $entries->getEntry($context->route, $resolved->profile, $sectionKey)) {
+            if ($existing) {
                 $entries->deleteEntry($existing, $request->user());
             }
 
@@ -87,7 +98,9 @@ class ConsultationSpecialtyEntryController extends ConsultationWorkflowControlle
                 ->with('success', __('consultation_specialties.messages.section_deleted'));
         }
 
-        $model = $entries->upsertEntry($context->route, $resolved->profile, $sectionKey, $entry, $request->user());
+        $model = $existing
+            ? $entries->updateEntry($existing, $entry, $request->user())
+            : $entries->createEntry($context->route, $resolved->profile, $sectionKey, $entry, $request->user());
 
         if ($this->shouldReturnJson($request)) {
             return response()->json([
@@ -116,7 +129,10 @@ class ConsultationSpecialtyEntryController extends ConsultationWorkflowControlle
         }
 
         $resolved = $resolver->resolve($request->user(), visit: $visit, consultationRoute: $context->route, department: $context->route?->department);
-        $entry = $entries->getEntry($context->route, $resolved->profile, $sectionKey);
+        $entryId = $request->integer('consultation_specialty_entry_id');
+        $entry = $entryId
+            ? $entries->getEntryById($context->route, $resolved->profile, $sectionKey, $entryId)
+            : $entries->getEntry($context->route, $resolved->profile, $sectionKey);
 
         if ($entry) {
             $entries->deleteEntry($entry, $request->user());

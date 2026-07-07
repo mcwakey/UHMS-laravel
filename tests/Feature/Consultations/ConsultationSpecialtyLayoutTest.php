@@ -40,7 +40,9 @@ class ConsultationSpecialtyLayoutTest extends TestCase
 
         $this->doctor = User::factory()->create();
         $role = Role::findOrCreate('Doctor', 'web');
-        $role->givePermissionTo(Permission::findOrCreate('consultations.view', 'web'));
+        foreach (['consultations.view', 'consultations.create'] as $permission) {
+            $role->givePermissionTo(Permission::findOrCreate($permission, 'web'));
+        }
         $this->doctor->assignRole($role);
     }
 
@@ -79,6 +81,15 @@ class ConsultationSpecialtyLayoutTest extends TestCase
         $registry = app(ConsultationSpecialtySectionComponentRegistry::class);
 
         $this->assertSame($registry->fallbackComponent(), $registry->resolveComponent('unmapped_specialist_section'));
+    }
+
+    public function test_specialty_sections_have_representative_icons(): void
+    {
+        $registry = app(ConsultationSpecialtySectionComponentRegistry::class);
+
+        $this->assertSame('ti-mood-sick', $registry->iconFor('pain_assessment'));
+        $this->assertSame('ti-eye-check', $registry->iconFor('visual_acuity'));
+        $this->assertSame('ti-dental-broken', $registry->iconFor('tooth_chart'));
     }
 
     public function test_seeded_specialist_layout_orders_are_preserved(): void
@@ -175,6 +186,10 @@ class ConsultationSpecialtyLayoutTest extends TestCase
         $response->assertOk();
         $response->assertSee('Physiotherapy Workspace');
         $response->assertSee('Pain Assessment');
+        $response->assertSee('ti-mood-sick');
+        $response->assertSee('id="badge-specialty-pain_assessment"', false);
+        $response->assertSee('data-bs-target="#add-specialty-pain_assessment-form"', false);
+        $response->assertSee('class="collapse mb-3" id="add-specialty-pain_assessment-form"', false);
         $response->assertSee(__('consultation_specialties.actions.save_section'));
         $response->assertSee('name="pain_score"', false);
         $response->assertSee('id="complaints-section"', false);

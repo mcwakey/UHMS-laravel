@@ -81,6 +81,21 @@ class ConsultationSpecialtyResolverTest extends TestCase
         $this->assertSame('department_mapping', $resolved->source);
     }
 
+    public function test_department_type_mapping_ignores_other_department_specific_mappings(): void
+    {
+        $general = $this->department('General Medicine', 'GENX', DepartmentType::CONSULTATION);
+        $eye = $this->department('Eye Clinic', 'EYEX', DepartmentType::CONSULTATION);
+        $this->mapping([
+            'department_id' => $eye->id,
+            'department_type' => DepartmentType::CONSULTATION->value,
+        ], 'ophthalmology', priority: 20);
+
+        $resolved = $this->resolver->resolve($this->doctor, department: $general);
+
+        $this->assertSame('general_medicine', $resolved->profile->code);
+        $this->assertSame('department_type_mapping', $resolved->source);
+    }
+
     public function test_route_mapping_beats_department_mapping(): void
     {
         [$visit, $route, $department] = $this->consultationRouteFixture();
@@ -106,6 +121,22 @@ class ConsultationSpecialtyResolverTest extends TestCase
         $resolved = $this->resolver->resolve($this->doctor);
 
         $this->assertSame('physiotherapy', $resolved->profile->code);
+        $this->assertSame('doctor_preference', $resolved->source);
+    }
+
+    public function test_doctor_preference_beats_department_mapping(): void
+    {
+        $department = $this->department('Eye Clinic', 'EYEP', DepartmentType::CONSULTATION);
+        $this->mapping(['department_id' => $department->id], 'ophthalmology', priority: 20);
+
+        DoctorConsultationPreference::query()->create([
+            'user_id' => $this->doctor->id,
+            'default_consultation_specialty_profile_id' => $this->profile('general_medicine')->id,
+        ]);
+
+        $resolved = $this->resolver->resolve($this->doctor, department: $department);
+
+        $this->assertSame('general_medicine', $resolved->profile->code);
         $this->assertSame('doctor_preference', $resolved->source);
     }
 

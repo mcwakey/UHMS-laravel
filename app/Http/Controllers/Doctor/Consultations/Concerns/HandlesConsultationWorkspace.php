@@ -366,8 +366,12 @@ trait HandlesConsultationWorkspace
             department: $selectedRoute?->department ?? $visit->currentDepartment,
         );
         $specialtyLayout = app(ConsultationSpecialtyLayoutService::class)->buildLayout($specialtyContext);
+        $specialtyEntryService = app(ConsultationSpecialtyEntryService::class);
         $specialtyEntries = $selectedRoute
-            ? app(ConsultationSpecialtyEntryService::class)->entriesAsArray($selectedRoute, $specialtyContext->profile)
+            ? $specialtyEntryService->entriesAsArray($selectedRoute, $specialtyContext->profile)
+            : [];
+        $specialtyEntryGroups = $selectedRoute
+            ? $specialtyEntryService->entriesGroupedForWorkspace($selectedRoute, $specialtyContext->profile)
             : [];
         $specialtyFavorites = app(ConsultationSpecialtyFavoriteService::class)->getWorkspaceDefaults($specialtyContext->profile);
         $specialtyOrderSets = app(ConsultationSpecialtyOrderSetService::class)->getWorkspaceOrderSets($specialtyContext);
@@ -428,6 +432,7 @@ trait HandlesConsultationWorkspace
             'specialtyContext' => $specialtyContext->toArray(),
             'specialtyLayout' => $specialtyLayout,
             'specialtyEntries' => $specialtyEntries,
+            'specialtyEntryGroups' => $specialtyEntryGroups,
             'specialtyFavorites' => $specialtyFavorites,
             'specialtyOrderSets' => $specialtyOrderSets,
             'specialtyReadiness' => $specialtyReadiness,

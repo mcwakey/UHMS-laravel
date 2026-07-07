@@ -39,7 +39,9 @@ class ConsultationSpecialtyProfileResolver
             'Matched active consultation route specialty mapping.',
             $activeDepartment,
             $route,
-        ) ?? $this->fromMapping(
+        ) ?? $this->fromDoctorPreference($user, $activeDepartment, $route)
+            ?? $this->fromUserDepartment($user, $route)
+            ?? $this->fromMapping(
             ConsultationSpecialtyProfileMapping::query()
                 ->active()
                 ->forDepartment($activeDepartment)
@@ -52,14 +54,15 @@ class ConsultationSpecialtyProfileResolver
             ConsultationSpecialtyProfileMapping::query()
                 ->active()
                 ->forDepartmentType($this->departmentTypeValue($activeDepartment))
-                ->whereNotNull('department_type'),
+                ->whereNotNull('department_type')
+                ->whereNull('department_id')
+                ->whereNull('consultation_route_id')
+                ->whereNull('user_id'),
             'department_type_mapping',
             'Matched active department type specialty mapping.',
             $activeDepartment,
             $route,
-        ) ?? $this->fromDoctorPreference($user, $activeDepartment, $route)
-            ?? $this->fromUserDepartment($user, $route)
-            ?? $this->fromExistingConsultationEntry($route, $consultation, $activeDepartment)
+        ) ?? $this->fromExistingConsultationEntry($route, $consultation, $activeDepartment)
             ?? $this->profiles->fallbackResolvedContext(
                 department: $activeDepartment,
                 consultationRoute: $route,

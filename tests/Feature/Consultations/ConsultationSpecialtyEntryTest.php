@@ -89,6 +89,63 @@ class ConsultationSpecialtyEntryTest extends TestCase
         $this->assertSame('Lower back', $entry->entry['pain_location']);
     }
 
+    public function test_specialty_add_creates_multiple_records_and_edit_targets_one_record(): void
+    {
+        [$visit, $route] = $this->consultationRouteFixture('Physiotherapy', 'PHY', 'physiotherapy');
+        $profile = $this->profile('physiotherapy');
+
+        $first = $this->actingAs($this->doctor)
+            ->postJson(route('admin.consultations.specialty-entries.store', [$visit, 'pain_assessment']), [
+                'consultation_route_id' => $route->id,
+                'specialty_profile_id' => $profile->id,
+                'pain_score' => 8,
+                'pain_location' => 'Lower back',
+            ])
+            ->assertOk()
+            ->json('entry.id');
+
+        $second = $this->actingAs($this->doctor)
+            ->postJson(route('admin.consultations.specialty-entries.store', [$visit, 'pain_assessment']), [
+                'consultation_route_id' => $route->id,
+                'specialty_profile_id' => $profile->id,
+                'pain_score' => 4,
+                'pain_location' => 'Right shoulder',
+            ])
+            ->assertOk()
+            ->json('entry.id');
+
+        $this->assertNotSame($first, $second);
+        $this->assertSame(2, ConsultationSpecialtyEntry::query()
+            ->where('consultation_id', $route->id)
+            ->where('section_key', 'pain_assessment')
+            ->count());
+
+        $this->actingAs($this->doctor)
+            ->postJson(route('admin.consultations.specialty-entries.store', [$visit, 'pain_assessment']), [
+                'consultation_route_id' => $route->id,
+                'specialty_profile_id' => $profile->id,
+                'consultation_specialty_entry_id' => $first,
+                'pain_score' => 6,
+                'pain_location' => 'Left knee',
+            ])
+            ->assertOk()
+            ->assertJsonPath('entry.id', $first);
+
+        $this->assertSame('Left knee', ConsultationSpecialtyEntry::query()->findOrFail($first)->entry['pain_location']);
+        $this->assertSame('Right shoulder', ConsultationSpecialtyEntry::query()->findOrFail($second)->entry['pain_location']);
+
+        $this->actingAs($this->doctor)
+            ->deleteJson(route('admin.consultations.specialty-entries.destroy', [$visit, 'pain_assessment']), [
+                'consultation_route_id' => $route->id,
+                'consultation_specialty_entry_id' => $first,
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseMissing('consultation_specialty_entries', ['id' => $first]);
+        $this->assertDatabaseHas('consultation_specialty_entries', ['id' => $second]);
+    }
+
     public function test_ophthalmology_visual_acuity_can_be_saved(): void
     {
         [$visit, $route] = $this->consultationRouteFixture('Ophthalmology', 'EYE', 'ophthalmology');
@@ -227,8 +284,12 @@ class ConsultationSpecialtyEntryTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Right shoulder');
+        $response->assertSee('id="badge-specialty-pain_assessment"', false);
+        $response->assertSee('1 entry');
         $response->assertSee('value="7"', false);
-        $response->assertSee(__('consultation_specialties.messages.entry_loaded'));
+        $response->assertSee('data-bs-target="#add-specialty-pain_assessment-form"', false);
+        $response->assertSee('data-bs-target="#edit-specialty-pain_assessment-', false);
+        $response->assertSee('form="delete-specialty-', false);
     }
 
     private function profile(string $code): ConsultationSpecialtyProfile

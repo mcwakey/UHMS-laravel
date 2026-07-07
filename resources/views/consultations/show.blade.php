@@ -183,8 +183,8 @@
         if ($entry?->created_at) {
             $bits[] = 'Created: '.$entry->created_at->format('d M Y, h:i A');
         }
-        if (($entry?->updater?->full_name ?? null) && $entry?->updated_at && $entry?->created_at && $entry->updated_at->gt($entry->created_at)) {
-            $bits[] = 'Edited by: '.$entry->updater->full_name.' '.$entry->updated_at->format('d M Y, h:i A');
+        if (($updater = $entry?->updater ?? $entry?->updatedBy ?? null) && ($updater?->full_name ?? null) && $entry?->updated_at && $entry?->created_at && $entry->updated_at->gt($entry->created_at)) {
+            $bits[] = 'Edited by: '.$updater->full_name.' '.$entry->updated_at->format('d M Y, h:i A');
         }
         if ($entry?->sourcePattern) {
             $bits[] = 'Source Pattern: '.$entry->sourcePattern->name;
@@ -1468,7 +1468,7 @@
 
                     {{-- ========================= PATTERNS ========================= --}}
                     @foreach($layoutTabSections->filter(fn ($section) => ! in_array(($section['component'] ?? null), ['consultations.partials.specialty.core-section'], true)) as $section)
-                        @include($section['component'], ['section' => $section, 'activeTabTarget' => $activeTabTarget, 'specialtyEntries' => $specialtyEntries ?? []])
+                        @include($section['component'], ['section' => $section, 'activeTabTarget' => $activeTabTarget, 'specialtyEntries' => $specialtyEntries ?? [], 'specialtyEntryGroups' => $specialtyEntryGroups ?? []])
                     @endforeach
 
                     {{-- ========================= PATTERNS ========================= --}}

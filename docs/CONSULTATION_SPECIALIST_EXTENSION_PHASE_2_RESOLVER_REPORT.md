@@ -2,7 +2,7 @@
 
 ## Summary
 
-Implemented the read-only specialty resolver layer for consultation workspaces. The resolver determines the active specialty profile from route mappings, department mappings, department type mappings, doctor preferences, user department mappings, existing specialty entries, and finally the general medicine fallback.
+Implemented the read-only specialty resolver layer for consultation workspaces. The resolver determines the active specialty profile from route mappings, doctor preferences, user department mappings, department mappings, department type mappings, existing specialty entries, and finally the general medicine fallback.
 
 The visible consultation UI was not changed.
 
@@ -48,10 +48,10 @@ Mapping fields:
 Implemented priority:
 
 1. Active consultation route mapping
-2. Active department mapping
-3. Active department type mapping
-4. Active doctor preference
-5. User primary or assigned department mapping
+2. Active doctor preference
+3. User primary or assigned department mapping
+4. Active department mapping
+5. Active department type mapping
 6. Existing consultation specialty entry
 7. General medicine fallback
 

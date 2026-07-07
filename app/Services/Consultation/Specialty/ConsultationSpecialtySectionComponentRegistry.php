@@ -100,6 +100,35 @@ class ConsultationSpecialtySectionComponentRegistry
 
     public function iconFor(string $sectionKey): string
     {
+        $specialtyIcon = match ($sectionKey) {
+            'presenting_problem' => 'ti-clipboard-heart',
+            'pain_assessment' => 'ti-mood-sick',
+            'functional_limitation' => 'ti-walk',
+            'physical_assessment' => 'ti-stretching',
+            'treatment_plan' => 'ti-target-arrow',
+            'therapy_session' => 'ti-activity',
+            'home_exercise_plan' => 'ti-run',
+            'progress_notes' => 'ti-progress-check',
+            'eye_complaint' => 'ti-eye-exclamation',
+            'visual_acuity' => 'ti-eye-check',
+            'refraction' => 'ti-glasses',
+            'iop' => 'ti-gauge',
+            'eye_examination' => 'ti-eye-cog',
+            'follow_up' => 'ti-calendar-time',
+            'dental_complaint' => 'ti-dental',
+            'tooth_chart' => 'ti-dental-broken',
+            'oral_examination' => 'ti-mouth',
+            'dental_diagnosis' => 'ti-report-medical',
+            'dental_xray' => 'ti-scan',
+            'dental_procedures' => 'ti-tools',
+            'consent' => 'ti-shield-check',
+            default => null,
+        };
+
+        if ($specialtyIcon) {
+            return $specialtyIcon;
+        }
+
         return match ($this->canonicalSectionKey($sectionKey)) {
             'complaints' => 'ti-message-report',
             'hopc' => 'ti-file-description',

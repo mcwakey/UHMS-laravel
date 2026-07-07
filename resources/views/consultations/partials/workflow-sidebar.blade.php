@@ -5,7 +5,11 @@
                         <nav class="consultation-sidebar">
                             <ul class="nav flex-column gap-1" id="consultationTabs" role="tablist">
                                 @php
-                                    $badgeForSection = function (array $section) use ($record, $procedureRequests) {
+                                    $badgeForSection = function (array $section) use ($record, $procedureRequests, $specialtyEntries, $specialtyEntryGroups) {
+                                        $specialtyEntryCount = isset($specialtyEntryGroups)
+                                            ? collect($specialtyEntryGroups[$section['key']] ?? [])->count()
+                                            : (! empty($specialtyEntries[$section['key']] ?? []) ? 1 : 0);
+
                                         return match ($section['canonical_key'] ?? $section['key']) {
                                             'complaints' => ['id' => 'badge-complaints', 'count' => $record?->complaints?->count() ?? 0],
                                             'hopc' => ['id' => 'badge-hopc', 'count' => $record?->historiesOfPresentingComplaint?->count() ?? 0],
@@ -15,7 +19,7 @@
                                             'prescription' => ['id' => 'badge-prescriptions', 'count' => $record?->prescriptions?->count() ?? 0],
                                             'procedures' => ['id' => 'badge-procedures', 'count' => $procedureRequests->count()],
                                             'tasks' => ['id' => 'badge-tasks', 'count' => $record?->tasks?->count() ?? 0],
-                                            default => null,
+                                            default => ['id' => 'badge-specialty-'.$section['key'], 'count' => $specialtyEntryCount],
                                         };
                                     };
                                 @endphp
