@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('consultation_specialty_order_sets', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('consultation_specialty_profile_id')->constrained('consultation_specialty_profiles')->cascadeOnDelete();
+            $table->foreignId('consultation_specialty_profile_id')->constrained('consultation_specialty_profiles', indexName: 'cso_sets_profile_fk')->cascadeOnDelete();
             $table->string('code');
             $table->string('name');
             $table->text('description')->nullable();
@@ -31,7 +31,7 @@ return new class extends Migration
 
         Schema::create('consultation_specialty_order_set_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('consultation_specialty_order_set_id')->constrained('consultation_specialty_order_sets')->cascadeOnDelete();
+            $table->foreignId('consultation_specialty_order_set_id')->constrained('consultation_specialty_order_sets', indexName: 'cso_items_set_fk')->cascadeOnDelete();
             $table->string('item_type');
             $table->string('label');
             $table->text('description')->nullable();
@@ -55,9 +55,9 @@ return new class extends Migration
 
         Schema::create('consultation_specialty_order_set_applications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('consultation_id')->constrained('visit_consultation_routes')->cascadeOnDelete();
-            $table->foreignId('consultation_specialty_order_set_id')->nullable()->constrained('consultation_specialty_order_sets')->nullOnDelete();
-            $table->foreignId('consultation_specialty_profile_id')->nullable()->constrained('consultation_specialty_profiles')->nullOnDelete();
+            $table->foreignId('consultation_id')->constrained('visit_consultation_routes', indexName: 'cso_apps_consultation_fk')->cascadeOnDelete();
+            $table->foreignId('consultation_specialty_order_set_id')->nullable()->constrained('consultation_specialty_order_sets', indexName: 'cso_apps_set_fk')->nullOnDelete();
+            $table->foreignId('consultation_specialty_profile_id')->nullable()->constrained('consultation_specialty_profiles', indexName: 'cso_apps_profile_fk')->nullOnDelete();
             $table->foreignId('applied_by')->constrained('users')->cascadeOnDelete();
             $table->string('status')->default('applied');
             $table->json('preview_payload')->nullable();
@@ -72,8 +72,8 @@ return new class extends Migration
 
         Schema::create('consultation_specialty_order_set_application_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('consultation_specialty_order_set_application_id')->constrained('consultation_specialty_order_set_applications')->cascadeOnDelete();
-            $table->foreignId('consultation_specialty_order_set_item_id')->nullable()->constrained('consultation_specialty_order_set_items')->nullOnDelete();
+            $table->foreignId('consultation_specialty_order_set_application_id')->constrained('consultation_specialty_order_set_applications', indexName: 'cso_app_items_application_fk')->cascadeOnDelete();
+            $table->foreignId('consultation_specialty_order_set_item_id')->nullable()->constrained('consultation_specialty_order_set_items', indexName: 'cso_app_items_item_fk')->nullOnDelete();
             $table->string('item_type');
             $table->string('label');
             $table->string('apply_mode');

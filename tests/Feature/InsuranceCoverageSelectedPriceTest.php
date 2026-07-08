@@ -63,6 +63,37 @@ class InsuranceCoverageSelectedPriceTest extends TestCase
         $this->assertSame(56.0, (float) $insuranceReceivable->allocated_amount);
     }
 
+    public function test_create_invoice_resolves_service_items_against_visit_insurance_tariff(): void
+    {
+        [$visit, $provider] = $this->insuredVisitWithTier(80);
+        $service = $this->serviceWithProviderPrice($provider, cashPrice: 100, insurancePrice: 70);
+
+        $invoice = app(BillingService::class)->createInvoice(
+            [
+                'visit_id' => $visit->id,
+                'patient_id' => $visit->patient_id,
+                'billing_type' => BillingType::INSURANCE->value,
+            ],
+            [[
+                'service_catalog_id' => $service->id,
+                'description' => $service->name,
+                'quantity' => 1,
+                'unit_price' => 100,
+            ]]
+        );
+
+        $item = $invoice->items->sole();
+
+        $this->assertSame(100.0, (float) $item->cash_price);
+        $this->assertSame(70.0, (float) $item->selected_price);
+        $this->assertSame(70.0, (float) $item->unit_price);
+        $this->assertSame(70.0, (float) $item->insurance_price);
+        $this->assertSame(56.0, (float) $item->insurance_covered);
+        $this->assertSame(14.0, (float) $item->patient_payable);
+        $this->assertSame($provider->id, (int) $item->insurance_provider_id);
+        $this->assertSame('provider_specific_price', $item->pricing_source);
+    }
+
     public function test_cash_fallback_does_not_calculate_insurance_coverage(): void
     {
         [$visit] = $this->insuredVisitWithTier(80);

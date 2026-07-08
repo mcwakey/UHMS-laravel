@@ -11,10 +11,10 @@ return new class extends Migration
         Schema::create('consultation_specialty_profile_mappings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('consultation_specialty_profile_id')
-                ->constrained('consultation_specialty_profiles')
+                ->constrained('consultation_specialty_profiles', indexName: 'cspm_profile_fk')
                 ->cascadeOnDelete();
             $table->foreignId('department_id')->nullable()->constrained('departments')->nullOnDelete();
-            $table->foreignId('consultation_route_id')->nullable()->constrained('visit_consultation_routes')->nullOnDelete();
+            $table->foreignId('consultation_route_id')->nullable()->constrained('visit_consultation_routes', indexName: 'cspm_route_fk')->nullOnDelete();
             $table->string('department_type')->nullable();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('source')->nullable();
