@@ -99,6 +99,7 @@ use App\Http\Controllers\Admin\Reporting\LogRetentionController;
 use App\Http\Controllers\Admin\Settings\NotificationBroadcastController;
 use App\Http\Controllers\Admin\Settings\NotificationPreferenceController;
 use App\Http\Controllers\Admin\Reporting\OperationalReportController;
+use App\Http\Controllers\Admin\Reports\ConsultationSpecialtyReportController;
 use App\Http\Controllers\Admin\Store\PurchaseOrderController;
 use App\Http\Controllers\Admin\Store\PurchaseReturnController;
 use App\Http\Controllers\Admin\Appointments\QueueController;
@@ -1627,6 +1628,9 @@ Route::middleware('auth')->group(function () {
         Route::middleware(['module:reports', 'can:reports.view'])->prefix('reports')->name('reports.')->group(function () {
             Route::get('/', [ReportsHubController::class, 'index'])->name('index');
             Route::get('/dashboard', [OperationalReportController::class, 'dashboard'])->name('dashboard');
+            Route::get('consultation-specialties', [ConsultationSpecialtyReportController::class, 'index'])->name('consultation-specialties.index');
+            Route::get('consultation-specialties/data', [ConsultationSpecialtyReportController::class, 'data'])->name('consultation-specialties.data');
+            Route::get('consultation-specialties/export', [ConsultationSpecialtyReportController::class, 'export'])->name('consultation-specialties.export');
             Route::get('department-metrics', [\App\Http\Controllers\Admin\Reporting\DepartmentMetricsController::class, 'index'])->name('department-metrics');
             Route::get('department-comparison', [\App\Http\Controllers\Admin\Reporting\DepartmentComparisonController::class, 'index'])
                 ->name('department-comparison.index')

@@ -820,7 +820,7 @@
                                                         $investigationFavorites = collect($specialtyFavorites['investigation'] ?? []);
                                                     @endphp
                                                     @if($investigationFavorites->isNotEmpty())
-                                                        <div class="mt-2 d-flex flex-wrap gap-1">
+                                                        <div class="small text-muted fw-semibold mt-2">{{ __('consultation_specialties.favorites.specialty_suggestions') }}</div><div class="mt-1 d-flex flex-wrap gap-1">
                                                             @foreach($investigationFavorites->take(8) as $favorite)
                                                                 <span class="badge bg-info-subtle text-info">{{ $favorite['label'] }}</span>
                                                             @endforeach
@@ -1285,7 +1285,7 @@
                                                         $procedureFavorites = collect($specialtyFavorites['procedure'] ?? []);
                                                     @endphp
                                                     @if($procedureFavorites->isNotEmpty())
-                                                        <div class="mt-2 d-flex flex-wrap gap-1">
+                                                        <div class="small text-muted fw-semibold mt-2">{{ __('consultation_specialties.favorites.specialty_suggestions') }}</div><div class="mt-1 d-flex flex-wrap gap-1">
                                                             @foreach($procedureFavorites->take(8) as $favorite)
                                                                 <span class="badge bg-warning-subtle text-warning">{{ $favorite['label'] }}</span>
                                                             @endforeach

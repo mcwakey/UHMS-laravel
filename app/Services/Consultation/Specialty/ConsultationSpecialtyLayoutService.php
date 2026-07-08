@@ -12,6 +12,7 @@ class ConsultationSpecialtyLayoutService
         private readonly ConsultationSpecialtyProfileService $profiles,
         private readonly ConsultationSpecialtySectionComponentRegistry $registry,
         private readonly ConsultationSpecialtySectionSchema $schemas,
+        private readonly ConsultationSpecialtySectionAliasService $aliases,
     ) {}
 
     public function buildLayout(array|ResolvedConsultationSpecialty $specialtyContext, array $existingWorkspacePayload = []): array
@@ -20,11 +21,13 @@ class ConsultationSpecialtyLayoutService
             ? $specialtyContext->toArray()
             : $specialtyContext;
 
+        $profileCode = $context['profile']['code'] ?? null;
+
         $sections = Collection::make($context['sections'] ?? [])
             ->filter(fn ($section) => is_array($section) && ($section['is_visible'] ?? true))
             ->sortBy(fn ($section) => (int) ($section['display_order'] ?? 0))
             ->unique(fn ($section) => (string) ($section['key'] ?? ''))
-            ->map(fn ($section) => $this->normalizeSection($section))
+            ->map(fn ($section) => $this->normalizeSection($section, $profileCode))
             ->values();
 
         if ($sections->isEmpty()) {
@@ -52,7 +55,7 @@ class ConsultationSpecialtyLayoutService
                 'is_required' => $section->is_required,
                 'is_visible' => $section->is_visible,
                 'config' => $section->config ?? [],
-            ]))
+            ], $profile->code))
             ->values()
             ->all();
 
@@ -71,17 +74,19 @@ class ConsultationSpecialtyLayoutService
         ];
     }
 
-    private function normalizeSection(array $section): array
+    private function normalizeSection(array $section, ?string $profileCode = null): array
     {
         $key = (string) ($section['key'] ?? $section['section_key'] ?? '');
+        $canonicalKey = $this->registry->canonicalSectionKey($key);
+        $displayLabel = $profileCode ? $this->aliases->displayLabelFor($profileCode, $canonicalKey) : null;
 
         return [
             'key' => $key,
-            'canonical_key' => $this->registry->canonicalSectionKey($key),
-            'label' => $section['label'] ?? str($key)->replace('_', ' ')->title()->toString(),
-            'translated_label' => $section['translated_label'] ?? __(
+            'canonical_key' => $canonicalKey,
+            'label' => $displayLabel ?? ($section['label'] ?? str($key)->replace('_', ' ')->title()->toString()),
+            'translated_label' => $displayLabel ?? ($section['translated_label'] ?? __(
                 'consultation_specialties.sections.'.$key,
-            ),
+            )),
             'component' => $this->registry->resolveComponent($key, $section['component'] ?? null),
             'display_order' => (int) ($section['display_order'] ?? 0),
             'is_required' => (bool) ($section['is_required'] ?? false),

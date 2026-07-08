@@ -367,8 +367,10 @@ class ConsultationPersonalisedWorkspaceHardeningTest extends TestCase
             ->assertViewHas('specialtyOrderSets')
             ->assertViewHas('specialtyReadiness')
             ->assertViewHas('specialtySummaryBuilder', fn (array $summary) => $summary['available'] === true)
-            ->assertViewHas('doctorSpecialtyWorkspace')
-            ->assertViewHas('specialtyBillingContext', fn (array $billing) => array_key_exists('warnings', $billing));
+            ->assertViewHas('doctorSpecialtyWorkspace');
+
+        // Phase 16.5: the doctor workspace must not receive billing context.
+        $this->assertArrayNotHasKey('specialtyBillingContext', $response->original->getData());
 
         foreach ($case['expected_sections'] as $sectionKey) {
             $this->assertContains($sectionKey, $sectionKeys, "{$case['code']} is missing {$sectionKey}");
@@ -508,7 +510,7 @@ class ConsultationPersonalisedWorkspaceHardeningTest extends TestCase
                 'department_name' => 'Physiotherapy',
                 'department_code' => 'PHY',
                 'department_type' => DepartmentType::TREATMENT,
-                'expected_sections' => ['presenting_problem', 'pain_assessment', 'physical_assessment', 'treatment_plan'],
+                'expected_sections' => ['complaints', 'pain_assessment', 'physical_assessment', 'treatment_plan'],
                 'expected_actions' => ['pain_assessment', 'treatment_plan', 'order_sets'],
                 'representative_section' => 'pain_assessment',
                 'representative_payload' => ['pain_score' => 6, 'pain_location' => 'Lower back'],
@@ -527,7 +529,7 @@ class ConsultationPersonalisedWorkspaceHardeningTest extends TestCase
                 'department_name' => 'Ophthalmology',
                 'department_code' => 'EYE',
                 'department_type' => DepartmentType::CONSULTATION,
-                'expected_sections' => ['eye_complaint', 'visual_acuity', 'eye_examination', 'diagnosis'],
+                'expected_sections' => ['complaints', 'visual_acuity', 'eye_examination', 'diagnosis'],
                 'expected_actions' => ['visual_acuity', 'iop', 'order_sets'],
                 'representative_section' => 'visual_acuity',
                 'representative_payload' => ['right_eye_unaided' => '6/9', 'left_eye_unaided' => '6/12'],
@@ -545,7 +547,7 @@ class ConsultationPersonalisedWorkspaceHardeningTest extends TestCase
                 'department_name' => 'Dental',
                 'department_code' => 'DEN',
                 'department_type' => DepartmentType::CONSULTATION,
-                'expected_sections' => ['dental_complaint', 'tooth_chart', 'oral_examination', 'consent'],
+                'expected_sections' => ['complaints', 'tooth_chart', 'oral_examination', 'consent'],
                 'expected_actions' => ['tooth_chart', 'consent', 'order_sets'],
                 'representative_section' => 'tooth_chart',
                 'representative_payload' => ['tooth_number' => '36', 'condition' => 'Caries'],
@@ -564,7 +566,7 @@ class ConsultationPersonalisedWorkspaceHardeningTest extends TestCase
                 'department_name' => 'Obstetrics',
                 'department_code' => 'OBS',
                 'department_type' => DepartmentType::CONSULTATION,
-                'expected_sections' => ['obstetric_history', 'current_pregnancy', 'fetal_assessment', 'birth_plan'],
+                'expected_sections' => ['complaints', 'obstetric_history', 'current_pregnancy', 'fetal_assessment', 'birth_plan'],
                 'expected_actions' => ['obstetric_history', 'fetal_assessment', 'order_sets'],
                 'representative_section' => 'antenatal_vitals',
                 'representative_payload' => ['blood_pressure' => '120/80', 'weight' => 72],
@@ -584,7 +586,7 @@ class ConsultationPersonalisedWorkspaceHardeningTest extends TestCase
                 'department_name' => 'Gynecology',
                 'department_code' => 'GYN',
                 'department_type' => DepartmentType::CONSULTATION,
-                'expected_sections' => ['gyne_complaint', 'menstrual_history', 'pelvic_examination', 'breast_examination'],
+                'expected_sections' => ['complaints', 'menstrual_history', 'pelvic_examination', 'breast_examination'],
                 'expected_actions' => ['gyne_complaint', 'pelvic_examination', 'order_sets'],
                 'representative_section' => 'menstrual_history',
                 'representative_payload' => ['cycle_length' => '28 days', 'bleeding_pattern' => 'Regular'],
@@ -602,7 +604,7 @@ class ConsultationPersonalisedWorkspaceHardeningTest extends TestCase
                 'department_name' => 'ENT',
                 'department_code' => 'ENT',
                 'department_type' => DepartmentType::CONSULTATION,
-                'expected_sections' => ['ent_complaint', 'ear_assessment', 'nose_assessment', 'throat_assessment'],
+                'expected_sections' => ['complaints', 'ear_assessment', 'nose_assessment', 'throat_assessment'],
                 'expected_actions' => ['ent_complaint', 'ear_assessment', 'order_sets'],
                 'representative_section' => 'ear_assessment',
                 'representative_payload' => ['ear_pain' => true, 'otoscopy_right' => 'Inflamed canal'],
@@ -619,7 +621,7 @@ class ConsultationPersonalisedWorkspaceHardeningTest extends TestCase
                 'department_name' => 'Pediatrics',
                 'department_code' => 'PED',
                 'department_type' => DepartmentType::CONSULTATION,
-                'expected_sections' => ['pediatric_complaint', 'growth_assessment', 'immunization_status', 'caregiver_instructions'],
+                'expected_sections' => ['complaints', 'growth_assessment', 'immunization_status', 'caregiver_instructions'],
                 'expected_actions' => ['pediatric_complaint', 'growth_assessment', 'order_sets'],
                 'representative_section' => 'growth_assessment',
                 'representative_payload' => ['weight' => 18.5, 'growth_concern' => 'No concerns'],
@@ -656,7 +658,7 @@ class ConsultationPersonalisedWorkspaceHardeningTest extends TestCase
                 'department_name' => 'Orthopedics',
                 'department_code' => 'ORT',
                 'department_type' => DepartmentType::CONSULTATION,
-                'expected_sections' => ['ortho_complaint', 'joint_limb_examination', 'neurovascular_status', 'cast_splint_plan'],
+                'expected_sections' => ['complaints', 'joint_limb_examination', 'neurovascular_status', 'cast_splint_plan'],
                 'expected_actions' => ['ortho_complaint', 'neurovascular_status', 'order_sets'],
                 'representative_section' => 'neurovascular_status',
                 'representative_payload' => ['pulse_present' => true, 'capillary_refill' => 'Less than 2 seconds'],
@@ -675,8 +677,8 @@ class ConsultationPersonalisedWorkspaceHardeningTest extends TestCase
                 'department_name' => 'Surgery',
                 'department_code' => 'SUR',
                 'department_type' => DepartmentType::CONSULTATION,
-                'expected_sections' => ['surgical_complaint', 'wound_assessment', 'local_or_abdominal_exam', 'consent'],
-                'expected_actions' => ['surgical_complaint', 'procedure_plan', 'order_sets'],
+                'expected_sections' => ['complaints', 'wound_assessment', 'local_or_abdominal_exam', 'consent'],
+                'expected_actions' => ['surgical_complaint', 'procedures', 'order_sets'],
                 'representative_section' => 'consent',
                 'representative_payload' => ['consent_required' => true, 'consent_obtained' => true, 'consent_type' => 'Debridement'],
                 'reload_needles' => ['Debridement'],

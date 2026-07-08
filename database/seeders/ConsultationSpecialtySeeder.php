@@ -11,7 +11,7 @@ use Illuminate\Database\Seeder;
 class ConsultationSpecialtySeeder extends Seeder
 {
     /**
-     * @var array<string, array{name: string, description: string, department_type: string, icon: string, color: string, sort_order: int, sections: array<int, string>}>
+     * @var array<string, array{name: string, description: string, department_type: string, icon: string, color: string, sort_order: int, sections: array<int, string>, legacy_sections?: array<int, string>, complaint_label?: string}>
      */
     private array $profiles = [
         'general_medicine' => [
@@ -45,7 +45,7 @@ class ConsultationSpecialtySeeder extends Seeder
             'sort_order' => 10,
             'sections' => [
                 'patient_summary',
-                'presenting_problem',
+                'complaints',
                 'pain_assessment',
                 'functional_limitation',
                 'physical_assessment',
@@ -57,6 +57,10 @@ class ConsultationSpecialtySeeder extends Seeder
                 'summary',
                 'completion_readiness',
             ],
+            'legacy_sections' => [
+                'presenting_problem',
+            ],
+            'complaint_label' => 'Presenting Problem',
         ],
         'ophthalmology' => [
             'name' => 'Ophthalmology',
@@ -67,7 +71,7 @@ class ConsultationSpecialtySeeder extends Seeder
             'sort_order' => 20,
             'sections' => [
                 'patient_summary',
-                'eye_complaint',
+                'complaints',
                 'visual_acuity',
                 'refraction',
                 'iop',
@@ -80,6 +84,10 @@ class ConsultationSpecialtySeeder extends Seeder
                 'summary',
                 'completion_readiness',
             ],
+            'legacy_sections' => [
+                'eye_complaint',
+            ],
+            'complaint_label' => 'Eye Complaint',
         ],
         'dental' => [
             'name' => 'Dental',
@@ -90,18 +98,25 @@ class ConsultationSpecialtySeeder extends Seeder
             'sort_order' => 30,
             'sections' => [
                 'patient_summary',
-                'dental_complaint',
+                'complaints',
                 'tooth_chart',
                 'oral_examination',
-                'dental_diagnosis',
-                'dental_xray',
-                'dental_procedures',
+                'diagnosis',
+                'investigations',
+                'procedures',
                 'consent',
                 'prescription',
                 'follow_up',
                 'summary',
                 'completion_readiness',
             ],
+            'legacy_sections' => [
+                'dental_diagnosis',
+                'dental_xray',
+                'dental_procedures',
+                'dental_complaint',
+            ],
+            'complaint_label' => 'Dental Complaint',
         ],
         'obstetrics' => [
             'name' => 'Obstetrics / Antenatal',
@@ -112,14 +127,14 @@ class ConsultationSpecialtySeeder extends Seeder
             'sort_order' => 40,
             'sections' => [
                 'patient_summary',
+                'complaints',
                 'obstetric_history',
                 'current_pregnancy',
                 'lmp_edd_gestational_age',
                 'antenatal_vitals',
                 'fetal_assessment',
                 'risk_assessment',
-                'ultrasound_findings',
-                'lab_screening',
+                'investigations',
                 'diagnosis',
                 'prescription',
                 'birth_plan',
@@ -127,6 +142,11 @@ class ConsultationSpecialtySeeder extends Seeder
                 'summary',
                 'completion_readiness',
             ],
+            'legacy_sections' => [
+                'ultrasound_findings',
+                'lab_screening',
+            ],
+            'complaint_label' => 'Current Complaint',
         ],
         'gynecology' => [
             'name' => 'Gynecology',
@@ -137,7 +157,7 @@ class ConsultationSpecialtySeeder extends Seeder
             'sort_order' => 50,
             'sections' => [
                 'patient_summary',
-                'gyne_complaint',
+                'complaints',
                 'menstrual_history',
                 'obstetric_history',
                 'contraceptive_history',
@@ -152,6 +172,10 @@ class ConsultationSpecialtySeeder extends Seeder
                 'summary',
                 'completion_readiness',
             ],
+            'legacy_sections' => [
+                'gyne_complaint',
+            ],
+            'complaint_label' => 'Gyne Complaint',
         ],
         'ent' => [
             'name' => 'ENT',
@@ -162,7 +186,7 @@ class ConsultationSpecialtySeeder extends Seeder
             'sort_order' => 60,
             'sections' => [
                 'patient_summary',
-                'ent_complaint',
+                'complaints',
                 'ear_assessment',
                 'nose_assessment',
                 'throat_assessment',
@@ -176,6 +200,10 @@ class ConsultationSpecialtySeeder extends Seeder
                 'summary',
                 'completion_readiness',
             ],
+            'legacy_sections' => [
+                'ent_complaint',
+            ],
+            'complaint_label' => 'ENT Complaint',
         ],
         'pediatrics' => [
             'name' => 'Pediatrics',
@@ -186,7 +214,7 @@ class ConsultationSpecialtySeeder extends Seeder
             'sort_order' => 70,
             'sections' => [
                 'patient_summary',
-                'pediatric_complaint',
+                'complaints',
                 'birth_history',
                 'feeding_history',
                 'growth_assessment',
@@ -201,6 +229,10 @@ class ConsultationSpecialtySeeder extends Seeder
                 'summary',
                 'completion_readiness',
             ],
+            'legacy_sections' => [
+                'pediatric_complaint',
+            ],
+            'complaint_label' => 'Pediatric Complaint',
         ],
         'emergency' => [
             'name' => 'Emergency / Casualty',
@@ -212,20 +244,27 @@ class ConsultationSpecialtySeeder extends Seeder
             'sections' => [
                 'patient_summary',
                 'triage_summary',
-                'emergency_complaint',
+                'complaints',
                 'primary_survey',
                 'vitals_monitoring',
                 'trauma_assessment',
                 'emergency_interventions',
                 'diagnosis',
-                'urgent_investigations',
-                'urgent_procedures',
-                'medications_given',
+                'investigations',
+                'procedures',
+                'prescription',
                 'disposition',
                 'handover',
                 'summary',
                 'completion_readiness',
             ],
+            'legacy_sections' => [
+                'urgent_investigations',
+                'urgent_procedures',
+                'medications_given',
+                'emergency_complaint',
+            ],
+            'complaint_label' => 'Emergency Complaint',
         ],
         'orthopedics' => [
             'name' => 'Orthopedics',
@@ -236,20 +275,26 @@ class ConsultationSpecialtySeeder extends Seeder
             'sort_order' => 90,
             'sections' => [
                 'patient_summary',
-                'ortho_complaint',
+                'complaints',
                 'injury_history',
                 'pain_mobility_assessment',
                 'joint_limb_examination',
                 'neurovascular_status',
-                'imaging',
+                'investigations',
                 'diagnosis',
-                'procedure_plan',
+                'procedures',
                 'cast_splint_plan',
                 'prescription',
                 'follow_up',
                 'summary',
                 'completion_readiness',
             ],
+            'legacy_sections' => [
+                'imaging',
+                'procedure_plan',
+                'ortho_complaint',
+            ],
+            'complaint_label' => 'Ortho Complaint',
         ],
         'surgery' => [
             'name' => 'Surgery / Surgical OPD',
@@ -260,13 +305,13 @@ class ConsultationSpecialtySeeder extends Seeder
             'sort_order' => 100,
             'sections' => [
                 'patient_summary',
-                'surgical_complaint',
+                'complaints',
                 'surgical_history',
                 'wound_assessment',
                 'local_or_abdominal_exam',
                 'diagnosis',
                 'investigations',
-                'procedure_plan',
+                'procedures',
                 'consent',
                 'theatre_referral',
                 'post_op_instructions',
@@ -274,6 +319,11 @@ class ConsultationSpecialtySeeder extends Seeder
                 'summary',
                 'completion_readiness',
             ],
+            'legacy_sections' => [
+                'procedure_plan',
+                'surgical_complaint',
+            ],
+            'complaint_label' => 'Surgical Complaint',
         ],
     ];
 
@@ -297,13 +347,35 @@ class ConsultationSpecialtySeeder extends Seeder
             $seededProfiles[$code] = $profile;
 
             foreach ($definition['sections'] as $index => $sectionKey) {
+                // Phase 16.6: the canonical `complaints` section keeps a
+                // profile-specific display label (e.g. "Eye Complaint")
+                // instead of the generic title-cased key.
+                $label = $sectionKey === 'complaints' && isset($definition['complaint_label'])
+                    ? $definition['complaint_label']
+                    : $this->labelFor($sectionKey);
+
+                $profile->sections()->updateOrCreate(
+                    ['section_key' => $sectionKey],
+                    [
+                        'label' => $label,
+                        'display_order' => ($index + 1) * 10,
+                        'is_required' => $sectionKey === 'patient_summary',
+                        'is_visible' => true,
+                    ],
+                );
+            }
+
+            // Phase 16.5: legacy duplicate sections stay in the database for
+            // saved-entry compatibility but are hidden from the doctor
+            // workspace. Re-seeding must never resurrect them.
+            foreach ($definition['legacy_sections'] ?? [] as $index => $sectionKey) {
                 $profile->sections()->updateOrCreate(
                     ['section_key' => $sectionKey],
                     [
                         'label' => $this->labelFor($sectionKey),
-                        'display_order' => ($index + 1) * 10,
-                        'is_required' => $sectionKey === 'patient_summary',
-                        'is_visible' => true,
+                        'display_order' => 900 + ($index + 1) * 10,
+                        'is_required' => false,
+                        'is_visible' => false,
                     ],
                 );
             }

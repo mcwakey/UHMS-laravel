@@ -81,6 +81,10 @@ class ConsultationSpecialtySummaryBuilder
     {
         $content = match ($section['formatter']) {
             'complaints' => $this->formatter->complaints((array) data_get($sources, $section['source'], [])),
+            'complaints_plus_entry' => $this->formatter->sentenceList([
+                $this->formatter->complaints((array) data_get($sources, $section['source'], [])),
+                $this->formatter->keyValue((array) data_get($sources, $section['extra_source'] ?? '', [])),
+            ]),
             'diagnoses' => $this->formatter->diagnoses((array) data_get($sources, $section['source'], [])),
             'investigations' => $this->formatter->investigations((array) data_get($sources, $section['source'], [])),
             'procedures' => $this->formatter->procedures((array) data_get($sources, $section['source'], [])),
@@ -90,6 +94,7 @@ class ConsultationSpecialtySummaryBuilder
             'entry_plus_diagnoses' => $this->combined($sources, $section, fn ($extra) => $this->formatter->diagnoses((array) $extra)),
             'entry_plus_investigations' => $this->combined($sources, $section, fn ($extra) => $this->formatter->investigations((array) $extra)),
             'entry_plus_procedures' => $this->combined($sources, $section, fn ($extra) => $this->formatter->procedures((array) $extra)),
+            'entry_plus_prescriptions' => $this->combined($sources, $section, fn ($extra) => $this->formatter->prescriptions((array) $extra)),
             'key_value_list' => $this->keyValueList((array) data_get($sources, $section['source'], [])),
             default => $this->formatter->keyValue((array) data_get($sources, $section['source'], [])),
         };

@@ -1,433 +1,425 @@
 You are working on the UHMS Laravel codebase.
 
-Phase 14A fixed the test runtime memory cap. The wide suite now completes without the old `Allowed memory size of 134217728 bytes exhausted` fatal error.
+Phase 15 is complete. Specialist reporting and dashboard integration has been implemented and the full suite is green.
 
-Current full-suite result:
+Current personalised consultation profiles:
 
 ```text
-20 failed, 1395 passed, 7065 assertions
+general_medicine
+physiotherapy
+ophthalmology
+dental
+obstetrics
+gynecology
+ent
+pediatrics
+emergency
+orthopedics
+surgery
 ```
 
-The remaining failures are real application/test assertion failures, not runtime memory failures.
+The system now supports:
 
-This phase is:
+```text
+specialty profiles
+specialty sections
+structured forms
+favorites
+order sets
+readiness
+summary builder
+doctor personal workspace
+admin configuration
+billing/service mapping
+reporting/dashboard analytics
+CSV export
+full-suite green baseline
+```
 
-# Phase 14B — Wide Suite Failure Cleanup
+Now implement:
+
+# Phase 16 — Specialist Browser Fixtures, Visual QA, and UAT Pack
 
 ## Goal
 
-Fix the 20 remaining full-suite failures exposed after the test runtime memory issue was resolved.
+Create a practical browser/manual testing foundation for all personalised consultation workspaces.
 
-This is a bug-fix and regression cleanup phase.
+This phase should make it easy to open each specialty workspace in the browser and verify that the real UI behaves correctly.
 
-Do not add new features.
+This is not a new clinical feature phase.
 
-Do not rewrite modules.
-
-Do not skip or hide failing tests unless a test is proven obsolete and the report explains why.
-
----
-
-# Remaining Failure Groups
-
-The Phase 14A report listed these remaining failures:
+The goal is:
 
 ```text
-ActivityLogContextTest
-AsyncPageBehaviorTest
-AuthTest
-BillingEnhancementsTest
-ConsultationClinicalSectionsTest
-InertiaBridgeLeakGuardTest
-LegacyInertiaBridgeTest
-PatientManagementTest
-PatientMergeTest
-Stage2NeedsReviewLogTest
-WorkflowJsonResponsesTest
+seed realistic opt-in test data
+create browser fixtures for representative specialist workspaces
+expand Playwright coverage safely
+prepare a manual UAT checklist
+validate responsive UI and no-console-error behavior
+keep the full suite green
 ```
-
-Treat them in priority order.
 
 ---
 
 # Important Rules
 
-Do not change personalised consultation workspace behavior unless a failure directly proves a regression.
+Do not modify default production seeders in a way that creates fake clinical data.
 
-Do not weaken security, audit, masking, billing, or patient validation behavior just to satisfy tests.
+Do not create fake invoices or patient records in default launch seeders.
 
-Do not remove route/middleware/permission protection.
+All browser/manual test data must be opt-in and clearly marked as testing/demo data.
 
-Do not skip tests.
+Do not rewrite the consultation workspace.
 
-Do not use broad snapshots as a shortcut.
+Do not create separate specialty pages/controllers.
 
-Fix root causes.
+Do not change clinical save behavior.
 
-Where a test expectation is genuinely outdated because the intended behavior changed, update the test with a clear explanation in the report.
+Do not change billing apply behavior.
 
----
+Do not run destructive operations against non-testing environments.
 
-# Required Work
-
-## 1. Reproduce Failures Individually
-
-Run each failing test class/file individually first.
-
-Suggested commands:
-
-```bash
-php artisan test tests/Feature/ActivityLogContextTest.php
-php artisan test tests/Feature/AsyncPageBehaviorTest.php
-php artisan test tests/Feature/AuthTest.php
-php artisan test tests/Feature/BillingEnhancementsTest.php
-php artisan test tests/Feature/Consultations/ConsultationClinicalSectionsTest.php
-php artisan test tests/Feature/InertiaBridgeLeakGuardTest.php
-php artisan test tests/Feature/LegacyInertiaBridgeTest.php
-php artisan test tests/Feature/PatientManagementTest.php
-php artisan test tests/Feature/PatientMergeTest.php
-php artisan test tests/Feature/Stage2NeedsReviewLogTest.php
-php artisan test tests/Feature/WorkflowJsonResponsesTest.php
-```
-
-If file paths differ, locate them with `rg`.
-
-Capture exact failing assertions/errors before fixing.
+Do not add a huge slow browser suite. Keep it representative and stable.
 
 ---
 
-## 2. Fix User-Facing 500 First
+# Required Deliverables
 
-### AsyncPageBehaviorTest
+## 1. Inspect Existing Browser Fixture Pattern
 
-Reported issue:
+Inspect existing consultation E2E/browser fixture code.
+
+Look for:
 
 ```text
-appointment show page crashes when PatientJourneyService::snapshot() receives a null visit
+ConsultationBrowserFixtureService
+ConsultationE2EFixtureCommand
+consultation:e2e-fixture
+tests-e2e/tests/consultation-workspace.spec.ts
+Playwright auth/session setup
+fixture metadata format
+test users
+test departments
+test visits/routes
 ```
 
-Expected fix:
-
-* Inspect appointment show page/controller/view.
-* Inspect `PatientJourneyService::snapshot()`.
-* If appointment has no visit yet, page should not crash.
-* Return a safe empty journey snapshot or hide the journey widget.
-* Add/adjust test that appointment show page renders when visit is null.
-* Do not fabricate a visit just to avoid null.
-* Do not weaken patient journey behavior for real visits.
-
-Acceptance:
-
-```bash
-php artisan test tests/Feature/AsyncPageBehaviorTest.php
-```
-
-passes.
+Document the current fixture behavior in the report.
 
 ---
 
-## 3. Fix Navigation/Auth Regression
+## 2. Add Specialist Browser Fixture Support
 
-### AuthTest
-
-Reported issue:
+Extend the existing fixture service/command or add a focused service:
 
 ```text
-doctor login redirects to admin/my-dashboard instead of doctor.dashboard
+app/Services/Consultation/Specialty/ConsultationSpecialtyBrowserFixtureService.php
 ```
 
-Expected fix:
+Only add a new service if it keeps the existing fixture clean.
 
-* Inspect login redirect logic.
-* Inspect role/permission dashboard routing.
-* Decide intended behavior:
+The fixture should be opt-in and available only in local/testing environments.
 
-  * If doctor should go to doctor dashboard, fix redirect logic.
-  * If UHMS now intentionally routes all clinical users to `admin/my-dashboard`, update the test only if the new behavior is documented and accepted.
-* Prefer preserving role-specific dashboard expectations unless the project already standardized on `admin/my-dashboard`.
-
-Acceptance:
+Suggested command:
 
 ```bash
-php artisan test tests/Feature/AuthTest.php
+php artisan consultation:specialty-e2e-fixture --json
 ```
 
-passes.
+or extend existing:
+
+```bash
+php artisan consultation:e2e-fixture --specialties --json
+```
+
+The command should create or return fixture metadata for these representative profiles:
+
+```text
+general_medicine
+physiotherapy
+ophthalmology
+dental
+obstetrics
+ent
+pediatrics
+emergency
+surgery
+```
+
+Optional, if easy:
+
+```text
+gynecology
+orthopedics
+```
+
+Fixture metadata should include:
+
+```json
+{
+  "login_url": "...",
+  "workspace_url": "...",
+  "profile_code": "...",
+  "profile_label": "...",
+  "doctor_email": "...",
+  "doctor_password": "...",
+  "patient_number": "...",
+  "visit_id": "...",
+  "route_id": "...",
+  "expected_sections": [],
+  "expected_quick_actions": [],
+  "expected_structured_section": "..."
+}
+```
+
+Rules:
+
+* Use stable test users.
+* Use stable departments mapped to specialty profiles.
+* Create visit/consultation route/session per profile.
+* Use existing factories/models where possible.
+* Mark records with testing metadata where available.
+* Do not create billing charges unless explicitly safe and already supported by test patterns.
+* If service mappings exist, expose billing context but do not apply charges automatically.
 
 ---
 
-## 4. Fix Inertia/Async Bridge Regressions
+## 3. Seed Representative Structured Entries
 
-### InertiaBridgeLeakGuardTest
+For each fixture profile, seed one or two representative entries so the browser can verify reload behavior.
 
-Reported issue:
-
-```text
-several Blade views still use direct location.reload() or window.location.href
-```
-
-Expected fix:
-
-* Locate direct uses of:
-
-  * `location.reload()`
-  * `window.location.reload()`
-  * `window.location.href`
-  * inline navigation patterns forbidden by the guard
-* Replace with existing project-safe bridge/helper pattern.
-* If some location usage is legitimate, update allowlist narrowly with explanation.
-* Do not introduce new inline event handlers.
-
-Acceptance:
-
-```bash
-php artisan test tests/Feature/InertiaBridgeLeakGuardTest.php
-```
-
-passes.
-
-### LegacyInertiaBridgeTest
-
-Reported issue:
+Examples:
 
 ```text
-complaint, diagnosis, and treatment legacy submissions no longer match expected redirect/session/json behavior
+physiotherapy: pain assessment
+ophthalmology: visual acuity
+dental: tooth chart
+obstetrics: antenatal vitals
+ent: ear assessment
+pediatrics: growth assessment
+emergency: primary survey
+surgery: consent
 ```
 
-Expected fix:
+Also create at least one incomplete case where readiness blockers are visible.
 
-* Inspect legacy submission endpoints.
-* Restore expected response behavior:
-
-  * normal form submit redirects with session flash/errors
-  * JSON/Ajax submit returns expected JSON payload/status
-  * route context is preserved
-* Do not break current consultation Ajax flows.
-* Add small regression coverage if needed.
-
-Acceptance:
-
-```bash
-php artisan test tests/Feature/LegacyInertiaBridgeTest.php
-```
-
-passes.
+Do not over-seed.
 
 ---
 
-## 5. Fix Consultation Clinical Section Regression
+## 4. Expand Playwright Browser Smoke
 
-### ConsultationClinicalSectionsTest
-
-Reported issue:
+Create:
 
 ```text
-expected HOPC section ordering is missing
+tests-e2e/tests/consultation-specialty-workspaces.spec.ts
 ```
 
-Expected fix:
+Keep the existing general consultation smoke intact.
 
-* Inspect consultation layout ordering after personalised workspace work.
-* Ensure general medicine still includes HOPC in the expected order.
-* Ensure sidebar/core section markers still expose HOPC where older tests expect it.
-* If test expects literal text/key that has been renamed, preserve backward-compatible alias.
-* Do not remove personalised section ordering.
+The new smoke test should be data-driven.
 
-Acceptance:
+For each selected profile fixture:
 
-```bash
-php artisan test tests/Feature/Consultations/ConsultationClinicalSectionsTest.php
-php artisan test tests/Feature/Consultations
+```text
+login as fixture doctor
+open workspace URL
+confirm no console/server errors
+confirm profile label/header appears
+confirm sidebar sections render
+confirm at least one expected quick action appears
+click one quick action
+confirm target section becomes active/visible
+save one structured field
+refresh page
+confirm saved value reloads
+open readiness card/section
+generate summary preview
+if order sets exist, open preview for one order set
+confirm billing card/context does not crash
 ```
 
-pass.
+Profiles to cover at minimum:
+
+```text
+general_medicine
+physiotherapy
+ophthalmology
+dental
+obstetrics
+ent
+pediatrics
+emergency
+surgery
+```
+
+If runtime becomes too slow, split into two Playwright projects or mark as specialist smoke and run separately.
+
+Do not make this flaky.
+
+Use stable selectors.
+
+Avoid relying on text that is too translation-sensitive unless the fixture sets locale.
 
 ---
 
-## 6. Fix Billing View Regression
+## 5. Add Responsive Smoke Checks
 
-### BillingEnhancementsTest
-
-Reported issue:
+For at least these viewports:
 
 ```text
-invoice page still renders Payment History
+desktop
+tablet
+mobile
 ```
 
-Expected fix:
+Run representative profiles:
 
-* Inspect intended billing UI from the test.
-* If “Payment History” should have been replaced/hidden, update the Blade view.
-* If it is still intended to display, update test only if accepted behavior changed and document it.
-* Make sure credit notes/write-offs/discount/sponsor behavior is not broken.
-
-Acceptance:
-
-```bash
-php artisan test tests/Feature/BillingEnhancementsTest.php
+```text
+general_medicine
+obstetrics
+emergency
+dental
 ```
 
-passes.
+Check:
+
+```text
+workspace header does not overlap
+sidebar/tabs are usable
+structured form fields are accessible
+right panel/readiness card remains reachable
+modal closes correctly
+no horizontal layout break that hides critical actions
+```
+
+Keep these checks light.
 
 ---
 
-## 7. Fix Patient Management Regressions
+## 6. Add Manual UAT Checklist
 
-### PatientManagementTest
-
-Reported issues:
+Create:
 
 ```text
-patient create form fields
-patient creation flow
-insurance registration
-doctor summary update assertions
+docs/CONSULTATION_SPECIALIST_WORKSPACE_UAT_CHECKLIST.md
 ```
 
-Expected fix:
+The checklist should be usable by non-developer testers.
 
-* Inspect patient create/edit/show forms.
-* Restore expected form field names/labels/inputs.
-* Fix patient creation validation/redirect/session behavior.
-* Fix insurance registration flow if field names or relationship changed.
-* Fix doctor summary update route or test expectation.
-* Do not break current patient registration behavior.
-
-Acceptance:
-
-```bash
-php artisan test tests/Feature/PatientManagementTest.php
-```
-
-passes.
-
-### PatientMergeTest
-
-Reported issue:
+Include sections:
 
 ```text
-merge index/compare page assertions fail
+Test preparation
+Login credentials / fixture command
+How to open each specialty workspace
+General medicine checklist
+Physiotherapy checklist
+Ophthalmology checklist
+Dental checklist
+Obstetrics checklist
+Gynecology checklist
+ENT checklist
+Pediatrics checklist
+Emergency checklist
+Orthopedics checklist
+Surgery checklist
+Billing awareness checklist
+Readiness checklist
+Summary builder checklist
+Order set checklist
+Reporting dashboard checklist
+Responsive/mobile checklist
+Bug reporting template
+Pass/fail sign-off table
 ```
 
-Expected fix:
+Each specialty checklist should include:
 
-* Inspect patient merge index/compare views.
-* Restore expected content/links/forms.
-* Ensure merge pages render without crash.
-* Do not change merge semantics unless the current implementation is incorrect.
-
-Acceptance:
-
-```bash
-php artisan test tests/Feature/PatientMergeTest.php
+```text
+workspace opens
+correct specialty name appears
+expected sections appear
+quick actions work
+structured field saves
+value reloads after refresh
+readiness shows correct status
+summary preview generates
+order set preview works
+billing card does not crash
+no console/page error
 ```
-
-passes.
 
 ---
 
-## 8. Fix Audit/Logging Regressions
+## 7. Add Visual QA Notes
 
-### ActivityLogContextTest
-
-Reported issue:
+Create or include in the UAT checklist:
 
 ```text
-sensitive phone masking expectation changed
+docs/CONSULTATION_SPECIALIST_VISUAL_QA_NOTES.md
 ```
 
-Expected fix:
+or combine with the UAT checklist.
 
-* Inspect masking helper/service.
-* Confirm intended masking policy.
-* For phone numbers, apply consistent masking in activity log context.
-* Do not expose full sensitive phone numbers.
-* Update test only if the new masking policy is better and documented.
-
-Acceptance:
-
-```bash
-php artisan test tests/Feature/ActivityLogContextTest.php
-```
-
-passes.
-
-### Stage2NeedsReviewLogTest
-
-Reported issue:
+Document:
 
 ```text
-logs audit still reports 2 NEEDS_REVIEW items
+expected workspace header behavior
+section/sidebar behavior
+card spacing
+empty states
+mobile behavior
+known acceptable limitations
+screens that need future redesign
 ```
 
-Expected fix:
-
-* Run the logs audit command/test.
-* Inspect the two remaining `NEEDS_REVIEW` log items.
-* Either:
-
-  * add proper module/action mapping, or
-  * add a justified allowlist entry if genuinely acceptable.
-* Do not suppress real audit gaps.
-
-Acceptance:
-
-```bash
-php artisan test tests/Feature/Stage2NeedsReviewLogTest.php
-```
-
-passes.
+Do not redesign everything in this phase. Only fix clear breakages.
 
 ---
 
-## 9. Fix Workflow JSON Regression
+## 8. Admin Setup Verification
 
-### WorkflowJsonResponsesTest
+Add browser or feature-level verification that admin can inspect the profiles.
 
-Reported issue:
+At minimum:
 
 ```text
-triage assessment page still exposes the unbilled Radiology department
+profiles list shows all 11 profiles
+sections page opens for each profile
+favorites page opens
+order sets page opens
+service mappings page opens
+report page opens
 ```
 
-Expected fix:
-
-* Inspect triage assessment JSON/page payload.
-* Ensure unbilled Radiology department is not exposed where test expects filtered departments.
-* Preserve legitimate radiology workflow elsewhere.
-* Do not globally hide Radiology.
-
-Acceptance:
-
-```bash
-php artisan test tests/Feature/WorkflowJsonResponsesTest.php
-```
-
-passes.
+This can remain feature-test coverage if browser coverage would be too slow.
 
 ---
 
-# 10. Run Focused Regression Matrix
+## 9. Reporting Browser Smoke
 
-After fixing individual failures, run:
+Add a small browser smoke for the specialist report page:
 
-```bash
-php artisan test tests/Feature/ActivityLogContextTest.php
-php artisan test tests/Feature/AsyncPageBehaviorTest.php
-php artisan test tests/Feature/AuthTest.php
-php artisan test tests/Feature/BillingEnhancementsTest.php
-php artisan test tests/Feature/Consultations/ConsultationClinicalSectionsTest.php
-php artisan test tests/Feature/InertiaBridgeLeakGuardTest.php
-php artisan test tests/Feature/LegacyInertiaBridgeTest.php
-php artisan test tests/Feature/PatientManagementTest.php
-php artisan test tests/Feature/PatientMergeTest.php
-php artisan test tests/Feature/Stage2NeedsReviewLogTest.php
-php artisan test tests/Feature/WorkflowJsonResponsesTest.php
+```text
+login as admin
+open /admin/reports/consultation-specialties
+confirm summary cards render
+apply a specialty/date filter
+confirm table/chart area remains visible
+trigger CSV export request or verify export link exists
 ```
 
-Then run:
+Do not deeply test analytics in browser. Feature tests already cover metrics.
+
+---
+
+## 10. Stability and Test Commands
+
+Run:
 
 ```bash
+php artisan migrate
+php artisan db:seed --class=ConsultationSpecialtySeeder
 php artisan test tests/Feature/Consultations
 php artisan test tests/Feature/ConsultationWorkspaceStabilisationTest.php
 php artisan test tests/Feature/System/RouteLoadMemoryTest.php
@@ -437,32 +429,44 @@ php artisan view:clear
 npm run build
 ```
 
-Then run the wide suite:
+Run Playwright:
+
+```bash
+cd tests-e2e
+npx playwright test tests/consultation-workspace.spec.ts
+npx playwright test tests/consultation-specialty-workspaces.spec.ts
+```
+
+If the project path expects Playwright from root, use the existing project convention.
+
+Then run full suite:
 
 ```bash
 php artisan test
 ```
 
+If full suite fails, document honestly and classify failures.
+
 ---
 
-# 11. Create Report
+## 11. Report
 
 Create:
 
 ```text
-docs/UHMS_WIDE_SUITE_FAILURE_CLEANUP_REPORT.md
+docs/CONSULTATION_SPECIALIST_BROWSER_UAT_REPORT.md
 ```
 
 The report must include:
 
 ```text
-# UHMS Wide Suite Failure Cleanup Report
+# Consultation Specialist Browser UAT Report
 
 ## Summary
-Explain what was fixed.
+Explain what was implemented and validated.
 
-## Initial Failure Baseline
-List the 20 failing tests/classes from Phase 14A.
+## Existing Browser Fixture Findings
+Document the existing fixture/Playwright setup.
 
 ## Files Added
 List new files.
@@ -470,74 +474,63 @@ List new files.
 ## Files Modified
 List modified files.
 
-## Fixes By Failure Group
+## Fixture Design
+Explain command/service, profiles covered, test users, departments, visits/routes, and metadata.
 
-### ActivityLogContextTest
-Cause, fix, result.
+## Browser Coverage
+List Playwright files and profiles covered.
 
-### AsyncPageBehaviorTest
-Cause, fix, result.
+## Responsive Coverage
+List profiles/viewports checked.
 
-### AuthTest
-Cause, fix, result.
+## Manual UAT Checklist
+Link to checklist and summarize content.
 
-### BillingEnhancementsTest
-Cause, fix, result.
+## Report Page Smoke
+Explain specialist reporting browser coverage.
 
-### ConsultationClinicalSectionsTest
-Cause, fix, result.
-
-### InertiaBridgeLeakGuardTest
-Cause, fix, result.
-
-### LegacyInertiaBridgeTest
-Cause, fix, result.
-
-### PatientManagementTest
-Cause, fix, result.
-
-### PatientMergeTest
-Cause, fix, result.
-
-### Stage2NeedsReviewLogTest
-Cause, fix, result.
-
-### WorkflowJsonResponsesTest
-Cause, fix, result.
+## Defects Found and Fixed
+List any UI/Blade/JS/responsive/selector issues fixed.
 
 ## Test Results
-List focused commands and results.
+Include all command results.
 
 ## Full Suite Result
 Include final `php artisan test` result.
 
 ## Backward Compatibility
-Confirm personalised consultation workspace, billing mapping, admin configuration, patient management, auth, and audit behavior remain stable.
+Confirm consultation workspace, specialist reporting, billing, admin config, and patient workflows remain stable.
 
 ## Known Issues / Follow-up
-List any remaining failures honestly.
+List:
+- deeper specialist browser coverage if deferred
+- advanced visual redesign needs
+- future mobile polish
+- specialist fixtures for gynecology/orthopedics if not covered
+- future partograph/odontogram/growth-chart feature work
 ```
 
 ---
 
 # Acceptance Criteria
 
-Phase 14B is complete only when:
+Phase 16 is complete only when:
 
-* Each previously failing test class has been reproduced and addressed.
-* User-facing 500 is fixed.
-* Auth redirect behavior is corrected or documented.
-* Inertia bridge guard passes.
-* Patient management tests pass.
-* Patient merge tests pass.
-* Audit/masking tests pass.
-* Workflow JSON test passes.
-* Consultation focused tests still pass.
-* Workspace stabilisation still passes.
-* Route memory test still passes.
+* Specialist browser fixture command/service exists or existing fixture supports specialist profiles.
+* Browser fixture metadata is available for representative profiles.
+* Playwright specialist workspace smoke exists.
+* General consultation smoke remains green.
+* At least 9 profiles are covered in browser smoke or clearly documented if fewer are covered.
+* Responsive smoke covers desktop/tablet/mobile for representative profiles.
+* Manual UAT checklist exists.
+* Specialist report page browser smoke exists.
+* Admin/profile setup remains accessible.
+* Focused consultation feature suite passes.
+* Workspace stabilisation passes.
+* Route memory test passes.
 * Route list and view cache pass.
 * Frontend build passes.
-* `php artisan test` is run and result documented.
-* Report is created.
+* Full suite is run and documented.
+* Browser UAT report is created.
 
-Stop after Phase 14B and upload the report.
+Stop after Phase 16.

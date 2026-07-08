@@ -11,7 +11,10 @@ use App\Models\VisitConsultationRoute;
 
 class ConsultationSpecialtySummarySourceCollector
 {
-    public function __construct(private readonly ConsultationSpecialtyReadinessService $readiness) {}
+    public function __construct(
+        private readonly ConsultationSpecialtyReadinessService $readiness,
+        private readonly ConsultationSpecialtySectionAliasService $aliases,
+    ) {}
 
     public function collect($consultation, ResolvedConsultationSpecialty|array $specialtyContext, array $workspacePayload = []): array
     {
@@ -39,6 +42,13 @@ class ConsultationSpecialtySummarySourceCollector
                 ->mapWithKeys(fn (ConsultationSpecialtyEntry $entry) => [$entry->section_key => $entry->entry ?? []])
                 ->all()
             : [];
+
+        if ($profile) {
+            // Expose legacy duplicate-section entries under canonical
+            // "*_review" buckets so summary templates can merge them into
+            // the canonical shared headings without losing saved data.
+            $entries = $this->aliases->withMergedLegacyEntries($profile->code, $entries);
+        }
 
         $readiness = $workspacePayload['specialtyReadiness'] ?? null;
         if (! is_array($readiness) && $profile) {

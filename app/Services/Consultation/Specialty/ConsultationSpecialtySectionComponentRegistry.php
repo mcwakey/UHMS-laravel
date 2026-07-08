@@ -26,11 +26,39 @@ class ConsultationSpecialtySectionComponentRegistry
     ];
 
     private const ALIASES = [
-        'eye_complaint' => 'complaints',
-        'dental_complaint' => 'complaints',
-        'presenting_problem' => 'complaints',
         'progress_notes' => 'notes',
         'follow_up' => 'tasks',
+    ];
+
+    /**
+     * Legacy duplicate specialty sections hidden in Phase 16.5/16.6. They
+     * keep their structured schemas (for saved-entry compatibility) but
+     * resolve to the canonical shared section, so anchors/badges collapse
+     * onto the shared panes. Kept in sync with
+     * ConsultationSpecialtySectionAliasService.
+     */
+    private const DUPLICATE_SECTION_ALIASES = [
+        'lab_screening' => 'investigations',
+        'ultrasound_findings' => 'investigations',
+        'urgent_investigations' => 'investigations',
+        'imaging' => 'investigations',
+        'dental_xray' => 'investigations',
+        'urgent_procedures' => 'procedures',
+        'dental_procedures' => 'procedures',
+        'procedure_plan' => 'procedures',
+        'dental_diagnosis' => 'diagnosis',
+        'medications_given' => 'prescription',
+        // Phase 16.6: complaint-like specialty sections canonicalise to the
+        // core complaints pane instead of rendering their own schema form.
+        'presenting_problem' => 'complaints',
+        'eye_complaint' => 'complaints',
+        'dental_complaint' => 'complaints',
+        'gyne_complaint' => 'complaints',
+        'ent_complaint' => 'complaints',
+        'pediatric_complaint' => 'complaints',
+        'emergency_complaint' => 'complaints',
+        'ortho_complaint' => 'complaints',
+        'surgical_complaint' => 'complaints',
     ];
 
     public function __construct(
@@ -71,6 +99,10 @@ class ConsultationSpecialtySectionComponentRegistry
 
     public function canonicalSectionKey(string $sectionKey): string
     {
+        if (isset(self::DUPLICATE_SECTION_ALIASES[$sectionKey])) {
+            return self::DUPLICATE_SECTION_ALIASES[$sectionKey];
+        }
+
         if ($this->schemas->hasSchema($sectionKey)) {
             return $sectionKey;
         }

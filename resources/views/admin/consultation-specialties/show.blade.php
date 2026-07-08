@@ -44,7 +44,21 @@
                 <table class="table mb-0">
                     <tbody>
                     @forelse($profile->sections as $section)
-                        <tr><td><code>{{ $section->section_key }}</code></td><td>{{ $section->label }}</td><td class="text-end"><span class="badge bg-{{ $section->is_visible ? 'success' : 'secondary' }}">{{ $section->is_visible ? __('consultation_specialties.admin.visible') : __('consultation_specialties.admin.hidden') }}</span></td></tr>
+                        @php($aliasTarget = ($sectionAliasMap ?? [])[$section->section_key] ?? null)
+                        @php($isCanonicalComplaints = $section->section_key === 'complaints' && ! empty($complaintDisplayLabel) && $complaintDisplayLabel !== __('consultation_specialties.sections.complaints'))
+                        <tr>
+                            <td><code>{{ $section->section_key }}</code></td>
+                            <td>{{ $section->label }}</td>
+                            <td class="text-end">
+                                @if($aliasTarget)
+                                    <span class="badge bg-info-subtle text-info" title="{{ __('consultation_specialties.admin.hidden_from_doctor_workspace') }}">{{ __('consultation_specialties.admin.maps_to', ['section' => __('consultation_specialties.sections.'.$aliasTarget)]) }}</span>
+                                @endif
+                                @if($isCanonicalComplaints)
+                                    <span class="badge bg-primary-subtle text-primary">{{ __('consultation_specialties.admin.displayed_as', ['label' => $complaintDisplayLabel]) }}</span>
+                                @endif
+                                <span class="badge bg-{{ $section->is_visible ? 'success' : 'secondary' }}">{{ $section->is_visible ? __('consultation_specialties.admin.visible') : __('consultation_specialties.admin.hidden') }}</span>
+                            </td>
+                        </tr>
                     @empty
                         <tr><td class="text-center text-muted py-3">{{ __('consultation_specialties.admin.no_records') }}</td></tr>
                     @endforelse

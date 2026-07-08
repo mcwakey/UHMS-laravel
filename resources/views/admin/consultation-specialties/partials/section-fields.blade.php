@@ -1,6 +1,21 @@
 @php($editing = isset($section) && $section)
+@php($aliasTarget = $editing ? (($sectionAliasMap ?? [])[$section->section_key] ?? null) : null)
+@php($isCanonicalComplaints = $editing && $section->section_key === 'complaints' && ! empty($complaintDisplayLabel) && $complaintDisplayLabel !== __('consultation_specialties.sections.complaints'))
 @if($editing)
-    <td><input name="section_key" class="form-control form-control-sm" value="{{ old('section_key', $section->section_key) }}" required></td>
+    <td>
+        <input name="section_key" class="form-control form-control-sm" value="{{ old('section_key', $section->section_key) }}" required>
+        @if($aliasTarget)
+            <div class="mt-1 d-flex flex-wrap gap-1" title="{{ __('consultation_specialties.admin.hidden_from_doctor_workspace') }}">
+                <span class="badge bg-secondary-subtle text-secondary">{{ __('consultation_specialties.admin.deprecated_duplicate') }}</span>
+                <span class="badge bg-info-subtle text-info">{{ __('consultation_specialties.admin.maps_to', ['section' => __('consultation_specialties.sections.'.$aliasTarget)]) }}</span>
+            </div>
+        @endif
+        @if($isCanonicalComplaints)
+            <div class="mt-1">
+                <span class="badge bg-primary-subtle text-primary">{{ __('consultation_specialties.admin.displayed_as', ['label' => $complaintDisplayLabel]) }}</span>
+            </div>
+        @endif
+    </td>
     <td><input name="label" class="form-control form-control-sm" value="{{ old('label', $section->label) }}" required></td>
     <td>
         <select name="component" class="form-select form-select-sm">

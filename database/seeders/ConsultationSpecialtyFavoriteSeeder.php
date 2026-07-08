@@ -93,7 +93,7 @@ class ConsultationSpecialtyFavoriteSeeder extends Seeder
                 'Oral ulcer', 'Malocclusion',
             ],
             'investigation' => [
-                'Periapical X-ray', 'Panoramic X-ray', 'Bitewing X-ray',
+                'Periapical X-ray', 'Panoramic X-ray', 'OPG', 'Bitewing X-ray',
                 'Dental vitality test', 'Dental examination',
             ],
             'procedure' => [
@@ -139,7 +139,7 @@ class ConsultationSpecialtyFavoriteSeeder extends Seeder
         'ent' => [
             'diagnosis' => ['Otitis media', 'Otitis externa', 'Wax impaction', 'Tonsillitis', 'Sinusitis', 'Allergic rhinitis', 'Epistaxis', 'Hearing loss'],
             'procedure' => ['Ear syringing', 'Audiometry', 'Nasal packing', 'Throat examination'],
-            'investigation' => ['Audiometry', 'Tympanometry'],
+            'investigation' => ['Audiometry', 'Tympanometry', 'Ear swab', 'Sinus X-ray', 'CT sinuses'],
         ],
         'pediatrics' => [
             'diagnosis' => ['Fever in child', 'Acute respiratory infection', 'Diarrhea', 'Dehydration', 'Malnutrition', 'Immunization review'],
@@ -148,13 +148,13 @@ class ConsultationSpecialtyFavoriteSeeder extends Seeder
         ],
         'emergency' => [
             'diagnosis' => ['Trauma assessment', 'Chest pain', 'Severe asthma', 'Seizure', 'Hypoglycemia', 'Dehydration', 'Shock'],
-            'investigation' => ['Urgent FBC', 'Urgent malaria test', 'Urgent X-ray'],
+            'investigation' => ['Urgent FBC', 'Urgent malaria test', 'Urgent X-ray', 'Blood glucose', 'ECG'],
             'procedure' => ['Oxygen therapy', 'IV fluids'],
             'task' => ['Repeat vital signs', 'Prepare handover'],
         ],
         'orthopedics' => [
             'diagnosis' => ['Fracture', 'Sprain', 'Dislocation', 'Back pain', 'Knee pain', 'Shoulder pain'],
-            'investigation' => ['X-ray'],
+            'investigation' => ['X-ray', 'CT scan', 'MRI'],
             'procedure' => ['Cast application', 'Splinting', 'Physiotherapy referral'],
         ],
         'surgery' => [

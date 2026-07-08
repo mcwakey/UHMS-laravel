@@ -8,6 +8,7 @@ use App\Models\ConsultationSpecialtyProfile;
 use App\Models\ConsultationSpecialtySection;
 use App\Services\ActivityLogService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyAdminOptions;
+use App\Services\Consultation\Specialty\ConsultationSpecialtySectionAliasService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -15,12 +16,14 @@ class ConsultationSpecialtySectionController extends Controller
 {
     public function __construct(private readonly ActivityLogService $activity) {}
 
-    public function index(ConsultationSpecialtyProfile $profile, ConsultationSpecialtyAdminOptions $options)
+    public function index(ConsultationSpecialtyProfile $profile, ConsultationSpecialtyAdminOptions $options, ConsultationSpecialtySectionAliasService $sectionAliases)
     {
         return view('admin.consultation-specialties.sections', [
             'profile' => $profile->load(['sections' => fn ($query) => $query->ordered()]),
             'sectionKeys' => $options->sectionKeys(),
             'components' => $options->componentOptions(),
+            'sectionAliasMap' => $sectionAliases->aliasMapFor($profile->code),
+            'complaintDisplayLabel' => $sectionAliases->displayLabelFor($profile->code, 'complaints'),
         ]);
     }
 

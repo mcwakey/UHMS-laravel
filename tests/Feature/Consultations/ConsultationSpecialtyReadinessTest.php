@@ -183,12 +183,14 @@ class ConsultationSpecialtyReadinessTest extends TestCase
     public function test_completion_route_blocks_specialist_missing_requirements_but_not_warnings(): void
     {
         [$visit, $route] = $this->consultationRouteFixture('Physiotherapy', 'PHY', 'physiotherapy', DepartmentType::TREATMENT);
+        // Phase 16.6: presenting_problem canonicalises to the core complaints
+        // record created below, so pain_assessment is the next blocker.
         $this->addCoreClinicalRecord($route);
 
         $this->actingAs($this->doctor)
             ->postJson(route('admin.consultations.routes.complete', [$visit, $route]), ['notes' => 'Ready'])
             ->assertStatus(422)
-            ->assertJsonFragment(['code' => 'specialty_presenting_problem_recorded']);
+            ->assertJsonFragment(['code' => 'specialty_pain_assessment_recorded']);
 
         $profile = $this->profile('physiotherapy');
         $this->entry($route, $profile, 'presenting_problem', ['problem_description' => 'Low back pain']);

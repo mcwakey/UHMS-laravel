@@ -9,6 +9,7 @@ use App\Services\ReportExportService;
 use App\Services\ReportFilterService;
 use App\Services\ReportPrintService;
 use App\Services\OperationalReportService;
+use App\Services\Consultation\Specialty\ConsultationSpecialtyDashboardWidgetService;
 use Illuminate\Http\Request;
 
 class OperationalReportController extends Controller
@@ -18,11 +19,17 @@ class OperationalReportController extends Controller
         private ReportFilterService $filters,
         private ReportExportService $exports,
         private ReportPrintService $prints,
+        private ConsultationSpecialtyDashboardWidgetService $specialtyDashboardWidget,
     ) {}
 
     public function dashboard(Request $request)
     {
-        return view('reports.dashboard', $this->reports->dashboard($request->only(['date_from', 'date_to'])));
+        $filters = $request->only(['date_from', 'date_to']);
+
+        return view('reports.dashboard', array_merge(
+            $this->reports->dashboard($filters),
+            ['specialtyWidget' => $this->specialtyDashboardWidget->widgetPayload($filters, $request->user())]
+        ));
     }
 
     public function show(Request $request, string $report)

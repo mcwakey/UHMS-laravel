@@ -57,7 +57,6 @@ use App\Services\Consultation\ConsultationActionGuard;
 use App\Services\Consultation\ConsultationIdempotencyService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyEntryService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyFavoriteService;
-use App\Services\Consultation\Specialty\ConsultationSpecialtyBillingMappingService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyLayoutService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyOrderSetService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyProfileResolver;
@@ -393,13 +392,6 @@ trait HandlesConsultationWorkspace
                 'specialtySummaryBuilder' => $specialtySummaryBuilder,
             ],
         );
-        $specialtyBillingContext = app(ConsultationSpecialtyBillingMappingService::class)->getWorkspaceBillingContext(
-            $selectedRoute,
-            $specialtyContext,
-            [
-                'specialtyReadiness' => $specialtyReadiness,
-            ],
-        );
         $frequencyDefaults = $specialtyFavorites['frequency_defaults'] ?? $frequencyOptions->options();
 
         return view('consultations.show', [
@@ -438,7 +430,6 @@ trait HandlesConsultationWorkspace
             'specialtyReadiness' => $specialtyReadiness,
             'specialtySummaryBuilder' => $specialtySummaryBuilder,
             'doctorSpecialtyWorkspace' => $doctorSpecialtyWorkspace,
-            'specialtyBillingContext' => $specialtyBillingContext,
             'entryPermissions' => $this->entryPermissions,
             'prescriptionFrequencyOptions' => $frequencyDefaults,
             'taskFrequencyOptions' => $frequencyDefaults,

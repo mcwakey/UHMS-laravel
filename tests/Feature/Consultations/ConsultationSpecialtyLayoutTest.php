@@ -109,7 +109,7 @@ class ConsultationSpecialtyLayoutTest extends TestCase
         $expected = [
             'physiotherapy' => [
                 'patient_summary',
-                'presenting_problem',
+                'complaints',
                 'pain_assessment',
                 'functional_limitation',
                 'physical_assessment',
@@ -123,7 +123,7 @@ class ConsultationSpecialtyLayoutTest extends TestCase
             ],
             'ophthalmology' => [
                 'patient_summary',
-                'eye_complaint',
+                'complaints',
                 'visual_acuity',
                 'refraction',
                 'iop',
@@ -138,12 +138,12 @@ class ConsultationSpecialtyLayoutTest extends TestCase
             ],
             'dental' => [
                 'patient_summary',
-                'dental_complaint',
+                'complaints',
                 'tooth_chart',
                 'oral_examination',
-                'dental_diagnosis',
-                'dental_xray',
-                'dental_procedures',
+                'diagnosis',
+                'investigations',
+                'procedures',
                 'consent',
                 'prescription',
                 'follow_up',

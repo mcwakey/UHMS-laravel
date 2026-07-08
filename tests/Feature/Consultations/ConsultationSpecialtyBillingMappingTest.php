@@ -67,7 +67,7 @@ class ConsultationSpecialtyBillingMappingTest extends TestCase
         $this->assertTrue($resolved->is($routeMapping));
     }
 
-    public function test_workspace_payload_exposes_specialty_billing_context(): void
+    public function test_doctor_workspace_does_not_expose_billing_card_or_context(): void
     {
         [$visit, $route] = $this->consultationRouteFixture('Dental', 'DEN', 'dental');
         $service = $this->service('Dental Consultation', $route->department);
@@ -78,12 +78,11 @@ class ConsultationSpecialtyBillingMappingTest extends TestCase
             ->get(route('admin.consultations.routes.show', [$visit, $route]));
 
         $response->assertOk();
-        $response->assertViewHas('specialtyBillingContext', function (array $context) use ($service) {
-            return data_get($context, 'default_service.service.id') === $service->id
-                && data_get($context, 'default_service.already_billed') === false
-                && filled(data_get($context, 'preview_url'))
-                && filled(data_get($context, 'apply_url'));
-        });
+        // Phase 16.5: billing/service mapping is admin/finance-facing only.
+        $this->assertArrayNotHasKey('specialtyBillingContext', $response->original->getData());
+        $response->assertDontSee(route('admin.consultations.specialty-billing.preview', $visit));
+        $response->assertDontSee(__('consultation_specialties.billing.apply_charge'));
+        $response->assertDontSee(__('consultation_specialties.billing.mapped_service'));
     }
 
     public function test_apply_uses_billing_service_and_writes_application_audit(): void

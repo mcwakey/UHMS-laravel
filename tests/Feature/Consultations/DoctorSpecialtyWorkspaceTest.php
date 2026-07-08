@@ -83,11 +83,11 @@ class DoctorSpecialtyWorkspaceTest extends TestCase
         $cases = [
             ['Physiotherapy', 'PHY', 'physiotherapy', DepartmentType::TREATMENT, ['pain_assessment', 'treatment_plan', 'therapy_session', 'home_exercise_plan', 'order_sets', 'generate_summary', 'readiness']],
             ['Ophthalmology', 'EYE', 'ophthalmology', DepartmentType::CONSULTATION, ['visual_acuity', 'refraction', 'iop', 'eye_examination', 'order_sets', 'generate_summary', 'readiness']],
-            ['Dental', 'DEN', 'dental', DepartmentType::CONSULTATION, ['tooth_chart', 'oral_examination', 'dental_diagnosis', 'dental_procedure', 'consent', 'order_sets', 'generate_summary', 'readiness']],
+            ['Dental', 'DEN', 'dental', DepartmentType::CONSULTATION, ['tooth_chart', 'oral_examination', 'diagnosis', 'procedures', 'consent', 'order_sets', 'generate_summary', 'readiness']],
             ['Obstetrics', 'OBS', 'obstetrics', DepartmentType::CONSULTATION, ['obstetric_history', 'current_pregnancy', 'fetal_assessment', 'risk_assessment', 'birth_plan', 'order_sets']],
             ['ENT', 'ENT', 'ent', DepartmentType::CONSULTATION, ['ent_complaint', 'ear_assessment', 'nose_assessment', 'throat_assessment', 'hearing_balance_assessment', 'order_sets']],
             ['Emergency', 'EMR', 'emergency', DepartmentType::EMERGENCY, ['triage_summary', 'primary_survey', 'vitals_monitoring', 'emergency_interventions', 'disposition', 'handover']],
-            ['Surgery', 'SUR', 'surgery', DepartmentType::CONSULTATION, ['surgical_complaint', 'wound_assessment', 'local_or_abdominal_exam', 'procedure_plan', 'theatre_referral', 'post_op_instructions']],
+            ['Surgery', 'SUR', 'surgery', DepartmentType::CONSULTATION, ['surgical_complaint', 'wound_assessment', 'local_or_abdominal_exam', 'procedures', 'theatre_referral', 'post_op_instructions']],
         ];
 
         foreach ($cases as [$name, $code, $profileCode, $type, $expected]) {

@@ -39,6 +39,39 @@
 </div>
 
 <div class="row g-3">
+    @if(($specialtyWidget['visible'] ?? false) === true)
+        <div class="col-xl-4">
+            <div class="card h-100 border-start border-primary border-3">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">{{ __('reports.consultation_specialties.widget_title') }}</h5>
+                    <a href="{{ $specialtyWidget['route'] }}" class="btn btn-outline-primary btn-sm">{{ __('reports.view_report') }}</a>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between border-bottom py-2">
+                        <span class="text-muted">{{ __('reports.consultation_specialties.total_specialist_consultations') }}</span>
+                        <strong>{{ number_format($specialtyWidget['summary']['total_specialist_consultations'] ?? 0) }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between border-bottom py-2">
+                        <span class="text-muted">{{ __('reports.consultation_specialties.order_sets_applied') }}</span>
+                        <strong>{{ number_format($specialtyWidget['summary']['order_sets_applied'] ?? 0) }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2">
+                        <span class="text-muted">{{ __('reports.consultation_specialties.specialty_revenue') }}</span>
+                        <strong>GHS {{ number_format((float) ($specialtyWidget['summary']['specialty_revenue'] ?? 0), 2) }}</strong>
+                    </div>
+                    <div class="mt-3 small text-muted">{{ __('reports.consultation_specialties.top_specialties') }}</div>
+                    @forelse($specialtyWidget['top_specialties'] as $specialty)
+                        <div class="d-flex justify-content-between border-top py-2">
+                            <span>{{ $specialty->name }}</span>
+                            <strong>{{ number_format($specialty->consultations_count) }}</strong>
+                        </div>
+                    @empty
+                        <div class="text-muted small mt-2">{{ __('reports.no_data') }}</div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    @endif
     <div class="col-xl-4">
         <div class="card h-100">
             <div class="card-header bg-white"><h5 class="card-title mb-0">{{ __('reports.management.financial_summary') }}</h5></div>

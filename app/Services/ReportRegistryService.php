@@ -94,6 +94,18 @@ class ReportRegistryService
                 'printable'   => false,
                 'icon'        => 'ti-chart-dots',
             ],
+            [
+                'key'         => 'clinical.consultation_specialties',
+                'section'     => 'clinical',
+                'title'       => __('reports.consultation_specialties.title'),
+                'description' => __('reports.consultation_specialties.description'),
+                'permission'  => 'reports.view',
+                'module'      => 'consultation',
+                'route'       => 'admin.reports.consultation-specialties.index',
+                'exportable'  => true,
+                'printable'   => false,
+                'icon'        => 'ti-stethoscope',
+            ],
 
             /* ---------------------------------------------------------- */
             /* Patients / Visits                                            */

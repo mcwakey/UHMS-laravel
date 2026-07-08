@@ -13,7 +13,10 @@ use Illuminate\Support\Collection;
 
 class ConsultationSpecialtyReadinessService
 {
-    public function __construct(private readonly ConsultationSpecialtyReadinessRuleRegistry $registry) {}
+    public function __construct(
+        private readonly ConsultationSpecialtyReadinessRuleRegistry $registry,
+        private readonly ConsultationSpecialtySectionComponentRegistry $sectionRegistry,
+    ) {}
 
     public function evaluate(
         $consultation,
@@ -69,7 +72,8 @@ class ConsultationSpecialtyReadinessService
     private function evaluateRule(array $rule, VisitConsultationRoute $route, $record, Collection $entries, array $anchors): array
     {
         $complete = match ($rule['source'] ?? null) {
-            'core_complaint' => $record && ($record->complaints->isNotEmpty() || filled($route->visit?->chief_complaint)),
+            'core_complaint' => ($record && ($record->complaints->isNotEmpty() || filled($route->visit?->chief_complaint)))
+                || $this->entryHasFields($entries->get($rule['legacy_section_key'] ?? '') ?? [], [], 'any'),
             'core_hopc' => $record && $record->relationLoaded('historiesOfPresentingComplaint') && $record->historiesOfPresentingComplaint->isNotEmpty(),
             'core_examination' => $record && $record->physicalExaminations->isNotEmpty(),
             'core_diagnosis' => $record && $record->diagnoses->isNotEmpty(),
@@ -123,10 +127,15 @@ class ConsultationSpecialtyReadinessService
                 || ($record && $record->treatments->isNotEmpty())
                 || ProcedureRequest::query()->where('consultation_route_id', $route->id)->exists()
                 || filled($route->notes),
+            'procedure_plan_recorded' => $this->entryHasFields($entries->get('procedure_plan') ?? [], ['procedure_planned', 'procedure_done', 'anaesthesia_plan', 'notes'], 'any')
+                || ($record && $record->treatments->isNotEmpty())
+                || ProcedureRequest::query()->where('consultation_route_id', $route->id)->exists()
+                || filled($route->notes),
             'consent_obtained_if_required' => ! (bool) data_get($entries->get('consent') ?? [], 'consent_required')
                 || (bool) data_get($entries->get('consent') ?? [], 'consent_obtained'),
-            'xray_missing_if_extraction_planned' => ! $this->containsExtraction($entries->get('dental_procedures') ?? [])
-                || $this->entryHasFields($entries->get('dental_xray') ?? [], ['xray_requested', 'xray_findings'], 'any'),
+            'xray_missing_if_extraction_planned' => ! $this->extractionPlanned($entries, $record)
+                || $this->entryHasFields($entries->get('dental_xray') ?? [], ['xray_requested', 'xray_findings'], 'any')
+                || ($record && $record->investigations->isNotEmpty()),
             'handover_missing' => $this->entryHasFields($entries->get('handover') ?? [], ['handover_to', 'handover_notes'], 'any'),
             default => false,
         };
@@ -165,6 +174,16 @@ class ConsultationSpecialtyReadinessService
         ])));
 
         return str_contains($text, 'extract') || str_contains($text, 'extraction');
+    }
+
+    private function extractionPlanned(Collection $entries, $record): bool
+    {
+        if ($this->containsExtraction($entries->get('dental_procedures') ?? [])) {
+            return true;
+        }
+
+        return (bool) $record?->treatments
+            ->contains(fn ($treatment) => str_contains(strtolower((string) $treatment->description), 'extract'));
     }
 
     private function resultFromItems(?ConsultationSpecialtyProfile $profile, array $items, bool $fallback): ConsultationSpecialtyReadinessResult
@@ -242,9 +261,16 @@ class ConsultationSpecialtyReadinessService
         $sections = $context instanceof ResolvedConsultationSpecialty ? $context->sections : data_get($context, 'sections', []);
 
         return collect($sections)
-            ->mapWithKeys(fn ($section) => [
-                data_get($section, 'section_key', data_get($section, 'key')) => '#'.data_get($section, 'tab_target', data_get($section, 'key')),
-            ])
+            ->mapWithKeys(function ($section) {
+                $key = data_get($section, 'section_key') ?? data_get($section, 'key');
+                if (! $key) {
+                    return [];
+                }
+
+                $tabTarget = data_get($section, 'tab_target') ?? $this->sectionRegistry->tabTargetFor($key);
+
+                return [$key => $tabTarget ? '#'.$tabTarget : null];
+            })
             ->filter(fn ($anchor, $key) => filled($key) && filled($anchor))
             ->all();
     }

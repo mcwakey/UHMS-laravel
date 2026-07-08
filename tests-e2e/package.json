@@ -14,6 +14,7 @@
     "test:lab": "playwright test --config=playwright.config.ts tests/lab.spec.ts --workers=1",
     "test:pharmacy": "playwright test --config=playwright.config.ts tests/pharmacy.spec.ts --workers=1",
     "test:reports": "playwright test --config=playwright.config.ts tests/reports.spec.ts --workers=1",
+    "test:consultation-specialties": "playwright test --config=playwright.config.ts tests/consultation-specialty-workspaces.spec.ts --workers=1",
     "test:ui-localisation": "playwright test --config=playwright.config.ts tests/ui-localisation.spec.ts --workers=1",
     "test:security": "playwright test --config=playwright.config.ts --grep \"OTB-SEC\" --workers=1",
     "test:headed": "playwright test --config=playwright.config.ts --headed --workers=1",

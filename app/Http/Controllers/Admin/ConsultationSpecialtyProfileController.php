@@ -10,6 +10,7 @@ use App\Models\ConsultationSpecialtyOrderSetApplication;
 use App\Models\ConsultationSpecialtyProfile;
 use App\Services\ActivityLogService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyAdminOptions;
+use App\Services\Consultation\Specialty\ConsultationSpecialtySectionAliasService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -56,7 +57,7 @@ class ConsultationSpecialtyProfileController extends Controller
             ->with('success', __('consultation_specialties.admin.saved'));
     }
 
-    public function show(ConsultationSpecialtyProfile $profile)
+    public function show(ConsultationSpecialtyProfile $profile, ConsultationSpecialtySectionAliasService $sectionAliases)
     {
         $profile->loadCount(['sections', 'favorites', 'orderSets', 'mappings', 'doctorPreferences']);
         $profile->load([
@@ -66,7 +67,11 @@ class ConsultationSpecialtyProfileController extends Controller
             'mappings' => fn ($query) => $query->ordered()->with('department')->limit(8),
         ]);
 
-        return view('admin.consultation-specialties.show', compact('profile'));
+        return view('admin.consultation-specialties.show', [
+            'profile' => $profile,
+            'sectionAliasMap' => $sectionAliases->aliasMapFor($profile->code),
+            'complaintDisplayLabel' => $sectionAliases->displayLabelFor($profile->code, 'complaints'),
+        ]);
     }
 
     public function edit(ConsultationSpecialtyProfile $profile)
