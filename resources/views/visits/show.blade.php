@@ -281,7 +281,6 @@
         </div>
         @endif
 
-        @if($isWaiting || $isTriage || $visit->status->allowedTransitions())
         <div class="card mb-3">
             <div class="card-header">
                 <h6 class="fw-bold mb-0"><i class="ti ti-switch-horizontal me-1"></i>{{ __('visits.transition_visit') }}</h6>
@@ -384,6 +383,8 @@
                     </div>
                     @endif
 
+
+                    @if($isWaiting || $isTriage || $visit->status->allowedTransitions())
                     @can('consultations.create')
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <i class="ti ti-plus text-primary"></i>
@@ -432,6 +433,7 @@
                         </div>
                     </form>
                     @endcan
+                    @endif
                 </div>
 
                 {{-- WAITING: Triage / Cancelled / Reschedule only --}}
@@ -520,7 +522,6 @@
 
             </div>
         </div>
-        @endif
 
         {{-- Department History Card (shown after triage assigns dept) --}}
         {{-- @if($visit->departmentHistory->isNotEmpty())
