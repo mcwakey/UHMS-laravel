@@ -2,38 +2,26 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('admissions', function (Blueprint $table) {
-            $table->timestamp('discharge_planning_started_at')->nullable()->after('care_flags');
-            $table->foreignId('discharge_planning_started_by')->nullable()->after('discharge_planning_started_at')->constrained('users')->nullOnDelete();
-            $table->timestamp('expected_discharge_at')->nullable()->after('discharge_planning_started_by');
-            $table->text('discharge_planning_note')->nullable()->after('expected_discharge_at');
-        });
+        $this->addAdmissionPlanningColumns();
 
-        Schema::create('admission_discharge_clearances', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('admission_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('patient_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('visit_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('clearance_type');
-            $table->string('status')->default('pending');
-            $table->foreignId('cleared_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamp('cleared_at')->nullable();
-            $table->foreignId('revoked_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamp('revoked_at')->nullable();
-            $table->text('note')->nullable();
-            $table->json('metadata')->nullable();
-            $table->timestamps();
+        if (Schema::hasTable('admission_discharge_clearances')) {
+            $this->repairClearancesTable();
+        } else {
+            $this->createClearancesTable();
+        }
 
-            $table->unique(['admission_id', 'clearance_type']);
-            $table->index(['admission_id', 'status']);
-            $table->index('clearance_type');
-        });
+        if (Schema::hasTable('admission_discharge_summaries')) {
+            $this->repairSummariesTable();
+
+            return;
+        }
 
         Schema::create('admission_discharge_summaries', function (Blueprint $table) {
             $table->id();
@@ -59,8 +47,8 @@ return new class extends Migration
             $table->string('summary_status')->default('draft');
             $table->timestamps();
 
-            $table->unique('admission_id');
-            $table->index(['summary_status', 'approved_at']);
+            $table->unique('admission_id', 'adm_discharge_summary_admission_unique');
+            $table->index(['summary_status', 'approved_at'], 'adm_discharge_summary_status_approved_idx');
         });
     }
 
@@ -77,5 +65,98 @@ return new class extends Migration
                 'discharge_planning_note',
             ]);
         });
+    }
+
+    private function addAdmissionPlanningColumns(): void
+    {
+        Schema::table('admissions', function (Blueprint $table) {
+            if (! Schema::hasColumn('admissions', 'discharge_planning_started_at')) {
+                $table->timestamp('discharge_planning_started_at')->nullable()->after('care_flags');
+            }
+
+            if (! Schema::hasColumn('admissions', 'discharge_planning_started_by')) {
+                $table->foreignId('discharge_planning_started_by')->nullable()->after('discharge_planning_started_at')->constrained('users')->nullOnDelete();
+            }
+
+            if (! Schema::hasColumn('admissions', 'expected_discharge_at')) {
+                $table->timestamp('expected_discharge_at')->nullable()->after('discharge_planning_started_by');
+            }
+
+            if (! Schema::hasColumn('admissions', 'discharge_planning_note')) {
+                $table->text('discharge_planning_note')->nullable()->after('expected_discharge_at');
+            }
+        });
+    }
+
+    private function createClearancesTable(): void
+    {
+        Schema::create('admission_discharge_clearances', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('admission_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('patient_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('visit_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('clearance_type');
+            $table->string('status')->default('pending');
+            $table->foreignId('cleared_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('cleared_at')->nullable();
+            $table->foreignId('revoked_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('revoked_at')->nullable();
+            $table->text('note')->nullable();
+            $table->json('metadata')->nullable();
+            $table->timestamps();
+
+            $table->unique(['admission_id', 'clearance_type'], 'adm_discharge_clear_admission_type_unique');
+            $table->index(['admission_id', 'status'], 'adm_discharge_clear_admission_status_idx');
+            $table->index('clearance_type', 'adm_discharge_clear_type_idx');
+        });
+    }
+
+    private function repairClearancesTable(): void
+    {
+        if (! $this->hasIndex('admission_discharge_clearances', 'adm_discharge_clear_admission_type_unique')) {
+            Schema::table('admission_discharge_clearances', function (Blueprint $table) {
+                $table->unique(['admission_id', 'clearance_type'], 'adm_discharge_clear_admission_type_unique');
+            });
+        }
+
+        if (! $this->hasIndex('admission_discharge_clearances', 'adm_discharge_clear_admission_status_idx')) {
+            Schema::table('admission_discharge_clearances', function (Blueprint $table) {
+                $table->index(['admission_id', 'status'], 'adm_discharge_clear_admission_status_idx');
+            });
+        }
+
+        if (! $this->hasIndex('admission_discharge_clearances', 'adm_discharge_clear_type_idx')) {
+            Schema::table('admission_discharge_clearances', function (Blueprint $table) {
+                $table->index('clearance_type', 'adm_discharge_clear_type_idx');
+            });
+        }
+    }
+
+    private function repairSummariesTable(): void
+    {
+        if (! $this->hasIndex('admission_discharge_summaries', 'adm_discharge_summary_admission_unique')) {
+            Schema::table('admission_discharge_summaries', function (Blueprint $table) {
+                $table->unique('admission_id', 'adm_discharge_summary_admission_unique');
+            });
+        }
+
+        if (! $this->hasIndex('admission_discharge_summaries', 'adm_discharge_summary_status_approved_idx')) {
+            Schema::table('admission_discharge_summaries', function (Blueprint $table) {
+                $table->index(['summary_status', 'approved_at'], 'adm_discharge_summary_status_approved_idx');
+            });
+        }
+    }
+
+    private function hasIndex(string $table, string $index): bool
+    {
+        if (DB::getDriverName() === 'sqlite') {
+            return collect(DB::select('PRAGMA index_list('.$table.')'))
+                ->contains(fn ($row) => ($row->name ?? null) === $index);
+        }
+
+        return (int) (DB::selectOne(
+            'SELECT COUNT(*) AS aggregate FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ?',
+            [$table, $index],
+        )->aggregate ?? 0) > 0;
     }
 };
