@@ -43,6 +43,9 @@
                             @if($selectedRoute && $selectedRoute->id === $session->id)
                                 <span class="badge bg-primary ms-1">{{ __('consultations.workspace.current') }}</span>
                             @endif
+                            @if($session->reopened_at)
+                                <span class="badge bg-warning text-dark ms-1">{{ __('visits.badges.reopen_available') }}</span>
+                            @endif
                         </td>
                         <!-- <td>{{ $session->doctor ? 'Dr. ' . $session->doctor->full_name : __('consultations.unassigned') }}</td> -->
                         <td>{{ $contributors->isNotEmpty() ? $contributors->implode(', ') : __('consultations.workspace.no_contributors_yet') }}</td>
@@ -426,5 +429,4 @@
         @endif
     </div>
 </div>
-
 

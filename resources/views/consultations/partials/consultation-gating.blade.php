@@ -1,5 +1,5 @@
 {{-- ============================================================ --}}
-{{-- CONSULTATION GATING — Start Consultation banner --}}
+{{-- CONSULTATION GATING - Start / reopen consultation banner --}}
 {{-- ============================================================ --}}
 @if($needsStart)
 <div class="card border-warning mb-3">
@@ -18,9 +18,38 @@
 </div>
 @elseif($canEdit)
 <div class="alert alert-success py-2 mb-3 small d-flex align-items-center">
-    <i class="ti ti-pencil me-2"></i><strong>{{ __('consultations.workspace.consultation_in_progress') }}</strong>&nbsp;— {{ __('consultations.workspace.consultation_in_progress_help') }}
+    <i class="ti ti-pencil me-2"></i><strong>{{ __('consultations.workspace.consultation_in_progress') }}</strong>&nbsp;- {{ __('consultations.workspace.consultation_in_progress_help') }}
+</div>
+@elseif(($reopenEligibility ?? null)?->allowed && $selectedRoute)
+<div class="card border-warning mb-3">
+    <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-2">
+            <div>
+                <h6 class="fw-bold mb-1 text-warning"><i class="ti ti-lock-open me-1"></i>{{ __('consultations.reopen.title') }}</h6>
+                <small class="text-muted">{{ $reopenEligibility->message }}</small>
+            </div>
+            <span class="badge bg-secondary">{{ __('visits.actions.view_readonly') }}</span>
+        </div>
+        <form method="POST" action="{{ route('admin.consultations.routes.reopen', [$visit, $selectedRoute]) }}" class="row g-2 align-items-end">
+            @csrf
+            <div class="col-md">
+                <label class="form-label small">{{ __('consultations.reopen.reason') }}</label>
+                <input type="text" name="reason" class="form-control form-control-sm" required minlength="5" maxlength="1000" value="{{ old('reason') }}">
+            </div>
+            <div class="col-md-auto">
+                <button type="submit" class="btn btn-sm btn-warning">
+                    <i class="ti ti-lock-open me-1"></i>{{ __('consultations.reopen.submit') }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@elseif($selectedRoute && in_array($selectedRoute->status, [\App\Models\VisitConsultationRoute::STATUS_COMPLETED, \App\Models\VisitConsultationRoute::STATUS_CANCELLED], true))
+<div class="alert alert-secondary py-2 mb-3 small d-flex align-items-center">
+    <i class="ti ti-eye me-2"></i><strong>{{ __('visits.actions.view_readonly') }}</strong>&nbsp;- {{ ($reopenEligibility ?? null)?->message ?? __('consultations.reopen.blocked') }}
 </div>
 @endif
+
 @if($isSelectedRouteLocked && ! $canCorrectLocked)
 <div class="alert alert-secondary py-2 mb-3 small d-flex align-items-center">
     <i class="ti ti-lock me-2"></i><strong>{{ __('consultations.workspace.session_locked') }}</strong>&nbsp;- {{ __('consultations.workspace.session_locked_help') }}

@@ -73,6 +73,12 @@
                         $visit = $route->visit;
                         $isActive = $route->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE;
                         $isPending = $route->status === \App\Models\VisitConsultationRoute::STATUS_PENDING;
+                        $reopenPolicy = app(\App\Services\Consultation\ConsultationReopenEligibilityService::class);
+                        $reopenEligibility = $route->status === \App\Models\VisitConsultationRoute::STATUS_COMPLETED && auth()->user()
+                            ? $reopenPolicy->canReopen(auth()->user(), $visit, $route)
+                            : null;
+                        $activeAdmission = $visit->admission && $reopenPolicy->isActiveAdmission($visit->admission);
+                        $dischargedToday = $visit->admission && $reopenPolicy->isDischargedToday($visit->admission);
                         $serviceNames = $route->routeServices
                             ->map(fn ($routeService) => $routeService->service?->name)
                             ->filter()
@@ -132,6 +138,19 @@
                         <td>
                             <x-status-badge :status="$route->status" domain="consultation_route" />
                             <div class="small text-muted">{{ $visit->status->translatedLabel() }}</div>
+                            <div class="mt-1 d-flex flex-wrap gap-1">
+                                @if($activeAdmission)
+                                    <span class="badge bg-info-subtle text-info border">{{ __('visits.badges.on_admission') }}</span>
+                                @endif
+                                @if($dischargedToday)
+                                    <span class="badge bg-success-subtle text-success border">{{ __('visits.badges.discharged_today') }}</span>
+                                @endif
+                                @if($reopenEligibility?->allowed)
+                                    <span class="badge bg-warning-subtle text-warning border">{{ __('visits.badges.reopen_available') }}</span>
+                                @elseif($route->status === \App\Models\VisitConsultationRoute::STATUS_COMPLETED)
+                                    <span class="badge bg-secondary-subtle text-secondary border">{{ __('visits.badges.read_only') }}</span>
+                                @endif
+                            </div>
                         </td>
                         <td><small>{{ ($route->activated_at ?? $route->started_at ?? $route->created_at)->diffForHumans(null, true) }}</small></td>
                         <td>
@@ -147,6 +166,10 @@
                             @elseif($isActive)
                                 <a href="{{ route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-sm btn-success">
                                     <i class="ti ti-pencil me-1"></i>{{ __('consultations.continue') }}
+                                </a>
+                            @elseif($reopenEligibility?->allowed)
+                                <a href="{{ route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-sm btn-warning">
+                                    <i class="ti ti-lock-open me-1"></i>{{ __('visits.actions.reopen_consultation') }}
                                 </a>
                             @else
                                 <a href="{{ route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-sm btn-outline-primary">

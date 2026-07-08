@@ -134,6 +134,7 @@ trait HandlesConsultationWorkspace
             ])
             ->with([
                 'visit.patient',
+                'visit.admission',
                 'visit.medicalRecord',
                 'visit.queueEntries.department',
                 'department',
@@ -150,6 +151,7 @@ trait HandlesConsultationWorkspace
                 VisitConsultationRoute::STATUS_PENDING,
                 VisitConsultationRoute::STATUS_ACTIVE,
                 VisitConsultationRoute::STATUS_PAUSED,
+                VisitConsultationRoute::STATUS_COMPLETED,
             ])
             ->where(function ($routeQuery) {
                 $routeQuery->where('session_type', VisitConsultationRoute::SESSION_TYPE_EMERGENCY)
@@ -163,12 +165,20 @@ trait HandlesConsultationWorkspace
                         ->where(function ($outpatientQuery) {
                             $outpatientQuery
                                 ->where('visit_type', VisitType::OUTPATIENT->value)
-                                ->whereIn('status', [
-                                    VisitStatus::WAITING->value,
-                                    VisitStatus::ACTIVE->value,
-                                    VisitStatus::CONSULTING->value,
-                                    VisitStatus::EMERGENCY->value,
-                                ]);
+                                ->where(function ($opdStatusQuery) {
+                                    $opdStatusQuery
+                                        ->whereIn('status', [
+                                            VisitStatus::WAITING->value,
+                                            VisitStatus::ACTIVE->value,
+                                            VisitStatus::CONSULTING->value,
+                                            VisitStatus::EMERGENCY->value,
+                                        ])
+                                        ->orWhere(function ($completedTodayQuery) {
+                                            $completedTodayQuery
+                                                ->where('status', VisitStatus::COMPLETED->value)
+                                                ->whereDate('completed_at', today());
+                                        });
+                                });
                         })
                         ->orWhere(function ($nonOpdQuery) {
                             $nonOpdQuery
@@ -176,10 +186,44 @@ trait HandlesConsultationWorkspace
                                     VisitType::INPATIENT->value,
                                     VisitType::EMERGENCY->value,
                                 ])
-                                ->where('status', '!=', VisitStatus::DISCHARGED->value);
+                                ->where(function ($nonOpdStatusQuery) {
+                                    $nonOpdStatusQuery
+                                        ->where('status', '!=', VisitStatus::DISCHARGED->value)
+                                        ->orWhereHas('admission', fn ($admissionQuery) => $admissionQuery
+                                            ->whereIn('status', ['admitted', 'on_leave'])
+                                            ->whereNull('actual_discharge_date'))
+                                        ->orWhereHas('admission', fn ($admissionQuery) => $admissionQuery
+                                            ->whereNotNull('actual_discharge_date')
+                                            ->whereDate('actual_discharge_date', today()));
+                                });
                         });
                 });
             });
+
+        $query->where(function ($routeStatusQuery) {
+            $routeStatusQuery
+                ->whereIn('status', [
+                    VisitConsultationRoute::STATUS_PENDING,
+                    VisitConsultationRoute::STATUS_ACTIVE,
+                    VisitConsultationRoute::STATUS_PAUSED,
+                ])
+                ->orWhere(function ($completedRouteQuery) {
+                    $completedRouteQuery
+                        ->where('status', VisitConsultationRoute::STATUS_COMPLETED)
+                        ->whereHas('visit', function ($visitQuery) {
+                            $visitQuery
+                                ->where(function ($opdQuery) {
+                                    $opdQuery
+                                        ->where('visit_type', VisitType::OUTPATIENT->value)
+                                        ->where('status', VisitStatus::COMPLETED->value)
+                                        ->whereDate('completed_at', today());
+                                })
+                                ->orWhereHas('admission', fn ($admissionQuery) => $admissionQuery
+                                    ->whereNotNull('actual_discharge_date')
+                                    ->whereDate('actual_discharge_date', today()));
+                        });
+                });
+        });
 
         /** @var User|null $user */
         $user = Auth::user();
@@ -195,12 +239,33 @@ trait HandlesConsultationWorkspace
             $query->whereHas('visit', fn ($visitQuery) => $visitQuery->where('visit_type', $filters['visit_type']));
         }
 
-        if (! empty($filters['date_from'])) {
-            $query->whereHas('visit', fn ($visitQuery) => $visitQuery->whereDate('visit_date', '>=', $filters['date_from']));
-        }
+        if (! empty($filters['date_from']) || ! empty($filters['date_to'])) {
+            $from = $filters['date_from'] ?? null;
+            $to = $filters['date_to'] ?? null;
 
-        if (! empty($filters['date_to'])) {
-            $query->whereHas('visit', fn ($visitQuery) => $visitQuery->whereDate('visit_date', '<=', $filters['date_to']));
+            $query->whereHas('visit', function ($visitQuery) use ($from, $to) {
+                $visitQuery->where(function ($dateQuery) use ($from, $to) {
+                    $dateQuery->where(function ($visitDateQuery) use ($from, $to) {
+                        $visitDateQuery
+                            ->when($from, fn ($q) => $q->whereDate('visit_date', '>=', $from))
+                            ->when($to, fn ($q) => $q->whereDate('visit_date', '<=', $to));
+                    })
+                        ->orWhereHas('admission', function ($admissionQuery) use ($from, $to) {
+                            $admissionQuery
+                                ->where(function ($activeQuery) {
+                                    $activeQuery
+                                        ->whereIn('status', ['admitted', 'on_leave'])
+                                        ->whereNull('actual_discharge_date');
+                                })
+                                ->orWhere(function ($dischargeQuery) use ($from, $to) {
+                                    $dischargeQuery
+                                        ->whereNotNull('actual_discharge_date')
+                                        ->when($from, fn ($q) => $q->whereDate('actual_discharge_date', '>=', $from))
+                                        ->when($to, fn ($q) => $q->whereDate('actual_discharge_date', '<=', $to));
+                                });
+                        });
+                });
+            });
         }
 
         if ($request->boolean('my_patients')) {
@@ -377,6 +442,9 @@ trait HandlesConsultationWorkspace
         $specialtyReadiness = $selectedRoute
             ? app(ConsultationSpecialtyReadinessService::class)->evaluate($selectedRoute, $specialtyContext, ['completionReadiness' => $completionReadiness])
             : null;
+        $reopenEligibility = ($selectedRoute && Auth::user())
+            ? app(\App\Services\Consultation\ConsultationReopenEligibilityService::class)->canReopen(Auth::user(), $visit, $selectedRoute)
+            : null;
         $specialtySummaryBuilder = $selectedRoute ? [
             'available' => true,
             'profile_code' => $specialtyContext->profile->code,
@@ -428,6 +496,7 @@ trait HandlesConsultationWorkspace
             'specialtyFavorites' => $specialtyFavorites,
             'specialtyOrderSets' => $specialtyOrderSets,
             'specialtyReadiness' => $specialtyReadiness,
+            'reopenEligibility' => $reopenEligibility,
             'specialtySummaryBuilder' => $specialtySummaryBuilder,
             'doctorSpecialtyWorkspace' => $doctorSpecialtyWorkspace,
             'entryPermissions' => $this->entryPermissions,

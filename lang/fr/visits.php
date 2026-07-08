@@ -36,6 +36,19 @@ return [
     'no_visits_found' => 'Aucune visite trouvée',
     'no_visits_match_filters'   => 'Aucune visite ne correspond aux filtres sélectionnés.',
 
+    'badges' => [
+        'on_admission' => 'Hospitalisé',
+        'discharged_today' => 'Sortie aujourd\'hui',
+        'completed_today' => 'Terminée aujourd\'hui',
+        'reopen_available' => 'Réouverture disponible',
+        'read_only' => 'Lecture seule',
+    ],
+    'actions' => [
+        'reopen_consultation' => 'Réouvrir la consultation',
+        'continue_consultation' => 'Continuer la consultation',
+        'view_readonly' => 'Voir seulement',
+    ],
+
     'show_title'                => 'Détails de la visite',
     'visit_number'              => 'Visite #',
     'visit_date'                => 'Date de visite',

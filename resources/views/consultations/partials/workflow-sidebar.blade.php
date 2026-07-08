@@ -5,7 +5,7 @@
                         <nav class="consultation-sidebar">
                             <ul class="nav flex-column gap-1" id="consultationTabs" role="tablist">
                                 @php
-                                    $badgeForSection = function (array $section) use ($record, $procedureRequests, $specialtyEntries, $specialtyEntryGroups) {
+                                    $badgeForSection = function (array $section) use ($record, $procedureRequests, $specialtyEntries, $specialtyEntryGroups, $followUpAppointment) {
                                         $specialtyEntryCount = isset($specialtyEntryGroups)
                                             ? collect($specialtyEntryGroups[$section['key']] ?? [])->count()
                                             : (! empty($specialtyEntries[$section['key']] ?? []) ? 1 : 0);
@@ -16,9 +16,11 @@
                                             'examination' => ['id' => 'badge-examination', 'count' => $record?->physicalExaminations?->count() ?? 0],
                                             'diagnosis' => ['id' => 'badge-diagnoses', 'count' => $record?->diagnoses?->count() ?? 0],
                                             'investigations' => ['id' => 'badge-investigations', 'count' => $record?->investigations?->count() ?? 0],
+                                            'treatments' => ['id' => 'badge-treatments', 'count' => $record?->treatments?->count() ?? 0],
                                             'prescription' => ['id' => 'badge-prescriptions', 'count' => $record?->prescriptions?->count() ?? 0],
                                             'procedures' => ['id' => 'badge-procedures', 'count' => $procedureRequests->count()],
                                             'tasks' => ['id' => 'badge-tasks', 'count' => $record?->tasks?->count() ?? 0],
+                                            'follow_up_appointment' => ['id' => 'badge-follow-up', 'count' => $followUpAppointment ? 1 : 0],
                                             default => ['id' => 'badge-specialty-'.$section['key'], 'count' => $specialtyEntryCount],
                                         };
                                     };
@@ -65,12 +67,12 @@
                             <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
                                 <i class="ti ti-eye me-1"></i>{{ __('consultations.workspace.view_visit') }}
                             </a>
-                            <!-- <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#followUpAppointmentModal" @disabled(! $selectedRoute) title="{{ $selectedRoute ? __('consultations.workspace.set_next_appointment') : __('consultations.workspace.select_session_first') }}">
+                            <a href="#follow-up-section" class="btn btn-outline-primary btn-sm {{ ! $selectedRoute ? 'disabled' : '' }}" data-bs-toggle="pill" role="tab" aria-disabled="{{ $selectedRoute ? 'false' : 'true' }}" title="{{ $selectedRoute ? __('consultations.workspace.set_next_appointment') : __('consultations.workspace.select_session_first') }}">
                                 <i class="ti ti-calendar-plus me-1"></i>{{ $followUpAppointment ? __('consultations.workspace.update_next_appointment') : __('consultations.workspace.next_appointment') }}
                                 @if($followUpAppointment)
                                     <span class="badge bg-primary-subtle text-primary ms-1">{{ __('consultations.workspace.set') }}</span>
                                 @endif
-                            </button> -->
+                            </a>
                             @can('consultations.create')
                             <button type="button" class="btn btn-outline-purple btn-sm" data-bs-toggle="modal" data-bs-target="#savePatternModal">
                                 <i class="ti ti-template me-1"></i>{{ __('consultations.workspace.save_pattern') }}

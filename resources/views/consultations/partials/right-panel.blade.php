@@ -147,14 +147,13 @@
                     </div>
                 </div>
 
-                {{-- todo: next appointment card should also show up here if set, with option to cancel or reschedule if user has permission --}}
                 <div class="card">
-                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#followUpAppointmentModal" @disabled(! $selectedRoute) title="{{ $selectedRoute ? __('consultations.workspace.set_next_appointment') : __('consultations.workspace.select_session_first') }}">
+                    <a href="#follow-up-section" class="btn btn-outline-primary btn-sm {{ ! $selectedRoute ? 'disabled' : '' }}" data-bs-toggle="pill" role="tab" aria-disabled="{{ $selectedRoute ? 'false' : 'true' }}" title="{{ $selectedRoute ? __('consultations.workspace.set_next_appointment') : __('consultations.workspace.select_session_first') }}">
                         <i class="ti ti-calendar-plus me-1"></i>{{ $followUpAppointment ? __('consultations.workspace.update_next_appointment') : __('consultations.workspace.next_appointment') }}
                         @if($followUpAppointment)
                             <span class="badge bg-primary-subtle text-primary ms-1">{{ __('consultations.workspace.set') }}</span>
                         @endif
-                    </button>
+                    </a>
                 </div>
 
                 <div class="card">

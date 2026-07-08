@@ -72,6 +72,10 @@ class VisitConsultationRoute extends Model
         'locked_at',
         'locked_by',
         'lock_reason',
+        'reopened_at',
+        'reopened_by',
+        'reopen_reason',
+        'reopen_count',
         'notes',
     ];
 
@@ -82,6 +86,8 @@ class VisitConsultationRoute extends Model
         'completed_at' => 'datetime',
         'cancelled_at' => 'datetime',
         'locked_at' => 'datetime',
+        'reopened_at' => 'datetime',
+        'reopen_count' => 'integer',
     ];
 
     public function isLocked(): bool
@@ -169,6 +175,11 @@ class VisitConsultationRoute extends Model
     public function cancelledBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    public function reopenedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reopened_by');
     }
 
     public function medicalRecord(): HasOne

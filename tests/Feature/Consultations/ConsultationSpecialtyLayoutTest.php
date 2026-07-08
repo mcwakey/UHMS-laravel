@@ -71,7 +71,7 @@ class ConsultationSpecialtyLayoutTest extends TestCase
     {
         $registry = app(ConsultationSpecialtySectionComponentRegistry::class);
 
-        foreach (['complaints', 'hopc', 'examination', 'diagnosis', 'investigations', 'prescription', 'procedures', 'tasks', 'summary'] as $key) {
+        foreach (['complaints', 'hopc', 'examination', 'diagnosis', 'investigations', 'treatments', 'prescription', 'procedures', 'tasks', 'summary'] as $key) {
             $this->assertNotSame($registry->fallbackComponent(), $registry->resolveComponent($key));
         }
     }
@@ -205,6 +205,11 @@ class ConsultationSpecialtyLayoutTest extends TestCase
         $response->assertSee(__('consultation_specialties.actions.save_section'));
         $response->assertSee('name="pain_score"', false);
         $response->assertSee('id="complaints-section"', false);
+        $response->assertSee('id="tab-treatments"', false);
+        $response->assertSee('href="#treatments-section"', false);
+        $response->assertSee('id="tab-follow_up_appointment"', false);
+        $response->assertSee('href="#follow-up-section"', false);
+        $response->assertSee('id="follow-up-section"', false);
     }
 
     private function resolvedContext(string $profileCode): array

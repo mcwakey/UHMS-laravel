@@ -233,6 +233,35 @@ trait HandlesConsultationSessions
             ->with('success', __('messages.consultations.route_cancelled'));
     }
 
+    public function reopenRoute(Request $request, Visit $visit, VisitConsultationRoute $route)
+    {
+        $this->abortIfRouteMismatch($visit, $route);
+
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'min:5', 'max:1000'],
+            'target_status' => ['nullable', 'string', Rule::in([VisitConsultationRoute::STATUS_ACTIVE])],
+        ]);
+
+        try {
+            $route = $this->sessionWorkflow->reopenRoute($visit, $route, Auth::user(), $data['reason']);
+        } catch (ConsultationActionException $e) {
+            return $this->consultationActionFailureResponse($request, $e);
+        }
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json([
+                'success' => true,
+                'message' => __('consultations.reopen.success'),
+                'route_id' => $route->id,
+                'redirect' => route('admin.consultations.routes.show', [$visit, $route]),
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.consultations.routes.show', [$visit, $route])
+            ->with('success', __('consultations.reopen.success'));
+    }
+
     public function transitionVisit(TransitionConsultationRouteRequest $request, Visit $visit)
     {
         $data = $request->validated();

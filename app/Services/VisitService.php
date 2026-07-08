@@ -52,6 +52,8 @@ class VisitService
             'visitInsurance.insuranceTier',
             'activeConsultationRoute.doctor',
             'pendingConsultationRoutes.doctor',
+            'admission',
+            'consultationRoutes.doctor',
         ]);
 
         if (! empty($filters['search'])) {
@@ -86,12 +88,31 @@ class VisitService
             $query->whereHas('consultationRoutes', fn ($q) => $q->where('doctor_id', $filters['doctor_id']));
         }
 
-        if (! empty($filters['date_from'])) {
-            $query->whereDate('visit_date', '>=', $filters['date_from']);
-        }
+        if (! empty($filters['date_from']) || ! empty($filters['date_to'])) {
+            $from = $filters['date_from'] ?? null;
+            $to = $filters['date_to'] ?? null;
 
-        if (! empty($filters['date_to'])) {
-            $query->whereDate('visit_date', '<=', $filters['date_to']);
+            $query->where(function ($dateQuery) use ($from, $to) {
+                $dateQuery->where(function ($visitDateQuery) use ($from, $to) {
+                    $visitDateQuery
+                        ->when($from, fn ($q) => $q->whereDate('visit_date', '>=', $from))
+                        ->when($to, fn ($q) => $q->whereDate('visit_date', '<=', $to));
+                })
+                    ->orWhereHas('admission', function ($admissionQuery) use ($from, $to) {
+                        $admissionQuery
+                            ->where(function ($activeQuery) {
+                                $activeQuery
+                                    ->whereIn('status', [AdmissionStatus::ADMITTED->value, AdmissionStatus::ON_LEAVE->value])
+                                    ->whereNull('actual_discharge_date');
+                            })
+                            ->orWhere(function ($dischargeQuery) use ($from, $to) {
+                                $dischargeQuery
+                                    ->whereNotNull('actual_discharge_date')
+                                    ->when($from, fn ($q) => $q->whereDate('actual_discharge_date', '>=', $from))
+                                    ->when($to, fn ($q) => $q->whereDate('actual_discharge_date', '<=', $to));
+                            });
+                    });
+            });
         }
 
         if (isset($filters['today']) && $filters['today']) {
@@ -954,9 +975,8 @@ class VisitService
             ->when($to, fn ($query) => $query->whereDate('visit_date', '<=', $to));
 
         $activeAdmissions = Admission::query()
-            ->where('status', '!=', AdmissionStatus::DISCHARGED->value)
-            ->when($from, fn ($query) => $query->whereDate('admission_date', '>=', $from))
-            ->when($to, fn ($query) => $query->whereDate('admission_date', '<=', $to));
+            ->whereIn('status', [AdmissionStatus::ADMITTED->value, AdmissionStatus::ON_LEAVE->value])
+            ->whereNull('actual_discharge_date');
 
         $activeEmergencyCases = EmergencyCase::query()
             ->active()

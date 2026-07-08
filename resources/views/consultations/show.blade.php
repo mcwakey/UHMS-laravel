@@ -222,6 +222,66 @@
         ->filter(fn ($section) => ! empty($section['tab_target']))
         ->unique('tab_target')
         ->values();
+    $treatmentPlanTab = [
+        'key' => 'treatments',
+        'canonical_key' => 'treatments',
+        'label' => __('consultation_specialties.sections.treatment_plan'),
+        'translated_label' => __('consultation_specialties.sections.treatment_plan'),
+        'component' => 'consultations.partials.specialty.core-section',
+        'display_order' => 0,
+        'is_required' => false,
+        'is_visible' => true,
+        'is_core' => true,
+        'tab_target' => 'treatments-section',
+        'icon' => 'ti-target-arrow',
+        'config' => [],
+        'form_fields' => [],
+    ];
+    $followUpTab = [
+        'key' => 'follow_up_appointment',
+        'canonical_key' => 'follow_up_appointment',
+        'label' => __('consultations.workspace.follow_up_title'),
+        'translated_label' => __('consultations.workspace.follow_up_title'),
+        'component' => 'consultations.partials.specialty.core-section',
+        'display_order' => 0,
+        'is_required' => false,
+        'is_visible' => true,
+        'is_core' => true,
+        'tab_target' => 'follow-up-section',
+        'icon' => 'ti-calendar-time',
+        'config' => [],
+        'form_fields' => [],
+    ];
+    if (! $layoutTabSections->contains(fn ($section) => ($section['tab_target'] ?? null) === 'treatments-section')) {
+        $insertedTreatmentPlanTab = false;
+        $layoutTabSections = $layoutTabSections
+            ->flatMap(function ($section) use ($treatmentPlanTab, &$insertedTreatmentPlanTab) {
+                $sections = [$section];
+                if (! $insertedTreatmentPlanTab && ($section['tab_target'] ?? null) === 'investigations-section') {
+                    $sections[] = $treatmentPlanTab;
+                    $insertedTreatmentPlanTab = true;
+                }
+
+                return $sections;
+            })
+            ->when(! $insertedTreatmentPlanTab, fn ($sections) => $sections->push($treatmentPlanTab))
+            ->values();
+    }
+    if (! $layoutTabSections->contains(fn ($section) => ($section['tab_target'] ?? null) === 'follow-up-section')) {
+        $insertedFollowUpTab = false;
+        $layoutTabSections = $layoutTabSections
+            ->flatMap(function ($section) use ($followUpTab, &$insertedFollowUpTab) {
+                $sections = [$section];
+                if (! $insertedFollowUpTab && in_array(($section['tab_target'] ?? null), ['treatments-section', 'prescriptions-section', 'tasks-section'], true)) {
+                    $sections[] = $followUpTab;
+                    $insertedFollowUpTab = true;
+                }
+
+                return $sections;
+            })
+            ->when(! $insertedFollowUpTab, fn ($sections) => $sections->push($followUpTab))
+            ->values();
+    }
     $activeTabTarget = $layoutTabSections->first()['tab_target'] ?? 'complaints-section';
     $tabActiveClass = fn (string $target) => $activeTabTarget === $target ? 'show active' : '';
     $sectionLabel = function (string $key, string $fallback) use ($layoutSections) {
@@ -232,14 +292,18 @@
 
 @include('consultations.partials.session-context')
 
-@include('consultations.partials.specialty-workspace-band')
+<!-- @include('consultations.partials.specialty-workspace-band') -->
 
 @include('consultations.partials.specialty-order-sets')
 
 @php
     $canCorrectLocked = auth()->user()?->can('consultation.entries.correct_completed') || auth()->user()?->can('visits.reopen_locked_session');
     $isSelectedRouteLocked = $selectedRoute && $selectedRoute->locked_at;
-    $canEdit = in_array($visit->status, [\App\Enums\VisitStatus::CONSULTING, \App\Enums\VisitStatus::EMERGENCY], true) && $selectedRoute && $selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE && (! $isSelectedRouteLocked || $canCorrectLocked);
+    $isExplicitlyReopened = $selectedRoute && $selectedRoute->reopened_at;
+    $canEdit = (
+        in_array($visit->status, [\App\Enums\VisitStatus::CONSULTING, \App\Enums\VisitStatus::EMERGENCY], true)
+        || $isExplicitlyReopened
+    ) && $selectedRoute && $selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE && (! $isSelectedRouteLocked || $canCorrectLocked);
     $needsStart = $selectedRoute && (in_array($selectedRoute->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true) || ($selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE && in_array($visit->status, [\App\Enums\VisitStatus::WAITING, \App\Enums\VisitStatus::ACTIVE], true)));
 @endphp
 @include('consultations.partials.consultation-gating')
@@ -964,7 +1028,7 @@
                     <div class="tab-pane fade {{ $tabActiveClass('treatments-section') }}" id="treatments-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-vaccine me-1"></i>Treatments</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-target-arrow me-1"></i>{{ $sectionLabel('treatments', __('consultation_specialties.sections.treatment_plan')) }}</h6>
                                 @can('consultations.create')
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addTreatmentForm">
                                     <i class="ti ti-plus me-1"></i>Add
@@ -1685,20 +1749,21 @@
                         </div>
                     </div>
 
-                    {{-- ========================= NEXT APPOINTMENT / FOLLOW-UP MODAL ========================= --}}
-                    <div class="modal fade" id="followUpAppointmentModal" tabindex="-1" aria-labelledby="followUpAppointmentModalLabel" aria-hidden="true">
-                        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                            <div class="modal-content">
-                                <div class="modal-header">
+                    {{-- ========================= NEXT APPOINTMENT / FOLLOW-UP ========================= --}}
+                    <div class="tab-pane fade {{ $tabActiveClass('follow-up-section') }}" id="follow-up-section" role="tabpanel">
+                        <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-start gap-2">
                                     <div>
-                                        <h5 class="modal-title" id="followUpAppointmentModalLabel"><i class="ti ti-calendar-plus me-1"></i>{{ __('consultations.workspace.follow_up_title') }}</h5>
+                                        <h6 class="fw-bold mb-0"><i class="ti ti-calendar-time me-1"></i>{{ __('consultations.workspace.follow_up_title') }}</h6>
                                         @if($followUpAppointment)
                                             <small class="text-muted">{{ __('consultations.workspace.current_status', ['status' => $followUpAppointment->status?->translatedLabel() ?? ucfirst((string) $followUpAppointment->status)]) }}</small>
                                         @endif
                                     </div>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('common.close') }}"></button>
+                                    @if($followUpAppointment)
+                                        <span class="badge bg-primary-subtle text-primary">{{ __('consultations.workspace.set') }}</span>
+                                    @endif
                                 </div>
-                                <div class="modal-body">
+                                <div class="card-body">
                                 @if(! $selectedRoute)
                                     <x-empty-state icon="ti-route-off" :title="__('consultations.no_active_session')" :message="__('consultations.workspace.select_session_for_follow_up')" />
                                 @else
@@ -1854,7 +1919,6 @@
                                     @endif
                                 @endif
                                 </div>
-                            </div>
                         </div>
                     </div>
 

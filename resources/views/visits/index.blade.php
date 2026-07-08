@@ -146,6 +146,22 @@
     </x-slot:head>
 
                     @forelse($visits as $visit)
+                    @php
+                        $reopenPolicy = app(\App\Services\Consultation\ConsultationReopenEligibilityService::class);
+                        $activeAdmission = $visit->admission && $reopenPolicy->isActiveAdmission($visit->admission);
+                        $dischargedToday = $visit->admission && $reopenPolicy->isDischargedToday($visit->admission);
+                        $completedToday = $visit->status === \App\Enums\VisitStatus::COMPLETED
+                            && $visit->completed_at
+                            && $visit->completed_at->timezone(config('app.timezone'))->isSameDay(today());
+                        $consultationRoute = $visit->currentConsultationRoute()
+                            ?? $visit->consultationRoutes
+                                ->where('status', \App\Models\VisitConsultationRoute::STATUS_COMPLETED)
+                                ->sortByDesc('completed_at')
+                                ->first();
+                        $reopenEligibility = $consultationRoute && auth()->user()
+                            ? $reopenPolicy->canReopen(auth()->user(), $visit, $consultationRoute)
+                            : null;
+                    @endphp
                     <tr>
                         <td>
                             <a href="{{ route('admin.visits.show', $visit) }}" class="fw-medium text-primary">
@@ -205,6 +221,22 @@
                                     @endif
                                 </div>
                             @endif
+                            <div class="mt-1 d-flex flex-wrap gap-1">
+                                @if($activeAdmission)
+                                    <span class="badge bg-info-subtle text-info border">{{ __('visits.badges.on_admission') }}</span>
+                                @endif
+                                @if($dischargedToday)
+                                    <span class="badge bg-success-subtle text-success border">{{ __('visits.badges.discharged_today') }}</span>
+                                @endif
+                                @if($completedToday)
+                                    <span class="badge bg-success-subtle text-success border">{{ __('visits.badges.completed_today') }}</span>
+                                @endif
+                                @if($reopenEligibility?->allowed)
+                                    <span class="badge bg-warning-subtle text-warning border">{{ __('visits.badges.reopen_available') }}</span>
+                                @elseif($consultationRoute && in_array($consultationRoute->status, [\App\Models\VisitConsultationRoute::STATUS_COMPLETED, \App\Models\VisitConsultationRoute::STATUS_CANCELLED], true))
+                                    <span class="badge bg-secondary-subtle text-secondary border">{{ __('visits.badges.read_only') }}</span>
+                                @endif
+                            </div>
                         </td>
                         <td>{{ $visit->visit_date->translatedFormat('d M Y') }}</td>
                         <td>{{ $visit->duration ?? '—' }}</td>
@@ -215,6 +247,15 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item" href="{{ route('admin.visits.show', $visit) }}"><i class="ti ti-eye me-2"></i>{{ __('visits.view_details') }}</a></li>
+                                    @if($consultationRoute)
+                                        @if($consultationRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
+                                            <li><a class="dropdown-item" href="{{ route('admin.consultations.routes.show', [$visit, $consultationRoute]) }}"><i class="ti ti-stethoscope me-2"></i>{{ __('visits.actions.continue_consultation') }}</a></li>
+                                        @elseif($reopenEligibility?->allowed)
+                                            <li><a class="dropdown-item" href="{{ route('admin.consultations.routes.show', [$visit, $consultationRoute]) }}"><i class="ti ti-lock-open me-2"></i>{{ __('visits.actions.reopen_consultation') }}</a></li>
+                                        @else
+                                            <li><a class="dropdown-item" href="{{ route('admin.consultations.routes.show', [$visit, $consultationRoute]) }}"><i class="ti ti-eye me-2"></i>{{ __('visits.actions.view_readonly') }}</a></li>
+                                        @endif
+                                    @endif
                                     @can('visits.preview')
                                     <li><a class="dropdown-item" href="{{ route('admin.visits.preview', $visit) }}"><i class="ti ti-eye-search me-2"></i>{{ __('visits.preview_visit') }}</a></li>
                                     @endcan

@@ -35,6 +35,18 @@ return [
     'waiting_for_triage_note' => 'Waiting for triage',
     'no_visits_found' => 'No visits found',
     'no_visits_match_filters'   => 'No visits match the selected filters.',
+    'badges' => [
+        'on_admission' => 'On admission',
+        'discharged_today' => 'Discharged today',
+        'completed_today' => 'Completed today',
+        'reopen_available' => 'Reopen available',
+        'read_only' => 'Read-only',
+    ],
+    'actions' => [
+        'reopen_consultation' => 'Reopen consultation',
+        'continue_consultation' => 'Continue consultation',
+        'view_readonly' => 'View only',
+    ],
 
     // Show page
     'show_title'                => 'Visit Details',
