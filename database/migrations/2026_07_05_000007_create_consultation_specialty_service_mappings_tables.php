@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('consultation_specialty_service_mappings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('consultation_specialty_profile_id')->constrained('consultation_specialty_profiles')->cascadeOnDelete();
+            $table->foreignId('consultation_specialty_profile_id')->constrained('consultation_specialty_profiles', indexName: 'cssm_profile_fk')->cascadeOnDelete();
             $table->foreignId('service_id')->nullable()->constrained('service_catalog')->nullOnDelete();
             $table->foreignId('department_id')->nullable()->constrained('departments')->nullOnDelete();
             $table->unsignedBigInteger('consultation_route_id')->nullable()->index('cssm_route_idx');
@@ -32,9 +32,9 @@ return new class extends Migration
 
         Schema::create('consultation_specialty_billing_applications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('consultation_id')->constrained('visit_consultation_routes')->cascadeOnDelete();
-            $table->foreignId('consultation_specialty_profile_id')->nullable()->constrained('consultation_specialty_profiles')->nullOnDelete();
-            $table->foreignId('consultation_specialty_service_mapping_id')->nullable()->constrained('consultation_specialty_service_mappings')->nullOnDelete();
+            $table->foreignId('consultation_id')->constrained('visit_consultation_routes', indexName: 'csba_consultation_fk')->cascadeOnDelete();
+            $table->foreignId('consultation_specialty_profile_id')->nullable()->constrained('consultation_specialty_profiles', indexName: 'csba_profile_fk')->nullOnDelete();
+            $table->foreignId('consultation_specialty_service_mapping_id')->nullable()->constrained('consultation_specialty_service_mappings', indexName: 'csba_mapping_fk')->nullOnDelete();
             $table->foreignId('service_id')->nullable()->constrained('service_catalog')->nullOnDelete();
             $table->unsignedBigInteger('invoice_id')->nullable()->index('csba_invoice_idx');
             $table->unsignedBigInteger('invoice_item_id')->nullable()->index('csba_invoice_item_idx');

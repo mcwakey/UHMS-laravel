@@ -11,10 +11,10 @@ return new class extends Migration
         Schema::create('consultation_specialty_favorites', function (Blueprint $table) {
             $table->id();
             $table->foreignId('consultation_specialty_profile_id')
-                ->constrained('consultation_specialty_profiles')
+                ->constrained('consultation_specialty_profiles', indexName: 'csf_profile_fk')
                 ->cascadeOnDelete();
             $table->string('favorite_type');
-            $table->nullableMorphs('favoritable');
+            $table->nullableMorphs('favoritable', 'csf_favoritable_idx');
             $table->string('code')->nullable();
             $table->string('label');
             $table->text('description')->nullable();
