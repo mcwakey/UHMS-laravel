@@ -554,6 +554,7 @@ class BillingService
             $invoiceNumber = Invoice::generateNumber('INV', 'invoices', 'invoice_number');
             $visit = Visit::find($data['visit_id']);
             $actorId = Auth::id() ?? ($data['created_by'] ?? null) ?? $visit?->created_by;
+            $items = $this->normalizeCreateInvoiceItems($visit, $items);
 
             // Calculate totals from items
             $subtotal = 0;
@@ -1032,6 +1033,63 @@ class BillingService
         }
 
         return 0.0;
+    }
+
+    private function normalizeCreateInvoiceItems(?Visit $visit, array $items): array
+    {
+        if (! $visit) {
+            return $items;
+        }
+
+        $serviceIds = collect($items)
+            ->pluck('service_catalog_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($serviceIds->isEmpty()) {
+            return $items;
+        }
+
+        $services = ServiceCatalog::query()
+            ->with('prices')
+            ->whereIn('id', $serviceIds)
+            ->get()
+            ->keyBy('id');
+
+        return array_map(function (array $item) use ($visit, $services) {
+            $serviceId = $item['service_catalog_id'] ?? null;
+            $service = $serviceId ? $services->get((int) $serviceId) : null;
+
+            if (! $service || $this->hasTrustedPricingSnapshot($item)) {
+                return $item;
+            }
+
+            $snap = $this->priceResolver->resolveForVisit($service, $visit);
+            $payerType = $snap['payer_type'] ?? 'cash';
+            $pricingSource = $snap['pricing_source'] ?? 'cash_price';
+            $selectedPrice = (float) ($snap['selected_price'] ?? $service->price);
+
+            return array_merge($item, [
+                'cash_price' => (float) ($snap['cash_price'] ?? $service->price),
+                'selected_price' => $selectedPrice,
+                'unit_price' => $selectedPrice,
+                'insurance_price' => $this->hasSelectedInsurancePrice($payerType, $pricingSource) ? $selectedPrice : null,
+                'payer_type' => $payerType,
+                'insurance_provider_id' => $snap['insurance_provider_id'] ?? null,
+                'insurance_type' => $snap['insurance_type'] ?? null,
+                'pricing_source' => $pricingSource,
+            ]);
+        }, $items);
+    }
+
+    private function hasTrustedPricingSnapshot(array $item): bool
+    {
+        return array_key_exists('selected_price', $item)
+            || array_key_exists('cash_price', $item)
+            || array_key_exists('payer_type', $item)
+            || array_key_exists('pricing_source', $item)
+            || array_key_exists('insurance_provider_id', $item);
     }
 
     private function syncInsuranceUsageForItem(InvoiceItem $item, ?string $reason = null): void
