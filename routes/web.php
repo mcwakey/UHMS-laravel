@@ -166,6 +166,7 @@ use App\Http\Controllers\Doctor\MedicalPatternController;
 use App\Http\Controllers\Doctor\PrescriptionController;
 use App\Http\Controllers\Lab\LabRequestController;
 use App\Http\Controllers\Lab\LabResultController;
+use App\Http\Controllers\Lab\SampleController;
 use App\Http\Controllers\Pharmacy\DispensingController;
 use App\Http\Controllers\StaffDashboardController;
 use App\Http\Controllers\Theatre\TheatreController;
@@ -1365,6 +1366,16 @@ Route::middleware('auth')->group(function () {
                 Route::patch('requests/{labRequest}/accept', [LabRequestController::class, 'accept'])->name('requests.accept')->middleware('can:lab.results.create');
                 Route::post('requests/{labRequest}/accept-selected', [LabRequestController::class, 'acceptSelected'])->name('requests.accept-selected')->middleware('can:lab.results.create');
                 Route::patch('requests/{labRequest}/cancel', [LabRequestController::class, 'cancel'])->name('requests.cancel')->middleware('can:lab.results.create');
+            });
+
+            // Specimen / Sample Tracking
+            Route::middleware('can:lab.samples.view')->group(function () {
+                Route::get('samples', [SampleController::class, 'index'])->name('samples.index');
+                Route::post('requests/{labRequest}/samples/generate', [SampleController::class, 'generate'])->name('samples.generate')->middleware('can:lab.samples.manage');
+                Route::patch('samples/{sample}/collect', [SampleController::class, 'collect'])->name('samples.collect')->middleware('can:lab.samples.collect');
+                Route::patch('samples/{sample}/receive', [SampleController::class, 'receive'])->name('samples.receive')->middleware('can:lab.samples.receive');
+                Route::patch('samples/{sample}/reject', [SampleController::class, 'reject'])->name('samples.reject')->middleware('can:lab.samples.manage');
+                Route::patch('samples/{sample}/dispose', [SampleController::class, 'dispose'])->name('samples.dispose')->middleware('can:lab.samples.manage');
             });
 
             // Lab Results

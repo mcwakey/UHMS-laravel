@@ -41,6 +41,8 @@
     $pendingItems = $request->items->where('status', 'pending');
     $prepaidRequired = $request->requiresPrepaidResults();
     $resultBlocked = fn ($item) => $prepaidRequired && ! $item->isBillSettled();
+    $sampleBlocked = fn ($item) => $item->isBlockedBySample();
+    $showSamples = $request->usesSpecimens();
 @endphp
 
 <div class="row">
@@ -69,6 +71,10 @@
         @endif
 
 @include('lab.partials.accept-bill')
+
+@if($showSamples)
+@include('lab.partials.samples')
+@endif
 
 <!-- Investigation Items & Results -->
 @if($resultType === \App\Enums\ResultType::PARAMETERS)
@@ -221,6 +227,8 @@
                             @can('lab.results.create')
                             @if($resultBlocked($item))
                             <span class="badge bg-warning text-dark" title="Bill not settled"><i class="ti ti-clock-dollar me-1"></i>{{ __('lab.awaiting_payment_badge') }}</span>
+                            @elseif($sampleBlocked($item))
+                            <span class="badge bg-warning text-dark" title="{{ __('samples.awaiting_sample_title') }}"><i class="ti ti-test-pipe me-1"></i>{{ __('samples.awaiting_sample_badge') }}</span>
                             @else
                             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#resultModal-{{ $item->id }}" title="{{ __('lab.result_value_label') }}"><i class="ti ti-edit"></i></button>
                             @endif
@@ -238,7 +246,7 @@
 
 {{-- Per-item modals (parameters) --}}
 @foreach($request->items as $item)
-@if($request->status !== 'cancelled' && ! $item->result?->is_verified && !$resultBlocked($item))
+@if($request->status !== 'cancelled' && ! $item->result?->is_verified && !$resultBlocked($item) && !$sampleBlocked($item))
 <div class="modal fade" id="resultModal-{{ $item->id }}" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-lg-down">
         <form method="POST" action="{{ route('admin.lab.results.store', $item) }}" enctype="multipart/form-data" class="modal-content">

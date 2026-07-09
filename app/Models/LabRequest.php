@@ -99,6 +99,11 @@ class LabRequest extends Model
         return $this->hasMany(LabRequestItem::class);
     }
 
+    public function samples(): HasMany
+    {
+        return $this->hasMany(Sample::class);
+    }
+
     public function results(): HasMany
     {
         return $this->hasMany(LabResult::class);
@@ -177,6 +182,19 @@ class LabRequest extends Model
         }
 
         return true;
+    }
+
+    /**
+     * Whether this request deals in physical specimens (lab / pathology), so the
+     * sample-collection workflow applies. Radiology / scan / document
+     * departments are imaging-only and skip specimens.
+     */
+    public function usesSpecimens(): bool
+    {
+        $resultType = $this->targetDepartment?->result_type;
+
+        // No configured target department (legacy / direct lab) → assume specimens.
+        return $resultType === null || $resultType->usesTestCatalog();
     }
 
     public function getStatusColorAttribute(): string

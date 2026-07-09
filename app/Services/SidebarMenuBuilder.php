@@ -651,6 +651,14 @@ class SidebarMenuBuilder
                         'module' => 'investigations',
                     ],
                     [
+                        'label' => 'Samples',
+                        'icon' => 'ti ti-droplet',
+                        'route' => 'admin.lab.samples.index',
+                        'active_patterns' => ['admin.lab.samples.*'],
+                        'permission' => 'lab.samples.view',
+                        'module' => 'investigations',
+                    ],
+                    [
                         'label' => 'Results',
                         'icon' => 'ti ti-report-medical',
                         'route' => 'admin.lab.results.index',

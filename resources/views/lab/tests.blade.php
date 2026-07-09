@@ -269,6 +269,18 @@
                                                     <div class="form-text">Pre-filled into the result form for richtext-type investigation departments.</div>
                                                 </div>
                                                 <div class="mt-3">
+                                                    <label class="form-label">{{ __('samples.default_specimen_label') }}</label>
+                                                    <select name="default_specimen_type" class="form-select">
+                                                        <option value="">{{ __('samples.default_specimen_none') }}</option>
+                                                        @foreach(config('specimens.types') as $code => $def)
+                                                            <option value="{{ $code }}" {{ $test->default_specimen_type === $code ? 'selected' : '' }}>
+                                                                {{ \Illuminate\Support\Facades\Lang::has('samples.specimen.'.$code) ? __('samples.specimen.'.$code) : ($def['label'] ?? $code) }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                    <div class="form-text">{{ __('samples.default_specimen_hint') }}</div>
+                                                </div>
+                                                <div class="mt-3">
                                                     <label class="form-label">{{ __('lab.price_label_ghc') }}</label>
                                                     <input type="number" name="price" class="form-control" value="{{ $test->price }}" step="0.01" min="0">
                                                 </div>
@@ -402,6 +414,18 @@
                         <label class="form-label fw-medium">{{ __('lab.desc_template_label') }} <small class="text-muted">(rich text)</small></label>
                         <textarea name="description_template" class="form-control" rows="6" placeholder="Default report skeleton: findings, impressions, conclusions..."></textarea>
                         <div class="form-text">Pre-filled into the result form for richtext-type investigation departments.</div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label">{{ __('samples.default_specimen_label') }}</label>
+                        <select name="default_specimen_type" class="form-select">
+                            <option value="">{{ __('samples.default_specimen_none') }}</option>
+                            @foreach(config('specimens.types') as $code => $def)
+                                <option value="{{ $code }}">
+                                    {{ \Illuminate\Support\Facades\Lang::has('samples.specimen.'.$code) ? __('samples.specimen.'.$code) : ($def['label'] ?? $code) }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <div class="form-text">{{ __('samples.default_specimen_hint') }}</div>
                     </div>
                     <div class="mt-3">
                         <label class="form-label">{{ __('lab.price_label_ghc') }}</label>

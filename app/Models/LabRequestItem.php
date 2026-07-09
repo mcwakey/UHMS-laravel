@@ -10,6 +10,7 @@ class LabRequestItem extends Model
 {
     protected $fillable = [
         'lab_request_id',
+        'sample_id',
         'lab_test_id',
         'service_id',
         'status',
@@ -30,6 +31,11 @@ class LabRequestItem extends Model
     public function labRequest(): BelongsTo
     {
         return $this->belongsTo(LabRequest::class);
+    }
+
+    public function sample(): BelongsTo
+    {
+        return $this->belongsTo(Sample::class);
     }
 
     public function labTest(): BelongsTo
@@ -115,6 +121,22 @@ class LabRequestItem extends Model
     public function hasResult(): bool
     {
         return $this->result()->exists();
+    }
+
+    /**
+     * Whether result entry is blocked because this item's specimen has not yet
+     * been received in the lab. Items with no linked sample are unaffected
+     * (backward compatible with requests created before sample tracking).
+     */
+    public function isBlockedBySample(): bool
+    {
+        if (! $this->sample_id) {
+            return false;
+        }
+
+        $sample = $this->relationLoaded('sample') ? $this->sample : $this->sample()->first();
+
+        return $sample !== null && ! $sample->isReceived();
     }
 
     /**

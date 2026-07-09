@@ -298,12 +298,16 @@ class LabService
             'targetDepartment',
             'items.labTest.category',
             'items.labTest.criteria',
+            'items.sample',
             'items.service.investigationHeaders.criteria',
             'items.service.investigationCriteria',
             'items.invoiceItem.invoice',
             'items.result.performedBy',
             'items.result.verifiedBy',
             'items.result.values',
+            'samples.items',
+            'samples.collectedBy',
+            'samples.receivedBy',
         ]);
     }
 
@@ -376,6 +380,12 @@ class LabService
         $labRequest = $item->labRequest;
         if ($labRequest && $labRequest->requiresPrepaidResults() && ! $item->isBillSettled()) {
             throw new \RuntimeException('Payment required: this investigation must be paid before results can be entered.');
+        }
+
+        // Specimen gate: when a sample is tracked for this item, it must be
+        // received in the lab before a result can be entered.
+        if ($item->isBlockedBySample()) {
+            throw new \RuntimeException(__('samples.errors.result_blocked'));
         }
 
         return DB::transaction(function () use ($item, $data) {
