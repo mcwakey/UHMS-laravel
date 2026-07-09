@@ -2,15 +2,16 @@
 
 namespace App\Services\Consultation;
 
-use App\Enums\AdmissionStatus;
-use App\Enums\VisitStatus;
-use App\Enums\VisitType;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
 
 class ConsultationReopenEligibilityService
 {
+    public function __construct(
+        private readonly ConsultationSessionEligibilityService $eligibility,
+    ) {}
+
     public function canReopen(User $user, Visit $visit, ?VisitConsultationRoute $route = null): ReopenEligibilityResult
     {
         $route ??= $visit->consultationRoutes()
@@ -43,52 +44,36 @@ class ConsultationReopenEligibilityService
             return ReopenEligibilityResult::deny('not_completed', __('consultations.reopen.blocked'), 'CONSULTATION_REOPEN_BLOCKED');
         }
 
-        $visit->loadMissing('admission');
-        $admission = $visit->admission;
+        $decision = $this->eligibility->reopenDecision($visit, $route, $user);
 
-        if ($admission && $this->isActiveAdmission($admission)) {
-            return ReopenEligibilityResult::deny('active_admission', __('consultations.reopen.blocked'), 'CONSULTATION_REOPEN_BLOCKED');
-        }
-
-        if ($admission && $admission->actual_discharge_date) {
-            if (! $admission->actual_discharge_date->timezone(config('app.timezone'))->isSameDay(today())) {
-                return ReopenEligibilityResult::deny('discharge_too_old', __('consultations.reopen.discharge_too_old'), 'CONSULTATION_REOPEN_BLOCKED');
-            }
-
-            if (! $user->can('consultations.reopen_same_day_discharge')) {
-                return ReopenEligibilityResult::deny('permission_denied', __('consultations.reopen.permission_denied'), 'CONSULTATION_REOPEN_BLOCKED');
-            }
-
-            return ReopenEligibilityResult::allow(
+        return match ($decision['code']) {
+            'active_admission' => ReopenEligibilityResult::allow(
+                'active_admission',
+                $decision['message'],
+                'CONSULTATION_REOPEN_DURING_ACTIVE_ADMISSION',
+            ),
+            'same_day_discharge' => ReopenEligibilityResult::allow(
                 'same_day_discharge',
-                __('consultations.reopen.same_day_discharge_allowed'),
+                $decision['message'],
                 'CONSULTATION_REOPEN_AFTER_SAME_DAY_DISCHARGE',
-            );
-        }
-
-        if (
-            $visit->visit_type === VisitType::OUTPATIENT
-            && $visit->status === VisitStatus::COMPLETED
-            && $visit->completed_at?->timezone(config('app.timezone'))->isSameDay(today())
-        ) {
-            if (! $user->can('consultations.reopen_completed')) {
-                return ReopenEligibilityResult::deny('permission_denied', __('consultations.reopen.permission_denied'), 'CONSULTATION_REOPEN_BLOCKED');
-            }
-
-            return ReopenEligibilityResult::allow(
+            ),
+            'same_day_outpatient' => ReopenEligibilityResult::allow(
                 'completed_outpatient',
-                __('consultations.reopen.completed_outpatient_allowed'),
+                $decision['message'],
                 'CONSULTATION_REOPEN_COMPLETED_OUTPATIENT',
-            );
-        }
-
-        return ReopenEligibilityResult::deny('blocked', __('consultations.reopen.blocked'), 'CONSULTATION_REOPEN_BLOCKED');
+            ),
+            'override' => ReopenEligibilityResult::allow(
+                'override',
+                __('consultations.reopen.completed_outpatient_allowed'),
+                'CONSULTATION_REOPEN_AFTER_WINDOW_OVERRIDE',
+            ),
+            default => ReopenEligibilityResult::deny($decision['code'], $decision['message'], 'CONSULTATION_REOPEN_BLOCKED'),
+        };
     }
 
     public function isActiveAdmission($admission): bool
     {
-        return ! $admission->actual_discharge_date
-            && in_array($admission->status, [AdmissionStatus::ADMITTED, AdmissionStatus::ON_LEAVE], true);
+        return $this->eligibility->isActiveAdmission($admission);
     }
 
     public function isDischargedToday($admission): bool

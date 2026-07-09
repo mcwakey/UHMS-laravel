@@ -113,6 +113,16 @@ trait HandlesConsultationSessions
 
     public function storeRoute(Request $request, Visit $visit)
     {
+        if (app(\App\Services\Consultation\ConsultationSessionEligibilityService::class)->isVisitClinicallyLocked($visit)) {
+            $message = __('consultations.lock_reasons.visit_closed_after_visit_day');
+
+            if ($this->shouldReturnJson($request)) {
+                return response()->json(['error' => $message], 422);
+            }
+
+            return back()->withInput()->with('error', $message);
+        }
+
         $data = $request->validate([
             'department_id' => ['required', 'exists:departments,id'],
             'service_id' => ['nullable', 'exists:service_catalog,id'],

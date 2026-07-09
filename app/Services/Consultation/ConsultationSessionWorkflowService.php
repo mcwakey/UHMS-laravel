@@ -10,6 +10,7 @@ use App\Models\VisitConsultationRoute;
 use App\Models\VisitConsultationRouteLog;
 use App\Services\ActivityLogService;
 use App\Services\ConsultationRouteService;
+use App\Services\ConsultationSessionService;
 use App\Services\VisitService;
 use Illuminate\Support\Facades\DB;
 
@@ -21,6 +22,7 @@ class ConsultationSessionWorkflowService
         private readonly ConsultationActionGuard $guard,
         private readonly ConsultationCompletionReadinessService $readiness,
         private readonly ConsultationReopenEligibilityService $reopenEligibility,
+        private readonly ConsultationAutoCompletionService $autoCompletion,
         private readonly ActivityLogService $activityLog,
     ) {}
 
@@ -31,7 +33,7 @@ class ConsultationSessionWorkflowService
 
         $route = $this->routes->completeRoute($route, $user, $notes);
 
-        $this->completeVisitWhenAllRoutesAreClosed($visit, $route, $user, $notes);
+        $this->autoCompletion->evaluate($visit, $user, $route, $notes);
 
         return $route;
     }
@@ -93,7 +95,7 @@ class ConsultationSessionWorkflowService
 
             $this->restoreVisitForConsultation($visit, $route, $user, $reason);
 
-            app(\App\Services\ConsultationSessionService::class)->getOrCreateMedicalRecordForRoute($route, $user);
+            app(ConsultationSessionService::class)->getOrCreateMedicalRecordForRoute($route, $user);
 
             VisitConsultationRouteLog::create([
                 'visit_consultation_route_id' => $route->id,
@@ -199,52 +201,6 @@ class ConsultationSessionWorkflowService
             ],
             $route,
             'Consultation reopen workflow event.',
-        );
-    }
-
-    private function completeVisitWhenAllRoutesAreClosed(
-        Visit $visit,
-        VisitConsultationRoute $route,
-        User $user,
-        ?string $notes = null,
-    ): void {
-        $visit = $visit->fresh();
-
-        if (! $visit || $visit->status === VisitStatus::COMPLETED) {
-            return;
-        }
-
-        $hasOpenRoute = $visit->consultationRoutes()
-            ->where('status', '!=', VisitConsultationRoute::STATUS_CANCELLED)
-            ->where('status', '!=', VisitConsultationRoute::STATUS_COMPLETED)
-            ->exists();
-
-        if ($hasOpenRoute || ! $visit->canTransitionTo(VisitStatus::COMPLETED)) {
-            return;
-        }
-
-        $completedVisit = $this->visits->transition(
-            $visit,
-            VisitStatus::COMPLETED,
-            $notes ?: __('consultations.routes.all_sessions_completed')
-        );
-
-        if (! $completedVisit->completed_by) {
-            $completedVisit->forceFill(['completed_by' => $user->id])->save();
-        }
-
-        $this->activityLog->log(
-            LogModule::CONSULTATION,
-            'CONSULTATION_COMPLETED_AFTER_LAST_SESSION',
-            [
-                'patient_id' => $visit->patient_id,
-                'visit_id' => $visit->id,
-                'consultation_route_id' => $route->id,
-                'department_id' => $route->department_id,
-                'causer' => $user,
-            ],
-            $route,
-            'Consultation completed after the final session was completed.',
         );
     }
 

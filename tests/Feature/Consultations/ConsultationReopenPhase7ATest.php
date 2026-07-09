@@ -22,6 +22,7 @@ use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
 use App\Models\Ward;
 use App\Services\ConsultationSessionService;
+use App\Services\VisitService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -178,6 +179,49 @@ class ConsultationReopenPhase7ATest extends TestCase
 
         $this->assertStringContainsString($visit->visit_number, $html);
         $this->assertStringContainsString(__('visits.actions.reopen_consultation'), $html);
+    }
+
+    public function test_active_inpatient_completed_session_can_be_reopened_for_continued_care(): void
+    {
+        [$visit, $route] = $this->completedInpatientRouteWithActiveAdmission();
+
+        $this->actingAs($this->authorised)
+            ->postJson(route('admin.consultations.routes.reopen', [$visit, $route]), [
+                'reason' => 'Continue inpatient session while patient remains admitted',
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertSame(VisitConsultationRoute::STATUS_ACTIVE, $route->fresh()->status);
+        $this->assertNull($visit->fresh('admission')->admission->actual_discharge_date);
+        $this->assertDatabaseHas('activity_log', [
+            'event' => 'CONSULTATION_REOPEN_DURING_ACTIVE_ADMISSION',
+            'subject_type' => VisitConsultationRoute::class,
+            'subject_id' => $route->id,
+        ]);
+    }
+
+    public function test_completing_last_active_inpatient_session_does_not_close_admitted_visit(): void
+    {
+        [$visit, $route] = $this->inpatientVisitWithAdmission(
+            visitDate: now(),
+            admissionStatus: AdmissionStatus::ADMITTED,
+        );
+        $this->addCompletionReadyRecord($route);
+
+        $this->actingAs($this->authorised)
+            ->post(route('admin.consultations.routes.complete', [$visit, $route]), [
+                'notes' => 'Current inpatient consultation session complete',
+            ])
+            ->assertRedirect(route('admin.consultations.routes.show', [$visit, $route]));
+
+        $visit->refresh();
+
+        $this->assertSame(VisitConsultationRoute::STATUS_COMPLETED, $route->fresh()->status);
+        $this->assertSame(VisitStatus::ADMITTED, $visit->status);
+        $this->assertNull($visit->completed_at);
+        $this->assertNull($visit->completed_by);
+        $this->assertNull($visit->admission->actual_discharge_date);
     }
 
     public function test_inpatient_discharged_before_today_cannot_be_reopened_by_normal_permission(): void
@@ -381,8 +425,8 @@ class ConsultationReopenPhase7ATest extends TestCase
         ], $filters);
 
         return view('visits.index', [
-            'visits' => app(\App\Services\VisitService::class)->list($filters),
-            'stats' => app(\App\Services\VisitService::class)->todayStats($filters),
+            'visits' => app(VisitService::class)->list($filters),
+            'stats' => app(VisitService::class)->todayStats($filters),
             'filters' => $filters,
             'insuranceProviderOptions' => collect([[
                 'value' => 'cash',
@@ -419,6 +463,24 @@ class ConsultationReopenPhase7ATest extends TestCase
         );
 
         $this->createAdmission($visit, AdmissionStatus::DISCHARGED, $dischargedAt);
+
+        return [$visit->fresh('admission'), $route->fresh()];
+    }
+
+    private function completedInpatientRouteWithActiveAdmission(): array
+    {
+        [$visit, $route] = $this->visitWithRoute(
+            VisitType::INPATIENT,
+            VisitStatus::ADMITTED,
+            now()->subDays(2),
+            [
+                'status' => VisitConsultationRoute::STATUS_COMPLETED,
+                'completed_at' => now(),
+                'completed_by' => $this->authorised->id,
+            ],
+        );
+
+        $this->createAdmission($visit, AdmissionStatus::ADMITTED);
 
         return [$visit->fresh('admission'), $route->fresh()];
     }
@@ -466,6 +528,24 @@ class ConsultationReopenPhase7ATest extends TestCase
         app(ConsultationSessionService::class)->getOrCreateMedicalRecordForRoute($route, $this->authorised);
 
         return [$visit->fresh(['consultationRoutes', 'admission']), $route->fresh('medicalRecord')];
+    }
+
+    private function addCompletionReadyRecord(VisitConsultationRoute $route): void
+    {
+        $record = app(ConsultationSessionService::class)->getOrCreateMedicalRecordForRoute($route, $this->authorised);
+        $base = [
+            'consultation_route_id' => $route->id,
+            'visit_id' => $route->visit_id,
+            'patient_id' => $route->patient_id,
+            'department_id' => $route->department_id,
+            'doctor_id' => $this->authorised->id,
+            'created_by' => $this->authorised->id,
+        ];
+
+        $record->complaints()->create($base + ['description' => 'Inpatient review']);
+        $record->physicalExaminations()->create($base + ['findings' => 'Stable inpatient examination']);
+        $record->diagnoses()->create($base + ['description' => 'Active inpatient care', 'type' => 'provisional', 'is_primary' => true]);
+        $record->treatments()->create($base + ['type' => 'plan', 'description' => 'Continue ward care plan']);
     }
 
     private function createAdmission(Visit $visit, AdmissionStatus $status, $dischargedAt = null): Admission

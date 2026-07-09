@@ -44,15 +44,15 @@
                 @if($section['is_required'] ?? false)
                     <span class="badge bg-warning text-dark">{{ __('consultation_specialties.workspace.required') }}</span>
                 @endif
-                @can('consultations.create')
+                @if($canCreateEntries)
                     <button class="btn btn-sm btn-primary ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#{{ $formId }}" aria-expanded="false" aria-controls="{{ $formId }}">
                         <i class="ti ti-plus me-1"></i>{{ __('common.add') }}
                     </button>
-                @endcan
+                @endif
             </div>
         </div>
         <div class="card-body">
-            @can('consultations.create')
+            @if($canCreateEntries)
             <div class="collapse mb-3" id="{{ $formId }}">
                 <div class="card card-body bg-light">
                     <form data-ajax-form="{{ $section['key'] }}" data-consultation-form="specialty-entry" data-refresh-section="{{ $section['key'] }}" data-route-context-required="true" method="POST" action="{{ route('admin.consultations.specialty-entries.store', [$visit, $section['key']]) }}">
@@ -99,7 +99,7 @@
                     </form>
                 </div>
             </div>
-            @endcan
+            @endif
 
             @forelse($entryOwnerGroups as $group)
                 @php
@@ -138,12 +138,12 @@
                                     @if($entryFooter($specialtyEntry))<small class="text-muted d-block">{{ $entryFooter($specialtyEntry) }}</small>@endif
                                 </div>
                                 <div class="entry-actions d-flex gap-1">
-                                    @if($canEditEntry($specialtyEntry))
+                                    @if($canCreateEntries && $canEditEntry($specialtyEntry))
                                         <button aria-label="{{ __('consultation_specialties.admin.edit') }}" title="{{ __('consultation_specialties.admin.edit') }}" type="button" class="btn btn-xs btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#{{ $editFormId }}">
                                             <i class="ti ti-edit"></i>
                                         </button>
                                     @endif
-                                    @if($canDeleteEntry($specialtyEntry))
+                                    @if($canCreateEntries && $canDeleteEntry($specialtyEntry))
                                         <button type="submit" form="delete-specialty-{{ $specialtyEntry->id }}" class="btn btn-xs btn-outline-danger" data-confirm="{{ __('consultation_specialties.messages.confirm_delete') }}" aria-label="{{ __('common.delete') }}" title="{{ __('common.delete') }}">
                                             <i class="ti ti-trash"></i>
                                         </button>
@@ -151,7 +151,7 @@
                                 </div>
                             </div>
 
-                            @can('consultations.create')
+                            @if($canCreateEntries)
                             <div class="collapse mt-3" id="{{ $editFormId }}">
                                 <div class="card card-body bg-light border-0 p-3">
                                     <form data-ajax-form="{{ $section['key'] }}" data-consultation-form="specialty-entry" data-refresh-section="{{ $section['key'] }}" data-route-context-required="true" method="POST" action="{{ route('admin.consultations.specialty-entries.store', [$visit, $section['key']]) }}">
@@ -200,7 +200,7 @@
                                     </form>
                                 </div>
                             </div>
-                            @endcan
+                            @endif
 
                             @if($canDeleteEntry($specialtyEntry))
                                 <form id="delete-specialty-{{ $specialtyEntry->id }}" method="POST" action="{{ route('admin.consultations.specialty-entries.destroy', [$visit, $section['key']]) }}" class="d-none">

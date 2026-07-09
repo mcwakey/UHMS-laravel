@@ -29,6 +29,9 @@
                         $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_CANCELLED ? ' is-cancelled' : '';
                         $sessionServiceNames = $routeServiceNames($session);
                         $sessionLabel = $session->isEmergencySession() ? __('consultations.emergency_department_session') : ($session->department?->name ?? '-');
+                        $sessionReopenEligibility = $session->status === \App\Models\VisitConsultationRoute::STATUS_COMPLETED && auth()->user()
+                            ? app(\App\Services\Consultation\ConsultationReopenEligibilityService::class)->canReopen(auth()->user(), $visit, $session)
+                            : null;
                     @endphp
                     <tr class="session-route-row {{ trim($rowClass) }}">
                         <td class="fw-medium">
@@ -43,7 +46,7 @@
                             @if($selectedRoute && $selectedRoute->id === $session->id)
                                 <span class="badge bg-primary ms-1">{{ __('consultations.workspace.current') }}</span>
                             @endif
-                            @if($session->reopened_at)
+                            @if($sessionReopenEligibility?->allowed)
                                 <span class="badge bg-warning text-dark ms-1">{{ __('visits.badges.reopen_available') }}</span>
                             @endif
                         </td>
@@ -61,7 +64,7 @@
                                 </a>
                                 @if($session->status !== \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
                                 @endif
-                                @can('consultations.create')
+                                @if($canCreateEntries)
                                 @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
                                     <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $session]) }}">
                                         @csrf
@@ -80,7 +83,7 @@
                                         <button class="btn btn-xs btn-outline-danger" type="submit" data-confirm="Cancel this queued session?">Cancel</button>
                                     </form>
                                 @endif
-                                @endcan
+                                @endif
                             </div>
                         </td>
                     </tr>
@@ -131,22 +134,22 @@
             @endif --}}
             @if($selectedRoute)
                 @if(in_array($selectedRoute->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
-                    @can('consultations.create')
+                    @if($canCreateEntries)
                     <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $selectedRoute]) }}">
                         @csrf
                         <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-player-play me-1"></i>{{ __('consultations.workspace.start_session') }}</button>
                     </form>
-                    @endcan
+                    @endif
                 @endif
                 @if($selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
-                    @can('consultations.create')
+                    @if($canCreateEntries)
                     <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $selectedRoute]) }}">
                         @csrf
                         <button type="submit" class="btn btn-success btn-sm" data-confirm="{{ __('consultations.workspace.complete_session_confirm') }}">
                             <i class="ti ti-check me-1"></i>{{ __('consultations.workspace.complete_current_session') }}
                         </button>
                     </form>
-                    @endcan
+                    @endif
                 @endif
             @endif
         </div>
@@ -179,29 +182,29 @@
         {{-- <div class="d-flex flex-wrap gap-2 mt-3">
             @if($selectedRoute)
                 @if(in_array($selectedRoute->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
-                    @can('consultations.create')
+                    @if($canCreateEntries)
                     <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $selectedRoute]) }}">
                         @csrf
                         <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-player-play me-1"></i>Start Session</button>
                     </form>
-                    @endcan
+                    @endif
                 @endif
                 @if($selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
-                    @can('consultations.create')
+                    @if($canCreateEntries)
                     <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $selectedRoute]) }}">
                         @csrf
                         <button type="submit" class="btn btn-success btn-sm" data-confirm="Complete this consultation session?">
                             <i class="ti ti-check me-1"></i>Complete Current Session
                         </button>
                     </form>
-                    @endcan
+                    @endif
                 @endif
             @endif
-            @can('consultations.create')
+            @if($canCreateEntries)
             <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#sendSessionModal">
                 <i class="ti ti-transfer me-1"></i>Send to Another Session
             </button>
-            @endcan
+            @endif
         </div> --}}
     {{-- </div> --}}
 </div> -->
@@ -429,4 +432,3 @@
         @endif
     </div>
 </div>
-

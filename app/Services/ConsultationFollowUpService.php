@@ -27,7 +27,7 @@ class ConsultationFollowUpService
         $this->assertRouteCanBeModified($route, $user);
 
         return DB::transaction(function () use ($visit, $route, $record, $data, $user) {
-            $payload = $this->appointmentPayload($visit, $route, $record, $data);
+            $payload = $this->appointmentPayload($visit, $route, $record, $data, $user);
             $appointment = $this->appointments->create($payload)->fresh([
                 'department',
                 'doctor',
@@ -51,7 +51,7 @@ class ConsultationFollowUpService
                     'created_by' => $user->id,
                     'new_values' => $this->snapshot($appointment),
                     'metadata' => [
-                        'notify_patient_requested' => (bool) ($data['notify_patient'] ?? false),
+                        'sms_event_appointment_reminder_enabled' => (bool) config('integrations.sms_events.appointment_reminder', false),
                     ],
                 ],
                 $appointment,
@@ -69,7 +69,7 @@ class ConsultationFollowUpService
 
         return DB::transaction(function () use ($appointment, $visit, $route, $record, $data, $user) {
             $old = $this->snapshot($appointment->fresh(['department', 'doctor', 'services']));
-            $payload = $this->appointmentPayload($visit, $route, $record, $data);
+            $payload = $this->appointmentPayload($visit, $route, $record, $data, $user);
             unset($payload['patient_id'], $payload['visit_id'], $payload['consultation_route_id'], $payload['medical_record_id']);
 
             $appointment = $this->appointments->update($appointment, $payload)->fresh([
@@ -96,7 +96,7 @@ class ConsultationFollowUpService
                     'old_values' => $old,
                     'new_values' => $this->snapshot($appointment),
                     'metadata' => [
-                        'notify_patient_requested' => (bool) ($data['notify_patient'] ?? false),
+                        'sms_event_appointment_reminder_enabled' => (bool) config('integrations.sms_events.appointment_reminder', false),
                     ],
                 ],
                 $appointment,
@@ -147,10 +147,11 @@ class ConsultationFollowUpService
         });
     }
 
-    private function appointmentPayload(Visit $visit, VisitConsultationRoute $route, ?MedicalRecord $record, array $data): array
+    private function appointmentPayload(Visit $visit, VisitConsultationRoute $route, ?MedicalRecord $record, array $data, User $user): array
     {
-        $departmentId = (int) ($data['department_id'] ?? $route->department_id);
-        $serviceId = $data['service_id'] ?? null;
+        $departmentId = (int) $route->department_id;
+        $serviceId = (int) $data['service_id'];
+        $doctorId = $route->doctor_id ?: ($route->main_doctor_id ?: $user->id);
 
         $department = Department::query()
             ->whereKey($departmentId)
@@ -161,19 +162,17 @@ class ConsultationFollowUpService
             throw new \InvalidArgumentException('Selected follow-up department must be a consultation department.');
         }
 
-        if ($serviceId) {
-            $belongs = ServiceCatalog::query()
-                ->active()
-                ->whereKey($serviceId)
-                ->where(function ($query) use ($departmentId) {
-                    $query->where('department_id', $departmentId)
-                        ->orWhereHas('specialties', fn ($specialties) => $specialties->where('specialties.department_id', $departmentId));
-                })
-                ->exists();
+        $belongs = ServiceCatalog::query()
+            ->active()
+            ->whereKey($serviceId)
+            ->where(function ($query) use ($departmentId) {
+                $query->where('department_id', $departmentId)
+                    ->orWhereHas('specialties', fn ($specialties) => $specialties->where('specialties.department_id', $departmentId));
+            })
+            ->exists();
 
-            if (! $belongs) {
-                throw new \InvalidArgumentException('Selected service does not belong to the selected follow-up department.');
-            }
+        if (! $belongs) {
+            throw new \InvalidArgumentException('Selected service does not belong to the current consultation department.');
         }
 
         return [
@@ -182,7 +181,7 @@ class ConsultationFollowUpService
             'consultation_route_id' => $route->id,
             'medical_record_id' => $record?->id,
             'department_id' => $departmentId,
-            'doctor_id' => $data['doctor_id'] ?? null,
+            'doctor_id' => $doctorId,
             'appointment_date' => $data['appointment_date'],
             'start_time' => ($data['start_time'] ?? null) ?: '09:00',
             'end_time' => $data['end_time'] ?? null,
@@ -194,10 +193,10 @@ class ConsultationFollowUpService
             'consultation_mode' => 'in_person',
             'visit_insurance_id' => $visit->visit_insurance_id,
             'status' => AppointmentStatus::SCHEDULED,
-            'services' => $serviceId ? [[
-                'service_catalog_id' => (int) $serviceId,
+            'services' => [[
+                'service_catalog_id' => $serviceId,
                 'quantity' => 1,
-            ]] : [],
+            ]],
         ];
     }
 

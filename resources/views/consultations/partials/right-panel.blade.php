@@ -44,7 +44,7 @@
                                     <i class="ti ti-credit-card me-1"></i>{{ $nextPatientInLine['payment_message'] }}
                                 </span>
                             </div>
-                            @can('consultations.create')
+                            @if($canCreateEntries)
                                 <div class="d-grid gap-2 mt-3">
                                     <form method="POST" action="{{ route('admin.consultations.routes.next-patient.open', [$visit, $selectedRoute]) }}">
                                         @csrf
@@ -65,7 +65,7 @@
                                         :disabled-reason="$nextPatientInLine['payment_message']"
                                     />
                                 </div>
-                            @endcan
+                            @endif
                         @else
                             <x-empty-state icon="ti-users-off" :title="__('consultations.no_patient_waiting')" :message="__('consultations.workspace.no_patient_waiting_help')" />
                         @endif
@@ -73,7 +73,14 @@
                 </div>
 
                 <div class="card">
-                    <a href="#follow-up-section" class="btn btn-outline-primary btn-sm {{ ! $selectedRoute ? 'disabled' : '' }}" data-bs-toggle="pill" role="tab" aria-disabled="{{ $selectedRoute ? 'false' : 'true' }}" title="{{ $selectedRoute ? __('consultations.workspace.set_next_appointment') : __('consultations.workspace.select_session_first') }}">
+                    @php($canUseFollowUpQuickAction = $canCreateEntries && $selectedRoute)
+                    <a href="{{ $canUseFollowUpQuickAction ? '#follow-up-section' : '#' }}"
+                       class="btn btn-outline-primary btn-sm {{ $canUseFollowUpQuickAction ? '' : 'disabled' }}"
+                       @if($canUseFollowUpQuickAction) data-bs-toggle="pill" @endif
+                       role="tab"
+                       aria-disabled="{{ $canUseFollowUpQuickAction ? 'false' : 'true' }}"
+                       @if(! $canUseFollowUpQuickAction) tabindex="-1" @endif
+                       title="{{ $selectedRoute ? __('consultations.workspace.set_next_appointment') : __('consultations.workspace.select_session_first') }}">
                         <i class="ti ti-calendar-plus me-1"></i>{{ $followUpAppointment ? __('consultations.workspace.update_next_appointment') : __('consultations.workspace.next_appointment') }}
                         @if($followUpAppointment)
                             <span class="badge bg-primary-subtle text-primary ms-1">{{ __('consultations.workspace.set') }}</span>

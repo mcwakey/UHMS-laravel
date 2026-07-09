@@ -170,6 +170,12 @@
         return $names;
     };
     $selectedRouteServiceNames = $routeServiceNames($selectedRoute);
+    $canCorrectLocked = auth()->user()?->can('consultation.entries.correct_completed') || auth()->user()?->can('visits.reopen_locked_session');
+    $isSelectedRouteLocked = $selectedRoute && $selectedRoute->locked_at;
+    $canEdit = (bool) ($sessionEligibilityActions['can_add_item'] ?? false);
+    $canCreateEntries = $canEdit && (auth()->user()?->can('consultations.create') ?? false);
+    $eligibilityLockMessage = $sessionEligibilityActions['lock_reason'] ?? null;
+    $needsStart = $selectedRoute && (in_array($selectedRoute->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true) || ($selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE && in_array($visit->status, [\App\Enums\VisitStatus::WAITING, \App\Enums\VisitStatus::ACTIVE], true)));
     $ownerOf = fn ($entry) => $entry?->creator ?? $entry?->createdBy ?? $entry?->doctor ?? $entry?->requestedBy ?? $entry?->requestingDoctor ?? null;
     $ownerKey = fn ($entry) => ($ownerOf($entry)?->id) ? 'user-'.$ownerOf($entry)->id : 'unknown';
     $ownerName = fn ($entry) => $ownerOf($entry)?->full_name ?? __('consultations.workspace.unknown');
@@ -191,8 +197,8 @@
         }
         return implode(' · ', $bits);
     };
-    $canDeleteEntry = fn ($entry) => auth()->user() && $entryPermissions->canDelete(auth()->user(), $entry);
-    $canEditEntry = fn ($entry) => auth()->user() && $entryPermissions->canEdit(auth()->user(), $entry);
+    $canDeleteEntry = fn ($entry) => $canCreateEntries && auth()->user() && $entryPermissions->canDelete(auth()->user(), $entry);
+    $canEditEntry = fn ($entry) => $canCreateEntries && auth()->user() && $entryPermissions->canEdit(auth()->user(), $entry);
     $contributors = $selectedRoute?->contributors?->map(fn ($contributor) => $contributor->user?->full_name)->filter()->unique()->values() ?? collect();
     $isEmergencyRoute = $selectedRoute?->isEmergencySession() ?? false;
     $emergencyCase = $selectedRoute?->emergencyCase;
@@ -296,16 +302,6 @@
 
 @include('consultations.partials.specialty-order-sets')
 
-@php
-    $canCorrectLocked = auth()->user()?->can('consultation.entries.correct_completed') || auth()->user()?->can('visits.reopen_locked_session');
-    $isSelectedRouteLocked = $selectedRoute && $selectedRoute->locked_at;
-    $isExplicitlyReopened = $selectedRoute && $selectedRoute->reopened_at;
-    $canEdit = (
-        in_array($visit->status, [\App\Enums\VisitStatus::CONSULTING, \App\Enums\VisitStatus::EMERGENCY], true)
-        || $isExplicitlyReopened
-    ) && $selectedRoute && $selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE && (! $isSelectedRouteLocked || $canCorrectLocked);
-    $needsStart = $selectedRoute && (in_array($selectedRoute->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true) || ($selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE && in_array($visit->status, [\App\Enums\VisitStatus::WAITING, \App\Enums\VisitStatus::ACTIVE], true)));
-@endphp
 @include('consultations.partials.consultation-gating')
 {{-- ============================================================ --}}
 {{-- MAIN 3-COLUMN LAYOUT --}}
@@ -324,14 +320,14 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0"><i class="ti ti-message-report me-1"></i>{{ $sectionLabel('complaints', __('consultations.workspace.complaints')) }}</h6>
-                                @can('consultations.create')
+                                @if($canCreateEntries)
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addComplaintForm">
                                     <i class="ti ti-plus me-1"></i>{{ __('common.add') }}
                                 </button>
-                                @endcan
+                                @endif
                             </div>
                             <div class="card-body">
-                                @can('consultations.create')
+                                @if($canCreateEntries)
                                 <div class="collapse mb-3" id="addComplaintForm">
                                     <div class="card card-body bg-light">
                                         <form data-ajax-form="complaints" data-consultation-form="complaints" data-refresh-section="complaints" data-route-context-required="true" action="{{ route('admin.consultations.complaints.store', $visit) }}" method="POST">
@@ -373,7 +369,7 @@
                                         </form>
                                     </div>
                                 </div>
-                                @endcan
+                                @endif
 
                                 <div id="complaints-list">
                                     @forelse($ownerGroups($record?->complaints ?? []) as $group)
@@ -454,7 +450,7 @@
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0"><i class="ti ti-file-description me-1"></i>{{ $sectionLabel('hopc', 'History of Presenting Complaint') }} <span class="visually-hidden">HOPC</span></h6>
                                 <div>
-                                    @can('consultations.create')
+                                    @if($canCreateEntries)
                                     @can('patients.edit')
                                     <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#clinicalSummaryModal">
                                         <i class="ti ti-edit me-1"></i>Manage Patient Conditions
@@ -464,11 +460,11 @@
                                     <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addHopcForm">
                                         <i class="ti ti-plus me-1"></i>Add
                                     </button>
-                                    @endcan
+                                    @endif
                                 </div>
                             </div>
                             <div class="card-body">
-                                @can('consultations.create')
+                                @if($canCreateEntries)
                                 <div class="collapse mb-3" id="addHopcForm">
                                     <div class="card card-body bg-light">
                                         <form data-ajax-form="hopc" data-consultation-form="hopc" data-refresh-section="hopc" data-route-context-required="true" action="{{ route('admin.consultations.hopc.store', $visit) }}" method="POST">
@@ -508,7 +504,7 @@
                                         </form>
                                     </div>
                                 </div>
-                                @endcan
+                                @endif
 
                                 <div id="hopc-list">
                                     @forelse($ownerGroups($record?->historiesOfPresentingComplaint ?? []) as $group)
@@ -578,14 +574,14 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0"><i class="ti ti-zoom-check me-1"></i>{{ $sectionLabel('examination', 'Examination / Physical Examination') }}</h6>
-                                @can('consultations.create')
+                                @if($canCreateEntries)
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addExaminationForm">
                                     <i class="ti ti-plus me-1"></i>Add
                                 </button>
-                                @endcan
+                                @endif
                             </div>
                             <div class="card-body">
-                                @can('consultations.create')
+                                @if($canCreateEntries)
                                 <div class="collapse mb-3" id="addExaminationForm">
                                     <div class="card card-body bg-light">
                                         <form data-ajax-form="examination" data-consultation-form="examination" data-refresh-section="examination" data-route-context-required="true" action="{{ route('admin.consultations.examinations.store', $visit) }}" method="POST">
@@ -612,7 +608,7 @@
                                         </form>
                                     </div>
                                 </div>
-                                @endcan
+                                @endif
 
                                 <div id="examination-list">
                                     @forelse($ownerGroups($record?->physicalExaminations ?? []) as $group)
@@ -677,14 +673,14 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0"><i class="ti ti-report-medical me-1"></i>{{ $sectionLabel('diagnosis', 'Diagnoses') }} <span class="visually-hidden">Diagnoses</span></h6>
-                                @can('consultations.create')
+                                @if($canCreateEntries)
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addDiagnosisForm">
                                     <i class="ti ti-plus me-1"></i>Add
                                 </button>
-                                @endcan
+                                @endif
                             </div>
                             <div class="card-body">
-                                @can('consultations.create')
+                                @if($canCreateEntries)
                                 <div class="collapse mb-3" id="addDiagnosisForm">
                                     <div class="card card-body bg-light">
                                         <form data-ajax-form="diagnoses" data-consultation-form="diagnoses" data-refresh-section="diagnoses" data-route-context-required="true" action="{{ route('admin.consultations.diagnoses.store', $visit) }}" method="POST">
@@ -745,7 +741,7 @@
                                         </form>
                                     </div>
                                 </div>
-                                @endcan
+                                @endif
 
                                 <div id="diagnoses-list">
                                     @forelse($ownerGroups($record?->diagnoses ?? []) as $group)
@@ -838,14 +834,14 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0"><i class="ti ti-test-pipe me-1"></i>{{ $sectionLabel('investigations', 'Investigations') }}</h6>
-                                @can('consultations.create')
+                                @if($canCreateEntries)
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addInvestigationForm">
                                     <i class="ti ti-plus me-1"></i>Add
                                 </button>
-                                @endcan
+                                @endif
                             </div>
                             <div class="card-body">
-                                @can('consultations.create')
+                                @if($canCreateEntries)
                                 <div class="collapse mb-3" id="addInvestigationForm">
                                     <div class="card card-body bg-light">
                                         <form data-ajax-form="investigations" data-consultation-form="investigations" data-refresh-section="investigations" data-route-context-required="true" action="{{ route('admin.consultations.investigations.store', $visit) }}" method="POST">
@@ -905,7 +901,7 @@
                                         </form>
                                     </div>
                                 </div>
-                                @endcan
+                                @endif
 
                                 <div id="investigations-list">
                                     @php
@@ -1023,7 +1019,7 @@
                                                                     @if($item->result?->is_verified)
                                                                     <a data-no-inertia href="{{ route('admin.lab.results.print', $item) }}" target="_blank" class="btn btn-xs btn-outline-secondary" title="Print"><i class="ti ti-printer"></i></a>
                                                                     @endif
-                                                                    @can('consultations.create')
+                                                                    @if($canCreateEntries)
                                                                     @if($item->isDeletable() && $canEdit)
                                                                     <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
                                                                             data-consultation-action="delete-entry"
@@ -1033,7 +1029,7 @@
                                                                             data-confirm="{{ __('consultations.remove_investigation_item') }}"
                                                                             title="{{ __('common.delete') }}"><i class="ti ti-trash"></i></button>
                                                                     @endif
-                                                                    @endcan
+                                                                    @endif
                                                                 </div>
                                                             </div>
                                                             @endforeach
@@ -1058,14 +1054,14 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0"><i class="ti ti-target-arrow me-1"></i>{{ $sectionLabel('treatments', __('consultation_specialties.sections.treatment_plan')) }}</h6>
-                                @can('consultations.create')
+                                @if($canCreateEntries)
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addTreatmentForm">
                                     <i class="ti ti-plus me-1"></i>Add
                                 </button>
-                                @endcan
+                                @endif
                             </div>
                             <div class="card-body">
-                                @can('consultations.create')
+                                @if($canCreateEntries)
                                 <div class="collapse mb-3" id="addTreatmentForm">
                                     <div class="card card-body bg-light">
                                         <form data-ajax-form="treatments" data-consultation-form="treatments" data-refresh-section="treatments" data-route-context-required="true" action="{{ route('admin.consultations.treatments.store', $visit) }}" method="POST">
@@ -1094,7 +1090,7 @@
                                         </form>
                                     </div>
                                 </div>
-                                @endcan
+                                @endif
 
                                 <div id="treatments-list">
                                     @forelse($ownerGroups($record?->treatments ?? []) as $group)
@@ -1162,14 +1158,14 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0"><i class="ti ti-prescription me-1"></i>{{ $sectionLabel('prescription', 'Prescriptions') }} <span class="visually-hidden">Prescriptions</span></h6>
-                                @can('prescriptions.create')
+                                @if($canCreateEntries && (auth()->user()?->can('prescriptions.create') ?? false))
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addPrescriptionForm">
                                     <i class="ti ti-plus me-1"></i>New Rx
                                 </button>
-                                @endcan
+                                @endif
                             </div>
                             <div class="card-body">
-                                @can('prescriptions.create')
+                                @if($canCreateEntries && (auth()->user()?->can('prescriptions.create') ?? false))
                                 <div class="collapse mb-3" id="addPrescriptionForm">
                                     <div class="card card-body bg-light">
                                         <form data-ajax-form="prescriptions" data-consultation-form="prescriptions" data-refresh-section="prescriptions" data-route-context-required="true" data-prepare="prescription" method="POST" action="{{ route('admin.consultations.prescriptions.store', $visit) }}" id="prescriptionForm">
@@ -1261,7 +1257,7 @@
                                         </form>
                                     </div>
                                 </div>
-                                @endcan
+                                @endif
 
                                 <div id="prescriptions-list">
                                     @php
@@ -1397,14 +1393,14 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0"><i class="ti ti-activity-heartbeat me-1"></i>{{ $sectionLabel('procedures', 'Theatre / Procedure Requests') }} <span class="visually-hidden">Procedures</span></h6>
-                                @can('procedure.request')
+                                @if($canCreateEntries && (auth()->user()?->can('procedure.request') ?? false))
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addProcedureForm">
                                     <i class="ti ti-plus me-1"></i>Request Procedure
                                 </button>
-                                @endcan
+                                @endif
                             </div>
                             <div class="card-body">
-                                @can('procedure.request')
+                                @if($canCreateEntries && (auth()->user()?->can('procedure.request') ?? false))
                                 <div class="collapse mb-3" id="addProcedureForm">
                                     <div class="card card-body bg-light">
                                         <form data-ajax-form="procedures" data-consultation-form="procedures" data-refresh-section="procedures" data-route-context-required="true" method="POST" action="{{ route('admin.consultations.procedures.store', $visit) }}">
@@ -1465,7 +1461,7 @@
                                         </form>
                                     </div>
                                 </div>
-                                @endcan
+                                @endif
 
                                 <div id="procedures-list">
                                     @php
@@ -1677,14 +1673,14 @@
                                                 </div>
                                                 <small class="text-muted">Used {{ $pattern->usage_count }} times</small>
                                             </div>
-                                            @can('consultations.create')
+                                            @if($canCreateEntries)
                                             <button type="button" class="btn btn-sm btn-success apply-pattern-btn"
                                                     data-consultation-action="apply-pattern"
                                                     data-pattern-id="{{ $pattern->id }}" data-pattern-name="{{ $pattern->name }}"
                                                     data-pattern-types="{{ $pattern->items->pluck('type')->unique()->implode(',') }}">
                                                 <i class="ti ti-check me-1"></i>Apply
                                             </button>
-                                            @endcan
+                                            @endif
                                         </div>
                                     </div>
                                     @endforeach
@@ -1703,14 +1699,14 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0"><i class="ti ti-checklist me-1"></i>{{ $sectionLabel('tasks', 'Tasks') }}</h6>
-                                @can('consultations.create')
+                                @if($canCreateEntries)
                                 <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addTaskForm">
                                     <i class="ti ti-plus me-1"></i>Add Task
                                 </button>
-                                @endcan
+                                @endif
                             </div>
                             <div class="card-body">
-                                @can('consultations.create')
+                                @if($canCreateEntries)
                                 <div class="collapse mb-3" id="addTaskForm">
                                     <div class="card card-body bg-light">
                                         <form data-ajax-form="tasks" data-consultation-form="tasks" data-refresh-section="tasks" data-route-context-required="true" method="POST" action="{{ route('admin.consultations.tasks.store', $visit) }}">
@@ -1781,7 +1777,7 @@
                                         </form>
                                     </div>
                                 </div>
-                                @endcan
+                                @endif
                                 <div id="tasks-list">
                                 @if($record && $record->tasks && $record->tasks->count() > 0)
                                     @foreach($ownerGroups($record->tasks->sortBy(fn($t) => $t->completed_at ? 1 : 0)) as $group)
@@ -1876,13 +1872,17 @@
                                     <x-empty-state icon="ti-route-off" :title="__('consultations.no_active_session')" :message="__('consultations.workspace.select_session_for_follow_up')" />
                                 @else
                                     @php
-                                        $followUpDepartmentId = (string) old('department_id', $followUpAppointment?->department_id ?? $selectedRoute?->department_id);
+                                        $followUpDepartmentId = (string) ($selectedRoute?->department_id);
+                                        $followUpDepartment = $selectedRoute?->department;
                                         $followUpServiceId = (string) old('service_id', $followUpAppointment?->services?->first()?->id);
-                                        $followUpDoctorId = (string) old('doctor_id', $followUpAppointment?->doctor_id ?? $selectedRoute?->doctor_id);
+                                        $followUpDoctor = $selectedRoute?->doctor ?? $selectedRoute?->mainDoctor ?? auth()->user();
                                         $followUpPriority = (string) old('priority', $followUpAppointment?->priority ?? 'normal');
-                                        $canManageFollowUp = $followUpAppointment
+                                        $followUpServices = $consultationServices
+                                            ->filter(fn ($service) => (string) $service->department_id === $followUpDepartmentId)
+                                            ->values();
+                                        $canManageFollowUp = $canCreateEntries && ($followUpAppointment
                                             ? auth()->user()?->can('consultation.followup.update')
-                                            : auth()->user()?->can('consultation.followup.create');
+                                            : auth()->user()?->can('consultation.followup.create'));
                                         $followUpAction = $followUpAppointment
                                             ? route('admin.consultations.routes.follow-up.update', [$visit, $selectedRoute, $followUpAppointment])
                                             : route('admin.consultations.routes.follow-up.store', [$visit, $selectedRoute]);
@@ -1907,7 +1907,7 @@
                                                 <div class="text-muted small">{{ __('common.doctor') }}</div>
                                                 <div class="fw-semibold">{{ $followUpAppointment->doctor?->full_name ?? 'Unassigned' }}</div>
                                             </div>
-                                            @can('consultation.followup.cancel')
+                                            @if($canCreateEntries && auth()->user()?->can('consultation.followup.cancel'))
                                                 <div class="ms-auto">
                                                     <x-confirm-form
                                                         :action="route('admin.consultations.routes.follow-up.cancel', [$visit, $selectedRoute, $followUpAppointment])"
@@ -1923,7 +1923,7 @@
                                                         :reason-placeholder="__('consultations.follow_up_cancel_reason')"
                                                     />
                                                 </div>
-                                            @endcan
+                                            @endif
                                         </div>
                                     @endif
 
@@ -1936,12 +1936,12 @@
 
                                             <div class="row g-3">
                                                 <div class="col-md-4">
-                                                    <label class="form-label">{{ __('consultations.workspace.next_appointment_date') }} <span class="text-danger">*</span></label>
+                                                    <label class="form-label">{{ __('consultations.workspace.follow_up_date') }} <span class="text-danger">*</span></label>
                                                     <input type="date" name="appointment_date" class="form-control @error('appointment_date') is-invalid @enderror" required value="{{ old('appointment_date', $followUpAppointment?->appointment_date?->toDateString()) }}">
                                                     @error('appointment_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                                 </div>
                                                 <div class="col-md-4">
-                                                    <label class="form-label">{{ __('consultations.workspace.next_appointment_time') }}</label>
+                                                    <label class="form-label">{{ __('consultations.workspace.follow_up_time') }}</label>
                                                     <input type="time" name="start_time" class="form-control @error('start_time') is-invalid @enderror" value="{{ old('start_time', $followUpAppointment?->start_time ? substr((string) $followUpAppointment->start_time, 0, 5) : '') }}">
                                                     @error('start_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                                 </div>
@@ -1956,33 +1956,22 @@
                                                 </div>
                                                 <div class="col-md-4">
                                                     <label class="form-label">{{ __('common.department') }} <span class="text-danger">*</span></label>
-                                                    <select name="department_id" id="followUpDepartmentSelect" class="form-select @error('department_id') is-invalid @enderror" required>
-                                                        @foreach($consultationDepartments as $department)
-                                                            <option value="{{ $department->id }}" @selected($followUpDepartmentId === (string) $department->id)>{{ $department->name }}</option>
-                                                        @endforeach
-                                                    </select>
+                                                    <input type="text" class="form-control" value="{{ $followUpDepartment?->name ?? __('consultations.workspace.consultation_department') }}" readonly>
                                                     @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                                 </div>
                                                 <div class="col-md-4">
-                                                    <label class="form-label">{{ __('consultations.workspace.service') }}</label>
-                                                    <select name="service_id" id="followUpServiceSelect" class="form-select @error('service_id') is-invalid @enderror">
-                                                        <option value="">{{ __('consultations.no_specific_service') }}</option>
-                                                        @foreach($consultationServices as $service)
-                                                            <option value="{{ $service->id }}" data-department-id="{{ $service->department_id }}" @selected($followUpServiceId === (string) $service->id)>
-                                                                {{ $service->name }}{{ $service->department?->name ? ' - '.$service->department->name : '' }}
-                                                            </option>
+                                                    <label class="form-label">{{ __('consultations.workspace.service') }} <span class="text-danger">*</span></label>
+                                                    <select name="service_id" id="followUpServiceSelect" class="form-select @error('service_id') is-invalid @enderror" required>
+                                                        <option value="">{{ __('consultations.workspace.select_follow_up_service') }}</option>
+                                                        @foreach($followUpServices as $service)
+                                                            <option value="{{ $service->id }}" @selected($followUpServiceId === (string) $service->id)>{{ $service->name }}</option>
                                                         @endforeach
                                                     </select>
                                                     @error('service_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                                 </div>
                                                 <div class="col-md-4">
                                                     <label class="form-label">{{ __('common.doctor') }}</label>
-                                                    <select name="doctor_id" class="form-select @error('doctor_id') is-invalid @enderror">
-                                                        <option value="">{{ __('consultations.unassigned') }}</option>
-                                                        @foreach($doctors as $doc)
-                                                            <option value="{{ $doc->id }}" @selected($followUpDoctorId === (string) $doc->id)>Dr. {{ $doc->full_name }}</option>
-                                                        @endforeach
-                                                    </select>
+                                                    <input type="text" class="form-control" value="{{ $followUpDoctor?->full_name ? 'Dr. '.$followUpDoctor->full_name : __('consultations.unassigned') }}" readonly>
                                                     @error('doctor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                                 </div>
                                                 <div class="col-12">
@@ -2006,12 +1995,6 @@
                                                             @endforeach
                                                         </div>
                                                     @endif
-                                                </div>
-                                                <div class="col-12">
-                                                    <div class="form-check">
-                                                        <input type="checkbox" name="notify_patient" value="1" id="notifyPatientFollowUp" class="form-check-input" @checked(old('notify_patient'))>
-                                                        <label class="form-check-label" for="notifyPatientFollowUp">{{ __('consultations.workspace.notify_patient') }}</label>
-                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="mt-3 d-flex justify-content-end">
@@ -2055,7 +2038,7 @@
                                         <div class="small text-muted mt-1">{{ __('consultation_specialties.summary_builder.not_saved_yet') }}</div>
                                     </div>
                                 @endif
-                                @can('consultations.create')
+                                @if($canCreateEntries)
                                 <form data-ajax-form="summary" data-consultation-form="final-note" data-route-context-required="true" data-preserve-values="true" method="POST" action="{{ route('admin.consultations.final-note.update', $visit) }}">
                                     @csrf
                                     @method('PATCH')
@@ -2066,7 +2049,7 @@
                                 </form>
                                 @else
                                     <div class="border rounded p-3 bg-light">{{ $record?->final_note ?: __('consultations.no_clinicians_recorded') }}</div>
-                                @endcan
+                                @endif
                             </div>
                         </div>
 

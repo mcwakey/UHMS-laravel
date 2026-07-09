@@ -19,10 +19,10 @@ use App\Models\VisitConsultationRoute;
 use App\Models\VisitConsultationRouteService;
 use App\Services\ConsultationSessionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
-use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
 class ConsultationFollowUpAndNextPatientTest extends TestCase
@@ -81,17 +81,21 @@ class ConsultationFollowUpAndNextPatientTest extends TestCase
     public function test_doctor_can_set_follow_up_appointment_from_consultation(): void
     {
         [$visit, $route] = $this->makeConsultingVisit();
+        $otherDepartment = Department::factory()->create([
+            'name' => 'Dental Clinic',
+            'type' => DepartmentType::CONSULTATION->value,
+        ]);
+        $otherDoctor = User::factory()->create(['department_id' => $otherDepartment->id]);
 
         $response = $this->actingAs($this->doctor)->post(route('admin.consultations.routes.follow-up.store', [$visit, $route]), [
             'appointment_date' => now()->addWeek()->toDateString(),
             'start_time' => '09:15',
-            'department_id' => $this->department->id,
+            'department_id' => $otherDepartment->id,
             'service_id' => $this->service->id,
-            'doctor_id' => $this->doctor->id,
+            'doctor_id' => $otherDoctor->id,
             'priority' => Priority::NORMAL->value,
             'reason' => 'Review blood pressure and lab results',
             'notes' => 'Bring home BP chart',
-            'notify_patient' => '1',
         ]);
 
         $response->assertRedirect(route('admin.consultations.routes.show', [$visit, $route]));
@@ -101,6 +105,8 @@ class ConsultationFollowUpAndNextPatientTest extends TestCase
         $this->assertSame($visit->id, $appointment->visit_id);
         $this->assertSame($route->id, $appointment->consultation_route_id);
         $this->assertNotNull($appointment->medical_record_id);
+        $this->assertSame($route->department_id, $appointment->department_id);
+        $this->assertSame($route->doctor_id, $appointment->doctor_id);
         $this->assertSame([$this->service->id], $appointment->services->pluck('id')->all());
 
         $this->assertDatabaseHas('activity_log', [
@@ -111,6 +117,24 @@ class ConsultationFollowUpAndNextPatientTest extends TestCase
         ]);
         $activity = Activity::where('event', 'FOLLOW_UP_APPOINTMENT_CREATED')->firstOrFail();
         $this->assertSame($appointment->id, $activity->properties->get('appointment_id'));
+        $this->assertTrue($activity->properties->has('metadata'));
+        $this->assertArrayNotHasKey('notify_patient_requested', $activity->properties->get('metadata'));
+    }
+
+    public function test_follow_up_requires_a_service(): void
+    {
+        [$visit, $route] = $this->makeConsultingVisit();
+
+        $this->actingAs($this->doctor)
+            ->from(route('admin.consultations.routes.show', [$visit, $route]))
+            ->post(route('admin.consultations.routes.follow-up.store', [$visit, $route]), [
+                'appointment_date' => now()->addWeek()->toDateString(),
+                'start_time' => '09:15',
+                'priority' => Priority::NORMAL->value,
+                'reason' => 'Review blood pressure and lab results',
+            ])
+            ->assertRedirect(route('admin.consultations.routes.show', [$visit, $route]))
+            ->assertSessionHasErrors('service_id');
     }
 
     public function test_unauthorized_user_cannot_create_consultation_follow_up(): void
@@ -135,8 +159,7 @@ class ConsultationFollowUpAndNextPatientTest extends TestCase
         $this->actingAs($this->doctor)->post(route('admin.consultations.routes.follow-up.store', [$visit, $route]), [
             'appointment_date' => now()->addDays(5)->toDateString(),
             'start_time' => '10:00',
-            'department_id' => $this->department->id,
-            'doctor_id' => $this->doctor->id,
+            'service_id' => $this->service->id,
             'reason' => 'Review treatment response',
         ])->assertRedirect();
 
@@ -161,8 +184,7 @@ class ConsultationFollowUpAndNextPatientTest extends TestCase
         $this->actingAs($this->doctor)
             ->get(route('admin.consultations.routes.show', [$visit, $route]))
             ->assertOk()
-            ->assertSee('followUpAppointmentModal')
-            ->assertSee('Next Appointment')
+            ->assertSee('Follow-up')
             ->assertSee('Next Patient in Line')
             ->assertSee($nextVisit->patient->full_name)
             ->assertSee($nextVisit->visit_number)
@@ -317,8 +339,7 @@ class ConsultationFollowUpAndNextPatientTest extends TestCase
         bool $withQueueEntry = true,
         VisitType $visitType = VisitType::OUTPATIENT,
         VisitStatus $status = VisitStatus::WAITING,
-    ): array
-    {
+    ): array {
         $patient = Patient::factory()->create([
             'first_name' => $firstName,
             'last_name' => $lastName,

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\AdmissionsWard;
 
-use App\Enums\AdmissionStatus;
 use App\Enums\VisitStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DischargeRequest;
@@ -15,10 +14,11 @@ use App\Models\User;
 use App\Models\Visit;
 use App\Models\Vital;
 use App\Models\Ward;
+use App\Services\AdmissionMedicationBoardService;
 use App\Services\Admissions\AdmissionCareOverviewService;
 use App\Services\Admissions\AdmissionDischargeReadinessService;
+use App\Services\Admissions\AdmissionExtensionService;
 use App\Services\Admissions\AdmissionRequestService;
-use App\Services\AdmissionMedicationBoardService;
 use App\Services\AdmissionService;
 use App\Services\ConsultationSummaryService;
 use App\Services\VisitService;
@@ -233,6 +233,19 @@ class AdmissionController extends Controller
         return redirect()
             ->route('admin.admissions.show', $admission)
             ->with('success', __('messages.admissions.discharged'));
+    }
+
+    public function extend(Request $request, Admission $admission, AdmissionExtensionService $extensions)
+    {
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'min:5', 'max:1000'],
+        ]);
+
+        $admission = $extensions->extend($admission, $request->user(), $data['reason']);
+
+        return redirect()
+            ->route('admin.admissions.show', $admission)
+            ->with('success', __('admissions.admission_extended'));
     }
 
     public function storeRound(Request $request, Admission $admission)

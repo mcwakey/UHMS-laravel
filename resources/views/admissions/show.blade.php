@@ -14,11 +14,18 @@
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">
-            {{ __('admissions.admission_no') }} {{ $admission->admission_number }}
-            <span class="badge badge-soft-{{ $admission->status->color() }} ms-2">{{ $admission->status->label() }}</span>
+    <div class="flex-grow-1 min-w-0">
+        <h4 class="fw-bold mb-1 text-truncate">
+            {{ $admission->patient->full_name }}
+            <span class="badge badge-soft-{{ $admission->status->color() }} ms-1 align-middle">{{ $admission->status->label() }}</span>
         </h4>
+        <div class="d-flex flex-wrap gap-2 align-items-center text-muted fs-13">
+            <span><i class="ti ti-hash fs-12"></i> {{ $admission->admission_number }}</span>
+            <span class="text-muted">&middot;</span>
+            <span><i class="ti ti-bed fs-12"></i> {{ $admission->bed->ward->name }} / {{ $admission->bed->bed_number }}</span>
+            <span class="text-muted">&middot;</span>
+            <span><i class="ti ti-calendar fs-12"></i> {{ $admission->length_of_stay }} {{ __('admissions.days') }}</span>
+        </div>
     </div>
     <div class="text-end d-flex gap-2">
         @if($admission->status->value === 'admitted')
@@ -84,63 +91,7 @@
                 </div>
             </div>
             <div class="card-body">
-                @php $medCounts = $medicationBoard['counts'] ?? []; @endphp
-                <div class="d-flex flex-wrap gap-2">
-                    <span class="badge bg-info">{{ __('admissions.due_now_badge') }}: {{ $medCounts['due_now'] ?? 0 }}</span>
-                    <span class="badge bg-danger">{{ __('admissions.overdue_badge') }}: {{ $medCounts['overdue'] ?? 0 }}</span>
-                    <span class="badge bg-secondary">{{ __('admissions.upcoming_badge') }}: {{ $medCounts['upcoming'] ?? 0 }}</span>
-                    <span class="badge bg-success">{{ __('admissions.completed_today_badge') }}: {{ $medCounts['completed_today'] ?? 0 }}</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endcan
-
-    @can('admission.care_overview.view')
-    <div class="col-12">
-        <div class="card border-primary">
-            <div class="card-header d-flex align-items-center justify-content-between">
-                <h5 class="card-title mb-0"><i class="ti ti-report-medical me-1"></i>{{ __('admissions.nursing_handover') }}</h5>
-                <a href="#tab-nursing" class="btn btn-sm btn-outline-primary" onclick="event.preventDefault();showTab('tab-nursing')">{{ __('admissions.open_nursing_care') }}</a>
-            </div>
-            <div class="card-body">
-                <div class="row g-2">
-                    <div class="col-6 col-md-3">
-                        <div class="border rounded p-2 h-100">
-                            <div class="text-muted small">{{ __('admissions.last_vitals') }}</div>
-                            <div class="fw-semibold {{ ($careOverview['vitals_overdue'] ?? false) ? 'text-danger' : '' }}">
-                                {{ ($careOverview['latest_vitals'] ?? null)?->recorded_at?->diffForHumans() ?? __('admissions.not_recorded') }}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="border rounded p-2 h-100">
-                            <div class="text-muted small">{{ __('admissions.last_ward_round') }}</div>
-                            <div class="fw-semibold {{ ($careOverview['ward_round_overdue'] ?? false) ? 'text-danger' : '' }}">
-                                {{ ($careOverview['latest_ward_round'] ?? null)?->round_date?->diffForHumans() ?? __('admissions.not_recorded') }}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="border rounded p-2 h-100">
-                            <div class="text-muted small">{{ __('admissions.open_nursing_tasks') }}</div>
-                            <div class="fw-semibold">{{ ($careOverview['open_tasks'] ?? collect())->count() }}</div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="border rounded p-2 h-100">
-                            <div class="text-muted small">{{ __('admissions.care_flags_label') }}</div>
-                            <div class="fw-semibold">{{ ($careOverview['care_flags'] ?? collect())->count() }}</div>
-                        </div>
-                    </div>
-                </div>
-                @if(($careOverview['care_flags'] ?? collect())->isNotEmpty())
-                    <div class="d-flex flex-wrap gap-2 mt-3">
-                        @foreach($careOverview['care_flags'] as $flag)
-                            <span class="badge bg-{{ $flag->color() }}">{{ $flag->label() }}</span>
-                        @endforeach
-                    </div>
-                @endif
+                @include('admissions.partials.medication-counts', ['counts' => $medicationBoard['counts'] ?? [], 'layout' => 'inline'])
             </div>
         </div>
     </div>
@@ -161,39 +112,7 @@
     {{-- Vitals recording --}}
     @can('vitals.create')
     <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex align-items-center justify-content-between">
-                <h5 class="card-title mb-0"><i class="ti ti-heartbeat me-1"></i>{{ __('admissions.record_vitals') }}</h5>
-                @if($admission->visit->vitals->count() > 0)
-                @php $lastV = $admission->visit->vitals->sortByDesc('recorded_at')->first(); @endphp
-                <small class="text-muted">{{ __('admissions.last_recorded') }}: <strong>{{ $lastV->recorded_at->diffForHumans() }}</strong> by {{ $lastV->recordedBy->name ?? '—' }}</small>
-                @endif
-            </div>
-            <div class="card-body">
-                @if($admission->status->value === 'admitted')
-                <form method="POST" action="{{ route('admin.admissions.vitals.store', $admission) }}">
-                    @csrf
-                    <div class="row g-2 mb-3">
-                        <div class="col-6 col-md-3"><label class="form-label small">{{ __('admissions.bp_systolic') }}</label><div class="input-group input-group-sm"><input type="number" name="blood_pressure_systolic" class="form-control" placeholder="120" min="0" max="300"><span class="input-group-text">mmHg</span></div></div>
-                        <div class="col-6 col-md-3"><label class="form-label small">{{ __('admissions.bp_diastolic') }}</label><div class="input-group input-group-sm"><input type="number" name="blood_pressure_diastolic" class="form-control" placeholder="80" min="0" max="200"><span class="input-group-text">mmHg</span></div></div>
-                        <div class="col-6 col-md-3"><label class="form-label small">{{ __('admissions.heart_rate') }}</label><div class="input-group input-group-sm"><input type="number" name="heart_rate" class="form-control" placeholder="72" min="0" max="300"><span class="input-group-text">bpm</span></div></div>
-                        <div class="col-6 col-md-3"><label class="form-label small">{{ __('admissions.temperature') }}</label><div class="input-group input-group-sm"><input type="number" name="temperature" class="form-control" placeholder="36.6" step="0.1" min="30" max="45"><span class="input-group-text">°C</span></div></div>
-                        <div class="col-6 col-md-3"><label class="form-label small">{{ __('admissions.resp_rate') }}</label><div class="input-group input-group-sm"><input type="number" name="respiratory_rate" class="form-control" placeholder="16" min="0" max="60"><span class="input-group-text">/min</span></div></div>
-                        <div class="col-6 col-md-3"><label class="form-label small">{{ __('admissions.spo2_col') }}</label><div class="input-group input-group-sm"><input type="number" name="spo2" class="form-control" placeholder="98" step="0.1" min="0" max="100"><span class="input-group-text">%</span></div></div>
-                        <div class="col-6 col-md-3"><label class="form-label small">{{ __('admissions.weight') }}</label><div class="input-group input-group-sm"><input type="number" name="weight" class="form-control" placeholder="70" step="0.1" min="0"><span class="input-group-text">kg</span></div></div>
-                        <div class="col-6 col-md-3"><label class="form-label small">{{ __('admissions.blood_sugar') }}</label><div class="input-group input-group-sm"><input type="number" name="blood_sugar" class="form-control" placeholder="5.0" step="0.1" min="0"><span class="input-group-text">mmol/L</span></div></div>
-                    </div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-4"><label class="form-label small">{{ __('admissions.recorded_at') }}</label><input type="datetime-local" name="recorded_at" class="form-control form-control-sm" value="{{ now()->format('Y-m-d\TH:i') }}"></div>
-                        <div class="col-md-8"><label class="form-label small">{{ __('admissions.notes') }}</label><input type="text" name="notes" class="form-control form-control-sm" placeholder="{{ __('admissions.observations_ph') }}"></div>
-                    </div>
-                    <div class="text-end"><button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-device-floppy me-1"></i>{{ __('admissions.save_vitals') }}</button></div>
-                </form>
-                @else
-                <p class="text-muted mb-0">{{ __('admissions.vitals_disabled') }}</p>
-                @endif
-            </div>
-        </div>
+        @include('admissions.partials.vitals-form')
     </div>
     @endcan
 
@@ -256,40 +175,16 @@
         </div>
     </div>
 
-    {{-- Tasks --}}
+    {{-- Doctor-ordered clinical tasks --}}
     @if($medicalRecord->tasks->count() > 0)
     <div class="col-12">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <h5 class="card-title mb-0"><i class="ti ti-clipboard-list me-1"></i>{{ __('admissions.nursing_tasks') }}</h5>
+                <h5 class="card-title mb-0"><i class="ti ti-clipboard-list me-1"></i>{{ __('admissions.nursing_clinical_tasks') }}</h5>
                 <span class="badge bg-warning text-dark">{{ $medicalRecord->tasks->whereNotIn('status',['completed','cancelled'])->count() }} {{ __('admissions.pending_label') }}</span>
             </div>
             <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="bg-light"><tr><th style="width:3rem"></th><th>{{ __('admissions.task_col') }}</th><th>{{ __('admissions.priority_col') }}</th><th>{{ __('admissions.assigned_to_col') }}</th><th>{{ __('admissions.due_col') }}</th><th>{{ __('admissions.status_col') }}</th></tr></thead>
-                        <tbody>
-                            @foreach($medicalRecord->tasks->sortBy('status') as $task)
-                            @php $isDone = $task->status === 'completed'; @endphp
-                            <tr class="{{ $isDone ? 'table-success' : '' }}">
-                                <td class="text-center">
-                                    <form method="POST" action="{{ route('admin.consultations.tasks.toggle', $task) }}">
-                                        @csrf @method('PATCH')
-                                        <button aria-label="Confirm" title="Confirm" type="submit" class="btn btn-sm {{ $isDone?'btn-success':'btn-outline-success' }} p-1">
-                                            <i class="ti ti-check fs-13"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                                <td><div class="{{ $isDone?'task-done':'fw-medium' }}">{{ $task->title }}</div></td>
-                                <td><span class="badge bg-{{ match($task->priority){'high'=>'danger','medium'=>'warning',default=>'secondary'} }}">{{ ucfirst($task->priority??'normal') }}</span></td>
-                                <td>{{ $task->assignedUser->name ?? '—' }}</td>
-                                <td>@if($task->due_date)<span class="{{ !$isDone&&$task->due_date->isPast()?'text-danger fw-medium':'' }}">{{ $task->due_date->format('d M') }}</span>@else—@endif</td>
-                                <td><span class="badge badge-soft-{{ match($task->status){'completed'=>'success','in_progress'=>'info','cancelled'=>'secondary',default=>'warning'} }}">{{ ucfirst(str_replace('_',' ',$task->status)) }}</span></td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                @include('admissions.partials.consultation-tasks-table', ['tasks' => $medicalRecord->tasks])
             </div>
         </div>
     </div>
@@ -524,12 +419,8 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        @php $medCounts = $medicationBoard['counts'] ?? []; @endphp
-                        <div class="row g-2 mb-3">
-                            <div class="col-6 col-md-3"><span class="badge bg-info w-100 py-2">{{ __('admissions.due_now_badge') }}: {{ $medCounts['due_now'] ?? 0 }}</span></div>
-                            <div class="col-6 col-md-3"><span class="badge bg-danger w-100 py-2">{{ __('admissions.overdue_badge') }}: {{ $medCounts['overdue'] ?? 0 }}</span></div>
-                            <div class="col-6 col-md-3"><span class="badge bg-secondary w-100 py-2">{{ __('admissions.upcoming_badge') }}: {{ $medCounts['upcoming'] ?? 0 }}</span></div>
-                            <div class="col-6 col-md-3"><span class="badge bg-success w-100 py-2">{{ __('admissions.completed_today_badge') }}: {{ $medCounts['completed_today'] ?? 0 }}</span></div>
+                        <div class="mb-3">
+                            @include('admissions.partials.medication-counts', ['counts' => $medicationBoard['counts'] ?? [], 'layout' => 'grid'])
                         </div>
                         @if(($medicationBoard['orders'] ?? collect())->isNotEmpty())
                             <div class="table-responsive">
@@ -611,61 +502,9 @@
 
             <!-- TAB: PERIODIC VITALS -->
             <div class="tab-pane fade" id="tab-vitals" role="tabpanel">
-                @if($admission->status->value === 'admitted')
-                <div class="card mb-3">
-                    <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-activity me-1"></i>{{ __('admissions.record_vitals') }}</h5></div>
-                    <div class="card-body">
-                        <form method="POST" action="{{ route('admin.admissions.vitals.store', $admission) }}">
-                            @csrf
-                            <div class="row g-2 mb-3">
-                                <div class="col-6 col-md-3">
-                                    <label class="form-label small">{{ __('admissions.bp_systolic') }}</label>
-                                    <div class="input-group input-group-sm"><input type="number" name="blood_pressure_systolic" class="form-control" placeholder="120" min="0" max="300"><span class="input-group-text">mmHg</span></div>
-                                </div>
-                                <div class="col-6 col-md-3">
-                                    <label class="form-label small">{{ __('admissions.bp_diastolic') }}</label>
-                                    <div class="input-group input-group-sm"><input type="number" name="blood_pressure_diastolic" class="form-control" placeholder="80" min="0" max="200"><span class="input-group-text">mmHg</span></div>
-                                </div>
-                                <div class="col-6 col-md-3">
-                                    <label class="form-label small">{{ __('admissions.heart_rate') }}</label>
-                                    <div class="input-group input-group-sm"><input type="number" name="heart_rate" class="form-control" placeholder="72" min="0" max="300"><span class="input-group-text">bpm</span></div>
-                                </div>
-                                <div class="col-6 col-md-3">
-                                    <label class="form-label small">{{ __('admissions.temperature') }}</label>
-                                    <div class="input-group input-group-sm"><input type="number" name="temperature" class="form-control" placeholder="36.6" step="0.1" min="30" max="45"><span class="input-group-text">°C</span></div>
-                                </div>
-                                <div class="col-6 col-md-3">
-                                    <label class="form-label small">{{ __('admissions.resp_rate') }}</label>
-                                    <div class="input-group input-group-sm"><input type="number" name="respiratory_rate" class="form-control" placeholder="16" min="0" max="60"><span class="input-group-text">/min</span></div>
-                                </div>
-                                <div class="col-6 col-md-3">
-                                    <label class="form-label small">{{ __('admissions.spo2_col') }}</label>
-                                    <div class="input-group input-group-sm"><input type="number" name="spo2" class="form-control" placeholder="98" step="0.1" min="0" max="100"><span class="input-group-text">%</span></div>
-                                </div>
-                                <div class="col-6 col-md-3">
-                                    <label class="form-label small">{{ __('admissions.weight') }}</label>
-                                    <div class="input-group input-group-sm"><input type="number" name="weight" class="form-control" placeholder="70" step="0.1" min="0" max="500"><span class="input-group-text">kg</span></div>
-                                </div>
-                                <div class="col-6 col-md-3">
-                                    <label class="form-label small">{{ __('admissions.blood_sugar') }}</label>
-                                    <div class="input-group input-group-sm"><input type="number" name="blood_sugar" class="form-control" placeholder="5.0" step="0.1" min="0"><span class="input-group-text">mmol/L</span></div>
-                                </div>
-                            </div>
-                            <div class="row g-2 mb-3">
-                                <div class="col-md-4">
-                                    <label class="form-label small">{{ __('admissions.recorded_at') }}</label>
-                                    <input type="datetime-local" name="recorded_at" class="form-control form-control-sm" value="{{ now()->format('Y-m-d\TH:i') }}">
-                                </div>
-                                <div class="col-md-8">
-                                    <label class="form-label small">{{ __('admissions.notes') }}</label>
-                                    <input type="text" name="notes" class="form-control form-control-sm" placeholder="{{ __('admissions.observations_ph') }}">
-                                </div>
-                            </div>
-                            <div class="text-end"><button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-device-floppy me-1"></i>{{ __('admissions.save_vitals') }}</button></div>
-                        </form>
-                    </div>
+                <div class="mb-3">
+                    @include('admissions.partials.vitals-form', ['icon' => 'ti-activity'])
                 </div>
-                @endif
                 <div class="card">
                     <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-history me-1"></i>{{ __('admissions.vitals_history') }} ({{ $admission->visit->vitals->count() }})</h5></div>
                     <div class="card-body p-0">
@@ -725,69 +564,6 @@
                         </div>
                     </div>
 
-                {{-- <div class="row g-3">
-                    @if($medicalRecord->complaints->count() > 0)
-                    <div class="col-md-6">
-                        <div class="card h-100">
-                            <div class="card-header py-2"><h6 class="card-title mb-0"><i class="ti ti-message-circle me-1"></i>Complaints</h6></div>
-                            <div class="card-body">
-                                @foreach($medicalRecord->complaints as $c)
-                                <div class="ehr-item"><div class="fw-medium">{{ $c->description }}</div>@if($c->duration)<small class="text-muted">{{ $c->duration }}</small>@endif</div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-                    @if($medicalRecord->diagnoses->count() > 0)
-                    <div class="col-md-6">
-                        <div class="card h-100">
-                            <div class="card-header py-2"><h6 class="card-title mb-0"><i class="ti ti-stethoscope me-1"></i>Diagnoses</h6></div>
-                            <div class="card-body">
-                                @foreach($medicalRecord->diagnoses as $d)
-                                <div class="ehr-item {{ $d->is_primary ? 'is-primary' : '' }}">
-                                    @if($d->is_primary)<span class="badge bg-warning text-dark me-1" style="font-size:0.6rem">Primary</span>@endif
-                                    <span class="fw-medium">{{ $d->description }}</span>
-                                    @if($d->icdCodeEntry)<span class="badge bg-light text-dark ms-1 border">{{ $d->icdCodeEntry->code }}</span>@endif
-                                </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-                    @if($medicalRecord->treatments->count() > 0)
-                    <div class="col-md-6">
-                        <div class="card h-100">
-                            <div class="card-header py-2"><h6 class="card-title mb-0"><i class="ti ti-first-aid-kit me-1"></i>Treatments</h6></div>
-                            <div class="card-body">
-                                @foreach($medicalRecord->treatments as $t)
-                                <div class="ehr-item"><div class="fw-medium">{{ $t->description }}</div>@if($t->notes)<small class="text-muted">{{ $t->notes }}</small>@endif</div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-                    @if($medicalRecord->prescriptions->count() > 0)
-                    <div class="col-md-6">
-                        <div class="card h-100">
-                            <div class="card-header py-2"><h6 class="card-title mb-0"><i class="ti ti-pill me-1"></i>Prescriptions</h6></div>
-                            <div class="card-body p-0">
-                                @foreach($medicalRecord->prescriptions as $rx)
-                                <div class="px-3 py-2 border-bottom">
-                                    <strong class="fs-13">Rx #{{ $rx->prescription_number ?? $rx->id }}</strong>
-                                    @if($rx->items->count() > 0)
-                                    <ul class="mb-0 mt-1 ps-3 fs-12">
-                                        @foreach($rx->items as $item)
-                                        <li><strong>{{ $item->drug->name ?? '?' }}</strong> — {{ $item->dosage }}@if($item->frequency), {{ $item->frequency }}@endif @if($item->duration), {{ $item->duration }}@endif</li>
-                                        @endforeach
-                                    </ul>
-                                    @endif
-                                </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-                </div> --}}
                     @if($medicalRecord->complaints->count()===0 && $medicalRecord->diagnoses->count()===0 && $medicalRecord->treatments->count()===0 && $medicalRecord->prescriptions->count()===0)
                         <div class="text-center py-4 text-muted"><i class="ti ti-notes-off fs-1 d-block mb-2"></i>{{ __('admissions.no_consultation_data') }}</div>
                     @endif
@@ -806,48 +582,7 @@
                         </div>
                     </div>
                     <div class="card-body p-0">
-                        @if($medicalRecord->tasks->count() > 0)
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="bg-light">
-                                    <tr><th style="width:3rem"></th><th>{{ __('admissions.task_col') }}</th><th style="width:8rem">{{ __('admissions.priority_col') }}</th><th style="width:12rem">{{ __('admissions.assigned_to_col') }}</th><th style="width:8rem">{{ __('admissions.due_col') }}</th><th style="width:8rem">{{ __('admissions.status_col') }}</th><th style="width:9rem">{{ __('admissions.completed_col') }}</th></tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($medicalRecord->tasks->sortBy('status') as $task)
-                                    @php $isDone = $task->status === 'completed'; @endphp
-                                    <tr class="{{ $isDone ? 'table-success' : '' }}">
-                                        <td class="text-center">
-                                            <form method="POST" action="{{ route('admin.consultations.tasks.toggle', $task) }}">
-                                                @csrf @method('PATCH')
-                                                <button type="submit" class="btn btn-sm {{ $isDone ? 'btn-success' : 'btn-outline-success' }} p-1" title="{{ $isDone ? __('admissions.mark_pending_title') : __('admissions.mark_done_title') }}">
-                                                    <i class="ti ti-check fs-13"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                        <td>
-                                            <div class="{{ $isDone ? 'task-done' : 'fw-medium' }}">{{ $task->title }}</div>
-                                            @if($task->description)<small class="text-muted">{{ Str::limit($task->description, 80) }}</small>@endif
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-{{ match($task->priority) { 'high'=>'danger','medium'=>'warning',default=>'secondary' } }}">{{ ucfirst($task->priority ?? 'normal') }}</span>
-                                        </td>
-                                        <td>{{ $task->assignedUser->name ?? '—' }}</td>
-                                        <td>
-                                            @if($task->due_date)<span class="{{ !$isDone && $task->due_date->isPast() ? 'text-danger fw-medium' : '' }}">{{ $task->due_date->format('d M') }}</span>
-                                            @else—@endif
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-soft-{{ match($task->status){ 'completed'=>'success','in_progress'=>'info','cancelled'=>'secondary',default=>'warning'} }}">{{ ucfirst(str_replace('_',' ',$task->status)) }}</span>
-                                        </td>
-                                        <td>@if($task->completed_at)<small>{{ $task->completed_at->format('d M H:i') }}</small>@else—@endif</td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        @else
-                        <div class="text-center py-4 text-muted"><i class="ti ti-clipboard-off fs-1 d-block mb-2"></i>{{ __('admissions.no_tasks') }}</div>
-                        @endif
+                        @include('admissions.partials.consultation-tasks-table', ['tasks' => $medicalRecord->tasks, 'detailed' => true])
                     </div>
                 </div>
             </div>

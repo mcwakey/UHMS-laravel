@@ -1887,27 +1887,25 @@ const followUp = {
     init() {
         const department = document.getElementById('followUpDepartmentSelect');
         const service = document.getElementById('followUpServiceSelect');
-        if (!department || !service || department.dataset.followUpBound === 'true') {
-            return;
+        if (department && service && department.dataset.followUpBound !== 'true') {
+            department.dataset.followUpBound = 'true';
+            const sync = () => {
+                const departmentId = department.value;
+                Array.prototype.forEach.call(service.options, (option) => {
+                    if (!option.value) {
+                        option.hidden = false;
+                        return;
+                    }
+                    const matches = !departmentId || option.dataset.departmentId === departmentId;
+                    option.hidden = !matches;
+                    if (!matches && option.selected) {
+                        service.value = '';
+                    }
+                });
+            };
+            on(department, 'change', sync);
+            sync();
         }
-
-        department.dataset.followUpBound = 'true';
-        const sync = () => {
-            const departmentId = department.value;
-            Array.prototype.forEach.call(service.options, (option) => {
-                if (!option.value) {
-                    option.hidden = false;
-                    return;
-                }
-                const matches = !departmentId || option.dataset.departmentId === departmentId;
-                option.hidden = !matches;
-                if (!matches && option.selected) {
-                    service.value = '';
-                }
-            });
-        };
-        on(department, 'change', sync);
-        sync();
 
         if (state.config.openFollowUpSectionOnLoad) {
             tabs.activate('#follow-up-section');

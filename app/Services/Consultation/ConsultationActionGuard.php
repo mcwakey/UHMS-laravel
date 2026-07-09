@@ -16,6 +16,7 @@ class ConsultationActionGuard
     public function __construct(
         private ConsultationSessionService $sessions,
         private ActivityLogService $activityLog,
+        private ConsultationSessionEligibilityService $eligibility,
     ) {}
 
     public function editable(
@@ -82,19 +83,19 @@ class ConsultationActionGuard
             return;
         }
 
-        if ($route->isLocked()) {
-            $this->logBlocked($visit, $route, $user, 'CONSULTATION_ACTION_BLOCKED_LOCKED_ROUTE', $action);
-            throw new ConsultationActionException(__('messages.consultations.consultation_locked'), 423, 'CONSULTATION_ACTION_BLOCKED_LOCKED_ROUTE');
-        }
+        $decision = $this->eligibility->addItemDecision($visit, $route, $user);
+        if (! $decision['allowed']) {
+            $event = match ($decision['code']) {
+                'locked_session' => 'CONSULTATION_ACTION_BLOCKED_LOCKED_ROUTE',
+                'completed_session' => 'CONSULTATION_ACTION_BLOCKED_COMPLETED_ROUTE',
+                'cancelled_session' => 'CONSULTATION_ACTION_BLOCKED_CANCELLED_ROUTE',
+                'outpatient_visit_day_expired' => 'CONSULTATION_ACTION_BLOCKED_OUTPATIENT_WINDOW_EXPIRED',
+                'discharge_grace_expired' => 'CONSULTATION_ACTION_BLOCKED_DISCHARGE_GRACE_EXPIRED',
+                default => 'CONSULTATION_ACTION_BLOCKED_SESSION_ELIGIBILITY',
+            };
 
-        if ($route->status === VisitConsultationRoute::STATUS_COMPLETED) {
-            $this->logBlocked($visit, $route, $user, 'CONSULTATION_ACTION_BLOCKED_COMPLETED_ROUTE', $action);
-            throw new ConsultationActionException(__('messages.consultations.consultation_completed_readonly'), 423, 'CONSULTATION_ACTION_BLOCKED_COMPLETED_ROUTE');
-        }
-
-        if ($route->status === VisitConsultationRoute::STATUS_CANCELLED) {
-            $this->logBlocked($visit, $route, $user, 'CONSULTATION_ACTION_BLOCKED_CANCELLED_ROUTE', $action);
-            throw new ConsultationActionException(__('messages.consultations.consultation_cancelled_readonly'), 423, 'CONSULTATION_ACTION_BLOCKED_CANCELLED_ROUTE');
+            $this->logBlocked($visit, $route, $user, $event, $action, ['blocked_code' => $decision['code']]);
+            throw new ConsultationActionException($decision['message'], $decision['status'], $event);
         }
     }
 
@@ -119,7 +120,7 @@ class ConsultationActionGuard
             || $user->can('visits.reopen_locked_session');
     }
 
-    private function logBlocked(?Visit $visit, ?VisitConsultationRoute $route, User $user, string $event, string $action): void
+    private function logBlocked(?Visit $visit, ?VisitConsultationRoute $route, User $user, string $event, string $action, array $metadata = []): void
     {
         $this->activityLog->log(
             LogModule::CONSULTATION,
@@ -130,11 +131,11 @@ class ConsultationActionGuard
                 'consultation_route_id' => $route?->id,
                 'department_id' => $route?->department_id,
                 'causer' => $user,
-                'metadata' => [
+                'metadata' => array_merge([
                     'action' => $action,
                     'route_status' => $route?->status,
                     'locked' => (bool) $route?->locked_at,
-                ],
+                ], $metadata),
             ],
             $route,
             'Consultation action blocked.',

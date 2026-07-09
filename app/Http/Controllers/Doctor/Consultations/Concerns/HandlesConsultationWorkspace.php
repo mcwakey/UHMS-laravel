@@ -4,57 +4,26 @@ namespace App\Http\Controllers\Doctor\Consultations\Concerns;
 
 use App\Enums\AppointmentStatus;
 use App\Enums\DepartmentType;
-use App\Enums\Priority;
-use App\Enums\ProcedureStatus;
-use App\Enums\ResultType;
 use App\Enums\ServiceType;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
-use App\Http\Controllers\Controller;
-use App\Http\Requests\Consultations\CancelConsultationRouteRequest;
-use App\Http\Requests\Consultations\CompleteConsultationRouteRequest;
-use App\Http\Requests\Consultations\StoreConsultationDiagnosisRequest;
-use App\Http\Requests\Consultations\StoreConsultationFollowUpRequest;
-use App\Http\Requests\Consultations\StoreConsultationLabRequest;
-use App\Http\Requests\Consultations\StoreConsultationPrescriptionRequest;
-use App\Http\Requests\Consultations\StoreConsultationProcedureRequest;
-use App\Http\Requests\Consultations\StoreConsultationReferralRequest;
-use App\Http\Requests\Consultations\TransitionConsultationRouteRequest;
-use App\Http\Requests\StorePrescriptionRequest;
 use App\Models\Appointment;
-use App\Models\Complaint;
 use App\Models\Department;
-use App\Models\Diagnosis;
 use App\Models\Drug;
-use App\Models\HistoryOfPresentingComplaint;
 use App\Models\Investigation;
-use App\Models\LabRequest;
-use App\Models\LabRequestItem;
-use App\Models\LabTest;
 use App\Models\MedicalPattern;
 use App\Models\PatientProcedure;
-use App\Models\PhysicalExamination;
 use App\Models\Prescription;
 use App\Models\Procedure;
-use App\Models\ProcedureRequest;
 use App\Models\QueueEntry;
 use App\Models\ServiceCatalog;
-use App\Models\Treatment;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
-use App\Services\ClinicalService;
-use App\Services\ComplaintSearchService;
-use App\Services\ConsultationFollowUpService;
-use App\Services\ConsultationNextPatientService;
-use App\Services\ConsultationRouteService;
-use App\Services\ConsultationService;
-use App\Services\ConsultationSessionService;
-use App\Services\ConsultationSummaryService;
-use App\Services\Consultation\ConsultationActionContext;
+use App\Services\ClinicalFrequencyOptionService;
 use App\Services\Consultation\ConsultationActionException;
-use App\Services\Consultation\ConsultationActionGuard;
-use App\Services\Consultation\ConsultationIdempotencyService;
+use App\Services\Consultation\ConsultationReopenEligibilityService;
+use App\Services\Consultation\ConsultationSessionEligibilityService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyEntryService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyFavoriteService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyLayoutService;
@@ -62,25 +31,14 @@ use App\Services\Consultation\Specialty\ConsultationSpecialtyOrderSetService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyProfileResolver;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyReadinessService;
 use App\Services\Consultation\Specialty\DoctorSpecialtyWorkspaceService;
-use App\Services\HistoryOfPresentingComplaintService;
-use App\Services\LabService;
-use App\Services\MedicalPatternService;
+use App\Services\ConsultationNextPatientService;
 use App\Services\MedicalRecordEntryLogService;
-use App\Services\MedicalRecordEntryPermissionService;
-use App\Services\PhysicalExaminationService;
-use App\Services\PrescriptionService;
 use App\Services\ProcedureRequestService;
-use App\Services\ServicePriceResolver;
-use App\Services\VisitService;
-use App\Services\VisitWorkflowService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 
 trait HandlesConsultationWorkspace
 {
-
     public function index(Request $request)
     {
         $filters = $request->all();
@@ -364,7 +322,7 @@ trait HandlesConsultationWorkspace
 
         // Drugs for prescription dropdown
         $drugs = Drug::where('is_active', true)->orderBy('name')->get(['id', 'name', 'generic_name', 'strength', 'dosage_form', 'unit']);
-        $frequencyOptions = app(\App\Services\ClinicalFrequencyOptionService::class);
+        $frequencyOptions = app(ClinicalFrequencyOptionService::class);
 
         $procedures = Procedure::with('department')->active()->orderBy('name')->get();
         $patientProcedures = PatientProcedure::with(['procedure.department', 'performedByUser'])
@@ -443,8 +401,11 @@ trait HandlesConsultationWorkspace
             ? app(ConsultationSpecialtyReadinessService::class)->evaluate($selectedRoute, $specialtyContext, ['completionReadiness' => $completionReadiness])
             : null;
         $reopenEligibility = ($selectedRoute && Auth::user())
-            ? app(\App\Services\Consultation\ConsultationReopenEligibilityService::class)->canReopen(Auth::user(), $visit, $selectedRoute)
+            ? app(ConsultationReopenEligibilityService::class)->canReopen(Auth::user(), $visit, $selectedRoute)
             : null;
+        $sessionEligibilityActions = Auth::user()
+            ? app(ConsultationSessionEligibilityService::class)->availableActionsFor($visit, $selectedRoute, Auth::user())
+            : [];
         $specialtySummaryBuilder = $selectedRoute ? [
             'available' => true,
             'profile_code' => $specialtyContext->profile->code,
@@ -497,6 +458,7 @@ trait HandlesConsultationWorkspace
             'specialtyOrderSets' => $specialtyOrderSets,
             'specialtyReadiness' => $specialtyReadiness,
             'reopenEligibility' => $reopenEligibility,
+            'sessionEligibilityActions' => $sessionEligibilityActions,
             'specialtySummaryBuilder' => $specialtySummaryBuilder,
             'doctorSpecialtyWorkspace' => $doctorSpecialtyWorkspace,
             'entryPermissions' => $this->entryPermissions,

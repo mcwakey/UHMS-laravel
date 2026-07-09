@@ -17,7 +17,7 @@
                         </div>
                         <span class="badge bg-{{ $orderSet['color'] ?? 'secondary' }}-subtle text-{{ $orderSet['color'] ?? 'secondary' }}">{{ $orderSet['items_count'] }}</span>
                     </div>
-                    @can('consultations.create')
+                    @if($canCreateEntries)
                         <button type="button"
                                 class="btn btn-outline-primary btn-sm mt-2"
                                 data-order-set-preview
@@ -25,7 +25,7 @@
                                 data-apply-url="{{ route('admin.consultations.specialty-order-sets.apply', [$visit, $orderSet['id']]) }}">
                             <i class="ti ti-eye me-1"></i>{{ __('consultation_specialties.order_sets.preview') }}
                         </button>
-                    @endcan
+                    @endif
                 </div>
             @endforeach
         </div>

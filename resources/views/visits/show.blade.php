@@ -174,8 +174,11 @@
             });
             $activeConsultationRoute = $consultationRoutes->firstWhere('status', \App\Models\VisitConsultationRoute::STATUS_ACTIVE);
             $reopenPolicy = app(\App\Services\Consultation\ConsultationReopenEligibilityService::class);
+            $sessionEligibility = app(\App\Services\Consultation\ConsultationSessionEligibilityService::class);
+            $isVisitClinicallyLocked = $sessionEligibility->isVisitClinicallyLocked($visit);
             $hasReopenedActiveRoute = $activeConsultationRoute && $activeConsultationRoute->reopened_at;
-            $canQueueConsultationRoute = $isWaiting || $isTriage || $visit->status->allowedTransitions() || $hasReopenedActiveRoute;
+            $canQueueConsultationRoute = ! $isVisitClinicallyLocked
+                && ($isWaiting || $isTriage || $visit->status->allowedTransitions() || $hasReopenedActiveRoute);
             $routeBadgeClasses = [
                 \App\Models\VisitConsultationRoute::STATUS_ACTIVE => 'success',
                 \App\Models\VisitConsultationRoute::STATUS_PENDING => 'warning',

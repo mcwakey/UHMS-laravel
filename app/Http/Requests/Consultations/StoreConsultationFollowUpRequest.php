@@ -19,14 +19,10 @@ class StoreConsultationFollowUpRequest extends FormRequest
             'appointment_date' => ['required', 'date', 'after_or_equal:today'],
             'start_time' => ['nullable', 'date_format:H:i'],
             'end_time' => ['nullable', 'date_format:H:i', 'after:start_time'],
-            'department_id' => ['required', 'exists:departments,id'],
-            'service_id' => ['nullable', 'exists:service_catalog,id'],
-            'doctor_id' => ['nullable', 'exists:users,id'],
+            'service_id' => ['required', 'exists:service_catalog,id'],
             'reason' => ['required', 'string', 'max:2000'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'priority' => ['nullable', Rule::enum(Priority::class)],
-            'notify_patient' => ['nullable', 'boolean'],
         ];
     }
 }
-

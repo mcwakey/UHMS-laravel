@@ -67,18 +67,25 @@
                             <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
                                 <i class="ti ti-eye me-1"></i>{{ __('consultations.workspace.view_visit') }}
                             </a>
-                            <a href="#follow-up-section" class="btn btn-outline-primary btn-sm {{ ! $selectedRoute ? 'disabled' : '' }}" data-bs-toggle="pill" role="tab" aria-disabled="{{ $selectedRoute ? 'false' : 'true' }}" title="{{ $selectedRoute ? __('consultations.workspace.set_next_appointment') : __('consultations.workspace.select_session_first') }}">
+                            @php($canUseFollowUpQuickAction = $canCreateEntries && $selectedRoute)
+                            <a href="{{ $canUseFollowUpQuickAction ? '#follow-up-section' : '#' }}"
+                               class="btn btn-outline-primary btn-sm {{ $canUseFollowUpQuickAction ? '' : 'disabled' }}"
+                               @if($canUseFollowUpQuickAction) data-bs-toggle="pill" @endif
+                               role="tab"
+                               aria-disabled="{{ $canUseFollowUpQuickAction ? 'false' : 'true' }}"
+                               @if(! $canUseFollowUpQuickAction) tabindex="-1" @endif
+                               title="{{ $selectedRoute ? __('consultations.workspace.set_next_appointment') : __('consultations.workspace.select_session_first') }}">
                                 <i class="ti ti-calendar-plus me-1"></i>{{ $followUpAppointment ? __('consultations.workspace.update_next_appointment') : __('consultations.workspace.next_appointment') }}
                                 @if($followUpAppointment)
                                     <span class="badge bg-primary-subtle text-primary ms-1">{{ __('consultations.workspace.set') }}</span>
                                 @endif
                             </a>
-                            @can('consultations.create')
+                            @if($canCreateEntries)
                             <button type="button" class="btn btn-outline-purple btn-sm" data-bs-toggle="modal" data-bs-target="#savePatternModal">
                                 <i class="ti ti-template me-1"></i>{{ __('consultations.workspace.save_pattern') }}
                             </button>
-                            @endcan
-                            @if($visit->status->allowedTransitions())
+                            @endif
+                            @if($canCreateEntries && $visit->status->allowedTransitions())
                             <hr class="my-1">
                             <small class="text-muted fw-bold px-1">{{ __('consultations.workspace.transition_visit') }}</small>
                             @foreach($visit->status->allowedTransitions() as $nextStatus)
@@ -90,16 +97,6 @@
                                     <button type="submit" class="btn btn-warning btn-sm w-100"
                                             data-confirm="{{ __('consultations.confirm_admit_patient') }}">
                                         <i class="ti ti-bed me-1"></i>{{ __('consultations.workspace.admit_patient') }}
-                                    </button>
-                                </form>
-                                @elseif($nextStatus === \App\Enums\VisitStatus::COMPLETED)
-
-                                <form method="POST" action="{{ route('admin.consultations.transition', $visit) }}">
-                                    @csrf @method('PATCH')
-                                    <input type="hidden" name="status" value="{{ $nextStatus->value }}">
-                                    <button type="submit" class="btn btn-success btn-sm w-100"
-                                            data-confirm="{{ __('consultations.confirm_complete') }}">
-                                        <i class="ti ti-check me-1"></i>{{ __('consultations.workspace.complete_consultation') }}
                                     </button>
                                 </form>
                                 @elseif($nextStatus === \App\Enums\VisitStatus::CANCELLED)
@@ -128,7 +125,11 @@
                             @if($visit->status === \App\Enums\VisitStatus::CONSULTING)
                             <hr class="my-1">
                             <small class="text-muted fw-bold px-1">{{ __('consultations.workspace.session_routing') }}</small>
-                            <button type="button" class="btn btn-outline-indigo btn-sm w-100 mb-1" data-bs-toggle="modal" data-bs-target="#sendSessionModal">
+                            <button type="button"
+                                    class="btn btn-outline-indigo btn-sm w-100 mb-1"
+                                    @if($canCreateEntries) data-bs-toggle="modal" data-bs-target="#sendSessionModal" @endif
+                                    @disabled(! $canCreateEntries)
+                                    aria-disabled="{{ $canCreateEntries ? 'false' : 'true' }}">
                                 <i class="ti ti-transfer me-1"></i>{{ __('consultations.workspace.transfer_session') }}
                             </button>
                             {{-- <button type="button" class="btn btn-outline-purple btn-sm w-100" data-bs-toggle="modal" data-bs-target="#investigationModal">

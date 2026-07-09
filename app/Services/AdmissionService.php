@@ -13,6 +13,7 @@ use App\Models\Admission;
 use App\Models\EmergencyCase;
 use App\Models\WardRound;
 use App\Services\Admissions\BedWorkflowService;
+use App\Services\Consultation\ConsultationAutoCompletionService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -35,15 +36,15 @@ class AdmissionService
     {
         $query = Admission::with(['patient', 'bed.ward', 'admittedBy', 'visit']);
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->search($filters['search']);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['ward_id'])) {
+        if (! empty($filters['ward_id'])) {
             $query->byWard($filters['ward_id']);
         }
 
@@ -71,8 +72,8 @@ class AdmissionService
             // Transition visit status to ADMITTED and update type to INPATIENT
             $visit = $admission->visit;
             $this->statuses->setAdmitted($visit,
-                'Patient admitted (' . ($data['admission_type'] ?? 'admission') . ') to '
-                . $bed->ward->name . ' - Bed ' . $bed->bed_number);
+                'Patient admitted ('.($data['admission_type'] ?? 'admission').') to '
+                .$bed->ward->name.' - Bed '.$bed->bed_number);
             $visit->update(['visit_type' => VisitType::INPATIENT->value]);
 
             $this->admissionBilling->createInitialCharges($admission, $data);
@@ -83,7 +84,7 @@ class AdmissionService
             $this->pathway->record($visit->fresh(), 'ADMISSION_STARTED', [
                 'source' => $admission,
                 'title' => 'Admission started',
-                'description' => $bed->ward->name . ' / Bed ' . $bed->bed_number,
+                'description' => $bed->ward->name.' / Bed '.$bed->bed_number,
             ]);
 
             return $admission->load(['patient', 'bed.ward', 'admittedBy']);
@@ -142,6 +143,8 @@ class AdmissionService
             if ($visit->canTransitionTo(VisitStatus::DISCHARGING)) {
                 $visit->transitionTo(VisitStatus::DISCHARGING, 'Patient discharge initiated');
             }
+            app(ConsultationAutoCompletionService::class)
+                ->evaluate($visit, Auth::user(), $visit->consultationRoutes()->latest('id')->first(), 'Patient discharged');
 
             return $admission->fresh(['patient', 'bed.ward', 'dischargedBy']);
         });
@@ -177,11 +180,11 @@ class AdmissionService
         $query = Admission::with(['patient', 'bed.ward', 'admittedBy', 'visit'])
             ->where('status', AdmissionStatus::ADMITTED);
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->search($filters['search']);
         }
 
-        if (!empty($filters['ward_id'])) {
+        if (! empty($filters['ward_id'])) {
             $query->byWard($filters['ward_id']);
         }
 

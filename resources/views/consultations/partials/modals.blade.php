@@ -19,7 +19,7 @@
 {{-- ============================================================ --}}
 {{-- EDIT CONSULTATION ENTRY MODAL --}}
 {{-- ============================================================ --}}
-@can('consultations.create')
+@if($canCreateEntries)
 <div class="modal fade" id="editEntryModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -42,12 +42,12 @@
         </div>
     </div>
 </div>
-@endcan
+@endif
 
 {{-- ============================================================ --}}
 {{-- SAVE AS PATTERN MODAL --}}
 {{-- ============================================================ --}}
-@can('consultations.create')
+@if($canCreateEntries)
 <div class="modal fade" id="savePatternModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -81,7 +81,7 @@
         </div>
     </div>
 </div>
-@endcan
+@endif
 
 {{-- ============================================================ --}}
 {{-- SEND TO ANOTHER CONSULTATION SESSION MODAL --}}
