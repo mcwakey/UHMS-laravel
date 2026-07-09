@@ -12,6 +12,7 @@ enum PatientJourneyStage: string
 {
     case REGISTERED = 'registered';
     case CHECKED_IN = 'checked_in';
+    case TRIAGE = 'triage';
     case CONSULTATION = 'consultation';
     case INVESTIGATION = 'investigation';
     case PROCEDURE = 'procedure';
@@ -27,14 +28,15 @@ enum PatientJourneyStage: string
         return match ($this) {
             self::REGISTERED => 1,
             self::CHECKED_IN => 2,
-            self::CONSULTATION => 3,
-            self::INVESTIGATION => 4,
-            self::PROCEDURE => 5,
-            self::TREATMENT => 6,
-            self::PHARMACY => 7,
-            self::ADMISSION => 8,
-            self::DISCHARGE => 9,
-            self::COMPLETED => 10,
+            self::TRIAGE => 3,
+            self::CONSULTATION => 4,
+            self::INVESTIGATION => 5,
+            self::PROCEDURE => 6,
+            self::TREATMENT => 7,
+            self::PHARMACY => 8,
+            self::ADMISSION => 9,
+            self::DISCHARGE => 10,
+            self::COMPLETED => 11,
         };
     }
 
@@ -48,6 +50,7 @@ enum PatientJourneyStage: string
         return match ($this) {
             self::REGISTERED => 'ti-user-plus',
             self::CHECKED_IN => 'ti-login',
+            self::TRIAGE => 'ti-activity-heartbeat',
             self::CONSULTATION => 'ti-stethoscope',
             self::INVESTIGATION => 'ti-flask',
             self::PROCEDURE => 'ti-medical-cross',
@@ -77,7 +80,8 @@ enum PatientJourneyStage: string
     {
         return match ($status) {
             VisitStatus::CREATED, VisitStatus::SCHEDULED, VisitStatus::CONFIRMED, VisitStatus::REGISTERED => self::REGISTERED,
-            VisitStatus::WALKED_IN, VisitStatus::CHECKED_IN, VisitStatus::QUEUED, VisitStatus::TRIAGE => self::CHECKED_IN,
+            VisitStatus::WALKED_IN, VisitStatus::CHECKED_IN, VisitStatus::QUEUED => self::CHECKED_IN,
+            VisitStatus::TRIAGE => self::TRIAGE,
             VisitStatus::WAITING, VisitStatus::CONSULTING, VisitStatus::REFERRED_CONSULTATION, VisitStatus::ACTIVE, VisitStatus::EMERGENCY => self::CONSULTATION,
             VisitStatus::WAITING_INVESTIGATION, VisitStatus::LAB => self::INVESTIGATION,
             VisitStatus::PHARMACY, VisitStatus::BILLING => self::PHARMACY,

@@ -219,8 +219,68 @@ class ConsultationReopenPhase7ATest extends TestCase
         $route->refresh();
         $this->assertSame(VisitConsultationRoute::STATUS_ACTIVE, $route->status);
         $this->assertNotNull($route->reopened_at);
+        $this->assertSame(VisitStatus::CONSULTING, $visit->fresh()->status);
+        $this->assertNull($visit->fresh()->completed_at);
+        $this->assertNull($visit->fresh()->completed_by);
         $this->assertSame($routeCount, VisitConsultationRoute::where('visit_id', $visit->id)->count());
         $this->assertSame($recordCount, MedicalRecord::where('visit_id', $visit->id)->count());
+    }
+
+    public function test_visit_details_reopens_completed_session_and_returns_to_visit_journey(): void
+    {
+        [$visit, $route] = $this->completedOutpatientVisit();
+
+        $this->actingAs($this->authorised)
+            ->get(route('admin.visits.show', $visit))
+            ->assertOk()
+            ->assertSee(__('visits.actions.reopen_consultation'));
+
+        $this->actingAs($this->authorised)
+            ->post(route('admin.consultations.routes.reopen', [$visit, $route]), [
+                'return_to_visit' => '1',
+                'reason' => __('consultations.reopen.visit_details_reason'),
+            ])
+            ->assertRedirect(route('admin.visits.show', $visit));
+
+        $this->assertSame(VisitConsultationRoute::STATUS_ACTIVE, $route->fresh()->status);
+        $this->assertSame(VisitStatus::CONSULTING, $visit->fresh()->status);
+        $this->assertDatabaseHas('visit_status_logs', [
+            'visit_id' => $visit->id,
+            'from_status' => VisitStatus::COMPLETED->value,
+            'to_status' => VisitStatus::CONSULTING->value,
+        ]);
+
+        $this->actingAs($this->authorised)
+            ->get(route('admin.visits.show', $visit))
+            ->assertOk()
+            ->assertSee('visitRouteServiceSelect');
+    }
+
+    public function test_visit_details_can_activate_pending_session_after_completed_visit_is_reopened(): void
+    {
+        [$visit, $route] = $this->completedOutpatientVisit([
+            'status' => VisitConsultationRoute::STATUS_PENDING,
+            'completed_at' => null,
+            'completed_by' => null,
+            'started_at' => null,
+            'started_by' => null,
+            'activated_at' => null,
+        ]);
+
+        $this->actingAs($this->authorised)
+            ->post(route('admin.consultations.routes.activate', [$visit, $route]), [
+                'return_to_visit' => '1',
+                'reason' => __('consultations.reopen.visit_details_reason'),
+            ])
+            ->assertRedirect(route('admin.visits.show', $visit));
+
+        $this->assertSame(VisitStatus::CONSULTING, $visit->fresh()->status);
+        $this->assertSame(VisitConsultationRoute::STATUS_ACTIVE, $route->fresh()->status);
+        $this->assertDatabaseHas('activity_log', [
+            'event' => 'CONSULTATION_VISIT_REOPENED_FOR_ROUTE_ACTIVATION',
+            'subject_type' => VisitConsultationRoute::class,
+            'subject_id' => $route->id,
+        ]);
     }
 
     public function test_reopened_route_allows_guarded_clinical_mutation(): void

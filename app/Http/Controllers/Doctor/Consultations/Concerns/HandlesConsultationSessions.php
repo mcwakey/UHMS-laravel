@@ -171,6 +171,13 @@ trait HandlesConsultationSessions
         $this->abortIfRouteMismatch($visit, $route);
 
         try {
+            if ($this->visitRequiresReopenForConsultationActivation($visit)) {
+                $reason = $request->input('reason', __('consultations.reopen.visit_details_reason'));
+                $this->sessionWorkflow->reopenVisitForRouteActivation($visit, $route, Auth::user(), $reason);
+                $visit = $visit->fresh(['consultationRoutes']);
+                $route = $route->fresh();
+            }
+
             if ($request->boolean('route_only')) {
                 $route = $this->consultationRouteService->activateRouteOnly($route, Auth::user());
 
@@ -180,8 +187,16 @@ trait HandlesConsultationSessions
             }
 
             $route = $this->consultationRouteService->activateRoute($route, Auth::user());
+        } catch (ConsultationActionException $e) {
+            return $this->consultationActionFailureResponse($request, $e);
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());
+        }
+
+        if ($request->boolean('return_to_visit')) {
+            return redirect()
+                ->route('admin.visits.show', $visit)
+                ->with('success', __('messages.consultations.route_activated'));
         }
 
         return redirect()
@@ -209,6 +224,12 @@ trait HandlesConsultationSessions
                 'message' => __('messages.consultations.route_completed'),
                 'route_id' => $route->id,
             ]);
+        }
+
+        if ($request->boolean('return_to_visit')) {
+            return redirect()
+                ->route('admin.visits.show', $visit)
+                ->with('success', __('messages.consultations.route_completed'));
         }
 
         return redirect()
@@ -257,6 +278,12 @@ trait HandlesConsultationSessions
             ]);
         }
 
+        if ($request->boolean('return_to_visit')) {
+            return redirect()
+                ->route('admin.visits.show', $visit)
+                ->with('success', __('consultations.reopen.success'));
+        }
+
         return redirect()
             ->route('admin.consultations.routes.show', [$visit, $route])
             ->with('success', __('consultations.reopen.success'));
@@ -283,6 +310,14 @@ trait HandlesConsultationSessions
         return redirect()
             ->route('admin.consultations.index')
             ->with('success', __('messages.consultations.visit_transitioned', ['status' => $newStatus->label()]));
+    }
+
+    private function visitRequiresReopenForConsultationActivation(Visit $visit): bool
+    {
+        return in_array($visit->status, [
+            VisitStatus::COMPLETED,
+            VisitStatus::DISCHARGED,
+        ], true);
     }
 
 }

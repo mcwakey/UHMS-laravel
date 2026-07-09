@@ -37,6 +37,8 @@ class VisitDepartmentHistory extends Model
     const TYPE_CONSULTATION = 'consultation';
     const TYPE_REFERRAL     = 'referral';
     const TYPE_INVESTIGATION = 'investigation';
+    const TYPE_PHARMACY = 'pharmacy';
+    const TYPE_PROCEDURE = 'procedure';
 
     const STATUS_WAITING     = 'waiting';
     const STATUS_IN_PROGRESS = 'in_progress';
@@ -98,6 +100,8 @@ class VisitDepartmentHistory extends Model
             self::TYPE_CONSULTATION  => 'Consultation',
             self::TYPE_REFERRAL      => 'Referral',
             self::TYPE_INVESTIGATION => 'Investigation',
+            self::TYPE_PHARMACY      => 'Pharmacy',
+            self::TYPE_PROCEDURE     => 'Procedure',
             default                  => ucfirst($this->type),
         };
     }
@@ -141,6 +145,8 @@ class VisitDepartmentHistory extends Model
             self::TYPE_CONSULTATION  => 'primary',
             self::TYPE_REFERRAL      => 'indigo',
             self::TYPE_INVESTIGATION => 'purple',
+            self::TYPE_PHARMACY      => 'orange',
+            self::TYPE_PROCEDURE     => 'warning',
             default                  => 'secondary',
         };
     }

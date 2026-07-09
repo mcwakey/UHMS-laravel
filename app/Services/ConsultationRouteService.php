@@ -213,8 +213,12 @@ class ConsultationRouteService
             VisitStatus::ACTIVE,
             VisitStatus::CONSULTING,
             VisitStatus::EMERGENCY,
+            VisitStatus::WAITING_INVESTIGATION,
+            VisitStatus::LAB,
+            VisitStatus::PHARMACY,
+            VisitStatus::BILLING,
         ], true)) {
-            throw new \InvalidArgumentException('Route can only be started when the visit is waiting consultation, active, consulting, or emergency.');
+            throw new \InvalidArgumentException('Route can only be started when the visit is active in the clinical workflow.');
         }
 
         return DB::transaction(function () use ($route, $visit, $user) {
@@ -227,6 +231,21 @@ class ConsultationRouteService
             if (in_array($visit->status, [VisitStatus::WAITING, VisitStatus::ACTIVE], true)) {
                 $this->queueService->completeCurrentEntry($visit);
                 $this->visitWorkflowService->transition($visit->fresh(), VisitStatus::CONSULTING, 'Consultation started');
+                $visit = $visit->fresh();
+            } elseif ($visit->status !== VisitStatus::CONSULTING) {
+                $previousVisitStatus = $visit->status;
+                $visit->forceFill([
+                    'status' => VisitStatus::CONSULTING,
+                    'checked_out_at' => null,
+                    'completed_at' => null,
+                    'completed_by' => null,
+                ])->save();
+                $visit->statusLogs()->create([
+                    'from_status' => $previousVisitStatus->value,
+                    'to_status' => VisitStatus::CONSULTING->value,
+                    'changed_by' => $user->id,
+                    'notes' => 'Consultation session resumed',
+                ]);
                 $visit = $visit->fresh();
             }
 

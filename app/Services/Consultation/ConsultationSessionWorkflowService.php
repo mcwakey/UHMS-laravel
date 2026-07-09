@@ -29,7 +29,11 @@ class ConsultationSessionWorkflowService
         $this->guard->assertEditableRoute($visit, $route, $user, 'consultation.route.complete');
         $this->readiness->assertReady($route, $user);
 
-        return $this->routes->completeRoute($route, $user, $notes);
+        $route = $this->routes->completeRoute($route, $user, $notes);
+
+        $this->completeVisitWhenAllRoutesAreClosed($visit, $route, $user, $notes);
+
+        return $route;
     }
 
     public function cancelRoute(Visit $visit, VisitConsultationRoute $route, User $user, ?string $reason = null): VisitConsultationRoute
@@ -87,6 +91,8 @@ class ConsultationSessionWorkflowService
                 'reopen_count' => ((int) $route->reopen_count) + 1,
             ])->save();
 
+            $this->restoreVisitForConsultation($visit, $route, $user, $reason);
+
             app(\App\Services\ConsultationSessionService::class)->getOrCreateMedicalRecordForRoute($route, $user);
 
             VisitConsultationRouteLog::create([
@@ -112,6 +118,37 @@ class ConsultationSessionWorkflowService
             }
 
             return $route->fresh(['department', 'service', 'routeServices.service', 'medicalRecord']);
+        });
+    }
+
+    public function reopenVisitForRouteActivation(Visit $visit, VisitConsultationRoute $route, User $user, string $reason): Visit
+    {
+        $route->loadMissing(['visit', 'department']);
+
+        if (! $user->can('consultations.reopen')) {
+            throw new ConsultationActionException(__('consultations.reopen.permission_denied'), 403, 'CONSULTATION_REOPEN_BLOCKED');
+        }
+
+        if ($route->isLocked()) {
+            throw new ConsultationActionException(__('consultations.reopen.locked_session'), 423, 'CONSULTATION_REOPEN_BLOCKED');
+        }
+
+        if ($route->status === VisitConsultationRoute::STATUS_CANCELLED) {
+            throw new ConsultationActionException(__('messages.consultations.consultation_cancelled_readonly'), 423, 'CONSULTATION_REOPEN_BLOCKED');
+        }
+
+        if ($route->status === VisitConsultationRoute::STATUS_COMPLETED) {
+            return $this->reopenRoute($visit, $route, $user, $reason)->visit;
+        }
+
+        return DB::transaction(function () use ($visit, $route, $user, $reason) {
+            $this->restoreVisitForConsultation($visit, $route, $user, $reason);
+
+            $this->logReopenEvent('CONSULTATION_VISIT_REOPENED_FOR_ROUTE_ACTIVATION', $visit->fresh(), $route, $user, $reason, [
+                'route_status' => $route->status,
+            ]);
+
+            return $visit->fresh(['consultationRoutes']);
         });
     }
 
@@ -163,5 +200,80 @@ class ConsultationSessionWorkflowService
             $route,
             'Consultation reopen workflow event.',
         );
+    }
+
+    private function completeVisitWhenAllRoutesAreClosed(
+        Visit $visit,
+        VisitConsultationRoute $route,
+        User $user,
+        ?string $notes = null,
+    ): void {
+        $visit = $visit->fresh();
+
+        if (! $visit || $visit->status === VisitStatus::COMPLETED) {
+            return;
+        }
+
+        $hasOpenRoute = $visit->consultationRoutes()
+            ->where('status', '!=', VisitConsultationRoute::STATUS_CANCELLED)
+            ->where('status', '!=', VisitConsultationRoute::STATUS_COMPLETED)
+            ->exists();
+
+        if ($hasOpenRoute || ! $visit->canTransitionTo(VisitStatus::COMPLETED)) {
+            return;
+        }
+
+        $completedVisit = $this->visits->transition(
+            $visit,
+            VisitStatus::COMPLETED,
+            $notes ?: __('consultations.routes.all_sessions_completed')
+        );
+
+        if (! $completedVisit->completed_by) {
+            $completedVisit->forceFill(['completed_by' => $user->id])->save();
+        }
+
+        $this->activityLog->log(
+            LogModule::CONSULTATION,
+            'CONSULTATION_COMPLETED_AFTER_LAST_SESSION',
+            [
+                'patient_id' => $visit->patient_id,
+                'visit_id' => $visit->id,
+                'consultation_route_id' => $route->id,
+                'department_id' => $route->department_id,
+                'causer' => $user,
+            ],
+            $route,
+            'Consultation completed after the final session was completed.',
+        );
+    }
+
+    private function restoreVisitForConsultation(Visit $visit, VisitConsultationRoute $route, User $user, string $reason): void
+    {
+        if ($visit->status === VisitStatus::CONSULTING) {
+            return;
+        }
+
+        $from = $visit->status;
+
+        $visit->forceFill([
+            'status' => VisitStatus::CONSULTING,
+            'current_department_id' => $route->department_id,
+            'checked_out_at' => null,
+            'completed_at' => null,
+            'completed_by' => null,
+        ])->save();
+
+        $visit->statusLogs()->create([
+            'from_status' => $from->value,
+            'to_status' => VisitStatus::CONSULTING->value,
+            'changed_by' => $user->id,
+            'notes' => $reason,
+        ]);
+
+        $this->logReopenEvent('CONSULTATION_VISIT_STATUS_REOPENED', $visit->fresh(), $route, $user, $reason, [
+            'previous_visit_status' => $from->value,
+            'new_visit_status' => VisitStatus::CONSULTING->value,
+        ]);
     }
 }

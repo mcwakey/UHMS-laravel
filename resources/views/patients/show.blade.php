@@ -54,54 +54,20 @@
 </div>
 @endif
 
-@can('patients.privacy_directives.manage')
-<div class="card mb-3">
-    <div class="card-header">
-        <h6 class="fw-bold mb-0"><i class="ti ti-shield-lock me-1"></i>{{ __('patients.privacy.privacy_directive') }}</h6>
-    </div>
-    <div class="card-body">
-        <form method="POST" action="{{ route('admin.patients.privacy-directives.store', $patient) }}" class="row g-2 align-items-end">
-            @csrf
-            <div class="col-md-3">
-                <label class="form-label">{{ __('common.type') }}</label>
-                <select name="directive_type" class="form-select" required>
-                    @foreach(['do_not_disclose_contact', 'restricted_address', 'restricted_identity', 'restricted_emergency_contact', 'minor_or_guardian_required', 'court_restriction', 'confidential_patient', 'custom'] as $type)
-                        <option value="{{ $type }}">{{ __('patients.privacy.'.$type) !== 'patients.privacy.'.$type ? __('patients.privacy.'.$type) : str_replace('_', ' ', $type) }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">{{ __('common.summary') }}</label>
-                <input type="text" name="summary" class="form-control" maxlength="255" required>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">{{ __('common.notes') }}</label>
-                <input type="text" name="details" class="form-control" maxlength="2000">
-            </div>
-            <div class="col-md-1 d-grid">
-                <button type="submit" class="btn btn-primary">{{ __('common.add') }}</button>
-            </div>
-        </form>
-    </div>
+@if(auth()->user()?->can('patients.privacy_directives.manage') || auth()->user()?->can('patients.privacy.break_glass'))
+<div class="d-flex justify-content-end flex-wrap gap-2 mb-3">
+    @can('patients.privacy_directives.manage')
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPrivacyDirectiveModal">
+            <i class="ti ti-shield-lock me-1"></i>{{ __('patients.privacy.privacy_directive') }}
+        </button>
+    @endcan
+    @can('patients.privacy.break_glass')
+        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#startBreakGlassModal">
+            <i class="ti ti-shield-lock me-1"></i>{{ __('patients.privacy.start_break_glass_access') }}
+        </button>
+    @endcan
 </div>
-@endcan
-
-@can('patients.privacy.break_glass')
-<div class="card mb-3">
-    <div class="card-body">
-        <form method="POST" action="{{ route('admin.patients.privacy.break-glass.start', $patient) }}" class="row g-2 align-items-end">
-            @csrf
-            <div class="col-md-9">
-                <label class="form-label">{{ __('patients.privacy.break_glass_reason') }}</label>
-                <input type="text" name="reason" class="form-control" minlength="10" required>
-            </div>
-            <div class="col-md-3 d-grid">
-                <button type="submit" class="btn btn-warning"><i class="ti ti-shield-lock me-1"></i>{{ __('patients.privacy.start_break_glass_access') }}</button>
-            </div>
-        </form>
-    </div>
-</div>
-@endcan
+@endif
 
 <!-- Patient Header Card -->
 <div class="card">
@@ -934,6 +900,88 @@
     </div>
 </div>
 
+@can('patients.privacy_directives.manage')
+<div class="modal fade" id="addPrivacyDirectiveModal" tabindex="-1" aria-labelledby="addPrivacyDirectiveModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.patients.privacy-directives.store', $patient) }}">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addPrivacyDirectiveModalLabel">
+                        <i class="ti ti-shield-lock me-1"></i>{{ __('patients.privacy.privacy_directive') }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('common.close') }}"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{{ __('common.type') }}</label>
+                            <select name="directive_type" class="form-select @error('directive_type') is-invalid @enderror" required>
+                                @foreach(['do_not_disclose_contact', 'restricted_address', 'restricted_identity', 'restricted_emergency_contact', 'minor_or_guardian_required', 'court_restriction', 'confidential_patient', 'custom'] as $type)
+                                    <option value="{{ $type }}" @selected(old('directive_type') === $type)>{{ __('patients.privacy.'.$type) !== 'patients.privacy.'.$type ? __('patients.privacy.'.$type) : str_replace('_', ' ', $type) }}</option>
+                                @endforeach
+                            </select>
+                            @error('directive_type')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">{{ __('common.summary') }}</label>
+                            <input type="text" name="summary" class="form-control @error('summary') is-invalid @enderror" value="{{ old('summary') }}" maxlength="255" required>
+                            @error('summary')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">{{ __('common.notes') }}</label>
+                            <textarea name="details" class="form-control @error('details') is-invalid @enderror" rows="4" maxlength="2000">{{ old('details') }}</textarea>
+                            @error('details')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('common.add') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endcan
+
+@can('patients.privacy.break_glass')
+<div class="modal fade" id="startBreakGlassModal" tabindex="-1" aria-labelledby="startBreakGlassModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.patients.privacy.break-glass.start', $patient) }}">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title" id="startBreakGlassModalLabel">
+                        <i class="ti ti-shield-lock me-1"></i>{{ __('patients.privacy.break_glass_access') }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('common.close') }}"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label">{{ __('patients.privacy.break_glass_reason') }}</label>
+                    <textarea name="reason" class="form-control @error('reason') is-invalid @enderror" rows="4" minlength="10" required>{{ old('reason') }}</textarea>
+                    @error('reason')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="ti ti-shield-lock me-1"></i>{{ __('patients.privacy.start_break_glass_access') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endcan
+
 {{-- Add Insurance Modal --}}
 @can('patients.edit')
     @include('patients.partials.insurance-add-modal', [
@@ -1200,6 +1248,20 @@
     @endif
 
     // ── Edit Insurance Modal ──────────────────────────────────────────────────
+    @if($errors->has('directive_type') || $errors->has('summary') || $errors->has('details'))
+    var privacyDirectiveModal = document.getElementById('addPrivacyDirectiveModal');
+    if (privacyDirectiveModal) {
+        new bootstrap.Modal(privacyDirectiveModal).show();
+    }
+    @endif
+
+    @if($errors->has('reason'))
+    var breakGlassModal = document.getElementById('startBreakGlassModal');
+    if (breakGlassModal) {
+        new bootstrap.Modal(breakGlassModal).show();
+    }
+    @endif
+
     document.querySelectorAll('.edit-insurance-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.dataset.id;

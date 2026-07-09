@@ -45,6 +45,17 @@ class PatientJourneyTest extends TestCase
         $this->assertSame(PatientJourneyStage::INVESTIGATION, $service->currentStage($this->visit(VisitStatus::LAB)));
         $this->assertSame(PatientJourneyStage::PHARMACY, $service->currentStage($this->visit(VisitStatus::PHARMACY)));
         $this->assertSame(PatientJourneyStage::REGISTERED, $service->currentStage($this->visit(VisitStatus::REGISTERED)));
+        $this->assertSame(PatientJourneyStage::TRIAGE, $service->currentStage($this->visit(VisitStatus::TRIAGE)));
+    }
+
+    public function test_queued_visit_expects_triage_before_consultation(): void
+    {
+        $snapshot = app(PatientJourneyService::class)->snapshot($this->visit(VisitStatus::QUEUED));
+        $relevant = collect($snapshot['relevant_stages'])->map->value;
+
+        $this->assertSame(PatientJourneyStage::CHECKED_IN, $snapshot['current_stage']);
+        $this->assertSame(PatientJourneyStage::TRIAGE, $snapshot['next_stage']);
+        $this->assertTrue($relevant->contains('triage'));
     }
 
     public function test_completed_and_next_stages(): void

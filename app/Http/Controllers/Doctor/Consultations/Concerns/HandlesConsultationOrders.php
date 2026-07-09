@@ -242,6 +242,53 @@ trait HandlesConsultationOrders
         return back()->withFragment('procedures-section')->with('success', __('messages.consultations.procedure_updated'));
     }
 
+    public function sendProcedureDepartmentToDepartment(Request $request, Visit $visit, Department $department)
+    {
+        $data = $request->validate([
+            'consultation_route_id' => ['required', 'integer', 'exists:visit_consultation_routes,id'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        try {
+            $context = $this->consultationMutationContext($request, $visit, 'procedure.department.send_to_department', 'procedure.request');
+            $procedureRequest = $this->orderWorkflow->sendProcedureDepartmentToDepartment($visit, $context, $department, $data['notes'] ?? null);
+        } catch (ConsultationActionException $e) {
+            return $this->consultationActionFailureResponse($request, $e);
+        } catch (\InvalidArgumentException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        $department = $procedureRequest->department ?: $department;
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('messages.consultations.procedure_department_handoff_sent', [
+                    'department' => $department?->name,
+                ]),
+                'visit_status' => $visit->fresh()->status?->value,
+                'department' => [
+                    'id' => $department?->id,
+                    'name' => $department?->name,
+                ],
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.consultations.routes.show', [$visit, $context->route])
+            ->withFragment('procedures-section')
+            ->with('success', __('messages.consultations.procedure_department_handoff_sent', [
+                'department' => $department?->name,
+            ]));
+    }
+
     public function storeLabRequest(StoreConsultationLabRequest $request, Visit $visit)
     {
         $data = $request->validated();
@@ -294,6 +341,102 @@ trait HandlesConsultationOrders
         }
 
         return back()->withFragment('investigations-section')->with('success', __('messages.consultations.lab_request_updated'));
+    }
+
+    public function sendLabRequestToDepartment(Request $request, Visit $visit, LabRequest $labRequest)
+    {
+        $data = $request->validate([
+            'consultation_route_id' => ['required', 'integer', 'exists:visit_consultation_routes,id'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        try {
+            $context = $this->consultationMutationContext($request, $visit, 'investigation.send_to_department', 'consultations.create');
+            $labRequest = $this->orderWorkflow->sendInvestigationRequestToDepartment($visit, $context, $labRequest, $data['notes'] ?? null);
+        } catch (ConsultationActionException $e) {
+            return $this->consultationActionFailureResponse($request, $e);
+        } catch (\InvalidArgumentException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        $department = $labRequest->targetDepartment ?: $labRequest->department;
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('messages.consultations.investigation_handoff_sent', [
+                    'number' => $labRequest->request_number,
+                    'department' => $department?->name,
+                ]),
+                'visit_status' => $visit->fresh()->status?->value,
+                'department' => [
+                    'id' => $department?->id,
+                    'name' => $department?->name,
+                ],
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.consultations.routes.show', [$visit, $context->route])
+            ->withFragment('investigations-section')
+            ->with('success', __('messages.consultations.investigation_handoff_sent', [
+                'number' => $labRequest->request_number,
+                'department' => $department?->name,
+            ]));
+    }
+
+    public function sendInvestigationDepartmentToDepartment(Request $request, Visit $visit, Department $department)
+    {
+        $data = $request->validate([
+            'consultation_route_id' => ['required', 'integer', 'exists:visit_consultation_routes,id'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        try {
+            $context = $this->consultationMutationContext($request, $visit, 'investigation.department.send_to_department', 'consultations.create');
+            $labRequest = $this->orderWorkflow->sendInvestigationDepartmentToDepartment($visit, $context, $department, $data['notes'] ?? null);
+        } catch (ConsultationActionException $e) {
+            return $this->consultationActionFailureResponse($request, $e);
+        } catch (\InvalidArgumentException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        $department = $labRequest->targetDepartment ?: $labRequest->department ?: $department;
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('messages.consultations.investigation_department_handoff_sent', [
+                    'department' => $department?->name,
+                ]),
+                'visit_status' => $visit->fresh()->status?->value,
+                'department' => [
+                    'id' => $department?->id,
+                    'name' => $department?->name,
+                ],
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.consultations.routes.show', [$visit, $context->route])
+            ->withFragment('investigations-section')
+            ->with('success', __('messages.consultations.investigation_department_handoff_sent', [
+                'department' => $department?->name,
+            ]));
     }
 
     public function sendToInvestigation(Request $request, Visit $visit)

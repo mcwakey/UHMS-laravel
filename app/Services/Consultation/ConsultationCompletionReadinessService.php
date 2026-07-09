@@ -20,7 +20,7 @@ class ConsultationCompletionReadinessService
 
     public function forRoute(VisitConsultationRoute $route): ConsultationCompletionReadinessResult
     {
-        $route->loadMissing(['visit', 'medicalRecord']);
+        $route = $route->fresh(['visit', 'medicalRecord']) ?? $route;
         $record = $route->medicalRecord;
 
         if (! $record) {
@@ -32,7 +32,7 @@ class ConsultationCompletionReadinessService
             ]));
         }
 
-        $record->loadMissing(['complaints', 'physicalExaminations', 'diagnoses', 'treatments', 'prescriptions', 'tasks']);
+        $record = $record->fresh(['complaints', 'physicalExaminations', 'diagnoses', 'treatments', 'prescriptions', 'tasks']) ?? $record;
 
         return new ConsultationCompletionReadinessResult($this->requirements([
             'complaint' => $record->complaints->isNotEmpty() || filled($route->visit?->chief_complaint),

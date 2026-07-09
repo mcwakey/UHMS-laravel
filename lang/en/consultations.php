@@ -25,6 +25,8 @@ return [
         'consultation' => 'Consultation',
         'referral' => 'Referral',
         'investigation' => 'Investigation',
+        'pharmacy' => 'Pharmacy',
+        'procedure' => 'Procedure',
     ],
     'history_status' => [
         'waiting' => 'Waiting',
@@ -138,6 +140,11 @@ return [
         'completed_outpatient_allowed' => 'Completed outpatient session can be reopened with an audited reason.',
         'discharge_too_old' => 'This inpatient discharge is not from today and needs a stronger correction workflow.',
         'locked_session' => 'Locked consultation sessions cannot be reopened through this workflow.',
+        'confirm' => 'Reopen this consultation session?',
+        'visit_details_reason' => 'Reopened from visit details to continue consultation care.',
+    ],
+    'routes' => [
+        'all_sessions_completed' => 'All consultation sessions have been completed.',
     ],
     'ajax' => [
         'validation_failed' => 'Please correct the highlighted fields.',

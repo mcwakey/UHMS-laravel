@@ -918,11 +918,40 @@
                                     @endphp
                                     @if($grouped->isNotEmpty())
                                         @foreach($grouped as $deptName => $reqs)
+                                        @php
+                                            $departmentReqs = collect($reqs);
+                                            $firstDepartmentReq = $departmentReqs->first();
+                                            $departmentId = $firstDepartmentReq?->target_department_id ?: $firstDepartmentReq?->department_id;
+                                            $departmentQueued = $departmentId && collect($visit->queueEntries ?? [])->contains(fn($entry) => (int) $entry->department_id === (int) $departmentId && in_array($entry->status, ['waiting', 'serving'], true));
+                                            $departmentSendable = $canEdit
+                                                && $selectedRoute
+                                                && $departmentId
+                                                && ! $departmentQueued
+                                                && $departmentReqs->contains(fn($r) => $r->status === 'pending' && (! $r->consultation_route_id || (int) $r->consultation_route_id === (int) $selectedRoute->id));
+                                        @endphp
                                         <div class="mb-3">
-                                            <h6 class="small fw-bold border-bottom pb-1 mb-2 text-uppercase text-muted">
-                                                <i class="ti ti-building-hospital me-1"></i>{{ $deptName }}
-                                                <span class="badge bg-light text-dark ms-1">{{ collect($reqs)->count() }} {{ Str::plural('request', collect($reqs)->count()) }}</span>
-                                            </h6>
+                                            <div class="d-flex justify-content-between align-items-center border-bottom pb-1 mb-2 gap-2">
+                                                <h6 class="small fw-bold mb-0 text-uppercase text-muted">
+                                                    <i class="ti ti-building-hospital me-1"></i>{{ $deptName }}
+                                                    <span class="badge bg-light text-dark ms-1">{{ $departmentReqs->count() }} {{ Str::plural('request', $departmentReqs->count()) }}</span>
+                                                </h6>
+                                                @if($departmentSendable)
+                                                <form method="POST"
+                                                      action="{{ route('admin.consultations.investigation-departments.send-to-department', [$visit, $departmentId]) }}"
+                                                      class="d-inline"
+                                                      onsubmit="if (!confirm(@js(__('messages.consultations.investigation_handoff_confirm', ['department' => $deptName])))) return false; const button = this.querySelector('button[type=submit]'); if (button) { button.disabled = true; button.innerHTML = '<span class=&quot;spinner-border spinner-border-sm me-1&quot; role=&quot;status&quot; aria-hidden=&quot;true&quot;></span>' + @js(__('messages.consultations.investigation_handoff_queueing')); } return true;">
+                                                    @csrf
+                                                    <input type="hidden" name="consultation_route_id" value="{{ $selectedRoute->id }}">
+                                                    <button type="submit" class="btn btn-xs btn-outline-info" title="{{ __('messages.consultations.investigation_handoff_confirm', ['department' => $deptName]) }}">
+                                                        <i class="ti ti-route me-1"></i>{{ __('messages.consultations.investigation_handoff_button') }}
+                                                    </button>
+                                                </form>
+                                                @elseif($departmentQueued)
+                                                <button type="button" class="btn btn-xs btn-outline-secondary" disabled title="{{ __('messages.consultations.investigation_handoff_queued_title', ['department' => $deptName]) }}">
+                                                    <i class="ti ti-clock-check me-1"></i>{{ __('messages.consultations.investigation_handoff_queued') }}
+                                                </button>
+                                                @endif
+                                            </div>
                                             @foreach(collect($reqs)->groupBy(fn($r) => $ownerKey($r)) as $ownerReqs)
                                                 @php
                                                     $firstReq = $ownerReqs->first();
@@ -1235,7 +1264,56 @@
                                 @endcan
 
                                 <div id="prescriptions-list">
-                                    @forelse($ownerGroups($record?->prescriptions ?? []) as $group)
+                                    @php
+                                        $pharmacyFallbackDepartment = \App\Models\Department::query()
+                                            ->where('type', \App\Enums\DepartmentType::PHARMACY->value)
+                                            ->where('status', 'active')
+                                            ->orderBy('name')
+                                            ->first();
+                                        $prescriptionTargetDepartment = function($prescription) use ($pharmacyFallbackDepartment) {
+                                            $department = $prescription->department;
+                                            $type = $department?->type instanceof \App\Enums\DepartmentType ? $department->type->value : (string) $department?->type;
+                                            return $type === \App\Enums\DepartmentType::PHARMACY->value ? $department : $pharmacyFallbackDepartment;
+                                        };
+                                        $prescriptionDeptGroups = collect($record?->prescriptions ?? [])->groupBy(fn($prescription) => $prescriptionTargetDepartment($prescription)?->id ?? 'pharmacy');
+                                    @endphp
+                                    @forelse($prescriptionDeptGroups as $deptKey => $deptPrescriptions)
+                                    @php
+                                        $firstPrescription = $deptPrescriptions->first();
+                                        $prescriptionDepartment = $firstPrescription ? $prescriptionTargetDepartment($firstPrescription) : null;
+                                        $prescriptionDepartmentId = $prescriptionDepartment?->id;
+                                        $prescriptionDepartmentName = $prescriptionDepartment?->name ?? 'Pharmacy';
+                                        $prescriptionQueued = $prescriptionDepartmentId && collect($visit->queueEntries ?? [])->contains(fn($entry) => (int) $entry->department_id === (int) $prescriptionDepartmentId && in_array($entry->status, ['waiting', 'serving'], true));
+                                        $prescriptionSendable = $canEdit
+                                            && $selectedRoute
+                                            && $prescriptionDepartmentId
+                                            && ! $prescriptionQueued
+                                            && $deptPrescriptions->contains(fn($prescription) => in_array($prescription->status->value, ['pending', 'partially_selected', 'partially_billed', 'billed'], true) && (! $prescription->consultation_route_id || (int) $prescription->consultation_route_id === (int) $selectedRoute->id));
+                                    @endphp
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center border-bottom pb-1 mb-2 gap-2">
+                                            <h6 class="small fw-bold mb-0 text-uppercase text-muted">
+                                                <i class="ti ti-building-hospital me-1"></i>{{ $prescriptionDepartmentName }}
+                                                <span class="badge bg-light text-dark ms-1">{{ $deptPrescriptions->count() }} {{ Str::plural('prescription', $deptPrescriptions->count()) }}</span>
+                                            </h6>
+                                            @if($prescriptionSendable)
+                                            <form method="POST"
+                                                  action="{{ route('admin.consultations.prescription-departments.send-to-department', [$visit, $prescriptionDepartmentId]) }}"
+                                                  class="d-inline"
+                                                  onsubmit="if (!confirm(@js(__('messages.consultations.investigation_handoff_confirm', ['department' => $prescriptionDepartmentName])))) return false; const button = this.querySelector('button[type=submit]'); if (button) { button.disabled = true; button.innerHTML = '<span class=&quot;spinner-border spinner-border-sm me-1&quot; role=&quot;status&quot; aria-hidden=&quot;true&quot;></span>' + @js(__('messages.consultations.investigation_handoff_queueing')); } return true;">
+                                                @csrf
+                                                <input type="hidden" name="consultation_route_id" value="{{ $selectedRoute->id }}">
+                                                <button type="submit" class="btn btn-xs btn-outline-info" title="{{ __('messages.consultations.investigation_handoff_confirm', ['department' => $prescriptionDepartmentName]) }}">
+                                                    <i class="ti ti-route me-1"></i>{{ __('messages.consultations.investigation_handoff_button') }}
+                                                </button>
+                                            </form>
+                                            @elseif($prescriptionQueued)
+                                            <button type="button" class="btn btn-xs btn-outline-secondary" disabled title="{{ __('messages.consultations.investigation_handoff_queued_title', ['department' => $prescriptionDepartmentName]) }}">
+                                                <i class="ti ti-clock-check me-1"></i>{{ __('messages.consultations.investigation_handoff_queued') }}
+                                            </button>
+                                            @endif
+                                        </div>
+                                    @foreach($ownerGroups($deptPrescriptions) as $group)
                                     @php
                                         $firstEntry = $group->first();
                                     @endphp
@@ -1301,6 +1379,8 @@
                                             @if($prescription->notes) <small class="text-muted">Notes: {{ $prescription->notes }}</small> @endif
                                         </div>
                                         @endforeach
+                                    </div>
+                                    @endforeach
                                     </div>
                                     @empty
                                     <div class="text-center text-muted py-4" id="prescriptions-empty">
@@ -1392,11 +1472,39 @@
                                         $procedureDeptGroups = collect($procedureRequests ?? [])->groupBy(fn($pr) => $pr->department?->name ?? 'Other');
                                     @endphp
                                     @forelse($procedureDeptGroups as $deptName => $deptProcedures)
+                                    @php
+                                        $firstProcedure = $deptProcedures->first();
+                                        $procedureDepartmentId = $firstProcedure?->department_id;
+                                        $procedureQueued = $procedureDepartmentId && collect($visit->queueEntries ?? [])->contains(fn($entry) => (int) $entry->department_id === (int) $procedureDepartmentId && in_array($entry->status, ['waiting', 'serving'], true));
+                                        $procedureSendable = $canEdit
+                                            && $selectedRoute
+                                            && $procedureDepartmentId
+                                            && ! $procedureQueued
+                                            && $deptProcedures->contains(fn($pr) => $pr->status->isOpen() && (! $pr->consultation_route_id || (int) $pr->consultation_route_id === (int) $selectedRoute->id));
+                                    @endphp
                                     <div class="mb-3">
-                                        <h6 class="small fw-bold border-bottom pb-1 mb-2 text-uppercase text-muted">
-                                            <i class="ti ti-building-hospital me-1"></i>{{ $deptName }}
-                                            <span class="badge bg-light text-dark ms-1">{{ $deptProcedures->count() }} {{ Str::plural('request', $deptProcedures->count()) }}</span>
-                                        </h6>
+                                        <div class="d-flex justify-content-between align-items-center border-bottom pb-1 mb-2 gap-2">
+                                            <h6 class="small fw-bold mb-0 text-uppercase text-muted">
+                                                <i class="ti ti-building-hospital me-1"></i>{{ $deptName }}
+                                                <span class="badge bg-light text-dark ms-1">{{ $deptProcedures->count() }} {{ Str::plural('request', $deptProcedures->count()) }}</span>
+                                            </h6>
+                                            @if($procedureSendable)
+                                            <form method="POST"
+                                                  action="{{ route('admin.consultations.procedure-departments.send-to-department', [$visit, $procedureDepartmentId]) }}"
+                                                  class="d-inline"
+                                                  onsubmit="if (!confirm(@js(__('messages.consultations.investigation_handoff_confirm', ['department' => $deptName])))) return false; const button = this.querySelector('button[type=submit]'); if (button) { button.disabled = true; button.innerHTML = '<span class=&quot;spinner-border spinner-border-sm me-1&quot; role=&quot;status&quot; aria-hidden=&quot;true&quot;></span>' + @js(__('messages.consultations.investigation_handoff_queueing')); } return true;">
+                                                @csrf
+                                                <input type="hidden" name="consultation_route_id" value="{{ $selectedRoute->id }}">
+                                                <button type="submit" class="btn btn-xs btn-outline-info" title="{{ __('messages.consultations.investigation_handoff_confirm', ['department' => $deptName]) }}">
+                                                    <i class="ti ti-route me-1"></i>{{ __('messages.consultations.investigation_handoff_button') }}
+                                                </button>
+                                            </form>
+                                            @elseif($procedureQueued)
+                                            <button type="button" class="btn btn-xs btn-outline-secondary" disabled title="{{ __('messages.consultations.investigation_handoff_queued_title', ['department' => $deptName]) }}">
+                                                <i class="ti ti-clock-check me-1"></i>{{ __('messages.consultations.investigation_handoff_queued') }}
+                                            </button>
+                                            @endif
+                                        </div>
                                         @foreach($deptProcedures->groupBy(fn($pr) => $ownerKey($pr)) as $ownerProcedures)
                                             @php
                                                 $firstPr = $ownerProcedures->first();

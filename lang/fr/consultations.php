@@ -25,6 +25,8 @@ return [
         'consultation' => 'Consultation',
         'referral' => 'Référence',
         'investigation' => 'Investigation',
+        'pharmacy' => 'Pharmacie',
+        'procedure' => 'Procédure',
     ],
     'history_status' => [
         'waiting' => 'En attente',
@@ -138,6 +140,11 @@ return [
         'completed_outpatient_allowed' => 'La séance externe terminée peut être réouverte avec un motif audité.',
         'discharge_too_old' => 'Cette sortie d\'hospitalisation n\'est pas d\'aujourd\'hui et nécessite un flux de correction renforcé.',
         'locked_session' => 'Les séances verrouillées ne peuvent pas être réouvertes par ce flux.',
+        'confirm' => 'Réouvrir cette séance de consultation ?',
+        'visit_details_reason' => 'Réouverture depuis le détail de la visite pour poursuivre les soins de consultation.',
+    ],
+    'routes' => [
+        'all_sessions_completed' => 'Toutes les séances de consultation sont terminées.',
     ],
     'ajax' => [
         'validation_failed' => 'Veuillez corriger les champs mis en évidence.',

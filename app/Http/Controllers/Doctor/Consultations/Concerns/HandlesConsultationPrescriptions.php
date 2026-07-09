@@ -174,6 +174,53 @@ trait HandlesConsultationPrescriptions
         return back()->withFragment('prescriptions-section')->with('success', __('messages.consultations.prescription_updated'));
     }
 
+    public function sendPrescriptionDepartmentToDepartment(Request $request, Visit $visit, Department $department)
+    {
+        $data = $request->validate([
+            'consultation_route_id' => ['required', 'integer', 'exists:visit_consultation_routes,id'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        try {
+            $context = $this->consultationMutationContext($request, $visit, 'prescription.department.send_to_department', 'prescriptions.create');
+            $prescription = $this->orderWorkflow->sendPrescriptionDepartmentToDepartment($visit, $context, $department, $data['notes'] ?? null);
+        } catch (ConsultationActionException $e) {
+            return $this->consultationActionFailureResponse($request, $e);
+        } catch (\InvalidArgumentException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        $department = $prescription->visit?->currentDepartment ?: $department;
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('messages.consultations.prescription_department_handoff_sent', [
+                    'department' => $department?->name,
+                ]),
+                'visit_status' => $visit->fresh()->status?->value,
+                'department' => [
+                    'id' => $department?->id,
+                    'name' => $department?->name,
+                ],
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.consultations.routes.show', [$visit, $context->route])
+            ->withFragment('prescriptions-section')
+            ->with('success', __('messages.consultations.prescription_department_handoff_sent', [
+                'department' => $department?->name,
+            ]));
+    }
+
     public function destroyPrescription(Prescription $prescription)
     {
         abort_unless(Auth::user() && $this->entryPermissions->canDelete(Auth::user(), $prescription), 403);

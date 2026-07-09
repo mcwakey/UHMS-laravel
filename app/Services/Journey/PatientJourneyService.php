@@ -157,6 +157,7 @@ class PatientJourneyService
         $relevant = [
             PatientJourneyStage::REGISTERED,
             PatientJourneyStage::CHECKED_IN,
+            PatientJourneyStage::TRIAGE,
             PatientJourneyStage::CONSULTATION,
         ];
 

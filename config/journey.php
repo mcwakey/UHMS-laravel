@@ -15,6 +15,7 @@ return [
     'thresholds' => [
         'registered'    => ['delayed' => 20,  'critical' => 40],
         'checked_in'    => ['delayed' => 30,  'critical' => 60],
+        'triage'        => ['delayed' => 30,  'critical' => 60],
         'consultation'  => ['delayed' => 60,  'critical' => 120],
         'investigation' => ['delayed' => 120, 'critical' => 240],
         'procedure'     => ['delayed' => 90,  'critical' => 180],

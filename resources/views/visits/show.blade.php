@@ -173,6 +173,9 @@
                 default => 4,
             });
             $activeConsultationRoute = $consultationRoutes->firstWhere('status', \App\Models\VisitConsultationRoute::STATUS_ACTIVE);
+            $reopenPolicy = app(\App\Services\Consultation\ConsultationReopenEligibilityService::class);
+            $hasReopenedActiveRoute = $activeConsultationRoute && $activeConsultationRoute->reopened_at;
+            $canQueueConsultationRoute = $isWaiting || $isTriage || $visit->status->allowedTransitions() || $hasReopenedActiveRoute;
             $routeBadgeClasses = [
                 \App\Models\VisitConsultationRoute::STATUS_ACTIVE => 'success',
                 \App\Models\VisitConsultationRoute::STATUS_PENDING => 'warning',
@@ -344,6 +347,9 @@
                                 @foreach($consultationRoutes as $route)
                                 @php
                                     $serviceNames = $routeServiceNames($route);
+                                    $routeReopenEligibility = auth()->user()
+                                        ? $reopenPolicy->canReopen(auth()->user(), $visit, $route)
+                                        : null;
                                 @endphp
                                 <tr>
                                     <td>{{ $route->department?->name ?? '-' }}</td>
@@ -357,14 +363,24 @@
                                             @if(in_array($route->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
                                             <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $route]) }}">
                                                 @csrf
-                                                <input type="hidden" name="route_only" value="1">
+                                                <input type="hidden" name="return_to_visit" value="1">
+                                                <input type="hidden" name="reason" value="{{ __('consultations.reopen.visit_details_reason') }}">
                                                 <button type="submit" class="btn btn-xs btn-primary">{{ __('visits.activate_btn') }}</button>
                                             </form>
                                             @endif
                                             @if($route->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
                                             <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $route]) }}">
                                                 @csrf
+                                                <input type="hidden" name="return_to_visit" value="1">
                                                 <button type="submit" class="btn btn-xs btn-success" onclick="return confirm('{{ __('visits.complete_session_confirm') }}')">{{ __('visits.complete_btn') }}</button>
+                                            </form>
+                                            @endif
+                                            @if($route->status === \App\Models\VisitConsultationRoute::STATUS_COMPLETED && $routeReopenEligibility?->allowed)
+                                            <form method="POST" action="{{ route('admin.consultations.routes.reopen', [$visit, $route]) }}">
+                                                @csrf
+                                                <input type="hidden" name="return_to_visit" value="1">
+                                                <input type="hidden" name="reason" value="{{ __('consultations.reopen.visit_details_reason') }}">
+                                                <button type="submit" class="btn btn-xs btn-primary" onclick="return confirm('{{ __('consultations.reopen.confirm') }}')">{{ __('visits.actions.reopen_consultation') }}</button>
                                             </form>
                                             @endif
                                             @if(in_array($route->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
@@ -384,7 +400,7 @@
                     @endif
 
 
-                    @if($isWaiting || $isTriage || $visit->status->allowedTransitions())
+                    @if($canQueueConsultationRoute)
                     @can('consultations.create')
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <i class="ti ti-plus text-primary"></i>

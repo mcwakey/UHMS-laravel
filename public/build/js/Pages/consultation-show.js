@@ -478,6 +478,72 @@ const sectionRefresh = {
                 rehydrate(target);
             });
     },
+
+    readiness() {
+        const target = document.getElementById('completionReadinessCard');
+        if (!target) {
+            return Promise.resolve();
+        }
+
+        const urlTemplate = state.config.routes?.readinessFragment;
+        if (urlTemplate) {
+            const url = new URL(urlTemplate, window.location.origin);
+            if (routeContext.current()) {
+                url.searchParams.set('consultation_route_id', routeContext.current());
+            }
+            url.searchParams.set('_refresh', Date.now());
+
+            return fetch(url.toString(), {
+                cache: 'no-store',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' },
+            })
+                .then((response) => {
+                    if (response.status === 204) {
+                        return '';
+                    }
+
+                    return response.text();
+                })
+                .then((html) => {
+                    if (!html.trim()) {
+                        return;
+                    }
+
+                    const doc = parseRefreshDocument(html);
+                    const fresh = doc.getElementById('completionReadinessCard');
+                    if (fresh) {
+                        target.outerHTML = fresh.outerHTML;
+                        const updated = document.getElementById('completionReadinessCard');
+                        if (updated) {
+                            rehydrate(updated);
+                        }
+                    }
+                })
+                .catch(() => {
+                    toast(t('ajax.section_refresh_failed', 'Could not refresh this section.'), 'danger');
+                });
+        }
+
+        return fetch(currentPageUrl(), {
+            cache: 'no-store',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' },
+        })
+            .then((response) => response.text())
+            .then((html) => {
+                const doc = parseRefreshDocument(html);
+                const fresh = doc.getElementById('completionReadinessCard');
+                if (fresh) {
+                    target.outerHTML = fresh.outerHTML;
+                    const updated = document.getElementById('completionReadinessCard');
+                    if (updated) {
+                        rehydrate(updated);
+                    }
+                }
+            })
+            .catch(() => {
+                toast(t('ajax.section_refresh_failed', 'Could not refresh this section.'), 'danger');
+            });
+    },
 };
 
 function rootOrDocument(root) {
@@ -558,6 +624,7 @@ const ajaxForms = {
             refreshes.push(sectionRefresh.refresh(section));
         }
         refreshes.push(sectionRefresh.summary());
+        refreshes.push(sectionRefresh.readiness());
 
         Promise.all(refreshes).then(() => {
             if (section) {
@@ -1065,7 +1132,7 @@ const entries = {
                 }
 
                 window.bootstrap?.Modal.getInstance(document.getElementById('editEntryModal'))?.hide();
-                Promise.all([sectionRefresh.refresh(section), sectionRefresh.summary()]).then(() => {
+                Promise.all([sectionRefresh.refresh(section), sectionRefresh.summary(), sectionRefresh.readiness()]).then(() => {
                     tabs.activate(`#${section}-section`);
                     toast('Updated successfully.');
                 });
@@ -1109,6 +1176,7 @@ const entries = {
                     sectionRefresh.refresh(badgeId.replace('badge-', ''));
                 }
                 sectionRefresh.summary();
+                sectionRefresh.readiness();
             })
             .catch((error) => {
                 button.disabled = false;
@@ -1150,6 +1218,7 @@ const diagnosis = {
                 }
                 button.remove();
                 sectionRefresh.summary();
+                sectionRefresh.readiness();
                 toast('Type set to Final.');
             })
             .catch(() => toast(t('updateTypeFailed', 'Could not update diagnosis type.'), 'danger'))
@@ -1183,6 +1252,7 @@ const diagnosis = {
                 document.getElementById(`set-primary-${id}`)?.classList.add('d-none');
                 document.getElementById(`diagnosis-${id}`)?.classList.add('is-primary');
                 sectionRefresh.summary();
+                sectionRefresh.readiness();
                 toast('Primary diagnosis updated.');
             })
             .catch(() => toast(t('setPrimaryFailed', 'Could not set primary diagnosis.'), 'danger'))
@@ -1495,7 +1565,7 @@ const patterns = {
                     .map((section) => normalize[section] || section)
                     .filter((section, index, all) => section && all.indexOf(section) === index);
 
-                Promise.all(refreshSections.map((section) => sectionRefresh.refresh(section)).concat([sectionRefresh.summary()])).then(() => {
+                Promise.all(refreshSections.map((section) => sectionRefresh.refresh(section)).concat([sectionRefresh.summary(), sectionRefresh.readiness()])).then(() => {
                     tabs.activate('#patterns-section');
                     toast('Pattern applied successfully.');
                 });
@@ -1839,11 +1909,9 @@ const followUp = {
         on(department, 'change', sync);
         sync();
 
-        if (state.config.openFollowUpModalOnLoad) {
-            const modal = document.getElementById('followUpAppointmentModal');
-            if (modal && window.bootstrap?.Modal) {
-                window.bootstrap.Modal.getOrCreateInstance(modal).show();
-            }
+        if (state.config.openFollowUpSectionOnLoad) {
+            tabs.activate('#follow-up-section');
+            document.getElementById('follow-up-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     },
 };

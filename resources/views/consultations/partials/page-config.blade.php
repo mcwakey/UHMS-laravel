@@ -58,6 +58,7 @@ $visitHistoryJson = $history['records']->map(function($r) {
         'openFollowUpSectionOnLoad' => $errors->has('appointment_date') || $errors->has('start_time') || $errors->has('end_time') || $errors->has('department_id') || $errors->has('service_id') || $errors->has('doctor_id') || $errors->has('reason') || $errors->has('notes') || $errors->has('priority'),
         'routes' => [
             'summaryFragment' => route('admin.consultations.summary-fragment', $visit),
+            'readinessFragment' => route('admin.consultations.readiness-fragment', $visit),
             'deptServicesBase' => url('admin/departments'),
             'procedureDeptServicesBase' => url('admin/theatre/departments'),
             'departmentVisitOptions' => route('admin.departments.visit-options', ['department' => '__ID__']),

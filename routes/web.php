@@ -1263,6 +1263,8 @@ Route::middleware('auth')->group(function () {
                 Route::patch('consultations/investigations/{investigation}', [ConsultationOrderController::class, 'updateInvestigation'])->name('consultations.investigations.update');
                 Route::delete('consultations/investigations/{investigation}', [ConsultationOrderController::class, 'destroyInvestigation'])->name('consultations.investigations.destroy');
                 Route::delete('consultations/investigation-items/{item}', [ConsultationOrderController::class, 'destroyInvestigationItem'])->name('consultations.investigation-items.destroy');
+                Route::post('consultations/{visit}/investigation-departments/{department}/send-to-department', [ConsultationOrderController::class, 'sendInvestigationDepartmentToDepartment'])->name('consultations.investigation-departments.send-to-department');
+                Route::post('consultations/{visit}/lab-requests/{labRequest}/send-to-department', [ConsultationOrderController::class, 'sendLabRequestToDepartment'])->name('consultations.lab-requests.send-to-department');
 
                 Route::post('consultations/{visit}/treatments', [ConsultationClinicalEntryController::class, 'storeTreatment'])->name('consultations.treatments.store');
                 Route::patch('consultations/treatments/{treatment}', [ConsultationClinicalEntryController::class, 'updateTreatment'])->name('consultations.treatments.update');
@@ -1279,6 +1281,7 @@ Route::middleware('auth')->group(function () {
             });
 
             Route::get('consultations/{visit}/summary-fragment', [ConsultationWorkspaceController::class, 'summaryFragment'])->name('consultations.summary-fragment');
+            Route::get('consultations/{visit}/readiness-fragment', [ConsultationWorkspaceController::class, 'readinessFragment'])->name('consultations.readiness-fragment');
             Route::get('consultations/{visit}/specialty-summary/preview', [ConsultationSpecialtySummaryController::class, 'preview'])->name('consultations.specialty-summary.preview');
             Route::patch('consultations/{visit}/final-note', [ConsultationWorkspaceController::class, 'updateFinalNote'])->name('consultations.final-note.update')->middleware('can:consultations.create');
             Route::patch('consultations/preferences/pinned-actions', [DoctorConsultationPreferenceController::class, 'updatePinnedActions'])->name('consultations.preferences.pinned-actions.update')->middleware('can:consultations.create');
@@ -1290,8 +1293,10 @@ Route::middleware('auth')->group(function () {
             Route::post('consultations/{visit}/prescriptions', [ConsultationPrescriptionController::class, 'storePrescription'])->name('consultations.prescriptions.store')->middleware('can:prescriptions.create');
             Route::patch('consultations/prescriptions/{prescription}', [ConsultationPrescriptionController::class, 'updatePrescription'])->name('consultations.prescriptions.update')->middleware('can:prescriptions.create');
             Route::delete('consultations/prescriptions/{prescription}', [ConsultationPrescriptionController::class, 'destroyPrescription'])->name('consultations.prescriptions.destroy')->middleware('can:prescriptions.create');
+            Route::post('consultations/{visit}/prescription-departments/{department}/send-to-department', [ConsultationPrescriptionController::class, 'sendPrescriptionDepartmentToDepartment'])->name('consultations.prescription-departments.send-to-department')->middleware('can:prescriptions.create');
             Route::post('consultations/{visit}/procedures', [ConsultationOrderController::class, 'storeProcedureRequest'])->name('consultations.procedures.store')->middleware('can:procedure.request');
             Route::patch('consultations/procedures/{procedureRequest}', [ConsultationOrderController::class, 'updateProcedureRequest'])->name('consultations.procedures.update')->middleware('can:procedure.request');
+            Route::post('consultations/{visit}/procedure-departments/{department}/send-to-department', [ConsultationOrderController::class, 'sendProcedureDepartmentToDepartment'])->name('consultations.procedure-departments.send-to-department')->middleware('can:procedure.request');
             Route::post('consultations/{visit}/lab-request', [ConsultationOrderController::class, 'storeLabRequest'])->name('consultations.lab-request.store')->middleware('can:lab.requests.create');
             Route::patch('consultations/lab-requests/{labRequest}', [ConsultationOrderController::class, 'updateLabRequest'])->name('consultations.lab-request.update')->middleware('can:lab.requests.create');
 

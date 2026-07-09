@@ -631,6 +631,37 @@ trait HandlesConsultationWorkspace
         return view('consultations.partials.summary-sections', compact('consultationSummary'));
     }
 
+    public function readinessFragment(Request $request, Visit $visit)
+    {
+        $routeId = $request->integer('consultation_route_id') ?: null;
+        $selectedRoute = $routeId
+            ? VisitConsultationRoute::query()
+                ->where('visit_id', $visit->id)
+                ->whereKey($routeId)
+                ->first()
+            : $visit->activeConsultationRoute()->first();
+
+        if (! $selectedRoute) {
+            return response('', 204);
+        }
+
+        $selectedRoute->load(['visit', 'department']);
+        $completionReadiness = $this->completionReadiness->forRoute($selectedRoute);
+        $specialtyContext = app(ConsultationSpecialtyProfileResolver::class)->resolve(
+            user: $request->user(),
+            visit: $visit,
+            consultationRoute: $selectedRoute,
+            department: $selectedRoute->department ?? $visit->currentDepartment,
+        );
+        $specialtyReadiness = app(ConsultationSpecialtyReadinessService::class)->evaluate(
+            $selectedRoute,
+            $specialtyContext,
+            ['completionReadiness' => $completionReadiness],
+        );
+
+        return view('consultations.partials.completion-readiness-card', compact('completionReadiness', 'specialtyReadiness'));
+    }
+
     public function updateFinalNote(Request $request, Visit $visit)
     {
         $data = $request->validate([

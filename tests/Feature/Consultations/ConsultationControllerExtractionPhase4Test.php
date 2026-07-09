@@ -31,6 +31,7 @@ class ConsultationControllerExtractionPhase4Test extends TestCase
             'admin.consultations.index' => ConsultationWorkspaceController::class.'@index',
             'admin.consultations.show' => ConsultationWorkspaceController::class.'@show',
             'admin.consultations.summary-fragment' => ConsultationWorkspaceController::class.'@summaryFragment',
+            'admin.consultations.readiness-fragment' => ConsultationWorkspaceController::class.'@readinessFragment',
             'admin.consultations.prescriptions.store' => ConsultationPrescriptionController::class.'@storePrescription',
             'admin.consultations.lab-request.store' => ConsultationOrderController::class.'@storeLabRequest',
             'admin.consultations.procedures.store' => ConsultationOrderController::class.'@storeProcedureRequest',
@@ -126,4 +127,3 @@ class ConsultationControllerExtractionPhase4Test extends TestCase
         }
     }
 }
-

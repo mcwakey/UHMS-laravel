@@ -49,8 +49,22 @@ class JourneyTimelineTest extends TestCase
 
         $this->assertSame('completed', $stages['registered']['status']);
         $this->assertSame('completed', $stages['checked_in']['status']);
+        $this->assertSame('skipped', $stages['triage']['status']);
         $this->assertSame('active', $stages['consultation']['status']);
         $this->assertSame('waiting', $stages['completed']['status']);
+    }
+
+    public function test_timeline_represents_triage_between_checkin_and_consultation(): void
+    {
+        $visit = $this->visit(VisitStatus::QUEUED);
+        $this->log($visit, 'registered', 'checked_in', now()->subHour());
+
+        $stages = $this->byStage($visit);
+
+        $this->assertSame('active', $stages['checked_in']['status']);
+        $this->assertSame('waiting', $stages['triage']['status']);
+        $this->assertSame('waiting', $stages['consultation']['status']);
+        $this->assertLessThan($stages['consultation']['stage']->order(), $stages['triage']['stage']->order());
     }
 
     public function test_a_stage_jumped_over_is_marked_skipped(): void
@@ -63,6 +77,7 @@ class JourneyTimelineTest extends TestCase
 
         $this->assertSame('completed', $stages['registered']['status']);
         $this->assertSame('skipped', $stages['checked_in']['status']);
+        $this->assertSame('skipped', $stages['triage']['status']);
         $this->assertSame('active', $stages['consultation']['status']);
     }
 

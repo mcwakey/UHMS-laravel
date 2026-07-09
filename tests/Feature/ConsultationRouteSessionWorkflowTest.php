@@ -343,6 +343,35 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_completing_last_session_completes_visit(): void
+    {
+        [$visit, $activeRoute] = $this->makeConsultingVisit();
+        $this->addCompletionReadyRecord($activeRoute);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.consultations.routes.complete', [$visit, $activeRoute]), [
+                'notes' => 'Final session complete',
+            ])
+            ->assertRedirect(route('admin.consultations.routes.show', [$visit, $activeRoute]));
+
+        $visit->refresh();
+
+        $this->assertSame(VisitConsultationRoute::STATUS_COMPLETED, $activeRoute->fresh()->status);
+        $this->assertSame(VisitStatus::COMPLETED, $visit->status);
+        $this->assertNotNull($visit->completed_at);
+        $this->assertSame($this->admin->id, $visit->completed_by);
+        $this->assertDatabaseHas('visit_status_logs', [
+            'visit_id' => $visit->id,
+            'from_status' => VisitStatus::CONSULTING->value,
+            'to_status' => VisitStatus::COMPLETED->value,
+        ]);
+        $this->assertDatabaseHas('activity_log', [
+            'event' => 'CONSULTATION_COMPLETED_AFTER_LAST_SESSION',
+            'subject_type' => VisitConsultationRoute::class,
+            'subject_id' => $activeRoute->id,
+        ]);
+    }
+
     public function test_queueing_another_consultation_session_bills_once_and_prevents_duplicate_billing(): void
     {
         [$visit] = $this->makeConsultingVisit();

@@ -485,6 +485,45 @@ const sectionRefresh = {
             return Promise.resolve();
         }
 
+        const urlTemplate = state.config.routes?.readinessFragment;
+        if (urlTemplate) {
+            const url = new URL(urlTemplate, window.location.origin);
+            if (routeContext.current()) {
+                url.searchParams.set('consultation_route_id', routeContext.current());
+            }
+            url.searchParams.set('_refresh', Date.now());
+
+            return fetch(url.toString(), {
+                cache: 'no-store',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' },
+            })
+                .then((response) => {
+                    if (response.status === 204) {
+                        return '';
+                    }
+
+                    return response.text();
+                })
+                .then((html) => {
+                    if (!html.trim()) {
+                        return;
+                    }
+
+                    const doc = parseRefreshDocument(html);
+                    const fresh = doc.getElementById('completionReadinessCard');
+                    if (fresh) {
+                        target.outerHTML = fresh.outerHTML;
+                        const updated = document.getElementById('completionReadinessCard');
+                        if (updated) {
+                            rehydrate(updated);
+                        }
+                    }
+                })
+                .catch(() => {
+                    toast(t('ajax.section_refresh_failed', 'Could not refresh this section.'), 'danger');
+                });
+        }
+
         return fetch(currentPageUrl(), {
             cache: 'no-store',
             headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' },
@@ -494,8 +533,11 @@ const sectionRefresh = {
                 const doc = parseRefreshDocument(html);
                 const fresh = doc.getElementById('completionReadinessCard');
                 if (fresh) {
-                    target.innerHTML = fresh.innerHTML;
-                    rehydrate(target);
+                    target.outerHTML = fresh.outerHTML;
+                    const updated = document.getElementById('completionReadinessCard');
+                    if (updated) {
+                        rehydrate(updated);
+                    }
                 }
             })
             .catch(() => {

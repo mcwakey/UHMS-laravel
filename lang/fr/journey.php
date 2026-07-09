@@ -5,6 +5,7 @@ return [
     'stages' => [
         'registered'    => 'Enregistrement',
         'checked_in'    => 'Arrivée',
+        'triage'        => 'Triage',
         'consultation'  => 'Consultation',
         'investigation' => 'Examens',
         'procedure'     => 'Procédure',
