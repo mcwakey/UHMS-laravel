@@ -47,6 +47,23 @@ class LabWorkflowTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_lab_request_index_displays_visit_queue_number(): void
+    {
+        $request = $this->makeLabRequest('INV-QUEUE-001', 'pending');
+        $request->visit->queueEntries()->create([
+            'department_id' => $this->department->id,
+            'queue_number' => 17,
+            'priority' => 'normal',
+            'status' => 'waiting',
+        ]);
+
+        $response = $this->actingAs($this->user)->get(route('admin.lab.requests.index'));
+
+        $response->assertStatus(200);
+        $response->assertSee('INV-QUEUE-001');
+        $response->assertSee('#17');
+    }
+
     public function test_lab_test_management_loads(): void
     {
         $response = $this->actingAs($this->user)->get(route('admin.lab.tests.index'));

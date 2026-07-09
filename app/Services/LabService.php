@@ -146,7 +146,15 @@ class LabService
 
     public function getRequests(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = LabRequest::with(['patient', 'requestedBy', 'items.labTest.criteria', 'items.service', 'department', 'targetDepartment'])
+        $query = LabRequest::with([
+            'patient',
+            'requestedBy',
+            'items.labTest.criteria',
+            'items.service',
+            'department',
+            'targetDepartment',
+            'visit.queueEntries.department',
+        ])
             ->latest();
 
         if (!empty($filters['status'])) {

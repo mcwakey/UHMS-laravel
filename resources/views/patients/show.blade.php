@@ -2,8 +2,70 @@
 @section('title', $patient->full_name . ' - ' . __('patients.profile_title'))
 
 @section('content')
+<x-page-header-back
+        :title="__('patients.title') . ' - ' . $patient->patient_id"
+        :href="route('admin.patients.index')"
+    >
+    <x-slot:actions>
+        <div class="d-flex align-items-center justify-content-end flex-nowrap gap-2 text-end">
+            @if($activeBreakGlass)
+                <div class="d-inline-flex align-items-center gap-2 rounded border border-warning-subtle bg-warning-subtle text-warning-emphasis px-2 py-1">
+                    <span class="d-inline-flex align-items-center">
+                        <i class="ti ti-alert-triangle me-1"></i>
+                        <strong>{{ __('patients.privacy.break_glass_active') }}</strong>
+                    </span>
+                    <span class="small">{{ __('patients.privacy.break_glass_expires_at', ['time' => $activeBreakGlass->expires_at?->format('d M Y H:i')]) }}</span>
+                    @can('patients.privacy.break_glass')
+                    <form method="POST" action="{{ route('admin.patients.privacy.break-glass.revoke', $activeBreakGlass) }}" class="m-0">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-dark py-0">{{ __('common.revoke') }}</button>
+                    </form>
+                    @endcan
+                </div>
+            @endif
+
+            @if($patient->activePrivacyDirectives->isNotEmpty())
+                <div class="d-inline-flex align-items-center flex-wrap gap-1 rounded border border-danger-subtle bg-danger-subtle text-danger-emphasis px-2 py-1">
+                    <span class="fw-semibold"><i class="ti ti-shield-lock me-1"></i>{{ __('patients.privacy.privacy_directives') }}</span>
+                    @can('patients.privacy_directives.view')
+                        @foreach($patient->activePrivacyDirectives as $directive)
+                            <span class="badge bg-danger text-white" title="{{ trim(($directive->summary ?? '').' '.($directive->details ?? '')) }}">
+                                {{ __('patients.privacy.'.$directive->directive_type) !== 'patients.privacy.'.$directive->directive_type ? __('patients.privacy.'.$directive->directive_type) : $directive->directive_type }}
+                            </span>
+                            @if($directive->summary)
+                                <span class="small text-danger-emphasis">{{ $directive->summary }}</span>
+                            @endif
+                        @endforeach
+                    @else
+                        <span class="small">{{ __('patients.privacy.directive_details_hidden') }}</span>
+                    @endcan
+                </div>
+            @endif
+
+            @can('patients.privacy_directives.manage')
+                <button type="button" class="btn btn-primary btn-md flex-shrink-0" data-bs-toggle="modal" data-bs-target="#addPrivacyDirectiveModal">
+                    <i class="ti ti-shield-lock me-1"></i>{{ __('patients.privacy.privacy_directive') }}
+                </button>
+            @endcan
+            @can('patients.privacy.break_glass')
+                <button type="button" class="btn btn-warning btn-md flex-shrink-0" data-bs-toggle="modal" data-bs-target="#startBreakGlassModal">
+                    <i class="ti ti-shield-lock me-1"></i>{{ __('patients.privacy.start_break_glass_access') }}
+                </button>
+            @endcan
+
+            @can('patients.mark_deceased')
+            @if(!$patient->is_deceased)
+                <button type="button" class="btn btn-outline-danger btn-md flex-shrink-0" data-bs-toggle="modal" data-bs-target="#markDeceasedModal">
+                    <i class="ti ti-skull me-1"></i>{{ __('patients.mark_deceased') }}
+                </button>
+            @endif
+            @endcan
+        </div>
+    </x-slot:actions>
+</x-page-header-back>
+
 <!-- Page Header -->
-<div class="d-flex mb-3">
+<!-- <div class="d-flex mb-3">
     <h6 class="fw-bold mb-0 d-flex align-items-center">
         <a href="{{ route('admin.patients.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>{{ __('patients.title') }}</a>
     </h6>
@@ -52,22 +114,7 @@
         <span>{{ __('patients.privacy.directive_details_hidden') }}</span>
     @endcan
 </div>
-@endif
-
-@if(auth()->user()?->can('patients.privacy_directives.manage') || auth()->user()?->can('patients.privacy.break_glass'))
-<div class="d-flex justify-content-end flex-wrap gap-2 mb-3">
-    @can('patients.privacy_directives.manage')
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPrivacyDirectiveModal">
-            <i class="ti ti-shield-lock me-1"></i>{{ __('patients.privacy.privacy_directive') }}
-        </button>
-    @endcan
-    @can('patients.privacy.break_glass')
-        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#startBreakGlassModal">
-            <i class="ti ti-shield-lock me-1"></i>{{ __('patients.privacy.start_break_glass_access') }}
-        </button>
-    @endcan
-</div>
-@endif
+@endif -->
 
 <!-- Patient Header Card -->
 <div class="card">

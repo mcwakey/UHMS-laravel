@@ -105,6 +105,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>{{ __('lab.request_number_short') }}</th>
+                        <th>{{ __('visits.queue_number') }}</th>
                         <th>{{ __('common.patient') }}</th>
                         <th>{{ __('common.department') }}</th>
                         <!-- <th>{{ __('common.type') }}</th> -->
@@ -117,11 +118,27 @@
                 </thead>
                 <tbody>
                     @forelse($requests as $req)
+                    @php
+                        $queueEntries = $req->visit?->queueEntries ?? collect();
+                        $queueEntry = $queueEntries
+                            ->first(fn ($entry) => (int) $entry->department_id === (int) $req->target_department_id && in_array($entry->status, ['waiting', 'serving'], true))
+                            ?? $queueEntries->first(fn ($entry) => (int) $entry->department_id === (int) $req->target_department_id)
+                            ?? $queueEntries->first(fn ($entry) => in_array($entry->status, ['waiting', 'serving'], true))
+                            ?? $queueEntries->first();
+                    @endphp
                     <tr>
                         <td>
                             <a href="{{ route('admin.lab.requests.show', $req) }}" class="fw-medium text-primary">
                                 {{ $req->request_number }}
                             </a>
+                        </td>
+                        <td>
+                            @if($queueEntry)
+                                <span class="badge bg-soft-primary text-primary">#{{ $queueEntry->queue_number }}</span>
+                                <div class="small text-muted">{{ $queueEntry->status_label }}</div>
+                            @else
+                                <span class="text-muted">&mdash;</span>
+                            @endif
                         </td>
                         <td>
                             <div class="fw-medium">{{ $req->patient?->full_name ?? $req->external_party_name ?? '—' }}</div>
@@ -164,7 +181,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center text-muted py-4">
+                        <td colspan="8" class="text-center text-muted py-4">
                             <i class="ti ti-microscope fs-1 d-block mb-2"></i>
                             {{ __('lab.no_requests_found') }}
                         </td>
