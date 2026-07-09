@@ -354,13 +354,15 @@ class ConsultationWorkspaceSectionDeduplicationTest extends TestCase
         $sections->assertOk()
             ->assertSee('dental_xray')
             ->assertSee(__('consultation_specialties.admin.deprecated_duplicate'))
-            ->assertSee(__('consultation_specialties.admin.maps_to', ['section' => __('consultation_specialties.sections.investigations')]));
+            // Phase 16.7: the "maps to" badge is itself profile-aware, so it
+            // names dental's own canonical label instead of the generic one.
+            ->assertSee(__('consultation_specialties.admin.maps_to', ['section' => 'Dental Investigations / X-ray']));
 
         $this->withoutMiddleware(ConvertBladeViewsToInertia::class)
             ->actingAs($admin)
             ->get(route('admin.consultation-specialties.show', $profile))
             ->assertOk()
-            ->assertSee(__('consultation_specialties.admin.maps_to', ['section' => __('consultation_specialties.sections.diagnosis')]));
+            ->assertSee(__('consultation_specialties.admin.maps_to', ['section' => 'Dental Diagnosis']));
     }
 
     public function test_browser_fixture_metadata_uses_canonical_actions_and_sections(): void

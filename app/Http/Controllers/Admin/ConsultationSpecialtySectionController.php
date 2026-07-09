@@ -23,8 +23,19 @@ class ConsultationSpecialtySectionController extends Controller
             'sectionKeys' => $options->sectionKeys(),
             'components' => $options->componentOptions(),
             'sectionAliasMap' => $sectionAliases->aliasMapFor($profile->code),
-            'complaintDisplayLabel' => $sectionAliases->displayLabelFor($profile->code, 'complaints'),
+            'canonicalSectionLabels' => $this->canonicalSectionLabels($profile, $sectionAliases),
         ]);
+    }
+
+    /**
+     * @return array<string, string> canonical section key => profile-specific display label override
+     */
+    private function canonicalSectionLabels(ConsultationSpecialtyProfile $profile, ConsultationSpecialtySectionAliasService $sectionAliases): array
+    {
+        return collect($sectionAliases->presentableCanonicalKeys())
+            ->mapWithKeys(fn (string $canonicalKey) => [$canonicalKey => $sectionAliases->displayLabelFor($profile->code, $canonicalKey)])
+            ->filter()
+            ->all();
     }
 
     public function store(Request $request, ConsultationSpecialtyProfile $profile, ConsultationSpecialtyAdminOptions $options)

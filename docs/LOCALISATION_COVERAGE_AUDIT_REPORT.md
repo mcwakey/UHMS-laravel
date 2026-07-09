@@ -1,6 +1,6 @@
 # UHMS Localisation Coverage Audit Report
 
-Date: 2026-07-08 11:58:34 +00:00
+Date: 2026-07-08 19:29:23 +00:00
 
 ## Summary
 
@@ -3259,37 +3259,37 @@ Date: 2026-07-08 11:58:34 +00:00
 
 ### `lang/en/consultation_specialties.php`
 
-- Line 356 [medium, language_file_candidates]: `Specialty readiness`
+- Line 451 [medium, language_file_candidates]: `Specialty readiness`
   - Context: `'title' => 'Specialty readiness',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: specialty_readiness`
-- Line 452 [medium, language_file_candidates]: `Specialty summary builder`
+- Line 547 [medium, language_file_candidates]: `Specialty summary builder`
   - Context: `'title' => 'Specialty summary builder',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: specialty_summary_builder`
-- Line 560 [medium, language_file_candidates]: `Order sets`
+- Line 655 [medium, language_file_candidates]: `Order sets`
   - Context: `'title' => 'Order sets',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: order_sets`
-- Line 590 [medium, language_file_candidates]: `Specialty billing`
+- Line 685 [medium, language_file_candidates]: `Specialty billing`
   - Context: `'title' => 'Specialty billing',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: specialty_billing`
-- Line 651 [medium, language_file_candidates]: `Consultation Specialties`
+- Line 746 [medium, language_file_candidates]: `Consultation Specialties`
   - Context: `'title' => 'Consultation Specialties',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: consultation_specialties`
-- Line 702 [medium, language_file_candidates]: `Description`
+- Line 797 [medium, language_file_candidates]: `Description`
   - Context: `'description' => 'Description',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: description`
-- Line 723 [medium, language_file_candidates]: `Label`
+- Line 818 [medium, language_file_candidates]: `Label`
   - Context: `'label' => 'Label',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -3788,37 +3788,37 @@ Date: 2026-07-08 11:58:34 +00:00
 
 ### `lang/fr/consultation_specialties.php`
 
-- Line 110 [medium, language_file_candidates]: `Espace :profile`
+- Line 203 [medium, language_file_candidates]: `Espace :profile`
   - Context: `'title' => 'Espace :profile',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: espace_profile`
-- Line 356 [medium, language_file_candidates]: `Preparation de specialite`
+- Line 449 [medium, language_file_candidates]: `Preparation de specialite`
   - Context: `'title' => 'Preparation de specialite',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: preparation_de_specialite`
-- Line 452 [medium, language_file_candidates]: `Generateur de resume de specialite`
+- Line 545 [medium, language_file_candidates]: `Generateur de resume de specialite`
   - Context: `'title' => 'Generateur de resume de specialite',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: generateur_de_resume_de_specialite`
-- Line 560 [medium, language_file_candidates]: `Ensembles d ordres`
+- Line 653 [medium, language_file_candidates]: `Ensembles d ordres`
   - Context: `'title' => 'Ensembles d ordres',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: ensembles_d_ordres`
-- Line 651 [medium, language_file_candidates]: `Specialites de consultation`
+- Line 744 [medium, language_file_candidates]: `Specialites de consultation`
   - Context: `'title' => 'Specialites de consultation',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: specialites_de_consultation`
-- Line 702 [medium, language_file_candidates]: `Description`
+- Line 795 [medium, language_file_candidates]: `Description`
   - Context: `'description' => 'Description',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: description`
-- Line 723 [medium, language_file_candidates]: `Libelle`
+- Line 816 [medium, language_file_candidates]: `Libelle`
   - Context: `'label' => 'Libelle',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -21793,7 +21793,7 @@ Date: 2026-07-08 11:58:34 +00:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/visits.php :: spo`
-- Line 887 [high, known_false_positive_candidates]: `Close`
+- Line 888 [high, known_false_positive_candidates]: `Close`
   - Context: `<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive

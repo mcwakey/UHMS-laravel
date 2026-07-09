@@ -16,6 +16,7 @@ class ConsultationSpecialtyReadinessService
     public function __construct(
         private readonly ConsultationSpecialtyReadinessRuleRegistry $registry,
         private readonly ConsultationSpecialtySectionComponentRegistry $sectionRegistry,
+        private readonly ConsultationSpecialtySectionAliasService $aliases,
     ) {}
 
     public function evaluate(
@@ -49,7 +50,7 @@ class ConsultationSpecialtyReadinessService
 
             $anchors = $this->anchors($specialtyContext);
             $items = collect($rules)
-                ->map(fn (array $rule) => $this->evaluateRule($rule, $route, $record, $entries, $anchors))
+                ->map(fn (array $rule) => $this->evaluateRule($rule, $route, $record, $entries, $anchors, $profile->code))
                 ->values()
                 ->all();
 
@@ -69,7 +70,7 @@ class ConsultationSpecialtyReadinessService
         return $result->isFallback ? [] : $result->blockingItems;
     }
 
-    private function evaluateRule(array $rule, VisitConsultationRoute $route, $record, Collection $entries, array $anchors): array
+    private function evaluateRule(array $rule, VisitConsultationRoute $route, $record, Collection $entries, array $anchors, string $profileCode): array
     {
         $complete = match ($rule['source'] ?? null) {
             'core_complaint' => ($record && ($record->complaints->isNotEmpty() || filled($route->visit?->chief_complaint)))
@@ -94,14 +95,20 @@ class ConsultationSpecialtyReadinessService
             default => 'missing',
         };
 
+        $sectionKey = $rule['section_key'] ?? null;
+
         return [
             'key' => $rule['key'],
             'label' => $rule['label'] ?? $rule['key'],
-            'section_key' => $rule['section_key'] ?? null,
+            'section_key' => $sectionKey,
+            // Phase 16.7: the same profile-aware label the workspace sidebar
+            // and summary preview show for this section, so readiness never
+            // names a section differently from where it points.
+            'section_label' => $sectionKey ? $this->aliases->presentationLabelFor($profileCode, $sectionKey) : null,
             'severity' => $severity,
             'status' => $status,
             'message' => $complete ? null : ($rule['message'] ?? null),
-            'anchor' => $this->anchorFor($rule['section_key'] ?? null, $anchors),
+            'anchor' => $this->anchorFor($sectionKey, $anchors),
             'source' => $rule['source'] ?? 'custom',
             'metadata' => [
                 'fields' => $rule['fields'] ?? [],
@@ -222,6 +229,7 @@ class ConsultationSpecialtyReadinessService
                 'key' => $requirement['code'],
                 'label' => $requirement['message'],
                 'section_key' => null,
+                'section_label' => null,
                 'severity' => 'blocking',
                 'status' => $requirement['met'] ? 'complete' : 'missing',
                 'message' => $requirement['met'] ? null : $requirement['message'],
