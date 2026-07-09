@@ -106,6 +106,101 @@ return [
         'post_op_instructions' => 'Post-op Instructions',
     ],
 
+    // Phase 16.7: profile-aware presentation labels for shared/core sections.
+    // Single source for the workspace sidebar, quick actions, readiness
+    // anchors, and the summary preview heading for the same canonical
+    // section. Only canonical keys with a profile-specific override are
+    // listed; every other profile/section falls back to the generic
+    // `sections.*` label.
+    'section_presentation_labels' => [
+        'physiotherapy' => [
+            'complaints' => 'Presenting Problem',
+            'diagnosis' => 'Physiotherapy Diagnosis / Problem',
+            'procedures' => 'Therapy Procedures',
+            'tasks' => 'Therapy Tasks',
+            'follow_up' => 'Therapy Follow-up',
+            'summary' => 'Physiotherapy Summary',
+        ],
+        'ophthalmology' => [
+            'complaints' => 'Eye Complaint',
+            'diagnosis' => 'Eye Diagnosis',
+            'investigations' => 'Eye Investigations',
+            'procedures' => 'Eye Procedures',
+            'prescription' => 'Eye Prescription / Treatment',
+            'follow_up' => 'Eye Follow-up',
+            'summary' => 'Eye Consultation Summary',
+        ],
+        'dental' => [
+            'complaints' => 'Dental Complaint',
+            'diagnosis' => 'Dental Diagnosis',
+            'investigations' => 'Dental Investigations / X-ray',
+            'procedures' => 'Dental Procedures',
+            'prescription' => 'Dental Prescription / Treatment',
+            'follow_up' => 'Dental Follow-up',
+            'summary' => 'Dental Summary',
+        ],
+        'obstetrics' => [
+            'complaints' => 'Current Complaint',
+            'investigations' => 'ANC Investigations / Screening',
+            'diagnosis' => 'Obstetric Diagnosis',
+            'prescription' => 'Obstetric Treatment / Prescription',
+            'follow_up' => 'ANC Follow-up',
+            'summary' => 'Obstetric Summary',
+        ],
+        'gynecology' => [
+            'complaints' => 'Gyne Complaint',
+            'diagnosis' => 'Gyne Diagnosis',
+            'investigations' => 'Gyne Investigations',
+            'procedures' => 'Gyne Procedures',
+            'prescription' => 'Gyne Treatment / Prescription',
+            'follow_up' => 'Gyne Follow-up',
+            'summary' => 'Gyne Summary',
+        ],
+        'ent' => [
+            'complaints' => 'ENT Complaint',
+            'diagnosis' => 'ENT Diagnosis',
+            'investigations' => 'ENT Investigations',
+            'procedures' => 'ENT Procedures',
+            'prescription' => 'ENT Treatment / Prescription',
+            'follow_up' => 'ENT Follow-up',
+            'summary' => 'ENT Summary',
+        ],
+        'pediatrics' => [
+            'complaints' => 'Pediatric Complaint',
+            'diagnosis' => 'Pediatric Diagnosis',
+            'investigations' => 'Pediatric Investigations',
+            'prescription' => 'Pediatric Treatment / Prescription',
+            'follow_up' => 'Pediatric Follow-up',
+            'summary' => 'Pediatric Summary',
+        ],
+        'emergency' => [
+            'complaints' => 'Emergency Complaint',
+            'diagnosis' => 'Emergency Diagnosis',
+            'investigations' => 'Emergency Investigations',
+            'procedures' => 'Emergency Procedures',
+            'prescription' => 'Emergency Treatment / Prescription',
+            'summary' => 'Emergency Summary',
+        ],
+        'orthopedics' => [
+            'complaints' => 'Ortho Complaint',
+            'diagnosis' => 'Orthopedic Diagnosis',
+            'investigations' => 'Orthopedic Imaging / Investigations',
+            'procedures' => 'Orthopedic Procedures',
+            'prescription' => 'Orthopedic Treatment / Prescription',
+            'follow_up' => 'Orthopedic Follow-up',
+            'summary' => 'Orthopedic Summary',
+        ],
+        'surgery' => [
+            'complaints' => 'Surgical Complaint',
+            'diagnosis' => 'Surgical Diagnosis',
+            'investigations' => 'Surgical Investigations',
+            'procedures' => 'Surgical Procedures',
+            'prescription' => 'Surgical Treatment / Prescription',
+            'follow_up' => 'Surgical Follow-up',
+            'summary' => 'Surgical Summary',
+        ],
+    ],
+
     'workspace' => [
         'title' => ':profile Workspace',
         'specialist_section' => 'Specialist section',

@@ -70,7 +70,10 @@ class ConsultationSpecialtyProfileController extends Controller
         return view('admin.consultation-specialties.show', [
             'profile' => $profile,
             'sectionAliasMap' => $sectionAliases->aliasMapFor($profile->code),
-            'complaintDisplayLabel' => $sectionAliases->displayLabelFor($profile->code, 'complaints'),
+            'canonicalSectionLabels' => collect($sectionAliases->presentableCanonicalKeys())
+                ->mapWithKeys(fn (string $canonicalKey) => [$canonicalKey => $sectionAliases->displayLabelFor($profile->code, $canonicalKey)])
+                ->filter()
+                ->all(),
         ]);
     }
 

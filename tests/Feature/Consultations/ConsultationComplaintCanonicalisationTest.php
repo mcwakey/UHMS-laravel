@@ -328,7 +328,9 @@ class ConsultationComplaintCanonicalisationTest extends TestCase
             ->assertOk()
             ->assertSee('ent_complaint')
             ->assertSee(__('consultation_specialties.admin.deprecated_duplicate'))
-            ->assertSee(__('consultation_specialties.admin.maps_to', ['section' => __('consultation_specialties.sections.complaints')]))
+            // Phase 16.7: the "maps to" badge is itself profile-aware, so it
+            // names ENT's own canonical label instead of the generic one.
+            ->assertSee(__('consultation_specialties.admin.maps_to', ['section' => 'ENT Complaint']))
             ->assertSee(__('consultation_specialties.admin.displayed_as', ['label' => 'ENT Complaint']));
 
         $this->withoutMiddleware(ConvertBladeViewsToInertia::class)

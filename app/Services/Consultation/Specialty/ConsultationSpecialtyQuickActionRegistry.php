@@ -6,9 +6,34 @@ use App\Models\ConsultationSpecialtyProfile;
 
 class ConsultationSpecialtyQuickActionRegistry
 {
+    public function __construct(
+        private readonly ConsultationSpecialtySectionAliasService $aliases,
+    ) {}
+
+    /**
+     * Phase 16.7: quick actions that target a canonical shared section carry
+     * a `canonical_key` marker; their label is resolved through the same
+     * profile-aware presentation service as the workspace sidebar and
+     * summary preview, so wording never drifts between the three surfaces.
+     */
     public function actionsForProfile(ConsultationSpecialtyProfile $profile): array
     {
-        return $this->actions()[$profile->code] ?? $this->actions()['general_medicine'];
+        $actions = $this->actions()[$profile->code] ?? $this->actions()['general_medicine'];
+
+        return collect($actions)
+            ->map(function (array $action) use ($profile) {
+                $canonicalKey = $action['canonical_key'] ?? null;
+                if ($canonicalKey) {
+                    $override = $this->aliases->displayLabelFor($profile->code, $canonicalKey);
+                    if ($override) {
+                        $action['label'] = $override;
+                    }
+                }
+                unset($action['canonical_key']);
+
+                return $action;
+            })
+            ->all();
     }
 
     public function validKeysForProfile(ConsultationSpecialtyProfile $profile): array
@@ -20,15 +45,15 @@ class ConsultationSpecialtyQuickActionRegistry
     {
         return [
             'general_medicine' => [
-                $this->action('complaints', 'section_anchor', '#complaints-section', 'ti-message-circle', 10),
+                $this->action('complaints', 'section_anchor', '#complaints-section', 'ti-message-circle', 10, null, 'complaints'),
                 $this->action('examination', 'section_anchor', '#examination-section', 'ti-stethoscope', 20),
-                $this->action('diagnosis', 'section_anchor', '#diagnosis-section', 'ti-clipboard-check', 30),
-                $this->action('prescription', 'open_prescription', '#prescription-section', 'ti-pill', 40),
+                $this->action('diagnosis', 'section_anchor', '#diagnosis-section', 'ti-clipboard-check', 30, null, 'diagnosis'),
+                $this->action('prescription', 'open_prescription', '#prescription-section', 'ti-pill', 40, null, 'prescription'),
                 $this->action('generate_summary', 'generate_summary', '#summary-section', 'ti-sparkles', 50),
                 $this->action('readiness', 'open_readiness', '#completionReadinessCard', 'ti-list-check', 60),
             ],
             'physiotherapy' => [
-                $this->action('presenting_problem', 'section_anchor', '#complaints-section', 'ti-clipboard-heart', 10),
+                $this->action('presenting_problem', 'section_anchor', '#complaints-section', 'ti-clipboard-heart', 10, null, 'complaints'),
                 $this->section('pain_assessment', 20), $this->section('physical_assessment', 30),
                 $this->section('treatment_plan', 40), $this->section('therapy_session', 50), $this->section('home_exercise_plan', 60),
                 $this->action('order_sets', 'open_order_sets', '#order-sets-panel', 'ti-packages', 70),
@@ -36,18 +61,18 @@ class ConsultationSpecialtyQuickActionRegistry
                 $this->action('readiness', 'open_readiness', '#completionReadinessCard', 'ti-list-check', 90),
             ],
             'ophthalmology' => [
-                $this->action('eye_complaint', 'section_anchor', '#complaints-section', 'ti-eye', 10),
+                $this->action('eye_complaint', 'section_anchor', '#complaints-section', 'ti-eye', 10, null, 'complaints'),
                 $this->section('visual_acuity', 20), $this->section('refraction', 30), $this->section('iop', 40), $this->section('eye_examination', 50),
-                $this->action('prescription', 'open_prescription', '#prescription-section', 'ti-pill', 60),
+                $this->action('prescription', 'open_prescription', '#prescription-section', 'ti-pill', 60, null, 'prescription'),
                 $this->action('order_sets', 'open_order_sets', '#order-sets-panel', 'ti-packages', 70),
                 $this->action('generate_summary', 'generate_summary', '#summary-section', 'ti-sparkles', 80),
                 $this->action('readiness', 'open_readiness', '#completionReadinessCard', 'ti-list-check', 90),
             ],
             'dental' => [
-                $this->action('dental_complaint', 'section_anchor', '#complaints-section', 'ti-message-circle', 10),
+                $this->action('dental_complaint', 'section_anchor', '#complaints-section', 'ti-message-circle', 10, null, 'complaints'),
                 $this->section('tooth_chart', 20), $this->section('oral_examination', 30),
-                $this->action('diagnosis', 'section_anchor', '#diagnoses-section', 'ti-report-medical', 40, 'diagnosis'),
-                $this->action('procedures', 'section_anchor', '#procedures-section', 'ti-activity-heartbeat', 50, 'procedures'),
+                $this->action('diagnosis', 'section_anchor', '#diagnoses-section', 'ti-report-medical', 40, 'diagnosis', 'diagnosis'),
+                $this->action('procedures', 'section_anchor', '#procedures-section', 'ti-activity-heartbeat', 50, 'procedures', 'procedures'),
                 $this->section('consent', 60),
                 $this->action('order_sets', 'open_order_sets', '#order-sets-panel', 'ti-packages', 70),
                 $this->action('generate_summary', 'generate_summary', '#summary-section', 'ti-sparkles', 80),
@@ -61,15 +86,15 @@ class ConsultationSpecialtyQuickActionRegistry
                 $this->action('readiness', 'open_readiness', '#completionReadinessCard', 'ti-list-check', 80),
             ],
             'gynecology' => [
-                $this->action('gyne_complaint', 'section_anchor', '#complaints-section', 'ti-message-circle', 10),
+                $this->action('gyne_complaint', 'section_anchor', '#complaints-section', 'ti-message-circle', 10, null, 'complaints'),
                 $this->section('menstrual_history', 20), $this->section('pelvic_examination', 30),
-                $this->section('breast_examination', 40), $this->action('prescription', 'open_prescription', '#prescriptions-section', 'ti-pill', 50),
+                $this->section('breast_examination', 40), $this->action('prescription', 'open_prescription', '#prescriptions-section', 'ti-pill', 50, null, 'prescription'),
                 $this->action('order_sets', 'open_order_sets', '#order-sets-panel', 'ti-packages', 60),
                 $this->action('generate_summary', 'generate_summary', '#summary-section', 'ti-sparkles', 70),
                 $this->action('readiness', 'open_readiness', '#completionReadinessCard', 'ti-list-check', 80),
             ],
             'ent' => [
-                $this->action('ent_complaint', 'section_anchor', '#complaints-section', 'ti-message-circle', 10),
+                $this->action('ent_complaint', 'section_anchor', '#complaints-section', 'ti-message-circle', 10, null, 'complaints'),
                 $this->section('ear_assessment', 20), $this->section('nose_assessment', 30),
                 $this->section('throat_assessment', 40), $this->section('hearing_balance_assessment', 50),
                 $this->action('order_sets', 'open_order_sets', '#order-sets-panel', 'ti-packages', 60),
@@ -77,7 +102,7 @@ class ConsultationSpecialtyQuickActionRegistry
                 $this->action('readiness', 'open_readiness', '#completionReadinessCard', 'ti-list-check', 80),
             ],
             'pediatrics' => [
-                $this->action('pediatric_complaint', 'section_anchor', '#complaints-section', 'ti-message-circle', 10),
+                $this->action('pediatric_complaint', 'section_anchor', '#complaints-section', 'ti-message-circle', 10, null, 'complaints'),
                 $this->section('growth_assessment', 20), $this->section('immunization_status', 30),
                 $this->section('pediatric_examination', 40), $this->section('caregiver_instructions', 50),
                 $this->action('order_sets', 'open_order_sets', '#order-sets-panel', 'ti-packages', 60),
@@ -92,7 +117,7 @@ class ConsultationSpecialtyQuickActionRegistry
                 $this->action('readiness', 'open_readiness', '#completionReadinessCard', 'ti-list-check', 90),
             ],
             'orthopedics' => [
-                $this->action('ortho_complaint', 'section_anchor', '#complaints-section', 'ti-bone', 10),
+                $this->action('ortho_complaint', 'section_anchor', '#complaints-section', 'ti-bone', 10, null, 'complaints'),
                 $this->section('injury_history', 20), $this->section('pain_mobility_assessment', 30),
                 $this->section('joint_limb_examination', 40), $this->section('neurovascular_status', 50), $this->section('cast_splint_plan', 60),
                 $this->action('order_sets', 'open_order_sets', '#order-sets-panel', 'ti-packages', 70),
@@ -100,9 +125,9 @@ class ConsultationSpecialtyQuickActionRegistry
                 $this->action('readiness', 'open_readiness', '#completionReadinessCard', 'ti-list-check', 90),
             ],
             'surgery' => [
-                $this->action('surgical_complaint', 'section_anchor', '#complaints-section', 'ti-message-circle', 10),
+                $this->action('surgical_complaint', 'section_anchor', '#complaints-section', 'ti-message-circle', 10, null, 'complaints'),
                 $this->section('wound_assessment', 20), $this->section('local_or_abdominal_exam', 30),
-                $this->action('procedures', 'section_anchor', '#procedures-section', 'ti-activity-heartbeat', 40, 'procedures'),
+                $this->action('procedures', 'section_anchor', '#procedures-section', 'ti-activity-heartbeat', 40, 'procedures', 'procedures'),
                 $this->section('theatre_referral', 50), $this->section('post_op_instructions', 60),
                 $this->action('order_sets', 'open_order_sets', '#order-sets-panel', 'ti-packages', 70),
                 $this->action('generate_summary', 'generate_summary', '#summary-section', 'ti-sparkles', 80),
@@ -118,7 +143,7 @@ class ConsultationSpecialtyQuickActionRegistry
         return $this->action($key, 'section_anchor', '#'.$sectionKey.'-section', 'ti-layout-board', $priority, $sectionKey);
     }
 
-    private function action(string $key, string $type, string $target, string $icon, int $priority, ?string $requiresSection = null): array
+    private function action(string $key, string $type, string $target, string $icon, int $priority, ?string $requiresSection = null, ?string $canonicalKey = null): array
     {
         return [
             'key' => $key,
@@ -129,6 +154,7 @@ class ConsultationSpecialtyQuickActionRegistry
             'priority' => $priority,
             'requires_section' => $requiresSection,
             'disabled' => false,
+            'canonical_key' => $canonicalKey,
         ];
     }
 }

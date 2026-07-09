@@ -140,7 +140,9 @@ class ConsultationSpecialtySummaryBuilderTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('summary.isFallback', false)
-            ->assertJsonFragment(['title' => __('consultation_specialties.summary_builder.dental_title')]);
+            // Phase 16.7: the summary title is the same profile-aware label
+            // the workspace shows for dental's `summary` section.
+            ->assertJsonFragment(['title' => 'Dental Summary']);
 
         $this->assertSame('Existing clinician note', $route->medicalRecord->fresh()->final_note);
     }
