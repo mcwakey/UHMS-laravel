@@ -38,6 +38,7 @@ class Payment extends Model
         'amount',
         'payment_method',
         'reference_number',
+        'payment_batch_reference',
         'received_by',
         'notes',
         'paid_at',

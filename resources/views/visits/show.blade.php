@@ -28,6 +28,10 @@
     </x-slot:actions>
 </x-page-header-back>
 
+{{-- Previous-visit outstanding balance advisory (permission-aware; never blocks emergency). --}}
+<x-billing.previous-balance-alert :visit="$visit" />
+@include('billing.partials.previous-balance-override-modal', ['visit' => $visit])
+
 <!-- @include('partials.patient-journey-widget', ['visit' => $visit]) -->
 
 <!-- Page Header -->

@@ -145,6 +145,16 @@
         </tr>
     </x-slot:head>
 
+                    @php
+                        // Previous-visit outstanding debt flags (one query for the whole page).
+                        $pbEnabled = config('billing.previous_balance_policy.enabled', true);
+                        $pbCanAmount = (bool) auth()->user()?->can('billing.previous_balance.amount.view');
+                        $pbCanFlag = $pbCanAmount || (bool) auth()->user()?->can('billing.previous_balance.flag.view');
+                        $pbMap = ($pbEnabled && $pbCanFlag)
+                            ? app(\App\Services\Billing\PatientOutstandingBalanceService::class)
+                                ->totalOutstandingMap($visits->pluck('patient_id')->all())
+                            : [];
+                    @endphp
                     @forelse($visits as $visit)
                     @php
                         $reopenPolicy = app(\App\Services\Consultation\ConsultationReopenEligibilityService::class);
@@ -173,6 +183,9 @@
                             <div>
                                 <a href="{{ route('admin.patients.show', $visit->patient) }}" class="fw-medium">{{ $visit->patient->full_name }}</a>
                                 <div class="small text-muted">{{ $visit->patient->gender }} · {{ $visit->patient->age }}y</div>
+                                @if(($pbMap[$visit->patient_id] ?? 0) > 0)
+                                    <x-billing.outstanding-badge :amount="$pbMap[$visit->patient_id]" :show-amount="$pbCanAmount" class="mt-1" />
+                                @endif
                             </div>
                         </td>
                         <td>

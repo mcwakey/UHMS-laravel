@@ -102,6 +102,7 @@ class PaymentService
                 'amount'           => $amount,
                 'payment_method'   => $data['payment_method'],
                 'reference_number' => $data['reference_number'] ?? null,
+                'payment_batch_reference' => $data['payment_batch_reference'] ?? null,
                 'received_by'      => Auth::id(),
                 'notes'            => $data['notes'] ?? null,
                 'paid_at'          => $data['paid_at'] ?? now(),

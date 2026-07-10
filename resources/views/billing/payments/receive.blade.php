@@ -6,6 +6,15 @@
     $paymentGatewayAvailable = app(\App\Services\ModuleService::class)->enabled('payment_gateway')
         && app(\App\Services\Integrations\Payment\PaymentProviderResolver::class)->activeProvider() !== null
         && (bool) auth()->user()?->can('integrations.payments.transactions.initiate');
+
+    // Previous-visit balance visibility on the cashier queue.
+    $pbEnabled = config('billing.previous_balance_policy.enabled', true);
+    $pbCanAmount = (bool) auth()->user()?->can('billing.previous_balance.amount.view');
+    $pbCanAllocate = (bool) auth()->user()?->can('billing.payment.allocate_cross_visit');
+    $pbShow = $pbEnabled && ($pbCanAmount || $pbCanAllocate);
+    $pbService = $pbShow ? app(\App\Services\Billing\PatientOutstandingBalanceService::class) : null;
+    $pbCache = [];
+    $pbMoney = fn ($v) => '₵' . number_format((float) $v, 2);
 @endphp
 <div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
     <div class="flex-grow-1">
@@ -150,6 +159,17 @@
                     @forelse($invoices as $invoice)
                     @php
                         $cashierBalance = (float) ($invoice->cashier_balance ?? $invoice->balance);
+
+                        // Patient's previous-visit outstanding (settled last in oldest-first).
+                        $pbSummary = null;
+                        if ($pbService && $invoice->patient) {
+                            $pid = $invoice->patient_id;
+                            if (! array_key_exists($pid, $pbCache)) {
+                                $pbCache[$pid] = $pbService->buildPatientBalanceSummary($invoice->patient, $invoice->visit);
+                            }
+                            $pbSummary = $pbCache[$pid];
+                        }
+                        $pbHasPrevious = $pbSummary && ! empty($pbSummary['has_previous_outstanding']);
                     @endphp
                     <tr>
                         <td>
@@ -166,6 +186,28 @@
                                     | <x-patient-protected-field field="phone" :value="$invoice->patient->phone" />
                                 @endif
                             </small>
+                            @if($pbHasPrevious && $pbCanAmount)
+                                <div class="mt-1">
+                                    <span class="badge bg-warning-subtle text-warning" title="{{ __('billing.previous_visits_outstanding') }}">
+                                        <i class="ti ti-history me-1"></i>{{ __('billing.previous_outstanding_balance') }}: {{ $pbMoney($pbSummary['previous_outstanding']) }}
+                                    </span>
+                                    @if($pbCanAllocate)
+                                    <button type="button" class="btn btn-sm btn-outline-warning ms-1 py-0 px-1"
+                                            data-cross-visit-allocate
+                                            data-action="{{ route('admin.billing.previous-balance.allocate', $invoice->patient) }}"
+                                            data-visit-id="{{ $invoice->visit_id }}"
+                                            data-patient="{{ $invoice->patient->full_name }}"
+                                            data-total="{{ number_format($pbSummary['total_outstanding'], 2, '.', '') }}"
+                                            data-total-label="{{ $pbMoney($pbSummary['total_outstanding']) }}"
+                                            data-previous-label="{{ $pbMoney($pbSummary['previous_outstanding']) }}"
+                                            data-bs-toggle="modal" data-bs-target="#crossVisitAllocationModal">
+                                        <i class="ti ti-arrows-split me-1"></i>{{ __('billing.split_payment_across_visits') }}
+                                    </button>
+                                    @endif
+                                </div>
+                            @elseif($pbHasPrevious)
+                                <div class="mt-1"><span class="badge bg-warning-subtle text-warning">{{ __('billing.outstanding_balance_exists') }}</span></div>
+                            @endif
                         </td>
                         <td>
                             <div>{{ $invoice->visit?->visit_number ?? __('payments.direct_invoice') }}</div>
@@ -261,6 +303,8 @@
     </div>
     @endif
 </div>
+
+@include('billing.partials.cross-visit-allocation-modal')
 @endsection
 
 @push('scripts')

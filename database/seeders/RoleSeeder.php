@@ -187,6 +187,16 @@ class RoleSeeder extends Seeder
             'billing.discount.report',
             'billing.complete_visit_with_balance',
             'billing.discharge_clearance.override',
+            // ── Previous-visit outstanding balance & cross-visit allocation ──
+            'billing.previous_balance.view',            // see that a previous balance exists + summary
+            'billing.previous_balance.amount.view',     // see the actual outstanding amounts
+            'billing.previous_balance.flag.view',        // see only a generic "outstanding balance exists" flag
+            'billing.previous_balance.override',        // authorise OPD service despite old debt
+            'billing.payment.allocate_cross_visit',     // split a tender across visits (oldest-first)
+            'billing.payment.allocate_manual',          // manually allocate a tender to specific invoices
+            'billing.patient_statement.view',
+            'billing.patient_statement.print',
+            'billing.patient_statement.export',
             'credit_notes.view',
             'credit_notes.create',
             'credit_notes.write_off',
@@ -1304,6 +1314,7 @@ class RoleSeeder extends Seeder
             'visits.view', 'visits.create', 'visits.edit', 'visits.transition', 'visits.preview',
             'queue.view', 'queue.manage',
             'invoices.view',
+            'billing.previous_balance.flag.view',
             'appointments.view', 'appointments.create', 'appointments.edit', 'appointments.update', 'appointments.cancel',
             // Patient communication: send approved SMS + view delivery status only
             'integrations.sms.view', 'integrations.sms.send', 'integrations.sms.reports.view',
@@ -1321,6 +1332,10 @@ class RoleSeeder extends Seeder
             'billing.discount.view', 'billing.discount.apply',
             'payments.view', 'payments.create',
             'receivables.view', 'receivables.payment.record',
+            'billing.previous_balance.view', 'billing.previous_balance.amount.view',
+            'billing.previous_balance.flag.view',
+            'billing.payment.allocate_cross_visit', 'billing.payment.allocate_manual',
+            'billing.patient_statement.view', 'billing.patient_statement.print',
             'admission.discharge.readiness.view', 'admission.discharge.clearance.view',
             'admission.discharge.clearance.manage',
             'receivables.workbench.view', 'receivables.cases.view',
@@ -1445,6 +1460,10 @@ class RoleSeeder extends Seeder
             'sponsors.view', 'sponsors.create', 'sponsors.edit', 'sponsors.authorize', 'sponsors.payment.record',
             'corporate_clients.view', 'corporate_clients.create', 'corporate_clients.edit', 'corporate_clients.payment.record',
             'receivables.view', 'receivables.allocate', 'receivables.reallocate', 'receivables.payment.record', 'receivables.write_off',
+            'billing.previous_balance.view', 'billing.previous_balance.amount.view', 'billing.previous_balance.flag.view',
+            'billing.previous_balance.override',
+            'billing.payment.allocate_cross_visit', 'billing.payment.allocate_manual',
+            'billing.patient_statement.view', 'billing.patient_statement.print', 'billing.patient_statement.export',
             'admission.discharge.readiness.view', 'admission.discharge.clearance.view',
             'admission.discharge.clearance.manage',
             'receivables.workbench.view', 'receivables.cases.view', 'receivables.cases.manage',
@@ -1712,6 +1731,12 @@ class RoleSeeder extends Seeder
                 'patients.insurance.edit',
                 'patients.privacy_directives.view',
             ]);
+        }
+
+        // Clinical roles see only a generic "billing clearance required" flag for
+        // previous debt — never the financial amounts (spec §17).
+        foreach ([$doctor, $consultant, $specialist, $physicianAssistant, $nurse, $wardNurse, $emergencyDoctor] as $role) {
+            $role->givePermissionTo('billing.previous_balance.flag.view');
         }
 
         // Safe for all roles: the service still limits switching to departments

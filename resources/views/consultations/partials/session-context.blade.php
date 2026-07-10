@@ -1,3 +1,8 @@
+{{-- Previous-balance advisory for the clinician (flag-only users see no amounts). --}}
+@if(config('billing.previous_balance_policy.show_warning_on_consultation', true))
+    <x-billing.previous-balance-alert :visit="$visit" />
+@endif
+
 {{-- ============================================================ --}}
 {{-- CONSULTATION SESSIONS --}}
 {{-- ============================================================ --}}

@@ -157,6 +157,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Billing\InvoiceController;
 use App\Http\Controllers\Billing\PaymentController;
+use App\Http\Controllers\Billing\PreviousBalanceController;
 use App\Http\Controllers\Billing\ReceivableController;
 use App\Http\Controllers\Billing\CreditNoteController;
 use App\Http\Controllers\Billing\SponsorController;
@@ -1504,7 +1505,17 @@ Route::middleware('auth')->group(function () {
                 Route::get('payments/{payment}/receipt-pdf', [PaymentController::class, 'receiptPdf'])->name('payments.receipt-pdf');
                 Route::post('payments/{payment}/reverse', [PaymentController::class, 'reverse'])
                     ->name('payments.reverse')->middleware('can:payments.refund');
+
+                // Cross-visit payment allocation (oldest-first / current-visit / manual).
+                Route::post('previous-balance/{patient}/allocate', [PreviousBalanceController::class, 'allocate'])
+                    ->name('previous-balance.allocate')
+                    ->middleware('can:billing.payment.allocate_cross_visit');
             });
+
+            // Previous-visit outstanding balance OPD override.
+            Route::post('previous-balance/{visit}/override', [PreviousBalanceController::class, 'override'])
+                ->name('previous-balance.override')
+                ->middleware('can:billing.previous_balance.override');
 
             // Credit notes & write-offs
             Route::middleware('can:credit_notes.view')->prefix('credit-notes')->name('credit-notes.')->group(function () {

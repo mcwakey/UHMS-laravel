@@ -85,6 +85,16 @@
         </tr>
     </x-slot:head>
 
+                    @php
+                        // Outstanding-debt flags for the page (one query).
+                        $pbEnabled = config('billing.previous_balance_policy.enabled', true);
+                        $pbCanAmount = (bool) auth()->user()?->can('billing.previous_balance.amount.view');
+                        $pbCanFlag = $pbCanAmount || (bool) auth()->user()?->can('billing.previous_balance.flag.view');
+                        $pbMap = ($pbEnabled && $pbCanFlag)
+                            ? app(\App\Services\Billing\PatientOutstandingBalanceService::class)
+                                ->totalOutstandingMap($patients->pluck('id')->all())
+                            : [];
+                    @endphp
                     @forelse($patients as $patient)
                     <tr>
                         <td>
@@ -103,6 +113,9 @@
                                     <a href="{{ route('admin.patients.show', $patient) }}" class="fw-medium text-dark">{{ $patient->full_name }}</a>
                                     @if($patient->email)
                                     <br><small class="text-muted"><x-patient-protected-field field="email" :value="$patient->email" /></small>
+                                    @endif
+                                    @if(($pbMap[$patient->id] ?? 0) > 0)
+                                    <br><x-billing.outstanding-badge :amount="$pbMap[$patient->id]" :show-amount="$pbCanAmount" class="mt-1" />
                                     @endif
                                 </div>
                             </div>

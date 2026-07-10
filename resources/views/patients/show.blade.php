@@ -3,7 +3,7 @@
 
 @section('content')
 <x-page-header-back
-        :title="__('patients.title') . ' - ' . $patient->patient_id"
+        :title="__('patients.profile_title')"
         :href="route('admin.patients.index')"
     >
     <x-slot:actions>

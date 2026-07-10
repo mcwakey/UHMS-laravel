@@ -136,6 +136,9 @@
 
 <div id="paymentFormFeedback" class="alert d-none" role="alert"></div>
 
+{{-- Patient's previous-visit outstanding balance across other visits (permission-aware). --}}
+<x-billing.previous-balance-alert :invoice="$invoice" />
+
 <div class="row">
     <!-- Invoice Details -->
     <div class="col-lg-8">

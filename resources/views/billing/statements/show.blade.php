@@ -20,6 +20,27 @@
     </div>
 </div></div>
 
+@php
+    $pbSummary = app(\App\Services\Billing\PatientOutstandingBalanceService::class)->buildPatientBalanceSummary($patient);
+@endphp
+<div class="row g-3 mb-3">
+    <div class="col-md-3 col-6">
+        <x-stat-card :title="__('billing.previous_visits_outstanding')" :value="$pbSummary['previous_outstanding']" format="currency" variant="warning" icon="ti-history" />
+    </div>
+    <div class="col-md-3 col-6">
+        <x-stat-card :title="__('billing.total_patient_outstanding')" :value="$pbSummary['total_outstanding']" format="currency" variant="danger" icon="ti-report-money" />
+    </div>
+    <div class="col-md-3 col-6">
+        <x-stat-card :title="__('billing.oldest_unpaid_invoice')"
+            :value="$pbSummary['oldest_unpaid_invoice']?->invoice_number ?? '—'"
+            :subtitle="$pbSummary['oldest_age_days'] !== null ? __('billing.age_days', ['days' => $pbSummary['oldest_age_days']]) : null"
+            variant="secondary" icon="ti-file-invoice" />
+    </div>
+    <div class="col-md-3 col-6">
+        <x-stat-card :title="__('billing.aging_bucket')" :value="$pbSummary['ar_bucket'] ?? '—'" variant="info" icon="ti-calendar-stats" />
+    </div>
+</div>
+
 <x-filter-bar :action="route('admin.billing.statements.show', $patient)" :reset-url="route('admin.billing.statements.show', $patient)">
     <div class="col-md-3"><label class="form-label small">{{ __('common.from') }}</label><input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}"></div>
     <div class="col-md-3"><label class="form-label small">{{ __('common.to') }}</label><input type="date" name="date_to" class="form-control" value="{{ $filters['date_to'] ?? '' }}"></div>

@@ -22,6 +22,8 @@ class VisitBillingOverride extends Model
     public const TYPE_CREDIT_APPROVAL = 'CREDIT_APPROVAL';
     public const TYPE_MANAGEMENT_APPROVAL = 'MANAGEMENT_APPROVAL';
     public const TYPE_INSURANCE_AUTHORIZATION_PENDING = 'INSURANCE_AUTHORIZATION_PENDING';
+    /** Authorises an OPD visit to proceed despite the patient's PREVIOUS-visit debt. */
+    public const TYPE_PREVIOUS_BALANCE_OVERRIDE = 'PREVIOUS_BALANCE_OVERRIDE';
 
     public const SCOPE_VISIT = 'VISIT';
     public const SCOPE_DEPARTMENT = 'DEPARTMENT';

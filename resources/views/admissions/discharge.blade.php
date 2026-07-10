@@ -20,6 +20,11 @@
 </div>
 @endif
 
+{{-- Previous-visit + current-admission + total patient balance at discharge clearance. --}}
+@if(config('billing.previous_balance_policy.admission_show_previous_balance_on_discharge', true) && $admission->visit)
+    <x-billing.previous-balance-alert :visit="$admission->visit" />
+@endif
+
 <div class="row">
     <div class="col-lg-8">
         <div class="card">

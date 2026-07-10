@@ -1,536 +1,417 @@
-You are working on the UHMS Laravel codebase.
+Great — this is a very clean implementation. The design decision to keep `Payment` single-invoice-scoped and group cross-visit tenders with `payment_batch_reference` is the right move. It avoids disturbing the existing payment/accounting pipeline while still achieving the accounting outcome: old debt collection reduces Patient Receivables and does **not** re-recognise revenue. The report confirms the big rules are respected: visit invoices stay separate, patient balance is computed from open patient receivables, emergency care is never blocked, and everything runs through existing services. 
 
-Phase 15 is complete. Specialist reporting and dashboard integration has been implemented and the full suite is green.
+I would proceed with the documented UI touchpoints. The backend is already ready; what remains is making the feature visible in the right workflows. 
 
-Current personalised consultation profiles:
+Then the next phase should be:
 
 ```text
-general_medicine
-physiotherapy
-ophthalmology
-dental
-obstetrics
-gynecology
-ent
-pediatrics
-emergency
-orthopedics
-surgery
+Previous Balance UI Completion Pass
 ```
 
-The system now supports:
+You are working on UHMS — Ultimate Hospital Management System.
+
+Previous Visit Outstanding Balance Policy and Cross-Visit Payment Allocation is already implemented and verified.
+
+The backend is complete:
+- PatientOutstandingBalanceService
+- PatientPaymentAllocationService
+- PreviousBalanceOverrideService
+- PreviousBalanceController
+- previous-balance alert component
+- override modal
+- cross-visit allocation endpoint
+- permissions
+- localisation
+- tests
+
+Now proceed with the documented follow-up UI touchpoints.
+
+Goal:
+Complete the user-facing integration of previous visit outstanding balance across the main UHMS workflows.
+
+Do not rewrite the backend services.
+Do not change the core accounting design.
+Do not merge old invoices into current invoices.
+Do not create duplicate payment/accounting logic.
+Do not bypass PaymentService.
+Do not bypass InvoiceReceivable.
+Do not bypass ActivityLogService.
+Do not block emergency care because of old debt.
+
+---
+
+# 1. Scope
+
+Implement the remaining UI touchpoints:
+
+1. Cashier cross-visit allocation form on receive payment screen
+2. Patient search debt badges
+3. Visit list debt badges
+4. Discharge clearance previous/current/total balance panel
+5. Consultation screen advisory for clinical users
+6. Patient account statement summary cards
+7. Optional overpayment deposit TODO display, not full deposit implementation
+
+Use the existing completed services:
+
+```php
+PatientOutstandingBalanceService
+PatientPaymentAllocationService
+PreviousBalanceOverrideService
+````
+
+Use the existing endpoint:
 
 ```text
-specialty profiles
-specialty sections
-structured forms
-favorites
-order sets
-readiness
-summary builder
-doctor personal workspace
-admin configuration
-billing/service mapping
-reporting/dashboard analytics
-CSV export
-full-suite green baseline
+admin.billing.previous-balance.allocate
 ```
 
-Now implement:
+Use the reusable component:
 
-# Phase 16 — Specialist Browser Fixtures, Visual QA, and UAT Pack
-
-## Goal
-
-Create a practical browser/manual testing foundation for all personalised consultation workspaces.
-
-This phase should make it easy to open each specialty workspace in the browser and verify that the real UI behaves correctly.
-
-This is not a new clinical feature phase.
-
-The goal is:
-
-```text
-seed realistic opt-in test data
-create browser fixtures for representative specialist workspaces
-expand Playwright coverage safely
-prepare a manual UAT checklist
-validate responsive UI and no-console-error behavior
-keep the full suite green
+```blade
+<x-billing.previous-balance-alert>
 ```
 
 ---
 
-# Important Rules
+# 2. Cashier Cross-Visit Allocation Form
 
-Do not modify default production seeders in a way that creates fake clinical data.
+Add a dedicated allocation option on the payment receive screen.
 
-Do not create fake invoices or patient records in default launch seeders.
+When a patient has previous outstanding balance, show:
 
-All browser/manual test data must be opt-in and clearly marked as testing/demo data.
+```text
+Previous outstanding
+Current visit balance
+Total patient balance
+Oldest unpaid invoice
+```
 
-Do not rewrite the consultation workspace.
+Payment allocation modes:
 
-Do not create separate specialty pages/controllers.
+```text
+Oldest outstanding first
+Current visit only
+Manual split
+```
 
-Do not change clinical save behavior.
+Default mode:
 
-Do not change billing apply behavior.
+```text
+Oldest outstanding first
+```
 
-Do not run destructive operations against non-testing environments.
+Manual split form should list open patient invoices:
 
-Do not add a huge slow browser suite. Keep it representative and stable.
+```text
+Visit Date
+Visit Number
+Invoice Number
+Invoice Balance
+Age Days
+Allocation Amount
+```
+
+Validation:
+
+* total allocation cannot exceed tender amount
+* invoice allocation cannot exceed invoice balance
+* payment amount must be greater than zero
+* overpayment remains rejected unless deposit workflow is later enabled
+
+Submit to the existing allocation endpoint.
+
+Do not create new backend allocation logic in the controller or Blade.
 
 ---
 
-# Required Deliverables
+# 3. Patient Search Debt Badges
 
-## 1. Inspect Existing Browser Fixture Pattern
+On patient search results, show outstanding balance indicator.
 
-Inspect existing consultation E2E/browser fixture code.
+Permission behavior:
 
-Look for:
+If user has:
 
 ```text
-ConsultationBrowserFixtureService
-ConsultationE2EFixtureCommand
-consultation:e2e-fixture
-tests-e2e/tests/consultation-workspace.spec.ts
-Playwright auth/session setup
-fixture metadata format
-test users
-test departments
-test visits/routes
+billing.previous_balance.amount.view
 ```
 
-Document the current fixture behavior in the report.
+show amount:
+
+```text
+Outstanding: GHS 250
+```
+
+If user only has:
+
+```text
+billing.previous_balance.flag.view
+```
+
+show generic flag:
+
+```text
+Outstanding balance exists
+```
+
+If user has neither permission, show nothing.
+
+Do not expose financial amount to clinical users without amount permission.
 
 ---
 
-## 2. Add Specialist Browser Fixture Support
+# 4. Visit List Debt Badges
 
-Extend the existing fixture service/command or add a focused service:
-
-```text
-app/Services/Consultation/Specialty/ConsultationSpecialtyBrowserFixtureService.php
-```
-
-Only add a new service if it keeps the existing fixture clean.
-
-The fixture should be opt-in and available only in local/testing environments.
-
-Suggested command:
-
-```bash
-php artisan consultation:specialty-e2e-fixture --json
-```
-
-or extend existing:
-
-```bash
-php artisan consultation:e2e-fixture --specialties --json
-```
-
-The command should create or return fixture metadata for these representative profiles:
-
-```text
-general_medicine
-physiotherapy
-ophthalmology
-dental
-obstetrics
-ent
-pediatrics
-emergency
-surgery
-```
-
-Optional, if easy:
-
-```text
-gynecology
-orthopedics
-```
-
-Fixture metadata should include:
-
-```json
-{
-  "login_url": "...",
-  "workspace_url": "...",
-  "profile_code": "...",
-  "profile_label": "...",
-  "doctor_email": "...",
-  "doctor_password": "...",
-  "patient_number": "...",
-  "visit_id": "...",
-  "route_id": "...",
-  "expected_sections": [],
-  "expected_quick_actions": [],
-  "expected_structured_section": "..."
-}
-```
-
-Rules:
-
-* Use stable test users.
-* Use stable departments mapped to specialty profiles.
-* Create visit/consultation route/session per profile.
-* Use existing factories/models where possible.
-* Mark records with testing metadata where available.
-* Do not create billing charges unless explicitly safe and already supported by test patterns.
-* If service mappings exist, expose billing context but do not apply charges automatically.
-
----
-
-## 3. Seed Representative Structured Entries
-
-For each fixture profile, seed one or two representative entries so the browser can verify reload behavior.
+On visit list and visit-related queues, add a small previous-balance indicator where useful.
 
 Examples:
 
 ```text
-physiotherapy: pain assessment
-ophthalmology: visual acuity
-dental: tooth chart
-obstetrics: antenatal vitals
-ent: ear assessment
-pediatrics: growth assessment
-emergency: primary survey
-surgery: consent
+Old Balance
+Outstanding
+Billing Alert
 ```
 
-Also create at least one incomplete case where readiness blockers are visible.
+Rules:
 
-Do not over-seed.
+* amount only visible with `billing.previous_balance.amount.view`
+* flag-only users see generic debt flag
+* no badge if no previous outstanding
+* do not clutter the visit table
+* badge should link to patient statement or invoice/billing page only when authorized
+
+Use `<x-status-badge>` or a consistent Bootstrap badge style according to UI standards.
 
 ---
 
-## 4. Expand Playwright Browser Smoke
+# 5. Discharge Clearance Panel
 
-Create:
+On discharge clearance / admission billing clearance, show:
 
 ```text
-tests-e2e/tests/consultation-specialty-workspaces.spec.ts
+Previous visit outstanding
+Current admission balance
+Total patient outstanding
 ```
 
-Keep the existing general consultation smoke intact.
+Important:
 
-The new smoke test should be data-driven.
+* do not merge previous balance into the admission invoice
+* do not force total settlement unless existing config/policy requires it
+* show a clear note if policy is current-admission-only
+* allow authorized billing supervisor override if existing workflow supports it
 
-For each selected profile fixture:
-
-```text
-login as fixture doctor
-open workspace URL
-confirm no console/server errors
-confirm profile label/header appears
-confirm sidebar sections render
-confirm at least one expected quick action appears
-click one quick action
-confirm target section becomes active/visible
-save one structured field
-refresh page
-confirm saved value reloads
-open readiness card/section
-generate summary preview
-if order sets exist, open preview for one order set
-confirm billing card/context does not crash
-```
-
-Profiles to cover at minimum:
+Suggested wording:
 
 ```text
-general_medicine
-physiotherapy
-ophthalmology
-dental
-obstetrics
-ent
-pediatrics
-emergency
-surgery
-```
-
-If runtime becomes too slow, split into two Playwright projects or mark as specialist smoke and run separately.
-
-Do not make this flaky.
-
-Use stable selectors.
-
-Avoid relying on text that is too translation-sensitive unless the fixture sets locale.
-
----
-
-## 5. Add Responsive Smoke Checks
-
-For at least these viewports:
-
-```text
-desktop
-tablet
-mobile
-```
-
-Run representative profiles:
-
-```text
-general_medicine
-obstetrics
-emergency
-dental
-```
-
-Check:
-
-```text
-workspace header does not overlap
-sidebar/tabs are usable
-structured form fields are accessible
-right panel/readiness card remains reachable
-modal closes correctly
-no horizontal layout break that hides critical actions
-```
-
-Keep these checks light.
-
----
-
-## 6. Add Manual UAT Checklist
-
-Create:
-
-```text
-docs/CONSULTATION_SPECIALIST_WORKSPACE_UAT_CHECKLIST.md
-```
-
-The checklist should be usable by non-developer testers.
-
-Include sections:
-
-```text
-Test preparation
-Login credentials / fixture command
-How to open each specialty workspace
-General medicine checklist
-Physiotherapy checklist
-Ophthalmology checklist
-Dental checklist
-Obstetrics checklist
-Gynecology checklist
-ENT checklist
-Pediatrics checklist
-Emergency checklist
-Orthopedics checklist
-Surgery checklist
-Billing awareness checklist
-Readiness checklist
-Summary builder checklist
-Order set checklist
-Reporting dashboard checklist
-Responsive/mobile checklist
-Bug reporting template
-Pass/fail sign-off table
-```
-
-Each specialty checklist should include:
-
-```text
-workspace opens
-correct specialty name appears
-expected sections appear
-quick actions work
-structured field saves
-value reloads after refresh
-readiness shows correct status
-summary preview generates
-order set preview works
-billing card does not crash
-no console/page error
+Previous balances are shown for account awareness. They are not part of the current admission invoice.
 ```
 
 ---
 
-## 7. Add Visual QA Notes
+# 6. Consultation Screen Advisory
 
-Create or include in the UAT checklist:
+Add a lightweight advisory for clinical users.
 
-```text
-docs/CONSULTATION_SPECIALIST_VISUAL_QA_NOTES.md
-```
-
-or combine with the UAT checklist.
-
-Document:
+For flag-only users:
 
 ```text
-expected workspace header behavior
-section/sidebar behavior
-card spacing
-empty states
-mobile behavior
-known acceptable limitations
-screens that need future redesign
+Billing clearance required. Previous outstanding balance exists. Please contact billing.
 ```
 
-Do not redesign everything in this phase. Only fix clear breakages.
+For users with amount permission:
+
+```text
+Previous outstanding balance: GHS 250. Billing override may be required.
+```
+
+Rules:
+
+* clinical users without amount permission must not see money values
+* emergency care must not be blocked
+* advisory should not make the consultation page noisy
+* use the reusable previous-balance alert component if it fits cleanly
 
 ---
 
-## 8. Admin Setup Verification
+# 7. Patient Account Statement Summary Cards
 
-Add browser or feature-level verification that admin can inspect the profiles.
-
-At minimum:
+On patient profile billing/accounts statement, add summary cards:
 
 ```text
-profiles list shows all 11 profiles
-sections page opens for each profile
-favorites page opens
-order sets page opens
-service mappings page opens
-report page opens
+Previous Visits Outstanding
+Current Visit Outstanding
+Total Outstanding
+Oldest Unpaid Invoice
 ```
 
-This can remain feature-test coverage if browser coverage would be too slow.
+Data source:
+
+```php
+PatientOutstandingBalanceService::buildPatientBalanceSummary()
+```
+
+Statement table should continue using the existing ledger/statement service.
+
+Do not create a second statement engine.
 
 ---
 
-## 9. Reporting Browser Smoke
+# 8. Optional Overpayment Display
 
-Add a small browser smoke for the specialist report page:
+Since overpayment currently rejects by default, show clear feedback:
 
 ```text
-login as admin
-open /admin/reports/consultation-specialties
-confirm summary cards render
-apply a specialty/date filter
-confirm table/chart area remains visible
-trigger CSV export request or verify export link exists
+Payment exceeds total outstanding balance. Patient deposit workflow is not enabled yet.
 ```
 
-Do not deeply test analytics in browser. Feature tests already cover metrics.
+Document patient deposit liability as future work.
+
+Do not implement deposit liability in this UI pass unless it already exists and is safe.
 
 ---
 
-## 10. Stability and Test Commands
+# 9. Localisation
 
-Run:
+Add or update English/French keys for all new UI strings.
+
+Files:
+
+```text
+lang/en/billing.php
+lang/fr/billing.php
+lang/en/patients.php
+lang/fr/patients.php
+lang/en/visits.php
+lang/fr/visits.php
+lang/en/admissions.php
+lang/fr/admissions.php
+lang/en/consultation.php
+lang/fr/consultation.php
+```
+
+Do not hardcode English labels.
+
+---
+
+# 10. Permissions
+
+Respect existing permissions:
+
+```text
+billing.previous_balance.view
+billing.previous_balance.amount.view
+billing.previous_balance.flag.view
+billing.previous_balance.override
+billing.payment.allocate_cross_visit
+billing.payment.allocate_manual
+billing.patient_statement.view
+billing.patient_statement.print
+billing.patient_statement.export
+```
+
+Backend must remain protected.
+
+Do not rely only on hiding UI.
+
+---
+
+# 11. UI Standards
+
+Use existing UHMS UI standards:
+
+```text
+Blade
+Bootstrap 5
+Tabler Icons
+<x-page-header>
+<x-stat-card>
+<x-status-badge>
+<x-empty-state>
+<x-confirm-form>
+<x-data-table>
+<x-print-layout>
+```
+
+Do not introduce Tailwind.
+
+Do not redesign billing pages from scratch.
+
+---
+
+# 12. Tests Strategy
+
+This phase is mostly view wiring.
+
+Add only focused tests where useful:
+
+1. amount users see previous-balance amount
+2. flag-only users see generic flag
+3. unauthorized users see nothing
+4. cashier can access allocation form
+5. manual allocation UI posts to existing endpoint
+6. discharge clearance panel renders summary
+7. consultation advisory hides amounts for clinical users
+
+Do not run the full suite until the end of the batch unless required.
+
+At minimum, run:
 
 ```bash
-php artisan migrate
-php artisan db:seed --class=ConsultationSpecialtySeeder
-php artisan test tests/Feature/Consultations
-php artisan test tests/Feature/ConsultationWorkspaceStabilisationTest.php
-php artisan test tests/Feature/System/RouteLoadMemoryTest.php
-php artisan route:list
 php artisan view:cache
-php artisan view:clear
-npm run build
-```
-
-Run Playwright:
-
-```bash
-cd tests-e2e
-npx playwright test tests/consultation-workspace.spec.ts
-npx playwright test tests/consultation-specialty-workspaces.spec.ts
-```
-
-If the project path expects Playwright from root, use the existing project convention.
-
-Then run full suite:
-
-```bash
-php artisan test
-```
-
-If full suite fails, document honestly and classify failures.
-
----
-
-## 11. Report
-
-Create:
-
-```text
-docs/CONSULTATION_SPECIALIST_BROWSER_UAT_REPORT.md
-```
-
-The report must include:
-
-```text
-# Consultation Specialist Browser UAT Report
-
-## Summary
-Explain what was implemented and validated.
-
-## Existing Browser Fixture Findings
-Document the existing fixture/Playwright setup.
-
-## Files Added
-List new files.
-
-## Files Modified
-List modified files.
-
-## Fixture Design
-Explain command/service, profiles covered, test users, departments, visits/routes, and metadata.
-
-## Browser Coverage
-List Playwright files and profiles covered.
-
-## Responsive Coverage
-List profiles/viewports checked.
-
-## Manual UAT Checklist
-Link to checklist and summarize content.
-
-## Report Page Smoke
-Explain specialist reporting browser coverage.
-
-## Defects Found and Fixed
-List any UI/Blade/JS/responsive/selector issues fixed.
-
-## Test Results
-Include all command results.
-
-## Full Suite Result
-Include final `php artisan test` result.
-
-## Backward Compatibility
-Confirm consultation workspace, specialist reporting, billing, admin config, and patient workflows remain stable.
-
-## Known Issues / Follow-up
-List:
-- deeper specialist browser coverage if deferred
-- advanced visual redesign needs
-- future mobile polish
-- specialist fixtures for gynecology/orthopedics if not covered
-- future partograph/odontogram/growth-chart feature work
+php artisan route:list
+php artisan test --filter=PreviousBalancePolicyTest
+php artisan test --filter=Billing
 ```
 
 ---
 
-# Acceptance Criteria
+# 13. Documentation
 
-Phase 16 is complete only when:
+Update:
 
-* Specialist browser fixture command/service exists or existing fixture supports specialist profiles.
-* Browser fixture metadata is available for representative profiles.
-* Playwright specialist workspace smoke exists.
-* General consultation smoke remains green.
-* At least 9 profiles are covered in browser smoke or clearly documented if fewer are covered.
-* Responsive smoke covers desktop/tablet/mobile for representative profiles.
-* Manual UAT checklist exists.
-* Specialist report page browser smoke exists.
-* Admin/profile setup remains accessible.
-* Focused consultation feature suite passes.
-* Workspace stabilisation passes.
-* Route memory test passes.
-* Route list and view cache pass.
-* Frontend build passes.
-* Full suite is run and documented.
-* Browser UAT report is created.
+```text
+docs/PREVIOUS_VISIT_OUTSTANDING_BALANCE_POLICY_REPORT.md
+```
 
-Stop after Phase 16.
+Add a section:
+
+```text
+UI Completion Pass
+```
+
+Include:
+
+* cashier allocation form completed
+* patient search badges completed
+* visit list badges completed
+* discharge clearance panel completed
+* consultation advisory completed
+* patient statement summary cards completed
+* permissions checked
+* localisation keys added
+* tests/manual verification performed
+* remaining TODOs
+
+---
+
+# 14. Acceptance Criteria
+
+This phase is complete when:
+
+* cashier can allocate payment across previous/current invoices from the UI
+* patient search shows previous balance indicator by permission
+* visit list shows previous balance indicator by permission
+* discharge clearance shows previous/current/total balance
+* consultation screen shows safe billing advisory
+* patient statement shows summary cards
+* financial amounts are hidden from unauthorized/flag-only users
+* emergency care remains unblocked
+* current visit invoices remain clean
+* no duplicate accounting or payment logic is introduced
+* documentation is updated
+* focused verification passes
+
+Proceed with Previous Balance UI Completion Pass now.
+
