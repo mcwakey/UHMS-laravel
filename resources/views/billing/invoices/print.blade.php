@@ -6,7 +6,7 @@
     <title>{{ __('invoices.invoice') }} {{ $invoice->invoice_number }}</title>
     @php
         $org = \App\Models\Setting::getGroup('organization');
-        $orgName = $org['name'] ?? config('app.name', 'UHMS');
+        $orgName = trim((string) ($org['name'] ?? '')) ?: config('app.name', 'UHMS');
         $orgLogo = !empty($org['logo']) ? asset('storage/'.$org['logo']) : null;
         $orgAddress = collect([$org['address'] ?? null, $org['city'] ?? null, $org['region'] ?? null])->filter()->implode(', ');
         $orgContact = collect([$org['phone'] ?? null, $org['email'] ?? null])->filter()->implode('  ·  ');
@@ -29,7 +29,8 @@
         .text-center { text-align: center; }
 
         .topbar { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid {{ $accent }}; padding-bottom: 18px; margin-bottom: 22px; }
-        .org-name { font-size: 20px; font-weight: 700; color: #0f172a; }
+        .org-brand { display: flex; align-items: center; gap: 12px; }
+        .org-name { font-size: 20px; font-weight: 700; color: #0f172a; text-transform: uppercase; line-height: 1.15; }
         .org-meta { font-size: 12px; color: #64748b; margin-top: 3px; }
         .doc-title { font-size: 26px; font-weight: 700; color: {{ $accent }}; letter-spacing: 1px; }
         .doc-num { font-size: 14px; font-weight: 600; margin-top: 2px; }
@@ -81,13 +82,15 @@
     <div class="sheet">
         <div class="topbar">
             <div>
-                @if($orgLogo)
-                    <img src="{{ $orgLogo }}" alt="{{ $orgName }}" style="max-height:54px; margin-bottom:4px;">
-                    <div class="org-meta">{{ $orgAddress }}</div>
-                @else
-                    <div class="org-name">{{ $orgName }}</div>
-                    <div class="org-meta">{{ $orgAddress ?: __('common.app_tagline') }}</div>
-                @endif
+                <div class="org-brand">
+                    @if($orgLogo)
+                        <img src="{{ $orgLogo }}" alt="{{ $orgName }}" style="max-height:54px;">
+                    @endif
+                    <div>
+                        <div class="org-name">{{ $orgName }}</div>
+                        <div class="org-meta">{{ $orgAddress ?: __('common.app_tagline') }}</div>
+                    </div>
+                </div>
                 @if($orgContact)<div class="org-meta">{{ $orgContact }}</div>@endif
             </div>
             <div class="text-end">

@@ -5,7 +5,7 @@
     <title>{{ __('invoices.invoice') }} {{ $invoice->invoice_number }}</title>
     @php
         $org = \App\Models\Setting::getGroup('organization');
-        $orgName = $org['name'] ?? config('app.name', 'UHMS');
+        $orgName = trim((string) ($org['name'] ?? '')) ?: config('app.name', 'UHMS');
         $orgLogoPath = !empty($org['logo']) && is_file(public_path('storage/'.$org['logo'])) ? public_path('storage/'.$org['logo']) : null;
         $orgAddress = collect([$org['address'] ?? null, $org['city'] ?? null, $org['region'] ?? null])->filter()->implode(', ');
         $orgContact = collect([$org['phone'] ?? null, $org['email'] ?? null])->filter()->implode('  ·  ');
@@ -66,8 +66,17 @@
         <tr>
             <td>
                 @if($orgLogoPath)
-                    <img src="{{ $orgLogoPath }}" alt="{{ $orgName }}" style="max-height:46px; margin-bottom:4px;">
-                    <div class="org-meta">{{ $orgAddress }}</div>
+                    <table style="border-collapse:collapse;">
+                        <tr>
+                            <td style="width:52px; padding-right:8px; vertical-align:middle;">
+                                <img src="{{ $orgLogoPath }}" alt="{{ $orgName }}" style="max-height:46px;">
+                            </td>
+                            <td style="vertical-align:middle;">
+                                <div class="org-name">{{ $orgName }}</div>
+                                <div class="org-meta">{{ $orgAddress ?: __('common.app_tagline') }}</div>
+                            </td>
+                        </tr>
+                    </table>
                 @else
                     <div class="org-name">{{ $orgName }}</div>
                     <div class="org-meta">{{ $orgAddress ?: __('common.app_tagline') }}</div>
