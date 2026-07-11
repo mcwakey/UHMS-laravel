@@ -1,42 +1,46 @@
 <?php
 
-use App\Http\Controllers\Admin\Billing\AccountCategoryController;
-use App\Http\Controllers\Admin\FrontDesk\CallLogController;
-use App\Http\Controllers\Admin\FrontDesk\CourierLogController;
-use App\Http\Controllers\Admin\FrontDesk\FrontDeskDashboardController;
-use App\Http\Controllers\Admin\FrontDesk\FrontDeskReportController;
-use App\Http\Controllers\Admin\FrontDesk\IncidentLogController;
-use App\Http\Controllers\Admin\FrontDesk\LostFoundController;
-use App\Http\Controllers\Admin\FrontDesk\ShiftHandoverController;
-use App\Http\Controllers\Admin\FrontDesk\VisitorLogController;
-use App\Http\Controllers\Admin\ConsultationSpecialtyFavoriteController;
-use App\Http\Controllers\Admin\ConsultationSpecialtyMappingController;
-use App\Http\Controllers\Admin\ConsultationSpecialtyOrderSetController as AdminConsultationSpecialtyOrderSetController;
-use App\Http\Controllers\Admin\ConsultationSpecialtyOrderSetItemController;
-use App\Http\Controllers\Admin\ConsultationSpecialtyProfileController;
-use App\Http\Controllers\Admin\ConsultationSpecialtySectionController;
-use App\Http\Controllers\Admin\ConsultationSpecialtyServiceMappingController;
-use App\Http\Controllers\Admin\DoctorConsultationPreferenceAdminController;
-use App\Http\Controllers\Admin\Reporting\ActivityLogController;
-use App\Http\Controllers\Admin\AdmissionsWard\AdmissionController;
+use App\Http\Controllers\Accounting\AccountController as AccountingAccountController;
+use App\Http\Controllers\Accounting\AccountingAccountMappingController;
+use App\Http\Controllers\Accounting\AccountingCloseReadinessController;
+use App\Http\Controllers\Accounting\AccountingDashboardController;
+use App\Http\Controllers\Accounting\AccountingPeriodController;
+use App\Http\Controllers\Accounting\AccountingPostingAttemptController;
+use App\Http\Controllers\Accounting\AccountingPostingController;
+use App\Http\Controllers\Accounting\AccountingPostingTemplateController;
+use App\Http\Controllers\Accounting\AccountingReportController;
+use App\Http\Controllers\Accounting\AccountingSettingsController;
+use App\Http\Controllers\Accounting\AccountsPayableController;
+use App\Http\Controllers\Accounting\BankAccountController;
+use App\Http\Controllers\Accounting\BankReconciliationAdjustmentController;
+use App\Http\Controllers\Accounting\BankReconciliationController;
+use App\Http\Controllers\Accounting\BankStatementImportController;
+use App\Http\Controllers\Accounting\BasicAccountingBridgeController;
+use App\Http\Controllers\Accounting\BudgetController;
+use App\Http\Controllers\Accounting\FailedPostingWorkbenchController;
+use App\Http\Controllers\Accounting\FiscalYearController;
+use App\Http\Controllers\Accounting\FixedAssetController;
+use App\Http\Controllers\Accounting\JournalEntryController;
+use App\Http\Controllers\Accounting\PayrollPostingController;
+use App\Http\Controllers\Accounting\ReceivableWorkbenchController;
+use App\Http\Controllers\Accounting\SubledgerReconciliationController;
+use App\Http\Controllers\Accounting\TaxAccountingController;
 use App\Http\Controllers\Admin\AdmissionsWard\AdmissionBedWorkflowController;
+use App\Http\Controllers\Admin\AdmissionsWard\AdmissionController;
 use App\Http\Controllers\Admin\AdmissionsWard\AdmissionDischargeWorkflowController;
 use App\Http\Controllers\Admin\AdmissionsWard\AdmissionMedicationBoardController;
 use App\Http\Controllers\Admin\AdmissionsWard\AdmissionNursingCareController;
 use App\Http\Controllers\Admin\AdmissionsWard\AdmissionRequestController;
-use App\Http\Controllers\Admin\Maternity\MaternityCaseController;
-use App\Http\Controllers\Admin\Maternity\MaternityDashboardController;
-use App\Http\Controllers\Admin\Maternity\MaternityBillingReadinessController;
-use App\Http\Controllers\Admin\Maternity\MaternityReportController;
-use App\Http\Controllers\Admin\Maternity\PregnancyProfileController;
-use App\Http\Controllers\Admin\Maternity\AntenatalVisitController;
-use App\Http\Controllers\Admin\Maternity\DeliveryRecordController;
-use App\Http\Controllers\Admin\Maternity\LaborEpisodeController;
-use App\Http\Controllers\Admin\Maternity\NewbornRecordController;
-use App\Http\Controllers\Admin\Maternity\PostnatalCaseController;
-use App\Http\Controllers\Admin\Lab\AnalyzerController;
+use App\Http\Controllers\Admin\AdmissionsWard\MarChartController;
+use App\Http\Controllers\Admin\AdmissionsWard\VitalController;
+use App\Http\Controllers\Admin\AdmissionsWard\WardController;
 use App\Http\Controllers\Admin\Appointments\AppointmentController;
-use App\Http\Controllers\Admin\Hr\AttendanceController;
+use App\Http\Controllers\Admin\Appointments\ConsultationTaskController;
+use App\Http\Controllers\Admin\Appointments\QueueController;
+use App\Http\Controllers\Admin\Billing\AccountCategoryController;
+use App\Http\Controllers\Admin\Billing\CashierShiftController;
+use App\Http\Controllers\Admin\Billing\ClaimController;
+use App\Http\Controllers\Admin\Billing\FinancialEntryController;
 use App\Http\Controllers\Admin\BloodBank\BloodBankDashboardController;
 use App\Http\Controllers\Admin\BloodBank\BloodBankReportController;
 use App\Http\Controllers\Admin\BloodBank\BloodCrossmatchController;
@@ -46,130 +50,162 @@ use App\Http\Controllers\Admin\BloodBank\BloodIssueController;
 use App\Http\Controllers\Admin\BloodBank\BloodRequestController;
 use App\Http\Controllers\Admin\BloodBank\BloodStorageLocationController;
 use App\Http\Controllers\Admin\BloodBank\BloodUnitController;
-use App\Http\Controllers\Admin\Pharmacy\CounterSaleController;
-use App\Http\Controllers\Admin\Billing\CashierShiftController;
-use App\Http\Controllers\Admin\Billing\ClaimController;
-use App\Http\Controllers\Admin\Settings\ComplaintCatalogueController;
-use App\Http\Controllers\Admin\Settings\ComplaintSearchController;
-use App\Http\Controllers\Admin\Appointments\ConsultationTaskController;
+use App\Http\Controllers\Admin\ConsultationSpecialtyFavoriteController;
+use App\Http\Controllers\Admin\ConsultationSpecialtyMappingController;
+use App\Http\Controllers\Admin\ConsultationSpecialtyOrderSetController as AdminConsultationSpecialtyOrderSetController;
+use App\Http\Controllers\Admin\ConsultationSpecialtyOrderSetItemController;
+use App\Http\Controllers\Admin\ConsultationSpecialtyProfileController;
+use App\Http\Controllers\Admin\ConsultationSpecialtySectionController;
+use App\Http\Controllers\Admin\ConsultationSpecialtyServiceMappingController;
 use App\Http\Controllers\Admin\Dashboard\DashboardController;
-use App\Http\Controllers\Admin\Settings\DepartmentController;
-use App\Http\Controllers\Admin\Store\DepartmentConsumablesController;
-use App\Http\Controllers\Admin\Hr\DesignationController;
-use App\Http\Controllers\Admin\Pharmacy\DrugController;
-use App\Http\Controllers\Admin\Emergency\EmergencyContactController;
+use App\Http\Controllers\Admin\Dashboard\DepartmentContextController;
+use App\Http\Controllers\Admin\Dashboard\DepartmentDashboardController;
+use App\Http\Controllers\Admin\Dashboard\PermissionDashboardController;
+use App\Http\Controllers\Admin\Dashboard\ProfileController;
+use App\Http\Controllers\Admin\DoctorConsultationPreferenceAdminController;
 use App\Http\Controllers\Admin\Emergency\EmergencyBayController;
 use App\Http\Controllers\Admin\Emergency\EmergencyBillingController;
 use App\Http\Controllers\Admin\Emergency\EmergencyBoardController;
 use App\Http\Controllers\Admin\Emergency\EmergencyCaseController;
 use App\Http\Controllers\Admin\Emergency\EmergencyConsumableController;
-use App\Http\Controllers\Admin\Emergency\EmergencyPatientIdentityController;
+use App\Http\Controllers\Admin\Emergency\EmergencyContactController;
 use App\Http\Controllers\Admin\Emergency\EmergencyDispositionController;
 use App\Http\Controllers\Admin\Emergency\EmergencyInvestigationController;
 use App\Http\Controllers\Admin\Emergency\EmergencyMedicationBoardController;
 use App\Http\Controllers\Admin\Emergency\EmergencyMedicationController;
 use App\Http\Controllers\Admin\Emergency\EmergencyNoteController;
+use App\Http\Controllers\Admin\Emergency\EmergencyPatientIdentityController;
 use App\Http\Controllers\Admin\Emergency\EmergencyProcedureController;
 use App\Http\Controllers\Admin\Emergency\EmergencyReportController;
+use App\Http\Controllers\Admin\Emergency\EmergencyTaskController;
 use App\Http\Controllers\Admin\Emergency\EmergencyTriageController;
 use App\Http\Controllers\Admin\Emergency\EmergencyVitalsController;
-use App\Http\Controllers\Admin\Emergency\EmergencyTaskController;
+use App\Http\Controllers\Admin\FrontDesk\CallLogController;
+use App\Http\Controllers\Admin\FrontDesk\CourierLogController;
+use App\Http\Controllers\Admin\FrontDesk\FrontDeskDashboardController;
+use App\Http\Controllers\Admin\FrontDesk\FrontDeskReportController;
+use App\Http\Controllers\Admin\FrontDesk\IncidentLogController;
+use App\Http\Controllers\Admin\FrontDesk\LostFoundController;
+use App\Http\Controllers\Admin\FrontDesk\ShiftHandoverController;
+use App\Http\Controllers\Admin\FrontDesk\VisitorLogController;
+use App\Http\Controllers\Admin\Hr\AttendanceController;
+use App\Http\Controllers\Admin\Hr\DesignationController;
 use App\Http\Controllers\Admin\Hr\EmployeeController;
-use App\Http\Controllers\Admin\Billing\FinancialEntryController;
-use App\Http\Controllers\Admin\Settings\LocationController;
-use App\Http\Controllers\Admin\Settings\IcdCodeController;
+use App\Http\Controllers\Admin\Hr\HrConfigurationController;
+use App\Http\Controllers\Admin\Hr\LeaveController;
+use App\Http\Controllers\Admin\Hr\PayrollController;
 use App\Http\Controllers\Admin\Insurance\InsuranceProviderController;
 use App\Http\Controllers\Admin\Insurance\InsuranceTierController;
 use App\Http\Controllers\Admin\Insurance\InsuranceVerificationController;
+use App\Http\Controllers\Admin\Integrations\GoLiveChecklistController;
+use App\Http\Controllers\Admin\Integrations\InvoiceGatewayPaymentController;
+use App\Http\Controllers\Admin\Integrations\PaymentCallbackController;
+use App\Http\Controllers\Admin\Integrations\PaymentProviderController;
+use App\Http\Controllers\Admin\Integrations\PaymentReconciliationController;
+use App\Http\Controllers\Admin\Integrations\PaymentRefundController;
+use App\Http\Controllers\Admin\Integrations\PaymentRequestLinkController;
+use App\Http\Controllers\Admin\Integrations\PaymentTransactionController;
+use App\Http\Controllers\Admin\Integrations\ProviderHealthController;
+use App\Http\Controllers\Admin\Integrations\SchedulerStatusController;
+use App\Http\Controllers\Admin\Integrations\SmsDeliveryReportController;
+use App\Http\Controllers\Admin\Integrations\SmsEventController;
+use App\Http\Controllers\Admin\Integrations\SmsMessageController;
+use App\Http\Controllers\Admin\Integrations\SmsProviderController;
+use App\Http\Controllers\Admin\Integrations\SmsQueueController;
+use App\Http\Controllers\Admin\Integrations\SmsTemplateController;
+use App\Http\Controllers\Admin\Journey\JourneyAnalyticsController;
+use App\Http\Controllers\Admin\Journey\JourneyHandoffAssignmentController;
+use App\Http\Controllers\Admin\Journey\JourneyWorklistController;
+use App\Http\Controllers\Admin\Lab\AnalyzerController;
 use App\Http\Controllers\Admin\Lab\InvestigationCatalogueController;
 use App\Http\Controllers\Admin\Lab\InvestigationItemController;
 use App\Http\Controllers\Admin\Lab\LabTestController;
-use App\Http\Controllers\Admin\Hr\LeaveController;
-use App\Http\Controllers\Admin\Pharmacy\MedicationAdministrationController;
-use App\Http\Controllers\Admin\Pharmacy\MedicationAdministrationReportController;
-use App\Http\Controllers\Admin\AdmissionsWard\MarChartController;
-use App\Http\Controllers\Admin\Settings\ModuleController;
-use App\Http\Controllers\Admin\Settings\NotificationController;
-use App\Http\Controllers\Admin\Patients\PatientController;
+use App\Http\Controllers\Admin\Maternity\AntenatalVisitController;
+use App\Http\Controllers\Admin\Maternity\DeliveryRecordController;
+use App\Http\Controllers\Admin\Maternity\LaborEpisodeController;
+use App\Http\Controllers\Admin\Maternity\MaternityBillingReadinessController;
+use App\Http\Controllers\Admin\Maternity\MaternityCaseController;
+use App\Http\Controllers\Admin\Maternity\MaternityDashboardController;
+use App\Http\Controllers\Admin\Maternity\MaternityReportController;
+use App\Http\Controllers\Admin\Maternity\NewbornRecordController;
+use App\Http\Controllers\Admin\Maternity\PostnatalCaseController;
+use App\Http\Controllers\Admin\Maternity\PregnancyProfileController;
 use App\Http\Controllers\Admin\Patients\PatientComplaintController;
+use App\Http\Controllers\Admin\Patients\PatientController;
 use App\Http\Controllers\Admin\Patients\PatientInsuranceController;
 use App\Http\Controllers\Admin\Patients\PatientMergeController;
 use App\Http\Controllers\Admin\Patients\PatientPrivacyController;
-use App\Http\Controllers\Admin\Hr\PayrollController;
+use App\Http\Controllers\Admin\Patients\TriageController;
+use App\Http\Controllers\Admin\Pharmacy\CounterSaleController;
+use App\Http\Controllers\Admin\Pharmacy\DrugController;
+use App\Http\Controllers\Admin\Pharmacy\MedicationAdministrationController;
+use App\Http\Controllers\Admin\Pharmacy\MedicationAdministrationReportController;
+use App\Http\Controllers\Admin\Pharmacy\ProductController;
+use App\Http\Controllers\Admin\Pharmacy\ProductPricingController;
 use App\Http\Controllers\Admin\Procedures\ProcedureCatalogueController;
 use App\Http\Controllers\Admin\Procedures\ProcedureConsumablesController;
 use App\Http\Controllers\Admin\Procedures\ProcedureController;
-use App\Http\Controllers\Admin\Pharmacy\ProductController;
-use App\Http\Controllers\Admin\Pharmacy\ProductPricingController;
-use App\Http\Controllers\Admin\Store\ProductStockController;
-use App\Http\Controllers\Admin\Dashboard\ProfileController;
-use App\Http\Controllers\Admin\Reporting\LogRetentionController;
-use App\Http\Controllers\Admin\Settings\NotificationBroadcastController;
-use App\Http\Controllers\Admin\Settings\NotificationPreferenceController;
-use App\Http\Controllers\Admin\Reporting\OperationalReportController;
-use App\Http\Controllers\Admin\Reports\ConsultationSpecialtyReportController;
-use App\Http\Controllers\Admin\Store\PurchaseOrderController;
-use App\Http\Controllers\Admin\Store\PurchaseReturnController;
-use App\Http\Controllers\Admin\Appointments\QueueController;
-use App\Http\Controllers\Admin\Reporting\ReportController;
-use App\Http\Controllers\Admin\Reporting\ReportsHubController;
-use App\Http\Controllers\Admin\Settings\RoleController;
 use App\Http\Controllers\Admin\Procedures\ServiceCatalogController;
 use App\Http\Controllers\Admin\Procedures\ServiceRenderingActionController;
 use App\Http\Controllers\Admin\Procedures\ServiceRenderingController;
 use App\Http\Controllers\Admin\Procedures\ServiceRenderingReportController;
+use App\Http\Controllers\Admin\Reporting\ActivityLogController;
+use App\Http\Controllers\Admin\Reporting\DepartmentComparisonController;
+use App\Http\Controllers\Admin\Reporting\DepartmentMetricsController;
+use App\Http\Controllers\Admin\Reporting\LogRetentionController;
+use App\Http\Controllers\Admin\Reporting\OperationalReportController;
+use App\Http\Controllers\Admin\Reporting\ReportController;
+use App\Http\Controllers\Admin\Reporting\ReportsHubController;
 use App\Http\Controllers\Admin\Reporting\StatisticsController;
+use App\Http\Controllers\Admin\Reports\ConsultationSpecialtyReportController;
+use App\Http\Controllers\Admin\Settings\ComplaintCatalogueController;
+use App\Http\Controllers\Admin\Settings\ComplaintSearchController;
+use App\Http\Controllers\Admin\Settings\DepartmentController;
+use App\Http\Controllers\Admin\Settings\IcdCodeController;
+use App\Http\Controllers\Admin\Settings\JourneyNotificationPreferenceController;
+use App\Http\Controllers\Admin\Settings\LocationController;
+use App\Http\Controllers\Admin\Settings\ModuleController;
+use App\Http\Controllers\Admin\Settings\NotificationBroadcastController;
+use App\Http\Controllers\Admin\Settings\NotificationController;
+use App\Http\Controllers\Admin\Settings\NotificationPreferenceController;
+use App\Http\Controllers\Admin\Settings\RoleController;
 use App\Http\Controllers\Admin\Settings\SettingsController;
 use App\Http\Controllers\Admin\Settings\SpecialtyController;
+use App\Http\Controllers\Admin\Settings\UserController;
+use App\Http\Controllers\Admin\Settings\UserDepartmentAssignmentController;
+use App\Http\Controllers\Admin\Settings\UserPermissionController;
+use App\Http\Controllers\Admin\Store\DepartmentConsumablesController;
+use App\Http\Controllers\Admin\Store\ProductStockController;
+use App\Http\Controllers\Admin\Store\PurchaseOrderController;
+use App\Http\Controllers\Admin\Store\PurchaseReturnController;
 use App\Http\Controllers\Admin\Store\StockController;
 use App\Http\Controllers\Admin\Store\StockLocationController;
 use App\Http\Controllers\Admin\Store\StockRequisitionController;
 use App\Http\Controllers\Admin\Store\SupplierController;
-use App\Http\Controllers\Admin\Patients\TriageController;
-use App\Http\Controllers\Admin\Settings\UserController;
 use App\Http\Controllers\Admin\Visits\VisitController;
 use App\Http\Controllers\Admin\Visits\VisitDepartmentOptionsController;
 use App\Http\Controllers\Admin\Visits\VisitPreviewController;
-use App\Http\Controllers\Admin\AdmissionsWard\VitalController;
-use App\Http\Controllers\Admin\AdmissionsWard\WardController;
-use App\Http\Controllers\Doctor\Consultations\ConsultationClinicalEntryController;
-use App\Http\Controllers\Doctor\Consultations\ConsultationSpecialtyBillingController;
-use App\Http\Controllers\Doctor\Consultations\ConsultationOrderController;
-use App\Http\Controllers\Doctor\Consultations\ConsultationPlanningController;
-use App\Http\Controllers\Doctor\Consultations\ConsultationPrescriptionController;
-use App\Http\Controllers\Doctor\Consultations\ConsultationSessionController;
-use App\Http\Controllers\Doctor\Consultations\ConsultationSpecialtyEntryController;
-use App\Http\Controllers\Doctor\Consultations\ConsultationSpecialtyOrderSetController;
-use App\Http\Controllers\Doctor\Consultations\ConsultationSpecialtySummaryController;
-use App\Http\Controllers\Doctor\Consultations\DoctorConsultationPreferenceController;
-use App\Http\Controllers\Doctor\Consultations\ConsultationWorkspaceController;
-use App\Http\Controllers\Accounting\AccountController as AccountingAccountController;
-use App\Http\Controllers\Accounting\AccountingDashboardController;
-use App\Http\Controllers\Accounting\AccountingAccountMappingController;
-use App\Http\Controllers\Accounting\AccountingCloseReadinessController;
-use App\Http\Controllers\Accounting\AccountingPostingAttemptController;
-use App\Http\Controllers\Accounting\AccountsPayableController;
-use App\Http\Controllers\Accounting\AccountingPostingController;
-use App\Http\Controllers\Accounting\AccountingPeriodController;
-use App\Http\Controllers\Accounting\AccountingReportController;
-use App\Http\Controllers\Accounting\AccountingSettingsController;
-use App\Http\Controllers\Accounting\BudgetController;
-use App\Http\Controllers\Accounting\FiscalYearController;
-use App\Http\Controllers\Accounting\FixedAssetController;
-use App\Http\Controllers\Accounting\JournalEntryController;
-use App\Http\Controllers\Accounting\PayrollPostingController;
-use App\Http\Controllers\Accounting\ReceivableWorkbenchController;
-use App\Http\Controllers\Accounting\TaxAccountingController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Billing\BillingReportController;
+use App\Http\Controllers\Billing\CreditNoteController;
 use App\Http\Controllers\Billing\InvoiceController;
 use App\Http\Controllers\Billing\PaymentController;
 use App\Http\Controllers\Billing\PreviousBalanceController;
 use App\Http\Controllers\Billing\ReceivableController;
-use App\Http\Controllers\Billing\CreditNoteController;
 use App\Http\Controllers\Billing\SponsorController;
-use App\Http\Controllers\Billing\BillingReportController;
+use App\Http\Controllers\Doctor\Consultations\ConsultationClinicalEntryController;
+use App\Http\Controllers\Doctor\Consultations\ConsultationOrderController;
+use App\Http\Controllers\Doctor\Consultations\ConsultationPlanningController;
+use App\Http\Controllers\Doctor\Consultations\ConsultationPrescriptionController;
+use App\Http\Controllers\Doctor\Consultations\ConsultationSessionController;
+use App\Http\Controllers\Doctor\Consultations\ConsultationSpecialtyBillingController;
+use App\Http\Controllers\Doctor\Consultations\ConsultationSpecialtyEntryController;
+use App\Http\Controllers\Doctor\Consultations\ConsultationSpecialtyOrderSetController;
+use App\Http\Controllers\Doctor\Consultations\ConsultationSpecialtySummaryController;
+use App\Http\Controllers\Doctor\Consultations\ConsultationWorkspaceController;
+use App\Http\Controllers\Doctor\Consultations\DoctorConsultationPreferenceController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use App\Http\Controllers\Doctor\MedicalPatternController;
 use App\Http\Controllers\Doctor\PrescriptionController;
@@ -177,15 +213,21 @@ use App\Http\Controllers\Lab\LabRequestController;
 use App\Http\Controllers\Lab\LabResultController;
 use App\Http\Controllers\Lab\SampleController;
 use App\Http\Controllers\Pharmacy\DispensingController;
+use App\Http\Controllers\PublicPaymentController;
 use App\Http\Controllers\StaffDashboardController;
 use App\Http\Controllers\Theatre\TheatreController;
 use App\Http\Controllers\Theatre\TheatreRoomController;
 use App\Http\Controllers\Theatre\TheatreScheduleController;
+use App\Http\Middleware\SetLocale;
 use App\Models\Department;
+use App\Models\EmergencyCase;
 use App\Models\User;
+use App\Models\Visit;
 use App\Services\ProcedureRequestService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\Rule;
 
 /*
 |--------------------------------------------------------------------------
@@ -207,9 +249,9 @@ Route::middleware('guest')->group(function () {
 Route::post('logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
 // Language switcher — available to guests (session) and users (persisted to profile).
-Route::post('locale', function (\Illuminate\Http\Request $request) {
+Route::post('locale', function (Request $request) {
     $validated = $request->validate([
-        'locale' => ['required', 'string', \Illuminate\Validation\Rule::in(\App\Http\Middleware\SetLocale::SUPPORTED)],
+        'locale' => ['required', 'string', Rule::in(SetLocale::SUPPORTED)],
     ]);
 
     $request->session()->put('locale', $validated['locale']);
@@ -243,11 +285,11 @@ Route::get('/', function () {
 */
 Route::middleware(['throttle:public-payments', 'module:payment_gateway'])
     ->prefix('pay')->name('public.payments.')->group(function () {
-        Route::get('{token}', [\App\Http\Controllers\PublicPaymentController::class, 'show'])->name('show')->where('token', '[A-Za-z0-9]+');
-        Route::post('{token}/initiate', [\App\Http\Controllers\PublicPaymentController::class, 'initiate'])->name('initiate')->where('token', '[A-Za-z0-9]+');
-        Route::post('{token}/verify', [\App\Http\Controllers\PublicPaymentController::class, 'verify'])->name('verify')->where('token', '[A-Za-z0-9]+');
-        Route::get('{token}/status', [\App\Http\Controllers\PublicPaymentController::class, 'status'])->name('status')->where('token', '[A-Za-z0-9]+');
-        Route::get('{token}/receipt', [\App\Http\Controllers\PublicPaymentController::class, 'receipt'])->name('receipt')->where('token', '[A-Za-z0-9]+');
+        Route::get('{token}', [PublicPaymentController::class, 'show'])->name('show')->where('token', '[A-Za-z0-9]+');
+        Route::post('{token}/initiate', [PublicPaymentController::class, 'initiate'])->name('initiate')->where('token', '[A-Za-z0-9]+');
+        Route::post('{token}/verify', [PublicPaymentController::class, 'verify'])->name('verify')->where('token', '[A-Za-z0-9]+');
+        Route::get('{token}/status', [PublicPaymentController::class, 'status'])->name('status')->where('token', '[A-Za-z0-9]+');
+        Route::get('{token}/receipt', [PublicPaymentController::class, 'receipt'])->name('receipt')->where('token', '[A-Za-z0-9]+');
     });
 
 /*
@@ -278,40 +320,40 @@ Route::middleware('auth')->group(function () {
             ->middleware('can:patients.view');
 
         // Department-type dashboard — resolves the right dashboard for the user.
-        Route::get('my-dashboard', [\App\Http\Controllers\Admin\Dashboard\DepartmentDashboardController::class, 'index'])->name('my-dashboard');
-        Route::post('my-dashboard/context', [\App\Http\Controllers\Admin\Dashboard\DepartmentContextController::class, 'store'])
+        Route::get('my-dashboard', [DepartmentDashboardController::class, 'index'])->name('my-dashboard');
+        Route::post('my-dashboard/context', [DepartmentContextController::class, 'store'])
             ->name('my-dashboard.context.store')
             ->middleware('can:departments.context.switch');
-        Route::delete('my-dashboard/context', [\App\Http\Controllers\Admin\Dashboard\DepartmentContextController::class, 'destroy'])
+        Route::delete('my-dashboard/context', [DepartmentContextController::class, 'destroy'])
             ->name('my-dashboard.context.destroy')
             ->middleware('can:departments.context.switch');
 
         // Phase 9.3 — patient flow worklist (capability-gated in the controller).
-        Route::get('journey/worklist', [\App\Http\Controllers\Admin\Journey\JourneyWorklistController::class, 'index'])->name('journey.worklist');
+        Route::get('journey/worklist', [JourneyWorklistController::class, 'index'])->name('journey.worklist');
         // Phase 9.5 — live refresh (returns the rows + summary partial).
-        Route::get('journey/worklist/refresh', [\App\Http\Controllers\Admin\Journey\JourneyWorklistController::class, 'refresh'])->name('journey.worklist.refresh');
+        Route::get('journey/worklist/refresh', [JourneyWorklistController::class, 'refresh'])->name('journey.worklist.refresh');
         // Phase 9.7 — per-user journey notification preferences.
-        Route::get('settings/journey-notifications', [\App\Http\Controllers\Admin\Settings\JourneyNotificationPreferenceController::class, 'show'])->name('settings.journey-notifications');
-        Route::put('settings/journey-notifications', [\App\Http\Controllers\Admin\Settings\JourneyNotificationPreferenceController::class, 'update'])
+        Route::get('settings/journey-notifications', [JourneyNotificationPreferenceController::class, 'show'])->name('settings.journey-notifications');
+        Route::put('settings/journey-notifications', [JourneyNotificationPreferenceController::class, 'update'])
             ->name('settings.journey-notifications.update')
             ->middleware('can:settings.journey_notifications.update');
 
         // Phase 9.8 — journey SLA / operational performance analytics (capability-gated).
-        Route::get('journey/analytics', [\App\Http\Controllers\Admin\Journey\JourneyAnalyticsController::class, 'index'])->name('journey.analytics');
-        Route::get('journey/analytics/export', [\App\Http\Controllers\Admin\Journey\JourneyAnalyticsController::class, 'export'])->name('journey.analytics.export');
+        Route::get('journey/analytics', [JourneyAnalyticsController::class, 'index'])->name('journey.analytics');
+        Route::get('journey/analytics/export', [JourneyAnalyticsController::class, 'export'])->name('journey.analytics.export');
 
         // Phase 9.5 — handoff coordination actions (authorised in the service).
         Route::prefix('journey/handoffs')->name('journey.handoffs.')->group(function () {
-            Route::post('claim', [\App\Http\Controllers\Admin\Journey\JourneyHandoffAssignmentController::class, 'claim'])
+            Route::post('claim', [JourneyHandoffAssignmentController::class, 'claim'])
                 ->name('claim')
                 ->middleware('can:journey.handoffs.claim');
-            Route::post('assign', [\App\Http\Controllers\Admin\Journey\JourneyHandoffAssignmentController::class, 'assign'])
+            Route::post('assign', [JourneyHandoffAssignmentController::class, 'assign'])
                 ->name('assign')
                 ->middleware('can:journey.handoffs.assign');
-            Route::post('{assignment}/acknowledge', [\App\Http\Controllers\Admin\Journey\JourneyHandoffAssignmentController::class, 'acknowledge'])
+            Route::post('{assignment}/acknowledge', [JourneyHandoffAssignmentController::class, 'acknowledge'])
                 ->name('acknowledge')
                 ->middleware('can:journey.handoffs.acknowledge');
-            Route::post('{assignment}/resolve', [\App\Http\Controllers\Admin\Journey\JourneyHandoffAssignmentController::class, 'resolve'])
+            Route::post('{assignment}/resolve', [JourneyHandoffAssignmentController::class, 'resolve'])
                 ->name('resolve')
                 ->middleware('can:journey.handoffs.resolve');
         });
@@ -340,16 +382,16 @@ Route::middleware('auth')->group(function () {
             Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit')->middleware('can:users.edit');
             Route::put('users/{user}', [UserController::class, 'update'])->name('users.update')->middleware('can:users.edit');
             Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status')->middleware('can:users.disable');
-            Route::get('users/{user}/departments', [\App\Http\Controllers\Admin\Settings\UserDepartmentAssignmentController::class, 'index'])
+            Route::get('users/{user}/departments', [UserDepartmentAssignmentController::class, 'index'])
                 ->name('users.departments.index')
                 ->middleware('can:users.departments.view');
-            Route::post('users/{user}/departments', [\App\Http\Controllers\Admin\Settings\UserDepartmentAssignmentController::class, 'store'])
+            Route::post('users/{user}/departments', [UserDepartmentAssignmentController::class, 'store'])
                 ->name('users.departments.store')
                 ->middleware('can:users.departments.manage');
-            Route::patch('users/{user}/departments/{department}/primary', [\App\Http\Controllers\Admin\Settings\UserDepartmentAssignmentController::class, 'setPrimary'])
+            Route::patch('users/{user}/departments/{department}/primary', [UserDepartmentAssignmentController::class, 'setPrimary'])
                 ->name('users.departments.primary')
                 ->middleware('can:users.departments.manage');
-            Route::delete('users/{user}/departments/{department}', [\App\Http\Controllers\Admin\Settings\UserDepartmentAssignmentController::class, 'destroy'])
+            Route::delete('users/{user}/departments/{department}', [UserDepartmentAssignmentController::class, 'destroy'])
                 ->name('users.departments.destroy')
                 ->middleware('can:users.departments.manage');
         });
@@ -366,14 +408,14 @@ Route::middleware('auth')->group(function () {
 
         // Permissions Dashboard (read-only audit / catalogue)
         Route::middleware('can:permissions.view')->group(function () {
-            Route::get('permissions', [\App\Http\Controllers\Admin\Dashboard\PermissionDashboardController::class, 'index'])->name('permissions.index');
-            Route::post('permissions/refresh', [\App\Http\Controllers\Admin\Dashboard\PermissionDashboardController::class, 'refresh'])->name('permissions.refresh')->middleware('can:permissions.assign');
+            Route::get('permissions', [PermissionDashboardController::class, 'index'])->name('permissions.index');
+            Route::post('permissions/refresh', [PermissionDashboardController::class, 'refresh'])->name('permissions.refresh')->middleware('can:permissions.assign');
         });
 
         // Per-user direct permission overrides
         Route::middleware('can:permissions.assign')->group(function () {
-            Route::get('users/{user}/permissions', [\App\Http\Controllers\Admin\Settings\UserPermissionController::class, 'edit'])->name('users.permissions.edit');
-            Route::put('users/{user}/permissions', [\App\Http\Controllers\Admin\Settings\UserPermissionController::class, 'update'])->name('users.permissions.update');
+            Route::get('users/{user}/permissions', [UserPermissionController::class, 'edit'])->name('users.permissions.edit');
+            Route::put('users/{user}/permissions', [UserPermissionController::class, 'update'])->name('users.permissions.update');
         });
 
         // Patients
@@ -677,7 +719,7 @@ Route::middleware('auth')->group(function () {
             Route::post('cases/{emergencyCase}/confirm-identity', [EmergencyPatientIdentityController::class, 'store'])->name('cases.confirm-identity')->middleware('can:patients.merge.confirm_identity');
             Route::post('cases/{emergencyCase}/register-identity', [EmergencyPatientIdentityController::class, 'register'])->name('cases.register-identity')->middleware('can:patients.merge.confirm_identity');
 
-            Route::get('cases/{emergencyCase}/triage', fn (\App\Models\EmergencyCase $emergencyCase) => redirect()->route('admin.emergency.cases.show', $emergencyCase))->name('triage.show');
+            Route::get('cases/{emergencyCase}/triage', fn (EmergencyCase $emergencyCase) => redirect()->route('admin.emergency.cases.show', $emergencyCase))->name('triage.show');
             Route::post('cases/{emergencyCase}/triage', [EmergencyTriageController::class, 'store'])->name('triage.store')->middleware('can:emergency.triage.perform');
             Route::post('cases/{emergencyCase}/assign-bay', [EmergencyBayController::class, 'assign'])->name('bay.assign')->middleware('can:emergency.bay.assign');
             Route::post('cases/{emergencyCase}/assign-ward-bed', [EmergencyBayController::class, 'assignWardBed'])->name('bay.assign-ward-bed')->middleware('can:emergency.bay.assign');
@@ -1029,7 +1071,7 @@ Route::middleware('auth')->group(function () {
                 ->prefix('failed-postings')
                 ->name('failed-postings.')
                 ->group(function () {
-                    $workbench = \App\Http\Controllers\Accounting\FailedPostingWorkbenchController::class;
+                    $workbench = FailedPostingWorkbenchController::class;
                     Route::get('/', [$workbench, 'index'])->name('index');
                     Route::post('retry-selected', [$workbench, 'retrySelected'])->name('retry-selected')->middleware('can:accounting.failed_postings.retry');
                     Route::get('{failedPosting}', [$workbench, 'show'])->name('show');
@@ -1042,7 +1084,7 @@ Route::middleware('auth')->group(function () {
                 ->prefix('subledger-reconciliation')
                 ->name('subledger-reconciliation.')
                 ->group(function () {
-                    $controller = \App\Http\Controllers\Accounting\SubledgerReconciliationController::class;
+                    $controller = SubledgerReconciliationController::class;
                     Route::get('/', [$controller, 'index'])->name('index');
                     Route::get('create', [$controller, 'create'])->name('create')->middleware('can:accounting.subledger_reconciliation.run');
                     Route::post('/', [$controller, 'store'])->name('store')->middleware('can:accounting.subledger_reconciliation.run');
@@ -1086,10 +1128,10 @@ Route::middleware('auth')->group(function () {
 
             // ── Bank Accounts, Statement Import & Reconciliation (Phase B) ──
             Route::middleware('module:accounting_basic')->prefix('bank')->name('bank.')->group(function () {
-                $bankAccounts = \App\Http\Controllers\Accounting\BankAccountController::class;
-                $imports = \App\Http\Controllers\Accounting\BankStatementImportController::class;
-                $recons = \App\Http\Controllers\Accounting\BankReconciliationController::class;
-                $adjustments = \App\Http\Controllers\Accounting\BankReconciliationAdjustmentController::class;
+                $bankAccounts = BankAccountController::class;
+                $imports = BankStatementImportController::class;
+                $recons = BankReconciliationController::class;
+                $adjustments = BankReconciliationAdjustmentController::class;
 
                 Route::middleware('can:accounting.bank_accounts.view')->prefix('accounts')->name('accounts.')->group(function () use ($bankAccounts) {
                     Route::get('/', [$bankAccounts, 'index'])->name('index');
@@ -1134,8 +1176,8 @@ Route::middleware('auth')->group(function () {
                 ->prefix('basic-bridge')
                 ->name('basic-bridge.')
                 ->group(function () {
-                    Route::get('/', [\App\Http\Controllers\Accounting\BasicAccountingBridgeController::class, 'index'])->name('index');
-                    Route::post('execute', [\App\Http\Controllers\Accounting\BasicAccountingBridgeController::class, 'execute'])
+                    Route::get('/', [BasicAccountingBridgeController::class, 'index'])->name('index');
+                    Route::post('execute', [BasicAccountingBridgeController::class, 'execute'])
                         ->name('execute')
                         ->middleware('can:accounting.basic.batch.execute');
                 });
@@ -1144,23 +1186,23 @@ Route::middleware('auth')->group(function () {
                 ->prefix('posting-templates')
                 ->name('posting-templates.')
                 ->group(function () {
-                    Route::get('/', [\App\Http\Controllers\Accounting\AccountingPostingTemplateController::class, 'index'])->name('index');
-                    Route::get('create', [\App\Http\Controllers\Accounting\AccountingPostingTemplateController::class, 'create'])->name('create')->middleware('can:accounting.posting_templates.manage');
-                    Route::post('/', [\App\Http\Controllers\Accounting\AccountingPostingTemplateController::class, 'store'])->name('store')->middleware('can:accounting.posting_templates.manage');
-                    Route::get('{postingTemplate}/edit', [\App\Http\Controllers\Accounting\AccountingPostingTemplateController::class, 'edit'])->name('edit')->middleware('can:accounting.posting_templates.manage');
-                    Route::put('{postingTemplate}', [\App\Http\Controllers\Accounting\AccountingPostingTemplateController::class, 'update'])->name('update')->middleware('can:accounting.posting_templates.manage');
-                    Route::patch('{postingTemplate}/approve', [\App\Http\Controllers\Accounting\AccountingPostingTemplateController::class, 'approve'])->name('approve')->middleware('can:accounting.posting_templates.approve');
-                    Route::patch('{postingTemplate}/disable', [\App\Http\Controllers\Accounting\AccountingPostingTemplateController::class, 'disable'])->name('disable')->middleware('can:accounting.posting_templates.manage');
+                    Route::get('/', [AccountingPostingTemplateController::class, 'index'])->name('index');
+                    Route::get('create', [AccountingPostingTemplateController::class, 'create'])->name('create')->middleware('can:accounting.posting_templates.manage');
+                    Route::post('/', [AccountingPostingTemplateController::class, 'store'])->name('store')->middleware('can:accounting.posting_templates.manage');
+                    Route::get('{postingTemplate}/edit', [AccountingPostingTemplateController::class, 'edit'])->name('edit')->middleware('can:accounting.posting_templates.manage');
+                    Route::put('{postingTemplate}', [AccountingPostingTemplateController::class, 'update'])->name('update')->middleware('can:accounting.posting_templates.manage');
+                    Route::patch('{postingTemplate}/approve', [AccountingPostingTemplateController::class, 'approve'])->name('approve')->middleware('can:accounting.posting_templates.approve');
+                    Route::patch('{postingTemplate}/disable', [AccountingPostingTemplateController::class, 'disable'])->name('disable')->middleware('can:accounting.posting_templates.manage');
                 });
         });
 
         // HR & Payroll
         Route::prefix('hr')->name('hr.')->middleware('module:hr')->group(function () {
-            Route::get('configuration', [\App\Http\Controllers\Admin\Hr\HrConfigurationController::class, 'index'])
+            Route::get('configuration', [HrConfigurationController::class, 'index'])
                 ->name('configuration.index')->middleware('can:hr.shifts.view');
-            Route::post('configuration/shifts', [\App\Http\Controllers\Admin\Hr\HrConfigurationController::class, 'storeShift'])
+            Route::post('configuration/shifts', [HrConfigurationController::class, 'storeShift'])
                 ->name('configuration.shifts.store')->middleware('can:hr.shifts.manage');
-            Route::put('configuration/policies/{policy}', [\App\Http\Controllers\Admin\Hr\HrConfigurationController::class, 'updatePolicy'])
+            Route::put('configuration/policies/{policy}', [HrConfigurationController::class, 'updatePolicy'])
                 ->name('configuration.policies.update')->middleware('can:hr.shifts.manage');
             // Employees
             Route::middleware('can:hr.employees.view')->group(function () {
@@ -1647,7 +1689,7 @@ Route::middleware('auth')->group(function () {
         // staff_performance) can still reach that page.
         Route::middleware('module:reports')->prefix('statistics')->name('statistics.')->group(function () {
             Route::get('/', [StatisticsController::class, 'dashboard'])->name('dashboard');
-            Route::get('investigation-results', function (\Illuminate\Http\Request $request) {
+            Route::get('investigation-results', function (Request $request) {
                 return redirect()->route('admin.statistics.investigations', $request->query());
             })->name('investigation-results');
             foreach ([
@@ -1668,11 +1710,11 @@ Route::middleware('auth')->group(function () {
             Route::get('consultation-specialties', [ConsultationSpecialtyReportController::class, 'index'])->name('consultation-specialties.index');
             Route::get('consultation-specialties/data', [ConsultationSpecialtyReportController::class, 'data'])->name('consultation-specialties.data');
             Route::get('consultation-specialties/export', [ConsultationSpecialtyReportController::class, 'export'])->name('consultation-specialties.export');
-            Route::get('department-metrics', [\App\Http\Controllers\Admin\Reporting\DepartmentMetricsController::class, 'index'])->name('department-metrics');
-            Route::get('department-comparison', [\App\Http\Controllers\Admin\Reporting\DepartmentComparisonController::class, 'index'])
+            Route::get('department-metrics', [DepartmentMetricsController::class, 'index'])->name('department-metrics');
+            Route::get('department-comparison', [DepartmentComparisonController::class, 'index'])
                 ->name('department-comparison.index')
                 ->middleware('can:reports.department_comparison.view');
-            Route::get('department-comparison/export', [\App\Http\Controllers\Admin\Reporting\DepartmentComparisonController::class, 'export'])
+            Route::get('department-comparison/export', [DepartmentComparisonController::class, 'export'])
                 ->name('department-comparison.export')
                 ->middleware('can:reports.department_comparison.export');
             foreach ([
@@ -1740,6 +1782,8 @@ Route::middleware('auth')->group(function () {
             Route::put('invoice', [SettingsController::class, 'updateInvoice'])->name('invoice.update');
             Route::get('payment-methods', [SettingsController::class, 'paymentMethods'])->name('payment-methods');
             Route::put('payment-methods', [SettingsController::class, 'updatePaymentMethods'])->name('payment-methods.update');
+            Route::get('payment-timing', [SettingsController::class, 'paymentTiming'])->name('payment-timing');
+            Route::put('payment-timing', [SettingsController::class, 'updatePaymentTiming'])->name('payment-timing.update');
             Route::get('ward', [SettingsController::class, 'ward'])->name('ward');
             Route::put('ward', [SettingsController::class, 'updateWard'])->name('ward.update');
             Route::get('activity-log', [ActivityLogController::class, 'index'])->name('activity-log');
@@ -1788,93 +1832,93 @@ Route::middleware('auth')->group(function () {
             // ── SMS Gateway ──────────────────────────────────────────────
             Route::middleware(['module:sms_gateway', 'can:integrations.sms.view'])
                 ->prefix('sms')->name('sms.')->group(function () {
-                    Route::get('providers', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'index'])->name('providers.index');
-                    Route::get('providers/create', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'create'])->name('providers.create')->middleware('can:integrations.sms.providers.manage');
-                    Route::post('providers', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'store'])->name('providers.store')->middleware('can:integrations.sms.providers.manage');
-                    Route::get('providers/{provider}/edit', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'edit'])->name('providers.edit')->middleware('can:integrations.sms.providers.manage');
-                    Route::put('providers/{provider}', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'update'])->name('providers.update')->middleware('can:integrations.sms.providers.manage');
-                    Route::put('providers/{provider}/credentials', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'updateCredentials'])->name('providers.credentials.update')->middleware('can:integrations.sms.credentials.manage');
-                    Route::post('providers/{provider}/activate', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'activate'])->name('providers.activate')->middleware('can:integrations.sms.providers.activate');
-                    Route::post('providers/{provider}/deactivate', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'deactivate'])->name('providers.deactivate')->middleware('can:integrations.sms.providers.activate');
-                    Route::post('providers/{provider}/test', [\App\Http\Controllers\Admin\Integrations\SmsProviderController::class, 'test'])->name('providers.test')->middleware('can:integrations.sms.test');
+                    Route::get('providers', [SmsProviderController::class, 'index'])->name('providers.index');
+                    Route::get('providers/create', [SmsProviderController::class, 'create'])->name('providers.create')->middleware('can:integrations.sms.providers.manage');
+                    Route::post('providers', [SmsProviderController::class, 'store'])->name('providers.store')->middleware('can:integrations.sms.providers.manage');
+                    Route::get('providers/{provider}/edit', [SmsProviderController::class, 'edit'])->name('providers.edit')->middleware('can:integrations.sms.providers.manage');
+                    Route::put('providers/{provider}', [SmsProviderController::class, 'update'])->name('providers.update')->middleware('can:integrations.sms.providers.manage');
+                    Route::put('providers/{provider}/credentials', [SmsProviderController::class, 'updateCredentials'])->name('providers.credentials.update')->middleware('can:integrations.sms.credentials.manage');
+                    Route::post('providers/{provider}/activate', [SmsProviderController::class, 'activate'])->name('providers.activate')->middleware('can:integrations.sms.providers.activate');
+                    Route::post('providers/{provider}/deactivate', [SmsProviderController::class, 'deactivate'])->name('providers.deactivate')->middleware('can:integrations.sms.providers.activate');
+                    Route::post('providers/{provider}/test', [SmsProviderController::class, 'test'])->name('providers.test')->middleware('can:integrations.sms.test');
 
-                    Route::get('messages', [\App\Http\Controllers\Admin\Integrations\SmsMessageController::class, 'index'])->name('messages.index');
-                    Route::get('messages/create', [\App\Http\Controllers\Admin\Integrations\SmsMessageController::class, 'create'])->name('messages.create')->middleware('can:integrations.sms.send');
-                    Route::post('messages', [\App\Http\Controllers\Admin\Integrations\SmsMessageController::class, 'store'])->name('messages.store')->middleware('can:integrations.sms.send');
-                    Route::get('messages/{message}', [\App\Http\Controllers\Admin\Integrations\SmsMessageController::class, 'show'])->name('messages.show');
-                    Route::post('messages/{message}/resend', [\App\Http\Controllers\Admin\Integrations\SmsMessageController::class, 'resend'])->name('messages.resend')->middleware('can:integrations.sms.send');
+                    Route::get('messages', [SmsMessageController::class, 'index'])->name('messages.index');
+                    Route::get('messages/create', [SmsMessageController::class, 'create'])->name('messages.create')->middleware('can:integrations.sms.send');
+                    Route::post('messages', [SmsMessageController::class, 'store'])->name('messages.store')->middleware('can:integrations.sms.send');
+                    Route::get('messages/{message}', [SmsMessageController::class, 'show'])->name('messages.show');
+                    Route::post('messages/{message}/resend', [SmsMessageController::class, 'resend'])->name('messages.resend')->middleware('can:integrations.sms.send');
 
                     Route::middleware('can:integrations.sms.templates.manage')->group(function () {
-                        Route::get('templates', [\App\Http\Controllers\Admin\Integrations\SmsTemplateController::class, 'index'])->name('templates.index');
-                        Route::post('templates', [\App\Http\Controllers\Admin\Integrations\SmsTemplateController::class, 'store'])->name('templates.store');
-                        Route::put('templates/{template}', [\App\Http\Controllers\Admin\Integrations\SmsTemplateController::class, 'update'])->name('templates.update');
+                        Route::get('templates', [SmsTemplateController::class, 'index'])->name('templates.index');
+                        Route::post('templates', [SmsTemplateController::class, 'store'])->name('templates.store');
+                        Route::put('templates/{template}', [SmsTemplateController::class, 'update'])->name('templates.update');
                     });
 
-                    Route::get('delivery-reports', [\App\Http\Controllers\Admin\Integrations\SmsDeliveryReportController::class, 'index'])->name('delivery-reports.index')->middleware('can:integrations.sms.reports.view');
+                    Route::get('delivery-reports', [SmsDeliveryReportController::class, 'index'])->name('delivery-reports.index')->middleware('can:integrations.sms.reports.view');
 
                     // Phase 2 — queue, events, status reconciliation, template preview
-                    Route::get('queue', [\App\Http\Controllers\Admin\Integrations\SmsQueueController::class, 'index'])->name('queue.index')->middleware('can:integrations.sms.queue.view');
-                    Route::post('messages/{message}/retry', [\App\Http\Controllers\Admin\Integrations\SmsQueueController::class, 'retry'])->name('queue.retry')->middleware('can:integrations.sms.queue.retry');
-                    Route::post('status-reconcile', [\App\Http\Controllers\Admin\Integrations\SmsQueueController::class, 'reconcile'])->name('status.reconcile')->middleware('can:integrations.sms.status.reconcile');
-                    Route::get('events', [\App\Http\Controllers\Admin\Integrations\SmsEventController::class, 'index'])->name('events.index')->middleware('can:integrations.sms.events.manage');
-                    Route::put('events', [\App\Http\Controllers\Admin\Integrations\SmsEventController::class, 'update'])->name('events.update')->middleware('can:integrations.sms.events.manage');
-                    Route::post('templates/preview', [\App\Http\Controllers\Admin\Integrations\SmsTemplateController::class, 'preview'])->name('templates.preview')->middleware('can:integrations.sms.templates.manage');
+                    Route::get('queue', [SmsQueueController::class, 'index'])->name('queue.index')->middleware('can:integrations.sms.queue.view');
+                    Route::post('messages/{message}/retry', [SmsQueueController::class, 'retry'])->name('queue.retry')->middleware('can:integrations.sms.queue.retry');
+                    Route::post('status-reconcile', [SmsQueueController::class, 'reconcile'])->name('status.reconcile')->middleware('can:integrations.sms.status.reconcile');
+                    Route::get('events', [SmsEventController::class, 'index'])->name('events.index')->middleware('can:integrations.sms.events.manage');
+                    Route::put('events', [SmsEventController::class, 'update'])->name('events.update')->middleware('can:integrations.sms.events.manage');
+                    Route::post('templates/preview', [SmsTemplateController::class, 'preview'])->name('templates.preview')->middleware('can:integrations.sms.templates.manage');
                 });
 
             // ── Payment Gateway ──────────────────────────────────────────
             Route::middleware(['module:payment_gateway', 'can:integrations.payments.view'])
                 ->prefix('payments')->name('payments.')->group(function () {
-                    Route::get('providers', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'index'])->name('providers.index');
-                    Route::get('providers/create', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'create'])->name('providers.create')->middleware('can:integrations.payments.providers.manage');
-                    Route::post('providers', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'store'])->name('providers.store')->middleware('can:integrations.payments.providers.manage');
-                    Route::get('providers/{provider}/edit', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'edit'])->name('providers.edit')->middleware('can:integrations.payments.providers.manage');
-                    Route::put('providers/{provider}', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'update'])->name('providers.update')->middleware('can:integrations.payments.providers.manage');
-                    Route::put('providers/{provider}/credentials', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'updateCredentials'])->name('providers.credentials.update')->middleware('can:integrations.payments.credentials.manage');
-                    Route::post('providers/{provider}/activate', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'activate'])->name('providers.activate')->middleware('can:integrations.payments.providers.activate');
-                    Route::post('providers/{provider}/deactivate', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'deactivate'])->name('providers.deactivate')->middleware('can:integrations.payments.providers.activate');
-                    Route::post('providers/{provider}/test', [\App\Http\Controllers\Admin\Integrations\PaymentProviderController::class, 'test'])->name('providers.test')->middleware('can:integrations.payments.test');
+                    Route::get('providers', [PaymentProviderController::class, 'index'])->name('providers.index');
+                    Route::get('providers/create', [PaymentProviderController::class, 'create'])->name('providers.create')->middleware('can:integrations.payments.providers.manage');
+                    Route::post('providers', [PaymentProviderController::class, 'store'])->name('providers.store')->middleware('can:integrations.payments.providers.manage');
+                    Route::get('providers/{provider}/edit', [PaymentProviderController::class, 'edit'])->name('providers.edit')->middleware('can:integrations.payments.providers.manage');
+                    Route::put('providers/{provider}', [PaymentProviderController::class, 'update'])->name('providers.update')->middleware('can:integrations.payments.providers.manage');
+                    Route::put('providers/{provider}/credentials', [PaymentProviderController::class, 'updateCredentials'])->name('providers.credentials.update')->middleware('can:integrations.payments.credentials.manage');
+                    Route::post('providers/{provider}/activate', [PaymentProviderController::class, 'activate'])->name('providers.activate')->middleware('can:integrations.payments.providers.activate');
+                    Route::post('providers/{provider}/deactivate', [PaymentProviderController::class, 'deactivate'])->name('providers.deactivate')->middleware('can:integrations.payments.providers.activate');
+                    Route::post('providers/{provider}/test', [PaymentProviderController::class, 'test'])->name('providers.test')->middleware('can:integrations.payments.test');
 
-                    Route::get('transactions', [\App\Http\Controllers\Admin\Integrations\PaymentTransactionController::class, 'index'])->name('transactions.index')->middleware('can:integrations.payments.transactions.view');
-                    Route::get('transactions/create', [\App\Http\Controllers\Admin\Integrations\PaymentTransactionController::class, 'create'])->name('transactions.create')->middleware('can:integrations.payments.transactions.initiate');
-                    Route::post('transactions', [\App\Http\Controllers\Admin\Integrations\PaymentTransactionController::class, 'store'])->name('transactions.store')->middleware('can:integrations.payments.transactions.initiate');
-                    Route::get('transactions/{transaction}', [\App\Http\Controllers\Admin\Integrations\PaymentTransactionController::class, 'show'])->name('transactions.show')->middleware('can:integrations.payments.transactions.view');
-                    Route::post('transactions/{transaction}/verify', [\App\Http\Controllers\Admin\Integrations\PaymentTransactionController::class, 'verify'])->name('transactions.verify')->middleware('can:integrations.payments.transactions.verify');
-                    Route::post('transactions/{transaction}/refunds', [\App\Http\Controllers\Admin\Integrations\PaymentRefundController::class, 'store'])->name('refunds.store')->middleware('can:integrations.payments.refunds.manage');
+                    Route::get('transactions', [PaymentTransactionController::class, 'index'])->name('transactions.index')->middleware('can:integrations.payments.transactions.view');
+                    Route::get('transactions/create', [PaymentTransactionController::class, 'create'])->name('transactions.create')->middleware('can:integrations.payments.transactions.initiate');
+                    Route::post('transactions', [PaymentTransactionController::class, 'store'])->name('transactions.store')->middleware('can:integrations.payments.transactions.initiate');
+                    Route::get('transactions/{transaction}', [PaymentTransactionController::class, 'show'])->name('transactions.show')->middleware('can:integrations.payments.transactions.view');
+                    Route::post('transactions/{transaction}/verify', [PaymentTransactionController::class, 'verify'])->name('transactions.verify')->middleware('can:integrations.payments.transactions.verify');
+                    Route::post('transactions/{transaction}/refunds', [PaymentRefundController::class, 'store'])->name('refunds.store')->middleware('can:integrations.payments.refunds.manage');
 
-                    Route::get('callbacks', [\App\Http\Controllers\Admin\Integrations\PaymentCallbackController::class, 'index'])->name('callbacks.index')->middleware('can:integrations.payments.callbacks.view');
+                    Route::get('callbacks', [PaymentCallbackController::class, 'index'])->name('callbacks.index')->middleware('can:integrations.payments.callbacks.view');
 
                     // Phase 2 — reconciliation dashboard, recheck/expire, refund bridge, request links
-                    Route::get('reconciliation', [\App\Http\Controllers\Admin\Integrations\PaymentReconciliationController::class, 'index'])->name('reconciliation.index')->middleware('can:integrations.payments.reconciliation.view');
-                    Route::get('reconciliation/export', [\App\Http\Controllers\Admin\Integrations\PaymentReconciliationController::class, 'export'])->name('reconciliation.export')->middleware('can:integrations.payments.reconciliation.view');
-                    Route::post('transactions/{transaction}/recheck', [\App\Http\Controllers\Admin\Integrations\PaymentReconciliationController::class, 'recheck'])->name('reconciliation.recheck')->middleware('can:integrations.payments.reconciliation.verify');
-                    Route::post('transactions/{transaction}/expire', [\App\Http\Controllers\Admin\Integrations\PaymentReconciliationController::class, 'markExpired'])->name('transactions.expire')->middleware('can:integrations.payments.reconciliation.expire');
-                    Route::post('transactions/{transaction}/cancel', [\App\Http\Controllers\Admin\Integrations\PaymentReconciliationController::class, 'cancel'])->name('transactions.cancel')->middleware('can:integrations.payments.reconciliation.expire');
-                    Route::post('transactions/{transaction}/refund-bridge', [\App\Http\Controllers\Admin\Integrations\PaymentRefundController::class, 'bridge'])->name('refunds.bridge')->middleware('can:integrations.payments.refunds.prepare');
+                    Route::get('reconciliation', [PaymentReconciliationController::class, 'index'])->name('reconciliation.index')->middleware('can:integrations.payments.reconciliation.view');
+                    Route::get('reconciliation/export', [PaymentReconciliationController::class, 'export'])->name('reconciliation.export')->middleware('can:integrations.payments.reconciliation.view');
+                    Route::post('transactions/{transaction}/recheck', [PaymentReconciliationController::class, 'recheck'])->name('reconciliation.recheck')->middleware('can:integrations.payments.reconciliation.verify');
+                    Route::post('transactions/{transaction}/expire', [PaymentReconciliationController::class, 'markExpired'])->name('transactions.expire')->middleware('can:integrations.payments.reconciliation.expire');
+                    Route::post('transactions/{transaction}/cancel', [PaymentReconciliationController::class, 'cancel'])->name('transactions.cancel')->middleware('can:integrations.payments.reconciliation.expire');
+                    Route::post('transactions/{transaction}/refund-bridge', [PaymentRefundController::class, 'bridge'])->name('refunds.bridge')->middleware('can:integrations.payments.refunds.prepare');
 
-                    Route::get('request-links', [\App\Http\Controllers\Admin\Integrations\PaymentRequestLinkController::class, 'index'])->name('request-links.index')->middleware('can:integrations.payments.request_links.manage');
-                    Route::post('request-links', [\App\Http\Controllers\Admin\Integrations\PaymentRequestLinkController::class, 'store'])->name('request-links.store')->middleware('can:integrations.payments.request_links.manage');
-                    Route::post('request-links/{link}/expire', [\App\Http\Controllers\Admin\Integrations\PaymentRequestLinkController::class, 'expire'])->name('request-links.expire')->middleware('can:integrations.payments.request_links.manage');
-                    Route::post('invoices/{invoice}/payment-request-sms', [\App\Http\Controllers\Admin\Integrations\PaymentRequestLinkController::class, 'sendSms'])->name('invoices.payment-request-sms')->middleware('can:integrations.payments.request_links.manage');
+                    Route::get('request-links', [PaymentRequestLinkController::class, 'index'])->name('request-links.index')->middleware('can:integrations.payments.request_links.manage');
+                    Route::post('request-links', [PaymentRequestLinkController::class, 'store'])->name('request-links.store')->middleware('can:integrations.payments.request_links.manage');
+                    Route::post('request-links/{link}/expire', [PaymentRequestLinkController::class, 'expire'])->name('request-links.expire')->middleware('can:integrations.payments.request_links.manage');
+                    Route::post('invoices/{invoice}/payment-request-sms', [PaymentRequestLinkController::class, 'sendSms'])->name('invoices.payment-request-sms')->middleware('can:integrations.payments.request_links.manage');
 
                     // Inline mobile-money payment from the invoice screen (third path)
-                    Route::post('invoices/{invoice}/charge', [\App\Http\Controllers\Admin\Integrations\InvoiceGatewayPaymentController::class, 'charge'])->name('invoices.charge')->middleware('can:integrations.payments.transactions.initiate');
-                    Route::post('transactions/{transaction}/verify-inline', [\App\Http\Controllers\Admin\Integrations\InvoiceGatewayPaymentController::class, 'verify'])->name('transactions.verify-inline')->middleware('can:integrations.payments.transactions.verify');
-                    Route::get('transactions/{transaction}/status', [\App\Http\Controllers\Admin\Integrations\InvoiceGatewayPaymentController::class, 'status'])->name('transactions.status')->middleware('can:integrations.payments.transactions.verify');
+                    Route::post('invoices/{invoice}/charge', [InvoiceGatewayPaymentController::class, 'charge'])->name('invoices.charge')->middleware('can:integrations.payments.transactions.initiate');
+                    Route::post('transactions/{transaction}/verify-inline', [InvoiceGatewayPaymentController::class, 'verify'])->name('transactions.verify-inline')->middleware('can:integrations.payments.transactions.verify');
+                    Route::get('transactions/{transaction}/status', [InvoiceGatewayPaymentController::class, 'status'])->name('transactions.status')->middleware('can:integrations.payments.transactions.verify');
                 });
 
             // ── Provider Health (spans both modules; admin/IT) ───────────
-            Route::get('health', [\App\Http\Controllers\Admin\Integrations\ProviderHealthController::class, 'index'])->name('health.index')->middleware('can:integrations.payments.reconciliation.view');
+            Route::get('health', [ProviderHealthController::class, 'index'])->name('health.index')->middleware('can:integrations.payments.reconciliation.view');
 
             // ── Provider go-live checklists + scheduler status (Phase 3) ──
             Route::prefix('golive')->name('golive.')->group(function () {
-                Route::get('/', [\App\Http\Controllers\Admin\Integrations\GoLiveChecklistController::class, 'index'])->name('index');
-                Route::get('providers/{provider}', [\App\Http\Controllers\Admin\Integrations\GoLiveChecklistController::class, 'show'])->name('show');
-                Route::post('checklists/{checklist}/items', [\App\Http\Controllers\Admin\Integrations\GoLiveChecklistController::class, 'updateItem'])->name('items.update')->middleware('can:integrations.payments.golive.manage');
-                Route::post('checklists/{checklist}/signoff', [\App\Http\Controllers\Admin\Integrations\GoLiveChecklistController::class, 'signoff'])->name('signoff')->middleware('can:integrations.payments.golive.approve');
-                Route::post('checklists/{checklist}/approve', [\App\Http\Controllers\Admin\Integrations\GoLiveChecklistController::class, 'approve'])->name('approve')->middleware('can:integrations.payments.golive.approve');
+                Route::get('/', [GoLiveChecklistController::class, 'index'])->name('index');
+                Route::get('providers/{provider}', [GoLiveChecklistController::class, 'show'])->name('show');
+                Route::post('checklists/{checklist}/items', [GoLiveChecklistController::class, 'updateItem'])->name('items.update')->middleware('can:integrations.payments.golive.manage');
+                Route::post('checklists/{checklist}/signoff', [GoLiveChecklistController::class, 'signoff'])->name('signoff')->middleware('can:integrations.payments.golive.approve');
+                Route::post('checklists/{checklist}/approve', [GoLiveChecklistController::class, 'approve'])->name('approve')->middleware('can:integrations.payments.golive.approve');
             });
 
-            Route::get('scheduler', [\App\Http\Controllers\Admin\Integrations\SchedulerStatusController::class, 'index'])->name('scheduler.index')->middleware('can:integrations.scheduler.view');
+            Route::get('scheduler', [SchedulerStatusController::class, 'index'])->name('scheduler.index')->middleware('can:integrations.scheduler.view');
         });
 
         // ICD-10 Code Database
@@ -1974,9 +2018,9 @@ Route::middleware('auth')->group(function () {
                 Route::get('departments', function () {
                     return response()->json(app(ProcedureRequestService::class)->procedureDepartments());
                 })->name('departments');
-                Route::get('departments/{department}/services', function (\Illuminate\Http\Request $request, Department $department) {
+                Route::get('departments/{department}/services', function (Request $request, Department $department) {
                     $visit = $request->integer('visit_id')
-                        ? \App\Models\Visit::find($request->integer('visit_id'))
+                        ? Visit::find($request->integer('visit_id'))
                         : null;
 
                     return response()->json(app(ProcedureRequestService::class)->servicesForDepartment($department->id, $visit));

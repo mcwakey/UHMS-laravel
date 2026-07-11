@@ -2,10 +2,17 @@
 
 namespace App\Http\Controllers\Admin\Settings;
 
+use App\Enums\LogModule;
+use App\Enums\VisitPaymentTimingPolicy;
+use App\Enums\VisitType;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdatePaymentTimingSettingsRequest;
 use App\Models\ServiceCatalog;
 use App\Models\Setting;
+use App\Services\ActivityLogService;
+use App\Services\Billing\PaymentTimingConfigurationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SettingsController extends Controller
 {
@@ -112,6 +119,73 @@ class SettingsController extends Controller
         }
 
         return back()->with('success', __('messages.settings.payment_methods_updated'));
+    }
+
+    /** Payment timing policy foundation (configuration only in Phase 1). */
+    public function paymentTiming(PaymentTimingConfigurationService $configuration)
+    {
+        $settings = [
+            'enabled' => $configuration->enabled(),
+            'default_policy' => $configuration->globalDefault()->value,
+            'emergency_never_block_stabilisation' => $configuration->neverBlockEmergencyStabilisation(),
+            'require_settlement_for_pay_after_services' => $configuration->requiresSettlementForPayAfterServices(),
+            'require_settlement_for_running_bill' => $configuration->requiresSettlementForRunningBill(),
+            'allow_outstanding_balance_override' => $configuration->allowsOutstandingBalanceOverride(),
+        ];
+
+        foreach (VisitType::cases() as $visitType) {
+            $settings["{$visitType->value}_policy"] = $configuration->configuredPolicyForVisitType($visitType)->value;
+        }
+
+        return view('settings.payment-timing', [
+            'settings' => $settings,
+            'visitTypes' => VisitType::cases(),
+            'globalPolicies' => VisitPaymentTimingPolicy::operationalPolicies(),
+            'visitPolicies' => VisitPaymentTimingPolicy::selectable(),
+        ]);
+    }
+
+    public function updatePaymentTiming(
+        UpdatePaymentTimingSettingsRequest $request,
+        ActivityLogService $activityLog,
+    ) {
+        $validated = $request->validated();
+        $booleanKeys = [
+            'enabled',
+            'emergency_never_block_stabilisation',
+            'require_settlement_for_pay_after_services',
+            'require_settlement_for_running_bill',
+            'allow_outstanding_balance_override',
+        ];
+        foreach ($booleanKeys as $key) {
+            $validated[$key] = $request->boolean($key);
+        }
+
+        DB::transaction(function () use ($validated, $booleanKeys, $activityLog): void {
+            $changes = [];
+            foreach ($validated as $key => $value) {
+                $type = in_array($key, $booleanKeys, true) ? 'boolean' : 'string';
+                $old = Setting::getValue(PaymentTimingConfigurationService::GROUP, $key);
+                $normalisedOld = $type === 'boolean' && $old !== null ? (bool) $old : $old;
+                if ($normalisedOld === $value) {
+                    continue;
+                }
+
+                Setting::setValue(PaymentTimingConfigurationService::GROUP, $key, $value, $type);
+                $changes[$key] = ['old' => $normalisedOld, 'new' => $value];
+            }
+
+            if ($changes !== []) {
+                $activityLog->log(LogModule::SETTINGS, 'PAYMENT_TIMING_SETTINGS_UPDATED', [
+                    'setting_group' => PaymentTimingConfigurationService::GROUP,
+                    'setting_keys' => array_keys($changes),
+                    'old_values' => array_map(fn (array $change) => $change['old'], $changes),
+                    'new_values' => array_map(fn (array $change) => $change['new'], $changes),
+                ], description: 'Payment timing settings updated');
+            }
+        });
+
+        return back()->with('success', __('payment_timing.updated_successfully'));
     }
 
     /**

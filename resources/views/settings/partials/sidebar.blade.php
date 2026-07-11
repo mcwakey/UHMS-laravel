@@ -19,6 +19,10 @@
        class="list-group-item list-group-item-action {{ request()->routeIs('admin.settings.payment-methods') ? 'active' : '' }}">
         <i class="ti ti-credit-card me-2"></i>{{ __('settings.payment_methods') }}
     </a>
+    <a href="{{ route('admin.settings.payment-timing') }}"
+       class="list-group-item list-group-item-action {{ request()->routeIs('admin.settings.payment-timing*') ? 'active' : '' }}">
+        <i class="ti ti-clock-dollar me-2"></i>{{ __('payment_timing.title') }}
+    </a>
     <a href="{{ route('admin.settings.ward') }}"
        class="list-group-item list-group-item-action {{ request()->routeIs('admin.settings.ward') ? 'active' : '' }}">
         <i class="ti ti-bed me-2"></i>{{ __('settings.ward_admissions') }}

@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
             DrugGenericNameSeeder::class,
             ProductAndDrugSeeder::class,
             InsurancePricingSeeder::class,
+            PaymentTimingSettingsSeeder::class,
             MedicationFrequencySeeder::class,
 
             // ── Clinical reference data ──────────────────────────────────

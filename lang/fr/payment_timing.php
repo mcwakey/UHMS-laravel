@@ -1,0 +1,48 @@
+<?php
+
+return [
+    'title' => 'Politiques de moment du paiement',
+    'enable' => 'Activer la configuration du moment du paiement',
+    'enable_help' => 'Enregistre les préférences pour les phases ultérieures. Cette option ne modifie ni ne bloque encore la prestation des soins.',
+    'global_default' => 'Politique générale par défaut',
+    'visit_type_defaults' => 'Valeurs par défaut selon le type de visite',
+    'emergency_protection' => 'Protection des urgences',
+    'never_block_stabilisation' => 'Ne jamais bloquer la stabilisation d’urgence en raison d’un paiement en attente',
+    'emergency_help' => 'La stabilisation d’urgence reste protégée ; la facturation finale ou l’autorisation financière peut intervenir plus tard.',
+    'financial_closure' => 'Clôture financière',
+    'require_pay_after_settlement' => 'Exiger le règlement avant la clôture financière pour le paiement après tous les services',
+    'require_running_bill_settlement' => 'Exiger le règlement avant la clôture financière pour la facture ouverte',
+    'allow_outstanding_override' => 'Autoriser les dérogations approuvées pour clôturer avec un solde impayé',
+    'financial_closure_help' => 'Ces préférences sont préparatoires et ne modifient pas encore la fin de visite ni la sortie.',
+    'updated_successfully' => 'Les paramètres du moment du paiement ont été mis à jour.',
+    'invalid_policy' => 'Politique de moment du paiement non valide.',
+    'global_cannot_inherit' => 'La politique générale ne peut pas utiliser la valeur par défaut du système.',
+    'unknown_visit_type' => 'Politique associée à un type de visite inconnu.',
+    'policies' => [
+        'inherit' => [
+            'label' => 'Utiliser la valeur par défaut du système',
+            'description' => 'Utiliser la politique de paiement générale de l’hôpital.',
+        ],
+        'pay_before_service' => [
+            'label' => 'Payer avant le service',
+            'description' => 'Le paiement est requis avant la prestation des services facturables concernés.',
+        ],
+        'pay_after_all_services' => [
+            'label' => 'Payer après tous les services',
+            'description' => 'Le patient peut terminer les services avant d’effectuer le paiement final.',
+        ],
+        'running_bill' => [
+            'label' => 'Facture ouverte',
+            'description' => 'Les frais s’accumulent pendant les soins et des paiements partiels peuvent être enregistrés.',
+        ],
+    ],
+    'sources' => [
+        'global_default' => 'Politique générale par défaut',
+        'visit_type' => 'Type de visite',
+        'patient_risk' => 'Risque financier du patient',
+        'insurance' => 'Assurance',
+        'corporate_account' => 'Compte d’entreprise',
+        'manual_override' => 'Dérogation manuelle',
+        'emergency_policy' => 'Politique d’urgence',
+    ],
+];
