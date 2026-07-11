@@ -3,7 +3,9 @@
 namespace App\Services\Claims;
 
 use App\Models\Claim;
+use App\Models\Invoice;
 use App\Models\User;
+use Illuminate\Support\Collection;
 
 class NhiaClaimWorkflow extends GenericClaimWorkflow
 {
@@ -34,10 +36,6 @@ class NhiaClaimWorkflow extends GenericClaimWorkflow
 
         if (! $claim->membership_number) {
             $errors[] = 'Membership number is required for NHIA claims.';
-        }
-
-        if ($provider?->requiresVerificationCode() && ! $claim->verification_code) {
-            $errors[] = ($provider->verificationCodeLabel() ?: 'CCC Code').' is required for NHIA claims.';
         }
 
         foreach ($claim->items as $item) {
@@ -95,5 +93,25 @@ class NhiaClaimWorkflow extends GenericClaimWorkflow
         ])->save();
 
         return $claim->fresh();
+    }
+
+    protected function claimableInvoiceItems(Invoice $invoice): Collection
+    {
+        return $invoice->items
+            ->reject(fn ($item) => in_array($item->payment_status, ['cancelled', 'voided'], true))
+            ->values();
+    }
+
+    protected function insuranceCoveredAmount($item): float
+    {
+        $covered = parent::insuranceCoveredAmount($item);
+        if ($covered > 0) {
+            return $covered;
+        }
+
+        $quantity = max(1, (int) ($item->quantity ?? 1));
+        $lineTotal = (float) ($item->selected_price ?: $item->insurance_price ?: $item->total_price ?: $item->unit_price);
+
+        return round($lineTotal * $quantity, 2);
     }
 }

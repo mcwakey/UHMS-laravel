@@ -104,6 +104,44 @@ class InsuranceTypeClaimWorkflowTest extends TestCase
             ->assertDontSee($cashInvoice->visit->visit_number);
     }
 
+    public function test_valid_patient_nhia_insurance_makes_visit_eligible_even_without_ccc_or_visit_link(): void
+    {
+        $invoice = $this->createInsuranceInvoice(insuranceAmount: 0, cccCode: null);
+        $nhiaInsurance = PatientInsurance::where('patient_id', $invoice->patient_id)
+            ->where('insurance_provider_id', $invoice->items->first()->insurance_provider_id)
+            ->firstOrFail();
+        $cashProvider = $this->createCashProvider();
+        $cashInsurance = PatientInsurance::create([
+            'patient_id' => $invoice->patient_id,
+            'insurance_provider_id' => $cashProvider->id,
+            'membership_number' => 'CASH',
+            'start_date' => now()->subYear()->toDateString(),
+            'expiry_date' => now()->addYear()->toDateString(),
+            'is_primary' => true,
+            'is_active' => true,
+        ]);
+        $invoice->visit->forceFill(['visit_insurance_id' => $cashInsurance->id])->save();
+
+        $this->actingAs($this->user)
+            ->get(route('admin.claims.nhia.eligible-visits'))
+            ->assertOk()
+            ->assertSee($invoice->visit->visit_number)
+            ->assertSee('National Health Insurance Scheme');
+
+        $response = $this->actingAs($this->user)
+            ->post(route('admin.claims.nhia.prepare-from-visit', $invoice->visit));
+
+        $claim = Claim::first();
+
+        $response->assertRedirect(route('admin.claims.show', $claim));
+        $this->assertSame($nhiaInsurance->id, $claim->patient_insurance_id);
+        $this->assertSame($nhiaInsurance->insurance_provider_id, $claim->insurance_provider_id);
+        $this->assertSame('NHIS-123456789', $claim->membership_number);
+        $this->assertNull($claim->verification_code);
+        $this->assertEquals(80.00, (float) $claim->total_claim_amount);
+        $this->assertEquals(80.00, (float) $claim->items->first()->claim_amount);
+    }
+
     public function test_nhia_claim_preparation_stores_type_workflow_and_invoice_item_snapshots(): void
     {
         $invoice = $this->createInsuranceInvoice();
@@ -125,7 +163,7 @@ class InsuranceTypeClaimWorkflowTest extends TestCase
         $this->assertSame(1, ClaimStatusLog::where('claim_id', $claim->id)->count());
     }
 
-    public function test_nhia_claim_requires_ccc_before_ready_or_submission(): void
+    public function test_nhia_claim_does_not_require_ccc_before_ready_or_submission(): void
     {
         $invoice = $this->createInsuranceInvoice(cccCode: null);
         $this->actingAs($this->user)->post(route('admin.claims.store-from-invoice'), [
@@ -134,20 +172,17 @@ class InsuranceTypeClaimWorkflowTest extends TestCase
         $claim = Claim::first();
 
         $this->actingAs($this->user)->post(route('admin.claims.mark-ready', $claim))
-            ->assertSessionHas('error', 'CCC Code is required for NHIA claims.');
-
-        $this->actingAs($this->user)->post(route('admin.claims.submit', $claim), [
-            'submission_mode' => 'EXPORT',
-        ])->assertSessionHas('error', 'CCC Code is required for NHIA claims.');
-
-        $this->actingAs($this->user)->post(route('admin.claims.verification-code', $claim), [
-            'verification_code' => 'CCC-12345',
-        ])->assertSessionHas('success');
-
-        $this->actingAs($this->user)->post(route('admin.claims.mark-ready', $claim->fresh()))
             ->assertSessionHas('success');
 
         $this->assertSame(ClaimStatus::READY, $claim->fresh()->status);
+
+        $this->actingAs($this->user)->post(route('admin.claims.submit', $claim), [
+            'submission_mode' => 'EXPORT',
+        ])->assertRedirect(route('admin.claims.show', $claim));
+
+        $claim->refresh();
+        $this->assertSame(ClaimStatus::SUBMITTED, $claim->status);
+        $this->assertNull($claim->verification_code);
     }
 
     public function test_nhia_claim_can_be_exported_and_manually_submitted_after_validation(): void

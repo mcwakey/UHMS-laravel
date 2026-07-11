@@ -63,24 +63,28 @@ class ClaimController extends Controller
         $visits = Visit::query()
             ->with([
                 'patient',
+                'patient.insurances.insuranceProvider.insuranceType',
                 'visitInsurance.insuranceProvider.insuranceType',
                 'latestInvoice.items',
             ])
-            ->whereHas('visitInsurance.insuranceProvider.insuranceType', function ($query) use ($selectedTypeCode) {
-                $query->where('requires_claim_submission', true);
-                if ($selectedTypeCode !== '') {
-                    $query->where('code', $selectedTypeCode);
-                }
+            ->whereHas('patient.insurances', function ($query) use ($selectedTypeCode) {
+                $query->valid()
+                    ->whereHas('insuranceProvider', function ($providerQuery) use ($selectedTypeCode) {
+                        $providerQuery->where('is_active', true)
+                            ->where(function ($claimQuery) {
+                                $claimQuery->where('requires_claim_submission', true)
+                                    ->orWhereHas('insuranceType', fn ($typeQuery) => $typeQuery->where('requires_claim_submission', true));
+                            })
+                            ->when($selectedTypeCode !== '', function ($typeQuery) use ($selectedTypeCode) {
+                                $typeQuery->where(function ($matchQuery) use ($selectedTypeCode) {
+                                    $matchQuery->whereHas('insuranceType', fn ($insuranceTypeQuery) => $insuranceTypeQuery->where('code', $selectedTypeCode))
+                                        ->orWhereRaw('UPPER(type) = ?', [strtoupper($selectedTypeCode)]);
+                                });
+                            });
+                    });
             })
             ->whereHas('invoices.items', function ($query) {
-                $query->where(function ($q) {
-                    $q->where('payer_type', 'insurance')
-                        ->orWhere('insurance_covered', '>', 0)
-                        ->orWhere(function ($legacy) {
-                            $legacy->where('is_nhis_covered', true)
-                                ->where('nhis_approved_amount', '>', 0);
-                        });
-                });
+                $query->whereNotIn('payment_status', ['cancelled', 'voided']);
             })
             ->whereDoesntHave('invoices.claim', function ($query) {
                 $query->whereNotIn('status', [ClaimStatus::CANCELLED->value, ClaimStatus::REJECTED->value]);
@@ -88,6 +92,13 @@ class ClaimController extends Controller
             ->latest('visit_date')
             ->paginate(20)
             ->withQueryString();
+
+        $visits->getCollection()->each(function (Visit $visit) use ($selectedTypeCode) {
+            $visit->setRelation(
+                'claimEligibleInsurance',
+                $this->claimService->eligibleInsuranceForVisit($visit, $selectedTypeCode ?: null)
+            );
+        });
 
         return view('claims.eligible-visits', compact('visits', 'insuranceTypes', 'selectedTypeCode'));
     }
@@ -155,16 +166,27 @@ class ClaimController extends Controller
 
     public function prepareFromVisit(Request $request, Visit $visit)
     {
-        $visit->loadMissing(['latestInvoice.items', 'visitInsurance.insuranceProvider.insuranceType']);
+        $selectedTypeCode = $request->routeIs('admin.claims.nhia.prepare-from-visit') ? 'NHIA' : null;
+        $visit->loadMissing([
+            'latestInvoice.items',
+            'visitInsurance.insuranceProvider.insuranceType',
+            'patient.insurances.insuranceProvider.insuranceType',
+        ]);
 
         if (! $visit->latestInvoice) {
             return back()->with('error', __('messages.claims.no_invoice'));
         }
 
+        $eligibleInsurance = $this->claimService->eligibleInsuranceForVisit($visit, $selectedTypeCode);
+
+        if ($selectedTypeCode && ! $eligibleInsurance) {
+            return back()->with('error', 'This patient does not have a valid NHIA insurance.');
+        }
+
         try {
             $claim = $this->claimService->createFromInvoice(
                 $visit->latestInvoice,
-                $visit->visitInsurance?->insurance_provider_id,
+                $eligibleInsurance?->insurance_provider_id ?: $visit->visitInsurance?->insurance_provider_id,
                 $request->integer('assigned_doctor_id') ?: null,
             );
         } catch (\InvalidArgumentException $e) {

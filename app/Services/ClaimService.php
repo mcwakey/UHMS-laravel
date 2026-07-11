@@ -10,7 +10,9 @@ use App\Models\ClaimItem;
 use App\Models\InsuranceProvider;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\PatientInsurance;
 use App\Models\User;
+use App\Models\Visit;
 use App\Services\Claims\ClaimStatusService;
 use App\Services\Claims\ClaimValidationResult;
 use App\Services\Claims\ClaimWorkflowManager;
@@ -72,6 +74,24 @@ class ClaimService
         $this->logClaimEvent($claim, 'CLAIM_PREPARED', 'Claim prepared from invoice: ' . ($claim->claim_number ?? ''), ['causer' => $user]);
 
         return $claim;
+    }
+
+    public function eligibleInsuranceForVisit(Visit $visit, ?string $typeCode = null): ?PatientInsurance
+    {
+        $typeCode = $typeCode ? strtoupper($typeCode) : null;
+        $visit->loadMissing([
+            'visitInsurance.insuranceProvider.insuranceType',
+            'patient.insurances.insuranceProvider.insuranceType',
+        ]);
+
+        $candidates = collect([$visit->visitInsurance])
+            ->merge($visit->patient?->insurances ?? collect())
+            ->filter()
+            ->unique('id')
+            ->filter(fn (PatientInsurance $insurance) => $this->insuranceQualifiesForClaim($insurance, $typeCode))
+            ->values();
+
+        return $candidates->firstWhere('is_primary', true) ?: $candidates->first();
     }
 
     /**
@@ -357,5 +377,25 @@ class ClaimService
         }
 
         return (float) ($item->insurance_covered ?? 0);
+    }
+
+    private function insuranceQualifiesForClaim(PatientInsurance $insurance, ?string $typeCode = null): bool
+    {
+        $insurance->loadMissing('insuranceProvider.insuranceType');
+
+        $provider = $insurance->insuranceProvider;
+        if (! $insurance->is_valid || ! $provider?->is_active || ! $provider->requiresClaimSubmission()) {
+            return false;
+        }
+
+        $claimTypeCode = strtoupper((string) ($provider->claimTypeCode() ?: ''));
+        $legacyType = strtoupper((string) ($provider->type?->value ?? $provider->type ?? ''));
+        $matchesType = ! $typeCode || $claimTypeCode === $typeCode || $legacyType === $typeCode;
+
+        if (! $matchesType) {
+            return false;
+        }
+
+        return true;
     }
 }

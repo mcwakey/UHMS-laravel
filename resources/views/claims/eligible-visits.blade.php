@@ -69,11 +69,17 @@
                     @forelse($visits as $visit)
                         @php
                             $invoice = $visit->latestInvoice;
-                            $claimable = $invoice?->items?->sum(function ($item) {
+                            $claimable = $invoice?->items?->reject(fn ($item) => in_array($item->payment_status, ['cancelled', 'voided'], true))->sum(function ($item) {
                                 $legacy = ($item->is_nhis_covered && $item->nhis_approved_amount) ? (float) $item->nhis_approved_amount : 0;
-                                return max($legacy, (float) ($item->insurance_covered ?? 0));
+                                $covered = max($legacy, (float) ($item->insurance_covered ?? 0));
+                                if ($covered > 0) {
+                                    return $covered;
+                                }
+                                $quantity = max(1, (int) ($item->quantity ?? 1));
+                                return (float) ($item->selected_price ?: $item->insurance_price ?: $item->total_price ?: $item->unit_price) * $quantity;
                             }) ?? 0;
-                            $provider = $visit->visitInsurance?->insuranceProvider;
+                            $claimInsurance = $visit->claimEligibleInsurance ?? $visit->visitInsurance;
+                            $provider = $claimInsurance?->insuranceProvider;
                             $type = $provider?->insuranceType;
                         @endphp
                     <tr>

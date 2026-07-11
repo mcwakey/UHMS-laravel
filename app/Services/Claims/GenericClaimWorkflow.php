@@ -10,6 +10,7 @@ use App\Models\ClaimItem;
 use App\Models\InsuranceProvider;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\PatientInsurance;
 use App\Models\User;
 use App\Models\Visit;
 use Illuminate\Support\Collection;
@@ -45,8 +46,10 @@ class GenericClaimWorkflow implements ClaimWorkflowInterface
                 'items.serviceCatalog.department',
                 'items.product',
                 'items.department',
+                'items.patientInsurance.insuranceProvider.insuranceType',
                 'visit.visitInsurance.insuranceProvider.insuranceType',
                 'visit.insuranceVerification',
+                'patient.insurances.insuranceProvider.insuranceType',
                 'patient',
             ]);
             $provider->loadMissing('insuranceType');
@@ -61,11 +64,14 @@ class GenericClaimWorkflow implements ClaimWorkflowInterface
                 return $existingClaim->fresh(['items', 'insuranceProvider.insuranceType', 'patient', 'invoice']);
             }
 
-            $visitInsurance = $invoice->visit?->visitInsurance;
+            $visitInsurance = $this->claimInsuranceForProvider($invoice, $provider);
             $periodDate = $invoice->visit?->visit_date?->toDateString()
                 ?? $invoice->created_at?->toDateString()
                 ?? now()->toDateString();
             $verification = $invoice->visit?->insuranceVerification;
+            if ($verification && $visitInsurance && (int) $verification->patient_insurance_id !== (int) $visitInsurance->id) {
+                $verification = null;
+            }
 
             $claim = Claim::create([
                 'claim_number' => Claim::generateClaimNumber(),
@@ -306,6 +312,38 @@ class GenericClaimWorkflow implements ClaimWorkflowInterface
             ->whereHas('items', fn ($query) => $query->whereIn('invoice_item_id', $invoiceItemIds))
             ->first()
             ?: Claim::where('invoice_id', $invoice->id)->first();
+    }
+
+    protected function claimInsuranceForProvider(Invoice $invoice, InsuranceProvider $provider): ?PatientInsurance
+    {
+        $providerId = (int) $provider->id;
+        $current = $invoice->visit?->visitInsurance;
+        if ($this->patientInsuranceMatchesProvider($current, $providerId)) {
+            return $current;
+        }
+
+        $fromItems = $invoice->items
+            ->pluck('patientInsurance')
+            ->filter(fn (?PatientInsurance $insurance) => $this->patientInsuranceMatchesProvider($insurance, $providerId))
+            ->first();
+
+        if ($fromItems) {
+            return $fromItems;
+        }
+
+        return ($invoice->patient?->insurances ?? collect())
+            ->filter(fn (PatientInsurance $insurance) => $this->patientInsuranceMatchesProvider($insurance, $providerId))
+            ->sortByDesc(fn (PatientInsurance $insurance) => (int) $insurance->is_primary)
+            ->first();
+    }
+
+    protected function patientInsuranceMatchesProvider(?PatientInsurance $insurance, int $providerId): bool
+    {
+        if (! $insurance || (int) $insurance->insurance_provider_id !== $providerId) {
+            return false;
+        }
+
+        return $insurance->is_valid;
     }
 
     protected function primaryDiagnosis(Claim $claim): ?string
