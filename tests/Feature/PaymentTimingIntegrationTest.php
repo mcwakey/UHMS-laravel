@@ -76,7 +76,8 @@ class PaymentTimingIntegrationTest extends TestCase
         ) => $actualVisit === $visit
             && $legacy->advisory
             && $actualTyped === $typed
-            && $context['gate_operation'] === 'test_operation');
+            && $context['gate_operation'] === 'test_operation'
+            && $context['payment_gate_stage'] === 'render');
         $this->app->instance(VisitPaymentTimingResolver::class, $resolver);
         $this->app->instance(PaymentTimingPolicyComparisonService::class, $comparison);
 

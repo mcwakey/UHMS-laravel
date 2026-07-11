@@ -12,6 +12,7 @@ use App\Models\LabResult;
 use App\Models\LabTest;
 use App\Models\LabTestCategory;
 use App\Models\Visit;
+use App\Services\Billing\PaymentGateService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -21,6 +22,8 @@ use Illuminate\Support\Facades\DB;
 
 class LabService
 {
+    public function __construct(private PaymentGateService $paymentGate) {}
+
     /*
     |--------------------------------------------------------------------------
     | Lab Test Catalog Management
@@ -386,8 +389,11 @@ class LabService
         // Pay-before-results: an outpatient/walk-in must settle the bill before
         // results are entered. Emergency/inpatient run on a post-paid bill.
         $labRequest = $item->labRequest;
-        if ($labRequest && $labRequest->requiresPrepaidResults() && ! $item->isBillSettled()) {
-            throw new \RuntimeException('Payment required: this investigation must be paid before results can be entered.');
+        if ($labRequest && $labRequest->requiresPrepaidResults()) {
+            $paymentDecision = $this->paymentGate->policyForLabResultEntry($item, Auth::user());
+            if (! $paymentDecision->allowed) {
+                throw new \RuntimeException($paymentDecision->message);
+            }
         }
 
         // Specimen gate: when a sample is tracked for this item, it must be

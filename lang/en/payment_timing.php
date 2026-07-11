@@ -29,6 +29,20 @@ return [
         'missing_context' => 'Required comparison context is missing',
         'invalid_configuration_fallback' => 'Invalid configuration fallback',
     ],
+    'gate_stages' => [
+        'start' => 'Service start',
+        'perform' => 'Service performance',
+        'result' => 'Result entry',
+        'complete' => 'Service completion',
+        'dispense' => 'Dispensing',
+        'issue' => 'Issue',
+        'render' => 'Service rendering',
+        'readiness' => 'Readiness',
+    ],
+    'gate_context' => 'Payment gate stage',
+    'policy_unavailable' => 'Payment policy unavailable',
+    'invoice_item_missing' => 'Invoice item missing',
+    'coverage_title' => 'Payment gate diagnostic coverage',
     'policies' => [
         'inherit' => [
             'label' => 'Use System Default',

@@ -5,11 +5,14 @@ namespace Tests\Feature;
 use App\Enums\VisitPaymentPolicySource;
 use App\Enums\VisitPaymentTimingPolicy;
 use App\Enums\VisitType;
+use App\Models\Patient;
 use App\Models\Setting;
+use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitBillingOverride;
 use App\Services\Billing\VisitPaymentTimingResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class VisitPaymentTimingResolverTest extends TestCase
@@ -80,5 +83,28 @@ class VisitPaymentTimingResolverTest extends TestCase
 
         $this->assertSame(VisitPaymentTimingPolicy::PAY_BEFORE_SERVICE, $decision->policy);
         $this->assertNotSame(VisitPaymentTimingPolicy::INHERIT, $decision->policy);
+    }
+
+    public function test_observe_mode_override_lookup_is_memoised_per_visit(): void
+    {
+        $user = User::factory()->create();
+        $patient = Patient::factory()->create(['registered_by' => $user->id]);
+        $visit = Visit::factory()->create([
+            'patient_id' => $patient->id,
+            'created_by' => $user->id,
+            'visit_type' => VisitType::OUTPATIENT,
+        ]);
+        $overrideQueries = 0;
+        DB::listen(function ($query) use (&$overrideQueries): void {
+            if (str_contains($query->sql, 'visit_billing_overrides')) {
+                $overrideQueries++;
+            }
+        });
+
+        $resolver = app(VisitPaymentTimingResolver::class);
+        $resolver->resolve($visit);
+        $resolver->resolve($visit);
+
+        $this->assertSame(1, $overrideQueries);
     }
 }

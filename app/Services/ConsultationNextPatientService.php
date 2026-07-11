@@ -2,20 +2,21 @@
 
 namespace App\Services;
 
+use App\Data\Billing\PaymentGateContext;
 use App\Enums\LogModule;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Models\QueueEntry;
 use App\Models\User;
 use App\Models\VisitConsultationRoute;
-use App\Services\Billing\BillingPolicyService;
+use App\Services\Billing\PaymentGateService;
 use Illuminate\Support\Facades\DB;
 
 class ConsultationNextPatientService
 {
     public function __construct(
         private ConsultationRouteService $routes,
-        private BillingPolicyService $billingPolicy,
+        private PaymentGateService $paymentGate,
         private ActivityLogService $logger,
     ) {}
 
@@ -205,7 +206,11 @@ class ConsultationNextPatientService
                 continue;
             }
 
-            $decision = $this->billingPolicy->getInvoiceItemPolicy($routeService->invoiceItem, $user);
+            $decision = $this->paymentGate->policyFor(
+                $routeService->invoiceItem,
+                $user,
+                PaymentGateContext::consultationReadiness($route->department_id),
+            );
             if (! $decision->allowed) {
                 return [
                     'allowed' => false,

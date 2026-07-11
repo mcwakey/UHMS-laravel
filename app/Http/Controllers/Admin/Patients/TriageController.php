@@ -11,7 +11,8 @@ use App\Models\QueueEntry;
 use App\Models\Vital;
 use App\Models\Visit;
 use App\Services\ConsultationRouteService;
-use App\Services\Billing\BillingPolicyService;
+use App\Data\Billing\PaymentGateContext;
+use App\Services\Billing\PaymentGateService;
 use App\Services\VisitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -90,7 +91,7 @@ class TriageController extends Controller
     /**
      * Save triage record and transition the visit.
      */
-    public function store(Request $request, Visit $visit, ConsultationRouteService $consultationRoutes, BillingPolicyService $billingPolicy)
+    public function store(Request $request, Visit $visit, ConsultationRouteService $consultationRoutes, PaymentGateService $paymentGate)
     {
         if ($visit->status !== VisitStatus::TRIAGE) {
             if ($request->expectsJson()) {
@@ -151,7 +152,7 @@ class TriageController extends Controller
 
         try {
             if ($selectedRoute) {
-                $this->assertRouteServicesSettled($selectedRoute->fresh(), $billingPolicy, $request->user());
+                $this->assertRouteServicesSettled($selectedRoute->fresh(), $paymentGate, $request->user());
             }
 
             $visit = $this->visitService->processTriage($visit, $validated);
@@ -353,7 +354,7 @@ class TriageController extends Controller
         );
     }
 
-    private function assertRouteServicesSettled($route, BillingPolicyService $billingPolicy, $user): void
+    private function assertRouteServicesSettled($route, PaymentGateService $paymentGate, $user): void
     {
         $route->loadMissing([
             'routeServices.service',
@@ -375,7 +376,11 @@ class TriageController extends Controller
                 continue;
             }
 
-            $decision = $billingPolicy->getInvoiceItemPolicy($routeService->invoiceItem, $user);
+            $decision = $paymentGate->policyFor(
+                $routeService->invoiceItem,
+                $user,
+                PaymentGateContext::triageRouteCompletion($route->department_id),
+            );
             if (! $decision->allowed) {
                 throw new \RuntimeException($decision->message ?: "{$serviceName} bill has not been settled.");
             }

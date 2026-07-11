@@ -34,8 +34,12 @@ class PaymentTimingPolicyComparisonService
         $safeContext = [
             'visit_id' => $visit->getKey(),
             'visit_type' => $visitType instanceof \BackedEnum ? (string) $visitType->value : ($visitType !== null ? (string) $visitType : null),
+            'payment_gate_stage' => isset($context['payment_gate_stage']) ? (string) $context['payment_gate_stage'] : null,
             'gate_operation' => (string) ($context['gate_operation'] ?? 'invoice_item_policy'),
             'department_type' => isset($context['department_type']) ? (string) $context['department_type'] : null,
+            'service_type' => isset($context['service_type']) ? (string) $context['service_type'] : null,
+            'invoice_item_present' => isset($context['invoice_item_present']) ? (bool) $context['invoice_item_present'] : null,
+            'emergency_stabilisation' => isset($context['emergency_stabilisation']) ? (bool) $context['emergency_stabilisation'] : null,
             'integration_mode' => $this->configuration->integrationMode()->value,
         ];
         $comparison = new PaymentTimingPolicyComparison($outcome, $legacy, $typed, $safeContext);

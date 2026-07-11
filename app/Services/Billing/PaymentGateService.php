@@ -2,10 +2,14 @@
 
 namespace App\Services\Billing;
 
+use App\Data\Billing\PaymentGateContext;
+use App\Enums\PaymentGateStage;
 use App\Exceptions\BillingGateException;
 use App\Models\InvoiceItem;
+use App\Models\LabRequestItem;
 use App\Models\User;
 use App\Models\Visit;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * The enforcement façade. Departments ask "can I render this now?" and get a
@@ -29,22 +33,40 @@ class PaymentGateService
     |--------------------------------------------------------------------------
     */
 
-    public function policyFor(InvoiceItem $item, ?User $user = null): BillingPolicyDecision
-    {
-        return $this->policy->getInvoiceItemPolicy($item, $user, 'invoice_item_policy');
+    public function evaluateInvoiceItem(
+        InvoiceItem $item,
+        PaymentGateContext $context,
+        ?User $user = null,
+    ): BillingPolicyDecision {
+        return $this->policy->getInvoiceItemPolicy($item, $user, $context);
     }
 
-    public function canRenderInvoiceItem(InvoiceItem $item, ?User $user = null, string $gateOperation = 'invoice_item_render'): bool
-    {
-        return $this->policy->getInvoiceItemPolicy($item, $user, $gateOperation)->allowed;
+    public function policyFor(
+        InvoiceItem $item,
+        ?User $user = null,
+        PaymentGateContext|string|null $context = null,
+    ): BillingPolicyDecision {
+        return $this->evaluateInvoiceItem(
+            $item,
+            $this->context($context, PaymentGateStage::RENDER, 'invoice_item.policy'),
+            $user,
+        );
     }
 
-    public function assertCanRenderInvoiceItem(InvoiceItem $item, ?User $user = null, string $gateOperation = 'invoice_item_render'): void
-    {
-        $decision = $this->policy->getInvoiceItemPolicy($item, $user, $gateOperation);
-        if (! $decision->allowed) {
-            throw BillingGateException::fromDecision($decision);
-        }
+    public function canRenderInvoiceItem(
+        InvoiceItem $item,
+        ?User $user = null,
+        PaymentGateContext|string $context = 'invoice_item.render',
+    ): bool {
+        return $this->policyFor($item, $user, $this->context($context, PaymentGateStage::RENDER, 'invoice_item.render'))->allowed;
+    }
+
+    public function assertCanRenderInvoiceItem(
+        InvoiceItem $item,
+        ?User $user = null,
+        PaymentGateContext|string $context = 'invoice_item.render',
+    ): void {
+        $this->assertAllowed($this->policyFor($item, $user, $this->context($context, PaymentGateStage::RENDER, 'invoice_item.render')));
     }
 
     /*
@@ -59,13 +81,21 @@ class PaymentGateService
             return true; // nothing billed to settle
         }
 
-        return $this->canRenderInvoiceItem($consultationFee, $user, 'consultation_start');
+        return $this->canRenderInvoiceItem(
+            $consultationFee,
+            $user,
+            PaymentGateContext::forOperation(PaymentGateStage::START, 'consultation.start', 'consultation', 'consultation_service'),
+        );
     }
 
     public function assertCanStartConsultation(Visit $visit, ?InvoiceItem $consultationFee, User $user): void
     {
         if ($consultationFee !== null) {
-            $this->assertCanRenderInvoiceItem($consultationFee, $user, 'consultation_start');
+            $this->assertCanRenderInvoiceItem(
+                $consultationFee,
+                $user,
+                PaymentGateContext::forOperation(PaymentGateStage::START, 'consultation.start', 'consultation', 'consultation_service'),
+            );
         }
     }
 
@@ -77,42 +107,108 @@ class PaymentGateService
 
     public function canProcessInvestigation(mixed $investigationRequest, User $user): bool
     {
-        return $this->canRenderResolved($investigationRequest, $user, 'investigation_process');
+        return $this->canRenderResolved(
+            $investigationRequest,
+            $user,
+            PaymentGateContext::forOperation(PaymentGateStage::PERFORM, 'investigation.perform', 'investigation', 'investigation_service'),
+        );
     }
 
     public function assertCanProcessInvestigation(mixed $investigationRequest, User $user): void
     {
-        $this->assertCanRenderResolved($investigationRequest, $user, 'investigation_process');
+        $this->assertCanRenderResolved(
+            $investigationRequest,
+            $user,
+            PaymentGateContext::forOperation(PaymentGateStage::PERFORM, 'investigation.perform', 'investigation', 'investigation_service'),
+        );
     }
 
     public function canDispensePrescriptionItem(mixed $prescriptionItem, User $user): bool
     {
-        return $this->canRenderResolved($prescriptionItem, $user, 'prescription_dispense');
+        return $this->canRenderResolved($prescriptionItem, $user, PaymentGateContext::pharmacyDispense());
     }
 
     public function assertCanDispensePrescriptionItem(mixed $prescriptionItem, User $user): void
     {
-        $this->assertCanRenderResolved($prescriptionItem, $user, 'prescription_dispense');
+        $this->assertCanRenderResolved($prescriptionItem, $user, PaymentGateContext::pharmacyDispense());
     }
 
     public function canStartProcedure(mixed $procedureRequest, User $user): bool
     {
-        return $this->canRenderResolved($procedureRequest, $user, 'procedure_start');
+        return $this->canRenderResolved(
+            $procedureRequest,
+            $user,
+            PaymentGateContext::forOperation(PaymentGateStage::START, 'procedure.start', 'procedure', 'procedure_service'),
+        );
     }
 
     public function assertCanStartProcedure(mixed $procedureRequest, User $user): void
     {
-        $this->assertCanRenderResolved($procedureRequest, $user, 'procedure_start');
+        $this->assertCanRenderResolved(
+            $procedureRequest,
+            $user,
+            PaymentGateContext::forOperation(PaymentGateStage::START, 'procedure.start', 'procedure', 'procedure_service'),
+        );
     }
 
     public function canMarkServiceRendered(mixed $serviceRendering, User $user): bool
     {
-        return $this->canRenderResolved($serviceRendering, $user, 'service_mark_rendered');
+        return $this->canRenderResolved(
+            $serviceRendering,
+            $user,
+            PaymentGateContext::forOperation(PaymentGateStage::RENDER, 'service.render', serviceType: 'service_rendering'),
+        );
     }
 
     public function assertCanMarkServiceRendered(mixed $serviceRendering, User $user): void
     {
-        $this->assertCanRenderResolved($serviceRendering, $user, 'service_mark_rendered');
+        $this->assertCanRenderResolved(
+            $serviceRendering,
+            $user,
+            PaymentGateContext::forOperation(PaymentGateStage::RENDER, 'service.render', serviceType: 'service_rendering'),
+        );
+    }
+
+    public function policyForLabResultEntry(LabRequestItem $requestItem, ?User $user = null): BillingPolicyDecision
+    {
+        $labRequest = $requestItem->relationLoaded('labRequest')
+            ? $requestItem->labRequest
+            : ($requestItem->lab_request_id ? $requestItem->labRequest()->first() : null);
+        $context = PaymentGateContext::laboratoryResultEntry(
+            $labRequest?->target_department_id ?? $labRequest?->department_id,
+        );
+        if (! $requestItem->invoice_item_id) {
+            return $this->missingItemAllowed($context);
+        }
+        $item = $this->resolveInvoiceItem($requestItem);
+        if (! $item) {
+            return $this->missingItemAllowed($context);
+        }
+
+        return $this->policy->getIntrinsicSettlementPolicy(
+            $item,
+            $context,
+            'Payment required: this investigation must be paid before results can be entered.',
+        );
+    }
+
+    public function canEnterLabResult(LabRequestItem $requestItem, ?User $user = null): bool
+    {
+        return $this->policyForLabResultEntry($requestItem, $user)->allowed;
+    }
+
+    public function assertCanEnterLabResult(LabRequestItem $requestItem, ?User $user = null): void
+    {
+        $this->assertAllowed($this->policyForLabResultEntry($requestItem, $user));
+    }
+
+    public function policyForPaidPharmacyItem(InvoiceItem $item, ?User $user = null): BillingPolicyDecision
+    {
+        return $this->policy->getPaidOnlyInvoiceItemPolicy(
+            $item,
+            PaymentGateContext::pharmacyDispense($item->department_id),
+            'This item cannot be dispensed until its bill is settled (paid).',
+        );
     }
 
     /*
@@ -121,18 +217,18 @@ class PaymentGateService
     |--------------------------------------------------------------------------
     */
 
-    private function canRenderResolved(mixed $subject, User $user, string $gateOperation): bool
+    private function canRenderResolved(mixed $subject, User $user, PaymentGateContext $context): bool
     {
         $item = $this->resolveInvoiceItem($subject);
 
-        return $item === null ? true : $this->canRenderInvoiceItem($item, $user, $gateOperation);
+        return $item === null ? true : $this->canRenderInvoiceItem($item, $user, $context);
     }
 
-    private function assertCanRenderResolved(mixed $subject, User $user, string $gateOperation): void
+    private function assertCanRenderResolved(mixed $subject, User $user, PaymentGateContext $context): void
     {
         $item = $this->resolveInvoiceItem($subject);
         if ($item !== null) {
-            $this->assertCanRenderInvoiceItem($item, $user, $gateOperation);
+            $this->assertCanRenderInvoiceItem($item, $user, $context);
         }
     }
 
@@ -147,8 +243,11 @@ class PaymentGateService
             return $subject;
         }
         if (is_object($subject)) {
-            if (isset($subject->invoiceItem) && $subject->invoiceItem instanceof InvoiceItem) {
+            if ($subject instanceof Model && $subject->relationLoaded('invoiceItem') && $subject->invoiceItem instanceof InvoiceItem) {
                 return $subject->invoiceItem;
+            }
+            if ($subject instanceof Model && array_key_exists('invoice_item_id', $subject->getAttributes())) {
+                return ! empty($subject->invoice_item_id) ? InvoiceItem::find($subject->invoice_item_id) : null;
             }
             if (method_exists($subject, 'invoiceItem')) {
                 $related = $subject->invoiceItem()->first();
@@ -156,11 +255,37 @@ class PaymentGateService
                     return $related;
                 }
             }
-            if (! empty($subject->invoice_item_id)) {
-                return InvoiceItem::find($subject->invoice_item_id);
-            }
         }
 
         return null;
+    }
+
+    private function context(
+        PaymentGateContext|string|null $context,
+        PaymentGateStage $defaultStage,
+        string $defaultOperation,
+    ): PaymentGateContext {
+        return match (true) {
+            $context instanceof PaymentGateContext => $context,
+            is_string($context) => PaymentGateContext::forOperation($defaultStage, $context),
+            default => PaymentGateContext::forOperation($defaultStage, $defaultOperation),
+        };
+    }
+
+    private function missingItemAllowed(PaymentGateContext $context): BillingPolicyDecision
+    {
+        return BillingPolicyDecision::allow(
+            BillingPolicyService::MODE_ADVISORY,
+            'INVOICE_ITEM_MISSING_ALLOWED',
+            'No invoice item is linked; existing workflow allows this operation.',
+            ['settlementStatus' => InvoiceItemSettlementService::UNBILLED],
+        );
+    }
+
+    private function assertAllowed(BillingPolicyDecision $decision): void
+    {
+        if (! $decision->allowed) {
+            throw BillingGateException::fromDecision($decision);
+        }
     }
 }

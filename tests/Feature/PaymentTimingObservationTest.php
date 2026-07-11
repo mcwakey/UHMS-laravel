@@ -72,6 +72,9 @@ class PaymentTimingObservationTest extends TestCase
                 $json = json_encode($payload);
 
                 return $payload['outcome'] === 'legacy_more_restrictive'
+                    && $payload['context']['payment_gate_stage'] === 'result'
+                    && $payload['context']['gate_operation'] === 'laboratory.result.enter'
+                    && $payload['context']['invoice_item_present'] === true
                     && ! str_contains($json, 'patient_name')
                     && ! str_contains($json, 'phone')
                     && ! str_contains($json, 'email')
@@ -83,8 +86,16 @@ class PaymentTimingObservationTest extends TestCase
             $this->visit(),
             $this->legacy(false),
             $this->typed(VisitPaymentTimingPolicy::RUNNING_BILL),
+            [
+                'payment_gate_stage' => 'result',
+                'gate_operation' => 'laboratory.result.enter',
+                'service_type' => 'investigation_service',
+                'invoice_item_present' => true,
+            ],
         );
         $this->assertSame(PaymentTimingComparisonOutcome::LEGACY_MORE_RESTRICTIVE, $result->outcome);
+        $this->assertSame('result', $result->context['payment_gate_stage']);
+        $this->assertSame('laboratory.result.enter', $result->context['gate_operation']);
     }
 
     public function test_matches_are_not_logged_by_default_and_logging_failure_is_non_fatal(): void

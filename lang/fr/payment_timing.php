@@ -29,6 +29,20 @@ return [
         'missing_context' => 'Le contexte requis pour la comparaison est manquant',
         'invalid_configuration_fallback' => 'Repli dû à une configuration non valide',
     ],
+    'gate_stages' => [
+        'start' => 'Début du service',
+        'perform' => 'Réalisation du service',
+        'result' => 'Saisie du résultat',
+        'complete' => 'Achèvement du service',
+        'dispense' => 'Délivrance',
+        'issue' => 'Remise',
+        'render' => 'Prestation du service',
+        'readiness' => 'État de préparation',
+    ],
+    'gate_context' => 'Étape de la règle de paiement',
+    'policy_unavailable' => 'Politique de paiement indisponible',
+    'invoice_item_missing' => 'Ligne de facture manquante',
+    'coverage_title' => 'Couverture diagnostique des règles de paiement',
     'policies' => [
         'inherit' => [
             'label' => 'Utiliser la valeur par défaut du système',

@@ -2,6 +2,7 @@
 
 namespace App\Services\Billing;
 
+use App\Data\Billing\PaymentGateContext;
 use App\Enums\AdmissionStatus;
 use App\Enums\PaymentTimingIntegrationMode;
 use App\Enums\VisitType;
@@ -156,15 +157,75 @@ class BillingPolicyService
     public function getInvoiceItemPolicy(
         InvoiceItem $item,
         ?User $user = null,
-        string $gateOperation = 'invoice_item_policy',
+        PaymentGateContext|string $context = 'invoice_item_policy',
     ): BillingPolicyDecision {
         $legacyDecision = $this->evaluateLegacyInvoiceItemPolicy($item, $user);
 
         if ($this->paymentTimingConfiguration->integrationMode() === PaymentTimingIntegrationMode::OBSERVE) {
-            $this->observePaymentTiming($item, $legacyDecision, $gateOperation);
+            $this->observePaymentTiming($item, $legacyDecision, $this->normaliseContext($context));
         }
 
         return $legacyDecision;
+    }
+
+    /** Preserve the laboratory's pre-Phase-3 intrinsic settlement gate. */
+    public function getIntrinsicSettlementPolicy(
+        InvoiceItem $item,
+        PaymentGateContext $context,
+        string $blockedMessage,
+    ): BillingPolicyDecision {
+        $status = $this->settlement->settlementStatus($item);
+        $extra = ['settlementStatus' => $status];
+        $decision = match ($status) {
+            InvoiceItemSettlementService::PAID => BillingPolicyDecision::allow(
+                self::MODE_STRICT_PAY_BEFORE_SERVICE, 'ITEM_PAID', 'This item has been paid for.', $extra
+            ),
+            InvoiceItemSettlementService::COVERED_BY_INSURANCE => BillingPolicyDecision::allow(
+                self::MODE_INSURANCE_COVERED, 'ITEM_COVERED', 'This item is covered by insurance.', $extra
+            ),
+            InvoiceItemSettlementService::WAIVED => BillingPolicyDecision::allow(
+                self::MODE_WAIVED, 'ITEM_WAIVED', 'This item has been waived.', $extra
+            ),
+            InvoiceItemSettlementService::ADJUSTED => BillingPolicyDecision::allow(
+                self::MODE_WAIVED, 'INVOICE_ADJUSTED', 'This invoice has been fully settled by an adjustment.', $extra
+            ),
+            default => BillingPolicyDecision::block(
+                self::MODE_STRICT_PAY_BEFORE_SERVICE, 'ITEM_UNPAID', $blockedMessage, $extra + ['requiresPayment' => true]
+            ),
+        };
+
+        if ($this->paymentTimingConfiguration->integrationMode() === PaymentTimingIntegrationMode::OBSERVE) {
+            $this->observePaymentTiming($item, $decision, $context);
+        }
+
+        return $decision;
+    }
+
+    /** Preserve pharmacy's existing paid-only release rule, including emergency visits. */
+    public function getPaidOnlyInvoiceItemPolicy(
+        InvoiceItem $item,
+        PaymentGateContext $context,
+        string $blockedMessage,
+    ): BillingPolicyDecision {
+        $decision = $item->isPaid()
+            ? BillingPolicyDecision::allow(
+                self::MODE_STRICT_PAY_BEFORE_SERVICE,
+                'ITEM_PAID',
+                'This item has been paid for.',
+                ['settlementStatus' => InvoiceItemSettlementService::PAID],
+            )
+            : BillingPolicyDecision::block(
+                self::MODE_STRICT_PAY_BEFORE_SERVICE,
+                'ITEM_UNPAID',
+                $blockedMessage,
+                ['settlementStatus' => InvoiceItemSettlementService::BILLED_UNPAID, 'requiresPayment' => true],
+            );
+
+        if ($this->paymentTimingConfiguration->integrationMode() === PaymentTimingIntegrationMode::OBSERVE) {
+            $this->observePaymentTiming($item, $decision, $context);
+        }
+
+        return $decision;
     }
 
     private function evaluateLegacyInvoiceItemPolicy(InvoiceItem $item, ?User $user = null): BillingPolicyDecision
@@ -259,7 +320,7 @@ class BillingPolicyService
     private function observePaymentTiming(
         InvoiceItem $item,
         BillingPolicyDecision $legacyDecision,
-        string $gateOperation,
+        PaymentGateContext $context,
     ): void {
         try {
             $visit = $item->relationLoaded('visit') ? $item->visit : ($item->visit_id ? $item->visit()->first() : null);
@@ -269,21 +330,30 @@ class BillingPolicyService
 
             $typedDecision = $this->paymentTimingResolver->resolve($visit);
             $legacySnapshot = $this->paymentTimingCompatibility->describeLegacyDecision($legacyDecision);
-            $this->paymentTimingComparison->compare($visit, $legacySnapshot, $typedDecision, [
-                'gate_operation' => $gateOperation,
-            ]);
+            $this->paymentTimingComparison->compare(
+                $visit,
+                $legacySnapshot,
+                $typedDecision,
+                $context->observationContext(true),
+            );
         } catch (Throwable $exception) {
             // The legacy result is authoritative; observation can never alter it.
             try {
                 Log::warning('payment_timing_observation_failed', [
                     'visit_id' => $item->visit_id,
-                    'gate_operation' => $gateOperation,
+                    'payment_gate_stage' => $context->stage->value,
+                    'gate_operation' => $context->operation,
                     'exception' => $exception::class,
                 ]);
             } catch (Throwable) {
                 // A diagnostic logger failure must also leave the legacy result intact.
             }
         }
+    }
+
+    private function normaliseContext(PaymentGateContext|string $context): PaymentGateContext
+    {
+        return $context instanceof PaymentGateContext ? $context : PaymentGateContext::legacy($context);
     }
 
     /*

@@ -11,6 +11,7 @@ use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use App\Models\Product;
 use App\Models\StockLocation;
+use App\Services\Billing\PaymentGateService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,7 @@ class PharmacyBillingSelectionService
         private BillingService $billing,
         private StockBalanceService $balances,
         private StockLocationService $locations,
+        private PaymentGateService $paymentGate,
     ) {}
 
     public function billSelectedItems(Prescription $prescription, array $items): Collection
@@ -213,7 +215,10 @@ class PharmacyBillingSelectionService
             return false; // nothing billed/outstanding to dispense
         }
 
-        return $selections->every(fn (PharmacyBillingSelection $s) => $s->invoiceItem && $s->invoiceItem->isPaid());
+        return $selections->every(fn (PharmacyBillingSelection $selection) =>
+            $selection->invoiceItem
+            && $this->paymentGate->policyForPaidPharmacyItem($selection->invoiceItem, Auth::user())->allowed
+        );
     }
 
     public function recordDispensed(PrescriptionItem $item, float $quantity, ?int $userId = null): void
