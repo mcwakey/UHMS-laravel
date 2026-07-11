@@ -662,6 +662,53 @@ class RoleSeeder extends Seeder
             'notifications.broadcast',
             'notifications.manage_preferences',
 
+            // ── Front Desk Operations (Phase 18A) ─────────────────────────
+            'front_desk.view',
+            'front_desk.dashboard.view',
+            'front_desk.visitors.view',
+            'front_desk.visitors.create',
+            'front_desk.visitors.update',
+            'front_desk.visitors.checkout',
+            'front_desk.visitors.print_pass',
+            'front_desk.calls.view',
+            'front_desk.calls.create',
+            'front_desk.calls.update',
+            'front_desk.couriers.view',
+            'front_desk.couriers.create',
+            'front_desk.couriers.update',
+            'front_desk.couriers.deliver',
+            'front_desk.reports.view',
+            'front_desk.reports.export',
+            // Phase 18C — call follow-up queue & courier workflow
+            'front_desk.calls.followups.view',
+            'front_desk.calls.followups.assign',
+            'front_desk.calls.followups.complete',
+            'front_desk.calls.transfer',
+            'front_desk.couriers.workflow.view',
+            'front_desk.couriers.dispatch',
+            'front_desk.couriers.handover',
+            'front_desk.couriers.return',
+            // Phase 18E — shift handover, lost & found, incident desk
+            'front_desk.handovers.view',
+            'front_desk.handovers.create',
+            'front_desk.handovers.update',
+            'front_desk.handovers.submit',
+            'front_desk.handovers.accept',
+            'front_desk.handovers.cancel',
+            'front_desk.lost_found.view',
+            'front_desk.lost_found.create',
+            'front_desk.lost_found.update',
+            'front_desk.lost_found.claim',
+            'front_desk.lost_found.release',
+            'front_desk.lost_found.cancel',
+            'front_desk.incidents.view',
+            'front_desk.incidents.create',
+            'front_desk.incidents.update',
+            'front_desk.incidents.assign',
+            'front_desk.incidents.escalate',
+            'front_desk.incidents.resolve',
+            'front_desk.incidents.cancel',
+
             // ── Activity / Audit Logs ─────────────────────────────────────
             'logs.view',
             'logs.view_patient',
@@ -1308,6 +1355,17 @@ class RoleSeeder extends Seeder
         ]);
 
         // ── Receptionist ──────────────────────────────────────────────────
+        // Front desk operational set (no reports/config) shared by reception/records.
+        $frontDeskOperationalPerms = [
+            'front_desk.view', 'front_desk.dashboard.view',
+            'front_desk.visitors.view', 'front_desk.visitors.create', 'front_desk.visitors.update',
+            'front_desk.visitors.checkout', 'front_desk.visitors.print_pass',
+            'front_desk.calls.view', 'front_desk.calls.create', 'front_desk.calls.update',
+            'front_desk.calls.followups.view', 'front_desk.calls.followups.assign', 'front_desk.calls.followups.complete', 'front_desk.calls.transfer',
+            'front_desk.couriers.view', 'front_desk.couriers.create', 'front_desk.couriers.update', 'front_desk.couriers.deliver',
+            'front_desk.couriers.workflow.view', 'front_desk.couriers.dispatch', 'front_desk.couriers.handover', 'front_desk.couriers.return',
+        ];
+
         $receptionist = Role::firstOrCreate(['name' => 'Receptionist']);
         $receptionist->syncPermissions(array_values(array_unique(array_merge([
             'patients.view', 'patients.create', 'patients.edit',
@@ -1320,7 +1378,15 @@ class RoleSeeder extends Seeder
             'integrations.sms.view', 'integrations.sms.send', 'integrations.sms.reports.view',
             'integrations.sms.queue.view',
             'notifications.view',
-        ], $maternityReceptionPerms))));
+            // Front desk operational reports (view only).
+            'front_desk.reports.view',
+            // Phase 18E facility operations (handover / lost & found / incident desk).
+            'front_desk.handovers.view', 'front_desk.handovers.create', 'front_desk.handovers.update',
+            'front_desk.handovers.submit', 'front_desk.handovers.accept',
+            'front_desk.lost_found.view', 'front_desk.lost_found.create', 'front_desk.lost_found.update',
+            'front_desk.lost_found.claim', 'front_desk.lost_found.release',
+            'front_desk.incidents.view', 'front_desk.incidents.create', 'front_desk.incidents.update',
+        ], $frontDeskOperationalPerms, $maternityReceptionPerms))));
 
         // ── Cashier ───────────────────────────────────────────────────────
         // Payment collection only; cannot modify invoices
@@ -1355,7 +1421,7 @@ class RoleSeeder extends Seeder
 
         // ── Lab Technician ────────────────────────────────────────────────
         $medicalRecordsOfficer = Role::firstOrCreate(['name' => 'Medical Records Officer']);
-        $medicalRecordsOfficer->syncPermissions([
+        $medicalRecordsOfficer->syncPermissions(array_values(array_unique(array_merge([
             'patients.view', 'patients.create', 'patients.edit',
             'patients.merge.view', 'patients.merge.request', 'patients.merge.confirm_identity',
             'patients.pii.view', 'patients.contact.view', 'patients.identity.view',
@@ -1365,7 +1431,12 @@ class RoleSeeder extends Seeder
             'appointments.view',
             'reports.view',
             'notifications.view',
-        ]);
+            // Front desk operations + reporting (view + export).
+            'front_desk.reports.view',
+            'front_desk.reports.export',
+            // Phase 18E — records officer gets view access to facility logs.
+            'front_desk.handovers.view', 'front_desk.lost_found.view', 'front_desk.incidents.view',
+        ], $frontDeskOperationalPerms))));
 
         $labTech = Role::firstOrCreate(['name' => 'Lab Technician']);
         $labTech->syncPermissions([

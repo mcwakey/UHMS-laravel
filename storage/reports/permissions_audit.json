@@ -1,15 +1,15 @@
 {
-    "generated_at": "2026-07-08T19:31:11+00:00",
+    "generated_at": "2026-07-11T18:17:41+00:00",
     "totals": {
-        "permissions_in_db": 2,
-        "used_in_routes": 438,
-        "admin_mutation_routes": 608
+        "permissions_in_db": 62,
+        "used_in_routes": 489,
+        "admin_mutation_routes": 653
     },
     "risk_distribution": {
-        "LOW": 1,
-        "NORMAL": 0,
-        "HIGH": 0,
-        "CRITICAL": 1
+        "LOW": 16,
+        "NORMAL": 38,
+        "HIGH": 5,
+        "CRITICAL": 3
     },
     "referenced_not_in_db": [
         "departments.context.switch",
@@ -329,6 +329,10 @@
         "pharmacy.dispensing.create",
         "lab.requests.view",
         "lab.results.create",
+        "lab.samples.view",
+        "lab.samples.manage",
+        "lab.samples.collect",
+        "lab.samples.receive",
         "lab.results.view",
         "lab.results.verify",
         "lab.tests.manage",
@@ -451,6 +455,19 @@
         "notifications.broadcast"
     ],
     "unused_in_routes": [
+        "admissions.readmit",
+        "billing.patient_statement.export",
+        "billing.patient_statement.print",
+        "billing.patient_statement.view",
+        "billing.payment.allocate_manual",
+        "billing.previous_balance.amount.view",
+        "billing.previous_balance.flag.view",
+        "billing.previous_balance.view",
+        "consultations.reopen_after_window",
+        "consultations.reopen_completed",
+        "consultations.reopen_same_day_discharge",
+        "consultations.sessions.override_lock",
+        "consultations.sessions.reopen",
         "patients.delete"
     ],
     "unprotected_routes": [],

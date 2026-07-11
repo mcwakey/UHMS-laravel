@@ -133,9 +133,9 @@
         <tr>
             <th>{{ __('common.visit_number_short') }}</th>
             <th>{{ __('common.patient') }}</th>
+            <th>{{ __('common.type') }}</th>
             <th>{{ __('visits.active_insurance') }}</th>
             <!-- <th>{{ __('common.age') }}</th> -->
-            <th>{{ __('common.type') }}</th>
             <th>{{ __('common.priority') }}</th>
             <!-- <th>{{ __('common.doctor') }}</th> -->
             <th>{{ __('common.status') }}</th>
@@ -183,8 +183,26 @@
                             <div>
                                 <a href="{{ route('admin.patients.show', $visit->patient) }}" class="fw-medium">{{ $visit->patient->full_name }}</a>
                                 <div class="small text-muted">{{ $visit->patient->gender }} · {{ $visit->patient->age }}y</div>
-                                @if(($pbMap[$visit->patient_id] ?? 0) > 0)
-                                    <x-billing.outstanding-badge :amount="$pbMap[$visit->patient_id]" :show-amount="$pbCanAmount" class="mt-1" />
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ $visit->visit_type === \App\Enums\VisitType::EMERGENCY ? 'danger' : ($visit->visit_type === \App\Enums\VisitType::INPATIENT ? 'info' : 'light text-dark') }}">
+                                {{ $visit->visit_type->translatedLabel() }}
+                            </span>
+                            <div class="mt-1 d-flex flex-wrap gap-1">
+                                @if($activeAdmission)
+                                    <span class="badge bg-info-subtle text-info border">{{ __('visits.badges.on_admission') }}</span>
+                                @endif
+                                @if($dischargedToday)
+                                    <span class="badge bg-success-subtle text-success border">{{ __('visits.badges.discharged_today') }}</span>
+                                @endif
+                                @if($completedToday)
+                                    <span class="badge bg-success-subtle text-success border">{{ __('visits.badges.completed_today') }}</span>
+                                @endif
+                                @if($reopenEligibility?->allowed)
+                                    <span class="badge bg-warning-subtle text-warning border">{{ __('visits.badges.reopen_available') }}</span>
+                                @elseif($consultationRoute && in_array($consultationRoute->status, [\App\Models\VisitConsultationRoute::STATUS_COMPLETED, \App\Models\VisitConsultationRoute::STATUS_CANCELLED], true))
+                                    <span class="badge bg-secondary-subtle text-secondary border">{{ __('visits.badges.read_only') }}</span>
                                 @endif
                             </div>
                         </td>
@@ -198,19 +216,19 @@
                                     && $provider
                                     && ! $provider->is_default;
                             @endphp
-                            <span class="badge bg-{{ $hasInsurance ? ($provider->type?->color() ?? 'info') : 'secondary' }}">
-                                <i class="ti ti-{{ $hasInsurance ? 'shield-check' : 'cash' }} me-1"></i>{{ $hasInsurance ? $provider->short_name  . " - " . $visitInsurance->insuranceTier->name : ($provider?->short_name ?? __('visits.cash_and_carry')) }}
-                            </span>
+                            <div>
+                                <span class="badge bg-{{ $hasInsurance ? ($provider->type?->color() ?? 'info') : 'secondary' }}">
+                                    <i class="ti ti-{{ $hasInsurance ? 'shield-check' : 'cash' }} me-1"></i>{{ $hasInsurance ? $provider->short_name  . " - " . $visitInsurance->insuranceTier->name : ($provider?->short_name ?? __('visits.cash_and_carry')) }}
+                                </span>
+                            </div>
                             <!-- @if($hasInsurance && $visitInsurance->insuranceTier?->name)
                                 <small class="text-muted d-block mt-1">{{ $visitInsurance->insuranceTier->name }}</small>
                             @endif -->
+                            @if(($pbMap[$visit->patient_id] ?? 0) > 0)
+                                <x-billing.outstanding-badge :amount="$pbMap[$visit->patient_id]" :show-amount="$pbCanAmount" class="mt-1" />
+                            @endif
                         </td>
                         <!-- <td>{{ $visit->patient_age ?? $visit->patient->age }}y</td> -->
-                        <td>
-                            <span class="badge bg-{{ $visit->visit_type === \App\Enums\VisitType::EMERGENCY ? 'danger' : ($visit->visit_type === \App\Enums\VisitType::INPATIENT ? 'info' : 'light text-dark') }}">
-                                {{ $visit->visit_type->translatedLabel() }}
-                            </span>
-                        </td>
                         <td>
                             <x-status-badge :status="$visit->priority" />
                             @if($visit->triage_score)
@@ -234,7 +252,7 @@
                                     @endif
                                 </div>
                             @endif
-                            <div class="mt-1 d-flex flex-wrap gap-1">
+                            <!-- <div class="mt-1 d-flex flex-wrap gap-1">
                                 @if($activeAdmission)
                                     <span class="badge bg-info-subtle text-info border">{{ __('visits.badges.on_admission') }}</span>
                                 @endif
@@ -249,7 +267,7 @@
                                 @elseif($consultationRoute && in_array($consultationRoute->status, [\App\Models\VisitConsultationRoute::STATUS_COMPLETED, \App\Models\VisitConsultationRoute::STATUS_CANCELLED], true))
                                     <span class="badge bg-secondary-subtle text-secondary border">{{ __('visits.badges.read_only') }}</span>
                                 @endif
-                            </div>
+                            </div> -->
                         </td>
                         <td>{{ $visit->visit_date->translatedFormat('d M Y') }}</td>
                         <td>{{ $visit->duration ?? '—' }}</td>

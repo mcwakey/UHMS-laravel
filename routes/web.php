@@ -1,6 +1,14 @@
 <?php
 
 use App\Http\Controllers\Admin\Billing\AccountCategoryController;
+use App\Http\Controllers\Admin\FrontDesk\CallLogController;
+use App\Http\Controllers\Admin\FrontDesk\CourierLogController;
+use App\Http\Controllers\Admin\FrontDesk\FrontDeskDashboardController;
+use App\Http\Controllers\Admin\FrontDesk\FrontDeskReportController;
+use App\Http\Controllers\Admin\FrontDesk\IncidentLogController;
+use App\Http\Controllers\Admin\FrontDesk\LostFoundController;
+use App\Http\Controllers\Admin\FrontDesk\ShiftHandoverController;
+use App\Http\Controllers\Admin\FrontDesk\VisitorLogController;
 use App\Http\Controllers\Admin\ConsultationSpecialtyFavoriteController;
 use App\Http\Controllers\Admin\ConsultationSpecialtyMappingController;
 use App\Http\Controllers\Admin\ConsultationSpecialtyOrderSetController as AdminConsultationSpecialtyOrderSetController;
@@ -2108,6 +2116,110 @@ Route::middleware('auth')->group(function () {
             Route::middleware('can:notifications.broadcast')->group(function () {
                 Route::get('/broadcast', [NotificationBroadcastController::class, 'create'])->name('broadcast.create');
                 Route::post('/broadcast', [NotificationBroadcastController::class, 'store'])->name('broadcast.store');
+            });
+        });
+
+        // Front Desk Operations (Phase 18A) — non-clinical reception / facility desk.
+        Route::prefix('front-desk')->name('front-desk.')->middleware('can:front_desk.view')->group(function () {
+            Route::get('/', [FrontDeskDashboardController::class, 'index'])
+                ->name('index')->middleware('can:front_desk.dashboard.view');
+
+            // Visitor logs
+            Route::middleware('can:front_desk.visitors.view')->group(function () {
+                Route::get('visitors', [VisitorLogController::class, 'index'])->name('visitors.index');
+                Route::get('visitors/create', [VisitorLogController::class, 'create'])->name('visitors.create')->middleware('can:front_desk.visitors.create');
+                Route::post('visitors', [VisitorLogController::class, 'store'])->name('visitors.store')->middleware('can:front_desk.visitors.create');
+                // History (static segments registered before the {visitor} param routes)
+                Route::get('visitors/patient/{patient}', [VisitorLogController::class, 'patientHistory'])->name('visitors.patient-history');
+                Route::get('visitors/admission/{admission}', [VisitorLogController::class, 'admissionHistory'])->name('visitors.admission-history');
+                Route::get('visitors/{visitor}', [VisitorLogController::class, 'show'])->name('visitors.show');
+                Route::get('visitors/{visitor}/edit', [VisitorLogController::class, 'edit'])->name('visitors.edit')->middleware('can:front_desk.visitors.update');
+                Route::put('visitors/{visitor}', [VisitorLogController::class, 'update'])->name('visitors.update')->middleware('can:front_desk.visitors.update');
+                Route::get('visitors/{visitor}/pass', [VisitorLogController::class, 'pass'])->name('visitors.pass')->middleware('can:front_desk.visitors.print_pass');
+                Route::post('visitors/{visitor}/check-out', [VisitorLogController::class, 'checkOut'])->name('visitors.check-out')->middleware('can:front_desk.visitors.checkout');
+            });
+
+            // Call logs
+            Route::middleware('can:front_desk.calls.view')->group(function () {
+                Route::get('calls', [CallLogController::class, 'index'])->name('calls.index');
+                Route::get('calls/create', [CallLogController::class, 'create'])->name('calls.create')->middleware('can:front_desk.calls.create');
+                Route::post('calls', [CallLogController::class, 'store'])->name('calls.store')->middleware('can:front_desk.calls.create');
+                // Callback queue (Phase 18C) — static segment before {call}
+                Route::get('calls/follow-ups', [CallLogController::class, 'followUps'])->name('calls.follow-ups')->middleware('can:front_desk.calls.followups.view');
+                Route::get('calls/{call}', [CallLogController::class, 'show'])->name('calls.show');
+                Route::get('calls/{call}/edit', [CallLogController::class, 'edit'])->name('calls.edit')->middleware('can:front_desk.calls.update');
+                Route::put('calls/{call}', [CallLogController::class, 'update'])->name('calls.update')->middleware('can:front_desk.calls.update');
+                // Follow-up workflow (Phase 18C)
+                Route::post('calls/{call}/assign-follow-up', [CallLogController::class, 'assignFollowUp'])->name('calls.assign-follow-up')->middleware('can:front_desk.calls.followups.assign');
+                Route::post('calls/{call}/complete-follow-up', [CallLogController::class, 'completeFollowUp'])->name('calls.complete-follow-up')->middleware('can:front_desk.calls.followups.complete');
+                Route::post('calls/{call}/cancel-follow-up', [CallLogController::class, 'cancelFollowUp'])->name('calls.cancel-follow-up')->middleware('can:front_desk.calls.followups.complete');
+                Route::post('calls/{call}/transfer', [CallLogController::class, 'transfer'])->name('calls.transfer')->middleware('can:front_desk.calls.transfer');
+                // Backward-compatible Phase 18A route.
+                Route::post('calls/{call}/follow-up-complete', [CallLogController::class, 'completeFollowUp'])->name('calls.follow-up-complete')->middleware('can:front_desk.calls.update');
+            });
+
+            // Courier logs
+            Route::middleware('can:front_desk.couriers.view')->group(function () {
+                Route::get('couriers', [CourierLogController::class, 'index'])->name('couriers.index');
+                Route::get('couriers/create', [CourierLogController::class, 'create'])->name('couriers.create')->middleware('can:front_desk.couriers.create');
+                Route::post('couriers', [CourierLogController::class, 'store'])->name('couriers.store')->middleware('can:front_desk.couriers.create');
+                // Courier workflow board (Phase 18C) — static segment before {courier}
+                Route::get('couriers/workflow', [CourierLogController::class, 'workflow'])->name('couriers.workflow')->middleware('can:front_desk.couriers.workflow.view');
+                Route::get('couriers/{courier}', [CourierLogController::class, 'show'])->name('couriers.show');
+                Route::get('couriers/{courier}/edit', [CourierLogController::class, 'edit'])->name('couriers.edit')->middleware('can:front_desk.couriers.update');
+                Route::put('couriers/{courier}', [CourierLogController::class, 'update'])->name('couriers.update')->middleware('can:front_desk.couriers.update');
+                // Dispatch / handover / delivery / return workflow (Phase 18C)
+                Route::post('couriers/{courier}/dispatch', [CourierLogController::class, 'dispatchItem'])->name('couriers.dispatch')->middleware('can:front_desk.couriers.dispatch');
+                Route::post('couriers/{courier}/handover', [CourierLogController::class, 'handover'])->name('couriers.handover')->middleware('can:front_desk.couriers.handover');
+                Route::post('couriers/{courier}/mark-delivered', [CourierLogController::class, 'markDelivered'])->name('couriers.mark-delivered')->middleware('can:front_desk.couriers.deliver');
+                Route::post('couriers/{courier}/mark-returned', [CourierLogController::class, 'markReturned'])->name('couriers.mark-returned')->middleware('can:front_desk.couriers.return');
+            });
+
+            // Shift handovers (Phase 18E)
+            Route::middleware('can:front_desk.handovers.view')->group(function () {
+                Route::get('handovers', [ShiftHandoverController::class, 'index'])->name('handovers.index');
+                Route::get('handovers/create', [ShiftHandoverController::class, 'create'])->name('handovers.create')->middleware('can:front_desk.handovers.create');
+                Route::post('handovers', [ShiftHandoverController::class, 'store'])->name('handovers.store')->middleware('can:front_desk.handovers.create');
+                Route::get('handovers/{handover}', [ShiftHandoverController::class, 'show'])->name('handovers.show');
+                Route::get('handovers/{handover}/edit', [ShiftHandoverController::class, 'edit'])->name('handovers.edit')->middleware('can:front_desk.handovers.update');
+                Route::put('handovers/{handover}', [ShiftHandoverController::class, 'update'])->name('handovers.update')->middleware('can:front_desk.handovers.update');
+                Route::post('handovers/{handover}/submit', [ShiftHandoverController::class, 'submit'])->name('handovers.submit')->middleware('can:front_desk.handovers.submit');
+                Route::post('handovers/{handover}/accept', [ShiftHandoverController::class, 'accept'])->name('handovers.accept')->middleware('can:front_desk.handovers.accept');
+                Route::post('handovers/{handover}/cancel', [ShiftHandoverController::class, 'cancel'])->name('handovers.cancel')->middleware('can:front_desk.handovers.cancel');
+            });
+
+            // Lost & found (Phase 18E)
+            Route::middleware('can:front_desk.lost_found.view')->group(function () {
+                Route::get('lost-found', [LostFoundController::class, 'index'])->name('lost-found.index');
+                Route::get('lost-found/create', [LostFoundController::class, 'create'])->name('lost-found.create')->middleware('can:front_desk.lost_found.create');
+                Route::post('lost-found', [LostFoundController::class, 'store'])->name('lost-found.store')->middleware('can:front_desk.lost_found.create');
+                Route::get('lost-found/{lostFound}', [LostFoundController::class, 'show'])->name('lost-found.show');
+                Route::get('lost-found/{lostFound}/edit', [LostFoundController::class, 'edit'])->name('lost-found.edit')->middleware('can:front_desk.lost_found.update');
+                Route::put('lost-found/{lostFound}', [LostFoundController::class, 'update'])->name('lost-found.update')->middleware('can:front_desk.lost_found.update');
+                Route::post('lost-found/{lostFound}/claim', [LostFoundController::class, 'claim'])->name('lost-found.claim')->middleware('can:front_desk.lost_found.claim');
+                Route::post('lost-found/{lostFound}/release', [LostFoundController::class, 'release'])->name('lost-found.release')->middleware('can:front_desk.lost_found.release');
+                Route::post('lost-found/{lostFound}/cancel', [LostFoundController::class, 'cancel'])->name('lost-found.cancel')->middleware('can:front_desk.lost_found.cancel');
+            });
+
+            // Incident / security desk (Phase 18E)
+            Route::middleware('can:front_desk.incidents.view')->group(function () {
+                Route::get('incidents', [IncidentLogController::class, 'index'])->name('incidents.index');
+                Route::get('incidents/create', [IncidentLogController::class, 'create'])->name('incidents.create')->middleware('can:front_desk.incidents.create');
+                Route::post('incidents', [IncidentLogController::class, 'store'])->name('incidents.store')->middleware('can:front_desk.incidents.create');
+                Route::get('incidents/{incident}', [IncidentLogController::class, 'show'])->name('incidents.show');
+                Route::get('incidents/{incident}/edit', [IncidentLogController::class, 'edit'])->name('incidents.edit')->middleware('can:front_desk.incidents.update');
+                Route::put('incidents/{incident}', [IncidentLogController::class, 'update'])->name('incidents.update')->middleware('can:front_desk.incidents.update');
+                Route::post('incidents/{incident}/assign', [IncidentLogController::class, 'assign'])->name('incidents.assign')->middleware('can:front_desk.incidents.assign');
+                Route::post('incidents/{incident}/escalate', [IncidentLogController::class, 'escalate'])->name('incidents.escalate')->middleware('can:front_desk.incidents.escalate');
+                Route::post('incidents/{incident}/resolve', [IncidentLogController::class, 'resolve'])->name('incidents.resolve')->middleware('can:front_desk.incidents.resolve');
+                Route::post('incidents/{incident}/cancel', [IncidentLogController::class, 'cancel'])->name('incidents.cancel')->middleware('can:front_desk.incidents.cancel');
+            });
+
+            // Reports & CSV exports (Phase 18D)
+            Route::middleware('can:front_desk.reports.view')->group(function () {
+                Route::get('reports', [FrontDeskReportController::class, 'index'])->name('reports.index');
+                Route::get('reports/data', [FrontDeskReportController::class, 'data'])->name('reports.data');
+                Route::get('reports/export', [FrontDeskReportController::class, 'export'])->name('reports.export')->middleware('can:front_desk.reports.export');
             });
         });
 

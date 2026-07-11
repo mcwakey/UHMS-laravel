@@ -1,417 +1,394 @@
-Great — this is a very clean implementation. The design decision to keep `Payment` single-invoice-scoped and group cross-visit tenders with `payment_batch_reference` is the right move. It avoids disturbing the existing payment/accounting pipeline while still achieving the accounting outcome: old debt collection reduces Patient Receivables and does **not** re-recognise revenue. The report confirms the big rules are respected: visit invoices stay separate, patient balance is computed from open patient receivables, emergency care is never blocked, and everything runs through existing services. 
+You are working on the UHMS Laravel codebase.
 
-I would proceed with the documented UI touchpoints. The backend is already ready; what remains is making the feature visible in the right workflows. 
+The Front Desk Operations module is now feature-complete across:
 
-Then the next phase should be:
-
-```text
-Previous Balance UI Completion Pass
+```text id="d5xlcc"
+18A — Visitor Logs, Call Logs, Courier Logs, Dashboard
+18B — Patient Visitor Management, Visitor Pass, Warnings, History
+18C — Call Follow-up Queue, Courier Dispatch/Handover Workflow
+18D — Reports, Exports, Operational Analytics
+18E — Shift Handover, Lost & Found, Incident/Security Desk
 ```
 
-You are working on UHMS — Ultimate Hospital Management System.
+Now implement:
 
-Previous Visit Outstanding Balance Policy and Cross-Visit Payment Allocation is already implemented and verified.
+# Phase 18F — Front Desk Module Wrap-up, Full-Suite Recovery, and Closure
 
-The backend is complete:
-- PatientOutstandingBalanceService
-- PatientPaymentAllocationService
-- PreviousBalanceOverrideService
-- PreviousBalanceController
-- previous-balance alert component
-- override modal
-- cross-visit allocation endpoint
-- permissions
-- localisation
-- tests
+## Goal
 
-Now proceed with the documented follow-up UI touchpoints.
+Close the Front Desk Operations module properly.
 
-Goal:
-Complete the user-facing integration of previous visit outstanding balance across the main UHMS workflows.
+This phase must:
 
-Do not rewrite the backend services.
-Do not change the core accounting design.
-Do not merge old invoices into current invoices.
-Do not create duplicate payment/accounting logic.
-Do not bypass PaymentService.
-Do not bypass InvoiceReceivable.
-Do not bypass ActivityLogService.
-Do not block emergency care because of old debt.
+```text id="tv3n4r"
+run the full suite
+fix the 3 deferred consultation failures
+confirm Front Desk still passes
+confirm localisation/permission/audit gates still pass
+produce final module closure documentation
+```
+
+This is a cleanup and closure phase.
+
+Do not add new Front Desk features unless a test exposes a real defect.
 
 ---
 
-# 1. Scope
+# Known Baseline
 
-Implement the remaining UI touchpoints:
+Front Desk focused tests are green:
 
-1. Cashier cross-visit allocation form on receive payment screen
-2. Patient search debt badges
-3. Visit list debt badges
-4. Discharge clearance previous/current/total balance panel
-5. Consultation screen advisory for clinical users
-6. Patient account statement summary cards
-7. Optional overpayment deposit TODO display, not full deposit implementation
-
-Use the existing completed services:
-
-```php
-PatientOutstandingBalanceService
-PatientPaymentAllocationService
-PreviousBalanceOverrideService
-````
-
-Use the existing endpoint:
-
-```text
-admin.billing.previous-balance.allocate
+```text id="c9adnf"
+109 passed
 ```
 
-Use the reusable component:
+Safety gates are green:
 
-```blade
-<x-billing.previous-balance-alert>
+```text id="pvzve4"
+LanguageParityTest
+ActiveRuntimeLocalizationAuditTest
+RouteLoadMemoryTest
+PermissionsAuditStrictTest
+```
+
+Known deferred failures from previous full-suite runs:
+
+```text id="smo5co"
+1. ConsultationClinicalSectionsTest::consultation page shows required clinical order
+2. ConsultationJavascriptLifecyclePhase2Test::workflow controls no longer use inline event handlers
+3. ConsultationStructurePhase3Test::no inline workflow handlers exist in show or partials
+```
+
+Known source:
+
+```text id="p6oydk"
+resources/views/consultations/show.blade.php
+committed inline onsubmit handlers around lines 938 / 1299 / 1491
+clinical-section-order assertion involving Treatments
+```
+
+These were deferred throughout Phase 18A–18E and must now be fixed.
+
+---
+
+# Important Rules
+
+Do not weaken or skip tests.
+
+Do not hide the failures.
+
+Do not remove audit guards.
+
+Do not disable UI structure checks.
+
+Do not change Front Desk behavior unless a Front Desk test proves it is involved.
+
+Do not introduce inline handlers:
+
+```text id="wed1d8"
+onclick=
+onsubmit=
+onchange=
+window.location.href
+location.reload()
+```
+
+Use existing UHMS delegated JavaScript / consultation bridge patterns.
+
+Preserve consultation workflow behavior.
+
+Preserve Front Desk module behavior.
+
+---
+
+# 1. Start With Status Verification
+
+Run:
+
+```bash id="2eccfj"
+php artisan test tests/Feature/FrontDesk
+php artisan test tests/Feature/Localization/LanguageParityTest.php
+php artisan test tests/Feature/Localization/ActiveRuntimeLocalizationAuditTest.php
+php artisan test tests/Feature/System/RouteLoadMemoryTest.php
+php artisan test tests/Feature/Permissions/PermissionsAuditStrictTest.php
+```
+
+Expected:
+
+```text id="z1ub8s"
+FrontDesk passes
+safety gates pass
+```
+
+Then reproduce the three deferred failures individually:
+
+```bash id="3hbigz"
+php artisan test tests/Feature/Consultations/ConsultationClinicalSectionsTest.php
+php artisan test tests/Feature/Consultations/ConsultationJavascriptLifecyclePhase2Test.php
+php artisan test tests/Feature/Consultations/ConsultationStructurePhase3Test.php
+```
+
+Document the exact failure messages before fixing.
+
+---
+
+# 2. Fix Inline Handler Failures
+
+Inspect:
+
+```text id="7c4uan"
+resources/views/consultations/show.blade.php
+consultation partials included by show.blade.php
+consultation JavaScript bridge files
+```
+
+Find all inline workflow handlers:
+
+```bash id="hj0mxy"
+grep -R "onsubmit=" -n resources/views/consultations
+grep -R "onclick=" -n resources/views/consultations
+grep -R "onchange=" -n resources/views/consultations
+```
+
+Replace inline handlers with existing project-approved delegated behavior.
+
+Use existing conventions such as:
+
+```text id="me9qhw"
+data-ajax-form
+data-consultation-form
+data-refresh-section
+data-route-context-required
+data-modal-close-on-success
+data-confirm
+```
+
+or the existing UHMS consultation bridge pattern already used elsewhere.
+
+For each form that previously used `onsubmit=`:
+
+```text id="ul2mg9"
+preserve POST route
+preserve CSRF
+preserve validation display
+preserve modal behavior
+preserve section refresh
+preserve route context
+preserve normal submit fallback if possible
+```
+
+Do not simply delete behavior.
+
+---
+
+# 3. Fix Consultation Clinical Section Order Failure
+
+Investigate:
+
+```text id="6kqvcn"
+ConsultationClinicalSectionsTest::consultation page shows required clinical order
+```
+
+The known issue involves the **Treatments** clinical section.
+
+Determine whether:
+
+```text id="cccv12"
+the Treatments section no longer renders
+the section was renamed
+the section exists but its stable marker changed
+the test expectation is stale
+the specialty layout/dedup changes hid the expected marker
+```
+
+Preferred fix:
+
+```text id="f2s096"
+restore the intended Treatments section/order marker
+```
+
+If the user-facing label intentionally changed, add a backward-compatible stable marker instead of weakening the test.
+
+Do not remove treatment/procedure/task workflow.
+
+Do not break specialist workspace section presentation labels.
+
+---
+
+# 4. Run Focused Consultation Checks
+
+After fixes, run:
+
+```bash id="bhurz9"
+php artisan test tests/Feature/Consultations/ConsultationClinicalSectionsTest.php
+php artisan test tests/Feature/Consultations/ConsultationJavascriptLifecyclePhase2Test.php
+php artisan test tests/Feature/Consultations/ConsultationStructurePhase3Test.php
+```
+
+Then run:
+
+```bash id="3pydvg"
+php artisan test tests/Feature/Consultations
+php artisan test tests/Feature/ConsultationWorkspaceStabilisationTest.php
+php artisan test tests/Feature/System/RouteLoadMemoryTest.php
+```
+
+If any focused consultation test fails, fix the underlying issue.
+
+---
+
+# 5. Reconfirm Front Desk Module
+
+Run:
+
+```bash id="p1q8yi"
+php artisan test tests/Feature/FrontDesk
+```
+
+Expected:
+
+```text id="cmf3fe"
+all Front Desk tests pass
+```
+
+Also run the Front Desk gates:
+
+```bash id="7cm8ad"
+php artisan test tests/Feature/Localization/LanguageParityTest.php
+php artisan test tests/Feature/Localization/ActiveRuntimeLocalizationAuditTest.php
+php artisan test tests/Feature/Permissions/PermissionsAuditStrictTest.php
+php artisan test tests/Feature/System/RouteLoadMemoryTest.php
 ```
 
 ---
 
-# 2. Cashier Cross-Visit Allocation Form
+# 6. Build / Route / View Checks
 
-Add a dedicated allocation option on the payment receive screen.
+Run:
 
-When a patient has previous outstanding balance, show:
-
-```text
-Previous outstanding
-Current visit balance
-Total patient balance
-Oldest unpaid invoice
-```
-
-Payment allocation modes:
-
-```text
-Oldest outstanding first
-Current visit only
-Manual split
-```
-
-Default mode:
-
-```text
-Oldest outstanding first
-```
-
-Manual split form should list open patient invoices:
-
-```text
-Visit Date
-Visit Number
-Invoice Number
-Invoice Balance
-Age Days
-Allocation Amount
-```
-
-Validation:
-
-* total allocation cannot exceed tender amount
-* invoice allocation cannot exceed invoice balance
-* payment amount must be greater than zero
-* overpayment remains rejected unless deposit workflow is later enabled
-
-Submit to the existing allocation endpoint.
-
-Do not create new backend allocation logic in the controller or Blade.
-
----
-
-# 3. Patient Search Debt Badges
-
-On patient search results, show outstanding balance indicator.
-
-Permission behavior:
-
-If user has:
-
-```text
-billing.previous_balance.amount.view
-```
-
-show amount:
-
-```text
-Outstanding: GHS 250
-```
-
-If user only has:
-
-```text
-billing.previous_balance.flag.view
-```
-
-show generic flag:
-
-```text
-Outstanding balance exists
-```
-
-If user has neither permission, show nothing.
-
-Do not expose financial amount to clinical users without amount permission.
-
----
-
-# 4. Visit List Debt Badges
-
-On visit list and visit-related queues, add a small previous-balance indicator where useful.
-
-Examples:
-
-```text
-Old Balance
-Outstanding
-Billing Alert
-```
-
-Rules:
-
-* amount only visible with `billing.previous_balance.amount.view`
-* flag-only users see generic debt flag
-* no badge if no previous outstanding
-* do not clutter the visit table
-* badge should link to patient statement or invoice/billing page only when authorized
-
-Use `<x-status-badge>` or a consistent Bootstrap badge style according to UI standards.
-
----
-
-# 5. Discharge Clearance Panel
-
-On discharge clearance / admission billing clearance, show:
-
-```text
-Previous visit outstanding
-Current admission balance
-Total patient outstanding
-```
-
-Important:
-
-* do not merge previous balance into the admission invoice
-* do not force total settlement unless existing config/policy requires it
-* show a clear note if policy is current-admission-only
-* allow authorized billing supervisor override if existing workflow supports it
-
-Suggested wording:
-
-```text
-Previous balances are shown for account awareness. They are not part of the current admission invoice.
-```
-
----
-
-# 6. Consultation Screen Advisory
-
-Add a lightweight advisory for clinical users.
-
-For flag-only users:
-
-```text
-Billing clearance required. Previous outstanding balance exists. Please contact billing.
-```
-
-For users with amount permission:
-
-```text
-Previous outstanding balance: GHS 250. Billing override may be required.
-```
-
-Rules:
-
-* clinical users without amount permission must not see money values
-* emergency care must not be blocked
-* advisory should not make the consultation page noisy
-* use the reusable previous-balance alert component if it fits cleanly
-
----
-
-# 7. Patient Account Statement Summary Cards
-
-On patient profile billing/accounts statement, add summary cards:
-
-```text
-Previous Visits Outstanding
-Current Visit Outstanding
-Total Outstanding
-Oldest Unpaid Invoice
-```
-
-Data source:
-
-```php
-PatientOutstandingBalanceService::buildPatientBalanceSummary()
-```
-
-Statement table should continue using the existing ledger/statement service.
-
-Do not create a second statement engine.
-
----
-
-# 8. Optional Overpayment Display
-
-Since overpayment currently rejects by default, show clear feedback:
-
-```text
-Payment exceeds total outstanding balance. Patient deposit workflow is not enabled yet.
-```
-
-Document patient deposit liability as future work.
-
-Do not implement deposit liability in this UI pass unless it already exists and is safe.
-
----
-
-# 9. Localisation
-
-Add or update English/French keys for all new UI strings.
-
-Files:
-
-```text
-lang/en/billing.php
-lang/fr/billing.php
-lang/en/patients.php
-lang/fr/patients.php
-lang/en/visits.php
-lang/fr/visits.php
-lang/en/admissions.php
-lang/fr/admissions.php
-lang/en/consultation.php
-lang/fr/consultation.php
-```
-
-Do not hardcode English labels.
-
----
-
-# 10. Permissions
-
-Respect existing permissions:
-
-```text
-billing.previous_balance.view
-billing.previous_balance.amount.view
-billing.previous_balance.flag.view
-billing.previous_balance.override
-billing.payment.allocate_cross_visit
-billing.payment.allocate_manual
-billing.patient_statement.view
-billing.patient_statement.print
-billing.patient_statement.export
-```
-
-Backend must remain protected.
-
-Do not rely only on hiding UI.
-
----
-
-# 11. UI Standards
-
-Use existing UHMS UI standards:
-
-```text
-Blade
-Bootstrap 5
-Tabler Icons
-<x-page-header>
-<x-stat-card>
-<x-status-badge>
-<x-empty-state>
-<x-confirm-form>
-<x-data-table>
-<x-print-layout>
-```
-
-Do not introduce Tailwind.
-
-Do not redesign billing pages from scratch.
-
----
-
-# 12. Tests Strategy
-
-This phase is mostly view wiring.
-
-Add only focused tests where useful:
-
-1. amount users see previous-balance amount
-2. flag-only users see generic flag
-3. unauthorized users see nothing
-4. cashier can access allocation form
-5. manual allocation UI posts to existing endpoint
-6. discharge clearance panel renders summary
-7. consultation advisory hides amounts for clinical users
-
-Do not run the full suite until the end of the batch unless required.
-
-At minimum, run:
-
-```bash
-php artisan view:cache
+```bash id="3j7a7c"
 php artisan route:list
-php artisan test --filter=PreviousBalancePolicyTest
-php artisan test --filter=Billing
+php artisan view:cache
+php artisan view:clear
+npm run build
+```
+
+Fix any issues honestly.
+
+---
+
+# 7. Run Full Suite
+
+Now run the broad suite:
+
+```bash id="o19wwp"
+php artisan test
+```
+
+Expected target:
+
+```text id="aszae3"
+full suite green
+```
+
+If failures remain:
+
+```text id="syydnp"
+classify every failure
+identify whether it is caused by Phase 18F changes, Front Desk, or pre-existing debt
+do not skip or weaken tests
+fix caused failures
+document any true unrelated remaining failure honestly
 ```
 
 ---
 
-# 13. Documentation
+# 8. Front Desk Module Closure Audit
 
-Update:
+Create a short internal closure audit confirming:
 
-```text
-docs/PREVIOUS_VISIT_OUTSTANDING_BALANCE_POLICY_REPORT.md
+```text id="l968q3"
+all Front Desk routes are permission-gated
+all Front Desk write actions audit-log
+all Front Desk pages use EN/FR localisation
+all Front Desk exports are privacy-safe
+no clinical or billing data is exposed
+phones are masked where required
+visitor/call/courier/handover/lost-found/incident workflows pass tests
+report/export permissions behave correctly
+sidebar entries are permission-gated
 ```
 
-Add a section:
-
-```text
-UI Completion Pass
-```
-
-Include:
-
-* cashier allocation form completed
-* patient search badges completed
-* visit list badges completed
-* discharge clearance panel completed
-* consultation advisory completed
-* patient statement summary cards completed
-* permissions checked
-* localisation keys added
-* tests/manual verification performed
-* remaining TODOs
+Do not overbuild. This can be a report section plus tests already in place.
 
 ---
 
-# 14. Acceptance Criteria
+# 9. Documentation
 
-This phase is complete when:
+Create:
 
-* cashier can allocate payment across previous/current invoices from the UI
-* patient search shows previous balance indicator by permission
-* visit list shows previous balance indicator by permission
-* discharge clearance shows previous/current/total balance
-* consultation screen shows safe billing advisory
-* patient statement shows summary cards
-* financial amounts are hidden from unauthorized/flag-only users
-* emergency care remains unblocked
-* current visit invoices remain clean
-* no duplicate accounting or payment logic is introduced
-* documentation is updated
-* focused verification passes
+```text id="h6d2s3"
+docs/FRONT_DESK_MODULE_WRAPUP_AND_FULL_SUITE_RECOVERY_REPORT.md
+```
 
-Proceed with Previous Balance UI Completion Pass now.
+Report structure:
 
+```text id="xi6pzh"
+# Front Desk Module Wrap-up and Full-Suite Recovery Report
+
+## Summary
+Explain that Front Desk 18A–18E is complete and this phase closed the module.
+
+## Initial State
+List focused Front Desk status and the 3 deferred consultation failures.
+
+## Consultation Cleanup
+Explain the inline handler fixes and clinical section order fix.
+
+## Files Modified
+List modified files.
+
+## Front Desk Closure Audit
+Summarize route/permission/audit/localisation/privacy/export coverage.
+
+## Tests Run
+List focused Front Desk, focused consultation, safety gates, route/view/build checks.
+
+## Full Suite Result
+Include final php artisan test result.
+
+## Risk / Safety Notes
+Confirm Front Desk behavior was preserved and no clinical/billing data exposure was introduced.
+
+## Known Issues / Follow-up
+Only list true remaining follow-ups, such as:
+- visitor pass QR/PDF
+- SMS callback reminders
+- incident attachments/photos
+- dedicated Security role
+- scheduled front desk reports
+```
+
+---
+
+# Acceptance Criteria
+
+Phase 18F is complete only when:
+
+```text id="k3n4kh"
+the 3 deferred consultation failures are fixed
+focused consultation tests pass
+FrontDesk focused suite passes
+localisation gate passes
+active runtime localisation audit passes
+route memory test passes
+permissions strict audit passes
+route list passes
+view cache passes
+frontend build passes
+full suite is run
+full suite result is documented
+Front Desk closure report is created
+```
+
+Stop after Phase 18F and upload the report.

@@ -935,10 +935,10 @@
                                                 <form method="POST"
                                                       action="{{ route('admin.consultations.investigation-departments.send-to-department', [$visit, $departmentId]) }}"
                                                       class="d-inline"
-                                                      onsubmit="if (!confirm(@js(__('messages.consultations.investigation_handoff_confirm', ['department' => $deptName])))) return false; const button = this.querySelector('button[type=submit]'); if (button) { button.disabled = true; button.innerHTML = '<span class=&quot;spinner-border spinner-border-sm me-1&quot; role=&quot;status&quot; aria-hidden=&quot;true&quot;></span>' + @js(__('messages.consultations.investigation_handoff_queueing')); } return true;">
+                                                      data-confirm="{{ __('messages.consultations.investigation_handoff_confirm', ['department' => $deptName]) }}">
                                                     @csrf
                                                     <input type="hidden" name="consultation_route_id" value="{{ $selectedRoute->id }}">
-                                                    <button type="submit" class="btn btn-xs btn-outline-info" title="{{ __('messages.consultations.investigation_handoff_confirm', ['department' => $deptName]) }}">
+                                                    <button type="submit" class="btn btn-xs btn-outline-info" data-loading-text="{{ __('messages.consultations.investigation_handoff_queueing') }}" title="{{ __('messages.consultations.investigation_handoff_confirm', ['department' => $deptName]) }}">
                                                         <i class="ti ti-route me-1"></i>{{ __('messages.consultations.investigation_handoff_button') }}
                                                     </button>
                                                 </form>
@@ -1053,7 +1053,7 @@
                     <div class="tab-pane fade {{ $tabActiveClass('treatments-section') }}" id="treatments-section" role="tabpanel">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-target-arrow me-1"></i>{{ $sectionLabel('treatments', __('consultation_specialties.sections.treatment_plan')) }}</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-target-arrow me-1"></i>{{ $sectionLabel('treatments', __('consultation_specialties.sections.treatment_plan')) }}{{-- Backward-compatible stable clinical-section marker: the visible label is specialty-aware ("Treatment Plan") but the canonical "Treatments" marker keeps the required clinical-order contract stable. --}}<span class="visually-hidden" data-clinical-section="treatments">Treatments</span></h6>
                                 @if($canCreateEntries)
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addTreatmentForm">
                                     <i class="ti ti-plus me-1"></i>Add
@@ -1296,10 +1296,10 @@
                                             <form method="POST"
                                                   action="{{ route('admin.consultations.prescription-departments.send-to-department', [$visit, $prescriptionDepartmentId]) }}"
                                                   class="d-inline"
-                                                  onsubmit="if (!confirm(@js(__('messages.consultations.investigation_handoff_confirm', ['department' => $prescriptionDepartmentName])))) return false; const button = this.querySelector('button[type=submit]'); if (button) { button.disabled = true; button.innerHTML = '<span class=&quot;spinner-border spinner-border-sm me-1&quot; role=&quot;status&quot; aria-hidden=&quot;true&quot;></span>' + @js(__('messages.consultations.investigation_handoff_queueing')); } return true;">
+                                                  data-confirm="{{ __('messages.consultations.investigation_handoff_confirm', ['department' => $prescriptionDepartmentName]) }}">
                                                 @csrf
                                                 <input type="hidden" name="consultation_route_id" value="{{ $selectedRoute->id }}">
-                                                <button type="submit" class="btn btn-xs btn-outline-info" title="{{ __('messages.consultations.investigation_handoff_confirm', ['department' => $prescriptionDepartmentName]) }}">
+                                                <button type="submit" class="btn btn-xs btn-outline-info" data-loading-text="{{ __('messages.consultations.investigation_handoff_queueing') }}" title="{{ __('messages.consultations.investigation_handoff_confirm', ['department' => $prescriptionDepartmentName]) }}">
                                                     <i class="ti ti-route me-1"></i>{{ __('messages.consultations.investigation_handoff_button') }}
                                                 </button>
                                             </form>
@@ -1488,10 +1488,10 @@
                                             <form method="POST"
                                                   action="{{ route('admin.consultations.procedure-departments.send-to-department', [$visit, $procedureDepartmentId]) }}"
                                                   class="d-inline"
-                                                  onsubmit="if (!confirm(@js(__('messages.consultations.investigation_handoff_confirm', ['department' => $deptName])))) return false; const button = this.querySelector('button[type=submit]'); if (button) { button.disabled = true; button.innerHTML = '<span class=&quot;spinner-border spinner-border-sm me-1&quot; role=&quot;status&quot; aria-hidden=&quot;true&quot;></span>' + @js(__('messages.consultations.investigation_handoff_queueing')); } return true;">
+                                                  data-confirm="{{ __('messages.consultations.investigation_handoff_confirm', ['department' => $deptName]) }}">
                                                 @csrf
                                                 <input type="hidden" name="consultation_route_id" value="{{ $selectedRoute->id }}">
-                                                <button type="submit" class="btn btn-xs btn-outline-info" title="{{ __('messages.consultations.investigation_handoff_confirm', ['department' => $deptName]) }}">
+                                                <button type="submit" class="btn btn-xs btn-outline-info" data-loading-text="{{ __('messages.consultations.investigation_handoff_queueing') }}" title="{{ __('messages.consultations.investigation_handoff_confirm', ['department' => $deptName]) }}">
                                                     <i class="ti ti-route me-1"></i>{{ __('messages.consultations.investigation_handoff_button') }}
                                                 </button>
                                             </form>

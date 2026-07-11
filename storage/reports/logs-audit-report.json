@@ -1,13 +1,13 @@
 {
-    "generated_at": "2026-07-08T19:32:09+00:00",
-    "controllers_flagged": 105,
-    "logging_services_detected": 156,
+    "generated_at": "2026-07-11T18:19:25+00:00",
+    "controllers_flagged": 113,
+    "logging_services_detected": 168,
     "summary": {
         "MISSING_LOG": 0,
         "NEEDS_REVIEW": 0,
         "KNOWN_BACKLOG": 19,
         "INTENTIONALLY_SKIPPED": 1,
-        "SERVICE_FUNNEL_COVERED": 85
+        "SERVICE_FUNNEL_COVERED": 93
     },
     "real_missing_logs": 0,
     "findings": [
@@ -301,6 +301,23 @@
             "in_baseline": true
         },
         {
+            "controller": "app/Http/Controllers/Billing/PreviousBalanceController.php",
+            "unlogged_actions": [
+                "override"
+            ],
+            "actions": [
+                "override"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "CRITICAL",
+            "reason": "Delegates to PatientPaymentAllocationService, PreviousBalanceOverrideService (logs direct).",
+            "services": [
+                "PatientPaymentAllocationService",
+                "PreviousBalanceOverrideService"
+            ],
+            "in_baseline": false
+        },
+        {
             "controller": "app/Http/Controllers/Doctor/Consultations/ConsultationSpecialtyEntryController.php",
             "unlogged_actions": [
                 "store",
@@ -467,12 +484,13 @@
             ],
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
-            "reason": "Delegates to AdmissionDischargeReadinessService, AdmissionRequestService, AdmissionService, VisitService (logs direct).",
+            "reason": "Delegates to AdmissionDischargeReadinessService, AdmissionExtensionService, AdmissionRequestService, AdmissionService, VisitService (logs direct).",
             "services": [
+                "AdmissionMedicationBoardService",
                 "AdmissionCareOverviewService",
                 "AdmissionDischargeReadinessService",
+                "AdmissionExtensionService",
                 "AdmissionRequestService",
-                "AdmissionMedicationBoardService",
                 "AdmissionService",
                 "ConsultationSummaryService",
                 "VisitService",
@@ -594,6 +612,92 @@
                 "BloodRequestService"
             ],
             "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/FrontDesk/CallLogController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "transfer"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "transfer"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to CallLogService (logs direct).",
+            "services": [
+                "CallLogService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/FrontDesk/IncidentLogController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "assign",
+                "cancel"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "assign",
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to IncidentLogService (logs direct).",
+            "services": [
+                "IncidentLogService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/FrontDesk/LostFoundController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "release",
+                "cancel"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "release",
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to LostFoundService (logs direct).",
+            "services": [
+                "LostFoundService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/FrontDesk/ShiftHandoverController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "submit",
+                "cancel"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "submit",
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to ShiftHandoverService (logs direct).",
+            "services": [
+                "ShiftHandoverService"
+            ],
+            "in_baseline": false
         },
         {
             "controller": "app/Http/Controllers/Admin/Hr/AttendanceController.php",
@@ -945,6 +1049,23 @@
                 "LabService"
             ],
             "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Lab/SampleController.php",
+            "unlogged_actions": [
+                "reject"
+            ],
+            "actions": [
+                "reject"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to LabService, SampleService (logs direct).",
+            "services": [
+                "LabService",
+                "SampleService"
+            ],
+            "in_baseline": false
         },
         {
             "controller": "app/Http/Controllers/Theatre/TheatreController.php",
@@ -1395,6 +1516,43 @@
                 "EmergencyVitalsService"
             ],
             "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/FrontDesk/CourierLogController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ],
+            "actions": [
+                "store",
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to CourierLogService (logs direct).",
+            "services": [
+                "CourierLogService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/FrontDesk/VisitorLogController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ],
+            "actions": [
+                "store",
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to VisitorLogService (logs direct).",
+            "services": [
+                "PatientVisitorRuleService",
+                "VisitorLogService"
+            ],
+            "in_baseline": false
         },
         {
             "controller": "app/Http/Controllers/Admin/Hr/EmployeeController.php",

@@ -58,10 +58,10 @@
             <th>{{ __('consultations.queue_number') }}</th>
             <th>{{ __('consultations.visit_number') }}</th>
             <th>{{ __('common.patient') }}</th>
+            <th>{{ __('common.type') }}</th>
             <th>{{ __('common.department') }}</th>
             <th>{{ __('consultations.services') }}</th>
             <th>{{ __('common.priority') }}</th>
-            <th>{{ __('common.doctor') }}</th>
             <th>{{ __('common.status') }}</th>
             <th>{{ __('consultations.waiting_time') }}</th>
             <th>{{ __('common.action') }}</th>
@@ -106,11 +106,15 @@
                             @endif
                         </td>
                         <td>
-                            <span class="fw-medium">{{ $visit->visit_number }}</span>
-                            <div class="small text-muted">{{ $visit->visit_type?->translatedLabel() }}</div>
+                            <a href="{{ route('admin.visits.show', $visit) }}" class="fw-medium text-primary">
+                                {{ $visit->visit_number }}
+                            </a>
+                            <!-- <span class="fw-medium">{{ $visit->visit_number }}</span> -->
+                            <div class="small text-muted">{{ $visit->patient->patient_number }}</div>
+                            <!-- <div class="small text-muted">{{ $visit->visit_type?->translatedLabel() }}</div> -->
                         </td>
                         <td>
-                            <div class="fw-medium">{{ $visit->patient->full_name }}</div>
+                            <!-- <div class="fw-medium">{{ $visit->patient->full_name }}</div>
                             <small class="text-muted">
                                 {{ $visit->patient->patient_number }}
                                 @if($visit->patient->age)
@@ -119,25 +123,19 @@
                                 @if($visit->patient->gender)
                                     {{ $visit->patient->gender->value }}
                                 @endif
-                            </small>
+                            </small> -->
+                            <div>
+                                <a href="{{ route('admin.patients.show', $visit->patient) }}" class="fw-medium">{{ $visit->patient->full_name }}</a>
+                                <div class="small text-muted">{{ $visit->patient->gender }} · {{ $visit->patient->age }}y</div>
+                                @if(($pbMap[$visit->patient_id] ?? 0) > 0)
+                                    <x-billing.outstanding-badge :amount="$pbMap[$visit->patient_id]" :show-amount="$pbCanAmount" class="mt-1" />
+                                @endif
+                            </div>
                         </td>
                         <td>
-                            <span class="badge {{ $route->isEmergencySession() ? 'bg-danger' : 'bg-light text-dark' }}">{{ $routeDepartmentLabel }}</span>
-                        </td>
-                        <td>
-                            <div class="fw-medium small">{{ $serviceNames->implode(', ') ?: '-' }}</div>
-                            <small class="text-muted">{{ Str::limit($visit->chief_complaint, 36) ?? '-' }}</small>
-                        </td>
-                        <td>
-                            <x-status-badge :status="$visit->priority" />
-                            @if($visit->triage_score)
-                                <x-status-badge :status="$visit->triage_score" class="ms-1" />
-                            @endif
-                        </td>
-                        <td>{{ $route->doctor || $route->mainDoctor ? 'Dr. ' . ($route->doctor?->full_name ?? $route->mainDoctor?->full_name) : '-' }}</td>
-                        <td>
-                            <x-status-badge :status="$route->status" domain="consultation_route" />
-                            <div class="small text-muted">{{ $visit->status->translatedLabel() }}</div>
+                            <span class="badge bg-{{ $visit->visit_type === \App\Enums\VisitType::EMERGENCY ? 'danger' : ($visit->visit_type === \App\Enums\VisitType::INPATIENT ? 'info' : 'light text-dark') }}">
+                                {{ $visit->visit_type->translatedLabel() }}
+                            </span>
                             <div class="mt-1 d-flex flex-wrap gap-1">
                                 @if($activeAdmission)
                                     <span class="badge bg-info-subtle text-info border">{{ __('visits.badges.on_admission') }}</span>
@@ -151,6 +149,27 @@
                                     <span class="badge bg-secondary-subtle text-secondary border">{{ __('visits.badges.read_only') }}</span>
                                 @endif
                             </div>
+                        </td>
+                        <td>
+                            <span class="badge {{ $route->isEmergencySession() ? 'bg-danger' : 'bg-light text-dark' }}">{{ $routeDepartmentLabel }}</span>
+                        </td>
+                        <td>
+                            <div class="fw-medium small">{{ $serviceNames->implode(', ') ?: '-' }}</div>
+                            <!-- <small class="text-muted">{{ Str::limit($visit->chief_complaint, 36) ?? '-' }}</small> -->
+                            <small class="text-muted">{{ $route->doctor || $route->mainDoctor ? 'Dr. ' . ($route->doctor?->full_name ?? $route->mainDoctor?->full_name) : '-' }}</small>
+                        </td>
+                        <td>
+                            <x-status-badge :status="$visit->priority" />
+                            @if($visit->triage_score)
+                                <x-status-badge :status="$visit->triage_score" class="ms-1" />
+                            @endif
+                        </td>
+                        <!-- <td>{{ $route->doctor || $route->mainDoctor ? 'Dr. ' . ($route->doctor?->full_name ?? $route->mainDoctor?->full_name) : '-' }}</td> -->
+                        <td>
+                            <x-status-badge :status="$route->status" domain="consultation_route" />
+                            <br/>
+                            <x-status-badge :status="$visit->status" />
+                            <!-- <div class="small text-muted">{{ $visit->status->translatedLabel() }}</div> -->
                         </td>
                         <td><small>{{ ($route->activated_at ?? $route->started_at ?? $route->created_at)->diffForHumans(null, true) }}</small></td>
                         <td>

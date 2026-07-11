@@ -141,6 +141,67 @@ class SidebarMenuBuilder
                 ],
             ],
             [
+                'title' => 'Front Desk',
+                'items' => [
+                    [
+                        'label' => 'Front Desk',
+                        'icon' => 'ti ti-headset',
+                        'permission' => 'front_desk.view',
+                        'active_patterns' => ['admin.front-desk.*'],
+                        'children' => [
+                            [
+                                'label' => 'Dashboard',
+                                'route' => 'admin.front-desk.index',
+                                'active_patterns' => ['admin.front-desk.index'],
+                                'permission' => 'front_desk.dashboard.view',
+                            ],
+                            [
+                                'label' => 'Visitor Logs',
+                                'route' => 'admin.front-desk.visitors.index',
+                                'active_patterns' => ['admin.front-desk.visitors.*'],
+                                'permission' => 'front_desk.visitors.view',
+                            ],
+                            [
+                                'label' => 'Call Logs',
+                                'route' => 'admin.front-desk.calls.index',
+                                'active_patterns' => ['admin.front-desk.calls.*'],
+                                'permission' => 'front_desk.calls.view',
+                            ],
+                            [
+                                'label' => 'Courier Logs',
+                                'route' => 'admin.front-desk.couriers.index',
+                                'active_patterns' => ['admin.front-desk.couriers.*'],
+                                'permission' => 'front_desk.couriers.view',
+                            ],
+                            [
+                                'label' => 'Shift Handovers',
+                                'route' => 'admin.front-desk.handovers.index',
+                                'active_patterns' => ['admin.front-desk.handovers.*'],
+                                'permission' => 'front_desk.handovers.view',
+                            ],
+                            [
+                                'label' => 'Lost & Found',
+                                'route' => 'admin.front-desk.lost-found.index',
+                                'active_patterns' => ['admin.front-desk.lost-found.*'],
+                                'permission' => 'front_desk.lost_found.view',
+                            ],
+                            [
+                                'label' => 'Incident Desk',
+                                'route' => 'admin.front-desk.incidents.index',
+                                'active_patterns' => ['admin.front-desk.incidents.*'],
+                                'permission' => 'front_desk.incidents.view',
+                            ],
+                            [
+                                'label' => 'Reports',
+                                'route' => 'admin.front-desk.reports.index',
+                                'active_patterns' => ['admin.front-desk.reports.*'],
+                                'permission' => 'front_desk.reports.view',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            [
                 'title' => 'Clinical',
                 'items' => [
                     // [
@@ -470,14 +531,14 @@ class SidebarMenuBuilder
             [
                 'title' => 'Ward / Inpatient',
                 'items' => [
-                    [
-                        'label' => 'Maternity',
-                        'icon' => 'ti ti-baby-carriage',
-                        'route' => 'admin.maternity.dashboard',
-                        'active_patterns' => ['admin.maternity.*'],
-                        'permission' => 'maternity.view',
-                        'module' => 'maternity',
-                    ],
+                    // [
+                    //     'label' => 'Maternity',
+                    //     'icon' => 'ti ti-baby-carriage',
+                    //     'route' => 'admin.maternity.dashboard',
+                    //     'active_patterns' => ['admin.maternity.*'],
+                    //     'permission' => 'maternity.view',
+                    //     'module' => 'maternity',
+                    // ],
                     [
                         'label' => 'Admissions Requests',
                         'icon' => 'ti ti-bed',
@@ -540,6 +601,65 @@ class SidebarMenuBuilder
                     //     'active_patterns' => ['admin.wards.beds'],
                     //     'permission' => 'beds.manage',
                     // ],
+                ],
+            ],
+            [
+                'title' => 'Ward / Maternity',
+                'items' => [
+                    [
+                        'label' => 'Maternity Board',
+                        'icon' => 'ti ti-calendar-heart',
+                        'route' => 'admin.maternity.dashboard',
+                        'active_patterns' => ['admin.maternity.dashboard'],
+                        'permission' => 'maternity.dashboard.view',
+                        'module' => 'maternity',
+                    ],
+                    [
+                        'label' => 'Pregnancy Profiles',
+                        'icon' => 'ti ti-user-heart',
+                        'route' => 'admin.maternity.pregnancies.index',
+                        'active_patterns' => [
+                            'admin.maternity.pregnancies.index',
+                            'admin.maternity.pregnancies.create',
+                            'admin.maternity.pregnancies.store',
+                            'admin.maternity.pregnancies.show',
+                            'admin.maternity.pregnancies.edit',
+                            'admin.maternity.pregnancies.update',
+                            'admin.maternity.pregnancies.status',
+                        ],
+                        'permission' => 'maternity.pregnancy.view',
+                        'module' => 'maternity',
+                    ],
+                    [
+                        'label' => 'Antenatal Care',
+                        'icon' => 'ti ti-stethoscope',
+                        'route' => 'admin.maternity.pregnancies.index',
+                        'active_patterns' => ['admin.maternity.pregnancies.antenatal.*', 'admin.maternity.antenatal.*'],
+                        'permission' => 'maternity.pregnancy.view',
+                        'module' => 'maternity',
+                    ],
+                    [
+                        'label' => 'Labor and Delivery',
+                        'icon' => 'ti ti-baby-carriage',
+                        'route' => 'admin.maternity.labor.index',
+                        'active_patterns' => [
+                            'admin.maternity.labor.*',
+                            'admin.maternity.pregnancies.labor.*',
+                            'admin.maternity.pregnancies.antenatal.labor.*',
+                            'admin.maternity.deliveries.*',
+                            'admin.maternity.newborns.*',
+                        ],
+                        'permission' => 'maternity.labor.view',
+                        'module' => 'maternity',
+                    ],
+                    [
+                        'label' => 'Postnatal Care',
+                        'icon' => 'ti ti-baby-bottle',
+                        'route' => 'admin.maternity.postnatal.index',
+                        'active_patterns' => ['admin.maternity.postnatal.*'],
+                        'permission' => 'maternity.postnatal.view',
+                        'module' => 'maternity',
+                    ],
                 ],
             ],
             [
