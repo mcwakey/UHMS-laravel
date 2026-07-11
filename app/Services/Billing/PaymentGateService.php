@@ -31,17 +31,17 @@ class PaymentGateService
 
     public function policyFor(InvoiceItem $item, ?User $user = null): BillingPolicyDecision
     {
-        return $this->policy->getInvoiceItemPolicy($item, $user);
+        return $this->policy->getInvoiceItemPolicy($item, $user, 'invoice_item_policy');
     }
 
-    public function canRenderInvoiceItem(InvoiceItem $item, ?User $user = null): bool
+    public function canRenderInvoiceItem(InvoiceItem $item, ?User $user = null, string $gateOperation = 'invoice_item_render'): bool
     {
-        return $this->policy->getInvoiceItemPolicy($item, $user)->allowed;
+        return $this->policy->getInvoiceItemPolicy($item, $user, $gateOperation)->allowed;
     }
 
-    public function assertCanRenderInvoiceItem(InvoiceItem $item, ?User $user = null): void
+    public function assertCanRenderInvoiceItem(InvoiceItem $item, ?User $user = null, string $gateOperation = 'invoice_item_render'): void
     {
-        $decision = $this->policy->getInvoiceItemPolicy($item, $user);
+        $decision = $this->policy->getInvoiceItemPolicy($item, $user, $gateOperation);
         if (! $decision->allowed) {
             throw BillingGateException::fromDecision($decision);
         }
@@ -59,13 +59,13 @@ class PaymentGateService
             return true; // nothing billed to settle
         }
 
-        return $this->canRenderInvoiceItem($consultationFee, $user);
+        return $this->canRenderInvoiceItem($consultationFee, $user, 'consultation_start');
     }
 
     public function assertCanStartConsultation(Visit $visit, ?InvoiceItem $consultationFee, User $user): void
     {
         if ($consultationFee !== null) {
-            $this->assertCanRenderInvoiceItem($consultationFee, $user);
+            $this->assertCanRenderInvoiceItem($consultationFee, $user, 'consultation_start');
         }
     }
 
@@ -77,42 +77,42 @@ class PaymentGateService
 
     public function canProcessInvestigation(mixed $investigationRequest, User $user): bool
     {
-        return $this->canRenderResolved($investigationRequest, $user);
+        return $this->canRenderResolved($investigationRequest, $user, 'investigation_process');
     }
 
     public function assertCanProcessInvestigation(mixed $investigationRequest, User $user): void
     {
-        $this->assertCanRenderResolved($investigationRequest, $user);
+        $this->assertCanRenderResolved($investigationRequest, $user, 'investigation_process');
     }
 
     public function canDispensePrescriptionItem(mixed $prescriptionItem, User $user): bool
     {
-        return $this->canRenderResolved($prescriptionItem, $user);
+        return $this->canRenderResolved($prescriptionItem, $user, 'prescription_dispense');
     }
 
     public function assertCanDispensePrescriptionItem(mixed $prescriptionItem, User $user): void
     {
-        $this->assertCanRenderResolved($prescriptionItem, $user);
+        $this->assertCanRenderResolved($prescriptionItem, $user, 'prescription_dispense');
     }
 
     public function canStartProcedure(mixed $procedureRequest, User $user): bool
     {
-        return $this->canRenderResolved($procedureRequest, $user);
+        return $this->canRenderResolved($procedureRequest, $user, 'procedure_start');
     }
 
     public function assertCanStartProcedure(mixed $procedureRequest, User $user): void
     {
-        $this->assertCanRenderResolved($procedureRequest, $user);
+        $this->assertCanRenderResolved($procedureRequest, $user, 'procedure_start');
     }
 
     public function canMarkServiceRendered(mixed $serviceRendering, User $user): bool
     {
-        return $this->canRenderResolved($serviceRendering, $user);
+        return $this->canRenderResolved($serviceRendering, $user, 'service_mark_rendered');
     }
 
     public function assertCanMarkServiceRendered(mixed $serviceRendering, User $user): void
     {
-        $this->assertCanRenderResolved($serviceRendering, $user);
+        $this->assertCanRenderResolved($serviceRendering, $user, 'service_mark_rendered');
     }
 
     /*
@@ -121,18 +121,18 @@ class PaymentGateService
     |--------------------------------------------------------------------------
     */
 
-    private function canRenderResolved(mixed $subject, User $user): bool
+    private function canRenderResolved(mixed $subject, User $user, string $gateOperation): bool
     {
         $item = $this->resolveInvoiceItem($subject);
 
-        return $item === null ? true : $this->canRenderInvoiceItem($item, $user);
+        return $item === null ? true : $this->canRenderInvoiceItem($item, $user, $gateOperation);
     }
 
-    private function assertCanRenderResolved(mixed $subject, User $user): void
+    private function assertCanRenderResolved(mixed $subject, User $user, string $gateOperation): void
     {
         $item = $this->resolveInvoiceItem($subject);
         if ($item !== null) {
-            $this->assertCanRenderInvoiceItem($item, $user);
+            $this->assertCanRenderInvoiceItem($item, $user, $gateOperation);
         }
     }
 

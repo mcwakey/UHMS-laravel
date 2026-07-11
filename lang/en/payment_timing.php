@@ -18,6 +18,17 @@ return [
     'invalid_policy' => 'Invalid payment timing policy.',
     'global_cannot_inherit' => 'The global payment timing policy cannot use the system default.',
     'unknown_visit_type' => 'Unknown visit type policy.',
+    'integration' => [
+        'legacy' => 'Legacy mode',
+        'observe' => 'Observation mode',
+        'source' => 'Payment policy source',
+        'match' => 'Legacy policy matches',
+        'legacy_more_restrictive' => 'Legacy policy is more restrictive',
+        'typed_more_restrictive' => 'Typed policy is more restrictive',
+        'not_comparable' => 'Comparison unavailable',
+        'missing_context' => 'Required comparison context is missing',
+        'invalid_configuration_fallback' => 'Invalid configuration fallback',
+    ],
     'policies' => [
         'inherit' => [
             'label' => 'Use System Default',

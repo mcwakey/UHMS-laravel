@@ -2,6 +2,7 @@
 
 namespace App\Services\Billing;
 
+use App\Enums\PaymentTimingIntegrationMode;
 use App\Enums\VisitPaymentTimingPolicy;
 use App\Enums\VisitType;
 use App\Models\Setting;
@@ -16,6 +17,30 @@ final class PaymentTimingConfigurationService
     public function enabled(): bool
     {
         return $this->boolean('enabled', (bool) config('payment_timing.enabled', false));
+    }
+
+    public function integrationMode(): PaymentTimingIntegrationMode
+    {
+        $mode = config('payment_timing.integration.mode', PaymentTimingIntegrationMode::LEGACY->value);
+
+        return is_string($mode)
+            ? PaymentTimingIntegrationMode::tryFrom($mode) ?? PaymentTimingIntegrationMode::LEGACY
+            : PaymentTimingIntegrationMode::LEGACY;
+    }
+
+    public function logsIntegrationMismatches(): bool
+    {
+        return (bool) config('payment_timing.integration.log_mismatches', true);
+    }
+
+    public function logsIntegrationMatches(): bool
+    {
+        return (bool) config('payment_timing.integration.log_matches', false);
+    }
+
+    public function integrationLogDeduplicationSeconds(): int
+    {
+        return max(0, (int) config('payment_timing.integration.deduplication_seconds', 300));
     }
 
     public function globalDefault(): VisitPaymentTimingPolicy
@@ -86,7 +111,7 @@ final class PaymentTimingConfigurationService
             return $policy;
         }
 
-        Log::warning('Invalid payment timing setting; using safe fallback.', ['group' => self::GROUP, 'key' => $key]);
+        $this->safeWarning('Invalid payment timing setting; using safe fallback.', ['group' => self::GROUP, 'key' => $key]);
 
         return $fallback;
     }
@@ -106,12 +131,21 @@ final class PaymentTimingConfigurationService
         try {
             return Setting::getValue(self::GROUP, $key, $fallback);
         } catch (Throwable $exception) {
-            Log::warning('Payment timing settings are unavailable; using configuration fallback.', [
+            $this->safeWarning('Payment timing settings are unavailable; using configuration fallback.', [
                 'key' => $key,
                 'exception' => $exception::class,
             ]);
 
             return $fallback;
+        }
+    }
+
+    private function safeWarning(string $message, array $context): void
+    {
+        try {
+            Log::warning($message, $context);
+        } catch (Throwable) {
+            // Configuration fallback must not depend on logging availability.
         }
     }
 }

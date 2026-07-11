@@ -3,12 +3,15 @@
 namespace App\Services\Billing;
 
 use App\Enums\AdmissionStatus;
+use App\Enums\PaymentTimingIntegrationMode;
 use App\Enums\VisitType;
 use App\Models\EmergencyCase;
 use App\Models\InvoiceItem;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitBillingOverride;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * The brain of the context-aware billing policy. Given a visit (care context)
@@ -21,21 +24,34 @@ class BillingPolicyService
 {
     // Care contexts
     public const CONTEXT_OPD = 'OPD';
+
     public const CONTEXT_EMERGENCY = 'EMERGENCY';
+
     public const CONTEXT_ADMISSION = 'ADMISSION';
 
     // Enforcement modes
     public const MODE_STRICT_PAY_BEFORE_SERVICE = 'STRICT_PAY_BEFORE_SERVICE';
+
     public const MODE_DEFERRED_VISIT_SETTLEMENT = 'DEFERRED_VISIT_SETTLEMENT';
+
     public const MODE_RUNNING_BILL = 'RUNNING_BILL';
+
     public const MODE_INSURANCE_COVERED = 'INSURANCE_COVERED';
+
     public const MODE_CREDIT_APPROVED = 'CREDIT_APPROVED';
+
     public const MODE_WAIVED = 'WAIVED';
+
     public const MODE_PAYMENT_GATE_BYPASS = 'PAYMENT_GATE_BYPASS';
+
     public const MODE_ADVISORY = 'ADVISORY'; // global enforcement disabled
 
     public function __construct(
         protected InvoiceItemSettlementService $settlement,
+        protected PaymentTimingConfigurationService $paymentTimingConfiguration,
+        protected VisitPaymentTimingResolver $paymentTimingResolver,
+        protected PaymentTimingLegacyCompatibilityService $paymentTimingCompatibility,
+        protected PaymentTimingPolicyComparisonService $paymentTimingComparison,
     ) {}
 
     /*
@@ -137,7 +153,21 @@ class BillingPolicyService
     |--------------------------------------------------------------------------
     */
 
-    public function getInvoiceItemPolicy(InvoiceItem $item, ?User $user = null): BillingPolicyDecision
+    public function getInvoiceItemPolicy(
+        InvoiceItem $item,
+        ?User $user = null,
+        string $gateOperation = 'invoice_item_policy',
+    ): BillingPolicyDecision {
+        $legacyDecision = $this->evaluateLegacyInvoiceItemPolicy($item, $user);
+
+        if ($this->paymentTimingConfiguration->integrationMode() === PaymentTimingIntegrationMode::OBSERVE) {
+            $this->observePaymentTiming($item, $legacyDecision, $gateOperation);
+        }
+
+        return $legacyDecision;
+    }
+
+    private function evaluateLegacyInvoiceItemPolicy(InvoiceItem $item, ?User $user = null): BillingPolicyDecision
     {
         $settlementStatus = $this->settlement->settlementStatus($item);
         $extra = ['settlementStatus' => $settlementStatus];
@@ -224,6 +254,36 @@ class BillingPolicyService
         return BillingPolicyDecision::block(self::MODE_STRICT_PAY_BEFORE_SERVICE, 'ITEM_UNPAID',
             $this->blockedMessageFor($item),
             $extra + ['requiresPayment' => true]);
+    }
+
+    private function observePaymentTiming(
+        InvoiceItem $item,
+        BillingPolicyDecision $legacyDecision,
+        string $gateOperation,
+    ): void {
+        try {
+            $visit = $item->relationLoaded('visit') ? $item->visit : ($item->visit_id ? $item->visit()->first() : null);
+            if (! $visit) {
+                return;
+            }
+
+            $typedDecision = $this->paymentTimingResolver->resolve($visit);
+            $legacySnapshot = $this->paymentTimingCompatibility->describeLegacyDecision($legacyDecision);
+            $this->paymentTimingComparison->compare($visit, $legacySnapshot, $typedDecision, [
+                'gate_operation' => $gateOperation,
+            ]);
+        } catch (Throwable $exception) {
+            // The legacy result is authoritative; observation can never alter it.
+            try {
+                Log::warning('payment_timing_observation_failed', [
+                    'visit_id' => $item->visit_id,
+                    'gate_operation' => $gateOperation,
+                    'exception' => $exception::class,
+                ]);
+            } catch (Throwable) {
+                // A diagnostic logger failure must also leave the legacy result intact.
+            }
+        }
     }
 
     /*

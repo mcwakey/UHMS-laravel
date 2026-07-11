@@ -114,5 +114,6 @@ class PaymentTimingSettingsTest extends TestCase
         $this->assertSame(array_keys($en), array_keys($fr));
         $this->assertSame(array_keys($en['policies']), array_keys($fr['policies']));
         $this->assertSame(array_keys($en['sources']), array_keys($fr['sources']));
+        $this->assertSame(array_keys($en['integration']), array_keys($fr['integration']));
     }
 }

@@ -18,6 +18,17 @@ return [
     'invalid_policy' => 'Politique de moment du paiement non valide.',
     'global_cannot_inherit' => 'La politique générale ne peut pas utiliser la valeur par défaut du système.',
     'unknown_visit_type' => 'Politique associée à un type de visite inconnu.',
+    'integration' => [
+        'legacy' => 'Mode historique',
+        'observe' => 'Mode d’observation',
+        'source' => 'Source de la politique de paiement',
+        'match' => 'La politique historique correspond',
+        'legacy_more_restrictive' => 'La politique historique est plus restrictive',
+        'typed_more_restrictive' => 'La politique typée est plus restrictive',
+        'not_comparable' => 'Comparaison indisponible',
+        'missing_context' => 'Le contexte requis pour la comparaison est manquant',
+        'invalid_configuration_fallback' => 'Repli dû à une configuration non valide',
+    ],
     'policies' => [
         'inherit' => [
             'label' => 'Utiliser la valeur par défaut du système',
