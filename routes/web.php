@@ -1784,6 +1784,9 @@ Route::middleware('auth')->group(function () {
             Route::put('payment-methods', [SettingsController::class, 'updatePaymentMethods'])->name('payment-methods.update');
             Route::get('payment-timing', [SettingsController::class, 'paymentTiming'])->name('payment-timing');
             Route::put('payment-timing', [SettingsController::class, 'updatePaymentTiming'])->name('payment-timing.update');
+            // Departmental payment enforcement (Payment Timing Policy Phase 4)
+            Route::get('payment-gate-operations', [SettingsController::class, 'paymentGateOperations'])->name('payment-gate-operations');
+            Route::put('payment-gate-operations', [SettingsController::class, 'updatePaymentGateOperations'])->name('payment-gate-operations.update');
             Route::get('ward', [SettingsController::class, 'ward'])->name('ward');
             Route::put('ward', [SettingsController::class, 'updateWard'])->name('ward.update');
             Route::get('activity-log', [ActivityLogController::class, 'index'])->name('activity-log');

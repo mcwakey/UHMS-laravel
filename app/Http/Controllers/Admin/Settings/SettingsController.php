@@ -3,13 +3,22 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\Enums\LogModule;
+use App\Enums\MissingBillingContextPolicy;
+use App\Enums\PaymentGateOperationMode;
+use App\Enums\PaymentGateOverrideScopeRule;
+use App\Enums\PaymentGateVisitContextRule;
 use App\Enums\VisitPaymentTimingPolicy;
 use App\Enums\VisitType;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdatePaymentGateOperationSettingsRequest;
 use App\Http\Requests\UpdatePaymentTimingSettingsRequest;
 use App\Models\ServiceCatalog;
 use App\Models\Setting;
 use App\Services\ActivityLogService;
+use App\Services\Billing\PaymentGateEnforcementEligibilityService;
+use App\Services\Billing\PaymentGateOperationCompatibilityService;
+use App\Services\Billing\PaymentGateOperationConfigurationService;
+use App\Services\Billing\PaymentGateOperationRegistry;
 use App\Services\Billing\PaymentTimingConfigurationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -186,6 +195,90 @@ class SettingsController extends Controller
         });
 
         return back()->with('success', __('payment_timing.updated_successfully'));
+    }
+
+    /**
+     * Departmental payment enforcement (Payment Timing Policy Phase 4).
+     * Read-only diagnostics for every registered operation; only unwired
+     * operations are editable — wired hard gates are protected/read-only.
+     */
+    public function paymentGateOperations(
+        PaymentGateOperationRegistry $registry,
+        PaymentGateOperationConfigurationService $configuration,
+        PaymentGateEnforcementEligibilityService $eligibility,
+        PaymentGateOperationCompatibilityService $compatibility,
+    ) {
+        $groups = [];
+        foreach ($registry->operations() as $operation => $definition) {
+            $family = (string) ($definition['workflow_family'] ?? 'other');
+            $groups[$family][] = [
+                'operation' => $operation,
+                'definition' => $definition,
+                'policy' => $configuration->policyFor($operation),
+                'eligibility' => $eligibility->evaluate($operation),
+                'compatibility' => $compatibility->evaluate($operation),
+                'editable' => ! ($definition['production_wired'] ?? false) && ! ($definition['hard_enforcement'] ?? false),
+            ];
+        }
+
+        return view('settings.payment-gate-operations', [
+            'groups' => $groups,
+            'modes' => PaymentGateOperationMode::cases(),
+            'missingContextOptions' => MissingBillingContextPolicy::cases(),
+            'visitContextOptions' => PaymentGateVisitContextRule::cases(),
+            'overrideScopeOptions' => PaymentGateOverrideScopeRule::cases(),
+        ]);
+    }
+
+    public function updatePaymentGateOperations(
+        UpdatePaymentGateOperationSettingsRequest $request,
+        ActivityLogService $activityLog,
+        PaymentGateOperationRegistry $registry,
+    ) {
+        $submitted = (array) ($request->validated()['operations'] ?? []);
+        $group = PaymentGateOperationConfigurationService::GROUP;
+
+        DB::transaction(function () use ($submitted, $registry, $activityLog, $group, $request): void {
+            $changes = [];
+
+            foreach ($submitted as $operation => $data) {
+                $operation = (string) $operation;
+                // Defence in depth: never persist wired/hard-gate operations here.
+                $definition = $registry->get($operation);
+                if ($definition === null || ($definition['production_wired'] ?? false) || ($definition['hard_enforcement'] ?? false)) {
+                    continue;
+                }
+
+                $payload = [
+                    'mode' => $data['mode'],
+                    'missing_context' => $data['missing_context'],
+                    'visit_context_rule' => $data['visit_context_rule'],
+                    'override_scope_rule' => $data['override_scope_rule'],
+                    'emergency_exempt' => $request->boolean("operations.{$operation}.emergency_exempt"),
+                    'inpatient_exempt' => $request->boolean("operations.{$operation}.inpatient_exempt"),
+                    'typed_enforcement_eligible' => $request->boolean("operations.{$operation}.typed_enforcement_eligible"),
+                ];
+
+                $old = Setting::getValue($group, $operation);
+                if (is_array($old) && $old == $payload) {
+                    continue; // unchanged
+                }
+
+                Setting::setValue($group, $operation, $payload, 'json');
+                $changes[$operation] = ['old' => $old, 'new' => $payload];
+            }
+
+            if ($changes !== []) {
+                $activityLog->log(LogModule::SETTINGS, 'PAYMENT_GATE_OPERATION_SETTINGS_UPDATED', [
+                    'setting_group' => $group,
+                    'setting_keys' => array_keys($changes),
+                    'old_values' => array_map(fn (array $c) => $c['old'], $changes),
+                    'new_values' => array_map(fn (array $c) => $c['new'], $changes),
+                ], description: 'Payment gate operation settings updated');
+            }
+        });
+
+        return back()->with('success', __('payment_gate.updated_successfully'));
     }
 
     /**

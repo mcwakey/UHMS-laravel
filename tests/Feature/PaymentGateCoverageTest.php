@@ -19,7 +19,7 @@ class PaymentGateCoverageTest extends TestCase
 
         $this->assertSame(0, $exit);
         $this->assertGreaterThan(0, $payload['production_wired']);
-        $this->assertGreaterThan(0, $payload['missing_production_wiring']);
+        $this->assertGreaterThan(0, $payload['unwired']);
         $this->assertContains('consultation.route.complete', array_column($payload['operations'], 'operation'));
         $this->assertContains('laboratory.result.enter', array_column($payload['operations'], 'operation'));
         $this->assertContains('pharmacy.item.dispense', array_column($payload['operations'], 'operation'));
