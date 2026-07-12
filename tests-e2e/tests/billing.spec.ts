@@ -326,36 +326,47 @@ echo json_encode([
 async function submitPayment(page: Page, fixture: BillingFixture, amount: number) {
   return page.evaluate(
     async ({ action, amountValue }) => {
-      const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
-      const body = new FormData();
-      body.set('_token', token);
-      body.set('amount', amountValue);
-      body.set('payment_method', 'cash');
-      body.set('reference_number', `E2E-${Date.now()}`);
-      body.set('notes', 'E2E billing suite payment check');
+      const requestPayment = async () => {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        const body = new FormData();
+        body.set('_token', token);
+        body.set('amount', amountValue);
+        body.set('payment_method', 'cash');
+        body.set('reference_number', `E2E-${Date.now()}`);
+        body.set('notes', 'E2E billing suite payment check');
 
-      const receivable = document.querySelector('#invoiceReceivableSelect');
-      if (receivable instanceof HTMLSelectElement && receivable.value) {
-        body.set('invoice_receivable_id', receivable.value);
+        const receivable = document.querySelector('#invoiceReceivableSelect');
+        if (receivable instanceof HTMLSelectElement && receivable.value) {
+          body.set('invoice_receivable_id', receivable.value);
+        }
+
+        const response = await fetch(action, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body,
+        });
+
+        const contentType = response.headers.get('content-type') || '';
+        const payload = contentType.includes('application/json') ? await response.json() : { text: await response.text() };
+
+        return {
+          ok: response.ok,
+          status: response.status,
+          payload,
+        };
+      };
+
+      const firstAttempt = await requestPayment();
+      if (!firstAttempt.ok && /database is locked/i.test(JSON.stringify(firstAttempt.payload))) {
+        await new Promise((resolve) => setTimeout(resolve, 750));
+
+        return requestPayment();
       }
 
-      const response = await fetch(action, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body,
-      });
-
-      const contentType = response.headers.get('content-type') || '';
-      const payload = contentType.includes('application/json') ? await response.json() : { text: await response.text() };
-
-      return {
-        ok: response.ok,
-        status: response.status,
-        payload,
-      };
+      return firstAttempt;
     },
     { action: fixture.paymentStorePath, amountValue: money(amount) },
   ) as Promise<PaymentResponse>;

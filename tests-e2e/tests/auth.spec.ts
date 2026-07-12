@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
 import { loginAs, requiredCredentials, submitLoginForm, url, waitForBodyText } from './support/auth';
+import { cleanupPermissionE2EUsers, ensurePermissionE2EUsers } from './support/e2e-users';
+
+test.beforeAll(() => ensurePermissionE2EUsers());
+test.afterAll(() => cleanupPermissionE2EUsers());
 
 const dashboardPath = '/admin/dashboard';
 const dashboardUrlPattern = /\/admin\/dashboard$/;

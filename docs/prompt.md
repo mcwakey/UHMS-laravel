@@ -1,2493 +1,1113 @@
-# UHMS Implementation Prompt — Payment Timing Policy Phase 9
+# UHMS Implementation Prompt
 
-## Financial Clearance, Conditional Closure, Outstanding-Balance Approval, and Receivable Preservation
+## Payment Timing Policy — Final Verification and Release Closure
 
 You are working on **UHMS**, a Laravel-based hospital management system.
 
-Implement **Phase 9 of the Configurable Payment Timing and Per-Visit Payment Policy system**.
+The Payment Timing Policy implementation batch, covering Phases 1–9, is functionally complete.
 
-Phases 1–8 are complete.
+This task is a dedicated **verification, hardening, and release-closure exercise**.
 
-Phase 9 completes the payment-timing implementation batch by introducing financial clearance and administrative financial closure for visits whose services may be completed before final payment.
+It is not Phase 10.
+
+Do not add new payment-policy features unless a defect discovered during verification requires a narrowly scoped correction.
 
 ---
 
-# 1. Existing Foundation
+# 1. Current Implementation State
 
-## Phase 1 — Payment-timing configuration
+The completed implementation includes:
 
-Implemented:
+1. Global and visit-type payment-timing policies
+2. Legacy/typed policy observation and compatibility
+3. Central `PaymentGateService` workflow integration
+4. Departmental operation configuration and cutover eligibility
+5. Patient financial-risk profiles
+6. Visit-level observational policy materialisation
+7. Approved per-visit payment arrangements
+8. Controlled typed operational cutover
+9. Financial clearance, conditional closure, and receivable preservation
 
-* `VisitPaymentTimingPolicy`
-* `VisitPaymentPolicySource`
-* Global payment-timing policy
-* Visit-type payment-timing configuration
-* Database-backed settings
-* Admin configuration
-* Permission protection
+The latest Phase 9 implementation provides:
+
+* Visit financial-clearance snapshots
+* Immutable clearance history
+* Conditional outstanding-balance approval
+* Maker-checker exception approval
+* Active-mode-only financial closure
+* Automatic staleness after invoice, invoice-item, receivable, or payment changes
+* Financial worklists, reports, exports, settings, and rollback
+* Safe deployment defaults
 * English/French localisation
-* Audit logging
+* Diagnostic, backfill, refresh, and expiry commands
 
-## Phase 2 — Legacy integration
-
-Implemented:
-
-* Legacy and observation integration modes
-* `VisitPaymentTimingDecision`
-* `VisitPaymentTimingResolver`
-* Legacy compatibility mapping
-* Decision comparison and diagnostics
-
-## Phase 3 — Central payment façade
-
-Implemented:
-
-* `PaymentGateStage`
-* `PaymentGateContext`
-* Production payment checks centralised through `PaymentGateService`
-* Maintained operation registry and coverage diagnostics
-
-Currently wired operations:
+Current deployment defaults remain:
 
 ```text
-consultation.route.complete
-consultation.next_patient.readiness
-laboratory.result.enter
-pharmacy.item.dispense
+Payment timing typed cutover: disabled
+Financial clearance enforcement: disabled
+PAYMENT_TIMING_FORCE_LEGACY: safe fallback available
+VISIT_FINANCIAL_CLEARANCE_FORCE_DISABLED: true
 ```
-
-## Phase 4 — Departmental policy registry
-
-Implemented:
-
-* Per-operation payment policy
-* Missing-billing-context rules
-* Visit-context rules
-* Override-scope rules
-* Eligibility and compatibility services
-* Configuration UI and audit
-
-## Phase 5 — Patient financial-risk profiles
-
-Implemented:
-
-* Financial-risk classification
-* Restricted visibility
-* Review, suspension, clearance, and expiry
-* Immutable history
-* Audit and reporting
-
-## Phase 6 — Visit-level materialisation
-
-Implemented:
-
-* One observational payment-policy record per visit
-* Baseline typed policy
-* Risk recommendation
-* Risk snapshot
-* Append-only policy history
-* Backfill, refresh, and diagnostics
-
-## Phase 7 — Approved visit arrangements
-
-Implemented:
-
-* Per-visit arrangement requests
-* Approval, rejection, withdrawal, replacement, revocation, and expiry
-* Maker-checker workflow
-* Risk-based approval requirements
-* Current approved-arrangement linkage
-* Administrative-only arrangement history
-
-## Phase 8 — Operational typed cutover
-
-Implemented:
-
-* Master cutover mode:
-
-  * `disabled`
-  * `observe`
-  * `active`
-* Environment force-legacy kill switch
-* Per-operation typed mode
-* Approved-arrangement precedence
-* Typed gate decisions
-* Automatic legacy fallback
-* Admin activation and rollback
-* Typed laboratory and pharmacy compatibility handling
-* Emergency visits remaining legacy
-* Nine unwired operations remaining unwired
-
-Typed policy can now allow services to proceed under:
-
-```text
-pay_after_all_services
-running_bill
-```
-
-without marking the relevant invoice item as paid.
 
 ---
 
-# 2. Phase 9 Goal
+# 2. Known Verification Gaps
 
-Implement a secure and auditable **visit financial-clearance and administrative financial-closure subsystem**.
+The Phase 9 focused verification passed, but final release verification is incomplete.
 
-The subsystem must:
+Known gaps:
 
-* Assess whether the visit’s patient-responsibility balance is settled
-* Distinguish clinical completion from financial clearance
-* Distinguish discharge from financial closure
-* Allow services and clinical sessions to complete independently of settlement
-* Support visits operating under:
+## 2.1 Laravel full suite
 
-  * `pay_before_service`
-  * `pay_after_all_services`
-  * `running_bill`
-* Allow authorised conditional clearance with an outstanding balance
-* Preserve all outstanding debt in the existing receivable ledger
-* Support payment-plan, approved outstanding-balance, insurance-pending, and corporate-guarantee clearance bases where appropriate
-* Maintain immutable clearance and approval history
-* Reopen or mark clearance stale when new financial activity occurs
-* Provide finance worklists, reports, commands, and audit trails
-* Remain independently reversible
-* Never falsely mark an invoice or receivable as paid
+The complete Laravel suite was attempted twice.
 
-The new financial-clearance subsystem may control only the new **administrative financial-close action**.
+The execution wrapper timed out before PHPUnit produced a final summary:
 
-It must not block:
+* First attempt: approximately 2-minute timeout
+* Second attempt: approximately 15-minute timeout
 
-* Clinical consultation completion
-* Session completion
-* Clinical reopening
-* Same-day outpatient reopening
-* Active inpatient sessions
-* Clinical discharge
-* Emergency care
-* Re-admission workflows
-* New clinical work permitted by existing visit/session rules
+The result is therefore:
+
+```text
+inconclusive
+```
+
+Do not describe the full Laravel suite as passing or failing until a complete final summary is obtained.
+
+## 2.2 Playwright
+
+The complete Playwright suite was invoked but stopped before test discovery because these environment values were absent:
+
+```text
+UHMS_RECEPTION_EMAIL
+UHMS_RECEPTION_PASSWORD
+```
+
+No credentials were invented.
+
+The browser suite therefore remains unexecuted.
+
+## 2.3 Existing NHIS failures
+
+Three `NhisClaimWorkflowTest` failures were previously reported as pre-existing and were observed to fail identically when the Phase 8 changes were stashed.
+
+This must be verified again against the current Phase 9 branch before final release closure.
 
 ---
 
-# 3. Mandatory Domain Separation
+# 3. Primary Goal
 
-UHMS must keep these concepts separate:
+Complete one trustworthy release-verification cycle that answers:
 
-```text
-Clinical work completed
-Consultation/session completed
-Patient clinically discharged
-Visit administratively active/completed
-Invoice settled
-Patient responsibility cleared
-Financial clearance conditionally approved
-Visit financially closed
-Outstanding receivable still collectible
-```
+1. Does the complete Laravel suite pass?
+2. If not, which failures are caused by the payment-timing batch?
+3. Are any failures genuinely pre-existing?
+4. Does the complete Playwright suite pass?
+5. Does the full payment-timing workflow work through the browser?
+6. Are safe deployment defaults preserved?
+7. Are rollback controls proven?
+8. Can the implementation be declared release-ready?
+9. Are there any documented release blockers?
 
-Important examples:
-
-## Example 1 — Pay after all services
-
-* The patient completes consultation, laboratory, pharmacy, and procedure work.
-* The clinical workflow is complete.
-* The invoice remains unpaid.
-* Financial clearance remains pending.
-* The visit is not financially closed.
-* Finance later receives payment or approves a conditional clearance.
-
-## Example 2 — Inpatient running bill
-
-* The patient receives services while admitted.
-* Partial payments may be recorded.
-* The clinician may discharge the patient.
-* Discharge does not mean the invoice is settled.
-* Finance clearance and financial closure remain separate.
-
-## Example 3 — Approved outstanding balance
-
-* Finance approves closure with GHS 500 outstanding.
-* The visit becomes conditionally cleared.
-* The GHS 500 receivable remains open.
-* The system does not create a payment, waiver, credit note, or adjustment.
-* Collection may continue after financial closure.
-
-## Example 4 — Reopened consultation
-
-* An outpatient visit is clinically reopened within the existing allowed period.
-* New billable items are added.
-* The previous financial clearance becomes stale or reopened.
-* Clinical reopening is not blocked by the financial-close record.
+Do not claim release readiness unless the evidence supports it.
 
 ---
 
-# 4. Mandatory Architecture Audit
-
-Before modifying code, inspect the following.
-
-## 4.1 Visit lifecycle
-
-Audit:
-
-* `Visit`
-* Visit statuses
-* Consultation completion
-* Session completion
-* Automatic consultation completion
-* Same-day outpatient reopening
-* Next-day outpatient restrictions
-* Inpatient active-session behaviour
-* Inpatient discharge
-* Discharge reversal or readmission
-* Visit cancellation
-* Visit reopening
-* Existing administrative completion
-* Existing financial or billing completion fields
-
-Identify which actions are:
-
-```text
-clinical
-administrative
-billing-related
-financial
-```
-
-Do not assume the existing generic “complete visit” action is suitable for financial closure.
-
-## 4.2 Invoice and receivable architecture
-
-Audit:
-
-* Invoice model and service
-* Invoice items
-* `InvoiceReceivable`
-* `InvoiceReceivableService`
-* `PaymentService`
-* Payment allocation
-* Invoice adjustment
-* Waivers
-* Insurance responsibility
-* Corporate responsibility
-* Sponsor responsibility
-* Patient responsibility
-* Partial payment behaviour
-* Overpayment handling
-* Payment reversal or refund handling
-* Existing statement and ageing reports
-
-The current ledger and receivable data must remain authoritative.
-
-## 4.3 Current payment policy
-
-Audit:
-
-* `OperationalVisitPaymentTimingResolver`
-* `VisitPaymentTimingResolver`
-* Current approved arrangement
-* Master cutover mode
-* Per-operation typed modes
-* Environment kill switch
-* Legacy visit-wide overrides
-* Previous-balance policy
-
-## 4.4 Existing clearance concepts
-
-Search for:
-
-```text
-financial clearance
-billing clearance
-discharge clearance
-patient cleared
-invoice clearance
-settlement clearance
-account clearance
-credit approval
-payment plan
-corporate guarantee
-insurance pending
-management approval
-```
-
-Determine whether existing fields, models, services, permissions, or approval workflows can be extended safely.
-
-Do not create duplicate clearance systems.
-
-## 4.5 Financial mutation events
-
-Audit the existing observer/event architecture for:
-
-* Invoice creation
-* Invoice-item creation
-* Invoice-item cancellation
-* Payment posting
-* Payment reversal
-* Credit note
-* Waiver
-* Adjustment
-* Insurance responsibility change
-* Sponsor or corporate authorisation change
-
-Determine the safest point for marking an existing clearance stale or refreshing it.
-
-Document all findings in the Phase 9 report.
-
----
-
-# 5. Financial-Clearance Mode
-
-Create:
-
-```text
-app/Enums/VisitFinancialClearanceMode.php
-```
-
-Required values:
-
-```php
-<?php
-
-namespace App\Enums;
-
-enum VisitFinancialClearanceMode: string
-{
-    case DISABLED = 'disabled';
-    case OBSERVE = 'observe';
-    case ACTIVE = 'active';
-}
-```
-
-Meaning:
-
-## `disabled`
-
-* Financial-clearance assessment may be manually previewed.
-* Existing clinical, visit, discharge, and billing behaviour remains unchanged.
-* No financial-close requirement is operational.
-* The financial-close action is unavailable or non-enforcing.
-
-## `observe`
-
-* Clearance decisions are calculated and recorded.
-* The system reports whether financial closure would be permitted.
-* Existing behaviour remains unchanged.
-* No administrative financial-close action is blocked or completed automatically.
-
-## `active`
-
-* The dedicated financial-close action requires a valid clearance decision.
-* Fully or conditionally cleared visits may be financially closed.
-* Visits that remain financially pending cannot be financially closed.
-* Clinical completion and discharge remain unaffected.
-
-Default:
-
-```text
-disabled
-```
-
-Invalid values must fall back to `disabled`.
-
----
-
-# 6. Financial-Clearance Status
-
-Create:
-
-```text
-app/Enums/VisitFinancialClearanceStatus.php
-```
-
-Suggested values:
-
-```php
-<?php
-
-namespace App\Enums;
-
-enum VisitFinancialClearanceStatus: string
-{
-    case PENDING = 'pending';
-    case CLEARED = 'cleared';
-    case CONDITIONALLY_CLEARED = 'conditionally_cleared';
-    case FINANCIALLY_CLOSED = 'financially_closed';
-    case STALE = 'stale';
-}
-```
-
-Meaning:
-
-## `pending`
-
-The visit has patient-responsibility amounts that are not settled and no valid conditional-clearance approval exists.
-
-## `cleared`
-
-The visit is currently financially clear through full settlement, zero patient responsibility, or another non-debt basis.
-
-## `conditionally_cleared`
-
-An authorised approval permits financial closure while an outstanding balance remains.
-
-## `financially_closed`
-
-The visit has been administratively closed from a financial perspective.
-
-This must not mean:
-
-* Clinically complete
-* Discharged
-* Invoice paid
-* Receivable closed
-
-## `stale`
-
-The previous assessment or closure no longer reflects current financial data.
-
-Examples:
-
-* A new invoice item was added
-* A payment was reversed
-* Responsibility changed
-* An approval expired or was revoked
-* A new charge was created after closure
-
----
-
-# 7. Financial-Clearance Basis
-
-Create:
-
-```text
-app/Enums/VisitFinancialClearanceBasis.php
-```
-
-Suggested values:
-
-```php
-<?php
-
-namespace App\Enums;
-
-enum VisitFinancialClearanceBasis: string
-{
-    case FULLY_SETTLED = 'fully_settled';
-    case ZERO_PATIENT_RESPONSIBILITY = 'zero_patient_responsibility';
-    case FULLY_INSURED = 'fully_insured';
-    case FULLY_SPONSORED = 'fully_sponsored';
-    case CORPORATE_GUARANTEE = 'corporate_guarantee';
-    case INSURANCE_PENDING_APPROVED = 'insurance_pending_approved';
-    case APPROVED_OUTSTANDING_BALANCE = 'approved_outstanding_balance';
-    case APPROVED_PAYMENT_PLAN = 'approved_payment_plan';
-    case MANAGEMENT_APPROVAL = 'management_approval';
-}
-```
-
-Use only bases supported by actual repository workflows.
-
-Rules:
-
-* Fully insured means the patient-responsibility portion is zero according to the existing invoice ledger.
-* Conditional bases must require an active approved clearance exception.
-* A basis must not change invoice accounting.
-* A basis must not create a payment.
-* A basis must not erase debt.
-
----
-
-# 8. Financial-Clearance Event Enum
-
-Create:
-
-```text
-app/Enums/VisitFinancialClearanceEvent.php
-```
-
-Suggested values:
-
-```text
-assessed
-cleared
-conditionally_cleared
-financially_closed
-marked_stale
-reopened
-refreshed
-conditional_clearance_revoked
-```
-
-Use it for immutable history.
-
----
-
-# 9. Financial-Clearance Data Model
-
-Create:
-
-```text
-visit_financial_clearances
-```
-
-One current financial-clearance record per visit.
-
-Suggested fields:
-
-```text
-id
-visit_id
-
-status
-basis
-
-operational_policy_snapshot
-policy_source_snapshot
-approved_arrangement_id_snapshot
-
-patient_responsibility_snapshot
-patient_paid_snapshot
-patient_outstanding_snapshot
-insurance_responsibility_snapshot
-sponsor_responsibility_snapshot
-corporate_responsibility_snapshot
-
-invoice_count_snapshot
-invoice_item_count_snapshot
-receivable_count_snapshot
-
-current_exception_id
-requires_finance_action
-
-assessment_version
-assessed_at
-cleared_at
-conditionally_cleared_at
-financially_closed_at
-stale_at
-reopened_at
-last_refreshed_at
-
-created_by
-last_refreshed_by
-financially_closed_by
-
-created_at
-updated_at
-```
-
-Adapt names to project conventions.
-
-Mandatory rules:
-
-* `visit_id` is unique.
-* Amount fields are snapshots only.
-* Existing invoice and receivable tables remain authoritative.
-* Amounts follow existing money precision.
-* `current_exception_id` is nullable.
-* No field should imply that an outstanding receivable was paid.
-* Add indexes for:
-
-  * status
-  * basis
-  * requires finance action
-  * assessed date
-  * closed date
-  * stale date
-* Use short explicit foreign-key names where required.
-
----
-
-# 10. Financial-Clearance History
-
-Create:
-
-```text
-visit_financial_clearance_history
-```
-
-Suggested fields:
-
-```text
-id
-visit_financial_clearance_id
-visit_id
-event_type
-old_values
-new_values
-reason_code
-performed_by
-performed_at
-created_at
-```
-
-Rules:
-
-* Append-only through normal workflows.
-* Store material status, basis, and amount snapshots.
-* Do not store patient contact data.
-* Do not store clinical details.
-* Do not expose raw JSON.
-* Do not permit history deletion or editing.
-* Do not duplicate unchanged refreshes.
-
----
-
-# 11. Models and Relationships
-
-Create:
-
-```text
-app/Models/VisitFinancialClearance.php
-app/Models/VisitFinancialClearanceHistory.php
-```
-
-Add relationships:
-
-```php
-Visit::financialClearance()
-Visit::financialClearanceHistory()
-Visit::financialClearanceExceptions()
-
-VisitFinancialClearance::visit()
-VisitFinancialClearance::currentException()
-VisitFinancialClearance::history()
-VisitFinancialClearance::creator()
-VisitFinancialClearance::refresher()
-VisitFinancialClearance::financialCloser()
-```
-
-Suggested scopes:
-
-```php
-scopePending()
-scopeCleared()
-scopeConditionallyCleared()
-scopeFinanciallyClosed()
-scopeStale()
-scopeRequiringFinanceAction()
-scopeAssessedBetween()
-```
-
-Avoid service calls inside model accessors.
-
----
-
-# 12. Live Financial Summary DTO
-
-Create:
-
-```text
-app/Data/Billing/VisitFinancialSummary.php
-```
-
-Suggested structure:
-
-```php
-final readonly class VisitFinancialSummary
-{
-    public function __construct(
-        public string $currency,
-        public string $patientResponsibility,
-        public string $patientPaid,
-        public string $patientOutstanding,
-        public string $insuranceResponsibility,
-        public string $sponsorResponsibility,
-        public string $corporateResponsibility,
-        public int $invoiceCount,
-        public int $invoiceItemCount,
-        public int $receivableCount,
-        public bool $hasUnbilledBillableItems,
-        public bool $hasPendingFinancialAdjustments,
-        public array $context = [],
-    ) {
-    }
-}
-```
-
-Use the project’s money conventions rather than raw floating-point values.
-
-Context must be bounded.
-
----
-
-# 13. Financial Summary Service
-
-Create:
-
-```text
-app/Services/Billing/VisitFinancialSummaryService.php
-```
-
-Responsibilities:
-
-```php
-public function summarize(Visit $visit): VisitFinancialSummary;
-```
-
-Mandatory rules:
-
-* Use existing invoices and receivables.
-* Reuse existing responsibility calculations.
-* Reuse current payment allocation.
-* Do not independently reconstruct the ledger.
-* Do not count cancelled invoice items as payable.
-* Respect adjustments and waivers.
-* Do not treat insurer responsibility as patient responsibility.
-* Do not treat sponsor responsibility as patient responsibility.
-* Do not count previous-visit debt as part of the current visit’s clearance.
-* Previous balance may be displayed separately.
-* Avoid duplicate invoice and payment queries.
-
----
-
-# 14. Financial-Clearance Decision DTO
-
-Create:
-
-```text
-app/Data/Billing/VisitFinancialClearanceDecision.php
-```
-
-Suggested structure:
-
-```php
-final readonly class VisitFinancialClearanceDecision
-{
-    public function __construct(
-        public VisitFinancialClearanceStatus $status,
-        public ?VisitFinancialClearanceBasis $basis,
-        public bool $mayFinanciallyClose,
-        public bool $requiresFinanceAction,
-        public string $reasonCode,
-        public VisitFinancialSummary $summary,
-        public ?int $conditionalApprovalId = null,
-        public array $context = [],
-    ) {
-    }
-}
-```
-
-The decision must not modify data.
-
----
-
-# 15. Financial-Clearance Decision Service
-
-Create:
-
-```text
-app/Services/Billing/VisitFinancialClearanceDecisionService.php
-```
-
-Suggested method:
-
-```php
-public function decide(Visit $visit): VisitFinancialClearanceDecision;
-```
-
-Resolution rules:
-
-## 15.1 Unbilled billable items
-
-If the visit contains known billable services that should have been billed but have no valid invoice item:
-
-* Do not financially close.
-* Return a machine-readable reason.
-* Preserve existing service-specific missing-billing behaviour.
-* Do not automatically create an invoice.
-
-## 15.2 Zero patient responsibility
-
-If patient responsibility is zero:
-
-* Clear using an appropriate basis:
-
-  * zero patient responsibility
-  * fully insured
-  * fully sponsored
-  * corporate guarantee
-* Do not require patient payment.
-
-## 15.3 Fully settled patient responsibility
-
-If current patient-responsibility outstanding is within the existing currency tolerance:
-
-* Return `cleared`
-* Basis: `fully_settled`
-* Allow financial close
-
-## 15.4 Outstanding patient responsibility
-
-If patient responsibility remains outstanding:
-
-* Check for a valid current conditional-clearance approval.
-* If valid:
-
-  * Return `conditionally_cleared`
-  * Preserve the outstanding amount
-  * Allow financial close
-* Otherwise:
-
-  * Return `pending`
-  * Require finance action
-  * Do not allow financial close
-
-## 15.5 Payment-timing policy
-
-The operational visit policy explains when payment was required during service delivery.
-
-It must not erase the final outstanding balance.
-
-For:
-
-```text
-pay_after_all_services
-running_bill
-```
-
-the visit may complete services before payment, but final financial clearance still requires:
-
-* Settlement, or
-* Valid conditional-clearance approval
-
-For:
-
-```text
-pay_before_service
-```
-
-perform a final residual-balance assessment as a safety check.
-
-## 15.6 Previous balance
-
-Previous-visit balance remains separate.
-
-Do not block current-visit financial clearance based solely on previous debt unless an existing hospital policy explicitly requires it.
-
-Report it separately where authorised.
-
----
-
-# 16. Financial-Clearance Exception Type
-
-Create:
-
-```text
-app/Enums/VisitFinancialClearanceExceptionType.php
-```
-
-Suggested values:
-
-```php
-<?php
-
-namespace App\Enums;
-
-enum VisitFinancialClearanceExceptionType: string
-{
-    case OUTSTANDING_BALANCE_APPROVAL = 'outstanding_balance_approval';
-    case PAYMENT_PLAN = 'payment_plan';
-    case INSURANCE_PENDING = 'insurance_pending';
-    case CORPORATE_GUARANTEE = 'corporate_guarantee';
-    case MANAGEMENT_APPROVAL = 'management_approval';
-}
-```
-
-Use only supported workflows.
-
-This is a financial-closure exception, not a service-payment arrangement.
-
----
-
-# 17. Financial-Clearance Exception Status
-
-Create:
-
-```text
-app/Enums/VisitFinancialClearanceExceptionStatus.php
-```
-
-Required values:
-
-```text
-pending
-approved
-rejected
-withdrawn
-revoked
-expired
-replaced
-```
-
-Use the same clear lifecycle discipline established in Phase 7.
-
----
-
-# 18. Conditional-Clearance Data Model
-
-Create:
-
-```text
-visit_financial_clearance_exceptions
-visit_financial_clearance_exception_history
-```
-
-Suggested exception fields:
-
-```text
-id
-visit_id
-visit_financial_clearance_id
-
-type
-status
-
-requested_amount
-approved_amount
-
-reason_code
-request_reason
-supporting_reference
-
-requested_by
-requested_at
-
-reviewed_by
-reviewed_at
-review_decision_reason
-
-approved_by
-approved_at
-
-effective_from
-expires_at
-
-withdrawn_by
-withdrawn_at
-withdrawal_reason
-
-revoked_by
-revoked_at
-revocation_reason
-
-replaced_by_exception_id
-
-financial_summary_snapshot
-payment_policy_snapshot
-arrangement_id_snapshot
-risk_level_snapshot
-
-created_at
-updated_at
-```
-
-Rules:
-
-* One pending exception request per visit.
-* One current approved exception per visit.
-* Approved amount cannot exceed the current outstanding amount unless the workflow explicitly supports a higher credit ceiling.
-* `inherit` and payment-policy mutation do not belong here.
-* Free text must be bounded.
-* Snapshot JSON must exclude patient contact and clinical information.
-* Use database transactions and row locking.
-* Preserve terminal records.
-
----
-
-# 19. Conditional-Clearance Approval Rules
-
-Create:
-
-```text
-app/Services/Billing/VisitFinancialClearanceApprovalPolicyService.php
-```
-
-and a typed approval-requirement DTO.
-
-Suggested rules:
-
-## Fully settled
-
-No exception approval required.
-
-## Outstanding-balance approval
-
-Requires:
-
-* Finance Manager or higher
-* Reason
-* Supporting reference where configured
-* Approved amount
-* Separate approver by default
-
-## Payment plan
-
-Requires:
-
-* Existing or new structured payment-plan details
-* Finance Manager approval
-* Effective date
-* Optional due schedule or external reference
-* Separate approver
-
-Do not build a full instalment collection subsystem unless one already exists.
-
-## Insurance pending
-
-Requires:
-
-* Confirmed insurance relationship
-* Authorisation or claim reference
-* Finance or insurance-authorisation permission
-* Explicit reason
-
-## Corporate guarantee
-
-Requires:
-
-* Valid corporate relationship
-* Guarantee reference
-* Credit-limit validation where an existing corporate credit limit exists
-
-## Management approval
-
-Requires:
-
-* High-level permission
-* Reason
-* Supporting reference
-* Separate approver
-
-Self-approval must be prohibited by default.
-
----
-
-# 20. Conditional-Clearance Service
-
-Create:
-
-```text
-app/Services/Billing/VisitFinancialClearanceExceptionService.php
-```
-
-Suggested methods:
-
-```php
-public function request(...): VisitFinancialClearanceException;
-
-public function approve(...): VisitFinancialClearanceException;
-
-public function reject(...): VisitFinancialClearanceException;
-
-public function withdraw(...): VisitFinancialClearanceException;
-
-public function revoke(...): VisitFinancialClearanceException;
-
-public function expireDue(...): int;
-```
-
-Every mutation must:
-
-* Run in a transaction
-* Lock current pending and approved records
-* Recalculate live outstanding patient responsibility
-* Recheck requester/approver separation
-* Recheck approval permissions
-* Append immutable history
-* Create one activity log
-* Preserve the receivable
-* Avoid invoice or payment mutation
-
-Approving an exception must not:
-
-* Create a payment
-* Create a waiver
-* Create a credit note
-* Adjust the invoice
-* Close the receivable
-* Mark the invoice paid
-* Create a Phase 7 payment arrangement
-* Create a previous-balance override
-
----
-
-# 21. Financial-Clearance Service
-
-Create:
-
-```text
-app/Services/Billing/VisitFinancialClearanceService.php
-```
-
-Suggested methods:
-
-```php
-public function assess(
-    Visit $visit,
-    ?User $actor = null,
-    bool $logActivity = false
-): VisitFinancialClearance;
-
-public function refresh(
-    Visit $visit,
-    ?User $actor = null,
-    ?string $reasonCode = null
-): VisitFinancialClearance;
-
-public function financiallyClose(
-    Visit $visit,
-    User $actor,
-    string $reason
-): VisitFinancialClearance;
-
-public function markStale(
-    Visit $visit,
-    string $reasonCode,
-    ?User $actor = null
-): ?VisitFinancialClearance;
-
-public function reopenFinancialClearance(
-    Visit $visit,
-    string $reasonCode,
-    ?User $actor = null
-): VisitFinancialClearance;
-```
-
-## Assess
-
-* Calculate the live decision.
-* Create or update the current clearance record.
-* Append history only on material change.
-* Do not close the visit automatically.
-
-## Financially close
-
-* Available only in `active` mode.
-* Recalculate the live decision inside the transaction.
-* Require `mayFinanciallyClose = true`.
-* Set status to `financially_closed`.
-* Preserve the clearance basis.
-* Record actor and timestamp.
-* Do not change clinical visit status.
-
-## Mark stale
-
-Used after relevant financial changes.
-
-* Do not block the financial mutation.
-* Mark existing clearance stale.
-* Append bounded history.
-* Do not modify the invoice or payment.
-
-## Reopen financial clearance
-
-If a financially closed visit receives new billable activity:
-
-* Move financial status to stale or pending according to the final design.
-* Preserve the previous close event in history.
-* Do not block clinical reopening.
-* Do not delete the previous close timestamp from history.
-
----
-
-# 22. Operational Financial-Close Action
-
-Add a dedicated action:
-
-```text
-Financially Close Visit
-```
-
-Do not reuse a clinical “Complete Visit” button.
-
-Suggested route:
-
-```text
-POST visits/{visit}/financial-clearance/close
-```
-
-The action must:
-
-1. Require financial-close permission.
-2. Require Phase 9 mode `active`.
-3. Recalculate the live decision.
-4. Require cleared or conditionally cleared status.
-5. Require a reason.
-6. Run transactionally.
-7. Append history.
-8. Create one activity log.
-9. Leave clinical and discharge statuses unchanged.
-
-If pending:
-
-* Reject the financial-close action.
-* Return a localised reason.
-* Provide links to:
-
-  * invoice
-  * payment collection
-  * exception request
-  * finance review
-
----
-
-# 23. Clinical Completion and Discharge Safety
-
-Phase 9 must explicitly prove:
-
-* Consultation completion is not blocked by financial clearance.
-* Session completion is not blocked by financial clearance.
-* Same-day outpatient reopening remains allowed according to current rules.
-* Existing next-day outpatient restrictions remain unchanged.
-* Active inpatient sessions remain editable according to current rules.
-* Inpatient discharge is not blocked by financial clearance.
-* Emergency disposition and discharge are not blocked by financial clearance.
-* Readmission is not blocked by prior financial closure.
-* New clinical items may be added after clinical reopening.
-* New billable items mark financial clearance stale rather than being rejected.
-
-Do not add financial-clearance checks to clinical completion or discharge controllers.
-
----
-
-# 24. Automatic Assessment and Staleness Integration
-
-Audit existing observers and events.
-
-Where safe, integrate after successful financial mutations.
-
-Potential triggers:
-
-```text
-invoice created
-invoice item created
-invoice item cancelled
-payment posted
-payment reversed
-waiver applied
-adjustment applied
-responsibility changed
-insurance coverage changed
-corporate responsibility changed
-```
-
-Preferred behaviour:
-
-## No existing clearance record
-
-* Do nothing automatically.
-* Assessment may occur when finance opens the visit or through backfill.
-
-## Existing pending, cleared, conditionally cleared, or closed record
-
-* Mark stale or queue a failure-safe refresh after commit.
-* Do not block the original financial mutation.
-* Do not create duplicate history for repeated equivalent events.
-
-## Payment posted
-
-A failure-safe after-commit refresh may automatically move:
-
-```text
-pending → cleared
-stale → cleared
-conditionally_cleared → cleared
-```
-
-when the outstanding patient balance reaches zero.
-
-Do not automatically financially close the visit.
-
-## New charge after financial close
-
-Mark the record stale or reopened.
-
-Do not reject the charge merely because the visit was financially closed.
-
----
-
-# 25. Clearance Snapshot Staleness
-
-Create:
-
-```php
-public function snapshotIsStale(
-    VisitFinancialClearance $clearance
-): bool;
-```
-
-Possible stale conditions:
-
-* Current patient responsibility differs from snapshot
-* Current paid amount differs
-* Current outstanding amount differs
-* Invoice count changed
-* Active conditional exception changed
-* Approved exception expired or was revoked
-* Operational payment policy changed
-* Current approved visit arrangement changed
-* New unbilled billable item exists
-* Payment reversal occurred after assessment
-
-Staleness is diagnostic until refresh or close.
-
-A stale record cannot be financially closed without re-assessment.
-
----
-
-# 26. Current Visit Versus Previous Balance
-
-Show both values separately:
-
-```text
-Current visit outstanding
-Previous visit outstanding
-Total patient exposure
-```
-
-Financial clearance for the current visit should normally use:
-
-```text
-Current visit outstanding
-```
-
-Previous-balance policy remains independently enforced at its existing workflow stage.
+# 4. Hard Guardrails
 
 Do not:
 
-* Merge previous balance into the current visit invoice
-* Move previous debt to the current visit
-* Create a previous-balance override from a clearance approval
-* Treat financial closure as settlement of old debt
+* Add new payment-policy functionality
+* Enable typed cutover by default
+* Enable financial-clearance enforcement by default
+* Remove environment rollback controls
+* Invent test credentials
+* Hardcode real user passwords
+* weaken assertions merely to make tests pass
+* Skip failing tests
+* mark tests risky or incomplete to hide failures
+* delete regression tests
+* change accounting rules without a confirmed defect
+* change clinical completion or discharge rules without a confirmed defect
+* automatically activate operations after verification
+* alter production patient, invoice, payment, receivable, or GL data
+* describe an incomplete run as passing
+* treat timeout as success
+* treat missing credentials as a test pass
+* dismiss failures as pre-existing without evidence
 
 ---
 
-# 27. Patient Financial-Risk Integration
+# 5. Pre-Verification Repository Audit
 
-Financial risk may inform approval requirements but must not alter ledger calculations.
+Before running wide tests, inspect the repository state.
 
-Suggested behaviour:
-
-## Normal
-
-Standard approval requirements.
-
-## Watchlist
-
-Finance review required for conditional clearance.
-
-## High risk
-
-Separate approver required.
-
-## Blocked credit
-
-Conditional clearance requires Finance Manager or higher and explicit supporting reference.
-
-Risk profile changes after exception request must trigger stale-context detection.
-
-Do not modify the patient financial-risk profile when approving or revoking financial clearance.
-
----
-
-# 28. Payment Arrangement Integration
-
-Use the current operational payment policy only as context.
-
-Examples:
-
-## Approved pay after all services
-
-* Explains why services proceeded before settlement.
-* Does not itself approve financial closure with debt.
-
-## Approved running bill
-
-* Explains why charges accumulated.
-* Does not itself clear the balance.
-
-## Approved pay before service
-
-* A residual outstanding balance should still prevent financial closure unless an exception is approved.
-
-Do not automatically create a clearance exception from a Phase 7 arrangement.
-
----
-
-# 29. Exception Expiry and Revocation
-
-Add:
+Record:
 
 ```text
-php artisan billing:visit-financial-clearance-exception-expire
+current branch
+current commit
+working-tree status
+uncommitted files
+database driver used for tests
+PHP version
+Laravel version
+Node version
+npm/pnpm/yarn version
+Playwright version
+configured test environment
 ```
 
-Rules:
-
-* Dry-run by default
-* `--commit` performs mutations
-* Idempotent
-* Transactional
-* Mark due approved exceptions expired
-* Mark related conditional clearance stale
-* Do not automatically reopen clinical work
-* Do not modify receivables
-* Create history and activity logs only on commit
-
-Register daily scheduling only if consistent with project conventions.
-
-Use:
-
-```text
-withoutOverlapping
-onOneServer
-```
-
----
-
-# 30. Configuration
-
-Create:
-
-```text
-config/visit_financial_clearance.php
-```
-
-Suggested defaults:
-
-```php
-return [
-    'mode' => 'disabled',
-
-    'financial_close' => [
-        'require_reason' => true,
-        'fallback_to_no_enforcement_on_failure' => true,
-    ],
-
-    'settlement' => [
-        'currency_tolerance' => '0.01',
-        'use_patient_responsibility_only' => true,
-        'require_no_unbilled_billable_items' => true,
-    ],
-
-    'conditional_clearance' => [
-        'enabled' => true,
-        'require_separate_approver' => true,
-        'allow_outstanding_balance' => true,
-        'allow_payment_plan' => true,
-        'allow_insurance_pending' => true,
-        'allow_corporate_guarantee' => true,
-    ],
-
-    'automatic_refresh' => [
-        'after_payment' => true,
-        'mark_stale_after_new_charge' => true,
-        'financially_close_automatically' => false,
-    ],
-];
-```
-
-Adapt to existing settings conventions.
-
-Database-backed admin settings should include only operationally appropriate options.
-
-Deployment defaults must not activate financial-close enforcement.
-
----
-
-# 31. Environment Safety Override
-
-Add an environment control such as:
-
-```env
-VISIT_FINANCIAL_CLEARANCE_FORCE_DISABLED=true
-```
-
-Rules:
-
-* Overrides database active mode
-* Does not modify clearance records
-* Does not modify exception approvals
-* Does not modify invoices
-* Visible in diagnostics and admin UI
-* Allows immediate rollback of financial-close enforcement
-
-Precedence:
-
-```text
-environment force-disabled
-→ configured financial-clearance mode
-→ live clearance decision
-```
-
----
-
-# 32. Permissions
-
-Add:
-
-```text
-visits.financial_clearance.view
-visits.financial_clearance.assess
-visits.financial_clearance.close
-visits.financial_clearance.history
-visits.financial_clearance.report
-
-visits.financial_clearance_exception.request
-visits.financial_clearance_exception.approve
-visits.financial_clearance_exception.reject
-visits.financial_clearance_exception.withdraw
-visits.financial_clearance_exception.revoke
-visits.financial_clearance_exception.history
-
-billing.financial_clearance.settings.view
-billing.financial_clearance.settings.manage
-billing.financial_clearance.settings.activate
-billing.financial_clearance.settings.rollback
-```
-
-Suggested role assignments:
-
-## Super Admin / Admin
-
-All permissions.
-
-## Finance Manager
-
-View, assess, close, history, report, request, approve, reject, revoke.
-
-Do not grant activation or rollback unless hospital policy permits it.
-
-## Accountant
-
-View, assess, request, withdraw, history, report.
-
-No exception approval or financial close by default.
-
-## Reception and clinical roles
-
-No financial-close or exception-management permissions.
-
-They must retain normal clinical workflow permissions.
-
----
-
-# 33. Administration Interface
-
-Add a restricted **Financial Clearance Settings** page.
-
-Display:
-
-```text
-Configured mode
-Effective mode
-Environment force-disabled status
-Settlement basis
-Patient-responsibility tolerance
-Unbilled-item requirement
-Conditional-clearance options
-Separate-approver requirement
-Automatic refresh behaviour
-```
-
-Controls:
-
-```text
-Disabled
-Observe Only
-Active
-```
-
-Activation requires:
-
-* Activation permission
-* Confirmation
-* Reason
-* Activity log
-
-Provide prominent rollback:
-
-```text
-Disable Financial-Close Enforcement
-```
-
-Rollback must:
-
-* Change configured mode to disabled
-* Require reason
-* Create one audit event
-* Leave existing clearances and approvals intact
-* Leave accounting records untouched
-
----
-
-# 34. Visit Financial-Clearance UI
-
-Add a restricted card to the visit billing/finance area.
-
-Show:
-
-```text
-Operational payment policy
-Current visit patient responsibility
-Amount paid
-Current outstanding balance
-Previous outstanding balance
-Clearance status
-Clearance basis
-Conditional approval
-Assessment freshness
-Assessed at
-Financially closed at
-```
-
-Clearly label:
-
-> Financial closure is separate from clinical completion and discharge.
-
-Actions according to permission:
-
-```text
-Assess Financial Clearance
-Refresh Assessment
-Collect Payment
-Request Conditional Clearance
-Approve or Reject Exception
-Revoke Exception
-Financially Close Visit
-View History
-```
-
-Do not expose unrestricted financial-risk details.
-
----
-
-# 35. Finance Worklist
-
-Add:
-
-```text
-admin/billing/visit-financial-clearances
-```
-
-Filters:
-
-```text
-status
-basis
-financially closed
-requires finance action
-stale
-visit type
-operational payment policy
-conditional exception type
-risk level
-date range
-active visits only
-discharged but not financially closed
-clinically completed but not financially closed
-```
-
-Columns:
-
-```text
-Visit
-Patient
-Visit type
-Clinical status
-Discharge status
-Payment policy
-Patient responsibility
-Paid
-Outstanding
-Clearance status
-Basis
-Exception
-Stale
-Last assessed
-```
-
-Respect patient masking and permission boundaries.
-
----
-
-# 36. Reporting
-
-Add aggregate metrics:
-
-```text
-pending financial clearances
-cleared visits
-conditionally cleared visits
-financially closed visits
-stale clearances
-discharged but financially open
-clinically completed but financially open
-outstanding amount conditionally closed
-payment-plan amount
-insurance-pending amount
-corporate-guaranteed amount
-average time from clinical completion to financial closure
-```
-
-Patient-level export requires report permission.
-
-Export only necessary financial and visit identifiers.
-
-Do not include clinical notes, diagnosis, contact data, or raw history JSON.
-
----
-
-# 37. Activity Logging
-
-Suggested actions:
-
-```text
-VISIT_FINANCIAL_CLEARANCE_ASSESSED
-VISIT_FINANCIAL_CLEARANCE_REFRESHED
-VISIT_FINANCIAL_CLEARANCE_CLEARED
-VISIT_FINANCIAL_CLEARANCE_CONDITIONALLY_CLEARED
-VISIT_FINANCIALLY_CLOSED
-VISIT_FINANCIAL_CLEARANCE_MARKED_STALE
-VISIT_FINANCIAL_CLEARANCE_REOPENED
-
-VISIT_FINANCIAL_CLEARANCE_EXCEPTION_REQUESTED
-VISIT_FINANCIAL_CLEARANCE_EXCEPTION_APPROVED
-VISIT_FINANCIAL_CLEARANCE_EXCEPTION_REJECTED
-VISIT_FINANCIAL_CLEARANCE_EXCEPTION_WITHDRAWN
-VISIT_FINANCIAL_CLEARANCE_EXCEPTION_REVOKED
-VISIT_FINANCIAL_CLEARANCE_EXCEPTION_EXPIRED
-
-VISIT_FINANCIAL_CLEARANCE_MODE_CHANGED
-VISIT_FINANCIAL_CLEARANCE_ROLLBACK
-```
-
-Use bounded metadata:
-
-```text
-visit id
-clearance id
-exception id
-old/new status
-basis
-patient responsibility snapshot
-paid snapshot
-outstanding snapshot
-approved amount
-actor
-timestamp
-```
-
-Do not include:
-
-* Patient name
-* Contact data
-* Clinical notes
-* Free-text financial-risk details
-* Full invoice contents
-
-Routine decision previews and reads must not create activity logs.
-
----
-
-# 38. Read-Only Diagnostic Commands
-
-Add:
-
-```text
-php artisan billing:visit-financial-clearance-status
-php artisan billing:visit-financial-clearance-audit
-```
-
-Suggested status options:
-
-```text
---visit=
---status=
---stale
---financially-open
---clinically-complete
---discharged
---problems-only
---limit=
---json
-```
-
-Audit should detect:
-
-```text
-visit missing clearance record
-financially closed with outstanding debt and no approved exception
-conditionally cleared without current approved exception
-expired or revoked exception still linked
-cleared snapshot differs from live balance
-financially closed record is stale
-new charges after closure
-payment reversal after closure
-multiple current approved exceptions
-pending record with closed timestamp
-closed record missing actor
-approved amount below current outstanding
-approved amount above allowed limit
-current receivable incorrectly marked settled
-patient responsibility incorrectly includes insurer amount
-clinical status modified by financial close
-```
-
-Rules:
-
-* Read-only
-* No automatic fixes
-* No activity logs
-* No sensitive output
-* Findings do not fail the exit code
-* Technical failure may return non-zero
-
----
-
-# 39. Backfill and Refresh Commands
-
-Add:
-
-```text
-php artisan billing:visit-financial-clearance-backfill
-php artisan billing:visit-financial-clearance-refresh
-```
-
-Suggested options:
-
-```text
---visit=
---visit-type=
---active-only
---completed-only
---discharged-only
---missing-only
---stale-only
---limit=
---dry-run
---commit
---json
-```
-
-Rules:
-
-* Dry-run by default
-* Bounded chunking
-* No N+1 financial queries
-* No invoice/payment/receivable mutation
-* No automatic financial closure
-* Idempotent
-* Existing records preserved unless refresh requested
-* History and activity logs only for committed material changes
-
----
-
-# 40. Performance Requirements
-
-## Clinical workflows
-
-No financial-clearance query should be added to ordinary clinical actions.
-
-Do not load financial-clearance relations in:
-
-* Consultation workspace
-* Laboratory result workflow
-* Pharmacy dispensing workflow
-* Nursing workflows
-* Emergency workflows
-
-unless the user has a finance-specific need and permission.
-
-## Finance workflows
-
-Use:
-
-* Eager loading
-* Pagination
-* Indexed filters
-* Existing invoice summaries
-* Request-scoped memoisation
-* Bounded live balance calculations
-
-## Automatic refresh
-
-* Use after-commit behaviour
-* Avoid recalculating the same visit several times in one transaction
-* Deduplicate staleness events
-* Do not block successful payment posting because refresh failed
-
-Add focused query assertions where stable.
-
----
-
-# 41. Failure Safety
-
-If assessment fails:
-
-* Do not alter clinical or discharge state.
-* Do not mark the visit cleared.
-* Log the technical failure.
-* Allow later repair through refresh or backfill.
-
-If financial close fails:
-
-* Roll back the close transaction.
-* Preserve the previous clearance status.
-* Do not modify invoices or receivables.
-* Do not change clinical status.
-
-If automatic refresh fails:
-
-* Preserve the successful invoice or payment mutation.
-* Log the error.
-* Mark repair as available through diagnostic commands.
-
-If conditional approval fails:
-
-* Preserve any previous valid approval.
-* Do not partially link the exception.
-* Do not alter accounting records.
-
----
-
-# 42. Form Requests
-
-Create dedicated requests for:
-
-```text
-AssessVisitFinancialClearanceRequest
-CloseVisitFinanciallyRequest
-StoreVisitFinancialClearanceExceptionRequest
-ApproveVisitFinancialClearanceExceptionRequest
-RejectVisitFinancialClearanceExceptionRequest
-WithdrawVisitFinancialClearanceExceptionRequest
-RevokeVisitFinancialClearanceExceptionRequest
-UpdateVisitFinancialClearanceSettingsRequest
-RollbackVisitFinancialClearanceRequest
-```
-
-Validation must cover:
-
-* Permission
-* Visit eligibility
-* Current state
-* Exception type
-* Requested and approved amount
-* Non-negative values
-* Effective and expiry dates
-* Reason requirements
-* Supporting references
-* Requester/approver separation
-* Stale financial summary
-* Stale risk context
-* Invalid direct status manipulation
-* Unknown fields
-* Activation confirmation
-
----
-
-# 43. Localisation
-
-Create:
-
-```text
-lang/en/visit_financial_clearance.php
-lang/fr/visit_financial_clearance.php
-```
-
-Required concepts:
-
-```text
-Financial Clearance
-Financially Close Visit
-Pending
-Cleared
-Conditionally Cleared
-Financially Closed
-Stale
-Fully Settled
-Zero Patient Responsibility
-Fully Insured
-Outstanding Balance Approved
-Payment Plan Approved
-Insurance Pending Approved
-Corporate Guarantee
-Management Approval
-Current Visit Outstanding
-Previous Visit Outstanding
-Requires Finance Action
-Assess Clearance
-Refresh Assessment
-Request Conditional Clearance
-Approve
-Reject
-Withdraw
-Revoke
-New Charges Added After Closure
-Payment Reversal After Closure
-Financial Closure Is Separate From Clinical Completion
-Clinical Discharge Remains Allowed
-Outstanding Receivable Remains Collectible
-Disable Financial-Close Enforcement
-```
-
-Also localise:
-
-* Validation
-* Exception types and statuses
-* History events
-* Worklist filters
-* Empty states
-* Reports
-* Audit command labels
-* Success, rejection, and rollback feedback
-
-Maintain full English/French parity.
-
----
-
-# 44. Tests
-
-Add focused tests first.
-
-## 44.1 Enum and model tests
-
-Verify:
-
-* Clearance modes exist.
-* Statuses and bases exist.
-* Exception types and statuses exist.
-* Enum casts work.
-* One clearance per visit.
-* One pending and one current approved exception per visit.
-* History relationships work.
-* Terminal records remain historical.
-
-## 44.2 Financial summary tests
-
-Verify:
-
-* Patient responsibility is calculated from existing ledger data.
-* Patient payments are reflected correctly.
-* Partial payment is reflected correctly.
-* Insurance responsibility is not counted as patient debt.
-* Sponsor/corporate responsibility is separate.
-* Waivers and adjustments follow current accounting behaviour.
-* Cancelled items are excluded.
-* Previous balance is not merged into the current visit.
-* No duplicate accounting calculation is introduced.
-
-## 44.3 Decision tests
-
-Verify:
-
-* Zero patient responsibility clears.
-* Fully settled patient responsibility clears.
-* Outstanding balance remains pending.
-* Valid approved exception conditionally clears.
-* Expired or revoked exception does not clear.
-* Unbilled billable items prevent financial close where configured.
-* Stale assessment cannot close.
-* Pay-after-services still requires final settlement or exception.
-* Running bill still requires final settlement or exception.
-* Pay-before still performs residual-balance validation.
-
-## 44.4 Exception workflow tests
-
-Verify:
-
-* Request succeeds.
-* Duplicate pending request is rejected.
-* Approval succeeds.
-* Rejection succeeds.
-* Withdrawal succeeds.
-* Revocation succeeds.
-* Expiry succeeds.
-* Replacement succeeds.
-* Self-approval is blocked.
-* Stale balance blocks silent approval.
-* High-risk/blocked-credit requirements are enforced.
-* History and activity logs are created exactly once.
-
-## 44.5 Financial-close tests
-
-Verify:
-
-* Disabled mode does not enforce closure.
-* Observe mode reports but does not operationally close.
-* Active mode allows cleared financial close.
-* Active mode allows conditionally cleared financial close.
-* Active mode rejects pending close.
-* Financial close does not change clinical visit status.
-* Financial close does not discharge the patient.
-* Financial close does not mark invoice paid.
-* Financial close does not close the receivable.
-* Financial close does not create payment, waiver, adjustment, or override.
-
-## 44.6 Clinical safety regression tests
-
-Explicitly verify:
-
-* Outpatient consultation can be reopened within the current allowed period.
-* Existing next-day outpatient rules remain unchanged.
-* Inpatient active sessions remain editable.
-* Inpatient clinical discharge remains allowed.
-* Emergency discharge or disposition remains allowed.
-* Clinical completion does not require financial clearance.
-* New clinical work after reopening remains allowed.
-* New billable work marks clearance stale rather than blocking clinical work.
-* Readmission behaviour remains unchanged.
-
-## 44.7 Automatic staleness tests
-
-Verify:
-
-* New invoice item marks clearance stale.
-* Payment posting refreshes or marks stale according to configuration.
-* Full payment may refresh pending to cleared.
-* Payment reversal marks clearance stale.
-* Adjustment changes mark clearance stale.
-* New charge after financial close reopens or stales financial clearance.
-* Original financial mutation succeeds even if refresh fails.
-* Repeated equivalent events do not duplicate history.
-
-## 44.8 Permission and privacy tests
-
-Verify:
-
-* View, assess, close, exception, history, report, settings, activate, and rollback permissions are distinct.
-* Accountant cannot approve or financially close by default.
-* Finance Manager can perform authorised finance actions.
-* Clinical users do not receive clearance details in page source, props, or JSON.
-* Patient masking remains intact.
-* Reads create no activity logs.
-
-## 44.9 Worklist and report tests
-
-Verify:
-
-* Filters work.
-* Pagination works.
-* Discharged-but-financially-open visits are reported.
-* Clinically-complete-but-financially-open visits are reported.
-* Conditional outstanding totals are correct.
-* Export omits clinical and contact details.
-
-## 44.10 Command tests
-
-Verify:
-
-* Backfill dry-run performs no writes.
-* Backfill commit is idempotent.
-* Refresh affects only selected records.
-* Exception expiry is idempotent.
-* Status and audit commands are read-only.
-* JSON output is valid.
-* Findings do not fail the exit code.
-
-## 44.11 Rollback tests
-
-Verify:
-
-* Environment force-disabled overrides active DB mode.
-* Admin rollback disables enforcement immediately.
-* Existing clearance and exception records remain intact.
-* Clinical workflows remain unchanged.
-* Accounting records remain unchanged.
-* Rollback creates one audit event.
-
-## 44.12 Payment-timing regression tests
-
-Verify:
-
-* Phase 8 typed cutover still works.
-* Approved pay-after arrangements still permit eligible services.
-* Approved pay-before arrangements still block eligible unpaid services.
-* Running-bill service behaviour remains unchanged.
-* Emergency remains legacy.
-* Nine unwired operations remain unwired.
-* Previous-balance policy remains separate.
-* Phase 7 arrangement workflow remains intact.
-* Phase 6 materialisation remains intact.
-* Phase 5 financial-risk lifecycle remains intact.
-
-## 44.13 Localisation tests
-
-Verify English/French parity.
-
----
-
-# 45. Targeted Verification
-
-Run focused checks first:
+Run:
 
 ```bash
-php artisan migrate
-php artisan route:list
-php artisan config:clear
-php artisan view:clear
-php artisan view:cache
-
-php artisan test --filter=VisitFinancialClearanceEnum
-php artisan test --filter=VisitFinancialSummary
-php artisan test --filter=VisitFinancialClearanceDecision
-php artisan test --filter=VisitFinancialClearanceService
-php artisan test --filter=VisitFinancialClearanceException
-php artisan test --filter=VisitFinancialClose
-php artisan test --filter=VisitFinancialClearancePermission
-php artisan test --filter=VisitFinancialClearanceCommand
-php artisan test --filter=VisitFinancialClearanceClinicalSafety
-php artisan test --filter=VisitFinancialClearanceStaleness
-php artisan test --filter=VisitFinancialClearanceRollback
+git status --short
+git diff --check
+php -v
+php artisan --version
+node --version
+npm --version
 ```
 
-Rerun payment-policy regressions:
+Use the project’s actual package manager where different.
 
-```bash
-php artisan test --filter=PaymentTimingCutover
-php artisan test --filter=VisitPaymentArrangement
-php artisan test --filter=VisitPaymentPolicy
-php artisan test --filter=PatientFinancialRisk
-php artisan test --filter=PaymentTiming
-php artisan test --filter=PaymentGateService
-php artisan test --filter=BillingPaymentPolicy
-php artisan test --filter=PreviousBalancePolicy
-php artisan test --filter=TriagePayment
-php artisan test --filter=ConsultationPaymentReadiness
-php artisan test --filter=LaboratoryPaymentGate
-php artisan test --filter=Pharmacy
+Do not discard legitimate uncommitted implementation work.
+
+---
+
+# 6. Configuration Safety Audit
+
+Confirm the safe runtime defaults before testing.
+
+Verify:
+
+```text
+payment timing master cutover mode defaults to disabled
+typed operation settings are not active by default
+environment force-legacy behaviour works
+financial-clearance mode defaults to disabled
+VISIT_FINANCIAL_CLEARANCE_FORCE_DISABLED defaults safely
+no operation seeder selects typed mode
+no financial-clearance seeder activates enforcement
 ```
 
-Run diagnostics:
+Run the existing commands:
 
 ```bash
-php artisan billing:visit-financial-clearance-backfill --active-only --dry-run
-php artisan billing:visit-financial-clearance-status
-php artisan billing:visit-financial-clearance-audit
-php artisan billing:visit-financial-clearance-exception-expire --dry-run
 php artisan billing:payment-timing-cutover-status
 php artisan billing:payment-timing-cutover-audit
-php artisan billing:visit-payment-arrangement-audit
-php artisan billing:visit-payment-policy-audit
 php artisan billing:payment-gate-coverage
 php artisan billing:payment-gate-policy-audit
+php artisan billing:visit-payment-policy-audit
+php artisan billing:visit-payment-arrangement-audit
+php artisan billing:visit-financial-clearance-status
+php artisan billing:visit-financial-clearance-audit
+php artisan billing:financial-risk-audit
 ```
 
-Also run:
+Record:
 
 ```text
-PHP syntax checks
-Blade compilation
-localisation parity
+configured mode
+effective mode
+environment override
+typed operations
+wired operations
+unwired operations
+financial-clearance mode
+audit findings
+```
+
+Do not mutate configuration while running read-only diagnostics.
+
+---
+
+# 7. Database and Migration Verification
+
+Run migration verification against the actual test database configuration.
+
+Required checks:
+
+```bash
+php artisan migrate:status
+php artisan migrate --force
+```
+
+Where safe and supported, also verify a clean database:
+
+```bash
+php artisan migrate:fresh --seed --env=testing
+```
+
+Only use `migrate:fresh` on a disposable test database.
+
+Never run it against production or a shared development database.
+
+Verify:
+
+* All Phase 1–9 migrations apply cleanly
+* Permission migrations are idempotent
+* Settings seeders remain idempotent
+* No duplicate settings are created
+* No operation becomes typed through seeding
+* No patient is automatically classified as financially risky
+* No visit arrangement is automatically approved
+* No financial clearance is automatically activated
+* MySQL foreign-key identifier lengths remain safe
+* SQLite testing compatibility remains intact where used
+
+Record the final migration and seed results.
+
+---
+
+# 8. Syntax, Static, Route, View, and Localisation Checks
+
+Run:
+
+```bash
+php -l <all new and modified PHP files>
+php artisan route:list
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+php artisan view:cache
+```
+
+Run the project’s existing:
+
+```text
+localisation parity check
+localisation audit
 permission audit
-activity-log integrity check
+activity-log integrity audit
+route-permission audit
 git diff --check
 ```
 
+Confirm:
+
+* EN/FR parity
+* No missing route permissions
+* No unprotected mutation route
+* No new real activity-log gap
+* No invalid Blade compilation
+* No unresolved syntax error
+* No whitespace or merge-marker issue
+
+Do not fix unrelated legacy localisation candidates unless they block verification or were introduced by this batch.
+
 ---
 
-# 46. Final Wide Verification
+# 9. Focused Payment-Timing Verification
 
-Phase 9 completes this payment-timing implementation batch.
+Before running the complete suite, run the full focused payment-timing family.
 
-After all focused Phase 9 tests pass, run one final wide verification.
+Include all tests matching:
 
-## Laravel suite
+```text
+PaymentTiming
+PaymentGate
+BillingPaymentPolicy
+PreviousBalance
+PatientFinancialRisk
+VisitPaymentPolicy
+VisitPaymentArrangement
+VisitFinancialClearance
+TriagePayment
+ConsultationPaymentReadiness
+LaboratoryPaymentGate
+Pharmacy
+LanguageParity
+```
+
+Suggested command strategy:
+
+```bash
+php artisan test \
+  --filter='PaymentTiming|PaymentGate|BillingPaymentPolicy|PreviousBalance|PatientFinancialRisk|VisitPaymentPolicy|VisitPaymentArrangement|VisitFinancialClearance|TriagePayment|ConsultationPaymentReadiness|LaboratoryPaymentGate|Pharmacy|LanguageParity'
+```
+
+Adjust to PHPUnit support and repository naming.
+
+Record:
+
+```text
+tests
+assertions
+passed
+failed
+skipped
+duration
+```
+
+All payment-timing failures introduced by Phases 1–9 must be fixed before proceeding.
+
+---
+
+# 10. Partitioned Laravel Verification
+
+The full suite previously exceeded the execution wrapper limit.
+
+Run the Laravel suite in stable partitions first.
+
+Use the repository’s actual test directory structure.
+
+Suggested partitions:
+
+```text
+Unit
+Authentication and permissions
+Patients and visits
+Consultation
+Emergency and admission
+Laboratory and investigations
+Pharmacy and stock
+Billing and payments
+Insurance and NHIS
+Reports and analytics
+Commands and scheduling
+Other feature modules
+```
+
+Possible command pattern:
+
+```bash
+php artisan test tests/Unit
+php artisan test tests/Feature/Auth
+php artisan test tests/Feature/Patients
+php artisan test tests/Feature/Visits
+php artisan test tests/Feature/Consultation
+php artisan test tests/Feature/Emergency
+php artisan test tests/Feature/Admission
+php artisan test tests/Feature/Lab
+php artisan test tests/Feature/Pharmacy
+php artisan test tests/Feature/Billing
+php artisan test tests/Feature/Nhis
+```
+
+Use actual paths, not invented paths.
+
+Where the repository does not group tests by module, generate a stable test-class inventory and execute bounded groups.
+
+For every partition, record:
+
+```text
+command
+tests
+assertions
+passed
+failed
+skipped
+duration
+peak memory where available
+```
+
+Do not stop after the first unrelated failure unless it prevents the remaining partitions from executing.
+
+---
+
+# 11. NHIS Baseline Verification
+
+The known `NhisClaimWorkflowTest` failures require evidence-based classification.
+
+Perform this workflow:
+
+1. Run the failing NHIS test class on the current branch.
+2. Record exact failing methods, exception messages, stack traces, and assertions.
+3. Identify files changed by Phases 1–9 that could influence those tests.
+4. Compare against a clean pre-payment-policy baseline where available.
+5. Where safe, use:
+
+   * a temporary worktree,
+   * a known prior commit,
+   * or a carefully controlled stash comparison.
+6. Run the same NHIS tests on the baseline.
+7. Compare failures exactly.
+
+Classify each failure as:
+
+```text
+introduced by payment-timing batch
+pre-existing and identical
+pre-existing but changed
+environment-dependent
+inconclusive
+```
+
+Do not rely only on memory or an earlier statement.
+
+If a failure is caused by this batch, fix it and rerun both the NHIS tests and affected payment regressions.
+
+If genuinely pre-existing, document:
+
+```text
+baseline commit
+test name
+current error
+baseline error
+evidence that errors match
+```
+
+Do not silently exclude the tests from release reporting.
+
+---
+
+# 12. Full Laravel Suite
+
+After all partitions complete and payment-related failures are fixed, run the complete suite once.
+
+Use an execution method that allows sufficient time and preserves output.
+
+Preferred approaches:
 
 ```bash
 php artisan test
 ```
 
-Rules:
+or, where the project supports it:
 
-* Do not dismiss new failures as unrelated without verification.
-* Compare any known `NhisClaimWorkflowTest` failures against the confirmed pre-Phase-9 baseline.
-* Fix failures caused by Phases 1–9.
-* Clearly document genuinely pre-existing failures with evidence.
-* Report total tests, assertions, passed, failed, skipped, and duration.
-
-## Playwright suite
-
-Run the complete existing Playwright suite after the Laravel suite.
-
-Add focused browser coverage for:
-
-```text
-finance assesses a pay-after visit
-unpaid visit shows pending clearance
-finance requests conditional clearance
-separate approver approves it
-visit becomes conditionally cleared
-finance financially closes the visit
-invoice and receivable remain outstanding
-new billable item marks financial closure stale
-clinical completion and discharge remain unaffected
-admin rollback disables financial-close enforcement
+```bash
+php artisan test --parallel
 ```
 
-Document browser, viewport, and result summary.
+Use parallel execution only if:
 
-Do not claim the full suite passed unless it actually passed.
+* The suite is designed for it
+* Database isolation is reliable
+* Scheduler/cache/file tests are compatible
+* Results are reproducible
+
+Capture output to a file while preserving the exit code.
+
+Example:
+
+```bash
+set -o pipefail
+php artisan test 2>&1 | tee storage/logs/payment-timing-final-suite.log
+```
+
+On Windows PowerShell, use an equivalent mechanism that preserves the command exit code.
+
+The test runner must be allowed enough time to finish.
+
+Record:
+
+```text
+total tests
+total assertions
+passed
+failed
+skipped
+risky
+duration
+exit code
+```
+
+If it still fails to complete:
+
+* identify the last completed test
+* identify long-running or hanging classes
+* execute those classes separately
+* inspect locks, network calls, scheduler behaviour, database transactions, and subprocesses
+* fix payment-batch causes
+* rerun the complete suite
+
+Do not declare closure while the full-suite result remains inconclusive unless there is a clearly documented infrastructure limitation accepted as a release blocker.
 
 ---
 
-# 47. Documentation
+# 13. Full-Suite Failure Triage
+
+For every full-suite failure:
+
+1. Rerun the individual test.
+2. Rerun its containing class.
+3. Rerun its module partition.
+4. Check order dependency.
+5. Check database leakage.
+6. Check cached settings leakage.
+7. Check environment variable leakage.
+8. Check singleton or memoisation leakage.
+9. Check observers and after-commit jobs.
+10. Check payment cutover and clearance settings are reset between tests.
+
+Pay particular attention to new singleton services introduced across Phases 1–9.
+
+Ensure tests reset or isolate:
+
+```text
+payment timing cutover mode
+operation modes
+compatibility acknowledgements
+approved arrangements
+financial-risk profiles
+visit payment-policy snapshots
+financial-clearance settings
+environment force switches
+cached Setting values
+request-scoped memoisation
+```
+
+Fix any batch-created order dependency.
+
+---
+
+# 14. Playwright Environment Preparation
+
+Do not invent credentials.
+
+Create or reuse a dedicated deterministic E2E reception account through the existing fixture/seeder framework.
+
+Preferred approach:
+
+1. Audit existing Playwright authentication fixtures.
+2. Audit existing E2E test-data seeders.
+3. Add or extend a dedicated test-only fixture command if necessary.
+4. Generate or configure:
+
+   ```text
+   UHMS_RECEPTION_EMAIL
+   UHMS_RECEPTION_PASSWORD
+   ```
+5. Keep credentials test-only.
+6. Do not commit real production credentials.
+7. Do not print passwords in reports or logs.
+8. Ensure the account has only the permissions required by the suite.
+
+Where the existing test harness already supports a shared fixture account, reuse it.
+
+Document the setup command and required environment variables.
+
+---
+
+# 15. Payment-Timing Playwright Fixture
+
+Prepare deterministic browser-test data containing:
+
+```text
+finance user who can assess and close
+separate finance-manager approver
+reception user
+outpatient visit
+inpatient visit
+emergency visit
+pay-after approved arrangement
+pay-before approved arrangement
+running-bill arrangement
+unpaid invoice item
+partially paid invoice
+fully paid invoice
+open patient receivable
+conditional-clearance request
+approved conditional-clearance exception
+financially closed visit
+stale financially closed visit
+```
+
+The fixture must be:
+
+* Idempotent
+* Discoverable
+* Test-only
+* Safe to rerun
+* Separate from default production launch data
+* Free from real patient information
+
+Include stable identifiers in fixture metadata.
+
+---
+
+# 16. Focused Playwright Coverage
+
+Add or enable focused browser tests for the completed payment-timing workflow.
+
+Required browser flow:
+
+## 16.1 Pay-after service workflow
+
+1. Finance opens a visit with an approved `pay_after_all_services` arrangement.
+2. Typed cutover is explicitly active for an eligible test operation.
+3. An unpaid eligible service proceeds.
+4. The invoice item remains unpaid.
+5. The receivable remains open.
+
+## 16.2 Pay-before workflow
+
+1. Finance opens a visit with an approved `pay_before_service` arrangement.
+2. The unpaid eligible service is blocked.
+3. The user sees the correct localised payment-required message.
+4. Payment is recorded through the existing payment workflow.
+5. The service becomes eligible.
+
+## 16.3 Conditional financial clearance
+
+1. Finance assesses an unpaid pay-after visit.
+2. Clearance displays `pending`.
+3. A conditional-clearance exception is requested.
+4. The requester cannot approve their own request.
+5. A separate Finance Manager approves it.
+6. Clearance becomes `conditionally_cleared`.
+7. Finance financially closes the visit.
+8. The invoice remains unpaid or partially unpaid.
+9. The receivable remains open and collectible.
+
+## 16.4 New activity after financial close
+
+1. A new billable item is added after financial close.
+2. The financial-clearance record becomes stale or reopened.
+3. Clinical work remains allowed.
+4. The invoice and receivable include the new charge.
+
+## 16.5 Clinical independence
+
+Verify:
+
+* Consultation completion remains possible without financial closure.
+* Same-day outpatient reopening follows existing rules.
+* Inpatient discharge remains possible without financial closure.
+* Emergency disposition remains unchanged.
+* Re-admission remains unchanged.
+
+## 16.6 Rollback
+
+1. Admin activates typed cutover in the fixture environment.
+2. Admin activates financial-clearance enforcement.
+3. Admin performs rollback.
+4. Legacy authority resumes.
+5. Approved arrangements remain recorded.
+6. Clearance and exception history remain intact.
+
+---
+
+# 17. Complete Playwright Suite
+
+After focused browser coverage passes, run the complete existing Playwright suite.
+
+Use the repository’s standard command, such as:
+
+```bash
+npx playwright test
+```
+
+or the actual project script.
+
+Record:
+
+```text
+total tests
+passed
+failed
+skipped
+flaky
+duration
+browser projects
+workers
+retries
+```
+
+On failure, retain:
+
+```text
+trace
+screenshot
+video where configured
+console output
+network error details
+```
+
+Do not delete failure artifacts before triage.
+
+Rerun failed tests individually and then within the full suite.
+
+Fix all regressions introduced by Phases 1–9.
+
+Document genuine pre-existing browser failures with evidence.
+
+---
+
+# 18. Manual Release Smoke Test
+
+Perform a bounded manual smoke test after automated suites.
+
+Verify:
+
+## Configuration
+
+* Typed cutover defaults disabled
+* Financial-clearance enforcement defaults disabled
+* Environment kill switches are visible
+* Operation modes display correctly
+* Rollback buttons are permission-protected
+
+## Patient risk
+
+* Authorised finance user can view a risk profile
+* Clinical user cannot view sensitive risk information
+
+## Arrangement
+
+* Requester cannot self-approve
+* Approved arrangement remains visible
+* Revocation preserves history
+
+## Typed service gate
+
+* Pay-before blocks
+* Pay-after allows
+* Running bill allows
+* Emergency remains legacy
+
+## Financial clearance
+
+* Fully settled clears
+* Unpaid remains pending
+* Conditional approval clears administratively
+* Financial close preserves debt
+* New charge marks clearance stale
+* Clinical completion and discharge remain independent
+
+Record the test user roles and fixture identifiers, but do not record passwords.
+
+---
+
+# 19. Security and Privacy Verification
+
+Verify that unauthorised users cannot receive:
+
+```text
+patient financial-risk level or reason
+visit risk snapshots
+approved-arrangement details
+conditional-clearance details
+financial-clearance history
+audit metadata
+free-text approval reasons
+```
+
+Check:
+
+* Blade page source
+* JSON responses
+* Inertia props
+* API resources
+* CSV exports
+* browser network responses
+* logs
+* command JSON output
+
+Confirm patient masking remains active.
+
+Run permission and route audits again after all fixes.
+
+---
+
+# 20. Accounting Integrity Verification
+
+Create focused assertions or manual verification proving:
+
+* Pay-after does not mark invoice items paid
+* Running bill does not mark invoice items paid
+* Conditional clearance does not mark invoice paid
+* Financial close does not mark invoice paid
+* Outstanding receivable remains open
+* Payment posting still updates the existing ledger correctly
+* Payment reversal marks clearance stale
+* Waiver and adjustment behaviour remains unchanged
+* No duplicate payment allocation occurs
+* No duplicate journal entry occurs
+* No previous debt is moved into the current visit
+* No approved arrangement creates a billing override
+* No conditional clearance creates a payment or waiver
+
+Where existing general-ledger tests exist, rerun the applicable billing/accounting suites.
+
+---
+
+# 21. Performance Verification
+
+Measure or assert:
+
+```text
+disabled typed cutover adds zero arrangement/policy queries
+disabled financial-clearance mode adds no clinical workflow query
+payment-gate loops avoid N+1 arrangement lookups
+finance worklists paginate
+history is not loaded in list views
+financial summaries reuse current ledger services
+automatic staleness is after-commit and failure-safe
+```
+
+Review query logs for:
+
+* consultation route completion
+* next-patient readiness
+* laboratory result entry
+* pharmacy dispensing
+* visit financial-clearance worklist
+* visit financial-clearance detail
+
+Fix batch-created N+1 or repeated settings queries.
+
+Do not perform speculative optimisation unrelated to the batch.
+
+---
+
+# 22. Scheduler and Command Verification
+
+Run or test all relevant scheduled commands:
+
+```text
+billing:financial-risk-expire
+billing:visit-payment-arrangement-expire
+billing:visit-financial-clearance-exception-expire
+```
+
+Confirm:
+
+* Dry-run defaults where specified
+* Commit is idempotent
+* `withoutOverlapping`
+* `onOneServer` where configured
+* Repeated execution does not duplicate history or activity logs
+* Expiry does not alter receivables
+* Failures are visible but do not corrupt workflow state
+
+Run all read-only audit commands and confirm they create no writes or activity logs.
+
+---
+
+# 23. Release Readiness Checklist
+
+Create a checklist covering:
+
+## Database
+
+* Migrations reviewed
+* Backups required before deployment
+* Migration order valid
+* Rollback limitations documented
+* No destructive migration
+
+## Configuration
+
+* New environment variables documented
+* Safe defaults confirmed
+* Config cache instructions documented
+* Kill switches documented
+
+## Permissions
+
+* Permission migration applied
+* Role assignments reviewed
+* Activation permissions restricted
+* Clinical roles receive no sensitive finance permissions
+
+## Operations
+
+* Typed operations default legacy
+* Financial-clearance mode disabled
+* Emergency remains legacy
+* Nine unwired operations remain unwired
+
+## Monitoring
+
+* Diagnostic log events documented
+* Audit commands documented
+* Failure fallback documented
+* Support team knows rollback procedure
+
+## Accounting
+
+* Receivable preservation verified
+* No fake settlement
+* No GL mutation from closure
+* Payment reversal behaviour verified
+
+## Clinical safety
+
+* Completion independent
+* Discharge independent
+* Emergency unaffected
+* Reopening unaffected
+
+---
+
+# 24. Deployment Plan
+
+Document a safe deployment sequence.
+
+Suggested sequence:
+
+1. Create database backup.
+2. Deploy code with all enforcement disabled.
+3. Run migrations.
+4. Run idempotent seeders.
+5. Clear and rebuild caches.
+6. Run permission audit.
+7. Run configuration status commands.
+8. Run payment-gate and clearance audit commands.
+9. Verify all operation modes remain legacy/disabled.
+10. Verify financial-clearance mode remains disabled.
+11. Perform finance/admin UI smoke tests.
+12. Monitor logs.
+13. Do not activate typed cutover during the deployment itself.
+14. Schedule a separate operational activation decision.
+
+Do not combine deployment with enforcement activation.
+
+---
+
+# 25. Rollback Plan
+
+Document two rollback levels.
+
+## 25.1 Operational rollback
+
+Use:
+
+```text
+PAYMENT_TIMING_FORCE_LEGACY
+VISIT_FINANCIAL_CLEARANCE_FORCE_DISABLED
+```
+
+and admin rollback controls.
+
+Operational rollback must:
+
+* Restore legacy gate authority
+* Disable financial-close enforcement
+* Preserve approved arrangements
+* Preserve clearances and histories
+* Preserve invoices, payments, and receivables
+
+## 25.2 Code rollback
+
+Document:
+
+* Commit or release tag
+* Migration compatibility
+* Whether additive tables may remain safely after code rollback
+* Cache clearing steps
+* Worker restart steps
+* Scheduler restart steps
+
+Do not recommend destructive down migrations as the first rollback method.
+
+---
+
+# 26. Release Closure Report
 
 Create:
 
 ```text
-docs/billing/PAYMENT_TIMING_POLICY_PHASE_9_REPORT.md
+docs/billing/PAYMENT_TIMING_POLICY_RELEASE_CLOSURE_REPORT.md
 ```
 
 The report must include:
 
-1. Existing visit and financial architecture audited
-2. Clinical-versus-financial lifecycle separation
-3. Files created
-4. Files modified
-5. Clearance-mode design
-6. Environment rollback design
-7. Clearance status and basis vocabulary
-8. Financial summary design
-9. Ledger and receivable source-of-truth decision
-10. Clearance decision rules
-11. Conditional-clearance exception workflow
-12. Approval and self-approval controls
-13. Financial-close action
-14. Clinical completion and discharge safety
-15. Reopening and new-charge behaviour
-16. Automatic staleness/refresh integration
-17. Current versus previous-balance handling
-18. Payment-arrangement integration
-19. Financial-risk integration
-20. Permissions and role assignments
-21. Admin settings and rollback
-22. Visit UI and finance worklist
-23. Reporting and exports
-24. Activity-log behaviour
-25. Diagnostic and maintenance commands
-26. Query and performance impact
-27. Focused tests and results
-28. Full Laravel-suite results
-29. Full Playwright-suite results
-30. Any confirmed pre-existing failures
-31. Confirmation that outstanding receivables remain collectible
-32. Confirmation that clinical completion/discharge remain independent
-33. Confirmation that financial close does not mark invoices paid
-34. Final implementation-batch closure summary
-35. Deferred future work
+1. Executive implementation summary
+2. Phases 1–9 closure inventory
+3. Repository and environment details
+4. Safe deployment defaults
+5. Migration results
+6. Seeder idempotence results
+7. Syntax, route, view, localisation, permission, and audit results
+8. Focused payment-timing test totals
+9. Laravel partition results
+10. Full Laravel-suite totals
+11. NHIS baseline investigation
+12. Playwright fixture setup
+13. Focused Playwright results
+14. Full Playwright-suite totals
+15. Screenshots/traces for browser failures
+16. Manual smoke-test results
+17. Accounting-integrity verification
+18. Security/privacy verification
+19. Query/performance findings
+20. Scheduler and command verification
+21. Known pre-existing failures
+22. New failures fixed
+23. Remaining blockers
+24. Deployment checklist
+25. Rollback procedure
+26. Environment variable reference
+27. Release readiness verdict
+28. Final implementation-batch status
 
-Do not claim tests or commands passed unless they were executed successfully.
+Use one of these final verdicts:
 
----
+```text
+READY FOR DEPLOYMENT WITH ENFORCEMENT DISABLED
+READY FOR CONTROLLED PILOT
+BLOCKED — VERIFICATION FAILURE
+BLOCKED — ENVIRONMENT REQUIREMENT
+```
 
-# 48. Guardrails
-
-Do not:
-
-* Block clinical completion because financial clearance is pending
-* Block session completion because financial clearance is pending
-* Block inpatient discharge because financial clearance is pending
-* Block emergency care or disposition
-* Remove same-day outpatient reopening
-* Change existing next-day outpatient restrictions
-* Prevent inpatient active sessions from being edited
-* Treat financial closure as clinical completion
-* Treat clinical discharge as financial clearance
-* Mark outstanding invoices paid
-* Close receivables with unpaid balances
-* Create payments
-* Create waivers
-* Create credit notes
-* Create invoice adjustments
-* Merge previous debt into the current visit invoice
-* Create previous-balance overrides
-* Create Phase 7 payment arrangements automatically
-* Modify patient financial-risk profiles
-* Change GL entries
-* Wire the nine unwired operations
-* Enable emergency typed enforcement
-* Invent an emergency stabilisation field
-* Automatically financially close visits after payment
-* Hide outstanding debt after conditional closure
-* Audit routine reads
-* Expose sensitive patient data
-* Skip final wide verification after the phase is complete
+Do not use a stronger verdict than the evidence supports.
 
 ---
 
-# 49. Acceptance Criteria
+# 27. Final Acceptance Criteria
 
-Phase 9 is complete only when:
+Release verification is complete only when:
 
-* Financial-clearance mode supports disabled, observe, and active states.
-* Deployment defaults to disabled.
-* Environment force-disabled rollback exists.
-* One current financial-clearance record exists per visit.
-* Financial-clearance history is append-only.
-* Live financial summaries use existing ledger and receivable data.
-* Patient responsibility is separated from insurer, sponsor, and corporate responsibility.
-* Previous balance remains separate from current-visit clearance.
-* Fully settled visits clear.
-* Zero-patient-responsibility visits clear.
-* Outstanding visits remain pending without approval.
-* Valid conditional approvals allow conditional clearance.
-* Outstanding receivables remain open after conditional clearance.
-* A dedicated financial-close action exists.
-* Financial close requires a current valid assessment in active mode.
-* Financial close does not change clinical visit status.
-* Financial close does not discharge the patient.
-* Financial close does not mark invoices paid.
-* Financial close does not close receivables.
-* New charges after closure mark the clearance stale or reopened.
-* Payment reversals mark clearance stale.
-* Clinical reopening remains allowed.
-* Same-day outpatient reopening remains unchanged.
-* Inpatient active-session behaviour remains unchanged.
-* Clinical discharge remains independent.
-* Emergency workflows remain unaffected.
-* Conditional-clearance approvals use maker-checker controls.
-* Self-approval is blocked by default.
-* Exception expiry and revocation work.
-* Financial risk affects approval requirements only.
-* Payment arrangements explain timing but do not approve debt closure.
-* Finance users have a restricted worklist and history.
-* Admin activation and rollback are permission-controlled and audited.
-* Maintenance and audit commands are safe and idempotent.
-* English/French localisation is complete.
-* Focused tests pass.
-* One final full Laravel suite is executed.
-* One final full Playwright suite is executed.
-* All new regressions caused by the payment-timing batch are fixed.
-* The Phase 9 report accurately documents the complete implementation and verification.
+* Repository state is documented.
+* Safe defaults are confirmed.
+* All migrations apply cleanly.
+* Seeders are idempotent.
+* Syntax checks pass.
+* Routes compile.
+* Blade views compile.
+* English/French parity passes.
+* Permission audit reports no new gap.
+* Activity-log audit reports no new real gap.
+* Focused payment-timing tests pass.
+* Laravel module partitions complete.
+* Known NHIS failures are evidence-classified.
+* The complete Laravel suite produces a final summary.
+* Playwright credentials are supplied through a safe test fixture or environment configuration.
+* Focused payment-timing browser tests pass.
+* The complete Playwright suite produces a final summary.
+* Regressions introduced by Phases 1–9 are fixed.
+* Outstanding receivables remain collectible.
+* No financial closure falsely settles an invoice.
+* Clinical completion remains independent.
+* Inpatient discharge remains independent.
+* Emergency behaviour remains unchanged.
+* Typed cutover remains disabled after testing.
+* Financial-clearance enforcement remains disabled after testing.
+* Rollback controls are proven.
+* Deployment and rollback plans are documented.
+* The release-closure report contains exact evidence.
+* A justified release-readiness verdict is issued.
 
-Proceed with **Payment Timing Policy Phase 9 only**.
+Proceed with **Payment Timing Policy Final Verification and Release Closure only**.
 
-After implementation, provide:
+Do not implement additional payment-policy functionality.
 
-1. A concise implementation summary
-2. Files created and modified
-3. Financial-clearance data model
-4. Clearance statuses and bases
-5. Financial summary and ledger integration
-6. Conditional-clearance approval workflow
-7. Financial-close behaviour
-8. Clinical completion, reopening, and discharge safety
-9. New-charge and payment-reversal behaviour
-10. Permission and privacy design
-11. Admin activation and rollback
-12. UI, worklist, and reporting details
-13. Diagnostic and maintenance command results
-14. Query and performance impact
-15. Focused test results
-16. Full Laravel-suite results
-17. Full Playwright-suite results
-18. Any confirmed pre-existing failures
-19. Confirmation that outstanding debt remains collectible
-20. Confirmation that invoices are not falsely marked paid
-21. Confirmation that clinical workflows remain independent
-22. The Phase 9 report path
-23. Final payment-timing implementation-batch closure summary
+After completion, provide:
 
-Then stop after Phase 9.
+1. Verification summary
+2. Files modified to fix regressions
+3. Repository and environment details
+4. Focused test totals
+5. Laravel partition totals
+6. Full Laravel-suite result
+7. NHIS baseline findings
+8. Playwright environment setup
+9. Focused Playwright result
+10. Full Playwright-suite result
+11. Manual smoke-test findings
+12. Accounting-integrity findings
+13. Security/privacy findings
+14. Query/performance findings
+15. Scheduler and command results
+16. Known pre-existing failures
+17. Remaining blockers
+18. Deployment checklist
+19. Rollback procedure
+20. Release-readiness verdict
+21. Release-closure report path
+
+Then stop.

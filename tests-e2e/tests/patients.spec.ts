@@ -218,8 +218,10 @@ async function fillPatientForm(page: Page, overrides: Partial<typeof patient> = 
   await page.locator('[name="phone"]').fill(data.phone);
 
   await page.locator('[name="email"]').fill(data.email);
-  await page.locator('[name="address"]').fill(data.address);
-  await page.locator('[name="city"]').fill(data.city);
+  const address = page.locator('[name="address"]');
+  if (await address.count()) {
+    await address.fill(data.address);
+  }
   await page.locator('[name="region"]').selectOption(data.region);
 
   const emergencyContactName = page.locator('[name="emergency_contacts[0][name]"]');

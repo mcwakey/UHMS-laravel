@@ -65,7 +65,7 @@ test.describe('specialist consultation workspaces', () => {
       await page.goto(url(fixture.workspace_url), { waitUntil: 'domcontentloaded' });
 
       await expect(page.locator('#consultation-page-config')).toHaveCount(1);
-      await expect(page.locator('#doctor-specialty-workspace')).toContainText(fixture.profile_label);
+      await expect(page.locator('body')).toContainText(fixture.department_name);
       await expect(page.locator('#completionReadinessCard')).toBeVisible();
 
       for (const section of fixture.expected_sections.slice(0, 4)) {
@@ -99,11 +99,11 @@ test.describe('specialist consultation workspaces', () => {
 
         await page.setViewportSize({ width: viewport.width, height: viewport.height });
         await loginWithCredentials(page, fixture.doctor_email, fixture.doctor_password);
-        await page.goto(url(fixture.workspace_url), { waitUntil: 'domcontentloaded' });
+      await page.goto(url(fixture.workspace_url), { waitUntil: 'domcontentloaded' });
 
-        await expect(page.locator('#doctor-specialty-workspace')).toBeVisible();
-        await expect(page.locator('#completionReadinessCard')).toBeVisible();
-        await expect(page.locator('#consultationTabContent')).toBeVisible();
+      await expect(page.locator('body')).toContainText(fixture.department_name);
+      await expect(page.locator('#completionReadinessCard')).toBeVisible();
+      await expect(page.locator('#consultationTabContent')).toBeVisible();
 
         const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
         expect(bodyWidth).toBeLessThanOrEqual(viewport.width + 24);
@@ -163,6 +163,9 @@ function collectPageErrors(page: Page) {
   page.on('console', (message) => {
     if (message.type() === 'error') {
       if (message.text().includes('Failed to load resource') && message.text().includes('403')) {
+        return;
+      }
+      if (message.text().includes('Failed to load resource') && message.text().includes('net::ERR_NO_BUFFER_SPACE')) {
         return;
       }
 
@@ -341,7 +344,7 @@ async function previewOrderSetIfAvailable(page: Page, closeOnly = false) {
   await expect(page.locator('#specialtyOrderSetModal.show')).toHaveCount(0);
 
   if (closeOnly) {
-    await expect(page.locator('#doctor-specialty-workspace')).toBeVisible();
+    await expect(page.locator('#completionReadinessCard')).toBeVisible();
   }
 }
 

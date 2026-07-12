@@ -17,10 +17,31 @@ const phpBinary = process.env.UHMS_PHP_BINARY ?? 'php';
 const employeeIdPrefix = 'E2E-PERM-';
 
 const users: E2EUser[] = [
+  credentialsFor('UHMS_ADMIN_EMAIL', 'UHMS_ADMIN_PASSWORD', 'Admin', `${employeeIdPrefix}ADMIN`),
+  credentialsFor('UHMS_FINANCE_EMAIL', 'UHMS_FINANCE_PASSWORD', 'Finance Manager', `${employeeIdPrefix}FINANCE`, [
+    'visits.financial_clearance.view',
+    'visits.financial_clearance.assess',
+    'visits.financial_clearance.close',
+    'visits.financial_clearance.history',
+    'visits.financial_clearance_exception.request',
+    'visits.financial_clearance_exception.withdraw',
+  ]),
+  credentialsFor('UHMS_FINANCE_APPROVER_EMAIL', 'UHMS_FINANCE_APPROVER_PASSWORD', 'Finance Manager', `${employeeIdPrefix}FINANCE-APPROVER`, [
+    'visits.financial_clearance.view',
+    'visits.financial_clearance.assess',
+    'visits.financial_clearance.close',
+    'visits.financial_clearance.history',
+    'visits.financial_clearance_exception.approve',
+    'visits.financial_clearance_exception.reject',
+    'visits.financial_clearance_exception.revoke',
+  ]),
   credentialsFor('UHMS_RECEPTION_EMAIL', 'UHMS_RECEPTION_PASSWORD', 'Receptionist', `${employeeIdPrefix}RECEPTION`, [
     'patients.view',
     'patients.create',
     'patients.edit',
+    'patients.contact.edit',
+    'patients.address.edit',
+    'patients.emergency_contact.edit',
     'visits.view',
     'visits.create',
     'visits.edit',

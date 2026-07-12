@@ -248,6 +248,11 @@ $pharmacyLocation = App\Models\StockLocation::updateOrCreate(
     ]
 );
 
+// Bill/dispense services resolve the operational default from the first active
+// pharmacy department. Seed stock at that exact location so this fixture is
+// deterministic even when an older pharmacy department already exists.
+$pharmacyLocation = app(App\Services\PharmacyBillingSelectionService::class)->pharmacyLocation();
+
 $runId = base_convert((string) now()->timestamp, 10, 36) . random_int(100, 999);
 $code = 'E2E-PHAR-' . strtoupper($runId);
 
