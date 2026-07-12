@@ -221,6 +221,16 @@ class RoleSeeder extends Seeder
             'visits.payment_policy.history',
             'visits.payment_policy.report',
             'visits.payment_policy.refresh',
+            // Per-visit payment arrangements (Payment Timing Policy Phase 7) — administrative only
+            'visits.payment_arrangement.view',
+            'visits.payment_arrangement.request',
+            'visits.payment_arrangement.approve',
+            'visits.payment_arrangement.reject',
+            'visits.payment_arrangement.withdraw',
+            'visits.payment_arrangement.revoke',
+            'visits.payment_arrangement.history',
+            'visits.payment_arrangement.report',
+            'visits.payment_arrangement.restore_baseline',
             'sponsors.manage',
             'sponsors.view',
             'sponsors.create',
@@ -1550,6 +1560,9 @@ class RoleSeeder extends Seeder
             'patients.financial_risk.history', 'patients.financial_risk.report',
             // Visit payment-policy snapshots (Phase 6) — observational finance view/history/report
             'visits.payment_policy.view', 'visits.payment_policy.history', 'visits.payment_policy.report',
+            // Visit payment arrangements (Phase 7) — Accountant may request/withdraw but not approve/revoke
+            'visits.payment_arrangement.view', 'visits.payment_arrangement.request',
+            'visits.payment_arrangement.withdraw', 'visits.payment_arrangement.history', 'visits.payment_arrangement.report',
             'billing.payment.allocate_cross_visit', 'billing.payment.allocate_manual',
             'billing.patient_statement.view', 'billing.patient_statement.print', 'billing.patient_statement.export',
             'admission.discharge.readiness.view', 'admission.discharge.clearance.view',
@@ -1622,6 +1635,9 @@ class RoleSeeder extends Seeder
                 'patients.financial_risk.clear',
                 // Finance Manager may refresh observational visit payment policies (Phase 6)
                 'visits.payment_policy.refresh',
+                // Finance Manager may approve/reject/revoke/restore visit payment arrangements (Phase 7)
+                'visits.payment_arrangement.approve', 'visits.payment_arrangement.reject',
+                'visits.payment_arrangement.revoke', 'visits.payment_arrangement.restore_baseline',
                 'accounting.failed_postings.resolve',
                 'accounting.failed_postings.waive',
                 'accounting.subledger_reconciliation.approve',

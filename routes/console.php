@@ -21,6 +21,13 @@ Schedule::command('billing:financial-risk-expire')
     ->withoutOverlapping()
     ->onOneServer();
 
+// Payment Timing Policy Phase 7 — expire due approved visit payment arrangements.
+// Idempotent, overlap-protected; administrative only (changes no payment gate).
+Schedule::command('billing:visit-payment-arrangement-expire --commit')
+    ->dailyAt('01:20')
+    ->withoutOverlapping()
+    ->onOneServer();
+
 // Quarterly attestation export (Jan / Apr / Jul / Oct, 03:00).
 Schedule::command('permissions:export')
     ->cron('0 3 1 1,4,7,10 *')

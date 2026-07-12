@@ -42,6 +42,7 @@ use App\Http\Controllers\Admin\Billing\CashierShiftController;
 use App\Http\Controllers\Admin\Billing\ClaimController;
 use App\Http\Controllers\Admin\Billing\FinancialEntryController;
 use App\Http\Controllers\Admin\Billing\FinancialRiskController;
+use App\Http\Controllers\Admin\Billing\VisitPaymentArrangementController;
 use App\Http\Controllers\Admin\Billing\VisitPaymentPolicyController;
 use App\Http\Controllers\Admin\BloodBank\BloodBankDashboardController;
 use App\Http\Controllers\Admin\BloodBank\BloodBankReportController;
@@ -1543,6 +1544,20 @@ Route::middleware('auth')->group(function () {
                 Route::get('visit/{visit}', [VisitPaymentPolicyController::class, 'show'])->name('show')->middleware('can:visits.payment_policy.view');
                 Route::post('visit/{visit}/refresh', [VisitPaymentPolicyController::class, 'refresh'])->name('refresh')->middleware('can:visits.payment_policy.refresh');
             });
+
+            // Per-visit payment arrangements — request/approval workflow (Payment Timing Policy Phase 7)
+            Route::prefix('visit-payment-arrangements')->name('visit-payment-arrangements.')->group(function () {
+                Route::get('/', [VisitPaymentArrangementController::class, 'index'])->name('index')->middleware('can:visits.payment_arrangement.view');
+                Route::get('report', [VisitPaymentArrangementController::class, 'report'])->name('report')->middleware('can:visits.payment_arrangement.report');
+                Route::get('{arrangement}', [VisitPaymentArrangementController::class, 'show'])->name('show')->middleware('can:visits.payment_arrangement.view');
+                Route::put('{arrangement}', [VisitPaymentArrangementController::class, 'update'])->name('update')->middleware('can:visits.payment_arrangement.request');
+                Route::post('{arrangement}/approve', [VisitPaymentArrangementController::class, 'approve'])->name('approve')->middleware('can:visits.payment_arrangement.approve');
+                Route::post('{arrangement}/reject', [VisitPaymentArrangementController::class, 'reject'])->name('reject')->middleware('can:visits.payment_arrangement.reject');
+                Route::post('{arrangement}/withdraw', [VisitPaymentArrangementController::class, 'withdraw'])->name('withdraw')->middleware('can:visits.payment_arrangement.withdraw');
+                Route::post('{arrangement}/revoke', [VisitPaymentArrangementController::class, 'revoke'])->name('revoke')->middleware('can:visits.payment_arrangement.revoke');
+            });
+            Route::post('visits/{visit}/payment-arrangements', [VisitPaymentArrangementController::class, 'store'])->name('visits.payment-arrangements.store')->middleware('can:visits.payment_arrangement.request');
+            Route::post('visits/{visit}/payment-arrangements/restore-baseline', [VisitPaymentArrangementController::class, 'restoreBaseline'])->name('visits.payment-arrangements.restore-baseline')->middleware('can:visits.payment_arrangement.restore_baseline');
 
             // Walk-in counter sale (drugs + investigations, no visit)
             Route::middleware('can:invoices.create')->group(function () {

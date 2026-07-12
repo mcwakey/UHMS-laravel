@@ -82,11 +82,21 @@ class VisitPaymentPolicyController extends Controller
             $history = $policy->history()->with('performer')->take(50)->get();
         }
 
+        // Phase 7 — administrative arrangement context (permission-gated in the view).
+        $approvedArrangement = null;
+        $pendingArrangement = null;
+        if ($request->user()?->can('visits.payment_arrangement.view')) {
+            $approvedArrangement = $visit->currentApprovedPaymentArrangement()->with('approver')->first();
+            $pendingArrangement = $visit->pendingPaymentArrangement()->with('requester')->first();
+        }
+
         return view('admin.billing.visit-payment-policies.show', [
             'visit' => $visit,
             'policy' => $policy,
             'history' => $history,
             'isStale' => $this->service->snapshotIsStale($policy),
+            'approvedArrangement' => $approvedArrangement,
+            'pendingArrangement' => $pendingArrangement,
         ]);
     }
 

@@ -101,6 +101,100 @@
     </div>
 </div>
 
+@can('visits.payment_arrangement.view')
+    @php $isEmergency = ($policy->emergency_protection_snapshot) || ((is_object($visit->visit_type) ? $visit->visit_type->value : $visit->visit_type) === 'emergency'); @endphp
+    <div class="card mt-3 border-info">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0">{{ __('visit_payment_arrangement.cards.approved_arrangement') }}</h6>
+            @if(($approvedArrangement ?? null))
+                <a href="{{ route('admin.billing.visit-payment-arrangements.show', $approvedArrangement) }}" class="btn btn-sm btn-outline-secondary">{{ __('visit_payment_arrangement.actions.view_history') }}</a>
+            @endif
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning py-2 mb-3"><i class="ti ti-alert-triangle me-1"></i>{{ __('visit_payment_arrangement.administrative_notice') }}</div>
+            @if($isEmergency)
+                <div class="alert alert-danger py-2 mb-3"><i class="ti ti-urgent me-1"></i>{{ __('visit_payment_arrangement.emergency_notice') }}</div>
+            @endif
+
+            @if(($approvedArrangement ?? null))
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-muted">{{ __('visit_payment_arrangement.fields.approved_policy') }}</dt>
+                    <dd class="col-sm-8"><span class="badge bg-info">{{ $approvedArrangement->approved_policy->label() }}</span></dd>
+                    <dt class="col-sm-4 text-muted">{{ __('visit_payment_arrangement.fields.approver') }}</dt>
+                    <dd class="col-sm-8">{{ $approvedArrangement->approver?->name ?? '—' }}</dd>
+                    <dt class="col-sm-4 text-muted">{{ __('visit_payment_arrangement.fields.expires_at') }}</dt>
+                    <dd class="col-sm-8">{{ optional($approvedArrangement->expires_at)->format('d M Y') ?? '—' }}</dd>
+                </dl>
+                @can('visits.payment_arrangement.restore_baseline')
+                    <form method="POST" action="{{ route('admin.billing.visits.payment-arrangements.restore-baseline', $visit) }}" class="mt-3 d-flex gap-2">
+                        @csrf
+                        <input type="text" name="reason" class="form-control form-control-sm" maxlength="1000" placeholder="{{ __('visit_payment_arrangement.fields.request_reason') }}" required>
+                        <button type="submit" class="btn btn-sm btn-outline-danger text-nowrap">{{ __('visit_payment_arrangement.actions.restore_baseline') }}</button>
+                    </form>
+                @endcan
+            @elseif(($pendingArrangement ?? null))
+                <p class="mb-2">{{ __('visit_payment_arrangement.fields.status') }}:
+                    <span class="badge bg-{{ $pendingArrangement->status->color() }}">{{ $pendingArrangement->status->label() }}</span>
+                    — <a href="{{ route('admin.billing.visit-payment-arrangements.show', $pendingArrangement) }}">{{ __('visit_payment_arrangement.actions.view_history') }}</a>
+                </p>
+            @else
+                <p class="text-muted">{{ __('visit_payment_arrangement.empty_state') }}</p>
+                @can('visits.payment_arrangement.request')
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#vpaRequestModal">{{ __('visit_payment_arrangement.actions.request') }}</button>
+                @endcan
+            @endif
+        </div>
+    </div>
+
+    @can('visits.payment_arrangement.request')
+    @unless(($approvedArrangement ?? null) || ($pendingArrangement ?? null))
+    <div class="modal fade" id="vpaRequestModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <form method="POST" action="{{ route('admin.billing.visits.payment-arrangements.store', $visit) }}">
+                @csrf
+                <div class="modal-content">
+                    <div class="modal-header"><h5 class="modal-title">{{ __('visit_payment_arrangement.actions.request') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <div class="alert alert-info py-2">{{ __('visit_payment_arrangement.does_not_control') }}</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="vpa_policy">{{ __('visit_payment_arrangement.fields.requested_policy') }}</label>
+                                <select name="requested_policy" id="vpa_policy" class="form-select" required>
+                                    @foreach(\App\Enums\VisitPaymentTimingPolicy::operationalPolicies() as $p)
+                                        <option value="{{ $p->value }}">{{ $p->label() }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="vpa_effective">{{ __('visit_payment_arrangement.fields.effective_from') }}</label>
+                                <input type="date" name="effective_from" id="vpa_effective" class="form-control" value="{{ now()->toDateString() }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="vpa_expires">{{ __('visit_payment_arrangement.fields.expires_at') }}</label>
+                                <input type="date" name="expires_at" id="vpa_expires" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="vpa_ref">{{ __('visit_payment_arrangement.fields.supporting_reference') }}</label>
+                                <input type="text" name="supporting_reference" id="vpa_ref" class="form-control" maxlength="191">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="vpa_reason">{{ __('visit_payment_arrangement.fields.request_reason') }}</label>
+                                <textarea name="request_reason" id="vpa_reason" rows="2" class="form-control" maxlength="1000" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('visit_payment_arrangement.actions.cancel') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ __('visit_payment_arrangement.actions.submit') }}</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endunless
+    @endcan
+@endcan
+
 @can('visits.payment_policy.history')
     <div class="card mt-3">
         <div class="card-header"><h6 class="fw-bold mb-0">{{ __('visit_payment_policy.history.title') }}</h6></div>

@@ -285,6 +285,25 @@ class Visit extends Model
         return $this->hasMany(VisitPaymentPolicyHistory::class)->latest('performed_at')->latest('id');
     }
 
+    public function paymentArrangements()
+    {
+        return $this->hasMany(VisitPaymentArrangement::class)->latest('id');
+    }
+
+    public function currentApprovedPaymentArrangement()
+    {
+        return $this->hasOne(VisitPaymentArrangement::class)
+            ->where('status', \App\Enums\VisitPaymentArrangementStatus::APPROVED->value)
+            ->latestOfMany();
+    }
+
+    public function pendingPaymentArrangement()
+    {
+        return $this->hasOne(VisitPaymentArrangement::class)
+            ->where('status', \App\Enums\VisitPaymentArrangementStatus::PENDING->value)
+            ->latestOfMany();
+    }
+
     public function emergencyCase()
     {
         return $this->hasOne(EmergencyCase::class);

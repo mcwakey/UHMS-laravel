@@ -47,6 +47,10 @@ class VisitPaymentPolicy extends Model
         'resolution_version',
         'materialized_at',
         'last_refreshed_at',
+        // Phase 7 — additive link to the current approved arrangement (administrative only).
+        'current_approved_arrangement_id',
+        'approved_policy_snapshot',
+        'approved_arrangement_observed_at',
     ];
 
     protected function casts(): array
@@ -63,6 +67,8 @@ class VisitPaymentPolicy extends Model
             'patient_risk_observed_at' => 'datetime',
             'materialized_at' => 'datetime',
             'last_refreshed_at' => 'datetime',
+            'approved_policy_snapshot' => VisitPaymentTimingPolicy::class,
+            'approved_arrangement_observed_at' => 'datetime',
         ];
     }
 
@@ -85,6 +91,16 @@ class VisitPaymentPolicy extends Model
     public function history(): HasMany
     {
         return $this->hasMany(VisitPaymentPolicyHistory::class)->latest('performed_at')->latest('id');
+    }
+
+    public function arrangements(): HasMany
+    {
+        return $this->hasMany(VisitPaymentArrangement::class, 'visit_payment_policy_id');
+    }
+
+    public function currentApprovedArrangement(): BelongsTo
+    {
+        return $this->belongsTo(VisitPaymentArrangement::class, 'current_approved_arrangement_id');
     }
 
     /*
