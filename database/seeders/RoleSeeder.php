@@ -216,6 +216,11 @@ class RoleSeeder extends Seeder
             'patients.financial_risk.clear',
             'patients.financial_risk.history',
             'patients.financial_risk.report',
+            // Visit payment-policy materialisation (Payment Timing Policy Phase 6) — observational only
+            'visits.payment_policy.view',
+            'visits.payment_policy.history',
+            'visits.payment_policy.report',
+            'visits.payment_policy.refresh',
             'sponsors.manage',
             'sponsors.view',
             'sponsors.create',
@@ -1543,6 +1548,8 @@ class RoleSeeder extends Seeder
             // Patient financial-risk profiles (Phase 5) — finance staff may classify, review and report
             'patients.financial_risk.view', 'patients.financial_risk.manage', 'patients.financial_risk.review',
             'patients.financial_risk.history', 'patients.financial_risk.report',
+            // Visit payment-policy snapshots (Phase 6) — observational finance view/history/report
+            'visits.payment_policy.view', 'visits.payment_policy.history', 'visits.payment_policy.report',
             'billing.payment.allocate_cross_visit', 'billing.payment.allocate_manual',
             'billing.patient_statement.view', 'billing.patient_statement.print', 'billing.patient_statement.export',
             'admission.discharge.readiness.view', 'admission.discharge.clearance.view',
@@ -1613,6 +1620,8 @@ class RoleSeeder extends Seeder
             $accountant->permissions->pluck('name')->merge([
                 // Finance Manager may also clear financial-risk restrictions (Phase 5)
                 'patients.financial_risk.clear',
+                // Finance Manager may refresh observational visit payment policies (Phase 6)
+                'visits.payment_policy.refresh',
                 'accounting.failed_postings.resolve',
                 'accounting.failed_postings.waive',
                 'accounting.subledger_reconciliation.approve',

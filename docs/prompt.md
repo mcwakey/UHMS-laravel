@@ -1,12 +1,12 @@
-# UHMS Implementation Prompt — Payment Timing Policy Phase 5
+# UHMS Implementation Prompt — Payment Timing Policy Phase 6
 
-## Patient Financial-Risk Profiles, Restricted Visibility, Review Workflow, History, and Audit
+## Visit-Level Policy Materialisation, Financial-Risk Snapshots, and Non-Operational Recommendations
 
 You are working on **UHMS**, a Laravel-based hospital management system.
 
-Implement **Phase 5 of the Configurable Payment Timing and Per-Visit Payment Policy system**.
+Implement **Phase 6 of the Configurable Payment Timing and Per-Visit Payment Policy system**.
 
-Phases 1–4 are complete.
+Phases 1–5 are complete.
 
 ---
 
@@ -18,26 +18,25 @@ Implemented:
 
 * `VisitPaymentTimingPolicy`
 * `VisitPaymentPolicySource`
-* Global and visit-type payment-timing settings
+* Global and visit-type payment-timing configuration
+* Database-backed payment-timing settings
 * `PaymentTimingConfigurationService`
-* Admin configuration
-* Permission protection
-* English/French localisation
-* Transactional updates and activity logging
+* Admin configuration, localisation, permissions, and audit
 
 ## Phase 2 — Legacy integration and observation
 
 Implemented:
 
-* Legacy/observe integration modes
+* `PaymentTimingIntegrationMode`
 * `VisitPaymentTimingDecision`
-* Limited typed resolver
+* `VisitPaymentTimingResolver`
 * Legacy compatibility mapping
-* Decision comparison
+* Typed-versus-legacy comparison
+* Legacy-authoritative observation mode
 * Bounded mismatch diagnostics
 * `billing:payment-timing-audit`
 
-Legacy payment decisions remain authoritative.
+Legacy decisions remain operationally authoritative.
 
 ## Phase 3 — Central payment façade
 
@@ -45,10 +44,10 @@ Implemented:
 
 * `PaymentGateStage`
 * `PaymentGateContext`
-* Production payment checks centralised through `PaymentGateService`
-* Maintained operation registry
+* Central production access through `PaymentGateService`
 * Stage-aware observation
-* Payment-gate coverage command
+* `PaymentGateOperationRegistry`
+* `billing:payment-gate-coverage`
 
 Four production operations are currently wired:
 
@@ -61,7 +60,7 @@ pharmacy.item.dispense
 
 Nine operations remain intentionally unwired.
 
-## Phase 4 — Departmental enforcement-policy foundation
+## Phase 4 — Departmental enforcement configuration
 
 Implemented:
 
@@ -71,1274 +70,1402 @@ Implemented:
 * `PaymentGateOverrideScopeRule`
 * `PaymentGateOperationPolicy`
 * `PaymentGateEnforcementEligibility`
-* Operation configuration, eligibility, and compatibility services
-* Admin operation-policy interface
-* Idempotent settings seeding
-* Coverage and policy-audit commands
+* Per-operation configuration, diagnostics, admin interface, and audit
 
-All operation configuration remains non-operational.
+All 13 operations remain configuration-non-operational.
 
 No typed enforcement mode exists.
 
-No current production payment outcome is controlled by the Phase 4 operation settings.
+## Phase 5 — Patient financial-risk profiles
+
+Implemented:
+
+* `PatientFinancialRiskLevel`
+* `PatientFinancialRiskReason`
+* `PatientFinancialRiskStatus`
+* `PatientFinancialRiskEvent`
+* Dedicated financial-risk profile and immutable history tables
+* Transactional classification and lifecycle service
+* Restricted permissions and privacy filtering
+* Patient profile UI and finance worklist
+* Expiry and audit commands
+* Aggregated report and scoped export
+
+Financial-risk data currently has no effect on:
+
+* Visits
+* Payment timing
+* Payment gates
+* Invoices
+* Receivables
+* Overrides
+* Visit completion
+* Discharge
+* Financial closure
 
 ---
 
-# 2. Phase 5 Goal
+# 2. Phase 6 Goal
 
-Create a secure and auditable **patient financial-risk profile subsystem** that allows authorised finance and management users to:
+Create a secure and auditable **visit-level payment-policy materialisation subsystem**.
 
-* Classify a patient’s financial-risk level
-* Record the reason for the classification
-* Add structured supporting context
-* Define an effective date
-* Define an optional review or expiry date
-* Suspend, expire, clear, or reactivate a risk profile
-* Review the complete change history
-* Restrict sensitive financial-risk information from unrelated users
-* Search and report on active risk profiles
-* Audit every material mutation
+For each visit, UHMS should be able to preserve:
 
-This phase must establish patient-level financial-risk data only.
+* The typed payment-timing policy resolved for that visit
+* The source of that policy
+* The global policy applicable at materialisation time
+* The visit-type configuration applicable at materialisation time
+* Emergency-protection context
+* Compatible visit-wide legacy override context
+* The patient’s financial-risk profile at that moment
+* A non-operational risk-based policy recommendation
+* Whether finance review is recommended
+* The policy-resolution version used
+* The date and time the record was materialised
 
-It must **not**:
+This phase must provide a stable visit-specific record for later manual approvals and overrides.
 
-* Force a visit to pay before service
-* Change a visit payment-timing decision
-* Modify `VisitPaymentTimingResolver`
-* Modify `PaymentGateService` operational outcomes
-* Change existing previous-balance behaviour
-* Automatically create billing overrides
-* Automatically deny deferred settlement
-* Automatically classify patients from outstanding balances
-* Persist visit-level risk snapshots
-* Add risk-based visit-policy overrides
-
-Risk-based policy resolution will be implemented in a later phase.
+It must not yet allow the visit record or risk recommendation to alter any production payment decision.
 
 ---
 
-# 3. Core Domain Principle
+# 3. Core Separation
 
-Financial risk is not the same as:
+The implementation must keep these concepts separate:
 
 ```text
-invoice unpaid
-previous visit balance
-active receivable
-insurance pending
-payment gate blocked
-credit approved
-billing override
-patient medically high risk
+1. Baseline typed visit policy
+2. Patient financial-risk snapshot
+3. Risk-based policy recommendation
+4. Operational legacy payment-gate decision
+5. Future approved visit-specific policy
 ```
 
-Patient financial risk is a controlled administrative classification representing the hospital’s willingness to extend payment flexibility to the patient.
+In Phase 6:
 
-Do not reuse clinical risk fields.
+* The baseline typed policy may be materialised.
+* The patient-risk state may be snapshotted.
+* A candidate recommendation may be calculated.
+* The recommendation may say that finance review is required.
+* The recommendation must not become the operational policy.
+* The payment gate must continue returning the legacy decision.
+* No service may be blocked or released because of the materialised record.
 
-Do not overload patient status, invoice status, payment status, or visit status.
+Do not use one `effective_policy` field ambiguously for both observation and production enforcement.
 
 ---
 
-# 4. Mandatory Existing-Architecture Audit
+# 4. Mandatory Architecture Audit
 
 Before modifying code, inspect:
 
-## Patient architecture
+## Visit creation
 
-* `Patient` model
-* Patient profile controllers and services
-* Patient administration pages
-* Patient search and list pages
-* Existing patient tabs or profile sections
-* Patient merge behaviour
-* Patient privacy and field-authorisation services
-* Sensitive-field masking conventions
-* Existing patient history/audit displays
+* All services, controllers, jobs, imports, commands, seeders, and APIs that create visits
+* Central visit-creation services
+* Visit events and listeners
+* Appointment-to-visit conversion
+* Emergency visit creation
+* Admission visit creation
+* Walk-in and direct-registration workflows
+* Test and fixture creation paths
 
-## Billing architecture
+Determine the safest central integration point for materialisation.
 
-* `PatientOutstandingBalanceService`
-* `PreviousBalanceOverrideService`
-* `VisitBillingOverrideService`
-* `InvoiceReceivable`
-* `InvoiceReceivableService`
-* Existing credit, sponsor, corporate, and insurance models
-* Existing balance reports
-* Existing patient statements
+Do not add duplicate materialisation calls to many controllers if one stable visit-created event or service exists.
 
-## Security architecture
+## Visit model and workflow
 
-* Permission registration
-* Policies and gates
-* Role seeding
-* Existing sensitive finance permissions
-* Existing `PatientFieldAuthorizationService`
-* Existing `PatientPrivacyService`
-* Existing audit-log conventions
-* Existing export permissions
+Inspect:
 
-## Settings and enums
+* `Visit`
+* `VisitType`
+* Visit status and lifecycle
+* Visit merge or replacement behaviour
+* Visit cancellation
+* Visit reopening
+* Visit completion
+* Admission and emergency associations
+* Existing activity-log behaviour
+* Existing finance and billing tabs
 
-* Existing enum conventions
-* Existing reason-code conventions
-* Existing status-history patterns
-* Existing model event patterns
-* Existing active/expired scopes
+## Payment timing
 
-Reuse existing architecture wherever possible.
+Inspect:
 
-Do not create a separate patient-profile framework or duplicate the privacy subsystem.
+* `VisitPaymentTimingResolver`
+* `VisitPaymentTimingDecision`
+* `PaymentTimingConfigurationService`
+* `PaymentTimingLegacyCompatibilityService`
+* Existing compatible visit-wide overrides
+* Existing emergency policy handling
+* Integration-mode behaviour
 
-Document the findings in the Phase 5 report.
+## Financial risk
 
----
+Inspect:
 
-# 5. Financial-Risk Level Enum
+* `PatientFinancialRiskService`
+* `PatientFinancialRiskProfile`
+* Risk status and active-slot semantics
+* Restricted visibility permissions
+* Financial-risk history
+* Expiry behaviour
 
-Create:
+## Existing history and snapshot patterns
 
-```text
-app/Enums/PatientFinancialRiskLevel.php
-```
+Inspect whether UHMS already has:
 
-Required values:
+* Visit snapshot tables
+* Policy history tables
+* Immutable assessment snapshots
+* Versioned decision records
+* Event-based visit metadata
 
-```php
-<?php
+Reuse established conventions where suitable.
 
-namespace App\Enums;
-
-enum PatientFinancialRiskLevel: string
-{
-    case NORMAL = 'normal';
-    case WATCHLIST = 'watchlist';
-    case HIGH_RISK = 'high_risk';
-    case BLOCKED_CREDIT = 'blocked_credit';
-}
-```
-
-Meaning:
-
-## `normal`
-
-No active financial restriction is recorded.
-
-This should normally be represented by the absence of an active restrictive profile or by a formally cleared profile according to the final data model.
-
-## `watchlist`
-
-The patient requires additional financial review but is not automatically denied payment flexibility.
-
-## `high_risk`
-
-The patient presents a material financial exposure requiring controlled approval before extending credit or deferred payment in a future phase.
-
-## `blocked_credit`
-
-The hospital has formally restricted new credit or deferred-settlement arrangements, subject to authorised override in a future phase.
-
-Rules:
-
-* Use localisation for labels and descriptions.
-* Do not hardcode labels in views.
-* Do not create numeric severity assumptions unless explicitly defined.
-* Add helpers only where consistent with current enum conventions.
-* The enum must not make payment decisions.
+Document the architecture findings in the Phase 6 report.
 
 ---
 
-# 6. Risk Reason Enum
+# 5. Visit Payment Policy Record
 
-Create:
-
-```text
-app/Enums/PatientFinancialRiskReason.php
-```
-
-Required structured reasons:
-
-```php
-<?php
-
-namespace App\Enums;
-
-enum PatientFinancialRiskReason: string
-{
-    case PREVIOUS_UNPAID_VISITS = 'previous_unpaid_visits';
-    case REPEATED_ABANDONED_INVOICES = 'repeated_abandoned_invoices';
-    case CREDIT_LIMIT_EXCEEDED = 'credit_limit_exceeded';
-    case INVALID_CORPORATE_GUARANTEE = 'invalid_corporate_guarantee';
-    case INSURANCE_ELIGIBILITY_UNRESOLVED = 'insurance_eligibility_unresolved';
-    case PAYMENT_COMMITMENT_BREACHED = 'payment_commitment_breached';
-    case MANAGEMENT_DECISION = 'management_decision';
-    case OTHER = 'other';
-}
-```
-
-Adjust names only where existing UHMS terminology provides a better canonical equivalent.
-
-Rules:
-
-* `OTHER` requires explanatory text.
-* `MANAGEMENT_DECISION` should normally require explanatory text or a reference.
-* Structured reasons must be stored as enum values.
-* Free-text details must remain supplementary.
-* Do not infer a reason automatically in this phase.
-
----
-
-# 7. Risk Profile Status Enum
-
-Create:
+Create a dedicated table:
 
 ```text
-app/Enums/PatientFinancialRiskStatus.php
+visit_payment_policies
 ```
 
-Suggested values:
-
-```php
-<?php
-
-namespace App\Enums;
-
-enum PatientFinancialRiskStatus: string
-{
-    case ACTIVE = 'active';
-    case UNDER_REVIEW = 'under_review';
-    case SUSPENDED = 'suspended';
-    case CLEARED = 'cleared';
-    case EXPIRED = 'expired';
-}
-```
-
-Meaning:
-
-## `active`
-
-The classification is currently valid.
-
-## `under_review`
-
-The profile is being reviewed and remains visible, but operational behaviour must not change in this phase.
-
-## `suspended`
-
-The classification is temporarily inactive without being deleted.
-
-## `cleared`
-
-An authorised reviewer has formally removed the restriction.
-
-## `expired`
-
-The effective period ended.
-
-Rules:
-
-* Do not delete historical profiles when cleared.
-* Do not use soft deletion as the normal clearance workflow.
-* Preserve the difference between suspension, clearance, and expiry.
-* No status should affect live payment gates in Phase 5.
-
----
-
-# 8. Data Model
-
-Use a dedicated patient financial-risk profile and immutable history.
-
-Preferred tables:
-
-```text
-patient_financial_risk_profiles
-patient_financial_risk_history
-```
-
-Adapt names to existing project conventions if required.
-
-## 8.1 `patient_financial_risk_profiles`
+The table should contain one current materialised policy record per visit.
 
 Suggested fields:
 
 ```text
 id
-patient_id
-risk_level
-primary_reason
-reason_details
-status
-credit_limit
-effective_from
-review_due_at
-expires_at
-reference
-set_by
-reviewed_by
-reviewed_at
-suspended_by
-suspended_at
-cleared_by
-cleared_at
-clearance_reason
+visit_id
+
+resolved_policy
+resolution_source
+resolution_reason_code
+
+recommended_policy
+recommendation_source
+recommendation_reason_code
+requires_finance_review
+
+global_default_snapshot
+visit_type_policy_snapshot
+visit_type_snapshot
+emergency_protection_snapshot
+
+compatible_override_type_snapshot
+compatible_override_scope_snapshot
+compatible_override_id_snapshot
+
+patient_financial_risk_profile_id
+patient_risk_level_snapshot
+patient_risk_status_snapshot
+patient_risk_reason_snapshot
+patient_risk_observed_at
+
+resolution_version
+materialized_at
+last_refreshed_at
+
 created_at
 updated_at
 ```
 
-Potential additional fields are allowed only when justified by current UHMS architecture.
+Adapt fields to repository conventions.
 
-Rules:
+## Mandatory rules
 
-* Use foreign keys where consistent with existing migrations.
-* Use explicit, safely shortened foreign-key names where necessary for MySQL identifier limits.
-* Monetary fields must follow the existing UHMS currency/decimal conventions.
-* `credit_limit` is optional and informational in Phase 5.
-* Do not enforce the credit limit against invoices or visits yet.
-* Free-text fields must be length-bounded.
-* Use appropriate indexes for patient, status, risk level, review date, and expiry date.
+* `visit_id` must be unique.
+* The final `resolved_policy` must never contain `inherit`.
+* `recommended_policy` may be nullable.
+* `recommendation_source` should normally be nullable unless a recommendation exists.
+* `requires_finance_review` must default to false.
+* Snapshot fields must represent point-in-time values.
+* Do not store free-text financial-risk details.
+* Do not store patient phone, email, address, diagnosis, or clinical notes.
+* Use shortened explicit foreign-key names where MySQL identifier limits require them.
+* Add useful indexes for resolved policy, source, finance-review flag, risk level, and materialisation date.
+* Use enum casts.
 
-## 8.2 `patient_financial_risk_history`
+Do not add an operational or active enforcement flag in Phase 6.
+
+The record is observational by architecture.
+
+---
+
+# 6. Visit Payment Policy History
+
+Create:
+
+```text
+visit_payment_policy_history
+```
+
+This must be append-only through normal application workflows.
 
 Suggested fields:
 
 ```text
 id
-patient_financial_risk_profile_id
-patient_id
+visit_payment_policy_id
+visit_id
 event_type
 old_values
 new_values
-reason
+reason_code
 performed_by
 performed_at
 created_at
 ```
 
-Use the existing JSON-casting and activity-history conventions.
-
-History should record material transitions such as:
+Suggested events:
 
 ```text
-created
-updated
-submitted_for_review
-review_completed
-suspended
-reactivated
-cleared
-expired
+materialized
+refreshed
+risk_snapshot_changed
+baseline_policy_changed
+recommendation_changed
+marked_stale
 ```
 
-Do not store full patient snapshots.
+Create an enum if consistent with existing history patterns:
 
-Do not duplicate unnecessary personal information in history JSON.
+```text
+VisitPaymentPolicyEvent
+```
 
----
+Rules:
 
-# 9. Single Active Restrictive Profile Rule
-
-A patient must not have multiple conflicting active restrictive profiles.
-
-Define the rule clearly:
-
-* A patient may have only one current profile in `active` or `under_review` state.
-* Suspended, cleared, and expired historical profiles may remain.
-* Updating the current classification should normally mutate the current profile and append history, unless the existing project convention favours versioned profile records.
-* Clearing and later reclassifying a patient must remain historically traceable.
-
-Enforce this through:
-
-* Service-layer transactions
-* Database constraints where safely possible
-* Row locking during mutation
-* Focused concurrency tests
-
-Do not rely only on UI validation.
+* Do not store patient snapshots.
+* Store only material payment-policy and risk-snapshot fields.
+* Do not store unrestricted free text.
+* Do not permit UI editing or deletion of history rows.
+* Do not duplicate routine read activity in `ActivityLog`.
+* Avoid duplicate history entries when nothing changed.
 
 ---
 
-# 10. Models and Relationships
+# 7. Visit Payment Policy Model
 
 Create:
 
 ```text
-app/Models/PatientFinancialRiskProfile.php
-app/Models/PatientFinancialRiskHistory.php
+app/Models/VisitPaymentPolicy.php
+app/Models/VisitPaymentPolicyHistory.php
 ```
 
 Suggested relationships:
 
 ```php
-Patient::financialRiskProfiles()
-Patient::activeFinancialRiskProfile()
-Patient::financialRiskHistory()
+Visit::paymentPolicy()
+Visit::paymentPolicyHistory()
 
-PatientFinancialRiskProfile::patient()
-PatientFinancialRiskProfile::setter()
-PatientFinancialRiskProfile::reviewer()
-PatientFinancialRiskProfile::suspender()
-PatientFinancialRiskProfile::clearer()
-PatientFinancialRiskProfile::history()
+VisitPaymentPolicy::visit()
+VisitPaymentPolicy::patientFinancialRiskProfile()
+VisitPaymentPolicy::history()
+
+VisitPaymentPolicyHistory::policy()
+VisitPaymentPolicyHistory::visit()
+VisitPaymentPolicyHistory::performer()
 ```
 
-Use established user-relation naming conventions.
+Use enum casts for:
+
+```text
+resolved_policy
+resolution_source
+recommended_policy
+recommendation_source
+patient_risk_level_snapshot
+patient_risk_status_snapshot
+event_type
+```
 
 Add scopes such as:
 
 ```php
-scopeActive()
-scopeRestrictive()
-scopeDueForReview()
-scopeExpired()
-scopeForRiskLevel()
+scopeRequiringFinanceReview()
+scopeForResolvedPolicy()
+scopeForRecommendation()
+scopeWithRiskSnapshot()
+scopeMaterializedBetween()
 ```
 
-Rules:
-
-* Avoid hidden service calls inside model accessors.
-* Do not make `Patient::financialRiskProfile` trigger expensive or repeated queries in lists.
-* Eager-load in report and index workflows.
-* Use enum casts.
-* Use decimal or money casts consistent with the project.
+Avoid hidden service calls or automatic policy refreshes inside model accessors.
 
 ---
 
-# 11. Central Financial-Risk Service
+# 8. Risk Recommendation Vocabulary
+
+Do not treat risk recommendations as operational decisions.
+
+Create a DTO:
+
+```text
+app/Data/Billing/PatientRiskPaymentRecommendation.php
+```
+
+Suggested structure:
+
+```php
+final readonly class PatientRiskPaymentRecommendation
+{
+    public function __construct(
+        public ?VisitPaymentTimingPolicy $recommendedPolicy,
+        public ?VisitPaymentPolicySource $source,
+        public ?string $reasonCode,
+        public bool $requiresFinanceReview,
+        public bool $approvedForResolution,
+        public array $context = [],
+    ) {
+    }
+
+    public static function none(): self
+    {
+        // Safe no-recommendation result.
+    }
+}
+```
+
+Keep context bounded and non-sensitive.
+
+Possible machine reason codes:
+
+```text
+no_active_risk_profile
+risk_profile_suspended
+risk_profile_under_review
+watchlist_review_recommended
+high_risk_prepayment_recommended
+blocked_credit_prepayment_recommended
+risk_rule_not_approved
+risk_profile_expired
+```
+
+Do not use translated strings as canonical reason codes.
+
+---
+
+# 9. Risk-to-Policy Recommendation Rules
 
 Create:
 
 ```text
-app/Services/Billing/PatientFinancialRiskService.php
+app/Services/Billing/PatientRiskPaymentRecommendationService.php
 ```
 
-or an equivalent finance-oriented namespace consistent with UHMS.
+This service should read the active patient financial-risk profile and return a recommendation only.
+
+Suggested provisional rules:
+
+## No active profile
+
+```text
+recommended policy: null
+requires finance review: false
+approved for resolution: false
+```
+
+## `normal`
+
+```text
+recommended policy: null
+requires finance review: false
+approved for resolution: false
+```
+
+## `watchlist`
+
+```text
+recommended policy: null
+requires finance review: true
+reason: watchlist_review_recommended
+approved for resolution: false
+```
+
+## `high_risk`
+
+```text
+recommended policy: pay_before_service
+requires finance review: true
+reason: high_risk_prepayment_recommended
+approved for resolution: false
+```
+
+## `blocked_credit`
+
+```text
+recommended policy: pay_before_service
+requires finance review: true
+reason: blocked_credit_prepayment_recommended
+approved for resolution: false
+```
+
+## Suspended, cleared, or expired profile
+
+No active recommendation.
+
+## Under review
+
+Preserve the snapshotted risk level, but require finance review.
+
+Do not automatically resolve the visit to `pay_before_service`.
+
+---
+
+# 10. Risk-Policy Approval Configuration
+
+Mirror the safe non-operational approach used by Phase 4.
+
+Create a typed configuration layer describing whether a risk level has been approved to influence future policy resolution.
+
+Suggested DTO:
+
+```text
+PatientFinancialRiskPolicyRule
+```
+
+Suggested service:
+
+```text
+PatientFinancialRiskPolicyConfigurationService
+```
+
+Possible rule fields:
+
+```text
+risk level
+recommended policy
+requires finance review
+approved_for_resolution
+```
+
+Initial defaults:
+
+| Risk level     | Recommendation     | Finance review | Approved for resolution |
+| -------------- | ------------------ | -------------: | ----------------------: |
+| Normal         | None               |             No |                      No |
+| Watchlist      | None               |            Yes |                      No |
+| High risk      | Pay before service |            Yes |                      No |
+| Blocked credit | Pay before service |            Yes |                      No |
+
+Rules:
+
+* All levels must initially have `approved_for_resolution = false`.
+* Do not expose an operational activation switch in Phase 6.
+* Settings may be diagnostic and preparatory only.
+* Invalid settings must fall back to safe defaults.
+* A stored setting must never make a risk recommendation operational.
+* Do not add typed enforcement mode.
+
+Use existing settings infrastructure if database-backed storage is required.
+
+If no admin editability is needed yet, keep the rules in typed configuration and document that choice.
+
+---
+
+# 11. Visit Payment Policy Materialisation Service
+
+Create:
+
+```text
+app/Services/Billing/VisitPaymentPolicyMaterializationService.php
+```
 
 Responsibilities:
 
 ```php
-public function currentFor(Patient $patient): ?PatientFinancialRiskProfile;
+public function materialize(
+    Visit $visit,
+    ?User $actor = null
+): VisitPaymentPolicy;
 
-public function createOrClassify(
-    Patient $patient,
-    PatientFinancialRiskData $data,
-    User $actor
-): PatientFinancialRiskProfile;
+public function refresh(
+    Visit $visit,
+    ?User $actor = null,
+    ?string $reasonCode = null
+): VisitPaymentPolicy;
 
-public function update(
-    PatientFinancialRiskProfile $profile,
-    PatientFinancialRiskData $data,
-    User $actor
-): PatientFinancialRiskProfile;
-
-public function submitForReview(...): PatientFinancialRiskProfile;
-
-public function completeReview(...): PatientFinancialRiskProfile;
-
-public function suspend(...): PatientFinancialRiskProfile;
-
-public function reactivate(...): PatientFinancialRiskProfile;
-
-public function clear(...): PatientFinancialRiskProfile;
-
-public function expireDueProfiles(...): int;
+public function preview(
+    Visit $visit
+): VisitPaymentPolicyPreview;
 ```
 
-Use dedicated DTOs or validated arrays according to existing project conventions.
+Create a preview DTO if useful.
 
-Rules:
+## Materialisation flow
 
-* All mutations must run inside database transactions.
-* Lock the current patient profile where necessary.
-* Append immutable history for every material mutation.
-* Use `ActivityLog` for material mutations.
-* Do not call `PaymentGateService`.
-* Do not call `VisitPaymentTimingResolver`.
-* Do not create billing overrides.
-* Do not modify visit records.
-* Do not modify invoices.
-* Do not automatically create a profile from outstanding balances.
+1. Load the visit and patient using bounded required relations.
+2. Resolve the baseline typed policy through the existing `VisitPaymentTimingResolver`.
+3. Obtain the current patient-risk recommendation.
+4. Snapshot the current risk profile.
+5. Capture global and visit-type policy context.
+6. Capture compatible visit-wide legacy override context.
+7. Create or update the unique visit payment-policy record.
+8. Append history only when the record is created or materially changed.
+9. Write an activity log only for material creation or refresh.
+10. Return the stored record.
+
+## Mandatory behaviour
+
+The stored `resolved_policy` must come from the current typed baseline resolver.
+
+The risk recommendation must be stored separately.
+
+Do not replace:
+
+```text
+resolved_policy
+```
+
+with:
+
+```text
+recommended_policy
+```
+
+even for `high_risk` or `blocked_credit`.
 
 ---
 
-# 12. State-Transition Rules
+# 12. Point-in-Time Snapshot Rules
 
-Define explicit allowed transitions.
+Risk snapshots must be historically meaningful.
 
-Suggested transitions:
-
-```text
-active → under_review
-active → suspended
-active → cleared
-active → expired
-
-under_review → active
-under_review → suspended
-under_review → cleared
-under_review → expired
-
-suspended → active
-suspended → under_review
-suspended → cleared
-suspended → expired
-```
-
-Rules:
-
-* `cleared` and `expired` are terminal for that profile.
-* A new classification after clearance should create or formally reactivate according to the documented data strategy.
-* Reactivation must require a reason.
-* Clearance must require a clearance reason.
-* Suspended profiles must not be treated as active.
-* Invalid transitions must be rejected in the backend.
-* No transition should affect a live visit in Phase 5.
-
-Create a transition service or model helper only if it keeps the domain logic clear.
-
----
-
-# 13. Review and Expiry Workflow
-
-## 13.1 Review date
-
-Allow an optional:
+Capture:
 
 ```text
-review_due_at
-```
-
-This means the profile should be reviewed; it does not automatically clear or expire the profile.
-
-## 13.2 Expiry date
-
-Allow an optional:
-
-```text
-expires_at
-```
-
-When reached, the profile should transition to `expired`.
-
-## 13.3 Scheduled command
-
-Add a command such as:
-
-```bash
-php artisan billing:financial-risk-expire
-```
-
-The command should:
-
-* Find active, under-review, or suspended profiles whose `expires_at` has passed
-* Transition them to `expired`
-* Append history
-* Create appropriate activity logs
-* Be idempotent
-* Avoid touching already cleared or expired profiles
-* Avoid changing payment gates or visits
-
-Register it with the scheduler only if consistent with existing project scheduling conventions.
-
-Use:
-
-```text
-withoutOverlapping
-```
-
-where appropriate.
-
-## 13.4 Review reminder diagnostics
-
-Optionally add a read-only command:
-
-```bash
-php artisan billing:financial-risk-review-due
-```
-
-or include due-review reporting in the admin index.
-
-Do not create notification automation unless a suitable existing notification framework and explicit scope exist.
-
----
-
-# 14. Existing Balance Context
-
-The profile UI may show authorised users useful financial context from existing services:
-
-```text
-current patient-responsibility receivables
-previous outstanding balance
-oldest unpaid invoice
-age of oldest debt
-number of unpaid visits
-```
-
-Use existing:
-
-```text
-PatientOutstandingBalanceService
-InvoiceReceivable
-existing patient balance summaries
-```
-
-Rules:
-
-* Display context only.
-* Do not copy balance values into the risk profile unless explicitly captured as an immutable assessment snapshot.
-* If an assessment snapshot is added, it must be clearly marked as historical and must not replace live receivable data.
-* Do not automatically determine risk level.
-* The user must make and confirm the classification.
-* No risk profile should be created merely because a patient has an outstanding balance.
-
----
-
-# 15. Permissions
-
-Add only the permissions needed for this subsystem.
-
-Suggested permissions:
-
-```text
-patients.financial_risk.view
-patients.financial_risk.manage
-patients.financial_risk.review
-patients.financial_risk.clear
-patients.financial_risk.history
-patients.financial_risk.report
-```
-
-Evaluate whether existing finance or patient-sensitive permissions can be reused without reducing confidentiality.
-
-Suggested intent:
-
-## `view`
-
-View the current restricted profile.
-
-## `manage`
-
-Create and update classifications.
-
-## `review`
-
-Submit and complete reviews, suspend, or reactivate.
-
-## `clear`
-
-Clear or remove an active restriction.
-
-## `history`
-
-View detailed mutation history.
-
-## `report`
-
-Access cross-patient risk reports and exports.
-
-Rules:
-
-* Do not grant these broadly to clinical roles.
-* Existing super-admin behaviour should remain intact.
-* Suggested initial role assignment may include authorised:
-
-  * finance managers
-  * billing supervisors
-  * selected administrators
-  * hospital management
-* Ordinary clinicians should not see detailed risk reasons.
-* Reception access should be deliberately limited.
-* Backend controllers, services, routes, and exports must enforce permissions.
-
----
-
-# 16. Restricted Visibility and Privacy
-
-Integrate with the existing patient privacy architecture.
-
-Financial-risk data is sensitive administrative information.
-
-## 16.1 Full visibility
-
-Authorised users may see:
-
-```text
+patient financial-risk profile ID
 risk level
-reason
+risk status
+structured reason
+observation timestamp
+```
+
+Do not capture:
+
+```text
 reason details
-credit limit
-effective date
-review date
-expiry date
-references
-set/review/clear actors
-history
-```
-
-## 16.2 Limited operational visibility
-
-Where a future workflow needs a non-sensitive indicator, prepare a method that can eventually expose:
-
-```text
-financial review required
-payment arrangement requires finance review
-```
-
-Do not expose detailed reasons.
-
-In Phase 5, do not add this indicator broadly to clinical workspaces unless an existing business requirement already demands it.
-
-## 16.3 No visibility
-
-Unauthorised users must not receive financial-risk data in:
-
-* Patient JSON
-* Search responses
-* Data tables
-* Inertia props
-* API resources
-* Print views
-* Exports
-* Activity-log previews
-* Browser page source
-* Hidden form fields
-
-Do not merely hide the Blade section.
-
-Filter the data at the backend.
-
----
-
-# 17. Patient Profile UI
-
-Add a restricted **Financial Risk** section to the appropriate patient finance or administration profile.
-
-Avoid placing it prominently in unrelated clinical tabs.
-
-The section should show:
-
-```text
-Current status
-Risk level
-Primary reason
-Effective date
-Review due date
-Expiry date
-Credit limit
-Reference
-Set by
-Last reviewed by
-Last updated
-```
-
-Actions according to permission:
-
-```text
-Classify patient
-Edit classification
-Submit for review
-Complete review
-Suspend
-Reactivate
-Clear restriction
-View history
-```
-
-## Form requirements
-
-The classification form should include:
-
-```text
-Risk level
-Primary reason
-Reason details
-Optional credit limit
-Effective date
-Optional review date
-Optional expiry date
-Optional reference
-```
-
-Validation messages must be localised.
-
-For a normal patient with no current profile, show a neutral empty state rather than a warning badge.
-
----
-
-# 18. Admin Financial-Risk Worklist
-
-Add a restricted finance/admin page listing patient financial-risk profiles.
-
-Suggested route area:
-
-```text
-admin/billing/financial-risk
-```
-
-or the closest existing billing administration namespace.
-
-Features:
-
-* Search by patient identifier or name using existing privacy-aware patient search
-* Filter by risk level
-* Filter by status
-* Filter by review due
-* Filter by expired
-* Filter by active restriction
-* Sort by risk level, effective date, review date, or expiry date
-* Pagination
-* Permission-safe links to patient profiles
-
-Columns:
-
-```text
-Patient
-Risk level
-Status
-Primary reason
-Effective date
-Review due
-Expiry date
-Credit limit
-Last updated
-```
-
-Respect patient masking and privacy rules.
-
-Do not expose detailed free-text reasons in broad list views unless necessary.
-
----
-
-# 19. History Interface
-
-Add a restricted history panel showing:
-
-```text
-date/time
-event type
-previous level/status
-new level/status
-performed by
-reason
 reference
+clearance reason
+patient contact information
+full financial-risk history
 ```
 
-Do not dump raw JSON directly into the UI.
+## Existing visit behaviour
 
-Render a human-readable, localised summary.
+A later change to the patient’s financial-risk profile must not silently rewrite an existing visit snapshot.
 
-History must be immutable through normal application workflows.
+Existing visit snapshots remain unchanged unless an authorised or system-controlled refresh explicitly occurs.
 
-Do not provide delete or edit actions for history entries.
+## New visit behaviour
+
+New visits should snapshot the financial-risk profile available at visit materialisation time.
+
+## Stale snapshot detection
+
+Provide a diagnostic method such as:
+
+```php
+public function snapshotIsStale(
+    VisitPaymentPolicy $policy
+): bool;
+```
+
+A snapshot may be considered stale when:
+
+* The patient has a newer active risk profile
+* The snapshotted profile was cleared, suspended, or expired later
+* The risk profile was materially updated after observation
+* The visit record has no snapshot despite a current restrictive profile
+
+Staleness must not automatically change the visit policy.
 
 ---
 
-# 20. Activity Logging
+# 13. Materialisation Trigger
+
+Integrate materialisation into the safest central visit-creation path discovered during the audit.
+
+Preferred order:
+
+1. Existing domain event and listener
+2. Existing central visit-creation service
+3. Existing workflow orchestration service
+4. Model observer only if already consistent with project conventions
+
+Do not add duplicated calls across many controllers.
+
+## Transaction behaviour
+
+* The visit must exist before materialisation.
+* If the project requires the policy record to be created atomically with the visit, use the existing visit transaction.
+* If materialisation occurs after commit, ensure failure cannot roll back an otherwise valid clinical visit unless the project explicitly requires it.
+* Materialisation failure must not block emergency care.
+* Log technical failures safely.
+* Provide a repair/backfill command.
+
+## Required coverage
+
+Ensure materialisation works for:
+
+```text
+outpatient visits
+inpatient visits
+emergency visits
+appointment-generated visits
+direct/walk-in visits
+```
+
+Use actual existing creation paths.
+
+---
+
+# 14. Existing Visit Backfill
+
+Add:
+
+```bash
+php artisan billing:visit-payment-policy-backfill
+```
+
+Suggested options:
+
+```text
+--visit=
+--visit-type=
+--active-only
+--missing-only
+--limit=
+--dry-run
+--commit
+--json
+```
+
+Rules:
+
+* Default to dry-run unless project conventions strongly favour explicit confirmation.
+* `--commit` performs writes.
+* Bound the maximum batch size.
+* Use chunking.
+* Avoid N+1 risk-profile and override queries.
+* Do not create invoices, payments, receivables, or overrides.
+* Do not change visit status.
+* Append history only for committed materialisations.
+* Create activity logs only for actual committed material changes.
+* Repeated execution must be idempotent.
+* Do not overwrite an existing record unless refresh is explicitly requested.
+
+---
+
+# 15. Refresh Behaviour
+
+Do not automatically refresh every visit when:
+
+* The global default changes
+* A visit-type policy changes
+* A patient-risk profile changes
+* A risk profile expires
+* An override is created or revoked
+
+Phase 6 should preserve the original snapshot by default.
+
+Provide explicit controlled refresh through:
+
+* The materialisation service
+* A maintenance command
+* Future authorised UI action, if deliberately included
+
+If adding a refresh command:
+
+```bash
+php artisan billing:visit-payment-policy-refresh
+```
+
+support:
+
+```text
+--visit=
+--active-only
+--stale-only
+--limit=
+--dry-run
+--commit
+--reason=
+```
+
+Every material refresh must append history.
+
+Do not add automatic scheduled refresh in Phase 6.
+
+---
+
+# 16. Activity Logging
 
 Use the existing `ActivityLog` architecture.
 
 Suggested actions:
 
 ```text
-PATIENT_FINANCIAL_RISK_CREATED
-PATIENT_FINANCIAL_RISK_UPDATED
-PATIENT_FINANCIAL_RISK_SUBMITTED_FOR_REVIEW
-PATIENT_FINANCIAL_RISK_REVIEW_COMPLETED
-PATIENT_FINANCIAL_RISK_SUSPENDED
-PATIENT_FINANCIAL_RISK_REACTIVATED
-PATIENT_FINANCIAL_RISK_CLEARED
-PATIENT_FINANCIAL_RISK_EXPIRED
+VISIT_PAYMENT_POLICY_MATERIALIZED
+VISIT_PAYMENT_POLICY_REFRESHED
+VISIT_PAYMENT_POLICY_RISK_SNAPSHOT_CHANGED
+VISIT_PAYMENT_POLICY_RECOMMENDATION_CHANGED
 ```
 
-Capture:
+Capture only bounded metadata:
 
 ```text
-patient identifier
-profile identifier
-old level/status
-new level/status
-structured reason
-actor
+visit identifier
+policy record identifier
+old resolved policy
+new resolved policy
+old recommendation
+new recommendation
+resolution source
+risk level snapshot
+requires finance review
+actor or system source
 timestamp
 ```
 
-Do not include unnecessary patient contact information.
-
-Do not include unrestricted free-text details in broad audit metadata where the existing logging standards discourage it.
-
-Avoid duplicate logging from both model observers and services.
-
-Choose one authoritative mutation-logging path.
-
----
-
-# 21. Validation
-
-Create dedicated FormRequests.
-
-Suggested requests:
-
-```text
-StorePatientFinancialRiskRequest
-UpdatePatientFinancialRiskRequest
-ReviewPatientFinancialRiskRequest
-SuspendPatientFinancialRiskRequest
-ReactivatePatientFinancialRiskRequest
-ClearPatientFinancialRiskRequest
-```
-
-Consolidate where appropriate without making one request ambiguous.
-
-Required validation:
-
-* Risk level must be a valid enum.
-* Reason must be a valid enum.
-* `OTHER` requires `reason_details`.
-* Management decisions require details or a reference.
-* Credit limit must be non-negative.
-* Effective date must be valid.
-* Review date cannot precede the effective date.
-* Expiry date cannot precede the effective date.
-* Clearance requires a reason.
-* Suspension requires a reason.
-* Reactivation requires a reason.
-* Unknown fields should not be trusted.
-* Invalid state transitions must be rejected.
-* Unauthorised users cannot invoke endpoints directly.
-
----
-
-# 22. Reporting and Export
-
-Add a restricted read-only report for authorised users.
-
-Metrics may include:
-
-```text
-active watchlist patients
-active high-risk patients
-active blocked-credit patients
-profiles due for review
-profiles expiring soon
-profiles cleared during period
-profiles created during period
-```
-
-Patient-level export should require:
-
-```text
-patients.financial_risk.report
-```
-
-Export only necessary fields.
-
-Respect patient-sensitive export permissions already present in UHMS.
-
 Do not include:
 
+* Patient name
+* Contact information
 * Clinical details
-* Insurance member numbers
-* Unnecessary contact fields
-* Raw audit JSON
-* Internal free-text notes unless explicitly authorised
+* Free-text financial-risk details
+* Insurance identifiers
 
-If introducing export would significantly broaden the phase, implement the query service and restricted HTML report first, and document CSV export as deferred.
+Do not log routine reads or previews.
+
+Avoid duplicate logs from observers and services.
 
 ---
 
-# 23. Read-Only Diagnostic Command
+# 17. Permissions
+
+Add focused visit-policy permissions.
+
+Suggested permissions:
+
+```text
+visits.payment_policy.view
+visits.payment_policy.history
+visits.payment_policy.report
+visits.payment_policy.refresh
+```
+
+Suggested initial role assignment:
+
+## Super Admin / Admin
+
+All permissions.
+
+## Finance Manager
+
+View, history, report, refresh.
+
+## Accountant
+
+View, history, report.
+
+## Clinical and reception roles
+
+No detailed visit-policy snapshot permissions by default.
+
+Rules:
+
+* Backend routes and controllers must enforce permissions.
+* Do not rely only on hidden Blade elements.
+* `refresh` must not mean approve or activate.
+* No permission in Phase 6 should allow a user to change the operational payment policy.
+
+---
+
+# 18. Restricted Visit-Level UI
+
+Add a restricted **Payment Policy** section to the appropriate visit billing or finance interface.
+
+Show:
+
+```text
+Observed visit policy
+Policy source
+Resolution reason
+Global default snapshot
+Visit-type policy snapshot
+Emergency protection considered
+Compatible visit-wide override observed
+Risk level snapshot
+Risk status snapshot
+Risk recommendation
+Finance review required
+Materialised at
+Last refreshed
+Snapshot freshness
+```
+
+Clearly display:
+
+> This record is observational and does not currently control service access or payment enforcement.
+
+Do not display sensitive risk reason details to users without the appropriate financial-risk permission.
+
+## Suggested labels
+
+Distinguish:
+
+```text
+Observed policy
+Recommended policy
+Operational legacy gate
+```
+
+Do not label the recommendation as the patient’s active payment arrangement.
+
+---
+
+# 19. Finance Worklist
+
+Add a restricted worklist or extend an existing billing worklist to show visits with materialised policies.
+
+Possible route:
+
+```text
+admin/billing/visit-payment-policies
+```
+
+Filters:
+
+```text
+resolved policy
+resolution source
+recommended policy
+finance review required
+risk level snapshot
+visit type
+active visits only
+stale snapshot
+materialisation date range
+```
+
+Columns:
+
+```text
+Visit
+Patient
+Visit type
+Observed policy
+Source
+Risk snapshot
+Recommendation
+Finance review
+Snapshot status
+Materialised at
+```
+
+Use existing patient privacy masking.
+
+Do not expose confidential risk details in the broad list.
+
+No approval or override action should exist in Phase 6.
+
+---
+
+# 20. Non-Sensitive Finance Review Indicator
+
+Prepare a restricted helper or DTO for finance workflows:
+
+```text
+Financial review required
+```
+
+This indicator may be shown to:
+
+* Finance worklists
+* Billing staff with visit payment-policy permission
+* Management reports
+
+Do not expose:
+
+```text
+High-risk patient
+Blocked-credit patient
+Repeated abandoned invoices
+```
+
+to ordinary clinical users.
+
+Do not add the indicator to clinical consultation, laboratory, pharmacy, nursing, or emergency workspaces in Phase 6.
+
+---
+
+# 21. History Interface
+
+Add a permission-controlled visit payment-policy history panel.
+
+Show human-readable transitions:
+
+```text
+Materialised
+Baseline policy refreshed
+Risk snapshot changed
+Recommendation changed
+Marked stale
+```
+
+Display:
+
+```text
+date/time
+event
+previous policy
+new policy
+previous recommendation
+new recommendation
+risk snapshot change
+performed by
+reason code
+```
+
+Do not render raw JSON.
+
+Do not provide edit or delete controls.
+
+---
+
+# 22. Diagnostic Audit Command
 
 Add:
 
 ```bash
-php artisan billing:financial-risk-audit
+php artisan billing:visit-payment-policy-audit
 ```
 
 Suggested options:
 
 ```text
---patient=
---status=
---level=
---review-due
---expired
+--visit=
+--visit-type=
+--missing
+--stale
+--finance-review
 --problems-only
+--limit=
 --json
 ```
 
-The command should detect:
+Detect:
 
 ```text
-multiple active profiles for one patient
-active profile already beyond expiry
-invalid date ordering
-missing actor references
-missing required reason details
-terminal profiles incorrectly active
-profiles due for review
+visits missing a materialised policy
+duplicate visit policy records
+resolved policy still set to inherit
+unknown resolution source
+recommendation without source
+source without recommendation
+restrictive risk snapshot without expected recommendation
+recommendation incorrectly treated as resolved policy
+stale risk snapshot
+missing resolution version
+invalid materialisation timestamps
+unexpected sensitive fields in snapshot payload
 ```
 
 Rules:
 
 * Read-only
-* No automatic fixes
-* No patient-sensitive free text in normal output
+* No automatic repair
+* No patient-sensitive free text
 * No activity logs
-* Findings should not cause a non-zero exit code unless the command itself fails
+* Findings do not fail the exit code
+* Technical command failures may return non-zero
 
 ---
 
-# 24. Seeding and Existing Data
+# 23. Resolver Guardrails
 
-Do not seed actual patients as financial risks in production/default seeders.
+Do not modify `VisitPaymentTimingResolver` to read patient financial-risk profiles.
 
-Permission seeding is allowed.
+Do not insert patient-risk precedence into the existing resolver.
 
-For tests and manual-testing datasets:
+The materialisation service may call:
 
-* Add dedicated factories
-* Add test-only seeders if consistent with UHMS conventions
-* Keep these separate from default launch data
-* Do not classify real production patients automatically
+```text
+VisitPaymentTimingResolver
+```
 
-No backfill should infer financial risk from old debt.
+for the baseline decision and separately call:
 
-Existing patients should simply have no active risk profile.
+```text
+PatientRiskPaymentRecommendationService
+```
+
+for the recommendation.
+
+The two results must remain separate.
+
+No production caller may replace the resolver result with the risk recommendation.
 
 ---
 
-# 25. Performance Requirements
+# 24. Payment-Gate Guardrails
 
-Avoid:
+Do not modify operational behaviour in:
 
-* N+1 active-profile lookups in patient lists
-* N+1 user lookups in history
-* Repeated balance-summary calculations
-* Loading full history when only current status is required
-* Including risk data in every patient query
+```text
+BillingPolicyService
+PaymentGateService
+PaymentTimingPolicyComparisonService
+InvoiceItemSettlementService
+PreviousBalanceOverrideService
+VisitBillingOverrideService
+```
 
-Use:
+Only additive diagnostic context may be introduced if absolutely required.
 
-* Explicit eager loading
-* Restricted query services
-* Pagination
-* Indexed status/date columns
-* Permission checks before loading sensitive relations
+Explicitly prove:
 
-The normal clinical patient workflow should incur no risk-profile query unless the data is actually required.
+* High-risk recommendation does not block service.
+* Blocked-credit recommendation does not block service.
+* Pay-after-services baseline remains unchanged by the recommendation.
+* Emergency running-bill baseline remains unchanged.
+* Pharmacy paid-only behaviour remains unchanged.
+* Laboratory compatibility behaviour remains unchanged.
+* Triage and consultation readiness remain unchanged.
+* No unwired operation becomes wired.
+
+---
+
+# 25. Existing Legacy Overrides
+
+The materialised record may snapshot compatible visit-wide override context already recognised by the Phase 2 resolver.
+
+Capture only:
+
+```text
+override identifier
+override type
+override scope
+whether it was considered
+```
+
+Do not capture unrestricted override reasons.
+
+Do not broaden:
+
+* Department-scoped overrides
+* Service-scoped overrides
+* Invoice-item-scoped overrides
+* Previous-balance overrides
+* Financial-closure overrides
+
+Do not create a new override.
+
+---
+
+# 26. Resolution Versioning
+
+Add an explicit version identifier to materialised records.
+
+Example:
+
+```text
+payment_timing_v1
+```
+
+or a project-consistent alternative.
+
+The version should identify the policy-materialisation algorithm.
+
+Rules:
+
+* Use a stable machine identifier.
+* Do not use application build timestamps.
+* A future algorithm change should use a new version.
+* Refresh history should show version changes.
+* Do not dynamically generate versions per request.
+
+---
+
+# 27. Seeding and Existing Data
+
+Do not seed visit payment policies for production data through `DatabaseSeeder`.
+
+Use the backfill command for existing visits.
+
+Test factories may create materialised visit-policy records.
+
+Manual-test seeders may materialise policies only in dedicated testing datasets.
+
+Do not classify patients or create risk profiles during backfill.
+
+Do not create overrides during backfill.
+
+---
+
+# 28. Performance Requirements
+
+Normal clinical workflows must remain lightweight.
+
+## Visit creation
+
+Materialisation should use:
+
+* Already-loaded visit
+* Already-loaded patient where available
+* Cached payment-timing settings
+* A bounded active-risk-profile query
+* A bounded compatible-override query
+
+Avoid unnecessary invoice, receivable, payment, or balance queries.
+
+## Lists
+
+* Eager-load visit, patient, and relevant actors
+* Paginate
+* Avoid loading full history
+* Avoid repeated risk-profile lookups
+* Use indexed filters
+
+## Payment gates
+
+Payment-gate evaluation must not query `visit_payment_policies` in Phase 6.
 
 Add focused query assertions where stable.
 
 ---
 
-# 26. Failure Safety
+# 29. Failure Safety
 
-If financial-risk data cannot be loaded:
+If materialisation fails during visit creation:
 
-* Do not alter payment-gate behaviour.
-* Do not block clinical care.
+* Do not alter the payment-gate decision.
 * Do not silently classify the patient.
-* Show an authorised administrative error where appropriate.
+* Do not create partial history.
+* Roll back only according to the chosen visit-creation integration contract.
+* Emergency care must not be blocked because the observational record failed.
 * Log the technical failure through existing application logging.
+* Allow later repair through the backfill command.
 
-If expiry processing fails:
+If risk recommendation fails:
 
-* Do not partially transition a profile.
-* Roll back the transaction.
-* Leave payment behaviour unchanged.
+* Store or return a safe no-recommendation result.
+* Preserve the baseline typed policy.
+* Do not block the visit.
 
-If audit logging fails inside a mutation transaction, follow the project’s existing material-audit integrity convention.
+If history or required audit logging fails during an explicit committed refresh:
 
-Do not claim a mutation succeeded if required audit logging did not complete.
+* Follow existing material-audit transaction conventions.
+* Do not claim success for a partial mutation.
 
 ---
 
-# 27. Localisation
+# 30. Localisation
 
-Add full English and French localisation.
+Add complete English and French localisation.
 
-Suggested file:
+Suggested files:
 
 ```text
-lang/en/patient_financial_risk.php
-lang/fr/patient_financial_risk.php
+lang/en/visit_payment_policy.php
+lang/fr/visit_payment_policy.php
 ```
 
-Required concepts include:
+Required concepts:
 
 ```text
-Financial Risk
-Risk Level
-Normal
-Watchlist
-High Risk
-Blocked Credit
-Primary Reason
-Reason Details
-Credit Limit
-Effective Date
-Review Due
-Expiry Date
-Reference
-Active
-Under Review
-Suspended
-Cleared
-Expired
-Classify Patient
-Submit for Review
-Complete Review
-Suspend
-Reactivate
-Clear Restriction
-View History
-Review Overdue
-Expires Soon
-Financial review required
+Visit Payment Policy
+Observed Policy
+Recommended Policy
+Operational Legacy Gate
+Policy Source
+Resolution Reason
+Finance Review Required
+Risk Snapshot
+Snapshot Current
+Snapshot Stale
+Materialised At
+Last Refreshed
+Global Default Snapshot
+Visit-Type Policy Snapshot
+Emergency Protection
+Compatible Visit Override
+This policy is observational
+No recommendation
+Prepayment recommended
+Payment after services
+Running bill
+Visit policy history
+Materialised
+Refreshed
+Risk snapshot changed
+Recommendation changed
 ```
 
 Also localise:
 
-* Reason labels
-* Event labels
-* Validation messages
+* Worklist labels
+* Filters
 * Empty states
-* Success and failure messages
-* Report labels
-* Command-facing descriptions where project conventions require them
+* Permission-related error messages
+* Command descriptions where project conventions require them
+
+Machine codes and stored enum values remain untranslated.
 
 Maintain English/French parity.
 
 ---
 
-# 28. Tests
+# 31. Tests
 
 Do not run the full Laravel or Playwright suites during this phase.
 
 Add focused tests.
 
-## 28.1 Enum tests
+## 31.1 Migration and model tests
 
 Verify:
 
-* All required levels exist.
-* All required reasons exist.
-* All statuses exist.
-* Labels resolve through localisation.
-* No enum makes operational payment decisions.
-
-## 28.2 Migration and model tests
-
-Verify:
-
-* Profile can be created.
+* One policy record can be created per visit.
+* Duplicate visit records are prevented.
 * Enum casts work.
-* Monetary fields follow project conventions.
+* `resolved_policy` cannot remain `inherit`.
 * Relationships work.
-* Current-profile scope works.
-* Due-for-review scope works.
-* Expired scope works.
-* History is related correctly.
+* History relationships work.
+* Snapshot fields remain bounded.
+* Sensitive free-text risk details are not stored.
 
-## 28.3 Service tests
-
-Verify:
-
-* Authorised classification succeeds.
-* Only one active restrictive profile exists.
-* Update appends history.
-* Review transitions work.
-* Suspension works.
-* Reactivation works.
-* Clearance works.
-* Expiry works.
-* Invalid transitions fail.
-* Transactions prevent partial updates.
-* Concurrent classification does not create duplicate active profiles.
-
-## 28.4 Permission and confidentiality tests
+## 31.2 Recommendation tests
 
 Verify:
 
-* Authorised user can view the profile.
-* Unauthorised user cannot view the profile.
-* Unauthorised user cannot infer the profile from JSON or page source.
-* Manage, review, clear, history, and report permissions are enforced separately.
-* Clinical users do not receive detailed reason data.
-* Patient privacy masking remains effective.
+* No active profile produces no recommendation.
+* Normal produces no recommendation.
+* Watchlist requires finance review without forcing a policy.
+* High risk recommends `pay_before_service`.
+* Blocked credit recommends `pay_before_service`.
+* Suspended, cleared, and expired profiles do not produce active recommendations.
+* Under-review status requires finance review.
+* All risk rules remain unapproved for operational resolution.
 
-## 28.5 UI tests
-
-Verify:
-
-* Current profile is displayed correctly.
-* Empty state displays for patients without a profile.
-* Forms show correct fields.
-* State-dependent actions are available only when valid.
-* History is human-readable.
-* Filters and pagination work.
-* Wired payment-gate settings remain unrelated.
-
-## 28.6 Audit tests
+## 31.3 Materialisation tests
 
 Verify:
 
-* Creation logs one activity event.
-* Update logs one event.
-* Review logs one event.
-* Suspension logs one event.
-* Reactivation logs one event.
-* Clearance logs one event.
-* Expiry logs one event.
-* Failed validation creates no event.
-* Read-only viewing creates no activity log.
-* History and ActivityLog do not conflict or duplicate incorrectly.
+* Outpatient materialises baseline policy correctly.
+* Inpatient materialises running-bill baseline.
+* Emergency materialises emergency policy correctly.
+* Visit-type inheritance resolves to global default.
+* Compatible visit-wide override context is snapshotted correctly.
+* Narrow overrides are not broadened.
+* Risk recommendation remains separate from resolved policy.
+* Materialisation is idempotent.
+* Material changes append history.
+* Unchanged materialisation does not duplicate history or logs.
+* Resolution version is stored.
 
-## 28.7 Expiry command tests
+## 31.4 Visit-creation integration tests
 
 Verify:
 
-* Due profiles expire.
-* Future profiles remain unchanged.
-* Cleared profiles remain unchanged.
+* Direct outpatient visit creation materialises a policy.
+* Appointment-generated visit materialises a policy.
+* Emergency visit creation materialises a policy.
+* Admission/inpatient visit creation materialises a policy.
+* Failed observational materialisation follows the documented safety behaviour.
+* No duplicate policy is created through repeated creation hooks.
+
+## 31.5 Snapshot tests
+
+Verify:
+
+* Risk profile ID, level, status, reason code, and observed timestamp are captured.
+* Free-text reason details are not captured.
+* Later risk-profile updates do not silently change the visit snapshot.
+* Stale snapshots are detected.
+* Explicit refresh updates the snapshot and appends history.
+* Refresh does not modify the patient’s risk profile.
+
+## 31.6 Permission and confidentiality tests
+
+Verify:
+
+* Authorised finance users can view the visit policy.
+* Unauthorised users do not receive it in page source, JSON, or props.
+* History requires its own permission.
+* Report requires report permission.
+* Refresh requires refresh permission.
+* Clinical users do not receive detailed risk snapshots.
+* Patient masking remains intact.
+
+## 31.7 Backfill tests
+
+Verify:
+
+* Dry-run performs no writes.
+* Commit creates missing records.
+* Existing records are preserved in missing-only mode.
+* Limit and filters work.
 * Repeated execution is idempotent.
-* History is added once.
-* Activity log is added once.
-* Payment gates remain unchanged.
+* No invoice, payment, override, or visit-state mutation occurs.
+* JSON output is valid.
 
-## 28.8 Diagnostic command tests
+## 31.8 Audit command tests
 
 Verify:
 
-* Duplicate-active-profile anomalies are reported.
-* Expired active records are reported.
-* Invalid date ordering is reported.
-* Filters work.
-* JSON output is valid.
+* Missing records are detected.
+* Stale snapshots are detected.
+* Invalid recommendation/source combinations are detected.
+* Resolved `inherit` is detected.
+* Sensitive data is not emitted.
 * Command performs no writes.
-* Findings do not create a failure exit code.
+* Findings do not fail the exit code.
 
-## 28.9 Non-enforcement regression tests
+## 31.9 Activity and history tests
+
+Verify:
+
+* Initial materialisation creates one history entry.
+* Initial materialisation creates one bounded activity event where required.
+* Refresh creates one history entry.
+* Unchanged refresh creates neither history nor activity log.
+* Reads create no logs.
+* History remains immutable.
+
+## 31.10 Non-enforcement regression tests
 
 Explicitly verify:
 
-* Creating a high-risk profile does not change `VisitPaymentTimingResolver`.
-* Creating a blocked-credit profile does not change `BillingPolicyService`.
-* Creating a risk profile does not change `PaymentGateService`.
-* Existing triage payment outcomes remain unchanged.
-* Existing consultation readiness remains unchanged.
-* Existing laboratory behaviour remains unchanged.
-* Existing pharmacy behaviour remains unchanged.
-* Existing previous-balance behaviour remains unchanged.
-* No visit policy or override is created.
+* High-risk recommendation does not change `VisitPaymentTimingResolver`.
+* Blocked-credit recommendation does not change `BillingPolicyService`.
+* Materialised policy does not change `PaymentGateService`.
+* Materialised `pay_after_all_services` does not release pharmacy dispensing.
+* Materialised `pay_before_service` does not introduce a new gate.
+* Triage outcomes remain unchanged.
+* Consultation readiness remains unchanged.
+* Laboratory outcomes remain unchanged.
+* Pharmacy outcomes remain unchanged.
+* Previous-balance outcomes remain unchanged.
+* Emergency and inpatient outcomes remain unchanged.
+* No payment-gate operation eligibility changes.
+* No visit billing override is created.
 
-## 28.10 Localisation tests
+## 31.11 Localisation tests
 
 Verify English/French parity.
 
 ---
 
-# 29. Targeted Verification
+# 32. Targeted Verification
 
 Run focused checks only.
 
@@ -1351,20 +1478,21 @@ php artisan config:clear
 php artisan view:clear
 php artisan view:cache
 
-php artisan test --filter=PatientFinancialRiskEnum
-php artisan test --filter=PatientFinancialRiskModel
-php artisan test --filter=PatientFinancialRiskService
-php artisan test --filter=PatientFinancialRiskPermission
-php artisan test --filter=PatientFinancialRiskWorkflow
-php artisan test --filter=PatientFinancialRiskAudit
-php artisan test --filter=PatientFinancialRiskExpiry
-php artisan test --filter=PatientFinancialRiskCommand
-php artisan test --filter=PatientFinancialRiskNonEnforcement
+php artisan test --filter=VisitPaymentPolicyModel
+php artisan test --filter=PatientRiskPaymentRecommendation
+php artisan test --filter=VisitPaymentPolicyMaterialization
+php artisan test --filter=VisitPaymentPolicyCreation
+php artisan test --filter=VisitPaymentPolicySnapshot
+php artisan test --filter=VisitPaymentPolicyPermission
+php artisan test --filter=VisitPaymentPolicyBackfill
+php artisan test --filter=VisitPaymentPolicyAudit
+php artisan test --filter=VisitPaymentPolicyNonEnforcement
 ```
 
 Rerun existing focused regressions:
 
 ```bash
+php artisan test --filter=PatientFinancialRisk
 php artisan test --filter=PaymentTiming
 php artisan test --filter=PaymentGateService
 php artisan test --filter=BillingPaymentPolicy
@@ -1375,9 +1503,11 @@ php artisan test --filter=LaboratoryPaymentGate
 php artisan test --filter=Pharmacy
 ```
 
-Run:
+Run diagnostics:
 
 ```bash
+php artisan billing:visit-payment-policy-backfill --active-only --dry-run
+php artisan billing:visit-payment-policy-audit
 php artisan billing:financial-risk-audit
 php artisan billing:payment-timing-audit --limit=25
 php artisan billing:payment-gate-coverage
@@ -1401,126 +1531,137 @@ Do not run the full Playwright suite.
 
 ---
 
-# 30. Documentation
+# 33. Documentation
 
 Create:
 
 ```text
-docs/billing/PAYMENT_TIMING_POLICY_PHASE_5_REPORT.md
+docs/billing/PAYMENT_TIMING_POLICY_PHASE_6_REPORT.md
 ```
 
 The report must include:
 
-1. Existing patient, billing, privacy, and audit architecture reviewed
-2. Data-model decision
-3. Files created
-4. Files modified
-5. Enum vocabulary
-6. Active-profile uniqueness strategy
-7. State-transition rules
-8. Review and expiry workflow
-9. Permissions and initial role assignment
-10. Privacy and restricted-visibility behaviour
-11. Patient profile UI
-12. Financial-risk worklist
-13. History design
-14. Activity-log behaviour
-15. Balance-context integration
-16. Reporting and export scope
-17. Expiry command and scheduler behaviour
-18. Diagnostic command results
-19. Seeder and existing-data decisions
-20. Performance and query impact
+1. Existing visit-creation architecture audited
+2. Materialisation integration point
+3. Data-model decision
+4. Files created
+5. Files modified
+6. Visit-policy record fields
+7. History design
+8. Risk recommendation rules
+9. Risk-rule approval configuration
+10. Baseline versus recommendation separation
+11. Risk snapshot design
+12. Snapshot staleness rules
+13. Materialisation and refresh behaviour
+14. Visit-creation coverage
+15. Existing-visit backfill behaviour
+16. Permissions and restricted visibility
+17. Visit-level UI and worklist
+18. Activity-log behaviour
+19. Diagnostic command results
+20. Query and performance impact
 21. Focused tests and results
-22. Confirmation that payment gates and visit policies remain unchanged
-23. Deferred work for Phase 6
+22. Confirmation that legacy payment decisions remain authoritative
+23. Confirmation that risk recommendations remain non-operational
+24. Deferred requirements for Phase 7
 
-Do not claim tests passed unless they were executed successfully.
+Do not claim tests passed unless they were actually executed.
 
 ---
 
-# 31. Guardrails
+# 34. Guardrails
 
 Do not:
 
-* Modify `VisitPaymentTimingResolver` to inspect risk profiles
-* Modify typed payment precedence
-* Force `pay_before_service`
-* Add per-visit payment-policy persistence
-* Add visit risk snapshots
-* Add per-visit payment overrides
-* Add risk override approvals
-* Modify operation eligibility
-* Add typed enforcement mode
-* Wire unwired payment-gate operations
+* Make risk profiles operational in payment resolution
+* Add patient-risk precedence to `VisitPaymentTimingResolver`
+* Replace the baseline resolved policy with the recommendation
+* Create a typed enforcement mode
+* Modify `BillingPolicyService` outcomes
+* Modify `PaymentGateService` outcomes
+* Wire any currently unwired payment operation
+* Change operation eligibility
+* Add manual per-visit policy selection
+* Add per-visit override requests
+* Add approval workflows
+* Add self-approval
+* Force a risk patient to prepay
+* Allow a patient to pay after services through this record
+* Create visit billing overrides
+* Broaden existing override scopes
 * Change laboratory compatibility
-* Change pharmacy compatibility
+* Change pharmacy paid-only behaviour
 * Change emergency behaviour
 * Change inpatient behaviour
 * Change previous-balance policy
-* Automatically classify patients from debt
-* Automatically clear profiles after payment
-* Automatically create profiles from failed payment
 * Change invoice calculations
-* Change receivable calculations
-* Change payment allocation
+* Change receivables
+* Change allocations
 * Change GL posting
 * Change visit completion
 * Change discharge
 * Change financial closure
-* Expose detailed risk information to ordinary clinical users
-* Create activity logs for profile reads
+* Automatically refresh old visit snapshots
+* Store free-text financial-risk details in visit snapshots
+* Expose risk snapshots to ordinary clinical users
 * Run broad test suites
 
 ---
 
-# 32. Acceptance Criteria
+# 35. Acceptance Criteria
 
-Phase 5 is complete only when:
+Phase 6 is complete only when:
 
-* Financial-risk level, reason, and status enums exist.
-* A dedicated patient financial-risk data model exists.
-* Financial-risk history is immutable.
-* Only one active restrictive profile can exist per patient.
-* Classification is transaction-safe.
-* Review, suspension, reactivation, clearance, and expiry workflows exist.
-* Invalid state transitions are rejected.
-* Review and expiry dates are supported.
-* Due expiry can be processed idempotently.
-* Permissions are granular and backend-enforced.
-* Sensitive risk data is excluded from unauthorised responses.
-* Patient privacy and masking remain intact.
-* Authorised users have a usable patient-profile interface.
-* Authorised users have a financial-risk worklist.
-* History is human-readable and permission-controlled.
-* Material mutations create activity logs.
-* Routine reads do not create activity logs.
-* Existing balance services may provide context but do not classify patients.
-* No existing patient is automatically classified.
-* No visit policy is created or modified.
-* No payment gate reads financial-risk profiles.
-* No production payment outcome changes.
+* A dedicated visit payment-policy record exists.
+* Each visit can have only one current materialised record.
+* Visit payment-policy history is append-only.
+* The baseline typed policy is stored separately from the risk recommendation.
+* Final stored baseline policies never contain `inherit`.
+* Risk recommendations remain non-operational.
+* High-risk and blocked-credit profiles may recommend prepayment without enforcing it.
+* Watchlist profiles may require finance review without enforcing a policy.
+* Risk rules remain unapproved for operational resolution.
+* New visits materialise policy context through a central creation path.
+* Existing visits can be backfilled safely.
+* Backfill is dry-run capable and idempotent.
+* Risk snapshots are point-in-time and confidentiality-safe.
+* Existing visit snapshots are not silently rewritten.
+* Snapshot staleness can be diagnosed.
+* Explicit refresh appends history.
+* Material mutations create bounded audit records.
+* Routine reads create no activity logs.
+* Permissions and backend privacy filtering are enforced.
+* Finance users have a restricted visit-policy view and worklist.
+* No approval or override action exists yet.
+* `VisitPaymentTimingResolver` remains risk-unaware.
+* `BillingPolicyService` remains unchanged operationally.
+* `PaymentGateService` remains unchanged operationally.
+* No new payment blocking or release behaviour is introduced.
+* Existing laboratory, pharmacy, emergency, inpatient, triage, consultation, and previous-balance behaviour remains unchanged.
 * English/French localisation is complete.
 * Focused tests pass.
-* The Phase 5 report accurately documents implementation and verification.
+* The Phase 6 report accurately documents implementation and verification.
 
-Proceed with **Payment Timing Policy Phase 5 only**.
+Proceed with **Payment Timing Policy Phase 6 only**.
 
 After implementation, provide:
 
 1. A concise implementation summary
 2. Files created and modified
-3. Data-model and active-profile strategy
-4. Risk levels, reasons, and statuses
-5. State-transition workflow
-6. Permission and privacy design
-7. UI and worklist details
-8. Audit and history behaviour
-9. Expiry and diagnostic command results
-10. Performance and query impact
-11. Focused test results
-12. Confirmation that payment behaviour remains unchanged
-13. The Phase 5 report path
-14. Recommended requirements for Phase 6
+3. Visit-policy data model and history design
+4. Materialisation integration point
+5. Risk recommendation rules
+6. Baseline-versus-recommendation separation
+7. Snapshot and staleness behaviour
+8. Existing-visit backfill results
+9. Permission and privacy behaviour
+10. UI and worklist details
+11. Diagnostic command results
+12. Query and performance impact
+13. Focused test results
+14. Confirmation that payment behaviour remains unchanged
+15. The Phase 6 report path
+16. Recommended requirements for Phase 7
 
-Then stop after Phase 5.
+Then stop after Phase 6.

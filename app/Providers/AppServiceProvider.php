@@ -113,6 +113,8 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\Invoice::observe(\App\Observers\InvoiceObserver::class);
         \App\Models\Payment::observe(\App\Observers\PaymentObserver::class);
         \App\Models\User::observe(\App\Observers\UserObserver::class);
+        // Payment Timing Policy Phase 6 — observational visit-payment-policy materialisation.
+        \App\Models\Visit::observe(\App\Observers\VisitObserver::class);
 
         // ---- Module feature-flag Blade directives ----
         // @module('pharmacy') ... @endmodule  → renders only when module enabled

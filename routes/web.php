@@ -42,6 +42,7 @@ use App\Http\Controllers\Admin\Billing\CashierShiftController;
 use App\Http\Controllers\Admin\Billing\ClaimController;
 use App\Http\Controllers\Admin\Billing\FinancialEntryController;
 use App\Http\Controllers\Admin\Billing\FinancialRiskController;
+use App\Http\Controllers\Admin\Billing\VisitPaymentPolicyController;
 use App\Http\Controllers\Admin\BloodBank\BloodBankDashboardController;
 use App\Http\Controllers\Admin\BloodBank\BloodBankReportController;
 use App\Http\Controllers\Admin\BloodBank\BloodCrossmatchController;
@@ -1533,6 +1534,14 @@ Route::middleware('auth')->group(function () {
                 Route::get('/', [FinancialRiskController::class, 'index'])->name('index')->middleware('can:patients.financial_risk.view');
                 Route::get('report', [FinancialRiskController::class, 'report'])->name('report')->middleware('can:patients.financial_risk.report');
                 Route::get('export', [FinancialRiskController::class, 'export'])->name('export')->middleware('can:patients.financial_risk.report');
+            });
+
+            // Visit payment-policy worklist, detail, history & controlled refresh (Payment Timing Policy Phase 6)
+            Route::prefix('visit-payment-policies')->name('visit-payment-policies.')->group(function () {
+                Route::get('/', [VisitPaymentPolicyController::class, 'index'])->name('index')->middleware('can:visits.payment_policy.view');
+                Route::get('report', [VisitPaymentPolicyController::class, 'report'])->name('report')->middleware('can:visits.payment_policy.report');
+                Route::get('visit/{visit}', [VisitPaymentPolicyController::class, 'show'])->name('show')->middleware('can:visits.payment_policy.view');
+                Route::post('visit/{visit}/refresh', [VisitPaymentPolicyController::class, 'refresh'])->name('refresh')->middleware('can:visits.payment_policy.refresh');
             });
 
             // Walk-in counter sale (drugs + investigations, no visit)

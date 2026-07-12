@@ -275,6 +275,16 @@ class Visit extends Model
         return $this->hasMany(VisitBillingOverride::class);
     }
 
+    public function paymentPolicy()
+    {
+        return $this->hasOne(VisitPaymentPolicy::class);
+    }
+
+    public function paymentPolicyHistory()
+    {
+        return $this->hasMany(VisitPaymentPolicyHistory::class)->latest('performed_at')->latest('id');
+    }
+
     public function emergencyCase()
     {
         return $this->hasOne(EmergencyCase::class);
