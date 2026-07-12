@@ -112,6 +112,8 @@ class AppServiceProvider extends ServiceProvider
         // Module-tagged log observers (extend Spatie LogsActivity with severity / context).
         \App\Models\Invoice::observe(\App\Observers\InvoiceObserver::class);
         \App\Models\Payment::observe(\App\Observers\PaymentObserver::class);
+        \App\Models\InvoiceItem::observe(\App\Observers\InvoiceItemObserver::class);
+        \App\Models\InvoiceReceivable::observe(\App\Observers\InvoiceReceivableObserver::class);
         \App\Models\User::observe(\App\Observers\UserObserver::class);
         // Payment Timing Policy Phase 6 — observational visit-payment-policy materialisation.
         \App\Models\Visit::observe(\App\Observers\VisitObserver::class);

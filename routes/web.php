@@ -45,6 +45,7 @@ use App\Http\Controllers\Admin\Billing\FinancialRiskController;
 use App\Http\Controllers\Admin\Billing\PaymentTimingCutoverController;
 use App\Http\Controllers\Admin\Billing\VisitPaymentArrangementController;
 use App\Http\Controllers\Admin\Billing\VisitPaymentPolicyController;
+use App\Http\Controllers\Admin\Billing\VisitFinancialClearanceController;
 use App\Http\Controllers\Admin\BloodBank\BloodBankDashboardController;
 use App\Http\Controllers\Admin\BloodBank\BloodBankReportController;
 use App\Http\Controllers\Admin\BloodBank\BloodCrossmatchController;
@@ -1566,6 +1567,24 @@ Route::middleware('auth')->group(function () {
                 Route::put('master', [PaymentTimingCutoverController::class, 'updateMaster'])->name('master')->middleware('can:billing.payment_timing.cutover.manage');
                 Route::put('operation', [PaymentTimingCutoverController::class, 'updateOperation'])->name('operation')->middleware('can:billing.payment_timing.cutover.manage');
                 Route::post('rollback', [PaymentTimingCutoverController::class, 'rollback'])->name('rollback')->middleware('can:billing.payment_timing.cutover.rollback');
+            });
+
+            Route::prefix('visit-financial-clearances')->name('visit-financial-clearances.')->group(function () {
+                Route::get('/', [VisitFinancialClearanceController::class, 'index'])->name('index')->middleware('can:visits.financial_clearance.view');
+                Route::get('report', [VisitFinancialClearanceController::class, 'report'])->name('report')->middleware('can:visits.financial_clearance.report');
+                Route::get('export', [VisitFinancialClearanceController::class, 'export'])->name('export')->middleware('can:visits.financial_clearance.report');
+                Route::get('settings', [VisitFinancialClearanceController::class, 'settings'])->name('settings')->middleware('can:billing.financial_clearance.settings.view');
+                Route::put('settings', [VisitFinancialClearanceController::class, 'updateSettings'])->name('settings.update')->middleware('can:billing.financial_clearance.settings.manage');
+                Route::post('settings/rollback', [VisitFinancialClearanceController::class, 'rollback'])->name('settings.rollback')->middleware('can:billing.financial_clearance.settings.rollback');
+                Route::get('visit/{visit}', [VisitFinancialClearanceController::class, 'show'])->name('show')->middleware('can:visits.financial_clearance.view');
+                Route::post('visit/{visit}/assess', [VisitFinancialClearanceController::class, 'assess'])->name('assess')->middleware('can:visits.financial_clearance.assess');
+                Route::post('visit/{visit}/close', [VisitFinancialClearanceController::class, 'close'])->name('close')->middleware('can:visits.financial_clearance.close');
+                Route::post('visit/{visit}/reopen', [VisitFinancialClearanceController::class, 'reopen'])->name('reopen')->middleware('can:visits.financial_clearance.close');
+                Route::post('visit/{visit}/exceptions', [VisitFinancialClearanceController::class, 'requestException'])->name('exceptions.request')->middleware('can:visits.financial_clearance_exception.request');
+                Route::post('exceptions/{exception}/approve', [VisitFinancialClearanceController::class, 'approve'])->name('exceptions.approve')->middleware('can:visits.financial_clearance_exception.approve');
+                Route::post('exceptions/{exception}/reject', [VisitFinancialClearanceController::class, 'reject'])->name('exceptions.reject')->middleware('can:visits.financial_clearance_exception.reject');
+                Route::post('exceptions/{exception}/withdraw', [VisitFinancialClearanceController::class, 'withdraw'])->name('exceptions.withdraw')->middleware('can:visits.financial_clearance_exception.withdraw');
+                Route::post('exceptions/{exception}/revoke', [VisitFinancialClearanceController::class, 'revoke'])->name('exceptions.revoke')->middleware('can:visits.financial_clearance_exception.revoke');
             });
 
             // Walk-in counter sale (drugs + investigations, no visit)

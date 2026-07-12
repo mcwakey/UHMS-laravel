@@ -180,6 +180,21 @@ class Visit extends Model
         return $this->hasMany(Invoice::class);
     }
 
+    public function financialClearance()
+    {
+        return $this->hasOne(VisitFinancialClearance::class);
+    }
+
+    public function financialClearanceHistory()
+    {
+        return $this->hasMany(VisitFinancialClearanceHistory::class);
+    }
+
+    public function financialClearanceExceptions()
+    {
+        return $this->hasMany(VisitFinancialClearanceException::class);
+    }
+
     public function serviceRenderings()
     {
         return $this->hasMany(ServiceRendering::class);

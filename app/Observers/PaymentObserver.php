@@ -9,6 +9,7 @@ use App\Services\ActivityLogService;
 
 class PaymentObserver
 {
+    public $afterCommit = true;
     public function __construct(protected ActivityLogService $logger) {}
 
     public function created(Payment $payment): void
@@ -23,6 +24,12 @@ class PaymentObserver
                 'method' => $payment->payment_method,
             ],
         ], $payment, 'Payment recorded');
+        $this->markStale($payment, 'payment_recorded');
+    }
+
+    public function updated(Payment $payment): void
+    {
+        $this->markStale($payment, 'payment_updated');
     }
 
     public function deleted(Payment $payment): void
@@ -37,5 +44,11 @@ class PaymentObserver
                 'amount' => $payment->amount,
             ],
         ], $payment, 'Payment refunded/deleted');
+        $this->markStale($payment, 'payment_deleted');
+    }
+
+    private function markStale(Payment $payment, string $reason): void
+    {
+        try { if ($payment->invoice?->visit) app(\App\Services\Billing\VisitFinancialClearanceService::class)->markStale($payment->invoice->visit, $reason); } catch (\Throwable $e) { report($e); }
     }
 }

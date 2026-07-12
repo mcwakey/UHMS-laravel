@@ -9,6 +9,7 @@ use App\Services\ActivityLogService;
 
 class InvoiceObserver
 {
+    public $afterCommit = true;
     public function __construct(protected ActivityLogService $logger) {}
 
     public function created(Invoice $invoice): void
@@ -23,6 +24,7 @@ class InvoiceObserver
                 'status' => (string) ($invoice->status?->value ?? $invoice->status),
             ],
         ], $invoice, 'Invoice generated');
+        $this->markStale($invoice, 'invoice_created');
     }
 
     public function updated(Invoice $invoice): void
@@ -46,6 +48,7 @@ class InvoiceObserver
                 'metadata' => ['from' => $from, 'to' => $to, 'invoice_number' => $invoice->invoice_number],
             ], $invoice, "Invoice status: {$from} → {$to}");
         }
+        $this->markStale($invoice, 'invoice_updated');
     }
 
     public function deleted(Invoice $invoice): void
@@ -55,5 +58,11 @@ class InvoiceObserver
             'patient_id' => $invoice->patient_id,
             'severity' => LogSeverity::WARNING,
         ]);
+        $this->markStale($invoice, 'invoice_deleted');
+    }
+
+    private function markStale(Invoice $invoice, string $reason): void
+    {
+        try { if ($invoice->visit) app(\App\Services\Billing\VisitFinancialClearanceService::class)->markStale($invoice->visit, $reason); } catch (\Throwable $e) { report($e); }
     }
 }

@@ -28,6 +28,11 @@ Schedule::command('billing:visit-payment-arrangement-expire --commit')
     ->withoutOverlapping()
     ->onOneServer();
 
+Schedule::command('billing:visit-financial-clearance-exception-expire --commit')
+    ->dailyAt('01:25')
+    ->withoutOverlapping()
+    ->onOneServer();
+
 // Quarterly attestation export (Jan / Apr / Jul / Oct, 03:00).
 Schedule::command('permissions:export')
     ->cron('0 3 1 1,4,7,10 *')
