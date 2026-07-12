@@ -302,6 +302,30 @@ class Patient extends Model
         return $this->hasOne(Visit::class)->latestOfMany('visit_date');
     }
 
+    public function financialRiskProfiles()
+    {
+        return $this->hasMany(PatientFinancialRiskProfile::class)->latest('effective_from')->latest('id');
+    }
+
+    /**
+     * The single current profile occupying the active slot (active / under_review),
+     * if any. Sensitive: only load when the viewer is authorised.
+     */
+    public function activeFinancialRiskProfile()
+    {
+        return $this->hasOne(PatientFinancialRiskProfile::class)
+            ->whereIn('status', [
+                \App\Enums\PatientFinancialRiskStatus::ACTIVE->value,
+                \App\Enums\PatientFinancialRiskStatus::UNDER_REVIEW->value,
+            ])
+            ->latestOfMany();
+    }
+
+    public function financialRiskHistory()
+    {
+        return $this->hasMany(PatientFinancialRiskHistory::class)->latest('performed_at')->latest('id');
+    }
+
     public function markedDeceasedBy()
     {
         return $this->belongsTo(User::class, 'marked_deceased_by');

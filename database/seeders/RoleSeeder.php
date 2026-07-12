@@ -209,6 +209,13 @@ class RoleSeeder extends Seeder
             'billing.refund.issue',
             'billing.refund.approve',
             'billing.refund.reverse',
+            // Patient financial-risk profiles (Payment Timing Policy Phase 5) — sensitive administrative data
+            'patients.financial_risk.view',
+            'patients.financial_risk.manage',
+            'patients.financial_risk.review',
+            'patients.financial_risk.clear',
+            'patients.financial_risk.history',
+            'patients.financial_risk.report',
             'sponsors.manage',
             'sponsors.view',
             'sponsors.create',
@@ -1533,6 +1540,9 @@ class RoleSeeder extends Seeder
             'receivables.view', 'receivables.allocate', 'receivables.reallocate', 'receivables.payment.record', 'receivables.write_off',
             'billing.previous_balance.view', 'billing.previous_balance.amount.view', 'billing.previous_balance.flag.view',
             'billing.previous_balance.override',
+            // Patient financial-risk profiles (Phase 5) — finance staff may classify, review and report
+            'patients.financial_risk.view', 'patients.financial_risk.manage', 'patients.financial_risk.review',
+            'patients.financial_risk.history', 'patients.financial_risk.report',
             'billing.payment.allocate_cross_visit', 'billing.payment.allocate_manual',
             'billing.patient_statement.view', 'billing.patient_statement.print', 'billing.patient_statement.export',
             'admission.discharge.readiness.view', 'admission.discharge.clearance.view',
@@ -1601,6 +1611,8 @@ class RoleSeeder extends Seeder
         $financeManager = Role::firstOrCreate(['name' => 'Finance Manager']);
         $financeManager->syncPermissions(
             $accountant->permissions->pluck('name')->merge([
+                // Finance Manager may also clear financial-risk restrictions (Phase 5)
+                'patients.financial_risk.clear',
                 'accounting.failed_postings.resolve',
                 'accounting.failed_postings.waive',
                 'accounting.subledger_reconciliation.approve',

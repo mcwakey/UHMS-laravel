@@ -41,6 +41,7 @@ use App\Http\Controllers\Admin\Billing\AccountCategoryController;
 use App\Http\Controllers\Admin\Billing\CashierShiftController;
 use App\Http\Controllers\Admin\Billing\ClaimController;
 use App\Http\Controllers\Admin\Billing\FinancialEntryController;
+use App\Http\Controllers\Admin\Billing\FinancialRiskController;
 use App\Http\Controllers\Admin\BloodBank\BloodBankDashboardController;
 use App\Http\Controllers\Admin\BloodBank\BloodBankReportController;
 use App\Http\Controllers\Admin\BloodBank\BloodCrossmatchController;
@@ -132,6 +133,7 @@ use App\Http\Controllers\Admin\Maternity\PostnatalCaseController;
 use App\Http\Controllers\Admin\Maternity\PregnancyProfileController;
 use App\Http\Controllers\Admin\Patients\PatientComplaintController;
 use App\Http\Controllers\Admin\Patients\PatientController;
+use App\Http\Controllers\Admin\Patients\PatientFinancialRiskController;
 use App\Http\Controllers\Admin\Patients\PatientInsuranceController;
 use App\Http\Controllers\Admin\Patients\PatientMergeController;
 use App\Http\Controllers\Admin\Patients\PatientPrivacyController;
@@ -445,6 +447,17 @@ Route::middleware('auth')->group(function () {
             Route::put('patients/{patient}', [PatientController::class, 'update'])->name('patients.update')->middleware('can:patients.edit');
             Route::patch('patients/{patient}/toggle-status', [PatientController::class, 'toggleStatus'])->name('patients.toggle-status')->middleware('can:patients.edit');
             Route::patch('patients/{patient}/mark-deceased', [PatientController::class, 'markDeceased'])->name('patients.mark-deceased')->middleware('can:patients.mark_deceased');
+
+            // Patient Financial-Risk profiles (Payment Timing Policy Phase 5) — sensitive administrative data
+            Route::prefix('patients/{patient}/financial-risk')->name('patients.financial-risk.')->group(function () {
+                Route::post('/', [PatientFinancialRiskController::class, 'store'])->name('store')->middleware('can:patients.financial_risk.manage');
+                Route::put('{profile}', [PatientFinancialRiskController::class, 'update'])->name('update')->middleware('can:patients.financial_risk.manage');
+                Route::post('{profile}/submit-review', [PatientFinancialRiskController::class, 'submitForReview'])->name('submit-review')->middleware('can:patients.financial_risk.review');
+                Route::post('{profile}/complete-review', [PatientFinancialRiskController::class, 'completeReview'])->name('complete-review')->middleware('can:patients.financial_risk.review');
+                Route::post('{profile}/suspend', [PatientFinancialRiskController::class, 'suspend'])->name('suspend')->middleware('can:patients.financial_risk.review');
+                Route::post('{profile}/reactivate', [PatientFinancialRiskController::class, 'reactivate'])->name('reactivate')->middleware('can:patients.financial_risk.review');
+                Route::post('{profile}/clear', [PatientFinancialRiskController::class, 'clear'])->name('clear')->middleware('can:patients.financial_risk.clear');
+            });
 
             // Patient Insurance Management
             Route::middleware(['module:insurance', 'can:patients.edit'])->group(function () {
@@ -1514,6 +1527,13 @@ Route::middleware('auth')->group(function () {
             // Billing dashboard
             Route::get('dashboard', [BillingReportController::class, 'dashboard'])
                 ->name('dashboard')->middleware('can:invoices.view');
+
+            // Patient financial-risk worklist & report (Payment Timing Policy Phase 5)
+            Route::prefix('financial-risk')->name('financial-risk.')->group(function () {
+                Route::get('/', [FinancialRiskController::class, 'index'])->name('index')->middleware('can:patients.financial_risk.view');
+                Route::get('report', [FinancialRiskController::class, 'report'])->name('report')->middleware('can:patients.financial_risk.report');
+                Route::get('export', [FinancialRiskController::class, 'export'])->name('export')->middleware('can:patients.financial_risk.report');
+            });
 
             // Walk-in counter sale (drugs + investigations, no visit)
             Route::middleware('can:invoices.create')->group(function () {

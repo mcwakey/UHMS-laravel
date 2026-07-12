@@ -238,7 +238,20 @@ class PatientController extends Controller
             ->latest('expires_at')
             ->first();
 
-        return view('patients.show', compact('patient', 'insuranceProviders', 'upcomingVisits', 'upcomingAppointments', 'activityLogs', 'activeBreakGlass'));
+        // Financial risk (Payment Timing Policy Phase 5) — sensitive administrative
+        // data. Loaded ONLY when the viewer is authorised, so it never reaches the
+        // page/props for anyone else. Not a payment decision.
+        $financialRisk = null;
+        $financialRiskHistory = collect();
+        if ($request->user()?->can('patients.financial_risk.view')) {
+            $financialRisk = app(\App\Services\Billing\PatientFinancialRiskService::class)->currentFor($patient);
+            $financialRisk?->load(['setter', 'reviewer', 'suspender', 'clearer']);
+            if ($request->user()->can('patients.financial_risk.history')) {
+                $financialRiskHistory = $patient->financialRiskHistory()->with('performer')->take(50)->get();
+            }
+        }
+
+        return view('patients.show', compact('patient', 'insuranceProviders', 'upcomingVisits', 'upcomingAppointments', 'activityLogs', 'activeBreakGlass', 'financialRisk', 'financialRiskHistory'));
     }
 
     public function edit(Patient $patient)

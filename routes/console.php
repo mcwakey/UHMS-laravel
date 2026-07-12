@@ -14,6 +14,13 @@ Schedule::command('permissions:audit --json')
     ->withoutOverlapping()
     ->onOneServer();
 
+// Payment Timing Policy Phase 5 — expire due patient financial-risk profiles.
+// Idempotent and bounded; overlap-protected. Changes no payment gate or visit.
+Schedule::command('billing:financial-risk-expire')
+    ->dailyAt('01:15')
+    ->withoutOverlapping()
+    ->onOneServer();
+
 // Quarterly attestation export (Jan / Apr / Jul / Oct, 03:00).
 Schedule::command('permissions:export')
     ->cron('0 3 1 1,4,7,10 *')

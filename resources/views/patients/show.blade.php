@@ -417,6 +417,13 @@
     <li class="nav-item">
         <a href="#billing" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-receipt me-1"></i>{{ __('patients.tab_billing') }} <span class="badge bg-warning text-dark ms-1">{{ $patient->visits->flatMap(fn($v) => $v->invoices)->count() }}</span></a>
     </li>
+    @can('patients.financial_risk.view')
+    <li class="nav-item">
+        <a href="#financial-risk" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-alert-triangle me-1"></i>{{ __('patient_financial_risk.title') }}
+            @if($financialRisk && $financialRisk->isRestrictive())<span class="badge bg-{{ $financialRisk->risk_level->color() }} ms-1">{{ $financialRisk->risk_level->label() }}</span>@endif
+        </a>
+    </li>
+    @endcan
     <li class="nav-item">
         <a href="#registration-info" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-info-circle me-1"></i>{{ __('patients.tab_registration_info') }}</a>
     </li>
@@ -858,6 +865,13 @@
             </div>
         </div>
     </div>
+
+    @can('patients.financial_risk.view')
+    <!-- Financial Risk Tab (Payment Timing Policy Phase 5) -->
+    <div class="tab-pane" id="financial-risk">
+        @include('patients.partials._financial-risk')
+    </div>
+    @endcan
 
     <!-- Registration Info Tab -->
     <div class="tab-pane" id="registration-info">

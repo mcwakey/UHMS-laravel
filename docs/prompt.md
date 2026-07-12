@@ -1,56 +1,56 @@
-# UHMS Implementation Prompt — Payment Timing Policy Phase 4
+# UHMS Implementation Prompt — Payment Timing Policy Phase 5
 
-## Departmental Enforcement Policy Registry, Stage Rules, and Safe Cutover Controls
+## Patient Financial-Risk Profiles, Restricted Visibility, Review Workflow, History, and Audit
 
 You are working on **UHMS**, a Laravel-based hospital management system.
 
-Implement **Phase 4 of the Configurable Payment Timing and Per-Visit Payment Policy system**.
+Implement **Phase 5 of the Configurable Payment Timing and Per-Visit Payment Policy system**.
 
-Phases 1–3 are complete.
+Phases 1–4 are complete.
 
 ---
 
 # 1. Existing Foundation
 
-## Phase 1
+## Phase 1 — Payment-timing configuration
 
-Phase 1 introduced:
+Implemented:
 
 * `VisitPaymentTimingPolicy`
 * `VisitPaymentPolicySource`
-* Typed global and visit-type configuration
-* Database-backed payment-timing settings
+* Global and visit-type payment-timing settings
 * `PaymentTimingConfigurationService`
-* Admin settings UI
+* Admin configuration
+* Permission protection
 * English/French localisation
-* Permission-controlled configuration
 * Transactional updates and activity logging
 
-## Phase 2
+## Phase 2 — Legacy integration and observation
 
-Phase 2 introduced:
+Implemented:
 
-* `PaymentTimingIntegrationMode`
+* Legacy/observe integration modes
 * `VisitPaymentTimingDecision`
-* `VisitPaymentTimingResolver`
+* Limited typed resolver
 * Legacy compatibility mapping
-* Typed-versus-legacy comparison
-* Legacy-authoritative observation mode
+* Decision comparison
 * Bounded mismatch diagnostics
 * `billing:payment-timing-audit`
 
-## Phase 3
+Legacy payment decisions remain authoritative.
 
-Phase 3 introduced:
+## Phase 3 — Central payment façade
+
+Implemented:
 
 * `PaymentGateStage`
 * `PaymentGateContext`
-* Centralised production access through `PaymentGateService`
-* `PaymentGateOperationRegistry`
-* Stage-aware observation diagnostics
-* `billing:payment-gate-coverage`
+* Production payment checks centralised through `PaymentGateService`
+* Maintained operation registry
+* Stage-aware observation
+* Payment-gate coverage command
 
-The following production operations are currently wired:
+Four production operations are currently wired:
 
 ```text
 consultation.route.complete
@@ -59,129 +59,148 @@ laboratory.result.enter
 pharmacy.item.dispense
 ```
 
-The following operations are registered but intentionally unwired:
+Nine operations remain intentionally unwired.
+
+## Phase 4 — Departmental enforcement-policy foundation
+
+Implemented:
+
+* `PaymentGateOperationMode`
+* `MissingBillingContextPolicy`
+* `PaymentGateVisitContextRule`
+* `PaymentGateOverrideScopeRule`
+* `PaymentGateOperationPolicy`
+* `PaymentGateEnforcementEligibility`
+* Operation configuration, eligibility, and compatibility services
+* Admin operation-policy interface
+* Idempotent settings seeding
+* Coverage and policy-audit commands
+
+All operation configuration remains non-operational.
+
+No typed enforcement mode exists.
+
+No current production payment outcome is controlled by the Phase 4 operation settings.
+
+---
+
+# 2. Phase 5 Goal
+
+Create a secure and auditable **patient financial-risk profile subsystem** that allows authorised finance and management users to:
+
+* Classify a patient’s financial-risk level
+* Record the reason for the classification
+* Add structured supporting context
+* Define an effective date
+* Define an optional review or expiry date
+* Suspend, expire, clear, or reactivate a risk profile
+* Review the complete change history
+* Restrict sensitive financial-risk information from unrelated users
+* Search and report on active risk profiles
+* Audit every material mutation
+
+This phase must establish patient-level financial-risk data only.
+
+It must **not**:
+
+* Force a visit to pay before service
+* Change a visit payment-timing decision
+* Modify `VisitPaymentTimingResolver`
+* Modify `PaymentGateService` operational outcomes
+* Change existing previous-balance behaviour
+* Automatically create billing overrides
+* Automatically deny deferred settlement
+* Automatically classify patients from outstanding balances
+* Persist visit-level risk snapshots
+* Add risk-based visit-policy overrides
+
+Risk-based policy resolution will be implemented in a later phase.
+
+---
+
+# 3. Core Domain Principle
+
+Financial risk is not the same as:
 
 ```text
-consultation.start
-investigation.perform
-procedure.start
-service.render
-theatre.perform
-treatment.perform
-nursing.service.render
-blood_bank.unit.issue
-ambulance.render
+invoice unpaid
+previous visit balance
+active receivable
+insurance pending
+payment gate blocked
+credit approved
+billing override
+patient medically high risk
 ```
 
-Phase 3 confirmed that:
+Patient financial risk is a controlled administrative classification representing the hospital’s willingness to extend payment flexibility to the patient.
 
-* Existing payment decisions remain legacy-authoritative.
-* No new department began blocking payment.
-* Laboratory currently uses intrinsic settlement rules at result entry.
-* Pharmacy currently has a stricter paid-only dispensing rule.
-* Emergency and inpatient legacy behaviour remains unchanged.
-* UHMS cannot yet reliably distinguish emergency stabilisation from post-stabilisation routine care.
-* Missing invoice and invoice-item behaviour varies by workflow and must not be silently normalised.
-* Previous-balance overrides remain a separate prior-debt policy.
+Do not reuse clinical risk fields.
+
+Do not overload patient status, invoice status, payment status, or visit status.
 
 ---
 
-# 2. Phase 4 Goal
+# 4. Mandatory Existing-Architecture Audit
 
-Create a configurable and auditable **departmental payment-enforcement policy foundation** that defines:
+Before modifying code, inspect:
 
-* Which workflow operations are eligible for payment enforcement
-* At which stage payment may be checked
-* Whether an operation is:
+## Patient architecture
 
-  * disabled
-  * observation-only
-  * legacy-enforced
-  * eligible for future typed enforcement
-* How emergency and inpatient visits are treated
-* How missing invoices and missing invoice items are handled
-* Whether service-scoped or visit-scoped overrides may apply
-* Whether insurer-covered, waived, adjusted, or zero-responsibility items may proceed
-* How the system can safely roll back an operation to its previous behaviour
+* `Patient` model
+* Patient profile controllers and services
+* Patient administration pages
+* Patient search and list pages
+* Existing patient tabs or profile sections
+* Patient merge behaviour
+* Patient privacy and field-authorisation services
+* Sensitive-field masking conventions
+* Existing patient history/audit displays
 
-This phase establishes the policy registry, configuration model, administration foundation, validation, audit, and diagnostics.
+## Billing architecture
 
-It must **not activate new departmental payment blocking**.
+* `PatientOutstandingBalanceService`
+* `PreviousBalanceOverrideService`
+* `VisitBillingOverrideService`
+* `InvoiceReceivable`
+* `InvoiceReceivableService`
+* Existing credit, sponsor, corporate, and insurance models
+* Existing balance reports
+* Existing patient statements
 
-It must **not switch typed payment timing into operational authority**.
+## Security architecture
+
+* Permission registration
+* Policies and gates
+* Role seeding
+* Existing sensitive finance permissions
+* Existing `PatientFieldAuthorizationService`
+* Existing `PatientPrivacyService`
+* Existing audit-log conventions
+* Existing export permissions
+
+## Settings and enums
+
+* Existing enum conventions
+* Existing reason-code conventions
+* Existing status-history patterns
+* Existing model event patterns
+* Existing active/expired scopes
+
+Reuse existing architecture wherever possible.
+
+Do not create a separate patient-profile framework or duplicate the privacy subsystem.
+
+Document the findings in the Phase 5 report.
 
 ---
 
-# 3. Key Architectural Principle
+# 5. Financial-Risk Level Enum
 
-UHMS must distinguish three separate concepts:
+Create:
 
 ```text
-1. Visit payment-timing policy
-2. Departmental enforcement operation
-3. Invoice-item settlement state
-```
-
-Examples:
-
-* A visit may have `pay_before_service`.
-* Laboratory may enforce at result entry rather than request creation.
-* Pharmacy may enforce at dispensing.
-* An invoice item may already be paid, fully insured, waived, adjusted, partially paid, or missing.
-* A visit-wide override may allow deferred settlement.
-* A narrow invoice-item override must not automatically apply to unrelated services.
-
-Do not collapse these concepts into one boolean.
-
----
-
-# 4. Mandatory Repository Audit
-
-Before modifying code, inspect all relevant implementation added in Phases 1–3 and all current billing-policy configuration.
-
-Review:
-
-```text
-VisitPaymentTimingPolicy
-VisitPaymentPolicySource
-PaymentTimingIntegrationMode
-PaymentTimingConfigurationService
-VisitPaymentTimingResolver
-PaymentGateStage
-PaymentGateContext
-PaymentGateOperationRegistry
-PaymentGateService
-BillingPolicyService
-InvoiceItemSettlementService
-VisitBillingOverrideService
-PreviousBalanceOverrideService
-config/payment_timing.php
-config/billing_policy.php
-```
-
-Also inspect:
-
-* Existing `Setting` model and settings infrastructure
-* Existing settings controller and views
-* Existing enum-backed validation conventions
-* Existing permission and activity-log conventions
-* Existing feature-flag patterns
-* Existing service and department registries
-* Existing caching conventions
-* Existing configuration-seeding conventions
-
-Document any duplicated or overlapping setting before introducing new keys.
-
----
-
-# 5. Enforcement Mode Vocabulary
-
-Create a typed enum representing the configured enforcement state for a registered operation.
-
-Suggested location:
-
-```text
-app/Enums/PaymentGateOperationMode.php
+app/Enums/PatientFinancialRiskLevel.php
 ```
 
 Required values:
@@ -191,1120 +210,1156 @@ Required values:
 
 namespace App\Enums;
 
-enum PaymentGateOperationMode: string
+enum PatientFinancialRiskLevel: string
 {
-    case DISABLED = 'disabled';
-    case OBSERVE = 'observe';
-    case LEGACY = 'legacy';
+    case NORMAL = 'normal';
+    case WATCHLIST = 'watchlist';
+    case HIGH_RISK = 'high_risk';
+    case BLOCKED_CREDIT = 'blocked_credit';
 }
 ```
 
 Meaning:
 
-## `disabled`
+## `normal`
 
-* No payment-policy gate should be invoked for that operation.
-* Existing intrinsic settlement display calculations may still run.
-* This must not remove an existing hard production check unless the operation already supports safe configuration and explicit compatibility handling.
-* Existing wired operations should not default to disabled if doing so would relax current behaviour.
+No active financial restriction is recorded.
 
-## `observe`
+This should normally be represented by the absence of an active restrictive profile or by a formally cleared profile according to the final data model.
 
-* The workflow calculates the configured operation policy.
-* It records bounded diagnostics.
-* It does not change the current operational result.
-* For currently unwired operations, observation must not block the action.
-* For existing wired hard gates, the current legacy result remains authoritative.
+## `watchlist`
 
-## `legacy`
+The patient requires additional financial review but is not automatically denied payment flexibility.
 
-* The operation uses the existing legacy gate behaviour.
-* This does not mean typed enforcement.
-* Existing wired operations should default to legacy.
-* Newly registered but previously unwired operations must not default to legacy enforcement.
+## `high_risk`
 
-Do not add `typed`, `active`, or `enforce_typed` mode in this phase.
+The patient presents a material financial exposure requiring controlled approval before extending credit or deferred payment in a future phase.
 
----
+## `blocked_credit`
 
-# 6. Missing Billing Context Policy
-
-Create an enum for handling missing billing context at each operation.
-
-Suggested location:
-
-```text
-app/Enums/MissingBillingContextPolicy.php
-```
-
-Suggested values:
-
-```php
-<?php
-
-namespace App\Enums;
-
-enum MissingBillingContextPolicy: string
-{
-    case PRESERVE_LEGACY = 'preserve_legacy';
-    case ALLOW = 'allow';
-    case BLOCK = 'block';
-    case NOT_APPLICABLE = 'not_applicable';
-}
-```
+The hospital has formally restricted new credit or deferred-settlement arrangements, subject to authorised override in a future phase.
 
 Rules:
 
-* Existing wired operations should initially use `preserve_legacy`.
-* Newly unwired operations should not become blocked because an invoice item is missing.
-* `block` must not become operational for unwired workflows in this phase.
-* `not_applicable` may be used for non-billable operations.
-* The enum defines configuration vocabulary only.
-* It must not override existing production behaviour yet.
+* Use localisation for labels and descriptions.
+* Do not hardcode labels in views.
+* Do not create numeric severity assumptions unless explicitly defined.
+* Add helpers only where consistent with current enum conventions.
+* The enum must not make payment decisions.
 
 ---
 
-# 7. Visit Context Policy
-
-Create a typed representation of visit-context handling for each operation.
-
-Possible enum:
-
-```text
-app/Enums/PaymentGateVisitContextRule.php
-```
-
-Suggested values:
-
-```php
-<?php
-
-namespace App\Enums;
-
-enum PaymentGateVisitContextRule: string
-{
-    case USE_VISIT_POLICY = 'use_visit_policy';
-    case ALWAYS_RUNNING_BILL = 'always_running_bill';
-    case PRESERVE_LEGACY = 'preserve_legacy';
-    case NOT_APPLICABLE = 'not_applicable';
-}
-```
-
-Use this for configuration and diagnostics.
-
-Do not yet use it to replace legacy operational decisions.
-
----
-
-# 8. Override Scope Policy
-
-Create an enum or typed rule describing which override scopes an operation may recognise.
-
-Suggested enum:
-
-```text
-app/Enums/PaymentGateOverrideScopeRule.php
-```
-
-Suggested values:
-
-```php
-<?php
-
-namespace App\Enums;
-
-enum PaymentGateOverrideScopeRule: string
-{
-    case NONE = 'none';
-    case INVOICE_ITEM_ONLY = 'invoice_item_only';
-    case SERVICE_OR_ITEM = 'service_or_item';
-    case DEPARTMENT_SERVICE_OR_ITEM = 'department_service_or_item';
-    case VISIT_WIDE = 'visit_wide';
-    case PRESERVE_LEGACY = 'preserve_legacy';
-}
-```
-
-Rules:
-
-* Existing wired operations should initially preserve legacy override scope.
-* A narrow override must never be broadened automatically.
-* A visit-wide override should apply only where the existing policy confirms that scope.
-* Previous-balance overrides remain separate and are not included in this enum.
-* Financial-closure overrides remain separate.
-* This is preparatory configuration in Phase 4.
-
----
-
-# 9. Operation Policy DTO
-
-Create a typed DTO describing the complete configured policy for one registered payment-gate operation.
-
-Suggested location:
-
-```text
-app/Data/Billing/PaymentGateOperationPolicy.php
-```
-
-Suggested structure:
-
-```php
-final readonly class PaymentGateOperationPolicy
-{
-    public function __construct(
-        public string $operation,
-        public PaymentGateStage $stage,
-        public PaymentGateOperationMode $mode,
-        public MissingBillingContextPolicy $missingBillingContext,
-        public PaymentGateVisitContextRule $visitContextRule,
-        public PaymentGateOverrideScopeRule $overrideScopeRule,
-        public bool $allowZeroPatientResponsibility,
-        public bool $allowFullyInsured,
-        public bool $allowWaived,
-        public bool $allowFullyAdjusted,
-        public bool $allowPartialPayment,
-        public bool $emergencyExempt,
-        public bool $inpatientExempt,
-        public bool $enabledForFutureTypedEnforcement,
-        public array $metadata = [],
-    ) {
-    }
-}
-```
-
-Adapt the shape to existing project conventions.
-
-Rules:
-
-* Avoid arbitrary unbounded metadata.
-* Do not store translated labels.
-* Do not duplicate values already available in the operation registry unless the DTO represents the resolved configuration.
-* The DTO must be immutable.
-* It must be safe to expose to diagnostics without patient data.
-
----
-
-# 10. Extend the Operation Registry
-
-Extend `PaymentGateOperationRegistry` so every operation declares:
-
-```text
-operation code
-stage
-department type
-workflow family
-whether currently production-wired
-whether currently a hard gate
-legacy behaviour
-default operation mode
-default missing-context policy
-default visit-context rule
-default override-scope rule
-future typed-enforcement eligibility
-```
-
-The registry must remain descriptive.
-
-It must not itself evaluate invoices or make payment decisions.
-
-Suggested conceptual definition:
-
-```php
-[
-    'pharmacy.item.dispense' => [
-        'stage' => PaymentGateStage::DISPENSE,
-        'department_type' => DepartmentType::PHARMACY,
-        'wired' => true,
-        'hard_gate' => true,
-        'default_mode' => PaymentGateOperationMode::LEGACY,
-        'missing_billing_context' => MissingBillingContextPolicy::PRESERVE_LEGACY,
-        'visit_context_rule' => PaymentGateVisitContextRule::PRESERVE_LEGACY,
-        'override_scope_rule' => PaymentGateOverrideScopeRule::PRESERVE_LEGACY,
-        'typed_enforcement_eligible' => true,
-    ],
-]
-```
-
-Use actual enums and conventions.
-
----
-
-# 11. Required Initial Operation Defaults
-
-Preserve current behaviour.
-
-## 11.1 Existing wired operations
-
-The following should default to `legacy`:
-
-```text
-consultation.route.complete
-consultation.next_patient.readiness
-laboratory.result.enter
-pharmacy.item.dispense
-```
-
-Their current rules must remain unchanged.
-
-## 11.2 Existing unwired operations
-
-The following should default to `disabled` or `observe`, whichever does not add operational checks:
-
-```text
-consultation.start
-investigation.perform
-procedure.start
-service.render
-theatre.perform
-treatment.perform
-nursing.service.render
-blood_bank.unit.issue
-ambulance.render
-```
-
-Prefer:
-
-```text
-disabled
-```
-
-unless observation can be performed safely without introducing queries, side effects, or workflow changes.
-
-Do not add production calls merely because an operation exists in the registry.
-
-## 11.3 Laboratory compatibility
-
-Laboratory result entry must retain its intrinsic settlement compatibility policy:
-
-* Paid may proceed.
-* Fully insured may proceed where currently permitted.
-* Waived may proceed where currently permitted.
-* Fully adjusted may proceed where currently permitted.
-* Missing invoice item preserves current allow behaviour.
-* Visit timing overrides do not become broader than current laboratory behaviour.
-
-## 11.4 Pharmacy compatibility
-
-Pharmacy dispensing must retain its stricter paid-only compatibility rule.
-
-Do not newly permit dispensing because:
-
-* The visit is emergency
-* The visit is inpatient
-* The item is waived
-* A credit override exists
-* Deferred settlement exists
-* A generic payment-gate bypass exists
-
-unless current pharmacy behaviour already allows that exact case.
-
-Document these as compatibility rules, not ideal future policy.
-
----
-
-# 12. Configuration Storage
-
-Use the existing grouped `Setting` infrastructure.
-
-Do not create a separate operation-policy table unless the existing settings system cannot safely support structured operation settings.
-
-Preferred settings group:
-
-```text
-payment_gate_operations
-```
-
-Possible keys:
-
-```text
-consultation.route.complete.mode
-consultation.route.complete.missing_context
-consultation.route.complete.visit_context_rule
-consultation.route.complete.override_scope_rule
-consultation.route.complete.emergency_exempt
-consultation.route.complete.inpatient_exempt
-consultation.route.complete.typed_enforcement_eligible
-```
-
-However, avoid an uncontrolled explosion of flat settings if the project settings system supports validated JSON or grouped structured payloads.
-
-Choose one of:
-
-## Option A — Structured JSON per operation
-
-```text
-payment_gate_operations.consultation.route.complete
-```
-
-Value:
-
-```json
-{
-  "mode": "legacy",
-  "missing_context": "preserve_legacy",
-  "visit_context_rule": "preserve_legacy",
-  "override_scope_rule": "preserve_legacy",
-  "emergency_exempt": false,
-  "inpatient_exempt": false,
-  "typed_enforcement_eligible": true
-}
-```
-
-## Option B — Flat typed keys
-
-Use only if that matches existing settings conventions better.
-
-Document the storage decision.
-
----
-
-# 13. Configuration Service
+# 6. Risk Reason Enum
 
 Create:
 
 ```text
-app/Services/Billing/PaymentGateOperationConfigurationService.php
+app/Enums/PatientFinancialRiskReason.php
 ```
 
-Responsibilities:
+Required structured reasons:
 
 ```php
-public function policyFor(string $operation): PaymentGateOperationPolicy;
+<?php
 
-public function policies(): Collection|array;
+namespace App\Enums;
 
-public function modeFor(string $operation): PaymentGateOperationMode;
+enum PatientFinancialRiskReason: string
+{
+    case PREVIOUS_UNPAID_VISITS = 'previous_unpaid_visits';
+    case REPEATED_ABANDONED_INVOICES = 'repeated_abandoned_invoices';
+    case CREDIT_LIMIT_EXCEEDED = 'credit_limit_exceeded';
+    case INVALID_CORPORATE_GUARANTEE = 'invalid_corporate_guarantee';
+    case INSURANCE_ELIGIBILITY_UNRESOLVED = 'insurance_eligibility_unresolved';
+    case PAYMENT_COMMITMENT_BREACHED = 'payment_commitment_breached';
+    case MANAGEMENT_DECISION = 'management_decision';
+    case OTHER = 'other';
+}
+```
 
-public function registered(string $operation): bool;
+Adjust names only where existing UHMS terminology provides a better canonical equivalent.
+
+Rules:
+
+* `OTHER` requires explanatory text.
+* `MANAGEMENT_DECISION` should normally require explanatory text or a reference.
+* Structured reasons must be stored as enum values.
+* Free-text details must remain supplementary.
+* Do not infer a reason automatically in this phase.
+
+---
+
+# 7. Risk Profile Status Enum
+
+Create:
+
+```text
+app/Enums/PatientFinancialRiskStatus.php
+```
+
+Suggested values:
+
+```php
+<?php
+
+namespace App\Enums;
+
+enum PatientFinancialRiskStatus: string
+{
+    case ACTIVE = 'active';
+    case UNDER_REVIEW = 'under_review';
+    case SUSPENDED = 'suspended';
+    case CLEARED = 'cleared';
+    case EXPIRED = 'expired';
+}
+```
+
+Meaning:
+
+## `active`
+
+The classification is currently valid.
+
+## `under_review`
+
+The profile is being reviewed and remains visible, but operational behaviour must not change in this phase.
+
+## `suspended`
+
+The classification is temporarily inactive without being deleted.
+
+## `cleared`
+
+An authorised reviewer has formally removed the restriction.
+
+## `expired`
+
+The effective period ended.
+
+Rules:
+
+* Do not delete historical profiles when cleared.
+* Do not use soft deletion as the normal clearance workflow.
+* Preserve the difference between suspension, clearance, and expiry.
+* No status should affect live payment gates in Phase 5.
+
+---
+
+# 8. Data Model
+
+Use a dedicated patient financial-risk profile and immutable history.
+
+Preferred tables:
+
+```text
+patient_financial_risk_profiles
+patient_financial_risk_history
+```
+
+Adapt names to existing project conventions if required.
+
+## 8.1 `patient_financial_risk_profiles`
+
+Suggested fields:
+
+```text
+id
+patient_id
+risk_level
+primary_reason
+reason_details
+status
+credit_limit
+effective_from
+review_due_at
+expires_at
+reference
+set_by
+reviewed_by
+reviewed_at
+suspended_by
+suspended_at
+cleared_by
+cleared_at
+clearance_reason
+created_at
+updated_at
+```
+
+Potential additional fields are allowed only when justified by current UHMS architecture.
+
+Rules:
+
+* Use foreign keys where consistent with existing migrations.
+* Use explicit, safely shortened foreign-key names where necessary for MySQL identifier limits.
+* Monetary fields must follow the existing UHMS currency/decimal conventions.
+* `credit_limit` is optional and informational in Phase 5.
+* Do not enforce the credit limit against invoices or visits yet.
+* Free-text fields must be length-bounded.
+* Use appropriate indexes for patient, status, risk level, review date, and expiry date.
+
+## 8.2 `patient_financial_risk_history`
+
+Suggested fields:
+
+```text
+id
+patient_financial_risk_profile_id
+patient_id
+event_type
+old_values
+new_values
+reason
+performed_by
+performed_at
+created_at
+```
+
+Use the existing JSON-casting and activity-history conventions.
+
+History should record material transitions such as:
+
+```text
+created
+updated
+submitted_for_review
+review_completed
+suspended
+reactivated
+cleared
+expired
+```
+
+Do not store full patient snapshots.
+
+Do not duplicate unnecessary personal information in history JSON.
+
+---
+
+# 9. Single Active Restrictive Profile Rule
+
+A patient must not have multiple conflicting active restrictive profiles.
+
+Define the rule clearly:
+
+* A patient may have only one current profile in `active` or `under_review` state.
+* Suspended, cleared, and expired historical profiles may remain.
+* Updating the current classification should normally mutate the current profile and append history, unless the existing project convention favours versioned profile records.
+* Clearing and later reclassifying a patient must remain historically traceable.
+
+Enforce this through:
+
+* Service-layer transactions
+* Database constraints where safely possible
+* Row locking during mutation
+* Focused concurrency tests
+
+Do not rely only on UI validation.
+
+---
+
+# 10. Models and Relationships
+
+Create:
+
+```text
+app/Models/PatientFinancialRiskProfile.php
+app/Models/PatientFinancialRiskHistory.php
+```
+
+Suggested relationships:
+
+```php
+Patient::financialRiskProfiles()
+Patient::activeFinancialRiskProfile()
+Patient::financialRiskHistory()
+
+PatientFinancialRiskProfile::patient()
+PatientFinancialRiskProfile::setter()
+PatientFinancialRiskProfile::reviewer()
+PatientFinancialRiskProfile::suspender()
+PatientFinancialRiskProfile::clearer()
+PatientFinancialRiskProfile::history()
+```
+
+Use established user-relation naming conventions.
+
+Add scopes such as:
+
+```php
+scopeActive()
+scopeRestrictive()
+scopeDueForReview()
+scopeExpired()
+scopeForRiskLevel()
 ```
 
 Rules:
 
-* Validate against `PaymentGateOperationRegistry`.
-* Return typed values.
-* Fall back to registry defaults.
-* Handle invalid stored values safely.
-* Cache through existing settings caching.
-* Never return an unknown operation as an enforceable operation.
-* Unknown operations should fail safely to a non-enforcing diagnostic representation.
-* Do not query invoice, visit, patient, or override data.
-* Do not make payment decisions.
-* Do not change current workflow outcomes.
+* Avoid hidden service calls inside model accessors.
+* Do not make `Patient::financialRiskProfile` trigger expensive or repeated queries in lists.
+* Eager-load in report and index workflows.
+* Use enum casts.
+* Use decimal or money casts consistent with the project.
 
 ---
 
-# 14. Administration Interface
+# 11. Central Financial-Risk Service
 
-Extend the existing Payment Timing Policies settings area with a restricted section:
-
-```text
-Departmental Payment Enforcement
-```
-
-The UI must present the registered operations grouped by department or workflow family.
-
-For each operation, show:
+Create:
 
 ```text
-Operation
-Workflow stage
-Current production status
-Current enforcement behaviour
-Configured mode
-Missing billing context handling
-Emergency handling
-Inpatient handling
-Override-scope rule
-Typed-enforcement eligibility
+app/Services/Billing/PatientFinancialRiskService.php
 ```
 
-## 14.1 Mode options
+or an equivalent finance-oriented namespace consistent with UHMS.
 
-Offer:
+Responsibilities:
 
-```text
-Disabled
-Observe Only
-Use Existing Legacy Gate
+```php
+public function currentFor(Patient $patient): ?PatientFinancialRiskProfile;
+
+public function createOrClassify(
+    Patient $patient,
+    PatientFinancialRiskData $data,
+    User $actor
+): PatientFinancialRiskProfile;
+
+public function update(
+    PatientFinancialRiskProfile $profile,
+    PatientFinancialRiskData $data,
+    User $actor
+): PatientFinancialRiskProfile;
+
+public function submitForReview(...): PatientFinancialRiskProfile;
+
+public function completeReview(...): PatientFinancialRiskProfile;
+
+public function suspend(...): PatientFinancialRiskProfile;
+
+public function reactivate(...): PatientFinancialRiskProfile;
+
+public function clear(...): PatientFinancialRiskProfile;
+
+public function expireDueProfiles(...): int;
 ```
 
-Do not offer typed enforcement.
+Use dedicated DTOs or validated arrays according to existing project conventions.
 
-## 14.2 Safety indicators
+Rules:
 
-Clearly identify:
-
-```text
-Currently wired
-Currently unwired
-Existing hard gate
-Display/readiness only
-Compatibility-specific rule
-```
-
-## 14.3 Restrictions
-
-For unwired operations:
-
-* Changing the mode must not silently wire the operation.
-* The UI should explain that configuration alone does not activate a production gate.
-* A future implementation phase is required to wire approved operations.
-
-For existing wired hard gates:
-
-* Do not allow an ordinary setting change to disable current protection unless a deliberate safe rollback contract exists.
-* If disabling would alter current production behaviour, either:
-
-  * make the control read-only in Phase 4, or
-  * accept the setting but keep it non-operational until the cutover phase.
-
-Prefer read-only compatibility protection for existing hard gates.
-
-## 14.4 UX
-
-Follow the existing Bootstrap/Blade design.
-
-Do not introduce:
-
-* Inline JavaScript handlers
-* A new UI framework
-* Untranslated labels
-* Large modals
-* Direct controller policy logic
-
-Use concise help text.
+* All mutations must run inside database transactions.
+* Lock the current patient profile where necessary.
+* Append immutable history for every material mutation.
+* Use `ActivityLog` for material mutations.
+* Do not call `PaymentGateService`.
+* Do not call `VisitPaymentTimingResolver`.
+* Do not create billing overrides.
+* Do not modify visit records.
+* Do not modify invoices.
+* Do not automatically create a profile from outstanding balances.
 
 ---
 
-# 15. Request Validation
+# 12. State-Transition Rules
 
-Create or extend a form request for operation-policy settings.
+Define explicit allowed transitions.
 
-Validate:
+Suggested transitions:
 
-* Operation exists in the registry.
-* Mode is a valid enum.
-* Missing-context policy is valid.
-* Visit-context rule is valid.
-* Override-scope rule is valid.
-* Boolean values are normalised.
-* Existing hard-gate compatibility operations cannot be accidentally disabled where Phase 4 does not support that change.
-* Typed enforcement cannot be selected.
-* Unknown operation codes are rejected.
-* Duplicate operations are rejected.
-* Partial invalid updates do not persist.
+```text
+active → under_review
+active → suspended
+active → cleared
+active → expired
 
-Use database transactions for successful multi-operation updates.
+under_review → active
+under_review → suspended
+under_review → cleared
+under_review → expired
 
-Audit only changed values.
+suspended → active
+suspended → under_review
+suspended → cleared
+suspended → expired
+```
+
+Rules:
+
+* `cleared` and `expired` are terminal for that profile.
+* A new classification after clearance should create or formally reactivate according to the documented data strategy.
+* Reactivation must require a reason.
+* Clearance must require a clearance reason.
+* Suspended profiles must not be treated as active.
+* Invalid transitions must be rejected in the backend.
+* No transition should affect a live visit in Phase 5.
+
+Create a transition service or model helper only if it keeps the domain logic clear.
 
 ---
 
-# 16. Audit Logging
+# 13. Review and Expiry Workflow
 
-Use the existing `ActivityLog` infrastructure for configuration mutations.
+## 13.1 Review date
 
-Suggested action:
+Allow an optional:
 
 ```text
-PAYMENT_GATE_OPERATION_SETTINGS_UPDATED
+review_due_at
 ```
 
-Use the existing naming conventions if different.
+This means the profile should be reviewed; it does not automatically clear or expire the profile.
+
+## 13.2 Expiry date
+
+Allow an optional:
+
+```text
+expires_at
+```
+
+When reached, the profile should transition to `expired`.
+
+## 13.3 Scheduled command
+
+Add a command such as:
+
+```bash
+php artisan billing:financial-risk-expire
+```
+
+The command should:
+
+* Find active, under-review, or suspended profiles whose `expires_at` has passed
+* Transition them to `expired`
+* Append history
+* Create appropriate activity logs
+* Be idempotent
+* Avoid touching already cleared or expired profiles
+* Avoid changing payment gates or visits
+
+Register it with the scheduler only if consistent with existing project scheduling conventions.
+
+Use:
+
+```text
+withoutOverlapping
+```
+
+where appropriate.
+
+## 13.4 Review reminder diagnostics
+
+Optionally add a read-only command:
+
+```bash
+php artisan billing:financial-risk-review-due
+```
+
+or include due-review reporting in the admin index.
+
+Do not create notification automation unless a suitable existing notification framework and explicit scope exist.
+
+---
+
+# 14. Existing Balance Context
+
+The profile UI may show authorised users useful financial context from existing services:
+
+```text
+current patient-responsibility receivables
+previous outstanding balance
+oldest unpaid invoice
+age of oldest debt
+number of unpaid visits
+```
+
+Use existing:
+
+```text
+PatientOutstandingBalanceService
+InvoiceReceivable
+existing patient balance summaries
+```
+
+Rules:
+
+* Display context only.
+* Do not copy balance values into the risk profile unless explicitly captured as an immutable assessment snapshot.
+* If an assessment snapshot is added, it must be clearly marked as historical and must not replace live receivable data.
+* Do not automatically determine risk level.
+* The user must make and confirm the classification.
+* No risk profile should be created merely because a patient has an outstanding balance.
+
+---
+
+# 15. Permissions
+
+Add only the permissions needed for this subsystem.
+
+Suggested permissions:
+
+```text
+patients.financial_risk.view
+patients.financial_risk.manage
+patients.financial_risk.review
+patients.financial_risk.clear
+patients.financial_risk.history
+patients.financial_risk.report
+```
+
+Evaluate whether existing finance or patient-sensitive permissions can be reused without reducing confidentiality.
+
+Suggested intent:
+
+## `view`
+
+View the current restricted profile.
+
+## `manage`
+
+Create and update classifications.
+
+## `review`
+
+Submit and complete reviews, suspend, or reactivate.
+
+## `clear`
+
+Clear or remove an active restriction.
+
+## `history`
+
+View detailed mutation history.
+
+## `report`
+
+Access cross-patient risk reports and exports.
+
+Rules:
+
+* Do not grant these broadly to clinical roles.
+* Existing super-admin behaviour should remain intact.
+* Suggested initial role assignment may include authorised:
+
+  * finance managers
+  * billing supervisors
+  * selected administrators
+  * hospital management
+* Ordinary clinicians should not see detailed risk reasons.
+* Reception access should be deliberately limited.
+* Backend controllers, services, routes, and exports must enforce permissions.
+
+---
+
+# 16. Restricted Visibility and Privacy
+
+Integrate with the existing patient privacy architecture.
+
+Financial-risk data is sensitive administrative information.
+
+## 16.1 Full visibility
+
+Authorised users may see:
+
+```text
+risk level
+reason
+reason details
+credit limit
+effective date
+review date
+expiry date
+references
+set/review/clear actors
+history
+```
+
+## 16.2 Limited operational visibility
+
+Where a future workflow needs a non-sensitive indicator, prepare a method that can eventually expose:
+
+```text
+financial review required
+payment arrangement requires finance review
+```
+
+Do not expose detailed reasons.
+
+In Phase 5, do not add this indicator broadly to clinical workspaces unless an existing business requirement already demands it.
+
+## 16.3 No visibility
+
+Unauthorised users must not receive financial-risk data in:
+
+* Patient JSON
+* Search responses
+* Data tables
+* Inertia props
+* API resources
+* Print views
+* Exports
+* Activity-log previews
+* Browser page source
+* Hidden form fields
+
+Do not merely hide the Blade section.
+
+Filter the data at the backend.
+
+---
+
+# 17. Patient Profile UI
+
+Add a restricted **Financial Risk** section to the appropriate patient finance or administration profile.
+
+Avoid placing it prominently in unrelated clinical tabs.
+
+The section should show:
+
+```text
+Current status
+Risk level
+Primary reason
+Effective date
+Review due date
+Expiry date
+Credit limit
+Reference
+Set by
+Last reviewed by
+Last updated
+```
+
+Actions according to permission:
+
+```text
+Classify patient
+Edit classification
+Submit for review
+Complete review
+Suspend
+Reactivate
+Clear restriction
+View history
+```
+
+## Form requirements
+
+The classification form should include:
+
+```text
+Risk level
+Primary reason
+Reason details
+Optional credit limit
+Effective date
+Optional review date
+Optional expiry date
+Optional reference
+```
+
+Validation messages must be localised.
+
+For a normal patient with no current profile, show a neutral empty state rather than a warning badge.
+
+---
+
+# 18. Admin Financial-Risk Worklist
+
+Add a restricted finance/admin page listing patient financial-risk profiles.
+
+Suggested route area:
+
+```text
+admin/billing/financial-risk
+```
+
+or the closest existing billing administration namespace.
+
+Features:
+
+* Search by patient identifier or name using existing privacy-aware patient search
+* Filter by risk level
+* Filter by status
+* Filter by review due
+* Filter by expired
+* Filter by active restriction
+* Sort by risk level, effective date, review date, or expiry date
+* Pagination
+* Permission-safe links to patient profiles
+
+Columns:
+
+```text
+Patient
+Risk level
+Status
+Primary reason
+Effective date
+Review due
+Expiry date
+Credit limit
+Last updated
+```
+
+Respect patient masking and privacy rules.
+
+Do not expose detailed free-text reasons in broad list views unless necessary.
+
+---
+
+# 19. History Interface
+
+Add a restricted history panel showing:
+
+```text
+date/time
+event type
+previous level/status
+new level/status
+performed by
+reason
+reference
+```
+
+Do not dump raw JSON directly into the UI.
+
+Render a human-readable, localised summary.
+
+History must be immutable through normal application workflows.
+
+Do not provide delete or edit actions for history entries.
+
+---
+
+# 20. Activity Logging
+
+Use the existing `ActivityLog` architecture.
+
+Suggested actions:
+
+```text
+PATIENT_FINANCIAL_RISK_CREATED
+PATIENT_FINANCIAL_RISK_UPDATED
+PATIENT_FINANCIAL_RISK_SUBMITTED_FOR_REVIEW
+PATIENT_FINANCIAL_RISK_REVIEW_COMPLETED
+PATIENT_FINANCIAL_RISK_SUSPENDED
+PATIENT_FINANCIAL_RISK_REACTIVATED
+PATIENT_FINANCIAL_RISK_CLEARED
+PATIENT_FINANCIAL_RISK_EXPIRED
+```
 
 Capture:
 
 ```text
-operations changed
-old typed values
-new typed values
-changed by
+patient identifier
+profile identifier
+old level/status
+new level/status
+structured reason
+actor
 timestamp
 ```
 
-Do not log unchanged operations.
+Do not include unnecessary patient contact information.
 
-Do not log patient data.
+Do not include unrestricted free-text details in broad audit metadata where the existing logging standards discourage it.
 
-Do not create activity logs during routine gate reads.
+Avoid duplicate logging from both model observers and services.
 
----
-
-# 17. Enforcement Eligibility Matrix
-
-Create a service that evaluates whether an operation is architecturally eligible for future typed enforcement.
-
-Suggested service:
-
-```text
-app/Services/Billing/PaymentGateEnforcementEligibilityService.php
-```
-
-The service should evaluate configuration and registry metadata only.
-
-Possible output:
-
-```text
-eligible
-ineligible_unwired
-ineligible_missing_stage
-ineligible_missing_invoice_resolution
-ineligible_emergency_boundary
-ineligible_compatibility_rule
-ineligible_unapproved_policy
-```
-
-Suggested DTO:
-
-```text
-PaymentGateEnforcementEligibility
-```
-
-The service must not enable enforcement.
-
-It should help identify what remains before each operation can be cut over.
-
-Examples:
-
-## Pharmacy dispensing
-
-May be ineligible for direct typed enforcement until UHMS decides whether the paid-only rule should remain or converge with visit payment timing.
-
-## Laboratory result entry
-
-May be ineligible until the hospital decides whether result entry, result verification, or result release is the correct enforcement stage.
-
-## Emergency operations
-
-Remain ineligible where stabilisation boundaries cannot be reliably identified.
+Choose one authoritative mutation-logging path.
 
 ---
 
-# 18. Departmental Policy Decisions to Encode
+# 21. Validation
 
-Phase 4 should encode **provisional safe defaults**, not final hospital decisions.
+Create dedicated FormRequests.
 
-## Consultation
+Suggested requests:
 
-### `consultation.route.complete`
+```text
+StorePatientFinancialRiskRequest
+UpdatePatientFinancialRiskRequest
+ReviewPatientFinancialRiskRequest
+SuspendPatientFinancialRiskRequest
+ReactivatePatientFinancialRiskRequest
+ClearPatientFinancialRiskRequest
+```
 
-* Existing hard gate
-* Preserve legacy
-* No behavioural change
+Consolidate where appropriate without making one request ambiguous.
 
-### `consultation.next_patient.readiness`
+Required validation:
 
-* Existing readiness and activation check
-* Preserve legacy
-* Do not convert all readiness failures into hard enforcement
-
-### `consultation.start`
-
-* Unwired
-* Default disabled
-* Do not block consultation start in Phase 4
-
-## Investigations and radiology
-
-### `investigation.perform`
-
-* Unwired
-* Default disabled
-* Record that the final enforcement stage is undecided:
-
-  * acceptance
-  * sample collection
-  * performance
-  * result entry
-  * result verification
-  * result release
-
-### `laboratory.result.enter`
-
-* Existing wired compatibility gate
-* Preserve current intrinsic settlement behaviour
-
-## Pharmacy
-
-### `pharmacy.item.dispense`
-
-* Existing paid-only hard gate
-* Preserve legacy compatibility
-* Mark as requiring explicit policy convergence decision before typed enforcement
-
-## Procedures
-
-### `procedure.start`
-
-* Unwired
-* Default disabled
-* Do not block scheduling or performance
-
-## Theatre
-
-### `theatre.perform`
-
-* Unwired
-* Default disabled
-* Emergency and life-saving boundaries unresolved
-
-## Treatment
-
-### `treatment.perform`
-
-* Unwired
-* Default disabled
-
-## Nursing
-
-### `nursing.service.render`
-
-* Unwired
-* Default disabled
-* Medication administration and essential nursing care must not be accidentally blocked
-
-## Blood bank
-
-### `blood_bank.unit.issue`
-
-* Unwired
-* Default disabled
-* Emergency and life-saving blood issue must remain protected
-
-## Ambulance
-
-### `ambulance.render`
-
-* No dedicated operational workflow confirmed
-* Default disabled
-* Mark as unavailable until a concrete billable workflow exists
+* Risk level must be a valid enum.
+* Reason must be a valid enum.
+* `OTHER` requires `reason_details`.
+* Management decisions require details or a reference.
+* Credit limit must be non-negative.
+* Effective date must be valid.
+* Review date cannot precede the effective date.
+* Expiry date cannot precede the effective date.
+* Clearance requires a reason.
+* Suspension requires a reason.
+* Reactivation requires a reason.
+* Unknown fields should not be trusted.
+* Invalid state transitions must be rejected.
+* Unauthorised users cannot invoke endpoints directly.
 
 ---
 
-# 19. Emergency and Inpatient Safety
+# 22. Reporting and Export
 
-## 19.1 Emergency
+Add a restricted read-only report for authorised users.
 
-Phase 4 must not claim that emergency stabilisation can be reliably distinguished if the repository still lacks an authoritative marker.
+Metrics may include:
 
-For operations involving emergency care:
+```text
+active watchlist patients
+active high-risk patients
+active blocked-credit patients
+profiles due for review
+profiles expiring soon
+profiles cleared during period
+profiles created during period
+```
 
-* Mark emergency-stage enforcement eligibility as unresolved.
-* Keep current legacy behaviour.
-* Do not activate new gates.
-* Do not add a fake `is_stabilisation` field without a broader clinical workflow design.
-* Document which existing statuses or markers were reviewed.
+Patient-level export should require:
 
-## 19.2 Inpatient
+```text
+patients.financial_risk.report
+```
 
-Inpatient visits generally use running-bill behaviour.
+Export only necessary fields.
 
-Do not add service-level blocking to:
+Respect patient-sensitive export permissions already present in UHMS.
 
-* Nursing tasks
-* Medication administration
-* Bed management
-* Treatment rendering
-* Discharge planning
+Do not include:
 
-Phase 4 may record future financial-clearance requirements separately, but must not enforce them.
+* Clinical details
+* Insurance member numbers
+* Unnecessary contact fields
+* Raw audit JSON
+* Internal free-text notes unless explicitly authorised
+
+If introducing export would significantly broaden the phase, implement the query service and restricted HTML report first, and document CSV export as deferred.
 
 ---
 
-# 20. Compatibility Evaluation
+# 23. Read-Only Diagnostic Command
 
-Add a compatibility evaluator that compares:
-
-```text
-registered default
-stored operation policy
-current production wiring
-legacy behaviour
-future typed-enforcement eligibility
-```
-
-Suggested service:
-
-```text
-PaymentGateOperationCompatibilityService
-```
-
-Possible statuses:
-
-```text
-compatible
-configuration_non_operational
-legacy_hard_gate_protected
-typed_cutover_not_ready
-unwired_operation
-emergency_boundary_missing
-invoice_resolution_missing
-compatibility_rule_conflict
-```
-
-This service is diagnostic only.
-
----
-
-# 21. Extend Coverage Command
-
-Extend:
+Add:
 
 ```bash
-php artisan billing:payment-gate-coverage
-```
-
-Add useful options such as:
-
-```text
---operation=
---department=
---wired-only
---unwired-only
---eligible-only
---ineligible-only
---json
-```
-
-Output should include:
-
-```text
-operation
-stage
-department
-wired status
-hard-gate status
-configured mode
-legacy behaviour
-missing-context rule
-emergency rule
-inpatient rule
-override-scope rule
-typed-enforcement eligibility
-eligibility reason
-```
-
-The command must remain read-only.
-
-It must:
-
-* Create no invoices
-* Create no payments
-* Create no overrides
-* Create no settings
-* Create no activity-log entries
-* Avoid patient data
-* Exit successfully when operations are ineligible or unwired
-
----
-
-# 22. Add a Policy Audit Command
-
-Add a read-only command:
-
-```bash
-php artisan billing:payment-gate-policy-audit
+php artisan billing:financial-risk-audit
 ```
 
 Suggested options:
 
 ```text
---operation=
---department=
---json
+--patient=
+--status=
+--level=
+--review-due
+--expired
 --problems-only
+--json
 ```
 
-The command should identify:
+The command should detect:
 
 ```text
-invalid stored enum values
-unknown operation settings
-missing registry defaults
-wired operations configured as disabled
-unwired operations configured as legacy
-hard gates without compatibility protection
-typed-eligible operations missing invoice resolution
-emergency-sensitive operations without a reliable boundary
+multiple active profiles for one patient
+active profile already beyond expiry
+invalid date ordering
+missing actor references
+missing required reason details
+terminal profiles incorrectly active
+profiles due for review
 ```
 
-It must not modify settings automatically.
+Rules:
 
-It should exit non-zero only for technical command failure, not because policy warnings exist.
-
----
-
-# 23. No Production Cutover
-
-This phase must not change `PaymentGateService` to enforce operation settings operationally.
-
-The operation-policy configuration may be consulted for:
-
-* Diagnostics
-* Admin display
-* Eligibility analysis
-* Observation metadata
-* Audit commands
-
-It must not yet cause:
-
-```text
-allow → block
-block → allow
-advisory → hard block
-unwired → wired
-```
-
-Existing wired legacy behaviour remains authoritative.
-
-A later cutover phase will deliberately connect approved operation modes to production enforcement.
+* Read-only
+* No automatic fixes
+* No patient-sensitive free text in normal output
+* No activity logs
+* Findings should not cause a non-zero exit code unless the command itself fails
 
 ---
 
-# 24. Performance Requirements
+# 24. Seeding and Existing Data
 
-The configuration and diagnostics must not degrade normal workflows.
+Do not seed actual patients as financial risks in production/default seeders.
 
-## Normal workflow
+Permission seeding is allowed.
 
-* Existing production gate paths should not add operation-settings database queries.
-* Configuration should use existing cache.
-* Registry metadata should be in memory.
-* Legacy mode should remain lightweight.
-* No operation-policy query should occur where the feature is unused.
+For tests and manual-testing datasets:
 
-## Admin and commands
+* Add dedicated factories
+* Add test-only seeders if consistent with UHMS conventions
+* Keep these separate from default launch data
+* Do not classify real production patients automatically
 
-* Load operation settings in groups.
-* Avoid one settings query per operation.
-* Avoid N+1 registry lookups.
-* Commands should work from registry and grouped settings.
+No backfill should infer financial risk from old debt.
 
-Add focused performance checks where stable.
+Existing patients should simply have no active risk profile.
 
 ---
 
-# 25. Failure Safety
+# 25. Performance Requirements
 
-If stored operation configuration is invalid:
+Avoid:
 
-* Fall back to registry defaults.
-* Record a bounded application warning.
-* Preserve current legacy workflow behaviour.
-* Do not enable a new gate.
-* Do not disable an existing hard gate.
+* N+1 active-profile lookups in patient lists
+* N+1 user lookups in history
+* Repeated balance-summary calculations
+* Loading full history when only current status is required
+* Including risk data in every patient query
 
-If operation-policy resolution throws:
+Use:
 
-* Continue with existing production behaviour.
-* Do not expose internal errors to clinicians.
-* Do not roll back clinical or billing actions solely because diagnostics failed.
+* Explicit eager loading
+* Restricted query services
+* Pagination
+* Indexed status/date columns
+* Permission checks before loading sensitive relations
 
-If the registry and stored configuration disagree:
+The normal clinical patient workflow should incur no risk-profile query unless the data is actually required.
 
-* Registry compatibility defaults win for operational safety.
-* Report the disagreement through diagnostics.
+Add focused query assertions where stable.
 
 ---
 
-# 26. Permissions
+# 26. Failure Safety
 
-Reuse:
+If financial-risk data cannot be loaded:
 
-```text
-settings.manage
-```
+* Do not alter payment-gate behaviour.
+* Do not block clinical care.
+* Do not silently classify the patient.
+* Show an authorised administrative error where appropriate.
+* Log the technical failure through existing application logging.
 
-for configuration unless a more appropriate existing billing-settings permission already exists.
+If expiry processing fails:
 
-For read-only diagnostic pages, reuse an existing billing/reporting/admin permission.
+* Do not partially transition a profile.
+* Roll back the transaction.
+* Leave payment behaviour unchanged.
 
-Do not create new permissions unnecessarily.
+If audit logging fails inside a mutation transaction, follow the project’s existing material-audit integrity convention.
 
-Backend routes must be protected.
-
-Do not rely only on hidden controls.
+Do not claim a mutation succeeded if required audit logging did not complete.
 
 ---
 
 # 27. Localisation
 
-Add complete English and French translations for:
+Add full English and French localisation.
+
+Suggested file:
 
 ```text
-Departmental Payment Enforcement
-Operation
-Workflow Stage
-Currently Wired
-Currently Unwired
-Existing Hard Gate
-Disabled
-Observe Only
-Use Existing Legacy Gate
-Missing Billing Context
-Preserve Existing Behaviour
-Allow
-Block
-Not Applicable
-Visit Context Rule
-Override Scope
-Emergency Exempt
-Inpatient Exempt
-Typed Enforcement Eligibility
-Eligible
-Not Eligible
-Compatibility Rule Conflict
-Emergency Boundary Missing
-Invoice Resolution Missing
-Configuration is not yet operational
+lang/en/patient_financial_risk.php
+lang/fr/patient_financial_risk.php
 ```
 
-Machine codes and stored enum values remain untranslated.
+Required concepts include:
 
-Maintain EN/FR parity.
+```text
+Financial Risk
+Risk Level
+Normal
+Watchlist
+High Risk
+Blocked Credit
+Primary Reason
+Reason Details
+Credit Limit
+Effective Date
+Review Due
+Expiry Date
+Reference
+Active
+Under Review
+Suspended
+Cleared
+Expired
+Classify Patient
+Submit for Review
+Complete Review
+Suspend
+Reactivate
+Clear Restriction
+View History
+Review Overdue
+Expires Soon
+Financial review required
+```
+
+Also localise:
+
+* Reason labels
+* Event labels
+* Validation messages
+* Empty states
+* Success and failure messages
+* Report labels
+* Command-facing descriptions where project conventions require them
+
+Maintain English/French parity.
 
 ---
 
-# 28. Seeding
+# 28. Tests
 
-Add idempotent defaults using existing settings conventions.
-
-Rules:
-
-* Do not overwrite administrator values.
-* Do not duplicate settings.
-* Existing wired operations receive compatibility-safe defaults.
-* Existing unwired operations remain disabled.
-* Do not activate typed enforcement.
-* Seeder must be safe to run repeatedly.
-* No schema migration should be added if existing settings storage is sufficient.
-
-Document the number of settings or operation records created.
-
----
-
-# 29. Tests
-
-Do not run the full Laravel or Playwright suites.
+Do not run the full Laravel or Playwright suites during this phase.
 
 Add focused tests.
 
-## 29.1 Enum tests
+## 28.1 Enum tests
 
 Verify:
 
-* Operation modes contain only the required values.
-* Missing-context policies are valid.
-* Visit-context rules are valid.
-* Override-scope rules are valid.
-* No typed enforcement mode exists.
+* All required levels exist.
+* All required reasons exist.
+* All statuses exist.
+* Labels resolve through localisation.
+* No enum makes operational payment decisions.
 
-## 29.2 Registry tests
-
-Verify:
-
-* All 13 operations remain registered.
-* Operation codes are unique.
-* Every operation has a valid stage.
-* Every operation has safe defaults.
-* Existing wired operations default to legacy.
-* Existing unwired operations default to disabled or safe observation.
-* Pharmacy and laboratory retain compatibility metadata.
-* Emergency-sensitive operations are marked appropriately.
-
-## 29.3 Configuration service tests
+## 28.2 Migration and model tests
 
 Verify:
 
-* Stored settings override registry defaults where permitted.
-* Invalid values fall back safely.
-* Unknown operations are non-enforcing.
-* Existing hard gates cannot be accidentally disabled.
-* Grouped settings load efficiently.
-* Policies are returned as typed DTOs.
+* Profile can be created.
+* Enum casts work.
+* Monetary fields follow project conventions.
+* Relationships work.
+* Current-profile scope works.
+* Due-for-review scope works.
+* Expired scope works.
+* History is related correctly.
 
-## 29.4 Admin settings tests
-
-Verify:
-
-* Authorised users can view operation settings.
-* Unauthorised users cannot view or update them.
-* Valid settings persist transactionally.
-* Invalid operation codes are rejected.
-* Invalid enums are rejected.
-* Typed enforcement cannot be selected.
-* Existing hard-gate protections are validated.
-* Successful changes create one activity log.
-* Unchanged updates do not create logs.
-* Failed validation creates no logs.
-
-## 29.5 Eligibility tests
+## 28.3 Service tests
 
 Verify:
 
-* Unwired operations are ineligible.
-* Emergency-sensitive operations without a boundary are ineligible.
-* Pharmacy reports its compatibility conflict.
-* Laboratory reports its unresolved stage/convergence issue where applicable.
-* Existing wired operations may be technically eligible only where all prerequisites are satisfied.
-* Eligibility never changes workflow outcomes.
+* Authorised classification succeeds.
+* Only one active restrictive profile exists.
+* Update appends history.
+* Review transitions work.
+* Suspension works.
+* Reactivation works.
+* Clearance works.
+* Expiry works.
+* Invalid transitions fail.
+* Transactions prevent partial updates.
+* Concurrent classification does not create duplicate active profiles.
 
-## 29.6 Compatibility tests
-
-Verify:
-
-* Current production wiring remains unchanged.
-* Existing wired gates retain legacy outcomes.
-* Unwired operations remain unwired.
-* Operation settings do not produce allow/block changes.
-* Existing messages and exceptions remain unchanged.
-* Previous-balance overrides remain separate.
-
-## 29.7 Command tests
+## 28.4 Permission and confidentiality tests
 
 Verify:
 
-* Coverage command shows configuration and eligibility.
-* Audit command detects unsafe combinations.
-* JSON output is valid.
+* Authorised user can view the profile.
+* Unauthorised user cannot view the profile.
+* Unauthorised user cannot infer the profile from JSON or page source.
+* Manage, review, clear, history, and report permissions are enforced separately.
+* Clinical users do not receive detailed reason data.
+* Patient privacy masking remains effective.
+
+## 28.5 UI tests
+
+Verify:
+
+* Current profile is displayed correctly.
+* Empty state displays for patients without a profile.
+* Forms show correct fields.
+* State-dependent actions are available only when valid.
+* History is human-readable.
+* Filters and pagination work.
+* Wired payment-gate settings remain unrelated.
+
+## 28.6 Audit tests
+
+Verify:
+
+* Creation logs one activity event.
+* Update logs one event.
+* Review logs one event.
+* Suspension logs one event.
+* Reactivation logs one event.
+* Clearance logs one event.
+* Expiry logs one event.
+* Failed validation creates no event.
+* Read-only viewing creates no activity log.
+* History and ActivityLog do not conflict or duplicate incorrectly.
+
+## 28.7 Expiry command tests
+
+Verify:
+
+* Due profiles expire.
+* Future profiles remain unchanged.
+* Cleared profiles remain unchanged.
+* Repeated execution is idempotent.
+* History is added once.
+* Activity log is added once.
+* Payment gates remain unchanged.
+
+## 28.8 Diagnostic command tests
+
+Verify:
+
+* Duplicate-active-profile anomalies are reported.
+* Expired active records are reported.
+* Invalid date ordering is reported.
 * Filters work.
-* Commands perform no writes.
-* Commands create no activity logs.
-* Warnings do not cause failure exit codes.
+* JSON output is valid.
+* Command performs no writes.
+* Findings do not create a failure exit code.
 
-## 29.8 Seeder tests
+## 28.9 Non-enforcement regression tests
 
-Verify:
+Explicitly verify:
 
-* Seeder creates expected defaults.
-* Seeder is idempotent.
-* Existing administrator values are preserved.
-* No duplicate operation settings are created.
+* Creating a high-risk profile does not change `VisitPaymentTimingResolver`.
+* Creating a blocked-credit profile does not change `BillingPolicyService`.
+* Creating a risk profile does not change `PaymentGateService`.
+* Existing triage payment outcomes remain unchanged.
+* Existing consultation readiness remains unchanged.
+* Existing laboratory behaviour remains unchanged.
+* Existing pharmacy behaviour remains unchanged.
+* Existing previous-balance behaviour remains unchanged.
+* No visit policy or override is created.
 
-## 29.9 Localisation tests
+## 28.10 Localisation tests
 
 Verify English/French parity.
 
 ---
 
-# 30. Targeted Verification
+# 29. Targeted Verification
 
-Run only focused checks.
+Run focused checks only.
 
 Suggested commands:
 
 ```bash
+php artisan migrate
+php artisan route:list
 php artisan config:clear
 php artisan view:clear
 php artisan view:cache
 
-php artisan test --filter=PaymentGateOperationMode
-php artisan test --filter=PaymentGateOperationRegistry
-php artisan test --filter=PaymentGateOperationConfiguration
-php artisan test --filter=PaymentGateOperationSettings
-php artisan test --filter=PaymentGateEnforcementEligibility
-php artisan test --filter=PaymentGateOperationCompatibility
-php artisan test --filter=PaymentGateCoverage
-php artisan test --filter=PaymentGatePolicyAudit
+php artisan test --filter=PatientFinancialRiskEnum
+php artisan test --filter=PatientFinancialRiskModel
+php artisan test --filter=PatientFinancialRiskService
+php artisan test --filter=PatientFinancialRiskPermission
+php artisan test --filter=PatientFinancialRiskWorkflow
+php artisan test --filter=PatientFinancialRiskAudit
+php artisan test --filter=PatientFinancialRiskExpiry
+php artisan test --filter=PatientFinancialRiskCommand
+php artisan test --filter=PatientFinancialRiskNonEnforcement
 ```
 
 Rerun existing focused regressions:
@@ -1323,6 +1378,7 @@ php artisan test --filter=Pharmacy
 Run:
 
 ```bash
+php artisan billing:financial-risk-audit
 php artisan billing:payment-timing-audit --limit=25
 php artisan billing:payment-gate-coverage
 php artisan billing:payment-gate-policy-audit
@@ -1345,129 +1401,126 @@ Do not run the full Playwright suite.
 
 ---
 
-# 31. Documentation
+# 30. Documentation
 
 Create:
 
 ```text
-docs/billing/PAYMENT_TIMING_POLICY_PHASE_4_REPORT.md
+docs/billing/PAYMENT_TIMING_POLICY_PHASE_5_REPORT.md
 ```
 
 The report must include:
 
-1. Existing architecture audited
-2. Operation-policy vocabulary
-3. Registry extensions
-4. Configuration storage decision
-5. Files created
-6. Files modified
-7. Default policies for all 13 operations
-8. Existing hard-gate compatibility protections
-9. Missing billing-context rules
-10. Emergency and inpatient rules
-11. Override-scope rules
-12. Pharmacy compatibility decision
-13. Laboratory compatibility decision
-14. Enforcement eligibility results
-15. Admin interface changes
-16. Validation and permissions
-17. Audit behaviour
-18. Seeder behaviour and idempotence
-19. Coverage command results
-20. Policy-audit command results
-21. Query and performance impact
-22. Focused tests and results
-23. Confirmation that production payment outcomes remain unchanged
-24. Operations ready or not ready for future cutover
-25. Recommendations for Phase 5
+1. Existing patient, billing, privacy, and audit architecture reviewed
+2. Data-model decision
+3. Files created
+4. Files modified
+5. Enum vocabulary
+6. Active-profile uniqueness strategy
+7. State-transition rules
+8. Review and expiry workflow
+9. Permissions and initial role assignment
+10. Privacy and restricted-visibility behaviour
+11. Patient profile UI
+12. Financial-risk worklist
+13. History design
+14. Activity-log behaviour
+15. Balance-context integration
+16. Reporting and export scope
+17. Expiry command and scheduler behaviour
+18. Diagnostic command results
+19. Seeder and existing-data decisions
+20. Performance and query impact
+21. Focused tests and results
+22. Confirmation that payment gates and visit policies remain unchanged
+23. Deferred work for Phase 6
 
 Do not claim tests passed unless they were executed successfully.
 
 ---
 
-# 32. Guardrails
+# 31. Guardrails
 
 Do not:
 
-* Add patient financial-risk profiles
-* Add risk enums or patient-risk tables
-* Persist per-visit payment timing
-* Add per-visit payment-policy overrides
+* Modify `VisitPaymentTimingResolver` to inspect risk profiles
+* Modify typed payment precedence
+* Force `pay_before_service`
+* Add per-visit payment-policy persistence
+* Add visit risk snapshots
+* Add per-visit payment overrides
 * Add risk override approvals
-* Add insurance timing resolution
-* Add sponsor timing resolution
-* Add corporate timing resolution
+* Modify operation eligibility
 * Add typed enforcement mode
-* Make typed decisions operational
-* Wire the nine unwired operations
-* Add new departmental blocking
-* Relax existing laboratory behaviour
-* Relax existing pharmacy paid-only behaviour
+* Wire unwired payment-gate operations
+* Change laboratory compatibility
+* Change pharmacy compatibility
 * Change emergency behaviour
 * Change inpatient behaviour
-* Add emergency stabilisation fields without a proper clinical design
+* Change previous-balance policy
+* Automatically classify patients from debt
+* Automatically clear profiles after payment
+* Automatically create profiles from failed payment
 * Change invoice calculations
 * Change receivable calculations
-* Change payment allocations
-* Change general-ledger posting
-* Change previous-balance policy
+* Change payment allocation
+* Change GL posting
 * Change visit completion
 * Change discharge
 * Change financial closure
-* Create activity logs for policy reads
+* Expose detailed risk information to ordinary clinical users
+* Create activity logs for profile reads
 * Run broad test suites
 
 ---
 
-# 33. Acceptance Criteria
+# 32. Acceptance Criteria
 
-Phase 4 is complete only when:
+Phase 5 is complete only when:
 
-* A typed operation-mode enum exists.
-* A typed missing-billing-context policy exists.
-* Typed visit-context and override-scope rules exist.
-* Every registered operation has safe policy defaults.
-* Existing wired operations default to legacy compatibility.
-* Existing unwired operations remain non-enforcing.
-* A typed operation-policy DTO exists.
-* Operation settings use the existing settings infrastructure.
-* A typed configuration service exists.
-* Invalid settings fall back safely.
-* Existing hard gates cannot be accidentally disabled.
-* The admin UI exposes operation-policy configuration safely.
-* Configuration changes are permission-controlled.
-* Configuration changes are audited.
-* Seed defaults are idempotent.
-* Enforcement eligibility is calculated diagnostically.
-* Pharmacy compatibility limitations are explicit.
-* Laboratory compatibility limitations are explicit.
-* Emergency-stage limitations are explicit.
-* Coverage diagnostics include configured policy and eligibility.
-* A policy-audit command identifies unsafe combinations.
-* No production operation changes allow/block behaviour.
-* No unwired operation becomes wired.
-* Existing messages, exceptions, and override scopes remain unchanged.
+* Financial-risk level, reason, and status enums exist.
+* A dedicated patient financial-risk data model exists.
+* Financial-risk history is immutable.
+* Only one active restrictive profile can exist per patient.
+* Classification is transaction-safe.
+* Review, suspension, reactivation, clearance, and expiry workflows exist.
+* Invalid state transitions are rejected.
+* Review and expiry dates are supported.
+* Due expiry can be processed idempotently.
+* Permissions are granular and backend-enforced.
+* Sensitive risk data is excluded from unauthorised responses.
+* Patient privacy and masking remain intact.
+* Authorised users have a usable patient-profile interface.
+* Authorised users have a financial-risk worklist.
+* History is human-readable and permission-controlled.
+* Material mutations create activity logs.
+* Routine reads do not create activity logs.
+* Existing balance services may provide context but do not classify patients.
+* No existing patient is automatically classified.
+* No visit policy is created or modified.
+* No payment gate reads financial-risk profiles.
+* No production payment outcome changes.
 * English/French localisation is complete.
 * Focused tests pass.
-* The Phase 4 report accurately documents implementation and verification.
+* The Phase 5 report accurately documents implementation and verification.
 
-Proceed with **Payment Timing Policy Phase 4 only**.
+Proceed with **Payment Timing Policy Phase 5 only**.
 
 After implementation, provide:
 
 1. A concise implementation summary
 2. Files created and modified
-3. The final operation-policy vocabulary
-4. Configuration storage and seeding details
-5. Default policies for all 13 operations
-6. Pharmacy and laboratory compatibility decisions
-7. Emergency and inpatient safety decisions
-8. Enforcement-eligibility results
-9. Coverage and policy-audit command results
-10. Query and performance impact
+3. Data-model and active-profile strategy
+4. Risk levels, reasons, and statuses
+5. State-transition workflow
+6. Permission and privacy design
+7. UI and worklist details
+8. Audit and history behaviour
+9. Expiry and diagnostic command results
+10. Performance and query impact
 11. Focused test results
-12. Confirmation that production outcomes remain unchanged
-13. The Phase 4 report path
-14. Recommended requirements for Phase 5
+12. Confirmation that payment behaviour remains unchanged
+13. The Phase 5 report path
+14. Recommended requirements for Phase 6
 
-Then stop after Phase 4.
+Then stop after Phase 5.
