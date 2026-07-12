@@ -180,7 +180,7 @@ class ClaimController extends Controller
         $eligibleInsurance = $this->claimService->eligibleInsuranceForVisit($visit, $selectedTypeCode);
 
         if ($selectedTypeCode && ! $eligibleInsurance) {
-            return back()->with('error', 'This patient does not have a valid NHIA insurance.');
+            return back()->with('error', __('claims.patient_has_no_valid_nhia_insurance'));
         }
 
         try {

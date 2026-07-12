@@ -37,6 +37,7 @@ return [
     'back_to_claim' => 'Retour a la demande',
     'invoice_claim_notice' => 'Creation d une demande depuis la facture :invoice - Patient : :patient - Montant reclamable : :amount',
     'invoice_no_claimable_items' => 'Cette facture ne contient aucune ligne couverte par assurance avec un montant approuve. Mettez a jour les lignes de facture avant de creer une demande.',
+    'patient_has_no_valid_nhia_insurance' => 'Ce patient ne dispose pas d une assurance NHIA valide.',
     'claim_from_invoice' => 'Demande d assurance depuis facture',
     'insurance_provider' => 'Fournisseur d assurance',
     'select_provider' => 'Selectionner un fournisseur...',

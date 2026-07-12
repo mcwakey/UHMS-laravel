@@ -37,6 +37,7 @@ return [
     'back_to_claim' => 'Back to Claim',
     'invoice_claim_notice' => 'Creating insurance claim from Invoice :invoice - Patient: :patient - Claimable Amount: :amount',
     'invoice_no_claimable_items' => 'This invoice does not have any insurance-covered lines with an approved amount. Update the invoice items before creating a claim.',
+    'patient_has_no_valid_nhia_insurance' => 'This patient does not have valid NHIA insurance.',
     'claim_from_invoice' => 'Insurance Claim from Invoice',
     'insurance_provider' => 'Insurance Provider',
     'select_provider' => 'Select Provider...',
