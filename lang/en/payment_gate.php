@@ -45,6 +45,7 @@ return [
         'disabled' => 'Disabled',
         'observe' => 'Observe Only',
         'legacy' => 'Use Existing Legacy Gate',
+        'typed' => 'Typed Enforcement',
     ],
 
     'missing_context' => [

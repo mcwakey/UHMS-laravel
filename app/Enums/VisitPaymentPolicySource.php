@@ -11,6 +11,7 @@ enum VisitPaymentPolicySource: string
     case CORPORATE_ACCOUNT = 'corporate_account';
     case MANUAL_OVERRIDE = 'manual_override';
     case EMERGENCY_POLICY = 'emergency_policy';
+    case APPROVED_ARRANGEMENT = 'approved_arrangement';
 
     public function translationKey(): string
     {

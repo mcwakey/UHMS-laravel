@@ -53,6 +53,7 @@ class BillingPolicyService
         protected VisitPaymentTimingResolver $paymentTimingResolver,
         protected PaymentTimingLegacyCompatibilityService $paymentTimingCompatibility,
         protected PaymentTimingPolicyComparisonService $paymentTimingComparison,
+        protected PaymentTimingCutoverGateService $paymentTimingCutover,
     ) {}
 
     /*
@@ -160,12 +161,14 @@ class BillingPolicyService
         PaymentGateContext|string $context = 'invoice_item_policy',
     ): BillingPolicyDecision {
         $legacyDecision = $this->evaluateLegacyInvoiceItemPolicy($item, $user);
+        $normalisedContext = $this->normaliseContext($context);
 
         if ($this->paymentTimingConfiguration->integrationMode() === PaymentTimingIntegrationMode::OBSERVE) {
-            $this->observePaymentTiming($item, $legacyDecision, $this->normaliseContext($context));
+            $this->observePaymentTiming($item, $legacyDecision, $normalisedContext);
         }
 
-        return $legacyDecision;
+        // Phase 8 operational cutover (default disabled → returns legacy unchanged).
+        return $this->paymentTimingCutover->apply($legacyDecision, $item, $normalisedContext);
     }
 
     /** Preserve the laboratory's pre-Phase-3 intrinsic settlement gate. */
@@ -198,7 +201,8 @@ class BillingPolicyService
             $this->observePaymentTiming($item, $decision, $context);
         }
 
-        return $decision;
+        // Phase 8 operational cutover (default disabled → returns legacy unchanged).
+        return $this->paymentTimingCutover->apply($decision, $item, $context);
     }
 
     /** Preserve pharmacy's existing paid-only release rule, including emergency visits. */
@@ -225,7 +229,14 @@ class BillingPolicyService
             $this->observePaymentTiming($item, $decision, $context);
         }
 
-        return $decision;
+        // Phase 8 operational cutover (default disabled → returns legacy unchanged).
+        return $this->paymentTimingCutover->apply($decision, $item, $context);
+    }
+
+    /** Public: the pre-cutover legacy decision (read-only; used by the Phase 8 preview command). */
+    public function legacyInvoiceItemPolicy(InvoiceItem $item, ?User $user = null): BillingPolicyDecision
+    {
+        return $this->evaluateLegacyInvoiceItemPolicy($item, $user);
     }
 
     private function evaluateLegacyInvoiceItemPolicy(InvoiceItem $item, ?User $user = null): BillingPolicyDecision

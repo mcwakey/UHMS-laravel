@@ -21,6 +21,13 @@ class PaymentTimingSettingsSeeder extends Seeder
             'require_settlement_for_pay_after_services' => ['1', 'boolean'],
             'require_settlement_for_running_bill' => ['1', 'boolean'],
             'allow_outstanding_balance_override' => ['1', 'boolean'],
+            // Payment Timing Policy Phase 8 — operational cutover (deployment defaults).
+            // Master mode DISABLED preserves all existing legacy behaviour; the
+            // seeder never activates cutover or selects typed operation mode.
+            'cutover_mode' => ['disabled', 'string'],
+            'cutover_failure_fallback' => ['1', 'boolean'],
+            'cutover_log_decisions' => ['0', 'boolean'],
+            'cutover_log_fallbacks' => ['1', 'boolean'],
         ];
 
         // Keep this assertion close to the seed vocabulary so adding a visit

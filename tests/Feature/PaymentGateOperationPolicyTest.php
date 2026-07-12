@@ -104,12 +104,20 @@ class PaymentGateOperationPolicyTest extends TestCase
 
     // --- Eligibility --------------------------------------------------------
 
-    public function test_no_operation_is_eligible_for_typed_enforcement_in_this_phase(): void
+    public function test_only_wired_non_compatibility_operations_are_typed_eligible(): void
     {
+        // Phase 8: the two consultation hard gates became typed-eligible; lab/
+        // pharmacy still require a compatibility decision, and all nine unwired
+        // operations remain ineligible.
         $eligibility = app(PaymentGateEnforcementEligibilityService::class);
 
-        foreach ($this->registry()->operationCodes() as $operation) {
-            $this->assertFalse($eligibility->evaluate($operation)->eligible, "{$operation} must not be eligible in Phase 4");
+        $this->assertTrue($eligibility->evaluate('consultation.route.complete')->eligible);
+        $this->assertTrue($eligibility->evaluate('consultation.next_patient.readiness')->eligible);
+        $this->assertFalse($eligibility->evaluate('laboratory.result.enter')->eligible);
+        $this->assertFalse($eligibility->evaluate('pharmacy.item.dispense')->eligible);
+
+        foreach (['theatre.perform', 'service.render', 'ambulance.service.render', 'nursing.service.render'] as $unwired) {
+            $this->assertFalse($eligibility->evaluate($unwired)->eligible, "{$unwired} must remain ineligible");
         }
     }
 
@@ -125,8 +133,9 @@ class PaymentGateOperationPolicyTest extends TestCase
             PaymentGateEnforcementEligibility::INELIGIBLE_COMPATIBILITY_RULE,
             $eligibility->evaluate('pharmacy.item.dispense')->status,
         );
+        // Phase 8 — consultation route completion is now typed-eligible.
         $this->assertSame(
-            PaymentGateEnforcementEligibility::INELIGIBLE_UNAPPROVED_POLICY,
+            PaymentGateEnforcementEligibility::ELIGIBLE,
             $eligibility->evaluate('consultation.route.complete')->status,
         );
     }

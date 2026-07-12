@@ -42,6 +42,7 @@ use App\Http\Controllers\Admin\Billing\CashierShiftController;
 use App\Http\Controllers\Admin\Billing\ClaimController;
 use App\Http\Controllers\Admin\Billing\FinancialEntryController;
 use App\Http\Controllers\Admin\Billing\FinancialRiskController;
+use App\Http\Controllers\Admin\Billing\PaymentTimingCutoverController;
 use App\Http\Controllers\Admin\Billing\VisitPaymentArrangementController;
 use App\Http\Controllers\Admin\Billing\VisitPaymentPolicyController;
 use App\Http\Controllers\Admin\BloodBank\BloodBankDashboardController;
@@ -1558,6 +1559,14 @@ Route::middleware('auth')->group(function () {
             });
             Route::post('visits/{visit}/payment-arrangements', [VisitPaymentArrangementController::class, 'store'])->name('visits.payment-arrangements.store')->middleware('can:visits.payment_arrangement.request');
             Route::post('visits/{visit}/payment-arrangements/restore-baseline', [VisitPaymentArrangementController::class, 'restoreBaseline'])->name('visits.payment-arrangements.restore-baseline')->middleware('can:visits.payment_arrangement.restore_baseline');
+
+            // Operational payment-timing cutover (Payment Timing Policy Phase 8)
+            Route::prefix('payment-timing-cutover')->name('payment-timing-cutover.')->group(function () {
+                Route::get('/', [PaymentTimingCutoverController::class, 'index'])->name('index')->middleware('can:billing.payment_timing.cutover.view');
+                Route::put('master', [PaymentTimingCutoverController::class, 'updateMaster'])->name('master')->middleware('can:billing.payment_timing.cutover.manage');
+                Route::put('operation', [PaymentTimingCutoverController::class, 'updateOperation'])->name('operation')->middleware('can:billing.payment_timing.cutover.manage');
+                Route::post('rollback', [PaymentTimingCutoverController::class, 'rollback'])->name('rollback')->middleware('can:billing.payment_timing.cutover.rollback');
+            });
 
             // Walk-in counter sale (drugs + investigations, no visit)
             Route::middleware('can:invoices.create')->group(function () {

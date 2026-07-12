@@ -51,7 +51,10 @@ class PaymentTimingIntegrationTest extends TestCase
         $decision = app(BillingPolicyService::class)->getInvoiceItemPolicy(new InvoiceItem);
         $this->assertTrue($decision->allowed);
         $this->assertSame(BillingPolicyService::MODE_ADVISORY, $decision->mode);
-        $this->assertCount(0, DB::getQueryLog());
+        // The typed resolver/comparison are never invoked (mocks above). Phase 8
+        // reads only the cached master cutover switch (a single settings read),
+        // and adds NO arrangement/visit-policy/typed-operation queries.
+        $this->assertLessThanOrEqual(1, count(DB::getQueryLog()));
     }
 
     public function test_observe_mode_compares_but_returns_the_unchanged_legacy_result(): void

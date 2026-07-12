@@ -231,6 +231,11 @@ class RoleSeeder extends Seeder
             'visits.payment_arrangement.history',
             'visits.payment_arrangement.report',
             'visits.payment_arrangement.restore_baseline',
+            // Operational payment-timing cutover (Payment Timing Policy Phase 8)
+            'billing.payment_timing.cutover.view',
+            'billing.payment_timing.cutover.manage',
+            'billing.payment_timing.cutover.activate',
+            'billing.payment_timing.cutover.rollback',
             'sponsors.manage',
             'sponsors.view',
             'sponsors.create',
@@ -1563,6 +1568,8 @@ class RoleSeeder extends Seeder
             // Visit payment arrangements (Phase 7) — Accountant may request/withdraw but not approve/revoke
             'visits.payment_arrangement.view', 'visits.payment_arrangement.request',
             'visits.payment_arrangement.withdraw', 'visits.payment_arrangement.history', 'visits.payment_arrangement.report',
+            // Cutover: Accountant view only (Phase 8)
+            'billing.payment_timing.cutover.view',
             'billing.payment.allocate_cross_visit', 'billing.payment.allocate_manual',
             'billing.patient_statement.view', 'billing.patient_statement.print', 'billing.patient_statement.export',
             'admission.discharge.readiness.view', 'admission.discharge.clearance.view',
@@ -1638,6 +1645,8 @@ class RoleSeeder extends Seeder
                 // Finance Manager may approve/reject/revoke/restore visit payment arrangements (Phase 7)
                 'visits.payment_arrangement.approve', 'visits.payment_arrangement.reject',
                 'visits.payment_arrangement.revoke', 'visits.payment_arrangement.restore_baseline',
+                // Cutover: Finance Manager may view/manage but NOT activate/rollback (Phase 8)
+                'billing.payment_timing.cutover.view', 'billing.payment_timing.cutover.manage',
                 'accounting.failed_postings.resolve',
                 'accounting.failed_postings.waive',
                 'accounting.subledger_reconciliation.approve',

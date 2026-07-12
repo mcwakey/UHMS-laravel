@@ -116,6 +116,12 @@ class AppServiceProvider extends ServiceProvider
         // Payment Timing Policy Phase 6 — observational visit-payment-policy materialisation.
         \App\Models\Visit::observe(\App\Observers\VisitObserver::class);
 
+        // Payment Timing Policy Phase 8 — request-scoped memoisation/de-dup for the
+        // operational resolver and cutover diagnostics (bounded gate performance).
+        $this->app->singleton(\App\Services\Billing\OperationalVisitPaymentTimingResolver::class);
+        $this->app->singleton(\App\Services\Billing\PaymentTimingCutoverDiagnostics::class);
+        $this->app->singleton(\App\Services\Billing\PaymentTimingCutoverConfigurationService::class);
+
         // ---- Module feature-flag Blade directives ----
         // @module('pharmacy') ... @endmodule  → renders only when module enabled
         Blade::if('module', function (string $slug) {

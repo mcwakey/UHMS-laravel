@@ -4,11 +4,13 @@ namespace App\Enums;
 
 /**
  * Configured enforcement state for a registered payment-gate operation
- * (Payment Timing Policy Phase 4).
+ * (Payment Timing Policy Phase 4, extended in Phase 8).
  *
- * Deliberately has exactly three values. There is NO `typed` / `active` /
- * `enforce_typed` mode in this phase — typed enforcement is not operational and
- * will only be connected in a later, deliberate cutover phase.
+ * `typed` (Phase 8) makes the operation use operational typed enforcement — but
+ * ONLY when the master cutover is active, the operation is registry-approved and
+ * wired, any required compatibility acknowledgement is present, and the runtime
+ * context is eligible. Otherwise the operation stays legacy/observe. The seeder
+ * never selects `typed`, and it is invalid for the nine unwired operations.
  */
 enum PaymentGateOperationMode: string
 {
@@ -20,6 +22,9 @@ enum PaymentGateOperationMode: string
 
     /** The operation uses its existing legacy gate behaviour (not typed enforcement). */
     case LEGACY = 'legacy';
+
+    /** The operation uses operational typed enforcement (Phase 8; guarded by cutover). */
+    case TYPED = 'typed';
 
     public function label(): string
     {

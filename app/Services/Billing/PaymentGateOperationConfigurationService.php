@@ -31,6 +31,8 @@ final class PaymentGateOperationConfigurationService
     private const OVERRIDABLE_KEYS = [
         'mode', 'missing_context', 'visit_context_rule', 'override_scope_rule',
         'emergency_exempt', 'inpatient_exempt', 'typed_enforcement_eligible',
+        // Phase 8 — compatibility acknowledgement for typed lab/pharmacy cutover.
+        'compatibility_acknowledged',
     ];
 
     public function __construct(private readonly PaymentGateOperationRegistry $registry) {}
@@ -92,6 +94,16 @@ final class PaymentGateOperationConfigurationService
             $mode = $definition['default_mode'];
         }
 
+        // Phase 8 safety net: a stored `typed` mode can only stand when the
+        // operation is genuinely typed-eligible (wired hard gate, registry-
+        // approved, and any required compatibility acknowledgement present).
+        // Otherwise clamp to LEGACY so an invalid stored value never enforces.
+        if ($mode === PaymentGateOperationMode::TYPED
+            && ! $this->typedAllowed($definition, (bool) ($stored['compatibility_acknowledged'] ?? false))) {
+            $this->warn('Refusing typed mode for a non-eligible operation; keeping legacy.', $operation);
+            $mode = PaymentGateOperationMode::LEGACY;
+        }
+
         $missing = $this->enum(MissingBillingContextPolicy::class, $stored['missing_context'] ?? null, $operation, 'missing_context')
             ?? $definition['missing_billing_context'];
         $visitRule = $this->enum(PaymentGateVisitContextRule::class, $stored['visit_context_rule'] ?? null, $operation, 'visit_context_rule')
@@ -124,6 +136,12 @@ final class PaymentGateOperationConfigurationService
                 'compatibility_requires_decision' => (bool) ($definition['compatibility_requires_decision'] ?? false),
                 'compatibility_note' => $definition['compatibility_note'] ?? null,
                 'has_stored_override' => $stored !== [],
+                // Phase 8 typed-cutover metadata.
+                'approved_for_typed_enforcement' => (bool) ($definition['approved_for_typed_enforcement'] ?? false),
+                'typed_supported_visit_types' => $definition['typed_supported_visit_types'] ?? [],
+                'requires_compatibility_acknowledgement' => (bool) ($definition['requires_compatibility_acknowledgement'] ?? false),
+                'compatibility_acknowledged' => (bool) ($stored['compatibility_acknowledged'] ?? false),
+                'emergency_supported' => (bool) ($definition['emergency_supported'] ?? false),
             ],
         );
     }
@@ -134,6 +152,50 @@ final class PaymentGateOperationConfigurationService
     private function boolOverride(array $stored, string $key, bool $default): bool
     {
         return array_key_exists($key, $stored) ? (bool) $stored[$key] : $default;
+    }
+
+    /**
+     * Whether the operation may validly be set to typed mode (Phase 8): a wired
+     * hard gate, registry-approved for typed enforcement, with any required
+     * compatibility acknowledgement present.
+     *
+     * @param  array<string, mixed>  $definition
+     */
+    private function typedAllowed(array $definition, bool $acknowledged): bool
+    {
+        $wired = (bool) ($definition['production_wired'] ?? false) && (bool) ($definition['hard_enforcement'] ?? false);
+        $approved = (bool) ($definition['approved_for_typed_enforcement'] ?? false);
+        $ackOk = ! (bool) ($definition['requires_compatibility_acknowledgement'] ?? false) || $acknowledged;
+
+        return $wired && $approved && $ackOk;
+    }
+
+    /** Public: is this operation eligible to be configured as typed at all? */
+    public function operationTypedEligible(string $operation): bool
+    {
+        $definition = $this->registry->get($operation);
+        if ($definition === null) {
+            return false;
+        }
+
+        return (bool) ($definition['production_wired'] ?? false)
+            && (bool) ($definition['hard_enforcement'] ?? false)
+            && (bool) ($definition['approved_for_typed_enforcement'] ?? false);
+    }
+
+    public function compatibilityAcknowledged(string $operation): bool
+    {
+        return (bool) ($this->storedFor($operation)['compatibility_acknowledged'] ?? false);
+    }
+
+    /**
+     * Public read of the raw stored (overridable) settings for one operation.
+     *
+     * @return array<string, mixed>
+     */
+    public function storedForPublic(string $operation): array
+    {
+        return $this->storedFor($operation);
     }
 
     /**

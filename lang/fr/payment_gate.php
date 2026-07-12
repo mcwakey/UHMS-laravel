@@ -45,6 +45,7 @@ return [
         'disabled' => 'Désactivé',
         'observe' => 'Observation uniquement',
         'legacy' => 'Utiliser le blocage hérité existant',
+        'typed' => 'Application typée',
     ],
 
     'missing_context' => [

@@ -32,6 +32,8 @@ class PaymentTimingEnumTest extends TestCase
         $this->assertSame([
             'global_default', 'visit_type', 'patient_risk', 'insurance',
             'corporate_account', 'manual_override', 'emergency_policy',
+            // Phase 8 — runtime approved-arrangement precedence.
+            'approved_arrangement',
         ], array_column(VisitPaymentPolicySource::cases(), 'value'));
     }
 }

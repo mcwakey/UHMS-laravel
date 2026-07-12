@@ -69,5 +69,6 @@ return [
         'corporate_account' => 'Corporate account',
         'manual_override' => 'Manual override',
         'emergency_policy' => 'Emergency policy',
+        'approved_arrangement' => 'Approved visit arrangement',
     ],
 ];

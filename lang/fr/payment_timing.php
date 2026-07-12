@@ -69,5 +69,6 @@ return [
         'corporate_account' => 'Compte d’entreprise',
         'manual_override' => 'Dérogation manuelle',
         'emergency_policy' => 'Politique d’urgence',
+        'approved_arrangement' => 'Arrangement de visite approuvé',
     ],
 ];

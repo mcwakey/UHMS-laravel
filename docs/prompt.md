@@ -1,28 +1,29 @@
-# UHMS Implementation Prompt — Payment Timing Policy Phase 7
+# UHMS Implementation Prompt — Payment Timing Policy Phase 8
 
-## Authorised Per-Visit Payment Arrangements, Request/Approval Workflow, and Revocation
+## Controlled Operational Cutover, Approved-Arrangement Precedence, Typed Gate Decisions, and Instant Rollback
 
 You are working on **UHMS**, a Laravel-based hospital management system.
 
-Implement **Phase 7 of the Configurable Payment Timing and Per-Visit Payment Policy system**.
+Implement **Phase 8 of the Configurable Payment Timing and Per-Visit Payment Policy system**.
 
-Phases 1–6 are complete.
+Phases 1–7 are complete.
 
 ---
 
 # 1. Existing Foundation
 
-## Phase 1 — Configuration foundation
+## Phase 1 — Typed configuration
 
 Implemented:
 
 * `VisitPaymentTimingPolicy`
 * `VisitPaymentPolicySource`
-* Global and visit-type payment-timing settings
-* Database-backed configuration
-* Admin settings, localisation, permissions, and audit
+* Global payment-timing policy
+* Visit-type policy configuration
+* Database-backed settings
+* Admin UI, localisation, permission protection, and audit
 
-## Phase 2 — Legacy observation integration
+## Phase 2 — Legacy integration
 
 Implemented:
 
@@ -30,22 +31,22 @@ Implemented:
 * `VisitPaymentTimingDecision`
 * `VisitPaymentTimingResolver`
 * Legacy compatibility mapping
-* Comparison diagnostics
-* `billing:payment-timing-audit`
+* Typed-versus-legacy comparison
+* Bounded diagnostics
 
-Legacy billing decisions remain authoritative.
+Legacy decisions remain operationally authoritative.
 
-## Phase 3 — Central payment façade
+## Phase 3 — Central payment-gate façade
 
 Implemented:
 
 * `PaymentGateStage`
 * `PaymentGateContext`
-* Production payment checks centralised through `PaymentGateService`
-* Maintained operation registry
-* Stage-aware diagnostics and coverage reporting
+* Centralised production payment checks through `PaymentGateService`
+* Stage-aware observation
+* Operation registry and coverage command
 
-Four production checks are wired:
+Four production hard gates are wired:
 
 ```text
 consultation.route.complete
@@ -56,200 +57,198 @@ pharmacy.item.dispense
 
 Nine operations remain intentionally unwired.
 
-## Phase 4 — Departmental enforcement policy
+## Phase 4 — Departmental operation policy
 
 Implemented:
 
-* Operation modes and stage rules
-* Missing-context policy
-* Visit-context rules
-* Override-scope rules
+* `PaymentGateOperationMode`
+* `MissingBillingContextPolicy`
+* `PaymentGateVisitContextRule`
+* `PaymentGateOverrideScopeRule`
+* Per-operation policy DTO and configuration
 * Eligibility and compatibility diagnostics
 * Admin configuration and audit
 
-All operation configuration remains non-operational.
+Current operation modes are:
+
+```text
+disabled
+observe
+legacy
+```
+
+No typed mode currently exists.
 
 ## Phase 5 — Patient financial-risk profiles
 
 Implemented:
 
-* Patient financial-risk classification
-* Restricted permissions and privacy
-* Lifecycle, review, suspension, clearance, and expiry
-* Immutable history and activity logging
+* Restricted financial-risk classification
+* History and lifecycle
+* Permissions and privacy
 * Finance worklist and reporting
 
-Financial-risk profiles do not affect visits or payment gates.
+Financial risk remains separate from live gate decisions.
 
 ## Phase 6 — Visit policy materialisation
 
 Implemented:
 
-* One observational `visit_payment_policies` record per visit
+* Observed baseline policy per visit
+* Risk recommendation
+* Risk snapshot
 * Append-only policy history
-* Baseline typed policy snapshots
-* Patient financial-risk snapshots
-* Non-operational recommendations
-* Finance-review indicators
-* Backfill, refresh, and audit commands
-* Restricted worklist and detail views
+* Backfill, refresh, audit, and finance worklist
 
-Important Phase 6 guarantees:
+The baseline and recommendation remain non-operational.
 
-* `resolved_policy` is the baseline typed observation.
-* `recommended_policy` is separate and non-operational.
-* Risk recommendations never replace the baseline.
-* `VisitPaymentTimingResolver` remains risk-unaware.
-* `BillingPolicyService` and `PaymentGateService` do not read materialised visit policy records.
-* No operational payment-policy field currently exists.
+## Phase 7 — Approved visit arrangements
 
----
+Implemented:
 
-# 2. Phase 7 Goal
-
-Implement an explicit and authorised **per-visit payment-arrangement workflow**.
-
-The workflow must support authorised users requesting or directly setting, subject to permissions and approval rules:
-
-```text
-Pay Before Service
-Pay After All Services
-Running Bill
-Return to Baseline Policy
-```
-
-The workflow must also support:
-
-* Requests
-* Approval
-* Rejection
-* Withdrawal
-* Revocation
-* Expiry
-* Replacement by a newer approved arrangement
-* Full history
-* Separation of requester and approver
+* Per-visit arrangement requests
+* Approval, rejection, withdrawal, revocation, expiry, and replacement
+* Maker-checker enforcement
 * Risk-based approval requirements
-* Reason and supporting reference
-* Permission-controlled visibility
-* Safe handling of concurrent requests
-* Clear distinction between baseline, recommendation, and approved arrangement
+* Current approved-arrangement link
+* Arrangement history and audit
+* Restricted approval worklist
 
-This phase creates an **approved visit-specific arrangement**, but it must remain separate from the live legacy payment gate.
-
-An approved arrangement must not yet change:
-
-* Triage blocking
-* Consultation readiness
-* Laboratory result entry
-* Pharmacy dispensing
-* Any other departmental workflow
-* Invoice settlement
-* Visit completion
-* Discharge
-* Financial closure
-
-Operational cutover will occur in a later phase.
+Approved arrangements currently remain administrative only.
 
 ---
 
-# 3. Core Domain Separation
+# 2. Phase 8 Goal
 
-UHMS must preserve these distinct concepts:
+Introduce a safe and reversible mechanism through which:
+
+1. The hospital’s typed global and visit-type payment policies can become operational for specifically approved payment-gate operations.
+2. A current approved per-visit arrangement can take precedence over the typed baseline.
+3. Existing legacy decisions remain the automatic fallback.
+4. Each operation can be activated separately.
+5. Activation can be observed before becoming active.
+6. An environment-level kill switch can immediately return the entire system to legacy behaviour.
+7. Laboratory and pharmacy compatibility changes require explicit acknowledgement.
+8. Emergency-sensitive workflows remain on legacy behaviour until an authoritative emergency-stage boundary exists.
+9. No unwired operation becomes wired.
+10. Financial closure, discharge, and previous-balance enforcement remain outside this phase.
+
+This is the first phase permitted to change production allow/block decisions, but only when administrators explicitly activate the cutover.
+
+Deployment defaults must preserve all existing behaviour.
+
+---
+
+# 3. Operational Decision Hierarchy
+
+For a payment-gate operation that is actively using typed enforcement, resolve the visit policy in this order:
 
 ```text
-Baseline observed policy
+1. Emergency safety restriction or typed-scope exclusion
+2. Current operationally eligible approved visit arrangement
+3. Existing typed baseline from VisitPaymentTimingResolver
+   a. compatible visit-wide legacy override
+   b. explicit visit-type policy
+   c. global default
+4. Legacy decision fallback
+```
+
+Important:
+
+* The Phase 6 `resolved_policy` record remains historical and observational.
+* Runtime resolution should use current typed configuration rather than blindly trusting a stale snapshot.
+* The approved arrangement may override the baseline.
+* Risk recommendation alone must never become operational.
+* An approved arrangement that is stale, expired, revoked, replaced, inconsistent, or not yet effective must be ignored.
+* Any technical failure must return the existing legacy result.
+
+---
+
+# 4. Core Separation
+
+Preserve these distinct concepts:
+
+```text
+Observed baseline snapshot
+Current runtime typed baseline
 Risk recommendation
-Requested policy
-Approved visit arrangement
-Legacy operational gate
-Future typed operational policy
+Approved administrative arrangement
+Operational typed policy
+Legacy fallback decision
+Invoice-item settlement state
+Departmental gate operation
 ```
 
-For example:
+Do not overwrite the materialised baseline when the operational policy changes.
+
+Do not mark the recommendation as approved.
+
+Do not create a billing override merely to make the arrangement operational.
+
+---
+
+# 5. Mandatory Architecture Audit
+
+Before changing code, audit:
+
+## Runtime payment decisions
+
+* `BillingPolicyService`
+* `PaymentGateService`
+* `BillingPolicyDecision`
+* `BillingPolicyReason`
+* `InvoiceItemSettlementService`
+* Existing visit billing overrides
+* Existing operation-specific compatibility paths
+* Existing missing-invoice behaviour
+* Existing partial-payment behaviour
+
+## Typed policy
+
+* `VisitPaymentTimingResolver`
+* `VisitPaymentTimingDecision`
+* `PaymentTimingConfigurationService`
+* `PaymentTimingPolicyComparisonService`
+* Existing legacy/observe integration mode
+
+## Operation policy
+
+* `PaymentGateOperationRegistry`
+* `PaymentGateOperationConfigurationService`
+* `PaymentGateEnforcementEligibilityService`
+* `PaymentGateOperationCompatibilityService`
+* Current admin configuration and audit
+
+## Approved arrangement
+
+* `VisitPaymentArrangement`
+* `VisitPaymentArrangementService`
+* `VisitPaymentArrangementApprovalPolicyService`
+* Current-arrangement link on `VisitPaymentPolicy`
+* Risk-staleness logic
+* Expiry and replacement handling
+
+## Existing production call sites
+
+Reconfirm the exact runtime behaviour of:
 
 ```text
-Baseline observed policy: Pay After All Services
-Risk recommendation: Pay Before Service
-Requested arrangement: Pay After All Services
-Approved arrangement: Pay After All Services
-Legacy operational gate: Still authoritative and unchanged
+consultation.route.complete
+consultation.next_patient.readiness
+laboratory.result.enter
+pharmacy.item.dispense
 ```
 
-Do not overwrite `resolved_policy` when an arrangement is approved.
-
-Do not overwrite `recommended_policy`.
-
-Do not make `approved_policy` synonymous with the current operational gate.
+Document the audit in the Phase 8 report.
 
 ---
 
-# 4. Mandatory Architecture Audit
-
-Before changing code, inspect:
-
-## Visit policy materialisation
-
-* `VisitPaymentPolicy`
-* `VisitPaymentPolicyHistory`
-* `VisitPaymentPolicyMaterializationService`
-* Visit-policy worklist and detail UI
-* Snapshot staleness logic
-* Backfill, refresh, and audit commands
-* Existing permissions and role assignments
-
-## Existing overrides
-
-* `VisitBillingOverride`
-* `VisitBillingOverrideService`
-* Override types
-* Override scopes
-* Approval rules
-* Requester and approver fields
-* Expiry and revocation
-* Audit logging
-* Existing UI and commands
-
-Determine whether the existing override infrastructure can safely support approved visit payment arrangements or whether a dedicated request/approval table is required.
-
-Do not force the new workflow into an existing override type where semantics differ.
-
-## Existing approval workflows
-
-Inspect:
-
-* Credit approvals
-* Sponsor authorisations
-* Insurance authorisations
-* Management approvals
-* Any maker-checker workflows
-* Existing request/review models
-* Existing approval history patterns
-* Existing self-approval prevention conventions
-
-## Visit lifecycle
-
-Inspect:
-
-* Active visit definition
-* Completed visit behaviour
-* Reopened visits
-* Cancelled visits
-* Inpatient discharge
-* Emergency closure
-* Same-day reopening rules
-* Visit replacement or merge behaviour
-
-Document all findings in the Phase 7 report.
-
----
-
-# 5. Arrangement Status Enum
+# 6. Master Cutover Mode
 
 Create:
 
 ```text
-app/Enums/VisitPaymentArrangementStatus.php
+app/Enums/PaymentTimingCutoverMode.php
 ```
 
 Required values:
@@ -259,1101 +258,882 @@ Required values:
 
 namespace App\Enums;
 
-enum VisitPaymentArrangementStatus: string
+enum PaymentTimingCutoverMode: string
 {
-    case PENDING = 'pending';
-    case APPROVED = 'approved';
-    case REJECTED = 'rejected';
-    case WITHDRAWN = 'withdrawn';
-    case REVOKED = 'revoked';
-    case EXPIRED = 'expired';
-    case REPLACED = 'replaced';
+    case DISABLED = 'disabled';
+    case OBSERVE = 'observe';
+    case ACTIVE = 'active';
 }
 ```
 
 Meaning:
 
-## `pending`
+## `disabled`
 
-Submitted and awaiting authorised decision.
+* Legacy decisions are returned unchanged.
+* Approved arrangements are not queried during normal gate evaluation.
+* Typed operational resolution is not performed.
+* Existing Phase 2 diagnostics may remain independently available.
 
-## `approved`
+## `observe`
 
-Valid administrative arrangement for the visit.
+* Runtime typed policy is resolved.
+* A would-be typed gate decision is calculated.
+* Legacy remains authoritative.
+* Typed-versus-legacy differences are logged through bounded diagnostics.
+* No allow/block outcome changes.
 
-Still non-operational in Phase 7.
+## `active`
 
-## `rejected`
+* Operations configured for typed mode may return typed decisions.
+* Operations configured for legacy remain legacy-authoritative.
+* Ineligible or unsupported contexts fall back to legacy.
+* Unwired operations remain untouched.
 
-Declined by an authorised reviewer.
+Default:
 
-## `withdrawn`
+```text
+disabled
+```
 
-Cancelled by the requester before decision.
+Invalid values must resolve to `disabled`.
 
-## `revoked`
+---
 
-Previously approved arrangement cancelled by an authorised user.
+# 7. Environment Kill Switch
 
-## `expired`
+Add a technical override such as:
 
-Approved arrangement reached its expiry.
+```env
+PAYMENT_TIMING_FORCE_LEGACY=true
+```
 
-## `replaced`
-
-Superseded by a newer approved arrangement.
+or the project’s preferred equivalent.
 
 Rules:
 
-* Terminal statuses must be explicit.
-* Do not delete rejected, withdrawn, revoked, expired, or replaced requests.
-* Status values must use enum casts.
-* Labels must be localised.
-* Status itself must not control payment gates.
+* The environment kill switch must override database settings.
+* When enabled, the effective master cutover mode is `disabled`.
+* It must not require a database connection to take effect.
+* It must not delete or modify approved arrangements.
+* It must not rewrite operation settings.
+* It must be clearly visible in diagnostics and the admin UI.
+* It must provide immediate rollback after configuration cache refresh or the project’s normal deployment process.
+
+Use a safe production default according to project deployment conventions.
+
+Document the exact precedence:
+
+```text
+environment force-legacy
+→ master cutover setting
+→ per-operation mode
+→ runtime eligibility
+```
 
 ---
 
-# 6. Arrangement Source Enum
+# 8. Extend Operation Mode Vocabulary
 
-Create:
+Extend:
 
 ```text
-app/Enums/VisitPaymentArrangementSource.php
+PaymentGateOperationMode
 ```
 
-Suggested values:
+with:
 
 ```php
-<?php
-
-namespace App\Enums;
-
-enum VisitPaymentArrangementSource: string
-{
-    case MANUAL_REQUEST = 'manual_request';
-    case RISK_RECOMMENDATION = 'risk_recommendation';
-    case FINANCE_DECISION = 'finance_decision';
-    case MANAGEMENT_DECISION = 'management_decision';
-    case CREDIT_APPROVAL = 'credit_approval';
-    case CORPORATE_GUARANTEE = 'corporate_guarantee';
-    case INSURANCE_AUTHORIZATION = 'insurance_authorization';
-    case BASELINE_RESTORATION = 'baseline_restoration';
-}
+case TYPED = 'typed';
 ```
 
-Use only sources supported by actual repository workflows.
+Final values:
 
-Do not add speculative sources that cannot be justified.
+```text
+disabled
+observe
+legacy
+typed
+```
 
-The source is administrative metadata only.
+Rules:
+
+* `typed` is valid only for an already wired hard-gate operation.
+* `typed` is valid only when the registry approves the operation for typed enforcement.
+* `typed` is invalid for the nine unwired operations.
+* `typed` must not be accepted when required compatibility acknowledgement is absent.
+* Deployment must preserve all four currently wired operations as `legacy`.
+* The seeder must never automatically switch an operation to `typed`.
 
 ---
 
-# 7. Arrangement Event Enum
+# 9. Cutover Configuration Service
 
 Create:
 
 ```text
-app/Enums/VisitPaymentArrangementEvent.php
+app/Services/Billing/PaymentTimingCutoverConfigurationService.php
 ```
 
-Suggested values:
+Suggested methods:
+
+```php
+public function configuredMode(): PaymentTimingCutoverMode;
+
+public function effectiveMode(): PaymentTimingCutoverMode;
+
+public function forceLegacy(): bool;
+
+public function operationUsesTypedPolicy(string $operation): bool;
+
+public function operationIsObserveOnly(string $operation): bool;
+
+public function fallbackToLegacyOnFailure(): bool;
+```
+
+Rules:
+
+* Return typed values.
+* Use existing settings caching.
+* Respect the environment kill switch.
+* Invalid settings must safely disable cutover.
+* Do not query visits, patients, arrangements, invoices, or payments.
+* Do not make gate decisions.
+
+Suggested database settings:
 
 ```text
-requested
-approved
-rejected
-withdrawn
-revoked
+payment_timing.cutover_mode
+payment_timing.cutover_failure_fallback
+payment_timing.cutover_log_decisions
+payment_timing.cutover_log_fallbacks
+```
+
+Use existing naming conventions where different.
+
+---
+
+# 10. Typed Operation Eligibility
+
+Update the operation registry and eligibility service.
+
+The nine unwired operations remain ineligible.
+
+The following four wired operations may become eligible for typed cutover after their Phase 8 requirements are satisfied:
+
+```text
+consultation.route.complete
+consultation.next_patient.readiness
+laboratory.result.enter
+pharmacy.item.dispense
+```
+
+Registry metadata should include:
+
+```text
+approved_for_typed_enforcement
+typed_supported_visit_types
+requires_compatibility_acknowledgement
+compatibility_change_description
+emergency_supported
+typed_missing_context_rule
+```
+
+Suggested initial scope:
+
+| Operation                           |        Typed eligibility | Suggested supported visit types |
+| ----------------------------------- | -----------------------: | ------------------------------- |
+| Consultation route completion       |                      Yes | Outpatient                      |
+| Consultation next-patient readiness |                      Yes | Outpatient                      |
+| Laboratory result entry             | Yes with acknowledgement | Outpatient, inpatient           |
+| Pharmacy dispensing                 | Yes with acknowledgement | Outpatient, inpatient           |
+
+Emergency visits must initially fall back to legacy because UHMS still lacks an authoritative stabilisation-versus-post-stabilisation boundary.
+
+Do not falsely mark emergency typed enforcement as safe.
+
+---
+
+# 11. Laboratory Compatibility Decision
+
+Laboratory currently uses an intrinsic settlement compatibility rule.
+
+When its operation remains `legacy`:
+
+* Preserve all current behaviour.
+
+When explicitly changed to `typed` and the master cutover is active:
+
+## `pay_before_service`
+
+Require settlement according to the approved typed pre-service rules.
+
+Allow existing recognised states such as:
+
+```text
+paid
+fully insured
+waived
+fully adjusted
+approved compatible narrow override
+```
+
+according to operation configuration.
+
+## `pay_after_all_services`
+
+Allow result entry before payment.
+
+Do not mark the item paid.
+
+Do not change the invoice.
+
+Do not clear the receivable.
+
+## `running_bill`
+
+Allow result entry while charges remain outstanding.
+
+## Missing invoice item
+
+Preserve the configured operation missing-context behaviour.
+
+Do not silently normalise missing-item handling.
+
+The admin must explicitly acknowledge that typed laboratory mode changes the old intrinsic paid/covered/waived-only behaviour.
+
+---
+
+# 12. Pharmacy Compatibility Decision
+
+Pharmacy currently uses a stricter paid-only dispensing rule.
+
+When its operation remains `legacy`:
+
+* Preserve the paid-only rule exactly.
+
+When explicitly changed to `typed` and master cutover is active:
+
+## `pay_before_service`
+
+Dispensing requires the relevant invoice item to meet pre-service settlement requirements.
+
+## `pay_after_all_services`
+
+Dispensing may proceed before payment.
+
+The charge remains outstanding.
+
+## `running_bill`
+
+Dispensing may proceed while the visit bill accumulates.
+
+## Safety boundaries
+
+Typed payment policy must not bypass:
+
+* Stock availability
+* Prescription validity
+* Quantity validation
+* Clinical dispensing checks
+* Controlled-drug requirements
+* Cancellation rules
+* Existing dispensing concurrency protection
+
+The admin must explicitly acknowledge that typed pharmacy mode relaxes the former paid-only compatibility rule for eligible visits.
+
+Emergency pharmacy dispensing must remain legacy in Phase 8.
+
+---
+
+# 13. Approved-Arrangement Operational Eligibility
+
+Create:
+
+```text
+app/Data/Billing/ApprovedArrangementOperationalEligibility.php
+```
+
+and:
+
+```text
+app/Services/Billing/ApprovedArrangementOperationalEligibilityService.php
+```
+
+The service should determine whether the current approved arrangement may influence runtime policy.
+
+Possible outcomes:
+
+```text
+eligible
+no_current_arrangement
+not_yet_effective
 expired
+revoked
 replaced
-updated_before_decision
+stale_risk_context
+link_mismatch
+unsupported_visit_type
+unsupported_operation
+conflicting_legacy_visit_override
+missing_materialised_policy
+invalid_approved_policy
 ```
 
-Use the enum for append-only arrangement history.
+Eligibility requires:
+
+* Status is `approved`.
+* Arrangement is linked as the current approved arrangement.
+* Approved policy is a valid operational policy.
+* Effective date has been reached.
+* Expiry has not passed.
+* Arrangement has not been revoked, expired, or replaced.
+* Risk context is not stale according to the approved operational rule.
+* Visit type is supported for the operation.
+* Operation is typed-eligible.
+* There is no unresolved conflicting active visit-wide legacy override.
+
+This service is read-only.
+
+It must not update, revoke, or refresh the arrangement.
 
 ---
 
-# 8. Data Model
+# 14. Stale Approved Arrangements
 
-Create a dedicated table:
+If the patient’s financial-risk state changes materially after approval:
 
-```text
-visit_payment_arrangements
-```
+* The arrangement must not silently remain operational.
+* Mark the arrangement as operationally ineligible at runtime.
+* Fall back according to the runtime typed baseline or legacy safety rules.
+* Show it as requiring finance review in the finance worklist.
+* Log a bounded diagnostic event.
+* Do not automatically revoke it.
+* Do not automatically modify the patient risk profile.
+* Do not silently refresh its snapshot.
 
-A dedicated table is preferred because:
+Provide an authorised review path through the existing arrangement workflow or a focused refresh/reapproval action only if consistent with Phase 7 semantics.
 
-* A visit may have multiple historical requests.
-* Requests may be rejected or withdrawn.
-* Approved arrangements may later be revoked or replaced.
-* Requester and approver must remain historically traceable.
-* The observational `visit_payment_policies` record must remain separate.
-
-Suggested fields:
-
-```text
-id
-visit_id
-visit_payment_policy_id
-
-requested_policy
-approved_policy
-
-source
-status
-
-request_reason_code
-request_reason
-supporting_reference
-
-requested_by
-requested_at
-
-reviewed_by
-reviewed_at
-review_decision_reason
-
-approved_by
-approved_at
-
-effective_from
-expires_at
-
-withdrawn_by
-withdrawn_at
-withdrawal_reason
-
-revoked_by
-revoked_at
-revocation_reason
-
-replaced_by_arrangement_id
-
-requires_approval
-requires_separate_approver
-risk_level_snapshot
-risk_status_snapshot
-baseline_policy_snapshot
-recommended_policy_snapshot
-
-created_at
-updated_at
-```
-
-Adapt fields to project conventions.
-
-## Mandatory constraints
-
-* A visit may have only one pending request at a time.
-* A visit may have only one current approved arrangement.
-* Historical terminal requests remain available.
-* `approved_policy` must be null unless the status is approved, revoked, expired, or replaced after approval.
-* `requested_policy` must never be `inherit`.
-* `approved_policy` must never be `inherit`.
-* Free-text fields must be length-bounded.
-* Use explicit short foreign-key names where necessary.
-* Add indexes for:
-
-  * visit
-  * status
-  * requested policy
-  * approved policy
-  * expiry
-  * requester
-  * approver
-
-Do not add an `is_operational` field.
+Do not approve stale context implicitly.
 
 ---
 
-# 9. Arrangement History
+# 15. Approved-Arrangement Precedence
 
 Create:
 
 ```text
-visit_payment_arrangement_history
+app/Services/Billing/OperationalVisitPaymentTimingResolver.php
 ```
 
-Suggested fields:
+Suggested method:
+
+```php
+public function resolve(
+    Visit $visit,
+    PaymentGateContext $context
+): OperationalVisitPaymentTimingDecision;
+```
+
+Create a dedicated DTO if appropriate.
+
+Resolution:
+
+1. Resolve the current typed baseline through `VisitPaymentTimingResolver`.
+2. Determine whether a current approved arrangement exists.
+3. Evaluate arrangement operational eligibility.
+4. If eligible, return the approved arrangement policy with source:
+
+   ```text
+   approved_arrangement
+   ```
+5. Otherwise return the current typed baseline.
+6. Include fallback and eligibility reason context.
+
+Add to `VisitPaymentPolicySource`:
+
+```php
+case APPROVED_ARRANGEMENT = 'approved_arrangement';
+```
+
+Do not modify the Phase 6 stored baseline.
+
+Do not make risk recommendation a resolver source.
+
+---
+
+# 16. Legacy Override Conflicts
+
+The existing Phase 2 resolver recognises compatible visit-wide legacy overrides.
+
+An approved arrangement and an active legacy visit-wide override may conflict.
+
+Examples:
 
 ```text
-id
-visit_payment_arrangement_id
-visit_id
-event_type
-old_values
-new_values
-reason_code
-performed_by
-performed_at
-created_at
+Approved arrangement: pay_before_service
+Legacy deferred-settlement override: allows deferred payment
 ```
 
 Rules:
 
-* Append-only through normal application workflows.
-* Store only material arrangement fields.
-* Do not store patient contact information.
-* Do not store clinical data.
-* Do not store unrestricted patient-risk details.
-* Render human-readable history.
-* Do not expose raw JSON.
-* Do not provide edit or delete actions.
+* Do not silently let two policies compete.
+* Detect conflicts.
+* A conflicting arrangement must be operationally ineligible until resolved.
+* Report the conflict in the arrangement UI and audit command.
+* Allow matching policies to coexist only if their semantics genuinely match.
+* Do not automatically revoke or complete the legacy override.
+* Do not create a replacement override.
+
+Narrow department, service, and invoice-item overrides remain governed by the operation’s override-scope rule.
 
 ---
 
-# 10. Models and Relationships
+# 17. Typed Gate Evaluation Service
 
 Create:
 
 ```text
-app/Models/VisitPaymentArrangement.php
-app/Models/VisitPaymentArrangementHistory.php
+app/Services/Billing/TypedPaymentGateDecisionService.php
 ```
 
-Suggested relationships:
+Responsibilities:
 
 ```php
-Visit::paymentArrangements()
-Visit::currentApprovedPaymentArrangement()
-Visit::pendingPaymentArrangement()
-
-VisitPaymentPolicy::arrangements()
-
-VisitPaymentArrangement::visit()
-VisitPaymentArrangement::materializedPolicy()
-VisitPaymentArrangement::requester()
-VisitPaymentArrangement::reviewer()
-VisitPaymentArrangement::approver()
-VisitPaymentArrangement::withdrawer()
-VisitPaymentArrangement::revoker()
-VisitPaymentArrangement::replacement()
-VisitPaymentArrangement::history()
+public function evaluate(
+    BillingPolicyDecision $legacyDecision,
+    Visit $visit,
+    ?InvoiceItem $invoiceItem,
+    VisitPaymentTimingPolicy $policy,
+    PaymentGateOperationPolicy $operationPolicy,
+    PaymentGateContext $context
+): BillingPolicyDecision;
 ```
 
-Suggested scopes:
+The service must reuse existing settlement and override infrastructure.
 
-```php
-scopePending()
-scopeApproved()
-scopeCurrent()
-scopeExpired()
-scopeForRequestedPolicy()
-scopeForApprovedPolicy()
-scopeRequiringReview()
+Do not create a second balance or accounting calculation.
+
+## `pay_before_service`
+
+Require applicable pre-service settlement.
+
+Recognise operation-approved states such as:
+
+```text
+paid
+fully insured
+waived
+fully adjusted
+allowed partial-payment threshold
+compatible narrow override
 ```
 
-Avoid hidden service calls inside accessors.
+Do not allow an active visit-wide deferred override to defeat an approved pay-before arrangement unless the conflict was explicitly resolved.
+
+## `pay_after_all_services`
+
+Allow the service to proceed despite unpaid or partially paid patient responsibility.
+
+Do not:
+
+* Mark paid
+* Change invoice status
+* Remove receivable
+* Create payment
+* Create override
+
+## `running_bill`
+
+Allow the service to proceed while charges accumulate.
+
+Do not imply financial clearance.
+
+## Non-payment failures
+
+Typed timing policy must not override unrelated workflow failures.
+
+Preserve:
+
+* Missing or invalid clinical prerequisites
+* Stock failures
+* Missing required bill creation where the operation currently requires billing
+* Cancelled service restrictions
+* Invalid entities
+* Existing non-payment validation
+
+The service changes only payment-timing permission.
 
 ---
 
-# 11. Approval Requirement Decision
+# 18. Missing Billing Context
 
-Create a typed decision DTO:
+Use the Phase 4 operation policy.
 
-```text
-app/Data/Billing/VisitPaymentArrangementApprovalRequirement.php
-```
+For typed operations:
 
-Suggested shape:
+## `preserve_legacy`
+
+Return the legacy result for missing billing context.
+
+## `allow`
+
+Allow only when the operation is explicitly approved for that behaviour.
+
+## `block`
+
+Block only where the operation is wired, typed, and explicitly approved.
+
+## `not_applicable`
+
+Return the appropriate non-payment decision.
+
+Initial typed cutover should preserve existing workflow-specific missing-item behaviour.
+
+Do not use Phase 8 to normalise inconsistencies.
+
+---
+
+# 19. Integrate With PaymentGateService
+
+Integrate the cutover inside the single central façade.
+
+Conceptual flow:
 
 ```php
-final readonly class VisitPaymentArrangementApprovalRequirement
-{
-    public function __construct(
-        public bool $requiresApproval,
-        public bool $requiresSeparateApprover,
-        public bool $requiresFinanceManager,
-        public bool $requiresManagementApproval,
-        public string $reasonCode,
-        public array $context = [],
-    ) {
-    }
+$legacyDecision = $this->billingPolicyService
+    ->getInvoiceItemPolicy(...);
+
+$cutoverMode = $this->cutoverConfiguration->effectiveMode();
+
+if ($cutoverMode === PaymentTimingCutoverMode::DISABLED) {
+    return $legacyDecision;
 }
+
+$operationPolicy = $this->operationConfiguration
+    ->policyFor($context->operation);
+
+$operationalPolicy = $this->operationalResolver
+    ->resolve($visit, $context);
+
+$typedDecision = $this->typedGateDecisionService
+    ->evaluate(
+        legacyDecision: $legacyDecision,
+        visit: $visit,
+        invoiceItem: $invoiceItem,
+        policy: $operationalPolicy->policy,
+        operationPolicy: $operationPolicy,
+        context: $context,
+    );
+
+if ($cutoverMode === PaymentTimingCutoverMode::OBSERVE
+    || $operationPolicy->mode !== PaymentGateOperationMode::TYPED) {
+    $this->comparison->record(...);
+
+    return $legacyDecision;
+}
+
+return $typedDecision;
 ```
 
-Create:
-
-```text
-app/Services/Billing/VisitPaymentArrangementApprovalPolicyService.php
-```
-
-This service should determine the administrative approval requirements.
-
-It must not make an operational payment decision.
-
----
-
-# 12. Approval Rules
-
-Use the following initial rules.
-
-## Requesting `pay_before_service`
-
-This is more restrictive than allowing deferred payment.
-
-It may be directly approved by an authorised finance manager where permissions allow.
-
-However:
-
-* A reason is required.
-* The decision must be auditable.
-* It must not affect emergency stabilisation.
-* It remains non-operational in Phase 7.
-
-## Requesting `pay_after_all_services`
-
-Requires approval when:
-
-* The baseline is `pay_before_service`.
-* The patient has a `high_risk` snapshot.
-* The patient has a `blocked_credit` snapshot.
-* The visit has a prepayment recommendation.
-* The visit has a material previous outstanding balance above any existing policy threshold.
-* The request extends beyond a configured credit limit.
-* The requester lacks direct-authorisation permission.
-
-## Requesting `running_bill`
-
-Requires approval when:
-
-* The visit is outpatient.
-* The baseline is not already `running_bill`.
-* The patient is high risk or blocked credit.
-* The request is not supported by an existing admission, emergency, corporate, or credit workflow.
-
-## Restoring baseline
-
-May be directly executed by an authorised user where it only removes an approved arrangement and returns the visit to the observational baseline.
-
-This still requires:
-
-* A reason
-* History
-* Audit
-
-## Risk recommendation
-
-A risk recommendation may pre-populate a request but may not auto-submit or auto-approve it.
-
-No recommendation is automatically approved.
-
----
-
-# 13. Self-Approval Rules
-
-By default:
-
-```text
-requester cannot approve own request
-```
-
-Implement a dedicated permission only if the project genuinely requires exceptional self-approval:
-
-```text
-visits.payment_arrangement.self_approve
-```
-
-Do not grant it to normal roles.
-
-If introduced:
-
-* Grant only to Super Admin by default.
-* Require a reason.
-* Record that self-approval occurred.
-* Keep the feature explicit.
-
-Prefer not to introduce this permission unless needed.
-
----
-
-# 14. Permissions
-
-Add granular permissions:
-
-```text
-visits.payment_arrangement.view
-visits.payment_arrangement.request
-visits.payment_arrangement.approve
-visits.payment_arrangement.reject
-visits.payment_arrangement.withdraw
-visits.payment_arrangement.revoke
-visits.payment_arrangement.history
-visits.payment_arrangement.report
-```
-
-Optional:
-
-```text
-visits.payment_arrangement.force_pre_service
-visits.payment_arrangement.allow_post_service
-visits.payment_arrangement.allow_running_bill
-visits.payment_arrangement.restore_baseline
-```
-
-Use these only if the project benefits from policy-specific permissions.
-
-Suggested role assignments:
-
-## Super Admin / Admin
-
-All permissions.
-
-## Finance Manager
-
-View, request, approve, reject, withdraw, revoke, history, report, and all policy-specific permissions.
-
-## Accountant
-
-View, request, withdraw, history, report.
-
-No approval or revocation by default.
-
-## Reception
-
-Optional request-only access if hospital workflow requires it.
-
-No approval access.
-
-## Clinical users
-
-No detailed arrangement management permissions.
-
-Backend routes, FormRequests, policies, and services must enforce permissions.
-
----
-
-# 15. Arrangement Service
-
-Create:
-
-```text
-app/Services/Billing/VisitPaymentArrangementService.php
-```
-
-Suggested responsibilities:
-
-```php
-public function request(
-    Visit $visit,
-    VisitPaymentArrangementData $data,
-    User $actor
-): VisitPaymentArrangement;
-
-public function approve(
-    VisitPaymentArrangement $arrangement,
-    VisitPaymentArrangementApprovalData $data,
-    User $actor
-): VisitPaymentArrangement;
-
-public function reject(...): VisitPaymentArrangement;
-
-public function withdraw(...): VisitPaymentArrangement;
-
-public function revoke(...): VisitPaymentArrangement;
-
-public function expireDue(...): int;
-
-public function restoreBaseline(
-    Visit $visit,
-    string $reason,
-    User $actor
-): VisitPaymentArrangement;
-```
-
-Use dedicated DTOs or validated arrays according to project conventions.
-
-## Service rules
-
-Every mutation must:
-
-* Run inside a database transaction.
-* Lock the visit’s pending and current approved arrangement rows.
-* Recheck status under lock.
-* Enforce requester/approver separation.
-* Append immutable history.
-* Create exactly one material activity log.
-* Preserve terminal records.
-* Avoid duplicate current arrangements.
-* Avoid duplicate pending requests.
-* Never call the payment gate.
-* Never create or modify invoices.
-* Never create or modify receivables.
-* Never change visit status.
-
----
-
-# 16. Request Workflow
-
-## Creating a request
-
-A request should snapshot:
-
-```text
-baseline observed policy
-risk recommendation
-risk level
-risk status
-finance-review requirement
-current approved arrangement, if any
-```
-
-These are request-time administrative snapshots.
-
-Do not copy:
-
-```text
-free-text financial-risk details
-patient contact information
-clinical information
-full policy history
-```
-
-## Updating a pending request
-
-A requester may update their own pending request where permitted.
-
-Updating must:
-
-* Require the request to remain pending.
-* Append history when material fields change.
-* Recalculate approval requirements.
-* Not allow changing the visit.
-* Not allow direct status manipulation.
-
-## Duplicate request prevention
-
-Reject or reuse a pending request where the same visit already has one.
-
-Do not silently create multiple pending requests.
-
----
-
-# 17. Approval Workflow
-
-Approval must:
-
-1. Re-read and lock the arrangement.
-2. Confirm status is pending.
-3. Confirm actor has approval permission.
-4. Confirm self-approval rules.
-5. Re-evaluate approval requirements.
-6. Validate that the requested policy remains allowed.
-7. Mark any previous approved arrangement as replaced.
-8. Store the approved policy.
-9. Set effective and optional expiry dates.
-10. Append history.
-11. Create one activity log.
-12. Update the linked observational visit policy only with a reference to the approved arrangement, if needed.
-
-Do not replace the observational baseline fields.
-
-Do not make the arrangement operational.
-
----
-
-# 18. Linking to VisitPaymentPolicy
-
-Extend `visit_payment_policies` only where necessary.
-
-Potential additive fields:
-
-```text
-current_approved_arrangement_id
-approved_policy_snapshot
-approved_arrangement_observed_at
-```
-
-Use clear naming.
+Adapt this to actual architecture.
 
 Rules:
 
-* `resolved_policy` remains the baseline.
-* `recommended_policy` remains the risk recommendation.
-* `approved_policy_snapshot` is the administrative arrangement.
-* None of these fields controls the gate in Phase 7.
-* Avoid duplicating the entire arrangement record.
-* A link to the current approved arrangement is preferable where sufficient.
+* Disabled mode must remain lightweight.
+* Observe mode must return the exact legacy decision.
+* Active mode only uses typed decisions for operations explicitly configured as `typed`.
+* Other operations return legacy.
+* Any exception returns legacy.
+* Public façade method contracts remain compatible.
 
-Update the visit-policy UI to distinguish:
+---
+
+# 20. Decision Authority Metadata
+
+Extend `BillingPolicyDecision` only if it can be done backward-compatibly.
+
+Suggested additive metadata:
 
 ```text
-Observed baseline
-Risk recommendation
-Approved administrative arrangement
-Operational legacy gate
+decision_authority
+payment_timing_policy
+payment_timing_source
+operation
+cutover_mode
+fallback_reason
+approved_arrangement_id
 ```
 
-Display an explicit notice:
+Possible authority values:
 
-> The approved arrangement is recorded but does not yet control service access or payment enforcement.
+```text
+legacy
+typed_baseline
+approved_arrangement
+legacy_fallback
+```
 
----
+Rules:
 
-# 19. Replacement Rules
-
-Approving a new arrangement for a visit with an existing approved arrangement must:
-
-* Mark the old arrangement as `replaced`.
-* Set `replaced_by_arrangement_id`.
-* Preserve the old arrangement’s original approval data.
-* Append history to both records where appropriate.
-* Update the current approved-arrangement link.
-* Create one bounded activity event for the new approval and one replacement event where existing audit conventions require it.
-
-Do not delete or mutate historical approval details.
+* Existing consumers must continue working.
+* Do not require existing callers to read new fields.
+* Do not expose sensitive arrangement or risk information.
+* IDs may be included only in restricted diagnostic contexts.
 
 ---
 
-# 20. Revocation Rules
+# 21. Typed Reason Codes
 
-An approved arrangement may be revoked by an authorised user.
-
-Revocation requires:
-
-* A reason
-* Permission
-* Current approved status
-* Transactional locking
-* History
-* Activity logging
-
-Revocation must:
-
-* Remove the arrangement as the current approved arrangement.
-* Preserve the baseline and recommendation.
-* Not automatically restore or create another arrangement.
-* Not affect past services.
-* Not modify invoices.
-* Not change the payment gate in Phase 7.
+Add stable machine reason codes according to existing conventions.
 
 Possible reasons:
 
 ```text
-credit conditions breached
-insurance or corporate guarantee cancelled
-management decision
-incorrect approval
-patient request
-visit context changed
-other
+TYPED_PREPAYMENT_REQUIRED
+TYPED_PREPAYMENT_SETTLED
+TYPED_PAY_AFTER_SERVICES_ALLOWED
+TYPED_RUNNING_BILL_ALLOWED
+APPROVED_ARRANGEMENT_PREPAYMENT_REQUIRED
+APPROVED_ARRANGEMENT_DEFERRED_SETTLEMENT
+APPROVED_ARRANGEMENT_RUNNING_BILL
+APPROVED_ARRANGEMENT_INELIGIBLE
+TYPED_OPERATION_UNSUPPORTED
+TYPED_EMERGENCY_FALLBACK
+TYPED_FAILURE_LEGACY_FALLBACK
+TYPED_LEGACY_OVERRIDE_CONFLICT
 ```
 
-Use structured reason codes where useful.
+Use the current `BillingPolicyReason` architecture if one exists.
+
+User-facing messages must be localised.
 
 ---
 
-# 21. Expiry Rules
+# 22. Admin Cutover Interface
 
-Allow an optional `expires_at`.
-
-Add:
-
-```bash
-php artisan billing:visit-payment-arrangement-expire
-```
-
-The command should:
-
-* Find approved arrangements whose expiry has passed.
-* Lock and recheck each arrangement.
-* Mark it expired.
-* Remove it as the current approved arrangement.
-* Append history.
-* Create one activity log.
-* Remain idempotent.
-* Avoid touching rejected, withdrawn, revoked, replaced, or already expired records.
-
-Register it with the scheduler only if consistent with current project conventions.
-
-Use:
-
-```text
-withoutOverlapping
-onOneServer
-```
-
-where appropriate.
-
-Expiry must not change the payment gate in Phase 7.
-
----
-
-# 22. Visit Lifecycle Handling
-
-Define behaviour for:
-
-## Completed visit
-
-Requests may be disallowed unless the visit is reopened or a permission explicitly allows post-completion financial correction.
-
-## Cancelled visit
-
-New requests should normally be rejected.
-
-Pending requests may be automatically withdrawn or require manual closure according to existing conventions.
-
-## Reopened visit
-
-Existing approved arrangements should remain historically visible.
-
-Whether they remain current should depend on:
-
-* Expiry
-* Revocation
-* Visit identity remaining the same
-* Existing reopening semantics
-
-Do not automatically create a new arrangement.
-
-## Inpatient discharge
-
-An approved running-bill or pay-after-services arrangement remains administrative only.
-
-Do not connect it to discharge clearance.
-
-## Emergency visit
-
-Requests must not imply that emergency stabilisation can be blocked.
-
-Any approved prepayment arrangement must display an emergency-safety warning.
-
----
-
-# 23. Patient Financial-Risk Integration
-
-Use Phase 6 snapshots and current risk state only for approval requirements.
-
-Do not change the patient’s financial-risk profile.
-
-## High risk / blocked credit
-
-A request to allow deferred payment must require:
-
-* Separate approver
-* Finance Manager or higher
-* Reason
-* Supporting reference where configured
-
-## Watchlist
-
-Require finance review, but do not automatically prohibit post-service payment.
-
-## Cleared, expired, or suspended profile
-
-Use the request-time snapshot.
-
-Do not silently rewrite historical requests when the patient risk profile later changes.
-
-## Risk changed after request
-
-At approval time:
-
-* Detect whether the current risk profile differs materially from the request snapshot.
-* Flag the request as stale.
-* Require explicit confirmation or request refresh.
-* Do not silently approve based on outdated risk data.
-
----
-
-# 24. Previous Outstanding Balance Context
-
-Use existing balance services only to inform approval requirements.
-
-Possible request-time context:
-
-```text
-previous patient-responsibility balance
-oldest unpaid invoice age
-number of unpaid prior visits
-```
-
-Rules:
-
-* Do not copy full invoice lists.
-* Do not create a parallel balance calculation.
-* Do not automatically reject requests solely because debt exists unless configured.
-* Do not merge previous-balance override semantics with visit payment arrangements.
-* A previous-balance override remains a separate prior-debt exception.
-* Approved visit arrangements must not automatically create previous-balance overrides.
-
----
-
-# 25. Form Requests
-
-Create dedicated FormRequests.
-
-Suggested requests:
-
-```text
-StoreVisitPaymentArrangementRequest
-UpdateVisitPaymentArrangementRequest
-ApproveVisitPaymentArrangementRequest
-RejectVisitPaymentArrangementRequest
-WithdrawVisitPaymentArrangementRequest
-RevokeVisitPaymentArrangementRequest
-RestoreVisitPaymentBaselineRequest
-```
-
-Validation must cover:
-
-* Visit exists and is eligible.
-* Requested policy is a valid operational policy.
-* `inherit` is rejected.
-* Reason is required.
-* Free text is length-bounded.
-* Effective date is valid.
-* Expiry is after effective date.
-* Supporting reference is validated.
-* Pending-state requirements.
-* Approval-state requirements.
-* Self-approval restriction.
-* Policy-specific permission.
-* Unknown fields are ignored or rejected according to project conventions.
-* Direct endpoint access is permission-protected.
-
----
-
-# 26. Controllers and Routes
-
-Add controllers under the existing billing/admin namespace.
-
-Possible controller:
-
-```text
-Admin\Billing\VisitPaymentArrangementController
-```
-
-Routes may include:
-
-```text
-GET    admin/billing/visit-payment-arrangements
-GET    admin/billing/visit-payment-arrangements/{arrangement}
-POST   visits/{visit}/payment-arrangements
-PUT    visit-payment-arrangements/{arrangement}
-POST   visit-payment-arrangements/{arrangement}/approve
-POST   visit-payment-arrangements/{arrangement}/reject
-POST   visit-payment-arrangements/{arrangement}/withdraw
-POST   visit-payment-arrangements/{arrangement}/revoke
-POST   visits/{visit}/payment-arrangements/restore-baseline
-```
-
-Follow current route naming and middleware conventions.
-
-Keep controllers thin.
-
-Use service methods for domain transitions.
-
----
-
-# 27. User Interface
-
-## Visit policy detail page
-
-Extend the restricted Phase 6 page.
-
-Show four clearly separated cards:
-
-### Observed baseline
-
-From the typed baseline resolver.
-
-### Risk recommendation
-
-Non-operational recommendation.
-
-### Approved visit arrangement
-
-The current approved administrative policy, where present.
-
-### Operational legacy gate
-
-Explain that live service access still follows the existing legacy gate.
-
-## Arrangement actions
-
-Depending on permission and state:
-
-```text
-Request Pay Before Service
-Request Pay After All Services
-Request Running Bill
-Request Return to Baseline
-Approve
-Reject
-Withdraw
-Revoke
-View History
-```
-
-## Request form
-
-Show:
-
-```text
-Requested policy
-Reason
-Supporting reference
-Effective date
-Optional expiry date
-Current baseline
-Current recommendation
-Current risk snapshot
-Finance review requirement
-```
-
-## Safety labels
+Add a restricted **Operational Payment Cutover** page or section.
 
 Display:
 
-> Approval records an administrative arrangement only. It does not yet change live service-access enforcement.
+```text
+Configured master mode
+Effective master mode
+Environment force-legacy status
+Legacy fallback status
+Eligible operations
+Operation mode
+Supported visit types
+Compatibility warnings
+Emergency support
+Current cutover blockers
+```
 
-For emergency visits:
+## Master controls
 
-> Emergency stabilisation remains protected regardless of this administrative arrangement.
+Offer:
 
-Do not expose detailed risk reasons without financial-risk permission.
+```text
+Disabled
+Observe Only
+Active
+```
+
+Changing to `active` must require:
+
+* Dedicated permission
+* Explicit reason
+* Confirmation
+* Audit entry
+
+## Operation controls
+
+Eligible wired operations may select:
+
+```text
+Legacy
+Observe
+Typed
+```
+
+Unwired operations remain unable to select typed.
+
+Laboratory and pharmacy require explicit compatibility acknowledgement.
+
+## Rollback
+
+Provide a prominent action to:
+
+```text
+Return all payment operations to legacy authority
+```
+
+Rollback must:
+
+* Change the master mode to disabled or equivalent.
+* Require a reason.
+* Create one audit event.
+* Not modify approved arrangements.
+* Not delete settings history.
+* Not modify invoices or payments.
 
 ---
 
-# 28. Approval Worklist
+# 23. Cutover Permissions
 
 Add:
 
 ```text
-admin/billing/visit-payment-arrangements
+billing.payment_timing.cutover.view
+billing.payment_timing.cutover.manage
+billing.payment_timing.cutover.activate
+billing.payment_timing.cutover.rollback
 ```
 
-Filters:
+Suggested grants:
 
-```text
-status
-requested policy
-approved policy
-source
-requester
-approver
-requires finance review
-risk level snapshot
-visit type
-date range
-expiring soon
-stale request context
-```
+## Super Admin
 
-Columns:
+All.
 
-```text
-Visit
-Patient
-Visit type
-Baseline
-Recommendation
-Requested policy
-Status
-Risk snapshot
-Requester
-Approver
-Requested at
-Expiry
-```
+## Admin
 
-Respect patient masking.
+View, manage, activate, rollback.
 
-Do not show unrestricted free-text reasons in the broad list.
+## Finance Manager
+
+View and manage operation recommendations, but not activate or rollback by default.
+
+## Accountant
+
+View only, if operationally useful.
+
+## Clinical and reception roles
+
+None.
+
+Backend enforcement is mandatory.
+
+Do not rely only on the UI.
 
 ---
 
-# 29. Arrangement History UI
-
-Render:
-
-```text
-event
-old status
-new status
-old requested policy
-new requested policy
-approved policy
-actor
-timestamp
-reason code
-```
-
-Do not dump raw JSON.
-
-No edit/delete controls.
-
-History requires its own permission.
-
----
-
-# 30. Activity Logging
+# 24. Cutover Audit Logging
 
 Use existing `ActivityLog`.
 
 Suggested actions:
 
 ```text
-VISIT_PAYMENT_ARRANGEMENT_REQUESTED
-VISIT_PAYMENT_ARRANGEMENT_UPDATED
-VISIT_PAYMENT_ARRANGEMENT_APPROVED
-VISIT_PAYMENT_ARRANGEMENT_REJECTED
-VISIT_PAYMENT_ARRANGEMENT_WITHDRAWN
-VISIT_PAYMENT_ARRANGEMENT_REVOKED
-VISIT_PAYMENT_ARRANGEMENT_EXPIRED
-VISIT_PAYMENT_ARRANGEMENT_REPLACED
-VISIT_PAYMENT_BASELINE_RESTORED
+PAYMENT_TIMING_CUTOVER_MODE_CHANGED
+PAYMENT_GATE_TYPED_OPERATION_ENABLED
+PAYMENT_GATE_TYPED_OPERATION_DISABLED
+PAYMENT_TIMING_FORCE_LEGACY_ROLLBACK
+PAYMENT_TIMING_CUTOVER_SETTINGS_UPDATED
 ```
 
-Capture bounded metadata:
+Capture:
 
 ```text
-visit id
-arrangement id
-requested policy
-approved policy
-old status
-new status
-requester id
-approver id
-risk level snapshot
-requires finance review
-effective and expiry timestamps
+old master mode
+new master mode
+operation
+old operation mode
+new operation mode
+supported visit types
+compatibility acknowledgement
+reason
+actor
+timestamp
 ```
 
-Do not include:
+Do not include patient data.
 
-* Patient name
-* Contact information
-* Clinical information
-* Free-text risk details
-* Full request reason text where current audit conventions discourage it
-
-Reads must not create activity logs.
-
-Avoid duplicate service and observer logs.
+Routine gate decisions must not create activity logs.
 
 ---
 
-# 31. Read-Only Audit Command
+# 25. Runtime Diagnostics
+
+Use bounded application diagnostics rather than activity logs.
+
+Suggested events:
+
+```text
+payment_timing_typed_decision_observed
+payment_timing_typed_decision_applied
+payment_timing_legacy_fallback
+payment_timing_arrangement_ineligible
+payment_timing_override_conflict
+payment_timing_emergency_scope_fallback
+```
+
+Rules:
+
+* Do not log every successful decision by default.
+* Log fallbacks, mismatches, and cutover anomalies.
+* Deduplicate repeated events where possible.
+* Exclude patient names, contacts, diagnoses, and free-text reasons.
+* Logging failure must never affect the gate.
+
+---
+
+# 26. Cutover Status Command
 
 Add:
 
 ```bash
-php artisan billing:visit-payment-arrangement-audit
+php artisan billing:payment-timing-cutover-status
 ```
 
 Suggested options:
 
 ```text
+--operation=
+--visit-type=
+--typed-only
+--problems-only
+--json
+```
+
+Output:
+
+```text
+configured master mode
+effective master mode
+force-legacy status
+operation
+wired status
+operation mode
+typed eligibility
+supported visit types
+compatibility acknowledgement
+emergency support
+fallback configuration
+```
+
+Read-only.
+
+No activity logs.
+
+Warnings do not fail the exit code.
+
+---
+
+# 27. Cutover Audit Command
+
+Add:
+
+```bash
+php artisan billing:payment-timing-cutover-audit
+```
+
+Suggested options:
+
+```text
+--operation=
 --visit=
---status=
---pending
---approved
---expired
---stale
+--active-only
 --problems-only
 --limit=
 --json
@@ -1362,372 +1142,602 @@ Suggested options:
 Detect:
 
 ```text
-multiple pending requests for one visit
-multiple current approved arrangements
-approved record without approved policy
-pending record with approved policy
-requester equals approver
-expired arrangement still current
-replaced arrangement still current
-terminal status missing timestamp
-invalid effective/expiry ordering
-request risk snapshot stale before approval
-approved arrangement linked to missing visit-policy record
-approved arrangement incorrectly treated as operational
+master active while force-legacy is enabled
+typed mode on an unwired operation
+typed mode on an ineligible operation
+missing compatibility acknowledgement
+unsupported emergency typed use
+unsupported visit type
+approved arrangement stale
+approved arrangement expired but linked
+approved arrangement link mismatch
+conflicting active legacy visit-wide override
+resolved inherit policy
+typed operation missing invoice resolution
+active typed mode without rollback fallback
+```
+
+Read-only.
+
+No automatic repair.
+
+Findings do not fail the exit code.
+
+---
+
+# 28. Typed Decision Preview Command
+
+Add a read-only preview command if it can safely use an existing invoice item:
+
+```bash
+php artisan billing:payment-timing-cutover-preview \
+    --visit=123 \
+    --operation=consultation.route.complete \
+    --invoice-item=456
+```
+
+Output:
+
+```text
+legacy decision
+typed baseline policy
+current approved arrangement
+arrangement eligibility
+operational typed policy
+would-be typed decision
+comparison outcome
+effective runtime authority
+fallback reason
 ```
 
 Rules:
 
-* Read-only
-* No automatic repair
-* No activity logs
-* No sensitive free text
-* Findings do not fail the exit code
-* Technical command failure may return non-zero
+* No service state mutation.
+* No invoice or payment creation.
+* No override creation.
+* No activity log.
+* No patient-sensitive output.
+* Missing context should be reported, not invented.
+
+If a safe preview cannot be implemented for every operation, support only operations with a concrete invoice-item context.
 
 ---
 
-# 32. Reporting
+# 29. Existing Visit Policies and Arrangements
 
-Add restricted aggregate metrics:
+Do not rewrite Phase 6 or Phase 7 records during cutover activation.
 
-```text
-pending requests
-approved arrangements
-rejected requests
-revoked arrangements
-expired arrangements
-pay-before approvals
-pay-after-services approvals
-running-bill approvals
-high-risk deferred-payment approvals
-average approval time
-requests awaiting review beyond threshold
-```
+Existing approved arrangements may become operational dynamically if:
 
-Patient-level export requires report permission.
+* They remain current.
+* They are eligible.
+* Their effective date has arrived.
+* Their expiry has not passed.
+* Their context is not stale.
+* Their operation and visit type are supported.
+* The master and operation cutover settings allow it.
 
-Export only necessary administrative fields.
+Do not require a new approval solely because cutover was activated unless hospital policy explicitly requires reapproval.
 
-No contact, clinical, or raw history data.
+The cutover audit must list older arrangements that are not operationally eligible.
 
 ---
 
-# 33. Concurrency and Integrity
+# 30. Visit Lifecycle Rules
 
-Protect against:
+## Active visit
 
-```text
-two simultaneous requests
-two simultaneous approvals
-approval while withdrawal occurs
-approval while revocation occurs
-replacement race
-expiry while approval updates
-stale risk context approval
-```
+Eligible for typed decisions.
 
-Use:
+## Completed visit
 
-* Transactions
-* `lockForUpdate`
-* Unique constraints where possible
-* Idempotent state transitions
-* Status rechecks inside transactions
+No new service-gate decision should normally occur unless reopened.
 
-Do not rely only on UI disabling.
+Do not retroactively change completed service outcomes.
 
-Add focused concurrency tests.
+## Reopened visit
+
+Use the current approved arrangement only if it remains valid and current.
+
+## Cancelled visit
+
+Typed service enforcement should not run.
+
+## Inpatient visit
+
+Typed laboratory and pharmacy operations may use `running_bill` or an approved arrangement where the operation supports inpatient cutover.
+
+## Emergency visit
+
+Always fall back to legacy during Phase 8.
+
+Do not claim stage-specific emergency typed support.
 
 ---
 
-# 34. Performance Requirements
+# 31. Risk-Patient Behaviour
 
-Normal clinical workflows must not query arrangements.
+Risk recommendation remains non-operational by itself.
 
-Only restricted finance/admin pages should load:
+To force prepayment for a known risk patient:
+
+1. A financial-risk profile exists.
+2. The visit records a recommendation.
+3. An authorised per-visit `pay_before_service` arrangement is requested.
+4. The arrangement is approved.
+5. The arrangement is operationally eligible.
+6. Master cutover is active.
+7. The relevant operation is configured as typed.
+
+Do not skip the approval workflow.
+
+Do not automatically create or approve the arrangement.
+
+A high-risk or blocked-credit patient without an approved arrangement continues to use the typed baseline or legacy fallback.
+
+---
+
+# 32. Pay-After-All-Services Behaviour
+
+For an eligible visit with:
 
 ```text
-pending arrangement
-current approved arrangement
-history
+pay_after_all_services
 ```
+
+the typed gate may allow the currently wired service operation to proceed before payment.
+
+Mandatory rules:
+
+* The billable item must still be recorded according to the workflow’s missing-context rule.
+* The charge remains on the existing invoice.
+* Patient responsibility remains outstanding.
+* The system must not mark the item paid.
+* The system must not close the receivable.
+* The system must not create a waiver.
+* The system must not create a payment.
+* The system must not create a billing override.
+* Financial settlement remains required later according to future closure policy.
+
+This phase does not implement final financial closure.
+
+---
+
+# 33. Pay-Before-Service Behaviour
+
+For an eligible visit with:
+
+```text
+pay_before_service
+```
+
+the typed gate must require applicable settlement before proceeding.
+
+It must:
+
+* Use existing invoice-item financial state.
+* Respect allowed insurance, waiver, adjustment, partial-payment, and narrow-override rules from operation policy.
+* Preserve missing-context rules.
+* Return a localised payment-required message.
+* Provide existing cashier or invoice action metadata where available.
+* Avoid duplicate invoice or balance calculations.
+
+A restrictive arrangement may block an action that the typed baseline would otherwise allow.
+
+---
+
+# 34. Running-Bill Behaviour
+
+For an eligible visit with:
+
+```text
+running_bill
+```
+
+the typed gate may allow the operation while charges accumulate.
+
+It must not imply:
+
+* Payment
+* Financial clearance
+* Discharge clearance
+* Invoice closure
+* Debt waiver
+
+Inpatient running-bill support may be enabled only for operations whose registry scope includes inpatient visits.
+
+---
+
+# 35. Previous-Balance Policy
+
+Previous-balance enforcement remains separate.
+
+Rules:
+
+* Typed service policy does not automatically bypass previous debt.
+* An approved pay-after-services arrangement does not create a previous-balance override.
+* An existing previous-balance override does not become an approved visit arrangement.
+* Registration or OPD prior-debt checks retain existing behaviour.
+* Report both decisions separately where useful.
+
+Do not merge the two policies in Phase 8.
+
+---
+
+# 36. Financial Closure
+
+Do not implement final financial closure in this phase.
+
+An approved and operational:
+
+```text
+pay_after_all_services
+```
+
+or:
+
+```text
+running_bill
+```
+
+arrangement may allow services to proceed, but final settlement remains a separate future concern.
+
+Do not alter:
+
+* Visit completion
+* Admission discharge
+* Administrative closure
+* Invoice closure
+* Receivable status
+
+Phase 9 should implement financial-clearance and closure rules.
+
+---
+
+# 37. Performance Requirements
+
+## Disabled mode
+
+Must add no arrangement, visit-policy, or typed-operation database queries to normal gate evaluation.
+
+## Observe mode
+
+May add only bounded queries:
+
+* Current approved arrangement, preferably through already-loaded relations
+* Existing cached settings
+* Current eligibility context
+
+Use request-scoped memoisation by visit and operation.
+
+## Active mode
+
+Must avoid:
+
+* Repeated arrangement queries for several items in the same visit
+* Repeated risk-staleness queries
+* Repeated settings queries
+* Duplicate invoice-item settlement calculation
+* N+1 queries in service loops
 
 Use:
 
 * Eager loading
-* Pagination
-* Indexed filters
-* Bounded balance context
-* No full history in list pages
+* Existing settings cache
+* Resolver memoisation
+* Already-loaded invoice items
+* Bounded operation context
 
-`BillingPolicyService` and `PaymentGateService` must not query arrangement tables in Phase 7.
-
----
-
-# 35. Failure Safety
-
-If request creation fails:
-
-* Do not create partial history.
-* Do not alter the visit policy record.
-* Do not affect service access.
-
-If approval fails:
-
-* Roll back all state changes.
-* Preserve any prior approved arrangement.
-* Do not partially replace arrangements.
-* Do not modify the gate.
-
-If activity logging is required inside the material transaction and fails:
-
-* Follow existing audit-integrity conventions.
-* Do not claim success for a partial approval.
-
-If expiry processing fails:
-
-* Roll back that arrangement transition.
-* Leave payment behaviour unchanged.
+Add focused query assertions.
 
 ---
 
-# 36. Non-Operational Guardrails
+# 38. Failure Safety
 
-Do not modify operational behaviour in:
+Any failure in:
 
 ```text
-VisitPaymentTimingResolver
-BillingPolicyService
-PaymentGateService
-PaymentTimingPolicyComparisonService
-InvoiceItemSettlementService
-PreviousBalanceOverrideService
+cutover configuration
+operational resolver
+arrangement eligibility
+typed gate evaluation
+comparison logging
 ```
+
+must return the legacy decision.
 
 Do not:
 
-* Add patient-risk precedence to the resolver.
-* Add approved-arrangement precedence to the resolver.
-* Make the gate read `visit_payment_arrangements`.
-* Add typed enforcement mode.
-* Change operation eligibility.
-* Wire any unwired operation.
-* Change laboratory compatibility.
-* Change pharmacy compatibility.
-* Change emergency behaviour.
-* Change inpatient behaviour.
-* Change previous-balance behaviour.
-* Change invoice or receivable calculations.
-* Change payment allocation.
-* Change GL posting.
-* Change visit completion.
-* Change discharge.
-* Change financial closure.
+* Default to allow
+* Default to typed block
+* Expose internal exceptions to users
+* Roll back unrelated clinical work
+* Modify approved arrangements
+* Modify invoices
 
-Explicitly test that an approved arrangement remains administrative only.
+The fallback reason should be available to restricted diagnostics.
 
 ---
 
-# 37. Localisation
+# 39. Admin Validation
 
-Add:
+Create or extend FormRequests.
+
+Validate:
+
+* Master mode is valid.
+* Typed operation exists.
+* Operation is wired.
+* Operation is typed-eligible.
+* Visit-type scope is supported.
+* Required compatibility acknowledgement is present.
+* Emergency unsupported operations cannot be marked emergency-active.
+* Activation requires a reason.
+* Rollback requires a reason.
+* Unknown and duplicate operations are rejected.
+* Invalid mixed updates remain transactional.
+* Unauthorised endpoint calls fail.
+
+Do not allow UI manipulation to bypass registry safety.
+
+---
+
+# 40. Seeding and Deployment Defaults
+
+Update idempotent settings seeding.
+
+Deployment defaults:
 
 ```text
-lang/en/visit_payment_arrangement.php
-lang/fr/visit_payment_arrangement.php
+Master cutover: disabled
+All four wired operations: legacy
+Nine unwired operations: disabled
+Force-legacy fallback: enabled according to environment policy
+Typed compatibility acknowledgement: false
 ```
 
-Required concepts:
+Rules:
+
+* Never overwrite administrator settings.
+* Never activate typed mode during seeding.
+* Never enable master active mode during seeding.
+* Repeated seeding remains idempotent.
+
+No patient, visit, arrangement, invoice, or payment data should be seeded.
+
+---
+
+# 41. Localisation
+
+Add complete English and French localisation.
+
+Suggested concepts:
 
 ```text
-Visit Payment Arrangement
-Request Arrangement
-Requested Policy
-Approved Policy
-Pending
-Approved
-Rejected
-Withdrawn
-Revoked
-Expired
-Replaced
-Pay Before Service
-Pay After All Services
-Running Bill
-Return to Baseline
-Requires Approval
-Separate Approver Required
-Finance Review Required
-Supporting Reference
-Effective Date
-Expiry Date
-Approve
-Reject
-Withdraw
-Revoke
-Restore Baseline
-Request Context Is Stale
-Administrative Arrangement Only
-Does Not Control Service Access
-Emergency Stabilisation Remains Protected
+Operational Payment Cutover
+Configured Mode
+Effective Mode
+Force Legacy
+Disabled
+Observe Only
+Active
+Typed Policy
+Legacy Authority
+Typed Baseline
+Approved Arrangement
+Legacy Fallback
+Compatibility Acknowledgement
+Emergency Not Supported
+Unsupported Visit Type
+Arrangement Context Stale
+Legacy Override Conflict
+Prepayment Required
+Payment After Services Allowed
+Running Bill Allowed
+Immediate Rollback
+Return All Operations to Legacy
+Cutover Reason
+Decision Authority
 ```
 
 Also localise:
 
-* Validation messages
-* Status labels
-* Event labels
-* Reason codes where user-facing
-* Worklist filters
-* Empty states
-* Report labels
-* Success and failure feedback
+* Typed reason messages
+* Validation
+* Admin warnings
+* Diagnostic labels
+* Success and rollback feedback
 
-Maintain English/French parity.
+Maintain EN/FR parity.
 
 ---
 
-# 38. Tests
+# 42. Tests
 
 Do not run the full Laravel or Playwright suites during this phase.
 
-## 38.1 Enum and model tests
+## 42.1 Enum and configuration tests
 
 Verify:
 
-* Statuses, sources, and events exist.
-* Enum casts work.
-* One pending request per visit.
-* One current approved arrangement per visit.
-* Relationships work.
-* Terminal records remain historical.
-* Requested and approved policies reject `inherit`.
+* Cutover modes exist.
+* `typed` operation mode exists.
+* Default master mode is disabled.
+* Invalid master mode becomes disabled.
+* Environment force-legacy overrides database active mode.
+* Seeder does not activate cutover.
+* Disabled mode avoids operational queries.
 
-## 38.2 Approval-policy tests
-
-Verify:
-
-* Pay-before request requirements.
-* Pay-after request requirements.
-* Running-bill request requirements.
-* High-risk deferred-payment request requires separate approval.
-* Blocked-credit deferred-payment request requires separate approval.
-* Watchlist requires finance review.
-* Baseline restoration rules.
-* Risk recommendation never auto-approves.
-* Approval policy remains administrative only.
-
-## 38.3 Service workflow tests
+## 42.2 Registry and eligibility tests
 
 Verify:
 
-* Request succeeds.
-* Pending request can be updated.
-* Duplicate pending request is rejected.
-* Approval succeeds.
-* Rejection succeeds.
-* Withdrawal succeeds.
-* Revocation succeeds.
-* Expiry succeeds.
-* Replacement succeeds.
-* Baseline restoration succeeds.
-* Invalid transitions fail.
-* Terminal states cannot be reused.
-* History is appended once.
-* Activity log is written once.
+* Nine unwired operations remain ineligible.
+* Four wired operations have explicit typed metadata.
+* Laboratory and pharmacy require acknowledgement.
+* Emergency is unsupported.
+* Unsupported visit types fall back to legacy.
+* Typed mode cannot be saved for an ineligible operation.
 
-## 38.4 Self-approval tests
+## 42.3 Operational resolver tests
 
-Verify:
+Verify precedence:
 
-* Requester cannot approve own request.
-* Separate approver requirement is enforced.
-* Direct endpoint calls cannot bypass the rule.
-* Any exceptional self-approval permission, if introduced, is narrowly controlled and audited.
+* Eligible approved arrangement overrides typed baseline.
+* Typed baseline applies without an arrangement.
+* Risk recommendation alone does not override baseline.
+* Expired arrangement is ignored.
+* Revoked arrangement is ignored.
+* Replaced arrangement is ignored.
+* Future arrangement is ignored until effective.
+* Stale arrangement is ignored.
+* Link mismatch is ignored.
+* Conflicting legacy visit-wide override prevents arrangement use.
+* Source is `approved_arrangement` where applicable.
+* Final policies never contain `inherit`.
 
-## 38.5 Concurrency tests
+## 42.4 Typed gate decision tests
 
-Verify:
+### Pay before
 
-* Concurrent requests produce only one pending request.
-* Concurrent approvals produce only one current approved arrangement.
-* Replacement is transaction-safe.
-* Approval versus withdrawal is safe.
-* Approval versus expiry is safe.
+* Unpaid item blocks.
+* Paid item allows.
+* Fully insured item follows operation policy.
+* Waived item follows operation policy.
+* Fully adjusted item follows operation policy.
+* Allowed partial-payment threshold works.
+* Narrow compatible override works.
+* Missing billing context preserves configured behaviour.
 
-## 38.6 Risk snapshot tests
+### Pay after all services
 
-Verify:
+* Unpaid item may proceed.
+* Partially paid item may proceed.
+* Invoice and receivable remain unchanged.
+* No payment or override is created.
 
-* Request-time risk snapshot is stored.
-* Free-text risk details are excluded.
-* Risk change after request is detected.
-* Stale request cannot be approved silently.
-* Request refresh or explicit confirmation is required.
-* Patient risk profile itself is not changed.
+### Running bill
 
-## 38.7 Permission and confidentiality tests
+* Eligible operation may proceed unpaid.
+* Invoice remains outstanding.
+* No financial-clearance state is created.
 
-Verify:
-
-* View, request, approve, reject, withdraw, revoke, history, and report permissions are separate.
-* Unauthorised users do not receive arrangement data in page source, JSON, or props.
-* Clinical users do not see detailed reasons.
-* Patient masking remains effective.
-* Accountant cannot approve.
-* Finance Manager can approve.
-* Reception cannot approve.
-
-## 38.8 UI tests
+## 42.5 Gate integration tests
 
 Verify:
 
-* Baseline, recommendation, approved arrangement, and legacy gate are visibly distinct.
-* Request form shows the correct context.
-* State-dependent actions render correctly.
-* Emergency warning appears where applicable.
-* History is human-readable.
-* Worklist filters and pagination work.
-* No operational wording suggests the gate has switched.
+* Disabled mode returns the exact legacy decision.
+* Observe mode returns the exact legacy decision.
+* Active mode plus legacy operation returns legacy.
+* Active mode plus typed operation returns typed decision.
+* Kill switch returns legacy.
+* Runtime exception returns legacy.
+* Decision authority metadata is accurate.
+* Existing façade contracts remain compatible.
 
-## 38.9 Expiry and audit command tests
+## 42.6 Approved arrangement tests
 
 Verify:
 
-* Due arrangements expire.
-* Repeated expiry runs are idempotent.
-* Audit command detects invalid combinations.
-* JSON output is valid.
-* Commands perform no unintended writes.
-* Audit findings do not fail the exit code.
+* Approved pay-after arrangement allows an eligible unpaid operation.
+* Approved pay-before arrangement blocks an eligible unpaid operation.
+* Approved running-bill arrangement allows an eligible operation.
+* Stale arrangement falls back safely.
+* Expired arrangement falls back safely.
+* Arrangement approval does not itself activate cutover.
+* Cutover activation does not rewrite arrangement records.
 
-## 38.10 Non-enforcement regression tests
+## 42.7 Laboratory tests
 
-Explicitly verify:
+Verify:
 
-* Approved `pay_before_service` does not introduce new blocking.
-* Approved `pay_after_all_services` does not release existing hard gates.
-* Approved `running_bill` does not alter OPD legacy behaviour.
-* Approved arrangement does not change `VisitPaymentTimingResolver`.
-* Approved arrangement does not change `BillingPolicyService`.
-* Approved arrangement does not change `PaymentGateService`.
-* Triage outcomes remain unchanged.
-* Consultation readiness remains unchanged.
-* Laboratory outcomes remain unchanged.
-* Pharmacy paid-only behaviour remains unchanged.
-* Previous-balance outcomes remain unchanged.
-* Emergency and inpatient outcomes remain unchanged.
-* No unwired operation becomes wired.
-* No invoice, payment, receivable, override, or GL mutation occurs from approval alone.
+* Legacy mode preserves old settlement behaviour.
+* Observe mode preserves old result.
+* Typed pay-before requires settlement.
+* Typed pay-after permits unpaid result entry.
+* Typed running-bill permits result entry.
+* Missing-item handling remains configured.
+* No invoice/payment mutation occurs.
 
-## 38.11 Localisation tests
+## 42.8 Pharmacy tests
+
+Verify:
+
+* Legacy mode remains paid-only.
+* Observe mode remains paid-only.
+* Typed pay-before remains settlement-required.
+* Typed pay-after permits unpaid dispensing after all non-payment pharmacy checks pass.
+* Typed running-bill permits unpaid dispensing for supported inpatient visits.
+* Stock, prescription, quantity, and clinical checks remain enforced.
+* Emergency remains legacy.
+* No payment, waiver, override, or receivable mutation occurs.
+
+## 42.9 Admin and permission tests
+
+Verify:
+
+* Cutover page is restricted.
+* Finance Manager cannot activate by default.
+* Admin can activate.
+* Admin can roll back.
+* Activation requires reason.
+* Typed lab/pharmacy require acknowledgement.
+* Unwired operations reject typed mode.
+* Every change creates one activity log.
+* Reads create no activity logs.
+
+## 42.10 Rollback tests
+
+Verify:
+
+* Master rollback immediately returns all operations to legacy.
+* Per-operation rollback affects only that operation.
+* Approved arrangements remain intact.
+* Existing invoices and visits remain unchanged.
+* Environment force-legacy overrides an active database setting.
+* Rollback is auditable.
+
+## 42.11 Command tests
+
+Verify:
+
+* Status command reports configured and effective mode.
+* Audit command detects unsafe configurations.
+* Preview command compares legacy and typed decisions safely.
+* JSON outputs are valid.
+* Commands perform no writes.
+* Findings do not fail the exit code.
+
+## 42.12 Performance tests
+
+Verify:
+
+* Disabled mode adds no arrangement query.
+* Observe/active mode memoises arrangement lookup.
+* Multiple invoice items for one visit do not create N+1 arrangement queries.
+* Settings remain cached.
+* Typed evaluation does not duplicate invoice settlement queries.
+
+## 42.13 Regression tests
+
+Verify:
+
+* Nine unwired operations remain unwired.
+* Previous-balance behaviour remains unchanged.
+* Visit arrangement approval workflow remains unchanged.
+* Patient-risk lifecycle remains unchanged.
+* Materialised policy history remains unchanged.
+* Emergency remains legacy.
+* Financial closure remains unchanged.
+* Visit completion and discharge remain unchanged.
+
+## 42.14 Localisation tests
 
 Verify English/French parity.
 
 ---
 
-# 39. Targeted Verification
+# 43. Targeted Verification
 
 Run focused checks only.
 
@@ -1740,20 +1750,20 @@ php artisan config:clear
 php artisan view:clear
 php artisan view:cache
 
-php artisan test --filter=VisitPaymentArrangementEnum
-php artisan test --filter=VisitPaymentArrangementModel
-php artisan test --filter=VisitPaymentArrangementApprovalPolicy
-php artisan test --filter=VisitPaymentArrangementService
-php artisan test --filter=VisitPaymentArrangementPermission
-php artisan test --filter=VisitPaymentArrangementWorkflow
-php artisan test --filter=VisitPaymentArrangementConcurrency
-php artisan test --filter=VisitPaymentArrangementCommand
-php artisan test --filter=VisitPaymentArrangementNonEnforcement
+php artisan test --filter=PaymentTimingCutover
+php artisan test --filter=OperationalVisitPaymentTimingResolver
+php artisan test --filter=TypedPaymentGateDecision
+php artisan test --filter=PaymentGateTypedIntegration
+php artisan test --filter=PaymentTimingCutoverPermission
+php artisan test --filter=PaymentTimingCutoverRollback
+php artisan test --filter=PaymentTimingCutoverCommand
+php artisan test --filter=PaymentTimingCutoverPerformance
 ```
 
 Rerun:
 
 ```bash
+php artisan test --filter=VisitPaymentArrangement
 php artisan test --filter=VisitPaymentPolicy
 php artisan test --filter=PatientFinancialRisk
 php artisan test --filter=PaymentTiming
@@ -1766,14 +1776,18 @@ php artisan test --filter=LaboratoryPaymentGate
 php artisan test --filter=Pharmacy
 ```
 
-Run:
+Run diagnostics:
 
 ```bash
+php artisan billing:payment-timing-cutover-status
+php artisan billing:payment-timing-cutover-audit
+php artisan billing:payment-timing-cutover-preview \
+    --visit=<visit-id> \
+    --operation=<operation> \
+    --invoice-item=<invoice-item-id>
+
 php artisan billing:visit-payment-arrangement-audit
-php artisan billing:visit-payment-arrangement-expire --dry-run
 php artisan billing:visit-payment-policy-audit
-php artisan billing:financial-risk-audit
-php artisan billing:payment-timing-audit --limit=25
 php artisan billing:payment-gate-coverage
 php artisan billing:payment-gate-policy-audit
 ```
@@ -1795,128 +1809,138 @@ Do not run the full Playwright suite.
 
 ---
 
-# 40. Documentation
+# 44. Documentation
 
 Create:
 
 ```text
-docs/billing/PAYMENT_TIMING_POLICY_PHASE_7_REPORT.md
+docs/billing/PAYMENT_TIMING_POLICY_PHASE_8_REPORT.md
 ```
 
 The report must include:
 
-1. Existing approval and override architecture audited
-2. Data-model decision
-3. Files created
-4. Files modified
-5. Arrangement status, source, and event vocabulary
-6. Request lifecycle
-7. Approval requirement rules
-8. Self-approval prevention
-9. Risk-based approval requirements
-10. Previous-balance context handling
-11. Approved-arrangement linkage to materialised visit policy
-12. Replacement, revocation, and expiry behaviour
-13. Permissions and role assignments
-14. Privacy and restricted visibility
-15. Worklist and detail UI
-16. History and activity-log behaviour
-17. Audit and expiry command results
-18. Concurrency protection
-19. Query and performance impact
-20. Focused tests and results
-21. Confirmation that approved arrangements remain non-operational
-22. Deferred requirements for Phase 8
+1. Existing runtime gate architecture audited
+2. Cutover-mode design
+3. Environment kill-switch precedence
+4. Files created
+5. Files modified
+6. Operation eligibility and visit-type scope
+7. Laboratory compatibility decision
+8. Pharmacy compatibility decision
+9. Approved-arrangement operational eligibility
+10. Approved-arrangement precedence
+11. Legacy override conflict handling
+12. Typed gate decision rules
+13. Missing-context handling
+14. PaymentGateService integration
+15. Admin activation and rollback UI
+16. Permissions and role assignments
+17. Activity-log behaviour
+18. Runtime diagnostics
+19. Status, audit, and preview commands
+20. Deployment defaults
+21. Query and performance impact
+22. Focused tests and results
+23. Exact operations activated during local verification
+24. Confirmation that emergency remains legacy
+25. Confirmation that unwired operations remain unwired
+26. Confirmation that financial closure remains unchanged
+27. Rollback verification results
+28. Deferred requirements for Phase 9
 
-Do not claim tests passed unless they were executed successfully.
+Do not claim tests passed unless they were actually executed.
 
 ---
 
-# 41. Guardrails
+# 45. Guardrails
 
 Do not:
 
-* Make approved arrangements operational
-* Add arrangement precedence to `VisitPaymentTimingResolver`
-* Make `BillingPolicyService` read approved arrangements
-* Make `PaymentGateService` read approved arrangements
-* Create typed enforcement mode
-* Change operation eligibility
-* Wire any unwired operation
-* Automatically approve recommendations
-* Allow self-approval by default
-* Broaden existing billing override scopes
-* Create previous-balance overrides
-* Modify patient financial-risk profiles
-* Change laboratory compatibility
-* Change pharmacy paid-only behaviour
-* Change emergency behaviour
-* Change inpatient behaviour
-* Change invoice calculations
-* Change receivables
-* Change allocations
+* Enable cutover by default
+* Seed typed mode
+* Ignore the environment kill switch
+* Make risk recommendations operational without an approved arrangement
+* Auto-create or auto-approve arrangements
+* Modify approved arrangement history
+* Rewrite materialised baseline records
+* Create billing overrides
+* Merge previous-balance policy with payment timing
+* Wire any of the nine unwired operations
+* Enable emergency typed enforcement
+* Invent an emergency stabilisation field
+* Bypass pharmacy clinical or stock checks
+* Mark unpaid services as paid
+* Remove receivables
+* Create payments
+* Create waivers
 * Change GL posting
 * Change visit completion
 * Change discharge
 * Change financial closure
-* Expose sensitive risk details to clinical users
-* Create activity logs for reads
+* Audit every gate read
+* Expose patient-sensitive data in diagnostics
 * Run broad test suites
 
 ---
 
-# 42. Acceptance Criteria
+# 46. Acceptance Criteria
 
-Phase 7 is complete only when:
+Phase 8 is complete only when:
 
-* A dedicated per-visit arrangement model exists.
-* Requests have explicit lifecycle statuses.
-* A visit can have only one pending request.
-* A visit can have only one current approved arrangement.
-* Requested and approved policies cannot be `inherit`.
-* Requester and approver are historically traceable.
-* Self-approval is prevented by default.
-* High-risk and blocked-credit deferred-payment requests require separate approval.
-* Recommendations never auto-submit or auto-approve.
-* Approval requirements are centrally resolved.
-* Requests, approvals, rejection, withdrawal, revocation, replacement, expiry, and baseline restoration work transactionally.
-* Historical arrangements are never deleted.
-* Immutable arrangement history exists.
-* Material mutations create one activity log.
-* Routine reads create no activity logs.
-* Risk snapshots are bounded and privacy-safe.
-* Stale request context is detected before approval.
-* Permissions are granular and backend-enforced.
-* Finance users have a restricted worklist and detail interface.
-* Baseline, recommendation, approved arrangement, and operational legacy gate are visibly distinct.
-* Approved arrangements remain administrative only.
-* No production payment outcome changes.
-* No new operation becomes wired.
-* Existing triage, consultation, laboratory, pharmacy, emergency, inpatient, and previous-balance behaviour remains unchanged.
+* A master cutover mode exists with disabled, observe, and active states.
+* Deployment defaults to disabled.
+* An environment force-legacy kill switch exists and wins over database settings.
+* `PaymentGateOperationMode` supports typed mode.
+* Typed mode is restricted to eligible wired operations.
+* The nine unwired operations remain unwired and ineligible.
+* Laboratory and pharmacy require compatibility acknowledgement.
+* Emergency typed enforcement remains unsupported.
+* A current approved arrangement can take precedence over the typed baseline.
+* Risk recommendation alone remains non-operational.
+* Stale, expired, revoked, replaced, future, or inconsistent arrangements are ignored.
+* Legacy override conflicts are detected.
+* A typed gate-decision service exists.
+* Pay-before service can block an unpaid eligible operation.
+* Pay-after-all-services can allow an unpaid eligible operation.
+* Running bill can allow an eligible operation while charges remain outstanding.
+* Missing-context behaviour remains operation-specific.
+* Typed timing never marks anything paid.
+* Typed timing never creates a payment, waiver, receivable change, or billing override.
+* Disabled and observe modes return exact legacy outcomes.
+* Active typed mode changes only explicitly activated operations.
+* All failures fall back to legacy.
+* Admin activation and rollback are permission-controlled and audited.
+* Master rollback immediately returns the system to legacy authority.
+* Approved arrangements survive rollback unchanged.
+* Status, audit, and preview commands are read-only.
+* Emergency behaviour remains unchanged.
+* Previous-balance behaviour remains unchanged.
+* Financial closure remains unchanged.
 * English/French localisation is complete.
 * Focused tests pass.
-* The Phase 7 report accurately documents implementation and verification.
+* The Phase 8 report accurately documents cutover and rollback verification.
 
-Proceed with **Payment Timing Policy Phase 7 only**.
+Proceed with **Payment Timing Policy Phase 8 only**.
 
 After implementation, provide:
 
 1. A concise implementation summary
 2. Files created and modified
-3. Arrangement data model and lifecycle
-4. Approval requirement rules
-5. Self-approval controls
-6. Risk-based approval handling
-7. Replacement, revocation, and expiry behaviour
-8. Permission and privacy design
-9. UI and worklist details
-10. Audit and history behaviour
-11. Concurrency safeguards
-12. Diagnostic command results
-13. Query and performance impact
-14. Focused test results
-15. Confirmation that approved arrangements remain non-operational
-16. The Phase 7 report path
-17. Recommended requirements for Phase 8
+3. Cutover-mode and kill-switch design
+4. Typed operation eligibility
+5. Approved-arrangement precedence
+6. Laboratory and pharmacy cutover behaviour
+7. Typed gate-decision rules
+8. Admin activation and rollback controls
+9. Permissions and audit behaviour
+10. Diagnostic command results
+11. Query and performance impact
+12. Focused test results
+13. Exact local active-cutover scenarios verified
+14. Rollback verification
+15. Confirmation that emergency and unwired operations remain legacy
+16. Confirmation that financial closure remains unchanged
+17. The Phase 8 report path
+18. Recommended requirements for Phase 9
 
-Then stop after Phase 7.
+Then stop after Phase 8.

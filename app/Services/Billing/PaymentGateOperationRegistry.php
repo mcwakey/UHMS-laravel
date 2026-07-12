@@ -32,6 +32,7 @@ final class PaymentGateOperationRegistry
                 facadeMethod: 'policyFor', wired: true, hardGate: true, caller: 'TriageController::store',
                 legacy: 'priced missing item blocks; unpriced/non-billable skips',
                 allow: ['zero' => true, 'insured' => true, 'waived' => true, 'adjusted' => true, 'partial' => false],
+                typedApproved: true, typedVisitTypes: ['outpatient'],
             ),
             'consultation.next_patient.readiness' => $this->entry(
                 stage: PaymentGateStage::READINESS, department: DepartmentType::CONSULTATION, family: 'consultation',
@@ -39,6 +40,7 @@ final class PaymentGateOperationRegistry
                 legacy: 'missing item skips readiness check; preview advises and openNext enforces',
                 allow: ['zero' => true, 'insured' => true, 'waived' => true, 'adjusted' => true, 'partial' => false],
                 note: 'readiness/activation check; not every readiness failure is a hard payment gate',
+                typedApproved: true, typedVisitTypes: ['outpatient'],
             ),
             'laboratory.result.enter' => $this->entry(
                 stage: PaymentGateStage::RESULT, department: DepartmentType::INVESTIGATION, family: 'laboratory',
@@ -47,6 +49,8 @@ final class PaymentGateOperationRegistry
                 allow: ['zero' => true, 'insured' => true, 'waived' => true, 'adjusted' => true, 'partial' => false],
                 compatibilityDecision: true,
                 note: 'intrinsic settlement compatibility; enforcement stage unresolved (acceptance/collection/result/verification/release)',
+                typedApproved: true, typedVisitTypes: ['outpatient', 'inpatient'], requiresAck: true,
+                compatibilityDescription: 'Typed laboratory mode changes the old intrinsic paid/covered/waived-only rule: pay-after/running-bill visits may enter results before payment.',
             ),
             'pharmacy.item.dispense' => $this->entry(
                 stage: PaymentGateStage::DISPENSE, department: DepartmentType::PHARMACY, family: 'pharmacy',
@@ -55,6 +59,8 @@ final class PaymentGateOperationRegistry
                 allow: ['zero' => false, 'insured' => false, 'waived' => false, 'adjusted' => false, 'partial' => false],
                 compatibilityDecision: true,
                 note: 'stricter paid-only rule; requires explicit policy-convergence decision before typed enforcement',
+                typedApproved: true, typedVisitTypes: ['outpatient', 'inpatient'], requiresAck: true,
+                compatibilityDescription: 'Typed pharmacy mode relaxes the former paid-only dispensing rule: pay-after/running-bill visits may dispense before payment (clinical/stock checks unchanged; emergency stays legacy).',
             ),
 
             // ── Unwired operations — default to DISABLED, add no operational check ──
@@ -136,6 +142,12 @@ final class PaymentGateOperationRegistry
         array $allow,
         bool $compatibilityDecision = false,
         ?string $note = null,
+        // Phase 8 typed-cutover metadata.
+        bool $typedApproved = false,
+        array $typedVisitTypes = [],
+        bool $requiresAck = false,
+        ?string $compatibilityDescription = null,
+        bool $emergencySupported = false,
     ): array {
         return [
             // Original Phase 3 keys (kept for existing consumers).
@@ -153,7 +165,13 @@ final class PaymentGateOperationRegistry
             'visit_context_rule' => PaymentGateVisitContextRule::PRESERVE_LEGACY,
             'override_scope_rule' => PaymentGateOverrideScopeRule::PRESERVE_LEGACY,
             'typed_enforcement_eligible' => true,
-            'approved_for_typed_enforcement' => false, // provisional in Phase 4; no hospital sign-off yet
+            // Phase 8: eligible wired operations may be approved for typed cutover.
+            'approved_for_typed_enforcement' => $typedApproved,
+            'typed_supported_visit_types' => $typedVisitTypes,
+            'requires_compatibility_acknowledgement' => $requiresAck,
+            'compatibility_change_description' => $compatibilityDescription,
+            'emergency_supported' => $emergencySupported, // Phase 8: emergency always legacy
+            'typed_missing_context_rule' => MissingBillingContextPolicy::PRESERVE_LEGACY,
             'emergency_sensitive' => false,
             'invoice_resolution_confirmed' => ! $compatibilityDecision,
             'compatibility_requires_decision' => $compatibilityDecision,
@@ -198,6 +216,12 @@ final class PaymentGateOperationRegistry
             'override_scope_rule' => PaymentGateOverrideScopeRule::PRESERVE_LEGACY,
             'typed_enforcement_eligible' => false,
             'approved_for_typed_enforcement' => false,
+            // Phase 8: unwired operations can never become typed.
+            'typed_supported_visit_types' => [],
+            'requires_compatibility_acknowledgement' => false,
+            'compatibility_change_description' => null,
+            'emergency_supported' => false,
+            'typed_missing_context_rule' => MissingBillingContextPolicy::PRESERVE_LEGACY,
             'emergency_sensitive' => $emergencySensitive,
             'invoice_resolution_confirmed' => false,
             'compatibility_requires_decision' => false,
