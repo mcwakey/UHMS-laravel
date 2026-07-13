@@ -30,6 +30,22 @@
 
 @php
     $invoiceSettlement = app(\App\Services\Billing\InvoiceItemSettlementService::class);
+    $paymentTimingConfiguration = app(\App\Services\Billing\PaymentTimingConfigurationService::class);
+    $paymentTimingResolver = app(\App\Services\Billing\OperationalVisitPaymentTimingResolver::class);
+    $paymentTimingAllowsTriage = function ($visit) use ($paymentTimingConfiguration, $paymentTimingResolver) {
+        if (! $paymentTimingConfiguration->enabled()) {
+            return false;
+        }
+
+        $route = $visit->currentConsultationRoute();
+        $context = \App\Data\Billing\PaymentGateContext::triageRouteCompletion($route?->department_id);
+        $decision = $paymentTimingResolver->resolve($visit, $context);
+
+        return in_array($decision->policy, [
+            \App\Enums\VisitPaymentTimingPolicy::PAY_AFTER_ALL_SERVICES,
+            \App\Enums\VisitPaymentTimingPolicy::RUNNING_BILL,
+        ], true);
+    };
 @endphp
 
 <div class="row g-3">
@@ -49,7 +65,7 @@
                         $patientBillBalance = (float) $visit->invoices
                             ->flatMap->items
                             ->sum(fn ($item) => $invoiceSettlement->outstandingBalance($item));
-                        $hasUnpaidBill = $patientBillBalance > 0;
+                        $hasBlockingUnpaidBill = $patientBillBalance > 0 && ! $paymentTimingAllowsTriage($visit);
                     @endphp
                     <div class="d-flex align-items-center px-3 py-2 border-bottom hover-bg-light">
                         <div class="flex-shrink-0 text-center me-3">
@@ -72,7 +88,7 @@
                                 <div class="text-muted" style="font-size:0.78rem;">{{ Str::limit($visit->chief_complaint, 60) }}</div>
                             @endif
                         </div>
-                        @if($hasUnpaidBill)
+                        @if($hasBlockingUnpaidBill)
                             <button type="button" class="btn btn-outline-muted btn-sm ms-2" disabled title="{{ __('triage.pay_bill_before_triage', ['amount' => '₵'.number_format($patientBillBalance, 2)]) }}">
                                 <i class="ti ti-lock me-1"></i>{{ __('triage.start_triage') }}
                             </button>
@@ -108,7 +124,7 @@
                         $patientBillBalance = (float) $visit->invoices
                             ->flatMap->items
                             ->sum(fn ($item) => $invoiceSettlement->outstandingBalance($item));
-                        $hasUnpaidBill = $patientBillBalance > 0;
+                        $hasBlockingUnpaidBill = $patientBillBalance > 0 && ! $paymentTimingAllowsTriage($visit);
                     @endphp
                     <div class="d-flex align-items-center px-3 py-2 border-bottom hover-bg-light">
                         <div class="flex-shrink-0 text-center me-3">
@@ -131,7 +147,7 @@
                                 <div class="text-muted" style="font-size:0.78rem;">{{ Str::limit($visit->chief_complaint, 60) }}</div>
                             @endif
                         </div>
-                        @if($hasUnpaidBill)
+                        @if($hasBlockingUnpaidBill)
                             <button type="button" class="btn btn-outline-muted btn-sm ms-2" disabled title="{{ __('triage.pay_bill_before_triage', ['amount' => '₵'.number_format($patientBillBalance, 2)]) }}">
                                 <i class="ti ti-lock me-1"></i>{{ __('triage.continue_triage') }}
                             </button>

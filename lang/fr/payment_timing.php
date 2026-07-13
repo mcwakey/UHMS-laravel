@@ -3,7 +3,7 @@
 return [
     'title' => 'Politiques de moment du paiement',
     'enable' => 'Activer la configuration du moment du paiement',
-    'enable_help' => 'Enregistre les préférences pour les phases ultérieures. Cette option ne modifie ni ne bloque encore la prestation des soins.',
+    'enable_help' => 'Applique ces préférences de moment du paiement aux contrôles de service configurés, comme le triage et la préparation à la consultation.',
     'global_default' => 'Politique générale par défaut',
     'visit_type_defaults' => 'Valeurs par défaut selon le type de visite',
     'emergency_protection' => 'Protection des urgences',
@@ -13,7 +13,7 @@ return [
     'require_pay_after_settlement' => 'Exiger le règlement avant la clôture financière pour le paiement après tous les services',
     'require_running_bill_settlement' => 'Exiger le règlement avant la clôture financière pour la facture ouverte',
     'allow_outstanding_override' => 'Autoriser les dérogations approuvées pour clôturer avec un solde impayé',
-    'financial_closure_help' => 'Ces préférences sont préparatoires et ne modifient pas encore la fin de visite ni la sortie.',
+    'financial_closure_help' => 'Ces préférences contrôlent les exigences de clôture financière ; elles ne marquent pas les factures comme payées et n’annulent pas les soldes impayés.',
     'updated_successfully' => 'Les paramètres du moment du paiement ont été mis à jour.',
     'invalid_policy' => 'Politique de moment du paiement non valide.',
     'global_cannot_inherit' => 'La politique générale ne peut pas utiliser la valeur par défaut du système.',

@@ -3,7 +3,7 @@
 return [
     'title' => 'Payment Timing Policies',
     'enable' => 'Enable configurable payment timing',
-    'enable_help' => 'Stores policy preferences for later phases. Enabling this setting does not yet change or block service delivery.',
+    'enable_help' => 'Applies these payment timing preferences to configured service gates such as triage and consultation readiness.',
     'global_default' => 'Global default',
     'visit_type_defaults' => 'Visit-type defaults',
     'emergency_protection' => 'Emergency protection',
@@ -13,7 +13,7 @@ return [
     'require_pay_after_settlement' => 'Require settlement before financial closure for Pay After All Services',
     'require_running_bill_settlement' => 'Require settlement before financial closure for Running Bill',
     'allow_outstanding_override' => 'Allow authorised outstanding-balance closure overrides',
-    'financial_closure_help' => 'These preferences are preparatory and do not yet alter visit completion or discharge.',
+    'financial_closure_help' => 'These preferences control financial closure requirements; they do not mark invoices paid or waive outstanding balances.',
     'updated_successfully' => 'Payment timing settings updated successfully.',
     'invalid_policy' => 'Invalid payment timing policy.',
     'global_cannot_inherit' => 'The global payment timing policy cannot use the system default.',

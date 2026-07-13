@@ -3,12 +3,17 @@
 namespace Tests\Feature;
 
 use App\Enums\DepartmentType;
+use App\Enums\BillingType;
+use App\Enums\InvoiceStatus;
 use App\Enums\Priority;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Models\Department;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\Patient;
 use App\Models\QueueEntry;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\Visit;
 use App\Services\QueueService;
@@ -62,6 +67,25 @@ class QueueBoardAndTriageQueueTest extends TestCase
             ->assertSee($visit->patient->full_name);
     }
 
+    public function test_triage_list_unlocked_for_unpaid_running_bill_visit(): void
+    {
+        Setting::setValue('payment_timing', 'enabled', true, 'boolean');
+        Setting::setValue('payment_timing', 'default_policy', 'running_bill', 'string');
+        Setting::setValue('payment_timing', 'outpatient_policy', 'inherit', 'string');
+
+        [$visit] = $this->makeTriageQueueVisit('Beatrice', 'Bediako', 1, VisitStatus::TRIAGE);
+        $this->addUnpaidInvoiceItem($visit);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('admin.triage.index'))
+            ->assertOk()
+            ->assertSee($visit->patient->full_name)
+            ->assertSee('admin\/triage\/'.$visit->id.'\/assess', false)
+            ->assertSee(__('triage.continue_triage'));
+
+        $response->assertDontSee('ti ti-lock me-1', false);
+    }
+
     public function test_department_queue_uses_queue_number_before_priority(): void
     {
         $department = Department::factory()->create([
@@ -86,7 +110,7 @@ class QueueBoardAndTriageQueueTest extends TestCase
         $this->assertSame($firstVisit->id, $entry?->visit_id);
     }
 
-    private function makeTriageQueueVisit(string $firstName, string $lastName, int $queueNumber): array
+    private function makeTriageQueueVisit(string $firstName, string $lastName, int $queueNumber, VisitStatus $status = VisitStatus::QUEUED): array
     {
         $patient = Patient::factory()->create([
             'first_name' => $firstName,
@@ -97,7 +121,7 @@ class QueueBoardAndTriageQueueTest extends TestCase
             'patient_id' => $patient->id,
             'created_by' => $this->user->id,
             'visit_type' => VisitType::OUTPATIENT,
-            'status' => VisitStatus::QUEUED,
+            'status' => $status,
             'visit_date' => today(),
             'checked_in_at' => now()->subMinutes(20),
         ]);
@@ -110,6 +134,44 @@ class QueueBoardAndTriageQueueTest extends TestCase
         ]);
 
         return [$visit, $entry];
+    }
+
+    private function addUnpaidInvoiceItem(Visit $visit): void
+    {
+        $invoice = Invoice::create([
+            'invoice_number' => 'INV-TRIAGE-'.$visit->id,
+            'visit_id' => $visit->id,
+            'patient_id' => $visit->patient_id,
+            'billing_type' => BillingType::CASH,
+            'subtotal' => 100,
+            'tax_amount' => 0,
+            'discount_amount' => 0,
+            'total_amount' => 100,
+            'amount_paid' => 0,
+            'balance' => 100,
+            'status' => InvoiceStatus::PENDING,
+            'created_by' => $this->user->id,
+        ]);
+
+        InvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'visit_id' => $visit->id,
+            'patient_id' => $visit->patient_id,
+            'description' => 'Consultation',
+            'quantity' => 1,
+            'unit_price' => 100,
+            'cash_price' => 100,
+            'selected_price' => 100,
+            'insurance_covered' => 0,
+            'discount_amount' => 0,
+            'patient_payable' => 100,
+            'paid_amount' => 0,
+            'balance' => 100,
+            'payment_status' => 'unpaid',
+            'total_price' => 100,
+            'payer_type' => 'cash',
+            'created_by' => $this->user->id,
+        ]);
     }
 
     private function makeDepartmentQueueVisit(

@@ -18,6 +18,7 @@ use App\Models\InvoiceItem;
 use App\Models\Patient;
 use App\Models\QueueEntry;
 use App\Models\ServiceCatalog;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
@@ -84,6 +85,13 @@ class WorkflowJsonResponsesTest extends TestCase
                 ])->save();
             }
         }
+    }
+
+    private function enablePaymentTimingPolicy(string $policy): void
+    {
+        Setting::setValue('payment_timing', 'enabled', true, 'boolean');
+        Setting::setValue('payment_timing', 'default_policy', $policy, 'string');
+        Setting::setValue('payment_timing', 'outpatient_policy', 'inherit', 'string');
     }
 
     protected function setUp(): void
@@ -238,6 +246,57 @@ class WorkflowJsonResponsesTest extends TestCase
         $this->assertSame(VisitStatus::TRIAGE, $visit->fresh()->status);
         $this->assertSame(VisitConsultationRoute::STATUS_PENDING, $route->fresh()->status);
         $this->assertSame(0, QueueEntry::where('visit_id', $visit->id)
+            ->where('department_id', $this->department->id)
+            ->where('status', 'waiting')
+            ->count());
+    }
+
+    public function test_triage_completion_allows_unpaid_consultation_when_global_running_bill_is_enabled(): void
+    {
+        $this->assertUnpaidTriageCompletionAllowedByPaymentTimingPolicy('running_bill');
+    }
+
+    public function test_triage_completion_allows_unpaid_consultation_when_global_pay_after_is_enabled(): void
+    {
+        $this->assertUnpaidTriageCompletionAllowedByPaymentTimingPolicy('pay_after_all_services');
+    }
+
+    private function assertUnpaidTriageCompletionAllowedByPaymentTimingPolicy(string $policy): void
+    {
+        $this->enablePaymentTimingPolicy($policy);
+
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+        $visit = Visit::factory()->create([
+            'patient_id' => $patient->id,
+            'created_by' => $this->user->id,
+            'current_department_id' => null,
+            'visit_type' => VisitType::OUTPATIENT,
+            'status' => VisitStatus::TRIAGE,
+        ]);
+        $service = $this->createService($this->department, 'Deferred General Consultation '.$policy);
+        app(VisitService::class)->attachServices($visit, [[
+            'service_catalog_id' => $service->id,
+            'quantity' => 1,
+        ]]);
+        $route = $visit->pendingConsultationRoutes()->firstOrFail();
+
+        $response = $this->actingAs($this->user)->postJson(route('admin.triage.store', $visit), [
+            'blood_pressure_systolic' => 120,
+            'blood_pressure_diastolic' => 80,
+            'heart_rate' => 78,
+            'temperature' => 36.9,
+            'respiratory_rate' => 16,
+            'spo2' => 98,
+            'consultation_route_id' => $route->id,
+            'notes' => 'Stable vitals',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('status', VisitStatus::WAITING->value);
+
+        $this->assertSame(VisitStatus::WAITING, $visit->fresh()->status);
+        $this->assertSame(VisitConsultationRoute::STATUS_ACTIVE, $route->fresh()->status);
+        $this->assertSame(1, QueueEntry::where('visit_id', $visit->id)
             ->where('department_id', $this->department->id)
             ->where('status', 'waiting')
             ->count());
