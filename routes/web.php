@@ -334,6 +334,15 @@ Route::middleware('auth')->group(function () {
             ->name('my-dashboard.context.destroy')
             ->middleware('can:departments.context.switch');
 
+        // Modern role dashboards (Preclinic design language) — read-only, role-gated in controller.
+        Route::prefix('dashboards')->name('dashboards.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\Dashboard\RoleDashboardController::class, 'index'])->name('index');
+            Route::get('receptionist', [\App\Http\Controllers\Admin\Dashboard\RoleDashboardController::class, 'receptionist'])->name('receptionist');
+            Route::get('doctor', [\App\Http\Controllers\Admin\Dashboard\RoleDashboardController::class, 'doctor'])->name('doctor');
+            Route::get('nurse', [\App\Http\Controllers\Admin\Dashboard\RoleDashboardController::class, 'nurse'])->name('nurse');
+            Route::get('pharmacist', [\App\Http\Controllers\Admin\Dashboard\RoleDashboardController::class, 'pharmacist'])->name('pharmacist');
+        });
+
         // Phase 9.3 — patient flow worklist (capability-gated in the controller).
         Route::get('journey/worklist', [JourneyWorklistController::class, 'index'])->name('journey.worklist');
         // Phase 9.5 — live refresh (returns the rows + summary partial).
@@ -2358,6 +2367,8 @@ Route::middleware('auth')->group(function () {
     |----------------------------------------------------------------------
     */
     Route::prefix('doctor')->name('doctor.')->group(function () {
-        Route::get('dashboard', [DoctorDashboardController::class, 'index'])->name('dashboard');
+        // The modern workflow-first dashboard is served directly at this URL.
+        Route::get('dashboard', [\App\Http\Controllers\Admin\Dashboard\RoleDashboardController::class, 'doctor'])->name('dashboard');
+        Route::get('dashboard/legacy', [DoctorDashboardController::class, 'index'])->name('dashboard.legacy');
     });
 });
