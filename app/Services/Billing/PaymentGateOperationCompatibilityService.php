@@ -5,10 +5,11 @@ namespace App\Services\Billing;
 use Illuminate\Support\Collection;
 
 /**
- * Compares registry default, stored operation policy, current production wiring,
- * legacy behaviour and future typed-enforcement eligibility (Payment Timing
- * Policy Phase 4). Diagnostic only — it changes nothing and every operation
- * remains configuration-non-operational this phase.
+ * Diagnostic compatibility metadata for registered payment-gate operations.
+ *
+ * Active production gate calls are now unified at runtime by typed Payment
+ * Timing Policies. This service keeps the old registry coverage information
+ * visible without controlling whether a patient may proceed.
  */
 final class PaymentGateOperationCompatibilityService
 {
@@ -48,8 +49,7 @@ final class PaymentGateOperationCompatibilityService
         return [
             'operation' => $operation,
             'status' => $this->status($definition),
-            // Phase 4 configuration is never operational — it changes no outcome.
-            'operational' => false,
+            'operational' => (bool) ($definition['production_wired'] ?? false),
             'production_wired' => (bool) ($definition['production_wired'] ?? false),
             'hard_enforcement' => (bool) ($definition['hard_enforcement'] ?? false),
             'configured_mode' => $policy->mode->value,
@@ -78,8 +78,8 @@ final class PaymentGateOperationCompatibilityService
     {
         return match (true) {
             ! ($definition['production_wired'] ?? false) => self::UNWIRED_OPERATION,
-            ($definition['compatibility_requires_decision'] ?? false) => self::COMPATIBILITY_RULE_CONFLICT,
             ($definition['hard_enforcement'] ?? false) => self::LEGACY_HARD_GATE_PROTECTED,
+            ($definition['compatibility_requires_decision'] ?? false) => self::COMPATIBILITY_RULE_CONFLICT,
             ($definition['emergency_sensitive'] ?? false) => self::EMERGENCY_BOUNDARY_MISSING,
             ! ($definition['invoice_resolution_confirmed'] ?? false) => self::INVOICE_RESOLUTION_MISSING,
             default => self::CONFIGURATION_NON_OPERATIONAL,

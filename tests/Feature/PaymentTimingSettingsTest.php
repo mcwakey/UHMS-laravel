@@ -2,10 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Data\Billing\PaymentGateContext;
+use App\Enums\VisitType;
 use App\Models\ActivityLog;
+use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\Patient;
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\Visit;
 use App\Services\Billing\BillingPolicyService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
@@ -96,15 +101,36 @@ class PaymentTimingSettingsTest extends TestCase
         $this->assertDatabaseMissing('settings', ['group' => 'payment_timing']);
     }
 
-    public function test_phase_one_setting_does_not_change_existing_payment_gate_behaviour(): void
+    public function test_enabled_running_bill_setting_controls_payment_gate_behaviour(): void
     {
         Setting::setValue('payment_timing', 'enabled', true, 'boolean');
-        config(['billing_policy.enforce' => false]);
+        Setting::setValue('payment_timing', 'default_policy', 'running_bill', 'string');
+        Setting::setValue('payment_timing', 'outpatient_policy', 'inherit', 'string');
+        config(['billing_policy.enforce' => true, 'billing_policy.opd.payment_required_before_service' => true]);
 
-        $decision = app(BillingPolicyService::class)->getInvoiceItemPolicy(new InvoiceItem);
+        $visit = Visit::factory()->create([
+            'patient_id' => Patient::factory()->create()->id,
+            'visit_type' => VisitType::OUTPATIENT->value,
+        ]);
+        $item = (new InvoiceItem([
+            'visit_id' => $visit->id,
+            'patient_payable' => 100,
+            'paid_amount' => 0,
+            'insurance_covered' => 0,
+            'balance' => 100,
+            'payment_status' => 'unpaid',
+        ]))->setRelation('visit', $visit)
+            ->setRelation('invoice', new Invoice(['balance' => 100, 'adjustment_amount' => 0]));
+
+        $decision = app(BillingPolicyService::class)->getInvoiceItemPolicy(
+            $item,
+            null,
+            PaymentGateContext::triageRouteCompletion(),
+        );
 
         $this->assertTrue($decision->allowed);
-        $this->assertSame(BillingPolicyService::MODE_ADVISORY, $decision->mode);
+        $this->assertSame('typed_baseline', $decision->decisionAuthority);
+        $this->assertSame(BillingPolicyService::MODE_RUNNING_BILL, $decision->mode);
     }
 
     public function test_new_localisation_files_have_matching_keys(): void

@@ -16,7 +16,6 @@ use App\Services\Billing\PaymentTimingConfigurationService;
 use App\Services\Billing\PaymentTimingPolicyComparisonService;
 use App\Services\Billing\VisitPaymentTimingResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Mockery;
 use Tests\TestCase;
@@ -37,7 +36,7 @@ class PaymentTimingIntegrationTest extends TestCase
         $this->assertSame(PaymentTimingIntegrationMode::OBSERVE, $service->integrationMode());
     }
 
-    public function test_legacy_mode_does_not_resolve_or_compare_typed_policy(): void
+    public function test_legacy_integration_mode_does_not_run_observational_comparison(): void
     {
         config(['payment_timing.integration.mode' => 'legacy', 'billing_policy.enforce' => false]);
         $resolver = Mockery::mock(VisitPaymentTimingResolver::class);
@@ -47,14 +46,9 @@ class PaymentTimingIntegrationTest extends TestCase
         $this->app->instance(VisitPaymentTimingResolver::class, $resolver);
         $this->app->instance(PaymentTimingPolicyComparisonService::class, $comparison);
 
-        DB::enableQueryLog();
         $decision = app(BillingPolicyService::class)->getInvoiceItemPolicy(new InvoiceItem);
         $this->assertTrue($decision->allowed);
         $this->assertSame(BillingPolicyService::MODE_ADVISORY, $decision->mode);
-        // The typed resolver/comparison are never invoked (mocks above). Phase 8
-        // reads only the cached master cutover switch (a single settings read),
-        // and adds NO arrangement/visit-policy/typed-operation queries.
-        $this->assertLessThanOrEqual(1, count(DB::getQueryLog()));
     }
 
     public function test_observe_mode_compares_but_returns_the_unchanged_legacy_result(): void

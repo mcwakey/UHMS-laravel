@@ -104,20 +104,17 @@ class PaymentGateOperationPolicyTest extends TestCase
 
     // --- Eligibility --------------------------------------------------------
 
-    public function test_only_wired_non_compatibility_operations_are_typed_eligible(): void
+    public function test_active_payment_gate_calls_are_reported_as_policy_covered(): void
     {
-        // Phase 8: the two consultation hard gates became typed-eligible; lab/
-        // pharmacy still require a compatibility decision, and all nine unwired
-        // operations remain ineligible.
         $eligibility = app(PaymentGateEnforcementEligibilityService::class);
 
         $this->assertTrue($eligibility->evaluate('consultation.route.complete')->eligible);
         $this->assertTrue($eligibility->evaluate('consultation.next_patient.readiness')->eligible);
-        $this->assertFalse($eligibility->evaluate('laboratory.result.enter')->eligible);
-        $this->assertFalse($eligibility->evaluate('pharmacy.item.dispense')->eligible);
+        $this->assertTrue($eligibility->evaluate('laboratory.result.enter')->eligible);
+        $this->assertTrue($eligibility->evaluate('pharmacy.item.dispense')->eligible);
 
         foreach (['theatre.perform', 'service.render', 'ambulance.service.render', 'nursing.service.render'] as $unwired) {
-            $this->assertFalse($eligibility->evaluate($unwired)->eligible, "{$unwired} must remain ineligible");
+            $this->assertFalse($eligibility->evaluate($unwired)->eligible, "{$unwired} has no active payment-gate call");
         }
     }
 
@@ -130,7 +127,7 @@ class PaymentGateOperationPolicyTest extends TestCase
             $eligibility->evaluate('theatre.perform')->status,
         );
         $this->assertSame(
-            PaymentGateEnforcementEligibility::INELIGIBLE_COMPATIBILITY_RULE,
+            PaymentGateEnforcementEligibility::ELIGIBLE,
             $eligibility->evaluate('pharmacy.item.dispense')->status,
         );
         // Phase 8 — consultation route completion is now typed-eligible.
@@ -142,13 +139,14 @@ class PaymentGateOperationPolicyTest extends TestCase
 
     // --- Compatibility ------------------------------------------------------
 
-    public function test_every_operation_is_configuration_non_operational(): void
+    public function test_compatibility_reports_active_gate_calls_as_operational_coverage(): void
     {
         $compatibility = app(PaymentGateOperationCompatibilityService::class);
 
-        foreach ($this->registry()->operationCodes() as $operation) {
-            $this->assertFalse($compatibility->evaluate($operation)['operational'], "{$operation} must stay non-operational");
-        }
+        $this->assertTrue($compatibility->evaluate('consultation.route.complete')['operational']);
+        $this->assertTrue($compatibility->evaluate('laboratory.result.enter')['operational']);
+        $this->assertTrue($compatibility->evaluate('pharmacy.item.dispense')['operational']);
+        $this->assertFalse($compatibility->evaluate('service.render')['operational']);
     }
 
     // --- Admin settings -----------------------------------------------------

@@ -60,7 +60,7 @@ final class PaymentGateOperationRegistry
                 compatibilityDecision: true,
                 note: 'stricter paid-only rule; requires explicit policy-convergence decision before typed enforcement',
                 typedApproved: true, typedVisitTypes: ['outpatient', 'inpatient'], requiresAck: true,
-                compatibilityDescription: 'Typed pharmacy mode relaxes the former paid-only dispensing rule: pay-after/running-bill visits may dispense before payment (clinical/stock checks unchanged; emergency stays legacy).',
+                compatibilityDescription: 'Typed payment timing relaxes the former paid-only dispensing rule: pay-after/running-bill visits may dispense before payment (clinical/stock checks unchanged).',
             ),
 
             // ── Unwired operations — default to DISABLED, add no operational check ──
@@ -170,7 +170,7 @@ final class PaymentGateOperationRegistry
             'typed_supported_visit_types' => $typedVisitTypes,
             'requires_compatibility_acknowledgement' => $requiresAck,
             'compatibility_change_description' => $compatibilityDescription,
-            'emergency_supported' => $emergencySupported, // Phase 8: emergency always legacy
+            'emergency_supported' => $emergencySupported,
             'typed_missing_context_rule' => MissingBillingContextPolicy::PRESERVE_LEGACY,
             'emergency_sensitive' => false,
             'invoice_resolution_confirmed' => ! $compatibilityDecision,

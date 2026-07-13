@@ -12,10 +12,7 @@ use App\Models\Vital;
 use App\Models\Visit;
 use App\Services\ConsultationRouteService;
 use App\Data\Billing\PaymentGateContext;
-use App\Enums\VisitPaymentTimingPolicy;
 use App\Services\Billing\PaymentGateService;
-use App\Services\Billing\PaymentTimingConfigurationService;
-use App\Services\Billing\OperationalVisitPaymentTimingResolver;
 use App\Services\VisitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -99,8 +96,6 @@ class TriageController extends Controller
         Visit $visit,
         ConsultationRouteService $consultationRoutes,
         PaymentGateService $paymentGate,
-        PaymentTimingConfigurationService $paymentTimingConfiguration,
-        OperationalVisitPaymentTimingResolver $paymentTimingResolver,
     )
     {
         if ($visit->status !== VisitStatus::TRIAGE) {
@@ -166,8 +161,6 @@ class TriageController extends Controller
                     $selectedRoute->fresh(),
                     $paymentGate,
                     $request->user(),
-                    $paymentTimingConfiguration,
-                    $paymentTimingResolver,
                 );
             }
 
@@ -376,8 +369,6 @@ class TriageController extends Controller
         $route,
         PaymentGateService $paymentGate,
         $user,
-        PaymentTimingConfigurationService $paymentTimingConfiguration,
-        OperationalVisitPaymentTimingResolver $paymentTimingResolver,
     ): void
     {
         $route->loadMissing([
@@ -408,36 +399,8 @@ class TriageController extends Controller
                 $context,
             );
             if (! $decision->allowed) {
-                if ($this->paymentTimingAllowsUnpaidTriageCompletion($route, $decision, $context, $paymentTimingConfiguration, $paymentTimingResolver)) {
-                    continue;
-                }
-
                 throw new \RuntimeException($decision->message ?: "{$serviceName} bill has not been settled.");
             }
         }
-    }
-
-    private function paymentTimingAllowsUnpaidTriageCompletion(
-        $route,
-        $decision,
-        PaymentGateContext $context,
-        PaymentTimingConfigurationService $paymentTimingConfiguration,
-        OperationalVisitPaymentTimingResolver $paymentTimingResolver,
-    ): bool {
-        if (! $paymentTimingConfiguration->enabled() || ! $decision->requiresPayment) {
-            return false;
-        }
-
-        $visit = $route->visit;
-        if (! $visit) {
-            return false;
-        }
-
-        $operational = $paymentTimingResolver->resolve($visit, $context);
-
-        return in_array($operational->policy, [
-            VisitPaymentTimingPolicy::PAY_AFTER_ALL_SERVICES,
-            VisitPaymentTimingPolicy::RUNNING_BILL,
-        ], true);
     }
 }
