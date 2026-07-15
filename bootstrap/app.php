@@ -9,6 +9,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectRecordsWorkspace;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
+use App\Support\PermissionMeta;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\QueryException;
@@ -17,7 +18,10 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Spatie\Permission\Models\Permission;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -128,6 +132,97 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return response()->view('errors.500', [], 500);
+        });
+
+        // Dev-only aid: surface exactly which gate/permission/middleware rejected
+        // the request on a 403, since Spatie's Gate::before grants Super Admin a
+        // blanket bypass — a 403 they still hit means the block came from
+        // something other than a permission check (a role/module/department
+        // middleware, or a raw abort() in app code), and that's non-obvious from
+        // the generic "Access denied" page alone. Never runs unless APP_DEBUG=true.
+        $exceptions->render(function (HttpExceptionInterface $e, Request $request) {
+            if (! config('app.debug') || $e->getStatusCode() !== 403 || $request->expectsJson()) {
+                return null;
+            }
+
+            $route = $request->route();
+            $routeMiddleware = collect($route?->gatherMiddleware() ?? []);
+
+            // `can:ability` or `can:ability,model-param` — only the ability
+            // segment maps to a Spatie permission name. These are the ones we
+            // can offer to grant directly from the debug panel.
+            $permissionRequirements = $routeMiddleware
+                ->filter(fn ($m) => str_starts_with($m, 'can:'))
+                ->map(function ($m) use ($request) {
+                    $ability = Str::before(Str::after($m, 'can:'), ',');
+
+                    return [
+                        'name' => $ability,
+                        'exists' => Permission::where('name', $ability)->exists(),
+                        'description' => PermissionMeta::description($ability),
+                        'risk' => PermissionMeta::risk($ability),
+                        'granted' => (bool) $request->user()?->can($ability),
+                    ];
+                })
+                ->filter(fn ($row) => $row['exists'])
+                ->values();
+
+            // role:/module:/department-scoping middleware aren't grantable the
+            // same way (they gate on role membership or module state, not a
+            // Spatie permission) — list them for context only.
+            $otherMiddleware = $routeMiddleware
+                ->filter(fn ($m) => str_starts_with($m, 'role:')
+                    || str_starts_with($m, 'module:')
+                    || str_starts_with($m, 'department.type')
+                    || str_starts_with($m, 'records.redirect')
+                    || str_starts_with($m, 'nursing.opd.scope'))
+                ->values();
+
+            $currentUserRoles = $request->user()?->roles->map(fn ($r) => [
+                'id' => $r->id,
+                'name' => $r->name,
+            ])->values() ?? collect();
+
+            // The original AuthorizationException (if any) is chained as the
+            // previous exception once Laravel maps it to an HTTP exception; its
+            // stack trace is the useful one. A raw abort(403, ...) has no
+            // previous exception, so fall back to the HTTP exception itself.
+            $origin = $e->getPrevious() ?? $e;
+
+            // These middleware wrap every single request, so they always sit on
+            // the stack and would otherwise be misreported as "where the 403 was
+            // thrown" for route-level `can:`/`role:` checks (which have no real
+            // app-code frame of their own — the middleware list above is the
+            // actual answer in that case).
+            $alwaysOnStack = array_map(
+                fn ($path) => str_replace('\\', '/', app_path($path)),
+                ['Http/Middleware/SecurityHeaders.php', 'Http/Middleware/SetLocale.php', 'Http/Middleware/HandleInertiaRequests.php', 'Http/Middleware/ConvertBladeViewsToInertia.php']
+            );
+
+            $frame = collect($origin->getTrace())->first(function ($f) use ($alwaysOnStack) {
+                if (! isset($f['file'])) {
+                    return false;
+                }
+
+                $file = str_replace('\\', '/', $f['file']);
+
+                return ! str_contains($file, '/vendor/') && ! in_array($file, $alwaysOnStack, true);
+            });
+
+            return response()->view('errors.403', [
+                'exception' => $e,
+                'authDebug' => [
+                    'exception_class' => $origin::class,
+                    'message' => $origin->getMessage(),
+                    'route_name' => $route?->getName(),
+                    'controller_action' => $route?->getActionName(),
+                    'permission_requirements' => $permissionRequirements,
+                    'other_middleware' => $otherMiddleware,
+                    'current_user_roles' => $currentUserRoles,
+                    'thrown_at' => $frame ? $frame['file'].':'.($frame['line'] ?? '?') : null,
+                    'thrown_in' => $frame ? trim(($frame['class'] ?? '').($frame['type'] ?? '').($frame['function'] ?? '')) : null,
+                ],
+            ], 403);
         });
 
         $exceptions->respond(fn ($response) => $response);

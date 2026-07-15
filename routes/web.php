@@ -202,6 +202,7 @@ use App\Http\Controllers\Billing\PaymentController;
 use App\Http\Controllers\Billing\PreviousBalanceController;
 use App\Http\Controllers\Billing\ReceivableController;
 use App\Http\Controllers\Billing\SponsorController;
+use App\Http\Controllers\Dev\DebugPermissionGrantController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationClinicalEntryController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationOrderController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationPlanningController;
@@ -310,6 +311,12 @@ Route::middleware(['throttle:public-payments', 'module:payment_gateway'])
 */
 
 Route::middleware('auth')->group(function () {
+
+    // Dev-only shortcut surfaced on the 403 debug panel (APP_DEBUG=true only):
+    // lets the signed-in user grant themselves — or one of their own roles —
+    // a permission they were just blocked on, without leaving the error page.
+    // Hard-gated in the controller regardless of how this route was reached.
+    Route::post('_debug/grant-permission', [DebugPermissionGrantController::class, 'store'])->name('debug.grant-permission');
 
     // Nursing Department OPD workspace. Clinical writes are delegated to the
     // existing triage/vitals controllers so validation, safety and audit rules

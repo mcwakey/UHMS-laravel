@@ -1,13 +1,13 @@
 {
-    "generated_at": "2026-07-11T18:19:25+00:00",
-    "controllers_flagged": 113,
-    "logging_services_detected": 168,
+    "generated_at": "2026-07-15T22:59:10+00:00",
+    "controllers_flagged": 114,
+    "logging_services_detected": 177,
     "summary": {
         "MISSING_LOG": 0,
         "NEEDS_REVIEW": 0,
         "KNOWN_BACKLOG": 19,
         "INTENTIONALLY_SKIPPED": 1,
-        "SERVICE_FUNNEL_COVERED": 93
+        "SERVICE_FUNNEL_COVERED": 94
     },
     "real_missing_logs": 0,
     "findings": [
@@ -535,7 +535,8 @@
             "reason": "Delegates to AppointmentService, VisitStatusFlowService (logs transitive).",
             "services": [
                 "AppointmentService",
-                "VisitStatusFlowService"
+                "VisitStatusFlowService",
+                "WorkspaceRouteResolver"
             ],
             "in_baseline": true
         },
@@ -572,9 +573,32 @@
                 "ClaimPreparationMirrorService",
                 "ClaimPaymentService",
                 "ClaimWorkflowManager",
-                "ClaimService"
+                "ClaimService",
+                "WorkspaceRouteResolver"
             ],
             "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/Billing/VisitPaymentArrangementController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "approve",
+                "reject"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "approve",
+                "reject"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to VisitPaymentArrangementService (logs direct).",
+            "services": [
+                "VisitPaymentArrangementService"
+            ],
+            "in_baseline": false
         },
         {
             "controller": "app/Http/Controllers/Admin/BloodBank/BloodCrossmatchController.php",
@@ -629,7 +653,8 @@
             "severity": "HIGH",
             "reason": "Delegates to CallLogService (logs direct).",
             "services": [
-                "CallLogService"
+                "CallLogService",
+                "WorkspaceRouteResolver"
             ],
             "in_baseline": false
         },
@@ -651,7 +676,8 @@
             "severity": "HIGH",
             "reason": "Delegates to IncidentLogService (logs direct).",
             "services": [
-                "IncidentLogService"
+                "IncidentLogService",
+                "WorkspaceRouteResolver"
             ],
             "in_baseline": false
         },
@@ -673,7 +699,8 @@
             "severity": "HIGH",
             "reason": "Delegates to LostFoundService (logs direct).",
             "services": [
-                "LostFoundService"
+                "LostFoundService",
+                "WorkspaceRouteResolver"
             ],
             "in_baseline": false
         },
@@ -695,7 +722,8 @@
             "severity": "HIGH",
             "reason": "Delegates to ShiftHandoverService (logs direct).",
             "services": [
-                "ShiftHandoverService"
+                "ShiftHandoverService",
+                "WorkspaceRouteResolver"
             ],
             "in_baseline": false
         },
@@ -1202,22 +1230,6 @@
             "in_baseline": false
         },
         {
-            "controller": "app/Http/Controllers/Admin/AdmissionsWard/VitalController.php",
-            "unlogged_actions": [
-                "store"
-            ],
-            "actions": [
-                "store"
-            ],
-            "classification": "SERVICE_FUNNEL_COVERED",
-            "severity": "MEDIUM",
-            "reason": "Delegates to VisitService (logs direct).",
-            "services": [
-                "VisitService"
-            ],
-            "in_baseline": true
-        },
-        {
             "controller": "app/Http/Controllers/Admin/AdmissionsWard/WardController.php",
             "unlogged_actions": [
                 "store",
@@ -1531,7 +1543,8 @@
             "severity": "MEDIUM",
             "reason": "Delegates to CourierLogService (logs direct).",
             "services": [
-                "CourierLogService"
+                "CourierLogService",
+                "WorkspaceRouteResolver"
             ],
             "in_baseline": false
         },
@@ -1550,7 +1563,8 @@
             "reason": "Delegates to VisitorLogService (logs direct).",
             "services": [
                 "PatientVisitorRuleService",
-                "VisitorLogService"
+                "VisitorLogService",
+                "WorkspaceRouteResolver"
             ],
             "in_baseline": false
         },
@@ -1801,6 +1815,24 @@
             "in_baseline": false
         },
         {
+            "controller": "app/Http/Controllers/Admin/Patients/PatientFinancialRiskController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ],
+            "actions": [
+                "store",
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to PatientFinancialRiskService (logs direct).",
+            "services": [
+                "PatientFinancialRiskService"
+            ],
+            "in_baseline": false
+        },
+        {
             "controller": "app/Http/Controllers/Admin/Patients/PatientMergeController.php",
             "unlogged_actions": [
                 "store"
@@ -1815,26 +1847,6 @@
                 "PatientMergePreviewService",
                 "PatientMergeService",
                 "PatientPrivacyService"
-            ],
-            "in_baseline": true
-        },
-        {
-            "controller": "app/Http/Controllers/Admin/Patients/TriageController.php",
-            "unlogged_actions": [
-                "store",
-                "update"
-            ],
-            "actions": [
-                "store",
-                "update"
-            ],
-            "classification": "SERVICE_FUNNEL_COVERED",
-            "severity": "MEDIUM",
-            "reason": "Delegates to ConsultationRouteService, VisitService (logs direct).",
-            "services": [
-                "ConsultationRouteService",
-                "BillingPolicyService",
-                "VisitService"
             ],
             "in_baseline": true
         },
@@ -1945,9 +1957,12 @@
             "reason": "Delegates to BillingService, ServiceRenderingService (logs direct).",
             "services": [
                 "BillingService",
+                "DepartmentContextSwitcherService",
+                "NursingOpdService",
                 "ServiceRenderingQueryService",
                 "ServiceRenderingReportService",
-                "ServiceRenderingService"
+                "ServiceRenderingService",
+                "WorkspaceRouteResolver"
             ],
             "in_baseline": false
         },
@@ -2108,6 +2123,22 @@
                 "SupplierLedgerService"
             ],
             "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Dev/DebugPermissionGrantController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to RolePermissionAuditService (logs direct).",
+            "services": [
+                "RolePermissionAuditService"
+            ],
+            "in_baseline": false
         },
         {
             "controller": "app/Http/Controllers/Theatre/TheatreRoomController.php",

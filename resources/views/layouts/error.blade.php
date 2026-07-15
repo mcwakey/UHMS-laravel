@@ -28,7 +28,7 @@
 </head>
 <body class="bg-light">
     <main class="d-flex align-items-center justify-content-center min-vh-100 p-3">
-        <div class="card border-0 shadow-sm w-100" style="max-width: 540px;">
+        <div class="card border-0 shadow-sm w-100" style="max-width: {{ $__env->hasSection('debug') ? '900px' : '540px' }};">
             <div class="card-body text-center p-4 p-md-5">
                 <div class="mb-3">
                     <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-{{ $variant }}-subtle"
@@ -48,6 +48,13 @@
 
                 @hasSection('support')
                     <div class="mt-4 pt-3 border-top small text-muted">@yield('support')</div>
+                @endif
+
+                @hasSection('debug')
+                    <div class="mt-4 pt-3 border-top small text-start">
+                        <div class="fw-semibold text-warning mb-1"><i class="ti ti-bug me-1"></i>Debug info (APP_DEBUG only — never shown in production)</div>
+                        @yield('debug')
+                    </div>
                 @endif
             </div>
         </div>
