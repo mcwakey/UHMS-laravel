@@ -144,7 +144,7 @@
 
                     <div class="pt-2 mt-2 border-top">
                         <p class="fs-12 text-muted mb-1 px-2">{{ __('common.language') }}</p>
-                        <form method="POST" action="{{ route('locale.switch') }}" data-spa-ignore="true" class="mb-0">
+                        <form method="POST" action="{{ route('locale.switch') }}" data-spa-ignore="true" data-no-inertia="true" class="mb-0">
                             @csrf
                             <input type="hidden" name="locale" value="en">
                             <button type="submit" class="dropdown-item {{ app()->getLocale() === 'en' ? 'active' : '' }}">
@@ -153,7 +153,7 @@
                                 @if(app()->getLocale() === 'en')<i class="ti ti-check ms-auto float-end mt-1"></i>@endif
                             </button>
                         </form>
-                        <form method="POST" action="{{ route('locale.switch') }}" data-spa-ignore="true" class="mb-0">
+                        <form method="POST" action="{{ route('locale.switch') }}" data-spa-ignore="true" data-no-inertia="true" class="mb-0">
                             @csrf
                             <input type="hidden" name="locale" value="fr">
                             <button type="submit" class="dropdown-item {{ app()->getLocale() === 'fr' ? 'active' : '' }}">
@@ -165,7 +165,7 @@
                     </div>
 
                     <div class="pt-2 mt-2 border-top">
-                        <form method="POST" action="{{ route('logout') }}" data-spa-ignore="true">
+                        <form method="POST" action="{{ route('logout') }}" data-spa-ignore="true" data-no-inertia="true">
                             @csrf
                             <button type="submit" class="dropdown-item text-danger">
                                 <i class="ti ti-logout me-1 fs-17 align-middle"></i>

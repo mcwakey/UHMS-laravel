@@ -210,6 +210,7 @@ function formHasFiles(form) {
 function shouldIgnoreForm(form, action) {
     if (!form) return true;
     if (form.hasAttribute('data-no-inertia')) return true;
+    if (form.hasAttribute('data-spa-ignore')) return true;
     // Forms whose handlers already invoked preventDefault are skipped at the
     // call site via event.defaultPrevented (jQuery $.ajax, etc.).
     if (form.target && form.target !== '' && form.target !== '_self') return true;
