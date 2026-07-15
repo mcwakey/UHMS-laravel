@@ -25,6 +25,7 @@ use App\Services\QueueService;
 use App\Services\VisitService;
 use App\Services\VisitStatusFlowService;
 use App\Services\VisitWorkflowService;
+use App\Services\WorkspaceRouteResolver;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -39,6 +40,7 @@ class VisitController extends Controller
         protected BillingService $billingService,
         protected VisitWorkflowService $visitWorkflowService,
         protected \App\Services\EmergencyCaseService $emergencyCaseService,
+        protected WorkspaceRouteResolver $workspaceRoutes,
     ) {}
 
     public function index(Request $request)
@@ -214,12 +216,12 @@ class VisitController extends Controller
                 'visit_number' => $visit->visit_number,
                 'status' => $visit->status->value,
                 'status_label' => $visit->status->label(),
-                'redirect_url' => route('admin.visits.show', $visit),
+                'redirect_url' => $this->workspaceRoutes->visitShow($visit),
             ], 201);
         }
 
         return redirect()
-            ->route('admin.visits.show', $visit)
+            ->to($this->workspaceRoutes->visitShow($visit))
             ->with('success', $message);
     }
 
@@ -262,7 +264,7 @@ class VisitController extends Controller
         }
 
         return redirect()
-            ->route('admin.visits.show', $visit)
+            ->to($this->workspaceRoutes->visitShow($visit))
             ->with('success', __('messages.visits.updated', ['number' => $visit->visit_number]));
     }
 

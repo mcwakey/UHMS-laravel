@@ -9,7 +9,7 @@
         </h4>
     </div>
     @can('front_desk.visitors.create')
-    <a href="{{ route('admin.front-desk.visitors.create') }}" class="btn btn-primary btn-md fs-13">
+    <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.create') }}" class="btn btn-primary btn-md fs-13">
         <i class="ti ti-plus me-1"></i>{{ __('front_desk.visitors.new') }}
     </a>
     @endcan
@@ -17,16 +17,16 @@
 
 {{-- Quick filters --}}
 <div class="d-flex flex-wrap gap-2 mb-3">
-    <a href="{{ route('admin.front-desk.visitors.index') }}" class="btn btn-sm {{ empty($filters['quick']) ? 'btn-primary' : 'btn-outline-secondary' }}">{{ __('front_desk.quick.all') }}</a>
+    <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.index') }}" class="btn btn-sm {{ empty($filters['quick']) ? 'btn-primary' : 'btn-outline-secondary' }}">{{ __('front_desk.quick.all') }}</a>
     @foreach($quickFilters as $qf)
-    <a href="{{ route('admin.front-desk.visitors.index', ['quick' => $qf]) }}"
+    <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.index', ['quick' => $qf]) }}"
        class="btn btn-sm {{ ($filters['quick'] ?? '') === $qf ? 'btn-primary' : 'btn-outline-secondary' }}">{{ __('front_desk.quick.' . $qf) }}</a>
     @endforeach
 </div>
 
 <div class="card mb-3">
     <div class="card-body">
-        <form method="GET" action="{{ route('admin.front-desk.visitors.index') }}" class="row g-2 align-items-end">
+        <form method="GET" action="{{ $workspaceRoutes->route('admin.front-desk.visitors.index') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
                 <label class="form-label fs-13">{{ __('front_desk.actions.search') }}</label>
                 <input type="text" name="search" class="form-control" value="{{ $filters['search'] ?? '' }}" placeholder="{{ __('front_desk.placeholders.search_visitors') }}">
@@ -68,7 +68,7 @@
             </div>
             <div class="col-md-3 d-flex gap-2">
                 <button type="submit" class="btn btn-primary"><i class="ti ti-filter me-1"></i>{{ __('front_desk.actions.filter') }}</button>
-                <a href="{{ route('admin.front-desk.visitors.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.reset') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.reset') }}</a>
             </div>
         </form>
     </div>
@@ -108,13 +108,13 @@
                             @if($log->isOverdue())<span class="badge bg-danger ms-1">{{ __('front_desk.visitors.overdue') }}</span>@endif
                         </td>
                         <td class="text-end">
-                            <a href="{{ route('admin.front-desk.visitors.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a>
+                            <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a>
                             @can('front_desk.visitors.update')
-                            <a href="{{ route('admin.front-desk.visitors.edit', $log) }}" class="btn btn-sm btn-icon btn-outline-secondary" title="{{ __('front_desk.actions.edit') }}"><i class="ti ti-edit"></i></a>
+                            <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.edit', $log) }}" class="btn btn-sm btn-icon btn-outline-secondary" title="{{ __('front_desk.actions.edit') }}"><i class="ti ti-edit"></i></a>
                             @endcan
                             @can('front_desk.visitors.checkout')
                             @if($log->isInside())
-                            <form method="POST" action="{{ route('admin.front-desk.visitors.check-out', $log) }}" class="d-inline">
+                            <form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.visitors.check-out', $log) }}" class="d-inline">
                                 @csrf
                                 <button type="submit" class="btn btn-sm btn-icon btn-outline-success" title="{{ __('front_desk.actions.check_out') }}"><i class="ti ti-logout"></i></button>
                             </form>

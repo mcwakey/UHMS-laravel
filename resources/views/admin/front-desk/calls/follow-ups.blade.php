@@ -8,14 +8,14 @@
             <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">{{ $logs->total() }}</span>
         </h4>
     </div>
-    <a href="{{ route('admin.front-desk.calls.index') }}" class="btn btn-outline-secondary btn-md fs-13"><i class="ti ti-list me-1"></i>{{ __('front_desk.calls.title') }}</a>
+    <a href="{{ $workspaceRoutes->route('admin.front-desk.calls.index') }}" class="btn btn-outline-secondary btn-md fs-13"><i class="ti ti-list me-1"></i>{{ __('front_desk.calls.title') }}</a>
 </div>
 
 <div class="d-flex flex-wrap gap-2 mb-3">
-    <a href="{{ route('admin.front-desk.calls.follow-ups') }}" class="btn btn-sm {{ empty(array_filter($filters)) ? 'btn-primary' : 'btn-outline-secondary' }}">{{ __('front_desk.dashboard.pending_callbacks') }}</a>
-    <a href="{{ route('admin.front-desk.calls.follow-ups', ['overdue' => 1]) }}" class="btn btn-sm {{ !empty($filters['overdue']) ? 'btn-primary' : 'btn-outline-secondary' }}">{{ __('front_desk.filters.overdue') }}</a>
-    <a href="{{ route('admin.front-desk.calls.follow-ups', ['due_today' => 1]) }}" class="btn btn-sm {{ !empty($filters['due_today']) ? 'btn-primary' : 'btn-outline-secondary' }}">{{ __('front_desk.filters.due_today') }}</a>
-    <a href="{{ route('admin.front-desk.calls.follow-ups', ['mine' => 1]) }}" class="btn btn-sm {{ !empty($filters['mine']) ? 'btn-primary' : 'btn-outline-secondary' }}">{{ __('front_desk.filters.mine') }}</a>
+    <a href="{{ $workspaceRoutes->route('admin.front-desk.calls.follow-ups') }}" class="btn btn-sm {{ empty(array_filter($filters)) ? 'btn-primary' : 'btn-outline-secondary' }}">{{ __('front_desk.dashboard.pending_callbacks') }}</a>
+    <a href="{{ $workspaceRoutes->route('admin.front-desk.calls.follow-ups', ['overdue' => 1]) }}" class="btn btn-sm {{ !empty($filters['overdue']) ? 'btn-primary' : 'btn-outline-secondary' }}">{{ __('front_desk.filters.overdue') }}</a>
+    <a href="{{ $workspaceRoutes->route('admin.front-desk.calls.follow-ups', ['due_today' => 1]) }}" class="btn btn-sm {{ !empty($filters['due_today']) ? 'btn-primary' : 'btn-outline-secondary' }}">{{ __('front_desk.filters.due_today') }}</a>
+    <a href="{{ $workspaceRoutes->route('admin.front-desk.calls.follow-ups', ['mine' => 1]) }}" class="btn btn-sm {{ !empty($filters['mine']) ? 'btn-primary' : 'btn-outline-secondary' }}">{{ __('front_desk.filters.mine') }}</a>
 </div>
 
 <div class="card">
@@ -44,7 +44,7 @@
                         </td>
                         <td>{{ $log->department?->name ?? __('front_desk.none') }}</td>
                         <td class="text-end">
-                            <a href="{{ route('admin.front-desk.calls.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a>
+                            <a href="{{ $workspaceRoutes->route('admin.front-desk.calls.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a>
                         </td>
                     </tr>
                     @empty

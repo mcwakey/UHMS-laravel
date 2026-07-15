@@ -8,6 +8,7 @@ use App\Services\Department\DepartmentDashboardDataService;
 use App\Services\Dashboard\DepartmentDashboardRegistry;
 use App\Services\Dashboard\DepartmentDashboardResolver;
 use App\Services\DepartmentMenuProfileService;
+use App\Services\WorkspaceRouteResolver;
 use Illuminate\Http\Request;
 
 /**
@@ -24,10 +25,15 @@ class DepartmentDashboardController extends Controller
         private DepartmentDashboardRegistry $registry,
         private DepartmentMenuProfileService $menuProfiles,
         private \App\Services\Department\DepartmentDashboardCacheService $dashboardCache,
+        private WorkspaceRouteResolver $workspaceRoutes,
     ) {}
 
     public function index(Request $request)
     {
+        if ($this->workspaceRoutes->isRecords()) {
+            return redirect()->route('records.dashboard');
+        }
+
         $context = $this->contextResolver->resolve($request->user(), $request);
         $key = $context->dashboard_key;
         $resolvedKey = $this->resolver->resolveKey($request->user());

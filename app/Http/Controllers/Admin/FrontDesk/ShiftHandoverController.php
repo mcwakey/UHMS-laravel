@@ -53,7 +53,7 @@ class ShiftHandoverController extends Controller
 
         $handover = $this->service->createDraft($data, $request->user());
 
-        return redirect()->route('admin.front-desk.handovers.show', $handover)
+        return redirect()->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.front-desk.handovers.show'), $handover)
             ->with('success', __('front_desk.flash.handover_created'));
     }
 
@@ -83,7 +83,7 @@ class ShiftHandoverController extends Controller
 
         $this->service->update($handover, $data, $request->user());
 
-        return redirect()->route('admin.front-desk.handovers.show', $handover)
+        return redirect()->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.front-desk.handovers.show'), $handover)
             ->with('success', __('front_desk.flash.handover_updated'));
     }
 

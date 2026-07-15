@@ -1,19 +1,24 @@
 @extends('layouts.app')
-@section('title', __('reports.patients.title'))
+@php
+    $patientReportTitle = request()->routeIs('records.reports.patients')
+        ? __('records.reports.patients')
+        : __('reports.patients.title');
+@endphp
+@section('title', $patientReportTitle)
 
 @section('content')
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
     <div>
-        <h4 class="fw-bold mb-0">{{ __('reports.patients.title') }}</h4>
+        <h4 class="fw-bold mb-0">{{ $patientReportTitle }}</h4>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('common.dashboard') }}</a></li>
-                <li class="breadcrumb-item active">{{ __('reports.patients.title') }}</li>
+                <li class="breadcrumb-item"><a href="{{ $workspaceRoutes->dashboard() }}">{{ $workspaceContext['workspaceKey'] === 'records' ? __('records.breadcrumbs.records') : __('common.dashboard') }}</a></li>
+                <li class="breadcrumb-item active">{{ $patientReportTitle }}</li>
             </ol>
         </nav>
     </div>
     <div>
-        <a href="{{ route('admin.reports.patients', array_merge(request()->query(), ['export' => 'pdf'])) }}" class="btn btn-danger btn-sm">
+        <a href="{{ $workspaceRoutes->route('admin.reports.patients', array_merge(request()->query(), ['export' => 'pdf'])) }}" class="btn btn-danger btn-sm">
             <i class="ti ti-file-type-pdf me-1"></i>{{ __('reports.actions.export_pdf') }}
         </a>
     </div>
@@ -74,7 +79,7 @@
 <!-- Filter -->
 <div class="card mb-4">
     <div class="card-body">
-        <form method="GET" action="{{ route('admin.reports.patients') }}" class="row g-3 align-items-end">
+        <form method="GET" action="{{ $workspaceRoutes->route('admin.reports.patients') }}" class="row g-3 align-items-end">
             <div class="col-md-3">
                 <label class="form-label">{{ __('reports.search') }}</label>
                 <input type="text" name="search" class="form-control" placeholder="Name or ID..." value="{{ $filters['search'] ?? '' }}">
@@ -124,7 +129,7 @@
                 <tbody>
                     @forelse($patients as $patient)
                     <tr>
-                        <td><a href="{{ route('admin.patients.show', $patient) }}" class="text-primary fw-medium">{{ $patient->patient_number }}</a></td>
+                        <td><a href="{{ $workspaceRoutes->route('admin.patients.show', $patient) }}" class="text-primary fw-medium">{{ $patient->patient_number }}</a></td>
                         <td>{{ $patient->full_name }}</td>
                         <td>{{ ucfirst($patient->gender?->value ?? '—') }}</td>
                         <td>{{ $patient->date_of_birth?->format('d M Y') ?? '—' }}</td>

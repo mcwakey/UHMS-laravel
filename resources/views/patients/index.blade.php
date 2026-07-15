@@ -6,18 +6,18 @@
     <!-- <span class="badge badge-soft-primary fw-medium border py-1 px-2 border-primary fs-13 ms-1">{{ __('common.total') }}: {{ $patients->total() }}</span> -->
     <x-slot:actions>
         @can('patients.merge.view')
-        <a href="{{ route('admin.patients.merge.index') }}" class="btn btn-outline-primary btn-md fs-13"><i class="ti ti-git-merge me-1"></i>{{ __('menu.folder_merge') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.patients.merge.index') }}" class="btn btn-outline-primary btn-md fs-13"><i class="ti ti-git-merge me-1"></i>{{ __('menu.folder_merge') }}</a>
         @endcan
         @can('patients.create')
-        <a href="{{ route('admin.patients.create') }}" class="btn btn-primary btn-md fs-13"><i class="ti ti-plus me-1"></i>{{ __('patients.new_patient') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.patients.create') }}" class="btn btn-primary btn-md fs-13"><i class="ti ti-plus me-1"></i>{{ __('patients.new_patient') }}</a>
         @endcan
     </x-slot:actions>
 </x-page-header>
 
 <!-- Filters -->
 <x-filter-bar
-    :action="route('admin.patients.index')"
-    :reset-url="route('admin.patients.index')"
+    :action="$workspaceRoutes->route('admin.patients.index')"
+    :reset-url="$workspaceRoutes->route('admin.patients.index')"
     ajax
     ajax-target="#patientsIndexResults"
 >
@@ -57,7 +57,7 @@
     </div>
     <x-slot:actions>
         <!-- <button type="submit" class="btn btn-outline-primary btn-md"><i class="ti ti-filter me-1"></i>{{ __('common.filter') }}</button> -->
-        <a aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" href="{{ route('admin.patients.index') }}" class="btn btn-outline-secondary btn-icon" data-filter-reset><i class="ti ti-x"></i></a>
+        <a aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" href="{{ $workspaceRoutes->route('admin.patients.index') }}" class="btn btn-outline-secondary btn-icon" data-filter-reset><i class="ti ti-x"></i></a>
     </x-slot:actions>
 </x-filter-bar>
 
@@ -98,7 +98,7 @@
                     @forelse($patients as $patient)
                     <tr>
                         <td>
-                            <a href="{{ route('admin.patients.show', $patient) }}" class="text-primary fw-medium">{{ $patient->patient_number }}</a>
+                            <a href="{{ $workspaceRoutes->route('admin.patients.show', $patient) }}" class="text-primary fw-medium">{{ $patient->patient_number }}</a>
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
@@ -110,7 +110,7 @@
                                     @endif
                                 </span>
                                 <div>
-                                    <a href="{{ route('admin.patients.show', $patient) }}" class="fw-medium text-dark">{{ $patient->full_name }}</a>
+                                    <a href="{{ $workspaceRoutes->route('admin.patients.show', $patient) }}" class="fw-medium text-dark">{{ $patient->full_name }}</a>
                                     @if($patient->email)
                                     <br><small class="text-muted"><x-patient-protected-field field="email" :value="$patient->email" /></small>
                                     @endif
@@ -166,7 +166,7 @@
                                     <i class="ti ti-lock"></i>
                                 </button>
                                 @else
-                                <a href="{{ route('admin.visits.create', ['patient_id' => $patient->id]) }}" class="btn btn-sm btn-outline-success" title="{{ __('patients.new_visit') }}">
+                                <a href="{{ $workspaceRoutes->route('admin.visits.create', ['patient_id' => $patient->id]) }}" class="btn btn-sm btn-outline-success" title="{{ __('patients.new_visit') }}">
                                     <i class="ti ti-stethoscope"></i>
                                 </a>
                                 @endif
@@ -177,12 +177,12 @@
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="{{ route('admin.patients.show', $patient) }}"><i class="ti ti-eye me-2"></i>{{ __('patients.view_profile') }}</a></li>
+                                        <li><a class="dropdown-item" href="{{ $workspaceRoutes->route('admin.patients.show', $patient) }}"><i class="ti ti-eye me-2"></i>{{ __('patients.view_profile') }}</a></li>
                                         @can('patients.edit')
                                         @if(!$patient->isMerged() && $patient->status !== 'deceased')
-                                        <li><a class="dropdown-item" href="{{ route('admin.patients.edit', $patient) }}"><i class="ti ti-edit me-2"></i>{{ __('common.edit') }}</a></li>
+                                        <li><a class="dropdown-item" href="{{ $workspaceRoutes->route('admin.patients.edit', $patient) }}"><i class="ti ti-edit me-2"></i>{{ __('common.edit') }}</a></li>
                                         <li>
-                                            <form method="POST" action="{{ route('admin.patients.toggle-status', $patient) }}" class="d-inline">
+                                            <form method="POST" action="{{ $workspaceRoutes->route('admin.patients.toggle-status', $patient) }}" class="d-inline">
                                                 @csrf @method('PATCH')
                                                 <button type="submit" class="dropdown-item">
                                                     <i class="ti ti-toggle-{{ $patient->status === 'active' ? 'right' : 'left' }} me-2"></i>
@@ -203,7 +203,7 @@
                             <i class="ti ti-user-off fs-1 d-block mb-2"></i>
                             {{ __('patients.no_patients_found') }}
                             @can('patients.create')
-                            <br><a href="{{ route('admin.patients.create') }}">{{ __('patients.register_new_patient') }}</a>
+                            <br><a href="{{ $workspaceRoutes->route('admin.patients.create') }}">{{ __('patients.register_new_patient') }}</a>
                             @endcan
                         </td>
                     </tr>

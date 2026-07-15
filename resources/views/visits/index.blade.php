@@ -10,7 +10,7 @@
         </a>
         @endcan
         @can('visits.create')
-        <a href="{{ route('admin.visits.create') }}" class="btn btn-primary btn-md">
+        <a href="{{ $workspaceRoutes->route('admin.visits.create') }}" class="btn btn-primary btn-md">
             <i class="ti ti-plus me-1"></i>{{ __('visits.new_visit') }}
         </a>
         @endcan
@@ -71,8 +71,8 @@
 
 <!-- Filters -->
 <x-filter-bar
-    :action="route('admin.visits.index')"
-    :reset-url="route('admin.visits.index')"
+    :action="$workspaceRoutes->route('admin.visits.index')"
+    :reset-url="$workspaceRoutes->route('admin.visits.index')"
     class="mb-2"
     ajax
     ajax-target="#visitsIndexResults"
@@ -115,7 +115,7 @@
     </div>
     <x-slot:actions>
         <!-- <button aria-label="{{ __('common.filter') }}" title="{{ __('common.filter') }}" type="submit" class="btn btn-primary"><i class="ti ti-filter"></i>{{ __('common.filter') }}</button> -->
-        <a aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary btn-icon" data-filter-reset><i class="ti ti-x"></i></a>
+        <a aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" href="{{ $workspaceRoutes->route('admin.visits.index') }}" class="btn btn-outline-secondary btn-icon" data-filter-reset><i class="ti ti-x"></i></a>
     </x-slot:actions>
 </x-filter-bar>
 
@@ -174,14 +174,14 @@
                     @endphp
                     <tr>
                         <td>
-                            <a href="{{ route('admin.visits.show', $visit) }}" class="fw-medium text-primary">
+                            <a href="{{ $workspaceRoutes->route('admin.visits.show', $visit) }}" class="fw-medium text-primary">
                                 {{ $visit->visit_number }}
                             </a>
                             <div class="small text-muted">{{ $visit->patient->patient_number }}</div>
                         </td>
                         <td>
                             <div>
-                                <a href="{{ route('admin.patients.show', $visit->patient) }}" class="fw-medium">{{ $visit->patient->full_name }}</a>
+                                <a href="{{ $workspaceRoutes->route('admin.patients.show', $visit->patient) }}" class="fw-medium">{{ $visit->patient->full_name }}</a>
                                 <div class="small text-muted">{{ $visit->patient->gender }} · {{ $visit->patient->age }}y</div>
                             </div>
                         </td>
@@ -277,7 +277,7 @@
                                     <i class="ti ti-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="{{ route('admin.visits.show', $visit) }}"><i class="ti ti-eye me-2"></i>{{ __('visits.view_details') }}</a></li>
+                                    <li><a class="dropdown-item" href="{{ $workspaceRoutes->route('admin.visits.show', $visit) }}"><i class="ti ti-eye me-2"></i>{{ __('visits.view_details') }}</a></li>
                                     @if($consultationRoute)
                                         @if($consultationRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
                                             <li><a class="dropdown-item" href="{{ route('admin.consultations.routes.show', [$visit, $consultationRoute]) }}"><i class="ti ti-stethoscope me-2"></i>{{ __('visits.actions.continue_consultation') }}</a></li>
@@ -288,16 +288,16 @@
                                         @endif
                                     @endif
                                     @can('visits.preview')
-                                    <li><a class="dropdown-item" href="{{ route('admin.visits.preview', $visit) }}"><i class="ti ti-eye-search me-2"></i>{{ __('visits.preview_visit') }}</a></li>
+                                    <li><a class="dropdown-item" href="{{ $workspaceRoutes->route('admin.visits.preview', $visit) }}"><i class="ti ti-eye-search me-2"></i>{{ __('visits.preview_visit') }}</a></li>
                                     @endcan
                                     {{-- @can('visits.edit')
-                                    <li><a class="dropdown-item" href="{{ route('admin.visits.edit', $visit) }}"><i class="ti ti-pencil me-2"></i>Edit Visit</a></li>
+                                    <li><a class="dropdown-item" href="{{ $workspaceRoutes->route('admin.visits.edit', $visit) }}"><i class="ti ti-pencil me-2"></i>Edit Visit</a></li>
                                     @endcan --}}
                                     <!-- @if($visit->status->allowedTransitions())
                                     <li><hr class="dropdown-divider"></li>
                                     @foreach($visit->status->allowedTransitions() as $nextStatus)
                                         <li>
-                                            <form method="POST" action="{{ route('admin.visits.transition', $visit) }}">
+                                            <form method="POST" action="{{ $workspaceRoutes->route('admin.visits.transition', $visit) }}">
                                                 @csrf
                                                 @method('PATCH')
                                                 <input type="hidden" name="status" value="{{ $nextStatus->value }}">

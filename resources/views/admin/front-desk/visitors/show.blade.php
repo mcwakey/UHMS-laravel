@@ -21,14 +21,14 @@
         @endif
         @endcan
         @can('front_desk.visitors.print_pass')
-        <a href="{{ route('admin.front-desk.visitors.pass', $log) }}" target="_blank" rel="noopener" class="btn btn-outline-primary">
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.pass', $log) }}" target="_blank" rel="noopener" class="btn btn-outline-primary">
             <i class="ti ti-id-badge-2 me-1"></i>{{ __('front_desk.actions.print_pass') }}
         </a>
         @endcan
         @can('front_desk.visitors.update')
-        <a href="{{ route('admin.front-desk.visitors.edit', $log) }}" class="btn btn-outline-primary"><i class="ti ti-edit me-1"></i>{{ __('front_desk.actions.edit') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.edit', $log) }}" class="btn btn-outline-primary"><i class="ti ti-edit me-1"></i>{{ __('front_desk.actions.edit') }}</a>
         @endcan
-        <a href="{{ route('admin.front-desk.visitors.index') }}" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>{{ __('front_desk.actions.back') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.index') }}" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>{{ __('front_desk.actions.back') }}</a>
     </div>
 </div>
 
@@ -55,10 +55,10 @@
                 <h5 class="mb-0 fs-15">{{ __('front_desk.visitors.section_admission') }}</h5>
                 <div class="d-flex gap-2">
                     @if($log->patient)
-                    <a href="{{ route('admin.front-desk.visitors.patient-history', $log->patient) }}" class="fs-13"><i class="ti ti-history me-1"></i>{{ __('front_desk.actions.patient_history') }}</a>
+                    <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.patient-history', $log->patient) }}" class="fs-13"><i class="ti ti-history me-1"></i>{{ __('front_desk.actions.patient_history') }}</a>
                     @endif
                     @if($log->admission)
-                    <a href="{{ route('admin.front-desk.visitors.admission-history', $log->admission) }}" class="fs-13">{{ __('front_desk.actions.admission_history') }}</a>
+                    <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.admission-history', $log->admission) }}" class="fs-13">{{ __('front_desk.actions.admission_history') }}</a>
                     @endif
                 </div>
             </div>
@@ -115,7 +115,7 @@
 <div class="modal fade" id="checkoutModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ route('admin.front-desk.visitors.check-out', $log) }}">
+            <form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.visitors.check-out', $log) }}">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">{{ __('front_desk.actions.check_out') }}</h5>

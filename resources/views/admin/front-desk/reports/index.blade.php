@@ -10,7 +10,7 @@
     $wf = $payload['workflow'];
     $fac = $payload['facility'];
     $exportBase = request()->only(['date_from', 'date_to', 'department_id', 'ward_id', 'visitor_context', 'visitor_status', 'call_direction', 'call_category', 'call_outcome', 'follow_up_status', 'courier_direction', 'courier_type', 'courier_status', 'handover_status']);
-    $exportUrl = fn ($type) => route('admin.front-desk.reports.export', array_merge($exportBase, ['type' => $type]));
+    $exportUrl = fn ($type) => $workspaceRoutes->route('admin.front-desk.reports.export', array_merge($exportBase, ['type' => $type]));
     $cards = [
         'total_visitors', 'patient_visitors', 'facility_visitors', 'currently_inside', 'overdue_visitors',
         'total_calls', 'incoming_calls', 'outgoing_calls', 'pending_callbacks', 'overdue_callbacks',
@@ -32,7 +32,7 @@
 {{-- Filters --}}
 <div class="card mb-3">
     <div class="card-body">
-        <form method="GET" action="{{ route('admin.front-desk.reports.index') }}" class="row g-2 align-items-end">
+        <form method="GET" action="{{ $workspaceRoutes->route('admin.front-desk.reports.index') }}" class="row g-2 align-items-end">
             <div class="col-md-2">
                 <label class="form-label fs-13">{{ __('front_desk.filters.date_from') }}</label>
                 <input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] }}">
@@ -61,7 +61,7 @@
             </div>
             <div class="col-md-2 d-flex gap-2">
                 <button type="submit" class="btn btn-primary"><i class="ti ti-filter me-1"></i>{{ __('front_desk.reports.apply_filters') }}</button>
-                <a href="{{ route('admin.front-desk.reports.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.reports.reset') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.front-desk.reports.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.reports.reset') }}</a>
             </div>
         </form>
     </div>

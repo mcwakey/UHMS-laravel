@@ -15,9 +15,9 @@
     </div>
     <div class="d-flex gap-2">
         @can('front_desk.calls.update')
-        <a href="{{ route('admin.front-desk.calls.edit', $log) }}" class="btn btn-outline-primary"><i class="ti ti-edit me-1"></i>{{ __('front_desk.actions.edit') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.calls.edit', $log) }}" class="btn btn-outline-primary"><i class="ti ti-edit me-1"></i>{{ __('front_desk.actions.edit') }}</a>
         @endcan
-        <a href="{{ route('admin.front-desk.calls.index') }}" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>{{ __('front_desk.actions.back') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.calls.index') }}" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>{{ __('front_desk.actions.back') }}</a>
     </div>
 </div>
 
@@ -102,7 +102,7 @@
 {{-- Assign follow-up modal --}}
 @can('front_desk.calls.followups.assign')
 <div class="modal fade" id="assignModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
-    <form method="POST" action="{{ route('admin.front-desk.calls.assign-follow-up', $log) }}">
+    <form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.calls.assign-follow-up', $log) }}">
         @csrf
         <div class="modal-header"><h5 class="modal-title">{{ __('front_desk.actions.assign_follow_up') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
@@ -125,7 +125,7 @@
 @can('front_desk.calls.followups.complete')
 @if($log->hasPendingFollowUp())
 <div class="modal fade" id="completeModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
-    <form method="POST" action="{{ route('admin.front-desk.calls.complete-follow-up', $log) }}">
+    <form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.calls.complete-follow-up', $log) }}">
         @csrf
         <div class="modal-header"><h5 class="modal-title">{{ __('front_desk.actions.complete_follow_up') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body"><label class="form-label">{{ __('front_desk.fields.completion_note') }}</label><textarea name="completion_note" class="form-control" rows="2"></textarea></div>
@@ -133,7 +133,7 @@
     </form>
 </div></div></div>
 <div class="modal fade" id="cancelModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
-    <form method="POST" action="{{ route('admin.front-desk.calls.cancel-follow-up', $log) }}">
+    <form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.calls.cancel-follow-up', $log) }}">
         @csrf
         <div class="modal-header"><h5 class="modal-title">{{ __('front_desk.actions.cancel_follow_up') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body"><label class="form-label">{{ __('front_desk.fields.cancellation_reason') }}</label><textarea name="cancellation_reason" class="form-control" rows="2"></textarea></div>
@@ -146,7 +146,7 @@
 {{-- Transfer modal --}}
 @can('front_desk.calls.transfer')
 <div class="modal fade" id="transferModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
-    <form method="POST" action="{{ route('admin.front-desk.calls.transfer', $log) }}">
+    <form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.calls.transfer', $log) }}">
         @csrf
         <div class="modal-header"><h5 class="modal-title">{{ __('front_desk.actions.transfer') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">

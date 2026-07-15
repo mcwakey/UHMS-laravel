@@ -4,7 +4,7 @@
 @section('content')
 <x-page-header-back
         :title="__('visits.preview_title')"
-        :href="route('admin.visits.show', $visit)"
+        :href="$workspaceRoutes->route('admin.visits.show', $visit)"
     >
     <x-slot:actions>
         <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
@@ -31,7 +31,7 @@
 
     <div class="d-flex gap-2 flex-wrap">
         @can('mar_chart.view')
-        <a href="{{ route('admin.visits.mar-chart', $visit) }}" class="btn btn-primary btn-sm">
+        <a href="{{ $workspaceRoutes->route('admin.visits.mar-chart', $visit) }}" class="btn btn-primary btn-sm">
             <i class="ti ti-layout-grid me-1"></i>{{ __('visits.mar_chart') }}
         </a>
         @endcan
@@ -39,12 +39,12 @@
             <i class="ti ti-printer me-1"></i>{{ __('visits.print_summary') }}
         </button>
         @can('visits.view')
-        <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-info btn-sm">
+        <a href="{{ $workspaceRoutes->route('admin.visits.show', $visit) }}" class="btn btn-outline-info btn-sm">
             <i class="ti ti-layout-list me-1"></i>{{ __('visits.visit_detail_btn') }}
         </a>
         @endcan
         @can('visits.view')
-        <a href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary btn-sm">
+        <a href="{{ $workspaceRoutes->route('admin.visits.index') }}" class="btn btn-outline-secondary btn-sm">
             <i class="ti ti-arrow-left me-1"></i>{{ __('visits.back_to_visits_btn') }}
         </a>
         @endcan

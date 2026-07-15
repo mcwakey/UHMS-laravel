@@ -8,7 +8,7 @@
 <div class="alert alert-danger"><ul class="mb-0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
 @endif
 
-<form method="POST" action="{{ $isEdit ? route('admin.front-desk.calls.update', $log) : route('admin.front-desk.calls.store') }}">
+<form method="POST" action="{{ $isEdit ? $workspaceRoutes->route('admin.front-desk.calls.update', $log) : $workspaceRoutes->route('admin.front-desk.calls.store') }}">
     @csrf
     @if($isEdit) @method('PUT') @endif
 
@@ -118,7 +118,7 @@
                     </div>
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary flex-grow-1"><i class="ti ti-device-floppy me-1"></i>{{ __('front_desk.actions.save') }}</button>
-                        <a href="{{ $isEdit ? route('admin.front-desk.calls.show', $log) : route('admin.front-desk.calls.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.cancel') }}</a>
+                        <a href="{{ $isEdit ? $workspaceRoutes->route('admin.front-desk.calls.show', $log) : $workspaceRoutes->route('admin.front-desk.calls.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.cancel') }}</a>
                     </div>
                 </div>
             </div>

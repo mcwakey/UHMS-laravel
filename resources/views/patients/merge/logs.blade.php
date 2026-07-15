@@ -9,7 +9,7 @@
    </div> -->
 <x-page-header-back
     :title="__('patients.merge_audit_logs')"
-    :href="route('admin.patients.merge.index')"
+    :href="$workspaceRoutes->route('admin.patients.merge.index')"
 />
 
         <!-- <p class="text-muted mb-0">{{ __('patients.merge_audit_subtitle') }}</p> -->
@@ -37,7 +37,7 @@
                         <td>{{ $log->occurred_at?->format('d M Y H:i:s') }}</td>
                         <td>
                             @if($log->mergeRequest)
-                                <a href="{{ route('admin.patients.merge.requests.show', $log->mergeRequest) }}">{{ $log->mergeRequest->request_number }}</a>
+                                <a href="{{ $workspaceRoutes->route('admin.patients.merge.requests.show', $log->mergeRequest) }}">{{ $log->mergeRequest->request_number }}</a>
                             @else
                                 -
                             @endif

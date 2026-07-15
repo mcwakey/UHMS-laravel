@@ -1,1113 +1,976 @@
-# UHMS Implementation Prompt
+# UHMS Records Department Workspace — Personalized Menu and `/records/*` Route Architecture
 
-## Payment Timing Policy — Final Verification and Release Closure
+Implement a dedicated **Records Department Workspace** for UHMS.
 
-You are working on **UHMS**, a Laravel-based hospital management system.
+This work should follow the same department-aware navigation and workspace-personalisation approach already implemented for doctors and consultation departments.
 
-The Payment Timing Policy implementation batch, covering Phases 1–9, is functionally complete.
+The objective is that when a logged-in user’s active department has:
 
-This task is a dedicated **verification, hardening, and release-closure exercise**.
+```php
+DepartmentType::RECORDS
+```
 
-It is not Phase 10.
+the user should experience UHMS as a dedicated Records workspace with:
 
-Do not add new payment-policy features unless a defect discovered during verification requires a narrowly scoped correction.
+* A Records-specific sidebar menu
+* A Records dashboard
+* Records-specific breadcrumbs
+* Records-specific route names
+* Consistent `/records/*` URLs
+* Records-aware redirects after actions
+* Permission-controlled menu visibility
+* Active-department scoping
+* Reuse of existing patient, visit, appointment, document, and reporting logic
+
+Do not duplicate core patient, visit, appointment, or medical-record business logic merely to create the new URL structure.
 
 ---
 
-# 1. Current Implementation State
+## 1. Core Functional Requirement
 
-The completed implementation includes:
+When the active department type is `records`, all supported pages used by the Records officer must appear under the `/records` URL prefix.
 
-1. Global and visit-type payment-timing policies
-2. Legacy/typed policy observation and compatibility
-3. Central `PaymentGateService` workflow integration
-4. Departmental operation configuration and cutover eligibility
-5. Patient financial-risk profiles
-6. Visit-level observational policy materialisation
-7. Approved per-visit payment arrangements
-8. Controlled typed operational cutover
-9. Financial clearance, conditional closure, and receivable preservation
-
-The latest Phase 9 implementation provides:
-
-* Visit financial-clearance snapshots
-* Immutable clearance history
-* Conditional outstanding-balance approval
-* Maker-checker exception approval
-* Active-mode-only financial closure
-* Automatic staleness after invoice, invoice-item, receivable, or payment changes
-* Financial worklists, reports, exports, settings, and rollback
-* Safe deployment defaults
-* English/French localisation
-* Diagnostic, backfill, refresh, and expiry commands
-
-Current deployment defaults remain:
+Examples:
 
 ```text
-Payment timing typed cutover: disabled
-Financial clearance enforcement: disabled
-PAYMENT_TIMING_FORCE_LEGACY: safe fallback available
-VISIT_FINANCIAL_CLEARANCE_FORCE_DISABLED: true
+/records
+/records/dashboard
+/records/patients
+/records/patients/create
+/records/patients/{patient}
+/records/patients/{patient}/edit
+/records/visits
+/records/visits/create
+/records/visits/{visit}
+/records/appointments
+/records/appointments/{appointment}
+/records/documents
+/records/reports
 ```
+
+A Records user should not enter through `/records/patients` and then be sent back to a generic URL such as:
+
+```text
+/patients/{patient}
+/visits/{visit}
+/appointments/{appointment}
+```
+
+All navigation, form redirects, table actions, breadcrumbs, search results, dashboard links, pagination links, and related actions must preserve the Records workspace context.
 
 ---
 
-# 2. Known Verification Gaps
+# Phase 1 — Inspect the Existing Workspace Architecture
 
-The Phase 9 focused verification passed, but final release verification is incomplete.
+Before implementing, inspect the current codebase and identify:
 
-Known gaps:
+1. How doctor-specific menus are selected.
+2. How department type determines dashboard and navigation profiles.
+3. How the active department is resolved.
+4. How multi-department users switch active departments.
+5. How existing patient, visit, appointment, consultation, and records routes are currently registered.
+6. How menu visibility is filtered by:
 
-## 2.1 Laravel full suite
+   * permissions
+   * module availability
+   * active department
+   * role
+7. How dashboard redirection after login is currently resolved.
+8. Whether an existing workspace URL resolver, route resolver, menu registry, or department menu profile service can be extended.
+9. Which existing controllers and services can be reused.
+10. Which views currently hardcode route names such as:
 
-The complete Laravel suite was attempted twice.
-
-The execution wrapper timed out before PHPUnit produced a final summary:
-
-* First attempt: approximately 2-minute timeout
-* Second attempt: approximately 15-minute timeout
-
-The result is therefore:
-
-```text
-inconclusive
+```php
+route('patients.show', $patient)
+route('visits.show', $visit)
+route('appointments.show', $appointment)
 ```
 
-Do not describe the full Laravel suite as passing or failing until a complete final summary is obtained.
-
-## 2.2 Playwright
-
-The complete Playwright suite was invoked but stopped before test discovery because these environment values were absent:
-
-```text
-UHMS_RECEPTION_EMAIL
-UHMS_RECEPTION_PASSWORD
-```
-
-No credentials were invented.
-
-The browser suite therefore remains unexecuted.
-
-## 2.3 Existing NHIS failures
-
-Three `NhisClaimWorkflowTest` failures were previously reported as pre-existing and were observed to fail identically when the Phase 8 changes were stashed.
-
-This must be verified again against the current Phase 9 branch before final release closure.
+Do not create a competing workspace system where one already exists. Extend the existing department dashboard, menu profile, department-context, and route-resolution infrastructure.
 
 ---
 
-# 3. Primary Goal
+# Phase 2 — Records Workspace Route Group
 
-Complete one trustworthy release-verification cycle that answers:
+Create a dedicated Records route group.
 
-1. Does the complete Laravel suite pass?
-2. If not, which failures are caused by the payment-timing batch?
-3. Are any failures genuinely pre-existing?
-4. Does the complete Playwright suite pass?
-5. Does the full payment-timing workflow work through the browser?
-6. Are safe deployment defaults preserved?
-7. Are rollback controls proven?
-8. Can the implementation be declared release-ready?
-9. Are there any documented release blockers?
+Use a structure equivalent to:
 
-Do not claim release readiness unless the evidence supports it.
+```php
+Route::prefix('records')
+    ->name('records.')
+    ->middleware([
+        'auth',
+        'verified',
+        'department.context',
+        'department.type:records',
+    ])
+    ->group(function () {
+        // Records workspace routes
+    });
+```
+
+Use the project’s actual middleware names and department-type validation architecture.
+
+Required route naming should include, where the corresponding feature already exists:
+
+```text
+records.dashboard
+
+records.patients.index
+records.patients.create
+records.patients.store
+records.patients.show
+records.patients.edit
+records.patients.update
+
+records.visits.index
+records.visits.create
+records.visits.store
+records.visits.show
+records.visits.edit
+records.visits.update
+
+records.appointments.index
+records.appointments.create
+records.appointments.store
+records.appointments.show
+records.appointments.edit
+records.appointments.update
+
+records.documents.index
+records.documents.show
+
+records.reports.index
+records.reports.patients
+records.reports.visits
+records.reports.attendance
+```
+
+Only add routes for functionality that genuinely exists or is being implemented in this phase.
+
+Do not create empty placeholder pages simply to fill the menu.
 
 ---
 
-# 4. Hard Guardrails
+# Phase 3 — Reuse Existing Business Logic
 
-Do not:
+The `/records/*` routes must reuse the current application services and domain logic.
 
-* Add new payment-policy functionality
-* Enable typed cutover by default
-* Enable financial-clearance enforcement by default
-* Remove environment rollback controls
-* Invent test credentials
-* Hardcode real user passwords
-* weaken assertions merely to make tests pass
-* Skip failing tests
-* mark tests risky or incomplete to hide failures
-* delete regression tests
-* change accounting rules without a confirmed defect
-* change clinical completion or discharge rules without a confirmed defect
-* automatically activate operations after verification
-* alter production patient, invoice, payment, receivable, or GL data
-* describe an incomplete run as passing
-* treat timeout as success
-* treat missing credentials as a test pass
-* dismiss failures as pre-existing without evidence
+Preferred approaches include:
 
----
+* Thin Records workspace controllers
+* Shared application services
+* Shared query services
+* Shared form requests
+* Shared authorization policies
+* Shared Blade components
+* Shared patient and visit workflow services
+* Shared action classes
+* Shared controller traits where appropriate
 
-# 5. Pre-Verification Repository Audit
+Avoid copying full generic controllers into a new `Records` namespace unless separation is genuinely required.
 
-Before running wide tests, inspect the repository state.
+For example, a Records patient controller may delegate to existing patient services while rendering the shared patient views with a Records workspace context.
 
-Record:
+The Records route layer is primarily responsible for:
 
-```text
-current branch
-current commit
-working-tree status
-uncommitted files
-database driver used for tests
-PHP version
-Laravel version
-Node version
-npm/pnpm/yarn version
-Playwright version
-configured test environment
-```
+* Workspace authorization
+* Route context
+* Menu context
+* Breadcrumb context
+* Redirect context
+* Records-specific presentation decisions
 
-Run:
-
-```bash
-git status --short
-git diff --check
-php -v
-php artisan --version
-node --version
-npm --version
-```
-
-Use the project’s actual package manager where different.
-
-Do not discard legitimate uncommitted implementation work.
+It must not create a second patient-management implementation.
 
 ---
 
-# 6. Configuration Safety Audit
+# Phase 4 — Records Dashboard
 
-Confirm the safe runtime defaults before testing.
+Create or complete a dedicated Records dashboard.
 
-Verify:
-
-```text
-payment timing master cutover mode defaults to disabled
-typed operation settings are not active by default
-environment force-legacy behaviour works
-financial-clearance mode defaults to disabled
-VISIT_FINANCIAL_CLEARANCE_FORCE_DISABLED defaults safely
-no operation seeder selects typed mode
-no financial-clearance seeder activates enforcement
-```
-
-Run the existing commands:
-
-```bash
-php artisan billing:payment-timing-cutover-status
-php artisan billing:payment-timing-cutover-audit
-php artisan billing:payment-gate-coverage
-php artisan billing:payment-gate-policy-audit
-php artisan billing:visit-payment-policy-audit
-php artisan billing:visit-payment-arrangement-audit
-php artisan billing:visit-financial-clearance-status
-php artisan billing:visit-financial-clearance-audit
-php artisan billing:financial-risk-audit
-```
-
-Record:
+The route should resolve to:
 
 ```text
-configured mode
-effective mode
-environment override
-typed operations
-wired operations
-unwired operations
-financial-clearance mode
-audit findings
+/records
 ```
 
-Do not mutate configuration while running read-only diagnostics.
+or:
+
+```text
+/records/dashboard
+```
+
+Use one canonical route and redirect the other to it if both are present.
+
+The department dashboard resolver should map:
+
+```php
+DepartmentType::RECORDS => 'records.dashboard'
+```
+
+The dashboard should be personalized for Records operations.
+
+Include useful Records metrics where the necessary data already exists, such as:
+
+* Patients registered today
+* Patients registered this week
+* Visits created today
+* Patients checked in today
+* Active visits
+* Appointments today
+* Pending patient-record corrections
+* Possible duplicate patients
+* Recently updated patient records
+* Records activity today
+
+Each metric must:
+
+* Respect permissions
+* Use the active department where department scoping applies
+* Avoid leaking patient-sensitive information
+* Link to a valid `/records/*` destination
+* Display a safe empty state where no data exists
+
+Do not add misleading metrics that cannot be reliably calculated from current data.
 
 ---
 
-# 7. Database and Migration Verification
+# Phase 5 — Records-Specific Menu Profile
 
-Run migration verification against the actual test database configuration.
+Extend the existing department menu profile or menu registry so that:
 
-Required checks:
-
-```bash
-php artisan migrate:status
-php artisan migrate --force
+```php
+DepartmentType::RECORDS
 ```
 
-Where safe and supported, also verify a clean database:
+receives a dedicated Records menu.
 
-```bash
-php artisan migrate:fresh --seed --env=testing
-```
+Recommended menu structure:
 
-Only use `migrate:fresh` on a disposable test database.
+## Records Dashboard
 
-Never run it against production or a shared development database.
+* Dashboard
 
-Verify:
+## Patient Management
 
-* All Phase 1–9 migrations apply cleanly
-* Permission migrations are idempotent
-* Settings seeders remain idempotent
-* No duplicate settings are created
-* No operation becomes typed through seeding
-* No patient is automatically classified as financially risky
-* No visit arrangement is automatically approved
-* No financial clearance is automatically activated
-* MySQL foreign-key identifier lengths remain safe
-* SQLite testing compatibility remains intact where used
+* Patient List
+* Register New Patient
+* Patient Search
+* Recently Registered Patients
 
-Record the final migration and seed results.
+Where supported:
+
+* Duplicate Patient Review
+* Patient Merge Requests
+* Pending Record Corrections
+
+## Visits and Attendance
+
+* Visit List
+* Create Visit
+* Patient Check-In
+* Today’s Attendance
+* Active Visits
+* Completed Visits
+* Appointments
+
+## Patient Records
+
+* Patient Profiles
+* Visit History
+* Consultation History
+* Investigation History
+* Admission History
+* Uploaded Documents
+
+## Records Reports
+
+* Patient Registration Report
+* Attendance Report
+* Visit Report
+* Appointment Report
+* Records Activity Report
+
+## General
+
+* Notifications
+* My Profile
+* Switch Department
+
+Only show menu items where:
+
+1. The feature exists.
+2. The module is enabled.
+3. The user possesses the required permission.
+4. The active department context permits access.
+
+Do not expose menu items merely because the user belongs to a Records department.
+
+Permissions remain authoritative.
 
 ---
 
-# 8. Syntax, Static, Route, View, and Localisation Checks
+# Phase 6 — Workspace-Aware URL Resolution
 
-Run:
+Introduce or extend a centralized workspace route resolver.
 
-```bash
-php -l <all new and modified PHP files>
-php artisan route:list
-php artisan config:clear
-php artisan cache:clear
-php artisan view:clear
-php artisan view:cache
+The application must not scatter logic such as:
+
+```php
+if ($department->type === DepartmentType::RECORDS) {
+    return route('records.patients.show', $patient);
+}
 ```
 
-Run the project’s existing:
+across multiple views and controllers.
+
+Create or extend a service such as:
+
+```php
+DepartmentWorkspaceRouteResolver
+WorkspaceUrlResolver
+DepartmentRouteResolver
+```
+
+Use the naming convention already established in the project.
+
+The resolver should support methods equivalent to:
+
+```php
+patientIndex()
+patientCreate()
+patientShow(Patient $patient)
+patientEdit(Patient $patient)
+
+visitIndex()
+visitCreate()
+visitShow(Visit $visit)
+visitEdit(Visit $visit)
+
+appointmentIndex()
+appointmentShow(Appointment $appointment)
+
+dashboard()
+```
+
+For a Records user, it should return route names under:
 
 ```text
-localisation parity check
-localisation audit
-permission audit
-activity-log integrity audit
-route-permission audit
-git diff --check
+records.*
 ```
 
-Confirm:
-
-* EN/FR parity
-* No missing route permissions
-* No unprotected mutation route
-* No new real activity-log gap
-* No invalid Blade compilation
-* No unresolved syntax error
-* No whitespace or merge-marker issue
-
-Do not fix unrelated legacy localisation candidates unless they block verification or were introduced by this batch.
-
----
-
-# 9. Focused Payment-Timing Verification
-
-Before running the complete suite, run the full focused payment-timing family.
-
-Include all tests matching:
-
-```text
-PaymentTiming
-PaymentGate
-BillingPaymentPolicy
-PreviousBalance
-PatientFinancialRisk
-VisitPaymentPolicy
-VisitPaymentArrangement
-VisitFinancialClearance
-TriagePayment
-ConsultationPaymentReadiness
-LaboratoryPaymentGate
-Pharmacy
-LanguageParity
-```
-
-Suggested command strategy:
-
-```bash
-php artisan test \
-  --filter='PaymentTiming|PaymentGate|BillingPaymentPolicy|PreviousBalance|PatientFinancialRisk|VisitPaymentPolicy|VisitPaymentArrangement|VisitFinancialClearance|TriagePayment|ConsultationPaymentReadiness|LaboratoryPaymentGate|Pharmacy|LanguageParity'
-```
-
-Adjust to PHPUnit support and repository naming.
-
-Record:
-
-```text
-tests
-assertions
-passed
-failed
-skipped
-duration
-```
-
-All payment-timing failures introduced by Phases 1–9 must be fixed before proceeding.
-
----
-
-# 10. Partitioned Laravel Verification
-
-The full suite previously exceeded the execution wrapper limit.
-
-Run the Laravel suite in stable partitions first.
-
-Use the repository’s actual test directory structure.
-
-Suggested partitions:
-
-```text
-Unit
-Authentication and permissions
-Patients and visits
-Consultation
-Emergency and admission
-Laboratory and investigations
-Pharmacy and stock
-Billing and payments
-Insurance and NHIS
-Reports and analytics
-Commands and scheduling
-Other feature modules
-```
-
-Possible command pattern:
-
-```bash
-php artisan test tests/Unit
-php artisan test tests/Feature/Auth
-php artisan test tests/Feature/Patients
-php artisan test tests/Feature/Visits
-php artisan test tests/Feature/Consultation
-php artisan test tests/Feature/Emergency
-php artisan test tests/Feature/Admission
-php artisan test tests/Feature/Lab
-php artisan test tests/Feature/Pharmacy
-php artisan test tests/Feature/Billing
-php artisan test tests/Feature/Nhis
-```
-
-Use actual paths, not invented paths.
-
-Where the repository does not group tests by module, generate a stable test-class inventory and execute bounded groups.
-
-For every partition, record:
-
-```text
-command
-tests
-assertions
-passed
-failed
-skipped
-duration
-peak memory where available
-```
-
-Do not stop after the first unrelated failure unless it prevents the remaining partitions from executing.
-
----
-
-# 11. NHIS Baseline Verification
-
-The known `NhisClaimWorkflowTest` failures require evidence-based classification.
-
-Perform this workflow:
-
-1. Run the failing NHIS test class on the current branch.
-2. Record exact failing methods, exception messages, stack traces, and assertions.
-3. Identify files changed by Phases 1–9 that could influence those tests.
-4. Compare against a clean pre-payment-policy baseline where available.
-5. Where safe, use:
-
-   * a temporary worktree,
-   * a known prior commit,
-   * or a carefully controlled stash comparison.
-6. Run the same NHIS tests on the baseline.
-7. Compare failures exactly.
-
-Classify each failure as:
-
-```text
-introduced by payment-timing batch
-pre-existing and identical
-pre-existing but changed
-environment-dependent
-inconclusive
-```
-
-Do not rely only on memory or an earlier statement.
-
-If a failure is caused by this batch, fix it and rerun both the NHIS tests and affected payment regressions.
-
-If genuinely pre-existing, document:
-
-```text
-baseline commit
-test name
-current error
-baseline error
-evidence that errors match
-```
-
-Do not silently exclude the tests from release reporting.
-
----
-
-# 12. Full Laravel Suite
-
-After all partitions complete and payment-related failures are fixed, run the complete suite once.
-
-Use an execution method that allows sufficient time and preserves output.
-
-Preferred approaches:
-
-```bash
-php artisan test
-```
-
-or, where the project supports it:
-
-```bash
-php artisan test --parallel
-```
-
-Use parallel execution only if:
-
-* The suite is designed for it
-* Database isolation is reliable
-* Scheduler/cache/file tests are compatible
-* Results are reproducible
-
-Capture output to a file while preserving the exit code.
+For other users, it should preserve their existing workspace or generic route behaviour.
 
 Example:
 
-```bash
-set -o pipefail
-php artisan test 2>&1 | tee storage/logs/payment-timing-final-suite.log
+```php
+$workspaceRoutes->patientShow($patient);
 ```
 
-On Windows PowerShell, use an equivalent mechanism that preserves the command exit code.
-
-The test runner must be allowed enough time to finish.
-
-Record:
+For an active Records department:
 
 ```text
-total tests
-total assertions
-passed
-failed
-skipped
-risky
-duration
-exit code
+/records/patients/{patient}
 ```
 
-If it still fails to complete:
-
-* identify the last completed test
-* identify long-running or hanging classes
-* execute those classes separately
-* inspect locks, network calls, scheduler behaviour, database transactions, and subprocesses
-* fix payment-batch causes
-* rerun the complete suite
-
-Do not declare closure while the full-suite result remains inconclusive unless there is a clearly documented infrastructure limitation accepted as a release blocker.
-
----
-
-# 13. Full-Suite Failure Triage
-
-For every full-suite failure:
-
-1. Rerun the individual test.
-2. Rerun its containing class.
-3. Rerun its module partition.
-4. Check order dependency.
-5. Check database leakage.
-6. Check cached settings leakage.
-7. Check environment variable leakage.
-8. Check singleton or memoisation leakage.
-9. Check observers and after-commit jobs.
-10. Check payment cutover and clearance settings are reset between tests.
-
-Pay particular attention to new singleton services introduced across Phases 1–9.
-
-Ensure tests reset or isolate:
+For another workspace:
 
 ```text
-payment timing cutover mode
-operation modes
-compatibility acknowledgements
-approved arrangements
-financial-risk profiles
-visit payment-policy snapshots
-financial-clearance settings
-environment force switches
-cached Setting values
-request-scoped memoisation
+The appropriate existing route for that workspace
 ```
 
-Fix any batch-created order dependency.
+Do not base this solely on the user’s primary department. Use the currently active department context.
 
 ---
 
-# 14. Playwright Environment Preparation
+# Phase 7 — Replace Hardcoded Shared Links
 
-Do not invent credentials.
+Audit all shared pages used by Records staff.
 
-Create or reuse a dedicated deterministic E2E reception account through the existing fixture/seeder framework.
+Replace hardcoded generic links where they break workspace continuity.
 
-Preferred approach:
+Review at minimum:
 
-1. Audit existing Playwright authentication fixtures.
-2. Audit existing E2E test-data seeders.
-3. Add or extend a dedicated test-only fixture command if necessary.
-4. Generate or configure:
+* Patient index tables
+* Patient search results
+* Global search results
+* Patient cards
+* Patient show page
+* Patient edit page
+* Visit list
+* Visit history
+* Appointment list
+* Dashboard quick actions
+* Breadcrumbs
+* Action dropdowns
+* Empty-state actions
+* Pagination tables
+* Flash-message action links
+* Recently viewed records
+* Duplicate-patient results
+* Patient merge screens
+* Document links
+* Report drilldowns
 
-   ```text
-   UHMS_RECEPTION_EMAIL
-   UHMS_RECEPTION_PASSWORD
-   ```
-5. Keep credentials test-only.
-6. Do not commit real production credentials.
-7. Do not print passwords in reports or logs.
-8. Ensure the account has only the permissions required by the suite.
+Example of what should be avoided in a shared view:
 
-Where the existing test harness already supports a shared fixture account, reuse it.
+```php
+route('patients.show', $patient)
+```
 
-Document the setup command and required environment variables.
+Use the centralized route resolver or a workspace-aware component instead.
+
+Do not change API URLs, integration endpoints, callback URLs, signed URLs, download URLs, or print URLs unless they are explicitly part of the Records browser workspace.
 
 ---
 
-# 15. Payment-Timing Playwright Fixture
+# Phase 8 — Workspace-Aware Redirects
 
-Prepare deterministic browser-test data containing:
+All successful Records actions must redirect back into the `/records/*` workspace.
+
+Examples:
+
+After registering a patient:
 
 ```text
-finance user who can assess and close
-separate finance-manager approver
-reception user
-outpatient visit
-inpatient visit
-emergency visit
-pay-after approved arrangement
-pay-before approved arrangement
-running-bill arrangement
-unpaid invoice item
-partially paid invoice
-fully paid invoice
-open patient receivable
-conditional-clearance request
-approved conditional-clearance exception
-financially closed visit
-stale financially closed visit
+/records/patients/{patient}
 ```
 
-The fixture must be:
+After editing a patient:
 
-* Idempotent
-* Discoverable
-* Test-only
-* Safe to rerun
-* Separate from default production launch data
-* Free from real patient information
+```text
+/records/patients/{patient}
+```
 
-Include stable identifiers in fixture metadata.
+After creating a visit:
+
+```text
+/records/visits/{visit}
+```
+
+After updating an appointment:
+
+```text
+/records/appointments/{appointment}
+```
+
+After deleting, archiving, merging, correcting, or cancelling an item, return to the appropriate Records list or detail route.
+
+Avoid hardcoding Records redirects inside shared business services.
+
+Use a workspace redirect resolver such as:
+
+```php
+$workspaceRedirects->toPatient($patient);
+$workspaceRedirects->toVisit($visit);
+$workspaceRedirects->toAppointment($appointment);
+$workspaceRedirects->patientIndex();
+```
+
+Business services should remain unaware of the browser workspace where possible.
 
 ---
 
-# 16. Focused Playwright Coverage
+# Phase 9 — Login and Department Switching
 
-Add or enable focused browser tests for the completed payment-timing workflow.
+When a user logs in and their active department type is `records`, redirect them to:
 
-Required browser flow:
+```text
+/records
+```
 
-## 16.1 Pay-after service workflow
+When a multi-department user switches their active department to a Records department, redirect them to:
 
-1. Finance opens a visit with an approved `pay_after_all_services` arrangement.
-2. Typed cutover is explicitly active for an eligible test operation.
-3. An unpaid eligible service proceeds.
-4. The invoice item remains unpaid.
-5. The receivable remains open.
+```text
+/records
+```
 
-## 16.2 Pay-before workflow
+When switching away from Records, redirect to the corresponding target department workspace.
 
-1. Finance opens a visit with an approved `pay_before_service` arrangement.
-2. The unpaid eligible service is blocked.
-3. The user sees the correct localised payment-required message.
-4. Payment is recorded through the existing payment workflow.
-5. The service becomes eligible.
+The Records menu and route context must be determined from the active department selected in the session or existing department-context mechanism.
 
-## 16.3 Conditional financial clearance
+Do not use only:
 
-1. Finance assesses an unpaid pay-after visit.
-2. Clearance displays `pending`.
-3. A conditional-clearance exception is requested.
-4. The requester cannot approve their own request.
-5. A separate Finance Manager approves it.
-6. Clearance becomes `conditionally_cleared`.
-7. Finance financially closes the visit.
-8. The invoice remains unpaid or partially unpaid.
-9. The receivable remains open and collectible.
+```php
+$user->department_id
+```
 
-## 16.4 New activity after financial close
+when the application already supports multiple departments and an active department context.
 
-1. A new billable item is added after financial close.
-2. The financial-clearance record becomes stale or reopened.
-3. Clinical work remains allowed.
-4. The invoice and receivable include the new charge.
+---
 
-## 16.5 Clinical independence
+# Phase 10 — Records Workspace Authorization
+
+The URL prefix is not authorization.
+
+Protect the Records workspace so that access requires:
+
+1. An authenticated user.
+2. A valid active department context.
+3. Active department type equal to `records`, unless the project already supports an authorized admin-preview mode.
+4. The required feature permission.
+5. Any relevant module being enabled.
+6. Access to the requested patient, visit, appointment, or document under existing policies.
+
+A user from another department who manually enters:
+
+```text
+/records/patients
+```
+
+must not receive access merely because they possess a broad patient permission.
+
+Use the project’s existing behaviour for unauthorized department workspace access:
+
+* `403`
+* workspace unavailable page
+* safe redirect
+
+Do not create inconsistent behaviour.
+
+Administrators who are allowed to preview department dashboards may retain that capability through the existing preview mechanism.
+
+---
+
+# Phase 11 — Legacy Route Compatibility
+
+Keep existing generic patient, visit, and appointment routes working for:
+
+* Other departments
+* Existing bookmarks
+* Integrations
+* API consumers
+* Print flows
+* Signed URLs
+* Background jobs
+* Internal notifications
+
+For interactive browser requests from an active Records department, generic routes may redirect to their Records equivalents where safe.
+
+Examples:
+
+```text
+/patients
+→ /records/patients
+
+/patients/{patient}
+→ /records/patients/{patient}
+
+/visits
+→ /records/visits
+```
+
+Apply such redirects carefully.
+
+Do not blindly redirect:
+
+* JSON requests
+* API requests
+* signed routes
+* callbacks
+* payment endpoints
+* export downloads
+* print requests
+* AJAX endpoints
+* background or system requests
+
+Avoid redirect loops.
+
+Where generic routes are still required internally, allow them to render correctly while ensuring links generated inside the Records workspace remain Records-aware.
+
+---
+
+# Phase 12 — Breadcrumbs and Active Menu State
+
+Records pages must display Records-specific breadcrumbs.
+
+Examples:
+
+```text
+Records > Patients
+Records > Patients > Register Patient
+Records > Patients > Patient Profile
+Records > Visits
+Records > Visits > Visit Details
+Records > Appointments
+Records > Reports
+```
+
+The sidebar must correctly highlight the active item for nested Records routes.
+
+Examples:
+
+```text
+records.patients.show
+```
+
+should highlight:
+
+```text
+Patient List
+```
+
+or the relevant Patient Management parent section.
+
+Do not depend only on exact route-name equality where nested routes are involved.
+
+---
+
+# Phase 13 — Shared View Workspace Context
+
+Pass a clear workspace context to shared views.
+
+The context may include:
+
+```php
+[
+    'workspaceKey' => 'records',
+    'workspaceDepartment' => $activeDepartment,
+    'workspaceRoutePrefix' => 'records.',
+    'workspaceTitle' => __('records.workspace.title'),
+]
+```
+
+Use the project’s existing DTO or view-context architecture where available.
+
+Shared views should use this context for:
+
+* Page headings
+* Breadcrumbs
+* Action URLs
+* Back links
+* Form actions
+* Workspace-specific quick actions
+* Empty states
+
+Do not implement workspace detection through repeated direct session reads inside Blade templates.
+
+---
+
+# Phase 14 — Forms and Validation
+
+Records forms must submit to `/records/*` routes.
+
+Examples:
+
+```text
+POST /records/patients
+PUT /records/patients/{patient}
+POST /records/visits
+PUT /records/appointments/{appointment}
+```
+
+Reuse existing:
+
+* Form requests
+* Validation rules
+* policies
+* DTOs
+* action services
+* activity logging
+* patient privacy controls
+* duplicate detection
+* visit creation rules
+
+Validation errors must return the user to the same Records URL with their input preserved.
+
+Authorization failures must not leak patient information.
+
+---
+
+# Phase 15 — Patient Privacy and Audit Integrity
+
+The Records workspace handles highly sensitive patient information.
+
+Ensure all existing patient privacy protections remain active.
+
+This includes:
+
+* Masking protected fields
+* Permission checks for phone and email
+* Sensitive field access audit
+* Export restrictions
+* Search-result masking
+* Patient merge audit
+* Record correction audit
+* Patient update audit
+* Visit creation audit
+* Document access audit where already supported
+
+Do not bypass privacy services because the user works in Records.
+
+Where new Records-specific actions are added, record activity using the existing `ActivityLog` infrastructure.
+
+Avoid logging full sensitive values.
+
+---
+
+# Phase 16 — Localization
+
+Add complete English and French localisation for the Records workspace.
+
+Prefer an existing domain file if one exists, otherwise use:
+
+```text
+lang/en/records.php
+lang/fr/records.php
+```
+
+Include keys for:
+
+* Workspace title
+* Dashboard title
+* Menu sections
+* Menu items
+* Dashboard metrics
+* Empty states
+* Unauthorized workspace message
+* Breadcrumb labels
+* Quick actions
+* Reports
+* Record corrections
+* Duplicate-patient review
+* Recently registered patients
+* Today’s attendance
+* Active visits
+
+Maintain full EN/FR parity.
+
+Do not hardcode visible Records labels in controllers, services, Blade templates, or JavaScript.
+
+---
+
+# Phase 17 — Records Menu Configuration and Extensibility
+
+Implement the Records menu through the existing menu registry or department menu profile service.
+
+Do not build the Records menu directly inside the sidebar Blade template.
+
+The menu definition should be data-driven and support:
+
+* Section ordering
+* Route name
+* Icon
+* Permission
+* Module requirement
+* Active route patterns
+* Badge or count where supported
+* Department-type availability
+
+The architecture should make it straightforward to personalize menus later for:
+
+```text
+pharmacy
+investigation
+radiology
+finance
+stores
+nursing
+inpatient
+maternity
+theatre
+emergency
+blood_bank
+mortuary
+ambulance
+support
+administrative
+```
+
+Do not implement those other department menus in this phase unless required for safe shared refactoring.
+
+---
+
+# Phase 18 — Automated Verification
+
+Add focused automated tests for the Records workspace.
+
+## Route tests
 
 Verify:
 
-* Consultation completion remains possible without financial closure.
-* Same-day outpatient reopening follows existing rules.
-* Inpatient discharge remains possible without financial closure.
-* Emergency disposition remains unchanged.
-* Re-admission remains unchanged.
+* Records routes exist.
+* Route names use `records.*`.
+* URLs use `/records/*`.
+* Records middleware is attached.
+* Generic routes remain available where required.
 
-## 16.6 Rollback
-
-1. Admin activates typed cutover in the fixture environment.
-2. Admin activates financial-clearance enforcement.
-3. Admin performs rollback.
-4. Legacy authority resumes.
-5. Approved arrangements remain recorded.
-6. Clearance and exception history remain intact.
-
----
-
-# 17. Complete Playwright Suite
-
-After focused browser coverage passes, run the complete existing Playwright suite.
-
-Use the repository’s standard command, such as:
-
-```bash
-npx playwright test
-```
-
-or the actual project script.
-
-Record:
-
-```text
-total tests
-passed
-failed
-skipped
-flaky
-duration
-browser projects
-workers
-retries
-```
-
-On failure, retain:
-
-```text
-trace
-screenshot
-video where configured
-console output
-network error details
-```
-
-Do not delete failure artifacts before triage.
-
-Rerun failed tests individually and then within the full suite.
-
-Fix all regressions introduced by Phases 1–9.
-
-Document genuine pre-existing browser failures with evidence.
-
----
-
-# 18. Manual Release Smoke Test
-
-Perform a bounded manual smoke test after automated suites.
+## Access tests
 
 Verify:
 
-## Configuration
+* A Records department user can access authorized Records pages.
+* A non-Records department user cannot access the Records workspace.
+* A Records user without the necessary permission cannot access protected actions.
+* An authorized administrator preview still works if supported.
+* Multi-department active context is respected.
 
-* Typed cutover defaults disabled
-* Financial-clearance enforcement defaults disabled
-* Environment kill switches are visible
-* Operation modes display correctly
-* Rollback buttons are permission-protected
+## Menu tests
 
-## Patient risk
+Verify:
 
-* Authorised finance user can view a risk profile
-* Clinical user cannot view sensitive risk information
+* Records users see the Records menu profile.
+* Non-Records users do not receive the Records menu profile.
+* Unauthorized items are hidden.
+* Disabled-module items are hidden.
+* Active route highlighting works.
 
-## Arrangement
+## Redirect tests
 
-* Requester cannot self-approve
-* Approved arrangement remains visible
-* Revocation preserves history
+Verify:
 
-## Typed service gate
+* Patient creation redirects to `records.patients.show`.
+* Patient update remains inside `/records`.
+* Visit creation redirects to `records.visits.show`.
+* Appointment actions remain inside `/records`.
+* Department switching to Records redirects to `/records`.
+* Login with an active Records department redirects to `/records`.
+* No redirect loops occur.
+* JSON and API requests are not incorrectly redirected.
 
-* Pay-before blocks
-* Pay-after allows
-* Running bill allows
-* Emergency remains legacy
+## Shared-view tests
 
-## Financial clearance
+Verify links generated from:
 
-* Fully settled clears
-* Unpaid remains pending
-* Conditional approval clears administratively
-* Financial close preserves debt
-* New charge marks clearance stale
-* Clinical completion and discharge remain independent
+* Patient tables
+* Patient profile
+* Visit tables
+* Search results
+* Dashboard cards
+* Breadcrumbs
+* Action dropdowns
 
-Record the test user roles and fixture identifiers, but do not record passwords.
+all remain inside `/records/*` for Records users.
 
----
+## Privacy and audit tests
 
-# 19. Security and Privacy Verification
+Verify:
 
-Verify that unauthorised users cannot receive:
+* Existing patient masking remains active.
+* Sensitive-field authorization still applies.
+* Required activity-log entries are created.
+* Records routes do not expose unmasked fields through alternate views.
 
-```text
-patient financial-risk level or reason
-visit risk snapshots
-approved-arrangement details
-conditional-clearance details
-financial-clearance history
-audit metadata
-free-text approval reasons
-```
+Run only the focused Records workspace tests and essential route/view/localisation safety checks during implementation.
 
-Check:
+Do not run the entire UHMS test suite after every phase.
 
-* Blade page source
-* JSON responses
-* Inertia props
-* API resources
-* CSV exports
-* browser network responses
-* logs
-* command JSON output
-
-Confirm patient masking remains active.
-
-Run permission and route audits again after all fixes.
+Run one broad relevant suite after all implementation phases are complete.
 
 ---
 
-# 20. Accounting Integrity Verification
+# Phase 19 — Manual Acceptance Scenarios
 
-Create focused assertions or manual verification proving:
+Confirm the following manually:
 
-* Pay-after does not mark invoice items paid
-* Running bill does not mark invoice items paid
-* Conditional clearance does not mark invoice paid
-* Financial close does not mark invoice paid
-* Outstanding receivable remains open
-* Payment posting still updates the existing ledger correctly
-* Payment reversal marks clearance stale
-* Waiver and adjustment behaviour remains unchanged
-* No duplicate payment allocation occurs
-* No duplicate journal entry occurs
-* No previous debt is moved into the current visit
-* No approved arrangement creates a billing override
-* No conditional clearance creates a payment or waiver
+## Scenario A — Records login
 
-Where existing general-ledger tests exist, rerun the applicable billing/accounting suites.
+1. Log in as a user whose active department type is `records`.
+2. Confirm the landing URL is `/records`.
+3. Confirm the Records-specific menu is visible.
+4. Confirm unrelated department-specific menu sections are absent.
 
----
+## Scenario B — Patient workflow
 
-# 21. Performance Verification
+1. Open `/records/patients`.
+2. Register a new patient.
+3. Confirm the form submits through `/records/patients`.
+4. Confirm the success redirect is `/records/patients/{patient}`.
+5. Edit the patient.
+6. Confirm the user remains inside `/records/*`.
+7. Confirm breadcrumbs and sidebar highlighting remain correct.
 
-Measure or assert:
+## Scenario C — Visit workflow
 
-```text
-disabled typed cutover adds zero arrangement/policy queries
-disabled financial-clearance mode adds no clinical workflow query
-payment-gate loops avoid N+1 arrangement lookups
-finance worklists paginate
-history is not loaded in list views
-financial summaries reuse current ledger services
-automatic staleness is after-commit and failure-safe
-```
+1. Open a patient through `/records/patients/{patient}`.
+2. Create a visit.
+3. Confirm the visit URL becomes `/records/visits/{visit}`.
+4. Navigate back to the patient.
+5. Confirm no generic `/patients/*` or `/visits/*` URLs unexpectedly appear.
 
-Review query logs for:
+## Scenario D — Appointment workflow
 
-* consultation route completion
-* next-patient readiness
-* laboratory result entry
-* pharmacy dispensing
-* visit financial-clearance worklist
-* visit financial-clearance detail
+1. Open `/records/appointments`.
+2. Create or update an appointment.
+3. Confirm all redirects remain under `/records/appointments/*`.
 
-Fix batch-created N+1 or repeated settings queries.
+## Scenario E — Permissions
 
-Do not perform speculative optimisation unrelated to the batch.
+1. Remove a Records permission.
+2. Confirm the related menu item disappears.
+3. Confirm directly entering the route remains forbidden.
 
----
+## Scenario F — Department switching
 
-# 22. Scheduler and Command Verification
+1. Log in as a multi-department user.
+2. Switch to a Records department.
+3. Confirm redirect to `/records`.
+4. Switch to another department.
+5. Confirm the other department’s dashboard and menu load.
 
-Run or test all relevant scheduled commands:
+## Scenario G — Legacy compatibility
 
-```text
-billing:financial-risk-expire
-billing:visit-payment-arrangement-expire
-billing:visit-financial-clearance-exception-expire
-```
-
-Confirm:
-
-* Dry-run defaults where specified
-* Commit is idempotent
-* `withoutOverlapping`
-* `onOneServer` where configured
-* Repeated execution does not duplicate history or activity logs
-* Expiry does not alter receivables
-* Failures are visible but do not corrupt workflow state
-
-Run all read-only audit commands and confirm they create no writes or activity logs.
+1. While operating under Records, enter a generic interactive patient route.
+2. Confirm it safely resolves or redirects to the Records equivalent.
+3. Confirm API, print, export, and signed URLs are unaffected.
 
 ---
 
-# 23. Release Readiness Checklist
+# Acceptance Criteria
 
-Create a checklist covering:
+The implementation is accepted only when all the following are true:
 
-## Database
-
-* Migrations reviewed
-* Backups required before deployment
-* Migration order valid
-* Rollback limitations documented
-* No destructive migration
-
-## Configuration
-
-* New environment variables documented
-* Safe defaults confirmed
-* Config cache instructions documented
-* Kill switches documented
-
-## Permissions
-
-* Permission migration applied
-* Role assignments reviewed
-* Activation permissions restricted
-* Clinical roles receive no sensitive finance permissions
-
-## Operations
-
-* Typed operations default legacy
-* Financial-clearance mode disabled
-* Emergency remains legacy
-* Nine unwired operations remain unwired
-
-## Monitoring
-
-* Diagnostic log events documented
-* Audit commands documented
-* Failure fallback documented
-* Support team knows rollback procedure
-
-## Accounting
-
-* Receivable preservation verified
-* No fake settlement
-* No GL mutation from closure
-* Payment reversal behaviour verified
-
-## Clinical safety
-
-* Completion independent
-* Discharge independent
-* Emergency unaffected
-* Reopening unaffected
+1. Users with an active department type of `records` receive a dedicated Records menu.
+2. Their default dashboard uses `/records`.
+3. Patient, visit, appointment, document, and report pages available to Records staff use `/records/*` URLs.
+4. Route names use the `records.*` namespace.
+5. Forms submit through Records routes.
+6. Redirects remain inside the Records workspace.
+7. Breadcrumbs and active menu states are Records-aware.
+8. Permissions and enabled modules control menu visibility.
+9. A non-Records department user cannot directly access the Records workspace.
+10. Multi-department users are evaluated using the active department context.
+11. Existing patient and visit business logic is reused rather than duplicated.
+12. Generic routes remain functional for other departments and integrations.
+13. API, signed, print, callback, and export routes are not incorrectly redirected.
+14. Patient privacy protections remain fully active.
+15. Relevant actions remain audited.
+16. English and French localisation are complete and in parity.
+17. Focused Records workspace tests pass.
+18. One broad relevant suite passes after the implementation is complete.
+19. No route loops, duplicate route names, broken links, or generic URL leaks remain in the Records browser workflow.
 
 ---
 
-# 24. Deployment Plan
+# Deliverables
 
-Document a safe deployment sequence.
+Provide:
 
-Suggested sequence:
+1. Records workspace route group.
+2. Records-specific controllers or thin adapters where required.
+3. Records department dashboard.
+4. Records menu profile configuration.
+5. Workspace-aware URL resolver.
+6. Workspace-aware redirect resolver.
+7. Updated shared links and forms.
+8. Login and department-switch integration.
+9. Records breadcrumbs and active-menu handling.
+10. EN/FR localisation.
+11. Focused feature tests.
+12. A final implementation report containing:
 
-1. Create database backup.
-2. Deploy code with all enforcement disabled.
-3. Run migrations.
-4. Run idempotent seeders.
-5. Clear and rebuild caches.
-6. Run permission audit.
-7. Run configuration status commands.
-8. Run payment-gate and clearance audit commands.
-9. Verify all operation modes remain legacy/disabled.
-10. Verify financial-clearance mode remains disabled.
-11. Perform finance/admin UI smoke tests.
-12. Monitor logs.
-13. Do not activate typed cutover during the deployment itself.
-14. Schedule a separate operational activation decision.
+* Files created
+* Files modified
+* Route map
+* Records menu map
+* Reused services
+* Redirect behaviour
+* Permissions used
+* Privacy and audit checks
+* Tests executed
+* Test results
+* Remaining limitations, if any
 
-Do not combine deployment with enforcement activation.
-
----
-
-# 25. Rollback Plan
-
-Document two rollback levels.
-
-## 25.1 Operational rollback
-
-Use:
-
-```text
-PAYMENT_TIMING_FORCE_LEGACY
-VISIT_FINANCIAL_CLEARANCE_FORCE_DISABLED
-```
-
-and admin rollback controls.
-
-Operational rollback must:
-
-* Restore legacy gate authority
-* Disable financial-close enforcement
-* Preserve approved arrangements
-* Preserve clearances and histories
-* Preserve invoices, payments, and receivables
-
-## 25.2 Code rollback
-
-Document:
-
-* Commit or release tag
-* Migration compatibility
-* Whether additive tables may remain safely after code rollback
-* Cache clearing steps
-* Worker restart steps
-* Scheduler restart steps
-
-Do not recommend destructive down migrations as the first rollback method.
-
----
-
-# 26. Release Closure Report
-
-Create:
-
-```text
-docs/billing/PAYMENT_TIMING_POLICY_RELEASE_CLOSURE_REPORT.md
-```
-
-The report must include:
-
-1. Executive implementation summary
-2. Phases 1–9 closure inventory
-3. Repository and environment details
-4. Safe deployment defaults
-5. Migration results
-6. Seeder idempotence results
-7. Syntax, route, view, localisation, permission, and audit results
-8. Focused payment-timing test totals
-9. Laravel partition results
-10. Full Laravel-suite totals
-11. NHIS baseline investigation
-12. Playwright fixture setup
-13. Focused Playwright results
-14. Full Playwright-suite totals
-15. Screenshots/traces for browser failures
-16. Manual smoke-test results
-17. Accounting-integrity verification
-18. Security/privacy verification
-19. Query/performance findings
-20. Scheduler and command verification
-21. Known pre-existing failures
-22. New failures fixed
-23. Remaining blockers
-24. Deployment checklist
-25. Rollback procedure
-26. Environment variable reference
-27. Release readiness verdict
-28. Final implementation-batch status
-
-Use one of these final verdicts:
-
-```text
-READY FOR DEPLOYMENT WITH ENFORCEMENT DISABLED
-READY FOR CONTROLLED PILOT
-BLOCKED — VERIFICATION FAILURE
-BLOCKED — ENVIRONMENT REQUIREMENT
-```
-
-Do not use a stronger verdict than the evidence supports.
-
----
-
-# 27. Final Acceptance Criteria
-
-Release verification is complete only when:
-
-* Repository state is documented.
-* Safe defaults are confirmed.
-* All migrations apply cleanly.
-* Seeders are idempotent.
-* Syntax checks pass.
-* Routes compile.
-* Blade views compile.
-* English/French parity passes.
-* Permission audit reports no new gap.
-* Activity-log audit reports no new real gap.
-* Focused payment-timing tests pass.
-* Laravel module partitions complete.
-* Known NHIS failures are evidence-classified.
-* The complete Laravel suite produces a final summary.
-* Playwright credentials are supplied through a safe test fixture or environment configuration.
-* Focused payment-timing browser tests pass.
-* The complete Playwright suite produces a final summary.
-* Regressions introduced by Phases 1–9 are fixed.
-* Outstanding receivables remain collectible.
-* No financial closure falsely settles an invoice.
-* Clinical completion remains independent.
-* Inpatient discharge remains independent.
-* Emergency behaviour remains unchanged.
-* Typed cutover remains disabled after testing.
-* Financial-clearance enforcement remains disabled after testing.
-* Rollback controls are proven.
-* Deployment and rollback plans are documented.
-* The release-closure report contains exact evidence.
-* A justified release-readiness verdict is issued.
-
-Proceed with **Payment Timing Policy Final Verification and Release Closure only**.
-
-Do not implement additional payment-policy functionality.
-
-After completion, provide:
-
-1. Verification summary
-2. Files modified to fix regressions
-3. Repository and environment details
-4. Focused test totals
-5. Laravel partition totals
-6. Full Laravel-suite result
-7. NHIS baseline findings
-8. Playwright environment setup
-9. Focused Playwright result
-10. Full Playwright-suite result
-11. Manual smoke-test findings
-12. Accounting-integrity findings
-13. Security/privacy findings
-14. Query/performance findings
-15. Scheduler and command results
-16. Known pre-existing failures
-17. Remaining blockers
-18. Deployment checklist
-19. Rollback procedure
-20. Release-readiness verdict
-21. Release-closure report path
-
-Then stop.
+Implement the work fully. Do not stop at planning or architecture documentation.

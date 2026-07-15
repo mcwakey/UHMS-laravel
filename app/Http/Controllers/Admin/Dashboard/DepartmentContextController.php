@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Enums\LogModule;
 use App\Services\ActivityLogService;
 use App\Services\Department\DepartmentContextSwitcherService;
+use App\Services\WorkspaceRouteResolver;
 use Illuminate\Http\Request;
 
 class DepartmentContextController extends Controller
@@ -13,6 +14,7 @@ class DepartmentContextController extends Controller
     public function __construct(
         private DepartmentContextSwitcherService $switcher,
         private ActivityLogService $activityLog,
+        private WorkspaceRouteResolver $workspaceRoutes,
     ) {}
 
     public function store(Request $request)
@@ -31,9 +33,11 @@ class DepartmentContextController extends Controller
             'department_id' => $department->id,
         ], $department);
 
-        return back()->with('success', __('dashboards.department.department_context_switched', [
-            'department' => $department->name,
-        ]));
+        return redirect()
+            ->route($this->workspaceRoutes->dashboardRouteName())
+            ->with('success', __('dashboards.department.department_context_switched', [
+                'department' => $department->name,
+            ]));
     }
 
     public function destroy(Request $request)

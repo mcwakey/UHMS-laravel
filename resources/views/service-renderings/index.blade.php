@@ -10,7 +10,7 @@
             </button>
         @endcan
         <!-- @can('service_rendering.reports')
-            <a href="{{ route('admin.service-renderings.reports', request()->query()) }}" class="btn btn-outline-primary btn-sm">
+            <a href="{{ $workspaceRoutes->route('admin.service-renderings.reports', request()->query()) }}" class="btn btn-outline-primary btn-sm">
                 <i class="ti ti-report-analytics me-1"></i>{{ __('services.reports') }}
             </a>
         @endcan -->
@@ -41,8 +41,8 @@
 </div>
 
 <x-filter-bar
-    :action="route('admin.service-renderings.index')"
-    :reset-url="route('admin.service-renderings.index')"
+    :action="$workspaceRoutes->route('admin.service-renderings.index')"
+    :reset-url="$workspaceRoutes->route('admin.service-renderings.index')"
     ajax
     ajax-target="#serviceRenderingsIndexResults"
 >
@@ -79,7 +79,7 @@
         ])
     </div>
     <x-slot:actions>
-        <a aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" class="btn btn-outline-secondary btn-icon" href="{{ route('admin.service-renderings.index') }}" data-filter-reset>
+        <a aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" class="btn btn-outline-secondary btn-icon" href="{{ $workspaceRoutes->route('admin.service-renderings.index') }}" data-filter-reset>
             <i class="ti ti-x"></i>
         </a>
     </x-slot:actions>
@@ -141,10 +141,10 @@
             </td>
             <td class="text-end">
                 <div class="d-flex flex-wrap justify-content-end gap-1">
-                    <a href="{{ route('admin.service-renderings.show', $rendering) }}" class="btn btn-sm btn-outline-primary">{{ __('services.open') }}</a>
+                    <a href="{{ $workspaceRoutes->route('admin.service-renderings.show', $rendering) }}" class="btn btn-sm btn-outline-primary">{{ __('services.open') }}</a>
                     @can('service_rendering.start')
                         @if($rendering->can_be_started)
-                            <form method="POST" action="{{ route('admin.service-renderings.start', $rendering) }}">
+                            <form method="POST" action="{{ $workspaceRoutes->route('admin.service-renderings.start', $rendering) }}">
                                 @csrf
                                 <button class="btn btn-sm btn-outline-info">{{ __('services.start') }}</button>
                             </form>
@@ -164,7 +164,7 @@
 <div class="modal fade" id="addServiceModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <form method="POST" action="{{ route('admin.service-renderings.store') }}" id="addServiceForm">
+            <form method="POST" action="{{ $workspaceRoutes->route('admin.service-renderings.store') }}" id="addServiceForm">
                 @csrf
                 <div class="modal-header">
                     <div>
@@ -241,7 +241,7 @@
             $('#addSvcVisit').select2({
                 dropdownParent: $(modal), width: '100%', placeholder: 'Search visit or patient…', minimumInputLength: 2,
                 ajax: {
-                    url: '{{ route('admin.service-renderings.visit-search') }}', dataType: 'json', delay: 250,
+                    url: '{{ $workspaceRoutes->route('admin.service-renderings.visit-search') }}', dataType: 'json', delay: 250,
                     data: function (p) { return { q: p.term }; }, processResults: function (d) { return { results: d }; }, cache: true
                 }
             }).on('select2:select', function (e) { visitText = e.params.data.text || ''; updateSummary(); });
@@ -249,7 +249,7 @@
             $('#addSvcService').select2({
                 dropdownParent: $(modal), width: '100%', placeholder: 'Search a service…', minimumInputLength: 0,
                 ajax: {
-                    url: '{{ route('admin.service-renderings.service-search') }}', dataType: 'json', delay: 250,
+                    url: '{{ $workspaceRoutes->route('admin.service-renderings.service-search') }}', dataType: 'json', delay: 250,
                     data: function (p) { return { q: p.term, department_id: document.getElementById('addSvcDepartment').value }; },
                     processResults: function (d) { return { results: d }; }, cache: true
                 },

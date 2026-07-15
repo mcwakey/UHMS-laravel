@@ -7,11 +7,11 @@
         <h4 class="fw-bold mb-1">{{ __('patients.compare_folders') }}</h4>
         <p class="text-muted mb-0">{{ __('patients.compare_subtitle') }}</p>
     </div>
-    <a href="{{ route('admin.patients.merge.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-chevron-left me-1"></i>{{ __('common.back') }}</a>
+    <a href="{{ $workspaceRoutes->route('admin.patients.merge.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-chevron-left me-1"></i>{{ __('common.back') }}</a>
 </div> -->
 <x-page-header-back
     :title="__('patients.compare_folders')"
-    :href="route('admin.patients.merge.index')"
+    :href="$workspaceRoutes->route('admin.patients.merge.index')"
 />
 
 @if($errors->any())
@@ -87,7 +87,7 @@
     </div>
 </div>
 
-<form method="POST" action="{{ route('admin.patients.merge.requests.store') }}">
+<form method="POST" action="{{ $workspaceRoutes->route('admin.patients.merge.requests.store') }}">
     @csrf
     <input type="hidden" name="main_patient_number" value="{{ $mainPatient->patient_number }}">
     <input type="hidden" name="duplicate_patient_number" value="{{ $duplicatePatient->patient_number }}">

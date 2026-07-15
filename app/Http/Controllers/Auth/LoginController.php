@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
+use App\Services\WorkspaceRouteResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -59,6 +60,11 @@ class LoginController extends Controller
                 ->causedBy($user)
                 ->withProperties(['ip' => $request->ip(), 'user_agent' => $request->userAgent()])
                 ->log('logged in');
+
+            $workspaceRoutes = app(WorkspaceRouteResolver::class);
+            if ($workspaceRoutes->isRecords()) {
+                return redirect()->route($workspaceRoutes->dashboardRouteName());
+            }
 
             if ($user->hasRole('Super Admin') || $user->hasRole('Admin')) {
                 return redirect()->intended(route('admin.dashboard'));

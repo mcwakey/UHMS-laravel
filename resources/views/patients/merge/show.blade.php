@@ -7,11 +7,11 @@
         <h4 class="fw-bold mb-1">{{ $mergeRequest->request_number }}</h4>
         <p class="text-muted mb-0">{{ __('patients.merge_request_subtitle') }}</p>
     </div>
-    <a href="{{ route('admin.patients.merge.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-chevron-left me-1"></i>{{ __('common.back') }}</a>
+    <a href="{{ $workspaceRoutes->route('admin.patients.merge.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-chevron-left me-1"></i>{{ __('common.back') }}</a>
 </div> -->
 <x-page-header-back
     :title="__('patients.merge_patients') . ' - ' . $mergeRequest->request_number"
-    :href="route('admin.patients.merge.index')"
+    :href="$workspaceRoutes->route('admin.patients.merge.index')"
 />
 
 @if($errors->any())
@@ -27,7 +27,7 @@
                     {{ str_replace('_', ' ', $mergeRequest->status) }}
                     @if($mergeRequest->can_execute)
                         @can('patients.merge.execute')
-                            <form method="POST" action="{{ route('admin.patients.merge.requests.execute', $mergeRequest) }}">
+                            <form method="POST" action="{{ $workspaceRoutes->route('admin.patients.merge.requests.execute', $mergeRequest) }}">
                                 @csrf
                                 <button class="btn btn-success"><i class="ti ti-git-merge me-1"></i>{{ __('patients.execute_merge') }}</button>
                             </form>
@@ -83,7 +83,7 @@
 
 <!-- @if($mergeRequest->can_execute)
     @can('patients.merge.execute')
-        <form method="POST" action="{{ route('admin.patients.merge.requests.execute', $mergeRequest) }}" class="mb-3">
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.patients.merge.requests.execute', $mergeRequest) }}" class="mb-3">
             @csrf
             <button class="btn btn-primary"><i class="ti ti-git-merge me-1"></i>{{ __('patients.execute_merge') }}</button>
         </form>

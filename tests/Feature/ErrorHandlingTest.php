@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Enums\DepartmentType;
+use App\Models\Department;
 use App\Models\Module;
 use App\Models\User;
 use App\Services\ModuleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -88,6 +91,42 @@ class ErrorHandlingTest extends TestCase
         $response->assertDontSee('SQLSTATE');
     }
 
+    public function test_non_admin_403_dashboard_action_uses_the_department_dashboard(): void
+    {
+        $department = Department::create([
+            'name' => 'Outpatient Department',
+            'code' => 'OPD403',
+            'type' => DepartmentType::CONSULTATION->value,
+            'status' => 'active',
+        ]);
+        $user = User::factory()->create(['department_id' => $department->id]);
+        Route::get('/__test/role-forbidden', fn () => abort(403))->middleware('auth');
+
+        $this->actingAs($user)
+            ->get('/__test/role-forbidden')
+            ->assertForbidden()
+            ->assertSee('href="'.route('admin.my-dashboard').'"', false)
+            ->assertDontSee('href="'.route('admin.dashboard').'"', false);
+    }
+
+    public function test_records_403_dashboard_action_uses_the_records_workspace(): void
+    {
+        $department = Department::create([
+            'name' => 'Medical Records',
+            'code' => 'REC403',
+            'type' => DepartmentType::RECORDS->value,
+            'status' => 'active',
+        ]);
+        $user = User::factory()->create(['department_id' => $department->id]);
+        Route::get('/__test/records-forbidden', fn () => abort(403))->middleware('auth');
+
+        $this->actingAs($user)
+            ->get('/__test/records-forbidden')
+            ->assertForbidden()
+            ->assertSee('href="'.route('records.dashboard').'"', false)
+            ->assertDontSee('href="'.route('admin.dashboard').'"', false);
+    }
+
     /* ── Disabled module: friendly web page + clean JSON ── */
 
     public function test_disabled_module_shows_friendly_page(): void
@@ -140,7 +179,7 @@ class ErrorHandlingTest extends TestCase
 
     public function test_validation_errors_still_return_field_messages(): void
     {
-        Route::post('/__test/validate', function (\Illuminate\Http\Request $request) {
+        Route::post('/__test/validate', function (Request $request) {
             $request->validate(['name' => 'required']);
 
             return 'ok';

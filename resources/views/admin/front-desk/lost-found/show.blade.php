@@ -14,12 +14,12 @@
         @unless($log->isClosed())<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#releaseModal"><i class="ti ti-package-export me-1"></i>{{ __('front_desk.actions.release') }}</button>@endunless
         @endcan
         @can('front_desk.lost_found.update')
-        <a href="{{ route('admin.front-desk.lost-found.edit', $log) }}" class="btn btn-outline-secondary"><i class="ti ti-edit me-1"></i>{{ __('front_desk.actions.edit') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.lost-found.edit', $log) }}" class="btn btn-outline-secondary"><i class="ti ti-edit me-1"></i>{{ __('front_desk.actions.edit') }}</a>
         @endcan
         @can('front_desk.lost_found.cancel')
         @unless($log->isClosed())<button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal"><i class="ti ti-x me-1"></i>{{ __('front_desk.actions.cancel') }}</button>@endunless
         @endcan
-        <a href="{{ route('admin.front-desk.lost-found.index') }}" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>{{ __('front_desk.actions.back') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.lost-found.index') }}" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>{{ __('front_desk.actions.back') }}</a>
     </div>
 </div>
 
@@ -48,7 +48,7 @@
 
 @can('front_desk.lost_found.claim')
 @if($log->isUnclaimed())
-<div class="modal fade" id="claimModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="POST" action="{{ route('admin.front-desk.lost-found.claim', $log) }}">@csrf
+<div class="modal fade" id="claimModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.lost-found.claim', $log) }}">@csrf
     <div class="modal-header"><h5 class="modal-title">{{ __('front_desk.actions.claim') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
     <div class="modal-body">
         <div class="mb-3"><label class="form-label">{{ __('front_desk.fields.claimed_by_name') }}</label><input type="text" name="claimed_by_name" class="form-control"></div>
@@ -61,7 +61,7 @@
 
 @can('front_desk.lost_found.release')
 @unless($log->isClosed())
-<div class="modal fade" id="releaseModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="POST" action="{{ route('admin.front-desk.lost-found.release', $log) }}">@csrf
+<div class="modal fade" id="releaseModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.lost-found.release', $log) }}">@csrf
     <div class="modal-header"><h5 class="modal-title">{{ __('front_desk.actions.release') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
     <div class="modal-body">
         <div class="mb-3"><label class="form-label">{{ __('front_desk.fields.claimed_by_name') }}</label><input type="text" name="claimed_by_name" class="form-control" value="{{ $log->claimed_by_name }}"></div>
@@ -74,7 +74,7 @@
 
 @can('front_desk.lost_found.cancel')
 @unless($log->isClosed())
-<div class="modal fade" id="cancelModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="POST" action="{{ route('admin.front-desk.lost-found.cancel', $log) }}">@csrf
+<div class="modal fade" id="cancelModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.lost-found.cancel', $log) }}">@csrf
     <div class="modal-header"><h5 class="modal-title">{{ __('front_desk.actions.cancel') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
     <div class="modal-body"><label class="form-label">{{ __('front_desk.fields.reason') }}</label><textarea name="reason" class="form-control" rows="2"></textarea></div>
     <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('front_desk.actions.back') }}</button><button type="submit" class="btn btn-danger">{{ __('front_desk.actions.cancel') }}</button></div>

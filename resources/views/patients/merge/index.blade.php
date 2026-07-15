@@ -4,10 +4,10 @@
 @section('content')
 <x-page-header-back
     :title="__('patients.merge_patients')"
-    :href="route('admin.patients.index')"
+    :href="$workspaceRoutes->route('admin.patients.index')"
 >
     <x-slot:actions>
-        <a href="{{ route('admin.patients.merge.logs') }}" class="btn btn-outline-secondary btn-sm">
+        <a href="{{ $workspaceRoutes->route('admin.patients.merge.logs') }}" class="btn btn-outline-secondary btn-sm">
             <i class="ti ti-history me-1"></i>{{ __('patients.audit_logs') }}
         </a>
     </x-slot:actions>
@@ -18,7 +18,7 @@
 @endif
 
 <div class="card mb-3">
-    <form method="GET" action="{{ route('admin.patients.merge.compare') }}" id="mergeCompareForm">
+    <form method="GET" action="{{ $workspaceRoutes->route('admin.patients.merge.compare') }}" id="mergeCompareForm">
         <div class="card-header d-flex justify-content-between align-items-center gap-2">
             <h5 class="card-title mb-0">{{ __('patients.selected_folders') }}</h5>
             <button class="btn btn-primary" type="submit" id="compareBtn" disabled>
@@ -100,7 +100,7 @@
                         <td>{{ $mergeRequest->duplicatePatient?->patient_number }}<br><small class="text-muted">{{ $mergeRequest->duplicatePatient?->full_name }}</small></td>
                         <td><span class="badge bg-light text-dark border">{{ str_replace('_', ' ', $mergeRequest->status) }}</span></td>
                         <td>{{ $mergeRequest->created_at?->format('d M Y H:i') }}</td>
-                        <td class="text-end"><a href="{{ route('admin.patients.merge.requests.show', $mergeRequest) }}" class="btn btn-sm btn-outline-primary">{{ __('common.view') }}</a></td>
+                        <td class="text-end"><a href="{{ $workspaceRoutes->route('admin.patients.merge.requests.show', $mergeRequest) }}" class="btn btn-sm btn-outline-primary">{{ __('common.view') }}</a></td>
                     </tr>
                 @empty
                     <tr><td colspan="6"><x-empty-state message="{{ __('patients.no_merge_requests') }}" /></td></tr>
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
             minimumInputLength: 2,
             width: '100%',
             ajax: {
-                url: '{{ route("admin.patients.merge.search") }}',
+                url: '{{ $workspaceRoutes->route("admin.patients.merge.search") }}',
                 dataType: 'json',
                 delay: 300,
                 data: function (params) {

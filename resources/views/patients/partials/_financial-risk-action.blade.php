@@ -7,7 +7,7 @@
 
 <div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <form method="POST" action="{{ route($routeName, [$patient, $financialRisk]) }}">
+        <form method="POST" action="{{ $workspaceRoutes->route($routeName, [$patient, $financialRisk]) }}">
             @csrf
             <div class="modal-content">
                 <div class="modal-header">

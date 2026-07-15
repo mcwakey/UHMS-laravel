@@ -7,7 +7,7 @@
     <x-slot:actions>
         @include('appointments.partials.view-switch', ['active' => 'calendar'])
         @can('appointments.create')
-        <a href="{{ route('admin.appointments.create') }}" class="btn btn-primary">
+        <a href="{{ $workspaceRoutes->route('admin.appointments.create') }}" class="btn btn-primary">
             <i class="ti ti-plus me-1"></i> {{ __('appointments.new_appointment') }}
         </a>
         @endcan
@@ -23,7 +23,7 @@
                 <div class="d-flex justify-content-sm-end align-items-center gap-2 flex-wrap">
                 @include('appointments.partials.view-switch', ['active' => 'calendar'])
                 @can('appointments.create')
-                <a href="{{ route('admin.appointments.create') }}" class="btn btn-primary">
+                <a href="{{ $workspaceRoutes->route('admin.appointments.create') }}" class="btn btn-primary">
                     <i class="ti ti-plus me-1"></i> {{ __('appointments.new_appointment') }}
                 </a>
                 @endcan
@@ -39,8 +39,8 @@
         $activeDateRange = ($from ?? $defaultRangeStart).' to '.($to ?? $defaultRangeEnd);
     @endphp
     <x-filter-bar
-        :action="route('admin.appointments.calendar')"
-        :reset-url="route('admin.appointments.calendar')"
+        :action="$workspaceRoutes->route('admin.appointments.calendar')"
+        :reset-url="$workspaceRoutes->route('admin.appointments.calendar')"
         class="mb-2"
         :show-apply="false"
         row-class="row g-3 align-items-end"
@@ -90,7 +90,7 @@
             ])
         </div>
         <x-slot:actions>
-            <a href="{{ route('admin.appointments.calendar') }}" class="btn btn-outline-secondary btn-icon" aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}">
+            <a href="{{ $workspaceRoutes->route('admin.appointments.calendar') }}" class="btn btn-outline-secondary btn-icon" aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}">
                 <i class="ti ti-x"></i>
             </a>
         </x-slot:actions>
@@ -109,7 +109,7 @@
             $rangeQuery = request()->except(['date_range', 'date_from', 'date_to', 'from', 'to']);
             $defaultRangeQuery = array_merge($rangeQuery, ['date_range' => $defaultRangeStart.' to '.$defaultRangeEnd]);
         @endphp
-        <a href="{{ route('admin.appointments.calendar', array_merge($rangeQuery, ['date_range' => $prevStart->toDateString().' to '.$prevEnd->toDateString()])) }}" class="btn btn-outline-secondary btn-sm">
+        <a href="{{ $workspaceRoutes->route('admin.appointments.calendar', array_merge($rangeQuery, ['date_range' => $prevStart->toDateString().' to '.$prevEnd->toDateString()])) }}" class="btn btn-outline-secondary btn-sm">
             <i class="ti ti-chevron-left me-1"></i> {{ __('appointments.previous_range') }}
         </a>
         <div>
@@ -118,10 +118,10 @@
             </h5>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('admin.appointments.calendar', $defaultRangeQuery) }}" class="btn btn-outline-primary btn-sm">
+            <a href="{{ $workspaceRoutes->route('admin.appointments.calendar', $defaultRangeQuery) }}" class="btn btn-outline-primary btn-sm">
                 {{ __('appointments.default_range') }}
             </a>
-            <a href="{{ route('admin.appointments.calendar', array_merge($rangeQuery, ['date_range' => $nextStart->toDateString().' to '.$nextEnd->toDateString()])) }}" class="btn btn-outline-secondary btn-sm">
+            <a href="{{ $workspaceRoutes->route('admin.appointments.calendar', array_merge($rangeQuery, ['date_range' => $nextStart->toDateString().' to '.$nextEnd->toDateString()])) }}" class="btn btn-outline-secondary btn-sm">
                 {{ __('appointments.next_range') }} <i class="ti ti-chevron-right ms-1"></i>
             </a>
         </div>
@@ -175,7 +175,7 @@
                                 @endphp
                                 <td class="calendar-day-cell align-top p-2 {{ $isToday ? 'bg-primary bg-opacity-10' : '' }}">
                                     @forelse($dayAppointments as $apt)
-                                    <a href="{{ route('admin.appointments.show', $apt) }}" class="appointment-card card mb-2 border-start border-3 border-{{ $apt->status->color() }} text-decoration-none text-reset d-block">
+                                    <a href="{{ $workspaceRoutes->route('admin.appointments.show', $apt) }}" class="appointment-card card mb-2 border-start border-3 border-{{ $apt->status->color() }} text-decoration-none text-reset d-block">
                                         <div class="card-body p-2">
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <small class="fw-medium text-truncate" style="max-width: 120px;">
@@ -205,7 +205,7 @@
 
                                     @can('appointments.create')
                                     @if($day->gte(today()))
-                                    <a href="{{ route('admin.appointments.create', ['date' => $dayKey]) }}" class="btn btn-outline-primary btn-sm w-100 mt-1">
+                                    <a href="{{ $workspaceRoutes->route('admin.appointments.create', ['date' => $dayKey]) }}" class="btn btn-outline-primary btn-sm w-100 mt-1">
                                         <i class="ti ti-plus" style="font-size: 0.7rem;"></i>
                                     </a>
                                     @endif

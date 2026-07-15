@@ -4,7 +4,7 @@
 @section('content')
 <x-page-header-back
     :title="__('patients.title')"
-    :href="route('admin.patients.index')"
+    :href="$workspaceRoutes->route('admin.patients.index')"
 />
 
 <div class="alert alert-warning d-flex align-items-start" role="alert">
@@ -19,7 +19,7 @@
             {{ __('patients.merged_locked_body_suffix') }}
         </p>
         @if($patient->mergedToPatient)
-            <a href="{{ route('admin.patients.show', $patient->mergedToPatient) }}" class="btn btn-primary btn-sm">
+            <a href="{{ $workspaceRoutes->route('admin.patients.show', $patient->mergedToPatient) }}" class="btn btn-primary btn-sm">
                 {{ __('patients.open_main_folder', ['number' => $patient->mergedToPatient->patient_number, 'name' => $patient->mergedToPatient->full_name]) }}
             </a>
         @endif

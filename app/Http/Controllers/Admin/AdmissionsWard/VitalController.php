@@ -118,7 +118,7 @@ class VitalController extends Controller
             $visit->update(['triage_score' => $score->value]);
 
             return redirect()
-                ->route('admin.vitals.create', ['visit_id' => $visit->id, 'dept_chooser' => 1])
+                ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.vitals.create'), ['visit_id' => $visit->id, 'dept_chooser' => 1])
                 ->with('success', __('messages.vitals.recorded_triage', ['name' => $visit->patient->full_name]));
         }
 
@@ -157,7 +157,7 @@ class VitalController extends Controller
         );
 
         return redirect()
-            ->route('admin.vitals.create')
+            ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.vitals.create'))
             ->with('success', __('messages.vitals.assigned_consultation'));
     }
 

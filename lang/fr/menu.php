@@ -235,4 +235,18 @@ return [
     'payment_request_links' => 'Liens de demande de paiement',
     'go_live_checklists' => 'Listes de mise en production',
     'scheduler_status' => 'État du planificateur',
+    // Espace Dossiers
+    'records_workspace' => 'Espace Dossiers',
+    'records_dashboard' => 'Tableau de bord Dossiers',
+    'patient_management' => 'Gestion des patients',
+    'patient_list' => 'Liste des patients',
+    'register_new_patient' => 'Inscrire un nouveau patient',
+    'visits_and_attendance' => 'Visites et présences',
+    'visit_list' => 'Liste des visites',
+    'create_visit' => 'Créer une visite',
+    'records_reports' => 'Rapports des dossiers',
+    'patient_registration_report' => 'Rapport d’inscription des patients',
+    'attendance_report' => 'Rapport de présence',
+    'visit_report' => 'Rapport des visites',
+    'general' => 'Général',
 ];

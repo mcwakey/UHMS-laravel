@@ -4,7 +4,7 @@
 @section('content')
 <x-page-header-back
         :title="__('triage.summary')"
-        :href="route('admin.triage.index')"
+        :href="$workspaceRoutes->route('admin.triage.index')"
     />
 
 <!-- <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
@@ -35,7 +35,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center gap-2">
                     <h6 class="fw-bold mb-0"><i class="ti ti-heart-rate-monitor me-1"></i>{{ __('triage.recorded_vitals') }}</h6>
-                    <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-outline-primary btn-sm">
+                    <a href="{{ $workspaceRoutes->route('admin.triage.create', $visit) }}" class="btn btn-outline-primary btn-sm">
                         <i class="ti ti-pencil me-1"></i>{{ __('common.edit') }}
                     </a>
                 </div>
@@ -139,7 +139,7 @@
             @if($visit->status === \App\Enums\VisitStatus::TRIAGE)
                 <div class="card mb-3">
                     <div class="card-body">
-                        <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-info w-100">
+                        <a href="{{ $workspaceRoutes->route('admin.triage.create', $visit) }}" class="btn btn-info w-100">
                             <i class="ti ti-pencil me-1"></i>{{ __('triage.re_assess') }}
                         </a>
                     </div>
@@ -190,7 +190,7 @@
     <div class="alert alert-info">
         <i class="ti ti-info-circle me-1"></i>{{ __('triage.no_triage_record') }}
         @if($visit->status === \App\Enums\VisitStatus::TRIAGE)
-            <a href="{{ route('admin.triage.create', $visit) }}" class="alert-link">{{ __('triage.start_triage') }}</a>
+            <a href="{{ $workspaceRoutes->route('admin.triage.create', $visit) }}" class="alert-link">{{ __('triage.start_triage') }}</a>
         @endif
     </div>
 @endif

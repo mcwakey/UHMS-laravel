@@ -13,7 +13,7 @@
         </nav>
     </div>
     <div>
-        <a href="{{ route('admin.reports.claims', array_merge(request()->query(), ['export' => 'excel'])) }}" class="btn btn-success btn-sm">
+        <a href="{{ $workspaceRoutes->route('admin.reports.claims', array_merge(request()->query(), ['export' => 'excel'])) }}" class="btn btn-success btn-sm">
             <i class="ti ti-file-spreadsheet me-1"></i>{{ __('reports.actions.excel') }}
         </a>
     </div>
@@ -56,7 +56,7 @@
 
 <div class="card mb-4">
     <div class="card-body">
-        <form method="GET" action="{{ route('admin.reports.claims') }}" class="row g-3 align-items-end">
+        <form method="GET" action="{{ $workspaceRoutes->route('admin.reports.claims') }}" class="row g-3 align-items-end">
             <div class="col-md-2">
                 <label class="form-label">{{ __('reports.filters.date_from') }}</label>
                 <input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}">
@@ -85,7 +85,7 @@
             </div>
             <div class="col-md-3">
                 <button class="btn btn-primary">{{ __('reports.filter') }}</button>
-                <a href="{{ route('admin.reports.claims') }}" class="btn btn-outline-secondary">{{ __('reports.clear') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.reports.claims') }}" class="btn btn-outline-secondary">{{ __('reports.clear') }}</a>
             </div>
         </form>
     </div>

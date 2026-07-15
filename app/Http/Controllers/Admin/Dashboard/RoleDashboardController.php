@@ -39,7 +39,7 @@ class RoleDashboardController extends Controller
     {
         $this->authorizeRoles($request, ['Receptionist', 'Medical Records Officer', 'Cashier']);
 
-        return view('dashboards.receptionist', $service->build());
+        return view('dashboards.records', $service->build());
     }
 
     public function doctor(Request $request, DoctorDashboardService $service)

@@ -241,4 +241,19 @@ return [
     'payment_request_links' => 'Payment Request Links',
     'go_live_checklists' => 'Go-Live Checklists',
     'scheduler_status' => 'Scheduler Status',
+
+    // Records workspace
+    'records_workspace' => 'Records Workspace',
+    'records_dashboard' => 'Records Dashboard',
+    'patient_management' => 'Patient Management',
+    'patient_list' => 'Patient List',
+    'register_new_patient' => 'Register New Patient',
+    'visits_and_attendance' => 'Visits and Attendance',
+    'visit_list' => 'Visit List',
+    'create_visit' => 'Create Visit',
+    'records_reports' => 'Records Reports',
+    'patient_registration_report' => 'Patient Registration Report',
+    'attendance_report' => 'Attendance Report',
+    'visit_report' => 'Visit Report',
+    'general' => 'General',
 ];

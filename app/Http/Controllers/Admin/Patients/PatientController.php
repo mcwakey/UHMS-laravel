@@ -10,16 +10,18 @@ use App\Models\CountryRegion;
 use App\Models\InsuranceProvider;
 use App\Models\InsuranceTier;
 use App\Models\Patient;
-use App\Services\PatientService;
 use App\Services\PatientPrivacyService;
+use App\Services\PatientService;
 use App\Services\VisitService;
+use App\Services\WorkspaceRouteResolver;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class PatientController extends Controller
 {
     public function __construct(
-        private PatientService $patientService
+        private PatientService $patientService,
+        private WorkspaceRouteResolver $workspaceRoutes,
     ) {}
 
     public function index(Request $request)
@@ -151,7 +153,7 @@ class PatientController extends Controller
         }
 
         return redirect()
-            ->route('admin.patients.show', $patient)
+            ->to($this->workspaceRoutes->patientShow($patient))
             ->with('success', __('messages.patients.registered', ['number' => $patient->patient_number]));
     }
 
@@ -268,7 +270,7 @@ class PatientController extends Controller
         $this->patientService->update($patient, $request->validated());
 
         return redirect()
-            ->route('admin.patients.show', $patient)
+            ->to($this->workspaceRoutes->patientShow($patient))
             ->with('success', __('messages.patients.updated'));
     }
 

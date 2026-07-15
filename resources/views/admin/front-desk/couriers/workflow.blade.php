@@ -8,12 +8,12 @@
             <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">{{ $logs->total() }}</span>
         </h4>
     </div>
-    <a href="{{ route('admin.front-desk.couriers.index') }}" class="btn btn-outline-secondary btn-md fs-13"><i class="ti ti-list me-1"></i>{{ __('front_desk.couriers.title') }}</a>
+    <a href="{{ $workspaceRoutes->route('admin.front-desk.couriers.index') }}" class="btn btn-outline-secondary btn-md fs-13"><i class="ti ti-list me-1"></i>{{ __('front_desk.couriers.title') }}</a>
 </div>
 
 <div class="d-flex flex-wrap gap-2 mb-3">
     @foreach($quickFilters as $qf)
-    <a href="{{ route('admin.front-desk.couriers.workflow', ['quick' => $qf]) }}"
+    <a href="{{ $workspaceRoutes->route('admin.front-desk.couriers.workflow', ['quick' => $qf]) }}"
        class="btn btn-sm {{ ($filters['quick'] ?? 'pending_dispatch') === $qf ? 'btn-primary' : 'btn-outline-secondary' }}">{{ __('front_desk.courier_quick.' . $qf) }}</a>
     @endforeach
 </div>
@@ -46,7 +46,7 @@
                         </td>
                         <td>{{ $log->received_or_sent_at?->format('d M Y H:i') }}</td>
                         <td class="text-end">
-                            <a href="{{ route('admin.front-desk.couriers.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a>
+                            <a href="{{ $workspaceRoutes->route('admin.front-desk.couriers.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a>
                         </td>
                     </tr>
                     @empty

@@ -5,19 +5,19 @@
 <x-page-header :title="__('claims.insurance_claims')" icon="ti-file-dollar">
     <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">{{ __('claims.total') }}: {{ $claims->total() }}</span>
     <x-slot:actions>
-        <a href="{{ route('admin.claims.eligible-visits') }}" class="btn btn-outline-primary btn-md fs-13">
+        <a href="{{ $workspaceRoutes->route('admin.claims.eligible-visits') }}" class="btn btn-outline-primary btn-md fs-13">
             <i class="ti ti-user-check me-1"></i>{{ __('claims.eligible_visits') }}
         </a>
-        <a href="{{ route('admin.claims.nhia.index') }}" class="btn btn-outline-info btn-md fs-13">
+        <a href="{{ $workspaceRoutes->route('admin.claims.nhia.index') }}" class="btn btn-outline-info btn-md fs-13">
             <i class="ti ti-shield-check me-1"></i>{{ __('claims.provider_claims') }}
         </a>
         @can('claims.export')
-        <a href="{{ route('admin.claims.export', request()->all()) }}" class="btn btn-outline-success btn-md fs-13">
+        <a href="{{ $workspaceRoutes->route('admin.claims.export', request()->all()) }}" class="btn btn-outline-success btn-md fs-13">
             <i class="ti ti-file-spreadsheet me-1"></i>{{ __('claims.export_csv') }}
         </a>
         @endcan
         @can('claims.create')
-        <a href="{{ route('admin.claims.create') }}" class="btn btn-primary btn-md fs-13">
+        <a href="{{ $workspaceRoutes->route('admin.claims.create') }}" class="btn btn-primary btn-md fs-13">
             <i class="ti ti-plus me-1"></i>{{ __('claims.new_claim') }}
         </a>
         @endcan
@@ -98,7 +98,7 @@
 <!-- Filters -->
 <div class="card mb-3">
     <div class="card-body py-2">
-        <form method="GET" action="{{ route('admin.claims.index') }}" class="row g-2 align-items-end">
+        <form method="GET" action="{{ $workspaceRoutes->route('admin.claims.index') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
                 <input type="text" name="search" class="form-control" placeholder="{{ __('claims.search_placeholder') }}" value="{{ request('search') }}">
             </div>
@@ -134,7 +134,7 @@
             </div>
             @if(request()->hasAny(['search', 'status', 'provider_id', 'date_from']))
             <div class="col-md-1">
-                <a aria-label="{{ __('claims.clear') }}" title="{{ __('claims.clear') }}" href="{{ route('admin.claims.index') }}" class="btn btn-outline-secondary w-100"><i class="ti ti-x"></i></a>
+                <a aria-label="{{ __('claims.clear') }}" title="{{ __('claims.clear') }}" href="{{ $workspaceRoutes->route('admin.claims.index') }}" class="btn btn-outline-secondary w-100"><i class="ti ti-x"></i></a>
             </div>
             @endif
         </form>
@@ -164,7 +164,7 @@
                     @forelse($claims as $claim)
                     <tr>
                         <td>
-                            <a href="{{ route('admin.claims.show', $claim) }}" class="fw-medium text-primary">
+                            <a href="{{ $workspaceRoutes->route('admin.claims.show', $claim) }}" class="fw-medium text-primary">
                                 {{ $claim->claim_number }}
                             </a>
                         </td>
@@ -192,13 +192,13 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
-                                        <a href="{{ route('admin.claims.show', $claim) }}" class="dropdown-item">
+                                        <a href="{{ $workspaceRoutes->route('admin.claims.show', $claim) }}" class="dropdown-item">
                                             <i class="ti ti-eye me-1"></i>{{ __('claims.view') }}
                                         </a>
                                     </li>
                                     @if($claim->is_editable)
                                     <li>
-                                        <form method="POST" action="{{ route('admin.claims.submit', $claim) }}">
+                                        <form method="POST" action="{{ $workspaceRoutes->route('admin.claims.submit', $claim) }}">
                                             @csrf
                                             <button type="submit" class="dropdown-item">
                                                 <i class="ti ti-send me-1"></i>{{ __('claims.submit') }}
@@ -209,7 +209,7 @@
                                     @if($claim->is_reviewable)
                                     @can('claims.approve')
                                     <li>
-                                        <a href="{{ route('admin.claims.review', $claim) }}" class="dropdown-item">
+                                        <a href="{{ $workspaceRoutes->route('admin.claims.review', $claim) }}" class="dropdown-item">
                                             <i class="ti ti-checklist me-1"></i>{{ __('claims.review') }}
                                         </a>
                                     </li>

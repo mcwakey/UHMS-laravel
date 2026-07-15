@@ -92,7 +92,7 @@ class CourierLogController extends Controller
         $this->service->create($request->validated(), $request->user());
 
         return redirect()
-            ->route('admin.front-desk.couriers.index')
+            ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.front-desk.couriers.index'))
             ->with('success', __('front_desk.flash.courier_created'));
     }
 
@@ -117,7 +117,7 @@ class CourierLogController extends Controller
         $this->service->update($courier, $request->validated(), $request->user());
 
         return redirect()
-            ->route('admin.front-desk.couriers.show', $courier)
+            ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.front-desk.couriers.show'), $courier)
             ->with('success', __('front_desk.flash.courier_updated'));
     }
 

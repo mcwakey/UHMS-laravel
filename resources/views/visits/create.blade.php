@@ -4,7 +4,7 @@
 @section('content')
 <x-page-header-back
     :title="__('visits.create_new_visit')"
-    :href="route('admin.visits.index')"
+    :href="$workspaceRoutes->route('admin.visits.index')"
 />
 
 @if(session('error'))
@@ -16,7 +16,7 @@
 
 <div id="visitFormFeedback" class="alert d-none" role="alert"></div>
 
-<form method="POST" action="{{ route('admin.visits.store') }}" id="visitForm">
+<form method="POST" action="{{ $workspaceRoutes->route('admin.visits.store') }}" id="visitForm">
     @csrf
 
     <div class="row">
@@ -433,7 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
             minimumInputLength: 2,
             width: '100%',
             ajax: {
-                url: '{{ route("admin.visits.patient-search") }}',
+                url: '{{ $workspaceRoutes->route("admin.visits.patient-search") }}',
                 dataType: 'json',
                 delay: 300,
                 data: function(params) {
@@ -558,7 +558,7 @@ document.addEventListener('DOMContentLoaded', function() {
         box.classList.remove('d-none');
         box.classList.add('d-flex');
         label.textContent = @json(__('visit_flow.ui.computing'));
-        fetch('{{ route("admin.visits.attendance-preview") }}?patient_id=' + patientId, {
+        fetch('{{ $workspaceRoutes->route("admin.visits.attendance-preview") }}?patient_id=' + patientId, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(r => r.ok ? r.json() : Promise.reject(r))
@@ -571,7 +571,7 @@ document.addEventListener('DOMContentLoaded', function() {
         insuranceCard.classList.remove('d-none');
         document.getElementById('insuranceList').innerHTML = '<div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>' + visitI18n.loading_insurances + '</div>';
 
-        fetch('{{ route("admin.visits.patient-insurances") }}?patient_id=' + patientId, {
+        fetch('{{ $workspaceRoutes->route("admin.visits.patient-insurances") }}?patient_id=' + patientId, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(r => r.json())
@@ -1612,7 +1612,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return new Promise(function(resolve) {
             const patientId = patientIdInput.value;
             if (!patientId) { resolve(); return; }
-            fetch('{{ route("admin.visits.patient-insurances") }}?patient_id=' + patientId, {
+            fetch('{{ $workspaceRoutes->route("admin.visits.patient-insurances") }}?patient_id=' + patientId, {
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
             })
             .then(r => r.json())

@@ -4,7 +4,7 @@
 @section('content')
 <x-page-header-back
         :title="__('triage.edit_triage')"
-        :href="route('admin.triage.show', $visit)"
+        :href="$workspaceRoutes->route('admin.triage.show', $visit)"
     />
 
 <!-- Page Header -->
@@ -13,7 +13,7 @@
         <h4 class="fw-bold mb-0"><i class="ti ti-stethoscope me-2 text-info"></i>{{ __('triage.edit_triage') }}</h4>
         <small class="text-muted">{{ $visit->patient->full_name }} &bull; {{ $visit->visit_number }}</small>
     </div>
-    <a href="{{ route('admin.triage.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
+    <a href="{{ $workspaceRoutes->route('admin.triage.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
         <i class="ti ti-arrow-left me-1"></i>{{ __('triage.back_to_visit') }}
     </a>
 </div> -->
@@ -30,7 +30,7 @@
 <div class="row">
     <!-- Left: Triage Form -->
     <div class="col-lg-8">
-        <form method="POST" action="{{ route('admin.triage.update', $visit) }}" id="triageForm">
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.triage.update', $visit) }}" id="triageForm">
             @csrf
             @method('PUT')
 
@@ -164,7 +164,7 @@
                 <button type="submit" class="btn btn-primary px-4" id="triageSubmitBtn">
                     <i class="ti ti-device-floppy me-1"></i><span id="triageSubmitLabel">{{ __('triage.update_triage') }}</span>
                 </button>
-                <a href="{{ route('admin.triage.show', $visit) }}" class="btn btn-outline-secondary">{{ __('common.cancel') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.triage.show', $visit) }}" class="btn btn-outline-secondary">{{ __('common.cancel') }}</a>
             </div>
         </form>
     </div>

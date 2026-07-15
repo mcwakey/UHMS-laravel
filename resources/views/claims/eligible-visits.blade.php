@@ -11,7 +11,7 @@
         <small class="text-muted">{{ __('claims.eligible_visits_help') }}</small>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ route('admin.claims.index') }}" class="btn btn-outline-secondary btn-md fs-13">
+        <a href="{{ $workspaceRoutes->route('admin.claims.index') }}" class="btn btn-outline-secondary btn-md fs-13">
             <i class="ti ti-arrow-left me-1"></i>{{ __('claims.claims') }}
         </a>
     </div>
@@ -26,7 +26,7 @@
 
 <div class="card mb-3">
     <div class="card-body py-2">
-        <form method="GET" action="{{ route('admin.claims.eligible-visits') }}" class="row g-2 align-items-end">
+        <form method="GET" action="{{ $workspaceRoutes->route('admin.claims.eligible-visits') }}" class="row g-2 align-items-end">
             <div class="col-md-4">
                 <label class="form-label mb-1">{{ __('claims.insurance_type') }}</label>
                 <select name="type" class="form-select">
@@ -43,7 +43,7 @@
             </div>
             @if($selectedTypeCode)
             <div class="col-md-2">
-                <a href="{{ route('admin.claims.eligible-visits') }}" class="btn btn-outline-secondary w-100">{{ __('claims.clear') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.claims.eligible-visits') }}" class="btn btn-outline-secondary w-100">{{ __('claims.clear') }}</a>
             </div>
             @endif
         </form>
@@ -103,7 +103,7 @@
                         <td class="text-end fw-semibold">GHS {{ number_format($claimable, 2) }}</td>
                         <td class="text-end">
                             @can('claims.create')
-                            <form method="POST" action="{{ $type?->code === 'NHIA' ? route('admin.claims.nhia.prepare-from-visit', $visit) : route('admin.claims.prepare-from-visit', $visit) }}">
+                            <form method="POST" action="{{ $type?->code === 'NHIA' ? $workspaceRoutes->route('admin.claims.nhia.prepare-from-visit', $visit) : $workspaceRoutes->route('admin.claims.prepare-from-visit', $visit) }}">
                                 @csrf
                                 <button type="submit" class="btn btn-sm btn-primary">
                                     <i class="ti ti-file-plus me-1"></i>{{ __('claims.prepare_claim') }}

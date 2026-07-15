@@ -1416,6 +1416,11 @@ class RoleSeeder extends Seeder
             'invoices.view',
             'billing.previous_balance.flag.view',
             'appointments.view', 'appointments.create', 'appointments.edit', 'appointments.update', 'appointments.cancel',
+            // Records-department intake, service tracking, claims, and operational reports.
+            'vitals.view', 'vitals.create',
+            'service_rendering.view', 'service_rendering.reports',
+            'claims.view', 'claims.create', 'claims.export',
+            'reports.view', 'reports.export', 'reports.print',
             // Patient communication: send approved SMS + view delivery status only
             'integrations.sms.view', 'integrations.sms.send', 'integrations.sms.reports.view',
             'integrations.sms.queue.view',
@@ -1471,7 +1476,10 @@ class RoleSeeder extends Seeder
             'patients.clinical_sensitive.view', 'patients.export_sensitive.view',
             'visits.view', 'visits.preview',
             'appointments.view',
-            'reports.view',
+            'vitals.view', 'vitals.create',
+            'service_rendering.view', 'service_rendering.reports',
+            'claims.view', 'claims.create', 'claims.export',
+            'reports.view', 'reports.export', 'reports.print',
             'notifications.view',
             // Front desk operations + reporting (view + export).
             'front_desk.reports.view',

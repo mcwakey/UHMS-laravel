@@ -88,7 +88,7 @@ class VisitorLogController extends Controller
         $this->service->create($request->validated(), $request->user());
 
         return redirect()
-            ->route('admin.front-desk.visitors.index')
+            ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.front-desk.visitors.index'))
             ->with('success', __('front_desk.flash.visitor_created'));
     }
 
@@ -119,7 +119,7 @@ class VisitorLogController extends Controller
         $this->service->update($visitor, $request->validated(), $request->user());
 
         return redirect()
-            ->route('admin.front-desk.visitors.show', $visitor)
+            ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.front-desk.visitors.show'), $visitor)
             ->with('success', __('front_desk.flash.visitor_updated'));
     }
 
@@ -165,7 +165,7 @@ class VisitorLogController extends Controller
         return view('admin.front-desk.visitors.history', [
             'logs' => $logs,
             'heading' => __('front_desk.visitors.patient_history_for', ['patient' => $patient->patient_number]),
-            'backRoute' => route('admin.front-desk.visitors.index'),
+            'backRoute' => app(\App\Services\WorkspaceRouteResolver::class)->route('admin.front-desk.visitors.index'),
         ]);
     }
 
@@ -181,7 +181,7 @@ class VisitorLogController extends Controller
         return view('admin.front-desk.visitors.history', [
             'logs' => $logs,
             'heading' => __('front_desk.visitors.admission_history_for', ['admission' => $admission->admission_number]),
-            'backRoute' => route('admin.front-desk.visitors.index'),
+            'backRoute' => app(\App\Services\WorkspaceRouteResolver::class)->route('admin.front-desk.visitors.index'),
         ]);
     }
 

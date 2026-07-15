@@ -1,6 +1,6 @@
 @php $log = $log ?? null; $isEdit = $log !== null; @endphp
 @if($errors->any())<div class="alert alert-danger"><ul class="mb-0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
-<form method="POST" action="{{ $isEdit ? route('admin.front-desk.lost-found.update', $log) : route('admin.front-desk.lost-found.store') }}">
+<form method="POST" action="{{ $isEdit ? $workspaceRoutes->route('admin.front-desk.lost-found.update', $log) : $workspaceRoutes->route('admin.front-desk.lost-found.store') }}">
     @csrf @if($isEdit) @method('PUT') @endif
     <div class="card">
         <div class="card-header"><h5 class="mb-0 fs-15">{{ __('front_desk.lost_found.section_item') }}</h5></div>
@@ -35,7 +35,7 @@
             </div>
             <div class="d-flex gap-2 mt-3">
                 <button type="submit" class="btn btn-primary"><i class="ti ti-device-floppy me-1"></i>{{ __('front_desk.actions.save') }}</button>
-                <a href="{{ $isEdit ? route('admin.front-desk.lost-found.show', $log) : route('admin.front-desk.lost-found.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.cancel') }}</a>
+                <a href="{{ $isEdit ? $workspaceRoutes->route('admin.front-desk.lost-found.show', $log) : $workspaceRoutes->route('admin.front-desk.lost-found.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.cancel') }}</a>
             </div>
         </div>
     </div>

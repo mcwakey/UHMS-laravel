@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\DepartmentType;
 use App\Models\User;
 use App\Services\Department\DepartmentContextSwitcherService;
 use Illuminate\Support\Facades\Lang;
@@ -20,6 +21,19 @@ class SidebarMenuBuilder
     {
         if (! $user) {
             return [];
+        }
+
+        $activeDepartment = $this->departmentContextSwitcher->currentDepartment($user, request());
+        $activeType = $activeDepartment?->type instanceof DepartmentType
+            ? $activeDepartment->type
+            : null;
+
+        if ($activeType === DepartmentType::RECORDS) {
+            return $this->finaliseSections(
+                $this->recordsSections($unreadNotifications),
+                $user,
+                $currentRouteName,
+            );
         }
 
         // Non-admin clinical staff get a focused consultation sidebar
@@ -907,6 +921,7 @@ class SidebarMenuBuilder
                         'active_patterns' => ['admin.claims.index', 'admin.claims.show', 'admin.claims.review'],
                         'permission' => 'claims.view',
                         'module' => 'claims',
+                        'visible' => fn () => app(ModuleService::class)->enabled('insurance'),
                     ],
                     [
                         'label' => 'Eligible Visits',
@@ -915,6 +930,7 @@ class SidebarMenuBuilder
                         'active_patterns' => ['admin.claims.eligible-visits'],
                         'permission' => 'claims.view',
                         'module' => 'claims',
+                        'visible' => fn () => app(ModuleService::class)->enabled('insurance'),
                     ],
                     [
                         'label' => 'NHIA Claims',
@@ -1962,6 +1978,292 @@ class SidebarMenuBuilder
             fn (array $section) => $this->filterSection($section, $user, $currentRouteName),
             $sections,
         )));
+    }
+
+    /**
+     * Focused, permission- and module-filtered menu for the Records workspace.
+     */
+    protected function recordsSections(int $unreadNotifications): array
+    {
+        return [
+            [
+                'title' => 'Records Workspace',
+                'items' => [[
+                    'label' => 'Dashboard',
+                    'icon' => 'ti ti-layout-dashboard',
+                    'route' => 'records.dashboard',
+                    'active_patterns' => ['records.dashboard', 'records.dashboard.redirect'],
+                ]],
+            ],
+            [
+                'title' => 'Front Desk',
+                'items' => [
+                    // [
+                    //     'label' => 'Front Desk Dashboard',
+                    //     'icon' => 'ti ti-layout-dashboard',
+                    //     'route' => 'records.front-desk.index',
+                    //     'active_patterns' => ['records.front-desk.index'],
+                    //     'permission' => 'front_desk.view',
+                    //     'permissions_any' => ['front_desk.dashboard.view'],
+                    // ],
+                    [
+                        'label' => 'Visitor Logs',
+                        'icon' => 'ti ti-users',
+                        'route' => 'records.front-desk.visitors.index',
+                        'active_patterns' => ['records.front-desk.visitors.*'],
+                        'permission' => 'front_desk.view',
+                        'permissions_any' => ['front_desk.visitors.view'],
+                    ],
+                    [
+                        'label' => 'Call Logs',
+                        'icon' => 'ti ti-phone-call',
+                        'route' => 'records.front-desk.calls.index',
+                        'active_patterns' => ['records.front-desk.calls.*'],
+                        'permission' => 'front_desk.view',
+                        'permissions_any' => ['front_desk.calls.view'],
+                    ],
+                    [
+                        'label' => 'Courier Logs',
+                        'icon' => 'ti ti-package',
+                        'route' => 'records.front-desk.couriers.index',
+                        'active_patterns' => ['records.front-desk.couriers.*'],
+                        'permission' => 'front_desk.view',
+                        'permissions_any' => ['front_desk.couriers.view'],
+                    ],
+                    // [
+                    //     'label' => 'Shift Handovers',
+                    //     'icon' => 'ti ti-arrows-exchange',
+                    //     'route' => 'records.front-desk.handovers.index',
+                    //     'active_patterns' => ['records.front-desk.handovers.*'],
+                    //     'permission' => 'front_desk.view',
+                    //     'permissions_any' => ['front_desk.handovers.view'],
+                    // ],
+                    [
+                        'label' => 'Lost & Found',
+                        'icon' => 'ti ti-search',
+                        'route' => 'records.front-desk.lost-found.index',
+                        'active_patterns' => ['records.front-desk.lost-found.*'],
+                        'permission' => 'front_desk.view',
+                        'permissions_any' => ['front_desk.lost_found.view'],
+                    ],
+                    [
+                        'label' => 'Incident Desk',
+                        'icon' => 'ti ti-alert-triangle',
+                        'route' => 'records.front-desk.incidents.index',
+                        'active_patterns' => ['records.front-desk.incidents.*'],
+                        'permission' => 'front_desk.view',
+                        'permissions_any' => ['front_desk.incidents.view'],
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Patient Management',
+                'items' => [
+                    [
+                        'label' => 'Patients',
+                        'icon' => 'ti ti-users',
+                        'route' => 'records.patients.index',
+                        'active_patterns' => ['records.patients.index', 'records.patients.show', 'records.patients.edit', 'records.patients.merge.*'],
+                        'permission' => 'patients.view',
+                        'module' => 'patients',
+                    ],
+                    // [
+                    //     'label' => 'Register New Patient',
+                    //     'icon' => 'ti ti-user-plus',
+                    //     'route' => 'records.patients.create',
+                    //     'active_patterns' => ['records.patients.create'],
+                    //     'permission' => 'patients.create',
+                    //     'module' => 'patients',
+                    // ],
+                ],
+            ],
+            [
+                'title' => 'Attendance',
+                'items' => [
+                    [
+                        'label' => 'Appointments',
+                        'icon' => 'ti ti-calendar-event',
+                        'route' => 'records.appointments.index',
+                        'active_patterns' => ['records.appointments.*'],
+                        'permission' => 'appointments.view',
+                        'module' => 'appointments',
+                    ],
+                    [
+                        'label' => 'Visits / OPD',
+                        'icon' => 'ti ti-calendar-check',
+                        'route' => 'records.visits.index',
+                        'active_patterns' => ['records.visits.index', 'records.visits.show', 'records.visits.edit', 'records.visits.preview'],
+                        'permission' => 'visits.view',
+                        'module' => 'visits',
+                    ],
+                    // [
+                    //     'label' => 'Create Visit',
+                    //     'icon' => 'ti ti-plus',
+                    //     'route' => 'records.visits.create',
+                    //     'active_patterns' => ['records.visits.create'],
+                    //     'permission' => 'visits.create',
+                    //     'module' => 'visits',
+                    // ],
+                ],
+            ],
+            [
+                'title' => 'Clinical',
+                'items' => [
+                    [
+                        'label' => 'Vitals / Triage',
+                        'icon' => 'ti ti-heartbeat',
+                        'route' => 'records.triage.index',
+                        'active_patterns' => ['records.triage.*', 'records.vitals.*'],
+                        'permission' => 'vitals.view',
+                        'module' => 'triage',
+                    ],
+                    // [
+                    //     'label' => 'Record Vitals',
+                    //     'icon' => 'ti ti-activity-heartbeat',
+                    //     'route' => 'records.vitals.create',
+                    //     'active_patterns' => ['records.vitals.*'],
+                    //     'permission' => 'vitals.view',
+                    //     'module' => 'triage',
+                    // ],
+                    [
+                        'label' => 'Service Rendering',
+                        'icon' => 'ti ti-clipboard-check',
+                        'route' => 'records.service-renderings.index',
+                        'active_patterns' => ['records.service-renderings.*'],
+                        'permission' => 'service_rendering.view',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Claims & Insurance',
+                'items' => [
+                    [
+                        'label' => 'Eligible Visits',
+                        'icon' => 'ti ti-clipboard-list',
+                        'route' => 'records.claims.eligible-visits',
+                        'active_patterns' => ['records.claims.eligible-visits'],
+                        'permission' => 'claims.view',
+                        'module' => 'claims',
+                        'visible' => fn () => app(ModuleService::class)->enabled('insurance'),
+                    ],
+                    [
+                        'label' => 'Private Claims',
+                        'icon' => 'ti ti-file-dollar',
+                        'route' => 'records.claims.index',
+                        'active_patterns' => ['records.claims.index', 'records.claims.show', 'records.claims.review'],
+                        'permission' => 'claims.view',
+                        'module' => 'claims',
+                        'visible' => fn () => app(ModuleService::class)->enabled('insurance'),
+                    ],
+                    [
+                        'label' => 'NHIA Claims',
+                        'icon' => 'ti ti-shield-check',
+                        'route' => 'records.claims.nhia.index',
+                        'active_patterns' => ['records.claims.nhia.*'],
+                        'permission' => 'claims.view',
+                        'module' => 'claims',
+                        'visible' => fn () => app(ModuleService::class)->enabled('insurance'),
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Records Reports',
+                'items' => [
+                    [
+                        'label' => 'Reports',
+                        'icon' => 'ti ti-report-analytics',
+                        'route' => 'records.reports.index',
+                        'active_patterns' => ['records.reports.index'],
+                        'permission' => 'reports.view',
+                        'module' => 'reports',
+                    ],
+                    [
+                        'label' => 'Front Desk Reports',
+                        'icon' => 'ti ti-chart-bar',
+                        'route' => 'records.front-desk.reports.index',
+                        'active_patterns' => ['records.front-desk.reports.*'],
+                        'permission' => 'front_desk.view',
+                        'permissions_any' => ['front_desk.reports.view'],
+                    ],
+                    [
+                        'label' => 'Patient Registration Report',
+                        'icon' => 'ti ti-user-search',
+                        'route' => 'records.reports.patients',
+                        'active_patterns' => ['records.reports.patients'],
+                        'permission' => 'reports.view',
+                        'module' => 'reports',
+                    ],
+                    [
+                        'label' => 'Attendance Report',
+                        'icon' => 'ti ti-clipboard-list',
+                        'route' => 'records.reports.attendance',
+                        'active_patterns' => ['records.reports.attendance'],
+                        'permission' => 'reports.view',
+                        'module' => 'reports',
+                    ],
+                    [
+                        'label' => 'Visit Report',
+                        'icon' => 'ti ti-chart-bar',
+                        'route' => 'records.reports.visits',
+                        'active_patterns' => ['records.reports.visits'],
+                        'permission' => 'reports.view',
+                        'module' => 'reports',
+                    ],
+                    [
+                        'label' => 'Claims Report',
+                        'icon' => 'ti ti-file-dollar',
+                        'route' => 'records.reports.claims',
+                        'active_patterns' => ['records.reports.claims'],
+                        'permission' => 'reports.view',
+                        'module' => 'claims',
+                        'visible' => fn () => app(ModuleService::class)->enabled('insurance'),
+                    ],
+                    [
+                        'label' => 'Insurance Claims Report',
+                        'icon' => 'ti ti-shield-check',
+                        'route' => 'records.reports.insurance-claims',
+                        'active_patterns' => ['records.reports.insurance-claims'],
+                        'permission' => 'reports.view',
+                        'module' => 'insurance',
+                    ],
+                    [
+                        'label' => 'Daily Collection Report',
+                        'icon' => 'ti ti-cash',
+                        'route' => 'records.reports.daily-collection',
+                        'active_patterns' => ['records.reports.daily-collection'],
+                        'permission' => 'reports.view',
+                        'module' => 'reports',
+                    ],
+                    [
+                        'label' => 'Service Rendering Report',
+                        'icon' => 'ti ti-report-medical',
+                        'route' => 'records.service-renderings.reports',
+                        'active_patterns' => ['records.service-renderings.reports'],
+                        'permission' => 'service_rendering.reports',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'General',
+                'items' => [
+                    [
+                        'label' => 'Notifications',
+                        'icon' => 'ti ti-bell',
+                        'route' => 'admin.notifications.index',
+                        'active_patterns' => ['admin.notifications.*'],
+                        'permission' => 'notifications.view',
+                        'module' => 'notifications',
+                        'badge' => $unreadNotifications > 0 ? $unreadNotifications : null,
+                    ],
+                    [
+                        'label' => 'My Profile',
+                        'icon' => 'ti ti-user-circle',
+                        'route' => 'admin.profile',
+                        'active_patterns' => ['admin.profile'],
+                    ],
+                ],
+            ],
+        ];
     }
 
     // ------------------------------------------------------------------

@@ -54,7 +54,7 @@
         </div>
         <div class="flex-grow-1 min-w-0">
             <div class="d-flex align-items-center gap-2 flex-wrap">
-                <a href="{{ route('admin.patients.show', $patient) }}"
+                <a href="{{ $workspaceRoutes->route('admin.patients.show', $patient) }}"
                    class="patient-card__name text-decoration-none">
                     {{ $patient->full_name }}
                 </a>
@@ -70,7 +70,7 @@
                 @endif
             </div>
         </div>
-        <a href="{{ route('admin.patients.show', $patient) }}"
+        <a href="{{ $workspaceRoutes->route('admin.patients.show', $patient) }}"
            class="btn btn-sm btn-outline-primary patient-card__profile-btn"
            title="{{ __('patients.view_patient_profile') }}">
             <i class="ti ti-external-link"></i>

@@ -11,7 +11,7 @@
 @php
     $title = $title ?? __('patients.add_insurance');
     $submitLabel = $submitLabel ?? __('patients.add_insurance');
-    $formAction = $formAction ?: ($patient ? route('admin.patients.insurances.store', $patient) : '#');
+    $formAction = $formAction ?: ($patient ? $workspaceRoutes->route('admin.patients.insurances.store', $patient) : '#');
     $addableInsuranceTypes = $insuranceProviders
         ->where('is_default', false)
         ->map(function ($provider) {

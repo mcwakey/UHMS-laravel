@@ -9,23 +9,23 @@
     <div class="d-flex gap-2 flex-wrap">
         @can('front_desk.handovers.submit')
         @if($log->isDraft())
-        <form method="POST" action="{{ route('admin.front-desk.handovers.submit', $log) }}">@csrf<button type="submit" class="btn btn-primary"><i class="ti ti-send me-1"></i>{{ __('front_desk.actions.submit') }}</button></form>
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.handovers.submit', $log) }}">@csrf<button type="submit" class="btn btn-primary"><i class="ti ti-send me-1"></i>{{ __('front_desk.actions.submit') }}</button></form>
         @endif
         @endcan
         @can('front_desk.handovers.accept')
         @if($log->status->value === 'submitted')
-        <form method="POST" action="{{ route('admin.front-desk.handovers.accept', $log) }}">@csrf<button type="submit" class="btn btn-success"><i class="ti ti-check me-1"></i>{{ __('front_desk.actions.accept') }}</button></form>
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.handovers.accept', $log) }}">@csrf<button type="submit" class="btn btn-success"><i class="ti ti-check me-1"></i>{{ __('front_desk.actions.accept') }}</button></form>
         @endif
         @endcan
         @can('front_desk.handovers.update')
-        @if($log->isDraft())<a href="{{ route('admin.front-desk.handovers.edit', $log) }}" class="btn btn-outline-primary"><i class="ti ti-edit me-1"></i>{{ __('front_desk.actions.edit') }}</a>@endif
+        @if($log->isDraft())<a href="{{ $workspaceRoutes->route('admin.front-desk.handovers.edit', $log) }}" class="btn btn-outline-primary"><i class="ti ti-edit me-1"></i>{{ __('front_desk.actions.edit') }}</a>@endif
         @endcan
         @can('front_desk.handovers.cancel')
         @unless($log->isCompleted())
         <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal"><i class="ti ti-x me-1"></i>{{ __('front_desk.actions.cancel') }}</button>
         @endunless
         @endcan
-        <a href="{{ route('admin.front-desk.handovers.index') }}" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>{{ __('front_desk.actions.back') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.handovers.index') }}" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>{{ __('front_desk.actions.back') }}</a>
     </div>
 </div>
 
@@ -61,7 +61,7 @@
 @can('front_desk.handovers.cancel')
 @unless($log->isCompleted())
 <div class="modal fade" id="cancelModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
-    <form method="POST" action="{{ route('admin.front-desk.handovers.cancel', $log) }}">@csrf
+    <form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.handovers.cancel', $log) }}">@csrf
         <div class="modal-header"><h5 class="modal-title">{{ __('front_desk.actions.cancel') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body"><label class="form-label">{{ __('front_desk.fields.reason') }}</label><textarea name="reason" class="form-control" rows="2"></textarea></div>
         <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('front_desk.actions.back') }}</button><button type="submit" class="btn btn-danger">{{ __('front_desk.actions.cancel') }}</button></div>

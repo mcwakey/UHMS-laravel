@@ -83,7 +83,7 @@ class ServiceRenderingController extends Controller
         }
 
         return redirect()
-            ->route('admin.service-renderings.index')
+            ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.service-renderings.index'))
             ->with('success', __('messages.service_rendering.billed', ['service' => $service->name, 'visit' => $visit->visit_number]));
     }
 

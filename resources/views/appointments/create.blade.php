@@ -4,7 +4,7 @@
 @section('content')
 <x-page-header-back
     :title="__('appointments.schedule_title')"
-    :href="route('admin.appointments.index')"
+    :href="$workspaceRoutes->route('admin.appointments.index')"
 />
 
 @if(session('error'))
@@ -21,7 +21,7 @@
 </div>
 @endif
 
-<form method="POST" action="{{ route('admin.appointments.store') }}" id="appointmentForm">
+<form method="POST" action="{{ $workspaceRoutes->route('admin.appointments.store') }}" id="appointmentForm">
     @csrf
 
     <div class="row">
@@ -248,7 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
             minimumInputLength: 2,
             width: '100%',
             ajax: {
-                url: '{{ route("admin.visits.patient-search") }}',
+                url: '{{ $workspaceRoutes->route("admin.visits.patient-search") }}',
                 dataType: 'json',
                 delay: 300,
                 data: function(params) {
@@ -355,7 +355,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadPatientInsurances(patientId) {
         insuranceCard.classList.remove('d-none');
         document.getElementById('insuranceList').innerHTML = '<div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>' + escapeHtml(i18n.loading) + '</div>';
-        fetch('{{ route("admin.visits.patient-insurances") }}?patient_id=' + patientId, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+        fetch('{{ $workspaceRoutes->route("admin.visits.patient-insurances") }}?patient_id=' + patientId, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
         .then(r => r.json())
         .then(data => {
             patientInsurances = data.insurances || [];
@@ -419,14 +419,14 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         showServicesLoading();
-        fetch('{{ route("admin.visits.department-services") }}?department_id=' + this.value, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+        fetch('{{ $workspaceRoutes->route("admin.visits.department-services") }}?department_id=' + this.value, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
         .then(r => r.json()).then(data => { availableServices = data; renderServicesList(); updateDoctorsForSelectedServices(); });
     });
 
     doctorSelect.addEventListener('change', function() {
         if (!this.value || departmentSelect.value) return;
         showServicesLoading();
-        fetch('{{ route("admin.visits.services-for-doctor") }}?doctor_id=' + this.value, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+        fetch('{{ $workspaceRoutes->route("admin.visits.services-for-doctor") }}?doctor_id=' + this.value, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
         .then(r => r.json()).then(data => { availableServices = data; renderServicesList(); });
     });
 
@@ -531,7 +531,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateDoctorsForSelectedServices() {
         const ids = selectedServices.map(s => s.service_catalog_id);
         if (ids.length === 0) { repopulateDoctorSelect(allDoctors); return; }
-        fetch('{{ route("admin.visits.doctors-for-services") }}?' + ids.map(id => 'service_ids[]=' + id).join('&'), { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+        fetch('{{ $workspaceRoutes->route("admin.visits.doctors-for-services") }}?' + ids.map(id => 'service_ids[]=' + id).join('&'), { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
         .then(r => r.json()).then(data => repopulateDoctorSelect(data));
     }
 

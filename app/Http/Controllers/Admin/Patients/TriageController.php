@@ -249,13 +249,13 @@ class TriageController extends Controller
                 'triage_score' => $visit->triage_score?->value,
                 'triage_score_label' => $visit->triage_score?->label(),
                 'department' => $visit->currentDepartment?->name,
-                'redirect_url' => route('admin.triage.show', $visit),
+                'redirect_url' => app(\App\Services\WorkspaceRouteResolver::class)->route('admin.triage.show', $visit),
                 'queue_url' => route('admin.consultations.index'),
             ]);
         }
 
         return redirect()
-            ->route('admin.triage.show', $visit)
+            ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.triage.show'), $visit)
             ->with('success', $message);
     }
 

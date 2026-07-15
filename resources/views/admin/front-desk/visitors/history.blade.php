@@ -43,7 +43,7 @@
                         </td>
                         <td>{{ $log->checkedInBy?->full_name ?? __('front_desk.none') }}</td>
                         <td class="text-end">
-                            <a href="{{ route('admin.front-desk.visitors.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a>
+                            <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a>
                         </td>
                     </tr>
                     @empty

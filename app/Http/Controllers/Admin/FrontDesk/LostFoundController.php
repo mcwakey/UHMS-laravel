@@ -43,7 +43,7 @@ class LostFoundController extends Controller
     {
         $this->service->create($this->validated($request), $request->user());
 
-        return redirect()->route('admin.front-desk.lost-found.index')
+        return redirect()->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.front-desk.lost-found.index'))
             ->with('success', __('front_desk.flash.lost_found_created'));
     }
 
@@ -63,7 +63,7 @@ class LostFoundController extends Controller
     {
         $this->service->update($lostFound, $this->validated($request), $request->user());
 
-        return redirect()->route('admin.front-desk.lost-found.show', $lostFound)
+        return redirect()->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.front-desk.lost-found.show'), $lostFound)
             ->with('success', __('front_desk.flash.lost_found_updated'));
     }
 

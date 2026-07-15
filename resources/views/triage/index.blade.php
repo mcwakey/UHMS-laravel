@@ -93,7 +93,7 @@
                                 <i class="ti ti-lock me-1"></i>{{ __('triage.start_triage') }}
                             </button>
                         @else
-                            <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-warning btn-sm ms-2">
+                            <a href="{{ $workspaceRoutes->route('admin.triage.create', $visit) }}" class="btn btn-warning btn-sm ms-2">
                                 <i class="ti ti-stethoscope me-1"></i>{{ __('triage.start_triage') }}
                             </a>
                         @endif
@@ -152,7 +152,7 @@
                                 <i class="ti ti-lock me-1"></i>{{ __('triage.continue_triage') }}
                             </button>
                         @else
-                        <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-info btn-sm ms-2">
+                        <a href="{{ $workspaceRoutes->route('admin.triage.create', $visit) }}" class="btn btn-info btn-sm ms-2">
                             <i class="ti ti-arrow-right me-1"></i>{{ __('triage.continue_triage') }}
                         </a>
                         @endif

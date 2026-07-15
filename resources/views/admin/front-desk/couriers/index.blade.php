@@ -10,12 +10,12 @@
     </div>
     <div class="d-flex gap-2">
         @can('front_desk.couriers.workflow.view')
-        <a href="{{ route('admin.front-desk.couriers.workflow') }}" class="btn btn-outline-primary btn-md fs-13">
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.couriers.workflow') }}" class="btn btn-outline-primary btn-md fs-13">
             <i class="ti ti-truck-delivery me-1"></i>{{ __('front_desk.actions.view_workflow') }}
         </a>
         @endcan
         @can('front_desk.couriers.create')
-        <a href="{{ route('admin.front-desk.couriers.create') }}" class="btn btn-primary btn-md fs-13">
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.couriers.create') }}" class="btn btn-primary btn-md fs-13">
             <i class="ti ti-plus me-1"></i>{{ __('front_desk.couriers.new') }}
         </a>
         @endcan
@@ -24,7 +24,7 @@
 
 <div class="card mb-3">
     <div class="card-body">
-        <form method="GET" action="{{ route('admin.front-desk.couriers.index') }}" class="row g-2 align-items-end">
+        <form method="GET" action="{{ $workspaceRoutes->route('admin.front-desk.couriers.index') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
                 <label class="form-label fs-13">{{ __('front_desk.actions.search') }}</label>
                 <input type="text" name="search" class="form-control" value="{{ $filters['search'] ?? '' }}" placeholder="{{ __('front_desk.placeholders.search_couriers') }}">
@@ -84,7 +84,7 @@
             </div>
             <div class="col-md-3 d-flex gap-2">
                 <button type="submit" class="btn btn-primary"><i class="ti ti-filter me-1"></i>{{ __('front_desk.actions.filter') }}</button>
-                <a href="{{ route('admin.front-desk.couriers.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.reset') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.front-desk.couriers.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.reset') }}</a>
             </div>
         </form>
     </div>
@@ -115,13 +115,13 @@
                         <td>{{ $log->received_or_sent_at?->format('d M Y H:i') }}</td>
                         <td><x-status-badge :status="$log->status" size="sm" /></td>
                         <td class="text-end">
-                            <a href="{{ route('admin.front-desk.couriers.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a>
+                            <a href="{{ $workspaceRoutes->route('admin.front-desk.couriers.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a>
                             @can('front_desk.couriers.update')
-                            <a href="{{ route('admin.front-desk.couriers.edit', $log) }}" class="btn btn-sm btn-icon btn-outline-secondary" title="{{ __('front_desk.actions.edit') }}"><i class="ti ti-edit"></i></a>
+                            <a href="{{ $workspaceRoutes->route('admin.front-desk.couriers.edit', $log) }}" class="btn btn-sm btn-icon btn-outline-secondary" title="{{ __('front_desk.actions.edit') }}"><i class="ti ti-edit"></i></a>
                             @endcan
                             @can('front_desk.couriers.deliver')
                             @unless($log->isDelivered())
-                            <form method="POST" action="{{ route('admin.front-desk.couriers.mark-delivered', $log) }}" class="d-inline">
+                            <form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.couriers.mark-delivered', $log) }}" class="d-inline">
                                 @csrf
                                 <button type="submit" class="btn btn-sm btn-icon btn-outline-success" title="{{ __('front_desk.actions.mark_delivered') }}"><i class="ti ti-package-export"></i></button>
                             </form>

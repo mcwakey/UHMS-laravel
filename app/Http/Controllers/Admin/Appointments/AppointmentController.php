@@ -12,6 +12,7 @@ use App\Models\Patient;
 use App\Models\User;
 use App\Services\AppointmentService;
 use App\Services\VisitStatusFlowService;
+use App\Services\WorkspaceRouteResolver;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -20,6 +21,7 @@ class AppointmentController extends Controller
 {
     public function __construct(
         private AppointmentService $appointmentService,
+        private WorkspaceRouteResolver $workspaceRoutes,
     ) {}
 
     /**
@@ -81,7 +83,7 @@ class AppointmentController extends Controller
         $appointment = $this->appointmentService->create($data);
 
         return redirect()
-            ->route('admin.appointments.show', $appointment)
+            ->to($this->workspaceRoutes->appointmentShow($appointment))
             ->with('success', __('messages.appointments.created'));
     }
 
@@ -154,7 +156,7 @@ class AppointmentController extends Controller
         $this->appointmentService->update($appointment, $data);
 
         return redirect()
-            ->route('admin.appointments.show', $appointment)
+            ->to($this->workspaceRoutes->appointmentShow($appointment))
             ->with('success', __('messages.appointments.updated'));
     }
 
@@ -183,15 +185,15 @@ class AppointmentController extends Controller
                     'visit_number' => $appointment->visit?->visit_number,
                     'visit_status' => $appointment->visit?->status?->value,
                     'visit_status_label' => $appointment->visit?->status?->label(),
-                    'redirect_url' => route('admin.appointments.show', $appointment),
+                    'redirect_url' => $this->workspaceRoutes->appointmentShow($appointment),
                     'visit_redirect_url' => $appointment->visit
-                        ? route('admin.visits.show', $appointment->visit)
+                        ? $this->workspaceRoutes->visitShow($appointment->visit)
                         : null,
                 ]);
             }
 
             return redirect()
-                ->route('admin.appointments.show', $appointment)
+                ->to($this->workspaceRoutes->appointmentShow($appointment))
                 ->with('success', __('messages.appointments.checked_in'));
         } catch (\InvalidArgumentException $e) {
             if (request()->expectsJson()) {
@@ -225,7 +227,7 @@ class AppointmentController extends Controller
                     'appointment_status' => $appointment->status->value,
                     'appointment_status_label' => $appointment->status->label(),
                     'status_color' => $appointment->status->color(),
-                    'redirect_url' => route('admin.appointments.show', $appointment),
+                    'redirect_url' => $this->workspaceRoutes->appointmentShow($appointment),
                 ]);
             }
 
@@ -253,7 +255,7 @@ class AppointmentController extends Controller
         $this->appointmentService->cancel($appointment, $request->cancellation_reason);
 
         return redirect()
-            ->route('admin.appointments.index')
+            ->to($this->workspaceRoutes->appointmentIndex())
             ->with('success', __('messages.appointments.cancelled'));
     }
 
@@ -272,7 +274,7 @@ class AppointmentController extends Controller
                 'appointment_status' => $appointment->status->value,
                 'appointment_status_label' => $appointment->status->label(),
                 'status_color' => $appointment->status->color(),
-                'redirect_url' => route('admin.appointments.show', $appointment),
+                'redirect_url' => $this->workspaceRoutes->appointmentShow($appointment),
             ]);
         }
 

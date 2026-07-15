@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 @section('title', __('vitals.record_vitals'))
 
 @section('content')
@@ -20,7 +20,7 @@
             <div class="card-body p-0">
                 <div class="list-group list-group-flush" style="max-height: 500px; overflow-y: auto;">
                     @forelse($triageVisits as $tv)
-                    <a href="{{ route('admin.vitals.create', ['visit_id' => $tv->id]) }}"
+                    <a href="{{ $workspaceRoutes->route('admin.vitals.create', ['visit_id' => $tv->id]) }}"
                        class="list-group-item list-group-item-action {{ $visit && $visit->id === $tv->id ? 'active' : '' }}">
                         <div class="d-flex justify-content-between">
                             <div>
@@ -90,7 +90,7 @@
         <!-- Priority Update -->
         <div class="card mb-3">
             <div class="card-body py-2">
-                <form method="POST" action="{{ route('admin.vitals.update-priority', $visit) }}" class="d-flex align-items-center gap-2">
+                <form method="POST" action="{{ $workspaceRoutes->route('admin.vitals.update-priority', $visit) }}" class="d-flex align-items-center gap-2">
                     @csrf
                     @method('PATCH')
                     <label class="form-label mb-0 text-muted small fw-semibold text-nowrap">
@@ -146,7 +146,7 @@
                 <div class="row g-2">
                     @foreach($consultationDepts as $dept)
                     <div class="col-12 col-sm-6">
-                        <form method="POST" action="{{ route('admin.vitals.assign-consultation', $visit) }}">
+                        <form method="POST" action="{{ $workspaceRoutes->route('admin.vitals.assign-consultation', $visit) }}">
                             @csrf
                             @method('PATCH')
                             <input type="hidden" name="department_id" value="{{ $dept->id }}">
@@ -182,7 +182,7 @@
                 @endif
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ route('admin.vitals.store') }}">
+                <form method="POST" action="{{ $workspaceRoutes->route('admin.vitals.store') }}">
                     @csrf
                     <input type="hidden" name="visit_id" value="{{ $visit->id }}">
 
@@ -296,7 +296,7 @@
                         <button type="submit" class="btn btn-{{ $isTriage ? 'info' : 'primary' }}">
                             <i class="ti ti-check me-1"></i>Save Vitals
                         </button>
-                        <a href="{{ route('admin.vitals.create') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <a href="{{ $workspaceRoutes->route('admin.vitals.create') }}" class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
             </div>

@@ -9,17 +9,17 @@
     </div>
     <div class="d-flex gap-2">
         @can('front_desk.visitors.create')
-        <a href="{{ route('admin.front-desk.visitors.create') }}" class="btn btn-primary btn-sm">
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.create') }}" class="btn btn-primary btn-sm">
             <i class="ti ti-user-plus me-1"></i>{{ __('front_desk.visitors.new') }}
         </a>
         @endcan
         @can('front_desk.calls.create')
-        <a href="{{ route('admin.front-desk.calls.create') }}" class="btn btn-outline-primary btn-sm">
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.calls.create') }}" class="btn btn-outline-primary btn-sm">
             <i class="ti ti-phone-plus me-1"></i>{{ __('front_desk.calls.new') }}
         </a>
         @endcan
         @can('front_desk.couriers.create')
-        <a href="{{ route('admin.front-desk.couriers.create') }}" class="btn btn-outline-primary btn-sm">
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.couriers.create') }}" class="btn btn-outline-primary btn-sm">
             <i class="ti ti-package me-1"></i>{{ __('front_desk.couriers.new') }}
         </a>
         @endcan
@@ -42,7 +42,7 @@
 <div class="row g-3 mb-3">
     @foreach($cards as $card)
     <div class="col-xl-3 col-md-6">
-        <a href="{{ route($card['route']) }}" class="card h-100 text-decoration-none">
+        <a href="{{ $workspaceRoutes->route($card['route']) }}" class="card h-100 text-decoration-none">
             <div class="card-body d-flex align-items-center gap-3">
                 <span class="avatar avatar-lg bg-{{ $card['color'] }}-subtle rounded d-flex align-items-center justify-content-center">
                     <i class="ti {{ $card['icon'] }} fs-3 text-{{ $card['color'] }}"></i>
@@ -60,7 +60,7 @@
 {{-- Patient visitor management (Phase 18B) --}}
 <div class="row g-3 mb-3">
     <div class="col-xl-3 col-md-6">
-        <a href="{{ route('admin.front-desk.visitors.index', ['quick' => 'patient']) }}" class="card h-100 text-decoration-none">
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.index', ['quick' => 'patient']) }}" class="card h-100 text-decoration-none">
             <div class="card-body d-flex align-items-center gap-3">
                 <span class="avatar avatar-lg bg-primary-subtle rounded d-flex align-items-center justify-content-center"><i class="ti ti-user-heart fs-3 text-primary"></i></span>
                 <div><h3 class="mb-0 fw-bold">{{ $metrics['patient_visitors_inside_count'] }}</h3><span class="text-muted fs-13">{{ __('front_desk.dashboard.patient_visitors_inside') }}</span></div>
@@ -68,7 +68,7 @@
         </a>
     </div>
     <div class="col-xl-3 col-md-6">
-        <a href="{{ route('admin.front-desk.visitors.index', ['quick' => 'facility']) }}" class="card h-100 text-decoration-none">
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.index', ['quick' => 'facility']) }}" class="card h-100 text-decoration-none">
             <div class="card-body d-flex align-items-center gap-3">
                 <span class="avatar avatar-lg bg-info-subtle rounded d-flex align-items-center justify-content-center"><i class="ti ti-building fs-3 text-info"></i></span>
                 <div><h3 class="mb-0 fw-bold">{{ $metrics['facility_visitors_inside_count'] }}</h3><span class="text-muted fs-13">{{ __('front_desk.dashboard.facility_visitors_inside') }}</span></div>
@@ -76,7 +76,7 @@
         </a>
     </div>
     <div class="col-xl-3 col-md-6">
-        <a href="{{ route('admin.front-desk.visitors.index', ['quick' => 'overdue']) }}" class="card h-100 text-decoration-none">
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.index', ['quick' => 'overdue']) }}" class="card h-100 text-decoration-none">
             <div class="card-body d-flex align-items-center gap-3">
                 <span class="avatar avatar-lg bg-danger-subtle rounded d-flex align-items-center justify-content-center"><i class="ti ti-clock-exclamation fs-3 text-danger"></i></span>
                 <div><h3 class="mb-0 fw-bold">{{ $metrics['overdue_patient_visitors_count'] }}</h3><span class="text-muted fs-13">{{ __('front_desk.dashboard.overdue_patient_visitors') }}</span></div>
@@ -122,7 +122,7 @@
         <div class="card h-100">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="mb-0 fs-15">{{ __('front_desk.dashboard.recent_patient_visitors') }}</h5>
-                <a href="{{ route('admin.front-desk.visitors.index', ['quick' => 'patient']) }}" class="fs-13">{{ __('front_desk.actions.view') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.index', ['quick' => 'patient']) }}" class="fs-13">{{ __('front_desk.actions.view') }}</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -155,18 +155,18 @@
     $workflowCards = [];
     if (auth()->user()?->can('front_desk.calls.followups.view')) {
         $workflowCards = array_merge($workflowCards, [
-            ['label' => __('front_desk.dashboard.pending_callbacks'), 'value' => $metrics['pending_callbacks_count'], 'icon' => 'ti-phone-call', 'color' => 'primary', 'url' => route('admin.front-desk.calls.follow-ups')],
-            ['label' => __('front_desk.dashboard.overdue_callbacks'), 'value' => $metrics['overdue_callbacks_count'], 'icon' => 'ti-alarm', 'color' => 'danger', 'url' => route('admin.front-desk.calls.follow-ups', ['overdue' => 1])],
-            ['label' => __('front_desk.dashboard.callbacks_due_today'), 'value' => $metrics['callbacks_due_today_count'], 'icon' => 'ti-calendar-due', 'color' => 'warning', 'url' => route('admin.front-desk.calls.follow-ups', ['due_today' => 1])],
-            ['label' => __('front_desk.dashboard.assigned_to_me'), 'value' => $metrics['assigned_to_me_callbacks_count'], 'icon' => 'ti-user-check', 'color' => 'info', 'url' => route('admin.front-desk.calls.follow-ups', ['mine' => 1])],
+            ['label' => __('front_desk.dashboard.pending_callbacks'), 'value' => $metrics['pending_callbacks_count'], 'icon' => 'ti-phone-call', 'color' => 'primary', 'url' => $workspaceRoutes->route('admin.front-desk.calls.follow-ups')],
+            ['label' => __('front_desk.dashboard.overdue_callbacks'), 'value' => $metrics['overdue_callbacks_count'], 'icon' => 'ti-alarm', 'color' => 'danger', 'url' => $workspaceRoutes->route('admin.front-desk.calls.follow-ups', ['overdue' => 1])],
+            ['label' => __('front_desk.dashboard.callbacks_due_today'), 'value' => $metrics['callbacks_due_today_count'], 'icon' => 'ti-calendar-due', 'color' => 'warning', 'url' => $workspaceRoutes->route('admin.front-desk.calls.follow-ups', ['due_today' => 1])],
+            ['label' => __('front_desk.dashboard.assigned_to_me'), 'value' => $metrics['assigned_to_me_callbacks_count'], 'icon' => 'ti-user-check', 'color' => 'info', 'url' => $workspaceRoutes->route('admin.front-desk.calls.follow-ups', ['mine' => 1])],
         ]);
     }
     if (auth()->user()?->can('front_desk.couriers.workflow.view')) {
         $workflowCards = array_merge($workflowCards, [
-            ['label' => __('front_desk.dashboard.pending_dispatch'), 'value' => $metrics['pending_dispatch_count'], 'icon' => 'ti-package', 'color' => 'primary', 'url' => route('admin.front-desk.couriers.workflow', ['quick' => 'pending_dispatch'])],
-            ['label' => __('front_desk.dashboard.in_transit'), 'value' => $metrics['in_transit_couriers_count'], 'icon' => 'ti-truck', 'color' => 'info', 'url' => route('admin.front-desk.couriers.workflow', ['quick' => 'in_transit'])],
-            ['label' => __('front_desk.dashboard.awaiting_handover'), 'value' => $metrics['awaiting_handover_count'], 'icon' => 'ti-arrows-exchange', 'color' => 'warning', 'url' => route('admin.front-desk.couriers.workflow', ['quick' => 'awaiting_handover'])],
-            ['label' => __('front_desk.dashboard.overdue_couriers'), 'value' => $metrics['overdue_couriers_count'], 'icon' => 'ti-clock-exclamation', 'color' => 'danger', 'url' => route('admin.front-desk.couriers.workflow', ['quick' => 'overdue'])],
+            ['label' => __('front_desk.dashboard.pending_dispatch'), 'value' => $metrics['pending_dispatch_count'], 'icon' => 'ti-package', 'color' => 'primary', 'url' => $workspaceRoutes->route('admin.front-desk.couriers.workflow', ['quick' => 'pending_dispatch'])],
+            ['label' => __('front_desk.dashboard.in_transit'), 'value' => $metrics['in_transit_couriers_count'], 'icon' => 'ti-truck', 'color' => 'info', 'url' => $workspaceRoutes->route('admin.front-desk.couriers.workflow', ['quick' => 'in_transit'])],
+            ['label' => __('front_desk.dashboard.awaiting_handover'), 'value' => $metrics['awaiting_handover_count'], 'icon' => 'ti-arrows-exchange', 'color' => 'warning', 'url' => $workspaceRoutes->route('admin.front-desk.couriers.workflow', ['quick' => 'awaiting_handover'])],
+            ['label' => __('front_desk.dashboard.overdue_couriers'), 'value' => $metrics['overdue_couriers_count'], 'icon' => 'ti-clock-exclamation', 'color' => 'danger', 'url' => $workspaceRoutes->route('admin.front-desk.couriers.workflow', ['quick' => 'overdue'])],
         ]);
     }
 @endphp
@@ -189,7 +189,7 @@
         <div class="card h-100">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="mb-0 fs-15">{{ __('front_desk.dashboard.callback_queue') }}</h5>
-                @can('front_desk.calls.followups.view')<a href="{{ route('admin.front-desk.calls.follow-ups') }}" class="fs-13">{{ __('front_desk.actions.view') }}</a>@endcan
+                @can('front_desk.calls.followups.view')<a href="{{ $workspaceRoutes->route('admin.front-desk.calls.follow-ups') }}" class="fs-13">{{ __('front_desk.actions.view') }}</a>@endcan
             </div>
             <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm table-hover mb-0"><tbody>
                 @forelse($metrics['recent_pending_callbacks'] as $c)
@@ -207,7 +207,7 @@
         <div class="card h-100">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="mb-0 fs-15">{{ __('front_desk.dashboard.recent_handoffs') }}</h5>
-                @can('front_desk.couriers.workflow.view')<a href="{{ route('admin.front-desk.couriers.workflow') }}" class="fs-13">{{ __('front_desk.actions.view') }}</a>@endcan
+                @can('front_desk.couriers.workflow.view')<a href="{{ $workspaceRoutes->route('admin.front-desk.couriers.workflow') }}" class="fs-13">{{ __('front_desk.actions.view') }}</a>@endcan
             </div>
             <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm table-hover mb-0"><tbody>
                 @forelse($metrics['recent_courier_handoffs'] as $h)
@@ -228,14 +228,14 @@
 @php
     $facilityCards = [];
     if (auth()->user()?->can('front_desk.handovers.view')) {
-        $facilityCards[] = ['label' => __('front_desk.dashboard.pending_handovers'), 'value' => $metrics['pending_handovers_count'], 'icon' => 'ti-clipboard-list', 'color' => 'primary', 'url' => route('admin.front-desk.handovers.index')];
+        $facilityCards[] = ['label' => __('front_desk.dashboard.pending_handovers'), 'value' => $metrics['pending_handovers_count'], 'icon' => 'ti-clipboard-list', 'color' => 'primary', 'url' => $workspaceRoutes->route('admin.front-desk.handovers.index')];
     }
     if (auth()->user()?->can('front_desk.lost_found.view')) {
-        $facilityCards[] = ['label' => __('front_desk.dashboard.unclaimed_lost_found'), 'value' => $metrics['unclaimed_lost_found_count'], 'icon' => 'ti-briefcase', 'color' => 'warning', 'url' => route('admin.front-desk.lost-found.index', ['unclaimed' => 1])];
+        $facilityCards[] = ['label' => __('front_desk.dashboard.unclaimed_lost_found'), 'value' => $metrics['unclaimed_lost_found_count'], 'icon' => 'ti-briefcase', 'color' => 'warning', 'url' => $workspaceRoutes->route('admin.front-desk.lost-found.index', ['unclaimed' => 1])];
     }
     if (auth()->user()?->can('front_desk.incidents.view')) {
-        $facilityCards[] = ['label' => __('front_desk.dashboard.open_incidents'), 'value' => $metrics['open_incidents_count'], 'icon' => 'ti-alert-octagon', 'color' => 'info', 'url' => route('admin.front-desk.incidents.index', ['open' => 1])];
-        $facilityCards[] = ['label' => __('front_desk.dashboard.critical_incidents'), 'value' => $metrics['critical_open_incidents_count'], 'icon' => 'ti-urgent', 'color' => 'danger', 'url' => route('admin.front-desk.incidents.index', ['critical' => 1])];
+        $facilityCards[] = ['label' => __('front_desk.dashboard.open_incidents'), 'value' => $metrics['open_incidents_count'], 'icon' => 'ti-alert-octagon', 'color' => 'info', 'url' => $workspaceRoutes->route('admin.front-desk.incidents.index', ['open' => 1])];
+        $facilityCards[] = ['label' => __('front_desk.dashboard.critical_incidents'), 'value' => $metrics['critical_open_incidents_count'], 'icon' => 'ti-urgent', 'color' => 'danger', 'url' => $workspaceRoutes->route('admin.front-desk.incidents.index', ['critical' => 1])];
     }
 @endphp
 @if($facilityCards !== [])
@@ -259,7 +259,7 @@
         <div class="card h-100">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="mb-0 fs-15">{{ __('front_desk.dashboard.recent_visitors') }}</h5>
-                <a href="{{ route('admin.front-desk.visitors.index') }}" class="fs-13">{{ __('front_desk.actions.view') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.front-desk.visitors.index') }}" class="fs-13">{{ __('front_desk.actions.view') }}</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -288,7 +288,7 @@
         <div class="card h-100">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="mb-0 fs-15">{{ __('front_desk.dashboard.recent_calls') }}</h5>
-                <a href="{{ route('admin.front-desk.calls.index') }}" class="fs-13">{{ __('front_desk.actions.view') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.front-desk.calls.index') }}" class="fs-13">{{ __('front_desk.actions.view') }}</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -317,7 +317,7 @@
         <div class="card h-100">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="mb-0 fs-15">{{ __('front_desk.dashboard.recent_couriers') }}</h5>
-                <a href="{{ route('admin.front-desk.couriers.index') }}" class="fs-13">{{ __('front_desk.actions.view') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.front-desk.couriers.index') }}" class="fs-13">{{ __('front_desk.actions.view') }}</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">

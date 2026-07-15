@@ -82,7 +82,7 @@ class CallLogController extends Controller
         $this->service->create($request->validated(), $request->user());
 
         return redirect()
-            ->route('admin.front-desk.calls.index')
+            ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.front-desk.calls.index'))
             ->with('success', __('front_desk.flash.call_created'));
     }
 
@@ -103,7 +103,7 @@ class CallLogController extends Controller
         $this->service->update($call, $request->validated(), $request->user());
 
         return redirect()
-            ->route('admin.front-desk.calls.show', $call)
+            ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.front-desk.calls.show'), $call)
             ->with('success', __('front_desk.flash.call_updated'));
     }
 

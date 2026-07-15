@@ -100,7 +100,7 @@
             <div class="d-flex align-items-center gap-2 flex-wrap">{{ $actions }}</div>
         @elseif($showPreviewAction && $visit)
             @can('visits.preview')
-            <a href="{{ route('admin.visits.preview', $visit) }}" class="btn btn-outline-info btn-md">
+            <a href="{{ $workspaceRoutes->route('admin.visits.preview', $visit) }}" class="btn btn-outline-info btn-md">
                 <i class="ti ti-eye-search me-1"></i>{{ __('visits.preview_visit_btn') }}
             </a>
             @endcan
@@ -110,7 +110,7 @@
             <!-- <div class="col-md-3"> -->
                 <!-- <label class="text-muted small mb-1">{{ __('appointments.linked_visit') }}</label> -->
                 <div class="fw-medium">
-                    <a href="{{ route('admin.visits.show', $appointment->visit) }}">
+                    <a href="{{ $workspaceRoutes->route('admin.visits.show', $appointment->visit) }}">
                         {{ $appointment->visit->visit_number }}
                     </a>
                 </div>
@@ -198,7 +198,7 @@
             <div class="col-md-3 mb-2">
                 <label class="text-muted small mb-1">{{ __('appointments.linked_visit') }}</label>
                 <div class="fw-medium">
-                    <a href="{{ route('admin.visits.show', $appointment->visit) }}">
+                    <a href="{{ $workspaceRoutes->route('admin.visits.show', $appointment->visit) }}">
                         {{ $appointment->visit->visit_number }}
                     </a>
                 </div>

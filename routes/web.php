@@ -306,6 +306,248 @@ Route::middleware(['throttle:public-payments', 'module:payment_gateway'])
 
 Route::middleware('auth')->group(function () {
 
+    // Records Department browser workspace. These routes reuse existing domain logic.
+    Route::prefix('records')->name('records.')->middleware('department.type:records')->group(function () {
+        Route::get('/', \App\Http\Controllers\Records\DashboardController::class)->name('dashboard');
+        Route::get('dashboard', fn () => redirect()->route('records.dashboard'))->name('dashboard.redirect');
+
+        Route::middleware(['module:patients', 'can:patients.view'])->prefix('patients')->name('patients.')->group(function () {
+            Route::get('/', [PatientController::class, 'index'])->name('index');
+            Route::get('merge', [PatientMergeController::class, 'index'])->name('merge.index')->middleware('can:patients.merge.view');
+            Route::get('merge/search', [PatientMergeController::class, 'search'])->name('merge.search')->middleware('can:patients.merge.view');
+            Route::get('merge/compare', [PatientMergeController::class, 'compare'])->name('merge.compare')->middleware('can:patients.merge.request');
+            Route::post('merge/requests', [PatientMergeController::class, 'store'])->name('merge.requests.store')->middleware('can:patients.merge.request');
+            Route::get('merge/requests/{mergeRequest}', [PatientMergeController::class, 'show'])->name('merge.requests.show')->middleware('can:patients.merge.view');
+            Route::post('merge/requests/{mergeRequest}/execute', [PatientMergeController::class, 'execute'])->name('merge.requests.execute')->middleware('can:patients.merge.execute');
+            Route::get('merge/logs', [PatientMergeController::class, 'logs'])->name('merge.logs')->middleware('can:patients.merge.view');
+            Route::get('create', [PatientController::class, 'create'])->name('create')->middleware('can:patients.create');
+            Route::post('/', [PatientController::class, 'store'])->name('store')->middleware('can:patients.create');
+            Route::get('{patient}', [PatientController::class, 'show'])->name('show');
+            Route::patch('{patient}/medical-summary', [PatientController::class, 'updateMedicalSummary'])->name('medical-summary.update');
+            Route::post('{patient}/privacy/break-glass', [PatientPrivacyController::class, 'startBreakGlass'])->name('privacy.break-glass.start')->middleware('can:patients.privacy.break_glass');
+            Route::post('privacy/break-glass/{override}/revoke', [PatientPrivacyController::class, 'revokeBreakGlass'])->name('privacy.break-glass.revoke')->middleware('can:patients.privacy.break_glass');
+            Route::post('{patient}/privacy/directives', [PatientPrivacyController::class, 'storeDirective'])->name('privacy-directives.store')->middleware('can:patients.privacy_directives.manage');
+            Route::get('{patient}/edit', [PatientController::class, 'edit'])->name('edit')->middleware('can:patients.edit');
+            Route::put('{patient}', [PatientController::class, 'update'])->name('update')->middleware('can:patients.edit');
+            Route::patch('{patient}/toggle-status', [PatientController::class, 'toggleStatus'])->name('toggle-status')->middleware('can:patients.edit');
+            Route::patch('{patient}/mark-deceased', [PatientController::class, 'markDeceased'])->name('mark-deceased')->middleware('can:patients.mark_deceased');
+
+            Route::prefix('{patient}/financial-risk')->name('financial-risk.')->group(function () {
+                Route::post('/', [PatientFinancialRiskController::class, 'store'])->name('store')->middleware('can:patients.financial_risk.manage');
+                Route::put('{profile}', [PatientFinancialRiskController::class, 'update'])->name('update')->middleware('can:patients.financial_risk.manage');
+                Route::post('{profile}/submit-review', [PatientFinancialRiskController::class, 'submitForReview'])->name('submit-review')->middleware('can:patients.financial_risk.review');
+                Route::post('{profile}/complete-review', [PatientFinancialRiskController::class, 'completeReview'])->name('complete-review')->middleware('can:patients.financial_risk.review');
+                Route::post('{profile}/suspend', [PatientFinancialRiskController::class, 'suspend'])->name('suspend')->middleware('can:patients.financial_risk.review');
+                Route::post('{profile}/reactivate', [PatientFinancialRiskController::class, 'reactivate'])->name('reactivate')->middleware('can:patients.financial_risk.review');
+                Route::post('{profile}/clear', [PatientFinancialRiskController::class, 'clear'])->name('clear')->middleware('can:patients.financial_risk.clear');
+            });
+
+            Route::middleware(['module:insurance', 'can:patients.edit'])->group(function () {
+                Route::post('{patient}/insurances', [PatientInsuranceController::class, 'store'])->name('insurances.store');
+                Route::put('{patient}/insurances/{insurance}', [PatientInsuranceController::class, 'update'])->name('insurances.update');
+                Route::delete('{patient}/insurances/{insurance}', [PatientInsuranceController::class, 'destroy'])->name('insurances.destroy');
+                Route::patch('{patient}/insurances/{insurance}/set-primary', [PatientInsuranceController::class, 'setPrimary'])->name('insurances.set-primary');
+            });
+
+            Route::middleware('can:patients.edit')->group(function () {
+                Route::post('{patient}/emergency-contacts', [EmergencyContactController::class, 'store'])->name('emergency-contacts.store');
+                Route::put('{patient}/emergency-contacts/{contact}', [EmergencyContactController::class, 'update'])->name('emergency-contacts.update');
+                Route::delete('{patient}/emergency-contacts/{contact}', [EmergencyContactController::class, 'destroy'])->name('emergency-contacts.destroy');
+            });
+        });
+
+        Route::middleware(['module:visits', 'can:visits.view'])->prefix('visits')->name('visits.')->group(function () {
+            Route::get('/', [VisitController::class, 'index'])->name('index');
+            Route::get('create', [VisitController::class, 'create'])->name('create')->middleware('can:visits.create');
+            Route::post('/', [VisitController::class, 'store'])->name('store')->middleware('can:visits.create');
+            Route::get('patient-search', [VisitController::class, 'patientSearch'])->name('patient-search');
+            Route::get('attendance-preview', [VisitController::class, 'attendancePreview'])->name('attendance-preview');
+            Route::get('patient-insurances', [VisitController::class, 'patientInsurances'])->name('patient-insurances')->middleware('module:insurance');
+            Route::get('department-services', [VisitController::class, 'departmentServices'])->name('department-services');
+            Route::get('doctors-for-services', [VisitController::class, 'doctorsForServices'])->name('doctors-for-services');
+            Route::get('services-for-doctor', [VisitController::class, 'servicesForDoctor'])->name('services-for-doctor');
+            Route::get('service-price', [VisitController::class, 'servicePrice'])->name('service-price');
+            Route::get('{visit}', [VisitController::class, 'show'])->name('show');
+            Route::get('{visit}/preview', [VisitPreviewController::class, 'show'])->name('preview')->middleware('can:visits.preview');
+            Route::get('{visit}/edit', [VisitController::class, 'edit'])->name('edit')->middleware('can:visits.edit');
+            Route::put('{visit}', [VisitController::class, 'update'])->name('update')->middleware('can:visits.edit');
+            Route::patch('{visit}/insurance', [VisitController::class, 'updateInsurance'])->name('insurance.update')->middleware(['module:insurance', 'can:visits.edit']);
+            Route::patch('{visit}/transition', [VisitController::class, 'transition'])->name('transition')->middleware('can:visits.transition');
+            Route::patch('{visit}/send-to-department', [VisitController::class, 'sendToDepartment'])->name('send-to-department')->middleware('can:visits.transition');
+        });
+
+        Route::middleware(['module:appointments', 'can:appointments.view'])->prefix('appointments')->name('appointments.')->group(function () {
+            Route::get('/', [AppointmentController::class, 'index'])->name('index');
+            Route::get('create', [AppointmentController::class, 'create'])->name('create')->middleware('can:appointments.create');
+            Route::post('/', [AppointmentController::class, 'store'])->name('store')->middleware('can:appointments.create');
+            Route::get('calendar', [AppointmentController::class, 'calendar'])->name('calendar');
+            Route::get('{appointment}', [AppointmentController::class, 'show'])->name('show');
+            Route::get('{appointment}/edit', [AppointmentController::class, 'edit'])->name('edit')->middleware('can:appointments.edit');
+            Route::put('{appointment}', [AppointmentController::class, 'update'])->name('update')->middleware('can:appointments.edit');
+            Route::post('{appointment}/check-in', [AppointmentController::class, 'checkIn'])->name('check-in')->middleware('can:appointments.create');
+            Route::patch('{appointment}/transition', [AppointmentController::class, 'transition'])->name('transition')->middleware('can:appointments.edit');
+            Route::post('{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('cancel')->middleware('can:appointments.edit');
+            Route::post('{appointment}/no-show', [AppointmentController::class, 'noShow'])->name('no-show')->middleware('can:appointments.edit');
+        });
+
+        Route::middleware(['module:triage', 'can:vitals.view'])->group(function () {
+            Route::get('triage', [TriageController::class, 'index'])->name('triage.index');
+            Route::get('triage/{visit}', [TriageController::class, 'show'])->name('triage.show');
+            Route::get('triage/{visit}/assess', [TriageController::class, 'create'])->name('triage.create')->middleware('can:vitals.create');
+            Route::post('triage/{visit}', [TriageController::class, 'store'])->name('triage.store')->middleware('can:vitals.create');
+            Route::put('triage/{visit}/assess', [TriageController::class, 'update'])->name('triage.update')->middleware('can:vitals.create');
+
+            Route::get('vitals', [VitalController::class, 'create'])->name('vitals.create');
+            Route::post('vitals', [VitalController::class, 'store'])->name('vitals.store')->middleware('can:vitals.create');
+            Route::get('vitals/{visit}', [VitalController::class, 'show'])->name('vitals.show');
+            Route::patch('vitals/{visit}/update-priority', [VitalController::class, 'updatePriority'])->name('vitals.update-priority')->middleware('can:vitals.create');
+            Route::patch('vitals/{visit}/assign-consultation', [VitalController::class, 'assignConsultation'])->name('vitals.assign-consultation')->middleware('can:vitals.create');
+        });
+
+        Route::prefix('service-renderings')
+            ->name('service-renderings.')
+            ->middleware('can:service_rendering.view')
+            ->group(function () {
+                Route::get('/', [ServiceRenderingController::class, 'index'])->name('index');
+                Route::get('/reports', [ServiceRenderingReportController::class, 'index'])->name('reports')->middleware('can:service_rendering.reports');
+                Route::post('/', [ServiceRenderingController::class, 'store'])->name('store')->middleware('can:invoices.create');
+                Route::get('/visit-search', [ServiceRenderingController::class, 'visitSearch'])->name('visit-search')->middleware('can:invoices.create');
+                Route::get('/service-search', [ServiceRenderingController::class, 'serviceSearch'])->name('service-search')->middleware('can:invoices.create');
+                Route::get('/{serviceRendering}', [ServiceRenderingController::class, 'show'])->name('show');
+                Route::post('/{serviceRendering}/start', [ServiceRenderingActionController::class, 'start'])->name('start')->middleware('can:service_rendering.start');
+                Route::post('/{serviceRendering}/mark-rendered', [ServiceRenderingActionController::class, 'markRendered'])->name('mark-rendered')->middleware('can:service_rendering.mark_rendered');
+                Route::post('/{serviceRendering}/mark-not-rendered', [ServiceRenderingActionController::class, 'markNotRendered'])->name('mark-not-rendered')->middleware('can:service_rendering.mark_not_rendered');
+                Route::post('/{serviceRendering}/cancel', [ServiceRenderingActionController::class, 'cancel'])->name('cancel')->middleware('can:service_rendering.cancel');
+                Route::patch('/{serviceRendering}/notes', [ServiceRenderingActionController::class, 'updateNotes'])->name('notes')->middleware('can:service_rendering.edit_notes');
+            });
+
+        Route::middleware(['module:insurance', 'module:claims', 'can:claims.view'])->group(function () {
+            Route::get('claims', [ClaimController::class, 'index'])->name('claims.index');
+            Route::get('claims/eligible-visits', [ClaimController::class, 'eligibleVisits'])->name('claims.eligible-visits');
+            Route::post('claims/visits/{visit}/prepare', [ClaimController::class, 'prepareFromVisit'])->name('claims.prepare-from-visit')->middleware('can:claims.create');
+            Route::get('claims/nhia', [ClaimController::class, 'nhiaIndex'])->name('claims.nhia.index');
+            Route::get('claims/nhia/eligible-visits', [ClaimController::class, 'nhiaEligibleVisits'])->name('claims.nhia.eligible-visits');
+            Route::post('claims/nhia/visits/{visit}/prepare', [ClaimController::class, 'prepareFromVisit'])->name('claims.nhia.prepare-from-visit')->middleware('can:claims.create');
+            Route::get('claims/create', [ClaimController::class, 'create'])->name('claims.create')->middleware('can:claims.create');
+            Route::post('claims', [ClaimController::class, 'store'])->name('claims.store')->middleware('can:claims.create');
+            Route::post('claims/from-invoice', [ClaimController::class, 'storeFromInvoice'])->name('claims.store-from-invoice')->middleware('can:claims.create');
+            Route::get('claims/export', [ClaimController::class, 'export'])->name('claims.export')->middleware('can:claims.export');
+            Route::get('claims/{claim}', [ClaimController::class, 'show'])->name('claims.show');
+            Route::post('claims/{claim}/verification-code', [ClaimController::class, 'updateVerificationCode'])->name('claims.verification-code')->middleware('can:claims.create');
+            Route::post('claims/{claim}/validate', [ClaimController::class, 'validateClaim'])->name('claims.validate')->middleware('can:claims.create');
+            Route::post('claims/{claim}/mark-ready', [ClaimController::class, 'markReady'])->name('claims.mark-ready')->middleware('can:claims.create');
+            Route::post('claims/{claim}/submit', [ClaimController::class, 'submit'])->name('claims.submit')->middleware('can:claims.create');
+            Route::get('claims/{claim}/export', [ClaimController::class, 'exportClaim'])->name('claims.export-one')->middleware('can:claims.export');
+            Route::get('claims/{claim}/review', [ClaimController::class, 'review'])->name('claims.review')->middleware('can:claims.approve');
+            Route::post('claims/{claim}/review-item/{item}', [ClaimController::class, 'reviewItem'])->name('claims.review-item')->middleware('can:claims.approve');
+            Route::post('claims/{claim}/complete-review', [ClaimController::class, 'completeReview'])->name('claims.complete-review')->middleware('can:claims.approve');
+            Route::post('claims/{claim}/mark-paid', [ClaimController::class, 'markPaid'])->name('claims.mark-paid')->middleware('can:claims.approve');
+            Route::post('claims/{claim}/payments', [ClaimController::class, 'recordPayment'])->name('claims.payments.store')->middleware('can:claims.approve');
+            Route::post('claims/{claim}/appeal', [ClaimController::class, 'appeal'])->name('claims.appeal')->middleware('can:claims.create');
+            Route::post('claims/{claim}/add-item', [ClaimController::class, 'addItem'])->name('claims.add-item')->middleware('can:claims.create');
+            Route::delete('claims/remove-item/{item}', [ClaimController::class, 'removeItem'])->name('claims.remove-item')->middleware('can:claims.create');
+        });
+
+        Route::prefix('front-desk')->name('front-desk.')->middleware('can:front_desk.view')->group(function () {
+            Route::get('/', [FrontDeskDashboardController::class, 'index'])->name('index')->middleware('can:front_desk.dashboard.view');
+
+            Route::middleware('can:front_desk.visitors.view')->group(function () {
+                Route::get('visitors', [VisitorLogController::class, 'index'])->name('visitors.index');
+                Route::get('visitors/create', [VisitorLogController::class, 'create'])->name('visitors.create')->middleware('can:front_desk.visitors.create');
+                Route::post('visitors', [VisitorLogController::class, 'store'])->name('visitors.store')->middleware('can:front_desk.visitors.create');
+                Route::get('visitors/patient/{patient}', [VisitorLogController::class, 'patientHistory'])->name('visitors.patient-history');
+                Route::get('visitors/admission/{admission}', [VisitorLogController::class, 'admissionHistory'])->name('visitors.admission-history');
+                Route::get('visitors/{visitor}', [VisitorLogController::class, 'show'])->name('visitors.show');
+                Route::get('visitors/{visitor}/edit', [VisitorLogController::class, 'edit'])->name('visitors.edit')->middleware('can:front_desk.visitors.update');
+                Route::put('visitors/{visitor}', [VisitorLogController::class, 'update'])->name('visitors.update')->middleware('can:front_desk.visitors.update');
+                Route::get('visitors/{visitor}/pass', [VisitorLogController::class, 'pass'])->name('visitors.pass')->middleware('can:front_desk.visitors.print_pass');
+                Route::post('visitors/{visitor}/check-out', [VisitorLogController::class, 'checkOut'])->name('visitors.check-out')->middleware('can:front_desk.visitors.checkout');
+            });
+
+            Route::middleware('can:front_desk.calls.view')->group(function () {
+                Route::get('calls', [CallLogController::class, 'index'])->name('calls.index');
+                Route::get('calls/create', [CallLogController::class, 'create'])->name('calls.create')->middleware('can:front_desk.calls.create');
+                Route::post('calls', [CallLogController::class, 'store'])->name('calls.store')->middleware('can:front_desk.calls.create');
+                Route::get('calls/follow-ups', [CallLogController::class, 'followUps'])->name('calls.follow-ups')->middleware('can:front_desk.calls.followups.view');
+                Route::get('calls/{call}', [CallLogController::class, 'show'])->name('calls.show');
+                Route::get('calls/{call}/edit', [CallLogController::class, 'edit'])->name('calls.edit')->middleware('can:front_desk.calls.update');
+                Route::put('calls/{call}', [CallLogController::class, 'update'])->name('calls.update')->middleware('can:front_desk.calls.update');
+                Route::post('calls/{call}/assign-follow-up', [CallLogController::class, 'assignFollowUp'])->name('calls.assign-follow-up')->middleware('can:front_desk.calls.followups.assign');
+                Route::post('calls/{call}/complete-follow-up', [CallLogController::class, 'completeFollowUp'])->name('calls.complete-follow-up')->middleware('can:front_desk.calls.followups.complete');
+                Route::post('calls/{call}/cancel-follow-up', [CallLogController::class, 'cancelFollowUp'])->name('calls.cancel-follow-up')->middleware('can:front_desk.calls.followups.complete');
+                Route::post('calls/{call}/transfer', [CallLogController::class, 'transfer'])->name('calls.transfer')->middleware('can:front_desk.calls.transfer');
+                Route::post('calls/{call}/follow-up-complete', [CallLogController::class, 'completeFollowUp'])->name('calls.follow-up-complete')->middleware('can:front_desk.calls.update');
+            });
+
+            Route::middleware('can:front_desk.couriers.view')->group(function () {
+                Route::get('couriers', [CourierLogController::class, 'index'])->name('couriers.index');
+                Route::get('couriers/create', [CourierLogController::class, 'create'])->name('couriers.create')->middleware('can:front_desk.couriers.create');
+                Route::post('couriers', [CourierLogController::class, 'store'])->name('couriers.store')->middleware('can:front_desk.couriers.create');
+                Route::get('couriers/workflow', [CourierLogController::class, 'workflow'])->name('couriers.workflow')->middleware('can:front_desk.couriers.workflow.view');
+                Route::get('couriers/{courier}', [CourierLogController::class, 'show'])->name('couriers.show');
+                Route::get('couriers/{courier}/edit', [CourierLogController::class, 'edit'])->name('couriers.edit')->middleware('can:front_desk.couriers.update');
+                Route::put('couriers/{courier}', [CourierLogController::class, 'update'])->name('couriers.update')->middleware('can:front_desk.couriers.update');
+                Route::post('couriers/{courier}/dispatch', [CourierLogController::class, 'dispatchItem'])->name('couriers.dispatch')->middleware('can:front_desk.couriers.dispatch');
+                Route::post('couriers/{courier}/handover', [CourierLogController::class, 'handover'])->name('couriers.handover')->middleware('can:front_desk.couriers.handover');
+                Route::post('couriers/{courier}/mark-delivered', [CourierLogController::class, 'markDelivered'])->name('couriers.mark-delivered')->middleware('can:front_desk.couriers.deliver');
+                Route::post('couriers/{courier}/mark-returned', [CourierLogController::class, 'markReturned'])->name('couriers.mark-returned')->middleware('can:front_desk.couriers.return');
+            });
+
+            Route::middleware('can:front_desk.handovers.view')->group(function () {
+                Route::get('handovers', [ShiftHandoverController::class, 'index'])->name('handovers.index');
+                Route::get('handovers/create', [ShiftHandoverController::class, 'create'])->name('handovers.create')->middleware('can:front_desk.handovers.create');
+                Route::post('handovers', [ShiftHandoverController::class, 'store'])->name('handovers.store')->middleware('can:front_desk.handovers.create');
+                Route::get('handovers/{handover}', [ShiftHandoverController::class, 'show'])->name('handovers.show');
+                Route::get('handovers/{handover}/edit', [ShiftHandoverController::class, 'edit'])->name('handovers.edit')->middleware('can:front_desk.handovers.update');
+                Route::put('handovers/{handover}', [ShiftHandoverController::class, 'update'])->name('handovers.update')->middleware('can:front_desk.handovers.update');
+                Route::post('handovers/{handover}/submit', [ShiftHandoverController::class, 'submit'])->name('handovers.submit')->middleware('can:front_desk.handovers.submit');
+                Route::post('handovers/{handover}/accept', [ShiftHandoverController::class, 'accept'])->name('handovers.accept')->middleware('can:front_desk.handovers.accept');
+                Route::post('handovers/{handover}/cancel', [ShiftHandoverController::class, 'cancel'])->name('handovers.cancel')->middleware('can:front_desk.handovers.cancel');
+            });
+
+            Route::middleware('can:front_desk.lost_found.view')->group(function () {
+                Route::get('lost-found', [LostFoundController::class, 'index'])->name('lost-found.index');
+                Route::get('lost-found/create', [LostFoundController::class, 'create'])->name('lost-found.create')->middleware('can:front_desk.lost_found.create');
+                Route::post('lost-found', [LostFoundController::class, 'store'])->name('lost-found.store')->middleware('can:front_desk.lost_found.create');
+                Route::get('lost-found/{lostFound}', [LostFoundController::class, 'show'])->name('lost-found.show');
+                Route::get('lost-found/{lostFound}/edit', [LostFoundController::class, 'edit'])->name('lost-found.edit')->middleware('can:front_desk.lost_found.update');
+                Route::put('lost-found/{lostFound}', [LostFoundController::class, 'update'])->name('lost-found.update')->middleware('can:front_desk.lost_found.update');
+                Route::post('lost-found/{lostFound}/claim', [LostFoundController::class, 'claim'])->name('lost-found.claim')->middleware('can:front_desk.lost_found.claim');
+                Route::post('lost-found/{lostFound}/release', [LostFoundController::class, 'release'])->name('lost-found.release')->middleware('can:front_desk.lost_found.release');
+                Route::post('lost-found/{lostFound}/cancel', [LostFoundController::class, 'cancel'])->name('lost-found.cancel')->middleware('can:front_desk.lost_found.cancel');
+            });
+
+            Route::middleware('can:front_desk.incidents.view')->group(function () {
+                Route::get('incidents', [IncidentLogController::class, 'index'])->name('incidents.index');
+                Route::get('incidents/create', [IncidentLogController::class, 'create'])->name('incidents.create')->middleware('can:front_desk.incidents.create');
+                Route::post('incidents', [IncidentLogController::class, 'store'])->name('incidents.store')->middleware('can:front_desk.incidents.create');
+                Route::get('incidents/{incident}', [IncidentLogController::class, 'show'])->name('incidents.show');
+                Route::get('incidents/{incident}/edit', [IncidentLogController::class, 'edit'])->name('incidents.edit')->middleware('can:front_desk.incidents.update');
+                Route::put('incidents/{incident}', [IncidentLogController::class, 'update'])->name('incidents.update')->middleware('can:front_desk.incidents.update');
+                Route::post('incidents/{incident}/assign', [IncidentLogController::class, 'assign'])->name('incidents.assign')->middleware('can:front_desk.incidents.assign');
+                Route::post('incidents/{incident}/escalate', [IncidentLogController::class, 'escalate'])->name('incidents.escalate')->middleware('can:front_desk.incidents.escalate');
+                Route::post('incidents/{incident}/resolve', [IncidentLogController::class, 'resolve'])->name('incidents.resolve')->middleware('can:front_desk.incidents.resolve');
+                Route::post('incidents/{incident}/cancel', [IncidentLogController::class, 'cancel'])->name('incidents.cancel')->middleware('can:front_desk.incidents.cancel');
+            });
+
+            Route::middleware('can:front_desk.reports.view')->group(function () {
+                Route::get('reports', [FrontDeskReportController::class, 'index'])->name('reports.index');
+                Route::get('reports/data', [FrontDeskReportController::class, 'data'])->name('reports.data');
+                Route::get('reports/export', [FrontDeskReportController::class, 'export'])->name('reports.export')->middleware('can:front_desk.reports.export');
+            });
+        });
+
+        Route::middleware(['module:reports', 'can:reports.view'])->prefix('reports')->name('reports.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Records\ReportController::class, 'index'])->name('index');
+            Route::get('patients', [ReportController::class, 'patients'])->name('patients');
+            Route::get('visits', [ReportController::class, 'visits'])->name('visits');
+            Route::get('attendance', [ReportController::class, 'visits'])->name('attendance');
+            Route::get('insurance-claims', [ReportController::class, 'insuranceClaims'])->name('insurance-claims')->middleware('module:insurance');
+            Route::get('claims', [ReportController::class, 'claims'])->name('claims')->middleware(['module:insurance', 'module:claims']);
+            Route::get('daily-collection', [ReportController::class, 'dailyCollection'])->name('daily-collection');
+        });
+    });
+
     // Generic dashboard entry — routes every user to their resolved department dashboard.
     Route::get('dashboard', fn () => redirect()->route('admin.my-dashboard'))->name('dashboard');
 
@@ -434,7 +676,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Patients
-        Route::middleware('can:patients.view')->group(function () {
+        Route::middleware(['can:patients.view', 'records.redirect'])->group(function () {
             Route::get('patients', [PatientController::class, 'index'])->name('patients.index');
             Route::get('patients/merge', [PatientMergeController::class, 'index'])->name('patients.merge.index')->middleware('can:patients.merge.view');
             Route::get('patients/merge/search', [PatientMergeController::class, 'search'])->name('patients.merge.search')->middleware('can:patients.merge.view');
@@ -496,7 +738,7 @@ Route::middleware('auth')->group(function () {
         Route::get('locations/towns', [LocationController::class, 'towns'])->name('locations.towns');
 
         // Visits
-        Route::middleware('can:visits.view')->group(function () {
+        Route::middleware(['can:visits.view', 'records.redirect'])->group(function () {
             Route::get('visits', [VisitController::class, 'index'])->name('visits.index');
             Route::get('visits/create', [VisitController::class, 'create'])->name('visits.create')->middleware('can:visits.create');
             Route::post('visits', [VisitController::class, 'store'])->name('visits.store')->middleware('can:visits.create');
@@ -520,7 +762,7 @@ Route::middleware('auth')->group(function () {
 
         Route::prefix('service-renderings')
             ->name('service-renderings.')
-            ->middleware('can:service_rendering.view')
+            ->middleware(['can:service_rendering.view', 'records.redirect'])
             ->group(function () {
                 Route::get('/', [ServiceRenderingController::class, 'index'])->name('index');
                 Route::get('/reports', [ServiceRenderingReportController::class, 'index'])->name('reports')->middleware('can:service_rendering.reports');
@@ -766,7 +1008,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Appointments
-        Route::middleware('can:appointments.view')->group(function () {
+        Route::middleware(['can:appointments.view', 'records.redirect'])->group(function () {
             Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments.index');
             Route::get('appointments/create', [AppointmentController::class, 'create'])->name('appointments.create')->middleware('can:appointments.create');
             Route::post('appointments', [AppointmentController::class, 'store'])->name('appointments.store')->middleware('can:appointments.create');
@@ -801,7 +1043,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Claims
-        Route::middleware(['module:insurance', 'module:claims', 'can:claims.view'])->group(function () {
+        Route::middleware(['module:insurance', 'module:claims', 'can:claims.view', 'records.redirect'])->group(function () {
             Route::get('claims', [ClaimController::class, 'index'])->name('claims.index');
             Route::get('claims/eligible-visits', [ClaimController::class, 'eligibleVisits'])->name('claims.eligible-visits');
             Route::post('claims/visits/{visit}/prepare', [ClaimController::class, 'prepareFromVisit'])->name('claims.prepare-from-visit')->middleware('can:claims.create');
@@ -1393,7 +1635,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Triage Workflow
-        Route::middleware('can:vitals.view')->group(function () {
+        Route::middleware(['can:vitals.view', 'records.redirect'])->group(function () {
             Route::get('triage', [TriageController::class, 'index'])->name('triage.index');
             Route::get('triage/{visit}', [TriageController::class, 'show'])->name('triage.show');
             Route::get('triage/{visit}/assess', [TriageController::class, 'create'])->name('triage.create')->middleware('can:vitals.create');
@@ -1402,7 +1644,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Vitals (Nurse Triage)
-        Route::middleware('can:vitals.view')->group(function () {
+        Route::middleware(['can:vitals.view', 'records.redirect'])->group(function () {
             Route::get('vitals', [VitalController::class, 'create'])->name('vitals.create');
             Route::post('vitals', [VitalController::class, 'store'])->name('vitals.store')->middleware('can:vitals.create');
             Route::get('vitals/{visit}', [VitalController::class, 'show'])->name('vitals.show');
@@ -1785,7 +2027,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Reports
-        Route::middleware(['module:reports', 'can:reports.view'])->prefix('reports')->name('reports.')->group(function () {
+        Route::middleware(['module:reports', 'can:reports.view', 'records.redirect'])->prefix('reports')->name('reports.')->group(function () {
             Route::get('/', [ReportsHubController::class, 'index'])->name('index');
             Route::get('/dashboard', [OperationalReportController::class, 'dashboard'])->name('dashboard');
             Route::get('consultation-specialties', [ConsultationSpecialtyReportController::class, 'index'])->name('consultation-specialties.index');
@@ -2248,7 +2490,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Front Desk Operations (Phase 18A) — non-clinical reception / facility desk.
-        Route::prefix('front-desk')->name('front-desk.')->middleware('can:front_desk.view')->group(function () {
+        Route::prefix('front-desk')->name('front-desk.')->middleware(['can:front_desk.view', 'records.redirect'])->group(function () {
             Route::get('/', [FrontDeskDashboardController::class, 'index'])
                 ->name('index')->middleware('can:front_desk.dashboard.view');
 

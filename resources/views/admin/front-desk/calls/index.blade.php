@@ -10,12 +10,12 @@
     </div>
     <div class="d-flex gap-2">
         @can('front_desk.calls.followups.view')
-        <a href="{{ route('admin.front-desk.calls.follow-ups') }}" class="btn btn-outline-primary btn-md fs-13">
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.calls.follow-ups') }}" class="btn btn-outline-primary btn-md fs-13">
             <i class="ti ti-phone-call me-1"></i>{{ __('front_desk.actions.view_queue') }}
         </a>
         @endcan
         @can('front_desk.calls.create')
-        <a href="{{ route('admin.front-desk.calls.create') }}" class="btn btn-primary btn-md fs-13">
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.calls.create') }}" class="btn btn-primary btn-md fs-13">
             <i class="ti ti-plus me-1"></i>{{ __('front_desk.calls.new') }}
         </a>
         @endcan
@@ -24,7 +24,7 @@
 
 <div class="card mb-3">
     <div class="card-body">
-        <form method="GET" action="{{ route('admin.front-desk.calls.index') }}" class="row g-2 align-items-end">
+        <form method="GET" action="{{ $workspaceRoutes->route('admin.front-desk.calls.index') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
                 <label class="form-label fs-13">{{ __('front_desk.actions.search') }}</label>
                 <input type="text" name="search" class="form-control" value="{{ $filters['search'] ?? '' }}" placeholder="{{ __('front_desk.placeholders.search_calls') }}">
@@ -99,7 +99,7 @@
             </div>
             <div class="col-md-3 d-flex gap-2">
                 <button type="submit" class="btn btn-primary"><i class="ti ti-filter me-1"></i>{{ __('front_desk.actions.filter') }}</button>
-                <a href="{{ route('admin.front-desk.calls.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.reset') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.front-desk.calls.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.reset') }}</a>
             </div>
         </form>
     </div>
@@ -136,11 +136,11 @@
                             @endif
                         </td>
                         <td class="text-end">
-                            <a href="{{ route('admin.front-desk.calls.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a>
+                            <a href="{{ $workspaceRoutes->route('admin.front-desk.calls.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a>
                             @can('front_desk.calls.update')
-                            <a href="{{ route('admin.front-desk.calls.edit', $log) }}" class="btn btn-sm btn-icon btn-outline-secondary" title="{{ __('front_desk.actions.edit') }}"><i class="ti ti-edit"></i></a>
+                            <a href="{{ $workspaceRoutes->route('admin.front-desk.calls.edit', $log) }}" class="btn btn-sm btn-icon btn-outline-secondary" title="{{ __('front_desk.actions.edit') }}"><i class="ti ti-edit"></i></a>
                             @if($log->hasPendingFollowUp())
-                            <form method="POST" action="{{ route('admin.front-desk.calls.follow-up-complete', $log) }}" class="d-inline">
+                            <form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.calls.follow-up-complete', $log) }}" class="d-inline">
                                 @csrf
                                 <button type="submit" class="btn btn-sm btn-icon btn-outline-success" title="{{ __('front_desk.actions.complete_follow_up') }}"><i class="ti ti-check"></i></button>
                             </form>

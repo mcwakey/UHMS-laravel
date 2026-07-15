@@ -4,7 +4,7 @@
 @section('content')
 <x-page-header-back
         :title="__('patients.profile_title')"
-        :href="route('admin.patients.index')"
+        :href="$workspaceRoutes->route('admin.patients.index')"
     >
     <x-slot:actions>
         <div class="d-flex align-items-center justify-content-end flex-nowrap gap-2 text-end">
@@ -16,7 +16,7 @@
                     </span>
                     <span class="small">{{ __('patients.privacy.break_glass_expires_at', ['time' => $activeBreakGlass->expires_at?->format('d M Y H:i')]) }}</span>
                     @can('patients.privacy.break_glass')
-                    <form method="POST" action="{{ route('admin.patients.privacy.break-glass.revoke', $activeBreakGlass) }}" class="m-0">
+                    <form method="POST" action="{{ $workspaceRoutes->route('admin.patients.privacy.break-glass.revoke', $activeBreakGlass) }}" class="m-0">
                         @csrf
                         <button type="submit" class="btn btn-sm btn-outline-dark py-0">{{ __('common.revoke') }}</button>
                     </form>
@@ -67,7 +67,7 @@
 <!-- Page Header -->
 <!-- <div class="d-flex mb-3">
     <h6 class="fw-bold mb-0 d-flex align-items-center">
-        <a href="{{ route('admin.patients.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>{{ __('patients.title') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.patients.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>{{ __('patients.title') }}</a>
     </h6>
 
     @can('patients.mark_deceased')
@@ -87,7 +87,7 @@
         <span class="small">{{ __('patients.privacy.break_glass_expires_at', ['time' => $activeBreakGlass->expires_at?->format('d M Y H:i')]) }}</span>
     </div>
     @can('patients.privacy.break_glass')
-    <form method="POST" action="{{ route('admin.patients.privacy.break-glass.revoke', $activeBreakGlass) }}">
+    <form method="POST" action="{{ $workspaceRoutes->route('admin.patients.privacy.break-glass.revoke', $activeBreakGlass) }}">
         @csrf
         <button type="submit" class="btn btn-sm btn-outline-dark">{{ __('common.revoke') }}</button>
     </form>
@@ -179,13 +179,13 @@
                         <i class="ti ti-plus me-1"></i>{{ __('patients.new_visit') }}
                     </button>
                     @else
-                    <a href="{{ route('admin.visits.create') }}?patient_id={{ $patient->id }}" class="btn btn-success btn-md"><i class="ti ti-plus me-1"></i>{{ __('patients.new_visit') }}</a>
+                    <a href="{{ $workspaceRoutes->route('admin.visits.create', ['patient_id' => $patient->id]) }}" class="btn btn-success btn-md"><i class="ti ti-plus me-1"></i>{{ __('patients.new_visit') }}</a>
                     @endif
                     @endcan
                     @endif
 
                     @can('patients.edit')
-                    <a href="{{ route('admin.patients.edit', $patient) }}" class="btn btn-primary btn-md"><i class="ti ti-edit me-1"></i>{{ __('patients.edit_patient') }}</a>
+                    <a href="{{ $workspaceRoutes->route('admin.patients.edit', $patient) }}" class="btn btn-primary btn-md"><i class="ti ti-edit me-1"></i>{{ __('patients.edit_patient') }}</a>
                     @endcan
                 </div>
             </div>
@@ -469,7 +469,7 @@
                     <td>{{ Str::limit($appointment->reason ?: $appointment->notes ?: '-', 80) }}</td>
                     <td><span class="badge bg-{{ $appointment->status?->color() ?? 'secondary' }}">{{ $appointment->status?->translatedLabel() ?? '-' }}</span></td>
                     <td class="text-end">
-                        <a href="{{ route('admin.appointments.show', $appointment) }}" class="btn btn-sm btn-outline-primary" title="{{ __('common.view') }}">
+                        <a href="{{ $workspaceRoutes->route('admin.appointments.show', $appointment) }}" class="btn btn-sm btn-outline-primary" title="{{ __('common.view') }}">
                             <i class="ti ti-eye"></i>
                         </a>
                     </td>
@@ -505,7 +505,7 @@
                                 <td><span class="badge" style="background-color: {{ $uv->status->color() }}">{{ $uv->status->translatedLabel() }}</span></td>
                                 <td class="text-end">
                                     @php $linkedAppointment = $uv->appointments->first(); @endphp
-                                    <a href="{{ $linkedAppointment ? route('admin.appointments.show', $linkedAppointment) : route('admin.visits.show', $uv) }}" class="btn btn-sm btn-outline-primary" title="{{ __('common.view') }}">
+                                    <a href="{{ $linkedAppointment ? $workspaceRoutes->route('admin.appointments.show', $linkedAppointment) : $workspaceRoutes->route('admin.visits.show', $uv) }}" class="btn btn-sm btn-outline-primary" title="{{ __('common.view') }}">
                                         <i class="ti ti-eye"></i>
                                     </a>
                                 </td>
@@ -527,7 +527,7 @@
                     <i class="ti ti-plus me-1"></i>{{ __('patients.new_visit') }}
                 </button>
                 @else
-                <a href="{{ route('admin.visits.create') }}?patient_id={{ $patient->id }}" class="btn btn-sm btn-success"><i class="ti ti-plus me-1"></i>{{ __('patients.new_visit') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.visits.create', ['patient_id' => $patient->id]) }}" class="btn btn-sm btn-success"><i class="ti ti-plus me-1"></i>{{ __('patients.new_visit') }}</a>
                 @endif
                 @endcan
                 @endif
@@ -547,13 +547,13 @@
                 </x-slot:head>
                             @foreach($patient->visits as $visit)
                             <tr>
-                                <td><a href="{{ route('admin.visits.show', $visit) }}" class="fw-medium">{{ $visit->visit_number }}</a></td>
+                                <td><a href="{{ $workspaceRoutes->route('admin.visits.show', $visit) }}" class="fw-medium">{{ $visit->visit_number }}</a></td>
                                 <td>{{ $visit->visit_date->format('d M Y') }}</td>
                                 <td>{{ $visit->visit_type?->translatedLabel() ?? '—' }}</td>
                                 <td>—</td>
                                 <td>{{ $visit->currentConsultationDoctor()?->full_name ?? '—' }}</td>
                                 <td><x-status-badge :status="$visit->status" /></td>
-                                <td><a aria-label="View" title="View" href="{{ route('admin.visits.show', $visit) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
+                                <td><a aria-label="View" title="View" href="{{ $workspaceRoutes->route('admin.visits.show', $visit) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
                             </tr>
                             @endforeach
             </x-data-table>
@@ -647,7 +647,7 @@
                                         <span class="badge bg-primary">{{ __('patients.col_primary') }}</span>
                                     @else
                                         @can('patients.edit')
-                                        <form method="POST" action="{{ route('admin.patients.insurances.set-primary', [$patient, $ins]) }}" class="d-inline">
+                                        <form method="POST" action="{{ $workspaceRoutes->route('admin.patients.insurances.set-primary', [$patient, $ins]) }}" class="d-inline">
                                             @csrf @method('PATCH')
                                             <button type="submit" class="btn btn-sm btn-outline-primary">{{ __('patients.set_primary') }}</button>
                                         </form>
@@ -673,7 +673,7 @@
                                         data-bs-toggle="modal" data-bs-target="#editInsuranceModal" aria-label="{{ __('common.edit') }}" title="{{ __('common.edit') }}">
                                         <i class="ti ti-edit"></i>
                                     </button>
-                                    <x-confirm-form :action="route('admin.patients.insurances.destroy', [$patient, $ins])" method="DELETE"
+                                    <x-confirm-form :action="$workspaceRoutes->route('admin.patients.insurances.destroy', [$patient, $ins])" method="DELETE"
                                         button-label="" button-class="btn btn-sm btn-outline-danger" icon="ti-trash"
                                         :confirm-title="__('patients.remove_insurance')" :confirm-text="__('patients.remove_insurance_text')" :confirm-button="__('patients.yes_remove')" />
                                     @endif
@@ -738,7 +738,7 @@
                                         data-bs-toggle="modal" data-bs-target="#editEmergencyContactModal" aria-label="{{ __('common.edit') }}" title="{{ __('common.edit') }}">
                                         <i class="ti ti-edit"></i>
                                     </button>
-                                    <x-confirm-form :action="route('admin.patients.emergency-contacts.destroy', [$patient, $ec])" method="DELETE"
+                                    <x-confirm-form :action="$workspaceRoutes->route('admin.patients.emergency-contacts.destroy', [$patient, $ec])" method="DELETE"
                                         button-label="" button-class="btn btn-sm btn-outline-danger" icon="ti-trash"
                                         :confirm-title="__('patients.remove_contact')" :confirm-text="__('patients.remove_contact_text')" :confirm-button="__('patients.yes_remove')" />
                                     @endcan
@@ -965,7 +965,7 @@
 <div class="modal fade" id="addPrivacyDirectiveModal" tabindex="-1" aria-labelledby="addPrivacyDirectiveModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <form method="POST" action="{{ route('admin.patients.privacy-directives.store', $patient) }}">
+            <form method="POST" action="{{ $workspaceRoutes->route('admin.patients.privacy-directives.store', $patient) }}">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="addPrivacyDirectiveModalLabel">
@@ -1016,7 +1016,7 @@
 <div class="modal fade" id="startBreakGlassModal" tabindex="-1" aria-labelledby="startBreakGlassModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <form method="POST" action="{{ route('admin.patients.privacy.break-glass.start', $patient) }}">
+            <form method="POST" action="{{ $workspaceRoutes->route('admin.patients.privacy.break-glass.start', $patient) }}">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="startBreakGlassModalLabel">
@@ -1048,7 +1048,7 @@
     @include('patients.partials.insurance-add-modal', [
         'patient' => $patient,
         'insuranceProviders' => $insuranceProviders,
-        'formAction' => route('admin.patients.insurances.store', $patient),
+        'formAction' => $workspaceRoutes->route('admin.patients.insurances.store', $patient),
     ])
 
 {{-- Edit Insurance Modal --}}
@@ -1132,7 +1132,7 @@
 <div class="modal fade" id="addEmergencyContactModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ route('admin.patients.emergency-contacts.store', $patient) }}">
+            <form method="POST" action="{{ $workspaceRoutes->route('admin.patients.emergency-contacts.store', $patient) }}">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">{{ __('patients.add_emergency_contact') }}</h5>
@@ -1231,7 +1231,7 @@
                 <h5 class="modal-title" id="markDeceasedModalLabel"><i class="ti ti-skull me-2"></i>Mark Patient as Deceased</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="POST" action="{{ route('admin.patients.mark-deceased', $patient) }}" id="markDeceasedForm">
+            <form method="POST" action="{{ $workspaceRoutes->route('admin.patients.mark-deceased', $patient) }}" id="markDeceasedForm">
                 @csrf
                 @method('PATCH')
                 <div class="modal-body">

@@ -1,6 +1,6 @@
 @php $log = $log ?? null; $isEdit = $log !== null; @endphp
 @if($errors->any())<div class="alert alert-danger"><ul class="mb-0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
-<form method="POST" action="{{ $isEdit ? route('admin.front-desk.incidents.update', $log) : route('admin.front-desk.incidents.store') }}">
+<form method="POST" action="{{ $isEdit ? $workspaceRoutes->route('admin.front-desk.incidents.update', $log) : $workspaceRoutes->route('admin.front-desk.incidents.store') }}">
     @csrf @if($isEdit) @method('PUT') @endif
     <div class="row g-3">
         <div class="col-lg-8">
@@ -41,7 +41,7 @@
                         <select name="related_courier_log_id" class="form-select"><option value="">{{ __('front_desk.none') }}</option>@foreach($recentCouriers as $co)<option value="{{ $co->id }}" @selected((int) old('related_courier_log_id', $log?->related_courier_log_id) === $co->id)>#{{ $co->id }} — {{ $co->tracking_number ?: $co->recipient_name }}</option>@endforeach</select></div>
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary flex-grow-1"><i class="ti ti-device-floppy me-1"></i>{{ __('front_desk.actions.save') }}</button>
-                        <a href="{{ $isEdit ? route('admin.front-desk.incidents.show', $log) : route('admin.front-desk.incidents.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.cancel') }}</a>
+                        <a href="{{ $isEdit ? $workspaceRoutes->route('admin.front-desk.incidents.show', $log) : $workspaceRoutes->route('admin.front-desk.incidents.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.cancel') }}</a>
                     </div>
                 </div>
             </div>

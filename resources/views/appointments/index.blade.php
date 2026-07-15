@@ -8,7 +8,7 @@
     <x-slot:actions>
         @include('appointments.partials.view-switch', ['active' => 'list'])
         @can('appointments.create')
-        <a href="{{ route('admin.appointments.create') }}" class="btn btn-primary">
+        <a href="{{ $workspaceRoutes->route('admin.appointments.create') }}" class="btn btn-primary">
             <i class="ti ti-plus me-1"></i> {{ __('appointments.new_appointment') }}
         </a>
         @endcan
@@ -69,8 +69,8 @@
 
     {{-- Filters --}}
     <x-filter-bar
-        :action="route('admin.appointments.index')"
-        :reset-url="route('admin.appointments.index')"
+        :action="$workspaceRoutes->route('admin.appointments.index')"
+        :reset-url="$workspaceRoutes->route('admin.appointments.index')"
         class="mb-0"
         ajax
         ajax-target="#appointmentsIndexResults"
@@ -123,7 +123,7 @@
             ])
         </div>
         <x-slot:actions>
-            <a href="{{ route('admin.appointments.index') }}" class="btn btn-outline-secondary btn-icon" aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" data-filter-reset>
+            <a href="{{ $workspaceRoutes->route('admin.appointments.index') }}" class="btn btn-outline-secondary btn-icon" aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" data-filter-reset>
                 <i class="ti ti-x"></i>
             </a>
         </x-slot:actions>
@@ -157,13 +157,13 @@
                         @forelse($appointments as $appointment)
                         <tr data-appointment-row="{{ $appointment->id }}">
                             <td>
-                                <a href="{{ route('admin.appointments.show', $appointment) }}" class="fw-medium text-primary">
+                                <a href="{{ $workspaceRoutes->route('admin.appointments.show', $appointment) }}" class="fw-medium text-primary">
                                     {{ $appointment->appointment_number }}
                                 </a>
                                 <div class="small text-muted">{{ $appointment->patient->patient_number }}</div>
                             </td>
                             <td>
-                                <a href="{{ route('admin.patients.show', $appointment->patient) }}">
+                                <a href="{{ $workspaceRoutes->route('admin.patients.show', $appointment->patient) }}">
                                     {{ $appointment->patient->full_name ?? $appointment->patient->first_name . ' ' . $appointment->patient->last_name }}
                                 </a>
                                 <!-- <div class="small text-muted">{{ $appointment->patient->patient_number }}</div> -->
@@ -204,14 +204,14 @@
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
                                         <li>
-                                            <a class="dropdown-item" href="{{ route('admin.appointments.show', $appointment) }}">
+                                            <a class="dropdown-item" href="{{ $workspaceRoutes->route('admin.appointments.show', $appointment) }}">
                                                 <i class="ti ti-eye me-2"></i>View Details
                                             </a>
                                         </li>
                                         @can('appointments.edit')
                                         @if($appointment->is_active)
                                         <li>
-                                            <a class="dropdown-item" href="{{ route('admin.appointments.edit', $appointment) }}">
+                                            <a class="dropdown-item" href="{{ $workspaceRoutes->route('admin.appointments.edit', $appointment) }}">
                                                 <i class="ti ti-pencil me-2"></i>Edit
                                             </a>
                                         </li>
@@ -219,7 +219,7 @@
                                         @endcan
                                         @if($appointment->status === \App\Enums\AppointmentStatus::SCHEDULED)
                                         <li>
-                                                <form method="POST" action="{{ route('admin.appointments.transition', $appointment) }}" class="js-appointment-action-form" data-follow-up="appointment">
+                                                <form method="POST" action="{{ $workspaceRoutes->route('admin.appointments.transition', $appointment) }}" class="js-appointment-action-form" data-follow-up="appointment">
                                                 @csrf @method('PATCH')
                                                 <input type="hidden" name="status" value="confirmed">
                                                 <button type="submit" class="dropdown-item">
@@ -231,7 +231,7 @@
                                         @if($appointment->status === \App\Enums\AppointmentStatus::CONFIRMED)
                                         @can('appointments.create')
                                         <li>
-                                                <form method="POST" action="{{ route('admin.appointments.check-in', $appointment) }}" class="js-appointment-action-form" data-follow-up="visit">
+                                                <form method="POST" action="{{ $workspaceRoutes->route('admin.appointments.check-in', $appointment) }}" class="js-appointment-action-form" data-follow-up="visit">
                                                 @csrf
                                                 <button type="submit" class="dropdown-item">
                                                     <i class="ti ti-login me-2"></i>{{ __('appointments.check_in_patient') }}
@@ -240,7 +240,7 @@
                                         </li>
                                         @endcan
                                         <li>
-                                            <form method="POST" action="{{ route('admin.appointments.no-show', $appointment) }}">
+                                            <form method="POST" action="{{ $workspaceRoutes->route('admin.appointments.no-show', $appointment) }}">
                                                 @csrf
                                                 <button type="submit" class="dropdown-item">
                                                     <i class="ti ti-user-off me-2"></i>{{ __('appointments.no_show_action') }}
@@ -264,7 +264,7 @@
                                 <div class="modal fade" id="cancelModal{{ $appointment->id }}" tabindex="-1">
                                     <div class="modal-dialog">
                                         <div class="modal-content">
-                                            <form method="POST" action="{{ route('admin.appointments.cancel', $appointment) }}">
+                                            <form method="POST" action="{{ $workspaceRoutes->route('admin.appointments.cancel', $appointment) }}">
                                                 @csrf
                                                 <div class="modal-header">
                                                     <h5 class="modal-title">{{ __('appointments.cancel_appointment') }}</h5>

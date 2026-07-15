@@ -18,7 +18,7 @@
             <i class="ti ti-file-invoice me-1"></i>{{ __('reports.billing.create_invoice') }}
         </a>
         @endcan
-        <a href="{{ route('admin.reports.daily-collection', array_merge(request()->query(), ['export' => 'pdf'])) }}" class="btn btn-danger btn-sm">
+        <a href="{{ $workspaceRoutes->route('admin.reports.daily-collection', array_merge(request()->query(), ['export' => 'pdf'])) }}" class="btn btn-danger btn-sm">
             <i class="ti ti-file-type-pdf me-1"></i>{{ __('reports.actions.pdf') }}
         </a>
     </div>
@@ -76,7 +76,7 @@
 
 <div class="card mb-4">
     <div class="card-body">
-        <form method="GET" action="{{ route('admin.reports.daily-collection') }}" class="row g-3 align-items-end">
+        <form method="GET" action="{{ $workspaceRoutes->route('admin.reports.daily-collection') }}" class="row g-3 align-items-end">
             <div class="col-md-4">
                 <label class="form-label">{{ __('reports.date') }}</label>
                 <input type="date" name="date" class="form-control" value="{{ $filters['date'] ?? now()->toDateString() }}">
@@ -92,7 +92,7 @@
             </div>
             <div class="col-md-4">
                 <button type="submit" class="btn btn-primary"><i class="ti ti-filter me-1"></i>{{ __('reports.filter') }}</button>
-                <a href="{{ route('admin.reports.daily-collection') }}" class="btn btn-outline-secondary"><i class="ti ti-x me-1"></i>{{ __('reports.clear') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.reports.daily-collection') }}" class="btn btn-outline-secondary"><i class="ti ti-x me-1"></i>{{ __('reports.clear') }}</a>
             </div>
         </form>
     </div>

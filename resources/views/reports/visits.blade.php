@@ -1,19 +1,24 @@
 @extends('layouts.app')
-@section('title', __('reports.visits.title'))
+@php
+    $isRecordsAttendance = request()->routeIs('records.reports.attendance');
+    $visitReportTitle = $isRecordsAttendance ? __('records.reports.attendance') : __('reports.visits.title');
+    $visitReportRoute = $isRecordsAttendance ? 'records.reports.attendance' : $workspaceRoutes->routeName('admin.reports.visits');
+@endphp
+@section('title', $visitReportTitle)
 
 @section('content')
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
     <div>
-        <h4 class="fw-bold mb-0">{{ __('reports.visits.title') }}</h4>
+        <h4 class="fw-bold mb-0">{{ $visitReportTitle }}</h4>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('common.dashboard') }}</a></li>
-                <li class="breadcrumb-item active">{{ __('reports.visits.title') }}</li>
+                <li class="breadcrumb-item"><a href="{{ $workspaceRoutes->dashboard() }}">{{ $workspaceContext['workspaceKey'] === 'records' ? __('records.breadcrumbs.records') : __('common.dashboard') }}</a></li>
+                <li class="breadcrumb-item active">{{ $visitReportTitle }}</li>
             </ol>
         </nav>
     </div>
     <div>
-        <a href="{{ route('admin.reports.visits', array_merge(request()->query(), ['export' => 'pdf'])) }}" class="btn btn-danger btn-sm">
+        <a href="{{ route($visitReportRoute, array_merge(request()->query(), ['export' => 'pdf'])) }}" class="btn btn-danger btn-sm">
             <i class="ti ti-file-type-pdf me-1"></i>{{ __('reports.actions.export_pdf') }}
         </a>
     </div>
@@ -86,7 +91,7 @@
 <!-- Filter -->
 <div class="card mb-4">
     <div class="card-body">
-        <form method="GET" action="{{ route('admin.reports.visits') }}" class="row g-3 align-items-end">
+        <form method="GET" action="{{ route($visitReportRoute) }}" class="row g-3 align-items-end">
             <div class="col-md-2">
                 <label class="form-label">{{ __('reports.filters.date_from') }}</label>
                 <input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}">
@@ -147,7 +152,7 @@
                 <tbody>
                     @forelse($visits as $visit)
                     <tr>
-                        <td><a href="{{ route('admin.visits.show', $visit) }}" class="text-primary fw-medium">{{ $visit->visit_number }}</a></td>
+                        <td><a href="{{ $workspaceRoutes->route('admin.visits.show', $visit) }}" class="text-primary fw-medium">{{ $visit->visit_number }}</a></td>
                         <td>{{ $visit->patient->full_name }}</td>
                         <td><span class="badge bg-light text-dark">{{ $visit->visit_type->label() }}</span></td>
                         <td><x-status-badge :status="$visit->priority" /></td>

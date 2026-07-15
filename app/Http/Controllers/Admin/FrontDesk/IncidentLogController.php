@@ -54,7 +54,7 @@ class IncidentLogController extends Controller
     {
         $this->service->create($this->validated($request), $request->user());
 
-        return redirect()->route('admin.front-desk.incidents.index')
+        return redirect()->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.front-desk.incidents.index'))
             ->with('success', __('front_desk.flash.incident_created'));
     }
 
@@ -74,7 +74,7 @@ class IncidentLogController extends Controller
     {
         $this->service->update($incident, $this->validated($request), $request->user());
 
-        return redirect()->route('admin.front-desk.incidents.show', $incident)
+        return redirect()->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.front-desk.incidents.show'), $incident)
             ->with('success', __('front_desk.flash.incident_updated'));
     }
 

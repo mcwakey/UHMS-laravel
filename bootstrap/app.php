@@ -34,8 +34,10 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'role'   => \App\Http\Middleware\EnsureUserHasRole::class,
-            'module' => \App\Http\Middleware\EnsureModuleEnabled::class,
+            'role'             => \App\Http\Middleware\EnsureUserHasRole::class,
+            'module'           => \App\Http\Middleware\EnsureModuleEnabled::class,
+            'department.type'  => \App\Http\Middleware\EnsureActiveDepartmentType::class,
+            'records.redirect' => \App\Http\Middleware\RedirectRecordsWorkspace::class,
         ]);
 
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);

@@ -5,7 +5,7 @@
 <!-- Page Header -->
 <x-page-header-back
     :title="__('patients.register_patient')"
-    :href="route('admin.patients.index')"
+    :href="$workspaceRoutes->route('admin.patients.index')"
 />
 
 @php
@@ -15,7 +15,7 @@
     $digitalAddressPlaceholder = $countrySettings['digital_address_placeholder'] ?? '';
 @endphp
 
-<form method="POST" action="{{ route('admin.patients.store') }}" enctype="multipart/form-data">
+<form method="POST" action="{{ $workspaceRoutes->route('admin.patients.store') }}" enctype="multipart/form-data">
     @csrf
 
     <x-patient-personal-information-card :occupations="$occupations" />
@@ -71,7 +71,7 @@
     <x-patient-medical-notes-card />
     <!-- Submit -->
     <div class="d-flex justify-content-end gap-2 mb-4">
-        <a href="{{ route('admin.patients.index') }}" class="btn btn-outline-secondary">{{ __('common.cancel') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.patients.index') }}" class="btn btn-outline-secondary">{{ __('common.cancel') }}</a>
         <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>{{ __('patients.register_patient') }}</button>
     </div>
 </form>

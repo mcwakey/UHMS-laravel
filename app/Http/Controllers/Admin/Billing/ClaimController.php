@@ -121,7 +121,7 @@ class ClaimController extends Controller
 
         if ($invoice?->claim) {
             return redirect()
-                ->route('admin.claims.show', $invoice->claim)
+                ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.claims.show'), $invoice->claim)
                 ->with('success', __('messages.claims.already_exists'));
         }
 
@@ -160,13 +160,13 @@ class ClaimController extends Controller
         }
 
         return redirect()
-            ->route('admin.claims.show', $claim)
+            ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.claims.show'), $claim)
             ->with('success', __('messages.claims.ready_for_review'));
     }
 
     public function prepareFromVisit(Request $request, Visit $visit)
     {
-        $selectedTypeCode = $request->routeIs('admin.claims.nhia.prepare-from-visit') ? 'NHIA' : null;
+        $selectedTypeCode = $request->routeIs('admin.claims.nhia.prepare-from-visit', 'records.claims.nhia.prepare-from-visit') ? 'NHIA' : null;
         $visit->loadMissing([
             'latestInvoice.items',
             'visitInsurance.insuranceProvider.insuranceType',
@@ -194,7 +194,7 @@ class ClaimController extends Controller
         }
 
         return redirect()
-            ->route('admin.claims.show', $claim)
+            ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.claims.show'), $claim)
             ->with('success', __('messages.claims.prepared_from_visit'));
     }
 
@@ -206,7 +206,7 @@ class ClaimController extends Controller
         $claim = $this->claimService->create($request->validated());
 
         return redirect()
-            ->route('admin.claims.show', $claim)
+            ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.claims.show'), $claim)
             ->with('success', __('messages.claims.created'));
     }
 
@@ -281,7 +281,7 @@ class ClaimController extends Controller
             ]));
 
             return redirect()
-                ->route('admin.claims.show', $claim)
+                ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.claims.show'), $claim)
                 ->with('success', __('messages.claims.submitted'));
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
@@ -304,7 +304,7 @@ class ClaimController extends Controller
 
         if (! $claim->is_reviewable) {
             return redirect()
-                ->route('admin.claims.show', $claim)
+                ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.claims.show'), $claim)
                 ->with('error', __('messages.claims.cannot_review_status'));
         }
 
@@ -361,7 +361,7 @@ class ClaimController extends Controller
         $this->claimService->completeReview($claim, $request->reviewer_notes);
 
         return redirect()
-            ->route('admin.claims.show', $claim)
+            ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.claims.show'), $claim)
             ->with('success', __('messages.claims.review_completed'));
     }
 

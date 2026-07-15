@@ -444,7 +444,7 @@ class ServiceRenderingService
                 'priority' => NotificationPriority::NORMAL,
                 'title' => 'Service rendering required',
                 'message' => ($rendering->service?->name ?? 'A billed service').' is waiting for fulfilment.',
-                'action_url' => route('admin.service-renderings.show', $rendering),
+                'action_url' => app(\App\Services\WorkspaceRouteResolver::class)->route('admin.service-renderings.show', $rendering),
                 'source_type' => ServiceRendering::class,
                 'source_id' => $rendering->id,
             ]);

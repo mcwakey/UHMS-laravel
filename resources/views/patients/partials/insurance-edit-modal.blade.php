@@ -12,7 +12,7 @@
     $title = $title ?? __('patients.edit_insurance_plan');
     $submitLabel = $submitLabel ?? __('patients.update_insurance');
     $actionTemplate = $actionTemplate
-        ?: ($patient ? route('admin.patients.insurances.update', [$patient, '__INSURANCE__']) : null);
+        ?: ($patient ? $workspaceRoutes->route('admin.patients.insurances.update', [$patient, '__INSURANCE__']) : null);
     $formAction = $formAction ?: '#';
 @endphp
 

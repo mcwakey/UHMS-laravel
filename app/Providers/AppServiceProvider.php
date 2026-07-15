@@ -21,6 +21,7 @@ use App\Listeners\NotifyWardStaffAdmission;
 use App\Models\User;
 use App\Services\ModuleService;
 use App\Services\SidebarMenuBuilder;
+use App\Services\WorkspaceRouteResolver;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Auth;
@@ -146,6 +147,13 @@ class AppServiceProvider extends ServiceProvider
                 request()->route()?->getName() ?? '',
                 $unreadNotifications,
             ));
+        });
+
+        View::composer('*', function ($view) {
+            $routes = app(WorkspaceRouteResolver::class);
+
+            $view->with('workspaceRoutes', $routes);
+            $view->with('workspaceContext', $routes->viewContext());
         });
     }
 }

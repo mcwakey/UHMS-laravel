@@ -13,7 +13,7 @@
                 <i class="ti ti-eye-search me-1"></i>{{ __('services.visit_preview') }}
             </a>
         @endif
-        <a href="{{ route('admin.service-renderings.index') }}" class="btn btn-outline-secondary btn-sm">
+        <a href="{{ $workspaceRoutes->route('admin.service-renderings.index') }}" class="btn btn-outline-secondary btn-sm">
             <i class="ti ti-arrow-left me-1"></i>{{ __('common.back') }}
         </a>
     </div>
@@ -176,7 +176,7 @@
                 <div class="card mb-3">
                     <div class="card-body">
                         <h6 class="fw-semibold">{{ __('services.start_rendering') }}</h6>
-                        <form method="POST" action="{{ route('admin.service-renderings.start', $rendering) }}">
+                        <form method="POST" action="{{ $workspaceRoutes->route('admin.service-renderings.start', $rendering) }}">
                             @csrf
                             <textarea class="form-control mb-2" name="notes" rows="2" placeholder="{{ __('services.optional_start_note') }}"></textarea>
                             <button class="btn btn-info w-100" type="submit">{{ __('services.start_service') }}</button>
@@ -191,7 +191,7 @@
                 <div class="card mb-3">
                     <div class="card-body">
                         <h6 class="fw-semibold">{{ __('services.mark_rendered') }}</h6>
-                        <form method="POST" action="{{ route('admin.service-renderings.mark-rendered', $rendering) }}">
+                        <form method="POST" action="{{ $workspaceRoutes->route('admin.service-renderings.mark-rendered', $rendering) }}">
                             @csrf
                             <label class="form-label small">{{ __('services.rendered_at') }}</label>
                             <input type="datetime-local" class="form-control mb-2" name="rendered_at" value="{{ now()->format('Y-m-d\TH:i') }}">
@@ -211,7 +211,7 @@
                 <div class="card mb-3">
                     <div class="card-body">
                         <h6 class="fw-semibold">{{ __('services.mark_not_rendered') }}</h6>
-                        <form method="POST" action="{{ route('admin.service-renderings.mark-not-rendered', $rendering) }}">
+                        <form method="POST" action="{{ $workspaceRoutes->route('admin.service-renderings.mark-not-rendered', $rendering) }}">
                             @csrf
                             <label class="form-label small">{{ __('services.reason') }}</label>
                             <textarea class="form-control mb-2" name="reason_not_rendered" rows="3" required></textarea>
@@ -228,7 +228,7 @@
             <div class="card mb-3">
                 <div class="card-body">
                     <h6 class="fw-semibold">{{ __('services.update_notes') }}</h6>
-                    <form method="POST" action="{{ route('admin.service-renderings.notes', $rendering) }}">
+                    <form method="POST" action="{{ $workspaceRoutes->route('admin.service-renderings.notes', $rendering) }}">
                         @csrf
                         @method('PATCH')
                         <label class="form-label small">{{ __('services.result_summary') }}</label>
@@ -246,7 +246,7 @@
                 <div class="card border-danger">
                     <div class="card-body">
                         <h6 class="fw-semibold text-danger">{{ __('services.cancel_rendering') }}</h6>
-                        <form method="POST" action="{{ route('admin.service-renderings.cancel', $rendering) }}">
+                        <form method="POST" action="{{ $workspaceRoutes->route('admin.service-renderings.cancel', $rendering) }}">
                             @csrf
                             <label class="form-label small">{{ __('services.reason') }}</label>
                             <textarea class="form-control mb-2" name="reason" rows="3" required></textarea>

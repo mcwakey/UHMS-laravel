@@ -13,7 +13,7 @@
         </nav>
     </div>
     <div>
-        <a href="{{ route('admin.reports.insurance-claims', array_merge(request()->query(), ['export' => 'pdf'])) }}" class="btn btn-danger btn-sm">
+        <a href="{{ $workspaceRoutes->route('admin.reports.insurance-claims', array_merge(request()->query(), ['export' => 'pdf'])) }}" class="btn btn-danger btn-sm">
             <i class="ti ti-file-type-pdf me-1"></i>{{ __('reports.export.label_pdf') }}
         </a>
     </div>
@@ -58,7 +58,7 @@
 <!-- Filter -->
 <div class="card mb-4">
     <div class="card-body">
-        <form method="GET" action="{{ route('admin.reports.insurance-claims') }}" class="row g-3 align-items-end">
+        <form method="GET" action="{{ $workspaceRoutes->route('admin.reports.insurance-claims') }}" class="row g-3 align-items-end">
             <div class="col-md-3">
                 <label class="form-label">{{ __('reports.filters.date_from') }}</label>
                 <input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}">

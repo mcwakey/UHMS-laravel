@@ -1,6 +1,6 @@
 @php $log = $log ?? null; $isEdit = $log !== null; @endphp
 @if($errors->any())<div class="alert alert-danger"><ul class="mb-0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
-<form method="POST" action="{{ $isEdit ? route('admin.front-desk.handovers.update', $log) : route('admin.front-desk.handovers.store') }}">
+<form method="POST" action="{{ $isEdit ? $workspaceRoutes->route('admin.front-desk.handovers.update', $log) : $workspaceRoutes->route('admin.front-desk.handovers.store') }}">
     @csrf @if($isEdit) @method('PUT') @endif
     <div class="row g-3">
         <div class="col-lg-7">
@@ -56,7 +56,7 @@
             @endisset
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary flex-grow-1"><i class="ti ti-device-floppy me-1"></i>{{ __('front_desk.actions.save') }}</button>
-                <a href="{{ $isEdit ? route('admin.front-desk.handovers.show', $log) : route('admin.front-desk.handovers.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.cancel') }}</a>
+                <a href="{{ $isEdit ? $workspaceRoutes->route('admin.front-desk.handovers.show', $log) : $workspaceRoutes->route('admin.front-desk.handovers.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.cancel') }}</a>
             </div>
         </div>
     </div>

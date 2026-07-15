@@ -118,7 +118,7 @@
                 </div>
                 @can('mar_chart.view')
                 <div class="mt-2">
-                    <a href="{{ route('admin.visits.mar-chart', $visit) }}" class="btn btn-sm btn-outline-primary">
+                    <a href="{{ $workspaceRoutes->route('admin.visits.mar-chart', $visit) }}" class="btn btn-sm btn-outline-primary">
                         <i class="ti ti-layout-grid me-1"></i>{{ __('visits.medication_chart') }}
                     </a>
                 </div>

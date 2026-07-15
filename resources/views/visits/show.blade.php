@@ -10,7 +10,7 @@
 @section('content')
 <x-page-header-back
         :title="__('visits.title') . ' - ' . $visit->visit_number"
-        :href="route('admin.visits.index')"
+        :href="$workspaceRoutes->route('admin.visits.index')"
     >
     <x-slot:actions>
         @can('emergency.case.create')
@@ -21,7 +21,7 @@
         @endif
         @endcan
         @can('visits.create')
-        <a href="{{ route('admin.visits.create', ['patient_id' => $visit->patient_id]) }}" class="btn btn-primary btn-md">
+        <a href="{{ $workspaceRoutes->route('admin.visits.create', ['patient_id' => $visit->patient_id]) }}" class="btn btn-primary btn-md">
             <i class="ti ti-plus me-1"></i>{{ __('visits.new_visit_btn') }}
         </a>
         @endcan
@@ -37,7 +37,7 @@
 <!-- Page Header -->
 <!-- <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
     <h6 class="fw-bold mb-0 d-flex align-items-center">
-        <a href="{{ route('admin.visits.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i> </a>
+        <a href="{{ $workspaceRoutes->route('admin.visits.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i> </a>
     </h6>
     <div class="flex-grow-1">
         {{-- <a href="{{ route('admin.visits.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>Create New Visit</a> --}}
@@ -56,12 +56,12 @@
         @endif
         @endcan
         @can('visits.create')
-        <a href="{{ route('admin.visits.create', ['patient_id' => $visit->patient_id]) }}" class="btn btn-outline-primary btn-md">
+        <a href="{{ $workspaceRoutes->route('admin.visits.create', ['patient_id' => $visit->patient_id]) }}" class="btn btn-outline-primary btn-md">
             <i class="ti ti-plus me-1"></i>{{ __('visits.new_visit_btn') }}
         </a>
         @endcan
         {{-- @can('visits.edit')
-        <a href="{{ route('admin.visits.edit', $visit) }}" class="btn btn-outline-warning btn-md">
+        <a href="{{ $workspaceRoutes->route('admin.visits.edit', $visit) }}" class="btn btn-outline-warning btn-md">
             <i class="ti ti-pencil me-1"></i>Edit Visit
         </a>
         @endcan --}}
@@ -464,7 +464,7 @@
                 @if($isWaiting)
                 <div class="d-flex flex-wrap gap-2">
                     @foreach([\App\Enums\VisitStatus::TRIAGE, \App\Enums\VisitStatus::CANCELLED, \App\Enums\VisitStatus::RESCHEDULED] as $nextStatus)
-                        <form method="POST" action="{{ route('admin.visits.transition', $visit) }}" class="d-inline">
+                        <form method="POST" action="{{ $workspaceRoutes->route('admin.visits.transition', $visit) }}" class="d-inline">
                             @csrf
                             @method('PATCH')
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
@@ -489,7 +489,7 @@
                     @endif
                 {{-- </div>
                 <div class="d-flex flex-wrap gap-2"> --}}
-                    <form method="POST" action="{{ route('admin.visits.transition', $visit) }}" class="d-inline ms-1">
+                    <form method="POST" action="{{ $workspaceRoutes->route('admin.visits.transition', $visit) }}" class="d-inline ms-1">
                         @csrf
                         @method('PATCH')
                         <input type="hidden" name="status" value="{{ \App\Enums\VisitStatus::CANCELLED->value }}">
@@ -506,7 +506,7 @@
                     <p class="text-muted small mb-2">Send to another department:</p>
                     <div class="d-flex flex-wrap gap-2 mb-3">
                         @foreach($serviceDepts as $dept)
-                            <form method="POST" action="{{ route('admin.visits.send-to-department', $visit) }}" class="d-inline">
+                            <form method="POST" action="{{ $workspaceRoutes->route('admin.visits.send-to-department', $visit) }}" class="d-inline">
                                 @csrf
                                 @method('PATCH')
                                 <input type="hidden" name="department_id" value="{{ $dept->id }}">
@@ -527,7 +527,7 @@
                                 ? __('visits.send_to_triage_queue')
                                 : $nextStatus->translatedLabel();
                         @endphp
-                        <form method="POST" action="{{ route('admin.visits.transition', $visit) }}" class="d-inline">
+                        <form method="POST" action="{{ $workspaceRoutes->route('admin.visits.transition', $visit) }}" class="d-inline">
                             @csrf
                             @method('PATCH')
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
@@ -901,7 +901,7 @@
 @can('visits.edit')
 <div class="modal fade" id="changeVisitInsuranceModal" tabindex="-1" aria-labelledby="changeVisitInsuranceModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <form method="POST" action="{{ route('admin.visits.insurance.update', $visit) }}" class="modal-content">
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.visits.insurance.update', $visit) }}" class="modal-content">
             @csrf
             @method('PATCH')
             <div class="modal-header">
@@ -994,8 +994,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const patientId = @json($visit->patient_id);
-    const storeUrl = @json(route('admin.patients.insurances.store', $visit->patient));
-    const insuranceListUrl = @json(route('admin.visits.patient-insurances'));
+    const storeUrl = @json($workspaceRoutes->route('admin.patients.insurances.store', $visit->patient));
+    const insuranceListUrl = @json($workspaceRoutes->route('admin.visits.patient-insurances'));
     const addModal = window.bootstrap ? window.bootstrap.Modal.getOrCreateInstance(addModalEl) : null;
     const changeModal = changeModalEl && window.bootstrap ? window.bootstrap.Modal.getOrCreateInstance(changeModalEl) : null;
 

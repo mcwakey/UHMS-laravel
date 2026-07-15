@@ -8,18 +8,18 @@
         </h4>
     </div>
     @can('front_desk.incidents.create')
-    <a href="{{ route('admin.front-desk.incidents.create') }}" class="btn btn-primary btn-md fs-13"><i class="ti ti-plus me-1"></i>{{ __('front_desk.incidents.new') }}</a>
+    <a href="{{ $workspaceRoutes->route('admin.front-desk.incidents.create') }}" class="btn btn-primary btn-md fs-13"><i class="ti ti-plus me-1"></i>{{ __('front_desk.incidents.new') }}</a>
     @endcan
 </div>
 
 <div class="d-flex flex-wrap gap-2 mb-3">
-    <a href="{{ route('admin.front-desk.incidents.index') }}" class="btn btn-sm {{ empty(array_filter($filters)) ? 'btn-primary' : 'btn-outline-secondary' }}">{{ __('front_desk.quick.all') }}</a>
-    <a href="{{ route('admin.front-desk.incidents.index', ['open' => 1]) }}" class="btn btn-sm {{ !empty($filters['open']) ? 'btn-primary' : 'btn-outline-secondary' }}">{{ __('front_desk.incidents.open_only') }}</a>
-    <a href="{{ route('admin.front-desk.incidents.index', ['critical' => 1]) }}" class="btn btn-sm {{ !empty($filters['critical']) ? 'btn-danger' : 'btn-outline-danger' }}">{{ __('front_desk.incidents.critical_only') }}</a>
+    <a href="{{ $workspaceRoutes->route('admin.front-desk.incidents.index') }}" class="btn btn-sm {{ empty(array_filter($filters)) ? 'btn-primary' : 'btn-outline-secondary' }}">{{ __('front_desk.quick.all') }}</a>
+    <a href="{{ $workspaceRoutes->route('admin.front-desk.incidents.index', ['open' => 1]) }}" class="btn btn-sm {{ !empty($filters['open']) ? 'btn-primary' : 'btn-outline-secondary' }}">{{ __('front_desk.incidents.open_only') }}</a>
+    <a href="{{ $workspaceRoutes->route('admin.front-desk.incidents.index', ['critical' => 1]) }}" class="btn btn-sm {{ !empty($filters['critical']) ? 'btn-danger' : 'btn-outline-danger' }}">{{ __('front_desk.incidents.critical_only') }}</a>
 </div>
 
 <div class="card mb-3"><div class="card-body">
-    <form method="GET" action="{{ route('admin.front-desk.incidents.index') }}" class="row g-2 align-items-end">
+    <form method="GET" action="{{ $workspaceRoutes->route('admin.front-desk.incidents.index') }}" class="row g-2 align-items-end">
         <div class="col-md-3"><label class="form-label fs-13">{{ __('front_desk.actions.search') }}</label><input type="text" name="search" class="form-control" value="{{ $filters['search'] ?? '' }}"></div>
         <div class="col-md-2"><label class="form-label fs-13">{{ __('front_desk.fields.incident_type') }}</label>
             <select name="incident_type" class="form-select"><option value="">{{ __('front_desk.filters.all_types') }}</option>@foreach($types as $t)<option value="{{ $t->value }}" @selected(($filters['incident_type'] ?? '') === $t->value)>{{ $t->translatedLabel() }}</option>@endforeach</select></div>
@@ -28,7 +28,7 @@
         <div class="col-md-2"><label class="form-label fs-13">{{ __('front_desk.fields.status') }}</label>
             <select name="status" class="form-select"><option value="">{{ __('front_desk.filters.all_statuses') }}</option>@foreach($statuses as $st)<option value="{{ $st->value }}" @selected(($filters['status'] ?? '') === $st->value)>{{ $st->translatedLabel() }}</option>@endforeach</select></div>
         <div class="col-md-3 d-flex gap-2"><button type="submit" class="btn btn-primary"><i class="ti ti-filter me-1"></i>{{ __('front_desk.actions.filter') }}</button>
-            <a href="{{ route('admin.front-desk.incidents.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.reset') }}</a></div>
+            <a href="{{ $workspaceRoutes->route('admin.front-desk.incidents.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.reset') }}</a></div>
     </form>
 </div></div>
 
@@ -49,7 +49,7 @@
                 <td>{{ $log->location ?? __('front_desk.none') }}</td>
                 <td>{{ $log->assignedToUser?->full_name ?? __('front_desk.none') }}</td>
                 <td><x-status-badge :status="$log->status" size="sm" soft /></td>
-                <td class="text-end"><a href="{{ route('admin.front-desk.incidents.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a></td>
+                <td class="text-end"><a href="{{ $workspaceRoutes->route('admin.front-desk.incidents.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a></td>
             </tr>
             @empty
             <tr><td colspan="7"><x-empty-state icon="ti-alert-octagon" :message="__('front_desk.incidents.none')" /></td></tr>

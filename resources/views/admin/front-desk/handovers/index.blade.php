@@ -8,12 +8,12 @@
         </h4>
     </div>
     @can('front_desk.handovers.create')
-    <a href="{{ route('admin.front-desk.handovers.create') }}" class="btn btn-primary btn-md fs-13"><i class="ti ti-plus me-1"></i>{{ __('front_desk.handovers.new') }}</a>
+    <a href="{{ $workspaceRoutes->route('admin.front-desk.handovers.create') }}" class="btn btn-primary btn-md fs-13"><i class="ti ti-plus me-1"></i>{{ __('front_desk.handovers.new') }}</a>
     @endcan
 </div>
 
 <div class="card mb-3"><div class="card-body">
-    <form method="GET" action="{{ route('admin.front-desk.handovers.index') }}" class="row g-2 align-items-end">
+    <form method="GET" action="{{ $workspaceRoutes->route('admin.front-desk.handovers.index') }}" class="row g-2 align-items-end">
         <div class="col-md-3"><label class="form-label fs-13">{{ __('front_desk.actions.search') }}</label><input type="text" name="search" class="form-control" value="{{ $filters['search'] ?? '' }}"></div>
         <div class="col-md-2"><label class="form-label fs-13">{{ __('front_desk.filters.date_from') }}</label><input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}"></div>
         <div class="col-md-2"><label class="form-label fs-13">{{ __('front_desk.filters.date_to') }}</label><input type="date" name="date_to" class="form-control" value="{{ $filters['date_to'] ?? '' }}"></div>
@@ -22,7 +22,7 @@
                 @foreach($statuses as $s)<option value="{{ $s->value }}" @selected(($filters['status'] ?? '') === $s->value)>{{ $s->translatedLabel() }}</option>@endforeach
             </select></div>
         <div class="col-md-3 d-flex gap-2"><button type="submit" class="btn btn-primary"><i class="ti ti-filter me-1"></i>{{ __('front_desk.actions.filter') }}</button>
-            <a href="{{ route('admin.front-desk.handovers.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.reset') }}</a></div>
+            <a href="{{ $workspaceRoutes->route('admin.front-desk.handovers.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.reset') }}</a></div>
     </form>
 </div></div>
 
@@ -41,7 +41,7 @@
                 <td>{{ $log->outgoingUser?->full_name ?? __('front_desk.none') }}</td>
                 <td>{{ $log->incomingUser?->full_name ?? __('front_desk.none') }}</td>
                 <td><x-status-badge :status="$log->status" size="sm" /></td>
-                <td class="text-end"><a href="{{ route('admin.front-desk.handovers.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a></td>
+                <td class="text-end"><a href="{{ $workspaceRoutes->route('admin.front-desk.handovers.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a></td>
             </tr>
             @empty
             <tr><td colspan="6"><x-empty-state icon="ti-clipboard-list" :message="__('front_desk.handovers.none')" /></td></tr>

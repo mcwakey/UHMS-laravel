@@ -4,7 +4,7 @@
 @section('content')
 <x-page-header-back
         :title="__('triage.assessment')"
-        :href="route('admin.triage.index')"
+        :href="$workspaceRoutes->route('admin.triage.index')"
     />
 
 <!-- Page Header -->
@@ -30,7 +30,7 @@
 <div class="row">
     <!-- Left: Triage Form -->
     <div class="col-lg-8">
-        <form method="POST" action="{{ route('admin.triage.store', $visit) }}" id="triageForm">
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.triage.store', $visit) }}" id="triageForm">
             @csrf
 
             <!-- Vitals Card -->

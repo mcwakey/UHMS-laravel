@@ -14,20 +14,20 @@
         @if($claim->is_editable || $claim->status === \App\Enums\ClaimStatus::READY)
             @can('claims.create')
             @if($claim->is_editable)
-            <form method="POST" action="{{ route('admin.claims.validate', $claim) }}" class="d-inline">
+            <form method="POST" action="{{ $workspaceRoutes->route('admin.claims.validate', $claim) }}" class="d-inline">
                 @csrf
                 <button type="submit" class="btn btn-outline-info btn-md fs-13">
                     <i class="ti ti-shield-check me-1"></i>{{ __('claims.validate_claim') }}
                 </button>
             </form>
-            <form method="POST" action="{{ route('admin.claims.mark-ready', $claim) }}" class="d-inline">
+            <form method="POST" action="{{ $workspaceRoutes->route('admin.claims.mark-ready', $claim) }}" class="d-inline">
                 @csrf
                 <button type="submit" class="btn btn-outline-primary btn-md fs-13">
                     <i class="ti ti-circle-check me-1"></i>{{ __('claims.mark_ready') }}
                 </button>
             </form>
             @endif
-            <form method="POST" action="{{ route('admin.claims.submit', $claim) }}" class="d-inline">
+            <form method="POST" action="{{ $workspaceRoutes->route('admin.claims.submit', $claim) }}" class="d-inline">
                 @csrf
                 <input type="hidden" name="submission_mode" value="{{ $claim->claim_workflow_code === 'NHIA' ? 'EXPORT' : 'MANUAL' }}">
                 <button type="submit" class="btn btn-primary btn-md fs-13" onclick="return confirm(@json(__('claims.submit_confirm')))">
@@ -38,14 +38,14 @@
         @endif
 
         @can('claims.export')
-        <a href="{{ route('admin.claims.export-one', $claim) }}" class="btn btn-outline-success btn-md fs-13">
+        <a href="{{ $workspaceRoutes->route('admin.claims.export-one', $claim) }}" class="btn btn-outline-success btn-md fs-13">
             <i class="ti ti-file-spreadsheet me-1"></i>{{ __('claims.export') }}
         </a>
         @endcan
 
         @if($claim->is_reviewable)
             @can('claims.approve')
-            <a href="{{ route('admin.claims.review', $claim) }}" class="btn btn-warning btn-md fs-13">
+            <a href="{{ $workspaceRoutes->route('admin.claims.review', $claim) }}" class="btn btn-warning btn-md fs-13">
                 <i class="ti ti-checklist me-1"></i>{{ __('claims.review_claim') }}
             </a>
             @endcan
@@ -53,7 +53,7 @@
 
         @if($claim->status === \App\Enums\ClaimStatus::APPROVED || $claim->status === \App\Enums\ClaimStatus::PARTIALLY_APPROVED)
             @can('claims.approve')
-            <form method="POST" action="{{ route('admin.claims.mark-paid', $claim) }}" class="d-inline">
+            <form method="POST" action="{{ $workspaceRoutes->route('admin.claims.mark-paid', $claim) }}" class="d-inline">
                 @csrf
                 <button type="submit" class="btn btn-success btn-md fs-13" onclick="return confirm(@json(__('claims.mark_paid_confirm')))">
                     <i class="ti ti-cash me-1"></i>{{ __('claims.mark_paid') }}
@@ -64,7 +64,7 @@
 
         @if($claim->status === \App\Enums\ClaimStatus::REJECTED || $claim->status === \App\Enums\ClaimStatus::PARTIALLY_APPROVED)
             @can('claims.create')
-            <form method="POST" action="{{ route('admin.claims.appeal', $claim) }}" class="d-inline">
+            <form method="POST" action="{{ $workspaceRoutes->route('admin.claims.appeal', $claim) }}" class="d-inline">
                 @csrf
                 <button type="submit" class="btn btn-outline-warning btn-md fs-13" onclick="return confirm(@json(__('claims.appeal_confirm')))">
                     <i class="ti ti-refresh me-1"></i>{{ __('claims.appeal') }}
@@ -73,7 +73,7 @@
             @endcan
         @endif
 
-        <a href="{{ route('admin.claims.index') }}" class="btn btn-outline-secondary btn-md fs-13">
+        <a href="{{ $workspaceRoutes->route('admin.claims.index') }}" class="btn btn-outline-secondary btn-md fs-13">
             <i class="ti ti-arrow-left me-1"></i>{{ __('claims.back') }}
         </a>
     </div>
@@ -258,7 +258,7 @@
                     <small class="text-muted d-block">{{ __('claims.membership_number') }}</small>
                     <span class="fw-semibold">{{ $claim->membership_number ?: 'N/A' }}</span>
                 </div>
-                <form method="POST" action="{{ route('admin.claims.verification-code', $claim) }}">
+                <form method="POST" action="{{ $workspaceRoutes->route('admin.claims.verification-code', $claim) }}">
                     @csrf
                     <label class="form-label">{{ $claim->insuranceProvider?->verificationCodeLabel() ?? __('claims.verification_code') }}</label>
                     <div class="input-group">
@@ -322,7 +322,7 @@
                                 <td><x-status-badge :status="$item->status" /></td>
                                 @if($claim->is_editable)
                                 <td class="text-end">
-                                    <x-confirm-form :action="route('admin.claims.remove-item', $item)" method="DELETE"
+                                    <x-confirm-form :action="$workspaceRoutes->route('admin.claims.remove-item', $item)" method="DELETE"
                                         button-label="" button-class="btn btn-sm btn-outline-danger" icon="ti-trash"
                                         :confirm-title="__('claims.remove_item_title')" :confirm-text="__('claims.remove_item_text')" :confirm-button="__('claims.remove_item_confirm')" />
                                 </td>
@@ -401,7 +401,7 @@
                     <p class="text-muted mb-3">{{ __('claims.no_insurer_payments') }}</p>
                 @endif
                 @can('claims.approve')
-                <form method="POST" action="{{ route('admin.claims.payments.store', $claim) }}" class="row g-2">
+                <form method="POST" action="{{ $workspaceRoutes->route('admin.claims.payments.store', $claim) }}" class="row g-2">
                     @csrf
                     <div class="col-md-3">
                         <input type="date" name="payment_date" class="form-control" value="{{ now()->toDateString() }}" required>
@@ -427,7 +427,7 @@
 <div class="modal fade" id="addItemModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ route('admin.claims.add-item', $claim) }}">
+            <form method="POST" action="{{ $workspaceRoutes->route('admin.claims.add-item', $claim) }}">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">{{ __('claims.add_claim_item') }}</h5>

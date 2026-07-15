@@ -7,7 +7,7 @@
         <h4 class="fw-bold mb-0">{{ __('claims.create_insurance_claim') }}</h4>
     </div>
     <div>
-        <a href="{{ route('admin.claims.index') }}" class="btn btn-outline-secondary">
+        <a href="{{ $workspaceRoutes->route('admin.claims.index') }}" class="btn btn-outline-secondary">
             <i class="ti ti-arrow-left me-1"></i>{{ __('claims.back') }}
         </a>
     </div>
@@ -50,7 +50,7 @@
         <h5 class="card-title mb-0">{{ __('claims.claim_from_invoice') }}</h5>
     </div>
     <div class="card-body">
-        <form method="POST" action="{{ route('admin.claims.store-from-invoice') }}">
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.claims.store-from-invoice') }}">
             @csrf
             <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
 
@@ -126,7 +126,7 @@
         <h5 class="card-title mb-0">{{ __('claims.claim_details') }}</h5>
     </div>
     <div class="card-body">
-        <form method="POST" action="{{ route('admin.claims.store') }}" id="claimForm">
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.claims.store') }}" id="claimForm">
             @csrf
 
             <div class="row mb-3">

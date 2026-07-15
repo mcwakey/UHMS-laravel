@@ -7,7 +7,7 @@
         <h4 class="fw-bold mb-1"><i class="ti ti-report-analytics me-2 text-primary"></i>{{ __('services.reports_title') }}</h4>
         <p class="text-muted mb-0">{{ __('services.reports_description') }}</p>
     </div>
-    <a href="{{ route('admin.service-renderings.index', request()->query()) }}" class="btn btn-outline-secondary btn-sm">
+    <a href="{{ $workspaceRoutes->route('admin.service-renderings.index', request()->query()) }}" class="btn btn-outline-secondary btn-sm">
         <i class="ti ti-arrow-left me-1"></i>{{ __('services.back_to_worklist') }}
     </a>
 </div>
@@ -23,7 +23,7 @@
 
 <div class="card mb-3">
     <div class="card-body">
-        <form method="GET" action="{{ route('admin.service-renderings.reports') }}" class="row g-2 align-items-end" data-auto-filter-form="service-renderings-reports">
+        <form method="GET" action="{{ $workspaceRoutes->route('admin.service-renderings.reports') }}" class="row g-2 align-items-end" data-auto-filter-form="service-renderings-reports">
             <div class="col-md-2">
                 <label class="form-label small">{{ __('common.status') }}</label>
                 <select class="form-select form-select-sm" name="status">
@@ -53,7 +53,7 @@
             <div class="col-md-auto">
                 <div class="d-flex gap-1">
                     <button class="btn btn-primary btn-sm" type="submit"><i class="ti ti-filter me-1"></i>{{ __('services.apply') }}</button>
-                    <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.service-renderings.reports') }}"><i class="ti ti-x"></i></a>
+                    <a class="btn btn-outline-secondary btn-sm" href="{{ $workspaceRoutes->route('admin.service-renderings.reports') }}"><i class="ti ti-x"></i></a>
                 </div>
             </div>
         </form>

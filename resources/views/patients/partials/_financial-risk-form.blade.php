@@ -3,8 +3,8 @@
     use App\Enums\PatientFinancialRiskReason;
     $editing = (bool) ($financialRisk && $financialRisk->status->occupiesActiveSlot());
     $action = $editing
-        ? route('admin.patients.financial-risk.update', [$patient, $financialRisk])
-        : route('admin.patients.financial-risk.store', $patient);
+        ? $workspaceRoutes->route('admin.patients.financial-risk.update', [$patient, $financialRisk])
+        : $workspaceRoutes->route('admin.patients.financial-risk.store', $patient);
 @endphp
 
 <div class="modal fade" id="frClassifyModal" tabindex="-1" aria-hidden="true">

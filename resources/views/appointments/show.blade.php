@@ -5,7 +5,7 @@
 @section('content')
     <x-page-header-back
         :title="__('appointments.title') . ' - ' . $appointment->appointment_number"
-        :href="route('admin.appointments.index')"
+        :href="$workspaceRoutes->route('admin.appointments.index')"
     />
 
 <!-- <div class="content"> -->
@@ -74,7 +74,7 @@
             <x-visit-summary-card :appointment="$appointment">
                 <x-slot:actions>
                     @if($appointment->status === \App\Enums\AppointmentStatus::SCHEDULED)
-                    <form method="POST" action="{{ route('admin.appointments.transition', $appointment) }}" class="js-appointment-action-form" data-follow-up="appointment">
+                    <form method="POST" action="{{ $workspaceRoutes->route('admin.appointments.transition', $appointment) }}" class="js-appointment-action-form" data-follow-up="appointment">
                         @csrf @method('PATCH')
                         <input type="hidden" name="status" value="confirmed">
                         <button type="submit" class="btn btn-primary btn-md">
@@ -91,7 +91,7 @@
 
                     @if($appointment->status === \App\Enums\AppointmentStatus::CONFIRMED)
                         @can('appointments.create')
-                        <form method="POST" action="{{ route('admin.appointments.check-in', $appointment) }}" class="js-appointment-action-form" data-follow-up="visit" data-requires-insurance-verification="1">
+                        <form method="POST" action="{{ $workspaceRoutes->route('admin.appointments.check-in', $appointment) }}" class="js-appointment-action-form" data-follow-up="visit" data-requires-insurance-verification="1">
                             @csrf
                             <input type="hidden" name="visit_insurance_id" id="checkInVisitInsuranceId" value="{{ $appointment->visit_insurance_id }}">
                             <input type="hidden" name="insurance_verification_id" id="checkInInsuranceVerificationId" value="">
@@ -101,7 +101,7 @@
                             </button>
                         </form>
                         @endcan
-                        <form method="POST" action="{{ route('admin.appointments.no-show', $appointment) }}" class="js-appointment-action-form" data-follow-up="appointment">
+                        <form method="POST" action="{{ $workspaceRoutes->route('admin.appointments.no-show', $appointment) }}" class="js-appointment-action-form" data-follow-up="appointment">
                             @csrf
                             <button type="submit" class="btn btn-dark btn-md">
                                 <i class="ti ti-user-off me-1"></i>{{ __('appointments.no_show_action') }}
@@ -111,7 +111,7 @@
 
                     @if($appointment->is_active && $appointment->status !== \App\Enums\AppointmentStatus::CHECKED_IN)
                         @can('appointments.edit')
-                        <a href="{{ route('admin.appointments.edit', $appointment) }}" class="btn btn-outline-primary btn-md">
+                        <a href="{{ $workspaceRoutes->route('admin.appointments.edit', $appointment) }}" class="btn btn-outline-primary btn-md">
                             <i class="ti ti-pencil me-1"></i>{{ __('common.reschedule') }}
                         </a>
                         @endcan
@@ -134,7 +134,7 @@
             @can('appointments.create')
             <div class="card">
                 <div class="card-body">
-                    <a href="{{ route('admin.appointments.create', ['patient_id' => $appointment->patient_id]) }}" class="btn btn-outline-primary w-100">
+                    <a href="{{ $workspaceRoutes->route('admin.appointments.create', ['patient_id' => $appointment->patient_id]) }}" class="btn btn-outline-primary w-100">
                         <i class="ti ti-calendar-plus me-1"></i> {{ __('appointments.schedule_another') }}
                     </a>
                 </div>
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const checkInModal = checkInModalEl ? bootstrap.Modal.getOrCreateInstance(checkInModalEl) : null;
     const continueCheckInBtn = document.getElementById('continueAppointmentCheckInBtn');
     const verifyUrl = @json(route('admin.insurance.verify'));
-    const patientInsurancesUrl = @json(route('admin.visits.patient-insurances'));
+    const patientInsurancesUrl = @json($workspaceRoutes->route('admin.visits.patient-insurances'));
     const patientId = @json($appointment->patient_id);
     const selectedAppointmentInsuranceId = @json($appointment->visit_insurance_id);
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';

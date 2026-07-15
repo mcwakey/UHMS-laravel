@@ -15,7 +15,7 @@
         </small>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ route('admin.claims.show', $claim) }}" class="btn btn-outline-secondary btn-md fs-13">
+        <a href="{{ $workspaceRoutes->route('admin.claims.show', $claim) }}" class="btn btn-outline-secondary btn-md fs-13">
             <i class="ti ti-arrow-left me-1"></i>{{ __('claims.back_to_claim') }}
         </a>
     </div>
@@ -103,7 +103,7 @@
                 <span class="fw-semibold">{{ $claim->membership_number ?: 'N/A' }}</span>
             </div>
             <div class="col-md-3">
-                <form method="POST" action="{{ route('admin.claims.verification-code', $claim) }}">
+                <form method="POST" action="{{ $workspaceRoutes->route('admin.claims.verification-code', $claim) }}">
                     @csrf
                     <label class="form-label mb-1">{{ $claim->insuranceProvider?->verificationCodeLabel() ?? __('claims.verification_code') }}</label>
                     <div class="input-group input-group-sm">
@@ -146,7 +146,7 @@
                     @if($item->status === \App\Enums\ClaimItemStatus::PENDING)
                     <div class="d-flex gap-2">
                         <!-- Approve Form -->
-                        <form method="POST" action="{{ route('admin.claims.review-item', [$claim, $item]) }}" class="d-flex gap-1 flex-grow-1">
+                        <form method="POST" action="{{ $workspaceRoutes->route('admin.claims.review-item', [$claim, $item]) }}" class="d-flex gap-1 flex-grow-1">
                             @csrf
                             <input type="hidden" name="action" value="approve">
                             <input type="number" name="approved_amount" class="form-control form-control-sm" style="width: 140px;"
@@ -156,7 +156,7 @@
                             </button>
                         </form>
                         <!-- Reject Form -->
-                        <form method="POST" action="{{ route('admin.claims.review-item', [$claim, $item]) }}" class="d-flex gap-1 flex-grow-1">
+                        <form method="POST" action="{{ $workspaceRoutes->route('admin.claims.review-item', [$claim, $item]) }}" class="d-flex gap-1 flex-grow-1">
                             @csrf
                             <input type="hidden" name="action" value="reject">
                             <input type="text" name="rejection_reason" class="form-control form-control-sm"
@@ -181,7 +181,7 @@
         <h5 class="card-title mb-0 text-success"><i class="ti ti-check me-1"></i>{{ __('claims.all_items_reviewed') }}</h5>
     </div>
     <div class="card-body">
-        <form method="POST" action="{{ route('admin.claims.complete-review', $claim) }}">
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.claims.complete-review', $claim) }}">
             @csrf
             <div class="mb-3">
                 <label class="form-label">{{ __('claims.reviewer_notes_optional') }}</label>

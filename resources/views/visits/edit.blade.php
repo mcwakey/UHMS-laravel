@@ -4,7 +4,7 @@
 @section('content')
 <x-page-header-back
     :title="__('visits.edit_visit_heading')"
-    :href="route('admin.visits.show', $visit)"
+    :href="$workspaceRoutes->route('admin.visits.show', $visit)"
 />
 
 @if(session('error'))
@@ -21,7 +21,7 @@
 </div>
 @endif
 
-<form method="POST" action="{{ route('admin.visits.update', $visit) }}" id="visitForm">
+<form method="POST" action="{{ $workspaceRoutes->route('admin.visits.update', $visit) }}" id="visitForm">
     @csrf
     @method('PUT')
 
@@ -106,7 +106,7 @@
                 <button type="submit" class="btn btn-primary btn-lg">
                     <i class="ti ti-device-floppy me-1"></i>{{ __('visits.update_visit') }}
                 </button>
-                <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary">{{ __('common.cancel') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary">{{ __('common.cancel') }}</a>
             </div>
         </div>
     </div>
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* ----- Insurance ----- */
     function loadPatientInsurances() {
-        fetch('{{ route("admin.visits.patient-insurances") }}?patient_id=' + patientId, {
+        fetch('{{ $workspaceRoutes->route("admin.visits.patient-insurances") }}?patient_id=' + patientId, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(r => r.json())
@@ -279,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function () {
     departmentSelect.addEventListener('change', function () {
         if (!this.value) { showServicesPlaceholder(); return; }
         showServicesLoading();
-        fetch('{{ route("admin.visits.department-services") }}?department_id=' + this.value, {
+        fetch('{{ $workspaceRoutes->route("admin.visits.department-services") }}?department_id=' + this.value, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(r => r.json())
@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function () {
     doctorSelect.addEventListener('change', function () {
         if (!this.value || departmentSelect.value) return;
         showServicesLoading();
-        fetch('{{ route("admin.visits.services-for-doctor") }}?doctor_id=' + this.value, {
+        fetch('{{ $workspaceRoutes->route("admin.visits.services-for-doctor") }}?doctor_id=' + this.value, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(r => r.json())

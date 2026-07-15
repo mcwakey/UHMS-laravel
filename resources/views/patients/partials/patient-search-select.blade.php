@@ -22,7 +22,7 @@
     $required = $required ?? false;
     $emptyOption = $emptyOption ?? null;
     $selected = $selected ?? null;
-    $searchRoute = $searchRoute ?? route('admin.visits.patient-search');
+    $searchRoute = $searchRoute ?? $workspaceRoutes->route('admin.visits.patient-search');
 @endphp
 <div class="mb-2" data-patient-search="{{ $id }}" data-search-url="{{ $searchRoute }}">
     <label class="form-label">{{ $label }} @if($required)<span class="text-danger">*</span>@endif</label>

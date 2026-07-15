@@ -8,12 +8,12 @@
         </h4>
     </div>
     @can('front_desk.lost_found.create')
-    <a href="{{ route('admin.front-desk.lost-found.create') }}" class="btn btn-primary btn-md fs-13"><i class="ti ti-plus me-1"></i>{{ __('front_desk.lost_found.new') }}</a>
+    <a href="{{ $workspaceRoutes->route('admin.front-desk.lost-found.create') }}" class="btn btn-primary btn-md fs-13"><i class="ti ti-plus me-1"></i>{{ __('front_desk.lost_found.new') }}</a>
     @endcan
 </div>
 
 <div class="card mb-3"><div class="card-body">
-    <form method="GET" action="{{ route('admin.front-desk.lost-found.index') }}" class="row g-2 align-items-end">
+    <form method="GET" action="{{ $workspaceRoutes->route('admin.front-desk.lost-found.index') }}" class="row g-2 align-items-end">
         <div class="col-md-3"><label class="form-label fs-13">{{ __('front_desk.actions.search') }}</label><input type="text" name="search" class="form-control" value="{{ $filters['search'] ?? '' }}"></div>
         <div class="col-md-2"><label class="form-label fs-13">{{ __('front_desk.fields.item_status') }}</label>
             <select name="item_status" class="form-select"><option value="">{{ __('front_desk.filters.all_statuses') }}</option>
@@ -28,7 +28,7 @@
                 <option value="1" @selected(($filters['unclaimed'] ?? '') === '1')>{{ __('front_desk.dashboard.unclaimed_lost_found') }}</option>
             </select></div>
         <div class="col-md-3 d-flex gap-2"><button type="submit" class="btn btn-primary"><i class="ti ti-filter me-1"></i>{{ __('front_desk.actions.filter') }}</button>
-            <a href="{{ route('admin.front-desk.lost-found.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.reset') }}</a></div>
+            <a href="{{ $workspaceRoutes->route('admin.front-desk.lost-found.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.reset') }}</a></div>
     </form>
 </div></div>
 
@@ -49,7 +49,7 @@
                 <td>{{ $log->found_or_reported_at?->format('d M Y H:i') }}</td>
                 <td>{{ $log->stored_location ?? __('front_desk.none') }}</td>
                 <td><x-status-badge :status="$log->item_status" size="sm" /></td>
-                <td class="text-end"><a href="{{ route('admin.front-desk.lost-found.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a></td>
+                <td class="text-end"><a href="{{ $workspaceRoutes->route('admin.front-desk.lost-found.show', $log) }}" class="btn btn-sm btn-icon btn-outline-primary" title="{{ __('front_desk.actions.view') }}"><i class="ti ti-eye"></i></a></td>
             </tr>
             @empty
             <tr><td colspan="7"><x-empty-state icon="ti-briefcase" :message="__('front_desk.lost_found.none')" /></td></tr>

@@ -1,8 +1,14 @@
 {{-- Reusable error-page action buttons. Pass any of: back, reload, dashboard, login (booleans). --}}
 @php
-    $dashboardUrl = \Illuminate\Support\Facades\Route::has('admin.dashboard')
-        ? route('admin.dashboard')
-        : (\Illuminate\Support\Facades\Route::has('dashboard') ? route('dashboard') : url('/'));
+    try {
+        $dashboardUrl = auth()->check()
+            ? app(\App\Services\WorkspaceRouteResolver::class)->dashboard()
+            : (\Illuminate\Support\Facades\Route::has('login') ? route('login') : url('/'));
+    } catch (\Throwable) {
+        $dashboardUrl = auth()->check() && \Illuminate\Support\Facades\Route::has('admin.my-dashboard')
+            ? route('admin.my-dashboard')
+            : (\Illuminate\Support\Facades\Route::has('login') ? route('login') : url('/'));
+    }
     $loginUrl = \Illuminate\Support\Facades\Route::has('login') ? route('login') : url('/login');
 @endphp
 @if($back ?? false)

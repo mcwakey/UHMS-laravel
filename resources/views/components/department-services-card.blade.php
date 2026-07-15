@@ -9,7 +9,7 @@
 @php
     $departments = collect($departments);
     $doctors = collect($doctors);
-    $isVisitEdit = request()->routeIs('admin.visits.edit');
+    $isVisitEdit = request()->routeIs('admin.visits.edit', 'records.visits.edit');
 
     $title = __('visits.dept_services_heading');
     $departmentLabel = __('visits.department_filter_label');

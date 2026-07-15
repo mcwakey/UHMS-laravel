@@ -6,7 +6,7 @@
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">{{ __('front_desk.calls.edit') }}</h4>
     </div>
-    <a href="{{ route('admin.front-desk.calls.show', $log) }}" class="btn btn-outline-secondary">
+    <a href="{{ $workspaceRoutes->route('admin.front-desk.calls.show', $log) }}" class="btn btn-outline-secondary">
         <i class="ti ti-arrow-left me-1"></i>{{ __('front_desk.actions.back') }}
     </a>
 </div>

@@ -32,9 +32,9 @@
         @endunless
         @endcan
         @can('front_desk.couriers.update')
-        <a href="{{ route('admin.front-desk.couriers.edit', $log) }}" class="btn btn-outline-secondary"><i class="ti ti-edit me-1"></i>{{ __('front_desk.actions.edit') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.couriers.edit', $log) }}" class="btn btn-outline-secondary"><i class="ti ti-edit me-1"></i>{{ __('front_desk.actions.edit') }}</a>
         @endcan
-        <a href="{{ route('admin.front-desk.couriers.index') }}" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>{{ __('front_desk.actions.back') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.front-desk.couriers.index') }}" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>{{ __('front_desk.actions.back') }}</a>
     </div>
 </div>
 
@@ -105,7 +105,7 @@
 {{-- Dispatch modal --}}
 @can('front_desk.couriers.dispatch')
 <div class="modal fade" id="dispatchModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
-    <form method="POST" action="{{ route('admin.front-desk.couriers.dispatch', $log) }}">
+    <form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.couriers.dispatch', $log) }}">
         @csrf
         <div class="modal-header"><h5 class="modal-title">{{ __('front_desk.actions.dispatch') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
@@ -121,7 +121,7 @@
 {{-- Handover modal --}}
 @can('front_desk.couriers.handover')
 <div class="modal fade" id="handoverModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
-    <form method="POST" action="{{ route('admin.front-desk.couriers.handover', $log) }}">
+    <form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.couriers.handover', $log) }}">
         @csrf
         <div class="modal-header"><h5 class="modal-title">{{ __('front_desk.actions.handover') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
@@ -140,7 +140,7 @@
 @can('front_desk.couriers.deliver')
 @unless($log->isDelivered())
 <div class="modal fade" id="deliverModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
-    <form method="POST" action="{{ route('admin.front-desk.couriers.mark-delivered', $log) }}">
+    <form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.couriers.mark-delivered', $log) }}">
         @csrf
         <div class="modal-header"><h5 class="modal-title">{{ __('front_desk.actions.mark_delivered') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
@@ -158,7 +158,7 @@
 @can('front_desk.couriers.return')
 @unless($log->isDelivered())
 <div class="modal fade" id="returnModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
-    <form method="POST" action="{{ route('admin.front-desk.couriers.mark-returned', $log) }}">
+    <form method="POST" action="{{ $workspaceRoutes->route('admin.front-desk.couriers.mark-returned', $log) }}">
         @csrf
         <div class="modal-header"><h5 class="modal-title">{{ __('front_desk.actions.mark_returned') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body"><label class="form-label">{{ __('front_desk.fields.return_reason') }}</label><textarea name="reason" class="form-control" rows="2"></textarea></div>

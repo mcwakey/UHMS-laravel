@@ -5,6 +5,10 @@
     'breadcrumbs' => null,  // optional array of ['label' => , 'url' => (nullable)]
 ])
 
+@php
+    $breadcrumbs = $breadcrumbs ?? ($workspaceContext['breadcrumbs'] ?? null);
+@endphp
+
 {{--
     Standard UHMS page header. Usage:
 

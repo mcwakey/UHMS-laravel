@@ -11,7 +11,7 @@
 
 @include('admin.front-desk.partials.visitor-warnings', ['warnings' => $warnings ?? []])
 
-<form method="POST" action="{{ $isEdit ? route('admin.front-desk.visitors.update', $log) : route('admin.front-desk.visitors.store') }}">
+<form method="POST" action="{{ $isEdit ? $workspaceRoutes->route('admin.front-desk.visitors.update', $log) : $workspaceRoutes->route('admin.front-desk.visitors.store') }}">
     @csrf
     @if($isEdit) @method('PUT') @endif
 
@@ -143,7 +143,7 @@
                     </div>
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary flex-grow-1"><i class="ti ti-device-floppy me-1"></i>{{ __('front_desk.actions.save') }}</button>
-                        <a href="{{ $isEdit ? route('admin.front-desk.visitors.show', $log) : route('admin.front-desk.visitors.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.cancel') }}</a>
+                        <a href="{{ $isEdit ? $workspaceRoutes->route('admin.front-desk.visitors.show', $log) : $workspaceRoutes->route('admin.front-desk.visitors.index') }}" class="btn btn-outline-secondary">{{ __('front_desk.actions.cancel') }}</a>
                     </div>
                 </div>
             </div>
