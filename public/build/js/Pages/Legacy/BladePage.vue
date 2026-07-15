@@ -240,6 +240,7 @@ function handleSubmit(event) {
     if (shouldIgnoreForm(form, action)) return;
 
     const method = (form.getAttribute('method') || 'get').toLowerCase();
+    const preserveScroll = form.hasAttribute('data-preserve-scroll');
     event.preventDefault();
 
     const submitNative = (reason) => {
@@ -269,7 +270,7 @@ function handleSubmit(event) {
 
             router.visit(visitUrl, {
                 method: 'get',
-                preserveScroll: false,
+                preserveScroll,
                 preserveState: false,
                 onError: (errors) => {
                     // eslint-disable-next-line no-console
@@ -283,7 +284,7 @@ function handleSubmit(event) {
                 method,
                 data,
                 forceFormData,
-                preserveScroll: false,
+                preserveScroll,
                 preserveState: false,
                 onError: (errors) => {
                     // 422 validation errors are normal Inertia flow — the server

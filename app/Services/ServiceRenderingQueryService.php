@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\VisitType;
 use App\Models\ServiceRendering;
 use App\Models\User;
+use App\Services\Department\DepartmentContextSwitcherService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -19,7 +21,7 @@ class ServiceRenderingQueryService
 
     public function baseQuery(array $filters, ?User $user = null): Builder
     {
-        return ServiceRendering::query()
+        $query = ServiceRendering::query()
             ->with([
                 'patient',
                 'visit',
@@ -30,8 +32,19 @@ class ServiceRenderingQueryService
                 'admission',
                 'renderedBy',
                 'startedBy',
-            ])
-            ->visibleTo($user)
+            ]);
+
+        if (app(WorkspaceRouteResolver::class)->isNursing() && $user) {
+            $department = app(DepartmentContextSwitcherService::class)->currentDepartment($user, request());
+            $query->where('department_id', $department?->id)
+                ->whereNull('admission_id')
+                ->whereNull('emergency_case_id')
+                ->whereHas('visit', fn (Builder $visit) => $visit->where('visit_type', VisitType::OUTPATIENT->value));
+        } else {
+            $query->visibleTo($user);
+        }
+
+        return $query
             ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
             ->when($filters['department_id'] ?? null, fn (Builder $query, $departmentId) => $query->where('department_id', $departmentId))
             ->when($filters['service_id'] ?? null, fn (Builder $query, $serviceId) => $query->where('service_id', $serviceId))

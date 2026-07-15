@@ -10,10 +10,19 @@
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
     <h4 class="fw-bold mb-0">{{ $t('title') }}</h4>
     <div class="d-flex gap-2">
-        <a href="{{ route('admin.admissions.index') }}" class="btn btn-primary"><i class="ti ti-bed me-1"></i>{{ $t('view_admissions') }}</a>
-        <a href="{{ route('admin.visits.index') }}" class="btn btn-outline-dark"><i class="ti ti-list-numbers me-1"></i>{{ $tc('view_full_queue') }}</a>
+        @if($nursingOpd ?? false)
+            <a href="{{ route('nursing.opd.queue') }}" class="btn btn-primary"><i class="ti ti-list-numbers me-1"></i>{{ __('nursing.menu.opd_queue') }}</a>
+            <a href="{{ route('nursing.vitals.create') }}" class="btn btn-outline-dark"><i class="ti ti-heartbeat me-1"></i>{{ __('nursing.menu.vital_signs') }}</a>
+        @else
+            <a href="{{ route('admin.admissions.index') }}" class="btn btn-primary"><i class="ti ti-bed me-1"></i>{{ $t('view_admissions') }}</a>
+            <a href="{{ route('admin.visits.index') }}" class="btn btn-outline-dark"><i class="ti ti-list-numbers me-1"></i>{{ $tc('view_full_queue') }}</a>
+        @endif
     </div>
 </div>
+
+@if($nursingOpd ?? false)
+    @include('nursing.dashboard')
+@endif
 
 @include('dashboards.partials._insight', ['insight' => $insight])
 @include('dashboards.partials._pressure', ['widget' => $pressure])
@@ -114,7 +123,9 @@
                 @empty
                     <p class="text-center text-muted my-4">{{ $t('no_meds_due') }}</p>
                 @endforelse
-                <a href="{{ route('admin.admissions.index') }}" class="btn btn-light w-100 mt-2">{{ $tc('view_full_schedule') }}</a>
+                @unless($nursingOpd ?? false)
+                    <a href="{{ route('admin.admissions.index') }}" class="btn btn-light w-100 mt-2">{{ $tc('view_full_schedule') }}</a>
+                @endunless
             </div>
         </div>
     </div>
@@ -132,7 +143,9 @@
         <div class="card border shadow-sm h-100 mb-0">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="fw-bold mb-0">{{ $t('shift_handover_notes') }}</h5>
-                <a href="{{ route('admin.admissions.index') }}" class="btn btn-sm btn-outline-secondary">{{ $t('add_note') }}</a>
+                @unless($nursingOpd ?? false)
+                    <a href="{{ route('admin.admissions.index') }}" class="btn btn-sm btn-outline-secondary">{{ $t('add_note') }}</a>
+                @endunless
             </div>
             <div class="card-body">
                 @forelse($handoverNotes as $note)

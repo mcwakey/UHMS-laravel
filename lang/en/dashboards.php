@@ -358,6 +358,7 @@ return [
         'accounting' => 'Accounting / Finance Dashboard',
         'emergency' => 'Emergency / Casualty Dashboard',
         'admission' => 'Admission / Ward Dashboard',
+        'nursing' => 'Nursing OPD Dashboard',
         'blood_bank' => 'Blood Bank Dashboard',
         'claims' => 'Insurance / Claims Dashboard',
         'hr' => 'HR / Payroll Dashboard',

@@ -13,7 +13,7 @@
         <h4 class="fw-bold mb-0"><i class="ti ti-stethoscope me-2 text-info"></i>{{ __('triage.assessment') }}</h4>
         <small class="text-muted">{{ $visit->patient->full_name }} &bull; {{ $visit->visit_number }}</small>
     </div>
-    <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
+    <a href="{{ $workspaceRoutes->route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
         <i class="ti ti-arrow-left me-1"></i>{{ __('triage.back_to_visit') }}
     </a>
 </div> -->
@@ -202,7 +202,7 @@
                 <button type="submit" class="btn btn-primary px-4" id="triageSubmitBtn">
                     <i class="ti ti-stethoscope me-1"></i><span id="triageSubmitLabel">{{ __('triage.complete_triage') }}</span>
                 </button>
-                <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary">{{ __('common.cancel') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary">{{ __('common.cancel') }}</a>
             </div>
         </form>
     </div>

@@ -22,21 +22,21 @@ class DepartmentMenuProfileService
      * the top (just under "Main Menu"). Titles must match SidebarMenuBuilder.
      */
     private const PROFILES = [
-        'consultation'  => ['Patient Services', 'Clinical'],
-        'treatment'     => ['Clinical', 'Patient Services'],
-        'nursing'       => ['Ward / Inpatient', 'Ward / Emergency', 'Clinical'],
-        'emergency'     => ['Ward / Emergency', 'Patient Services', 'Clinical'],
+        'consultation' => ['Patient Services', 'Clinical'],
+        'treatment' => ['Clinical', 'Patient Services'],
+        'nursing' => ['Nursing Workspace', 'OPD Patient Flow', 'Triage and Assessment', 'Nursing Care'],
+        'emergency' => ['Ward / Emergency', 'Patient Services', 'Clinical'],
         'investigation' => ['Investigations'],
-        'radiology'     => ['Investigations'],
-        'procedure'     => ['Theatre / Procedures'],
-        'theatre'       => ['Theatre / Procedures'],
-        'pharmacy'      => ['Pharmacy'],
-        'inpatient'     => ['Ward / Inpatient', 'Ward / Emergency'],
-        'maternity'     => ['Ward / Inpatient', 'Clinical'],
-        'blood_bank'    => ['Blood Bank'],
-        'records'       => ['Patient Services', 'Reports'],
-        'finance'       => ['Billing & Collections', 'Accounts & Finance', 'Claims & Insurance'],
-        'stores'        => ['Store & Procurement'],
+        'radiology' => ['Investigations'],
+        'procedure' => ['Theatre / Procedures'],
+        'theatre' => ['Theatre / Procedures'],
+        'pharmacy' => ['Pharmacy'],
+        'inpatient' => ['Ward / Inpatient', 'Ward / Emergency'],
+        'maternity' => ['Ward / Inpatient', 'Clinical'],
+        'blood_bank' => ['Blood Bank'],
+        'records' => ['Patient Services', 'Reports'],
+        'finance' => ['Billing & Collections', 'Accounts & Finance', 'Claims & Insurance'],
+        'stores' => ['Store & Procurement'],
         // administrative, support, mortuary, ambulance → default order (no profile).
     ];
 

@@ -128,16 +128,16 @@
                                 <div class="small mb-1">{{ $h->actionLabel }}</div>
                                 <div class="d-flex flex-wrap gap-1">
                                     @if($h->actionUrl)
-                                        <a href="{{ $h->actionUrl }}" class="btn btn-sm btn-outline-primary" title="{{ __('journey.worklist.open_action') }}"><i class="ti ti-external-link"></i></a>
+                                        <a href="{{ $workspaceRoutes->visitActionUrl($h->visitId, $h->actionUrl) }}" class="btn btn-sm btn-outline-primary" title="{{ __('journey.worklist.open_action') }}"><i class="ti ti-external-link"></i></a>
                                     @endif
                                     @if($h->isUnassigned() && $canAct($h->toDepartmentType))
-                                        <form method="POST" action="{{ route('admin.journey.handoffs.claim') }}" class="d-inline">@csrf
+                                        <form method="POST" action="{{ route($workspaceRoutes->handoffRouteName('claim')) }}" class="d-inline">@csrf
                                             <input type="hidden" name="visit_id" value="{{ $h->visitId }}"><input type="hidden" name="cause" value="{{ $h->cause->value }}">
                                             <button class="btn btn-sm btn-primary">{{ __('journey.assignment.claim') }}</button>
                                         </form>
                                     @endif
                                     @if($canAct($h->toDepartmentType) && !empty($assignableByType[$h->toDepartmentType] ?? null))
-                                        <form method="POST" action="{{ route('admin.journey.handoffs.assign') }}" class="d-inline-flex gap-1">@csrf
+                                        <form method="POST" action="{{ route($workspaceRoutes->handoffRouteName('assign')) }}" class="d-inline-flex gap-1">@csrf
                                             <input type="hidden" name="visit_id" value="{{ $h->visitId }}"><input type="hidden" name="cause" value="{{ $h->cause->value }}">
                                             <select name="assignee_id" class="form-select form-select-sm" style="max-width: 150px;" required>
                                                 <option value="">{{ __('journey.assignment.choose_assignee') }}</option>
@@ -149,12 +149,12 @@
                                         </form>
                                     @endif
                                     @if($h->assignmentId && $h->assignmentStatus === 'assigned' && ($h->assignedToUserId === ($currentUserId ?? null) || $canAct($h->toDepartmentType)))
-                                        <form method="POST" action="{{ route('admin.journey.handoffs.acknowledge', $h->assignmentId) }}" class="d-inline">@csrf
+                                        <form method="POST" action="{{ route($workspaceRoutes->handoffRouteName('acknowledge'), $h->assignmentId) }}" class="d-inline">@csrf
                                             <button class="btn btn-sm btn-outline-success">{{ __('journey.assignment.acknowledge') }}</button>
                                         </form>
                                     @endif
                                     @if($h->assignmentId && ($h->assignedToUserId === ($currentUserId ?? null) || $canAct($h->toDepartmentType)))
-                                        <form method="POST" action="{{ route('admin.journey.handoffs.resolve', $h->assignmentId) }}" class="d-inline">@csrf
+                                        <form method="POST" action="{{ route($workspaceRoutes->handoffRouteName('resolve'), $h->assignmentId) }}" class="d-inline">@csrf
                                             <button class="btn btn-sm btn-success">{{ __('journey.assignment.resolve') }}</button>
                                         </form>
                                     @endif
@@ -182,7 +182,7 @@
                                     <span class="badge bg-{{ $stVariant($action->actionStatus) }}-subtle text-{{ $stVariant($action->actionStatus) }}">{{ __('journey.action_status.'.$action->actionStatus) }}</span>
                                 </div>
                                 @if($action->actionUrl)
-                                    <a href="{{ $action->actionUrl }}" class="btn btn-sm btn-primary"><i class="ti ti-arrow-right me-1"></i>{{ __('journey.worklist.open_action') }}</a>
+                                    <a href="{{ $workspaceRoutes->visitActionUrl($action->visitId, $action->actionUrl) }}" class="btn btn-sm btn-primary"><i class="ti ti-arrow-right me-1"></i>{{ __('journey.worklist.open_action') }}</a>
                                 @else
                                     <span class="small text-muted">{{ __('journey.worklist.unavailable') }}</span>
                                 @endif

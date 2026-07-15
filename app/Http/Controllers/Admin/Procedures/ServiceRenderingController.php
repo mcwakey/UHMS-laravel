@@ -8,9 +8,12 @@ use App\Models\ServiceCatalog;
 use App\Models\ServiceRendering;
 use App\Models\Visit;
 use App\Services\BillingService;
+use App\Services\Department\DepartmentContextSwitcherService;
+use App\Services\Nursing\NursingOpdService;
 use App\Services\ServiceRenderingQueryService;
 use App\Services\ServiceRenderingReportService;
 use App\Services\ServiceRenderingService;
+use App\Services\WorkspaceRouteResolver;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -42,13 +45,17 @@ class ServiceRenderingController extends Controller
             ->distinct()
             ->pluck('department_id');
 
+        $nursingDepartment = app(WorkspaceRouteResolver::class)->isNursing()
+            ? app(DepartmentContextSwitcherService::class)->currentDepartment($request->user(), $request)
+            : null;
+
         return view('service-renderings.index', [
             'renderings' => $this->queries->paginate($filters, $request->user(), (int) ($filters['per_page'] ?? 25)),
             'summary' => $this->reports->summary($filters, $request->user()),
             'filters' => $filters,
             'statuses' => ServiceRendering::statuses(),
-            'departments' => Department::query()->orderBy('name')->get(['id', 'name']),
-            'renderableDepartments' => Department::query()->whereIn('id', $renderableDepartmentIds)->orderBy('name')->get(['id', 'name']),
+            'departments' => Department::query()->when($nursingDepartment, fn ($query) => $query->whereKey($nursingDepartment->id))->orderBy('name')->get(['id', 'name']),
+            'renderableDepartments' => Department::query()->whereIn('id', $renderableDepartmentIds)->when($nursingDepartment, fn ($query) => $query->whereKey($nursingDepartment->id))->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -68,6 +75,11 @@ class ServiceRenderingController extends Controller
         $visit = Visit::findOrFail($data['visit_id']);
         $service = ServiceCatalog::findOrFail($data['service_id']);
 
+        if (app(WorkspaceRouteResolver::class)->isNursing()) {
+            $department = app(DepartmentContextSwitcherService::class)->currentDepartment($request->user(), $request);
+            abort_unless((int) $service->department_id === (int) $department?->id, 422, __('nursing.service_renderings.wrong_department'));
+        }
+
         try {
             $billing->addItemToVisitInvoice(
                 $visit,
@@ -83,7 +95,7 @@ class ServiceRenderingController extends Controller
         }
 
         return redirect()
-            ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.service-renderings.index'))
+            ->route(app(WorkspaceRouteResolver::class)->routeName('admin.service-renderings.index'))
             ->with('success', __('messages.service_rendering.billed', ['service' => $service->name, 'visit' => $visit->visit_number]));
     }
 
@@ -92,7 +104,11 @@ class ServiceRenderingController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
 
-        $visits = Visit::query()
+        $visits = app(WorkspaceRouteResolver::class)->isNursing()
+            ? app(NursingOpdService::class)->query(app(DepartmentContextSwitcherService::class)->currentDepartment($request->user(), $request))
+            : Visit::query();
+
+        $visits = $visits
             ->with('patient:id,patient_number,first_name,last_name')
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($w) use ($q) {
@@ -122,10 +138,15 @@ class ServiceRenderingController extends Controller
     {
         $q = trim((string) $request->query('q', ''));
 
+        $nursingDepartment = app(WorkspaceRouteResolver::class)->isNursing()
+            ? app(DepartmentContextSwitcherService::class)->currentDepartment($request->user(), $request)
+            : null;
+
         $services = ServiceCatalog::query()
             ->with('department:id,name')
             ->where('is_active', true)
             ->where('requires_rendering_tracking', true)
+            ->when($nursingDepartment, fn ($query) => $query->where('department_id', $nursingDepartment->id))
             ->when($request->query('department_id'), fn ($x, $deptId) => $x->where('department_id', $deptId))
             ->when($q !== '', function ($x) use ($q) {
                 $x->where(function ($w) use ($q) {

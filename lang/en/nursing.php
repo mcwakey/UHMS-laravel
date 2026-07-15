@@ -1,0 +1,58 @@
+<?php
+
+return [
+    'workspace' => ['title' => 'Nursing OPD Workspace'],
+    'unauthorized' => 'The Nursing workspace is available only while an active Nursing department is selected.',
+    'dashboard' => ['title' => 'Nursing OPD Dashboard', 'subtitle' => 'Today\'s department-scoped outpatient workload'],
+    'menu' => [
+        'workspace' => 'Nursing Workspace', 'dashboard' => 'Dashboard', 'opd_flow' => 'OPD Patient Flow',
+        'opd_queue' => 'OPD Queue', 'active_cases' => 'Active OPD Cases', 'completed_today' => 'Completed Today',
+        'triage_assessment' => 'Triage and Assessment', 'triage_worklist' => 'Triage Worklist', 'vital_signs' => 'Vital Signs',
+        'nursing_care' => 'Nursing Care', 'tasks' => 'Nursing Tasks', 'treatments' => 'Treatments',
+        'consultations' => 'Consultations', 'service_renderings' => 'Service Rendering', 'service_rendering_reports' => 'Service Rendering Report',
+        'coordination' => 'Coordination', 'handoffs' => 'Handoffs', 'patient_access' => 'Patient Access',
+        'patients' => 'Patient Search', 'visits' => 'Visit History', 'reports' => 'Nursing Reports',
+        'opd_reports' => 'OPD Activity Report', 'general' => 'General', 'notifications' => 'Notifications', 'profile' => 'My Profile',
+    ],
+    'queue' => [
+        'title' => 'OPD Nursing Queue', 'subtitle' => 'Outpatient visits assigned to :department',
+        'all' => 'All OPD visits', 'active' => 'Active cases', 'waiting_for_triage' => 'Waiting for triage',
+        'triage_in_progress' => 'In triage', 'vitals_incomplete' => 'Vitals incomplete',
+        'waiting_for_consultation' => 'Waiting for consultation', 'consultation_in_progress' => 'Consultation in progress',
+        'nursing_action_required' => 'Nursing action required', 'treatment_pending' => 'Treatment support',
+        'service_follow_up' => 'Service follow-up', 'ready_for_discharge' => 'Discharge preparation',
+        'completed_today' => 'Completed today', 'empty' => 'No outpatient visits match this worklist.',
+        'search_placeholder' => 'Visit or patient number', 'waiting_time' => 'Waiting time',
+    ],
+    'metrics' => [
+        'waiting_for_triage' => 'Waiting for triage', 'triage_in_progress' => 'In triage',
+        'vitals_incomplete' => 'Vitals incomplete', 'waiting_for_consultation' => 'Waiting for consultation',
+        'consultation_in_progress' => 'Active consultations', 'nursing_action_required' => 'Pending nursing tasks',
+        'treatment_pending' => 'Treatment support', 'service_follow_up' => 'Service follow-up',
+        'ready_for_discharge' => 'Discharge preparation', 'completed_today' => 'Completed today',
+        'active' => 'Active OPD cases', 'high_risk' => 'High-risk cases',
+    ],
+    'case' => [
+        'title' => 'OPD Nursing Case', 'visit_details' => 'Visit details', 'triage' => 'Triage summary',
+        'vitals' => 'Vital signs', 'tasks' => 'Nursing tasks', 'treatments' => 'Treatments',
+        'services' => 'Pending services', 'consultation' => 'Consultation status', 'no_data' => 'No information recorded.',
+        'record_triage' => 'Record triage', 'record_vitals' => 'Record vital signs', 'patient_identifier' => 'Patient identifier',
+    ],
+    'tasks' => ['title' => 'Nursing Tasks', 'empty' => 'No OPD nursing tasks are assigned to this department.', 'details' => 'Task details', 'claim' => 'Claim task', 'start' => 'Start task', 'complete' => 'Complete task', 'updated' => 'Nursing task updated.', 'closed_visit' => 'Tasks from a previous-day visit require the formal visit reopening workflow.', 'already_completed' => 'This task is already completed.', 'already_claimed' => 'This task is already assigned to another staff member.'],
+    'treatments' => ['title' => 'Treatment Support', 'empty' => 'No outpatient treatments require support.', 'details' => 'Visit treatments'],
+    'reports' => ['title' => 'Nursing OPD Activity Report', 'subtitle' => 'A bounded seven-day operational summary for :department', 'daily_attendance' => 'Daily OPD attendance'],
+    'consultations' => ['title' => 'OPD Consultations', 'subtitle' => 'Read-only consultation support for :department', 'details' => 'Consultation details', 'sessions' => 'Consultation sessions', 'clinician' => 'Clinician', 'record' => 'Clinical record', 'complaints' => 'Complaints', 'diagnoses' => 'Diagnoses', 'empty' => 'No scoped OPD consultations found.'],
+    'service_renderings' => ['wrong_department' => 'The selected service does not belong to the active Nursing department.'],
+    'common' => [
+        'patient' => 'Patient', 'visit' => 'Visit', 'status' => 'Status', 'priority' => 'Priority', 'arrival' => 'Arrival',
+        'action' => 'Action', 'view' => 'View', 'due' => 'Due', 'assigned_to' => 'Assigned to', 'type' => 'Type',
+        'description' => 'Description', 'recorded_at' => 'Recorded at', 'recorded_by' => 'Recorded by', 'department' => 'Department',
+        'filter' => 'Filter', 'reset' => 'Reset', 'today' => 'Today', 'not_assigned' => 'Unassigned',
+    ],
+    'breadcrumbs' => [
+        'nursing' => 'Nursing', 'opd_queue' => 'OPD Queue', 'patients' => 'Patients', 'visits' => 'Visits',
+        'triage' => 'Triage', 'vitals' => 'Vital Signs', 'tasks' => 'Nursing Tasks', 'treatments' => 'Treatments',
+        'handoffs' => 'Handoffs', 'reports' => 'Reports', 'details' => 'Details',
+        'consultations' => 'Consultations', 'service_renderings' => 'Service Rendering',
+    ],
+];

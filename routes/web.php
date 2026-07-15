@@ -43,9 +43,9 @@ use App\Http\Controllers\Admin\Billing\ClaimController;
 use App\Http\Controllers\Admin\Billing\FinancialEntryController;
 use App\Http\Controllers\Admin\Billing\FinancialRiskController;
 use App\Http\Controllers\Admin\Billing\PaymentTimingCutoverController;
+use App\Http\Controllers\Admin\Billing\VisitFinancialClearanceController;
 use App\Http\Controllers\Admin\Billing\VisitPaymentArrangementController;
 use App\Http\Controllers\Admin\Billing\VisitPaymentPolicyController;
-use App\Http\Controllers\Admin\Billing\VisitFinancialClearanceController;
 use App\Http\Controllers\Admin\BloodBank\BloodBankDashboardController;
 use App\Http\Controllers\Admin\BloodBank\BloodBankReportController;
 use App\Http\Controllers\Admin\BloodBank\BloodCrossmatchController;
@@ -67,6 +67,7 @@ use App\Http\Controllers\Admin\Dashboard\DepartmentContextController;
 use App\Http\Controllers\Admin\Dashboard\DepartmentDashboardController;
 use App\Http\Controllers\Admin\Dashboard\PermissionDashboardController;
 use App\Http\Controllers\Admin\Dashboard\ProfileController;
+use App\Http\Controllers\Admin\Dashboard\RoleDashboardController;
 use App\Http\Controllers\Admin\DoctorConsultationPreferenceAdminController;
 use App\Http\Controllers\Admin\Emergency\EmergencyBayController;
 use App\Http\Controllers\Admin\Emergency\EmergencyBillingController;
@@ -218,6 +219,10 @@ use App\Http\Controllers\Doctor\PrescriptionController;
 use App\Http\Controllers\Lab\LabRequestController;
 use App\Http\Controllers\Lab\LabResultController;
 use App\Http\Controllers\Lab\SampleController;
+use App\Http\Controllers\Nursing\ConsultationController;
+use App\Http\Controllers\Nursing\OpdController;
+use App\Http\Controllers\Nursing\TaskController;
+use App\Http\Controllers\Nursing\TreatmentController;
 use App\Http\Controllers\Pharmacy\DispensingController;
 use App\Http\Controllers\PublicPaymentController;
 use App\Http\Controllers\StaffDashboardController;
@@ -306,9 +311,92 @@ Route::middleware(['throttle:public-payments', 'module:payment_gateway'])
 
 Route::middleware('auth')->group(function () {
 
+    // Nursing Department OPD workspace. Clinical writes are delegated to the
+    // existing triage/vitals controllers so validation, safety and audit rules
+    // remain identical to the generic workflow.
+    Route::prefix('nursing')->name('nursing.')->middleware(['department.type:nursing', 'nursing.opd.scope'])->group(function () {
+        Route::get('/', fn () => redirect()->route('nursing.dashboard'))->name('dashboard.redirect');
+        Route::get('dashboard', App\Http\Controllers\Nursing\DashboardController::class)->middleware(['module:visits', 'can:visits.view'])->name('dashboard');
+
+        Route::middleware(['module:patients', 'can:patients.view'])->prefix('patients')->name('patients.')->group(function () {
+            Route::get('/', [PatientController::class, 'index'])->name('index');
+            Route::get('{patient}', [PatientController::class, 'show'])->name('show');
+        });
+
+        Route::middleware(['module:visits', 'can:visits.view'])->group(function () {
+            // Route::get('opd', [OpdController::class, 'index'])->name('opd.index');
+            Route::get('opd/queue', [OpdController::class, 'index'])->name('opd.queue');
+            // Route::get('opd/active', [OpdController::class, 'index'])->name('opd.active')->defaults('category', 'active');
+            // Route::get('opd/completed', [OpdController::class, 'index'])->name('opd.completed')->defaults('category', 'completed_today');
+            // Route::get('opd/{visit}', [OpdController::class, 'show'])->name('opd.show');
+            Route::get('/', [VisitController::class, 'index'])->name('index');
+            Route::get('visits', [VisitController::class, 'index'])->name('visits.index');
+            Route::get('visits/{visit}', [VisitController::class, 'show'])->name('visits.show');
+        });
+
+        Route::middleware(['module:triage', 'can:vitals.view'])->group(function () {
+            Route::get('triage', [TriageController::class, 'index'])->name('triage.index');
+            Route::get('triage/{visit}', [TriageController::class, 'show'])->name('triage.show');
+            Route::get('triage/{visit}/assess', [TriageController::class, 'create'])->name('triage.create')->middleware('can:vitals.create');
+            Route::get('triage/{visit}/edit', [TriageController::class, 'create'])->name('triage.edit')->middleware('can:vitals.create');
+            Route::post('triage/{visit}', [TriageController::class, 'store'])->name('triage.store')->middleware('can:vitals.create');
+            Route::put('triage/{visit}/assess', [TriageController::class, 'update'])->name('triage.update')->middleware('can:vitals.create');
+
+            Route::get('vitals/worklist', [VitalController::class, 'create'])->name('vitals.index');
+            Route::get('vitals', [VitalController::class, 'create'])->name('vitals.create');
+            Route::post('vitals', [VitalController::class, 'store'])->name('vitals.store')->middleware('can:vitals.create');
+            Route::get('vitals/{visit}', [VitalController::class, 'show'])->name('vitals.show');
+            Route::patch('vitals/{visit}/update-priority', [VitalController::class, 'updatePriority'])->name('vitals.update-priority')->middleware('can:vitals.create');
+            Route::patch('vitals/{visit}/assign-consultation', [VitalController::class, 'assignConsultation'])->name('vitals.assign-consultation')->middleware('can:vitals.create');
+        });
+
+        Route::middleware(['module:consultation', 'can:consultations.view'])->prefix('consultations')->name('consultations.')->group(function () {
+            Route::get('/', [ConsultationController::class, 'index'])->name('index');
+            Route::get('{visit}', [ConsultationController::class, 'show'])->name('show');
+            Route::get('{visit}/history', [ConsultationController::class, 'history'])->name('history');
+        });
+
+        Route::prefix('service-renderings')
+            ->name('service-renderings.')
+            ->middleware('can:service_rendering.view')
+            ->group(function () {
+                Route::get('/', [ServiceRenderingController::class, 'index'])->name('index');
+                Route::get('/reports', [ServiceRenderingReportController::class, 'index'])->name('reports')->middleware('can:service_rendering.reports');
+                Route::post('/', [ServiceRenderingController::class, 'store'])->name('store')->middleware('can:invoices.create');
+                Route::get('/visit-search', [ServiceRenderingController::class, 'visitSearch'])->name('visit-search')->middleware('can:invoices.create');
+                Route::get('/service-search', [ServiceRenderingController::class, 'serviceSearch'])->name('service-search')->middleware('can:invoices.create');
+                Route::get('/{serviceRendering}', [ServiceRenderingController::class, 'show'])->name('show');
+                Route::post('/{serviceRendering}/start', [ServiceRenderingActionController::class, 'start'])->name('start')->middleware('can:service_rendering.start');
+                Route::post('/{serviceRendering}/mark-rendered', [ServiceRenderingActionController::class, 'markRendered'])->name('mark-rendered')->middleware('can:service_rendering.mark_rendered');
+                Route::post('/{serviceRendering}/mark-not-rendered', [ServiceRenderingActionController::class, 'markNotRendered'])->name('mark-not-rendered')->middleware('can:service_rendering.mark_not_rendered');
+                Route::post('/{serviceRendering}/cancel', [ServiceRenderingActionController::class, 'cancel'])->name('cancel')->middleware('can:service_rendering.cancel');
+                Route::patch('/{serviceRendering}/notes', [ServiceRenderingActionController::class, 'updateNotes'])->name('notes')->middleware('can:service_rendering.edit_notes');
+            });
+
+        Route::middleware(['module:visits', 'can:visits.view'])->group(function () {
+            Route::get('tasks', [TaskController::class, 'index'])->name('tasks.index')->middleware('can:clinical_tasks.view');
+            Route::get('tasks/{task}', [TaskController::class, 'show'])->name('tasks.show')->middleware('can:clinical_tasks.view');
+            Route::patch('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update')->middleware('can:clinical_tasks.complete');
+            Route::get('treatments', [TreatmentController::class, 'index'])->name('treatments.index');
+            Route::get('treatments/{visit}', [TreatmentController::class, 'show'])->name('treatments.show');
+        });
+
+        Route::get('handoffs', [JourneyWorklistController::class, 'index'])->name('handoffs.index');
+        Route::get('handoffs/refresh', [JourneyWorklistController::class, 'refresh'])->name('handoffs.refresh');
+        Route::prefix('handoffs/actions')->name('handoffs.')->group(function () {
+            Route::post('claim', [JourneyHandoffAssignmentController::class, 'claim'])->name('claim')->middleware('can:journey.handoffs.claim');
+            Route::post('assign', [JourneyHandoffAssignmentController::class, 'assign'])->name('assign')->middleware('can:journey.handoffs.assign');
+            Route::post('{assignment}/acknowledge', [JourneyHandoffAssignmentController::class, 'acknowledge'])->name('acknowledge')->middleware('can:journey.handoffs.acknowledge');
+            Route::post('{assignment}/resolve', [JourneyHandoffAssignmentController::class, 'resolve'])->name('resolve')->middleware('can:journey.handoffs.resolve');
+        });
+
+        Route::get('reports', [App\Http\Controllers\Nursing\ReportController::class, 'index'])
+            ->middleware(['module:reports', 'can:reports.view'])->name('reports.index');
+    });
+
     // Records Department browser workspace. These routes reuse existing domain logic.
     Route::prefix('records')->name('records.')->middleware('department.type:records')->group(function () {
-        Route::get('/', \App\Http\Controllers\Records\DashboardController::class)->name('dashboard');
+        Route::get('/', App\Http\Controllers\Records\DashboardController::class)->name('dashboard');
         Route::get('dashboard', fn () => redirect()->route('records.dashboard'))->name('dashboard.redirect');
 
         Route::middleware(['module:patients', 'can:patients.view'])->prefix('patients')->name('patients.')->group(function () {
@@ -538,7 +626,7 @@ Route::middleware('auth')->group(function () {
         });
 
         Route::middleware(['module:reports', 'can:reports.view'])->prefix('reports')->name('reports.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Records\ReportController::class, 'index'])->name('index');
+            Route::get('/', [App\Http\Controllers\Records\ReportController::class, 'index'])->name('index');
             Route::get('patients', [ReportController::class, 'patients'])->name('patients');
             Route::get('visits', [ReportController::class, 'visits'])->name('visits');
             Route::get('attendance', [ReportController::class, 'visits'])->name('attendance');
@@ -578,11 +666,11 @@ Route::middleware('auth')->group(function () {
 
         // Modern role dashboards (Preclinic design language) — read-only, role-gated in controller.
         Route::prefix('dashboards')->name('dashboards.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Admin\Dashboard\RoleDashboardController::class, 'index'])->name('index');
-            Route::get('receptionist', [\App\Http\Controllers\Admin\Dashboard\RoleDashboardController::class, 'receptionist'])->name('receptionist');
-            Route::get('doctor', [\App\Http\Controllers\Admin\Dashboard\RoleDashboardController::class, 'doctor'])->name('doctor');
-            Route::get('nurse', [\App\Http\Controllers\Admin\Dashboard\RoleDashboardController::class, 'nurse'])->name('nurse');
-            Route::get('pharmacist', [\App\Http\Controllers\Admin\Dashboard\RoleDashboardController::class, 'pharmacist'])->name('pharmacist');
+            Route::get('/', [RoleDashboardController::class, 'index'])->name('index');
+            Route::get('receptionist', [RoleDashboardController::class, 'receptionist'])->name('receptionist');
+            Route::get('doctor', [RoleDashboardController::class, 'doctor'])->name('doctor');
+            Route::get('nurse', [RoleDashboardController::class, 'nurse'])->name('nurse');
+            Route::get('pharmacist', [RoleDashboardController::class, 'pharmacist'])->name('pharmacist');
         });
 
         // Phase 9.3 — patient flow worklist (capability-gated in the controller).
@@ -1537,7 +1625,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Consultations (Doctor EHR)
-        Route::middleware(['module:consultation', 'can:consultations.view'])->group(function () {
+        Route::middleware(['module:consultation', 'can:consultations.view', 'records.redirect'])->group(function () {
             Route::get('consultations', [ConsultationWorkspaceController::class, 'index'])->name('consultations.index');
             Route::get('consultations/{visit}', [ConsultationWorkspaceController::class, 'show'])->name('consultations.show');
             Route::get('consultations/{visit}/routes/{route}', [ConsultationWorkspaceController::class, 'show'])->name('consultations.routes.show');
@@ -2610,7 +2698,7 @@ Route::middleware('auth')->group(function () {
     */
     Route::prefix('doctor')->name('doctor.')->group(function () {
         // The modern workflow-first dashboard is served directly at this URL.
-        Route::get('dashboard', [\App\Http\Controllers\Admin\Dashboard\RoleDashboardController::class, 'doctor'])->name('dashboard');
+        Route::get('dashboard', [RoleDashboardController::class, 'doctor'])->name('dashboard');
         Route::get('dashboard/legacy', [DoctorDashboardController::class, 'index'])->name('dashboard.legacy');
     });
 });

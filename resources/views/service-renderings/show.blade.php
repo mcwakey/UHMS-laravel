@@ -9,7 +9,7 @@
     </div>
     <div class="d-flex gap-2">
         @if($rendering->visit)
-            <a href="{{ route('admin.visits.preview', $rendering->visit) }}" class="btn btn-outline-info btn-sm">
+            <a href="{{ $workspaceRoutes->isNursing() ? $workspaceRoutes->opdVisitShow($rendering->visit) : route('admin.visits.preview', $rendering->visit) }}" class="btn btn-outline-info btn-sm">
                 <i class="ti ti-eye-search me-1"></i>{{ __('services.visit_preview') }}
             </a>
         @endif

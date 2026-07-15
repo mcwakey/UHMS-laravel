@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ConsultationMode;
 use App\Enums\Priority;
 use App\Enums\TriageScore;
+use App\Enums\VisitPaymentArrangementStatus;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Traits\GeneratesNumbers;
@@ -165,6 +166,11 @@ class Visit extends Model
         return $this->hasMany(ClinicalTask::class);
     }
 
+    public function treatments()
+    {
+        return $this->hasMany(Treatment::class);
+    }
+
     public function medicationAdministrations()
     {
         return $this->hasMany(MedicationAdministration::class);
@@ -308,14 +314,14 @@ class Visit extends Model
     public function currentApprovedPaymentArrangement()
     {
         return $this->hasOne(VisitPaymentArrangement::class)
-            ->where('status', \App\Enums\VisitPaymentArrangementStatus::APPROVED->value)
+            ->where('status', VisitPaymentArrangementStatus::APPROVED->value)
             ->latestOfMany();
     }
 
     public function pendingPaymentArrangement()
     {
         return $this->hasOne(VisitPaymentArrangement::class)
-            ->where('status', \App\Enums\VisitPaymentArrangementStatus::PENDING->value)
+            ->where('status', VisitPaymentArrangementStatus::PENDING->value)
             ->latestOfMany();
     }
 

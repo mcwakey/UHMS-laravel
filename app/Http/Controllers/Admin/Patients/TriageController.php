@@ -2,18 +2,23 @@
 
 namespace App\Http\Controllers\Admin\Patients;
 
+use App\Data\Billing\PaymentGateContext;
 use App\Enums\DepartmentType;
+use App\Enums\LogModule;
 use App\Enums\TriageScore;
 use App\Enums\VisitStatus;
+use App\Enums\VisitType;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\QueueEntry;
-use App\Models\Vital;
 use App\Models\Visit;
-use App\Services\ConsultationRouteService;
-use App\Data\Billing\PaymentGateContext;
+use App\Models\Vital;
+use App\Services\ActivityLogService;
 use App\Services\Billing\PaymentGateService;
+use App\Services\ConsultationRouteService;
+use App\Services\Department\DepartmentContextSwitcherService;
 use App\Services\VisitService;
+use App\Services\WorkspaceRouteResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
@@ -46,7 +51,7 @@ class TriageController extends Controller
 
         if (! $isEdit && ! in_array($visit->status, [VisitStatus::QUEUED, VisitStatus::TRIAGE])) {
             return redirect()
-                ->route('admin.visits.show', $visit)
+                ->to(app(WorkspaceRouteResolver::class)->visitShow($visit))
                 ->with('error', __('messages.triage.not_awaiting'));
         }
 
@@ -96,18 +101,19 @@ class TriageController extends Controller
         Visit $visit,
         ConsultationRouteService $consultationRoutes,
         PaymentGateService $paymentGate,
-    )
-    {
+    ) {
+        $workspaceRoutes = app(WorkspaceRouteResolver::class);
+
         if ($visit->status !== VisitStatus::TRIAGE) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => __('messages.triage.not_in_triage'),
-                    'redirect_url' => route('admin.visits.show', $visit),
+                    'redirect_url' => $workspaceRoutes->visitShow($visit),
                 ], 409);
             }
 
             return redirect()
-                ->route('admin.visits.show', $visit)
+                ->to($workspaceRoutes->visitShow($visit))
                 ->with('error', __('messages.triage.not_in_triage'));
         }
 
@@ -189,6 +195,12 @@ class TriageController extends Controller
 
         $message = __('messages.triage.completed', ['status' => $visit->status->label()]);
 
+        app(ActivityLogService::class)->log(LogModule::CONSULTATION, 'TRIAGE_CREATED', [
+            'patient_id' => $visit->patient_id,
+            'visit_id' => $visit->id,
+            'department_id' => $visit->current_department_id,
+        ], $visit, 'Triage completed');
+
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => $message,
@@ -199,13 +211,13 @@ class TriageController extends Controller
                 'triage_score' => $visit->triage_score?->value,
                 'triage_score_label' => $visit->triage_score?->label(),
                 'department' => $visit->currentDepartment?->name,
-                'redirect_url' => route('admin.visits.show', $visit),
-                'queue_url' => route('admin.consultations.index'),
+                'redirect_url' => $workspaceRoutes->visitShow($visit),
+                'queue_url' => $workspaceRoutes->isNursing() ? $workspaceRoutes->opdQueue() : route('admin.consultations.index'),
             ]);
         }
 
         return redirect()
-            ->route('admin.visits.show', $visit)
+            ->to($workspaceRoutes->visitShow($visit))
             ->with('success', $message);
     }
 
@@ -237,6 +249,12 @@ class TriageController extends Controller
         $visit->update(['triage_score' => $score->value]);
         $visit = $visit->fresh(['triage', 'currentDepartment']);
 
+        app(ActivityLogService::class)->log(LogModule::CONSULTATION, 'TRIAGE_UPDATED', [
+            'patient_id' => $visit->patient_id,
+            'visit_id' => $visit->id,
+            'department_id' => $visit->current_department_id,
+        ], $visit, 'Triage updated');
+
         $message = __('triage.js_updated_successfully');
 
         if ($request->expectsJson()) {
@@ -249,13 +267,15 @@ class TriageController extends Controller
                 'triage_score' => $visit->triage_score?->value,
                 'triage_score_label' => $visit->triage_score?->label(),
                 'department' => $visit->currentDepartment?->name,
-                'redirect_url' => app(\App\Services\WorkspaceRouteResolver::class)->route('admin.triage.show', $visit),
-                'queue_url' => route('admin.consultations.index'),
+                'redirect_url' => app(WorkspaceRouteResolver::class)->route('admin.triage.show', $visit),
+                'queue_url' => app(WorkspaceRouteResolver::class)->isNursing()
+                    ? app(WorkspaceRouteResolver::class)->opdQueue()
+                    : route('admin.consultations.index'),
             ]);
         }
 
         return redirect()
-            ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.triage.show'), $visit)
+            ->route(app(WorkspaceRouteResolver::class)->routeName('admin.triage.show'), $visit)
             ->with('success', $message);
     }
 
@@ -283,7 +303,7 @@ class TriageController extends Controller
             ->orderBy('queue_number')
             ->limit(1);
 
-        $visits = Visit::with([
+        $visitsQuery = Visit::with([
             'patient',
             'triage',
             'currentDepartment',
@@ -298,7 +318,19 @@ class TriageController extends Controller
         ])
             ->addSelect(['triage_queue_number' => $triageQueueNumber])
             ->whereIn('status', [VisitStatus::QUEUED->value, VisitStatus::TRIAGE->value])
-            ->today()
+            ->today();
+
+        if (app(WorkspaceRouteResolver::class)->isNursing()) {
+            $department = app(DepartmentContextSwitcherService::class)
+                ->currentDepartment($request->user(), $request);
+            $visitsQuery->where('visit_type', VisitType::OUTPATIENT->value)
+                ->where(function ($query) use ($department) {
+                    $query->where('current_department_id', $department?->id)
+                        ->orWhereHas('triage', fn ($triage) => $triage->where('department_id', $department?->id));
+                });
+        }
+
+        $visits = $visitsQuery
             ->orderByRaw('triage_queue_number IS NULL')
             ->orderBy('triage_queue_number')
             ->orderBy('checked_in_at')
@@ -369,8 +401,7 @@ class TriageController extends Controller
         $route,
         PaymentGateService $paymentGate,
         $user,
-    ): void
-    {
+    ): void {
         $route->loadMissing([
             'visit',
             'routeServices.service',

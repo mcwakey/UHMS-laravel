@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\DepartmentType;
 use App\Models\User;
 use App\Services\Department\DepartmentContextSwitcherService;
+use App\Services\Department\DepartmentDashboardCapabilityService;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -31,6 +32,14 @@ class SidebarMenuBuilder
         if ($activeType === DepartmentType::RECORDS) {
             return $this->finaliseSections(
                 $this->recordsSections($unreadNotifications),
+                $user,
+                $currentRouteName,
+            );
+        }
+
+        if ($activeType === DepartmentType::NURSING) {
+            return $this->finaliseSections(
+                $this->nursingSections($unreadNotifications),
                 $user,
                 $currentRouteName,
             );
@@ -66,14 +75,14 @@ class SidebarMenuBuilder
                         'icon' => 'ti ti-list-check',
                         'route' => 'admin.journey.worklist',
                         'active_patterns' => ['admin.journey.worklist'],
-                        'visible' => fn (User $user) => app(\App\Services\Department\DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== [],
+                        'visible' => fn (User $user) => app(DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== [],
                     ],
                     [
                         'label' => 'Flow Analytics',
                         'icon' => 'ti ti-chart-histogram',
                         'route' => 'admin.journey.analytics',
                         'active_patterns' => ['admin.journey.analytics'],
-                        'visible' => fn (User $user) => $user->can('journey.oversight') || app(\App\Services\Department\DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== [],
+                        'visible' => fn (User $user) => $user->can('journey.oversight') || app(DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== [],
                     ],
                 ],
             ],
@@ -449,7 +458,6 @@ class SidebarMenuBuilder
                     //     'permission' => 'emergency.reports.view',
                     //     'module' => 'emergency',
                     // ],
-
 
                     // [
                     //     'label' => 'Vitals / Triage',
@@ -1848,7 +1856,7 @@ class SidebarMenuBuilder
         // Department-aware ordering: float the user's department-relevant sections
         // to the top. Presentation only — security filtering already happened.
         $currentDepartment = $this->departmentContextSwitcher->currentDepartment($user, request());
-        $currentType = $currentDepartment?->type instanceof \App\Enums\DepartmentType ? $currentDepartment->type : null;
+        $currentType = $currentDepartment?->type instanceof DepartmentType ? $currentDepartment->type : null;
 
         return $this->menuProfile->prioritiseForType($sections, $currentType);
     }
@@ -1864,6 +1872,7 @@ class SidebarMenuBuilder
         foreach ($sections as $section) {
             if (($section['title'] ?? null) !== 'Accounts & Finance') {
                 $result[] = $section;
+
                 continue;
             }
 
@@ -1878,6 +1887,7 @@ class SidebarMenuBuilder
                     if ($module && empty($item['module'])) {
                         $item['module'] = $module;
                     }
+
                     return $item;
                 })
                 ->values()
@@ -1978,6 +1988,111 @@ class SidebarMenuBuilder
             fn (array $section) => $this->filterSection($section, $user, $currentRouteName),
             $sections,
         )));
+    }
+
+    /**
+     * Focused OPD menu for an active Nursing department. Permission and module
+     * filtering is still performed by finaliseSections().
+     */
+    protected function nursingSections(int $unreadNotifications): array
+    {
+        return [
+            [
+                'title' => __('nursing.menu.workspace'),
+                'items' => [[
+                    'label' => __('nursing.menu.dashboard'),
+                    'icon' => 'ti ti-layout-dashboard',
+                    'route' => 'nursing.dashboard',
+                    'active_patterns' => ['nursing.dashboard', 'nursing.dashboard.redirect'],
+                    'permission' => 'visits.view',
+                ]],
+            ],
+            // [
+            //     'title' => __('nursing.menu.opd_flow'),
+            //     'items' => [
+            //         ['label' => __('nursing.menu.opd_queue'), 'icon' => 'ti ti-list-numbers', 'route' => 'nursing.opd.queue', 'active_patterns' => ['nursing.opd.index', 'nursing.opd.queue', 'nursing.opd.show'], 'permission' => 'visits.view', 'module' => 'visits'],
+            //         ['label' => __('nursing.menu.active_cases'), 'icon' => 'ti ti-activity', 'route' => 'nursing.opd.active', 'active_patterns' => ['nursing.opd.active'], 'permission' => 'visits.view', 'module' => 'visits'],
+            //         ['label' => __('nursing.menu.completed_today'), 'icon' => 'ti ti-circle-check', 'route' => 'nursing.opd.completed', 'active_patterns' => ['nursing.opd.completed'], 'permission' => 'visits.view', 'module' => 'visits'],
+            //     ],
+            // ],
+            [
+                'title' => __('nursing.menu.patient_access'),
+                'items' => [
+                    ['label' => __('nursing.menu.patients'), 'icon' => 'ti ti-users', 'route' => 'nursing.patients.index', 'active_patterns' => ['nursing.patients.*'], 'permission' => 'patients.view', 'module' => 'patients'],
+                    // ['label' => __('nursing.menu.visits'), 'icon' => 'ti ti-calendar-check', 'route' => 'nursing.visits.index', 'active_patterns' => ['nursing.visits.*'], 'permission' => 'visits.view', 'module' => 'visits'],
+                ],
+            ],
+            [
+                'title' => 'Attendance',
+                'items' => [
+                    // [
+                    //     'label' => 'Appointments',
+                    //     'icon' => 'ti ti-calendar-event',
+                    //     'route' => 'nursing.appointments.index',
+                    //     'active_patterns' => ['nursing.appointments.*'],
+                    //     'permission' => 'appointments.view',
+                    //     'module' => 'appointments',
+                    // ],
+                    [
+                        'label' => 'Visits / OPD',
+                        'icon' => 'ti ti-calendar-check',
+                        'route' => 'nursing.visits.index',
+                        'active_patterns' => ['nursing.visits.index', 'nursing.visits.show', 'nursing.visits.edit', 'nursing.visits.preview'],
+                        'permission' => 'visits.view',
+                        'module' => 'visits',
+                    ],
+                    // [
+                    //     'label' => 'Create Visit',
+                    //     'icon' => 'ti ti-plus',
+                    //     'route' => 'records.visits.create',
+                    //     'active_patterns' => ['records.visits.create'],
+                    //     'permission' => 'visits.create',
+                    //     'module' => 'visits',
+                    // ],
+                ],
+            ],
+            [
+                'title' => __('nursing.menu.triage_assessment'),
+                'items' => [
+                    ['label' => 'Vitals / Triage', 'icon' => 'ti ti-heartbeat', 'route' => 'nursing.triage.index', 'active_patterns' => ['nursing.triage.*'], 'permission' => 'vitals.view', 'module' => 'triage'],
+                    // ['label' => __('nursing.menu.vital_signs'), 'icon' => 'ti ti-activity-heartbeat', 'route' => 'nursing.vitals.create', 'active_patterns' => ['nursing.vitals.*'], 'permission' => 'vitals.view', 'module' => 'triage'],
+                    ['label' => __('nursing.menu.service_renderings'), 'icon' => 'ti ti-clipboard-check', 'route' => 'nursing.service-renderings.index', 'active_patterns' => ['nursing.service-renderings.index', 'nursing.service-renderings.show'], 'permission' => 'service_rendering.view'],
+                ],
+            ],
+            [
+                'title' => __('nursing.menu.nursing_care'),
+                'items' => [
+                    ['label' => __('nursing.menu.tasks'), 'icon' => 'ti ti-checklist', 'route' => 'nursing.tasks.index', 'active_patterns' => ['nursing.tasks.*'], 'permission' => 'clinical_tasks.view', 'module' => 'visits'],
+                    ['label' => __('nursing.menu.treatments'), 'icon' => 'ti ti-first-aid-kit', 'route' => 'nursing.treatments.index', 'active_patterns' => ['nursing.treatments.*'], 'permission' => 'visits.view', 'module' => 'visits'],
+                    ['label' => __('nursing.menu.consultations'), 'icon' => 'ti ti-stethoscope', 'route' => 'nursing.consultations.index', 'active_patterns' => ['nursing.consultations.*'], 'permission' => 'consultations.view', 'module' => 'consultation'],
+                ],
+            ],
+            [
+                'title' => __('nursing.menu.coordination'),
+                'items' => [[
+                    'label' => __('nursing.menu.handoffs'),
+                    'icon' => 'ti ti-arrows-exchange',
+                    'route' => 'nursing.handoffs.index',
+                    'active_patterns' => ['nursing.handoffs.*'],
+                    'visible' => fn (User $user) => app(DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== [],
+                ]],
+            ],
+            [
+                'title' => __('nursing.menu.reports'),
+                'items' => [[
+                    'label' => __('nursing.menu.opd_reports'), 'icon' => 'ti ti-report-analytics', 'route' => 'nursing.reports.index', 'active_patterns' => ['nursing.reports.*'], 'permission' => 'reports.view', 'module' => 'reports',
+                ], [
+                    'label' => __('nursing.menu.service_rendering_reports'), 'icon' => 'ti ti-report-medical', 'route' => 'nursing.service-renderings.reports', 'active_patterns' => ['nursing.service-renderings.reports'], 'permission' => 'service_rendering.reports',
+                ]],
+            ],
+            [
+                'title' => __('nursing.menu.general'),
+                'items' => [
+                    ['label' => __('nursing.menu.notifications'), 'icon' => 'ti ti-bell', 'route' => 'admin.notifications.index', 'active_patterns' => ['admin.notifications.*'], 'permission' => 'notifications.view', 'module' => 'notifications', 'badge' => $unreadNotifications > 0 ? $unreadNotifications : null],
+                    ['label' => __('nursing.menu.profile'), 'icon' => 'ti ti-user-circle', 'route' => 'admin.profile', 'active_patterns' => ['admin.profile']],
+                ],
+            ],
+        ];
     }
 
     /**
@@ -2286,7 +2401,7 @@ class SidebarMenuBuilder
                         'icon' => 'ti ti-list-check',
                         'route' => 'admin.journey.worklist',
                         'active_patterns' => ['admin.journey.worklist'],
-                        'visible' => fn (User $user) => app(\App\Services\Department\DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== [],
+                        'visible' => fn (User $user) => app(DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== [],
                     ],
                 ],
             ],
@@ -2483,7 +2598,7 @@ class SidebarMenuBuilder
      */
     protected function translateLabel(string $label): string
     {
-        $key = 'menu.' . trim(preg_replace('/[^a-z0-9]+/', '_', strtolower($label)), '_');
+        $key = 'menu.'.trim(preg_replace('/[^a-z0-9]+/', '_', strtolower($label)), '_');
 
         return Lang::has($key) ? __($key) : $label;
     }

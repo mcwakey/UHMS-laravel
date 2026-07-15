@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Services\WorkspaceRouteResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,10 +29,11 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
-        $throttleKey = Str::transliterate(Str::lower($request->input('email')) . '|' . $request->ip());
+        $throttleKey = Str::transliterate(Str::lower($request->input('email')).'|'.$request->ip());
 
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
+
             return back()->withErrors([
                 'email' => "Too many login attempts. Please try again in {$seconds} seconds.",
             ])->onlyInput('email');
@@ -46,6 +48,7 @@ class LoginController extends Controller
             if ($user->status !== UserStatus::ACTIVE) {
                 Auth::logout();
                 $request->session()->invalidate();
+
                 return back()->withErrors([
                     'email' => 'Your account has been deactivated. Please contact the administrator.',
                 ])->onlyInput('email');
@@ -53,7 +56,7 @@ class LoginController extends Controller
 
             $request->session()->regenerate();
 
-            /** @var \App\Models\User $user */
+            /** @var User $user */
             $user = Auth::user();
 
             activity('auth')
@@ -62,7 +65,7 @@ class LoginController extends Controller
                 ->log('logged in');
 
             $workspaceRoutes = app(WorkspaceRouteResolver::class);
-            if ($workspaceRoutes->isRecords()) {
+            if ($workspaceRoutes->isDepartmentWorkspace()) {
                 return redirect()->route($workspaceRoutes->dashboardRouteName());
             }
 

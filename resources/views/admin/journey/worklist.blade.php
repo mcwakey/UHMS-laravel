@@ -124,13 +124,13 @@
             </select>
         </div>
         <button type="submit" class="btn btn-primary btn-sm">{{ __('journey.worklist.apply') }}</button>
-        <a href="{{ route('admin.journey.worklist', ['tab' => $tab]) }}" class="btn btn-outline-secondary btn-sm">{{ __('journey.worklist.reset') }}</a>
+        <a href="{{ route($workspaceRoutes->handoffRouteName(), ['tab' => $tab]) }}" class="btn btn-outline-secondary btn-sm">{{ __('journey.worklist.reset') }}</a>
     </div>
 </form>
 
 {{-- Live-refreshable content --}}
 <div id="journey-worklist"
-     data-refresh-url="{{ route('admin.journey.worklist.refresh', request()->query()) }}"
+     data-refresh-url="{{ route($workspaceRoutes->handoffRouteName('refresh'), request()->query()) }}"
      data-interval="{{ (int) ($refreshConfig['interval_seconds'] ?? 60) }}"
      data-enabled="{{ !empty($refreshConfig['enabled']) ? '1' : '0' }}">
     @include('admin.journey.partials.worklist-refresh')

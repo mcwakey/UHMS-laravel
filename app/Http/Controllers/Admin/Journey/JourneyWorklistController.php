@@ -6,9 +6,11 @@ use App\Enums\JourneyDelayCause;
 use App\Enums\PatientJourneyStage;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\Department\DepartmentContextSwitcherService;
 use App\Services\Department\DepartmentDashboardCapabilityService;
 use App\Services\Journey\JourneyAssignableUserService;
 use App\Services\Journey\JourneyHandoffWorklistService;
+use App\Services\Journey\JourneyPredictionService;
 use App\Services\Journey\JourneyWorklistService;
 use Illuminate\Http\Request;
 
@@ -27,7 +29,8 @@ class JourneyWorklistController extends Controller
         private JourneyHandoffWorklistService $handoffWorklist,
         private JourneyAssignableUserService $assignableUsers,
         private DepartmentDashboardCapabilityService $capabilities,
-        private \App\Services\Journey\JourneyPredictionService $predictions,
+        private JourneyPredictionService $predictions,
+        private DepartmentContextSwitcherService $departmentContext,
     ) {}
 
     public function index(Request $request)
@@ -69,7 +72,7 @@ class JourneyWorklistController extends Controller
             'unassigned_only' => $request->boolean('unassigned_only') ?: null,
         ];
         $clean = array_filter($filters, fn ($value) => $value !== null);
-        $department = $user->department;
+        $department = $this->departmentContext->currentDepartment($user, $request);
 
         $actions = [];
         $handoffs = [];

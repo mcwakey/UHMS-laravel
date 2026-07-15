@@ -1,0 +1,58 @@
+<?php
+
+return [
+    'workspace' => ['title' => 'Espace infirmier ambulatoire'],
+    'unauthorized' => 'L’espace infirmier est disponible uniquement lorsqu’un service de soins infirmiers actif est sélectionné.',
+    'dashboard' => ['title' => 'Tableau de bord infirmier ambulatoire', 'subtitle' => 'Charge ambulatoire du service pour aujourd’hui'],
+    'menu' => [
+        'workspace' => 'Espace infirmier', 'dashboard' => 'Tableau de bord', 'opd_flow' => 'Flux des patients ambulatoires',
+        'opd_queue' => 'File ambulatoire', 'active_cases' => 'Cas ambulatoires actifs', 'completed_today' => 'Terminés aujourd’hui',
+        'triage_assessment' => 'Triage et évaluation', 'triage_worklist' => 'Liste de triage', 'vital_signs' => 'Signes vitaux',
+        'nursing_care' => 'Soins infirmiers', 'tasks' => 'Tâches infirmières', 'treatments' => 'Traitements',
+        'consultations' => 'Consultations', 'service_renderings' => 'Exécution des services', 'service_rendering_reports' => 'Rapport d’exécution des services',
+        'coordination' => 'Coordination', 'handoffs' => 'Transmissions', 'patient_access' => 'Accès patient',
+        'patients' => 'Recherche patient', 'visits' => 'Historique des visites', 'reports' => 'Rapports infirmiers',
+        'opd_reports' => 'Rapport d’activité ambulatoire', 'general' => 'Général', 'notifications' => 'Notifications', 'profile' => 'Mon profil',
+    ],
+    'queue' => [
+        'title' => 'File infirmière ambulatoire', 'subtitle' => 'Visites ambulatoires affectées à :department',
+        'all' => 'Toutes les visites', 'active' => 'Cas actifs', 'waiting_for_triage' => 'En attente de triage',
+        'triage_in_progress' => 'En triage', 'vitals_incomplete' => 'Signes vitaux incomplets',
+        'waiting_for_consultation' => 'En attente de consultation', 'consultation_in_progress' => 'Consultation en cours',
+        'nursing_action_required' => 'Action infirmière requise', 'treatment_pending' => 'Soutien au traitement',
+        'service_follow_up' => 'Suivi des services', 'ready_for_discharge' => 'Préparation de sortie',
+        'completed_today' => 'Terminés aujourd’hui', 'empty' => 'Aucune visite ambulatoire ne correspond à cette liste.',
+        'search_placeholder' => 'Numéro de visite ou patient', 'waiting_time' => 'Temps d’attente',
+    ],
+    'metrics' => [
+        'waiting_for_triage' => 'En attente de triage', 'triage_in_progress' => 'En triage',
+        'vitals_incomplete' => 'Signes vitaux incomplets', 'waiting_for_consultation' => 'En attente de consultation',
+        'consultation_in_progress' => 'Consultations actives', 'nursing_action_required' => 'Tâches infirmières en attente',
+        'treatment_pending' => 'Soutien au traitement', 'service_follow_up' => 'Suivi des services',
+        'ready_for_discharge' => 'Préparation de sortie', 'completed_today' => 'Terminés aujourd’hui',
+        'active' => 'Cas ambulatoires actifs', 'high_risk' => 'Cas à haut risque',
+    ],
+    'case' => [
+        'title' => 'Dossier infirmier ambulatoire', 'visit_details' => 'Détails de la visite', 'triage' => 'Résumé du triage',
+        'vitals' => 'Signes vitaux', 'tasks' => 'Tâches infirmières', 'treatments' => 'Traitements',
+        'services' => 'Services en attente', 'consultation' => 'État de la consultation', 'no_data' => 'Aucune information enregistrée.',
+        'record_triage' => 'Enregistrer le triage', 'record_vitals' => 'Enregistrer les signes vitaux', 'patient_identifier' => 'Identifiant patient',
+    ],
+    'tasks' => ['title' => 'Tâches infirmières', 'empty' => 'Aucune tâche ambulatoire n’est affectée à ce service.', 'details' => 'Détails de la tâche', 'claim' => 'Prendre la tâche', 'start' => 'Commencer la tâche', 'complete' => 'Terminer la tâche', 'updated' => 'Tâche infirmière mise à jour.', 'closed_visit' => 'Les tâches d’une visite antérieure nécessitent la procédure formelle de réouverture.', 'already_completed' => 'Cette tâche est déjà terminée.', 'already_claimed' => 'Cette tâche est déjà affectée à un autre membre du personnel.'],
+    'treatments' => ['title' => 'Soutien au traitement', 'empty' => 'Aucun traitement ambulatoire ne nécessite de soutien.', 'details' => 'Traitements de la visite'],
+    'reports' => ['title' => 'Rapport d’activité infirmière ambulatoire', 'subtitle' => 'Résumé opérationnel limité à sept jours pour :department', 'daily_attendance' => 'Fréquentation ambulatoire quotidienne'],
+    'consultations' => ['title' => 'Consultations ambulatoires', 'subtitle' => 'Soutien en lecture seule aux consultations pour :department', 'details' => 'Détails de la consultation', 'sessions' => 'Séances de consultation', 'clinician' => 'Clinicien', 'record' => 'Dossier clinique', 'complaints' => 'Plaintes', 'diagnoses' => 'Diagnostics', 'empty' => 'Aucune consultation ambulatoire correspondante.'],
+    'service_renderings' => ['wrong_department' => 'Le service sélectionné n’appartient pas au service infirmier actif.'],
+    'common' => [
+        'patient' => 'Patient', 'visit' => 'Visite', 'status' => 'Statut', 'priority' => 'Priorité', 'arrival' => 'Arrivée',
+        'action' => 'Action', 'view' => 'Voir', 'due' => 'Échéance', 'assigned_to' => 'Affecté à', 'type' => 'Type',
+        'description' => 'Description', 'recorded_at' => 'Enregistré le', 'recorded_by' => 'Enregistré par', 'department' => 'Service',
+        'filter' => 'Filtrer', 'reset' => 'Réinitialiser', 'today' => 'Aujourd’hui', 'not_assigned' => 'Non affecté',
+    ],
+    'breadcrumbs' => [
+        'nursing' => 'Soins infirmiers', 'opd_queue' => 'File ambulatoire', 'patients' => 'Patients', 'visits' => 'Visites',
+        'triage' => 'Triage', 'vitals' => 'Signes vitaux', 'tasks' => 'Tâches infirmières', 'treatments' => 'Traitements',
+        'handoffs' => 'Transmissions', 'reports' => 'Rapports', 'details' => 'Détails',
+        'consultations' => 'Consultations', 'service_renderings' => 'Exécution des services',
+    ],
+];

@@ -12,7 +12,7 @@
         <h4 class="fw-bold mb-0"><i class="ti ti-stethoscope me-2 text-info"></i>{{ __('triage.summary') }}</h4>
         <small class="text-muted">{{ $visit->patient->full_name }} &bull; {{ $visit->visit_number }}</small>
     </div>
-    <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
+        <a href="{{ $workspaceRoutes->route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
         <i class="ti ti-arrow-left me-1"></i>{{ __('triage.back_to_visit') }}
     </a>
 </div> -->

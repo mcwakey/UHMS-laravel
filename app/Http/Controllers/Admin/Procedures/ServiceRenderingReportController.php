@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin\Procedures;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\ServiceRendering;
+use App\Services\Department\DepartmentContextSwitcherService;
 use App\Services\ServiceRenderingReportService;
+use App\Services\WorkspaceRouteResolver;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -23,13 +25,17 @@ class ServiceRenderingReportController extends Controller
             'date_to',
         ]);
 
+        $nursingDepartment = app(WorkspaceRouteResolver::class)->isNursing()
+            ? app(DepartmentContextSwitcherService::class)->currentDepartment($request->user(), $request)
+            : null;
+
         return view('service-renderings.reports', [
             'filters' => $filters,
             'summary' => $this->reports->summary($filters, $request->user()),
             'byDepartment' => $this->reports->byDepartment($filters, $request->user()),
             'byStaff' => $this->reports->byStaff($filters, $request->user()),
             'statuses' => ServiceRendering::statuses(),
-            'departments' => Department::query()->orderBy('name')->get(['id', 'name']),
+            'departments' => Department::query()->when($nursingDepartment, fn ($query) => $query->whereKey($nursingDepartment->id))->orderBy('name')->get(['id', 'name']),
         ]);
     }
 

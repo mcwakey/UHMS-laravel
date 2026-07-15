@@ -165,7 +165,7 @@
                 </div>
                 @else
                 <p class="text-muted small">No consultation departments found. Please assign manually.</p>
-                <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-primary btn-sm">
+                <a href="{{ $workspaceRoutes->route('admin.visits.show', $visit) }}" class="btn btn-outline-primary btn-sm">
                     <i class="ti ti-external-link me-1"></i>Go to Visit Page
                 </a>
                 @endif

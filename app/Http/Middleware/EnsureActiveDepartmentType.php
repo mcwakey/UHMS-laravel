@@ -23,7 +23,11 @@ class EnsureActiveDepartmentType
             ? $department->type->value
             : (string) ($department?->type ?? '');
 
-        abort_unless($department && in_array($type, $allowedTypes, true), 403, __('records.unauthorized'));
+        $message = in_array(DepartmentType::NURSING->value, $allowedTypes, true)
+            ? __('nursing.unauthorized')
+            : __('records.unauthorized');
+
+        abort_unless($department && in_array($type, $allowedTypes, true), 403, $message);
 
         return $next($request);
     }

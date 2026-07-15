@@ -19,7 +19,7 @@ class RedirectRecordsWorkspace
         $name = $route?->getName();
 
         if ($name
-            && $this->workspaceRoutes->isRecords()
+            && $this->workspaceRoutes->isDepartmentWorkspace()
             && in_array($request->method(), ['GET', 'HEAD'], true)
             && ! $request->expectsJson()
             && ! $request->ajax()

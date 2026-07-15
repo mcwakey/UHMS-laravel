@@ -2,9 +2,30 @@
 
 namespace App\Services\Dashboard;
 
+use App\Models\Admission;
+use App\Models\Appointment;
+use App\Models\Bed;
+use App\Models\BloodRequest;
+use App\Models\BloodUnit;
+use App\Models\Claim;
+use App\Models\EmergencyCase;
+use App\Models\Invoice;
+use App\Models\JournalEntry;
+use App\Models\LabRequest;
+use App\Models\LeaveRequest;
+use App\Models\Payment;
+use App\Models\PayrollRecord;
+use App\Models\Prescription;
+use App\Models\ProcedureRequest;
+use App\Models\PurchaseOrder;
+use App\Models\StockBalance;
+use App\Models\StockRequisition;
 use App\Models\User;
+use App\Models\Visit;
 use Closure;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Throwable;
 
 /**
@@ -44,6 +65,7 @@ class DepartmentDashboardService
             DepartmentDashboardResolver::ACCOUNTING => $this->accounting(),
             DepartmentDashboardResolver::EMERGENCY => $this->emergency(),
             DepartmentDashboardResolver::ADMISSION => $this->admission(),
+            DepartmentDashboardResolver::NURSING => $this->consultation(),
             DepartmentDashboardResolver::BLOOD_BANK => $this->bloodBank(),
             DepartmentDashboardResolver::CLAIMS => $this->claims(),
             DepartmentDashboardResolver::HR => $this->hr(),
@@ -63,12 +85,12 @@ class DepartmentDashboardService
     }
 
     /* ===================================================================== */
-    /* Department builders                                                   */
+    /* Department builders */
     /* ===================================================================== */
 
     private function consultation(): array
     {
-        $V = \App\Models\Visit::class;
+        $V = Visit::class;
         $s = fn (string $status) => $this->count(fn () => $V::query()->whereDate('created_at', today())->where('status', $status)->count());
 
         return [
@@ -98,7 +120,7 @@ class DepartmentDashboardService
 
     private function pharmacy(): array
     {
-        $P = \App\Models\Prescription::class;
+        $P = Prescription::class;
         $s = fn (string $status) => $this->count(fn () => $P::query()->where('status', $status)->count());
         $lowStock = $this->pharmacyStockCount('<=', 'reorder');
         $outStock = $this->pharmacyStockCount('<=', 'zero');
@@ -134,7 +156,7 @@ class DepartmentDashboardService
 
     private function investigation(): array
     {
-        $L = \App\Models\LabRequest::class;
+        $L = LabRequest::class;
         $deptId = $this->user->department_id;
         $scope = fn ($q) => $deptId ? $q->where('target_department_id', $deptId) : $q;
         $s = fn (string $status) => $this->count(fn () => $scope($L::query())->where('status', $status)->count());
@@ -166,7 +188,7 @@ class DepartmentDashboardService
 
     private function theatre(): array
     {
-        $R = \App\Models\ProcedureRequest::class;
+        $R = ProcedureRequest::class;
         $s = fn ($status) => $this->count(fn () => $R::query()->where('status', is_array($status) ? null : $status)->when(is_array($status), fn ($q) => $q->whereIn('status', $status))->count());
 
         return [
@@ -194,8 +216,8 @@ class DepartmentDashboardService
 
     private function billing(): array
     {
-        $I = \App\Models\Invoice::class;
-        $Pay = \App\Models\Payment::class;
+        $I = Invoice::class;
+        $Pay = Payment::class;
         $unpaid = $this->count(fn () => $I::query()->whereIn('status', ['pending', 'partially_paid'])->count());
         $paymentsToday = $this->sum(fn () => $Pay::query()->whereDate('created_at', today())->sum('amount'));
         $invoicesToday = $this->count(fn () => $I::query()->whereDate('created_at', today())->count());
@@ -229,8 +251,8 @@ class DepartmentDashboardService
     {
         $low = $this->stockCount('reorder');
         $out = $this->stockCount('zero');
-        $req = $this->count(fn () => \App\Models\StockRequisition::query()->where('status', 'submitted')->count());
-        $po = $this->count(fn () => \App\Models\PurchaseOrder::query()->whereIn('status', ['submitted', 'approved', 'partially_received'])->count());
+        $req = $this->count(fn () => StockRequisition::query()->where('status', 'submitted')->count());
+        $po = $this->count(fn () => PurchaseOrder::query()->whereIn('status', ['submitted', 'approved', 'partially_received'])->count());
 
         return [
             'title' => __('dashboards.titles.stock'),
@@ -263,15 +285,15 @@ class DepartmentDashboardService
 
     private function accounting(): array
     {
-        $J = \App\Models\JournalEntry::class;
-        $failed = $this->count(fn () => \App\Models\Invoice::query()->where('accounting_status', 'failed')->count());
+        $J = JournalEntry::class;
+        $failed = $this->count(fn () => Invoice::query()->where('accounting_status', 'failed')->count());
 
         return [
             'title' => __('dashboards.titles.accounting'),
             'kpis' => array_values(array_filter([
                 $this->kpi(__('dashboards.accounting.journal_entries'), $this->count(fn () => $J::query()->count()), 'ti-book', 'primary', 'admin.accounting.journals.index'),
                 $this->kpi(__('dashboards.accounting.failed_postings'), $failed, 'ti-alert-octagon', 'danger'),
-                $this->kpi(__('dashboards.accounting.invoices_today'), $this->count(fn () => \App\Models\Invoice::query()->whereDate('created_at', today())->count()), 'ti-files', 'info', 'admin.billing.invoices.index'),
+                $this->kpi(__('dashboards.accounting.invoices_today'), $this->count(fn () => Invoice::query()->whereDate('created_at', today())->count()), 'ti-files', 'info', 'admin.billing.invoices.index'),
             ])),
             'alerts' => array_values(array_filter([
                 $this->alert(__('dashboards.accounting.alert_failed_postings'), $failed, 'danger', 'ti-alert-octagon'),
@@ -293,15 +315,15 @@ class DepartmentDashboardService
         return [
             'title' => __('dashboards.titles.management'),
             'kpis' => array_values(array_filter([
-                $this->kpi(__('dashboards.management.visits_today'), $this->count(fn () => \App\Models\Visit::query()->whereDate('created_at', today())->count()), 'ti-calendar', 'primary'),
-                $this->kpi(__('dashboards.management.admitted_patients'), $this->count(fn () => \App\Models\Admission::query()->whereNull('discharged_at')->count()), 'ti-bed', 'info'),
-                $this->permits('payments.view') ? $this->kpi(__('dashboards.management.revenue_today'), $this->sum(fn () => \App\Models\Payment::query()->whereDate('created_at', today())->sum('amount')), 'ti-cash', 'success', null, [], 'currency') : null,
-                $this->kpi(__('dashboards.management.unpaid_invoices'), $this->count(fn () => \App\Models\Invoice::query()->whereIn('status', ['pending', 'partially_paid'])->count()), 'ti-file-invoice', 'warning', 'admin.billing.invoices.index'),
+                $this->kpi(__('dashboards.management.visits_today'), $this->count(fn () => Visit::query()->whereDate('created_at', today())->count()), 'ti-calendar', 'primary'),
+                $this->kpi(__('dashboards.management.admitted_patients'), $this->count(fn () => Admission::query()->whereNull('discharged_at')->count()), 'ti-bed', 'info'),
+                $this->permits('payments.view') ? $this->kpi(__('dashboards.management.revenue_today'), $this->sum(fn () => Payment::query()->whereDate('created_at', today())->sum('amount')), 'ti-cash', 'success', null, [], 'currency') : null,
+                $this->kpi(__('dashboards.management.unpaid_invoices'), $this->count(fn () => Invoice::query()->whereIn('status', ['pending', 'partially_paid'])->count()), 'ti-file-invoice', 'warning', 'admin.billing.invoices.index'),
                 $this->kpi(__('dashboards.management.low_stock'), $this->stockCount('reorder'), 'ti-alert-triangle', 'warning', 'admin.store.stock.balances'),
-                $this->kpi(__('dashboards.management.pending_claims'), $this->count(fn () => \App\Models\Claim::query()->whereIn('status', ['draft', 'ready', 'submitted'])->count()), 'ti-clipboard-text', 'secondary'),
+                $this->kpi(__('dashboards.management.pending_claims'), $this->count(fn () => Claim::query()->whereIn('status', ['draft', 'ready', 'submitted'])->count()), 'ti-clipboard-text', 'secondary'),
             ])),
             'alerts' => array_values(array_filter([
-                $this->alert(__('dashboards.management.alerts_failed_postings'), $this->count(fn () => \App\Models\Invoice::query()->where('accounting_status', 'failed')->count()), 'danger', 'ti-alert-octagon'),
+                $this->alert(__('dashboards.management.alerts_failed_postings'), $this->count(fn () => Invoice::query()->where('accounting_status', 'failed')->count()), 'danger', 'ti-alert-octagon'),
                 $this->alert(__('dashboards.management.alerts_out_of_stock'), $this->stockCount('zero'), 'danger', 'ti-x', 'admin.store.stock.balances'),
             ])),
             'queues' => [],
@@ -322,7 +344,7 @@ class DepartmentDashboardService
         return [
             'title' => __('dashboards.titles.generic'),
             'kpis' => array_values(array_filter([
-                $this->kpi(__('dashboards.generic.visits_today'), $this->count(fn () => \App\Models\Visit::query()->whereDate('created_at', today())->count()), 'ti-calendar', 'primary'),
+                $this->kpi(__('dashboards.generic.visits_today'), $this->count(fn () => Visit::query()->whereDate('created_at', today())->count()), 'ti-calendar', 'primary'),
             ])),
             'quick_actions' => $this->actions([
                 [__('dashboards.generic.action_patients'), 'ti-users', 'admin.patients.index', 'primary', 'patient.view'],
@@ -333,7 +355,7 @@ class DepartmentDashboardService
 
     private function emergency(): array
     {
-        $E = \App\Models\EmergencyCase::class;
+        $E = EmergencyCase::class;
         $open = fn () => $E::query()->where(fn ($q) => $q->whereNull('disposition')->orWhere('disposition', ''));
         $triage = fn (array $cats) => $this->count(fn () => $open()->whereIn('final_triage_category', $cats)->count());
 
@@ -360,8 +382,8 @@ class DepartmentDashboardService
 
     private function admission(): array
     {
-        $A = \App\Models\Admission::class;
-        $B = \App\Models\Bed::class;
+        $A = Admission::class;
+        $B = Bed::class;
         $admitted = $this->count(fn () => $A::query()->where('status', 'admitted')->count());
 
         return [
@@ -388,8 +410,8 @@ class DepartmentDashboardService
 
     private function bloodBank(): array
     {
-        $U = \App\Models\BloodUnit::class;
-        $R = \App\Models\BloodRequest::class;
+        $U = BloodUnit::class;
+        $R = BloodRequest::class;
         $expiring = $this->count(fn () => $U::query()->where('status', 'AVAILABLE')->whereNotNull('expiry_date')->whereDate('expiry_date', '<=', today()->addDays(7))->count());
         $pendingReq = $this->count(fn () => $R::query()->whereIn('status', ['PENDING', 'pending'])->count());
 
@@ -418,7 +440,7 @@ class DepartmentDashboardService
 
     private function claims(): array
     {
-        $C = \App\Models\Claim::class;
+        $C = Claim::class;
         $s = fn ($statuses) => $this->count(fn () => $C::query()->whereIn('status', (array) $statuses)->count());
         $rejected = $s(['rejected']);
 
@@ -445,16 +467,16 @@ class DepartmentDashboardService
 
     private function hr(): array
     {
-        $L = \App\Models\LeaveRequest::class;
+        $L = LeaveRequest::class;
         $pendingLeave = $this->count(fn () => $L::query()->where('status', 'pending')->count());
 
         return [
             'title' => __('dashboards.titles.hr'),
             'kpis' => array_values(array_filter([
-                $this->kpi(__('dashboards.hr.active_staff'), $this->count(fn () => \App\Models\User::query()->count()), 'ti-users-group', 'primary', 'admin.hr.employees.index'),
+                $this->kpi(__('dashboards.hr.active_staff'), $this->count(fn () => User::query()->count()), 'ti-users-group', 'primary', 'admin.hr.employees.index'),
                 $this->kpi(__('dashboards.hr.pending_leave'), $pendingLeave, 'ti-calendar-off', 'warning', 'admin.hr.leave.index'),
-                $this->kpi(__('dashboards.hr.payroll_draft'), $this->count(fn () => \App\Models\PayrollRecord::query()->where('status', 'draft')->count()), 'ti-file-dollar', 'secondary'),
-                $this->kpi(__('dashboards.hr.payroll_approved'), $this->count(fn () => \App\Models\PayrollRecord::query()->where('status', 'approved')->count()), 'ti-check', 'success'),
+                $this->kpi(__('dashboards.hr.payroll_draft'), $this->count(fn () => PayrollRecord::query()->where('status', 'draft')->count()), 'ti-file-dollar', 'secondary'),
+                $this->kpi(__('dashboards.hr.payroll_approved'), $this->count(fn () => PayrollRecord::query()->where('status', 'approved')->count()), 'ti-check', 'success'),
             ])),
             'alerts' => array_values(array_filter([
                 $this->alert(__('dashboards.hr.alert_pending_leave'), $pendingLeave, 'warning', 'ti-calendar-off', 'admin.hr.leave.index'),
@@ -472,8 +494,8 @@ class DepartmentDashboardService
 
     private function reception(): array
     {
-        $V = \App\Models\Visit::class;
-        $A = \App\Models\Appointment::class;
+        $V = Visit::class;
+        $A = Appointment::class;
 
         return [
             'title' => __('dashboards.titles.reception'),
@@ -496,13 +518,13 @@ class DepartmentDashboardService
     }
 
     /* ===================================================================== */
-    /* Queue builders (defensive, limited)                                   */
+    /* Queue builders (defensive, limited) */
     /* ===================================================================== */
 
     private function visitQueue(string $title, array $statuses): array
     {
         $rows = $this->rows(function () use ($statuses) {
-            return \App\Models\Visit::query()
+            return Visit::query()
                 ->with(['patient:id,first_name,last_name', 'department:id,name'])
                 ->whereIn('status', $statuses)
                 ->latest('id')->limit(10)->get()
@@ -521,7 +543,7 @@ class DepartmentDashboardService
     private function prescriptionQueue(): array
     {
         $rows = $this->rows(function () {
-            return \App\Models\Prescription::query()
+            return Prescription::query()
                 ->with('patient:id,first_name,last_name')
                 ->whereIn('status', ['pending', 'partially_billed', 'billed', 'partially_dispensed'])
                 ->latest('id')->limit(10)->get()
@@ -540,7 +562,7 @@ class DepartmentDashboardService
     private function labQueue(Closure $scope): array
     {
         $rows = $this->rows(function () use ($scope) {
-            return $scope(\App\Models\LabRequest::query())
+            return $scope(LabRequest::query())
                 ->whereIn('status', ['pending', 'processing'])
                 ->latest('id')->limit(10)->get()
                 ->map(fn ($r) => [
@@ -558,7 +580,7 @@ class DepartmentDashboardService
     private function procedureQueue(): array
     {
         $rows = $this->rows(function () {
-            return \App\Models\ProcedureRequest::query()
+            return ProcedureRequest::query()
                 ->with(['patient:id,first_name,last_name', 'service:id,name'])
                 ->whereNotIn('status', ['completed', 'cancelled', 'rejected'])
                 ->latest('id')->limit(10)->get()
@@ -577,7 +599,7 @@ class DepartmentDashboardService
     private function invoiceQueue(): array
     {
         $rows = $this->rows(function () {
-            return \App\Models\Invoice::query()
+            return Invoice::query()
                 ->with('patient:id,first_name,last_name')
                 ->whereIn('status', ['pending', 'partially_paid'])
                 ->latest('id')->limit(10)->get()
@@ -596,7 +618,7 @@ class DepartmentDashboardService
     private function requisitionQueue(): array
     {
         $rows = $this->rows(function () {
-            return \App\Models\StockRequisition::query()
+            return StockRequisition::query()
                 ->with('department:id,name')
                 ->where('status', 'submitted')
                 ->latest('id')->limit(10)->get()
@@ -631,13 +653,13 @@ class DepartmentDashboardService
     private function admissionQueue(): array
     {
         $rows = $this->rows(function () {
-            return \App\Models\Admission::query()
+            return Admission::query()
                 ->with('patient:id,first_name,last_name')
                 ->where('status', 'admitted')
                 ->latest('id')->limit(10)->get()
                 ->map(fn ($a) => [
                     'label' => trim(($a->patient?->first_name ?? '').' '.($a->patient?->last_name ?? '')) ?: ('#'.$a->id),
-                    'meta' => $a->admission_date ? 'Admitted '.\Illuminate\Support\Carbon::parse($a->admission_date)->format('d M Y') : '',
+                    'meta' => $a->admission_date ? 'Admitted '.Carbon::parse($a->admission_date)->format('d M Y') : '',
                     'badge' => 'Admitted',
                     'badge_variant' => 'info',
                     'url' => $this->routeUrl('admin.admissions.show', $a->id),
@@ -650,7 +672,7 @@ class DepartmentDashboardService
     private function bloodRequestQueue(): array
     {
         $rows = $this->rows(function () {
-            return \App\Models\BloodRequest::query()
+            return BloodRequest::query()
                 ->whereIn('status', ['PENDING', 'pending', 'APPROVED', 'approved'])
                 ->latest('id')->limit(10)->get()
                 ->map(fn ($r) => [
@@ -668,7 +690,7 @@ class DepartmentDashboardService
     private function claimsQueue(): array
     {
         $rows = $this->rows(function () {
-            return \App\Models\Claim::query()
+            return Claim::query()
                 ->whereIn('status', ['draft', 'ready', 'rejected', 'resubmitted'])
                 ->latest('id')->limit(10)->get()
                 ->map(fn ($c) => [
@@ -686,7 +708,7 @@ class DepartmentDashboardService
     private function leaveQueue(): array
     {
         $rows = $this->rows(function () {
-            return \App\Models\LeaveRequest::query()
+            return LeaveRequest::query()
                 ->with('user:id,first_name,last_name')
                 ->where('status', 'pending')
                 ->latest('id')->limit(10)->get()
@@ -705,14 +727,14 @@ class DepartmentDashboardService
     private function appointmentQueue(): array
     {
         $rows = $this->rows(function () {
-            return \App\Models\Appointment::query()
+            return Appointment::query()
                 ->with('patient:id,first_name,last_name')
                 ->whereDate('appointment_date', today())
                 ->whereIn('status', ['scheduled', 'confirmed', 'checked_in'])
                 ->orderBy('start_time')->limit(10)->get()
                 ->map(fn ($a) => [
                     'label' => trim(($a->patient?->first_name ?? '').' '.($a->patient?->last_name ?? '')) ?: ('#'.$a->id),
-                    'meta' => $a->start_time ? \Illuminate\Support\Str::of((string) $a->start_time)->substr(0, 5) : '',
+                    'meta' => $a->start_time ? Str::of((string) $a->start_time)->substr(0, 5) : '',
                     'badge' => ucfirst(str_replace('_', ' ', (string) ($a->status?->value ?? $a->status))),
                     'badge_variant' => 'info',
                     'url' => $this->routeUrl('admin.appointments.show', $a->id),
@@ -723,7 +745,7 @@ class DepartmentDashboardService
     }
 
     /* ===================================================================== */
-    /* Helpers                                                               */
+    /* Helpers */
     /* ===================================================================== */
 
     private function count(Closure $q): int
@@ -852,14 +874,14 @@ class DepartmentDashboardService
     private function pharmacyStockCount(string $op, string $mode): int
     {
         return $this->count(function () use ($mode) {
-            $q = \App\Models\StockBalance::query()
+            $q = StockBalance::query()
                 ->whereHas('location', fn ($l) => $l->where('type', 'pharmacy'));
             if ($mode === 'zero') {
                 $q->where('quantity_on_hand', '<=', 0);
             } else {
                 $q->whereColumn('quantity_on_hand', '<=', 'products.reorder_level')
-                  ->join('products', 'products.id', '=', 'stock_balances.product_id')
-                  ->where('products.reorder_level', '>', 0);
+                    ->join('products', 'products.id', '=', 'stock_balances.product_id')
+                    ->where('products.reorder_level', '>', 0);
             }
 
             return $q->count();
@@ -871,10 +893,10 @@ class DepartmentDashboardService
     {
         return $this->count(function () use ($mode) {
             if ($mode === 'zero') {
-                return \App\Models\StockBalance::query()->where('quantity_on_hand', '<=', 0)->count();
+                return StockBalance::query()->where('quantity_on_hand', '<=', 0)->count();
             }
 
-            return \App\Models\StockBalance::query()
+            return StockBalance::query()
                 ->join('products', 'products.id', '=', 'stock_balances.product_id')
                 ->whereColumn('stock_balances.quantity_on_hand', '<=', 'products.reorder_level')
                 ->where('products.reorder_level', '>', 0)

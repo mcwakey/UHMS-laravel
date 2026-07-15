@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Admin\Dashboard;
 
 use App\Http\Controllers\Controller;
-use App\Services\Department\DepartmentContextResolver;
-use App\Services\Department\DepartmentDashboardDataService;
 use App\Services\Dashboard\DepartmentDashboardRegistry;
 use App\Services\Dashboard\DepartmentDashboardResolver;
+use App\Services\Department\DepartmentContextResolver;
+use App\Services\Department\DepartmentDashboardCacheService;
+use App\Services\Department\DepartmentDashboardDataService;
 use App\Services\DepartmentMenuProfileService;
 use App\Services\WorkspaceRouteResolver;
 use Illuminate\Http\Request;
@@ -24,14 +25,14 @@ class DepartmentDashboardController extends Controller
         private DepartmentDashboardResolver $resolver,
         private DepartmentDashboardRegistry $registry,
         private DepartmentMenuProfileService $menuProfiles,
-        private \App\Services\Department\DepartmentDashboardCacheService $dashboardCache,
+        private DepartmentDashboardCacheService $dashboardCache,
         private WorkspaceRouteResolver $workspaceRoutes,
     ) {}
 
     public function index(Request $request)
     {
-        if ($this->workspaceRoutes->isRecords()) {
-            return redirect()->route('records.dashboard');
+        if ($this->workspaceRoutes->isDepartmentWorkspace()) {
+            return redirect()->route($this->workspaceRoutes->dashboardRouteName());
         }
 
         $context = $this->contextResolver->resolve($request->user(), $request);

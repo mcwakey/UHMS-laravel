@@ -358,6 +358,7 @@ return [
         'accounting' => 'Tableau de bord Comptabilité',
         'emergency' => 'Tableau de bord Urgences',
         'admission' => 'Tableau de bord Admission / Unités de soins',
+        'nursing' => 'Tableau de bord infirmier ambulatoire',
         'blood_bank' => 'Tableau de bord Banque de sang',
         'claims' => 'Tableau de bord Assurances / Réclamations',
         'hr' => 'Tableau de bord RH / Paie',

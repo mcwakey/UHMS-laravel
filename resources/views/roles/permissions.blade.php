@@ -17,7 +17,7 @@
     </div>
 </div>
 
-<form method="POST" action="{{ route('admin.roles.permissions.update', $role) }}">
+<form method="POST" action="{{ route('admin.roles.permissions.update', $role) }}" data-preserve-scroll>
     @csrf
     @method('PUT')
 
@@ -68,7 +68,7 @@
         @endforeach
     </div>
 
-    <div class="d-flex justify-content-end gap-2 mt-3 mb-3">
+    <div class="permissions-action-bar d-flex justify-content-end gap-2 py-2">
         <a href="{{ route('admin.roles.index') }}" class="btn btn-outline-secondary">{{ __('roles.back_to_roles') }}</a>
         <button type="submit" class="btn btn-primary">
             <i class="ti ti-check me-1"></i>{{ __('roles.save_permissions') }}
@@ -76,6 +76,19 @@
     </div>
 </form>
 @endsection
+
+@push('styles')
+<style>
+    .permissions-action-bar {
+        position: sticky;
+        bottom: 0;
+        z-index: 1020;
+        background-color: var(--bs-body-bg);
+        border-top: 1px solid var(--bs-border-color);
+        margin-top: 1rem;
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script>

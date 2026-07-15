@@ -1221,6 +1221,7 @@ class RoleSeeder extends Seeder
         $nurse->syncPermissions(array_values(array_unique(array_merge([
             'patients.view',
             'visits.view', 'visits.transition', 'visits.preview',
+            'consultations.view',
             'complaints.view', 'complaints.create', 'complaints.edit_own', 'complaints.delete_own',
             'vitals.view', 'vitals.create',
             'queue.view', 'queue.manage',
@@ -1243,13 +1244,14 @@ class RoleSeeder extends Seeder
             'emergency.bay.assign', 'emergency.notes.create', 'emergency.vitals.record',
             'emergency.medication.administer', 'emergency.consumables.use', 'emergency.tasks.manage', 'emergency.reports.view',
             'notifications.view',
+            'reports.view',
             'procedures.view',
             'procedure.view', 'procedure.record_preop', 'procedure.record_postop',
             'procedure_catalogue.view',
             'consumable_usage.record', 'consumable.use',
             'service_rendering.view', 'service_rendering.start',
             'service_rendering.mark_rendered', 'service_rendering.mark_not_rendered',
-            'service_rendering.edit_notes',
+            'service_rendering.edit_notes', 'service_rendering.reports',
             // Specimen collection (phlebotomy) at ward / clinic
             'lab.samples.view', 'lab.samples.collect',
             'product.view', 'stock.view_balance',
@@ -1263,6 +1265,7 @@ class RoleSeeder extends Seeder
         $wardNurse->syncPermissions(array_values(array_unique(array_merge([
             'patients.view',
             'visits.view', 'visits.transition', 'visits.preview',
+            'consultations.view',
             'complaints.view', 'complaints.create', 'complaints.edit_own', 'complaints.delete_own',
             'vitals.view', 'vitals.create',
             'queue.view', 'queue.manage',
@@ -1293,6 +1296,7 @@ class RoleSeeder extends Seeder
             'emergency.triage.perform', 'emergency.bay.assign', 'emergency.notes.create',
             'emergency.vitals.record', 'emergency.medication.administer', 'emergency.consumables.use', 'emergency.tasks.manage', 'emergency.reports.view',
             'notifications.view',
+            'reports.view',
             'procedures.view',
             'procedure.view', 'procedure.record_preop', 'procedure.record_postop',
             'procedure_catalogue.view',
@@ -1344,12 +1348,18 @@ class RoleSeeder extends Seeder
         $triageNurse->syncPermissions([
             'patients.view',
             'visits.view', 'visits.preview',
+            'consultations.view',
             'complaints.view', 'complaints.create', 'complaints.edit_own', 'complaints.delete_own',
             'vitals.view', 'vitals.create',
             'queue.view',
+            'clinical_tasks.view', 'clinical_tasks.complete', 'clinical_tasks.view_overdue',
+            'service_rendering.view', 'service_rendering.start',
+            'service_rendering.mark_rendered', 'service_rendering.mark_not_rendered',
+            'service_rendering.edit_notes', 'service_rendering.reports',
             'emergency.board.view', 'emergency.case.create', 'emergency.case.view',
             'emergency.triage.perform', 'emergency.notes.create', 'emergency.vitals.record',
             'notifications.view',
+            'reports.view',
         ]);
 
         $theatreNurse = Role::firstOrCreate(['name' => 'Theatre Nurse']);
@@ -1482,10 +1492,10 @@ class RoleSeeder extends Seeder
             'reports.view', 'reports.export', 'reports.print',
             'notifications.view',
             // Front desk operations + reporting (view + export).
-            'front_desk.reports.view',
-            'front_desk.reports.export',
+            // 'front_desk.reports.view',
+            // 'front_desk.reports.export',
             // Phase 18E — records officer gets view access to facility logs.
-            'front_desk.handovers.view', 'front_desk.lost_found.view', 'front_desk.incidents.view',
+            // 'front_desk.handovers.view', 'front_desk.lost_found.view', 'front_desk.incidents.view',
         ], $frontDeskOperationalPerms))));
 
         $labTech = Role::firstOrCreate(['name' => 'Lab Technician']);

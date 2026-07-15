@@ -19,19 +19,35 @@ use Illuminate\Support\Facades\Lang;
 class DepartmentDashboardResolver
 {
     public const MANAGEMENT = 'management';
+
     public const CONSULTATION = 'consultation';
+
     public const PHARMACY = 'pharmacy';
+
     public const INVESTIGATION = 'investigation';
+
     public const THEATRE = 'theatre';
+
     public const BILLING = 'billing';
+
     public const STOCK = 'stock';
+
     public const ACCOUNTING = 'accounting';
+
     public const EMERGENCY = 'emergency';
+
     public const ADMISSION = 'admission';
+
+    public const NURSING = 'nursing';
+
     public const BLOOD_BANK = 'blood_bank';
+
     public const CLAIMS = 'claims';
+
     public const HR = 'hr';
+
     public const RECEPTION = 'reception';
+
     public const GENERIC = 'generic';
 
     public function __construct(

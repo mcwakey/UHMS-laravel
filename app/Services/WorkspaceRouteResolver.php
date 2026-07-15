@@ -25,33 +25,44 @@ class WorkspaceRouteResolver
 
     public function isRecords(): bool
     {
-        $user = $this->request->user();
-        if (! $user) {
-            return false;
-        }
+        return $this->isType(DepartmentType::RECORDS);
+    }
 
-        $type = $this->departments->currentDepartment($user, $this->request)?->type;
+    public function isNursing(): bool
+    {
+        return $this->isType(DepartmentType::NURSING);
+    }
 
-        return $type instanceof DepartmentType
-            ? $type === DepartmentType::RECORDS
-            : (string) $type === DepartmentType::RECORDS->value;
+    public function isDepartmentWorkspace(): bool
+    {
+        return $this->isRecords() || $this->isNursing();
     }
 
     public function dashboardRouteName(): string
     {
-        return $this->isRecords() ? 'records.dashboard' : 'admin.my-dashboard';
+        return match (true) {
+            $this->isRecords() => 'records.dashboard',
+            $this->isNursing() => 'nursing.dashboard',
+            default => 'admin.my-dashboard',
+        };
     }
 
     public function routeName(string $genericRoute): string
     {
-        if (! $this->isRecords()) {
+        $prefix = match (true) {
+            $this->isRecords() => 'records.',
+            $this->isNursing() => 'nursing.',
+            default => null,
+        };
+
+        if ($prefix === null) {
             return $genericRoute;
         }
 
         $candidate = Str::startsWith($genericRoute, 'admin.')
             ? Str::after($genericRoute, 'admin.')
             : $genericRoute;
-        $candidate = 'records.'.$candidate;
+        $candidate = $prefix.$candidate;
 
         return Route::has($candidate) ? $candidate : $genericRoute;
     }
@@ -116,10 +127,51 @@ class WorkspaceRouteResolver
         return $this->route('admin.appointments.show', $appointment);
     }
 
+    public function opdQueue(): string
+    {
+        return $this->isNursing() ? route('nursing.opd.queue') : $this->visitIndex();
+    }
+
+    public function opdVisitShow(Visit $visit): string
+    {
+        return $this->isNursing() ? route('nursing.opd.show', $visit) : $this->visitShow($visit);
+    }
+
+    public function visitActionUrl(int $visitId, string $fallback): string
+    {
+        return $this->isNursing() ? route('nursing.opd.show', $visitId) : $fallback;
+    }
+
+    public function taskIndex(): string
+    {
+        return $this->isNursing() ? route('nursing.tasks.index') : $this->dashboard();
+    }
+
+    public function treatmentIndex(): string
+    {
+        return $this->isNursing() ? route('nursing.treatments.index') : $this->dashboard();
+    }
+
+    public function handoffIndex(): string
+    {
+        return $this->isNursing() ? route('nursing.handoffs.index') : $this->route('admin.journey.worklist');
+    }
+
+    public function handoffRouteName(string $action = 'index'): string
+    {
+        if ($this->isNursing()) {
+            return $action === 'refresh' ? 'nursing.handoffs.refresh' : 'nursing.handoffs.'.$action;
+        }
+
+        return $action === 'index' ? 'admin.journey.worklist' : ($action === 'refresh'
+            ? 'admin.journey.worklist.refresh'
+            : 'admin.journey.handoffs.'.$action);
+    }
+
     /** @return array<string, mixed> */
     public function viewContext(): array
     {
-        if (! $this->isRecords()) {
+        if (! $this->isDepartmentWorkspace()) {
             return [
                 'workspaceKey' => 'generic',
                 'workspaceRoutePrefix' => 'admin.',
@@ -127,11 +179,14 @@ class WorkspaceRouteResolver
             ];
         }
 
+        $key = $this->isNursing() ? 'nursing' : 'records';
+
         return [
-            'workspaceKey' => 'records',
-            'workspaceRoutePrefix' => 'records.',
-            'workspaceTitle' => __('records.workspace.title'),
+            'workspaceKey' => $key,
+            'workspaceRoutePrefix' => $key.'.',
+            'workspaceTitle' => __($key.'.workspace.title'),
             'workspaceDepartment' => $this->departments->currentDepartment($this->request->user(), $this->request),
+            'workspaceScope' => $key === 'nursing' ? 'opd' : null,
             'breadcrumbs' => $this->breadcrumbs(),
         ];
     }
@@ -139,6 +194,10 @@ class WorkspaceRouteResolver
     /** @return list<array{label:string,url:?string}> */
     public function breadcrumbs(): array
     {
+        if ($this->isNursing()) {
+            return $this->nursingBreadcrumbs();
+        }
+
         $name = (string) $this->request->route()?->getName();
         $crumbs = [[
             'label' => __('records.breadcrumbs.records'),
@@ -188,5 +247,60 @@ class WorkspaceRouteResolver
         }
 
         return $crumbs;
+    }
+
+    /** @return list<array{label:string,url:?string}> */
+    private function nursingBreadcrumbs(): array
+    {
+        $name = (string) $this->request->route()?->getName();
+        $crumbs = [[
+            'label' => __('nursing.breadcrumbs.nursing'),
+            'url' => $name === 'nursing.dashboard' ? null : route('nursing.dashboard'),
+        ]];
+
+        $resource = match (true) {
+            Str::startsWith($name, 'nursing.opd') => ['opd_queue', 'nursing.opd.queue'],
+            Str::startsWith($name, 'nursing.patients') => ['patients', 'nursing.patients.index'],
+            Str::startsWith($name, 'nursing.visits') => ['visits', 'nursing.visits.index'],
+            Str::startsWith($name, 'nursing.triage') => ['triage', 'nursing.triage.index'],
+            Str::startsWith($name, 'nursing.vitals') => ['vitals', 'nursing.vitals.create'],
+            Str::startsWith($name, 'nursing.tasks') => ['tasks', 'nursing.tasks.index'],
+            Str::startsWith($name, 'nursing.treatments') => ['treatments', 'nursing.treatments.index'],
+            Str::startsWith($name, 'nursing.consultations') => ['consultations', 'nursing.consultations.index'],
+            Str::startsWith($name, 'nursing.service-renderings') => ['service_renderings', 'nursing.service-renderings.index'],
+            Str::startsWith($name, 'nursing.handoffs') => ['handoffs', 'nursing.handoffs.index'],
+            Str::startsWith($name, 'nursing.reports') => ['reports', 'nursing.reports.index'],
+            default => null,
+        };
+
+        if (! $resource) {
+            return $crumbs;
+        }
+
+        [$key, $indexRoute] = $resource;
+        $isIndex = $name === $indexRoute || ($key === 'opd_queue' && in_array($name, [
+            'nursing.opd.index', 'nursing.opd.active', 'nursing.opd.completed',
+        ], true));
+        $crumbs[] = ['label' => __('nursing.breadcrumbs.'.$key), 'url' => $isIndex ? null : route($indexRoute)];
+
+        if (! $isIndex) {
+            $crumbs[] = ['label' => __('nursing.breadcrumbs.details'), 'url' => null];
+        }
+
+        return $crumbs;
+    }
+
+    private function isType(DepartmentType $expected): bool
+    {
+        $user = $this->request->user();
+        if (! $user) {
+            return false;
+        }
+
+        $type = $this->departments->currentDepartment($user, $this->request)?->type;
+
+        return $type instanceof DepartmentType
+            ? $type === $expected
+            : (string) $type === $expected->value;
     }
 }

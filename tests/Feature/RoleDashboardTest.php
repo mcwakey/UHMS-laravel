@@ -2,7 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Department;
+use App\Models\Patient;
 use App\Models\User;
+use App\Models\Visit;
+use App\Models\VisitConsultationRoute;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -119,12 +123,12 @@ class RoleDashboardTest extends TestCase
 
     public function test_doctor_sees_unassigned_routes_in_their_department(): void
     {
-        $department = \App\Models\Department::factory()->create(['status' => 'active']);
+        $department = Department::factory()->create(['status' => 'active']);
         $doctor = $this->userWithRole('Doctor');
         $doctor->forceFill(['department_id' => $department->id])->save();
 
-        $patient = \App\Models\Patient::factory()->create();
-        $visit = \App\Models\Visit::factory()->create([
+        $patient = Patient::factory()->create();
+        $visit = Visit::factory()->create([
             'patient_id' => $patient->id,
             'visit_type' => 'outpatient',
             'chief_complaint' => 'Severe headache since morning',
@@ -132,12 +136,12 @@ class RoleDashboardTest extends TestCase
 
         // A route in the doctor's department with NO doctor assigned yet — the
         // shared pool the consultation workbench shows.
-        \App\Models\VisitConsultationRoute::create([
+        VisitConsultationRoute::create([
             'visit_id' => $visit->id,
             'patient_id' => $patient->id,
             'department_id' => $department->id,
             'doctor_id' => null,
-            'status' => \App\Models\VisitConsultationRoute::STATUS_PENDING,
+            'status' => VisitConsultationRoute::STATUS_PENDING,
         ]);
 
         $this->actingAs($doctor)->get('/doctor/dashboard')
