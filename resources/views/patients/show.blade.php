@@ -171,8 +171,12 @@
                         <span class="badge badge-soft-dark fs-13 px-3 py-2">{{ __('patients.deceased') }}</span>
                     @endif
                 </div>
-                <div class="d-flex gap-2 justify-content-lg-end flex-wrap">
+                <div class="d-flex gap-2 justify-content-lg-end">
                     @if(!$patient->isMerged() && !$patient->is_deceased && $patient->status === 'active')
+
+                    @can('appointments.create')
+                    <a href="{{ $workspaceRoutes->route('admin.appointments.create', ['patient_id' => $patient->id]) }}" class="btn btn-outline-primary btn-md"><i class="ti ti-calendar-plus me-1"></i>{{ __('appointments.schedule_appointment') }}</a>
+                    @endcan
                     @can('visits.create')
                     @if(($lastVisitDate && $lastVisitDate->toDateString() === today()->toDateString()))
                     <button type="button" class="btn btn-success btn-md" disabled title="{{ __('patients.cannot_visit_deceased') }}">
@@ -530,6 +534,9 @@
                 <a href="{{ $workspaceRoutes->route('admin.visits.create', ['patient_id' => $patient->id]) }}" class="btn btn-sm btn-success"><i class="ti ti-plus me-1"></i>{{ __('patients.new_visit') }}</a>
                 @endif
                 @endcan
+                @can('appointments.create')
+                <a href="{{ $workspaceRoutes->route('admin.appointments.create', ['patient_id' => $patient->id]) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-calendar-plus me-1"></i>{{ __('appointments.schedule_appointment') }}</a>
+                @endcan
                 @endif
             </div>
             @if($patient->visits->isNotEmpty())
@@ -553,7 +560,9 @@
                                 <td>—</td>
                                 <td>{{ $visit->currentConsultationDoctor()?->full_name ?? '—' }}</td>
                                 <td><x-status-badge :status="$visit->status" /></td>
+                                @can('visits.create')
                                 <td><a aria-label="View" title="View" href="{{ $workspaceRoutes->route('admin.visits.show', $visit) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
+                                @endcan
                             </tr>
                             @endforeach
             </x-data-table>

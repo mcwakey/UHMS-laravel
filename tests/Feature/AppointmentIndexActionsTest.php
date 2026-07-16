@@ -108,6 +108,85 @@ class AppointmentIndexActionsTest extends TestCase
             ->assertJsonPath('visit_redirect_url', route('admin.visits.show', $visit));
     }
 
+    public function test_create_uses_appointment_patient_search_without_visit_view_permission(): void
+    {
+        $appointmentUser = User::factory()->create(['department_id' => $this->department->id]);
+        $appointmentUser->givePermissionTo([
+            Permission::findOrCreate('appointments.view', 'web'),
+            Permission::findOrCreate('appointments.create', 'web'),
+        ]);
+
+        Patient::factory()->create([
+            'first_name' => 'Ama',
+            'last_name' => 'Mensah',
+            'phone' => '0241234567',
+            'email' => 'ama.mensah@example.test',
+            'registered_by' => $appointmentUser->id,
+        ]);
+
+        $response = $this->actingAs($appointmentUser)->get(route('admin.appointments.create'));
+        $page = $this->inertiaPage($response->getContent());
+        $html = $page['props']['html'];
+        $scripts = $this->legacyScripts($page);
+
+        $response->assertOk();
+        $this->assertStringContainsString(route('admin.appointments.patient-search'), $scripts);
+        $this->assertStringContainsString(route('admin.appointments.patient-insurances'), $scripts);
+        $this->assertStringContainsString(route('admin.appointments.department-services'), $scripts);
+        $this->assertStringContainsString(route('admin.appointments.services-for-doctor'), $scripts);
+        $this->assertStringContainsString(route('admin.appointments.doctors-for-services'), $scripts);
+        $this->assertStringNotContainsString(route('admin.visits.patient-search'), $scripts);
+        $this->assertStringNotContainsString(route('admin.visits.patient-insurances'), $scripts);
+        $this->assertStringNotContainsString(route('admin.visits.department-services'), $scripts);
+        $this->assertStringNotContainsString(route('admin.visits.services-for-doctor'), $scripts);
+        $this->assertStringNotContainsString(route('admin.visits.doctors-for-services'), $scripts);
+        $this->assertStringContainsString(__('appointments.search_patient'), $html);
+
+        $this->actingAs($appointmentUser)
+            ->getJson(route('admin.appointments.patient-search', ['q' => 'Ama']))
+            ->assertOk()
+            ->assertJsonPath('0.phone', '024****567')
+            ->assertJsonPath('0.email', 'am****@example.test')
+            ->assertDontSee('0241234567', false)
+            ->assertDontSee('ama.mensah@example.test', false);
+
+        $this->actingAs($appointmentUser)
+            ->getJson(route('admin.visits.patient-search', ['q' => 'Ama']))
+            ->assertForbidden();
+
+        $this->actingAs($appointmentUser)
+            ->getJson(route('admin.appointments.department-services', ['department_id' => $this->department->id]))
+            ->assertOk();
+
+        $this->actingAs($appointmentUser)
+            ->getJson(route('admin.visits.department-services', ['department_id' => $this->department->id]))
+            ->assertForbidden();
+    }
+
+    public function test_create_can_open_with_patient_preselected_from_patient_context(): void
+    {
+        $appointmentUser = User::factory()->create(['department_id' => $this->department->id]);
+        $appointmentUser->givePermissionTo([
+            Permission::findOrCreate('appointments.view', 'web'),
+            Permission::findOrCreate('appointments.create', 'web'),
+        ]);
+        $patient = Patient::factory()->create([
+            'first_name' => 'Akosua',
+            'last_name' => 'Mensah',
+            'registered_by' => $appointmentUser->id,
+        ]);
+
+        $response = $this->actingAs($appointmentUser)
+            ->get(route('admin.appointments.create', ['patient_id' => $patient->id]));
+        $page = $this->inertiaPage($response->getContent());
+        $html = $page['props']['html'];
+
+        $response->assertOk();
+        $this->assertStringContainsString('value="'.$patient->id.'"', $html);
+        $this->assertStringContainsString($patient->patient_number.' - '.$patient->full_name, $html);
+        $this->assertStringNotContainsString('id="patientInfo" class="d-none"', $html);
+    }
+
     private function createAppointment(AppointmentStatus $status): Appointment
     {
         $patient = Patient::factory()->create(['registered_by' => $this->user->id]);

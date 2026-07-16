@@ -474,6 +474,12 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [AppointmentController::class, 'index'])->name('index');
             Route::get('create', [AppointmentController::class, 'create'])->name('create')->middleware('can:appointments.create');
             Route::post('/', [AppointmentController::class, 'store'])->name('store')->middleware('can:appointments.create');
+            Route::get('patient-search', [AppointmentController::class, 'patientSearch'])->name('patient-search')->middleware('can:appointments.create');
+            Route::get('patient-insurances', [AppointmentController::class, 'patientInsurances'])->name('patient-insurances')->middleware(['module:insurance', 'can:appointments.create']);
+            Route::get('department-services', [AppointmentController::class, 'departmentServices'])->name('department-services')->middleware('can:appointments.create');
+            Route::get('doctors-for-services', [AppointmentController::class, 'doctorsForServices'])->name('doctors-for-services')->middleware('can:appointments.create');
+            Route::get('services-for-doctor', [AppointmentController::class, 'servicesForDoctor'])->name('services-for-doctor')->middleware('can:appointments.create');
+            Route::get('service-price', [AppointmentController::class, 'servicePrice'])->name('service-price')->middleware('can:appointments.create');
             Route::get('calendar', [AppointmentController::class, 'calendar'])->name('calendar');
             Route::get('{appointment}', [AppointmentController::class, 'show'])->name('show');
             Route::get('{appointment}/edit', [AppointmentController::class, 'edit'])->name('edit')->middleware('can:appointments.edit');
@@ -1106,6 +1112,12 @@ Route::middleware('auth')->group(function () {
             Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments.index');
             Route::get('appointments/create', [AppointmentController::class, 'create'])->name('appointments.create')->middleware('can:appointments.create');
             Route::post('appointments', [AppointmentController::class, 'store'])->name('appointments.store')->middleware('can:appointments.create');
+            Route::get('appointments/patient-search', [AppointmentController::class, 'patientSearch'])->name('appointments.patient-search')->middleware('can:appointments.create');
+            Route::get('appointments/patient-insurances', [AppointmentController::class, 'patientInsurances'])->name('appointments.patient-insurances')->middleware(['module:insurance', 'can:appointments.create']);
+            Route::get('appointments/department-services', [AppointmentController::class, 'departmentServices'])->name('appointments.department-services')->middleware('can:appointments.create');
+            Route::get('appointments/doctors-for-services', [AppointmentController::class, 'doctorsForServices'])->name('appointments.doctors-for-services')->middleware('can:appointments.create');
+            Route::get('appointments/services-for-doctor', [AppointmentController::class, 'servicesForDoctor'])->name('appointments.services-for-doctor')->middleware('can:appointments.create');
+            Route::get('appointments/service-price', [AppointmentController::class, 'servicePrice'])->name('appointments.service-price')->middleware('can:appointments.create');
             Route::get('appointments/calendar', [AppointmentController::class, 'calendar'])->name('appointments.calendar');
             Route::get('appointments/{appointment}', [AppointmentController::class, 'show'])->name('appointments.show');
             Route::get('appointments/{appointment}/edit', [AppointmentController::class, 'edit'])->name('appointments.edit')->middleware('can:appointments.edit');

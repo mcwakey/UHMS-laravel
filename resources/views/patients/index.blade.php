@@ -111,7 +111,7 @@
                                 </span>
                                 <div>
                                     <a href="{{ $workspaceRoutes->route('admin.patients.show', $patient) }}" class="fw-medium text-dark">{{ $patient->full_name }}</a>
-                                    <br><small class="text-muted">{{ $patient->gender?->label() }} {{ $patient->age }} yrs</small>
+                                    <br><small class="text-muted">{{ $patient->gender?->label() }} · {{ $patient->age }} yrs</small>
                                 </div>
                             </div>
                         </td>
@@ -161,10 +161,12 @@
                         </td>
                         <td>{{ $patient->last_visit_date ? \Carbon\Carbon::parse($patient->last_visit_date)->translatedFormat('d M Y') : '—' }}</td>
                         <td class="text-end">
+
+                            @php $lastVisitDate = $patient->visits->first()?->visit_date; @endphp
                             <div class="d-flex align-items-center justify-content-end gap-1">
                                 @if(!$patient->isMerged() && !$patient->is_deceased && $patient->status === 'active')
                                 @can('visits.create')
-                                @if($patient->last_visit_date === today()->toDateString())
+                                @if($lastVisitDate && $lastVisitDate->toDateString() === today()->toDateString())
                                 <button type="button" class="btn btn-sm btn-outline-secondary" title="{{ __('patients.merged_folder_no_visits') }}" disabled>
                                     <i class="ti ti-lock"></i>
                                 </button>
@@ -175,12 +177,20 @@
                                 @endif
                                 @endif
                                 @endcan
+                                {{-- @can('appointments.create')
+                                <a href="{{ $workspaceRoutes->route('admin.appointments.create', ['patient_id' => $patient->id]) }}" class="btn btn-sm btn-outline-primary" title="{{ __('appointments.schedule_appointment') }}">
+                                    <i class="ti ti-calendar-plus"></i>
+                                </a>
+                                @endcan --}}
                                 <div class="dropdown">
                                     <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="btn btn-sm btn-light" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">
                                         <li><a class="dropdown-item" href="{{ $workspaceRoutes->route('admin.patients.show', $patient) }}"><i class="ti ti-eye me-2"></i>{{ __('patients.view_profile') }}</a></li>
+                                        @can('appointments.create')
+                                        <li><a class="dropdown-item" href="{{ $workspaceRoutes->route('admin.appointments.create', ['patient_id' => $patient->id]) }}"><i class="ti ti-calendar-plus me-2"></i>{{ __('appointments.schedule_appointment') }}</a></li>
+                                        @endcan
                                         @can('patients.edit')
                                         @if(!$patient->isMerged() && $patient->status !== 'deceased')
                                         <li><a class="dropdown-item" href="{{ $workspaceRoutes->route('admin.patients.edit', $patient) }}"><i class="ti ti-edit me-2"></i>{{ __('common.edit') }}</a></li>

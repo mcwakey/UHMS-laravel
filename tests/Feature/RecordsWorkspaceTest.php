@@ -161,6 +161,54 @@ class RecordsWorkspaceTest extends TestCase
         $this->actingAs($user)->get(route('records.appointments.index'))->assertForbidden();
     }
 
+    public function test_records_appointment_create_uses_appointment_patient_search_permission(): void
+    {
+        $records = $this->department(DepartmentType::RECORDS, 'REC');
+        $user = User::factory()->create(['department_id' => $records->id]);
+        \Spatie\Permission\Models\Role::findOrCreate('Doctor', 'web');
+        $this->give($user, ['appointments.view', 'appointments.create']);
+
+        Patient::factory()->create([
+            'first_name' => 'Ama',
+            'last_name' => 'Boateng',
+            'phone' => '0247654321',
+            'registered_by' => $user->id,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('records.appointments.create'));
+        $page = $this->inertiaPage($response->getContent());
+        $scripts = $this->legacyScripts($page);
+
+        $response->assertOk();
+        $this->assertStringContainsString(route('records.appointments.patient-search'), $scripts);
+        $this->assertStringContainsString(route('records.appointments.patient-insurances'), $scripts);
+        $this->assertStringContainsString(route('records.appointments.department-services'), $scripts);
+        $this->assertStringContainsString(route('records.appointments.services-for-doctor'), $scripts);
+        $this->assertStringContainsString(route('records.appointments.doctors-for-services'), $scripts);
+        $this->assertStringNotContainsString(route('records.visits.patient-search'), $scripts);
+        $this->assertStringNotContainsString(route('records.visits.patient-insurances'), $scripts);
+        $this->assertStringNotContainsString(route('records.visits.department-services'), $scripts);
+        $this->assertStringNotContainsString(route('records.visits.services-for-doctor'), $scripts);
+        $this->assertStringNotContainsString(route('records.visits.doctors-for-services'), $scripts);
+
+        $this->actingAs($user)
+            ->getJson(route('records.appointments.patient-search', ['q' => 'Ama']))
+            ->assertOk()
+            ->assertJsonPath('0.phone', '024****321');
+
+        $this->actingAs($user)
+            ->getJson(route('records.visits.patient-search', ['q' => 'Ama']))
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->getJson(route('records.appointments.department-services', ['department_id' => $records->id]))
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->getJson(route('records.visits.department-services', ['department_id' => $records->id]))
+            ->assertForbidden();
+    }
+
     public function test_records_menu_exposes_front_desk_triage_services_and_claims_by_permission(): void
     {
         $records = $this->department(DepartmentType::RECORDS, 'REC');
@@ -332,5 +380,21 @@ class RecordsWorkspaceTest extends TestCase
         }
 
         $user->givePermissionTo($permissions);
+    }
+
+    private function inertiaPage(string $content): array
+    {
+        preg_match('/<script data-page="app" type="application\/json">(.*?)<\/script>/s', $content, $matches);
+
+        return json_decode($matches[1] ?? '{}', true, flags: JSON_THROW_ON_ERROR);
+    }
+
+    private function legacyScripts(array $page): string
+    {
+        if (! empty($page['props']['scripts'])) {
+            return $page['props']['scripts'];
+        }
+
+        return base64_decode($page['props']['scriptsEncoded'] ?? '', true) ?: '';
     }
 }

@@ -58,6 +58,24 @@ class PatientManagementTest extends TestCase
         $response->assertSee($patient->first_name);
     }
 
+    public function test_patient_index_links_directly_to_appointment_creation_when_authorized(): void
+    {
+        $this->user->givePermissionTo([
+            Permission::firstOrCreate(['name' => 'appointments.view']),
+            Permission::firstOrCreate(['name' => 'appointments.create']),
+        ]);
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        $this->user = $this->user->fresh();
+
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+
+        $response = $this->actingAs($this->user)->get(route('admin.patients.index'));
+
+        $response->assertOk();
+        $this->assertPageContainsUrl($response->getContent(), route('admin.appointments.create', ['patient_id' => $patient->id]));
+        $response->assertSee(__('appointments.schedule_appointment'));
+    }
+
     // ── Create ──────────────────────────────────
 
     public function test_patient_create_form_loads(): void
@@ -174,6 +192,24 @@ class PatientManagementTest extends TestCase
         $response = $this->actingAs($this->user)->get(route('admin.patients.show', $patient));
         $response->assertStatus(200);
         $response->assertSee($patient->first_name);
+    }
+
+    public function test_patient_profile_links_directly_to_appointment_creation_when_authorized(): void
+    {
+        $this->user->givePermissionTo([
+            Permission::firstOrCreate(['name' => 'appointments.view']),
+            Permission::firstOrCreate(['name' => 'appointments.create']),
+        ]);
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        $this->user = $this->user->fresh();
+
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+
+        $response = $this->actingAs($this->user)->get(route('admin.patients.show', $patient));
+
+        $response->assertOk();
+        $this->assertPageContainsUrl($response->getContent(), route('admin.appointments.create', ['patient_id' => $patient->id]));
+        $response->assertSee(__('appointments.schedule_appointment'));
     }
 
     public function test_doctor_can_update_patient_medical_summary_without_full_patient_edit_permission(): void
@@ -633,5 +669,13 @@ class PatientManagementTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('status=active', false);
+    }
+
+    private function assertPageContainsUrl(string $content, string $url): void
+    {
+        $this->assertTrue(
+            str_contains($content, $url) || str_contains($content, str_replace('/', '\\/', $url)),
+            "Failed asserting that page contains URL [{$url}]."
+        );
     }
 }

@@ -145,9 +145,9 @@
             <x-slot:head>
                 <tr>
                     <th>{{ __('appointments.appointment_no') }}</th>
-                    <th>{{ __('common.patient') }}</th>
+                    <th>{{ __('patients.patient_name') }}</th>
+                    <th>{{ __('common.phone') }}</th>
                     <th>{{ __('common.doctor') }}</th>
-                    <!-- <th>{{ __('common.department') }}</th> -->
                     <th>{{ __('common.date') }}</th>
                     <th>{{ __('common.status') }}</th>
                     <th class="text-end">{{ __('common.actions') }}</th>
@@ -163,10 +163,24 @@
                                 <div class="small text-muted">{{ $appointment->patient->patient_number }}</div>
                             </td>
                             <td>
-                                <a href="{{ $workspaceRoutes->route('admin.patients.show', $appointment->patient) }}">
-                                    {{ $appointment->patient->full_name ?? $appointment->patient->first_name . ' ' . $appointment->patient->last_name }}
-                                </a>
-                                <!-- <div class="small text-muted">{{ $appointment->patient->patient_number }}</div> -->
+                                <div class="d-flex align-items-center">
+                                    <span class="avatar avatar-md rounded-circle bg-light text-dark me-2 flex-shrink-0">
+                                        @if($appointment->patient->avatar)
+                                            <img src="{{ Storage::url($appointment->patient->avatar) }}" alt="{{ $appointment->patient->full_name }}" class="rounded-circle">
+                                        @else
+                                            {{ strtoupper(substr($appointment->patient->first_name, 0, 1) . substr($appointment->patient->last_name, 0, 1)) }}
+                                        @endif
+                                    </span>
+                                    <div>
+                                        <a href="{{ $workspaceRoutes->route('admin.patients.show', $appointment->patient) }}">
+                                            {{ $appointment->patient->full_name ?? $appointment->patient->first_name . ' ' . $appointment->patient->last_name }}
+                                        </a>
+                                        <br><small class="text-muted">{{ $appointment->patient->gender?->label() }} · {{ $appointment->patient->age }} yrs</small>
+                                    <!-- <div class="small text-muted">{{ $appointment->patient->patient_number }}</div> -->
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
                                 @php
                                     $patientPhones = collect([
                                         app(\App\Services\PatientPrivacyService::class)->display('phone', $appointment->patient?->phone),
@@ -178,11 +192,19 @@
                                         <i class="ti ti-phone me-1"></i>{{ $patientPhones->implode(' / ') }}
                                     </div>
                                 @endif
+                                @if($appointment->patient->email)
+                                <small class="text-muted"><x-patient-protected-field field="email" :value="$appointment->patient->email" /></small>
+                                @endif
                             </td>
+                            {{-- <td>
+                                <x-patient-protected-field field="phone" :value="$appointment->patient->phone" />
+                                @if($appointment->patient->email)
+                                <br><small class="text-muted"><x-patient-protected-field field="email" :value="$appointment->patient->email" /></small>
+                                @endif
+                            </td> --}}
                             <td>{{ $appointment->doctor?->name ?? '—' }}
                                 <div class="small text-muted">{{ $appointment->department->name }}</div>
                             </td>
-                            <!-- <td>{{ $appointment->department->name }}</td> -->
                             <td>
                                 {{ $appointment->appointment_date->format('d M Y') }}
                                 <div class="small text-muted">

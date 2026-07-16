@@ -9,8 +9,13 @@ use App\Http\Requests\UpdateAppointmentRequest;
 use App\Models\Appointment;
 use App\Models\Department;
 use App\Models\Patient;
+use App\Models\PatientInsurance;
+use App\Models\ServiceCatalog;
 use App\Models\User;
 use App\Services\AppointmentService;
+use App\Services\InsuranceService;
+use App\Services\PatientPrivacyService;
+use App\Services\VisitService;
 use App\Services\VisitStatusFlowService;
 use App\Services\WorkspaceRouteResolver;
 use Carbon\Carbon;
@@ -21,6 +26,8 @@ class AppointmentController extends Controller
 {
     public function __construct(
         private AppointmentService $appointmentService,
+        private VisitService $visitService,
+        private InsuranceService $insuranceService,
         private WorkspaceRouteResolver $workspaceRoutes,
     ) {}
 
@@ -57,6 +64,116 @@ class AppointmentController extends Controller
         return view('appointments.create', compact(
             'selectedPatient', 'departments', 'doctors', 'appointmentDate'
         ));
+    }
+
+    public function patientSearch(Request $request)
+    {
+        $privacy = app(PatientPrivacyService::class);
+        $term = $request->get('q', '');
+        if (strlen($term) < 2) {
+            return response()->json([]);
+        }
+
+        $patients = Patient::search($term)
+            ->whereIn('status', ['active', 'inactive', 'deceased'])
+            ->select('id', 'patient_number', 'first_name', 'last_name', 'other_names', 'date_of_birth', 'gender', 'phone', 'phone_secondary', 'email', 'ghana_card_number', 'status', 'is_deceased')
+            ->with('activeAdmission.bed.ward')
+            ->limit(10)
+            ->get()
+            ->map(function (Patient $patient) use ($privacy) {
+                $lastVisit = $patient->visits()->latest('visit_date')->value('visit_date');
+                $activeAdmission = $patient->activeAdmission;
+
+                return [
+                    'id' => $patient->id,
+                    'text' => "{$patient->patient_number} — {$patient->full_name}",
+                    'patient_number' => $patient->patient_number,
+                    'full_name' => $patient->full_name,
+                    'phone' => $privacy->display('phone', $patient->phone),
+                    'phone_secondary' => $privacy->display('phone_secondary', $patient->phone_secondary),
+                    'email' => $privacy->display('email', $patient->email),
+                    'ghana_card_number' => $privacy->display('ghana_card_number', $patient->ghana_card_number),
+                    'age' => $patient->age,
+                    'gender' => $patient->gender?->translatedLabel(),
+                    'last_visit_date' => $lastVisit ? Carbon::parse($lastVisit)->format('d M Y') : null,
+                    'is_deceased' => (bool) $patient->is_deceased,
+                    'active_admission' => $activeAdmission ? [
+                        'id' => $activeAdmission->id,
+                        'admission_number' => $activeAdmission->admission_number,
+                        'bed' => $activeAdmission->bed?->bed_number,
+                        'ward' => $activeAdmission->bed?->ward?->name,
+                    ] : null,
+                ];
+            });
+
+        return response()->json($patients);
+    }
+
+    public function patientInsurances(Request $request)
+    {
+        $patient = Patient::findOrFail($request->patient_id);
+        $insurances = $this->insuranceService->getPatientInsurances($patient);
+        $resolved = $this->insuranceService->resolveForVisit($patient);
+
+        return response()->json([
+            'insurances' => $insurances,
+            'default_insurance_id' => $resolved['insurance']?->id,
+            'is_fallback' => $resolved['is_fallback'],
+        ]);
+    }
+
+    public function departmentServices(Request $request)
+    {
+        $services = $this->visitService->getServicesForDepartment($request->department_id);
+
+        return response()->json($services->map(fn ($service) => $this->formatServiceForJson($service)));
+    }
+
+    public function doctorsForServices(Request $request)
+    {
+        $serviceIds = $request->input('service_ids', []);
+        $doctors = $this->visitService->getDoctorsForServices($serviceIds);
+
+        return response()->json($doctors->map(fn ($doctor) => [
+            'id' => $doctor->id,
+            'name' => 'Dr. '.$doctor->full_name,
+            'specialties' => $doctor->specialties->pluck('name')->toArray(),
+        ]));
+    }
+
+    public function servicesForDoctor(Request $request)
+    {
+        $services = $this->visitService->getServicesForDoctor($request->doctor_id);
+
+        return response()->json($services->map(fn ($service) => $this->formatServiceForJson($service)));
+    }
+
+    public function servicePrice(Request $request)
+    {
+        $request->validate([
+            'service_id' => ['required', 'exists:service_catalog,id'],
+            'insurance_id' => ['nullable', 'exists:patient_insurances,id'],
+        ]);
+
+        $service = ServiceCatalog::with('prices')->findOrFail($request->service_id);
+
+        $insuranceType = null;
+        $providerId = null;
+
+        if ($request->insurance_id) {
+            $patientInsurance = PatientInsurance::with('insuranceProvider')->find($request->insurance_id);
+            if ($patientInsurance) {
+                $insuranceType = $patientInsurance->insuranceProvider?->type;
+                $providerId = $patientInsurance->insurance_provider_id;
+            }
+        }
+
+        $price = $service->getPriceForInsurance($insuranceType, $providerId);
+
+        return response()->json([
+            'price' => $price,
+            'formatted_price' => '₵'.number_format($price, 2),
+        ]);
     }
 
     /**
@@ -396,5 +513,35 @@ class AppointmentController extends Controller
         $date = Carbon::parse($date);
 
         return $date->lt($tomorrow) ? $tomorrow->toDateString() : $date->toDateString();
+    }
+
+    private function formatServiceForJson(ServiceCatalog $service): array
+    {
+        $typePrices = [];
+        $providerPrices = [];
+
+        foreach ($service->prices as $price) {
+            if ($price->insurance_provider_id === null) {
+                $typePrices[$price->insurance_type] = (float) $price->price;
+            } else {
+                $providerPrices[$price->insurance_provider_id][$price->insurance_type] = (float) $price->price;
+            }
+        }
+
+        $departmentType = $service->department?->type ?? $service->department_type;
+
+        return [
+            'id' => $service->id,
+            'name' => $service->name,
+            'code' => $service->code,
+            'category' => $service->category,
+            'price' => (float) $service->price,
+            'formatted_price' => $service->formatted_price,
+            'base_price' => (float) $service->price,
+            'department_id' => $service->department_id,
+            'department_type' => $departmentType instanceof \UnitEnum ? $departmentType->value : (string) $departmentType,
+            'type_prices' => $typePrices,
+            'provider_prices' => $providerPrices,
+        ];
     }
 }
