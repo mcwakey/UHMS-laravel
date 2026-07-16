@@ -33,7 +33,7 @@ class PharmacistDashboardService
             'stockByCategory' => $this->stockByCategory(),
             'recentPrescriptions' => Prescription::with([
                 'patient:id,patient_number,first_name,last_name,other_names',
-                'doctor:id,name',
+                'doctor:id,first_name,last_name',
                 'items:id,prescription_id,drug_name',
             ])->latest()->take(4)->get(),
             'expiryAlerts' => $this->expiryAlerts(),

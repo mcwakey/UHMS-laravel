@@ -15,7 +15,7 @@ class TreatmentController extends Controller
     public function index(Request $request, NursingOpdService $opd)
     {
         $department = $this->nursingDepartment($request);
-        $treatments = $opd->treatments($department)->with(['patient:id,patient_number,first_name,last_name', 'visit:id,visit_number,status', 'doctor:id,name'])
+        $treatments = $opd->treatments($department)->with(['patient:id,patient_number,first_name,last_name', 'visit:id,visit_number,status', 'doctor:id,first_name,last_name'])
             ->latest()->paginate(20)->withQueryString();
 
         return view('nursing.treatments.index', compact('treatments'));

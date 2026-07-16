@@ -31,7 +31,7 @@ return new class extends Migration
             $table->string('reason_code')->nullable();
 
             $table->foreignId('performed_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamp('performed_at');
+            $table->dateTime('performed_at');
 
             $table->timestamps();
 

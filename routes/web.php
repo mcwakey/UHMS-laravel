@@ -331,12 +331,11 @@ Route::middleware('auth')->group(function () {
         });
 
         Route::middleware(['module:visits', 'can:visits.view'])->group(function () {
-            // Route::get('opd', [OpdController::class, 'index'])->name('opd.index');
+            Route::get('opd', [OpdController::class, 'index'])->name('opd.index');
             Route::get('opd/queue', [OpdController::class, 'index'])->name('opd.queue');
-            // Route::get('opd/active', [OpdController::class, 'index'])->name('opd.active')->defaults('category', 'active');
-            // Route::get('opd/completed', [OpdController::class, 'index'])->name('opd.completed')->defaults('category', 'completed_today');
-            // Route::get('opd/{visit}', [OpdController::class, 'show'])->name('opd.show');
-            Route::get('/', [VisitController::class, 'index'])->name('index');
+            Route::get('opd/active', [OpdController::class, 'index'])->name('opd.active')->defaults('category', 'active');
+            Route::get('opd/completed', [OpdController::class, 'index'])->name('opd.completed')->defaults('category', 'completed_today');
+            Route::get('opd/{visit}', [OpdController::class, 'show'])->name('opd.show');
             Route::get('visits', [VisitController::class, 'index'])->name('visits.index');
             Route::get('visits/{visit}', [VisitController::class, 'show'])->name('visits.show');
         });
@@ -1639,7 +1638,10 @@ Route::middleware('auth')->group(function () {
             Route::get('consultations/{visit}/history', [ConsultationWorkspaceController::class, 'history'])->name('consultations.history');
             Route::patch('consultations/{visit}/transition', [ConsultationSessionController::class, 'transitionVisit'])->name('consultations.transition')->middleware('can:visits.transition');
             Route::post('consultations/{visit}/start', [ConsultationSessionController::class, 'startConsultation'])->name('consultations.start')->middleware('can:consultations.create');
-            Route::post('consultations/{visit}/routes', [ConsultationSessionController::class, 'storeRoute'])->name('consultations.routes.store')->middleware('can:consultations.create');
+            // Queuing a session never redirects into the consultation record (see
+            // storeRoute()) — it only needs consultations.create, not the group's
+            // consultations.view gate.
+            Route::post('consultations/{visit}/routes', [ConsultationSessionController::class, 'storeRoute'])->name('consultations.routes.store')->withoutMiddleware('can:consultations.view')->middleware('can:consultations.create');
             Route::post('consultations/{visit}/routes/{route}/activate', [ConsultationSessionController::class, 'activateRoute'])->name('consultations.routes.activate')->middleware('can:consultations.create');
             Route::post('consultations/{visit}/routes/{route}/complete', [ConsultationSessionController::class, 'completeRoute'])->name('consultations.routes.complete')->middleware('can:consultations.create');
             Route::post('consultations/{visit}/routes/{route}/cancel', [ConsultationSessionController::class, 'cancelRoute'])->name('consultations.routes.cancel')->middleware('can:consultations.create');

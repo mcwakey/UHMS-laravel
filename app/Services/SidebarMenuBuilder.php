@@ -2007,14 +2007,14 @@ class SidebarMenuBuilder
                     'permission' => 'visits.view',
                 ]],
             ],
-            // [
-            //     'title' => __('nursing.menu.opd_flow'),
-            //     'items' => [
-            //         ['label' => __('nursing.menu.opd_queue'), 'icon' => 'ti ti-list-numbers', 'route' => 'nursing.opd.queue', 'active_patterns' => ['nursing.opd.index', 'nursing.opd.queue', 'nursing.opd.show'], 'permission' => 'visits.view', 'module' => 'visits'],
-            //         ['label' => __('nursing.menu.active_cases'), 'icon' => 'ti ti-activity', 'route' => 'nursing.opd.active', 'active_patterns' => ['nursing.opd.active'], 'permission' => 'visits.view', 'module' => 'visits'],
-            //         ['label' => __('nursing.menu.completed_today'), 'icon' => 'ti ti-circle-check', 'route' => 'nursing.opd.completed', 'active_patterns' => ['nursing.opd.completed'], 'permission' => 'visits.view', 'module' => 'visits'],
-            //     ],
-            // ],
+            [
+                'title' => __('nursing.menu.opd_flow'),
+                'items' => [
+                    ['label' => __('nursing.menu.opd_queue'), 'icon' => 'ti ti-list-numbers', 'route' => 'nursing.opd.queue', 'active_patterns' => ['nursing.opd.index', 'nursing.opd.queue', 'nursing.opd.show'], 'permission' => 'visits.view', 'module' => 'visits'],
+                    ['label' => __('nursing.menu.active_cases'), 'icon' => 'ti ti-activity', 'route' => 'nursing.opd.active', 'active_patterns' => ['nursing.opd.active'], 'permission' => 'visits.view', 'module' => 'visits'],
+                    ['label' => __('nursing.menu.completed_today'), 'icon' => 'ti ti-circle-check', 'route' => 'nursing.opd.completed', 'active_patterns' => ['nursing.opd.completed'], 'permission' => 'visits.view', 'module' => 'visits'],
+                ],
+            ],
             [
                 'title' => __('nursing.menu.patient_access'),
                 'items' => [
@@ -2055,7 +2055,7 @@ class SidebarMenuBuilder
                 'title' => __('nursing.menu.triage_assessment'),
                 'items' => [
                     ['label' => 'Vitals / Triage', 'icon' => 'ti ti-heartbeat', 'route' => 'nursing.triage.index', 'active_patterns' => ['nursing.triage.*'], 'permission' => 'vitals.view', 'module' => 'triage'],
-                    // ['label' => __('nursing.menu.vital_signs'), 'icon' => 'ti ti-activity-heartbeat', 'route' => 'nursing.vitals.create', 'active_patterns' => ['nursing.vitals.*'], 'permission' => 'vitals.view', 'module' => 'triage'],
+                    ['label' => __('nursing.menu.vital_signs'), 'icon' => 'ti ti-activity-heartbeat', 'route' => 'nursing.vitals.create', 'active_patterns' => ['nursing.vitals.*'], 'permission' => 'vitals.view', 'module' => 'triage'],
                     ['label' => __('nursing.menu.service_renderings'), 'icon' => 'ti ti-clipboard-check', 'route' => 'nursing.service-renderings.index', 'active_patterns' => ['nursing.service-renderings.index', 'nursing.service-renderings.show'], 'permission' => 'service_rendering.view'],
                 ],
             ],
@@ -2316,20 +2316,21 @@ class SidebarMenuBuilder
                         'permission' => 'reports.view',
                         'module' => 'reports',
                     ],
-                    [
-                        'label' => 'Visit Report',
-                        'icon' => 'ti ti-chart-bar',
-                        'route' => 'records.reports.visits',
-                        'active_patterns' => ['records.reports.visits'],
-                        'permission' => 'reports.view',
-                        'module' => 'reports',
-                    ],
+                    // [
+                    //     'label' => 'Visit Report',
+                    //     'icon' => 'ti ti-chart-bar',
+                    //     'route' => 'records.reports.visits',
+                    //     'active_patterns' => ['records.reports.visits'],
+                    //     'permission' => 'reports.view',
+                    //     'module' => 'reports',
+                    // ],
                     [
                         'label' => 'Claims Report',
                         'icon' => 'ti ti-file-dollar',
                         'route' => 'records.reports.claims',
                         'active_patterns' => ['records.reports.claims'],
-                        'permission' => 'reports.view',
+                        // 'permission' => 'reports.view',
+                        'permission' => 'claims.view',
                         'module' => 'claims',
                         'visible' => fn () => app(ModuleService::class)->enabled('insurance'),
                     ],
@@ -2338,7 +2339,8 @@ class SidebarMenuBuilder
                         'icon' => 'ti ti-shield-check',
                         'route' => 'records.reports.insurance-claims',
                         'active_patterns' => ['records.reports.insurance-claims'],
-                        'permission' => 'reports.view',
+                        // 'permission' => 'reports.view',
+                        'permission' => 'claims.view',
                         'module' => 'insurance',
                     ],
                     [
@@ -2346,7 +2348,8 @@ class SidebarMenuBuilder
                         'icon' => 'ti ti-cash',
                         'route' => 'records.reports.daily-collection',
                         'active_patterns' => ['records.reports.daily-collection'],
-                        'permission' => 'reports.view',
+                        // 'permission' => 'reports.view',
+                        'permission' => 'accounts.view',
                         'module' => 'reports',
                     ],
                     [

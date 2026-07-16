@@ -198,7 +198,7 @@ class BillingReportService
                 'invoice:id,invoice_number,patient_id',
                 'invoice.patient:id,first_name,last_name,patient_number',
                 'invoiceItem:id,description',
-                'performedBy:id,name',
+                'performedBy:id,first_name,last_name',
             ]);
 
         if (! empty($filters['date_from'])) {

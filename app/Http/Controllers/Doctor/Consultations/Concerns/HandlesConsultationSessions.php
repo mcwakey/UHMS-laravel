@@ -111,16 +111,16 @@ trait HandlesConsultationSessions
             ->with('success', __('messages.consultations.started'));
     }
 
+    /**
+     * Queues (and optionally activates) another consultation route for the
+     * visit. This is always driven by the AJAX form on the visit page, which
+     * displays the response inline and refreshes the routes table itself —
+     * there is no page to redirect to or back from.
+     */
     public function storeRoute(Request $request, Visit $visit)
     {
         if (app(\App\Services\Consultation\ConsultationSessionEligibilityService::class)->isVisitClinicallyLocked($visit)) {
-            $message = __('consultations.lock_reasons.visit_closed_after_visit_day');
-
-            if ($this->shouldReturnJson($request)) {
-                return response()->json(['error' => $message], 422);
-            }
-
-            return back()->withInput()->with('error', $message);
+            return response()->json(['error' => __('consultations.lock_reasons.visit_closed_after_visit_day')], 422);
         }
 
         $data = $request->validate([
@@ -152,28 +152,17 @@ trait HandlesConsultationSessions
                 activateNow: (bool) ($data['activate_now'] ?? false),
             );
         } catch (\Throwable $e) {
-            if ($this->shouldReturnJson($request)) {
-                return response()->json(['error' => $e->getMessage()], 422);
-            }
-
-            return back()->withInput()->with('error', $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 422);
         }
 
         $message = ($data['activate_now'] ?? false)
             ? __('messages.consultations.route_activated')
             : __('messages.consultations.route_queued');
 
-        if ($this->shouldReturnJson($request)) {
-            return response()->json([
-                'success' => $message,
-                'route_id' => $route->id,
-                'redirect' => route('admin.consultations.routes.show', [$visit, $route]),
-            ]);
-        }
-
-        return redirect()
-            ->route('admin.consultations.routes.show', [$visit, $route])
-            ->with('success', $message);
+        return response()->json([
+            'success' => $message,
+            'route_id' => $route->id,
+        ]);
     }
 
     public function activateRoute(Request $request, Visit $visit, VisitConsultationRoute $route)

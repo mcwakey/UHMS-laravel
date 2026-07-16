@@ -385,11 +385,11 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post(route('admin.consultations.routes.store', $visit), $payload)
-            ->assertRedirect();
+            ->assertOk();
 
         $this->actingAs($this->admin)
             ->post(route('admin.consultations.routes.store', $visit), $payload)
-            ->assertRedirect();
+            ->assertOk();
 
         $this->assertSame(1, VisitConsultationRoute::where('visit_id', $visit->id)
             ->where('department_id', $this->dentalDepartment->id)
@@ -418,7 +418,8 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
                 'service_ids' => [$this->dentalService->id],
                 'doctor_id' => $this->otherDoctor->id,
             ])
-            ->assertSessionHas('error', 'Selected doctor is not linked to this consultation department.');
+            ->assertStatus(422)
+            ->assertJson(['error' => 'Selected doctor is not linked to this consultation department.']);
     }
 
     public function test_unauthorized_user_cannot_activate_or_switch_sessions(): void

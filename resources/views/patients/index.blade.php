@@ -75,7 +75,7 @@
             <th>{{ __('patients.patient_id') }}</th>
             <th>{{ __('patients.patient_name') }}</th>
             <th>{{ __('common.phone') }}</th>
-            <th>{{ __('common.gender') }}</th>
+            <!-- <th>{{ __('common.gender') }}</th> -->
             <th>{{ __('common.date_of_birth') }}</th>
             <th>{{ __('patients.city') }}</th>
             <th>{{ __('patients.insurance') }}</th>
@@ -111,17 +111,17 @@
                                 </span>
                                 <div>
                                     <a href="{{ $workspaceRoutes->route('admin.patients.show', $patient) }}" class="fw-medium text-dark">{{ $patient->full_name }}</a>
-                                    @if($patient->email)
-                                    <br><small class="text-muted"><x-patient-protected-field field="email" :value="$patient->email" /></small>
-                                    @endif
-                                    @if(($pbMap[$patient->id] ?? 0) > 0)
-                                    <br><x-billing.outstanding-badge :amount="$pbMap[$patient->id]" :show-amount="$pbCanAmount" class="mt-1" />
-                                    @endif
+                                    <br><small class="text-muted">{{ $patient->gender?->label() }} {{ $patient->age }} yrs</small>
                                 </div>
                             </div>
                         </td>
-                        <td><x-patient-protected-field field="phone" :value="$patient->phone" /></td>
-                        <td>{{ $patient->gender?->label() }}</td>
+                        <td>
+                            <x-patient-protected-field field="phone" :value="$patient->phone" />
+                            @if($patient->email)
+                            <br><small class="text-muted"><x-patient-protected-field field="email" :value="$patient->email" /></small>
+                            @endif
+                        </td>
+                        <!-- <td>{{ $patient->gender?->label() }}</td> -->
                         {{-- <td>{{ $patient->age }} yrs</td> --}}
                         <td>{{ $patient->date_of_birth ? \Carbon\Carbon::parse($patient->date_of_birth)->translatedFormat('d M Y') : '—' }}</td>
                         <td>{{ $patient->city ?? '—' }}</td>
@@ -142,6 +142,9 @@
                             @else
                                 <span class="text-muted small">-</span>
                             @endif
+                                @if(($pbMap[$patient->id] ?? 0) > 0)
+                                <br><x-billing.outstanding-badge :amount="$pbMap[$patient->id]" :show-amount="$pbCanAmount" class="mt-1" />
+                                @endif
                         </td>
                         <td>
                             @if($patient->isMerged())

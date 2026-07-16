@@ -47,7 +47,7 @@ return new class extends Migration
             $table->json('new_values')->nullable();
             $table->string('reason_code')->nullable()->index();
             $table->foreignId('performed_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamp('performed_at')->index();
+            $table->dateTime('performed_at')->index();
             $table->timestamp('created_at')->useCurrent();
         });
 
@@ -63,7 +63,7 @@ return new class extends Migration
             $table->string('request_reason', 1000);
             $table->string('supporting_reference', 191)->nullable();
             $table->foreignId('requested_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamp('requested_at');
+            $table->dateTime('requested_at');
             $table->foreignId('reviewed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('reviewed_at')->nullable();
             $table->string('review_decision_reason', 1000)->nullable();
@@ -95,7 +95,7 @@ return new class extends Migration
             $table->json('old_values')->nullable();
             $table->json('new_values')->nullable();
             $table->foreignId('performed_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamp('performed_at')->index();
+            $table->dateTime('performed_at')->index();
             $table->timestamp('created_at')->useCurrent();
         });
     }

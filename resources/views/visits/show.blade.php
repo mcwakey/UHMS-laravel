@@ -292,18 +292,27 @@
         @endif
 
         <div class="card mb-3">
-            <div class="card-header">
+            <div class="card-header d-flex align-items-center justify-content-between">
                 <h6 class="fw-bold mb-0"><i class="ti ti-switch-horizontal me-1"></i>{{ __('visits.transition_visit') }}</h6>
+                <div>
+                    @can('visits.preview')
+                    <a href="{{ $workspaceRoutes->route('admin.visits.preview', $visit) }}" class="btn btn-outline-info btn-sm">
+                        <i class="ti ti-eye me-1"></i>{{ __('visits.preview_visit_btn') }}
+                    </a>
+                    @endcan
+                </div>
             </div>
             <div class="card-body">
                 <div class="border rounded p-3 mb-3">
                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
                         <h6 class="fw-bold mb-0"><i class="ti ti-route me-1 text-primary"></i>{{ __('visits.current_routing') }}</h6>
+                        @can('consultations.view')
                         @if($activeConsultationRoute)
                             <a href="{{ route('admin.consultations.routes.show', [$visit, $activeConsultationRoute]) }}" class="btn btn-sm btn-outline-primary">
                                 <i class="ti ti-external-link me-1"></i>{{ __('visits.open_active_session') }}
                             </a>
                         @endif
+                        @endcan
                     </div>
                     @if($activeConsultationRoute)
                     <div class="row g-2 small">
@@ -365,8 +374,10 @@
                                     <td><x-status-badge :status="$route->status" domain="consultation_route" /></td>
                                     <td>
                                         <div class="d-flex flex-wrap gap-1">
+                                            @can('consultations.view')
                                             <a href="{{ route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-xs btn-outline-primary">{{ __('visits.open_btn') }}</a>
-                                            @can('consultations.create')
+                                            @endcan
+                                            @can('consultation.routes.activate')
                                             @if(in_array($route->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
                                             <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $route]) }}">
                                                 @csrf
@@ -375,6 +386,9 @@
                                                 <button type="submit" class="btn btn-xs btn-primary">{{ __('visits.activate_btn') }}</button>
                                             </form>
                                             @endif
+                                            @endcan
+
+                                            @can('consultation.routes.complete')
                                             @if($route->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
                                             <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $route]) }}">
                                                 @csrf
@@ -382,18 +396,23 @@
                                                 <button type="submit" class="btn btn-xs btn-success" onclick="return confirm('{{ __('visits.complete_session_confirm') }}')">{{ __('visits.complete_btn') }}</button>
                                             </form>
                                             @endif
+                                            @endcan
+
+                                            @can('consultation.routes.cancel')
+                                            @if(in_array($route->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
+                                            <form method="POST" action="{{ route('admin.consultations.routes.cancel', [$visit, $route]) }}">
+                                                @csrf
+                                                <button type="submit" class="btn btn-xs btn-outline-danger" onclick="return confirm('{{ __('visits.cancel_route_confirm') }}')">{{ __('visits.cancel_btn') }}</button>
+                                            </form>
+                                            @endif
+                                            @endcan
+                                            @can('consultations.reopen')
                                             @if($route->status === \App\Models\VisitConsultationRoute::STATUS_COMPLETED && $routeReopenEligibility?->allowed)
                                             <form method="POST" action="{{ route('admin.consultations.routes.reopen', [$visit, $route]) }}">
                                                 @csrf
                                                 <input type="hidden" name="return_to_visit" value="1">
                                                 <input type="hidden" name="reason" value="{{ __('consultations.reopen.visit_details_reason') }}">
                                                 <button type="submit" class="btn btn-xs btn-primary" onclick="return confirm('{{ __('consultations.reopen.confirm') }}')">{{ __('visits.actions.reopen_consultation') }}</button>
-                                            </form>
-                                            @endif
-                                            @if(in_array($route->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
-                                            <form method="POST" action="{{ route('admin.consultations.routes.cancel', [$visit, $route]) }}">
-                                                @csrf
-                                                <button type="submit" class="btn btn-xs btn-outline-danger" onclick="return confirm('{{ __('visits.cancel_route_confirm') }}')">{{ __('visits.cancel_btn') }}</button>
                                             </form>
                                             @endif
                                             @endcan

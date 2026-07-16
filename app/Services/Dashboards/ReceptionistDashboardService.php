@@ -32,7 +32,7 @@ class ReceptionistDashboardService
             'kpis' => $this->kpis(),
             'footfall' => $this->footfall(),
             'channels' => $this->channels(),
-            'todaysAppointments' => Appointment::with(['patient:id,patient_number,first_name,last_name,other_names', 'doctor:id,name'])
+            'todaysAppointments' => Appointment::with(['patient:id,patient_number,first_name,last_name,other_names', 'doctor:id,first_name,last_name'])
                 ->whereDate('appointment_date', today())
                 ->orderBy('start_time')
                 ->take(5)
@@ -45,7 +45,7 @@ class ReceptionistDashboardService
                 ->take(4)
                 ->get(),
             'payments' => $this->paymentsToday(),
-            'appointmentRequests' => Appointment::with(['patient:id,patient_number,first_name,last_name,other_names', 'doctor:id,name'])
+            'appointmentRequests' => Appointment::with(['patient:id,patient_number,first_name,last_name,other_names', 'doctor:id,first_name,last_name'])
                 ->where('status', AppointmentStatus::SCHEDULED->value)
                 ->whereDate('appointment_date', '>=', today())
                 ->orderBy('appointment_date')

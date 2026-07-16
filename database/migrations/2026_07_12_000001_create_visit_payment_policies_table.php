@@ -52,7 +52,7 @@ return new class extends Migration
             $table->timestamp('patient_risk_observed_at')->nullable();
 
             $table->string('resolution_version');
-            $table->timestamp('materialized_at')->index();
+            $table->dateTime('materialized_at')->index();
             $table->timestamp('last_refreshed_at')->nullable();
 
             $table->timestamps();
