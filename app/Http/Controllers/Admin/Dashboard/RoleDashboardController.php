@@ -44,7 +44,11 @@ class RoleDashboardController extends Controller
 
     public function doctor(Request $request, DoctorDashboardService $service)
     {
-        $this->authorizeRoles($request, ['Doctor', 'Consultant', 'Specialist', 'Physician Assistant']);
+        abort_unless(
+            $request->user()->isConsultationUser() || $request->user()->hasRole(self::ADMIN_ROLES),
+            403
+        );
+
         $doctor = $service->resolveDoctor($request->user(), $request->integer('doctor') ?: null);
 
         return view('dashboards.doctor', $service->build($doctor));

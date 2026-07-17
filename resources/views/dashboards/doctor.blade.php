@@ -4,6 +4,7 @@
 @section('content')
 @php($t = fn ($k, $r = []) => __('role_dashboards.doctor.'.$k, $r))
 @php($tc = fn ($k, $r = []) => __('role_dashboards.common.'.$k, $r))
+@php($workspaceRoutes = app(\App\Services\WorkspaceRouteResolver::class))
 @php($routeStatusColor = fn ($s) => match ((string) $s) {
     'ACTIVE' => 'primary', 'PAUSED' => 'warning', default => 'info',
 })
@@ -26,8 +27,8 @@
         @endunless
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ route('admin.consultations.index') }}" class="btn btn-primary"><i class="ti ti-stethoscope me-1"></i>{{ $t('open_workbench') }}</a>
-        <a href="{{ route('admin.appointments.index') }}" class="btn btn-outline-dark"><i class="ti ti-calendar-cog me-1"></i>{{ $t('my_appointments') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.consultations.index') }}" class="btn btn-primary"><i class="ti ti-stethoscope me-1"></i>{{ $t('open_workbench') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.appointments.index') }}" class="btn btn-outline-dark"><i class="ti ti-calendar-cog me-1"></i>{{ $t('my_appointments') }}</a>
     </div>
 </div>
 
@@ -135,7 +136,7 @@
                     @else
                         <p class="text-muted small mb-3">{{ $t('no_vitals') }}</p>
                     @endif
-                    <a href="{{ route('admin.consultations.index') }}" class="btn btn-primary w-100">
+                    <a href="{{ $workspaceRoutes->route('admin.consultations.index') }}" class="btn btn-primary w-100">
                         {{ $routeModel->status === 'PENDING' ? $t('start_consultation') : $t('resume_consultation') }}
                     </a>
                 @else
@@ -215,7 +216,7 @@
                                 <td><span class="badge badge-soft-{{ $priorityColor($entry->visit?->priority?->value) }}">{{ ucfirst((string) ($entry->visit?->priority?->value ?? 'normal')) }}</span></td>
                                 <td class="fw-semibold">{{ $since ? $wait((int) \Illuminate\Support\Carbon::parse($since)->diffInMinutes(now())) : '—' }}</td>
                                 <td><span class="badge badge-soft-{{ $routeStatusColor($entry->status) }}">{{ $t('queue_statuses.'.$entry->status) }}</span></td>
-                                <td class="text-end pe-3"><a href="{{ route('admin.consultations.index') }}" class="btn btn-sm {{ $entry->status === 'PENDING' ? 'btn-primary' : 'btn-outline-secondary' }}">{{ $t('open') }}</a></td>
+                                <td class="text-end pe-3"><a href="{{ $workspaceRoutes->route('admin.consultations.index') }}" class="btn btn-sm {{ $entry->status === 'PENDING' ? 'btn-primary' : 'btn-outline-secondary' }}">{{ $t('open') }}</a></td>
                             </tr>
                         @empty
                             <tr><td colspan="7" class="text-center text-muted py-4">{{ $t('queue_empty') }}</td></tr>
@@ -247,7 +248,7 @@
                 @empty
                     <p class="text-center text-muted my-4">{{ $t('no_results') }}</p>
                 @endforelse
-                <a href="{{ route('admin.lab.results.index') }}" class="btn btn-light w-100 mt-2">{{ $t('view_all_results') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.lab.results.index') }}" class="btn btn-light w-100 mt-2">{{ $t('view_all_results') }}</a>
             </div>
         </div>
     </div>
@@ -273,7 +274,7 @@
                 @empty
                     <p class="text-center text-muted my-4">{{ $t('no_schedule_today') }}</p>
                 @endforelse
-                <a href="{{ route('admin.appointments.index') }}" class="btn btn-light w-100 mt-3">{{ $tc('view_full_schedule') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.appointments.index') }}" class="btn btn-light w-100 mt-3">{{ $tc('view_full_schedule') }}</a>
             </div>
         </div>
     </div>

@@ -36,15 +36,26 @@ class AppointmentController extends Controller
      */
     public function index(Request $request)
     {
-        $filters = $this->normalizedDateFilters($request);
+        $isDoctorWorkspace = $this->workspaceRoutes->isConsultation();
+        $filters = $this->normalizedDateFilters($request, false, $isDoctorWorkspace);
+
+        if ($isDoctorWorkspace) {
+            unset($filters['doctor_id'], $filters['department_id']);
+
+            if ($request->boolean('my_patients_only')) {
+                $filters['doctor_id'] = $request->user()?->id;
+                $filters['my_patients_only'] = '1';
+            }
+        }
+
         $stats = $this->appointmentService->getStats($filters);
         $appointments = $this->appointmentService->list($filters);
-        $doctors = User::role('Doctor')->orderBy('first_name')->get();
-        $departments = Department::active()->orderBy('name')->get();
+        $doctors = $isDoctorWorkspace ? collect() : User::role('Doctor')->orderBy('first_name')->get();
+        $departments = $isDoctorWorkspace ? collect() : Department::active()->orderBy('name')->get();
         $statuses = AppointmentStatus::cases();
 
         return view('appointments.index', compact(
-            'appointments', 'stats', 'doctors', 'departments', 'statuses', 'filters'
+            'appointments', 'stats', 'doctors', 'departments', 'statuses', 'filters', 'isDoctorWorkspace'
         ));
     }
 
@@ -420,7 +431,7 @@ class AppointmentController extends Controller
         return view('appointments.calendar', compact('calendarData', 'from', 'to', 'doctors', 'departments', 'statuses', 'filters'));
     }
 
-    private function normalizedDateFilters(Request $request, bool $expandTodayRange = false): array
+    private function normalizedDateFilters(Request $request, bool $expandTodayRange = false, bool $defaultTodayOnly = false): array
     {
         $filters = $request->all();
         $filters['per_page'] = $this->normalizePerPage($filters['per_page'] ?? null);
@@ -442,7 +453,7 @@ class AppointmentController extends Controller
         $filters['date_to'] = $this->normalizeDateValue($filters['date_to'] ?? null);
 
         if (empty($filters['date_from']) && empty($filters['date_to'])) {
-            $this->applyDefaultAppointmentRange($filters);
+            $this->applyDefaultAppointmentRange($filters, $defaultTodayOnly);
         }
 
         if (! empty($filters['date_from']) && empty($filters['date_to'])) {
@@ -479,8 +490,15 @@ class AppointmentController extends Controller
         return in_array($perPage, $allowed, true) ? $perPage : 10;
     }
 
-    private function applyDefaultAppointmentRange(array &$filters): void
+    private function applyDefaultAppointmentRange(array &$filters, bool $todayOnly = false): void
     {
+        if ($todayOnly) {
+            $filters['date_from'] = today()->toDateString();
+            $filters['date_to'] = today()->toDateString();
+
+            return;
+        }
+
         $filters['date_from'] = today()->subDays(3)->toDateString();
         $filters['date_to'] = today()->addDays(10)->toDateString();
     }

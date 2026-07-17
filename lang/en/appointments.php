@@ -16,6 +16,7 @@ return [
     'no_show_cancelled' => 'No Show / Cancelled',
     'search_placeholder' => 'Search patient, phone, or apt#...',
     'all_doctors' => 'All Doctors',
+    'my_patients_only' => 'My patients only',
     'appointment_no' => 'Apt #',
     'schedule_title' => 'Schedule Appointment',
     'edit_title' => 'Edit Appointment',

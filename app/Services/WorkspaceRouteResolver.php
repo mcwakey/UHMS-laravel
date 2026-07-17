@@ -33,9 +33,16 @@ class WorkspaceRouteResolver
         return $this->isType(DepartmentType::NURSING);
     }
 
+    public function isConsultation(): bool
+    {
+        $user = $this->request->user();
+
+        return ($user?->isConsultationUser() ?? false) || $this->isType(DepartmentType::CONSULTATION);
+    }
+
     public function isDepartmentWorkspace(): bool
     {
-        return $this->isRecords() || $this->isNursing();
+        return $this->isRecords() || $this->isNursing() || $this->isConsultation();
     }
 
     public function dashboardRouteName(): string
@@ -43,6 +50,7 @@ class WorkspaceRouteResolver
         return match (true) {
             $this->isRecords() => 'records.dashboard',
             $this->isNursing() => 'nursing.dashboard',
+            $this->isConsultation() => 'doctor.dashboard',
             default => 'admin.my-dashboard',
         };
     }
@@ -52,6 +60,7 @@ class WorkspaceRouteResolver
         $prefix = match (true) {
             $this->isRecords() => 'records.',
             $this->isNursing() => 'nursing.',
+            $this->isConsultation() => 'doctor.',
             default => null,
         };
 
@@ -179,6 +188,17 @@ class WorkspaceRouteResolver
             ];
         }
 
+        if ($this->isConsultation()) {
+            return [
+                'workspaceKey' => 'doctor',
+                'workspaceRoutePrefix' => 'doctor.',
+                'workspaceTitle' => __('doctor.workspace.title'),
+                'workspaceDepartment' => $this->departments->currentDepartment($this->request->user(), $this->request),
+                'workspaceScope' => 'consultation',
+                'breadcrumbs' => $this->breadcrumbs(),
+            ];
+        }
+
         $key = $this->isNursing() ? 'nursing' : 'records';
 
         return [
@@ -196,6 +216,10 @@ class WorkspaceRouteResolver
     {
         if ($this->isNursing()) {
             return $this->nursingBreadcrumbs();
+        }
+
+        if ($this->isConsultation()) {
+            return $this->doctorBreadcrumbs();
         }
 
         $name = (string) $this->request->route()?->getName();
@@ -285,6 +309,61 @@ class WorkspaceRouteResolver
 
         if (! $isIndex) {
             $crumbs[] = ['label' => __('nursing.breadcrumbs.details'), 'url' => null];
+        }
+
+        return $crumbs;
+    }
+
+    /** @return list<array{label:string,url:?string}> */
+    private function doctorBreadcrumbs(): array
+    {
+        $name = (string) $this->request->route()?->getName();
+        $crumbs = [[
+            'label' => __('doctor.breadcrumbs.doctor'),
+            'url' => $name === 'doctor.dashboard' ? null : route('doctor.dashboard'),
+        ]];
+
+        $resource = match (true) {
+            Str::startsWith($name, 'doctor.patients'), Str::startsWith($name, 'admin.patients') => ['patients', 'doctor.patients.index'],
+            Str::startsWith($name, 'doctor.appointments'), Str::startsWith($name, 'admin.appointments') => ['appointments', 'doctor.appointments.index'],
+            Str::startsWith($name, 'doctor.visits'), Str::startsWith($name, 'admin.visits') => ['visits', 'doctor.visits.index'],
+            Str::startsWith($name, 'doctor.consultations'), Str::startsWith($name, 'admin.consultations') => ['consultations', 'doctor.consultations.index'],
+            Str::startsWith($name, 'doctor.admissions'), Str::startsWith($name, 'admin.admissions') => ['admissions', 'doctor.admissions.index'],
+            Str::startsWith($name, 'doctor.prescriptions'), Str::startsWith($name, 'admin.prescriptions') => ['prescriptions', 'doctor.prescriptions.index'],
+            Str::startsWith($name, 'doctor.lab.requests'), Str::startsWith($name, 'admin.lab.requests') => ['investigation_requests', 'doctor.lab.requests.index'],
+            Str::startsWith($name, 'doctor.lab.results'), Str::startsWith($name, 'admin.lab.results') => ['investigation_results', 'doctor.lab.results.index'],
+            Str::startsWith($name, 'doctor.theatre'), Str::startsWith($name, 'admin.theatre') => ['procedures', 'doctor.theatre.index'],
+            Str::startsWith($name, 'doctor.journey'), Str::startsWith($name, 'admin.journey') => ['handoffs', 'doctor.journey.worklist'],
+            Str::startsWith($name, 'doctor.icd-codes'), Str::startsWith($name, 'admin.icd-codes') => ['icd_codes', 'doctor.icd-codes.index'],
+            Str::startsWith($name, 'doctor.procedure-catalogue'), Str::startsWith($name, 'admin.procedure-catalogue') => ['procedure_catalogue', 'doctor.procedure-catalogue.index'],
+            Str::startsWith($name, 'doctor.investigation-catalogue'), Str::startsWith($name, 'admin.investigation-catalogue') => ['investigation_catalogue', 'doctor.investigation-catalogue.index'],
+            Str::startsWith($name, 'doctor.patterns'), Str::startsWith($name, 'admin.patterns') => ['patterns', 'doctor.patterns.index'],
+            Str::startsWith($name, 'doctor.reports'), Str::startsWith($name, 'admin.reports') => ['reports', 'doctor.reports.visits'],
+            default => null,
+        };
+
+        if (! $resource) {
+            return $crumbs;
+        }
+
+        [$key, $indexRoute] = $resource;
+        $isIndex = $name === $indexRoute || Str::endsWith($name, '.index');
+        $crumbs[] = [
+            'label' => __('doctor.breadcrumbs.'.$key),
+            'url' => $isIndex || ! Route::has($indexRoute) ? null : route($indexRoute),
+        ];
+
+        if (! $isIndex) {
+            $action = Str::afterLast($name, '.');
+            $detailKey = match ($action) {
+                'create' => 'create',
+                'edit' => 'edit',
+                'calendar' => 'calendar',
+                'history' => 'history',
+                default => 'details',
+            };
+
+            $crumbs[] = ['label' => __('doctor.breadcrumbs.'.$detailKey), 'url' => null];
         }
 
         return $crumbs;

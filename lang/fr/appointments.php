@@ -16,6 +16,7 @@ return [
     'no_show_cancelled' => 'Absent / Annulé',
     'search_placeholder' => 'Rechercher patient, téléphone ou n° RDV...',
     'all_doctors' => 'Tous les médecins',
+    'my_patients_only' => 'Mes patients uniquement',
     'appointment_no' => 'RDV n°',
     'schedule_title' => 'Planifier un rendez-vous',
     'edit_title' => 'Modifier le rendez-vous',

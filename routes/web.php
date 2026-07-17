@@ -2725,8 +2725,94 @@ Route::middleware('auth')->group(function () {
     |----------------------------------------------------------------------
     */
     Route::prefix('doctor')->name('doctor.')->group(function () {
-        // The modern workflow-first dashboard is served directly at this URL.
-        Route::get('dashboard', [RoleDashboardController::class, 'doctor'])->name('dashboard');
+        // Doctor / consultation workspace. The modern workflow-first dashboard
+        // is canonical at /doctor; /doctor/dashboard remains as a compatibility
+        // redirect for existing bookmarks.
+        Route::get('/', [RoleDashboardController::class, 'doctor'])->name('dashboard');
+        Route::get('dashboard', fn () => redirect()->route('doctor.dashboard'))->name('dashboard.redirect');
         Route::get('dashboard/legacy', [DoctorDashboardController::class, 'index'])->name('dashboard.legacy');
+
+        Route::middleware(['module:patients', 'can:consultation.view_patient'])->prefix('patients')->name('patients.')->group(function () {
+            Route::get('/', [PatientController::class, 'index'])->name('index');
+            Route::get('{patient}', [PatientController::class, 'show'])->name('show');
+        });
+
+        Route::middleware(['module:appointments', 'can:appointments.view'])->prefix('appointments')->name('appointments.')->group(function () {
+            Route::get('/', [AppointmentController::class, 'index'])->name('index');
+            Route::get('{appointment}', [AppointmentController::class, 'show'])->name('show');
+        });
+
+        Route::middleware(['module:visits', 'can:visits.view'])->prefix('visits')->name('visits.')->group(function () {
+            Route::get('/', [VisitController::class, 'index'])->name('index');
+            Route::get('{visit}', [VisitController::class, 'show'])->name('show');
+        });
+
+        Route::middleware(['module:consultation', 'can:consultations.view'])->prefix('consultations')->name('consultations.')->group(function () {
+            Route::get('/', [ConsultationWorkspaceController::class, 'index'])->name('index');
+            Route::get('{visit}', [ConsultationWorkspaceController::class, 'show'])->name('show');
+            Route::get('{visit}/routes/{route}', [ConsultationWorkspaceController::class, 'show'])->name('routes.show');
+            Route::get('{visit}/history', [ConsultationWorkspaceController::class, 'history'])->name('history')->middleware('can:consultation.preview');
+        });
+
+        Route::middleware('can:ward.view')->prefix('admissions')->name('admissions.')->group(function () {
+            Route::get('/', [AdmissionController::class, 'index'])->name('index');
+            Route::get('{admission}', [AdmissionController::class, 'show'])->name('show');
+        });
+
+        Route::middleware('can:prescriptions.view')->prefix('prescriptions')->name('prescriptions.')->group(function () {
+            Route::get('/', [PrescriptionController::class, 'index'])->name('index');
+            Route::get('{prescription}', [PrescriptionController::class, 'show'])->name('show');
+            Route::get('{prescription}/print', [PrescriptionController::class, 'print'])->name('print');
+        });
+
+        Route::prefix('lab')->name('lab.')->middleware('module:investigations')->group(function () {
+            Route::middleware('can:lab.requests.view')->prefix('requests')->name('requests.')->group(function () {
+                Route::get('/', [LabRequestController::class, 'index'])->name('index');
+                Route::get('{labRequest}', [LabRequestController::class, 'show'])->name('show');
+            });
+            Route::middleware('can:lab.results.view')->prefix('results')->name('results.')->group(function () {
+                Route::get('/', [LabResultController::class, 'index'])->name('index');
+                Route::get('requests/{labRequest}', [LabResultController::class, 'showRequest'])->name('show');
+                Route::get('requests/{labRequest}/print', [LabResultController::class, 'printRequest'])->name('print-request');
+                Route::get('{item}/view', [LabResultController::class, 'view'])->name('view');
+                Route::get('{item}/print', [LabResultController::class, 'print'])->name('print');
+            });
+        });
+
+        Route::middleware('can:procedure.view')->prefix('theatre')->name('theatre.')->group(function () {
+            Route::get('/', [TheatreController::class, 'index'])->name('index');
+            Route::get('board', [TheatreController::class, 'index'])->name('board');
+            Route::get('calendar', [TheatreScheduleController::class, 'calendar'])->name('calendar');
+            Route::get('procedures/{procedure}', [TheatreController::class, 'show'])->name('show');
+        });
+
+        Route::get('handoffs', [JourneyWorklistController::class, 'index'])->name('journey.worklist');
+        Route::get('handoffs/refresh', [JourneyWorklistController::class, 'refresh'])->name('journey.worklist.refresh');
+
+        Route::middleware('can:icd.view')->prefix('icd-codes')->name('icd-codes.')->group(function () {
+            Route::get('/', [IcdCodeController::class, 'index'])->name('index');
+            Route::get('search', [IcdCodeController::class, 'search'])->name('search');
+        });
+
+        Route::middleware('can:procedure_catalogue.view')->prefix('procedure-catalogue')->name('procedure-catalogue.')->group(function () {
+            Route::get('/', [ProcedureCatalogueController::class, 'index'])->name('index');
+            Route::get('{service}', [ProcedureCatalogueController::class, 'show'])->name('show');
+        });
+
+        Route::middleware(['module:investigations', 'can:investigation.catalogue.view'])->prefix('investigation-catalogue')->name('investigation-catalogue.')->group(function () {
+            Route::get('/', [InvestigationCatalogueController::class, 'index'])->name('index');
+            Route::get('{service}', [InvestigationCatalogueController::class, 'show'])->name('show');
+        });
+
+        Route::middleware(['module:medical-patterns', 'can:consultations.view'])->prefix('patterns')->name('patterns.')->group(function () {
+            Route::get('/', [MedicalPatternController::class, 'index'])->name('index');
+            Route::get('suggest', [MedicalPatternController::class, 'suggest'])->name('suggest');
+            Route::get('{pattern}', [MedicalPatternController::class, 'show'])->name('show');
+        });
+
+        Route::middleware(['module:reports', 'can:reports.view'])->prefix('reports')->name('reports.')->group(function () {
+            Route::get('visits', [ReportController::class, 'visits'])->name('visits');
+            Route::get('consultation-stats', [ReportController::class, 'consultationStats'])->name('consultation-stats');
+        });
     });
 });
