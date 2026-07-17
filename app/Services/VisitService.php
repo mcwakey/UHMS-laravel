@@ -84,8 +84,23 @@ class VisitService
             $query->where('priority', $filters['priority']);
         }
 
+        if (! empty($filters['department_id'])) {
+            $departmentId = (int) $filters['department_id'];
+            $query->where(function ($departmentQuery) use ($departmentId) {
+                $departmentQuery
+                    ->where('current_department_id', $departmentId)
+                    ->orWhereHas('consultationRoutes', fn ($routeQuery) => $routeQuery->where('department_id', $departmentId))
+                    ->orWhereHas('visitServices', fn ($serviceQuery) => $serviceQuery->where('department_id', $departmentId));
+            });
+        }
+
         if (! empty($filters['doctor_id'])) {
-            $query->whereHas('consultationRoutes', fn ($q) => $q->where('doctor_id', $filters['doctor_id']));
+            $doctorId = (int) $filters['doctor_id'];
+            $query->whereHas('consultationRoutes', function ($routeQuery) use ($doctorId) {
+                $routeQuery
+                    ->where('doctor_id', $doctorId)
+                    ->orWhere('main_doctor_id', $doctorId);
+            });
         }
 
         if (! empty($filters['date_from']) || ! empty($filters['date_to'])) {
@@ -982,6 +997,37 @@ class VisitService
             ->active()
             ->when($from, fn ($query) => $query->whereDate('arrival_time', '>=', $from))
             ->when($to, fn ($query) => $query->whereDate('arrival_time', '<=', $to));
+
+        if (! empty($filters['department_id'])) {
+            $departmentId = (int) $filters['department_id'];
+            $visitDepartmentScope = function ($query) use ($departmentId) {
+                $query->where(function ($departmentQuery) use ($departmentId) {
+                    $departmentQuery
+                        ->where('current_department_id', $departmentId)
+                        ->orWhereHas('consultationRoutes', fn ($routeQuery) => $routeQuery->where('department_id', $departmentId))
+                        ->orWhereHas('visitServices', fn ($serviceQuery) => $serviceQuery->where('department_id', $departmentId));
+                });
+            };
+
+            $visitDepartmentScope($visitQuery);
+            $activeAdmissions->whereHas('visit', $visitDepartmentScope);
+            $activeEmergencyCases->whereHas('visit', $visitDepartmentScope);
+        }
+
+        if (! empty($filters['doctor_id'])) {
+            $doctorId = (int) $filters['doctor_id'];
+            $doctorScope = function ($query) use ($doctorId) {
+                $query->whereHas('consultationRoutes', function ($routeQuery) use ($doctorId) {
+                    $routeQuery
+                        ->where('doctor_id', $doctorId)
+                        ->orWhere('main_doctor_id', $doctorId);
+                });
+            };
+
+            $doctorScope($visitQuery);
+            $activeAdmissions->whereHas('visit', $doctorScope);
+            $activeEmergencyCases->whereHas('visit', $doctorScope);
+        }
 
         return [
             'total' => (clone $visitQuery)->count(),

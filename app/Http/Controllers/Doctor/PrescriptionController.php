@@ -24,7 +24,13 @@ class PrescriptionController extends Controller
      */
     public function index(Request $request)
     {
-        $prescriptions = $this->prescriptionService->list($request->all());
+        $filters = $request->all();
+
+        if ($this->shouldScopeToLoggedInDoctor($request)) {
+            $filters['doctor_id'] = $request->user()->id;
+        }
+
+        $prescriptions = $this->prescriptionService->list($filters);
 
         return view('prescriptions.index', compact('prescriptions'));
     }
@@ -34,6 +40,8 @@ class PrescriptionController extends Controller
      */
     public function show(Prescription $prescription)
     {
+        $this->authorizeDoctorWorkspacePrescription($prescription);
+
         $prescription->load(['patient', 'doctor', 'visit', 'items', 'medicalRecord']);
         $drugs = Drug::where('is_active', true)
             ->orderBy('name')
@@ -55,6 +63,8 @@ class PrescriptionController extends Controller
 
     public function print(Prescription $prescription)
     {
+        $this->authorizeDoctorWorkspacePrescription($prescription);
+
         $prescription->load(['patient', 'doctor', 'visit.patient', 'items.drug']);
 
         return view('reports.print-prescription', compact('prescription'));
@@ -103,5 +113,21 @@ class PrescriptionController extends Controller
         $this->prescriptionService->cancel($prescription);
 
         return back()->with('success', __('messages.prescriptions.cancelled', ['number' => $prescription->prescription_number]));
+    }
+
+    private function shouldScopeToLoggedInDoctor(Request $request): bool
+    {
+        return $request->routeIs('doctor.*') && ! ($request->user()?->hasRole('Super Admin') ?? false);
+    }
+
+    private function authorizeDoctorWorkspacePrescription(Prescription $prescription): void
+    {
+        $request = request();
+
+        abort_if(
+            $this->shouldScopeToLoggedInDoctor($request)
+                && (int) $prescription->doctor_id !== (int) $request->user()?->id,
+            404
+        );
     }
 }

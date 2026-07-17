@@ -172,6 +172,10 @@ class LabService
             $query->where('target_department_id', $filters['target_department_id']);
         }
 
+        if (!empty($filters['requested_by'])) {
+            $query->where('requested_by', $filters['requested_by']);
+        }
+
         if (!empty($filters['search'])) {
             $query->search($filters['search']);
         }
@@ -648,12 +652,18 @@ class LabService
         }
     }
 
-    public function getLabStats(): array
+    public function getLabStats(array $filters = []): array
     {
+        $scope = function ($query) use ($filters) {
+            return $query
+                ->when($filters['requested_by'] ?? null, fn ($q, $userId) => $q->where('requested_by', $userId))
+                ->when($filters['target_department_id'] ?? null, fn ($q, $departmentId) => $q->where('target_department_id', $departmentId));
+        };
+
         return [
-            'pending'         => LabRequest::pending()->count(),
-            'processing'      => LabRequest::processing()->count(),
-            'completed_today' => LabRequest::completed()->whereDate('updated_at', today())->count(),
+            'pending'         => $scope(LabRequest::pending())->count(),
+            'processing'      => $scope(LabRequest::processing())->count(),
+            'completed_today' => $scope(LabRequest::completed()->whereDate('updated_at', today()))->count(),
             'total_tests'     => LabTest::active()->count(),
         ];
     }

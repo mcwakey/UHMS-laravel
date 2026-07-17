@@ -2,6 +2,7 @@
 
 return [
     'title' => 'Appointments',
+    'description' => 'Review and manage scheduled patient appointments.',
     'list_view' => 'List',
     'calendar_view' => 'Calendar',
     'view_switch' => 'Appointment view',
@@ -22,6 +23,7 @@ return [
     'edit_title' => 'Edit Appointment',
     'show_title' => 'Appointment Details',
     'calendar_title' => 'Appointment Calendar',
+    'calendar_description' => 'Review scheduled appointments across the selected date range.',
     'back_to_appointments' => 'Back to Appointments',
     'back_to_appointment' => 'Back to Appointment',
     'select_patient' => 'Select Patient',

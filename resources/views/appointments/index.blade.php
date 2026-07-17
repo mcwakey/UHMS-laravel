@@ -3,7 +3,7 @@
 @section('title', __('appointments.title'))
 
 @section('content')
-<x-page-header :title="__('appointments.title')" icon="ti-calendar-event">
+<x-page-header :title="__('appointments.title')" :description="__('appointments.description')" icon="ti-calendar-event">
     <!-- <span class="badge bg-primary ms-2">{{ $appointments->total() }}</span> -->
     <x-slot:actions>
         @include('appointments.partials.view-switch', ['active' => 'list'])

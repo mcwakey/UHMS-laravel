@@ -2,6 +2,7 @@
 
 return [
     'title' => 'Rendez-vous',
+    'description' => 'Consulter et gérer les rendez-vous planifiés des patients.',
     'list_view' => 'Liste',
     'calendar_view' => 'Calendrier',
     'view_switch' => 'Vue des rendez-vous',
@@ -22,6 +23,7 @@ return [
     'edit_title' => 'Modifier le rendez-vous',
     'show_title' => 'Détails du rendez-vous',
     'calendar_title' => 'Calendrier des rendez-vous',
+    'calendar_description' => 'Consulter les rendez-vous planifiés sur la période sélectionnée.',
     'back_to_appointments' => 'Retour aux rendez-vous',
     'back_to_appointment' => 'Retour au rendez-vous',
     'select_patient' => 'Sélectionner un patient',

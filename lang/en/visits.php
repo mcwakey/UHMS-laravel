@@ -2,6 +2,7 @@
 
 return [
     'title' => 'Visits / OPD',
+    'description' => 'Review visit activity, patient attendance, and OPD workflow status.',
     'queue_board' => 'Queue Board',
     'new_visit' => 'New Visit',
     'range_total' => 'Range Total',
@@ -15,6 +16,7 @@ return [
     'search_placeholder' => 'Visit #, patient name, phone...',
     'visit_type' => 'Visit Type',
     'all_types' => 'All Types',
+    'my_patients_only' => 'My patients only',
     'active_insurance' => 'Active Insurance',
     'all_insurance' => 'All Insurance',
     'cash_and_carry' => 'Cash & Carry',

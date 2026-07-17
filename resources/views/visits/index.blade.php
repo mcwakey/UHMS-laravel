@@ -113,6 +113,17 @@
             'submitOnApply' => true,
         ])
     </div>
+    @if($isDoctorWorkspace)
+    <div class="col-md-2">
+        <label class="form-label d-block">&nbsp;</label>
+        <div class="form-check form-switch mt-2">
+            <input class="form-check-input" type="checkbox" role="switch" id="visitMyPatientsOnly" name="my_patients_only" value="1" @checked(! empty($filters['my_patients_only']))>
+            <label class="form-check-label" for="visitMyPatientsOnly">
+                {{ __('visits.my_patients_only') }}
+            </label>
+        </div>
+    </div>
+    @endif
     <x-slot:actions>
         <!-- <button aria-label="{{ __('common.filter') }}" title="{{ __('common.filter') }}" type="submit" class="btn btn-primary"><i class="ti ti-filter"></i>{{ __('common.filter') }}</button> -->
         <a aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" href="{{ $workspaceRoutes->route('admin.visits.index') }}" class="btn btn-outline-secondary btn-icon" data-filter-reset><i class="ti ti-x"></i></a>

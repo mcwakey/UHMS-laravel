@@ -112,6 +112,10 @@ class TheatreController extends Controller
             'billingItem.invoice',
         ])->whereIn('status', array_map(fn ($s) => $s->value, $statusFilter));
 
+        if ($this->shouldScopeToLoggedInDoctor($request)) {
+            $query->where('requested_by', $request->user()->id);
+        }
+
         if ($s = $request->input('search')) {
             $query->where(function ($q) use ($s) {
                 $q->where('request_number', 'like', "%{$s}%")
@@ -139,18 +143,22 @@ class TheatreController extends Controller
         $requests = $query->latest('id')->paginate(20)->withQueryString();
         $rooms = TheatreRoom::query()->orderBy('name')->get(['id', 'name', 'code']);
 
+        $statsScope = fn ($statsQuery) => $this->shouldScopeToLoggedInDoctor($request)
+            ? $statsQuery->where('requested_by', $request->user()->id)
+            : $statsQuery;
+
         $stats = [
-            'pending'    => ProcedureRequest::where('status', ProcedureStatus::REQUESTED->value)->count(),
-            'accepted'   => ProcedureRequest::where('status', ProcedureStatus::ACCEPTED->value)->count(),
-            'billed'     => ProcedureRequest::where('status', ProcedureStatus::BILLED->value)->count(),
-            'scheduled'  => ProcedureRequest::whereIn('status', [ProcedureStatus::SCHEDULED->value, ProcedureStatus::RESCHEDULED->value])->count(),
-            'in_theatre' => ProcedureRequest::whereIn('status', [
+            'pending'    => $statsScope(ProcedureRequest::where('status', ProcedureStatus::REQUESTED->value))->count(),
+            'accepted'   => $statsScope(ProcedureRequest::where('status', ProcedureStatus::ACCEPTED->value))->count(),
+            'billed'     => $statsScope(ProcedureRequest::where('status', ProcedureStatus::BILLED->value))->count(),
+            'scheduled'  => $statsScope(ProcedureRequest::whereIn('status', [ProcedureStatus::SCHEDULED->value, ProcedureStatus::RESCHEDULED->value]))->count(),
+            'in_theatre' => $statsScope(ProcedureRequest::whereIn('status', [
                 ProcedureStatus::PRE_OP->value, ProcedureStatus::ANAESTHESIA->value,
                 ProcedureStatus::IN_SURGERY->value, ProcedureStatus::SURGERY_DONE->value,
-            ])->count(),
-            'recovery'   => ProcedureRequest::where('status', ProcedureStatus::POST_OP->value)->count(),
-            'completed_today' => ProcedureRequest::where('status', ProcedureStatus::COMPLETED->value)
-                ->whereDate('completed_at', today())->count(),
+            ]))->count(),
+            'recovery'   => $statsScope(ProcedureRequest::where('status', ProcedureStatus::POST_OP->value))->count(),
+            'completed_today' => $statsScope(ProcedureRequest::where('status', ProcedureStatus::COMPLETED->value)
+                ->whereDate('completed_at', today()))->count(),
         ];
 
         return view('theatre.index', compact('requests', 'stats', 'tab', 'rooms'));
@@ -158,6 +166,8 @@ class TheatreController extends Controller
 
     public function show(ProcedureRequest $procedure)
     {
+        $this->authorizeDoctorWorkspaceProcedure($procedure);
+
         $procedure->load([
             'patient', 'visit', 'service', 'department', 'requestingDoctor',
             'schedule.theatreRoom', 'schedule.surgeon', 'schedule.anaesthetist', 'schedule.assistantSurgeon',
@@ -504,5 +514,21 @@ class TheatreController extends Controller
             return response()->json(['success' => $msg]);
         }
         return back()->with('success', $msg);
+    }
+
+    private function shouldScopeToLoggedInDoctor(Request $request): bool
+    {
+        return $request->routeIs('doctor.*') && ! ($request->user()?->hasRole('Super Admin') ?? false);
+    }
+
+    private function authorizeDoctorWorkspaceProcedure(ProcedureRequest $procedure): void
+    {
+        $request = request();
+
+        abort_if(
+            $this->shouldScopeToLoggedInDoctor($request)
+                && (int) $procedure->requested_by !== (int) $request->user()?->id,
+            404
+        );
     }
 }

@@ -2445,6 +2445,13 @@ class SidebarMenuBuilder
                         'permission' => 'consultation.create',
                     ],
                     [
+                        'label' => 'Emergency',
+                        'icon' => 'ti ti-ambulance',
+                        'route' => 'doctor.emergency.index',
+                        'active_patterns' => ['doctor.emergency.*', 'admin.emergency.*'],
+                        'permission' => 'emergency.view',
+                    ],
+                    [
                         'label' => 'Admissions',
                         'icon' => 'ti ti-bed',
                         'route' => 'doctor.admissions.index',
@@ -2502,11 +2509,11 @@ class SidebarMenuBuilder
                 'title' => 'Clinical Tools',
                 'items' => [
                     [
-                        'label' => 'ICD-10 Codes',
-                        'icon' => 'ti ti-medical-cross',
-                        'route' => 'doctor.icd-codes.index',
-                        'active_patterns' => ['doctor.icd-codes.*', 'admin.icd-codes.*'],
-                        'permission' => 'icd.view',
+                        'label' => 'Medicine List',
+                        'icon' => 'ti ti-pill',
+                        'route' => 'doctor.procedure-catalogue.index',
+                        'active_patterns' => ['doctor.procedure-catalogue.*', 'admin.procedure-catalogue.*'],
+                        'permission' => 'procedure_catalogue.view',
                     ],
                     [
                         'label' => 'Procedure Catalogue',
@@ -2521,6 +2528,13 @@ class SidebarMenuBuilder
                         'route' => 'doctor.investigation-catalogue.index',
                         'active_patterns' => ['doctor.investigation-catalogue.*', 'admin.investigation-catalogue.*'],
                         'permission' => 'investigation.catalogue.view',
+                    ],
+                    [
+                        'label' => 'ICD-10 Codes',
+                        'icon' => 'ti ti-medical-cross',
+                        'route' => 'doctor.icd-codes.index',
+                        'active_patterns' => ['doctor.icd-codes.*', 'admin.icd-codes.*'],
+                        'permission' => 'icd.view',
                     ],
                     [
                         'label' => 'Medical Patterns',
@@ -2543,28 +2557,28 @@ class SidebarMenuBuilder
                     ],
                 ],
             ],
-            // [
-            //     'title' => null,
-            //     'items' => [
-            //         [
-            //             'label' => 'Notifications',
-            //             'icon' => 'ti ti-bell',
-            //             'route' => 'admin.notifications.index',
-            //             'active_patterns' => ['admin.notifications.*'],
-            //             'permission' => 'notifications.view',
-            //             'badge' => $unreadNotifications > 0 ? $unreadNotifications : null,
-            //             'badge_class' => 'badge bg-danger rounded-pill ms-auto',
-            //         ],
-            //     ],
-            // ],
+            [
+                'title' => null,
+                'items' => [
+                    [
+                        'label' => 'Notifications',
+                        'icon' => 'ti ti-bell',
+                        'route' => 'doctor.notifications.index',
+                        'active_patterns' => ['doctor.notifications.*'],
+                        'permission' => 'notifications.view',
+                        'badge' => $unreadNotifications > 0 ? $unreadNotifications : null,
+                        'badge_class' => 'badge bg-danger rounded-pill ms-auto',
+                    ],
+                ],
+            ],
             [
                 'title' => 'Profile',
                 'items' => [
                     [
                         'label' => 'My Profile',
                         'icon' => 'ti ti-user-circle',
-                        'route' => 'admin.profile',
-                        'active_patterns' => ['admin.profile'],
+                        'route' => 'doctor.profile',
+                        'active_patterns' => ['doctor.profile'],
                     ],
                 ],
             ],

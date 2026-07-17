@@ -3,7 +3,7 @@
 @section('title', __('appointments.calendar_title'))
 
 @section('content')
-<x-page-header :title="__('appointments.calendar_title')" icon="ti-calendar-event">
+<x-page-header :title="__('appointments.calendar_title')" :description="__('appointments.calendar_description')" icon="ti-calendar-event">
     <x-slot:actions>
         @include('appointments.partials.view-switch', ['active' => 'calendar'])
         @can('appointments.create')
@@ -60,6 +60,17 @@
                 @endforeach
             </select>
         </div>
+        @if($isDoctorWorkspace)
+        <div class="col-md-2">
+            <label class="form-label small d-block">&nbsp;</label>
+            <div class="form-check form-switch mt-2">
+                <input class="form-check-input" type="checkbox" role="switch" id="appointmentCalendarMyPatientsOnly" name="my_patients_only" value="1" @checked(! empty($filters['my_patients_only']))>
+                <label class="form-check-label" for="appointmentCalendarMyPatientsOnly">
+                    {{ __('appointments.my_patients_only') }}
+                </label>
+            </div>
+        </div>
+        @else
         <div class="col-md-2">
             <label class="form-label">{{ __('common.doctor') }}</label>
             <select name="doctor_id" class="form-select">
@@ -82,6 +93,7 @@
                 @endforeach
             </select>
         </div>
+        @endif
         <div class="col-md-2">
             @include('partials.date-range-filter', [
                 'id' => 'appointmentCalendarDateRangePicker',

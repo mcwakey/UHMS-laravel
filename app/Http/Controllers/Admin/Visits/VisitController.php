@@ -46,6 +46,7 @@ class VisitController extends Controller
 
     public function index(Request $request)
     {
+        $isDoctorWorkspace = $request->routeIs('doctor.*');
         $filters = $request->all();
         unset($filters['status']);
 
@@ -71,6 +72,19 @@ class VisitController extends Controller
             $filters['date_range'] = $filters['date_from'].' to '.$filters['date_to'];
         }
 
+        if ($isDoctorWorkspace) {
+            unset($filters['doctor_id'], $filters['department_id']);
+
+            if (! ($request->user()?->hasRole('Super Admin') ?? false) && $request->user()?->department_id) {
+                $filters['department_id'] = $request->user()->department_id;
+            }
+
+            if ($request->boolean('my_patients_only')) {
+                $filters['doctor_id'] = $request->user()?->id;
+                $filters['my_patients_only'] = '1';
+            }
+        }
+
         $visits = $this->visitService->list($filters);
         $stats = $this->visitService->todayStats($filters);
 
@@ -90,7 +104,7 @@ class VisitController extends Controller
                 ])
         )->values();
 
-        return view('visits.index', compact('visits', 'stats', 'filters', 'insuranceProviderOptions'));
+        return view('visits.index', compact('visits', 'stats', 'filters', 'insuranceProviderOptions', 'isDoctorWorkspace'));
     }
 
     public function create(Request $request)

@@ -2,11 +2,11 @@
 @section('title', __('consultations.title'))
 
 @section('content')
-<x-page-header :title="__('consultations.title')" icon="ti-stethoscope" />
+<x-page-header :title="__('consultations.title')" :description="__('consultations.description')" icon="ti-stethoscope" />
 
 <x-filter-bar
-    :action="route('admin.consultations.index')"
-    :reset-url="route('admin.consultations.index')"
+    :action="$workspaceRoutes->route('admin.consultations.index')"
+    :reset-url="$workspaceRoutes->route('admin.consultations.index')"
     ajax
     ajax-target="#consultationsIndexResults"
 >
@@ -40,7 +40,7 @@
         </div>
     </div>
     <x-slot:actions>
-        <a aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" href="{{ route('admin.consultations.index') }}" class="btn btn-outline-secondary btn-icon" data-filter-reset><i class="ti ti-x"></i></a>
+        <a aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" href="{{ $workspaceRoutes->route('admin.consultations.index') }}" class="btn btn-outline-secondary btn-icon" data-filter-reset><i class="ti ti-x"></i></a>
     </x-slot:actions>
 </x-filter-bar>
 
@@ -106,7 +106,7 @@
                             @endif
                         </td>
                         <td>
-                            <a href="{{ route('admin.visits.show', $visit) }}" class="fw-medium text-primary">
+                            <a href="{{ $workspaceRoutes->route('admin.visits.show', $visit) }}" class="fw-medium text-primary">
                                 {{ $visit->visit_number }}
                             </a>
                             <!-- <span class="fw-medium">{{ $visit->visit_number }}</span> -->
@@ -125,7 +125,7 @@
                                 @endif
                             </small> -->
                             <div>
-                                <a href="{{ route('admin.patients.show', $visit->patient) }}" class="fw-medium">{{ $visit->patient->full_name }}</a>
+                                <a href="{{ $workspaceRoutes->route('admin.patients.show', $visit->patient) }}" class="fw-medium">{{ $visit->patient->full_name }}</a>
                                 <div class="small text-muted">{{ $visit->patient->gender }} · {{ $visit->patient->age }}y</div>
                                 @if(($pbMap[$visit->patient_id] ?? 0) > 0)
                                     <x-billing.outstanding-badge :amount="$pbMap[$visit->patient_id]" :show-amount="$pbCanAmount" class="mt-1" />
@@ -175,7 +175,7 @@
                         <td>
                             @if($isPending)
                                 @can('consultations.create')
-                                <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $route]) }}" class="d-inline">
+                                <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.activate', [$visit, $route]) }}" class="d-inline">
                                     @csrf
                                     <button type="submit" class="btn btn-sm btn-primary">
                                         <i class="ti ti-player-play me-1"></i>{{ $visit->status === \App\Enums\VisitStatus::CONSULTING ? __('consultations.activate') : __('consultations.start') }}
@@ -183,15 +183,15 @@
                                 </form>
                                 @endcan
                             @elseif($isActive)
-                                <a href="{{ route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-sm btn-success">
+                                <a href="{{ $workspaceRoutes->route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-sm btn-success">
                                     <i class="ti ti-pencil me-1"></i>{{ __('consultations.continue') }}
                                 </a>
                             @elseif($reopenEligibility?->allowed)
-                                <a href="{{ route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-sm btn-warning">
+                                <a href="{{ $workspaceRoutes->route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-sm btn-warning">
                                     <i class="ti ti-lock-open me-1"></i>{{ __('visits.actions.reopen_consultation') }}
                                 </a>
                             @else
-                                <a href="{{ route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-sm btn-outline-primary">
+                                <a href="{{ $workspaceRoutes->route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-sm btn-outline-primary">
                                     <i class="ti ti-eye me-1"></i>{{ __('consultations.open') }}
                                 </a>
                             @endif

@@ -36,11 +36,15 @@ class AppointmentController extends Controller
      */
     public function index(Request $request)
     {
-        $isDoctorWorkspace = $this->workspaceRoutes->isConsultation();
+        $isDoctorWorkspace = $request->routeIs('doctor.*');
         $filters = $this->normalizedDateFilters($request, false, $isDoctorWorkspace);
 
         if ($isDoctorWorkspace) {
             unset($filters['doctor_id'], $filters['department_id']);
+
+            if ($this->shouldScopeDoctorDepartment($request) && $request->user()?->department_id) {
+                $filters['department_id'] = $request->user()->department_id;
+            }
 
             if ($request->boolean('my_patients_only')) {
                 $filters['doctor_id'] = $request->user()?->id;
@@ -414,7 +418,22 @@ class AppointmentController extends Controller
      */
     public function calendar(Request $request)
     {
+        $isDoctorWorkspace = $request->routeIs('doctor.*');
         $filters = $this->normalizedDateFilters($request, true);
+
+        if ($isDoctorWorkspace) {
+            unset($filters['doctor_id'], $filters['department_id']);
+
+            if ($this->shouldScopeDoctorDepartment($request) && $request->user()?->department_id) {
+                $filters['department_id'] = $request->user()->department_id;
+            }
+
+            if ($request->boolean('my_patients_only')) {
+                $filters['doctor_id'] = $request->user()?->id;
+                $filters['my_patients_only'] = '1';
+            }
+        }
+
         $from = $filters['date_from'];
         $to = $filters['date_to'];
 
@@ -424,11 +443,11 @@ class AppointmentController extends Controller
             return response()->json($calendarData);
         }
 
-        $doctors = User::role('Doctor')->orderBy('first_name')->get();
-        $departments = Department::active()->orderBy('name')->get();
+        $doctors = $isDoctorWorkspace ? collect() : User::role('Doctor')->orderBy('first_name')->get();
+        $departments = $isDoctorWorkspace ? collect() : Department::active()->orderBy('name')->get();
         $statuses = AppointmentStatus::cases();
 
-        return view('appointments.calendar', compact('calendarData', 'from', 'to', 'doctors', 'departments', 'statuses', 'filters'));
+        return view('appointments.calendar', compact('calendarData', 'from', 'to', 'doctors', 'departments', 'statuses', 'filters', 'isDoctorWorkspace'));
     }
 
     private function normalizedDateFilters(Request $request, bool $expandTodayRange = false, bool $defaultTodayOnly = false): array
@@ -531,6 +550,11 @@ class AppointmentController extends Controller
         $date = Carbon::parse($date);
 
         return $date->lt($tomorrow) ? $tomorrow->toDateString() : $date->toDateString();
+    }
+
+    private function shouldScopeDoctorDepartment(Request $request): bool
+    {
+        return $request->routeIs('doctor.*') && ! ($request->user()?->hasRole('Super Admin') ?? false);
     }
 
     private function formatServiceForJson(ServiceCatalog $service): array

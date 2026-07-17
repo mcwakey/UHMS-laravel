@@ -2739,6 +2739,7 @@ Route::middleware('auth')->group(function () {
 
         Route::middleware(['module:appointments', 'can:appointments.view'])->prefix('appointments')->name('appointments.')->group(function () {
             Route::get('/', [AppointmentController::class, 'index'])->name('index');
+            Route::get('calendar', [AppointmentController::class, 'calendar'])->name('calendar');
             Route::get('{appointment}', [AppointmentController::class, 'show'])->name('show');
         });
 

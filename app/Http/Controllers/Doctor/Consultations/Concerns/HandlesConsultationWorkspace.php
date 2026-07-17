@@ -186,7 +186,7 @@ trait HandlesConsultationWorkspace
 
         /** @var User|null $user */
         $user = Auth::user();
-        if ($user && ! $user->hasAnyRole(['Super Admin', 'Admin']) && $user->department_id) {
+        if ($request->routeIs('doctor.*') && $user && ! $user->hasRole('Super Admin') && $user->department_id) {
             $query->where('department_id', $user->department_id);
         }
 

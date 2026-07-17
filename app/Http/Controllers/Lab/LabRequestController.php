@@ -27,8 +27,12 @@ class LabRequestController extends Controller
             $filters['target_department_id'] = $filters['department_id'];
         }
 
+        if ($this->shouldScopeToLoggedInDoctor($request)) {
+            $filters['requested_by'] = $request->user()->id;
+        }
+
         $requests = $this->labService->getRequests($filters);
-        $stats = $this->labService->getLabStats();
+        $stats = $this->labService->getLabStats($filters);
         $departments = $this->labService->getInvestigationDepartments();
 
         return view('lab.requests', compact('requests', 'stats', 'departments'));
@@ -39,6 +43,8 @@ class LabRequestController extends Controller
      */
     public function show(LabRequest $labRequest)
     {
+        $this->authorizeDoctorWorkspaceRequest($labRequest);
+
         $request = $this->labService->getRequestDetails($labRequest);
         $billingPrices = $this->investigationRequestService->billingPreview($request);
 
@@ -112,5 +118,21 @@ class LabRequestController extends Controller
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
+    }
+
+    private function shouldScopeToLoggedInDoctor(Request $request): bool
+    {
+        return $request->routeIs('doctor.*') && ! ($request->user()?->hasRole('Super Admin') ?? false);
+    }
+
+    private function authorizeDoctorWorkspaceRequest(LabRequest $labRequest): void
+    {
+        $request = request();
+
+        abort_if(
+            $this->shouldScopeToLoggedInDoctor($request)
+                && (int) $labRequest->requested_by !== (int) $request->user()?->id,
+            404
+        );
     }
 }

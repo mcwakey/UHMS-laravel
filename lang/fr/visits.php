@@ -2,6 +2,7 @@
 
 return [
     'title' => 'Visites / Consultations externes',
+    'description' => 'Consulter l’activité des visites, les présences et le statut du flux OPD.',
     'queue_board' => 'Tableau de file d\'attente',
     'new_visit' => 'Nouvelle visite',
     'range_total' => 'Total de la période',
@@ -15,6 +16,7 @@ return [
     'search_placeholder' => 'N° de visite, nom du patient, téléphone...',
     'visit_type' => 'Type de visite',
     'all_types' => 'Tous les types',
+    'my_patients_only' => 'Mes patients uniquement',
     'active_insurance' => 'Assurance active',
     'all_insurance' => 'Toutes les assurances',
     'cash_and_carry' => 'Paiement comptant',
