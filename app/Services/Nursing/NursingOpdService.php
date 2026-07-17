@@ -2,6 +2,7 @@
 
 namespace App\Services\Nursing;
 
+use App\Enums\DepartmentType;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Models\ClinicalTask;
@@ -107,6 +108,17 @@ class NursingOpdService
             ->where('visit_type', VisitType::OUTPATIENT->value)
             ->where(function (Builder $scope) use ($department) {
                 $scope->where('current_department_id', $department->id)
+                    ->orWhere(function (Builder $triageQueue) {
+                        $triageQueue->whereIn('status', [VisitStatus::QUEUED->value, VisitStatus::TRIAGE->value])
+                            ->where(function (Builder $queueScope) {
+                                $queueScope->whereNull('current_department_id')
+                                    ->orWhereHas('currentDepartment', fn (Builder $currentDepartment) => $currentDepartment
+                                        ->where('type', '!=', DepartmentType::NURSING->value))
+                                    ->orWhereHas('queueEntries', fn (Builder $queue) => $queue
+                                        ->whereNull('department_id')
+                                        ->whereIn('status', ['waiting', 'serving']));
+                            });
+                    })
                     ->orWhereHas('clinicalTasks', fn (Builder $tasks) => $tasks->where('assigned_department_id', $department->id))
                     ->orWhereHas('serviceRenderings', fn (Builder $renderings) => $renderings->where('department_id', $department->id))
                     ->orWhereHas('triage.triagedBy', fn (Builder $user) => $user

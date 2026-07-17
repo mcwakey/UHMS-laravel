@@ -436,8 +436,11 @@ Route::middleware('auth')->group(function () {
                 Route::post('{profile}/clear', [PatientFinancialRiskController::class, 'clear'])->name('clear')->middleware('can:patients.financial_risk.clear');
             });
 
+            Route::post('{patient}/insurances', [PatientInsuranceController::class, 'store'])
+                ->name('insurances.store')
+                ->middleware(['module:insurance', 'can:patient.insurance.create']);
+
             Route::middleware(['module:insurance', 'can:patients.edit'])->group(function () {
-                Route::post('{patient}/insurances', [PatientInsuranceController::class, 'store'])->name('insurances.store');
                 Route::put('{patient}/insurances/{insurance}', [PatientInsuranceController::class, 'update'])->name('insurances.update');
                 Route::delete('{patient}/insurances/{insurance}', [PatientInsuranceController::class, 'destroy'])->name('insurances.destroy');
                 Route::patch('{patient}/insurances/{insurance}/set-primary', [PatientInsuranceController::class, 'setPrimary'])->name('insurances.set-primary');
@@ -815,8 +818,11 @@ Route::middleware('auth')->group(function () {
             });
 
             // Patient Insurance Management
+            Route::post('patients/{patient}/insurances', [PatientInsuranceController::class, 'store'])
+                ->name('patients.insurances.store')
+                ->middleware(['module:insurance', 'can:patient.insurance.create']);
+
             Route::middleware(['module:insurance', 'can:patients.edit'])->group(function () {
-                Route::post('patients/{patient}/insurances', [PatientInsuranceController::class, 'store'])->name('patients.insurances.store');
                 Route::put('patients/{patient}/insurances/{insurance}', [PatientInsuranceController::class, 'update'])->name('patients.insurances.update');
                 Route::delete('patients/{patient}/insurances/{insurance}', [PatientInsuranceController::class, 'destroy'])->name('patients.insurances.destroy');
                 Route::patch('patients/{patient}/insurances/{insurance}/set-primary', [PatientInsuranceController::class, 'setPrimary'])->name('patients.insurances.set-primary');
@@ -1128,6 +1134,11 @@ Route::middleware('auth')->group(function () {
             Route::post('appointments/{appointment}/no-show', [AppointmentController::class, 'noShow'])->name('appointments.no-show')->middleware('can:appointments.edit');
         });
 
+        // Provider-agnostic insurance verification used during visit intake.
+        Route::post('insurance/verify', [InsuranceVerificationController::class, 'verify'])
+            ->name('insurance.verify')
+            ->middleware(['module:insurance', 'can:patient.insurance.verify']);
+
         // Insurance Providers & Tiers
         Route::middleware(['module:insurance', 'can:claims.view'])->group(function () {
             Route::get('insurance-providers', [InsuranceProviderController::class, 'index'])->name('insurance-providers.index');
@@ -1142,10 +1153,6 @@ Route::middleware('auth')->group(function () {
             Route::put('insurance-tiers/{tier}', [InsuranceTierController::class, 'update'])->name('insurance-tiers.update')->middleware('can:claims.create');
             Route::delete('insurance-tiers/{tier}', [InsuranceTierController::class, 'destroy'])->name('insurance-tiers.destroy')->middleware('can:claims.create');
 
-            // Generic, provider-agnostic insurance verification endpoint.
-            Route::post('insurance/verify', [InsuranceVerificationController::class, 'verify'])
-                ->name('insurance.verify')
-                ->middleware('can:claims.view');
         });
 
         // Claims

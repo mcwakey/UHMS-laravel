@@ -179,7 +179,7 @@
                     @endcan
                     @can('visits.create')
                     @if(($lastVisitDate && $lastVisitDate->toDateString() === today()->toDateString()))
-                    <button type="button" class="btn btn-success btn-md" disabled title="{{ __('patients.cannot_visit_deceased') }}">
+                    <button type="button" class="btn btn-success btn-md" disabled>
                         <i class="ti ti-plus me-1"></i>{{ __('patients.new_visit') }}
                     </button>
                     @else

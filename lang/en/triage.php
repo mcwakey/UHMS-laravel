@@ -56,6 +56,7 @@ return [
     'all_visits'                     => 'All Visits',
     'queue_label'                    => 'Queue',
     'patients_awaiting_today'        => 'Patients awaiting triage assessment today',
+    'patients_awaiting_range'        => 'Patients awaiting triage assessment for the selected dates',
 
     // Show view
     'summary'                        => 'Triage Summary',

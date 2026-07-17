@@ -12,10 +12,10 @@ use App\Models\PatientInsurance;
 use App\Models\User;
 use App\Services\Insurance\Verification\InsuranceVerificationService;
 use App\Services\Insurance\Verification\VerificationManager;
-use App\Support\Insurance\VerificationRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class InsuranceVerificationTest extends TestCase
@@ -27,13 +27,11 @@ class InsuranceVerificationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $this->user = User::factory()->create();
         $role = Role::findOrCreate('Verification Tester', 'web');
-        foreach (['claims.view', 'claims.create'] as $perm) {
-            $role->givePermissionTo(Permission::findOrCreate($perm, 'web'));
-        }
+        $role->givePermissionTo(Permission::findOrCreate('patient.insurance.verify', 'web'));
         $this->user->assignRole($role);
     }
 
@@ -158,5 +156,38 @@ class InsuranceVerificationTest extends TestCase
         $row = InsuranceVerification::first();
         $this->assertSame($insurance->id, $row->patient_insurance_id);
         $this->assertSame($this->user->id, $row->verified_by);
+    }
+
+    public function test_verification_endpoint_accepts_patient_insurance_verify_without_claims_view(): void
+    {
+        $insurance = $this->makeInsurance();
+
+        $this->assertTrue($this->user->can('patient.insurance.verify'));
+        $this->assertFalse($this->user->can('claims.view'));
+
+        $this->actingAs($this->user)
+            ->postJson(route('admin.insurance.verify'), [
+                'patient_insurance_id' => $insurance->id,
+            ])
+            ->assertOk()
+            ->assertJsonPath('status', VerificationStatus::NOT_REQUIRED->value);
+    }
+
+    public function test_verification_endpoint_rejects_claims_view_without_patient_insurance_verify(): void
+    {
+        $insurance = $this->makeInsurance();
+        $claimsUser = User::factory()->create();
+        $claimsRole = Role::findOrCreate('Claims Viewer', 'web');
+        $claimsRole->givePermissionTo(Permission::findOrCreate('claims.view', 'web'));
+        $claimsUser->assignRole($claimsRole);
+
+        $this->assertTrue($claimsUser->can('claims.view'));
+        $this->assertFalse($claimsUser->can('patient.insurance.verify'));
+
+        $this->actingAs($claimsUser)
+            ->postJson(route('admin.insurance.verify'), [
+                'patient_insurance_id' => $insurance->id,
+            ])
+            ->assertForbidden();
     }
 }

@@ -294,12 +294,35 @@ class TriageController extends Controller
      */
     public function index(Request $request)
     {
+        $dateRange = trim((string) $request->query('date_range', ''));
+        if ($dateRange !== '') {
+            $parts = preg_split('/\s+to\s+|\s+-\s+/', $dateRange);
+            $request->merge([
+                'date_from' => $parts[0] ?? null,
+                'date_to' => $parts[1] ?? ($parts[0] ?? null),
+            ]);
+        }
+
+        $validated = $request->validate([
+            'date_range' => ['nullable', 'string', 'max:64'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+        ]);
+        $dateFrom = $validated['date_from'] ?? $validated['date_to'] ?? today()->toDateString();
+        $dateTo = $validated['date_to'] ?? $dateFrom;
+        $filters = [
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+            'date_range' => $dateFrom.' to '.$dateTo,
+        ];
+
         $triageQueueNumber = QueueEntry::query()
             ->select('queue_number')
             ->whereColumn('visit_id', 'visits.id')
             ->whereNull('department_id')
             ->whereIn('status', ['waiting', 'serving'])
-            ->whereDate('created_at', today())
+            ->whereDate('created_at', '>=', $dateFrom)
+            ->whereDate('created_at', '<=', $dateTo)
             ->orderBy('queue_number')
             ->limit(1);
 
@@ -312,21 +335,29 @@ class TriageController extends Controller
             'pendingConsultationRoutes',
             'queueEntries' => fn ($query) => $query
                 ->whereNull('department_id')
-                ->today()
+                ->whereDate('created_at', '>=', $dateFrom)
+                ->whereDate('created_at', '<=', $dateTo)
                 ->whereIn('status', ['waiting', 'serving'])
                 ->orderBy('queue_number'),
         ])
             ->addSelect(['triage_queue_number' => $triageQueueNumber])
             ->whereIn('status', [VisitStatus::QUEUED->value, VisitStatus::TRIAGE->value])
-            ->today();
+            ->whereDate('visit_date', '>=', $dateFrom)
+            ->whereDate('visit_date', '<=', $dateTo);
 
         if (app(WorkspaceRouteResolver::class)->isNursing()) {
             $department = app(DepartmentContextSwitcherService::class)
                 ->currentDepartment($request->user(), $request);
             $visitsQuery->where('visit_type', VisitType::OUTPATIENT->value)
-                ->where(function ($query) use ($department) {
+                ->where(function ($query) use ($department, $dateFrom, $dateTo) {
                     $query->where('current_department_id', $department?->id)
-                        ->orWhereHas('triage', fn ($triage) => $triage->where('department_id', $department?->id));
+                        ->orWhereNull('current_department_id')
+                        ->orWhereHas('triage', fn ($triage) => $triage->where('department_id', $department?->id))
+                        ->orWhereHas('queueEntries', fn ($queue) => $queue
+                            ->whereNull('department_id')
+                            ->whereDate('created_at', '>=', $dateFrom)
+                            ->whereDate('created_at', '<=', $dateTo)
+                            ->whereIn('status', ['waiting', 'serving']));
                 });
         }
 
@@ -337,7 +368,7 @@ class TriageController extends Controller
             ->orderBy('id')
             ->get();
 
-        return view('triage.index', compact('visits'));
+        return view('triage.index', compact('visits', 'filters'));
     }
 
     private function billableConsultationDepartmentsForVisit(Visit $visit): Collection

@@ -2,7 +2,7 @@
 @section('title', __('triage.queue'))
 
 @section('content')
-<x-page-header :title="__('triage.queue')" :description="__('triage.patients_awaiting_today')" icon="ti-heart-broken"/>
+<x-page-header :title="__('triage.queue')" :description="__('triage.patients_awaiting_range')" icon="ti-heart-broken"/>
 
 <!-- Page Header -->
 <!-- <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
@@ -47,6 +47,25 @@
         ], true);
     };
 @endphp
+
+<x-filter-bar
+    :auto-submit="false" :show-apply="false"
+    class="mb-2"
+    ajax
+    ajax-target="#visitsIndexResults"
+>
+    <div class="col-md-2">
+        @include('partials.date-range-filter', [
+            'id' => 'triageDateRangePicker',
+            'value' => $filters['date_range'] ?? '',
+            'submitOnApply' => true,
+        ])
+    </div>
+    <x-slot:actions>
+        <!-- <button aria-label="{{ __('common.filter') }}" title="{{ __('common.filter') }}" type="submit" class="btn btn-primary"><i class="ti ti-filter"></i>{{ __('common.filter') }}</button> -->
+        <a aria-label="{{ __('common.reset') }}" title="{{ __('common.reset') }}" href="{{ $workspaceRoutes->route('admin.visits.index') }}" class="btn btn-outline-secondary btn-icon" data-filter-reset><i class="ti ti-x"></i></a>
+    </x-slot:actions>
+</x-filter-bar>
 
 <div class="row g-3">
     {{-- ── Awaiting Triage (WAITING) ───────────────────────────────────────── --}}
@@ -168,3 +187,7 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+    @include('partials.date-range-filter-scripts')
+@endpush

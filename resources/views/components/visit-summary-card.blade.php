@@ -247,6 +247,7 @@
         <hr />
 
     <!-- <div class="card-body"> -->
+                @can('journey.predictions.view')
         @if($snapshot && $snapshot['is_terminal'])
             <div class="text-muted"><i class="ti ti-door-exit me-1"></i>{{ __('journey.widget.exited') }}</div>
         @elseif($snapshot && $snapshot['is_completed'])
@@ -311,20 +312,25 @@
                         @endif
                         @if($canActHandoff)
                             @if($handoff->isUnassigned())
+                            @can('journey.handoffs.claim')
                                 <form method="POST" action="{{ route('admin.journey.handoffs.claim') }}" class="d-inline">@csrf
                                     <input type="hidden" name="visit_id" value="{{ $visit->id }}"><input type="hidden" name="cause" value="{{ $handoff->cause->value }}">
                                     <button class="btn btn-sm btn-primary py-0">{{ __('journey.assignment.claim') }}</button>
                                 </form>
+                            @endif
                             @elseif($handoff->assignmentId)
+                            @can('journey.handoffs.resolve')
                                 <form method="POST" action="{{ route('admin.journey.handoffs.resolve', $handoff->assignmentId) }}" class="d-inline">@csrf
                                     <button class="btn btn-sm btn-success py-0">{{ __('journey.assignment.resolve') }}</button>
                                 </form>
+                            @endif
                             @endif
                         @endif
                     </div>
                 @endif
             @endif
         @endif
+                @endcan
 
         {{-- Stage timeline --}}
         @if($snapshot)

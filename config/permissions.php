@@ -161,6 +161,8 @@ return [
     // owning module slug (used by the audit command + admin UI grouping).
     // ------------------------------------------------------------------
     'module_overrides' => [
+        'patient.insurance.create'   => 'patients',
+        'patient.insurance.verify'   => 'patients',
         'consultation.access'        => 'consultation',
         'consultation.dashboard'     => 'consultation',
         'consultation.queue'         => 'consultation',
@@ -268,6 +270,8 @@ return [
     // descriptor derived from the permission name (verb + noun).
     // ------------------------------------------------------------------
     'descriptions' => [
+        'patient.insurance.create'         => 'Add an insurance policy to an existing patient during registration or visit intake.',
+        'patient.insurance.verify'         => 'Run insurance eligibility verification during visit intake or appointment check-in.',
         'patients.merge.execute'           => 'Permanently merge two patient folders. Irreversible.',
         'patients.merge.confirm_identity'  => 'Confirm patient identity prior to executing a folder merge.',
         'visits.create_while_admitted'     => 'Create an outpatient visit for a currently admitted patient.',

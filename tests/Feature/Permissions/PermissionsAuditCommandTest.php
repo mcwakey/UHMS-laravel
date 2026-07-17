@@ -45,6 +45,12 @@ class PermissionsAuditCommandTest extends TestCase
         $this->assertSame('HIGH', \App\Support\PermissionMeta::risk('claims.submit'));
     }
 
+    public function test_patient_insurance_permissions_are_grouped_with_patient_permissions(): void
+    {
+        $this->assertSame('patients', \App\Support\PermissionMeta::module('patient.insurance.create'));
+        $this->assertSame('patients', \App\Support\PermissionMeta::module('patient.insurance.verify'));
+    }
+
     public function test_permission_meta_explains_permissions(): void
     {
         $this->assertSame(

@@ -121,6 +121,21 @@ class NursingWorkspaceTest extends TestCase
         $this->actingAs($user)->get(route('nursing.opd.show', $inpatient))->assertNotFound();
     }
 
+    public function test_nursing_visit_show_allows_global_triage_visit_assigned_to_consultation_department(): void
+    {
+        $nursing = $this->department(DepartmentType::NURSING, 'NUR');
+        $consultation = $this->department(DepartmentType::CONSULTATION, 'CON');
+        $user = User::factory()->create(['department_id' => $nursing->id]);
+        $this->give($user, ['visits.view']);
+
+        $visit = $this->visit($consultation, VisitType::OUTPATIENT, VisitStatus::QUEUED, 'PN-GLOBAL-TRIAGE');
+
+        $this->actingAs($user)
+            ->get(route('nursing.visits.show', $visit))
+            ->assertOk()
+            ->assertSee('PN-GLOBAL-TRIAGE');
+    }
+
     public function test_menu_is_nursing_specific_and_permission_filtered(): void
     {
         $nursing = $this->department(DepartmentType::NURSING, 'NUR');

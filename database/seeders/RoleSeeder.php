@@ -341,6 +341,8 @@ class RoleSeeder extends Seeder
             'appointments.delete',
 
             // ── Claims & Insurance ────────────────────────────────────────
+            'patient.insurance.create',
+            'patient.insurance.verify',
             'claims.view',
             'claims.create',
             'claims.approve',
@@ -1429,6 +1431,8 @@ class RoleSeeder extends Seeder
             // Records-department intake, service tracking, claims, and operational reports.
             'vitals.view', 'vitals.create',
             'service_rendering.view', 'service_rendering.reports',
+            'patient.insurance.create',
+            'patient.insurance.verify',
             'claims.view', 'claims.create', 'claims.export',
             'reports.view', 'reports.export', 'reports.print',
             // Patient communication: send approved SMS + view delivery status only
@@ -1488,6 +1492,8 @@ class RoleSeeder extends Seeder
             'appointments.view',
             'vitals.view', 'vitals.create',
             'service_rendering.view', 'service_rendering.reports',
+            'patient.insurance.create',
+            'patient.insurance.verify',
             'claims.view', 'claims.create', 'claims.export',
             'reports.view', 'reports.export', 'reports.print',
             'notifications.view',
@@ -1735,6 +1741,7 @@ class RoleSeeder extends Seeder
             'patients.view',
             'visits.view', 'visits.preview',
             'invoices.view',
+            'patient.insurance.verify',
             'claims.view', 'claims.create', 'claims.approve', 'claims.export',
             'complaints.view',
             'claims.eligible.view', 'claims.prepare', 'claims.validate', 'claims.submit',

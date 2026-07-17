@@ -20,10 +20,19 @@
         </a>
         @endif
         @endcan
+
+        @php $lastVisitDate = $visit->patient->visits->first()?->visit_date; @endphp
         @can('visits.create')
-        <a href="{{ $workspaceRoutes->route('admin.visits.create', ['patient_id' => $visit->patient_id]) }}" class="btn btn-primary btn-md">
+        @if(($lastVisitDate && $lastVisitDate->toDateString() === today()->toDateString()))
+        <!-- <a href="{{ $workspaceRoutes->route('admin.visits.create', ['patient_id' => $visit->patient_id]) }}" class="btn btn-primary btn-md">
+            <i class="ti ti-plus me-1"></i>{{ today()->toDateString() }}
+        </a> -->
+        <button type="button" class="btn btn-primary btn-md" disabled>
             <i class="ti ti-plus me-1"></i>{{ __('visits.new_visit_btn') }}
-        </a>
+        </button>
+        @else
+        <a href="{{ $workspaceRoutes->route('admin.visits.create', ['patient_id' => $visit->patient_id]) }}" class="btn btn-primary btn-md"><i class="ti ti-plus me-1"></i>{{ __('visits.new_visit_btn') }}</a>
+        @endif
         @endcan
     </x-slot:actions>
 </x-page-header-back>
@@ -478,6 +487,7 @@
                     @endif
                 </div>
 
+                @can('visits.transition')
                 {{-- WAITING: Triage / Cancelled / Reschedule only --}}
                 <p class="text-muted small mb-2">{{ __('visits.next_step') }}</p>
                 @if($isWaiting)
@@ -561,7 +571,7 @@
                     @endforeach
                 </div>
                 @endif
-
+                @endcan
             </div>
         </div>
 

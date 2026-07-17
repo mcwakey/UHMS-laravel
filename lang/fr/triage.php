@@ -56,6 +56,7 @@ return [
     'all_visits'                     => 'Toutes les visites',
     'queue_label'                    => 'File',
     'patients_awaiting_today'        => 'Patients en attente d\'évaluation de triage aujourd\'hui',
+    'patients_awaiting_range'        => 'Patients en attente d\'évaluation de triage pour les dates sélectionnées',
 
     // Show view
     'summary'                        => 'Résumé du triage',

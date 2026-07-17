@@ -33,6 +33,7 @@ class PatientManagementTest extends TestCase
             'patients.contact.edit',
             'patients.address.edit',
             'patients.insurance.edit',
+            'patient.insurance.create',
             'patients.clinical_sensitive.edit',
         ] as $p) {
             $perm = Permission::create(['name' => $p]);
@@ -308,6 +309,55 @@ class PatientManagementTest extends TestCase
             'membership_number' => 'INS-12345',
             'member_type' => 'holder',
         ]);
+    }
+
+    public function test_patient_insurance_creation_uses_its_dedicated_permission(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+        $provider = InsuranceProvider::create([
+            'name' => 'Dedicated Permission Plan',
+            'short_name' => 'DPP',
+            'type' => InsuranceType::PRIVATE,
+            'is_active' => true,
+            'is_default' => false,
+        ]);
+        $creator = User::factory()->create();
+        $role = Role::create(['name' => 'Insurance Creator']);
+        foreach (['patients.view', 'patient.insurance.create'] as $permission) {
+            $role->givePermissionTo(Permission::firstOrCreate(['name' => $permission]));
+        }
+        $creator->assignRole($role);
+
+        $this->assertFalse($creator->can('patients.edit'));
+
+        $this->actingAs($creator)
+            ->from(route('admin.patients.show', $patient))
+            ->post(route('admin.patients.insurances.store', $patient), [
+                'insurance_provider_id' => $provider->id,
+                'membership_number' => 'DPP-001',
+            ])
+            ->assertRedirect(route('admin.patients.show', $patient));
+
+        $this->assertDatabaseHas('patient_insurances', [
+            'patient_id' => $patient->id,
+            'insurance_provider_id' => $provider->id,
+            'membership_number' => 'DPP-001',
+        ]);
+    }
+
+    public function test_patients_edit_does_not_authorize_patient_insurance_creation(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+        $editor = User::factory()->create();
+        $role = Role::create(['name' => 'Patient Editor']);
+        foreach (['patients.view', 'patients.edit'] as $permission) {
+            $role->givePermissionTo(Permission::firstOrCreate(['name' => $permission]));
+        }
+        $editor->assignRole($role);
+
+        $this->actingAs($editor)
+            ->post(route('admin.patients.insurances.store', $patient), [])
+            ->assertForbidden();
     }
 
     public function test_insurance_provider_dropdown_filters_by_type_and_excludes_cash_default(): void

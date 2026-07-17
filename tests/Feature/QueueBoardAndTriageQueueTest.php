@@ -67,6 +67,42 @@ class QueueBoardAndTriageQueueTest extends TestCase
             ->assertSee($visit->patient->full_name);
     }
 
+    public function test_triage_list_filters_by_visit_date_range(): void
+    {
+        $yesterday = today()->subDay()->toDateString();
+        [$yesterdayVisit] = $this->makeTriageQueueVisit('Esi', 'Amoah', 2, VisitStatus::QUEUED, $yesterday);
+        [$todayVisit] = $this->makeTriageQueueVisit('Yaw', 'Asare', 3);
+
+        $this->actingAs($this->user)
+            ->get(route('admin.triage.index', ['date_range' => $yesterday.' to '.$yesterday]))
+            ->assertOk()
+            ->assertSee('#2')
+            ->assertSee($yesterdayVisit->patient->full_name)
+            ->assertDontSee($todayVisit->patient->full_name)
+            ->assertSee($yesterday.' to '.$yesterday);
+    }
+
+    public function test_nursing_triage_list_displays_global_unassigned_triage_queue(): void
+    {
+        $department = Department::factory()->create([
+            'name' => 'OPD Nursing',
+            'type' => DepartmentType::NURSING->value,
+        ]);
+        $this->user->forceFill(['department_id' => $department->id])->save();
+
+        [$visit] = $this->makeTriageQueueVisit('Akua', 'Boateng', 5);
+
+        $this->actingAs($this->user)
+            ->get(route('nursing.triage.index'))
+            ->assertOk()
+            ->assertSee('#5')
+            ->assertSee($visit->patient->full_name);
+
+        $this->actingAs($this->user)
+            ->get(route('nursing.triage.create', $visit))
+            ->assertOk();
+    }
+
     public function test_triage_list_unlocked_for_unpaid_running_bill_visit(): void
     {
         Setting::setValue('payment_timing', 'enabled', true, 'boolean');
@@ -110,8 +146,17 @@ class QueueBoardAndTriageQueueTest extends TestCase
         $this->assertSame($firstVisit->id, $entry?->visit_id);
     }
 
-    private function makeTriageQueueVisit(string $firstName, string $lastName, int $queueNumber, VisitStatus $status = VisitStatus::QUEUED): array
+    private function makeTriageQueueVisit(
+        string $firstName,
+        string $lastName,
+        int $queueNumber,
+        VisitStatus $status = VisitStatus::QUEUED,
+        ?string $visitDate = null,
+    ): array
     {
+        $date = $visitDate
+            ? \Illuminate\Support\Carbon::parse($visitDate)
+            : today();
         $patient = Patient::factory()->create([
             'first_name' => $firstName,
             'last_name' => $lastName,
@@ -122,8 +167,8 @@ class QueueBoardAndTriageQueueTest extends TestCase
             'created_by' => $this->user->id,
             'visit_type' => VisitType::OUTPATIENT,
             'status' => $status,
-            'visit_date' => today(),
-            'checked_in_at' => now()->subMinutes(20),
+            'visit_date' => $date->toDateString(),
+            'checked_in_at' => $date->copy()->setTime(8, 0),
         ]);
         $entry = QueueEntry::create([
             'visit_id' => $visit->id,
@@ -132,6 +177,10 @@ class QueueBoardAndTriageQueueTest extends TestCase
             'priority' => Priority::NORMAL,
             'status' => 'waiting',
         ]);
+        $entry->forceFill([
+            'created_at' => $date->copy()->setTime(8, 5),
+            'updated_at' => $date->copy()->setTime(8, 5),
+        ])->save();
 
         return [$visit, $entry];
     }
