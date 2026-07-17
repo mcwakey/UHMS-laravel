@@ -34,7 +34,7 @@
             </div>
 
             <x-insurance-selection-card
-                :can-add-insurance="auth()->user()?->can('patient.insurance.create') ?? false"
+                :can-add-insurance="auth()->user()?->can('patients.insurance.create') ?? false"
             />
 
             <x-visit-details-card />
@@ -80,7 +80,7 @@
 {{-- ──────────────────────────────────────────────────────────────────────
      Add / Edit / Renew Patient Insurance Modal — SPA: no full reload
 ──────────────────────────────────────────────────────────────────────── --}}
-@can('patient.insurance.create')
+@can('patients.insurance.create')
 @include('patients.partials.insurance-add-modal', [
     'patient' => null,
     'insuranceProviders' => $insuranceProviders,

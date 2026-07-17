@@ -31,7 +31,7 @@ class InsuranceVerificationTest extends TestCase
 
         $this->user = User::factory()->create();
         $role = Role::findOrCreate('Verification Tester', 'web');
-        $role->givePermissionTo(Permission::findOrCreate('patient.insurance.verify', 'web'));
+        $role->givePermissionTo(Permission::findOrCreate('patients.insurance.verify', 'web'));
         $this->user->assignRole($role);
     }
 
@@ -158,11 +158,11 @@ class InsuranceVerificationTest extends TestCase
         $this->assertSame($this->user->id, $row->verified_by);
     }
 
-    public function test_verification_endpoint_accepts_patient_insurance_verify_without_claims_view(): void
+    public function test_verification_endpoint_accepts_patients_insurance_verify_without_claims_view(): void
     {
         $insurance = $this->makeInsurance();
 
-        $this->assertTrue($this->user->can('patient.insurance.verify'));
+        $this->assertTrue($this->user->can('patients.insurance.verify'));
         $this->assertFalse($this->user->can('claims.view'));
 
         $this->actingAs($this->user)
@@ -173,7 +173,7 @@ class InsuranceVerificationTest extends TestCase
             ->assertJsonPath('status', VerificationStatus::NOT_REQUIRED->value);
     }
 
-    public function test_verification_endpoint_rejects_claims_view_without_patient_insurance_verify(): void
+    public function test_verification_endpoint_rejects_claims_view_without_patients_insurance_verify(): void
     {
         $insurance = $this->makeInsurance();
         $claimsUser = User::factory()->create();
@@ -182,7 +182,7 @@ class InsuranceVerificationTest extends TestCase
         $claimsUser->assignRole($claimsRole);
 
         $this->assertTrue($claimsUser->can('claims.view'));
-        $this->assertFalse($claimsUser->can('patient.insurance.verify'));
+        $this->assertFalse($claimsUser->can('patients.insurance.verify'));
 
         $this->actingAs($claimsUser)
             ->postJson(route('admin.insurance.verify'), [

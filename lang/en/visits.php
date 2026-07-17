@@ -207,6 +207,7 @@ return [
     'balance_col'               => 'Balance',
     'subtotal_row'              => 'Subtotal:',
     'preview_visit_btn'         => 'Preview Visit',
+    'preview_consultation_btn'  => 'Preview Consultation',
     'patient_sidebar'           => 'Patient',
     'new_visit_btn'             => 'New Visit',
     'create_emergency_case'     => 'Create Emergency Case',

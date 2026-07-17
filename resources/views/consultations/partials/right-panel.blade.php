@@ -109,19 +109,23 @@
                                             {{ trans_choice('consultations.workspace.complaint_count', $pastRecord->complaints->count(), ['count' => $pastRecord->complaints->count()]) }} &middot; {{ $pastRecord->diagnoses->count() }} dx
                                         </small>
                                     </div>
-                                    <button type="button" class="btn btn-xs btn-outline-primary flex-shrink-0"
-                                            data-consultation-action="open-url" data-url="{{ route('admin.consultations.history', $pastRecord->visit) }}" aria-label="{{ __('common.view') }}" title="{{ __('common.view') }}">
-                                        <i class="ti ti-eye"></i>
-                                    </button>
+                                    @can('consultation.preview')
+                                        <button type="button" class="btn btn-xs btn-outline-primary flex-shrink-0"
+                                                data-consultation-action="open-url" data-url="{{ route('admin.consultations.history', $pastRecord->visit) }}" aria-label="{{ __('common.view') }}" title="{{ __('common.view') }}">
+                                            <i class="ti ti-eye"></i>
+                                        </button>
+                                    @endcan
                                 </div>
                             </div>
                             @endforeach
                             @if($history['total'] > 10)
+                            @can('consultation.preview')
                             <div class="text-center mt-1">
                                 <a href="{{ route('admin.consultations.history', $visit) }}" class="btn btn-sm btn-outline-secondary w-100">
                                     {{ trans_choice('consultations.workspace.more_visits', $history['total'] - 10, ['count' => $history['total'] - 10]) }}
                                 </a>
                             </div>
+                            @endcan
                             @endif
                         @else
                             <div class="text-center text-muted py-3">

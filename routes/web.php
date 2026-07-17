@@ -438,7 +438,7 @@ Route::middleware('auth')->group(function () {
 
             Route::post('{patient}/insurances', [PatientInsuranceController::class, 'store'])
                 ->name('insurances.store')
-                ->middleware(['module:insurance', 'can:patient.insurance.create']);
+                ->middleware(['module:insurance', 'can:patients.insurance.create']);
 
             Route::middleware(['module:insurance', 'can:patients.edit'])->group(function () {
                 Route::put('{patient}/insurances/{insurance}', [PatientInsuranceController::class, 'update'])->name('insurances.update');
@@ -820,7 +820,7 @@ Route::middleware('auth')->group(function () {
             // Patient Insurance Management
             Route::post('patients/{patient}/insurances', [PatientInsuranceController::class, 'store'])
                 ->name('patients.insurances.store')
-                ->middleware(['module:insurance', 'can:patient.insurance.create']);
+                ->middleware(['module:insurance', 'can:patients.insurance.create']);
 
             Route::middleware(['module:insurance', 'can:patients.edit'])->group(function () {
                 Route::put('patients/{patient}/insurances/{insurance}', [PatientInsuranceController::class, 'update'])->name('patients.insurances.update');
@@ -1137,7 +1137,7 @@ Route::middleware('auth')->group(function () {
         // Provider-agnostic insurance verification used during visit intake.
         Route::post('insurance/verify', [InsuranceVerificationController::class, 'verify'])
             ->name('insurance.verify')
-            ->middleware(['module:insurance', 'can:patient.insurance.verify']);
+            ->middleware(['module:insurance', 'can:patients.insurance.verify']);
 
         // Insurance Providers & Tiers
         Route::middleware(['module:insurance', 'can:claims.view'])->group(function () {
@@ -1654,7 +1654,7 @@ Route::middleware('auth')->group(function () {
             Route::get('consultations', [ConsultationWorkspaceController::class, 'index'])->name('consultations.index');
             Route::get('consultations/{visit}', [ConsultationWorkspaceController::class, 'show'])->name('consultations.show');
             Route::get('consultations/{visit}/routes/{route}', [ConsultationWorkspaceController::class, 'show'])->name('consultations.routes.show');
-            Route::get('consultations/{visit}/history', [ConsultationWorkspaceController::class, 'history'])->name('consultations.history');
+            Route::get('consultations/{visit}/history', [ConsultationWorkspaceController::class, 'history'])->name('consultations.history')->middleware('can:consultation.preview');
             Route::patch('consultations/{visit}/transition', [ConsultationSessionController::class, 'transitionVisit'])->name('consultations.transition')->middleware('can:visits.transition');
             Route::post('consultations/{visit}/start', [ConsultationSessionController::class, 'startConsultation'])->name('consultations.start')->middleware('can:consultations.create');
             // Queuing a session never redirects into the consultation record (see

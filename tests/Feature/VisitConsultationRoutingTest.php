@@ -61,7 +61,7 @@ class VisitConsultationRoutingTest extends TestCase
         ]);
 
         $adminRole = Role::findOrCreate('Admin', 'web');
-        foreach (['visits.view', 'visits.create', 'visits.edit', 'consultations.view', 'consultations.create'] as $permission) {
+        foreach (['visits.view', 'visits.create', 'visits.edit', 'consultations.view', 'consultations.create', 'consultation.preview'] as $permission) {
             $adminRole->givePermissionTo(Permission::findOrCreate($permission, 'web'));
         }
 
@@ -537,6 +537,39 @@ class VisitConsultationRoutingTest extends TestCase
         $this->assertSame('consultation_queue', $notification->data['source_type'] ?? null);
         $this->assertSame($visit->id, $notification->data['visit_id'] ?? null);
         $this->assertSame($this->department->id, $notification->data['department_id'] ?? null);
+    }
+
+    public function test_visit_page_uses_consultation_preview_drawer_instead_of_visit_preview_link(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->admin->id]);
+        $service = $this->makeService($this->department);
+        $visit = Visit::factory()->create([
+            'patient_id' => $patient->id,
+            'created_by' => $this->admin->id,
+            'visit_type' => VisitType::OUTPATIENT,
+            'status' => VisitStatus::CONSULTING,
+            'current_department_id' => $this->department->id,
+        ]);
+
+        VisitConsultationRoute::create([
+            'visit_id' => $visit->id,
+            'patient_id' => $patient->id,
+            'department_id' => $this->department->id,
+            'service_id' => $service->id,
+            'doctor_id' => $this->doctor->id,
+            'status' => VisitConsultationRoute::STATUS_ACTIVE,
+            'routed_by' => $this->admin->id,
+            'activated_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->get(route('admin.visits.show', $visit));
+
+        $response->assertOk()
+            ->assertSee(__('visits.preview_consultation_btn'))
+            ->assertSee('visitConsultationPreviewOffcanvas', false)
+            ->assertSee('CONSULTATION SUMMARY', false)
+            ->assertDontSee(route('admin.visits.preview', $visit), false);
     }
 
     public function test_switching_active_consultation_route_only_queues_pending_route_becoming_active(): void

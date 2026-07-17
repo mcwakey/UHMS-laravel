@@ -161,11 +161,12 @@ return [
     // owning module slug (used by the audit command + admin UI grouping).
     // ------------------------------------------------------------------
     'module_overrides' => [
-        'patient.insurance.create'   => 'patients',
-        'patient.insurance.verify'   => 'patients',
+        'patients.insurance.create'  => 'patients',
+        'patients.insurance.verify'  => 'patients',
         'consultation.access'        => 'consultation',
         'consultation.dashboard'     => 'consultation',
         'consultation.queue'         => 'consultation',
+        'consultation.preview'       => 'consultation',
         'consultations.view'         => 'consultation',
         'consultations.create'       => 'consultation',
         'consultations.edit'         => 'consultation',
@@ -270,12 +271,13 @@ return [
     // descriptor derived from the permission name (verb + noun).
     // ------------------------------------------------------------------
     'descriptions' => [
-        'patient.insurance.create'         => 'Add an insurance policy to an existing patient during registration or visit intake.',
-        'patient.insurance.verify'         => 'Run insurance eligibility verification during visit intake or appointment check-in.',
+        'patients.insurance.create'        => 'Add an insurance policy to an existing patient during registration or visit intake.',
+        'patients.insurance.verify'        => 'Run insurance eligibility verification during visit intake or appointment check-in.',
         'patients.merge.execute'           => 'Permanently merge two patient folders. Irreversible.',
         'patients.merge.confirm_identity'  => 'Confirm patient identity prior to executing a folder merge.',
         'visits.create_while_admitted'     => 'Create an outpatient visit for a currently admitted patient.',
         'visits.reopen_locked_session'     => 'Reopen a consultation session that has already been locked/completed.',
+        'consultation.preview'             => 'Preview and print the consultation summary for a visit.',
         'consultation.entries.edit_any'    => 'Edit any clinician\'s consultation entry (not just the author\'s).',
         'consultation.entries.delete_any'  => 'Delete any clinician\'s consultation entry.',
         'consultation.entries.correct_completed' => 'Issue corrections against entries on a completed/locked encounter.',

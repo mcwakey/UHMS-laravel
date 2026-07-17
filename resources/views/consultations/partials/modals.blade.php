@@ -292,33 +292,12 @@
 </div>
 @endif
 
-<div class="offcanvas offcanvas-end consultation-preview-offcanvas" tabindex="-1" id="consultationPreviewOffcanvas" aria-labelledby="consultationPreviewOffcanvasLabel">
-    <div class="offcanvas-header border-bottom">
-        <div>
-            <h5 class="offcanvas-title fw-bold mb-0" id="consultationPreviewOffcanvasLabel">
-                <i class="ti ti-history me-1"></i>{{ __('consultations.workspace.preview') }}
-            </h5>
-            <div class="text-muted small">{{ $visit->visit_number }} &middot; {{ $visit->patient?->full_name }}</div>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-            <button type="button" class="btn btn-primary btn-sm" data-consultation-action="print">
-                <i class="ti ti-printer me-1"></i>{{ __('consultations.history.print_summary') }}
-            </button>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{{ __('common.close') }}"></button>
-        </div>
-    </div>
-    <div class="offcanvas-body">
-        <x-consultation-preview
-            :visit="$consultationPreview['visit']"
-            :generated-at="$consultationPreview['generatedAt']"
-            :sessions="$consultationPreview['sessions']"
-            :contributors="$consultationPreview['contributors']"
-            :session-summaries="$consultationPreview['sessionSummaries']"
-            :lab-requests="$consultationPreview['labRequests']"
-            :procedure-requests="$consultationPreview['procedureRequests']"
-        />
-    </div>
-</div>
+@can('consultation.preview')
+    <x-consultation-preview-drawer
+        id="consultationPreviewOffcanvas"
+        :preview="$consultationPreview"
+    />
+@endcan
 
 {{-- View Result Modal (used by investigations tab) --}}
 <div class="modal fade" id="viewResultModal" tabindex="-1">

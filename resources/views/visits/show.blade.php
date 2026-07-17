@@ -304,15 +304,15 @@
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h6 class="fw-bold mb-0"><i class="ti ti-switch-horizontal me-1"></i>{{ __('visits.transition_visit') }}</h6>
                 <div>
-                    @can('visits.preview')
-                    <a href="{{ $workspaceRoutes->route('admin.visits.preview', $visit) }}" class="btn btn-outline-info btn-sm">
-                        <i class="ti ti-eye me-1"></i>{{ __('visits.preview_visit_btn') }}
-                    </a>
+                    @can('consultation.preview')
+                    <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="offcanvas" data-bs-target="#visitConsultationPreviewOffcanvas" aria-controls="visitConsultationPreviewOffcanvas">
+                        <i class="ti ti-history me-1"></i>{{ __('visits.preview_consultation_btn') }}
+                    </button>
                     @endcan
                 </div>
             </div>
             <div class="card-body">
-                <div class="border rounded p-3 mb-3">
+                <!-- <div class="border rounded p-3 mb-3">
                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
                         <h6 class="fw-bold mb-0"><i class="ti ti-route me-1 text-primary"></i>{{ __('visits.current_routing') }}</h6>
                         @can('consultations.view')
@@ -349,7 +349,7 @@
                     @else
                         <p class="text-muted small mb-0">{{ __('visits.no_active_session') }}</p>
                     @endif
-                </div>
+                </div> -->
 
                 <div class="border rounded p-3 mb-3">
                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
@@ -999,6 +999,15 @@
     primary-checkbox-id="visitShowInsurancePrimary"
     save-button-id="visitShowInsuranceSaveBtn"
 />
+@endcan
+@can('consultation.preview')
+    @if($consultationPreview)
+        <x-consultation-preview-drawer
+            id="visitConsultationPreviewOffcanvas"
+            :preview="$consultationPreview"
+            :title="__('visits.preview_consultation_btn')"
+        />
+    @endif
 @endcan
 @endmodule
 

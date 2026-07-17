@@ -33,7 +33,7 @@ class PatientManagementTest extends TestCase
             'patients.contact.edit',
             'patients.address.edit',
             'patients.insurance.edit',
-            'patient.insurance.create',
+            'patients.insurance.create',
             'patients.clinical_sensitive.edit',
         ] as $p) {
             $perm = Permission::create(['name' => $p]);
@@ -323,7 +323,7 @@ class PatientManagementTest extends TestCase
         ]);
         $creator = User::factory()->create();
         $role = Role::create(['name' => 'Insurance Creator']);
-        foreach (['patients.view', 'patient.insurance.create'] as $permission) {
+        foreach (['patients.view', 'patients.insurance.create'] as $permission) {
             $role->givePermissionTo(Permission::firstOrCreate(['name' => $permission]));
         }
         $creator->assignRole($role);

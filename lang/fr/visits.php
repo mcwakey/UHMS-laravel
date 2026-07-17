@@ -198,6 +198,7 @@ return [
     'balance_col'               => 'Solde',
     'subtotal_row'              => 'Sous-total :',
     'preview_visit_btn'         => 'Aperçu de la visite',
+    'preview_consultation_btn'  => 'Aperçu de la consultation',
     'patient_sidebar'           => 'Patient',
     'new_visit_btn'             => 'Nouvelle visite',
     'create_emergency_case'     => 'Créer un cas d\'urgence',

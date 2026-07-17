@@ -19,6 +19,7 @@ use App\Models\ServiceCatalog;
 use App\Models\User;
 use App\Models\Visit;
 use App\Services\BillingService;
+use App\Services\ConsultationPreviewDataService;
 use App\Services\InsuranceService;
 use App\Services\PatientPrivacyService;
 use App\Services\QueueService;
@@ -321,7 +322,11 @@ class VisitController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('visits.show', compact('visit', 'insuranceInfo', 'consultationDepartments', 'patientInsuranceOptions', 'insuranceProviders'));
+        $consultationPreview = request()->user()?->can('consultation.preview')
+            ? app(ConsultationPreviewDataService::class)->build($visit)
+            : null;
+
+        return view('visits.show', compact('visit', 'insuranceInfo', 'consultationDepartments', 'patientInsuranceOptions', 'insuranceProviders', 'consultationPreview'));
     }
 
     public function updateInsurance(Request $request, Visit $visit)

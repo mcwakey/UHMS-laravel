@@ -61,9 +61,11 @@
                     </div>
                     <div class="card-body p-2">
                         <div class="d-grid gap-2">
-                            <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="offcanvas" data-bs-target="#consultationPreviewOffcanvas" aria-controls="consultationPreviewOffcanvas">
-                                <i class="ti ti-history me-1"></i>{{ __('consultations.workspace.preview') }}
-                            </button>
+                            @can('consultation.preview')
+                                <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="offcanvas" data-bs-target="#consultationPreviewOffcanvas" aria-controls="consultationPreviewOffcanvas">
+                                    <i class="ti ti-history me-1"></i>{{ __('consultations.workspace.preview') }}
+                                </button>
+                            @endcan
                             <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
                                 <i class="ti ti-eye me-1"></i>{{ __('consultations.workspace.view_visit') }}
                             </a>

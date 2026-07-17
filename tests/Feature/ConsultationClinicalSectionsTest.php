@@ -47,6 +47,7 @@ class ConsultationClinicalSectionsTest extends TestCase
         foreach ([
             'consultations.view',
             'consultations.create',
+            'consultation.preview',
             'consultation.entries.create',
             'consultation.entries.edit_own',
             'consultation.entries.delete_own',
