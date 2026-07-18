@@ -717,6 +717,63 @@ Route::middleware('auth')->group(function () {
             ->middleware(['module:reports', 'can:reports.investigations']);
     });
 
+    // Pharmacy (medication fulfilment) workspace. Browser adapters over the
+    // existing prescription, dispensing, drug-catalogue, stock, journey and
+    // reporting services — billing gates, FEFO batch selection and audit rules
+    // stay inside those services.
+    Route::prefix('pharmacy')->name('pharmacy.')->middleware('department.type:pharmacy')->group(function () {
+        Route::get('/', App\Http\Controllers\Pharmacy\DashboardController::class)->name('dashboard');
+        Route::get('dashboard', fn () => redirect()->route('pharmacy.dashboard'))->name('dashboard.redirect');
+
+        Route::middleware('module:pharmacy')->group(function () {
+            Route::middleware('can:prescriptions.view')->prefix('prescriptions')->name('prescriptions.')->group(function () {
+                Route::get('/', [PrescriptionController::class, 'index'])->name('index');
+                Route::get('{prescription}', [PrescriptionController::class, 'show'])->name('show');
+                Route::post('{prescription}/bill', [PrescriptionController::class, 'bill'])->name('bill')->middleware('can:pharmacy.dispensing.create');
+                Route::patch('{prescription}/cancel', [PrescriptionController::class, 'cancel'])->name('cancel')->middleware('can:prescriptions.create');
+            });
+
+            Route::middleware('can:pharmacy.dispensing.view')->group(function () {
+                Route::get('dispensing', [DispensingController::class, 'index'])->name('dispensing.index');
+                Route::get('dispensing/{prescription}', [DispensingController::class, 'show'])->name('dispensing.show');
+                Route::get('dispensing/items/{item}/dosage-print', [DispensingController::class, 'printDosage'])->name('dispensing.print-dosage');
+                Route::post('dispensing/{item}/dispense', [DispensingController::class, 'dispenseItem'])->name('dispensing.dispense-item')->middleware('can:pharmacy.dispensing.create');
+                Route::post('dispensing/{prescription}/batch', [DispensingController::class, 'batchDispense'])->name('dispensing.batch')->middleware('can:pharmacy.dispensing.create');
+                Route::get('history', [DispensingController::class, 'history'])->name('history');
+            });
+
+            Route::middleware('can:pharmacy.drugs.manage')->group(function () {
+                Route::get('drugs', [DrugController::class, 'index'])->name('drugs.index');
+                Route::get('drugs/search', [DrugController::class, 'search'])->name('drugs.search');
+                Route::get('drugs/{drug}/history', [DrugController::class, 'history'])->name('drugs.history');
+            });
+        });
+
+        Route::middleware(['module:inventory', 'can:stock.view'])->group(function () {
+            Route::get('stock', [ProductStockController::class, 'balances'])->name('product-stock.balances');
+            Route::get('stock/ledger', [ProductStockController::class, 'ledger'])->name('product-stock.ledger');
+        });
+
+        Route::middleware(['module:patients', 'can:patients.view'])->prefix('patients')->name('patients.')->group(function () {
+            Route::get('/', [PatientController::class, 'index'])->name('index');
+            Route::get('{patient}', [PatientController::class, 'show'])->name('show');
+        });
+
+        Route::get('handoffs', [JourneyWorklistController::class, 'index'])->name('handoffs.index');
+        Route::get('handoffs/refresh', [JourneyWorklistController::class, 'refresh'])->name('handoffs.refresh');
+        Route::prefix('handoffs/actions')->name('handoffs.')->group(function () {
+            Route::post('claim', [JourneyHandoffAssignmentController::class, 'claim'])->name('claim')->middleware('can:journey.handoffs.claim');
+            Route::post('assign', [JourneyHandoffAssignmentController::class, 'assign'])->name('assign')->middleware('can:journey.handoffs.assign');
+            Route::post('{assignment}/acknowledge', [JourneyHandoffAssignmentController::class, 'acknowledge'])->name('acknowledge')->middleware('can:journey.handoffs.acknowledge');
+            Route::post('{assignment}/resolve', [JourneyHandoffAssignmentController::class, 'resolve'])->name('resolve')->middleware('can:journey.handoffs.resolve');
+        });
+
+        Route::get('reports', [OperationalReportController::class, 'show'])
+            ->defaults('report', 'pharmacy')
+            ->name('reports.index')
+            ->middleware(['module:reports', 'can:reports.pharmacy']);
+    });
+
     // Nursing Department OPD workspace. Clinical writes are delegated to the
     // existing triage/vitals controllers so validation, safety and audit rules
     // remain identical to the generic workflow.
@@ -2169,7 +2226,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Prescriptions
-        Route::middleware('can:prescriptions.view')->group(function () {
+        Route::middleware(['can:prescriptions.view', 'records.redirect'])->group(function () {
             Route::get('prescriptions', [PrescriptionController::class, 'index'])->name('prescriptions.index');
             Route::get('prescriptions/{prescription}', [PrescriptionController::class, 'show'])->name('prescriptions.show');
             Route::get('prescriptions/{prescription}/print', [PrescriptionController::class, 'print'])->name('prescriptions.print');
@@ -2262,7 +2319,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Pharmacy
-        Route::prefix('pharmacy')->name('pharmacy.')->middleware('module:pharmacy')->group(function () {
+        Route::prefix('pharmacy')->name('pharmacy.')->middleware(['module:pharmacy', 'records.redirect'])->group(function () {
             // Dispensing
             Route::middleware('can:pharmacy.dispensing.view')->group(function () {
                 Route::get('dispensing', [DispensingController::class, 'index'])->name('dispensing.index');
@@ -2934,7 +2991,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // ── Admin: Product Stock (balances, ledger, receive, transfer, adjust, return) ──
-        Route::prefix('product-stock')->name('product-stock.')->middleware('module:inventory')->group(function () {
+        Route::prefix('product-stock')->name('product-stock.')->middleware(['module:inventory', 'records.redirect'])->group(function () {
             Route::middleware('can:stock.view')->group(function () {
                 Route::get('balances', [ProductStockController::class, 'balances'])->name('balances');
                 Route::get('ledger', [ProductStockController::class, 'ledger'])->name('ledger');

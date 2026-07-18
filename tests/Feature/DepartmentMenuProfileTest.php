@@ -102,11 +102,23 @@ class DepartmentMenuProfileTest extends TestCase
 
     public function test_sidebar_builder_keeps_main_menu_first_for_department_user(): void
     {
-        $user = $this->userInDepartmentType(DepartmentType::PHARMACY);
+        // Pharmacy now has a dedicated workspace sidebar, so use a profiled
+        // department type without its own workspace to exercise the generic menu.
+        $user = $this->userInDepartmentType(DepartmentType::FINANCE);
 
         $sections = app(SidebarMenuBuilder::class)->build($user, 'admin.dashboard');
 
         $this->assertNotEmpty($sections);
         $this->assertSame('Main Menu', $sections[0]['title']);
+    }
+
+    public function test_sidebar_builder_gives_pharmacy_users_the_workspace_menu(): void
+    {
+        $user = $this->userInDepartmentType(DepartmentType::PHARMACY);
+
+        $sections = app(SidebarMenuBuilder::class)->build($user, 'pharmacy.dashboard');
+
+        $this->assertNotEmpty($sections);
+        $this->assertSame(__('pharmacy.workspace.title'), $sections[0]['title']);
     }
 }

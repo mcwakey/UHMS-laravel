@@ -69,6 +69,14 @@ class SidebarMenuBuilder
             );
         }
 
+        if ($activeType === DepartmentType::PHARMACY) {
+            return $this->finaliseSections(
+                $this->pharmacySections($unreadNotifications),
+                $user,
+                $currentRouteName,
+            );
+        }
+
         // Non-admin clinical staff get a focused consultation sidebar
         if ($user->isConsultationUser() && ! $user->isAdminUser()) {
             return $this->finaliseSections(
@@ -2726,6 +2734,55 @@ class SidebarMenuBuilder
                 'items' => [
                     ['label' => __('investigations.menu.notifications'), 'icon' => 'ti ti-bell', 'route' => 'admin.notifications.index', 'active_patterns' => ['admin.notifications.*'], 'permission' => 'notifications.view', 'module' => 'notifications', 'badge' => $unreadNotifications > 0 ? $unreadNotifications : null],
                     ['label' => __('investigations.menu.profile'), 'icon' => 'ti ti-user-circle', 'route' => 'admin.profile', 'active_patterns' => ['admin.profile']],
+                ],
+            ],
+        ];
+    }
+
+    protected function pharmacySections(int $unreadNotifications): array
+    {
+        return [
+            [
+                'title' => __('pharmacy.workspace.title'),
+                'items' => [
+                    ['label' => __('pharmacy.menu.dashboard'), 'icon' => 'ti ti-layout-dashboard', 'route' => 'pharmacy.dashboard', 'active_patterns' => ['pharmacy.dashboard', 'pharmacy.dashboard.redirect']],
+                ],
+            ],
+            [
+                'title' => __('pharmacy.menu.fulfilment'),
+                'items' => [
+                    ['label' => __('pharmacy.menu.prescriptions'), 'icon' => 'ti ti-prescription', 'route' => 'pharmacy.prescriptions.index', 'active_patterns' => ['pharmacy.prescriptions.*'], 'permission' => 'prescriptions.view', 'module' => 'pharmacy'],
+                    ['label' => __('pharmacy.menu.dispensing'), 'icon' => 'ti ti-pill', 'route' => 'pharmacy.dispensing.index', 'active_patterns' => ['pharmacy.dispensing.*'], 'permission' => 'pharmacy.dispensing.view', 'module' => 'pharmacy'],
+                    ['label' => __('pharmacy.menu.history'), 'icon' => 'ti ti-history', 'route' => 'pharmacy.history', 'active_patterns' => ['pharmacy.history'], 'permission' => 'pharmacy.dispensing.view', 'module' => 'pharmacy'],
+                    ['label' => __('pharmacy.menu.counter_sale'), 'icon' => 'ti ti-cash-register', 'route' => 'admin.billing.counter-sale.create', 'active_patterns' => ['admin.billing.counter-sale.*'], 'permission' => 'invoices.create', 'module' => 'billing'],
+                ],
+            ],
+            [
+                'title' => __('pharmacy.menu.stock_title'),
+                'items' => [
+                    ['label' => __('pharmacy.menu.stock'), 'icon' => 'ti ti-packages', 'route' => 'pharmacy.product-stock.balances', 'active_patterns' => ['pharmacy.product-stock.balances'], 'permission' => 'stock.view', 'module' => 'inventory'],
+                    ['label' => __('pharmacy.menu.stock_ledger'), 'icon' => 'ti ti-list-details', 'route' => 'pharmacy.product-stock.ledger', 'active_patterns' => ['pharmacy.product-stock.ledger'], 'permission' => 'stock.view', 'module' => 'inventory'],
+                    ['label' => __('pharmacy.menu.drugs'), 'icon' => 'ti ti-medicine-syrup', 'route' => 'pharmacy.drugs.index', 'active_patterns' => ['pharmacy.drugs.*'], 'permission' => 'pharmacy.drugs.manage', 'module' => 'pharmacy'],
+                ],
+            ],
+            [
+                'title' => __('pharmacy.menu.patients_title'),
+                'items' => [
+                    ['label' => __('pharmacy.menu.patients'), 'icon' => 'ti ti-users', 'route' => 'pharmacy.patients.index', 'active_patterns' => ['pharmacy.patients.*'], 'permission' => 'patients.view', 'module' => 'patients'],
+                    ['label' => __('pharmacy.menu.handoffs'), 'icon' => 'ti ti-arrows-exchange', 'route' => 'pharmacy.handoffs.index', 'active_patterns' => ['pharmacy.handoffs.*'], 'visible' => fn (User $user) => app(DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== []],
+                ],
+            ],
+            [
+                'title' => __('pharmacy.menu.reports_title'),
+                'items' => [[
+                    'label' => __('pharmacy.menu.reports'), 'icon' => 'ti ti-chart-bar', 'route' => 'pharmacy.reports.index', 'active_patterns' => ['pharmacy.reports.*'], 'permission' => 'reports.pharmacy', 'module' => 'reports',
+                ]],
+            ],
+            [
+                'title' => __('pharmacy.menu.general'),
+                'items' => [
+                    ['label' => __('pharmacy.menu.notifications'), 'icon' => 'ti ti-bell', 'route' => 'admin.notifications.index', 'active_patterns' => ['admin.notifications.*'], 'permission' => 'notifications.view', 'module' => 'notifications', 'badge' => $unreadNotifications > 0 ? $unreadNotifications : null],
+                    ['label' => __('pharmacy.menu.profile'), 'icon' => 'ti ti-user-circle', 'route' => 'admin.profile', 'active_patterns' => ['admin.profile']],
                 ],
             ],
         ];

@@ -115,4 +115,47 @@ return [
     'back_to_queue'            => 'Retour à la file',
     'dispensed_at'             => 'Délivré le',
     'no_dispensing_records_found' => 'Aucune délivrance trouvée.',
+
+    // ── Espace de travail pharmacie ───────────────────────────────────
+    'unauthorized' => 'Accès réservé au personnel du service de pharmacie.',
+
+    'workspace' => [
+        'title' => 'Espace Pharmacie',
+    ],
+
+    'menu' => [
+        'dashboard'      => 'Tableau de bord',
+        'fulfilment'     => 'Délivrance des médicaments',
+        'prescriptions'  => 'Ordonnances',
+        'dispensing'     => 'File de délivrance',
+        'history'        => 'Historique des délivrances',
+        'counter_sale'   => 'Vente au comptoir',
+        'stock_title'    => 'Stock et catalogue',
+        'stock'          => 'Stock de médicaments',
+        'stock_ledger'   => 'Registre de stock',
+        'drugs'          => 'Catalogue des médicaments',
+        'patients_title' => 'Patients et coordination',
+        'patients'       => 'Patients',
+        'handoffs'       => 'Transferts',
+        'reports_title'  => 'Rapports',
+        'reports'        => 'Rapport de pharmacie',
+        'general'        => 'Général',
+        'notifications'  => 'Notifications',
+        'profile'        => 'Profil',
+    ],
+
+    'breadcrumbs' => [
+        'pharmacy'      => 'Pharmacie',
+        'prescriptions' => 'Ordonnances',
+        'dispensing'    => 'Délivrance',
+        'history'       => 'Historique des délivrances',
+        'drugs'         => 'Catalogue des médicaments',
+        'stock'         => 'Stock',
+        'patients'      => 'Patients',
+        'handoffs'      => 'Transferts',
+        'reports'       => 'Rapports',
+        'create'        => 'Créer',
+        'edit'          => 'Modifier',
+        'details'       => 'Détails',
+    ],
 ];

@@ -115,4 +115,47 @@ return [
     'back_to_queue'            => 'Back to Queue',
     'dispensed_at'             => 'Dispensed At',
     'no_dispensing_records_found' => 'No dispensing records found.',
+
+    // ── Pharmacy workspace ────────────────────────────────────────────
+    'unauthorized' => 'Access limited to pharmacy department staff.',
+
+    'workspace' => [
+        'title' => 'Pharmacy Workspace',
+    ],
+
+    'menu' => [
+        'dashboard'      => 'Dashboard',
+        'fulfilment'     => 'Medication Fulfilment',
+        'prescriptions'  => 'Prescriptions',
+        'dispensing'     => 'Dispensing Queue',
+        'history'        => 'Dispensing History',
+        'counter_sale'   => 'Counter Sale',
+        'stock_title'    => 'Stock & Catalogue',
+        'stock'          => 'Medication Stock',
+        'stock_ledger'   => 'Stock Ledger',
+        'drugs'          => 'Drug Catalog',
+        'patients_title' => 'Patients & Coordination',
+        'patients'       => 'Patients',
+        'handoffs'       => 'Handoffs',
+        'reports_title'  => 'Reports',
+        'reports'        => 'Pharmacy Report',
+        'general'        => 'General',
+        'notifications'  => 'Notifications',
+        'profile'        => 'Profile',
+    ],
+
+    'breadcrumbs' => [
+        'pharmacy'      => 'Pharmacy',
+        'prescriptions' => 'Prescriptions',
+        'dispensing'    => 'Dispensing',
+        'history'       => 'Dispensing History',
+        'drugs'         => 'Drug Catalog',
+        'stock'         => 'Stock',
+        'patients'      => 'Patients',
+        'handoffs'      => 'Handoffs',
+        'reports'       => 'Reports',
+        'create'        => 'Create',
+        'edit'          => 'Edit',
+        'details'       => 'Details',
+    ],
 ];

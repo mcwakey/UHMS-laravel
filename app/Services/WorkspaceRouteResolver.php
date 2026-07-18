@@ -48,6 +48,11 @@ class WorkspaceRouteResolver
         return $this->isType(DepartmentType::INVESTIGATION);
     }
 
+    public function isPharmacy(): bool
+    {
+        return $this->isType(DepartmentType::PHARMACY);
+    }
+
     public function isConsultation(): bool
     {
         $user = $this->request->user();
@@ -57,7 +62,7 @@ class WorkspaceRouteResolver
 
     public function isDepartmentWorkspace(): bool
     {
-        return $this->isRecords() || $this->isNursing() || $this->isEmergency() || $this->isInpatient() || $this->isInvestigation() || $this->isConsultation();
+        return $this->isRecords() || $this->isNursing() || $this->isEmergency() || $this->isInpatient() || $this->isInvestigation() || $this->isPharmacy() || $this->isConsultation();
     }
 
     public function dashboardRouteName(): string
@@ -68,6 +73,7 @@ class WorkspaceRouteResolver
             $this->isEmergency() => 'emergency.dashboard',
             $this->isInpatient() => 'inpatient.dashboard',
             $this->isInvestigation() => 'investigations.dashboard',
+            $this->isPharmacy() => 'pharmacy.dashboard',
             $this->isConsultation() => 'doctor.dashboard',
             default => 'admin.my-dashboard',
         };
@@ -81,6 +87,7 @@ class WorkspaceRouteResolver
             $this->isEmergency() => 'emergency.',
             $this->isInpatient() => 'inpatient.',
             $this->isInvestigation() => 'investigations.',
+            $this->isPharmacy() => 'pharmacy.',
             $this->isConsultation() => 'doctor.',
             default => null,
         };
@@ -116,6 +123,18 @@ class WorkspaceRouteResolver
                     : (Str::startsWith($genericRoute, 'admin.')
                         ? 'investigations.'.Str::after($genericRoute, 'admin.')
                         : 'investigations.'.$genericRoute),
+            };
+        } elseif ($this->isPharmacy()) {
+            $candidate = match ($genericRoute) {
+                'admin.journey.worklist' => 'pharmacy.handoffs.index',
+                'admin.journey.worklist.refresh' => 'pharmacy.handoffs.refresh',
+                default => Str::startsWith($genericRoute, 'admin.pharmacy.')
+                    // admin.pharmacy.dispensing/drugs/history map straight to
+                    // pharmacy.* (the generic fallback would double the prefix).
+                    ? 'pharmacy.'.Str::after($genericRoute, 'admin.pharmacy.')
+                    : (Str::startsWith($genericRoute, 'admin.')
+                        ? 'pharmacy.'.Str::after($genericRoute, 'admin.')
+                        : 'pharmacy.'.$genericRoute),
             };
         } elseif ($this->isEmergency() && Str::startsWith($genericRoute, 'admin.emergency.')) {
             $candidate = match ($genericRoute) {
@@ -237,6 +256,7 @@ class WorkspaceRouteResolver
             $this->isEmergency() => route('emergency.journey.worklist'),
             $this->isInpatient() => route('inpatient.handoffs.index'),
             $this->isInvestigation() => route('investigations.handoffs.index'),
+            $this->isPharmacy() => route('pharmacy.handoffs.index'),
             default => $this->route('admin.journey.worklist'),
         };
     }
@@ -259,6 +279,14 @@ class WorkspaceRouteResolver
 
         if ($this->isInvestigation()) {
             $candidate = 'investigations.handoffs.'.$action;
+
+            return Route::has($candidate) ? $candidate : ($action === 'refresh'
+                ? 'admin.journey.worklist.refresh'
+                : 'admin.journey.handoffs.'.$action);
+        }
+
+        if ($this->isPharmacy()) {
+            $candidate = 'pharmacy.handoffs.'.$action;
 
             return Route::has($candidate) ? $candidate : ($action === 'refresh'
                 ? 'admin.journey.worklist.refresh'
@@ -314,6 +342,17 @@ class WorkspaceRouteResolver
             ];
         }
 
+        if ($this->isPharmacy()) {
+            return [
+                'workspaceKey' => 'pharmacy',
+                'workspaceRoutePrefix' => 'pharmacy.',
+                'workspaceTitle' => __('pharmacy.workspace.title'),
+                'workspaceDepartment' => $this->departments->currentDepartment($this->request->user(), $this->request),
+                'workspaceScope' => 'medication_fulfilment',
+                'breadcrumbs' => $this->breadcrumbs(),
+            ];
+        }
+
         if ($this->isConsultation()) {
             return [
                 'workspaceKey' => 'doctor',
@@ -354,6 +393,10 @@ class WorkspaceRouteResolver
 
         if ($this->isInvestigation()) {
             return $this->investigationsBreadcrumbs();
+        }
+
+        if ($this->isPharmacy()) {
+            return $this->pharmacyBreadcrumbs();
         }
 
         if ($this->isConsultation()) {
@@ -604,6 +647,52 @@ class WorkspaceRouteResolver
         if (! $isIndex) {
             $action = Str::afterLast($name, '.');
             $crumbs[] = ['label' => __('investigations.breadcrumbs.'.match ($action) {
+                'create' => 'create',
+                'edit' => 'edit',
+                default => 'details',
+            }), 'url' => null];
+        }
+
+        return $crumbs;
+    }
+
+    /** @return list<array{label:string,url:?string}> */
+    private function pharmacyBreadcrumbs(): array
+    {
+        $name = (string) $this->request->route()?->getName();
+        $crumbs = [[
+            'label' => __('pharmacy.breadcrumbs.pharmacy'),
+            'url' => in_array($name, ['pharmacy.dashboard', 'pharmacy.dashboard.redirect'], true)
+                ? null
+                : route('pharmacy.dashboard'),
+        ]];
+
+        $resource = match (true) {
+            Str::startsWith($name, 'pharmacy.prescriptions') => ['prescriptions', 'pharmacy.prescriptions.index'],
+            Str::startsWith($name, 'pharmacy.dispensing') => ['dispensing', 'pharmacy.dispensing.index'],
+            $name === 'pharmacy.history' => ['history', 'pharmacy.history'],
+            Str::startsWith($name, 'pharmacy.drugs') => ['drugs', 'pharmacy.drugs.index'],
+            Str::startsWith($name, 'pharmacy.product-stock') => ['stock', 'pharmacy.product-stock.balances'],
+            Str::startsWith($name, 'pharmacy.patients') => ['patients', 'pharmacy.patients.index'],
+            Str::startsWith($name, 'pharmacy.handoffs') => ['handoffs', 'pharmacy.handoffs.index'],
+            Str::startsWith($name, 'pharmacy.reports') => ['reports', 'pharmacy.reports.index'],
+            default => null,
+        };
+
+        if (! $resource) {
+            return $crumbs;
+        }
+
+        [$key, $indexRoute] = $resource;
+        $isIndex = $name === $indexRoute;
+        $crumbs[] = [
+            'label' => __('pharmacy.breadcrumbs.'.$key),
+            'url' => $isIndex || ! Route::has($indexRoute) ? null : route($indexRoute),
+        ];
+
+        if (! $isIndex) {
+            $action = Str::afterLast($name, '.');
+            $crumbs[] = ['label' => __('pharmacy.breadcrumbs.'.match ($action) {
                 'create' => 'create',
                 'edit' => 'edit',
                 default => 'details',

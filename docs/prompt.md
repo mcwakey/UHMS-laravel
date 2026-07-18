@@ -1,8 +1,8 @@
-# UHMS Investigations Department Workspace — Diagnostic Workflow and `/investigations/*` Route Architecture
+# UHMS Pharmacy Department Workspace — Prescription Fulfilment and `/pharmacy/*` Route Architecture
 
-Implement a dedicated **Investigations Department Workspace** for UHMS.
+Implement a dedicated **Pharmacy Department Workspace** for UHMS.
 
-This workspace is for staff managing laboratory and other non-radiology diagnostic investigations from request receipt through payment or authorization checks, specimen collection, accessioning, processing, result entry, verification, release, clinician review, critical-result escalation, and reporting.
+This workspace is for pharmacy staff managing prescriptions from receipt and clinical review through payment or insurance authorization, stock allocation, dispensing, counselling, collection, returns, cancellations, controlled overrides, and pharmacy reporting.
 
 This implementation should follow the same department-aware workspace architecture already established for:
 
@@ -11,215 +11,226 @@ This implementation should follow the same department-aware workspace architectu
 * Nursing OPD
 * Emergency
 * Inpatient
+* Investigations
 
 The configured department type is:
 
 ```php
-DepartmentType::INVESTIGATION
+DepartmentType::PHARMACY
 ```
 
-The browser workspace should use the plural URL prefix:
+The browser workspace must use:
 
 ```text
-/investigations/*
+/pharmacy/*
 ```
 
 The objective is that when a logged-in user’s active department has:
 
 ```php
-DepartmentType::INVESTIGATION
+DepartmentType::PHARMACY
 ```
 
-the user should experience UHMS as a dedicated Investigations application with:
+the user should experience UHMS as a dedicated Pharmacy application with:
 
-* An Investigations-specific sidebar menu
-* A diagnostic operations dashboard
-* Investigation-specific breadcrumbs
-* Investigation-specific route names
-* Consistent `/investigations/*` URLs
-* Request, specimen, processing, and result worklists
-* Department and service-specific filtering
-* Critical-result management
-* Quality-control visibility where supported
+* A Pharmacy-specific sidebar menu
+* A Pharmacy operations dashboard
+* Pharmacy-specific breadcrumbs
+* Pharmacy-specific route names
+* Consistent `/pharmacy/*` URLs
+* Prescription and dispensing worklists
+* Medication-safety review
 * Payment and insurance authorization awareness
+* Stock and batch awareness
+* Partial-dispensing support
+* Patient collection and counselling workflows
+* Returns, reversals, and cancellation controls
 * Permission-controlled menu visibility
-* Active-department scoping
-* Patient privacy and result-security enforcement
-* Reuse of existing consultation, investigation, billing, inventory, reporting, journey, and audit logic
+* Active-department and stock-location scoping
+* Patient privacy and medication-safety enforcement
+* Reuse of existing prescription, billing, inventory, consultation, claims, journey, and audit logic
 
-Do not duplicate core investigation, billing, patient, consultation, specimen, inventory, result, or reporting logic merely to create the new workspace.
+Do not duplicate core prescription, dispensing, billing, payment, insurance, inventory, stock-ledger, medication-safety, patient, or reporting logic merely to create the Pharmacy workspace.
 
 ---
 
 # 1. Core Functional Requirement
 
-When the active department type is `investigation`, all supported browser pages used by investigation staff must appear under the `/investigations` URL prefix.
+When the active department type is `pharmacy`, all supported browser pages used by pharmacy staff must appear under the `/pharmacy` URL prefix.
 
 Examples:
 
 ```text
-/investigations
-/investigations/dashboard
+/pharmacy
+/pharmacy/dashboard
 
-/investigations/requests
-/investigations/requests/pending
-/investigations/requests/authorized
-/investigations/requests/awaiting-payment
-/investigations/requests/{request}
+/pharmacy/prescriptions
+/pharmacy/prescriptions/pending
+/pharmacy/prescriptions/authorized
+/pharmacy/prescriptions/awaiting-payment
+/pharmacy/prescriptions/clinical-review
+/pharmacy/prescriptions/ready
+/pharmacy/prescriptions/completed
+/pharmacy/prescriptions/{prescription}
 
-/investigations/specimens
-/investigations/specimens/collection
-/investigations/specimens/received
-/investigations/specimens/rejected
-/investigations/specimens/{specimen}
+/pharmacy/dispensing
+/pharmacy/dispensing/pending
+/pharmacy/dispensing/in-progress
+/pharmacy/dispensing/ready-for-collection
+/pharmacy/dispensing/partially-dispensed
+/pharmacy/dispensing/completed
+/pharmacy/dispensing/{dispensing}
 
-/investigations/worklist
-/investigations/worklist/pending
-/investigations/worklist/in-progress
-/investigations/worklist/overdue
+/pharmacy/collections
+/pharmacy/returns
+/pharmacy/reversals
+/pharmacy/cancellations
 
-/investigations/results
-/investigations/results/pending
-/investigations/results/entered
-/investigations/results/verification
-/investigations/results/released
-/investigations/results/critical
-/investigations/results/{result}
+/pharmacy/medications
+/pharmacy/stock
+/pharmacy/batches
+/pharmacy/expiries
+/pharmacy/low-stock
+/pharmacy/stock-outs
 
-/investigations/patients
-/investigations/patients/{patient}
+/pharmacy/patients
+/pharmacy/patients/{patient}
 
-/investigations/services
-/investigations/equipment
-/investigations/quality-control
-/investigations/consumables
-/investigations/handoffs
-/investigations/reports
+/pharmacy/handoffs
+/pharmacy/reports
 ```
 
-An Investigations user should not enter through:
+A Pharmacy user should not enter through:
 
 ```text
-/investigations/requests/{request}
+/pharmacy/prescriptions/{prescription}
 ```
 
 and later be redirected to generic URLs such as:
 
 ```text
-/investigation-requests/{request}
-/lab/requests/{request}
+/prescriptions/{prescription}
+/dispensing/{dispensing}
 /patients/{patient}
 /visits/{visit}
-/consultations/{consultation}
+/products/{product}
+/stock/{stockItem}
 ```
 
-All browser navigation, forms, redirects, breadcrumbs, worklists, patient links, result actions, notifications, dashboard cards, and report drilldowns must preserve the Investigations workspace context.
+All browser navigation, forms, redirects, breadcrumbs, worklists, patient links, stock actions, dispensing actions, notifications, dashboard cards, and report drilldowns must preserve the Pharmacy workspace context.
 
 ---
 
-# 2. Investigations Workspace Scope
+# 2. Pharmacy Workspace Scope
 
-The Investigations workspace is responsible for non-radiology diagnostic investigation workflows, including:
+The Pharmacy workspace is responsible for medication fulfilment workflows, including:
 
-1. Receiving investigation requests
-2. Validating requested services
-3. Payment or insurance authorization awareness
-4. Emergency and urgent request prioritization
-5. Specimen collection
-6. Specimen labeling
-7. Specimen accessioning
-8. Specimen receipt
-9. Specimen rejection
-10. Specimen recollection
-11. Test worklist generation
-12. Manual result entry
-13. Numeric result entry
-14. Free-text result entry
-15. Boolean result entry
-16. Positive/negative result entry
-17. Instrument or analyzer result import where supported
-18. Result verification
-19. Result approval
-20. Result release
-21. Critical-result identification
-22. Critical-result acknowledgement
-23. Clinician notification
-24. Result correction and amendment
-25. Investigation cancellation
-26. Repeat testing
-27. Quality-control tracking where supported
-28. Equipment and analyzer awareness
-29. Consumable and reagent awareness
-30. Investigation reports and operational analytics
+1. Receiving prescriptions
+2. Reviewing prescription completeness
+3. Reviewing medication safety alerts
+4. Checking allergies
+5. Detecting duplicate active medications
+6. Reviewing unusual dose warnings
+7. Reviewing missing-diagnosis warnings where configured
+8. Payment or insurance authorization awareness
+9. Sponsor authorization awareness
+10. Stock availability checks
+11. Batch selection
+12. Expiry-aware allocation
+13. Partial dispensing
+14. Full dispensing
+15. Medication labelling
+16. Patient counselling
+17. Marking medication ready for collection
+18. Recording patient collection
+19. Medication substitution where authorized
+20. Quantity adjustment where authorized
+21. Prescription cancellation
+22. Dispensing reversal
+23. Medication returns
+24. Stock restoration after valid return or reversal
+25. Controlled medication handling where supported
+26. Inpatient medication supply
+27. Emergency medication fulfilment
+28. OPD prescription fulfilment
+29. Pharmacy handoffs
+30. Pharmacy reports and operational analytics
 
-This workspace should primarily cover laboratory and similar diagnostic investigations.
+The Pharmacy workspace should remain distinct from:
 
-It must remain distinct from:
+* Drug prescribing in consultation
+* Medication administration by nurses
+* General Stores management
+* Finance and cashier workflows
+* Procurement
+* Clinical consultation
+* Inpatient nursing care
 
-* Radiology
-* Pharmacy
-* Theatre
-* General consultation
-* Inpatient ward care
-* Blood-bank operations where blood-bank workflows have their own dedicated department type
-
-Shared services may be reused, but Radiology should retain its own future `/radiology/*` workspace.
+Shared services should be reused, but the Pharmacy workspace must provide the pharmacist’s operational view.
 
 ---
 
-# Phase 1 — Inspect the Existing Investigation Architecture
+# Phase 1 — Inspect the Existing Pharmacy Architecture
 
 Before implementing, inspect the current codebase and identify:
 
 1. How department-specific menus are selected.
-2. How the existing department workspaces are registered.
+2. How current department workspaces are registered.
 3. How active department context is resolved.
 4. How multi-department users switch active departments.
 5. Existing routes, controllers, models, services, policies, jobs, commands, and views for:
 
-   * investigation requests
-   * investigation request items
-   * services
-   * service categories
-   * laboratory departments or benches
-   * specimen collection
-   * specimen types
-   * specimen accessioning
-   * specimen receipt
-   * specimen rejection
-   * test processing
-   * result entry
-   * result verification
-   * result release
-   * result amendments
-   * analyzer integration
-   * patient and visit links
+   * prescriptions
+   * prescription items
+   * medication products
+   * dispensing
+   * dispensing items
+   * partial dispensing
+   * medication collection
+   * medication returns
+   * reversals
+   * cancellations
+   * substitutions
+   * stock allocation
+   * stock reservations
+   * stock movements
+   * batches
+   * expiry dates
+   * stock locations
+   * inventory
    * billing
+   * payments
    * insurance
-   * stock and consumables
-   * critical-result alerts
-   * notifications
+   * claims
+   * sponsors
+   * medication safety
+   * allergies
+   * duplicate active medication checks
+   * unusual-dose warnings
+   * diagnosis requirements
+   * patient and visit links
    * reporting
-6. Existing investigation statuses.
-7. Existing specimen statuses.
-8. Existing result types and formats.
-9. Existing result-validation rules.
-10. Existing positive and negative result aggregation.
-11. Existing critical-value configuration.
-12. Existing service-to-department mapping.
-13. Existing billing and payment-gate operations.
-14. Existing Journey Intelligence stages for investigations.
-15. Existing patient privacy and audit protections.
-16. Existing views that hardcode generic routes such as:
+6. Existing prescription statuses.
+7. Existing dispensing statuses.
+8. Existing stock-reservation behaviour.
+9. Existing FEFO, FIFO, or batch-selection policy.
+10. Existing return and reversal rules.
+11. Existing payment-gate operations for Pharmacy.
+12. Existing emergency and inpatient exceptions.
+13. Existing Journey Intelligence stages for Pharmacy.
+14. Existing patient privacy protections.
+15. Existing audit-event infrastructure.
+16. Shared views that hardcode generic routes such as:
 
 ```php
-route('investigations.show', $request)
+route('prescriptions.show', $prescription)
+route('dispensing.show', $dispensing)
 route('patients.show', $patient)
 route('visits.show', $visit)
-route('consultations.show', $consultation)
+route('products.show', $product)
 ```
 
-Do not create a competing investigation, specimen, result, menu, or routing framework where one already exists.
+Do not create a competing prescription, dispensing, stock, menu, or routing framework where one already exists.
 
 Extend the existing:
 
@@ -228,118 +239,125 @@ Extend the existing:
 * Active department context
 * Workspace route resolver
 * Workspace redirect resolver
-* Investigation request services
-* Specimen services
-* Result-entry services
-* Result-verification services
-* Billing services
+* Prescription services
+* Prescription-safety services
+* Dispensing services
+* Stock-location resolver
+* Stock-allocation services
+* Billing and payment services
+* Insurance and claims services
 * Journey Intelligence services
-* Notification infrastructure
 * Authorization policies
 * Patient privacy services
 * Activity logging
 
 ---
 
-# Phase 2 — Investigations Workspace Route Group
+# Phase 2 — Pharmacy Workspace Route Group
 
-Create a dedicated Investigations route group.
+Create a dedicated Pharmacy route group.
 
 Use a structure equivalent to:
 
 ```php
-Route::prefix('investigations')
-    ->name('investigations.')
+Route::prefix('pharmacy')
+    ->name('pharmacy.')
     ->middleware([
         'auth',
         'verified',
         'department.context',
-        'department.type:investigation',
+        'department.type:pharmacy',
     ])
     ->group(function () {
-        // Investigations workspace routes
+        // Pharmacy workspace routes
     });
 ```
 
 Use the project’s actual middleware names and active-department authorization architecture.
 
-Required route names should include, where the corresponding functionality already exists:
+Required route names should include, where corresponding functionality already exists:
 
 ```text
-investigations.dashboard
+pharmacy.dashboard
 
-investigations.requests.index
-investigations.requests.pending
-investigations.requests.authorized
-investigations.requests.awaiting_payment
-investigations.requests.urgent
-investigations.requests.overdue
-investigations.requests.show
-investigations.requests.accept
-investigations.requests.cancel
+pharmacy.prescriptions.index
+pharmacy.prescriptions.pending
+pharmacy.prescriptions.awaiting_payment
+pharmacy.prescriptions.authorized
+pharmacy.prescriptions.clinical_review
+pharmacy.prescriptions.ready
+pharmacy.prescriptions.completed
+pharmacy.prescriptions.cancelled
+pharmacy.prescriptions.show
+pharmacy.prescriptions.accept
+pharmacy.prescriptions.review
+pharmacy.prescriptions.cancel
 
-investigations.specimens.index
-investigations.specimens.collection
-investigations.specimens.received
-investigations.specimens.rejected
-investigations.specimens.show
-investigations.specimens.collect
-investigations.specimens.receive
-investigations.specimens.reject
-investigations.specimens.recollect
+pharmacy.dispensing.index
+pharmacy.dispensing.pending
+pharmacy.dispensing.in_progress
+pharmacy.dispensing.partially_dispensed
+pharmacy.dispensing.ready_for_collection
+pharmacy.dispensing.completed
+pharmacy.dispensing.show
+pharmacy.dispensing.start
+pharmacy.dispensing.store
+pharmacy.dispensing.complete
 
-investigations.worklist.index
-investigations.worklist.pending
-investigations.worklist.in_progress
-investigations.worklist.overdue
-investigations.worklist.completed
+pharmacy.collections.index
+pharmacy.collections.show
+pharmacy.collections.confirm
 
-investigations.results.index
-investigations.results.pending
-investigations.results.entry
-investigations.results.verification
-investigations.results.released
-investigations.results.critical
-investigations.results.show
-investigations.results.store
-investigations.results.verify
-investigations.results.release
-investigations.results.amend
+pharmacy.returns.index
+pharmacy.returns.create
+pharmacy.returns.store
+pharmacy.returns.show
 
-investigations.patients.index
-investigations.patients.show
+pharmacy.reversals.index
+pharmacy.reversals.create
+pharmacy.reversals.store
 
-investigations.services.index
-investigations.services.show
+pharmacy.cancellations.index
 
-investigations.equipment.index
-investigations.quality_control.index
-investigations.consumables.index
+pharmacy.medications.index
+pharmacy.medications.show
 
-investigations.handoffs.index
-investigations.reports.index
+pharmacy.stock.index
+pharmacy.stock.show
+pharmacy.stock.low
+pharmacy.stock.out
+pharmacy.stock.expiring
+
+pharmacy.batches.index
+pharmacy.batches.show
+
+pharmacy.patients.index
+pharmacy.patients.show
+
+pharmacy.handoffs.index
+pharmacy.reports.index
 ```
 
-Only register routes for functionality that exists or is implemented in this phase.
+Only register routes for functionality that genuinely exists or is being implemented.
 
 Do not create empty placeholder pages merely to populate the menu.
 
 ---
 
-# Phase 3 — Investigations Operations Dashboard
+# Phase 3 — Pharmacy Operations Dashboard
 
-Create or complete a dedicated Investigations dashboard.
+Create or complete a dedicated Pharmacy dashboard.
 
-The canonical destination should be:
+The canonical route should be:
 
 ```text
-/investigations
+/pharmacy
 ```
 
 or:
 
 ```text
-/investigations/dashboard
+/pharmacy/dashboard
 ```
 
 Choose one canonical route and redirect the other to it.
@@ -347,48 +365,47 @@ Choose one canonical route and redirect the other to it.
 The department dashboard resolver should map:
 
 ```php
-DepartmentType::INVESTIGATION => 'investigations.dashboard'
+DepartmentType::PHARMACY => 'pharmacy.dashboard'
 ```
 
-The dashboard should function as an operational command board for diagnostic investigations.
+The dashboard should function as a Pharmacy operations command board.
 
 Recommended metrics and widgets include, where reliable data exists:
 
-* Requests received today
-* Requests awaiting authorization
-* Requests awaiting payment
-* Emergency requests
-* Urgent requests
-* Specimens awaiting collection
-* Specimens collected today
-* Specimens awaiting receipt
-* Rejected specimens
-* Recollection required
-* Tests pending
-* Tests in progress
-* Overdue investigations
-* Results awaiting entry
-* Results awaiting verification
-* Results awaiting release
-* Critical results
-* Critical results awaiting acknowledgement
-* Amended results today
-* Completed investigations today
-* Average request-to-collection time
-* Average collection-to-result time
-* Average turnaround time
-* Tests breaching SLA
-* Analyzer or equipment alerts where supported
-* Low-stock investigation consumables where supported
+* Prescriptions received today
+* Prescriptions awaiting payment
+* Prescriptions awaiting insurance authorization
+* Prescriptions requiring clinical review
+* Prescriptions with safety warnings
+* Prescriptions ready for dispensing
+* Dispensing in progress
+* Partially dispensed prescriptions
+* Ready for collection
+* Completed dispensings today
+* Emergency prescriptions
+* Inpatient medication requests
+* Overdue prescription fulfilments
+* Prescriptions blocked by stock
+* Prescriptions blocked by payment
+* Prescriptions blocked by clinical safety
+* Low-stock medications
+* Out-of-stock medications
+* Expiring batches
+* Expired-stock alerts
+* Pending returns
+* Pending reversals
+* Pending handoffs
+* Average prescription-to-dispensing time
+* Average ready-to-collection time
 
 Each dashboard metric must:
 
 * Respect permissions
 * Respect the active department
-* Scope data to investigation services assigned to the active department
-* Exclude Radiology services unless explicitly mapped to the Investigation department
+* Respect stock-location scoping
+* Include only prescriptions fulfilable by the active Pharmacy department
 * Avoid leaking protected patient information
-* Link to `/investigations/*` routes
+* Link to valid `/pharmacy/*` routes
 * Use safe empty states
 * Avoid expensive unbounded queries
 * Reuse Journey Intelligence and department metrics where applicable
@@ -397,94 +414,98 @@ Do not introduce metrics that cannot be calculated reliably.
 
 ---
 
-# Phase 4 — Investigations-Specific Menu Profile
+# Phase 4 — Pharmacy-Specific Menu Profile
 
 Extend the existing department menu profile or menu registry so that:
 
 ```php
-DepartmentType::INVESTIGATION
+DepartmentType::PHARMACY
 ```
 
-receives a dedicated Investigations menu.
+receives a dedicated Pharmacy menu.
 
 Recommended menu structure:
 
-## Investigations Command
+## Pharmacy Command
 
 * Dashboard
-* All Requests
-* Emergency Requests
-* Urgent Requests
-* Overdue Investigations
+* All Prescriptions
+* Emergency Prescriptions
+* Inpatient Requests
+* Overdue Prescriptions
 
-## Request Management
+## Prescription Review
 
-* Pending Requests
-* Authorized Requests
+* Pending Prescriptions
 * Awaiting Payment
-* Accepted Requests
-* Cancelled Requests
+* Awaiting Insurance Authorization
+* Clinical Review Required
+* Safety Warnings
+* Authorized Prescriptions
+* Cancelled Prescriptions
 
-## Specimen Management
+## Dispensing
 
-* Collection Worklist
-* Collected Specimens
-* Awaiting Receipt
-* Received Specimens
-* Rejected Specimens
-* Recollection Required
+* Ready to Dispense
+* Dispensing in Progress
+* Partially Dispensed
+* Ready for Collection
+* Completed Dispensing
 
-## Testing Worklist
+## Patient Collection
 
-* Pending Tests
-* Tests in Progress
-* Overdue Tests
-* Completed Tests
-* Assigned to Me
-* Unassigned Tests
+* Collection Queue
+* Collected Today
+* Uncollected Medications
+* Counselling Pending
 
-## Results
+## Returns and Corrections
 
-* Result Entry
-* Awaiting Verification
-* Awaiting Release
-* Released Results
-* Critical Results
-* Amended Results
+* Medication Returns
+* Dispensing Reversals
+* Prescription Cancellations
+* Substitution Review
 
-## Operations
+## Stock Awareness
 
-* Investigation Services
-* Equipment and Analyzers
-* Quality Control
-* Consumables and Reagents
+* Medication Stock
+* Low Stock
+* Out of Stock
+* Expiring Batches
+* Expired Batches
+* Batch Availability
 
 ## Coordination
 
-* Handoffs
+* Pharmacy Handoffs
 * Critical Alerts
 * Escalations
-* Pending Clinician Review
+* Pending Clinician Clarification
+* Pending Finance Clarification
 
 ## Patient Access
 
 * Patient Search
 * Patient Profiles
-* Investigation History
+* Medication History
+* Prescription History
 * Visit History
 
-## Investigation Reports
+## Pharmacy Reports
 
-* Request Volume Report
-* Specimen Collection Report
-* Rejected Specimen Report
-* Turnaround-Time Report
-* Positive and Negative Result Report
-* Critical-Result Report
-* Staff Activity Report
-* Service Performance Report
-* Analyzer Performance Report where supported
-* Consumable Usage Report where supported
+* Prescription Volume Report
+* Dispensing Report
+* Partial Dispensing Report
+* Medication Collection Report
+* Medication Return Report
+* Stockout Report
+* Low-Stock Report
+* Expiry Report
+* Pharmacist Activity Report
+* Prescription Turnaround-Time Report
+* Medication Utilization Report
+* Insurance Prescription Report
+* Emergency Medication Report
 
 ## General
 
@@ -498,135 +519,259 @@ Only show a menu item when:
 2. The required module is enabled.
 3. The user possesses the required permission.
 4. The active department permits access.
-5. The functionality belongs to the Investigation department.
+5. The feature belongs to Pharmacy operations.
 
 Permissions remain authoritative.
 
-Do not expose menu items solely because the active department type is `investigation`.
+Do not expose menu items solely because the active department type is `pharmacy`.
 
 ---
 
-# Phase 5 — Investigation Request Worklists
+# Phase 5 — Prescription Worklists
 
-Create or adapt investigation request worklists under:
+Create or adapt prescription worklists under:
 
 ```text
-/investigations/requests
+/pharmacy/prescriptions
 ```
 
-Recommended request categories include:
+Recommended worklist states include:
 
 ```text
 new
-awaiting_authorization
 awaiting_payment
+awaiting_insurance
+awaiting_sponsor_authorization
 authorized
+clinical_review_required
+safety_warning
 accepted
-urgent
-emergency
-awaiting_specimen
-in_progress
+ready_to_dispense
+dispensing_in_progress
+partially_dispensed
+ready_for_collection
 completed
 cancelled
+expired
 overdue
 ```
 
-Use existing request, billing, insurance, specimen, result, and journey statuses.
+Use existing prescription, payment, insurance, stock, dispensing, and journey statuses.
 
-Do not introduce duplicate statuses where the worklist state can be derived through a resolver.
+Do not introduce duplicate statuses where the worklist state can be derived by a resolver.
 
-Each worklist row should display only authorized information, such as:
+Each prescription row should display only authorized information, such as:
 
 * Patient identifier
 * Patient name according to privacy rules
 * Visit number
-* Request number
-* Requesting department
-* Requesting clinician
-* Requested service
+* Prescription number
+* Prescribing clinician
+* Prescribing department
+* Prescription date and time
 * Priority
-* Request date and time
-* Payment or authorization state
-* Specimen requirement
-* Current investigation stage
-* Assigned staff or bench
-* SLA status
+* Number of medication items
+* Payment or insurance state
+* Clinical-review state
+* Safety-warning state
+* Stock-availability state
+* Dispensing state
+* Assigned pharmacist
 * Waiting duration
+* SLA state
 * Next required action
 
 Support filters such as:
 
 * Date
 * Priority
-* Requesting department
-* Requesting clinician
-* Investigation service
-* Service category
-* Specimen type
+* Prescribing department
+* Prescribing clinician
+* Patient category
+* Prescription status
 * Payment state
 * Insurance state
-* Request status
-* Assigned staff
+* Safety-warning state
+* Stock state
+* Assigned pharmacist
+* Emergency or routine
+* Inpatient or outpatient
 * SLA state
 
 Use pagination and efficient queries.
 
 ---
 
-# Phase 6 — Investigation Request Workspace
+# Phase 6 — Prescription Workspace
 
-Create or adapt a dedicated investigation request workspace.
+Create or adapt a dedicated prescription workspace.
 
 Recommended route:
 
 ```text
-/investigations/requests/{request}
+/pharmacy/prescriptions/{prescription}
 ```
 
-The request workspace should coordinate the full investigation lifecycle.
+The prescription workspace should coordinate the complete fulfilment lifecycle.
 
 Recommended sections:
 
 1. Patient identity strip
 2. Visit details
-3. Request details
-4. Requesting clinician and department
-5. Investigation services requested
-6. Priority and SLA
-7. Payment or insurance authorization status
-8. Specimen requirements
-9. Specimen collection details
-10. Specimen acceptance or rejection history
-11. Current processing stage
-12. Assigned staff or laboratory section
-13. Result-entry status
-14. Verification status
-15. Release status
-16. Critical-result alerts
-17. Clinician acknowledgement
-18. Result amendment history
-19. Billing references where authorized
-20. Activity timeline
-21. Authorized quick actions
+3. Prescription details
+4. Prescribing clinician and department
+5. Diagnosis context where authorized
+6. Allergy information
+7. Active medication warnings
+8. Medication-safety warnings
+9. Prescription items
+10. Dose, route, frequency, and duration
+11. Payment and insurance authorization
+12. Stock availability
+13. Batch availability
+14. Dispensing history
+15. Partial-dispensing history
+16. Collection state
+17. Counselling state
+18. Return or reversal history
+19. Clinical clarification history
+20. Billing references where authorized
+21. Activity timeline
+22. Authorized quick actions
 
-Do not duplicate underlying request, specimen, result, billing, or notification implementations.
+Do not duplicate underlying prescription, dispensing, billing, stock, or safety implementations.
 
-The workspace should act as a coordinated department-specific view of existing services.
+The page should provide a Pharmacy-specific coordinated view of existing services.
 
 ---
 
-# Phase 7 — Payment and Authorization Awareness
+# Phase 7 — Prescription Acceptance and Clinical Review
 
-Investigation services may require payment, insurance approval, sponsorship, or an authorized exception.
+Before dispensing, the Pharmacy workflow should confirm that the prescription is appropriate for processing.
+
+The review may validate:
+
+* Patient identity
+* Prescription ownership
+* Prescribing clinician
+* Medication
+* Dose
+* Route
+* Frequency
+* Duration
+* Quantity
+* Diagnosis context where required
+* Allergy conflicts
+* Duplicate active medications
+* Drug interactions where supported
+* Unusual-dose warnings
+* Age-related warnings
+* Weight-related warnings where supported
+* Pregnancy-related warnings where supported
+* Missing required information
+* Prescription expiry
+* Cancellation state
+
+Reuse existing prescription-safety services.
+
+Do not recreate safety checks in Pharmacy controllers.
+
+Potential review states may include:
+
+```text
+not_reviewed
+review_required
+clarification_required
+reviewed
+approved
+rejected
+overridden
+```
+
+Any clinical-safety override must be:
+
+* Explicit
+* Permission-controlled
+* Reasoned
+* Linked to the specific warning
+* Audited
+
+Pharmacy staff should not silently alter the clinical prescription.
+
+Where a change is required, use:
+
+* Clinician clarification
+* Authorized substitution
+* Authorized quantity adjustment
+* Prescription amendment workflow
+
+according to existing policy.
+
+---
+
+# Phase 8 — Medication-Safety Integration
+
+Preserve and expose the existing medication-safety checks, including:
+
+* Allergy conflicts
+* Duplicate active medication
+* Missing-diagnosis policy
+* Unusual-dose warnings
+* Contraindication warnings where supported
+* Drug-interaction warnings where supported
+* Duplicate therapeutic-class warnings where supported
+* Pediatric or geriatric warnings where supported
+* Pregnancy or breastfeeding warnings where supported
+
+The Pharmacy workspace should distinguish:
+
+```text
+safe
+warning
+requires_review
+blocked
+overridden
+```
+
+Warnings should display:
+
+* Warning type
+* Medication
+* Clinical context
+* Severity
+* Recommended action
+* Override eligibility
+* Override status
+* Responsible reviewer
+
+Do not expose more diagnosis or clinical history than the pharmacist is authorized to view.
+
+Safety warnings must remain visible until resolved, accepted, or overridden according to policy.
+
+---
+
+# Phase 9 — Payment, Insurance, and Authorization Awareness
+
+Prescription fulfilment may depend on:
+
+* Cash payment
+* Insurance coverage
+* Sponsor authorization
+* Departmental payment deferral
+* Emergency override
+* Inpatient payment policy
+* Visit-specific billing override
 
 Display safe operational states such as:
 
 ```text
-authorized_to_proceed
+authorized_to_dispense
 payment_required
 payment_pending
 insurance_pending
 insurance_approved
+insurance_partially_covered
+sponsor_pending
 sponsor_approved
 emergency_override
 authorized_override
@@ -637,673 +782,608 @@ Reuse existing:
 
 * Payment-gate operation policy
 * Visit billing overrides
-* Insurance coverage services
+* Insurance coverage calculation
 * Sponsor authorization
-* Invoice receivables
-* Emergency exceptions
+* Invoice and receivable services
+* Emergency exception rules
+* Admission billing
 * Activity logging
 
-Do not expose unnecessary financial information to Investigation users without finance permissions.
+Do not expose unnecessary financial details without finance permissions.
 
-Do not hardcode a universal payment bypass.
+Do not hardcode a universal Pharmacy payment bypass.
 
-Use operation-specific policy for actions such as:
+Use operation-specific policy for:
 
-* Accept request
-* Collect specimen
-* Start processing
-* Release result
-
-Emergency stabilization-related investigations may proceed through the configured emergency policy.
+* Accepting prescription
+* Reserving stock
+* Starting dispensing
+* Completing dispensing
+* Releasing medication for collection
 
 Any override must be:
 
 * Explicit
 * Permission-controlled
 * Reasoned
-* Visit-scoped or request-scoped
+* Visit-scoped or prescription-scoped
+* Audited
+
+Emergency and inpatient medication workflows may proceed under their configured policies without silently bypassing billing.
+
+---
+
+# Phase 10 — Stock Location and Department Scoping
+
+All Pharmacy worklists and stock checks must respect:
+
+* Active department
+* Pharmacy stock location
+* User assignment
+* Medication-to-stock-location availability
+* Authorized cross-location access
+
+Where multiple Pharmacy departments exist, such as:
+
+* Main Pharmacy
+* OPD Pharmacy
+* Inpatient Pharmacy
+* Emergency Pharmacy
+* Satellite Pharmacy
+
+a user should only see prescriptions and stock relevant to their active department unless granted cross-department permission.
+
+Reuse the existing `StockLocationResolver`.
+
+Ensure:
+
+```php
+DepartmentType::PHARMACY
+```
+
+resolves to the correct Pharmacy stock location or configured location mapping.
+
+Do not expose every hospital stock item merely because a user belongs to a Pharmacy department.
+
+---
+
+# Phase 11 — Stock Availability and Reservation
+
+Before dispensing, the system should determine:
+
+* Available quantity
+* Reserved quantity
+* Dispensed quantity
+* Remaining quantity
+* Batch availability
+* Expiry state
+* Stock-location availability
+* Alternative product availability where authorized
+
+Reuse existing stock and reservation services.
+
+The system should support:
+
+```text
+fully_available
+partially_available
+out_of_stock
+alternative_available
+reservation_pending
+reserved
+```
+
+Stock reservation must:
+
+1. Be tied to the prescription item.
+2. Be tied to the active stock location.
+3. Prevent double allocation.
+4. Respect batch and expiry policy.
+5. Release unused reservations after cancellation or expiry.
+6. Be audited where required.
+7. Be transactionally safe.
+
+Do not create a second inventory ledger for Pharmacy.
+
+---
+
+# Phase 12 — Batch and Expiry Selection
+
+Dispensing should use the configured batch-selection policy.
+
+Prefer the existing policy, such as:
+
+* FEFO — first expiry, first out
+* FIFO — first in, first out
+* Explicit pharmacist selection where required
+
+Batch selection must consider:
+
+* Available quantity
+* Expiry date
+* Quarantine state
+* Recall state
+* Stock-location state
+* Product compatibility
+* Lot or batch restrictions
+
+Do not allow:
+
+* Expired batches
+* Quarantined batches
+* Recalled batches
+* Inactive batches
+* Zero-availability batches
+
+to be dispensed unless an explicit exceptional workflow exists.
+
+Batch selection and quantity deduction must be transactional.
+
+---
+
+# Phase 13 — Dispensing Workflow
+
+Expose dispensing under:
+
+```text
+/pharmacy/dispensing
+```
+
+Recommended dispensing states include:
+
+```text
+not_started
+in_progress
+partially_dispensed
+fully_dispensed
+ready_for_collection
+collected
+cancelled
+reversed
+```
+
+Authorized Pharmacy users should be able to:
+
+* Start dispensing
+* Select stock batches
+* Confirm dispensed quantity
+* Record partial dispensing
+* Record unavailable quantity
+* Record substitution where authorized
+* Generate or confirm medication labels
+* Record counselling instructions
+* Mark medication ready for collection
+* Complete dispensing
+
+Dispensing must not:
+
+* Exceed the prescribed quantity
+* Exceed available stock
+* Bypass unresolved blocking safety warnings
+* Bypass required payment or authorization policy
+* Modify the prescription silently
+* Create duplicate stock deductions
+* Mark uncollected medication as collected
+
+All dispensing actions must remain under `/pharmacy/*`.
+
+---
+
+# Phase 14 — Partial Dispensing
+
+Support partial dispensing where only part of the prescription quantity is available or authorized.
+
+A partial dispensing record should preserve:
+
+* Prescribed quantity
+* Previously dispensed quantity
+* Quantity dispensed now
+* Remaining quantity
+* Reason
+* Batch allocation
+* Responsible pharmacist
+* Date and time
+* Payment and insurance state
+* Follow-up requirement
+
+Potential reasons include:
+
+```text
+insufficient_stock
+insurance_limit
+patient_request
+clinical_adjustment
+package_size
+authorized_split
+other
+```
+
+The system should:
+
+1. Preserve the original prescribed quantity.
+2. Preserve each dispensing event.
+3. Maintain the outstanding quantity.
+4. Prevent over-dispensing.
+5. Keep the prescription visible in the partial-dispensing worklist.
+6. Allow later completion where valid.
+7. Update billing and stock correctly.
+8. Audit each dispensing event.
+
+Do not mark the prescription fully completed while outstanding medication remains unless the remainder is formally cancelled or waived.
+
+---
+
+# Phase 15 — Medication Substitution
+
+Where substitution is permitted, use a formal workflow.
+
+Potential substitution types include:
+
+* Generic equivalent
+* Brand equivalent
+* Strength substitution with quantity adjustment
+* Formulation substitution
+* Therapeutic alternative where explicit clinical approval exists
+
+A substitution should record:
+
+* Original medication
+* Replacement medication
+* Reason
+* Equivalence basis
+* Quantity adjustment
+* Approving pharmacist
+* Prescriber approval where required
+* Patient notification
+* Billing difference
+* Stock allocation
+* Date and time
+
+Do not allow arbitrary substitution through editing the original prescription item.
+
+Substitution must respect:
+
+* Permission
+* Formulary policy
+* Insurance coverage
+* Safety checks
+* Prescriber-approval policy
+* Audit requirements
+
+---
+
+# Phase 16 — Medication Labels and Counselling
+
+Where label generation exists, expose it within `/pharmacy/*`.
+
+Labels may include:
+
+* Patient identifier
+* Medication name
+* Dose
+* Route
+* Frequency
+* Duration
+* Quantity
+* Administration instructions
+* Warning instructions
+* Storage instructions
+* Dispensing date
+* Pharmacy
+* Responsible pharmacist
+
+Do not expose unnecessary sensitive information on labels.
+
+The counselling workflow may record:
+
+* Instructions explained
+* Side effects explained
+* Storage explained
+* Adherence guidance
+* Device-use guidance
+* Patient questions
+* Counselling completed by
+* Counselling date and time
+
+Counselling requirements may vary by medication or patient type.
+
+Do not mark counselling complete automatically where acknowledgement is required.
+
+---
+
+# Phase 17 — Ready for Collection and Collection Workflow
+
+Expose medication collection under:
+
+```text
+/pharmacy/collections
+```
+
+The collection queue should show:
+
+* Patient identifier
+* Prescription number
+* Medication count
+* Ready date and time
+* Waiting duration
+* Counselling requirement
+* Collection status
+* Authorized collector where applicable
+
+Collection confirmation should record:
+
+* Collector identity
+* Relationship to patient where applicable
+* Collection date and time
+* Responsible Pharmacy user
+* Counselling completion
+* Signature or acknowledgement where supported
+* Notes
+
+Potential collection states include:
+
+```text
+not_ready
+ready
+partially_ready
+collected
+partially_collected
+uncollected
+returned_to_stock
+```
+
+Do not mark medication collected merely because dispensing is complete.
+
+Uncollected medication should follow the configured expiry or return-to-stock policy.
+
+---
+
+# Phase 18 — Inpatient Pharmacy Workflow
+
+The Pharmacy workspace must support inpatient medication supply.
+
+Inpatient prescriptions may differ from OPD prescriptions because:
+
+* Medication may be supplied to a ward rather than directly to the patient.
+* Supply may occur in scheduled quantities.
+* Administration is recorded separately by Nursing.
+* Admission billing policies may apply.
+* Repeat or ongoing supply may be required.
+* Returned unused medication may need reconciliation.
+
+The Pharmacy workspace should display safe inpatient context such as:
+
+* Admission number
+* Ward
+* Bed
+* Ordering clinician
+* Medication schedule
+* Quantity requested
+* Quantity supplied
+* Remaining quantity
+* Supply cycle
+* Ward receipt state
+
+Do not treat Pharmacy dispensing as medication administration.
+
+Medication administration remains a Nursing or authorized clinical action.
+
+---
+
+# Phase 19 — Emergency Pharmacy Workflow
+
+Emergency prescriptions should remain highly visible and prioritized.
+
+The Pharmacy workspace should show:
+
+* Emergency priority
+* Emergency department
+* Emergency visit
+* Stabilization requirement
+* Payment override state
+* Stock availability
+* Required fulfilment time
+* Assigned pharmacist
+* Current status
+
+Emergency medication fulfilment must use the configured emergency payment and stock-override policies.
+
+Do not hardcode unrestricted emergency dispensing.
+
+Any exceptional action must be:
+
+* Operation-specific
+* Permission-controlled
+* Reasoned
 * Audited
 
 ---
 
-# Phase 8 — Specimen Collection Workflow
+# Phase 20 — Prescription Cancellation
 
-Expose specimen collection under:
+Provide a structured prescription-cancellation workflow.
 
-```text
-/investigations/specimens/collection
-```
+A cancellation should record:
 
-Reuse existing specimen and request services.
+* Prescription or item
+* Cancellation reason
+* Cancelling user
+* Date and time
+* Whether dispensing started
+* Whether stock was reserved
+* Whether stock was deducted
+* Whether billing was posted
+* Whether refund or reversal is required
+* Whether clinician notification is required
 
-The collection worklist should support:
-
-* Patient identification
-* Request identification
-* Required specimen type
-* Collection container
-* Collection instructions
-* Fasting or preparation requirements
-* Priority
-* Collection status
-* Assigned collector
-* Collection time
-* Barcode or accession number where supported
-* Special precautions
-
-Authorized users may:
-
-* Confirm patient identity
-* Record specimen collection
-* Record collection date and time
-* Record collector
-* Print or confirm labels
-* Record collection notes
-* Mark collection unsuccessful
-* Request recollection
-* Record refusal where appropriate
-
-Specimen collection must not create duplicate request items.
-
-Collection actions must remain under `/investigations/*`.
-
----
-
-# Phase 9 — Specimen Accessioning and Receipt
-
-Expose specimen receipt and accessioning inside the Investigations workspace.
-
-Recommended routes:
+Potential cancellation reasons may include:
 
 ```text
-/investigations/specimens/received
-/investigations/specimens/{specimen}
-```
-
-The workflow should support:
-
-* Accession number
-* Barcode
-* Collection time
-* Receipt time
-* Transport duration
-* Specimen condition
-* Specimen quantity
-* Container type
-* Temperature requirement where supported
-* Receiving staff
-* Laboratory section
-* Acceptance status
-* Rejection reason
-* Recollection requirement
-
-A specimen should not silently move into processing without the required acceptance state.
-
-Receipt and accessioning must be transactional and audited.
-
----
-
-# Phase 10 — Specimen Rejection and Recollection
-
-Support structured specimen rejection.
-
-Potential rejection reasons may include:
-
-```text
-wrong_patient
-unlabelled
-mislabelled
-insufficient_quantity
-wrong_container
-haemolysed
-clotted
-leaking
-contaminated
-delayed_transport
-temperature_breach
-duplicate_specimen
-invalid_collection
+prescriber_cancelled
+duplicate_prescription
+clinical_contraindication
+patient_declined
+medication_unavailable
+insurance_denied
+entered_in_error
 other
 ```
 
-Use existing configured reasons where available.
+Cancellation must:
 
-A rejection should record:
+1. Preserve the original prescription.
+2. Release unused stock reservations.
+3. Avoid reversing already administered medication.
+4. Trigger billing correction where required.
+5. Preserve audit history.
+6. Avoid silently deleting dispensing records.
 
+---
+
+# Phase 21 — Dispensing Reversal
+
+A completed dispensing must not be deleted directly.
+
+Provide a formal reversal workflow.
+
+A reversal should record:
+
+* Dispensing record
+* Prescription
+* Medication item
+* Quantity
+* Batch
 * Reason
-* Notes
-* Rejecting staff
-* Date and time
-* Whether recollection is required
-* Notification destination
-* Request and patient context
-
-The system should:
-
-1. Preserve the rejected specimen record.
-2. Mark the affected test as blocked or recollection required.
-3. Create or expose a recollection action.
-4. Notify the requesting clinical area where supported.
-5. Audit the rejection.
-6. Avoid silently cancelling the entire request if unaffected items can continue.
-
-Do not overwrite the original specimen state.
-
----
-
-# Phase 11 — Testing Worklist
-
-Expose the testing worklist under:
-
-```text
-/investigations/worklist
-```
-
-The worklist should group tests by their operational area where supported, such as:
-
-* Haematology
-* Chemistry
-* Microbiology
-* Serology
-* Parasitology
-* Histology
-* Immunology
-* Molecular diagnostics
-* Other configured investigation sections
-
-Use existing department, service-category, bench, or laboratory-section mappings.
-
-Recommended worklist states include:
-
-```text
-pending
-assigned
-in_progress
-paused
-awaiting_repeat
-awaiting_quality_control
-completed
-cancelled
-overdue
-```
-
-Each worklist item may display:
-
-* Request number
-* Patient identifier
-* Service
-* Specimen
-* Priority
-* Received time
-* Assigned staff
-* Equipment or analyzer
-* Current state
-* SLA status
-* Result-entry status
-* Quality-control blocker
-* Next action
-
-Authorized users may:
-
-* Claim
-* Assign
-* Start processing
-* Pause with reason
-* Mark processing complete
-* Request repeat testing
-* Escalate delay
-* View test history
-
-Do not treat result release as equivalent to processing completion.
-
----
-
-# Phase 12 — Result Format Support
-
-Preserve and extend the existing investigation result formats.
-
-Each investigation service should use its configured result type.
-
-Supported formats may include:
-
-```text
-free_text
-numeric
-boolean
-positive_negative
-structured
-```
-
-Where existing functionality supports them, also preserve:
-
-```text
-select
-multi_select
-range
-ratio
-date
-time
-organism_sensitivity
-```
-
-Do not force all investigation results into a free-text field.
-
-## Numeric Results
-
-Support:
-
-* Numeric value
-* Unit
-* Reference range
-* High or low indicator
-* Critical indicator
-* Decimal precision
-* Age-specific range where supported
-* Sex-specific range where supported
-
-## Boolean Results
-
-Support:
-
-```text
-true
-false
-```
-
-Display localized clinical labels configured for the service.
-
-## Positive/Negative Results
-
-Support:
-
-```text
-positive
-negative
-indeterminate
-equivocal
-```
-
-where configured.
-
-Positive and negative values must remain structured so they can be used for monthly and service-level statistics.
-
-## Free-Text Results
-
-Support free-text findings while preserving:
-
-* Responsible staff
-* Entry time
-* Verification state
-* Amendment history
-
-## Structured Results
-
-Reuse existing result schemas where a test has multiple analytes or fields.
-
-Do not duplicate investigation definitions inside result records.
-
----
-
-# Phase 13 — Result Entry
-
-Expose result entry under:
-
-```text
-/investigations/results/entry
-```
-
-Result entry should:
-
-1. Use the configured result format.
-2. Validate required fields.
-3. Validate numeric ranges and units.
-4. Detect abnormal and critical values.
-5. Record the responsible user.
-6. Record the entry time.
-7. Preserve analyzer origin where applicable.
-8. Support draft state where currently allowed.
-9. Prevent unauthorized release.
-10. Preserve amendment history.
-
-Potential result states include:
-
-```text
-not_entered
-draft
-entered
-awaiting_verification
-verified
-released
-amended
-cancelled
-```
-
-Do not allow released results to be overwritten directly.
-
-Corrections must use the result-amendment workflow.
-
----
-
-# Phase 14 — Result Verification and Approval
-
-Expose result verification under:
-
-```text
-/investigations/results/verification
-```
-
-Verification should confirm:
-
-* Patient and request
-* Investigation service
-* Specimen suitability
-* Result completeness
-* Units
-* Reference ranges
-* Abnormal indicators
-* Critical indicators
-* Quality-control status where relevant
-* Analyzer flags where relevant
-* Previous related results where permitted
-
-Use the existing authorization and professional-role model.
-
-The same user should not perform entry and verification where the current configuration requires separation of duties.
-
-Support configuration for:
-
-* Entry-only users
-* Verifiers
-* Approvers
-* Auto-verification for eligible analyzer results
-* Mandatory manual verification for critical results
-
-Verification must be audited.
-
----
-
-# Phase 15 — Result Release
-
-Expose releasable results under:
-
-```text
-/investigations/results
-```
-
-Result release should:
-
-1. Require verification where configured.
-2. Check critical-result handling requirements.
-3. Record the releasing user.
-4. Record release date and time.
-5. Make results visible to authorized clinicians.
-6. Update request and journey state.
-7. Trigger configured notifications.
-8. Preserve patient privacy.
-9. Preserve audit history.
-
-Do not mark the entire investigation request complete if some request items remain incomplete.
-
-Use item-level completion where the existing architecture supports multi-item requests.
-
----
-
-# Phase 16 — Critical Results
-
-Expose critical results under:
-
-```text
-/investigations/results/critical
-```
-
-Critical-result logic should use a centralized configuration or service.
-
-A critical result should record:
-
-* Investigation service
-* Result
-* Critical rule triggered
-* Patient and visit
-* Requesting clinician
-* Requesting department
-* Detection time
-* Responsible Investigation staff
-* Notification attempt
-* Recipient
-* Acknowledgement
-* Acknowledgement time
-* Escalation state
-* Resolution state
-
-The workflow should support:
-
-* Identify
-* Confirm
-* Notify
-* Escalate
-* Acknowledge
-* Resolve
-
-Critical results must remain highly visible until acknowledged or resolved according to the configured workflow.
-
-Do not expose full result details in notifications where privacy controls prohibit it.
-
-Reuse the existing Journey Intelligence and notification infrastructure where appropriate.
-
----
-
-# Phase 17 — Result Amendments and Corrections
-
-Released results must not be edited directly.
-
-Provide a formal amendment workflow.
-
-An amendment should record:
-
-* Original result
-* Corrected result
-* Amendment reason
-* Amending user
-* Amendment date and time
-* Verification
-* Release
-* Notification status
-* Whether clinical acknowledgement is required
-
-The system must:
-
-1. Preserve the original released result.
-2. Display the amendment history.
-3. Mark the current result as amended.
-4. Notify authorized clinical recipients where configured.
-5. Audit the amendment.
-6. Avoid altering historical reports silently.
-
-An amendment should not create an unrelated duplicate request.
-
----
-
-# Phase 18 — Analyzer and Equipment Integration
-
-Where analyzer integration already exists, expose operational visibility in the Investigations workspace.
-
-Support existing HL7, ASTM, file-import, serial, network, or middleware integrations where applicable.
-
-The workspace may show:
-
-* Connected analyzers
-* Connection state
-* Last successful communication
-* Pending result imports
-* Import failures
-* Unmatched results
-* Analyzer flags
-* Equipment maintenance state
-* Quality-control blockers
-
-Do not rewrite established analyzer communication services solely for the workspace.
-
-Analyzer results must pass through:
-
-* Patient and request matching
-* Service matching
-* Validation
-* Critical-value detection
-* Verification policy
-* Audit logging
-
-Do not auto-release unmatched or invalid results.
-
----
-
-# Phase 19 — Quality Control
-
-Where quality-control functionality already exists, expose it under:
-
-```text
-/investigations/quality-control
-```
-
-Potential visibility may include:
-
-* Control run status
-* Control material
-* Lot number
-* Expected range
-* Recorded value
-* Pass or fail
-* Equipment
-* Investigation service
 * Responsible user
 * Date and time
-* Corrective action
+* Stock-restoration eligibility
+* Billing-reversal requirement
+* Collection state
+* Patient possession state
 
-If a failed quality-control state should block patient-result processing or release, enforce that rule centrally.
+Stock should only be restored when:
 
-Do not create fake quality-control functionality merely to populate the menu.
+* The medication was not collected, or
+* A valid return was accepted under policy, and
+* The product remains suitable for return to stock.
 
-Where no quality-control model exists, omit the menu item and document it as a future limitation.
+Do not restore returned medication to saleable stock automatically where storage conditions or tamper state cannot be verified.
+
+Reversals must be transactionally safe and audited.
 
 ---
 
-# Phase 20 — Consumables and Reagents
+# Phase 22 — Medication Returns
 
-Where stock integration already exists, expose investigation-relevant consumable awareness.
-
-Recommended route:
+Expose returns under:
 
 ```text
-/investigations/consumables
+/pharmacy/returns
 ```
 
-The workspace may show:
+A medication return may record:
 
-* Reagents
-* Test kits
-* Collection tubes
-* Slides
-* Containers
-* Controls
-* Consumables
+* Patient
+* Prescription
+* Dispensing
+* Medication
+* Batch
+* Quantity
+* Return reason
+* Return date
+* Packaging state
+* Seal or tamper state
+* Storage-condition confidence
+* Expiry state
+* Stock-restoration decision
+* Refund or billing action
+* Responsible Pharmacy user
+
+Potential return outcomes include:
+
+```text
+accepted_return_to_stock
+accepted_quarantine
+accepted_for_destruction
+rejected
+billing_only_adjustment
+```
+
+Do not assume every returned medication can be returned to available stock.
+
+Use the existing stock, quarantine, destruction, billing, and audit services where available.
+
+---
+
+# Phase 23 — Stock Alerts
+
+Expose stock-awareness pages under:
+
+```text
+/pharmacy/stock
+/pharmacy/low-stock
+/pharmacy/stock-outs
+/pharmacy/expiries
+```
+
+The workspace may display:
+
+* Medication
+* Product code
+* Stock location
 * Available quantity
+* Reserved quantity
 * Reorder level
-* Expiry date
-* Lot number
-* Storage location
 * Stockout state
+* Earliest expiry
+* Expiring quantity
+* Batch count
+* Last stock movement
 
-Reuse the existing Stores and inventory services.
+Stock alerts should support:
 
-Do not create a second stock ledger for Investigations.
+* Low stock
+* Out of stock
+* Near expiry
+* Expired
+* Quarantined
+* Recalled
+* Negative-stock anomaly
+* Reservation anomaly
 
-Investigation staff should only have access to stock actions allowed by their permissions.
+Do not grant procurement, stock-adjustment, or transfer permissions merely because the user can view Pharmacy stock.
+
+Stock corrections should remain under the existing inventory authorization model.
 
 ---
 
-# Phase 21 — Investigation Service Configuration Awareness
+# Phase 24 — Pharmacy Handoffs and Clarifications
 
-Expose an investigation service list under:
+Expose Pharmacy handoffs under:
 
 ```text
-/investigations/services
-```
-
-The operational view may show:
-
-* Service name
-* Service code
-* Category
-* Department
-* Result format
-* Specimen requirement
-* Normal turnaround time
-* Emergency turnaround time
-* Reference range availability
-* Critical-value configuration
-* Billing mapping
-* Active or inactive state
-
-This operational view should not automatically grant permission to edit service definitions.
-
-Service configuration should remain under the existing administrative permission model.
-
----
-
-# Phase 22 — Department and Section Scoping
-
-All Investigations worklists must respect the active department.
-
-Where a hospital has multiple Investigation departments or sections, such as:
-
-* Main laboratory
-* Emergency laboratory
-* Haematology
-* Chemistry
-* Microbiology
-* Satellite laboratory
-
-the workspace must scope data through:
-
-* Active department
-* Service-to-department mapping
-* Laboratory section
-* User assignment
-* Authorized cross-department access
-
-Do not rely only on a broad service type of `investigation`.
-
-A user should not see every hospital investigation merely because their active department type is `investigation`.
-
-Use active `department_id` scoping where applicable.
-
----
-
-# Phase 23 — Handoffs and Coordination
-
-Expose Investigation handoffs under:
-
-```text
-/investigations/handoffs
+/pharmacy/handoffs
 ```
 
 Reuse the existing Journey Intelligence handoff infrastructure.
 
 Support handoffs such as:
 
-* Specimen collection requested
-* Recollection required
-* Critical result notification
-* Result awaiting clinician review
-* Investigation delayed
-* Equipment failure escalation
-* Test referred externally
-* Investigation blocking discharge
-* Investigation blocking procedure
+* Prescription clarification required
+* Medication unavailable
+* Alternative medication proposed
+* Payment clarification required
+* Insurance authorization pending
+* Inpatient medication ready
+* Emergency medication prepared
+* Medication not collected
+* Return or reversal requiring Finance action
+* Safety warning requiring clinician response
 
-The worklist should display:
+The handoff worklist should show:
 
 * Patient and visit context
-* Request
+* Prescription
 * Sending department
 * Receiving department
 * Required action
@@ -1322,19 +1402,19 @@ Authorized users may:
 * Escalate
 * Reassign
 
-All links should preserve `/investigations/*` context where an Investigation workspace destination exists.
+All Pharmacy-side links should preserve `/pharmacy/*` context.
 
 ---
 
-# Phase 24 — Workspace-Aware URL Resolution
+# Phase 25 — Workspace-Aware URL Resolution
 
 Extend the centralized workspace route resolver.
 
 Do not scatter checks such as:
 
 ```php
-if ($department->type === DepartmentType::INVESTIGATION) {
-    return route('investigations.requests.show', $request);
+if ($department->type === DepartmentType::PHARMACY) {
+    return route('pharmacy.prescriptions.show', $prescription);
 }
 ```
 
@@ -1353,29 +1433,32 @@ The resolver should support methods equivalent to:
 ```php
 dashboard()
 
-requestIndex()
-requestShow(InvestigationRequest $request)
+prescriptionIndex()
+prescriptionShow(Prescription $prescription)
 
-specimenCollection()
-specimenShow(Specimen $specimen)
+dispensingIndex()
+dispensingShow(Dispensing $dispensing)
 
-worklist()
-resultEntry()
-resultShow(InvestigationResult $result)
-criticalResultList()
+collectionIndex()
+returnIndex()
+reversalIndex()
+
+medicationIndex()
+medicationShow(Product $product)
+
+stockIndex()
+stockShow(StockItem $stockItem)
+batchIndex()
+batchShow(Batch $batch)
 
 patientIndex()
 patientShow(Patient $patient)
 
-serviceIndex()
-equipmentIndex()
-qualityControlIndex()
-consumableIndex()
 handoffIndex()
 reportIndex()
 ```
 
-For an Investigations user, the resolver must return `investigations.*` routes.
+For a Pharmacy user, the resolver must return `pharmacy.*` routes.
 
 For other users, preserve the appropriate existing workspace or generic route.
 
@@ -1383,29 +1466,33 @@ Always use the active department context rather than only the user’s primary d
 
 ---
 
-# Phase 25 — Replace Hardcoded Shared Links
+# Phase 26 — Replace Hardcoded Shared Links
 
-Audit all shared pages accessed by Investigation users.
+Audit all shared pages accessed by Pharmacy users.
 
 Replace hardcoded generic links that break workspace continuity.
 
 Review at minimum:
 
-* Investigation request lists
-* Specimen worklists
-* Result-entry pages
-* Verification pages
-* Released-result pages
-* Critical-result pages
+* Prescription worklists
+* Prescription details
+* Dispensing pages
+* Collection queue
+* Return pages
+* Reversal pages
+* Medication stock pages
+* Batch pages
 * Patient search
 * Patient profiles
+* Medication history
+* Prescription history
 * Visit history
-* Consultation investigation sections
 * Journey worklists
 * Dashboard cards
 * Breadcrumbs
 * Notifications
-* Escalation links
+* Safety-alert links
+* Handoff links
 * Action dropdowns
 * Empty-state actions
 * Report drilldowns
@@ -1414,96 +1501,102 @@ Review at minimum:
 Avoid shared-view code such as:
 
 ```php
-route('investigations.show', $request)
+route('prescriptions.show', $prescription)
 ```
 
 Use the centralized workspace route resolver.
 
-Do not alter API, analyzer, callback, signed, payment, print, export, or background-job URLs unless they are explicitly part of the Investigations browser workspace.
+Do not alter API, payment callback, insurance callback, signed, print, export, integration, or background-job URLs unless explicitly part of the Pharmacy browser workspace.
 
 ---
 
-# Phase 26 — Workspace-Aware Redirects
+# Phase 27 — Workspace-Aware Redirects
 
-All successful Investigations actions must redirect back into `/investigations/*`.
+All successful Pharmacy actions must redirect back into `/pharmacy/*`.
 
 Examples:
 
-After accepting a request:
+After accepting a prescription:
 
 ```text
-/investigations/requests/{request}
+/pharmacy/prescriptions/{prescription}
 ```
 
-After collecting a specimen:
+After clinical review:
 
 ```text
-/investigations/specimens/{specimen}
+/pharmacy/prescriptions/{prescription}
 ```
 
-After rejecting a specimen:
+After starting dispensing:
 
 ```text
-/investigations/specimens/rejected
+/pharmacy/dispensing/{dispensing}
 ```
 
-After entering a result:
+After partial dispensing:
 
 ```text
-/investigations/results/verification
+/pharmacy/dispensing/{dispensing}
 ```
 
-After verifying a result:
+After marking ready for collection:
 
 ```text
-/investigations/results/{result}
+/pharmacy/collections
 ```
 
-After releasing a result:
+After confirming collection:
 
 ```text
-/investigations/requests/{request}
+/pharmacy/prescriptions/{prescription}
 ```
 
-After amending a result:
+After a medication return:
 
 ```text
-/investigations/results/{result}
+/pharmacy/returns/{return}
 ```
 
-Avoid hardcoding Investigation redirects inside domain services.
+After a reversal:
+
+```text
+/pharmacy/prescriptions/{prescription}
+```
+
+Avoid hardcoding Pharmacy redirects inside domain services.
 
 Use a workspace redirect resolver such as:
 
 ```php
-$workspaceRedirects->toInvestigationRequest($request);
-$workspaceRedirects->toSpecimen($specimen);
-$workspaceRedirects->toResult($result);
-$workspaceRedirects->toVerificationQueue();
-$workspaceRedirects->toInvestigationDashboard();
+$workspaceRedirects->toPrescription($prescription);
+$workspaceRedirects->toDispensing($dispensing);
+$workspaceRedirects->toCollectionQueue();
+$workspaceRedirects->toReturn($return);
+$workspaceRedirects->toPharmacyDashboard();
 ```
 
-Validation failures must return the user to the same `/investigations/*` route with input preserved.
+Validation failures must return users to the same `/pharmacy/*` route with input preserved.
 
 ---
 
-# Phase 27 — Login and Department Switching
+# Phase 28 — Login and Department Switching
 
-When a user logs in and their active department type is `investigation`, redirect them to:
-
-```text
-/investigations
-```
-
-When a multi-department user switches to an Investigation department, redirect them to:
+When a user logs in and their active department type is `pharmacy`, redirect them to:
 
 ```text
-/investigations
+/pharmacy
 ```
 
-When switching away from Investigations, redirect to the selected department’s appropriate workspace.
+When a multi-department user switches to a Pharmacy department, redirect them to:
 
-The menu, dashboard, route context, and data scoping must always use the active department.
+```text
+/pharmacy
+```
+
+When switching away from Pharmacy, redirect to the selected department’s appropriate workspace.
+
+The menu, dashboard, stock location, route context, and data scoping must always use the active department.
 
 Do not rely only on:
 
@@ -1511,43 +1604,43 @@ Do not rely only on:
 $user->department_id
 ```
 
-where the application supports multiple departments.
+where the application supports active department selection.
 
 ---
 
-# Phase 28 — Investigations Workspace Authorization
+# Phase 29 — Pharmacy Workspace Authorization
 
-The `/investigations` prefix is not authorization.
+The `/pharmacy` prefix is not authorization.
 
 Protect the workspace so access requires:
 
 1. An authenticated user.
 2. A valid active department.
-3. Active department type equal to `investigation`, unless authorized admin preview applies.
+3. Active department type equal to `pharmacy`, unless authorized admin preview applies.
 4. The required permission.
 5. The relevant module being enabled.
-6. Access to the requested patient, visit, request, specimen, or result.
-7. Active-department or laboratory-section assignment where required.
+6. Access to the requested patient, visit, prescription, dispensing, product, stock location, or batch.
+7. Active-department or stock-location assignment where required.
 
 A user from another department who manually enters:
 
 ```text
-/investigations/requests
+/pharmacy/prescriptions
 ```
 
-must not receive access merely because they possess a broad investigation-view permission.
+must not receive access merely because they possess a broad prescription-view permission.
 
 Use the project’s existing unauthorized workspace behaviour:
 
 * `403`
-* workspace unavailable page
-* safe redirect
+* Workspace unavailable page
+* Safe redirect
 
 Do not create inconsistent authorization behaviour.
 
 ---
 
-# Phase 29 — Permission Model
+# Phase 30 — Permission Model
 
 Reuse existing permissions wherever possible.
 
@@ -1556,40 +1649,40 @@ Only add permissions where the current model does not represent the required act
 Potential permissions may include:
 
 ```text
-investigations.workspace.view
-investigations.requests.view
-investigations.requests.manage
-investigations.requests.accept
-investigations.requests.cancel
+pharmacy.workspace.view
 
-investigations.specimens.view
-investigations.specimens.collect
-investigations.specimens.receive
-investigations.specimens.reject
-investigations.specimens.recollect
+pharmacy.prescriptions.view
+pharmacy.prescriptions.review
+pharmacy.prescriptions.accept
+pharmacy.prescriptions.cancel
 
-investigations.worklist.view
-investigations.worklist.manage
+pharmacy.safety_warnings.view
+pharmacy.safety_warnings.manage
+pharmacy.safety_overrides.manage
 
-investigations.results.view
-investigations.results.enter
-investigations.results.verify
-investigations.results.release
-investigations.results.amend
+pharmacy.dispensing.view
+pharmacy.dispensing.manage
+pharmacy.dispensing.partial
+pharmacy.dispensing.complete
+pharmacy.dispensing.substitute
 
-investigations.critical_results.view
-investigations.critical_results.manage
+pharmacy.collections.view
+pharmacy.collections.confirm
 
-investigations.services.view
-investigations.equipment.view
-investigations.quality_control.view
-investigations.quality_control.manage
-investigations.consumables.view
+pharmacy.returns.view
+pharmacy.returns.manage
+pharmacy.reversals.view
+pharmacy.reversals.manage
 
-investigations.handoffs.view
-investigations.handoffs.manage
-investigations.reports.view
-investigations.overrides.manage
+pharmacy.stock.view
+pharmacy.batches.view
+pharmacy.expiries.view
+
+pharmacy.patients.view
+pharmacy.handoffs.view
+pharmacy.handoffs.manage
+pharmacy.reports.view
+pharmacy.billing_overrides.manage
 ```
 
 Inspect current permission names before adding new permissions.
@@ -1600,44 +1693,45 @@ Menu visibility must follow permissions, but controllers, policies, form request
 
 ---
 
-# Phase 30 — Legacy Route Compatibility
+# Phase 31 — Legacy Route Compatibility
 
-Keep existing generic investigation routes operational for:
+Keep existing generic prescription, dispensing, stock, and patient routes operational for:
 
 * Other departments
-* Clinician result viewing
+* Clinician prescription viewing
 * Existing bookmarks
 * APIs
-* Analyzer integrations
 * Print flows
 * Signed URLs
 * Internal notifications
 * Background jobs
 * Payment callbacks
+* Insurance callbacks
 * Export downloads
+* Integrations
 
-For interactive browser requests from an active Investigation department, generic routes may redirect to Investigation equivalents where safe.
+For interactive browser requests from an active Pharmacy department, generic routes may redirect to Pharmacy equivalents where safe.
 
 Examples:
 
 ```text
-/investigation-requests/{request}
-→ /investigations/requests/{request}
+/prescriptions/{prescription}
+→ /pharmacy/prescriptions/{prescription}
 
-/lab/results/{result}
-→ /investigations/results/{result}
+/dispensing/{dispensing}
+→ /pharmacy/dispensing/{dispensing}
 
-/specimens/{specimen}
-→ /investigations/specimens/{specimen}
+/products/{product}
+→ /pharmacy/medications/{product}
 ```
 
 Do not blindly redirect:
 
 * JSON requests
 * APIs
-* analyzer callbacks
 * signed URLs
 * payment callbacks
+* insurance callbacks
 * print routes
 * exports
 * background requests
@@ -1647,24 +1741,25 @@ Avoid redirect loops.
 
 ---
 
-# Phase 31 — Breadcrumbs and Active Menu State
+# Phase 32 — Breadcrumbs and Active Menu State
 
-Investigations pages must display Investigation-specific breadcrumbs.
+Pharmacy pages must display Pharmacy-specific breadcrumbs.
 
 Examples:
 
 ```text
-Investigations > Dashboard
-Investigations > Requests
-Investigations > Requests > Request Details
-Investigations > Specimen Collection
-Investigations > Specimens > Specimen Details
-Investigations > Testing Worklist
-Investigations > Result Entry
-Investigations > Verification
-Investigations > Critical Results
-Investigations > Quality Control
-Investigations > Reports
+Pharmacy > Dashboard
+Pharmacy > Prescriptions
+Pharmacy > Prescriptions > Prescription Details
+Pharmacy > Clinical Review
+Pharmacy > Dispensing
+Pharmacy > Dispensing > Dispensing Details
+Pharmacy > Ready for Collection
+Pharmacy > Returns
+Pharmacy > Stock
+Pharmacy > Expiring Batches
+Pharmacy > Handoffs
+Pharmacy > Reports
 ```
 
 The sidebar must correctly highlight parent items for nested routes.
@@ -1672,9 +1767,9 @@ The sidebar must correctly highlight parent items for nested routes.
 For example:
 
 ```text
-investigations.requests.show
-investigations.specimens.show
-investigations.results.show
+pharmacy.prescriptions.show
+pharmacy.dispensing.show
+pharmacy.returns.show
 ```
 
 should highlight the appropriate parent menu item.
@@ -1683,19 +1778,20 @@ Use active-route patterns rather than exact route-name equality only.
 
 ---
 
-# Phase 32 — Shared View Workspace Context
+# Phase 33 — Shared View Workspace Context
 
-Pass a clear Investigations workspace context to shared views.
+Pass a clear Pharmacy workspace context to shared views.
 
 The context may include:
 
 ```php
 [
-    'workspaceKey' => 'investigations',
+    'workspaceKey' => 'pharmacy',
     'workspaceDepartment' => $activeDepartment,
-    'workspaceRoutePrefix' => 'investigations.',
-    'workspaceTitle' => __('investigations.workspace.title'),
-    'workspaceScope' => 'diagnostic_investigation',
+    'workspaceRoutePrefix' => 'pharmacy.',
+    'workspaceTitle' => __('pharmacy.workspace.title'),
+    'workspaceScope' => 'medication_fulfilment',
+    'workspaceStockLocation' => $stockLocation,
 ]
 ```
 
@@ -1708,9 +1804,9 @@ Shared views should use this context for:
 * Links
 * Form actions
 * Back buttons
-* Request navigation
-* Specimen navigation
-* Result navigation
+* Prescription navigation
+* Dispensing navigation
+* Stock navigation
 * Quick actions
 * Empty states
 * Notifications
@@ -1719,11 +1815,11 @@ Do not repeatedly inspect session state or department type inside Blade template
 
 ---
 
-# Phase 33 — Patient Privacy and Result Security
+# Phase 34 — Patient Privacy and Medication Security
 
-The Investigations workspace handles highly sensitive patient and diagnostic information.
+The Pharmacy workspace handles sensitive patient, clinical, prescription, and medication information.
 
-Ensure all existing privacy controls remain active, including:
+Ensure existing privacy controls remain active, including:
 
 * Patient-name masking where applicable
 * Protected phone and email fields
@@ -1731,101 +1827,106 @@ Ensure all existing privacy controls remain active, including:
 * Access auditing
 * Search-result masking
 * Export restrictions
-* Secure patient, visit, request, specimen, and result lookup
+* Secure patient, visit, prescription, and dispensing lookup
 * Privacy-aware notifications
 * Activity-log sanitization
 
-Result visibility must remain permission-controlled.
+Pharmacy users should only see the clinical context necessary for medication review and fulfilment.
 
-Do not expose unreleased results to users who only possess released-result access.
+Do not expose full consultation notes or unrelated clinical history without permission.
 
-Do not expose:
+Medication security must preserve:
 
-* Draft results
-* Unverified results
-* Internal laboratory comments
-* Quality-control notes
-* Analyzer raw messages
-
-to unauthorized clinical users.
-
-Critical-result notifications must avoid unnecessary sensitive details.
+* Prescription ownership
+* Stock traceability
+* Batch traceability
+* Dispensing traceability
+* Return traceability
+* Reversal traceability
+* User accountability
+* Audit history
 
 ---
 
-# Phase 34 — Clinical and Operational Safety
+# Phase 35 — Clinical and Operational Safety
 
 Preserve existing clinical and operational safeguards, including:
 
-* Correct patient identification
-* Correct specimen identification
-* Duplicate-request checks
-* Specimen suitability rules
-* Critical-result detection
-* Result-range validation
-* Unit validation
-* Result verification
-* Amendment history
-* Analyzer matching
-* Quality-control blocking
-* Permission-controlled release
+* Allergy detection
+* Duplicate active medication checks
+* Unusual-dose warnings
+* Missing-diagnosis policy
+* Prescription expiry checks
+* Quantity validation
+* Stock availability validation
+* Batch expiry validation
+* Quarantine and recall blocking
+* Over-dispensing prevention
+* Duplicate dispensing prevention
+* Payment and insurance authorization
+* Separation of dispensing and administration
+* Controlled overrides
 * Audit trails
 
 Do not allow:
 
-* Result release without required verification
-* Direct editing of released results
-* Silent replacement of rejected specimens
-* Silent cancellation of pending request items
-* Unmatched analyzer results to be released
-* Critical results to disappear without acknowledgement
-* Unauthorized users to amend results
+* Dispensing beyond prescribed quantity
+* Dispensing unavailable stock
+* Dispensing expired or quarantined stock
+* Silent modification of prescriptions
+* Unresolved blocking safety warnings to be ignored
+* Direct deletion of completed dispensing records
+* Direct editing of completed stock movements
+* Invalid returns to restore saleable stock
+* Collected medication to be reversed without appropriate review
 
 Overrides must be explicit, permission-controlled, reasoned, and audited.
 
 ---
 
-# Phase 35 — Activity Logging and Audit
+# Phase 36 — Activity Logging and Audit
 
-Record relevant Investigation actions through the existing `ActivityLog` infrastructure.
+Record relevant Pharmacy actions through the existing `ActivityLog` infrastructure.
 
 Audit events should cover actions such as:
 
-* Request accepted
-* Request cancelled
+* Prescription accepted
+* Prescription review completed
+* Clinical clarification requested
+* Safety warning acknowledged
+* Safety override applied
 * Payment or authorization override applied
-* Specimen collected
-* Specimen received
-* Specimen rejected
-* Recollection requested
-* Test assigned
-* Test processing started
-* Test processing completed
-* Result entered
-* Result corrected before release
-* Result verified
-* Result released
-* Critical result detected
-* Critical result notification recorded
-* Critical result acknowledged
-* Result amended
-* Analyzer result imported
-* Analyzer result unmatched
-* Quality-control failure recorded
-* Investigation handoff acknowledged
-* Investigation handoff resolved
+* Stock reserved
+* Stock reservation released
+* Dispensing started
+* Medication partially dispensed
+* Medication fully dispensed
+* Medication substituted
+* Prescription marked ready for collection
+* Medication collected
+* Counselling completed
+* Prescription cancelled
+* Dispensing reversed
+* Medication returned
+* Stock returned to available inventory
+* Stock moved to quarantine
+* Return rejected
+* Handoff acknowledged
+* Handoff resolved
 
-Do not log full sensitive result values where the audit policy prohibits them.
+Do not log full sensitive clinical values where the audit policy prohibits them.
 
 Audit records should include sufficient context such as:
 
 * Actor
 * Patient identifier
 * Visit identifier
-* Request identifier
-* Specimen identifier
-* Result identifier
+* Prescription identifier
+* Dispensing identifier
+* Medication or product identifier
+* Batch identifier
 * Department
+* Stock location
 * Action
 * Timestamp
 * Reason where required
@@ -1833,15 +1934,15 @@ Audit records should include sufficient context such as:
 
 ---
 
-# Phase 36 — Localization
+# Phase 37 — Localization
 
-Add complete English and French localization for the Investigations workspace.
+Add complete English and French localization for the Pharmacy workspace.
 
-Prefer an existing investigation localization file if one exists, otherwise use:
+Prefer an existing pharmacy localization file if one exists, otherwise use:
 
 ```text
-lang/en/investigations.php
-lang/fr/investigations.php
+lang/en/pharmacy.php
+lang/fr/pharmacy.php
 ```
 
 Include keys for:
@@ -1849,20 +1950,18 @@ Include keys for:
 * Workspace title
 * Dashboard
 * Menu sections
-* Request states
-* Payment and authorization states
-* Specimen states
-* Specimen rejection reasons
-* Testing worklist states
-* Result formats
-* Result states
-* Verification
-* Release
-* Critical results
-* Amendments
-* Analyzer and equipment states
-* Quality-control states
-* Consumables
+* Prescription states
+* Dispensing states
+* Payment and insurance states
+* Safety-warning states
+* Stock-availability states
+* Batch and expiry states
+* Partial-dispensing reasons
+* Substitution reasons
+* Collection states
+* Return outcomes
+* Cancellation reasons
+* Reversal reasons
 * Handoffs
 * Empty states
 * Quick actions
@@ -1873,67 +1972,59 @@ Include keys for:
 
 Maintain complete English and French parity.
 
-Do not hardcode visible Investigation labels in controllers, services, Blade templates, or JavaScript.
+Do not hardcode visible Pharmacy labels in controllers, services, Blade templates, or JavaScript.
 
 ---
 
-# Phase 37 — Investigation Reports and Statistics
+# Phase 38 — Pharmacy Reports and Statistics
 
-Create or adapt Investigation reports under:
+Create or adapt Pharmacy reports under:
 
 ```text
-/investigations/reports
+/pharmacy/reports
 ```
 
 Recommended reports include:
 
-* Request volume by date
-* Request volume by service
-* Request volume by department
-* Request volume by clinician
-* Emergency and urgent request report
-* Specimen collection report
-* Rejected specimen report
-* Recollection report
-* Test turnaround-time report
-* SLA breach report
-* Result completion report
-* Critical-result report
-* Result amendment report
-* Staff activity report
-* Equipment performance report where supported
-* Consumable usage report where supported
-
-Preserve structured statistics for positive and negative results.
-
-Monthly and period-based reporting should be able to calculate:
-
-* Total tests
-* Positive results
-* Negative results
-* Indeterminate results
-* Positivity rate
-* Result counts by service
-* Result counts by department
-* Result counts by patient category where authorized
-
-Do not attempt to derive positive or negative statistics from unstructured free text.
-
-Only configured positive/negative result fields should contribute to those statistics.
+* Prescription volume by date
+* Prescription volume by department
+* Prescription volume by clinician
+* Prescription volume by medication
+* Dispensing volume
+* Partial dispensing report
+* Unfulfilled prescription report
+* Ready-for-collection report
+* Uncollected medication report
+* Medication return report
+* Dispensing reversal report
+* Prescription cancellation report
+* Stockout report
+* Low-stock report
+* Expiry report
+* Medication utilization report
+* Emergency prescription report
+* Inpatient medication supply report
+* Insurance prescription report
+* Pharmacist activity report
+* Prescription turnaround-time report
+* Collection turnaround-time report
 
 Reports must respect:
 
 * Permissions
 * Active department
+* Stock location
 * Patient privacy
-* Aggregation thresholds where applicable
+* Aggregation rules
 * Export permissions
+
+Do not expose patient-level medication data in aggregate reports unless the user has the required detailed-report permission.
 
 ---
 
-# Phase 38 — Menu Configuration and Future Extensibility
+# Phase 39 — Menu Configuration and Future Extensibility
 
-Implement the Investigations menu through the existing menu registry or department menu profile service.
+Implement the Pharmacy menu through the existing menu registry or department menu profile service.
 
 Do not define it directly inside the sidebar Blade template.
 
@@ -1947,19 +2038,20 @@ The menu configuration should support:
 * Active-route patterns
 * Badge counts
 * Department-type availability
-* Active department scoping
-* Laboratory-section scoping
+* Active-department scoping
+* Stock-location scoping
 * Feature flags
-* Emergency-request counts
-* Critical-result counts
-* Overdue-test counts
-* Specimen-rejection counts
+* Pending-prescription counts
+* Safety-warning counts
+* Ready-for-collection counts
+* Low-stock counts
+* Stockout counts
+* Expiry-alert counts
 
 The architecture must remain extensible for future department menu personalization, including:
 
 ```text
 radiology
-pharmacy
 finance
 stores
 maternity
@@ -1975,116 +2067,123 @@ Do not implement those other workspaces in this phase.
 
 ---
 
-# Phase 39 — Focused Automated Verification
+# Phase 40 — Focused Automated Verification
 
-Add focused automated tests for the Investigations workspace.
+Add focused automated tests for the Pharmacy workspace.
 
 ## Route tests
 
 Verify:
 
-* Investigation routes exist.
-* Route names use `investigations.*`.
-* URLs use `/investigations/*`.
-* Investigation department middleware is attached.
+* Pharmacy routes exist.
+* Route names use `pharmacy.*`.
+* URLs use `/pharmacy/*`.
+* Pharmacy department middleware is attached.
 * Generic routes remain available where required.
 
 ## Access tests
 
 Verify:
 
-* An Investigation department user can access authorized Investigation pages.
-* A non-Investigation department user cannot access the workspace.
+* A Pharmacy department user can access authorized Pharmacy pages.
+* A non-Pharmacy department user cannot access the workspace.
 * Users without the required permission cannot access protected actions.
 * Admin preview continues working where supported.
 * Multi-department active context is respected.
-* Active `department_id` scoping is respected.
+* Stock-location scoping is respected.
 
 ## Dashboard tests
 
 Verify:
 
-* The Investigations dashboard loads.
-* Metrics include only services mapped to the active Investigation department.
-* Radiology services do not leak into the workspace incorrectly.
-* Critical-result and overdue counts are accurate.
-* Links point to `/investigations/*`.
+* The Pharmacy dashboard loads.
+* Metrics include only prescriptions assigned to the active Pharmacy department.
+* Stock metrics use the active stock location.
+* Safety-warning and stockout counts are accurate.
+* Links point to `/pharmacy/*`.
 * Sensitive information remains protected.
 * Empty states render safely.
 
-## Request tests
+## Prescription tests
 
 Verify:
 
-* Requests appear in the correct worklist.
-* Payment and authorization states are reflected correctly.
-* Emergency and urgent requests are prioritized.
-* Multi-item requests retain item-level states.
-* Cancelling one item does not incorrectly cancel unrelated items.
+* Prescriptions appear in the correct worklists.
+* Payment and insurance states are reflected correctly.
+* Emergency and inpatient prescriptions are prioritized where configured.
+* Clinical-review requirements are enforced.
+* Cancelled prescriptions leave active worklists.
+* Multi-item prescriptions retain item-level state.
 
-## Specimen tests
-
-Verify:
-
-* Specimen collection uses the existing request.
-* Duplicate specimen records are not created incorrectly.
-* Receipt and accessioning are audited.
-* Rejection preserves the original specimen.
-* Recollection is created or exposed correctly.
-* Unaffected request items remain processable.
-
-## Result-format tests
+## Safety tests
 
 Verify:
 
-* Free-text results save correctly.
-* Numeric results validate values, units, and ranges.
-* Boolean results remain structured.
-* Positive and negative results remain structured.
-* Positive and negative statistics calculate correctly.
-* Structured result schemas remain supported.
+* Allergy warnings remain active.
+* Duplicate active medication warnings remain active.
+* Missing-diagnosis policy remains active.
+* Unusual-dose warnings remain active.
+* Blocking warnings prevent dispensing.
+* Overrides require permission and reason.
+* Overrides are audited.
 
-## Verification and release tests
-
-Verify:
-
-* Results requiring verification cannot be released early.
-* Unauthorized users cannot verify or release results.
-* Critical results follow the required workflow.
-* Multi-item requests complete only when all required items are complete.
-* Released results become visible to authorized clinicians.
-
-## Amendment tests
+## Stock tests
 
 Verify:
 
-* Released results cannot be overwritten directly.
-* Amendments preserve the original result.
-* Amendments require a reason.
-* Amendments are verified and released correctly.
-* Amendment actions are audited.
+* Stock availability uses the active stock location.
+* Reservations prevent double allocation.
+* Expired batches cannot be dispensed.
+* Quarantined or recalled batches cannot be dispensed.
+* Batch selection follows the configured policy.
+* Failed transactions do not create partial stock deductions.
+* Cancellation releases unused reservations.
 
-## Analyzer tests
+## Dispensing tests
 
-Where analyzer integration exists, verify:
+Verify:
 
-* Matched results import correctly.
-* Unmatched results do not auto-release.
-* Invalid results are blocked.
-* Critical-result detection still runs.
-* Analyzer imports are audited.
+* Dispensing cannot exceed prescribed quantity.
+* Dispensing cannot exceed available stock.
+* Full dispensing updates prescription state correctly.
+* Partial dispensing preserves outstanding quantity.
+* Later dispensing cannot exceed the remaining quantity.
+* Dispensing records preserve batch traceability.
+* Medication administration is not recorded by the Pharmacy dispensing action.
+
+## Collection tests
+
+Verify:
+
+* Dispensed medication does not automatically become collected.
+* Ready-for-collection state is separate from collected.
+* Collection records the responsible user and time.
+* Counselling requirements are enforced where configured.
+* Uncollected medication follows the configured return-to-stock process.
+
+## Return and reversal tests
+
+Verify:
+
+* Completed dispensing cannot be deleted directly.
+* Reversals require a reason.
+* Stock is only restored when eligible.
+* Invalid returns do not restore saleable stock.
+* Quarantined returns are handled correctly.
+* Billing corrections are triggered where required.
+* Return and reversal actions are audited.
 
 ## Redirect tests
 
 Verify:
 
-* Login redirects to `/investigations`.
-* Switching to an Investigation department redirects to `/investigations`.
-* Request actions remain under `/investigations/*`.
-* Specimen actions remain under `/investigations/*`.
-* Result-entry, verification, release, and amendment actions remain under `/investigations/*`.
+* Login redirects to `/pharmacy`.
+* Switching to Pharmacy redirects to `/pharmacy`.
+* Prescription actions remain under `/pharmacy/*`.
+* Dispensing actions remain under `/pharmacy/*`.
+* Collection, return, reversal, and stock links remain under `/pharmacy/*`.
 * No redirect loops occur.
-* JSON, analyzer, API, export, print, signed, and callback requests are not incorrectly redirected.
+* JSON, API, payment, insurance, signed, print, export, and integration requests are not incorrectly redirected.
 
 ## Privacy and audit tests
 
@@ -2092,116 +2191,132 @@ Verify:
 
 * Patient masking remains active.
 * Protected fields require permission.
-* Draft and unverified results are not exposed to unauthorized users.
-* Investigation actions generate required audit records.
-* Sensitive result values are not exposed through alternate views.
+* Pharmacy users only see authorized clinical context.
+* Pharmacy actions generate required audit records.
+* Sensitive values are not exposed through alternate Pharmacy views.
 
-Run focused Investigations workspace tests and essential route, view, localization, billing, integration, and audit checks during implementation.
+Run focused Pharmacy workspace tests and essential route, view, localization, stock, billing, integration, and audit checks during implementation.
 
 Do not run the full UHMS suite after each phase.
 
-Run one broad relevant suite after all Investigations workspace phases are complete.
+Run one broad relevant suite after all Pharmacy workspace phases are complete.
 
 ---
 
-# Phase 40 — Manual Acceptance Scenarios
+# Phase 41 — Manual Acceptance Scenarios
 
-## Scenario A — Investigation login
+## Scenario A — Pharmacy login
 
-1. Log in as a user whose active department type is `investigation`.
-2. Confirm the landing URL is `/investigations`.
-3. Confirm the Investigations menu is displayed.
+1. Log in as a user whose active department type is `pharmacy`.
+2. Confirm the landing URL is `/pharmacy`.
+3. Confirm the Pharmacy-specific menu is displayed.
 4. Confirm unrelated department menus are absent.
 
-## Scenario B — Request receipt
+## Scenario B — Prescription receipt
 
-1. Open the pending request worklist.
-2. Select a new request.
-3. Confirm payment or authorization state is visible.
-4. Accept the request.
-5. Confirm the redirect remains under `/investigations/*`.
+1. Open the pending prescription worklist.
+2. Select a new prescription.
+3. Confirm payment, insurance, stock, and safety states are visible.
+4. Accept the prescription.
+5. Confirm the redirect remains under `/pharmacy/*`.
 6. Confirm the action is audited.
 
-## Scenario C — Specimen collection
+## Scenario C — Clinical safety warning
 
-1. Open the collection worklist.
-2. Select a patient.
-3. Record specimen collection.
-4. Confirm labeling and specimen type.
-5. Confirm the specimen appears in the receipt worklist.
-6. Confirm all URLs remain under `/investigations/*`.
+1. Open a prescription with an allergy or dose warning.
+2. Confirm the warning is visible.
+3. Attempt to dispense without resolving it.
+4. Confirm dispensing is blocked.
+5. Apply an authorized override with a reason.
+6. Confirm the override is audited.
 
-## Scenario D — Specimen rejection
+## Scenario D — Full dispensing
 
-1. Open a received specimen.
-2. Reject it with a structured reason.
-3. Confirm the original specimen remains preserved.
-4. Confirm recollection is required.
-5. Confirm the requesting department is notified where supported.
+1. Open an authorized prescription.
+2. Start dispensing.
+3. Select valid stock batches.
+4. Dispense the full prescribed quantity.
+5. Mark the medication ready for collection.
+6. Confirm stock and prescription states update correctly.
+
+## Scenario E — Partial dispensing
+
+1. Open a prescription with insufficient stock.
+2. Dispense the available quantity.
+3. Confirm the prescription becomes partially dispensed.
+4. Confirm the remaining quantity is preserved.
+5. Complete the balance later.
+6. Confirm over-dispensing is prevented.
+
+## Scenario F — Batch expiry
+
+1. Open a medication with several batches.
+2. Confirm the configured batch-selection policy is used.
+3. Attempt to select an expired batch.
+4. Confirm the system blocks it.
+5. Confirm available valid batches can still be dispensed.
+
+## Scenario G — Patient collection
+
+1. Open the ready-for-collection queue.
+2. Select a prescription.
+3. Complete required counselling.
+4. Confirm collection.
+5. Confirm the medication becomes collected.
 6. Confirm the action is audited.
 
-## Scenario E — Numeric result
+## Scenario H — Inpatient medication supply
 
-1. Open a numeric test.
-2. Enter a result and unit.
-3. Confirm reference range and abnormal indicators.
-4. Submit for verification.
-5. Verify and release the result.
-6. Confirm the result appears in the clinician-facing workflow.
+1. Open an inpatient medication request.
+2. Confirm ward, admission, and bed context.
+3. Dispense the authorized supply.
+4. Confirm the medication remains separate from Nursing administration records.
+5. Confirm all URLs remain under `/pharmacy/*`.
 
-## Scenario F — Positive/negative result
+## Scenario I — Emergency prescription
 
-1. Open a positive/negative investigation.
-2. Record a positive result.
-3. Verify and release it.
-4. Confirm the structured value is preserved.
-5. Confirm the report statistics count it as positive.
+1. Open an emergency prescription without ordinary payment completion.
+2. Confirm the configured emergency policy is applied.
+3. Complete an authorized urgent dispensing.
+4. Confirm the override or exception is visible and audited.
 
-## Scenario G — Critical result
+## Scenario J — Return
 
-1. Enter a value that triggers a critical rule.
-2. Confirm the result appears in the critical worklist.
-3. Record notification to the clinician.
-4. Confirm acknowledgement and escalation states.
-5. Confirm the result remains visible until appropriately resolved.
+1. Open a completed dispensing.
+2. Record a patient return.
+3. Assess packaging and storage suitability.
+4. Place the medication in available stock, quarantine, or destruction according to policy.
+5. Confirm stock and billing updates are correct.
+6. Confirm the return is audited.
 
-## Scenario H — Result amendment
+## Scenario K — Reversal
 
-1. Open a released result.
-2. Attempt direct editing.
-3. Confirm direct editing is blocked.
-4. Start an amendment.
-5. Enter the reason and corrected result.
-6. Verify and release the amendment.
-7. Confirm the original result remains visible in history.
+1. Open a dispensing completed in error.
+2. Start a reversal.
+3. Record the reason.
+4. Confirm eligible stock is restored.
+5. Confirm billing correction is triggered where required.
+6. Confirm the original dispensing remains in history.
 
-## Scenario I — Multi-item request
+## Scenario L — Active department scoping
 
-1. Open a request containing several investigation items.
-2. Complete only one item.
-3. Confirm the request does not become fully completed.
-4. Complete the remaining items.
-5. Confirm the request then reaches its final state.
-
-## Scenario J — Active department scoping
-
-1. Use a user assigned to multiple Investigation departments.
+1. Use a user assigned to multiple Pharmacy departments.
 2. Switch the active department.
-3. Confirm the worklists change to the selected department.
-4. Confirm requests from unauthorized sections are not displayed.
+3. Confirm prescriptions and stock change to the selected Pharmacy.
+4. Confirm unauthorized stock locations are not visible.
 
-## Scenario K — Permission control
+## Scenario M — Permission control
 
-1. Remove result-verification permission.
-2. Confirm the verification menu item disappears.
-3. Enter the verification route directly.
+1. Remove dispensing-completion permission.
+2. Confirm the completion action disappears.
+3. Enter the route directly.
 4. Confirm access is denied.
 
-## Scenario L — Legacy compatibility
+## Scenario N — Legacy compatibility
 
-1. Enter a generic investigation route as an Investigation user.
-2. Confirm it safely resolves or redirects to the Investigations equivalent where configured.
-3. Confirm APIs, analyzer integrations, signed URLs, callbacks, print routes, and exports remain unaffected.
+1. Enter a generic prescription or dispensing route as a Pharmacy user.
+2. Confirm it safely resolves or redirects to the Pharmacy equivalent where configured.
+3. Confirm APIs, payment callbacks, insurance callbacks, signed URLs, print routes, and exports remain unaffected.
 
 ---
 
@@ -2209,37 +2324,41 @@ Run one broad relevant suite after all Investigations workspace phases are compl
 
 The implementation is accepted only when all the following are true:
 
-1. Users with an active department type of `investigation` receive a dedicated Investigations menu.
-2. Their default dashboard uses `/investigations`.
-3. Supported investigation pages use `/investigations/*` URLs.
-4. Route names use the `investigations.*` namespace.
-5. Worklists are scoped to the active Investigation department.
-6. Radiology requests do not incorrectly appear unless explicitly mapped.
-7. Forms submit through Investigation routes.
-8. Redirects remain inside the Investigations workspace.
-9. Breadcrumbs and active menu states are Investigation-aware.
+1. Users with an active department type of `pharmacy` receive a dedicated Pharmacy menu.
+2. Their default dashboard uses `/pharmacy`.
+3. Supported Pharmacy pages use `/pharmacy/*` URLs.
+4. Route names use the `pharmacy.*` namespace.
+5. Prescription and stock worklists are scoped to the active Pharmacy department.
+6. Stock availability uses the correct Pharmacy stock location.
+7. Forms submit through Pharmacy routes.
+8. Redirects remain inside the Pharmacy workspace.
+9. Breadcrumbs and active menu states are Pharmacy-aware.
 10. Permissions and enabled modules control menu visibility.
-11. A non-Investigation department user cannot access the workspace.
+11. A non-Pharmacy department user cannot access the workspace.
 12. Multi-department users are evaluated using the active department.
-13. Existing request, specimen, result, billing, insurance, inventory, journey, integration, reporting, and audit logic is reused.
-14. Core investigation and billing logic is not duplicated.
-15. Specimen collection, receipt, rejection, and recollection are fully tracked.
-16. Result formats remain structured and service-configurable.
-17. Numeric results preserve units and reference ranges.
-18. Positive and negative results remain usable for monthly statistics.
-19. Results requiring verification cannot be released early.
-20. Critical results use a visible acknowledgement and escalation workflow.
-21. Released results cannot be overwritten directly.
-22. Result amendments preserve the original result and audit history.
-23. Analyzer results cannot bypass matching, validation, verification, or critical-result checks.
-24. Generic routes remain functional for other departments and integrations.
-25. APIs, analyzer callbacks, signed URLs, print routes, exports, and payment callbacks are not incorrectly redirected.
-26. Patient privacy and result-security protections remain fully active.
-27. Relevant Investigation actions are audited.
-28. English and French localization are complete and in parity.
-29. Focused Investigations workspace tests pass.
-30. One broad relevant suite passes after all phases are complete.
-31. No broken links, route loops, duplicate route names, incorrect department leakage, silent result replacement, or Radiology workflow contamination remain.
+13. Existing prescription, dispensing, safety, billing, insurance, stock, inventory, journey, and audit logic is reused.
+14. Core prescription, dispensing, and stock logic is not duplicated.
+15. Allergy, duplicate-medication, diagnosis, and unusual-dose checks remain active.
+16. Blocking safety warnings prevent dispensing.
+17. Safety overrides are permission-controlled, reasoned, and audited.
+18. Payment and insurance policies remain active.
+19. Emergency and inpatient exceptions use configured policies.
+20. Stock reservations prevent double allocation.
+21. Expired, quarantined, recalled, or unavailable stock cannot be dispensed.
+22. Dispensing cannot exceed prescribed or available quantity.
+23. Partial dispensing preserves the outstanding balance.
+24. Patient collection remains separate from dispensing completion.
+25. Pharmacy dispensing remains separate from medication administration.
+26. Returns and reversals preserve stock and billing integrity.
+27. Completed dispensing records cannot be silently deleted or overwritten.
+28. Generic routes remain functional for other departments and integrations.
+29. APIs, payment callbacks, insurance callbacks, signed URLs, print routes, and exports are not incorrectly redirected.
+30. Patient privacy and medication security remain fully active.
+31. Relevant Pharmacy actions are audited.
+32. English and French localization are complete and in parity.
+33. Focused Pharmacy workspace tests pass.
+34. One broad relevant suite passes after all phases are complete.
+35. No broken links, route loops, duplicate route names, stock-location leakage, duplicate stock deductions, silent prescription modification, or Nursing-administration contamination remain.
 
 ---
 
@@ -2247,56 +2366,60 @@ The implementation is accepted only when all the following are true:
 
 Provide:
 
-1. Investigations workspace route group.
-2. Investigation-specific controllers or thin adapters where required.
-3. Investigations operations dashboard.
-4. Investigation department menu profile.
-5. Request worklists.
-6. Investigation request workspace.
-7. Payment and authorization integration.
-8. Specimen collection workflow.
-9. Specimen receipt and accessioning.
-10. Specimen rejection and recollection.
-11. Testing worklists.
-12. Result-format integration.
-13. Result-entry workflow.
-14. Verification and release workflow.
-15. Critical-result workflow.
-16. Result-amendment workflow.
-17. Analyzer and equipment integration where supported.
-18. Quality-control integration where supported.
-19. Consumable and reagent visibility.
-20. Positive and negative result reporting.
-21. Workspace-aware URL resolver updates.
-22. Workspace-aware redirect resolver updates.
-23. Updated shared links and forms.
-24. Login and department-switch integration.
-25. Investigation breadcrumbs and active-menu handling.
-26. Permission integration.
-27. Patient privacy and result-security integration.
-28. English and French localization.
-29. Focused feature tests.
-30. A final implementation report containing:
+1. Pharmacy workspace route group.
+2. Pharmacy-specific controllers or thin adapters where required.
+3. Pharmacy operations dashboard.
+4. Pharmacy department menu profile.
+5. Prescription worklists.
+6. Pharmacy prescription workspace.
+7. Clinical-review and medication-safety integration.
+8. Payment, insurance, sponsor, emergency, and inpatient policy integration.
+9. Active-department and stock-location scoping.
+10. Stock reservation and availability integration.
+11. Batch and expiry selection.
+12. Full and partial dispensing workflows.
+13. Medication substitution workflow.
+14. Medication labels and counselling integration.
+15. Ready-for-collection and patient-collection workflow.
+16. Inpatient Pharmacy workflow.
+17. Emergency Pharmacy workflow.
+18. Prescription cancellation.
+19. Dispensing reversal.
+20. Medication return workflow.
+21. Stock alert views.
+22. Pharmacy handoff integration.
+23. Workspace-aware URL resolver updates.
+24. Workspace-aware redirect resolver updates.
+25. Updated shared links and forms.
+26. Login and department-switch integration.
+27. Pharmacy breadcrumbs and active-menu handling.
+28. Permission integration.
+29. Patient privacy and medication-security integration.
+30. English and French localization.
+31. Focused feature tests.
+32. A final implementation report containing:
 
 * Files created
 * Files modified
-* Investigation route map
-* Investigation menu map
-* Request worklist categories
+* Pharmacy route map
+* Pharmacy menu map
+* Prescription worklist categories
 * Dashboard metrics
-* Specimen workflow
-* Result formats
-* Verification and release behaviour
-* Critical-result behaviour
-* Result-amendment behaviour
-* Analyzer integration behaviour
-* Positive and negative reporting behaviour
-* Active department scoping
+* Clinical-review behaviour
+* Medication-safety behaviour
+* Payment and insurance behaviour
+* Stock-location scoping
+* Reservation behaviour
+* Batch-selection behaviour
+* Full and partial dispensing behaviour
+* Collection behaviour
+* Inpatient and emergency Pharmacy behaviour
+* Return and reversal behaviour
 * Reused services
 * Redirect behaviour
 * Permissions used
 * Patient privacy checks
-* Result-security checks
+* Medication-security checks
 * Audit events
 * Tests executed
 * Test results
@@ -2304,4 +2427,4 @@ Provide:
 
 Implement the work fully.
 
-Do not stop at planning, route registration, menu configuration, dashboard layout, or request listing alone. The final implementation must provide a functional, secure, department-specific Investigations workspace throughout the complete diagnostic investigation lifecycle.
+Do not stop at planning, route registration, menu configuration, dashboard layout, prescription listing, or stock display alone. The final implementation must provide a functional, safe, stock-aware, department-specific Pharmacy workspace throughout the complete prescription-fulfilment lifecycle.
