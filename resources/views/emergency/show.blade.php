@@ -68,9 +68,11 @@
     .emergency-kpi { border-left: 4px solid rgba(220, 53, 69, .65); }
     .vitals-val { font-size: 1.1rem; font-weight: 700; }
     .vitals-label { font-size: .68rem; color: #6c757d; }
+    /* Vitals small multiples — each vital gets its own auto-scaled mini chart. */
+    .vitals-tile { border: 1px solid var(--bs-border-color, #e9ecef); border-radius: .5rem; padding: .5rem .65rem .35rem; height: 100%; }
+    .vitals-spark-wrap { position: relative; height: 76px; margin-top: .15rem; }
     .er-section-title { font-size: .78rem; letter-spacing: .02em; text-transform: uppercase; color: #6c757d; font-weight: 600; }
     .er-scroll { max-height: 360px; overflow: auto; }
-    .er-chart-wrap { position: relative; height: 190px; min-height: 190px; }
     /* Make select2 single selects match Bootstrap form-select sizing on this page. */
     .select2-container { width: 100% !important; }
     .select2-container--default .select2-selection--single {
@@ -241,14 +243,55 @@
             </div>
             <div class="card-body">
                 @if($case->vitals->isNotEmpty())
-                    <div class="row g-2 mb-3 text-center">
-                        <div class="col-6 col-md-3"><div class="vitals-val">{{ $latestVitals?->blood_pressure ?? '-' }}</div><div class="vitals-label">BP</div></div>
-                        <div class="col-6 col-md-3"><div class="vitals-val">{{ $latestVitals?->heart_rate ?? '-' }}</div><div class="vitals-label">HR</div></div>
-                        <div class="col-6 col-md-3"><div class="vitals-val">{{ $latestVitals?->respiratory_rate ?? '-' }}</div><div class="vitals-label">RR</div></div>
-                        <div class="col-6 col-md-3"><div class="vitals-val">{{ $latestVitals?->spo2 ?? '-' }}</div><div class="vitals-label">SpO2</div></div>
-                    </div>
-                    <div class="er-chart-wrap">
-                        <canvas id="emergencyVitalsChart"></canvas>
+                    {{-- One auto-scaled mini trend per vital: a wildly different value
+                         range per vital (BP ~120 vs Temp ~37) makes a single shared
+                         y-axis unreadable. --}}
+                    <div class="row g-2">
+                        <div class="col-6 col-md-4 col-xl">
+                            <div class="vitals-tile">
+                                <div class="d-flex align-items-baseline justify-content-between">
+                                    <span class="vitals-val">{{ $latestVitals?->blood_pressure ?? '-' }}</span>
+                                    <span class="vitals-label">BP</span>
+                                </div>
+                                <div class="vitals-spark-wrap"><canvas id="vitalsSparkBp"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-xl">
+                            <div class="vitals-tile">
+                                <div class="d-flex align-items-baseline justify-content-between">
+                                    <span class="vitals-val">{{ $latestVitals?->heart_rate ?? '-' }}</span>
+                                    <span class="vitals-label">HR</span>
+                                </div>
+                                <div class="vitals-spark-wrap"><canvas id="vitalsSparkHr"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-xl">
+                            <div class="vitals-tile">
+                                <div class="d-flex align-items-baseline justify-content-between">
+                                    <span class="vitals-val">{{ $latestVitals?->respiratory_rate ?? '-' }}</span>
+                                    <span class="vitals-label">RR</span>
+                                </div>
+                                <div class="vitals-spark-wrap"><canvas id="vitalsSparkRr"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-xl">
+                            <div class="vitals-tile">
+                                <div class="d-flex align-items-baseline justify-content-between">
+                                    <span class="vitals-val">{{ $latestVitals?->spo2 ?? '-' }}</span>
+                                    <span class="vitals-label">SpO2</span>
+                                </div>
+                                <div class="vitals-spark-wrap"><canvas id="vitalsSparkSpo2"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-xl">
+                            <div class="vitals-tile">
+                                <div class="d-flex align-items-baseline justify-content-between">
+                                    <span class="vitals-val">{{ $latestVitals?->temperature ?? '-' }}</span>
+                                    <span class="vitals-label">{{ __('emergency.vitals_temp') }}</span>
+                                </div>
+                                <div class="vitals-spark-wrap"><canvas id="vitalsSparkTemp"></canvas></div>
+                            </div>
+                        </div>
                     </div>
                     <div class="table-responsive mt-3 er-scroll">
                         <table class="table table-sm align-middle mb-0">
@@ -984,23 +1027,47 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var vitalsChartData = @json($vitalsChartData);
-    var chartEl = document.getElementById('emergencyVitalsChart');
-    if (chartEl && window.Chart && vitalsChartData.labels && vitalsChartData.labels.length) {
-        new Chart(chartEl, {
-            type: 'line',
-            data: {
-                labels: vitalsChartData.labels,
-                datasets: [
-                    { label: 'Systolic BP', data: vitalsChartData.systolic, borderColor: '#6f42c1', tension: .3, spanGaps: true },
-                    { label: 'Diastolic BP', data: vitalsChartData.diastolic, borderColor: '#20c997', tension: .3, spanGaps: true },
-                    { label: 'Heart Rate', data: vitalsChartData.heart_rate, borderColor: '#dc3545', tension: .3, spanGaps: true },
-                    { label: 'Respiratory Rate', data: vitalsChartData.respiratory_rate, borderColor: '#0d6efd', tension: .3, spanGaps: true },
-                    { label: 'Temperature', data: vitalsChartData.temperature, borderColor: '#fd7e14', tension: .3, spanGaps: true },
-                    { label: 'SpO2', data: vitalsChartData.spo2, borderColor: '#198754', tension: .3, spanGaps: true }
-                ]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: false } } }
-        });
+    if (window.Chart && vitalsChartData.labels && vitalsChartData.labels.length) {
+        var vitalsSpark = function (id, series) {
+            var el = document.getElementById(id);
+            if (!el || !series.some(function (s) { return s.data && s.data.some(function (v) { return v !== null && v !== undefined; }); })) {
+                return;
+            }
+            new Chart(el, {
+                type: 'line',
+                data: {
+                    labels: vitalsChartData.labels,
+                    datasets: series.map(function (s) {
+                        return {
+                            label: s.label, data: s.data, borderColor: s.color,
+                            backgroundColor: s.color, borderWidth: 2,
+                            tension: .3, spanGaps: true, pointRadius: 2.5, pointHoverRadius: 4
+                        };
+                    })
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    interaction: { mode: 'nearest', intersect: false },
+                    scales: {
+                        x: { display: false },
+                        y: {
+                            beginAtZero: false, grace: '15%',
+                            ticks: { maxTicksLimit: 3, font: { size: 9 }, color: '#adb5bd' },
+                            grid: { display: false }, border: { display: false }
+                        }
+                    }
+                }
+            });
+        };
+        vitalsSpark('vitalsSparkBp', [
+            { label: 'Systolic', data: vitalsChartData.systolic, color: '#6f42c1' },
+            { label: 'Diastolic', data: vitalsChartData.diastolic, color: '#20c997' }
+        ]);
+        vitalsSpark('vitalsSparkHr', [{ label: 'Heart Rate', data: vitalsChartData.heart_rate, color: '#dc3545' }]);
+        vitalsSpark('vitalsSparkRr', [{ label: 'Respiratory Rate', data: vitalsChartData.respiratory_rate, color: '#0d6efd' }]);
+        vitalsSpark('vitalsSparkSpo2', [{ label: 'SpO2', data: vitalsChartData.spo2, color: '#198754' }]);
+        vitalsSpark('vitalsSparkTemp', [{ label: 'Temperature', data: vitalsChartData.temperature, color: '#fd7e14' }]);
     }
 
     var modalToOpen = @json($shouldOpenTriageModal ? 'triageModal' : ($shouldOpenControlSheetModal ? 'controlSheetModal' : null));

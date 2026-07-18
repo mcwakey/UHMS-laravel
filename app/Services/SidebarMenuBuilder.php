@@ -77,6 +77,14 @@ class SidebarMenuBuilder
             );
         }
 
+        if ($activeType === DepartmentType::STORES) {
+            return $this->finaliseSections(
+                $this->storesSections($unreadNotifications),
+                $user,
+                $currentRouteName,
+            );
+        }
+
         // Non-admin clinical staff get a focused consultation sidebar
         if ($user->isConsultationUser() && ! $user->isAdminUser()) {
             return $this->finaliseSections(
@@ -2435,47 +2443,7 @@ class SidebarMenuBuilder
                 ]],
             ],
             [
-                'title' => __('emergency.menu.command'),
-                'items' => [
-                    [
-                        'label' => __('emergency.menu.emergency_board'),
-                        'icon' => 'ti ti-ambulance',
-                        'route' => 'emergency.board',
-                        'active_patterns' => ['emergency.board', 'emergency.queue.*', 'emergency.cases.index'],
-                        'permission' => 'emergency.board.view',
-                    ],
-                    [
-                        'label' => __('emergency.menu.critical_queue'),
-                        'icon' => 'ti ti-alert-triangle',
-                        'route' => 'emergency.queue.critical',
-                        'active_patterns' => ['emergency.queue.critical'],
-                        'permission' => 'emergency.board.view',
-                    ],
-                    [
-                        'label' => __('emergency.menu.resuscitation'),
-                        'icon' => 'ti ti-heartbeat',
-                        'route' => 'emergency.resuscitation.index',
-                        'active_patterns' => ['emergency.resuscitation.*'],
-                        'permission' => 'emergency.board.view',
-                    ],
-                    [
-                        'label' => __('emergency.menu.observation'),
-                        'icon' => 'ti ti-eye-heart',
-                        'route' => 'emergency.observations.index',
-                        'active_patterns' => ['emergency.observations.*'],
-                        'permission' => 'emergency.board.view',
-                    ],
-                    [
-                        'label' => __('emergency.menu.new_case'),
-                        'icon' => 'ti ti-plus',
-                        'route' => 'emergency.cases.create',
-                        'active_patterns' => ['emergency.cases.create'],
-                        'permission' => 'emergency.case.create',
-                    ],
-                ],
-            ],
-            [
-                'title' => __('emergency.menu.patient_flow'),
+                'title' => 'Patient Management',
                 'items' => [
                     [
                         'label' => __('emergency.menu.patients'),
@@ -2485,6 +2453,11 @@ class SidebarMenuBuilder
                         'permission' => 'patients.view',
                         'module' => 'patients',
                     ],
+                ],
+            ],
+            [
+                'title' => 'Attendance',
+                'items' => [
                     [
                         'label' => __('emergency.menu.visits'),
                         'icon' => 'ti ti-calendar-check',
@@ -2493,14 +2466,43 @@ class SidebarMenuBuilder
                         'permission' => 'visits.view',
                         'module' => 'visits',
                     ],
-                    [
-                        'label' => __('emergency.menu.triage'),
-                        'icon' => 'ti ti-triangles',
-                        'route' => 'emergency.triage.index',
-                        'active_patterns' => ['emergency.triage.*', 'emergency.vitals.*'],
-                        'permission' => 'vitals.view',
-                        'module' => 'triage',
-                    ],
+                    // [
+                    //     'label' => __('emergency.menu.triage'),
+                    //     'icon' => 'ti ti-triangles',
+                    //     'route' => 'emergency.triage.index',
+                    //     'active_patterns' => ['emergency.triage.*', 'emergency.vitals.*'],
+                    //     'permission' => 'vitals.view',
+                    //     'module' => 'triage',
+                    // ],
+                    // [
+                    //     'label' => __('emergency.menu.consultations'),
+                    //     'icon' => 'ti ti-stethoscope',
+                    //     'route' => 'emergency.consultations.index',
+                    //     'active_patterns' => ['emergency.consultations.*'],
+                    //     'permission' => 'consultations.view',
+                    //     'module' => 'consultation',
+                    // ],
+                ],
+            ],
+            [
+                'title' => 'Clinical',
+                'items' => [
+                    // [
+                    //     'label' => __('emergency.menu.visits'),
+                    //     'icon' => 'ti ti-calendar-check',
+                    //     'route' => 'emergency.visits.index',
+                    //     'active_patterns' => ['emergency.visits.*'],
+                    //     'permission' => 'visits.view',
+                    //     'module' => 'visits',
+                    // ],
+                    // [
+                    //     'label' => __('emergency.menu.triage'),
+                    //     'icon' => 'ti ti-triangles',
+                    //     'route' => 'emergency.triage.index',
+                    //     'active_patterns' => ['emergency.triage.*', 'emergency.vitals.*'],
+                    //     'permission' => 'vitals.view',
+                    //     'module' => 'triage',
+                    // ],
                     [
                         'label' => __('emergency.menu.consultations'),
                         'icon' => 'ti ti-stethoscope',
@@ -2509,8 +2511,85 @@ class SidebarMenuBuilder
                         'permission' => 'consultations.view',
                         'module' => 'consultation',
                     ],
+                    [
+                        'label' => 'Emergency',
+                        'icon' => 'ti ti-ambulance',
+                        'route' => 'emergency.board',
+                        'active_patterns' => ['emergency.board', 'emergency.queue.*', 'emergency.cases.index'],
+                        'permission' => 'emergency.board.view',
+                    ],
                 ],
             ],
+            [
+                'title' => __('emergency.menu.command'),
+                'items' => [
+                    [
+                        'label' => __('emergency.menu.critical_queue'),
+                        'icon' => 'ti ti-alert-triangle',
+                        'route' => 'emergency.queue.critical',
+                        'active_patterns' => ['emergency.queue.critical'],
+                        'permission' => 'emergency.board.view',
+                    ],
+                    // [
+                    //     'label' => __('emergency.menu.resuscitation'),
+                    //     'icon' => 'ti ti-heartbeat',
+                    //     'route' => 'emergency.resuscitation.index',
+                    //     'active_patterns' => ['emergency.resuscitation.*'],
+                    //     'permission' => 'emergency.board.view',
+                    // ],
+                    [
+                        'label' => __('emergency.menu.observation'),
+                        'icon' => 'ti ti-eye-heart',
+                        'route' => 'emergency.observations.index',
+                        'active_patterns' => ['emergency.observations.*'],
+                        'permission' => 'emergency.board.view',
+                    ],
+                    // [
+                    //     'label' => __('emergency.menu.new_case'),
+                    //     'icon' => 'ti ti-plus',
+                    //     'route' => 'emergency.cases.create',
+                    //     'active_patterns' => ['emergency.cases.create'],
+                    //     'permission' => 'emergency.case.create',
+                    // ],
+                ],
+            ],
+            // [
+            //     'title' => __('emergency.menu.patient_flow'),
+            //     'items' => [
+            //         [
+            //             'label' => __('emergency.menu.patients'),
+            //             'icon' => 'ti ti-users',
+            //             'route' => 'emergency.patients.index',
+            //             'active_patterns' => ['emergency.patients.*'],
+            //             'permission' => 'patients.view',
+            //             'module' => 'patients',
+            //         ],
+            //         [
+            //             'label' => __('emergency.menu.visits'),
+            //             'icon' => 'ti ti-calendar-check',
+            //             'route' => 'emergency.visits.index',
+            //             'active_patterns' => ['emergency.visits.*'],
+            //             'permission' => 'visits.view',
+            //             'module' => 'visits',
+            //         ],
+            //         [
+            //             'label' => __('emergency.menu.triage'),
+            //             'icon' => 'ti ti-triangles',
+            //             'route' => 'emergency.triage.index',
+            //             'active_patterns' => ['emergency.triage.*', 'emergency.vitals.*'],
+            //             'permission' => 'vitals.view',
+            //             'module' => 'triage',
+            //         ],
+            //         [
+            //             'label' => __('emergency.menu.consultations'),
+            //             'icon' => 'ti ti-stethoscope',
+            //             'route' => 'emergency.consultations.index',
+            //             'active_patterns' => ['emergency.consultations.*'],
+            //             'permission' => 'consultations.view',
+            //             'module' => 'consultation',
+            //         ],
+            //     ],
+            // ],
             [
                 'title' => __('emergency.menu.clinical_care'),
                 'items' => [
@@ -2783,6 +2862,64 @@ class SidebarMenuBuilder
                 'items' => [
                     ['label' => __('pharmacy.menu.notifications'), 'icon' => 'ti ti-bell', 'route' => 'admin.notifications.index', 'active_patterns' => ['admin.notifications.*'], 'permission' => 'notifications.view', 'module' => 'notifications', 'badge' => $unreadNotifications > 0 ? $unreadNotifications : null],
                     ['label' => __('pharmacy.menu.profile'), 'icon' => 'ti ti-user-circle', 'route' => 'admin.profile', 'active_patterns' => ['admin.profile']],
+                ],
+            ],
+        ];
+    }
+
+    protected function storesSections(int $unreadNotifications): array
+    {
+        return [
+            [
+                'title' => __('stores.workspace.title'),
+                'items' => [
+                    ['label' => __('stores.menu.dashboard'), 'icon' => 'ti ti-layout-dashboard', 'route' => 'stores.dashboard', 'active_patterns' => ['stores.dashboard', 'stores.dashboard.redirect']],
+                ],
+            ],
+            [
+                'title' => __('stores.menu.fulfilment'),
+                'items' => [
+                    ['label' => __('stores.menu.requisitions'), 'icon' => 'ti ti-clipboard-list', 'route' => 'stores.stock-requisitions.index', 'active_patterns' => ['stores.stock-requisitions.*'], 'permission' => 'store.requisition.view', 'module' => 'inventory'],
+                    ['label' => __('stores.menu.transfers'), 'icon' => 'ti ti-transfer', 'route' => 'stores.stock.transfers.index', 'active_patterns' => ['stores.stock.transfers.*'], 'permission' => 'store.purchase.view', 'module' => 'inventory'],
+                    ['label' => __('stores.menu.returns'), 'icon' => 'ti ti-arrow-back-up', 'route' => 'stores.stock.returns.index', 'active_patterns' => ['stores.stock.returns.*'], 'permission' => 'store.purchase.view', 'module' => 'inventory'],
+                    ['label' => __('stores.menu.adjustments'), 'icon' => 'ti ti-adjustments', 'route' => 'stores.stock.adjustments.index', 'active_patterns' => ['stores.stock.adjustments.*', 'stores.stock.movements.*'], 'permission' => 'store.purchase.view', 'module' => 'inventory'],
+                ],
+            ],
+            [
+                'title' => __('stores.menu.stock_title'),
+                'items' => [
+                    ['label' => __('stores.menu.stock'), 'icon' => 'ti ti-packages', 'route' => 'stores.stock.balances', 'active_patterns' => ['stores.stock.balances', 'stores.stock.batches.*'], 'permission' => 'store.purchase.view', 'module' => 'inventory'],
+                    ['label' => __('stores.menu.ledger'), 'icon' => 'ti ti-list-details', 'route' => 'stores.stock.ledger', 'active_patterns' => ['stores.stock.ledger'], 'permission' => 'store.purchase.view', 'module' => 'inventory'],
+                    ['label' => __('stores.menu.valuation'), 'icon' => 'ti ti-report-money', 'route' => 'stores.stock.valuation', 'active_patterns' => ['stores.stock.valuation'], 'permission' => 'reports.inventory_valuation.view', 'module' => 'inventory'],
+                    ['label' => __('stores.menu.locations'), 'icon' => 'ti ti-building-warehouse', 'route' => 'stores.stock.locations.index', 'active_patterns' => ['stores.stock.locations.*'], 'permission' => 'store.purchase.view', 'module' => 'inventory'],
+                    ['label' => __('stores.menu.products'), 'icon' => 'ti ti-box', 'route' => 'stores.products.index', 'active_patterns' => ['stores.products.*'], 'permission' => 'product.view', 'module' => 'inventory'],
+                ],
+            ],
+            [
+                'title' => __('stores.menu.procurement'),
+                'items' => [
+                    ['label' => __('stores.menu.purchase_orders'), 'icon' => 'ti ti-shopping-cart', 'route' => 'stores.purchase-orders.index', 'active_patterns' => ['stores.purchase-orders.*'], 'permission' => 'store.purchase.view', 'module' => 'inventory'],
+                    ['label' => __('stores.menu.purchase_returns'), 'icon' => 'ti ti-truck-return', 'route' => 'stores.purchase-returns.index', 'active_patterns' => ['stores.purchase-returns.*'], 'permission' => 'store.return.view', 'module' => 'inventory'],
+                    ['label' => __('stores.menu.suppliers'), 'icon' => 'ti ti-truck-delivery', 'route' => 'stores.suppliers.index', 'active_patterns' => ['stores.suppliers.*'], 'permission' => 'store.purchase.view', 'module' => 'inventory'],
+                ],
+            ],
+            [
+                'title' => __('stores.menu.coordination'),
+                'items' => [
+                    ['label' => __('stores.menu.handoffs'), 'icon' => 'ti ti-arrows-exchange', 'route' => 'stores.handoffs.index', 'active_patterns' => ['stores.handoffs.*'], 'visible' => fn (User $user) => app(DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== []],
+                ],
+            ],
+            [
+                'title' => __('stores.menu.reports_title'),
+                'items' => [[
+                    'label' => __('stores.menu.reports'), 'icon' => 'ti ti-chart-bar', 'route' => 'stores.reports.index', 'active_patterns' => ['stores.reports.*'], 'permission' => 'reports.stock', 'module' => 'reports',
+                ]],
+            ],
+            [
+                'title' => __('stores.menu.general'),
+                'items' => [
+                    ['label' => __('stores.menu.notifications'), 'icon' => 'ti ti-bell', 'route' => 'admin.notifications.index', 'active_patterns' => ['admin.notifications.*'], 'permission' => 'notifications.view', 'module' => 'notifications', 'badge' => $unreadNotifications > 0 ? $unreadNotifications : null],
+                    ['label' => __('stores.menu.profile'), 'icon' => 'ti ti-user-circle', 'route' => 'admin.profile', 'active_patterns' => ['admin.profile']],
                 ],
             ],
         ];

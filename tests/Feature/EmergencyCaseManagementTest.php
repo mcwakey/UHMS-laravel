@@ -221,7 +221,11 @@ class EmergencyCaseManagementTest extends TestCase
         $response->assertSee('Emergency Control Sheet');
         $response->assertSee('controlSheetModal', false);
         $response->assertSee('triageModal', false);
-        $response->assertSee('emergencyVitalsChart', false);
+        // Vitals trend renders as small multiples — one mini chart per vital.
+        $response->assertSee('vitalsSparkBp', false);
+        $response->assertSee('vitalsSparkHr', false);
+        $response->assertSee('vitalsSparkSpo2', false);
+        $response->assertSee('vitalsSparkTemp', false);
         $response->assertSee('BP 120', false);
     }
 

@@ -774,6 +774,75 @@ Route::middleware('auth')->group(function () {
             ->middleware(['module:reports', 'can:reports.pharmacy']);
     });
 
+    // Stores (inventory operations) workspace. Browser adapters over the
+    // existing requisition, purchase, stock-ledger, supplier, journey and
+    // reporting services — approvals, movement posting and audit rules stay
+    // inside those services.
+    Route::prefix('stores')->name('stores.')->middleware('department.type:stores')->group(function () {
+        Route::get('/', App\Http\Controllers\Stores\DashboardController::class)->name('dashboard');
+        Route::get('dashboard', fn () => redirect()->route('stores.dashboard'))->name('dashboard.redirect');
+
+        Route::middleware('module:inventory')->group(function () {
+            Route::middleware('can:store.requisition.view')->prefix('requisitions')->name('stock-requisitions.')->group(function () {
+                Route::get('/', [StockRequisitionController::class, 'index'])->name('index');
+                Route::get('create', [StockRequisitionController::class, 'create'])->name('create')->middleware('can:store.requisition.create');
+                Route::post('/', [StockRequisitionController::class, 'store'])->name('store')->middleware('can:store.requisition.create');
+                Route::get('{stockRequisition}', [StockRequisitionController::class, 'show'])->name('show');
+                Route::post('{stockRequisition}/approve', [StockRequisitionController::class, 'approve'])->name('approve')->middleware('can:store.requisition.approve');
+                Route::post('{stockRequisition}/issue', [StockRequisitionController::class, 'issue'])->name('issue')->middleware('can:store.requisition.issue');
+                Route::post('{stockRequisition}/acknowledge', [StockRequisitionController::class, 'acknowledge'])->name('acknowledge')->middleware('can:store.requisition.acknowledge');
+                Route::post('{stockRequisition}/cancel', [StockRequisitionController::class, 'cancel'])->name('cancel')->middleware('can:store.requisition.create');
+            });
+
+            Route::middleware('can:store.purchase.view')->group(function () {
+                Route::get('purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
+                Route::get('purchase-orders/create', [PurchaseOrderController::class, 'create'])->name('purchase-orders.create')->middleware('can:store.purchase.create');
+                Route::get('purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'show'])->name('purchase-orders.show');
+
+                Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+                Route::get('suppliers/{supplier}/ledger', [SupplierController::class, 'ledger'])->name('suppliers.ledger');
+
+                Route::get('stock', [StockController::class, 'balances'])->name('stock.balances');
+                Route::get('stock/valuation', [StockController::class, 'valuation'])->name('stock.valuation')->middleware('can:reports.inventory_valuation.view');
+                Route::get('stock/ledger', [StockController::class, 'ledger'])->name('stock.ledger');
+                Route::get('stock/adjustments', [StockController::class, 'adjustmentsIndex'])->name('stock.adjustments.index');
+                Route::get('stock/adjustments/create', [StockController::class, 'adjustmentForm'])->name('stock.adjustments.create')->middleware('can:store.purchase.create');
+                Route::get('stock/returns', [StockController::class, 'returnsIndex'])->name('stock.returns.index');
+                Route::get('stock/returns/create', [StockController::class, 'returnForm'])->name('stock.returns.create')->middleware('can:store.purchase.create');
+                Route::get('stock/transfers', [StockController::class, 'transfersIndex'])->name('stock.transfers.index');
+                Route::get('stock/transfers/create', [StockController::class, 'transferForm'])->name('stock.transfers.create')->middleware('can:store.purchase.create');
+                Route::get('stock/batches/{batch}', [StockController::class, 'batchShow'])->name('stock.batches.show');
+                Route::get('stock/movements/{movement}', [StockController::class, 'movementShow'])->name('stock.movements.show');
+                Route::get('stock/locations', [StockController::class, 'locations'])->name('stock.locations.index');
+            });
+
+            Route::middleware('can:store.return.view')->prefix('purchase-returns')->name('purchase-returns.')->group(function () {
+                Route::get('/', [PurchaseReturnController::class, 'index'])->name('index');
+                Route::get('create', [PurchaseReturnController::class, 'create'])->name('create')->middleware('can:store.return.create');
+                Route::get('{purchaseReturn}', [PurchaseReturnController::class, 'show'])->name('show');
+            });
+
+            Route::middleware('can:product.view')->prefix('products')->name('products.')->group(function () {
+                Route::get('/', [ProductController::class, 'index'])->name('index');
+                Route::get('{product}', [ProductController::class, 'show'])->whereNumber('product')->name('show');
+            });
+        });
+
+        Route::get('handoffs', [JourneyWorklistController::class, 'index'])->name('handoffs.index');
+        Route::get('handoffs/refresh', [JourneyWorklistController::class, 'refresh'])->name('handoffs.refresh');
+        Route::prefix('handoffs/actions')->name('handoffs.')->group(function () {
+            Route::post('claim', [JourneyHandoffAssignmentController::class, 'claim'])->name('claim')->middleware('can:journey.handoffs.claim');
+            Route::post('assign', [JourneyHandoffAssignmentController::class, 'assign'])->name('assign')->middleware('can:journey.handoffs.assign');
+            Route::post('{assignment}/acknowledge', [JourneyHandoffAssignmentController::class, 'acknowledge'])->name('acknowledge')->middleware('can:journey.handoffs.acknowledge');
+            Route::post('{assignment}/resolve', [JourneyHandoffAssignmentController::class, 'resolve'])->name('resolve')->middleware('can:journey.handoffs.resolve');
+        });
+
+        Route::get('reports', [OperationalReportController::class, 'show'])
+            ->defaults('report', 'stock')
+            ->name('reports.index')
+            ->middleware(['module:reports', 'can:reports.stock']);
+    });
+
     // Nursing Department OPD workspace. Clinical writes are delegated to the
     // existing triage/vitals controllers so validation, safety and audit rules
     // remain identical to the generic workflow.
@@ -1641,7 +1710,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Store & Procurement
-        Route::prefix('store')->name('store.')->middleware('module:inventory')->group(function () {
+        Route::prefix('store')->name('store.')->middleware(['module:inventory', 'records.redirect'])->group(function () {
             // Suppliers
             Route::middleware('can:store.purchase.view')->group(function () {
                 Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
@@ -2949,7 +3018,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // ── Admin: Products (parallel store catalogue for consumables/reagents/supplies) ──
-        Route::prefix('products')->name('products.')->middleware('module:inventory')->group(function () {
+        Route::prefix('products')->name('products.')->middleware(['module:inventory', 'records.redirect'])->group(function () {
             Route::middleware('can:product.view')->group(function () {
                 Route::get('/', [ProductController::class, 'index'])->name('index');
                 Route::get('for-department/{department}', [ProductController::class, 'forDepartment'])->name('for-department');

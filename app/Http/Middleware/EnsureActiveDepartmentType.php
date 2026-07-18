@@ -29,6 +29,7 @@ class EnsureActiveDepartmentType
             in_array(DepartmentType::INPATIENT->value, $allowedTypes, true) => __('inpatient.unauthorized'),
             in_array(DepartmentType::INVESTIGATION->value, $allowedTypes, true) => __('investigations.unauthorized'),
             in_array(DepartmentType::PHARMACY->value, $allowedTypes, true) => __('pharmacy.unauthorized'),
+            in_array(DepartmentType::STORES->value, $allowedTypes, true) => __('stores.unauthorized'),
             default => __('records.unauthorized'),
         };
 

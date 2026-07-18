@@ -1,8 +1,8 @@
-# UHMS Pharmacy Department Workspace — Prescription Fulfilment and `/pharmacy/*` Route Architecture
+# UHMS Stores Department Workspace — Inventory Operations and `/stores/*` Route Architecture
 
-Implement a dedicated **Pharmacy Department Workspace** for UHMS.
+Implement a dedicated **Stores Department Workspace** for UHMS.
 
-This workspace is for pharmacy staff managing prescriptions from receipt and clinical review through payment or insurance authorization, stock allocation, dispensing, counselling, collection, returns, cancellations, controlled overrides, and pharmacy reporting.
+This workspace is for Stores and inventory staff managing hospital supplies from receipt and storage through departmental requisitions, approvals, reservations, issuing, transfers, returns, adjustments, stock counts, expiry monitoring, quarantine, disposal, and inventory reporting.
 
 This implementation should follow the same department-aware workspace architecture already established for:
 
@@ -12,352 +12,452 @@ This implementation should follow the same department-aware workspace architectu
 * Emergency
 * Inpatient
 * Investigations
+* Pharmacy
 
 The configured department type is:
 
 ```php
-DepartmentType::PHARMACY
+DepartmentType::STORES
 ```
 
 The browser workspace must use:
 
 ```text
-/pharmacy/*
+/stores/*
 ```
 
 The objective is that when a logged-in user’s active department has:
 
 ```php
-DepartmentType::PHARMACY
+DepartmentType::STORES
 ```
 
-the user should experience UHMS as a dedicated Pharmacy application with:
+the user should experience UHMS as a dedicated Stores application with:
 
-* A Pharmacy-specific sidebar menu
-* A Pharmacy operations dashboard
-* Pharmacy-specific breadcrumbs
-* Pharmacy-specific route names
-* Consistent `/pharmacy/*` URLs
-* Prescription and dispensing worklists
-* Medication-safety review
-* Payment and insurance authorization awareness
-* Stock and batch awareness
-* Partial-dispensing support
-* Patient collection and counselling workflows
-* Returns, reversals, and cancellation controls
+* A Stores-specific sidebar menu
+* A Stores operations dashboard
+* Stores-specific breadcrumbs
+* Stores-specific route names
+* Consistent `/stores/*` URLs
+* Department requisition worklists
+* Goods receipt and stock-entry workflows
+* Stock issuing and transfer workflows
+* Batch, lot, serial, and expiry tracking
+* Stock-count and reconciliation workflows
+* Stock adjustment and approval controls
+* Quarantine, recall, damage, and disposal management
 * Permission-controlled menu visibility
 * Active-department and stock-location scoping
-* Patient privacy and medication-safety enforcement
-* Reuse of existing prescription, billing, inventory, consultation, claims, journey, and audit logic
+* Transactional stock-ledger integrity
+* Reuse of existing products, inventory, procurement, billing, pharmacy, department, reporting, and audit logic
 
-Do not duplicate core prescription, dispensing, billing, payment, insurance, inventory, stock-ledger, medication-safety, patient, or reporting logic merely to create the Pharmacy workspace.
+Do not duplicate core product, stock, inventory, stock-ledger, requisition, purchase, receiving, transfer, adjustment, or reporting logic merely to create the Stores workspace.
 
 ---
 
 # 1. Core Functional Requirement
 
-When the active department type is `pharmacy`, all supported browser pages used by pharmacy staff must appear under the `/pharmacy` URL prefix.
+When the active department type is `stores`, all supported browser pages used by Stores staff must appear under the `/stores` URL prefix.
 
 Examples:
 
 ```text
-/pharmacy
-/pharmacy/dashboard
+/stores
+/stores/dashboard
 
-/pharmacy/prescriptions
-/pharmacy/prescriptions/pending
-/pharmacy/prescriptions/authorized
-/pharmacy/prescriptions/awaiting-payment
-/pharmacy/prescriptions/clinical-review
-/pharmacy/prescriptions/ready
-/pharmacy/prescriptions/completed
-/pharmacy/prescriptions/{prescription}
+/stores/requisitions
+/stores/requisitions/pending
+/stores/requisitions/approved
+/stores/requisitions/partially-issued
+/stores/requisitions/completed
+/stores/requisitions/rejected
+/stores/requisitions/{requisition}
 
-/pharmacy/dispensing
-/pharmacy/dispensing/pending
-/pharmacy/dispensing/in-progress
-/pharmacy/dispensing/ready-for-collection
-/pharmacy/dispensing/partially-dispensed
-/pharmacy/dispensing/completed
-/pharmacy/dispensing/{dispensing}
+/stores/issues
+/stores/issues/pending
+/stores/issues/in-progress
+/stores/issues/completed
+/stores/issues/{issue}
 
-/pharmacy/collections
-/pharmacy/returns
-/pharmacy/reversals
-/pharmacy/cancellations
+/stores/receipts
+/stores/receipts/pending
+/stores/receipts/completed
+/stores/receipts/{receipt}
 
-/pharmacy/medications
-/pharmacy/stock
-/pharmacy/batches
-/pharmacy/expiries
-/pharmacy/low-stock
-/pharmacy/stock-outs
+/stores/transfers
+/stores/transfers/pending
+/stores/transfers/in-transit
+/stores/transfers/received
+/stores/transfers/{transfer}
 
-/pharmacy/patients
-/pharmacy/patients/{patient}
+/stores/returns
+/stores/adjustments
+/stores/stock-counts
+/stores/reconciliations
 
-/pharmacy/handoffs
-/pharmacy/reports
+/stores/products
+/stores/products/{product}
+
+/stores/stock
+/stores/stock/{stockItem}
+/stores/batches
+/stores/batches/{batch}
+/stores/expiries
+/stores/low-stock
+/stores/stock-outs
+
+/stores/quarantine
+/stores/recalls
+/stores/damages
+/stores/disposals
+
+/stores/suppliers
+/stores/purchase-requests
+/stores/purchase-orders
+/stores/goods-received
+
+/stores/handoffs
+/stores/reports
 ```
 
-A Pharmacy user should not enter through:
+A Stores user should not enter through:
 
 ```text
-/pharmacy/prescriptions/{prescription}
+/stores/requisitions/{requisition}
 ```
 
 and later be redirected to generic URLs such as:
 
 ```text
-/prescriptions/{prescription}
-/dispensing/{dispensing}
-/patients/{patient}
-/visits/{visit}
-/products/{product}
+/requisitions/{requisition}
 /stock/{stockItem}
+/products/{product}
+/inventory/transfers/{transfer}
+/goods-receipts/{receipt}
 ```
 
-All browser navigation, forms, redirects, breadcrumbs, worklists, patient links, stock actions, dispensing actions, notifications, dashboard cards, and report drilldowns must preserve the Pharmacy workspace context.
+All browser navigation, forms, redirects, breadcrumbs, worklists, stock links, product links, dashboard cards, notifications, approvals, and report drilldowns must preserve the Stores workspace context.
 
 ---
 
-# 2. Pharmacy Workspace Scope
+# 2. Stores Workspace Scope
 
-The Pharmacy workspace is responsible for medication fulfilment workflows, including:
+The Stores workspace is responsible for hospital inventory operations, including:
 
-1. Receiving prescriptions
-2. Reviewing prescription completeness
-3. Reviewing medication safety alerts
-4. Checking allergies
-5. Detecting duplicate active medications
-6. Reviewing unusual dose warnings
-7. Reviewing missing-diagnosis warnings where configured
-8. Payment or insurance authorization awareness
-9. Sponsor authorization awareness
-10. Stock availability checks
-11. Batch selection
-12. Expiry-aware allocation
-13. Partial dispensing
-14. Full dispensing
-15. Medication labelling
-16. Patient counselling
-17. Marking medication ready for collection
-18. Recording patient collection
-19. Medication substitution where authorized
-20. Quantity adjustment where authorized
-21. Prescription cancellation
-22. Dispensing reversal
-23. Medication returns
-24. Stock restoration after valid return or reversal
-25. Controlled medication handling where supported
-26. Inpatient medication supply
-27. Emergency medication fulfilment
-28. OPD prescription fulfilment
-29. Pharmacy handoffs
-30. Pharmacy reports and operational analytics
+1. Product and supply visibility
+2. Active stock-location visibility
+3. Departmental requisitions
+4. Requisition approval
+5. Stock reservation
+6. Full and partial issuing
+7. Departmental receipt acknowledgement
+8. Goods receipt
+9. Purchase-order receipt where supported
+10. Direct stock receipt where authorized
+11. Batch and lot creation
+12. Serial-number capture where supported
+13. Expiry-date capture
+14. Stock transfers
+15. Transfer dispatch
+16. Transfer receipt
+17. Departmental returns
+18. Supplier returns where supported
+19. Stock adjustments
+20. Adjustment approval
+21. Physical stock counts
+22. Cycle counts
+23. Stock reconciliation
+24. Variance investigation
+25. Low-stock monitoring
+26. Stockout monitoring
+27. Expiry monitoring
+28. Quarantine
+29. Product recall
+30. Damage recording
+31. Disposal and destruction
+32. Stock valuation
+33. Inventory movement history
+34. Stock-ledger reporting
+35. Supplier and procurement awareness where supported
+36. Stores handoffs and escalations
+37. Inventory reports and analytics
 
-The Pharmacy workspace should remain distinct from:
+The Stores workspace must remain distinct from:
 
-* Drug prescribing in consultation
-* Medication administration by nurses
-* General Stores management
-* Finance and cashier workflows
-* Procurement
-* Clinical consultation
-* Inpatient nursing care
+* Pharmacy prescription dispensing
+* Nursing medication administration
+* Departmental service consumption
+* Finance payments
+* Procurement approval where procurement is independently controlled
+* Clinical ordering
+* Patient billing
+* Pharmacy retail or patient collection
 
-Shared services should be reused, but the Pharmacy workspace must provide the pharmacist’s operational view.
+Stores may manage medical supplies, medications, consumables, equipment items, and general hospital products according to configuration, but it must not perform Pharmacy dispensing or clinical administration actions.
 
 ---
 
-# Phase 1 — Inspect the Existing Pharmacy Architecture
+# Phase 1 — Inspect the Existing Stores and Inventory Architecture
 
 Before implementing, inspect the current codebase and identify:
 
 1. How department-specific menus are selected.
-2. How current department workspaces are registered.
+2. How existing department workspaces are registered.
 3. How active department context is resolved.
 4. How multi-department users switch active departments.
-5. Existing routes, controllers, models, services, policies, jobs, commands, and views for:
+5. How `DepartmentType::STORES` is currently mapped by:
 
-   * prescriptions
-   * prescription items
-   * medication products
-   * dispensing
-   * dispensing items
-   * partial dispensing
-   * medication collection
-   * medication returns
-   * reversals
-   * cancellations
-   * substitutions
-   * stock allocation
-   * stock reservations
-   * stock movements
-   * batches
-   * expiry dates
+   * dashboard resolver
+   * menu profile service
+   * capability resolver
+   * stock-location resolver
+6. Existing routes, controllers, models, services, policies, commands, jobs, and views for:
+
+   * products
+   * product categories
+   * product units
+   * stock items
    * stock locations
-   * inventory
-   * billing
-   * payments
-   * insurance
-   * claims
-   * sponsors
-   * medication safety
-   * allergies
-   * duplicate active medication checks
-   * unusual-dose warnings
-   * diagnosis requirements
-   * patient and visit links
+   * batches
+   * lots
+   * serial numbers
+   * expiry dates
+   * stock movements
+   * stock ledger
+   * departmental requisitions
+   * requisition approvals
+   * stock reservations
+   * stock issues
+   * goods receipts
+   * purchase requests
+   * purchase orders
+   * suppliers
+   * stock transfers
+   * departmental returns
+   * supplier returns
+   * stock adjustments
+   * stock counts
+   * reconciliation
+   * quarantine
+   * recall
+   * damage
+   * disposal
    * reporting
-6. Existing prescription statuses.
-7. Existing dispensing statuses.
-8. Existing stock-reservation behaviour.
-9. Existing FEFO, FIFO, or batch-selection policy.
-10. Existing return and reversal rules.
-11. Existing payment-gate operations for Pharmacy.
-12. Existing emergency and inpatient exceptions.
-13. Existing Journey Intelligence stages for Pharmacy.
-14. Existing patient privacy protections.
-15. Existing audit-event infrastructure.
-16. Shared views that hardcode generic routes such as:
+7. Existing requisition statuses.
+8. Existing issue statuses.
+9. Existing transfer statuses.
+10. Existing goods-receipt and purchase-order statuses.
+11. Existing stock-count and reconciliation processes.
+12. Existing batch-selection policies.
+13. Existing stock valuation method.
+14. Existing approval thresholds.
+15. Existing negative-stock protections.
+16. Existing department and stock-location scoping.
+17. Existing stock integration with:
+
+* Pharmacy
+* Investigations
+* Radiology
+* Theatre
+* Inpatient wards
+* Nursing
+
+18. Existing audit-event infrastructure.
+19. Existing views that hardcode generic routes such as:
 
 ```php
-route('prescriptions.show', $prescription)
-route('dispensing.show', $dispensing)
-route('patients.show', $patient)
-route('visits.show', $visit)
+route('requisitions.show', $requisition)
+route('stock.show', $stockItem)
 route('products.show', $product)
+route('transfers.show', $transfer)
+route('goods-receipts.show', $receipt)
 ```
 
-Do not create a competing prescription, dispensing, stock, menu, or routing framework where one already exists.
+Do not create a competing stock, inventory, requisition, transfer, receipt, menu, or routing framework where one already exists.
 
 Extend the existing:
 
 * Department dashboard registry
 * Department menu profile service
+* Department capability resolver
 * Active department context
 * Workspace route resolver
 * Workspace redirect resolver
-* Prescription services
-* Prescription-safety services
-* Dispensing services
-* Stock-location resolver
-* Stock-allocation services
-* Billing and payment services
-* Insurance and claims services
-* Journey Intelligence services
+* Stock location resolver
+* Product services
+* Stock-ledger services
+* Requisition services
+* Reservation services
+* Issue services
+* Receipt services
+* Transfer services
+* Stock-count services
+* Adjustment services
 * Authorization policies
-* Patient privacy services
 * Activity logging
 
 ---
 
-# Phase 2 — Pharmacy Workspace Route Group
+# Phase 2 — Stores Workspace Route Group
 
-Create a dedicated Pharmacy route group.
+Create a dedicated Stores route group.
 
 Use a structure equivalent to:
 
 ```php
-Route::prefix('pharmacy')
-    ->name('pharmacy.')
+Route::prefix('stores')
+    ->name('stores.')
     ->middleware([
         'auth',
         'verified',
         'department.context',
-        'department.type:pharmacy',
+        'department.type:stores',
     ])
     ->group(function () {
-        // Pharmacy workspace routes
+        // Stores workspace routes
     });
 ```
 
 Use the project’s actual middleware names and active-department authorization architecture.
 
-Required route names should include, where corresponding functionality already exists:
+Required route names should include, where the corresponding functionality already exists:
 
 ```text
-pharmacy.dashboard
+stores.dashboard
 
-pharmacy.prescriptions.index
-pharmacy.prescriptions.pending
-pharmacy.prescriptions.awaiting_payment
-pharmacy.prescriptions.authorized
-pharmacy.prescriptions.clinical_review
-pharmacy.prescriptions.ready
-pharmacy.prescriptions.completed
-pharmacy.prescriptions.cancelled
-pharmacy.prescriptions.show
-pharmacy.prescriptions.accept
-pharmacy.prescriptions.review
-pharmacy.prescriptions.cancel
+stores.requisitions.index
+stores.requisitions.pending
+stores.requisitions.approved
+stores.requisitions.partially_issued
+stores.requisitions.completed
+stores.requisitions.rejected
+stores.requisitions.show
+stores.requisitions.approve
+stores.requisitions.reject
+stores.requisitions.reserve
+stores.requisitions.issue
 
-pharmacy.dispensing.index
-pharmacy.dispensing.pending
-pharmacy.dispensing.in_progress
-pharmacy.dispensing.partially_dispensed
-pharmacy.dispensing.ready_for_collection
-pharmacy.dispensing.completed
-pharmacy.dispensing.show
-pharmacy.dispensing.start
-pharmacy.dispensing.store
-pharmacy.dispensing.complete
+stores.issues.index
+stores.issues.pending
+stores.issues.in_progress
+stores.issues.completed
+stores.issues.show
+stores.issues.create
+stores.issues.store
+stores.issues.complete
 
-pharmacy.collections.index
-pharmacy.collections.show
-pharmacy.collections.confirm
+stores.receipts.index
+stores.receipts.pending
+stores.receipts.completed
+stores.receipts.show
+stores.receipts.create
+stores.receipts.store
+stores.receipts.complete
 
-pharmacy.returns.index
-pharmacy.returns.create
-pharmacy.returns.store
-pharmacy.returns.show
+stores.transfers.index
+stores.transfers.pending
+stores.transfers.in_transit
+stores.transfers.received
+stores.transfers.show
+stores.transfers.create
+stores.transfers.store
+stores.transfers.dispatch
+stores.transfers.receive
+stores.transfers.cancel
 
-pharmacy.reversals.index
-pharmacy.reversals.create
-pharmacy.reversals.store
+stores.returns.index
+stores.returns.create
+stores.returns.store
+stores.returns.show
+stores.returns.accept
+stores.returns.reject
 
-pharmacy.cancellations.index
+stores.adjustments.index
+stores.adjustments.create
+stores.adjustments.store
+stores.adjustments.show
+stores.adjustments.approve
+stores.adjustments.reject
 
-pharmacy.medications.index
-pharmacy.medications.show
+stores.stock_counts.index
+stores.stock_counts.create
+stores.stock_counts.store
+stores.stock_counts.show
+stores.stock_counts.start
+stores.stock_counts.submit
+stores.stock_counts.approve
 
-pharmacy.stock.index
-pharmacy.stock.show
-pharmacy.stock.low
-pharmacy.stock.out
-pharmacy.stock.expiring
+stores.reconciliations.index
+stores.reconciliations.show
+stores.reconciliations.complete
 
-pharmacy.batches.index
-pharmacy.batches.show
+stores.products.index
+stores.products.show
 
-pharmacy.patients.index
-pharmacy.patients.show
+stores.stock.index
+stores.stock.show
+stores.stock.low
+stores.stock.out
+stores.stock.expiring
+stores.stock.expired
 
-pharmacy.handoffs.index
-pharmacy.reports.index
+stores.batches.index
+stores.batches.show
+
+stores.quarantine.index
+stores.quarantine.show
+stores.quarantine.release
+
+stores.recalls.index
+stores.recalls.show
+
+stores.damages.index
+stores.damages.create
+stores.damages.store
+stores.damages.show
+
+stores.disposals.index
+stores.disposals.create
+stores.disposals.store
+stores.disposals.show
+stores.disposals.approve
+stores.disposals.complete
+
+stores.purchase_requests.index
+stores.purchase_requests.show
+stores.purchase_requests.create
+stores.purchase_requests.store
+
+stores.purchase_orders.index
+stores.purchase_orders.show
+
+stores.suppliers.index
+stores.suppliers.show
+
+stores.handoffs.index
+stores.reports.index
 ```
 
-Only register routes for functionality that genuinely exists or is being implemented.
+Only register routes for functionality that exists or is implemented in this phase.
 
-Do not create empty placeholder pages merely to populate the menu.
+Do not create empty placeholder pages merely to populate the Stores menu.
 
 ---
 
-# Phase 3 — Pharmacy Operations Dashboard
+# Phase 3 — Stores Operations Dashboard
 
-Create or complete a dedicated Pharmacy dashboard.
+Create or complete a dedicated Stores dashboard.
 
 The canonical route should be:
 
 ```text
-/pharmacy
+/stores
 ```
 
 or:
 
 ```text
-/pharmacy/dashboard
+/stores/dashboard
 ```
 
 Choose one canonical route and redirect the other to it.
@@ -365,147 +465,187 @@ Choose one canonical route and redirect the other to it.
 The department dashboard resolver should map:
 
 ```php
-DepartmentType::PHARMACY => 'pharmacy.dashboard'
+DepartmentType::STORES => 'stores.dashboard'
 ```
 
-The dashboard should function as a Pharmacy operations command board.
+The dashboard should function as an inventory operations command board.
 
 Recommended metrics and widgets include, where reliable data exists:
 
-* Prescriptions received today
-* Prescriptions awaiting payment
-* Prescriptions awaiting insurance authorization
-* Prescriptions requiring clinical review
-* Prescriptions with safety warnings
-* Prescriptions ready for dispensing
-* Dispensing in progress
-* Partially dispensed prescriptions
-* Ready for collection
-* Completed dispensings today
-* Emergency prescriptions
-* Inpatient medication requests
-* Overdue prescription fulfilments
-* Prescriptions blocked by stock
-* Prescriptions blocked by payment
-* Prescriptions blocked by clinical safety
-* Low-stock medications
-* Out-of-stock medications
-* Expiring batches
-* Expired-stock alerts
-* Pending returns
-* Pending reversals
-* Pending handoffs
-* Average prescription-to-dispensing time
-* Average ready-to-collection time
+* Pending requisitions
+* Urgent requisitions
+* Approved requisitions awaiting issue
+* Partially issued requisitions
+* Issues in progress
+* Transfers awaiting dispatch
+* Transfers in transit
+* Transfers awaiting receipt
+* Goods receipts pending completion
+* Purchase orders awaiting receipt
+* Departmental returns pending review
+* Adjustments awaiting approval
+* Open stock counts
+* Stock-count variances
+* Low-stock products
+* Out-of-stock products
+* Near-expiry batches
+* Expired batches
+* Quarantined stock
+* Recalled products
+* Damaged stock
+* Disposal requests awaiting approval
+* Negative-stock anomalies
+* Reservation anomalies
+* Stock without batches where batches are required
+* Products without reorder levels
+* Total stock value where authorized
+* Stock issued today
+* Stock received today
+* Stock transferred today
 
 Each dashboard metric must:
 
 * Respect permissions
 * Respect the active department
-* Respect stock-location scoping
-* Include only prescriptions fulfilable by the active Pharmacy department
-* Avoid leaking protected patient information
-* Link to valid `/pharmacy/*` routes
+* Respect the active Stores stock location
+* Avoid exposing unauthorized financial valuation
+* Link to valid `/stores/*` routes
 * Use safe empty states
 * Avoid expensive unbounded queries
-* Reuse Journey Intelligence and department metrics where applicable
+* Reuse existing inventory and department metrics where applicable
 
 Do not introduce metrics that cannot be calculated reliably.
 
 ---
 
-# Phase 4 — Pharmacy-Specific Menu Profile
+# Phase 4 — Stores-Specific Menu Profile
 
 Extend the existing department menu profile or menu registry so that:
 
 ```php
-DepartmentType::PHARMACY
+DepartmentType::STORES
 ```
 
-receives a dedicated Pharmacy menu.
+receives a dedicated Stores menu.
 
 Recommended menu structure:
 
-## Pharmacy Command
+## Stores Command
 
 * Dashboard
-* All Prescriptions
-* Emergency Prescriptions
-* Inpatient Requests
-* Overdue Prescriptions
+* Pending Requisitions
+* Urgent Requisitions
+* Pending Issues
+* Transfers in Transit
+* Open Stock Counts
 
-## Prescription Review
+## Requisitions
 
-* Pending Prescriptions
-* Awaiting Payment
-* Awaiting Insurance Authorization
-* Clinical Review Required
-* Safety Warnings
-* Authorized Prescriptions
-* Cancelled Prescriptions
+* All Requisitions
+* Pending Approval
+* Approved for Issue
+* Partially Issued
+* Completed Requisitions
+* Rejected Requisitions
 
-## Dispensing
+## Stock Issues
 
-* Ready to Dispense
-* Dispensing in Progress
-* Partially Dispensed
-* Ready for Collection
-* Completed Dispensing
+* Pending Issues
+* Issues in Progress
+* Completed Issues
+* Department Collection
+* Issue History
 
-## Patient Collection
+## Goods Receipt
 
-* Collection Queue
-* Collected Today
-* Uncollected Medications
-* Counselling Pending
+* Pending Receipts
+* New Goods Receipt
+* Purchase Orders Awaiting Receipt
+* Completed Receipts
+* Supplier Delivery History
 
-## Returns and Corrections
+## Transfers
 
-* Medication Returns
-* Dispensing Reversals
-* Prescription Cancellations
-* Substitution Review
+* New Transfer
+* Pending Transfers
+* Awaiting Dispatch
+* In Transit
+* Awaiting Receipt
+* Completed Transfers
+* Cancelled Transfers
 
-## Stock Awareness
+## Returns
 
-* Medication Stock
+* Departmental Returns
+* Pending Return Review
+* Accepted Returns
+* Rejected Returns
+* Supplier Returns
+
+## Stock Control
+
+* Current Stock
+* Product Catalogue
+* Batches and Lots
 * Low Stock
-* Out of Stock
-* Expiring Batches
-* Expired Batches
-* Batch Availability
+* Stock Outs
+* Near Expiry
+* Expired Stock
+* Stock Movement History
+
+## Inventory Control
+
+* Stock Counts
+* Cycle Counts
+* Variance Review
+* Reconciliation
+* Stock Adjustments
+* Adjustment Approvals
+
+## Stock Safety
+
+* Quarantined Stock
+* Product Recalls
+* Damaged Stock
+* Disposal Requests
+* Completed Disposals
+
+## Procurement Awareness
+
+* Purchase Requests
+* Purchase Orders
+* Suppliers
+* Awaiting Deliveries
+
+Only show Procurement items when those features exist and the user possesses the required permissions.
 
 ## Coordination
 
-* Pharmacy Handoffs
-* Critical Alerts
+* Stores Handoffs
+* Department Clarifications
 * Escalations
-* Pending Clinician Clarification
-* Pending Finance Clarification
+* Reservation Conflicts
+* Stockout Alerts
 
-## Patient Access
+## Stores Reports
 
-* Patient Search
-* Patient Profiles
-* Medication History
-* Prescription History
-* Visit History
-
-## Pharmacy Reports
-
-* Prescription Volume Report
-* Dispensing Report
-* Partial Dispensing Report
-* Medication Collection Report
-* Medication Return Report
+* Stock Balance Report
+* Stock Movement Report
+* Requisition Report
+* Issue Report
+* Receipt Report
+* Transfer Report
+* Return Report
+* Adjustment Report
+* Stock Count Report
+* Variance Report
+* Expiry Report
 * Stockout Report
 * Low-Stock Report
-* Expiry Report
-* Pharmacist Activity Report
-* Prescription Turnaround-Time Report
-* Medication Utilization Report
-* Insurance Prescription Report
-* Emergency Medication Report
+* Consumption Report
+* Stock Valuation Report
+* Supplier Delivery Report
+* Staff Activity Report
 
 ## General
 
@@ -519,871 +659,1306 @@ Only show a menu item when:
 2. The required module is enabled.
 3. The user possesses the required permission.
 4. The active department permits access.
-5. The feature belongs to Pharmacy operations.
+5. The active stock location permits the operation.
 
 Permissions remain authoritative.
 
-Do not expose menu items solely because the active department type is `pharmacy`.
+Do not expose menu items solely because the active department type is `stores`.
 
 ---
 
-# Phase 5 — Prescription Worklists
+# Phase 5 — Stock Location and Department Scoping
 
-Create or adapt prescription worklists under:
+All Stores worklists, balances, movements, receipts, issues, counts, and alerts must respect:
 
-```text
-/pharmacy/prescriptions
+* Active department
+* Active Stores stock location
+* User stock-location assignment
+* Authorized cross-location access
+* Product-location configuration
+* Department-to-stock-location mapping
+
+Where multiple Stores departments or locations exist, such as:
+
+* Central Medical Store
+* General Store
+* Pharmacy Bulk Store
+* Laboratory Store
+* Theatre Store
+* Ward Supply Store
+* Satellite Store
+
+a user should only see stock and operations relevant to their active department unless explicitly granted cross-location access.
+
+Extend or reuse the existing:
+
+```php
+StockLocationResolver
 ```
 
-Recommended worklist states include:
+Ensure:
+
+```php
+DepartmentType::STORES
+```
+
+resolves to the appropriate configured Stores stock location.
+
+Do not assume that every Stores department maps to one global stock location.
+
+Support explicit department-to-stock-location mapping where already available.
+
+---
+
+# Phase 6 — Stores Requisition Worklists
+
+Create or adapt requisition worklists under:
 
 ```text
-new
-awaiting_payment
-awaiting_insurance
-awaiting_sponsor_authorization
-authorized
-clinical_review_required
-safety_warning
-accepted
-ready_to_dispense
-dispensing_in_progress
-partially_dispensed
-ready_for_collection
+/stores/requisitions
+```
+
+Recommended requisition states include:
+
+```text
+draft
+submitted
+pending_approval
+approved
+partially_approved
+rejected
+reserved
+ready_for_issue
+partially_issued
+fully_issued
 completed
 cancelled
 expired
-overdue
 ```
 
-Use existing prescription, payment, insurance, stock, dispensing, and journey statuses.
+Use existing requisition, approval, reservation, and issue statuses.
 
-Do not introduce duplicate statuses where the worklist state can be derived by a resolver.
+Do not introduce duplicate statuses where the worklist state can be derived through a centralized resolver.
 
-Each prescription row should display only authorized information, such as:
+Each requisition row should display:
 
-* Patient identifier
-* Patient name according to privacy rules
-* Visit number
-* Prescription number
-* Prescribing clinician
-* Prescribing department
-* Prescription date and time
+* Requisition number
+* Requesting department
+* Requesting stock location where applicable
+* Requesting user
+* Request date and time
 * Priority
-* Number of medication items
-* Payment or insurance state
-* Clinical-review state
-* Safety-warning state
-* Stock-availability state
-* Dispensing state
-* Assigned pharmacist
+* Number of items
+* Approval state
+* Reservation state
+* Issue state
+* Assigned Stores officer
 * Waiting duration
-* SLA state
 * Next required action
 
 Support filters such as:
 
 * Date
 * Priority
-* Prescribing department
-* Prescribing clinician
-* Patient category
-* Prescription status
-* Payment state
-* Insurance state
-* Safety-warning state
-* Stock state
-* Assigned pharmacist
-* Emergency or routine
-* Inpatient or outpatient
-* SLA state
+* Requesting department
+* Requesting user
+* Product category
+* Requisition status
+* Approval state
+* Reservation state
+* Issue state
+* Assigned Stores officer
+* Urgent or routine
+* Waiting duration
 
 Use pagination and efficient queries.
 
 ---
 
-# Phase 6 — Prescription Workspace
+# Phase 7 — Requisition Workspace
 
-Create or adapt a dedicated prescription workspace.
+Create or adapt a dedicated requisition workspace.
 
 Recommended route:
 
 ```text
-/pharmacy/prescriptions/{prescription}
+/stores/requisitions/{requisition}
 ```
 
-The prescription workspace should coordinate the complete fulfilment lifecycle.
+The requisition workspace should coordinate the complete requisition-to-issue lifecycle.
 
 Recommended sections:
 
-1. Patient identity strip
-2. Visit details
-3. Prescription details
-4. Prescribing clinician and department
-5. Diagnosis context where authorized
-6. Allergy information
-7. Active medication warnings
-8. Medication-safety warnings
-9. Prescription items
-10. Dose, route, frequency, and duration
-11. Payment and insurance authorization
-12. Stock availability
-13. Batch availability
-14. Dispensing history
-15. Partial-dispensing history
-16. Collection state
-17. Counselling state
-18. Return or reversal history
-19. Clinical clarification history
-20. Billing references where authorized
-21. Activity timeline
-22. Authorized quick actions
+1. Requisition details
+2. Requesting department
+3. Requesting user
+4. Request date and priority
+5. Requested items
+6. Requested quantities
+7. Approved quantities
+8. Reserved quantities
+9. Previously issued quantities
+10. Outstanding quantities
+11. Available stock
+12. Batch availability
+13. Alternative products where authorized
+14. Approval history
+15. Reservation history
+16. Issue history
+17. Department receipt acknowledgement
+18. Clarification history
+19. Cancellation history
+20. Activity timeline
+21. Authorized quick actions
 
-Do not duplicate underlying prescription, dispensing, billing, stock, or safety implementations.
+Do not duplicate the underlying requisition, stock, reservation, or issue logic.
 
-The page should provide a Pharmacy-specific coordinated view of existing services.
-
----
-
-# Phase 7 — Prescription Acceptance and Clinical Review
-
-Before dispensing, the Pharmacy workflow should confirm that the prescription is appropriate for processing.
-
-The review may validate:
-
-* Patient identity
-* Prescription ownership
-* Prescribing clinician
-* Medication
-* Dose
-* Route
-* Frequency
-* Duration
-* Quantity
-* Diagnosis context where required
-* Allergy conflicts
-* Duplicate active medications
-* Drug interactions where supported
-* Unusual-dose warnings
-* Age-related warnings
-* Weight-related warnings where supported
-* Pregnancy-related warnings where supported
-* Missing required information
-* Prescription expiry
-* Cancellation state
-
-Reuse existing prescription-safety services.
-
-Do not recreate safety checks in Pharmacy controllers.
-
-Potential review states may include:
-
-```text
-not_reviewed
-review_required
-clarification_required
-reviewed
-approved
-rejected
-overridden
-```
-
-Any clinical-safety override must be:
-
-* Explicit
-* Permission-controlled
-* Reasoned
-* Linked to the specific warning
-* Audited
-
-Pharmacy staff should not silently alter the clinical prescription.
-
-Where a change is required, use:
-
-* Clinician clarification
-* Authorized substitution
-* Authorized quantity adjustment
-* Prescription amendment workflow
-
-according to existing policy.
+The page should coordinate existing inventory services through a Stores-specific interface.
 
 ---
 
-# Phase 8 — Medication-Safety Integration
+# Phase 8 — Requisition Approval
 
-Preserve and expose the existing medication-safety checks, including:
+Where requisitions require approval, preserve the existing approval architecture.
 
-* Allergy conflicts
-* Duplicate active medication
-* Missing-diagnosis policy
-* Unusual-dose warnings
-* Contraindication warnings where supported
-* Drug-interaction warnings where supported
-* Duplicate therapeutic-class warnings where supported
-* Pediatric or geriatric warnings where supported
-* Pregnancy or breastfeeding warnings where supported
+Approval should support:
 
-The Pharmacy workspace should distinguish:
+* Full approval
+* Partial approval
+* Rejection
+* Request for clarification
+* Approval by threshold
+* Multi-level approval where configured
+* Emergency approval where supported
 
-```text
-safe
-warning
-requires_review
-blocked
-overridden
-```
+An approval record should include:
 
-Warnings should display:
+* Requisition
+* Approving user
+* Approval level
+* Approved items
+* Approved quantities
+* Rejected items
+* Reason
+* Date and time
 
-* Warning type
-* Medication
-* Clinical context
-* Severity
-* Recommended action
-* Override eligibility
-* Override status
-* Responsible reviewer
+Do not allow approval of quantities greater than the requested quantity unless the existing workflow explicitly allows approved substitutions or package-size adjustments.
 
-Do not expose more diagnosis or clinical history than the pharmacist is authorized to view.
+Do not allow the same user to submit and approve a requisition where separation of duties is configured.
 
-Safety warnings must remain visible until resolved, accepted, or overridden according to policy.
+Approval actions must be audited.
 
 ---
 
-# Phase 9 — Payment, Insurance, and Authorization Awareness
+# Phase 9 — Stock Reservation
 
-Prescription fulfilment may depend on:
+After approval, stock may be reserved for the requisition.
 
-* Cash payment
-* Insurance coverage
-* Sponsor authorization
-* Departmental payment deferral
-* Emergency override
-* Inpatient payment policy
-* Visit-specific billing override
+Reservation must:
 
-Display safe operational states such as:
-
-```text
-authorized_to_dispense
-payment_required
-payment_pending
-insurance_pending
-insurance_approved
-insurance_partially_covered
-sponsor_pending
-sponsor_approved
-emergency_override
-authorized_override
-billing_context_missing
-```
-
-Reuse existing:
-
-* Payment-gate operation policy
-* Visit billing overrides
-* Insurance coverage calculation
-* Sponsor authorization
-* Invoice and receivable services
-* Emergency exception rules
-* Admission billing
-* Activity logging
-
-Do not expose unnecessary financial details without finance permissions.
-
-Do not hardcode a universal Pharmacy payment bypass.
-
-Use operation-specific policy for:
-
-* Accepting prescription
-* Reserving stock
-* Starting dispensing
-* Completing dispensing
-* Releasing medication for collection
-
-Any override must be:
-
-* Explicit
-* Permission-controlled
-* Reasoned
-* Visit-scoped or prescription-scoped
-* Audited
-
-Emergency and inpatient medication workflows may proceed under their configured policies without silently bypassing billing.
-
----
-
-# Phase 10 — Stock Location and Department Scoping
-
-All Pharmacy worklists and stock checks must respect:
-
-* Active department
-* Pharmacy stock location
-* User assignment
-* Medication-to-stock-location availability
-* Authorized cross-location access
-
-Where multiple Pharmacy departments exist, such as:
-
-* Main Pharmacy
-* OPD Pharmacy
-* Inpatient Pharmacy
-* Emergency Pharmacy
-* Satellite Pharmacy
-
-a user should only see prescriptions and stock relevant to their active department unless granted cross-department permission.
-
-Reuse the existing `StockLocationResolver`.
-
-Ensure:
-
-```php
-DepartmentType::PHARMACY
-```
-
-resolves to the correct Pharmacy stock location or configured location mapping.
-
-Do not expose every hospital stock item merely because a user belongs to a Pharmacy department.
-
----
-
-# Phase 11 — Stock Availability and Reservation
-
-Before dispensing, the system should determine:
-
-* Available quantity
-* Reserved quantity
-* Dispensed quantity
-* Remaining quantity
-* Batch availability
-* Expiry state
-* Stock-location availability
-* Alternative product availability where authorized
-
-Reuse existing stock and reservation services.
-
-The system should support:
-
-```text
-fully_available
-partially_available
-out_of_stock
-alternative_available
-reservation_pending
-reserved
-```
-
-Stock reservation must:
-
-1. Be tied to the prescription item.
-2. Be tied to the active stock location.
-3. Prevent double allocation.
+1. Be tied to the requisition item.
+2. Be tied to the source stock location.
+3. Respect available quantity.
 4. Respect batch and expiry policy.
-5. Release unused reservations after cancellation or expiry.
-6. Be audited where required.
-7. Be transactionally safe.
+5. Prevent double allocation.
+6. Support partial reservation.
+7. Preserve outstanding quantity.
+8. Release unused reservations after cancellation or expiry.
+9. Be transactionally safe.
+10. Be audited where required.
 
-Do not create a second inventory ledger for Pharmacy.
-
----
-
-# Phase 12 — Batch and Expiry Selection
-
-Dispensing should use the configured batch-selection policy.
-
-Prefer the existing policy, such as:
-
-* FEFO — first expiry, first out
-* FIFO — first in, first out
-* Explicit pharmacist selection where required
-
-Batch selection must consider:
-
-* Available quantity
-* Expiry date
-* Quarantine state
-* Recall state
-* Stock-location state
-* Product compatibility
-* Lot or batch restrictions
-
-Do not allow:
-
-* Expired batches
-* Quarantined batches
-* Recalled batches
-* Inactive batches
-* Zero-availability batches
-
-to be dispensed unless an explicit exceptional workflow exists.
-
-Batch selection and quantity deduction must be transactional.
-
----
-
-# Phase 13 — Dispensing Workflow
-
-Expose dispensing under:
+Reservation states may include:
 
 ```text
-/pharmacy/dispensing
+not_reserved
+partially_reserved
+fully_reserved
+reservation_conflict
+released
+expired
 ```
 
-Recommended dispensing states include:
+Do not create a separate stock ledger for reserved quantities.
+
+Use the existing inventory reservation architecture.
+
+---
+
+# Phase 10 — Stock Issue Workflow
+
+Expose stock issuing under:
+
+```text
+/stores/issues
+```
+
+Authorized Stores users should be able to:
+
+* Start an issue
+* Select an approved requisition
+* Confirm source stock location
+* Select valid batches
+* Confirm issue quantities
+* Record partial issue
+* Record unavailable quantities
+* Record substitutions where authorized
+* Prepare issue documentation
+* Mark items ready for departmental collection
+* Confirm handover
+* Complete the issue
+
+Issue states may include:
 
 ```text
 not_started
 in_progress
-partially_dispensed
-fully_dispensed
+partially_issued
 ready_for_collection
-collected
+handed_over
+completed
 cancelled
 reversed
 ```
 
-Authorized Pharmacy users should be able to:
+Stock issuing must not:
 
-* Start dispensing
-* Select stock batches
-* Confirm dispensed quantity
-* Record partial dispensing
-* Record unavailable quantity
-* Record substitution where authorized
-* Generate or confirm medication labels
-* Record counselling instructions
-* Mark medication ready for collection
-* Complete dispensing
-
-Dispensing must not:
-
-* Exceed the prescribed quantity
+* Exceed the approved quantity
+* Exceed the outstanding quantity
 * Exceed available stock
-* Bypass unresolved blocking safety warnings
-* Bypass required payment or authorization policy
-* Modify the prescription silently
-* Create duplicate stock deductions
-* Mark uncollected medication as collected
+* Use expired or quarantined stock
+* Deduct stock twice
+* Issue from an unauthorized stock location
+* Silently modify the original requisition
 
-All dispensing actions must remain under `/pharmacy/*`.
+All issue actions must remain under `/stores/*`.
 
 ---
 
-# Phase 14 — Partial Dispensing
+# Phase 11 — Partial Stock Issue
 
-Support partial dispensing where only part of the prescription quantity is available or authorized.
+Support partial issue where the full approved quantity is not available or cannot be supplied immediately.
 
-A partial dispensing record should preserve:
+A partial issue must preserve:
 
-* Prescribed quantity
-* Previously dispensed quantity
-* Quantity dispensed now
-* Remaining quantity
+* Requested quantity
+* Approved quantity
+* Previously issued quantity
+* Quantity issued now
+* Outstanding quantity
 * Reason
-* Batch allocation
-* Responsible pharmacist
+* Batch allocations
+* Responsible Stores user
 * Date and time
-* Payment and insurance state
 * Follow-up requirement
 
 Potential reasons include:
 
 ```text
 insufficient_stock
-insurance_limit
-patient_request
-clinical_adjustment
 package_size
-authorized_split
+allocation_limit
+department_request
+substitution_pending
+stock_under_quarantine
 other
 ```
 
 The system should:
 
-1. Preserve the original prescribed quantity.
-2. Preserve each dispensing event.
-3. Maintain the outstanding quantity.
-4. Prevent over-dispensing.
-5. Keep the prescription visible in the partial-dispensing worklist.
+1. Preserve the original requisition.
+2. Preserve every issue event.
+3. Maintain outstanding quantity.
+4. Prevent over-issuing.
+5. Keep the requisition visible in the partial-issue worklist.
 6. Allow later completion where valid.
-7. Update billing and stock correctly.
-8. Audit each dispensing event.
+7. Update stock correctly.
+8. Audit every issue event.
 
-Do not mark the prescription fully completed while outstanding medication remains unless the remainder is formally cancelled or waived.
+Do not mark the requisition fully completed while valid outstanding quantities remain unless those quantities are formally cancelled or waived.
 
 ---
 
-# Phase 15 — Medication Substitution
+# Phase 12 — Product Substitution
 
-Where substitution is permitted, use a formal workflow.
+Where Stores product substitution is permitted, use a formal workflow.
 
-Potential substitution types include:
+Potential substitutions include:
 
-* Generic equivalent
-* Brand equivalent
-* Strength substitution with quantity adjustment
-* Formulation substitution
-* Therapeutic alternative where explicit clinical approval exists
+* Equivalent brand
+* Equivalent generic product
+* Equivalent pack size
+* Equivalent unit configuration
+* Approved alternative consumable
 
 A substitution should record:
 
-* Original medication
-* Replacement medication
-* Reason
+* Requested product
+* Supplied product
 * Equivalence basis
-* Quantity adjustment
-* Approving pharmacist
-* Prescriber approval where required
-* Patient notification
-* Billing difference
-* Stock allocation
+* Requested quantity
+* Converted issue quantity
+* Reason
+* Approving user
+* Requesting department acceptance where required
+* Stock impact
 * Date and time
 
-Do not allow arbitrary substitution through editing the original prescription item.
+Do not allow arbitrary substitution through direct editing of the requisition item.
 
 Substitution must respect:
 
+* Product equivalence configuration
 * Permission
-* Formulary policy
-* Insurance coverage
-* Safety checks
-* Prescriber-approval policy
+* Approval policy
+* Unit conversion
+* Clinical restrictions where relevant
 * Audit requirements
 
 ---
 
-# Phase 16 — Medication Labels and Counselling
+# Phase 13 — Departmental Collection and Handover
 
-Where label generation exists, expose it within `/pharmacy/*`.
+Where the requesting department physically collects supplies, support a formal handover process.
 
-Labels may include:
+Handover should record:
 
-* Patient identifier
-* Medication name
-* Dose
-* Route
-* Frequency
-* Duration
-* Quantity
-* Administration instructions
-* Warning instructions
-* Storage instructions
-* Dispensing date
-* Pharmacy
-* Responsible pharmacist
-
-Do not expose unnecessary sensitive information on labels.
-
-The counselling workflow may record:
-
-* Instructions explained
-* Side effects explained
-* Storage explained
-* Adherence guidance
-* Device-use guidance
-* Patient questions
-* Counselling completed by
-* Counselling date and time
-
-Counselling requirements may vary by medication or patient type.
-
-Do not mark counselling complete automatically where acknowledgement is required.
-
----
-
-# Phase 17 — Ready for Collection and Collection Workflow
-
-Expose medication collection under:
-
-```text
-/pharmacy/collections
-```
-
-The collection queue should show:
-
-* Patient identifier
-* Prescription number
-* Medication count
-* Ready date and time
-* Waiting duration
-* Counselling requirement
-* Collection status
-* Authorized collector where applicable
-
-Collection confirmation should record:
-
-* Collector identity
-* Relationship to patient where applicable
+* Requisition
+* Issue
+* Requesting department
+* Collecting user
+* Issuing Stores user
 * Collection date and time
-* Responsible Pharmacy user
-* Counselling completion
-* Signature or acknowledgement where supported
+* Items and quantities
+* Condition at handover
+* Acknowledgement
 * Notes
 
-Potential collection states include:
+Potential handover states include:
 
 ```text
 not_ready
-ready
-partially_ready
-collected
+ready_for_collection
 partially_collected
-uncollected
-returned_to_stock
+collected
+receipt_acknowledged
 ```
 
-Do not mark medication collected merely because dispensing is complete.
+Do not mark issued stock as received by the requesting department merely because the Stores issue was prepared.
 
-Uncollected medication should follow the configured expiry or return-to-stock policy.
+Where departmental receipt acknowledgement exists, keep:
 
----
+* Stores handover
+* Department receipt
 
-# Phase 18 — Inpatient Pharmacy Workflow
-
-The Pharmacy workspace must support inpatient medication supply.
-
-Inpatient prescriptions may differ from OPD prescriptions because:
-
-* Medication may be supplied to a ward rather than directly to the patient.
-* Supply may occur in scheduled quantities.
-* Administration is recorded separately by Nursing.
-* Admission billing policies may apply.
-* Repeat or ongoing supply may be required.
-* Returned unused medication may need reconciliation.
-
-The Pharmacy workspace should display safe inpatient context such as:
-
-* Admission number
-* Ward
-* Bed
-* Ordering clinician
-* Medication schedule
-* Quantity requested
-* Quantity supplied
-* Remaining quantity
-* Supply cycle
-* Ward receipt state
-
-Do not treat Pharmacy dispensing as medication administration.
-
-Medication administration remains a Nursing or authorized clinical action.
+as distinct states.
 
 ---
 
-# Phase 19 — Emergency Pharmacy Workflow
+# Phase 14 — Goods Receipt Workflow
 
-Emergency prescriptions should remain highly visible and prioritized.
-
-The Pharmacy workspace should show:
-
-* Emergency priority
-* Emergency department
-* Emergency visit
-* Stabilization requirement
-* Payment override state
-* Stock availability
-* Required fulfilment time
-* Assigned pharmacist
-* Current status
-
-Emergency medication fulfilment must use the configured emergency payment and stock-override policies.
-
-Do not hardcode unrestricted emergency dispensing.
-
-Any exceptional action must be:
-
-* Operation-specific
-* Permission-controlled
-* Reasoned
-* Audited
-
----
-
-# Phase 20 — Prescription Cancellation
-
-Provide a structured prescription-cancellation workflow.
-
-A cancellation should record:
-
-* Prescription or item
-* Cancellation reason
-* Cancelling user
-* Date and time
-* Whether dispensing started
-* Whether stock was reserved
-* Whether stock was deducted
-* Whether billing was posted
-* Whether refund or reversal is required
-* Whether clinician notification is required
-
-Potential cancellation reasons may include:
+Expose goods receipt under:
 
 ```text
-prescriber_cancelled
-duplicate_prescription
-clinical_contraindication
-patient_declined
-medication_unavailable
-insurance_denied
-entered_in_error
+/stores/receipts
+```
+
+Goods receipt may originate from:
+
+* Purchase order
+* Supplier delivery
+* Donation
+* Opening balance
+* Approved direct receipt
+* Inter-facility transfer
+* Return from another location
+
+The receipt workflow should support:
+
+* Supplier or source
+* Purchase order
+* Delivery note
+* Invoice reference where authorized
+* Product
+* Ordered quantity
+* Delivered quantity
+* Accepted quantity
+* Rejected quantity
+* Unit of measure
+* Batch or lot
+* Serial number where supported
+* Manufacturing date
+* Expiry date
+* Unit cost where authorized
+* Receiving location
+* Receiving user
+* Inspection state
+* Receipt date and time
+
+Do not allow receipt completion without required batch or expiry information for configured products.
+
+Goods receipt must:
+
+1. Validate the source.
+2. Validate products and quantities.
+3. Create or update batches correctly.
+4. Post stock movements transactionally.
+5. Preserve rejected quantities.
+6. Update purchase-order receipt state where applicable.
+7. Preserve valuation data where authorized.
+8. Audit the receipt.
+
+---
+
+# Phase 15 — Goods Inspection and Rejection
+
+Before receipt completion, support inspection where applicable.
+
+Inspection may validate:
+
+* Product identity
+* Quantity
+* Packaging
+* Seal integrity
+* Batch number
+* Expiry date
+* Temperature state
+* Damage
+* Recall state
+* Purchase-order match
+* Unit-of-measure match
+
+Rejected delivery quantities should record:
+
+* Product
+* Quantity
+* Reason
+* Supplier
+* Delivery reference
+* Rejecting user
+* Date and time
+* Return or replacement requirement
+
+Potential rejection reasons include:
+
+```text
+wrong_product
+wrong_quantity
+damaged
+expired
+near_expiry
+incorrect_batch
+temperature_breach
+packaging_failure
+purchase_order_mismatch
+quality_failure
 other
 ```
 
-Cancellation must:
-
-1. Preserve the original prescription.
-2. Release unused stock reservations.
-3. Avoid reversing already administered medication.
-4. Trigger billing correction where required.
-5. Preserve audit history.
-6. Avoid silently deleting dispensing records.
+Do not add rejected quantities to available stock.
 
 ---
 
-# Phase 21 — Dispensing Reversal
+# Phase 16 — Batch, Lot, Serial, and Expiry Tracking
 
-A completed dispensing must not be deleted directly.
+Preserve product-level configuration for whether an item requires:
 
-Provide a formal reversal workflow.
+* Batch tracking
+* Lot tracking
+* Serial tracking
+* Expiry tracking
 
-A reversal should record:
+Batch records may include:
 
-* Dispensing record
-* Prescription
-* Medication item
-* Quantity
-* Batch
-* Reason
-* Responsible user
-* Date and time
-* Stock-restoration eligibility
-* Billing-reversal requirement
-* Collection state
-* Patient possession state
+* Product
+* Batch or lot number
+* Stock location
+* Received quantity
+* Available quantity
+* Reserved quantity
+* Expiry date
+* Manufacturing date
+* Supplier
+* Receipt reference
+* Unit cost
+* Quarantine state
+* Recall state
+* Disposal state
 
-Stock should only be restored when:
+Serial-tracked products must prevent duplicate serial numbers.
 
-* The medication was not collected, or
-* A valid return was accepted under policy, and
-* The product remains suitable for return to stock.
+Do not require batch or serial tracking for products that are not configured for it.
 
-Do not restore returned medication to saleable stock automatically where storage conditions or tamper state cannot be verified.
-
-Reversals must be transactionally safe and audited.
+Do not allow expired, quarantined, recalled, damaged, or disposed stock to appear as available.
 
 ---
 
-# Phase 22 — Medication Returns
+# Phase 17 — Stock Transfer Workflow
+
+Expose transfers under:
+
+```text
+/stores/transfers
+```
+
+Support:
+
+* Store-to-store transfer
+* Central-to-satellite transfer
+* Store-to-Pharmacy transfer
+* Store-to-Laboratory transfer
+* Store-to-Theatre transfer
+* Store-to-Ward transfer
+* Inter-facility transfer where supported
+
+A transfer should include:
+
+* Source location
+* Destination location
+* Requested items
+* Approved quantities
+* Dispatched quantities
+* Received quantities
+* Batch allocations
+* Requested user
+* Approving user
+* Dispatching user
+* Receiving user
+* Priority
+* Transfer date
+* Transport information where supported
+
+Transfer states may include:
+
+```text
+draft
+submitted
+approved
+reserved
+awaiting_dispatch
+dispatched
+in_transit
+partially_received
+received
+rejected
+cancelled
+```
+
+Transfers must:
+
+1. Prevent source stock from being issued twice.
+2. Preserve stock in transit.
+3. Avoid adding destination stock before receipt confirmation where the existing model uses in-transit stock.
+4. Support partial receipt.
+5. Record damaged or missing quantities.
+6. Maintain batch traceability.
+7. Be transactionally safe.
+8. Be audited.
+
+---
+
+# Phase 18 — Departmental Returns
 
 Expose returns under:
 
 ```text
-/pharmacy/returns
+/stores/returns
 ```
 
-A medication return may record:
+A departmental return may include:
 
-* Patient
-* Prescription
-* Dispensing
-* Medication
+* Requesting or returning department
+* Original issue
+* Product
 * Batch
 * Quantity
 * Return reason
-* Return date
-* Packaging state
-* Seal or tamper state
+* Packaging condition
 * Storage-condition confidence
 * Expiry state
-* Stock-restoration decision
-* Refund or billing action
-* Responsible Pharmacy user
+* Tamper state
+* Receiving Stores user
+* Return date and time
+* Stock disposition
 
-Potential return outcomes include:
+Potential outcomes include:
 
 ```text
 accepted_return_to_stock
-accepted_quarantine
-accepted_for_destruction
+accepted_to_quarantine
+accepted_for_disposal
 rejected
-billing_only_adjustment
 ```
 
-Do not assume every returned medication can be returned to available stock.
+Do not assume every returned item can return to available stock.
 
-Use the existing stock, quarantine, destruction, billing, and audit services where available.
+Stock should only return to available inventory where:
+
+* The product is eligible
+* Packaging is acceptable
+* Storage conditions are trustworthy
+* The batch is valid
+* The item is not expired, recalled, or damaged
+
+Use the existing quarantine, adjustment, and disposal services where applicable.
 
 ---
 
-# Phase 23 — Stock Alerts
+# Phase 19 — Supplier Returns
 
-Expose stock-awareness pages under:
+Where supplier-return functionality exists, expose it through Stores.
+
+Supplier returns may relate to:
+
+* Damaged delivery
+* Wrong product
+* Wrong quantity
+* Recall
+* Quality failure
+* Near expiry
+* Expired product
+* Contract rejection
+
+A supplier return should record:
+
+* Supplier
+* Original receipt
+* Product
+* Batch
+* Quantity
+* Reason
+* Return date
+* Dispatch reference
+* Replacement expected
+* Credit note reference where authorized
+* Responsible user
+
+Do not reduce stock twice when a rejected receipt quantity was never accepted into inventory.
+
+---
+
+# Phase 20 — Stock Adjustments
+
+Expose stock adjustments under:
 
 ```text
-/pharmacy/stock
-/pharmacy/low-stock
-/pharmacy/stock-outs
-/pharmacy/expiries
+/stores/adjustments
 ```
 
-The workspace may display:
+Adjustments should only be used for authorized inventory corrections.
 
-* Medication
-* Product code
+Potential adjustment types include:
+
+```text
+increase
+decrease
+correction
+opening_balance
+damage
+loss
+expiry
+found_stock
+unit_conversion
+system_correction
+```
+
+An adjustment must record:
+
+* Product
 * Stock location
+* Batch where applicable
+* Previous quantity
+* Adjustment quantity
+* New quantity
+* Adjustment type
+* Reason
+* Supporting reference
+* Requesting user
+* Approving user where required
+* Date and time
+
+Do not allow direct editing of stock balances.
+
+All balance changes must be represented by stock-ledger movements.
+
+Adjustments above configured thresholds should require approval.
+
+---
+
+# Phase 21 — Physical Stock Counts
+
+Expose physical stock counts under:
+
+```text
+/stores/stock-counts
+```
+
+Support:
+
+* Full stock count
+* Cycle count
+* Category count
+* Location count
+* Batch count
+* Spot count
+
+A stock count should include:
+
+* Count reference
+* Stock location
+* Scope
+* Count date
+* Count team
+* Count status
+* Product
+* Batch
+* System quantity
+* Counted quantity
+* Variance
+* Recount quantity
+* Final approved quantity
+* Notes
+
+Potential states include:
+
+```text
+draft
+scheduled
+in_progress
+submitted
+recount_required
+awaiting_approval
+approved
+reconciled
+cancelled
+```
+
+During a count, follow the existing policy regarding whether stock movement is:
+
+* Frozen
+* Restricted
+* Allowed with movement tracking
+* Counted using a cut-off timestamp
+
+Do not create unexplained adjustment movements automatically.
+
+Variance resolution must remain explicit and audited.
+
+---
+
+# Phase 22 — Stock Reconciliation
+
+Expose reconciliation under:
+
+```text
+/stores/reconciliations
+```
+
+Reconciliation should compare:
+
+* Opening stock
+* Receipts
+* Transfers in
+* Returns in
+* Issues
+* Transfers out
+* Disposals
+* Adjustments
+* Expected closing stock
+* Physical count
+* Variance
+
+A reconciliation should record:
+
+* Count reference
+* Products and batches
+* Variance reasons
+* Approved adjustments
+* Responsible user
+* Approving user
+* Completion date
+
+Potential variance reasons include:
+
+```text
+counting_error
+unposted_receipt
+unposted_issue
+incorrect_unit
+damage
+loss
+theft
+expired_stock
+system_error
+unknown
+```
+
+Do not reconcile by silently replacing ledger balances.
+
+Use authorized adjustment movements tied to the reconciliation.
+
+---
+
+# Phase 23 — Low Stock and Stockout Management
+
+Expose stock alerts under:
+
+```text
+/stores/low-stock
+/stores/stock-outs
+```
+
+The alert system should use existing product or location configuration such as:
+
+* Reorder level
+* Minimum stock
+* Maximum stock
+* Safety stock
+* Average consumption
+* Lead time
+* Reserved quantity
+* Available quantity
+
+The workspace should distinguish:
+
+```text
+healthy
+below_reorder
+low_stock
+critical_stock
+out_of_stock
+overstock
+```
+
+Where consumption history exists, display useful planning indicators such as:
+
+* Average daily consumption
+* Estimated days of stock remaining
+* Last issue date
+* Pending purchase quantity
+* Pending transfer quantity
+* Outstanding requisition quantity
+
+Do not generate procurement actions automatically unless the existing workflow supports it.
+
+---
+
+# Phase 24 — Expiry Management
+
+Expose expiry management under:
+
+```text
+/stores/expiries
+```
+
+Expiry views should support configurable windows such as:
+
+* Expired
+* Expiring within 30 days
+* Expiring within 60 days
+* Expiring within 90 days
+* Expiring within 180 days
+
+Display:
+
+* Product
+* Batch
+* Location
 * Available quantity
 * Reserved quantity
-* Reorder level
-* Stockout state
-* Earliest expiry
-* Expiring quantity
-* Batch count
-* Last stock movement
+* Expiry date
+* Days to expiry
+* Last movement
+* Related requisitions
+* Suggested action where supported
 
-Stock alerts should support:
+Potential actions include:
 
-* Low stock
-* Out of stock
-* Near expiry
-* Expired
-* Quarantined
-* Recalled
-* Negative-stock anomaly
-* Reservation anomaly
+* Prioritize issue
+* Transfer to higher-consumption location
+* Quarantine
+* Return to supplier
+* Dispose
+* Mark reviewed
 
-Do not grant procurement, stock-adjustment, or transfer permissions merely because the user can view Pharmacy stock.
+Do not permit issue or transfer of expired stock as available inventory.
 
-Stock corrections should remain under the existing inventory authorization model.
+Near-expiry restrictions should follow configured policy.
 
 ---
 
-# Phase 24 — Pharmacy Handoffs and Clarifications
+# Phase 25 — Quarantine
 
-Expose Pharmacy handoffs under:
+Expose quarantined stock under:
 
 ```text
-/pharmacy/handoffs
+/stores/quarantine
 ```
 
-Reuse the existing Journey Intelligence handoff infrastructure.
+Stock may be quarantined because of:
+
+* Quality concern
+* Damage
+* Temperature breach
+* Recall investigation
+* Pending inspection
+* Return assessment
+* Suspected counterfeit
+* Documentation problem
+* Near-expiry review
+
+A quarantine record should include:
+
+* Product
+* Batch
+* Quantity
+* Location
+* Reason
+* Quarantine date
+* Responsible user
+* Review date
+* Review outcome
+* Release or disposal decision
+
+Quarantined stock must not be available for:
+
+* Reservation
+* Issue
+* Transfer
+* Dispensing
+* Clinical consumption
+
+unless formally released by an authorized user.
+
+---
+
+# Phase 26 — Recall Management
+
+Expose product recalls under:
+
+```text
+/stores/recalls
+```
+
+A recall may include:
+
+* Product
+* Batch or lot
+* Recall source
+* Recall level
+* Reason
+* Effective date
+* Affected locations
+* Quantity on hand
+* Quantity issued
+* Quantity recovered
+* Quantity disposed
+* Status
+
+The system should support:
+
+1. Identifying affected stock.
+2. Blocking further use.
+3. Locating affected batches across authorized stock locations.
+4. Recording recovery.
+5. Recording department notifications.
+6. Recording supplier or regulator communication where supported.
+7. Recording final disposition.
+8. Auditing all actions.
+
+Do not expose patient-level dispensing details unless the user possesses the required permission and the recall workflow requires them.
+
+---
+
+# Phase 27 — Damage and Loss
+
+Expose damage and loss recording under:
+
+```text
+/stores/damages
+```
+
+A damage or loss record should include:
+
+* Product
+* Batch
+* Quantity
+* Location
+* Type
+* Reason
+* Date and time
+* Discovering user
+* Supporting notes
+* Investigation state
+* Stock disposition
+* Approval state
+
+Potential types include:
+
+```text
+physical_damage
+breakage
+spillage
+temperature_damage
+water_damage
+fire_damage
+loss
+theft
+unknown
+```
+
+Stock must not be reduced without an authorized stock movement.
+
+High-value or unusual losses should support escalation and approval.
+
+---
+
+# Phase 28 — Disposal and Destruction
+
+Expose disposal under:
+
+```text
+/stores/disposals
+```
+
+Disposal may apply to:
+
+* Expired stock
+* Damaged stock
+* Recalled stock
+* Contaminated stock
+* Failed quality inspection
+* Unusable returned stock
+
+A disposal record should include:
+
+* Product
+* Batch
+* Quantity
+* Reason
+* Disposal method
+* Requested user
+* Approving user
+* Witnesses where required
+* Disposal date
+* Disposal reference
+* Supporting documentation
+* Final stock movement
+
+Potential states include:
+
+```text
+requested
+awaiting_approval
+approved
+scheduled
+completed
+rejected
+cancelled
+```
+
+Do not reduce available stock twice if the item was already moved to quarantine or damaged stock.
+
+Use clear inventory states and one final disposal movement.
+
+---
+
+# Phase 29 — Purchase Requests and Procurement Awareness
+
+Where purchase-request functionality exists, expose Stores operational access under:
+
+```text
+/stores/purchase-requests
+```
+
+Stores users may be allowed to:
+
+* Create a purchase request
+* Suggest quantity
+* Link low-stock or stockout evidence
+* Link consumption history
+* Submit for approval
+* Track status
+* View related purchase orders
+
+The purchase-request process should not automatically grant Stores users authority to:
+
+* Approve purchases
+* Select suppliers
+* Confirm prices
+* Create financial commitments
+
+unless explicitly permitted.
+
+Reuse the existing procurement and approval architecture.
+
+---
+
+# Phase 30 — Purchase Orders and Supplier Deliveries
+
+Where purchase orders exist, expose a read or operational receipt view under:
+
+```text
+/stores/purchase-orders
+```
+
+Stores staff may need to see:
+
+* Supplier
+* Purchase-order number
+* Expected products
+* Ordered quantities
+* Previously received quantities
+* Outstanding quantities
+* Expected delivery date
+* Delivery state
+* Related receipts
+
+Purchase-order financial details should remain permission-controlled.
+
+Goods receipt must update purchase-order receipt progress without altering approved financial values improperly.
+
+---
+
+# Phase 31 — Product Catalogue Visibility
+
+Expose the product catalogue under:
+
+```text
+/stores/products
+```
+
+The operational Stores view may include:
+
+* Product name
+* Product code
+* Category
+* Unit
+* Pack size
+* Batch-tracking requirement
+* Expiry-tracking requirement
+* Serial-tracking requirement
+* Reorder level
+* Stock locations
+* Active or inactive state
+* Current balance
+* Reserved quantity
+* Available quantity
+
+The ability to view a product must not automatically grant permission to edit:
+
+* Product definitions
+* Prices
+* Billing mappings
+* Clinical mappings
+* Insurance prices
+* Procurement settings
+
+Use existing administrative permissions.
+
+---
+
+# Phase 32 — Stock Ledger and Movement History
+
+Every inventory balance change must be traceable through the existing stock ledger.
+
+Expose movement history under Stores where permitted.
+
+Movement types may include:
+
+```text
+receipt
+issue
+transfer_out
+transfer_in
+return_in
+return_out
+adjustment_in
+adjustment_out
+disposal
+quarantine_in
+quarantine_out
+reservation
+reservation_release
+```
+
+The ledger view should display:
+
+* Date and time
+* Product
+* Batch
+* Stock location
+* Movement type
+* Quantity in
+* Quantity out
+* Running balance where supported
+* Reference type
+* Reference number
+* Responsible user
+* Notes
+
+Do not permit direct editing or deletion of posted stock-ledger movements.
+
+Corrections must use reversals or adjustment workflows.
+
+---
+
+# Phase 33 — Stock Valuation
+
+Where stock valuation exists, preserve the configured valuation method, such as:
+
+* Weighted average
+* FIFO
+* Specific batch cost
+* Standard cost
+
+Do not implement a competing valuation method for the Stores workspace.
+
+Valuation views and reports should be permission-controlled.
+
+The workspace may show:
+
+* Quantity
+* Unit cost
+* Total value
+* Location value
+* Category value
+* Expired-stock value
+* Quarantined-stock value
+* Damaged-stock value
+
+Do not expose supplier pricing or inventory value to users without financial inventory permissions.
+
+---
+
+# Phase 34 — Stores Handoffs and Coordination
+
+Expose Stores handoffs under:
+
+```text
+/stores/handoffs
+```
+
+Reuse the existing Journey Intelligence handoff infrastructure where appropriate.
 
 Support handoffs such as:
 
-* Prescription clarification required
-* Medication unavailable
-* Alternative medication proposed
-* Payment clarification required
-* Insurance authorization pending
-* Inpatient medication ready
-* Emergency medication prepared
-* Medication not collected
-* Return or reversal requiring Finance action
-* Safety warning requiring clinician response
+* Requisition clarification required
+* Item unavailable
+* Alternative product proposed
+* Department collection ready
+* Transfer awaiting receipt
+* Goods receipt awaiting inspection
+* Purchase-order discrepancy
+* Stockout escalation
+* Near-expiry action required
+* Recall notification
+* Adjustment awaiting approval
+* Stock-count variance review
+* Disposal awaiting authorization
 
 The handoff worklist should show:
 
-* Patient and visit context
-* Prescription
+* Related requisition, issue, transfer, receipt, or stock item
 * Sending department
 * Receiving department
 * Required action
@@ -1402,19 +1977,19 @@ Authorized users may:
 * Escalate
 * Reassign
 
-All Pharmacy-side links should preserve `/pharmacy/*` context.
+All Stores-side links must preserve `/stores/*` context.
 
 ---
 
-# Phase 25 — Workspace-Aware URL Resolution
+# Phase 35 — Workspace-Aware URL Resolution
 
 Extend the centralized workspace route resolver.
 
 Do not scatter checks such as:
 
 ```php
-if ($department->type === DepartmentType::PHARMACY) {
-    return route('pharmacy.prescriptions.show', $prescription);
+if ($department->type === DepartmentType::STORES) {
+    return route('stores.requisitions.show', $requisition);
 }
 ```
 
@@ -1433,65 +2008,87 @@ The resolver should support methods equivalent to:
 ```php
 dashboard()
 
-prescriptionIndex()
-prescriptionShow(Prescription $prescription)
+requisitionIndex()
+requisitionShow(Requisition $requisition)
 
-dispensingIndex()
-dispensingShow(Dispensing $dispensing)
+issueIndex()
+issueShow(StockIssue $issue)
 
-collectionIndex()
+receiptIndex()
+receiptShow(GoodsReceipt $receipt)
+
+transferIndex()
+transferShow(StockTransfer $transfer)
+
 returnIndex()
-reversalIndex()
+returnShow(StockReturn $return)
 
-medicationIndex()
-medicationShow(Product $product)
+adjustmentIndex()
+adjustmentShow(StockAdjustment $adjustment)
+
+stockCountIndex()
+stockCountShow(StockCount $stockCount)
+
+productIndex()
+productShow(Product $product)
 
 stockIndex()
 stockShow(StockItem $stockItem)
+
 batchIndex()
 batchShow(Batch $batch)
 
-patientIndex()
-patientShow(Patient $patient)
+quarantineIndex()
+recallIndex()
+damageIndex()
+disposalIndex()
+
+purchaseRequestIndex()
+purchaseOrderIndex()
+supplierIndex()
 
 handoffIndex()
 reportIndex()
 ```
 
-For a Pharmacy user, the resolver must return `pharmacy.*` routes.
+For a Stores user, the resolver must return `stores.*` routes.
 
 For other users, preserve the appropriate existing workspace or generic route.
 
-Always use the active department context rather than only the user’s primary department.
+Always use the active department and stock-location context rather than only the user’s primary department.
 
 ---
 
-# Phase 26 — Replace Hardcoded Shared Links
+# Phase 36 — Replace Hardcoded Shared Links
 
-Audit all shared pages accessed by Pharmacy users.
+Audit all shared pages accessed by Stores users.
 
 Replace hardcoded generic links that break workspace continuity.
 
 Review at minimum:
 
-* Prescription worklists
-* Prescription details
-* Dispensing pages
-* Collection queue
+* Requisition worklists
+* Requisition details
+* Issue pages
+* Goods-receipt pages
+* Transfer pages
 * Return pages
-* Reversal pages
-* Medication stock pages
+* Adjustment pages
+* Stock-count pages
+* Reconciliation pages
+* Product lists
+* Stock pages
 * Batch pages
-* Patient search
-* Patient profiles
-* Medication history
-* Prescription history
-* Visit history
-* Journey worklists
+* Expiry pages
+* Quarantine pages
+* Recall pages
+* Disposal pages
+* Purchase-request pages
+* Purchase-order pages
+* Supplier pages
 * Dashboard cards
 * Breadcrumbs
 * Notifications
-* Safety-alert links
 * Handoff links
 * Action dropdowns
 * Empty-state actions
@@ -1501,102 +2098,103 @@ Review at minimum:
 Avoid shared-view code such as:
 
 ```php
-route('prescriptions.show', $prescription)
+route('requisitions.show', $requisition)
 ```
 
 Use the centralized workspace route resolver.
 
-Do not alter API, payment callback, insurance callback, signed, print, export, integration, or background-job URLs unless explicitly part of the Pharmacy browser workspace.
+Do not alter API, integration, signed, print, export, procurement callback, or background-job URLs unless explicitly part of the Stores browser workspace.
 
 ---
 
-# Phase 27 — Workspace-Aware Redirects
+# Phase 37 — Workspace-Aware Redirects
 
-All successful Pharmacy actions must redirect back into `/pharmacy/*`.
+All successful Stores actions must redirect back into `/stores/*`.
 
 Examples:
 
-After accepting a prescription:
+After approving a requisition:
 
 ```text
-/pharmacy/prescriptions/{prescription}
+/stores/requisitions/{requisition}
 ```
 
-After clinical review:
+After issuing stock:
 
 ```text
-/pharmacy/prescriptions/{prescription}
+/stores/issues/{issue}
 ```
 
-After starting dispensing:
+After completing a goods receipt:
 
 ```text
-/pharmacy/dispensing/{dispensing}
+/stores/receipts/{receipt}
 ```
 
-After partial dispensing:
+After dispatching a transfer:
 
 ```text
-/pharmacy/dispensing/{dispensing}
+/stores/transfers/{transfer}
 ```
 
-After marking ready for collection:
+After receiving a transfer:
 
 ```text
-/pharmacy/collections
+/stores/transfers/{transfer}
 ```
 
-After confirming collection:
+After submitting a stock adjustment:
 
 ```text
-/pharmacy/prescriptions/{prescription}
+/stores/adjustments/{adjustment}
 ```
 
-After a medication return:
+After completing a stock count:
 
 ```text
-/pharmacy/returns/{return}
+/stores/stock-counts/{stockCount}
 ```
 
-After a reversal:
+After recording a disposal:
 
 ```text
-/pharmacy/prescriptions/{prescription}
+/stores/disposals/{disposal}
 ```
 
-Avoid hardcoding Pharmacy redirects inside domain services.
+Avoid hardcoding Stores redirects inside domain services.
 
 Use a workspace redirect resolver such as:
 
 ```php
-$workspaceRedirects->toPrescription($prescription);
-$workspaceRedirects->toDispensing($dispensing);
-$workspaceRedirects->toCollectionQueue();
-$workspaceRedirects->toReturn($return);
-$workspaceRedirects->toPharmacyDashboard();
+$workspaceRedirects->toRequisition($requisition);
+$workspaceRedirects->toStockIssue($issue);
+$workspaceRedirects->toGoodsReceipt($receipt);
+$workspaceRedirects->toStockTransfer($transfer);
+$workspaceRedirects->toStockCount($stockCount);
+$workspaceRedirects->toStoresDashboard();
 ```
 
-Validation failures must return users to the same `/pharmacy/*` route with input preserved.
+Validation failures must return users to the same `/stores/*` route with input preserved.
 
 ---
 
-# Phase 28 — Login and Department Switching
+# Phase 38 — Login and Department Switching
 
-When a user logs in and their active department type is `pharmacy`, redirect them to:
-
-```text
-/pharmacy
-```
-
-When a multi-department user switches to a Pharmacy department, redirect them to:
+When a user logs in and their active department type is `stores`, redirect them to:
 
 ```text
-/pharmacy
+/stores
 ```
 
-When switching away from Pharmacy, redirect to the selected department’s appropriate workspace.
+When a multi-department user switches to a Stores department, redirect them to:
 
-The menu, dashboard, stock location, route context, and data scoping must always use the active department.
+```text
+/stores
+```
+
+When switching away from Stores, redirect to the selected department’s appropriate workspace.
+
+The menu, dashboard, route context, inventory data, and stock-location scoping must always use the active department.
 
 Do not rely only on:
 
@@ -1608,27 +2206,27 @@ where the application supports active department selection.
 
 ---
 
-# Phase 29 — Pharmacy Workspace Authorization
+# Phase 39 — Stores Workspace Authorization
 
-The `/pharmacy` prefix is not authorization.
+The `/stores` prefix is not authorization.
 
 Protect the workspace so access requires:
 
 1. An authenticated user.
 2. A valid active department.
-3. Active department type equal to `pharmacy`, unless authorized admin preview applies.
+3. Active department type equal to `stores`, unless authorized admin preview applies.
 4. The required permission.
 5. The relevant module being enabled.
-6. Access to the requested patient, visit, prescription, dispensing, product, stock location, or batch.
+6. Access to the requested stock location, product, requisition, receipt, issue, transfer, return, or count.
 7. Active-department or stock-location assignment where required.
 
 A user from another department who manually enters:
 
 ```text
-/pharmacy/prescriptions
+/stores/stock
 ```
 
-must not receive access merely because they possess a broad prescription-view permission.
+must not receive access merely because they possess a broad inventory-view permission.
 
 Use the project’s existing unauthorized workspace behaviour:
 
@@ -1640,7 +2238,7 @@ Do not create inconsistent authorization behaviour.
 
 ---
 
-# Phase 30 — Permission Model
+# Phase 40 — Permission Model
 
 Reuse existing permissions wherever possible.
 
@@ -1649,80 +2247,123 @@ Only add permissions where the current model does not represent the required act
 Potential permissions may include:
 
 ```text
-pharmacy.workspace.view
+stores.workspace.view
 
-pharmacy.prescriptions.view
-pharmacy.prescriptions.review
-pharmacy.prescriptions.accept
-pharmacy.prescriptions.cancel
+stores.requisitions.view
+stores.requisitions.approve
+stores.requisitions.reject
+stores.requisitions.reserve
+stores.requisitions.issue
 
-pharmacy.safety_warnings.view
-pharmacy.safety_warnings.manage
-pharmacy.safety_overrides.manage
+stores.issues.view
+stores.issues.manage
+stores.issues.complete
 
-pharmacy.dispensing.view
-pharmacy.dispensing.manage
-pharmacy.dispensing.partial
-pharmacy.dispensing.complete
-pharmacy.dispensing.substitute
+stores.receipts.view
+stores.receipts.create
+stores.receipts.complete
 
-pharmacy.collections.view
-pharmacy.collections.confirm
+stores.transfers.view
+stores.transfers.create
+stores.transfers.approve
+stores.transfers.dispatch
+stores.transfers.receive
 
-pharmacy.returns.view
-pharmacy.returns.manage
-pharmacy.reversals.view
-pharmacy.reversals.manage
+stores.returns.view
+stores.returns.manage
 
-pharmacy.stock.view
-pharmacy.batches.view
-pharmacy.expiries.view
+stores.adjustments.view
+stores.adjustments.create
+stores.adjustments.approve
 
-pharmacy.patients.view
-pharmacy.handoffs.view
-pharmacy.handoffs.manage
-pharmacy.reports.view
-pharmacy.billing_overrides.manage
+stores.stock_counts.view
+stores.stock_counts.manage
+stores.stock_counts.approve
+
+stores.reconciliations.view
+stores.reconciliations.manage
+
+stores.products.view
+stores.stock.view
+stores.batches.view
+stores.expiries.view
+
+stores.quarantine.view
+stores.quarantine.manage
+stores.recalls.view
+stores.recalls.manage
+stores.damages.view
+stores.damages.manage
+stores.disposals.view
+stores.disposals.manage
+stores.disposals.approve
+
+stores.purchase_requests.view
+stores.purchase_requests.create
+stores.purchase_orders.view
+stores.suppliers.view
+
+stores.stock_valuation.view
+stores.handoffs.view
+stores.handoffs.manage
+stores.reports.view
 ```
 
 Inspect current permission names before adding new permissions.
 
 Avoid duplicating equivalent permissions.
 
-Menu visibility must follow permissions, but controllers, policies, form requests, and services must independently enforce authorization.
+Menu visibility must follow permissions, but controllers, policies, form requests, approval services, and inventory services must independently enforce authorization.
 
 ---
 
-# Phase 31 — Legacy Route Compatibility
+# Phase 41 — Separation of Duties
 
-Keep existing generic prescription, dispensing, stock, and patient routes operational for:
+Where configured, enforce separation of duties for high-risk inventory actions.
+
+Examples:
+
+* Requisition submitter should not approve their own requisition.
+* Adjustment creator should not approve the adjustment.
+* Stock-count recorder should not be the only count approver.
+* Disposal requester should not complete disposal alone.
+* Transfer dispatcher and receiver should be distinct where operationally required.
+* Goods receipt and purchase-order approval should remain distinct.
+
+Use configurable rules rather than hardcoding one universal workflow.
+
+Separation-of-duty exceptions must be explicit, permission-controlled, reasoned, and audited.
+
+---
+
+# Phase 42 — Legacy Route Compatibility
+
+Keep existing generic stock, product, requisition, transfer, and receipt routes operational for:
 
 * Other departments
-* Clinician prescription viewing
 * Existing bookmarks
 * APIs
 * Print flows
 * Signed URLs
 * Internal notifications
 * Background jobs
-* Payment callbacks
-* Insurance callbacks
+* Procurement integrations
 * Export downloads
-* Integrations
+* Stock integrations
 
-For interactive browser requests from an active Pharmacy department, generic routes may redirect to Pharmacy equivalents where safe.
+For interactive browser requests from an active Stores department, generic routes may redirect to Stores equivalents where safe.
 
 Examples:
 
 ```text
-/prescriptions/{prescription}
-→ /pharmacy/prescriptions/{prescription}
+/requisitions/{requisition}
+→ /stores/requisitions/{requisition}
 
-/dispensing/{dispensing}
-→ /pharmacy/dispensing/{dispensing}
+/stock/{stockItem}
+→ /stores/stock/{stockItem}
 
-/products/{product}
-→ /pharmacy/medications/{product}
+/inventory/transfers/{transfer}
+→ /stores/transfers/{transfer}
 ```
 
 Do not blindly redirect:
@@ -1730,36 +2371,37 @@ Do not blindly redirect:
 * JSON requests
 * APIs
 * signed URLs
-* payment callbacks
-* insurance callbacks
 * print routes
 * exports
+* integration callbacks
 * background requests
-* integration requests
+* procurement integrations
 
 Avoid redirect loops.
 
 ---
 
-# Phase 32 — Breadcrumbs and Active Menu State
+# Phase 43 — Breadcrumbs and Active Menu State
 
-Pharmacy pages must display Pharmacy-specific breadcrumbs.
+Stores pages must display Stores-specific breadcrumbs.
 
 Examples:
 
 ```text
-Pharmacy > Dashboard
-Pharmacy > Prescriptions
-Pharmacy > Prescriptions > Prescription Details
-Pharmacy > Clinical Review
-Pharmacy > Dispensing
-Pharmacy > Dispensing > Dispensing Details
-Pharmacy > Ready for Collection
-Pharmacy > Returns
-Pharmacy > Stock
-Pharmacy > Expiring Batches
-Pharmacy > Handoffs
-Pharmacy > Reports
+Stores > Dashboard
+Stores > Requisitions
+Stores > Requisitions > Requisition Details
+Stores > Issues
+Stores > Goods Receipts
+Stores > Transfers
+Stores > Returns
+Stores > Current Stock
+Stores > Batches
+Stores > Stock Counts
+Stores > Reconciliation
+Stores > Quarantine
+Stores > Disposals
+Stores > Reports
 ```
 
 The sidebar must correctly highlight parent items for nested routes.
@@ -1767,9 +2409,10 @@ The sidebar must correctly highlight parent items for nested routes.
 For example:
 
 ```text
-pharmacy.prescriptions.show
-pharmacy.dispensing.show
-pharmacy.returns.show
+stores.requisitions.show
+stores.issues.show
+stores.transfers.show
+stores.stock_counts.show
 ```
 
 should highlight the appropriate parent menu item.
@@ -1778,19 +2421,19 @@ Use active-route patterns rather than exact route-name equality only.
 
 ---
 
-# Phase 33 — Shared View Workspace Context
+# Phase 44 — Shared View Workspace Context
 
-Pass a clear Pharmacy workspace context to shared views.
+Pass a clear Stores workspace context to shared views.
 
 The context may include:
 
 ```php
 [
-    'workspaceKey' => 'pharmacy',
+    'workspaceKey' => 'stores',
     'workspaceDepartment' => $activeDepartment,
-    'workspaceRoutePrefix' => 'pharmacy.',
-    'workspaceTitle' => __('pharmacy.workspace.title'),
-    'workspaceScope' => 'medication_fulfilment',
+    'workspaceRoutePrefix' => 'stores.',
+    'workspaceTitle' => __('stores.workspace.title'),
+    'workspaceScope' => 'inventory_operations',
     'workspaceStockLocation' => $stockLocation,
 ]
 ```
@@ -1804,9 +2447,11 @@ Shared views should use this context for:
 * Links
 * Form actions
 * Back buttons
-* Prescription navigation
-* Dispensing navigation
-* Stock navigation
+* Requisition navigation
+* Issue navigation
+* Receipt navigation
+* Transfer navigation
+* Product and stock navigation
 * Quick actions
 * Empty states
 * Notifications
@@ -1815,118 +2460,103 @@ Do not repeatedly inspect session state or department type inside Blade template
 
 ---
 
-# Phase 34 — Patient Privacy and Medication Security
+# Phase 45 — Inventory Integrity and Operational Safety
 
-The Pharmacy workspace handles sensitive patient, clinical, prescription, and medication information.
+Preserve existing inventory safeguards, including:
 
-Ensure existing privacy controls remain active, including:
-
-* Patient-name masking where applicable
-* Protected phone and email fields
-* Sensitive-field permission checks
-* Access auditing
-* Search-result masking
-* Export restrictions
-* Secure patient, visit, prescription, and dispensing lookup
-* Privacy-aware notifications
-* Activity-log sanitization
-
-Pharmacy users should only see the clinical context necessary for medication review and fulfilment.
-
-Do not expose full consultation notes or unrelated clinical history without permission.
-
-Medication security must preserve:
-
-* Prescription ownership
-* Stock traceability
-* Batch traceability
-* Dispensing traceability
-* Return traceability
-* Reversal traceability
-* User accountability
-* Audit history
-
----
-
-# Phase 35 — Clinical and Operational Safety
-
-Preserve existing clinical and operational safeguards, including:
-
-* Allergy detection
-* Duplicate active medication checks
-* Unusual-dose warnings
-* Missing-diagnosis policy
-* Prescription expiry checks
-* Quantity validation
-* Stock availability validation
-* Batch expiry validation
-* Quarantine and recall blocking
-* Over-dispensing prevention
-* Duplicate dispensing prevention
-* Payment and insurance authorization
-* Separation of dispensing and administration
-* Controlled overrides
-* Audit trails
+* Negative-stock prevention
+* Double-allocation prevention
+* Duplicate issue prevention
+* Duplicate receipt prevention
+* Batch and expiry validation
+* Unit-conversion validation
+* Serial-number uniqueness
+* Transactional stock movement
+* Reservation integrity
+* Transfer in-transit integrity
+* Stock-count variance approval
+* Adjustment approval
+* Quarantine blocking
+* Recall blocking
+* Disposal traceability
+* Stock-ledger auditability
 
 Do not allow:
 
-* Dispensing beyond prescribed quantity
-* Dispensing unavailable stock
-* Dispensing expired or quarantined stock
-* Silent modification of prescriptions
-* Unresolved blocking safety warnings to be ignored
-* Direct deletion of completed dispensing records
-* Direct editing of completed stock movements
-* Invalid returns to restore saleable stock
-* Collected medication to be reversed without appropriate review
+* Direct stock-balance editing
+* Issue beyond approved quantity
+* Issue beyond available quantity
+* Expired or quarantined stock to be issued
+* The same receipt to post stock twice
+* Transfer receipt beyond dispatched quantity
+* Returned stock to become available without assessment
+* Disposal without an approved inventory movement
+* Ledger movements to be silently deleted
+* Stock counts to overwrite balances directly
 
 Overrides must be explicit, permission-controlled, reasoned, and audited.
 
 ---
 
-# Phase 36 — Activity Logging and Audit
+# Phase 46 — Activity Logging and Audit
 
-Record relevant Pharmacy actions through the existing `ActivityLog` infrastructure.
+Record relevant Stores actions through the existing `ActivityLog` infrastructure.
 
 Audit events should cover actions such as:
 
-* Prescription accepted
-* Prescription review completed
-* Clinical clarification requested
-* Safety warning acknowledged
-* Safety override applied
-* Payment or authorization override applied
+* Requisition submitted
+* Requisition approved
+* Requisition partially approved
+* Requisition rejected
 * Stock reserved
-* Stock reservation released
-* Dispensing started
-* Medication partially dispensed
-* Medication fully dispensed
-* Medication substituted
-* Prescription marked ready for collection
-* Medication collected
-* Counselling completed
-* Prescription cancelled
-* Dispensing reversed
-* Medication returned
-* Stock returned to available inventory
-* Stock moved to quarantine
-* Return rejected
+* Reservation released
+* Stock issue started
+* Stock partially issued
+* Stock issue completed
+* Department handover confirmed
+* Goods receipt created
+* Goods receipt completed
+* Delivery quantity rejected
+* Batch created
+* Stock transfer requested
+* Stock transfer approved
+* Stock transfer dispatched
+* Stock transfer received
+* Departmental return accepted
+* Departmental return rejected
+* Stock adjustment requested
+* Stock adjustment approved
+* Stock count started
+* Stock count submitted
+* Stock-count variance approved
+* Reconciliation completed
+* Stock quarantined
+* Quarantine released
+* Recall initiated
+* Damaged stock recorded
+* Disposal requested
+* Disposal approved
+* Disposal completed
+* Purchase request created
 * Handoff acknowledged
 * Handoff resolved
 
-Do not log full sensitive clinical values where the audit policy prohibits them.
+Do not log sensitive supplier financial details where audit policy prohibits them.
 
 Audit records should include sufficient context such as:
 
 * Actor
-* Patient identifier
-* Visit identifier
-* Prescription identifier
-* Dispensing identifier
-* Medication or product identifier
-* Batch identifier
 * Department
 * Stock location
+* Product
+* Batch
+* Quantity
+* Requisition identifier
+* Issue identifier
+* Receipt identifier
+* Transfer identifier
+* Adjustment identifier
+* Count identifier
 * Action
 * Timestamp
 * Reason where required
@@ -1934,15 +2564,15 @@ Audit records should include sufficient context such as:
 
 ---
 
-# Phase 37 — Localization
+# Phase 47 — Localization
 
-Add complete English and French localization for the Pharmacy workspace.
+Add complete English and French localization for the Stores workspace.
 
-Prefer an existing pharmacy localization file if one exists, otherwise use:
+Prefer an existing Stores localization file if one exists, otherwise use:
 
 ```text
-lang/en/pharmacy.php
-lang/fr/pharmacy.php
+lang/en/stores.php
+lang/fr/stores.php
 ```
 
 Include keys for:
@@ -1950,18 +2580,23 @@ Include keys for:
 * Workspace title
 * Dashboard
 * Menu sections
-* Prescription states
-* Dispensing states
-* Payment and insurance states
-* Safety-warning states
-* Stock-availability states
-* Batch and expiry states
-* Partial-dispensing reasons
-* Substitution reasons
-* Collection states
-* Return outcomes
-* Cancellation reasons
-* Reversal reasons
+* Requisition states
+* Approval states
+* Reservation states
+* Issue states
+* Receipt states
+* Transfer states
+* Return states
+* Adjustment types and states
+* Stock-count states
+* Variance reasons
+* Stock alert states
+* Expiry states
+* Quarantine reasons
+* Recall states
+* Damage types
+* Disposal states
+* Goods-rejection reasons
 * Handoffs
 * Empty states
 * Quick actions
@@ -1972,59 +2607,74 @@ Include keys for:
 
 Maintain complete English and French parity.
 
-Do not hardcode visible Pharmacy labels in controllers, services, Blade templates, or JavaScript.
+Do not hardcode visible Stores labels in controllers, services, Blade templates, or JavaScript.
 
 ---
 
-# Phase 38 — Pharmacy Reports and Statistics
+# Phase 48 — Stores Reports and Statistics
 
-Create or adapt Pharmacy reports under:
+Create or adapt Stores reports under:
 
 ```text
-/pharmacy/reports
+/stores/reports
 ```
 
 Recommended reports include:
 
-* Prescription volume by date
-* Prescription volume by department
-* Prescription volume by clinician
-* Prescription volume by medication
-* Dispensing volume
-* Partial dispensing report
-* Unfulfilled prescription report
-* Ready-for-collection report
-* Uncollected medication report
-* Medication return report
-* Dispensing reversal report
-* Prescription cancellation report
-* Stockout report
+* Stock balance report
+* Stock movement report
+* Stock ledger report
+* Requisition volume report
+* Requisition fulfilment report
+* Partial issue report
+* Department consumption report
+* Product consumption report
+* Goods receipt report
+* Supplier delivery report
+* Transfer report
+* Return report
+* Adjustment report
+* Stock-count report
+* Variance report
+* Reconciliation report
 * Low-stock report
+* Stockout report
 * Expiry report
-* Medication utilization report
-* Emergency prescription report
-* Inpatient medication supply report
-* Insurance prescription report
-* Pharmacist activity report
-* Prescription turnaround-time report
-* Collection turnaround-time report
+* Quarantine report
+* Recall report
+* Damage and loss report
+* Disposal report
+* Stock valuation report
+* Inventory ageing report
+* Staff activity report
+* Stock-location performance report
 
 Reports must respect:
 
 * Permissions
 * Active department
 * Stock location
-* Patient privacy
-* Aggregation rules
+* Product visibility
+* Financial valuation permissions
 * Export permissions
 
-Do not expose patient-level medication data in aggregate reports unless the user has the required detailed-report permission.
+Consumption statistics should distinguish between:
+
+* Issued quantity
+* Returned quantity
+* Net issued quantity
+* Reserved quantity
+* Transferred quantity
+* Disposed quantity
+* Adjusted quantity
+
+Do not treat stock issued to a department as confirmed patient consumption unless the clinical consumption workflow records it separately.
 
 ---
 
-# Phase 39 — Menu Configuration and Future Extensibility
+# Phase 49 — Menu Configuration and Future Extensibility
 
-Implement the Pharmacy menu through the existing menu registry or department menu profile service.
+Implement the Stores menu through the existing menu registry or department menu profile service.
 
 Do not define it directly inside the sidebar Blade template.
 
@@ -2041,19 +2691,21 @@ The menu configuration should support:
 * Active-department scoping
 * Stock-location scoping
 * Feature flags
-* Pending-prescription counts
-* Safety-warning counts
-* Ready-for-collection counts
+* Pending requisition counts
+* Pending issue counts
+* Transfer counts
+* Stock-count variance counts
 * Low-stock counts
 * Stockout counts
 * Expiry-alert counts
+* Quarantine counts
+* Disposal-approval counts
 
 The architecture must remain extensible for future department menu personalization, including:
 
 ```text
 radiology
 finance
-stores
 maternity
 theatre
 blood_bank
@@ -2067,26 +2719,26 @@ Do not implement those other workspaces in this phase.
 
 ---
 
-# Phase 40 — Focused Automated Verification
+# Phase 50 — Focused Automated Verification
 
-Add focused automated tests for the Pharmacy workspace.
+Add focused automated tests for the Stores workspace.
 
 ## Route tests
 
 Verify:
 
-* Pharmacy routes exist.
-* Route names use `pharmacy.*`.
-* URLs use `/pharmacy/*`.
-* Pharmacy department middleware is attached.
+* Stores routes exist.
+* Route names use `stores.*`.
+* URLs use `/stores/*`.
+* Stores department middleware is attached.
 * Generic routes remain available where required.
 
 ## Access tests
 
 Verify:
 
-* A Pharmacy department user can access authorized Pharmacy pages.
-* A non-Pharmacy department user cannot access the workspace.
+* A Stores department user can access authorized Stores pages.
+* A non-Stores department user cannot access the workspace.
 * Users without the required permission cannot access protected actions.
 * Admin preview continues working where supported.
 * Multi-department active context is respected.
@@ -2096,227 +2748,255 @@ Verify:
 
 Verify:
 
-* The Pharmacy dashboard loads.
-* Metrics include only prescriptions assigned to the active Pharmacy department.
-* Stock metrics use the active stock location.
-* Safety-warning and stockout counts are accurate.
-* Links point to `/pharmacy/*`.
-* Sensitive information remains protected.
+* The Stores dashboard loads.
+* Metrics use the active Stores stock location.
+* Pending requisition and transfer counts are accurate.
+* Low-stock, stockout, expiry, and quarantine counts are accurate.
+* Stock valuation is hidden without permission.
+* Links point to `/stores/*`.
 * Empty states render safely.
 
-## Prescription tests
+## Requisition tests
 
 Verify:
 
-* Prescriptions appear in the correct worklists.
-* Payment and insurance states are reflected correctly.
-* Emergency and inpatient prescriptions are prioritized where configured.
-* Clinical-review requirements are enforced.
-* Cancelled prescriptions leave active worklists.
-* Multi-item prescriptions retain item-level state.
+* Requisitions appear in the correct worklists.
+* Approval state is reflected correctly.
+* Partial approval preserves unapproved quantities.
+* Rejection requires a reason.
+* Reservation cannot exceed approved or available quantity.
+* Requisition completion reflects issued quantities correctly.
 
-## Safety tests
-
-Verify:
-
-* Allergy warnings remain active.
-* Duplicate active medication warnings remain active.
-* Missing-diagnosis policy remains active.
-* Unusual-dose warnings remain active.
-* Blocking warnings prevent dispensing.
-* Overrides require permission and reason.
-* Overrides are audited.
-
-## Stock tests
+## Issue tests
 
 Verify:
 
-* Stock availability uses the active stock location.
-* Reservations prevent double allocation.
-* Expired batches cannot be dispensed.
-* Quarantined or recalled batches cannot be dispensed.
-* Batch selection follows the configured policy.
-* Failed transactions do not create partial stock deductions.
-* Cancellation releases unused reservations.
+* Issue cannot exceed approved quantity.
+* Issue cannot exceed outstanding quantity.
+* Issue cannot exceed available stock.
+* Partial issue preserves outstanding quantity.
+* Batch traceability is preserved.
+* Expired or quarantined batches cannot be issued.
+* Duplicate stock deductions are prevented.
 
-## Dispensing tests
-
-Verify:
-
-* Dispensing cannot exceed prescribed quantity.
-* Dispensing cannot exceed available stock.
-* Full dispensing updates prescription state correctly.
-* Partial dispensing preserves outstanding quantity.
-* Later dispensing cannot exceed the remaining quantity.
-* Dispensing records preserve batch traceability.
-* Medication administration is not recorded by the Pharmacy dispensing action.
-
-## Collection tests
+## Receipt tests
 
 Verify:
 
-* Dispensed medication does not automatically become collected.
-* Ready-for-collection state is separate from collected.
-* Collection records the responsible user and time.
-* Counselling requirements are enforced where configured.
-* Uncollected medication follows the configured return-to-stock process.
+* Goods receipt creates correct stock movements.
+* Purchase-order receipt progress updates correctly.
+* Rejected quantities do not enter available stock.
+* Batch and expiry requirements are enforced.
+* Duplicate receipt posting is prevented.
+* Receipt actions are audited.
 
-## Return and reversal tests
+## Transfer tests
 
 Verify:
 
-* Completed dispensing cannot be deleted directly.
-* Reversals require a reason.
-* Stock is only restored when eligible.
-* Invalid returns do not restore saleable stock.
-* Quarantined returns are handled correctly.
-* Billing corrections are triggered where required.
-* Return and reversal actions are audited.
+* Transfer reserves or deducts source stock correctly.
+* Dispatched stock enters the correct in-transit state.
+* Destination stock is updated at the correct workflow point.
+* Partial receipt preserves outstanding quantity.
+* Received quantity cannot exceed dispatched quantity.
+* Missing or damaged quantities are recorded.
+* Transfers are audited.
+
+## Return tests
+
+Verify:
+
+* Department returns preserve the original issue.
+* Valid returns can restore available stock.
+* Invalid returns go to quarantine or disposal.
+* Returned quantities cannot exceed issued quantities.
+* Return actions are audited.
+
+## Adjustment tests
+
+Verify:
+
+* Direct balance editing is not available.
+* Adjustments create stock-ledger movements.
+* Approval is required where configured.
+* Creator and approver separation works where configured.
+* Adjustments are audited.
+
+## Stock-count tests
+
+Verify:
+
+* Physical counts preserve system quantities.
+* Variances are calculated correctly.
+* Recounts work where required.
+* Approval creates linked adjustment movements.
+* Count reconciliation does not silently replace ledger balances.
+* Count actions are audited.
+
+## Expiry and quarantine tests
+
+Verify:
+
+* Expired stock cannot be issued.
+* Quarantined stock cannot be reserved, issued, transferred, or dispensed.
+* Authorized release restores the appropriate state.
+* Recall blocks affected stock.
+* Disposal removes stock through one traceable movement.
 
 ## Redirect tests
 
 Verify:
 
-* Login redirects to `/pharmacy`.
-* Switching to Pharmacy redirects to `/pharmacy`.
-* Prescription actions remain under `/pharmacy/*`.
-* Dispensing actions remain under `/pharmacy/*`.
-* Collection, return, reversal, and stock links remain under `/pharmacy/*`.
+* Login redirects to `/stores`.
+* Switching to Stores redirects to `/stores`.
+* Requisition actions remain under `/stores/*`.
+* Issue, receipt, transfer, return, adjustment, count, and disposal actions remain under `/stores/*`.
 * No redirect loops occur.
-* JSON, API, payment, insurance, signed, print, export, and integration requests are not incorrectly redirected.
+* JSON, API, signed, print, export, and integration requests are not incorrectly redirected.
 
-## Privacy and audit tests
+## Privacy, authorization, and audit tests
 
 Verify:
 
-* Patient masking remains active.
-* Protected fields require permission.
-* Pharmacy users only see authorized clinical context.
-* Pharmacy actions generate required audit records.
-* Sensitive values are not exposed through alternate Pharmacy views.
+* Supplier financial data is permission-controlled.
+* Stock valuation is permission-controlled.
+* Cross-location stock is not exposed without authorization.
+* Stores actions generate required audit records.
+* Ledger history cannot be silently altered.
 
-Run focused Pharmacy workspace tests and essential route, view, localization, stock, billing, integration, and audit checks during implementation.
+Run focused Stores workspace tests and essential route, view, localization, stock-ledger, transaction, permission, and audit checks during implementation.
 
 Do not run the full UHMS suite after each phase.
 
-Run one broad relevant suite after all Pharmacy workspace phases are complete.
+Run one broad relevant suite after all Stores workspace phases are complete.
 
 ---
 
-# Phase 41 — Manual Acceptance Scenarios
+# Phase 51 — Manual Acceptance Scenarios
 
-## Scenario A — Pharmacy login
+## Scenario A — Stores login
 
-1. Log in as a user whose active department type is `pharmacy`.
-2. Confirm the landing URL is `/pharmacy`.
-3. Confirm the Pharmacy-specific menu is displayed.
+1. Log in as a user whose active department type is `stores`.
+2. Confirm the landing URL is `/stores`.
+3. Confirm the Stores-specific menu is displayed.
 4. Confirm unrelated department menus are absent.
 
-## Scenario B — Prescription receipt
+## Scenario B — Requisition approval
 
-1. Open the pending prescription worklist.
-2. Select a new prescription.
-3. Confirm payment, insurance, stock, and safety states are visible.
-4. Accept the prescription.
-5. Confirm the redirect remains under `/pharmacy/*`.
-6. Confirm the action is audited.
+1. Open pending requisitions.
+2. Select a department requisition.
+3. Approve full or partial quantities.
+4. Confirm the route remains under `/stores/*`.
+5. Confirm the approval is audited.
 
-## Scenario C — Clinical safety warning
+## Scenario C — Stock reservation and issue
 
-1. Open a prescription with an allergy or dose warning.
-2. Confirm the warning is visible.
-3. Attempt to dispense without resolving it.
-4. Confirm dispensing is blocked.
-5. Apply an authorized override with a reason.
-6. Confirm the override is audited.
+1. Open an approved requisition.
+2. Reserve available stock.
+3. Start an issue.
+4. Select valid batches.
+5. Issue the approved quantity.
+6. Confirm stock, reservation, and requisition states update correctly.
 
-## Scenario D — Full dispensing
+## Scenario D — Partial issue
 
-1. Open an authorized prescription.
-2. Start dispensing.
-3. Select valid stock batches.
-4. Dispense the full prescribed quantity.
-5. Mark the medication ready for collection.
-6. Confirm stock and prescription states update correctly.
+1. Open a requisition with insufficient stock.
+2. Issue the available quantity.
+3. Confirm the requisition becomes partially issued.
+4. Confirm outstanding quantity is preserved.
+5. Complete the remaining issue later.
+6. Confirm over-issuing is prevented.
 
-## Scenario E — Partial dispensing
+## Scenario E — Departmental collection
 
-1. Open a prescription with insufficient stock.
-2. Dispense the available quantity.
-3. Confirm the prescription becomes partially dispensed.
-4. Confirm the remaining quantity is preserved.
-5. Complete the balance later.
-6. Confirm over-dispensing is prevented.
+1. Mark an issue ready for collection.
+2. Record the collecting department user.
+3. Complete the handover.
+4. Confirm departmental receipt remains distinct where acknowledgement is required.
+5. Confirm the action is audited.
 
-## Scenario F — Batch expiry
+## Scenario F — Goods receipt
 
-1. Open a medication with several batches.
-2. Confirm the configured batch-selection policy is used.
-3. Attempt to select an expired batch.
-4. Confirm the system blocks it.
-5. Confirm available valid batches can still be dispensed.
+1. Open a purchase order awaiting delivery.
+2. Record delivered products.
+3. Capture batches and expiry dates.
+4. Reject one damaged quantity.
+5. Complete the receipt.
+6. Confirm only accepted quantities enter available stock.
 
-## Scenario G — Patient collection
+## Scenario G — Stock transfer
 
-1. Open the ready-for-collection queue.
-2. Select a prescription.
-3. Complete required counselling.
-4. Confirm collection.
-5. Confirm the medication becomes collected.
-6. Confirm the action is audited.
+1. Create a transfer to another stock location.
+2. Approve and dispatch it.
+3. Confirm the stock enters the correct in-transit state.
+4. Receive it at the destination.
+5. Confirm both locations update correctly.
+6. Confirm batch traceability remains intact.
 
-## Scenario H — Inpatient medication supply
+## Scenario H — Departmental return
 
-1. Open an inpatient medication request.
-2. Confirm ward, admission, and bed context.
-3. Dispense the authorized supply.
-4. Confirm the medication remains separate from Nursing administration records.
-5. Confirm all URLs remain under `/pharmacy/*`.
+1. Open a completed stock issue.
+2. Record a return.
+3. Assess condition and storage suitability.
+4. Return eligible stock to available inventory.
+5. Move unsuitable stock to quarantine or disposal.
+6. Confirm stock movements are correct.
 
-## Scenario I — Emergency prescription
+## Scenario I — Stock adjustment
 
-1. Open an emergency prescription without ordinary payment completion.
-2. Confirm the configured emergency policy is applied.
-3. Complete an authorized urgent dispensing.
-4. Confirm the override or exception is visible and audited.
+1. Create a stock adjustment.
+2. Record the reason and supporting reference.
+3. Submit it for approval.
+4. Approve it with a separate authorized user.
+5. Confirm the ledger records the adjustment.
+6. Confirm direct balance editing is unavailable.
 
-## Scenario J — Return
+## Scenario J — Physical stock count
 
-1. Open a completed dispensing.
-2. Record a patient return.
-3. Assess packaging and storage suitability.
-4. Place the medication in available stock, quarantine, or destruction according to policy.
-5. Confirm stock and billing updates are correct.
-6. Confirm the return is audited.
+1. Create a stock count.
+2. Record physical quantities.
+3. Submit the count.
+4. Review variances.
+5. Approve reconciliation.
+6. Confirm linked adjustment movements are created.
+7. Confirm historical stock movements remain preserved.
 
-## Scenario K — Reversal
+## Scenario K — Expired stock
 
-1. Open a dispensing completed in error.
-2. Start a reversal.
-3. Record the reason.
-4. Confirm eligible stock is restored.
-5. Confirm billing correction is triggered where required.
-6. Confirm the original dispensing remains in history.
+1. Open an expired batch.
+2. Attempt to reserve or issue it.
+3. Confirm the system blocks the action.
+4. Move the batch through quarantine or disposal.
+5. Confirm the final stock movement is audited.
 
-## Scenario L — Active department scoping
+## Scenario L — Recall
 
-1. Use a user assigned to multiple Pharmacy departments.
+1. Create or open a product recall.
+2. Confirm affected batches are blocked.
+3. Identify quantities across authorized stock locations.
+4. Record recovered quantities.
+5. Complete the final disposition.
+6. Confirm recall actions are audited.
+
+## Scenario M — Active stock-location scoping
+
+1. Use a user assigned to multiple Stores departments.
 2. Switch the active department.
-3. Confirm prescriptions and stock change to the selected Pharmacy.
-4. Confirm unauthorized stock locations are not visible.
+3. Confirm stock, requisitions, receipts, and transfers change to the selected location.
+4. Confirm unauthorized locations are not visible.
 
-## Scenario M — Permission control
+## Scenario N — Permission control
 
-1. Remove dispensing-completion permission.
-2. Confirm the completion action disappears.
-3. Enter the route directly.
+1. Remove stock-adjustment approval permission.
+2. Confirm the approval action disappears.
+3. Enter the approval route directly.
 4. Confirm access is denied.
 
-## Scenario N — Legacy compatibility
+## Scenario O — Legacy compatibility
 
-1. Enter a generic prescription or dispensing route as a Pharmacy user.
-2. Confirm it safely resolves or redirects to the Pharmacy equivalent where configured.
-3. Confirm APIs, payment callbacks, insurance callbacks, signed URLs, print routes, and exports remain unaffected.
+1. Enter a generic requisition, stock, or transfer route as a Stores user.
+2. Confirm it safely resolves or redirects to the Stores equivalent where configured.
+3. Confirm APIs, signed URLs, print routes, exports, and integrations remain unaffected.
 
 ---
 
@@ -2324,41 +3004,41 @@ Run one broad relevant suite after all Pharmacy workspace phases are complete.
 
 The implementation is accepted only when all the following are true:
 
-1. Users with an active department type of `pharmacy` receive a dedicated Pharmacy menu.
-2. Their default dashboard uses `/pharmacy`.
-3. Supported Pharmacy pages use `/pharmacy/*` URLs.
-4. Route names use the `pharmacy.*` namespace.
-5. Prescription and stock worklists are scoped to the active Pharmacy department.
-6. Stock availability uses the correct Pharmacy stock location.
-7. Forms submit through Pharmacy routes.
-8. Redirects remain inside the Pharmacy workspace.
-9. Breadcrumbs and active menu states are Pharmacy-aware.
-10. Permissions and enabled modules control menu visibility.
-11. A non-Pharmacy department user cannot access the workspace.
-12. Multi-department users are evaluated using the active department.
-13. Existing prescription, dispensing, safety, billing, insurance, stock, inventory, journey, and audit logic is reused.
-14. Core prescription, dispensing, and stock logic is not duplicated.
-15. Allergy, duplicate-medication, diagnosis, and unusual-dose checks remain active.
-16. Blocking safety warnings prevent dispensing.
-17. Safety overrides are permission-controlled, reasoned, and audited.
-18. Payment and insurance policies remain active.
-19. Emergency and inpatient exceptions use configured policies.
-20. Stock reservations prevent double allocation.
-21. Expired, quarantined, recalled, or unavailable stock cannot be dispensed.
-22. Dispensing cannot exceed prescribed or available quantity.
-23. Partial dispensing preserves the outstanding balance.
-24. Patient collection remains separate from dispensing completion.
-25. Pharmacy dispensing remains separate from medication administration.
-26. Returns and reversals preserve stock and billing integrity.
-27. Completed dispensing records cannot be silently deleted or overwritten.
-28. Generic routes remain functional for other departments and integrations.
-29. APIs, payment callbacks, insurance callbacks, signed URLs, print routes, and exports are not incorrectly redirected.
-30. Patient privacy and medication security remain fully active.
-31. Relevant Pharmacy actions are audited.
+1. Users with an active department type of `stores` receive a dedicated Stores menu.
+2. Their default dashboard uses `/stores`.
+3. Supported Stores pages use `/stores/*` URLs.
+4. Route names use the `stores.*` namespace.
+5. Requisitions, stock, receipts, issues, and transfers are scoped to the active Stores department and stock location.
+6. Forms submit through Stores routes.
+7. Redirects remain inside the Stores workspace.
+8. Breadcrumbs and active menu states are Stores-aware.
+9. Permissions and enabled modules control menu visibility.
+10. A non-Stores department user cannot access the workspace.
+11. Multi-department users are evaluated using the active department.
+12. Existing product, inventory, requisition, stock-ledger, receipt, issue, transfer, count, procurement, reporting, and audit logic is reused.
+13. Core inventory and stock-ledger logic is not duplicated.
+14. Requisition approval and reservation are fully tracked.
+15. Stock reservation prevents double allocation.
+16. Stock issue cannot exceed approved, outstanding, or available quantity.
+17. Partial issues preserve outstanding quantities.
+18. Goods receipts preserve purchase-order and batch traceability.
+19. Rejected delivery quantities do not enter available stock.
+20. Transfers preserve source, in-transit, and destination integrity.
+21. Returned stock is assessed before returning to available inventory.
+22. Direct stock-balance editing is not permitted.
+23. Stock adjustments use traceable ledger movements.
+24. Stock counts preserve system quantities and create approved reconciliation movements.
+25. Expired, quarantined, recalled, damaged, or disposed stock cannot be issued.
+26. Disposal and destruction remain approval-controlled and traceable.
+27. Separation of duties is enforced where configured.
+28. Stock valuation and supplier financial data remain permission-controlled.
+29. Generic routes remain functional for other departments and integrations.
+30. APIs, signed URLs, print routes, exports, and integrations are not incorrectly redirected.
+31. Relevant Stores actions are audited.
 32. English and French localization are complete and in parity.
-33. Focused Pharmacy workspace tests pass.
+33. Focused Stores workspace tests pass.
 34. One broad relevant suite passes after all phases are complete.
-35. No broken links, route loops, duplicate route names, stock-location leakage, duplicate stock deductions, silent prescription modification, or Nursing-administration contamination remain.
+35. No broken links, route loops, duplicate route names, stock-location leakage, duplicate stock deductions, unexplained balance replacements, or Pharmacy-dispensing contamination remain.
 
 ---
 
@@ -2366,60 +3046,65 @@ The implementation is accepted only when all the following are true:
 
 Provide:
 
-1. Pharmacy workspace route group.
-2. Pharmacy-specific controllers or thin adapters where required.
-3. Pharmacy operations dashboard.
-4. Pharmacy department menu profile.
-5. Prescription worklists.
-6. Pharmacy prescription workspace.
-7. Clinical-review and medication-safety integration.
-8. Payment, insurance, sponsor, emergency, and inpatient policy integration.
-9. Active-department and stock-location scoping.
-10. Stock reservation and availability integration.
-11. Batch and expiry selection.
-12. Full and partial dispensing workflows.
-13. Medication substitution workflow.
-14. Medication labels and counselling integration.
-15. Ready-for-collection and patient-collection workflow.
-16. Inpatient Pharmacy workflow.
-17. Emergency Pharmacy workflow.
-18. Prescription cancellation.
-19. Dispensing reversal.
-20. Medication return workflow.
-21. Stock alert views.
-22. Pharmacy handoff integration.
-23. Workspace-aware URL resolver updates.
-24. Workspace-aware redirect resolver updates.
-25. Updated shared links and forms.
-26. Login and department-switch integration.
-27. Pharmacy breadcrumbs and active-menu handling.
-28. Permission integration.
-29. Patient privacy and medication-security integration.
-30. English and French localization.
-31. Focused feature tests.
-32. A final implementation report containing:
+1. Stores workspace route group.
+2. Stores-specific controllers or thin adapters where required.
+3. Stores operations dashboard.
+4. Stores department menu profile.
+5. Active-department and stock-location scoping.
+6. Requisition worklists.
+7. Requisition approval integration.
+8. Stock reservation workflow.
+9. Full and partial stock issuing.
+10. Product substitution workflow.
+11. Department collection and handover.
+12. Goods-receipt workflow.
+13. Delivery inspection and rejection.
+14. Batch, lot, serial, and expiry tracking.
+15. Stock-transfer workflow.
+16. Departmental and supplier returns.
+17. Stock-adjustment workflow.
+18. Physical stock-count workflow.
+19. Stock reconciliation.
+20. Low-stock and stockout monitoring.
+21. Expiry management.
+22. Quarantine and recall management.
+23. Damage, loss, disposal, and destruction workflows.
+24. Purchase-request and purchase-order awareness.
+25. Product catalogue and stock-ledger views.
+26. Stock valuation permission integration.
+27. Stores handoff integration.
+28. Workspace-aware URL resolver updates.
+29. Workspace-aware redirect resolver updates.
+30. Updated shared links and forms.
+31. Login and department-switch integration.
+32. Stores breadcrumbs and active-menu handling.
+33. Permission and separation-of-duty integration.
+34. English and French localization.
+35. Focused feature tests.
+36. A final implementation report containing:
 
 * Files created
 * Files modified
-* Pharmacy route map
-* Pharmacy menu map
-* Prescription worklist categories
+* Stores route map
+* Stores menu map
+* Stock-location mapping
 * Dashboard metrics
-* Clinical-review behaviour
-* Medication-safety behaviour
-* Payment and insurance behaviour
-* Stock-location scoping
+* Requisition workflow
 * Reservation behaviour
-* Batch-selection behaviour
-* Full and partial dispensing behaviour
-* Collection behaviour
-* Inpatient and emergency Pharmacy behaviour
-* Return and reversal behaviour
+* Full and partial issue behaviour
+* Goods-receipt behaviour
+* Batch and expiry behaviour
+* Transfer behaviour
+* Return behaviour
+* Adjustment behaviour
+* Stock-count and reconciliation behaviour
+* Quarantine, recall, damage, and disposal behaviour
+* Procurement integration
 * Reused services
 * Redirect behaviour
 * Permissions used
-* Patient privacy checks
-* Medication-security checks
+* Separation-of-duty rules
+* Inventory-integrity checks
 * Audit events
 * Tests executed
 * Test results
@@ -2427,4 +3112,4 @@ Provide:
 
 Implement the work fully.
 
-Do not stop at planning, route registration, menu configuration, dashboard layout, prescription listing, or stock display alone. The final implementation must provide a functional, safe, stock-aware, department-specific Pharmacy workspace throughout the complete prescription-fulfilment lifecycle.
+Do not stop at planning, route registration, menu configuration, dashboard layout, stock listing, or requisition listing alone. The final implementation must provide a functional, traceable, stock-location-aware, department-specific Stores workspace throughout the complete hospital inventory lifecycle.
