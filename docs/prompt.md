@@ -1,168 +1,224 @@
-# UHMS Nursing Department Workspace — OPD Nursing Menu and `/nursing/*` Route Architecture
+# UHMS Inpatient Department Workspace — Normal Admission and `/inpatient/*` Route Architecture
 
-Implement a dedicated **Nursing Department Workspace** for UHMS.
+Implement a dedicated **Inpatient Department Workspace** for UHMS.
 
-This workspace is specifically for nursing staff who manage **outpatient department cases**, including patient arrival, triage, vital signs, nursing assessments, consultation preparation, treatment support, nursing tasks, observation, patient flow, and OPD discharge preparation.
+This workspace is for clinical and operational staff managing normal hospital admissions from admission request and bed assignment through inpatient nursing care, clinical rounds, treatment, medication administration, investigations, procedures, monitoring, transfer, discharge, and readmission.
 
-This implementation should follow the same department-aware workspace approach already used for doctors, consultation departments, and the Records department.
+This implementation should follow the same department-aware workspace architecture already established for:
+
+* Doctors and consultation departments
+* Records
+* Nursing OPD
+* Emergency
 
 The objective is that when a logged-in user’s active department has:
 
 ```php
-DepartmentType::NURSING
+DepartmentType::INPATIENT
 ```
 
-the user should experience UHMS as a dedicated OPD Nursing application with:
+the user should experience UHMS as a dedicated Inpatient application with:
 
-* A Nursing-specific sidebar menu
-* A Nursing OPD dashboard
-* Nursing-specific breadcrumbs
-* Nursing-specific route names
-* Consistent `/nursing/*` URLs
-* Workspace-aware redirects
-* OPD patient queues and worklists
+* An Inpatient-specific sidebar menu
+* An Inpatient ward dashboard
+* Inpatient-specific breadcrumbs
+* Inpatient-specific route names
+* Consistent `/inpatient/*` URLs
+* Workspace-aware links and redirects
+* Admission and ward worklists
+* Bed and ward visibility
+* Nursing session and clinical-round workflows
+* Medication, treatment, investigation, and procedure coordination
+* Discharge-readiness and clearance workflows
+* Transfer and readmission support
 * Permission-controlled menu visibility
 * Active-department scoping
-* Reuse of existing patient, visit, triage, vital-sign, consultation, treatment, nursing-task, medication, and billing logic
+* Patient privacy and clinical-safety enforcement
+* Reuse of existing admission, patient, visit, consultation, nursing, billing, journey, and audit logic
 
-Do not duplicate core patient, visit, consultation, triage, treatment, or billing business logic merely to create the Nursing workspace.
+Do not duplicate core admission, ward, patient, consultation, nursing, medication, treatment, investigation, discharge, or billing business logic merely to create the Inpatient workspace.
 
 ---
 
 # 1. Core Functional Requirement
 
-When the active department type is `nursing`, all supported pages used by OPD nursing staff must appear under the `/nursing` URL prefix.
+When the active department type is `inpatient`, all supported browser pages used for normal admitted-patient care must appear under the `/inpatient` URL prefix.
 
 Examples:
 
 ```text
-/nursing
-/nursing/dashboard
+/inpatient
+/inpatient/dashboard
 
-/nursing/patients
-/nursing/patients/{patient}
+/inpatient/admissions
+/inpatient/admissions/pending
+/inpatient/admissions/active
+/inpatient/admissions/discharged
+/inpatient/admissions/{admission}
 
-/nursing/opd
-/nursing/opd/queue
-/nursing/opd/active
-/nursing/opd/completed
+/inpatient/wards
+/inpatient/wards/{ward}
+/inpatient/beds
+/inpatient/beds/availability
 
-/nursing/visits
-/nursing/visits/{visit}
+/inpatient/patients
+/inpatient/patients/{patient}
 
-/nursing/triage
-/nursing/triage/{visit}
-/nursing/triage/{visit}/edit
+/inpatient/visits
+/inpatient/visits/{visit}
 
-/nursing/vitals
-/nursing/vitals/{visit}
+/inpatient/rounds
+/inpatient/rounds/{admission}
 
-/nursing/assessments
-/nursing/assessments/{visit}
+/inpatient/sessions
+/inpatient/sessions/{session}
 
-/nursing/tasks
-/nursing/tasks/{task}
+/inpatient/vitals
+/inpatient/assessments
+/inpatient/care-plans
+/inpatient/tasks
+/inpatient/medications
+/inpatient/treatments
+/inpatient/procedures
+/inpatient/investigations
+/inpatient/observations
+/inpatient/intake-output
 
-/nursing/treatments
-/nursing/treatments/{visit}
-
-/nursing/observations
-/nursing/observations/{visit}
-
-/nursing/handoffs
-/nursing/reports
+/inpatient/handoffs
+/inpatient/transfers
+/inpatient/discharges
+/inpatient/readmissions
+/inpatient/reports
 ```
 
-A Nursing user should not enter through:
+An Inpatient user should not enter through:
 
 ```text
-/nursing/opd/queue
+/inpatient/admissions/{admission}
 ```
 
 and later be redirected to generic URLs such as:
 
 ```text
-/visits/{visit}
+/admissions/{admission}
 /patients/{patient}
-/triage/{visit}
+/visits/{visit}
 /consultations/{consultation}
+/nursing-sessions/{session}
+/discharges/{discharge}
 ```
 
-All browser navigation, forms, redirects, breadcrumbs, tables, worklists, dashboard links, patient-flow actions, and related actions must preserve the Nursing workspace context.
+All browser navigation, forms, dashboard links, ward lists, patient cards, session actions, breadcrumbs, notifications, worklists, and redirects must preserve the Inpatient workspace context.
 
 ---
 
-# 2. Nursing Workspace Scope
+# 2. Inpatient Workspace Scope
 
-The Nursing workspace is primarily responsible for **OPD nursing operations**.
+The Inpatient workspace is responsible for normal admission and ward-care workflows, including:
 
-The workspace should support existing functionality related to:
+1. Admission requests
+2. Admission acceptance
+3. Ward selection
+4. Bed allocation
+5. Active admissions
+6. Inpatient clinical sessions
+7. Nursing assessments
+8. Nursing care plans
+9. Vital-sign monitoring
+10. Intake and output monitoring
+11. Clinical rounds
+12. Doctor reviews
+13. Medication administration
+14. Treatments
+15. Procedures
+16. Investigation requests and follow-up
+17. Nursing tasks
+18. Patient observation
+19. Diet and nutrition instructions where supported
+20. Mobility and fall-risk monitoring
+21. Pressure-injury monitoring where supported
+22. Handoffs between shifts and departments
+23. Internal ward transfers
+24. External transfers
+25. Discharge readiness
+26. Departmental discharge clearances
+27. Final discharge
+28. Same-admission session reopening
+29. Readmission
+30. Inpatient reports and operational analytics
 
-1. OPD patient arrival and nursing queues
-2. Triage
-3. Vital signs
-4. Nursing assessment
-5. Consultation preparation
-6. Patient movement through the OPD workflow
-7. Nursing tasks
-8. Treatment and procedure support
-9. Medication administration where already supported
-10. Patient observation
-11. Clinical handoffs
-12. Monitoring pending services
-13. Consultation support
-14. OPD discharge preparation
-15. Same-day completed OPD case review or reopening where authorized
-16. Nursing reports and activity monitoring
+This workspace is for **normal inpatient admissions**.
 
-This phase should not convert the Nursing workspace into an inpatient ward-management workspace.
+It must remain distinct from:
 
-Inpatient nursing workflows should remain under the appropriate inpatient, ward, maternity, or admission context unless the current architecture intentionally shares components.
+* Emergency care
+* Routine OPD care
+* Maternity-specific admission
+* Theatre operations
+* Intensive-care workflows unless the current system models them through normal inpatient departments
+* Mortuary workflows
+
+Shared services and components may be reused, but the Inpatient workspace must present a ward-oriented and admission-oriented experience.
 
 ---
 
-# Phase 1 — Inspect Existing Nursing and OPD Architecture
+# Phase 1 — Inspect the Existing Admission Architecture
 
 Before implementing, inspect the current codebase and identify:
 
 1. How department-specific menus are selected.
-2. How doctor and Records workspaces are currently registered.
-3. How the active department context is resolved.
+2. How the Records, Nursing, Emergency, and doctor workspaces are registered.
+3. How active department context is resolved.
 4. How multi-department users switch active departments.
-5. Existing routes and controllers for:
+5. Existing routes, controllers, models, services, policies, and views for:
 
+   * admissions
+   * admission requests
+   * wards
+   * beds
+   * bed allocation
    * patients
    * visits
-   * triage
-   * vital signs
    * consultations
+   * inpatient sessions
+   * nursing sessions
+   * clinical rounds
    * nursing assessments
-   * nursing notes
+   * care plans
+   * vital signs
+   * intake and output
+   * medication administration
    * treatments
    * procedures
-   * medication administration
-   * clinical tasks
-   * observations
+   * investigations
+   * observation
+   * nursing tasks
    * handoffs
+   * transfers
+   * discharge clearances
    * discharge
-6. Existing OPD visit classifications and statuses.
-7. How outpatient and inpatient cases are distinguished.
-8. How active, completed, reopened, and closed consultations are handled.
-9. How patient queues and journey worklists are generated.
-10. Existing dashboard and menu profile services.
-11. Existing workspace URL and redirect resolvers.
-12. Existing permission, module, and department filtering.
-13. Existing patient privacy and audit protections.
-14. Views that hardcode generic route names such as:
+   * readmission
+6. Existing admission statuses.
+7. Existing bed and ward availability logic.
+8. Existing inpatient consultation-completion rules.
+9. Existing session reopen rules.
+10. Existing discharge and readmission services.
+11. Existing billing behaviour for active admissions.
+12. Existing Journey Intelligence stages for admitted patients.
+13. Existing patient privacy protections.
+14. Existing clinical-safety services.
+15. Existing activity-log events.
+16. Shared views that hardcode generic routes such as:
 
 ```php
+route('admissions.show', $admission)
 route('patients.show', $patient)
 route('visits.show', $visit)
-route('triage.edit', $visit)
 route('consultations.show', $consultation)
+route('discharges.show', $discharge)
 ```
 
-Do not create a competing workspace or menu system where one already exists.
+Do not create a competing admission, menu, dashboard, session, or routing architecture where one already exists.
 
 Extend the existing:
 
@@ -171,220 +227,313 @@ Extend the existing:
 * Active department context
 * Workspace route resolver
 * Workspace redirect resolver
-* Permission filtering
-* Patient journey services
+* Admission services
+* Bed-allocation services
 * Consultation workflow services
+* Nursing workflow services
+* Journey Intelligence services
+* Billing and receivable services
+* Authorization policies
+* Patient privacy services
+* Activity logging
 
 ---
 
-# Phase 2 — Nursing Workspace Route Group
+# Phase 2 — Inpatient Workspace Route Group
 
-Create a dedicated Nursing route group.
+Create a dedicated Inpatient route group.
 
 Use a structure equivalent to:
 
 ```php
-Route::prefix('nursing')
-    ->name('nursing.')
+Route::prefix('inpatient')
+    ->name('inpatient.')
     ->middleware([
         'auth',
         'verified',
         'department.context',
-        'department.type:nursing',
+        'department.type:inpatient',
     ])
     ->group(function () {
-        // Nursing workspace routes
+        // Inpatient workspace routes
     });
 ```
 
-Use the project’s actual middleware names and department-type authorization architecture.
+Use the project’s actual middleware names and active-department authorization architecture.
 
-Required route naming should include, where the corresponding feature already exists:
+Required route names should include, where the corresponding functionality already exists:
 
 ```text
-nursing.dashboard
+inpatient.dashboard
 
-nursing.patients.index
-nursing.patients.show
+inpatient.admissions.index
+inpatient.admissions.pending
+inpatient.admissions.active
+inpatient.admissions.discharged
+inpatient.admissions.show
+inpatient.admissions.accept
+inpatient.admissions.assign_bed
 
-nursing.opd.index
-nursing.opd.queue
-nursing.opd.active
-nursing.opd.completed
+inpatient.wards.index
+inpatient.wards.show
 
-nursing.visits.index
-nursing.visits.show
+inpatient.beds.index
+inpatient.beds.availability
+inpatient.beds.assign
+inpatient.beds.release
 
-nursing.triage.index
-nursing.triage.show
-nursing.triage.create
-nursing.triage.store
-nursing.triage.edit
-nursing.triage.update
+inpatient.patients.index
+inpatient.patients.show
 
-nursing.vitals.index
-nursing.vitals.show
-nursing.vitals.create
-nursing.vitals.store
-nursing.vitals.edit
-nursing.vitals.update
+inpatient.visits.index
+inpatient.visits.show
 
-nursing.assessments.index
-nursing.assessments.show
-nursing.assessments.create
-nursing.assessments.store
-nursing.assessments.edit
-nursing.assessments.update
+inpatient.rounds.index
+inpatient.rounds.show
+inpatient.rounds.create
+inpatient.rounds.store
+inpatient.rounds.update
 
-nursing.tasks.index
-nursing.tasks.show
-nursing.tasks.update
+inpatient.sessions.index
+inpatient.sessions.show
+inpatient.sessions.create
+inpatient.sessions.store
+inpatient.sessions.reopen
 
-nursing.treatments.index
-nursing.treatments.show
+inpatient.vitals.index
+inpatient.vitals.show
+inpatient.vitals.store
+inpatient.vitals.update
 
-nursing.observations.index
-nursing.observations.show
+inpatient.assessments.index
+inpatient.assessments.show
+inpatient.assessments.store
+inpatient.assessments.update
 
-nursing.handoffs.index
-nursing.reports.index
+inpatient.care_plans.index
+inpatient.care_plans.show
+inpatient.care_plans.store
+inpatient.care_plans.update
+
+inpatient.tasks.index
+inpatient.tasks.show
+inpatient.tasks.update
+
+inpatient.medications.index
+inpatient.medications.show
+inpatient.medications.administer
+
+inpatient.treatments.index
+inpatient.treatments.show
+inpatient.treatments.execute
+
+inpatient.procedures.index
+inpatient.procedures.show
+
+inpatient.investigations.index
+inpatient.investigations.show
+
+inpatient.observations.index
+inpatient.observations.show
+
+inpatient.intake_output.index
+inpatient.intake_output.show
+inpatient.intake_output.store
+
+inpatient.handoffs.index
+inpatient.handoffs.show
+inpatient.handoffs.update
+
+inpatient.transfers.index
+inpatient.transfers.create
+inpatient.transfers.store
+inpatient.transfers.show
+
+inpatient.discharges.index
+inpatient.discharges.readiness
+inpatient.discharges.create
+inpatient.discharges.store
+inpatient.discharges.show
+
+inpatient.readmissions.create
+inpatient.readmissions.store
+
+inpatient.reports.index
 ```
 
-Only register routes for functionality that exists or is being implemented.
+Only register routes for real functionality.
 
-Do not add non-functional placeholder pages.
+Do not add empty placeholder pages merely to populate the menu.
 
 ---
 
-# Phase 3 — Nursing OPD Dashboard
+# Phase 3 — Inpatient Ward Dashboard
 
-Create or complete a dedicated Nursing dashboard.
+Create or complete a dedicated Inpatient dashboard.
 
-The canonical route should be:
+The canonical destination should be:
 
 ```text
-/nursing
+/inpatient
 ```
 
 or:
 
 ```text
-/nursing/dashboard
+/inpatient/dashboard
 ```
 
-Choose one canonical destination and redirect the other to it.
+Choose one canonical route and redirect the other to it.
 
 The department dashboard resolver should map:
 
 ```php
-DepartmentType::NURSING => 'nursing.dashboard'
+DepartmentType::INPATIENT => 'inpatient.dashboard'
 ```
 
-The dashboard should be personalized for OPD nursing operations.
+The dashboard should function as an inpatient ward command board.
 
 Recommended metrics and widgets include, where reliable data exists:
 
-* Patients waiting for triage
-* Patients currently in triage
-* Patients with incomplete vital signs
-* Patients waiting for consultation
-* Active OPD cases
-* High-risk or critical patients
+* Active admissions
+* Admissions today
+* Pending admission requests
+* Patients awaiting bed allocation
+* Occupied beds
+* Available beds
+* Bed occupancy rate
+* Patients without assigned beds
+* Patients requiring clinical review
+* Patients with overdue vital signs
+* Patients with incomplete nursing assessments
 * Patients with overdue nursing tasks
-* Patients awaiting treatment
-* Patients under observation
-* Patients awaiting investigation
-* Patients awaiting medication
+* Medications due
+* Medications overdue
+* Treatments pending
+* Procedures pending
+* Investigations pending
+* Critical investigation results awaiting review
+* Patients with discharge planned today
+* Patients awaiting discharge clearances
 * Patients ready for discharge
-* Completed OPD cases today
-* Reopened OPD cases today
-* Average triage waiting time
-* Average nursing processing time
-* Pending handoffs
-* Unacknowledged handoffs
-* Recently completed nursing actions
+* Patients awaiting transfer
+* Handoffs awaiting acknowledgement
+* High-risk patients
+* Long-stay patients
+* Readmissions today
+* Discharges today
 
-Each dashboard widget must:
+Each dashboard metric must:
 
 * Respect permissions
 * Respect the active department
-* Include only appropriate OPD visits
+* Scope data to normal inpatient admissions
+* Avoid maternity and Emergency cases unless explicitly assigned to the Inpatient department
 * Avoid leaking protected patient information
-* Link to `/nursing/*` routes
+* Link to `/inpatient/*` routes
 * Use safe empty states
 * Avoid expensive unbounded queries
-* Reuse Journey Intelligence data where applicable
+* Reuse Journey Intelligence and department metrics where applicable
 
-Do not introduce metrics that cannot be calculated accurately from current data.
+Do not introduce misleading metrics that cannot be accurately calculated.
 
 ---
 
-# Phase 4 — Nursing-Specific Menu Profile
+# Phase 4 — Inpatient-Specific Menu Profile
 
 Extend the existing department menu profile or menu registry so that:
 
 ```php
-DepartmentType::NURSING
+DepartmentType::INPATIENT
 ```
 
-receives a dedicated OPD Nursing menu.
+receives a dedicated Inpatient menu.
 
 Recommended menu structure:
 
-## Nursing Dashboard
+## Inpatient Command
 
 * Dashboard
-
-## OPD Patient Flow
-
-* OPD Queue
-* Waiting for Triage
-* In Triage
-* Waiting for Consultation
-* Active OPD Cases
-* Completed Today
-
-## Triage and Assessment
-
-* Triage Worklist
-* Vital Signs
-* Nursing Assessments
+* Active Admissions
+* Pending Admissions
+* Discharged Today
+* Long-Stay Patients
 * High-Risk Patients
-* Critical Cases
 
-## Nursing Care
+## Wards and Beds
 
-* Nursing Tasks
-* Treatments
-* Procedures Support
-* Medication Administration
+* Ward Overview
+* Bed Availability
+* Bed Occupancy
+* Patients Without Beds
+* Bed Transfers
+
+## Patient Care
+
+* Admitted Patients
+* Clinical Rounds
+* Inpatient Sessions
+* Nursing Assessments
+* Care Plans
+* Vital Signs
+* Intake and Output
 * Patient Observations
 * Nursing Notes
 
+## Medication and Services
+
+* Medication Administration
+* Treatments
+* Procedures
+* Pending Investigations
+* Laboratory Follow-Up
+* Radiology Follow-Up
+* Pending Services
+
+## Nursing Work
+
+* Nursing Tasks
+* Tasks Due
+* Overdue Tasks
+* Assigned Tasks
+* Unassigned Tasks
+
 ## Coordination
 
-* Pending Services
-* Investigation Follow-Up
-* Consultation Follow-Up
-* Handoffs
+* Shift Handoffs
+* Department Handoffs
 * Escalations
-* Discharge Preparation
+* Transfers
+* Admission Requests
+
+## Discharge
+
+* Discharge Readiness
+* Pending Clearances
+* Planned Discharges
+* Completed Discharges
+* Readmissions
 
 ## Patient Access
 
 * Patient Search
 * Patient Profiles
+* Admission History
 * Visit History
 
-## Nursing Reports
+## Inpatient Reports
 
-* OPD Attendance Report
-* Triage Report
-* Vital Signs Report
+* Admission Report
+* Bed Occupancy Report
+* Ward Census Report
+* Length-of-Stay Report
 * Nursing Activity Report
+* Medication Administration Report
 * Treatment Report
-* Task Completion Report
-* Patient Flow Report
+* Investigation Follow-Up Report
+* Discharge Report
+* Readmission Report
+* Mortality Report where authorized
 
 ## General
 
@@ -395,260 +544,434 @@ Recommended menu structure:
 Only show a menu item when:
 
 1. The feature exists.
-2. The required module is enabled.
+2. The relevant module is enabled.
 3. The user possesses the required permission.
 4. The active department permits access.
-5. The feature is appropriate for OPD nursing.
-
-Do not expose menu items based only on the department type.
+5. The functionality belongs to normal inpatient care.
 
 Permissions remain authoritative.
 
+Do not expose actions solely because the user belongs to an Inpatient department.
+
 ---
 
-# Phase 5 — OPD Patient Queue
+# Phase 5 — Admission Worklists
 
-Create or adapt an OPD nursing queue under:
+Create or adapt Inpatient admission worklists under:
 
 ```text
-/nursing/opd/queue
+/inpatient/admissions
 ```
 
-The queue should include outpatient visits requiring nursing attention.
-
-Recommended queue categories:
+Recommended admission categories include:
 
 ```text
-waiting_for_triage
-triage_in_progress
-vitals_incomplete
-waiting_for_consultation
-consultation_in_progress
-nursing_action_required
-treatment_pending
-observation
-service_follow_up
+pending_acceptance
+awaiting_bed
+admitted
+active
+clinical_review_due
+nursing_action_due
+transfer_pending
+discharge_planned
+clearance_pending
 ready_for_discharge
-completed_today
+discharged_today
+readmitted
 ```
 
-Use the existing visit statuses, journey stages, consultation state, nursing tasks, and service statuses.
+Use existing admission statuses, bed-allocation state, journey stage, clinical-task state, and discharge-readiness services.
 
-Do not introduce duplicate visit statuses where existing statuses can be interpreted through a queue resolver.
+Do not introduce duplicate statuses where the worklist state can be derived by a resolver.
 
-Each queue item should display only authorized information, such as:
+Each worklist item should display only authorized information, such as:
 
 * Patient identifier
-* Masked patient name where required
+* Patient name according to privacy rules
+* Admission number
 * Visit number
-* Arrival time
-* Current OPD stage
-* Waiting duration
-* Priority or acuity
-* Triage status
-* Vital signs status
-* Consultation status
-* Pending nursing actions
+* Admission date and time
+* Admission reason
+* Admitting clinician
+* Ward
+* Bed
+* Length of stay
+* Current clinical stage
+* Responsible doctor
 * Assigned nurse where applicable
+* Pending tasks
+* Pending medications
+* Pending investigations
+* Discharge-readiness state
 * Next recommended action
 
-Each queue row should link to a `/nursing/*` destination.
+Support filters such as:
 
-The queue should support useful filters such as:
-
-* Department
-* Date
-* Status
-* Priority
+* Ward
+* Bed status
+* Admission date
+* Length of stay
+* Responsible clinician
 * Assigned nurse
-* Waiting duration
-* Triage completion
-* Consultation state
+* Admission status
+* Clinical-risk level
+* Discharge-readiness state
 * Pending task type
+* Payment or billing state where operationally relevant
 
 Use pagination and efficient queries.
 
 ---
 
-# Phase 6 — OPD Case Workspace
+# Phase 6 — Inpatient Admission Workspace
 
-Create or adapt a Nursing OPD case workspace for each visit.
+Create or adapt a dedicated Inpatient admission workspace.
 
 Recommended route:
 
 ```text
-/nursing/opd/{visit}
+/inpatient/admissions/{admission}
 ```
 
-or:
-
-```text
-/nursing/visits/{visit}
-```
-
-Choose the route that best fits the existing architecture.
-
-The OPD case page should provide a coordinated nursing view of the patient’s outpatient visit.
+The admission workspace should provide a coordinated view of the entire admission.
 
 Recommended sections:
 
 1. Patient identity strip
-2. Visit details
-3. Current journey stage
-4. Arrival and waiting-time information
-5. Triage summary
-6. Vital signs
-7. Nursing assessment
-8. Allergies and alerts
-9. Current complaints
-10. Consultation status
-11. Pending investigations
-12. Pending treatments
-13. Pending procedures
-14. Medication administration
-15. Nursing tasks
-16. Observations
-17. Handoffs
-18. Discharge readiness
-19. Activity timeline
-20. Authorized quick actions
+2. Admission details
+3. Ward and bed
+4. Admission date and length of stay
+5. Responsible clinician
+6. Assigned nursing team
+7. Diagnosis and problem list
+8. Allergies and clinical alerts
+9. Current admission status
+10. Current Journey Intelligence stage
+11. Vital-sign timeline
+12. Nursing assessment
+13. Care plan
+14. Clinical rounds
+15. Active clinical sessions
+16. Medication administration
+17. Treatments
+18. Procedures
+19. Investigations and results
+20. Intake and output
+21. Patient observations
+22. Nursing tasks
+23. Handoffs
+24. Transfer history
+25. Billing and service-access state
+26. Discharge readiness
+27. Clearances
+28. Activity timeline
+29. Authorized quick actions
 
-Do not duplicate the doctor consultation workspace.
+Do not duplicate underlying module implementations.
 
-The Nursing workspace should present the information and actions needed for OPD nursing care while respecting clinical ownership and permissions.
+The Inpatient admission page should coordinate existing workflows through one ward-oriented interface.
 
 ---
 
-# Phase 7 — Triage Workflow
+# Phase 7 — Ward and Bed Management Integration
 
-Ensure triage functionality is fully available inside the Nursing workspace.
+Expose ward and bed information within the Inpatient workspace.
 
 Examples:
 
 ```text
-/nursing/triage
-/nursing/triage/{visit}
-/nursing/triage/{visit}/edit
+/inpatient/wards
+/inpatient/wards/{ward}
+/inpatient/beds
+/inpatient/beds/availability
 ```
 
-The triage workflow should reuse existing:
+Reuse existing:
 
-* Triage models
-* Form requests
-* Validation
-* Acuity rules
-* Clinical alerts
-* Vital sign services
-* Audit logging
-* Patient privacy protections
+* Ward models
+* Bed models
+* Bed-allocation services
+* Admission services
+* Transfer services
+* Occupancy calculations
+* Activity logging
+* Authorization policies
 
-Triage should support existing fields such as:
+The ward overview may display:
 
-* Chief complaint
-* Arrival mode
-* Acuity or priority
-* Temperature
-* Pulse
-* Respiratory rate
-* Blood pressure
-* Oxygen saturation
-* Weight
-* Height
-* BMI
-* Pain score
-* Consciousness level
-* Clinical notes
-* Emergency indicators
-* Pregnancy-related information where already supported
-* Pediatric measurements where applicable
+* Ward capacity
+* Occupied beds
+* Available beds
+* Reserved beds
+* Out-of-service beds
+* Occupancy percentage
+* Patients awaiting beds
+* Planned discharges
+* Expected transfers
 
-Do not create parallel triage records for the same visit.
+Authorized users may:
 
-When triage is completed, the patient should move to the appropriate next OPD queue state using the existing journey and visit-state architecture.
+* Assign a bed
+* Transfer a patient to another bed
+* Transfer a patient to another ward
+* Release a bed after discharge
+* Mark a bed unavailable where supported
+* View bed history
 
----
+Do not allow a bed to be assigned concurrently to multiple active admissions.
 
-# Phase 8 — Vital Signs Workflow
+Bed assignment and release must be transactional and audited.
 
-Expose vital-sign recording and review under `/nursing/*`.
-
-The implementation must support:
-
-* Initial vital signs
-* Repeat vital signs
-* Time-stamped observations
-* Nurse identity
-* Abnormal-value indicators
-* Critical-value alerts
-* Trend display where supported
-* Patient age and context-aware ranges where already implemented
-* Audit logging
-* Authorization
-
-The page should distinguish between:
-
-* Missing vital signs
-* Complete vital signs
-* Abnormal vital signs
-* Critical vital signs
-* Repeat measurement due
-
-All form submissions and redirects must remain inside `/nursing/*`.
+Do not automatically release a bed before the configured discharge or transfer workflow considers the patient moved.
 
 ---
 
-# Phase 9 — Nursing Assessment
+# Phase 8 — Inpatient Clinical Sessions
 
-Create or adapt the nursing assessment workflow for OPD cases.
-
-The assessment may include existing fields such as:
-
-* General condition
-* Pain assessment
-* Mobility
-* Fall risk
-* Allergies
-* Infection risk
-* Mental status
-* Hydration
-* Nutrition concerns
-* Skin condition
-* Immediate nursing needs
-* Clinical observations
-* Escalation requirement
-* Nursing plan
-* Free-text nursing notes
-
-Do not add clinical assessment fields that do not fit the current data model unless required by existing project specifications.
-
-The assessment should:
-
-* Be visit-scoped
-* Be time-stamped
-* Record the responsible nurse
-* Respect privacy controls
-* Generate audit events
-* Integrate with nursing tasks where appropriate
-* Remain visible to authorized clinicians
-
----
-
-# Phase 10 — Nursing Tasks
-
-Expose nursing tasks under:
+Expose inpatient clinical sessions under:
 
 ```text
-/nursing/tasks
+/inpatient/sessions
 ```
 
-Reuse the existing consultation and nursing task infrastructure.
+A clinical session should represent an authorized episode of inpatient clinical work during an active admission.
 
-The Nursing workspace should show tasks assigned to:
+The session workflow must respect the established Inpatient rules:
 
-* The active nurse
-* The active Nursing department
-* Unassigned nursing staff
-* The current OPD visit
+1. An active admission must remain workable across multiple calendar days.
+2. Do not apply the OPD next-day locking rule to active inpatient admissions.
+3. An inpatient admission must remain open for new authorized clinical work until the patient is discharged.
+4. Completing one session must not block work in another active session.
+5. Only the completed session itself should become read-only unless reopened.
+6. Any active session must continue allowing authorized users to add new clinical items.
+7. A completed session may be reopened by an authorized user.
+8. Reopening must require a reason where configured.
+9. Reopening must be audited.
+10. Discharge must not destroy or detach existing clinical sessions.
+11. Authorized users should be able to reopen a session after discharge where the established workflow permits clinical correction or completion.
+12. Reopening a session must not silently reactivate the entire admission unless that is explicitly requested.
+13. Readmission must use the formal readmission workflow.
+14. Manual consultation completion must not be reintroduced where consultation completion is already automatic.
+
+Session states may include:
+
+```text
+active
+completed
+reopened
+cancelled
+locked
+```
+
+Use the current consultation and session architecture.
+
+Do not create a parallel inpatient consultation implementation.
+
+---
+
+# Phase 9 — Clinical Rounds
+
+Expose clinical rounds under:
+
+```text
+/inpatient/rounds
+```
+
+A clinical round may include:
+
+* Date and time
+* Responsible clinician
+* Participating staff
+* Current condition
+* New complaints
+* Examination findings
+* Diagnosis review
+* Medication review
+* Investigation review
+* Treatment response
+* Updated plan
+* Procedures required
+* Discharge planning
+* Follow-up interval
+* Clinical summary
+
+Rounds should be admission-scoped and linked to the active clinical session where applicable.
+
+Authorized users should be able to:
+
+* Start a round
+* Record findings
+* Update the treatment plan
+* Request investigations
+* Request procedures
+* Update medication
+* Create tasks
+* Mark review due
+* Complete the round
+
+All redirects and links must remain inside `/inpatient/*`.
+
+---
+
+# Phase 10 — Nursing Assessment and Care Plans
+
+Expose inpatient nursing assessments and care plans under:
+
+```text
+/inpatient/assessments
+/inpatient/care-plans
+```
+
+The nursing assessment may include existing fields such as:
+
+* General condition
+* Consciousness
+* Mobility
+* Fall risk
+* Pressure-injury risk
+* Pain
+* Nutrition risk
+* Hydration
+* Elimination
+* Skin condition
+* Infection risk
+* Mental state
+* Communication needs
+* Personal-care needs
+* Immediate nursing concerns
+* Escalation requirement
+
+The care plan may include:
+
+* Nursing problem
+* Goal
+* Planned intervention
+* Frequency
+* Responsible nurse
+* Start date
+* Review date
+* Status
+* Outcome
+* Completion note
+
+Assessments and care plans must be:
+
+* Admission-scoped
+* Time-stamped
+* Linked to the responsible user
+* Permission-controlled
+* Audited
+* Visible to authorized clinical staff
+
+Do not introduce duplicate care-plan models where existing nursing-task or care-plan infrastructure already exists.
+
+---
+
+# Phase 11 — Vital Signs and Ongoing Monitoring
+
+Expose inpatient vital signs under:
+
+```text
+/inpatient/vitals
+```
+
+Support:
+
+* Initial inpatient vital signs
+* Repeated observations
+* Time-stamped entries
+* Responsible staff
+* Abnormal-value indicators
+* Critical-value alerts
+* Trend display
+* Repeat-measurement schedules
+* Monitoring-frequency requirements
+* Escalation
+* Correction audit
+
+The workspace should distinguish:
+
+```text
+missing
+complete
+abnormal
+critical
+repeat_due
+monitoring_active
+overdue
+```
+
+Do not assume that one completed vital-sign entry satisfies the entire admission.
+
+Vital monitoring must support repeated observations over the admission duration.
+
+Critical values must use the existing clinical-alert and escalation architecture.
+
+---
+
+# Phase 12 — Intake and Output Monitoring
+
+Where supported, expose intake and output monitoring under:
+
+```text
+/inpatient/intake-output
+```
+
+Support records such as:
+
+* Oral fluids
+* IV fluids
+* Enteral feeds
+* Urine output
+* Drain output
+* Vomiting
+* Stool
+* Blood loss
+* Other measurable output
+* Running fluid balance
+* Shift totals
+* Daily totals
+
+Each entry should include:
+
+* Date and time
+* Quantity
+* Unit
+* Route or source
+* Responsible staff
+* Notes
+
+Use centralized unit and calculation handling.
+
+Do not duplicate medication-infusion or treatment records where those already generate intake records.
+
+---
+
+# Phase 13 — Nursing Tasks
+
+Expose inpatient nursing tasks under:
+
+```text
+/inpatient/tasks
+```
+
+Reuse existing clinical-task and Journey Intelligence infrastructure.
+
+Task categories may include:
+
+* Repeat vital signs
+* Medication administration
+* Patient repositioning
+* Wound care
+* Intake and output recording
+* Sample collection
+* Treatment administration
+* Preparation for procedure
+* Mobility assistance
+* Clinical review request
+* Discharge preparation
+* Handoff
+* Transfer preparation
 
 Task states may include:
 
@@ -660,64 +983,36 @@ in_progress
 completed
 cancelled
 overdue
+escalated
 ```
 
-Where the existing task model supports frequency-based task generation, display generated occurrences correctly.
+Where frequency-based task generation already exists, repeated occurrences must be displayed and completed correctly.
 
-For example, a task scheduled three times should produce or represent three actionable occurrences according to the current task architecture.
+Authorized users may:
 
-The Nursing workspace should allow authorized users to:
-
-* Claim a task
-* Assign a task
-* Acknowledge a task
-* Start a task
-* Record completion
+* Claim
+* Assign
+* Acknowledge
+* Start
+* Complete
 * Add a completion note
-* Escalate a task
-* View related patient and visit
+* Escalate
+* Reassign
 * View task history
 
-All task routes and redirects should remain under `/nursing/*`.
+All task links and redirects must remain inside `/inpatient/*`.
 
 ---
 
-# Phase 11 — Treatment and Procedure Support
+# Phase 14 — Medication Administration
 
-Expose nursing-relevant treatment and procedure worklists where those workflows already exist.
-
-Examples:
+Expose inpatient medication administration under:
 
 ```text
-/nursing/treatments
-/nursing/treatments/{visit}
+/inpatient/medications
 ```
 
-The worklist may include:
-
-* Ordered treatment
-* Ordered procedure
-* Prescribing or requesting clinician
-* Scheduled time
-* Status
-* Assigned nurse
-* Required consumables
-* Completion status
-* Pending billing or payment status where relevant
-* Clinical instructions
-* Safety warnings
-
-Do not allow nursing users to perform doctor-only ordering actions unless they possess a specific permission and the existing workflow supports it.
-
-The Nursing workspace may support execution, acknowledgement, administration, observation, and completion of authorized nursing actions.
-
----
-
-# Phase 12 — Medication Administration
-
-Where medication administration functionality already exists, expose it in the Nursing workspace.
-
-The workspace may display:
+Display:
 
 * Medication
 * Dose
@@ -725,165 +1020,437 @@ The workspace may display:
 * Frequency
 * Scheduled time
 * Prescribing clinician
+* Dispensing or availability state
 * Administration status
 * Last administered time
 * Next due time
+* Allergy warning
+* Duplicate-medication warning
+* Dose warning
 * Omitted or refused reason
-* Allergy warnings
-* Duplicate-medication warnings
-* Patient-specific safety alerts
 
-Authorized nursing users may record:
+Authorized users may record:
 
-* Administered
-* Delayed
-* Withheld
-* Refused
-* Not available
+```text
+administered
+delayed
+withheld
+refused
+not_available
+cancelled
+missed
+```
+
+Do not bypass:
+
+* Prescription safety
+* Pharmacy dispensing
+* Stock control
+* Payment policy
+* Allergy checks
+* Duplicate-medication checks
+* Audit logging
+
+Medication administration must not falsely imply that medication was dispensed, billed, or available where those steps are incomplete.
+
+Any urgent override must be explicit, permission-controlled, reasoned, and audited.
+
+---
+
+# Phase 15 — Treatments and Procedures
+
+Expose inpatient treatment and procedure worklists under:
+
+```text
+/inpatient/treatments
+/inpatient/procedures
+```
+
+Display:
+
+* Patient
+* Admission
+* Ward and bed
+* Ordered treatment or procedure
+* Requesting clinician
+* Priority
+* Scheduled time
+* Assigned staff
+* Required consumables
+* Payment or authorization state where relevant
+* Safety warnings
+* Status
+* Completion time
+
+Reuse existing:
+
+* Treatment services
+* Procedure services
+* Theatre services where appropriate
+* Stock and consumable logic
+* Billing mapping
+* Payment-gate policy
+* Activity logging
+
+Do not allow nursing or ward staff to perform doctor-only ordering actions unless explicitly permitted by the existing permission model.
+
+---
+
+# Phase 16 — Investigations and Result Follow-Up
+
+Expose inpatient investigation tracking under:
+
+```text
+/inpatient/investigations
+```
+
+Support:
+
+* Requested
+* Awaiting sample collection
+* Sample collected
+* In progress
+* Result available
+* Critical result
+* Result reviewed
 * Cancelled
 
-Do not bypass the existing prescription, pharmacy, inventory, payment, or medication-safety workflows.
+The worklist should help ward staff identify:
 
-Medication administration must not imply that the medication has been dispensed or paid for unless those workflows are complete.
+* Pending investigations
+* Overdue sample collection
+* Results awaiting review
+* Critical results
+* Investigations blocking discharge
+* Investigations requiring repeat collection
+
+Reuse existing laboratory, radiology, billing, consultation, and journey services.
+
+Do not create duplicate investigation records for the Inpatient workspace.
 
 ---
 
-# Phase 13 — Patient Observation
+# Phase 17 — Patient Observation and Risk Monitoring
 
-Provide an OPD observation worklist where applicable.
-
-Examples:
+Expose patient observation under:
 
 ```text
-/nursing/observations
-/nursing/observations/{visit}
+/inpatient/observations
 ```
 
-Observation functionality may include:
+Observation may include:
 
-* Observation start time
-* Observation reason
-* Assigned nurse
-* Repeat vital schedule
-* Clinical notes
+* General clinical observations
+* Neurological monitoring
 * Pain monitoring
-* Response to treatment
+* Wound monitoring
+* Mobility monitoring
+* Fall-risk monitoring
+* Pressure-injury monitoring
+* Treatment response
+* Fluid-balance concerns
+* Behavioural observation where supported
 * Escalation status
-* Observation duration
-* Readiness for consultation or discharge
 
-Observation is not an inpatient admission.
+High-risk patients should be visible on:
 
-Do not convert an OPD observation case into an admission unless the authorized admission workflow is explicitly completed.
+* The dashboard
+* Ward overview
+* Active admissions list
+* Nursing worklists
+* Handoffs
+
+Do not duplicate structured vital signs or medication records inside free-text observations.
 
 ---
 
-# Phase 14 — Nursing Handoffs
+# Phase 18 — Shift and Department Handoffs
 
-Expose Nursing handoffs under:
+Expose inpatient handoffs under:
 
 ```text
-/nursing/handoffs
+/inpatient/handoffs
 ```
 
-Reuse the existing Journey Intelligence handoff and coordination infrastructure.
+Reuse the existing Journey Intelligence handoff and coordination services.
 
-Nursing staff should be able to see:
+Support:
 
-* Handoffs owed by Nursing
-* Handoffs owed to Nursing
-* Unacknowledged handoffs
-* Overdue handoffs
-* Escalated handoffs
-* Patient and visit context
-* Responsible department
+* Shift handoff
+* Nurse-to-nurse handoff
+* Doctor-to-doctor handoff
+* Department handoff
+* Transfer handoff
+* Discharge handoff
+* Outstanding-action handoff
+
+The worklist should display:
+
+* Patient and admission context
+* Sending user or department
+* Receiving user or department
 * Expected action
+* Priority
+* Due time
 * SLA status
+* Acknowledgement state
+* Resolution state
 
-Use the existing handoff actions where supported:
+Authorized users may:
 
 * Claim
 * Assign
 * Acknowledge
 * Resolve
-* Dismiss
 * Escalate
+* Reassign
 
-All handoff links should resolve through `/nursing/*` where a Nursing workspace equivalent exists.
-
----
-
-# Phase 15 — OPD Session and Completion Rules
-
-Preserve the established outpatient consultation rules.
-
-For outpatient visits:
-
-1. Nursing staff should be able to continue working on an active same-day OPD visit.
-2. Completion of a consultation session must not immediately make the visit inaccessible on the same day.
-3. Authorized users should still be able to reopen a completed same-day session.
-4. A completed OPD consultation may be automatically finalized by the system according to the existing workflow.
-5. Manual consultation completion should not be reintroduced where the system has moved to automatic completion.
-6. New clinical items should be blocked on a later day unless the visit or session is formally reopened.
-7. Reopening must be permission-controlled and audited.
-8. The Nursing workspace should clearly show whether a case is:
-
-   * active
-   * completed today
-   * reopened
-   * closed from a previous day
-   * awaiting discharge
-9. Nursing actions must not reopen a visit silently.
-10. Existing visit-completion and consultation-completion services must remain authoritative.
-
-Do not apply inpatient session rules to OPD cases.
+All handoff links should use `/inpatient/*` routes where an Inpatient equivalent exists.
 
 ---
 
-# Phase 16 — Payment and Service Access Awareness
+# Phase 19 — Inpatient Transfer Workflow
 
-Nursing staff may need to know whether a patient is permitted to proceed with services.
+Expose inpatient transfers under:
 
-Display payment or service-access status where relevant, but do not expose unnecessary financial detail.
+```text
+/inpatient/transfers
+```
 
-The workspace may show safe operational states such as:
+Support:
+
+* Bed-to-bed transfer
+* Ward-to-ward transfer
+* Department transfer
+* Internal specialty transfer
+* External-facility transfer where supported
+
+A transfer may include:
+
+* Source ward and bed
+* Destination ward and bed
+* Reason
+* Priority
+* Responsible clinician
+* Accepting department
+* Acceptance status
+* Handoff
+* Transport status
+* Transfer date and time
+
+Reuse existing bed, ward, admission, ambulance, referral, and handoff services where applicable.
+
+A transfer must not create a duplicate active admission unless the established workflow explicitly requires it.
+
+Bed release and destination assignment must be transactional.
+
+---
+
+# Phase 20 — Discharge Readiness
+
+Create or extend a centralized inpatient discharge-readiness process.
+
+Recommended readiness areas include:
+
+* Clinical stability
+* Final diagnosis
+* Clinical summary
+* Medication reconciliation
+* Discharge prescription
+* Investigation review
+* Pending-result plan
+* Treatment completion
+* Procedure follow-up
+* Nursing clearance
+* Pharmacy clearance
+* Finance or billing clearance
+* Insurance or claims clearance
+* Ward clearance
+* Follow-up appointment
+* Referral instructions
+* Patient education
+* Warning signs
+* Responsible clinician approval
+
+Reuse the existing admission discharge-clearance architecture.
+
+Do not create duplicate clearance tables or services where existing ones already exist.
+
+The readiness screen should clearly distinguish:
+
+```text
+not_started
+in_progress
+blocked
+ready
+overridden
+completed
+```
+
+Overrides must be:
+
+* Permission-controlled
+* Reasoned
+* Audited
+* Scoped to the admission and clearance type
+
+---
+
+# Phase 21 — Inpatient Discharge
+
+Expose inpatient discharge under:
+
+```text
+/inpatient/discharges
+```
+
+The discharge process should:
+
+1. Validate discharge readiness.
+2. Record final diagnosis.
+3. Record discharge summary.
+4. Record discharge destination.
+5. Record medication and follow-up instructions.
+6. Resolve or safely carry forward outstanding actions.
+7. Complete required clearances.
+8. Update the admission status.
+9. Update the visit status.
+10. Release the bed at the correct workflow point.
+11. Update Journey Intelligence state.
+12. Preserve audit history.
+13. Preserve billing and receivable history.
+14. Preserve all clinical sessions and records.
+
+Do not silently cancel pending investigations, treatments, medications, or tasks.
+
+Outstanding items should be:
+
+* Completed
+* Cancelled with reason
+* Carried forward
+* Marked for outpatient follow-up
+* Explicitly overridden
+
+according to the existing workflow.
+
+---
+
+# Phase 22 — Session Reopening After Discharge
+
+Preserve the established session-reopening behaviour for inpatient cases.
+
+After discharge:
+
+1. Existing sessions must remain visible.
+2. Authorized users may reopen a completed session where permitted.
+3. Reopening must require the appropriate permission.
+4. Reopening must require a reason where configured.
+5. Reopening must be audited.
+6. Adding a clinical item after discharge must not silently remove the discharge.
+7. Reopening one session must not automatically reopen every session.
+8. Reopening a session must not silently reactivate bed occupancy.
+9. Reopening a session must not silently restart billing periods.
+10. Clinical corrections and late documentation must remain distinguishable from readmission.
+
+The UI should clearly indicate:
+
+```text
+discharged
+session_reopened_after_discharge
+late_entry
+clinical_correction
+```
+
+where the current data model supports these distinctions.
+
+---
+
+# Phase 23 — Readmission Workflow
+
+Expose readmission under:
+
+```text
+/inpatient/readmissions
+```
+
+The system should provide a formal **Readmit** action for eligible discharged patients.
+
+Readmission should:
+
+1. Use the existing patient record.
+2. Link to the previous admission.
+3. Preserve the previous discharge.
+4. Create or extend the appropriate admission episode according to the established domain model.
+5. Create a new active care period.
+6. Re-establish ward and bed allocation.
+7. Reopen or extend billing according to the configured admission and billing architecture.
+8. Preserve previous invoices, receivables, payments, and audit history.
+9. Record the readmission reason.
+10. Record the responsible clinician.
+11. Record the readmission date and time.
+12. Update Journey Intelligence.
+13. Create required handoffs.
+14. Audit the readmission.
+
+Do not accomplish readmission by simply changing a discharged admission back to `active` unless that is explicitly the established business model.
+
+Where the intended model is to extend the same admission and its billing period, use the existing extension service and preserve a clear readmission event.
+
+Where the intended model requires a linked new admission, use a parent or previous-admission relationship.
+
+Do not duplicate billing or clinical records.
+
+---
+
+# Phase 24 — Billing and Service-Access Awareness
+
+Display billing and service-access status where operationally relevant.
+
+The Inpatient workspace may show safe states such as:
 
 ```text
 cleared_to_proceed
-payment_required
 payment_deferred
+deposit_required
 insurance_pending
-authorized_override
 billing_context_missing
+authorized_override
+previous_balance_present
 ```
 
-Reuse the existing payment-gate operation policy and visit billing override architecture.
+Reuse existing:
 
-Do not allow the Nursing workspace to bypass payment enforcement.
+* Payment-gate operation policies
+* Per-visit billing overrides
+* Admission billing
+* Invoice receivables
+* Previous-balance policy
+* Payment allocation services
+* Insurance coverage
+* Claims workflow
+* Discharge clearances
 
-Respect:
+Do not expose unnecessary financial details to users without finance permissions.
 
-* Global payment policy
-* Per-visit payment permission
-* Risk-patient enforcement
-* Departmental operation configuration
-* Authorized billing overrides
-* Emergency exceptions
-* Audit logging
+Do not block urgent inpatient clinical care merely because billing is incomplete.
 
-Nursing staff should see only what is needed to know whether an action can proceed.
+However, elective or non-urgent services must follow the configured payment rules.
+
+Any override must be explicit, permission-controlled, reasoned, and audited.
+
+Readmission must extend or restart billing according to the current admission billing model without losing previous financial history.
 
 ---
 
-# Phase 17 — Workspace-Aware URL Resolution
+# Phase 25 — Workspace-Aware URL Resolution
 
-Introduce or extend the centralized workspace route resolver.
+Extend the centralized workspace route resolver.
 
 Do not scatter checks such as:
 
 ```php
-if ($department->type === DepartmentType::NURSING) {
-    return route('nursing.visits.show', $visit);
+if ($department->type === DepartmentType::INPATIENT) {
+    return route('inpatient.admissions.show', $admission);
 }
 ```
 
@@ -905,185 +1472,222 @@ dashboard()
 patientIndex()
 patientShow(Patient $patient)
 
-opdQueue()
-opdVisitShow(Visit $visit)
+admissionIndex()
+admissionShow(Admission $admission)
 
-visitIndex()
+wardIndex()
+wardShow(Ward $ward)
+
+bedAvailability()
+
 visitShow(Visit $visit)
 
-triageIndex()
-triageShow(Visit $visit)
-triageEdit(Visit $visit)
+roundIndex()
+roundShow(Admission $admission)
 
-vitalsShow(Visit $visit)
-vitalsEdit(Visit $visit)
+sessionIndex()
+sessionShow(ConsultationSession $session)
 
-assessmentShow(Visit $visit)
+vitalsShow(Admission $admission)
+assessmentShow(Admission $admission)
+carePlanShow(Admission $admission)
+
 taskIndex()
 taskShow(Task $task)
 
+medicationIndex()
 treatmentIndex()
+procedureIndex()
+investigationIndex()
 observationIndex()
 handoffIndex()
+
+transferIndex()
+dischargeReadiness(Admission $admission)
+dischargeShow(Discharge $discharge)
+readmissionCreate(Admission $admission)
 ```
 
-For a Nursing user, it should return `nursing.*` routes.
+For an Inpatient user, the resolver must return `inpatient.*` routes.
 
-For other users, it should preserve their existing workspace or generic routes.
+For other users, preserve the appropriate existing workspace or generic route.
 
-The resolver must use the currently active department context rather than only the user’s primary department.
+Always use the currently active department context rather than only the user’s primary department.
 
 ---
 
-# Phase 18 — Replace Hardcoded Shared Links
+# Phase 26 — Replace Hardcoded Shared Links
 
-Audit all shared pages accessed by Nursing staff.
+Audit all shared pages accessed by Inpatient users.
 
-Replace hardcoded generic links that break Nursing workspace continuity.
+Replace hardcoded generic links that break workspace continuity.
 
 Review at minimum:
 
-* OPD queues
+* Admission lists
+* Ward dashboards
+* Bed lists
 * Patient search
-* Patient profile
-* Visit lists
+* Patient profiles
 * Visit history
-* Triage pages
+* Admission history
+* Clinical rounds
+* Session pages
 * Vital-sign pages
-* Consultation summary pages
-* Nursing-task lists
+* Nursing assessments
+* Care plans
+* Task lists
+* Medication worklists
 * Treatment worklists
-* Observation worklists
+* Procedure worklists
+* Investigation worklists
+* Observation pages
 * Handoff pages
+* Transfer pages
+* Discharge pages
+* Readmission actions
 * Journey worklists
 * Dashboard cards
 * Breadcrumbs
-* Action dropdowns
-* Flash-message actions
-* Empty states
 * Notifications
 * Escalation links
-* Recently viewed patients
-* Pending-service links
+* Action dropdowns
+* Empty-state actions
+* Flash-message action links
 
 Avoid shared-view code such as:
 
 ```php
-route('visits.show', $visit)
+route('admissions.show', $admission)
 ```
 
 Use the centralized workspace route resolver.
 
-Do not alter API, integration, signed, payment-callback, print, export, or background-job URLs unless they are explicitly part of the Nursing browser workspace.
+Do not change API, callback, signed, payment, print, export, or background-job URLs unless they are explicitly part of the Inpatient browser workspace.
 
 ---
 
-# Phase 19 — Workspace-Aware Redirects
+# Phase 27 — Workspace-Aware Redirects
 
-All successful Nursing actions must redirect back into `/nursing/*`.
+All successful Inpatient actions must redirect back into `/inpatient/*`.
 
 Examples:
 
-After triage:
+After accepting an admission:
 
 ```text
-/nursing/opd/{visit}
+/inpatient/admissions/{admission}
+```
+
+After assigning a bed:
+
+```text
+/inpatient/admissions/{admission}
+```
+
+After recording a clinical round:
+
+```text
+/inpatient/admissions/{admission}
 ```
 
 After recording vital signs:
 
 ```text
-/nursing/opd/{visit}
+/inpatient/admissions/{admission}
 ```
 
 After completing a nursing task:
 
 ```text
-/nursing/tasks
+/inpatient/tasks
 ```
 
-or:
+or the admission workspace.
+
+After starting discharge:
 
 ```text
-/nursing/opd/{visit}
+/inpatient/discharges/{admission}/readiness
 ```
 
-After recording an observation:
+After completing discharge:
 
 ```text
-/nursing/observations/{visit}
+/inpatient/admissions/discharged
 ```
 
-After acknowledging a handoff:
+After readmission:
 
 ```text
-/nursing/handoffs
+/inpatient/admissions/{activeAdmission}
 ```
 
-Avoid hardcoding Nursing redirects inside clinical business services.
+Avoid hardcoding Inpatient redirects inside domain services.
 
 Use a workspace redirect resolver such as:
 
 ```php
-$workspaceRedirects->toOpdVisit($visit);
-$workspaceRedirects->toTriage($visit);
+$workspaceRedirects->toAdmission($admission);
+$workspaceRedirects->toWard($ward);
 $workspaceRedirects->toTaskList();
-$workspaceRedirects->toHandoffList();
+$workspaceRedirects->toDischargeReadiness($admission);
+$workspaceRedirects->toActiveAdmissions();
 ```
 
-Validation failures must return the user to the same Nursing route with input preserved.
+Validation failures must return users to the same `/inpatient/*` route with input preserved.
 
 ---
 
-# Phase 20 — Login and Department Switching
+# Phase 28 — Login and Department Switching
 
-When a user logs in and their active department type is `nursing`, redirect them to:
-
-```text
-/nursing
-```
-
-When a multi-department user switches their active department to a Nursing department, redirect them to:
+When a user logs in and their active department type is `inpatient`, redirect them to:
 
 ```text
-/nursing
+/inpatient
 ```
 
-When switching away from Nursing, redirect to the destination workspace associated with the newly active department.
+When a multi-department user switches to an Inpatient department, redirect them to:
 
-The Nursing menu and URLs must always be based on the active department context.
+```text
+/inpatient
+```
 
-Do not use only:
+When switching away from Inpatient, redirect to the selected department’s corresponding workspace.
+
+The menu, dashboard, route context, and data scoping must always use the active department.
+
+Do not rely only on:
 
 ```php
 $user->department_id
 ```
 
-where the application supports multiple departments.
+where the application supports multiple departments and an active department context.
 
 ---
 
-# Phase 21 — Nursing Workspace Authorization
+# Phase 29 — Inpatient Workspace Authorization
 
-The `/nursing` prefix is not authorization.
+The `/inpatient` prefix is not authorization.
 
-Protect the Nursing workspace so access requires:
+Protect the workspace so access requires:
 
 1. An authenticated user.
 2. A valid active department.
-3. Active department type equal to `nursing`, unless an authorized admin-preview mode applies.
-4. The permission required by the requested action.
+3. Active department type equal to `inpatient`, unless an authorized admin-preview mode applies.
+4. The required permission.
 5. The relevant module being enabled.
-6. Access to the patient and visit under existing policies.
-7. Appropriate clinical ownership or assignment where required.
+6. Access to the requested patient, visit, admission, ward, or bed.
+7. Appropriate ward or department assignment where required.
 
 A user from another department who enters:
 
 ```text
-/nursing/opd/queue
+/inpatient/admissions
 ```
 
-must not receive access merely because they possess a broad visit-view permission.
+must not receive access merely because they possess a broad admission-view permission.
 
 Use the project’s existing unauthorized workspace behaviour:
 
@@ -1095,82 +1699,100 @@ Do not create inconsistent authorization behaviour.
 
 ---
 
-# Phase 22 — Permission Model
+# Phase 30 — Permission Model
 
-Reuse existing permissions wherever they already correctly represent the action.
+Reuse existing permissions wherever possible.
 
-Add new permissions only where necessary.
+Only add permissions where the current permission model does not correctly represent the action.
 
 Potential permissions may include:
 
 ```text
-nursing.workspace.view
-nursing.opd_queue.view
-nursing.triage.view
-nursing.triage.manage
-nursing.vitals.view
-nursing.vitals.manage
-nursing.assessments.view
-nursing.assessments.manage
-nursing.tasks.view
-nursing.tasks.manage
-nursing.treatments.view
-nursing.treatments.execute
-nursing.medications.view
-nursing.medications.administer
-nursing.observations.view
-nursing.observations.manage
-nursing.handoffs.view
-nursing.handoffs.manage
-nursing.reports.view
-nursing.sessions.reopen
+inpatient.workspace.view
+inpatient.admissions.view
+inpatient.admissions.manage
+inpatient.admissions.accept
+inpatient.beds.view
+inpatient.beds.assign
+inpatient.wards.view
+inpatient.rounds.view
+inpatient.rounds.manage
+inpatient.sessions.view
+inpatient.sessions.manage
+inpatient.sessions.reopen
+inpatient.vitals.view
+inpatient.vitals.manage
+inpatient.assessments.view
+inpatient.assessments.manage
+inpatient.care_plans.view
+inpatient.care_plans.manage
+inpatient.tasks.view
+inpatient.tasks.manage
+inpatient.medications.view
+inpatient.medications.administer
+inpatient.treatments.view
+inpatient.treatments.execute
+inpatient.procedures.view
+inpatient.investigations.view
+inpatient.observations.view
+inpatient.observations.manage
+inpatient.handoffs.view
+inpatient.handoffs.manage
+inpatient.transfers.manage
+inpatient.discharges.view
+inpatient.discharges.manage
+inpatient.discharge_overrides.manage
+inpatient.readmissions.manage
+inpatient.reports.view
 ```
 
-Before adding permissions, inspect current permission names and avoid duplication.
+Inspect current permission names before adding new ones.
 
-Menu visibility must follow permission checks, but controllers, policies, and services must independently enforce authorization.
+Avoid duplicating equivalent permissions.
+
+Menu visibility must follow permissions, but controllers, policies, form requests, and services must independently enforce authorization.
 
 ---
 
-# Phase 23 — Legacy Route Compatibility
+# Phase 31 — Legacy Route Compatibility
 
 Keep existing generic routes operational for:
 
 * Other departments
 * Existing bookmarks
-* Internal notifications
+* APIs
 * Print flows
-* API consumers
+* Signed URLs
+* Internal notifications
 * Background jobs
 * Integrations
-* Signed URLs
+* Payment callbacks
+* Export downloads
 
-For interactive browser requests from an active Nursing department, generic routes may redirect to Nursing equivalents where safe.
+For interactive browser requests from an active Inpatient department, generic routes may redirect to Inpatient equivalents where safe.
 
 Examples:
 
 ```text
-/triage
-→ /nursing/triage
+/admissions/{admission}
+→ /inpatient/admissions/{admission}
+
+/wards/{ward}
+→ /inpatient/wards/{ward}
 
 /visits/{visit}
-→ /nursing/opd/{visit}
-
-/nursing-tasks
-→ /nursing/tasks
+→ /inpatient/visits/{visit}
 ```
-
-Apply redirects carefully.
 
 Do not blindly redirect:
 
 * JSON requests
-* API requests
+* APIs
 * signed URLs
-* payment callbacks
-* export downloads
+* callbacks
 * print routes
-* AJAX endpoints
+* exports
+* payment endpoints
 * background requests
 * integration requests
 
@@ -1178,57 +1800,58 @@ Avoid redirect loops.
 
 ---
 
-# Phase 24 — Breadcrumbs and Active Menu State
+# Phase 32 — Breadcrumbs and Active Menu State
 
-Nursing pages must display Nursing-specific breadcrumbs.
+Inpatient pages must display Inpatient-specific breadcrumbs.
 
 Examples:
 
 ```text
-Nursing > Dashboard
-Nursing > OPD Queue
-Nursing > OPD Queue > Patient Visit
-Nursing > Triage
-Nursing > Triage > Record Triage
-Nursing > Vital Signs
-Nursing > Nursing Tasks
-Nursing > Observations
-Nursing > Handoffs
-Nursing > Reports
+Inpatient > Dashboard
+Inpatient > Active Admissions
+Inpatient > Admissions > Patient Admission
+Inpatient > Wards
+Inpatient > Wards > Ward Details
+Inpatient > Beds
+Inpatient > Clinical Rounds
+Inpatient > Nursing Tasks
+Inpatient > Medications
+Inpatient > Investigations
+Inpatient > Discharge Readiness
+Inpatient > Discharges
+Inpatient > Readmission
+Inpatient > Reports
 ```
 
-The sidebar must correctly highlight menu items for nested routes.
+The sidebar must correctly highlight parent items for nested routes.
 
 For example:
 
 ```text
-nursing.triage.edit
-nursing.triage.update
+inpatient.admissions.show
+inpatient.rounds.show
+inpatient.sessions.show
 ```
 
-should highlight:
+should highlight the appropriate admission or patient-care section.
 
-```text
-Triage Worklist
-```
-
-Use active route patterns rather than exact route-name comparisons only.
+Use route patterns rather than exact route-name equality only.
 
 ---
 
-# Phase 25 — Shared View Workspace Context
+# Phase 33 — Shared View Workspace Context
 
-Pass a clear Nursing workspace context to shared views.
+Pass a clear Inpatient workspace context to shared views.
 
 The context may include:
 
 ```php
 [
-    'workspaceKey' => 'nursing',
+    'workspaceKey' => 'inpatient',
     'workspaceDepartment' => $activeDepartment,
-    'workspaceRoutePrefix' => 'nursing.',
-    'workspaceTitle' => __('nursing.workspace.title'),
-    'workspaceScope' => 'opd',
+    'workspaceRoutePrefix' => 'inpatient.',
+    'workspaceTitle' => __('inpatient.workspace.title'),
+    'workspaceScope' => 'normal_admission',
 ]
 ```
 
@@ -1241,99 +1864,118 @@ Shared views should use this context for:
 * Links
 * Form actions
 * Back buttons
+* Admission navigation
+* Ward navigation
 * Quick actions
 * Empty states
-* Queue navigation
-* Visit navigation
+* Notifications
+* Discharge actions
 
-Do not repeatedly read session state or detect the department type inside Blade templates.
+Do not repeatedly inspect session state or department type inside Blade templates.
 
 ---
 
-# Phase 26 — Patient Privacy and Clinical Safety
+# Phase 34 — Patient Privacy and Clinical Safety
 
-The Nursing workspace handles protected clinical information.
+The Inpatient workspace handles highly sensitive patient and admission information.
 
 Ensure all existing privacy controls remain active, including:
 
 * Patient-name masking where applicable
 * Protected phone and email fields
-* Sensitive field permissions
+* Sensitive-field permission checks
 * Access auditing
 * Search-result masking
 * Export restrictions
-* Clinical note authorization
-* Activity-log sanitization
+* Secure patient, visit, and admission lookup
 * Privacy-aware notifications
-* Secure patient and visit lookups
+* Activity-log sanitization
 
-Do not bypass privacy services because a user belongs to Nursing.
+Do not bypass privacy controls because the patient is admitted.
 
-Clinical safety protections must remain active, including:
+Clinical-safety protections must remain active, including:
 
 * Allergy warnings
-* Critical vital alerts
+* Critical vital-sign alerts
 * Medication conflicts
 * Duplicate active medication warnings
-* Missing diagnosis policy where relevant
 * Unusual dose warnings
-* Prescription override rules
-* Treatment readiness checks
-* Completion readiness checks
+* Missing diagnosis policy where applicable
+* Treatment-readiness checks
+* Procedure-readiness checks
+* Investigation-result alerts
+* Discharge-readiness checks
+* Admission and transfer readiness
+* Clinical escalation
 
-Nursing users should not be allowed to override clinical safety restrictions unless an explicit permission and override workflow exist.
+Overrides must be explicit, permission-controlled, reasoned, scoped, and audited.
 
 ---
 
-# Phase 27 — Activity Logging and Audit
+# Phase 35 — Activity Logging and Audit
 
-Record relevant Nursing actions using the existing `ActivityLog` infrastructure.
+Record relevant Inpatient actions through the existing `ActivityLog` infrastructure.
 
 Audit events should cover existing actions such as:
 
-* Triage created
-* Triage updated
+* Admission accepted
+* Admission rejected
+* Bed assigned
+* Bed changed
+* Ward transfer initiated
+* Ward transfer completed
+* Clinical round created
+* Clinical session created
+* Clinical session completed
+* Clinical session reopened
 * Vital signs recorded
 * Vital signs corrected
 * Nursing assessment created
-* Nursing assessment updated
+* Care plan created
+* Care plan updated
 * Nursing task claimed
-* Nursing task assigned
 * Nursing task completed
 * Medication administered
 * Medication withheld
 * Treatment completed
-* Observation started
-* Observation updated
-* Observation completed
+* Procedure completed
+* Investigation reviewed
+* Observation recorded
 * Handoff acknowledged
 * Handoff resolved
-* OPD session reopened
-* Clinical escalation created
+* Discharge clearance updated
+* Discharge override applied
+* Patient discharged
+* Session reopened after discharge
+* Readmission created
+* Admission billing period extended
 
-Do not log full sensitive field values.
+Do not log full sensitive values.
 
-Audit records should contain sufficient context such as:
+Audit records should include sufficient context such as:
 
 * Actor
 * Patient identifier
 * Visit identifier
+* Admission identifier
 * Department
+* Ward
 * Action
 * Timestamp
 * Reason where required
+* Previous and new state where appropriate
 
 ---
 
-# Phase 28 — Localization
+# Phase 36 — Localization
 
-Add complete English and French localisation for the Nursing workspace.
+Add complete English and French localization for the Inpatient workspace.
 
-Prefer an existing nursing localisation file if one exists, otherwise use:
+Prefer an existing inpatient localization file if one exists, otherwise use:
 
 ```text
-lang/en/nursing.php
-lang/fr/nursing.php
+lang/en/inpatient.php
+lang/fr/inpatient.php
 ```
 
 Include keys for:
@@ -1341,52 +1983,65 @@ Include keys for:
 * Workspace title
 * Dashboard
 * Menu sections
-* OPD queue states
-* Triage
+* Admission states
+* Ward and bed states
+* Clinical rounds
+* Sessions
 * Vital signs
 * Nursing assessments
+* Care plans
 * Nursing tasks
-* Treatments
 * Medication administration
+* Treatments
+* Procedures
+* Investigations
 * Observations
+* Intake and output
 * Handoffs
-* Patient-flow states
-* Payment-access states
+* Transfers
+* Discharge readiness
+* Clearances
+* Discharge
+* Session reopening
+* Readmission
+* Billing and service-access states
 * Empty states
 * Quick actions
+* Critical alerts
 * Reports
 * Breadcrumbs
 * Unauthorized workspace message
-* Session reopening
-* Critical alerts
-* Waiting-time labels
+* Override reasons
 
-Maintain complete EN/FR parity.
+Maintain complete English and French parity.
 
-Do not hardcode visible Nursing labels in controllers, services, Blade templates, or JavaScript.
+Do not hardcode visible Inpatient labels in controllers, services, Blade templates, or JavaScript.
 
 ---
 
-# Phase 29 — Menu Configuration and Future Extensibility
+# Phase 37 — Menu Configuration and Future Extensibility
 
-Implement the Nursing menu through the existing menu registry or department menu profile service.
+Implement the Inpatient menu through the existing menu registry or department menu profile service.
 
-Do not build it directly inside the sidebar Blade template.
+Do not define it directly inside the sidebar Blade template.
 
-The menu definition should support:
+The menu configuration should support:
 
 * Section ordering
 * Route name
 * Icon
 * Permission
 * Module requirement
-* Active route patterns
+* Active-route patterns
 * Badge counts
 * Department-type availability
-* OPD-specific visibility
+* Ward scoping
 * Feature flags
+* Overdue counts
+* Medication-due counts
+* Discharge-readiness counts
 
-The architecture should remain extensible for future department menu personalisation, including:
+The architecture must remain extensible for future department menu personalization, including:
 
 ```text
 pharmacy
@@ -1394,10 +2049,8 @@ investigation
 radiology
 finance
 stores
-inpatient
 maternity
 theatre
-emergency
 blood_bank
 mortuary
 ambulance
@@ -1409,27 +2062,27 @@ Do not implement those other workspaces in this phase.
 
 ---
 
-# Phase 30 — Focused Automated Verification
+# Phase 38 — Focused Automated Verification
 
-Add focused automated tests for the Nursing workspace.
+Add focused automated tests for the Inpatient workspace.
 
 ## Route tests
 
 Verify:
 
-* Nursing routes exist.
-* Route names use `nursing.*`.
-* URLs use `/nursing/*`.
-* Nursing department middleware is attached.
+* Inpatient routes exist.
+* Route names use `inpatient.*`.
+* URLs use `/inpatient/*`.
+* Inpatient department middleware is attached.
 * Generic routes remain available where required.
 
 ## Access tests
 
 Verify:
 
-* A Nursing department user can access authorized Nursing pages.
-* A non-Nursing department user cannot access the Nursing workspace.
-* A Nursing user without the required permission cannot access protected actions.
+* An Inpatient department user can access authorized Inpatient pages.
+* A non-Inpatient department user cannot access the workspace.
+* Users without the required permission cannot access protected actions.
 * Admin preview continues working where supported.
 * Multi-department active context is respected.
 
@@ -1437,56 +2090,96 @@ Verify:
 
 Verify:
 
-* Nursing dashboard loads.
-* OPD metrics include only appropriate visits.
-* Links point to `/nursing/*`.
+* The Inpatient dashboard loads.
+* Metrics include only normal inpatient admissions.
+* Maternity and Emergency cases do not leak into the workspace incorrectly.
+* Ward and bed metrics are accurate.
+* Links point to `/inpatient/*`.
 * Sensitive information remains protected.
 * Empty states render safely.
 
-## Menu tests
+## Admission tests
 
 Verify:
 
-* Nursing users receive the Nursing menu.
-* Non-Nursing users do not receive it.
-* Unauthorized items are hidden.
-* Disabled-module items are hidden.
-* Active-route highlighting works.
-* Badge counts use OPD-scoped data.
-
-## Queue tests
-
-Verify:
-
-* Only OPD visits appear.
-* Inpatient visits do not incorrectly appear.
-* Queue categorization is correct.
-* Triage and vital status are reflected.
-* Completed-today cases remain accessible.
-* Previous-day closed cases are not editable without reopening.
-
-## Redirect tests
-
-Verify:
-
-* Login redirects to `/nursing`.
-* Switching to Nursing redirects to `/nursing`.
-* Triage actions remain inside `/nursing/*`.
-* Vital-sign actions remain inside `/nursing/*`.
-* Task actions remain inside `/nursing/*`.
-* Handoff actions remain inside `/nursing/*`.
-* No redirect loops occur.
-* JSON and API requests are not incorrectly redirected.
+* Admission acceptance uses the existing admission service.
+* Bed assignment is transactional.
+* A bed cannot be assigned to multiple active admissions.
+* Active admissions remain visible.
+* Discharged admissions leave the active-admission worklist.
+* Readmitted patients return through the correct workflow.
 
 ## Session-rule tests
 
 Verify:
 
-* Active same-day OPD visits remain editable.
-* Completed same-day OPD sessions can be reopened with permission.
-* Previous-day sessions reject new clinical entries until reopened.
+* Active inpatient admissions remain workable across multiple days.
+* OPD next-day locking is not applied.
+* Completing one session does not block another active session.
+* A completed session becomes read-only until reopened.
+* Authorized users can reopen a completed session.
+* Reopening requires a reason where configured.
 * Reopening is audited.
-* Inpatient rules are not accidentally applied to OPD cases.
+* Reopening after discharge does not silently reactivate the admission.
+* Reopening after discharge does not silently restore bed occupancy.
+* Readmission uses the formal readmission workflow.
+
+## Ward and bed tests
+
+Verify:
+
+* Ward occupancy counts are accurate.
+* Bed availability updates after assignment.
+* Transfers release and assign beds correctly.
+* Discharge releases the bed at the correct point.
+* Failed transactions do not leave inconsistent occupancy.
+
+## Medication and task tests
+
+Verify:
+
+* Medication-due worklists are admission-scoped.
+* Administration actions remain under `/inpatient/*`.
+* Allergy and dose warnings remain active.
+* Frequency-based nursing tasks display correctly.
+* Completed tasks are audited.
+
+## Discharge tests
+
+Verify:
+
+* Discharge readiness uses the existing clearance architecture.
+* Missing required clearances block discharge.
+* Authorized overrides require a reason.
+* Overrides are audited.
+* Discharge preserves clinical and billing history.
+* Outstanding items are not silently discarded.
+* Bed release occurs correctly.
+
+## Readmission tests
+
+Verify:
+
+* Readmission links to the previous admission.
+* Previous discharge remains preserved.
+* The correct billing period or new billing episode is created.
+* Previous invoices and payments are not modified incorrectly.
+* Ward and bed allocation is re-established.
+* Journey Intelligence updates correctly.
+* Readmission is audited.
+
+## Redirect tests
+
+Verify:
+
+* Login redirects to `/inpatient`.
+* Switching to Inpatient redirects to `/inpatient`.
+* Admission actions remain under `/inpatient/*`.
+* Clinical round actions remain under `/inpatient/*`.
+* Session actions remain under `/inpatient/*`.
+* Medication, treatment, investigation, transfer, discharge, and readmission actions remain under `/inpatient/*`.
+* No redirect loops occur.
+* JSON and API requests are not incorrectly redirected.
 
 ## Privacy and audit tests
 
@@ -1494,95 +2187,141 @@ Verify:
 
 * Patient masking remains active.
 * Protected fields require permission.
-* Clinical actions generate required audit records.
-* Sensitive values are not exposed through alternate Nursing views.
+* Clinical, admission, transfer, discharge, and readmission actions generate audit records.
+* Sensitive values are not exposed through alternate Inpatient views.
 
-Run focused Nursing workspace tests and essential route, view, localisation, migration, and audit checks during implementation.
+Run focused Inpatient workspace tests and essential route, view, localization, migration, billing, and audit checks during implementation.
 
-Do not run the entire UHMS suite after each phase.
+Do not run the full UHMS suite after each phase.
 
-Run one broad relevant suite after all Nursing workspace phases are complete.
+Run one broad relevant suite after all Inpatient workspace phases are complete.
 
 ---
 
-# Phase 31 — Manual Acceptance Scenarios
+# Phase 39 — Manual Acceptance Scenarios
 
-## Scenario A — Nursing login
+## Scenario A — Inpatient login
 
-1. Log in as a user whose active department type is `nursing`.
-2. Confirm the landing URL is `/nursing`.
-3. Confirm the Nursing OPD menu is displayed.
+1. Log in as a user whose active department type is `inpatient`.
+2. Confirm the landing URL is `/inpatient`.
+3. Confirm the Inpatient menu is displayed.
 4. Confirm unrelated department menus are absent.
 
-## Scenario B — OPD queue
+## Scenario B — Admission acceptance
 
-1. Open `/nursing/opd/queue`.
-2. Confirm only OPD cases are shown.
-3. Confirm patient states and waiting times are correct.
-4. Open a patient.
-5. Confirm the URL remains under `/nursing/*`.
+1. Open pending admissions.
+2. Accept an admission.
+3. Assign a ward and bed.
+4. Confirm the patient appears in active admissions.
+5. Confirm the URL remains under `/inpatient/*`.
+6. Confirm the actions are audited.
 
-## Scenario C — Triage
+## Scenario C — Multi-day active admission
 
-1. Open a patient waiting for triage.
-2. Record triage information.
-3. Submit the form.
-4. Confirm the redirect remains under `/nursing/*`.
-5. Confirm the queue status changes correctly.
-6. Confirm the activity is audited.
+1. Open an admission created on a previous day.
+2. Confirm the admission remains active.
+3. Start a new clinical session.
+4. Add clinical items.
+5. Confirm the OPD next-day restriction is not applied.
 
-## Scenario D — Vital signs
+## Scenario D — Multiple clinical sessions
 
-1. Record initial vital signs.
-2. Record a repeat vital.
-3. Confirm both readings appear in the timeline.
-4. Confirm abnormal readings are highlighted.
-5. Confirm critical values trigger the existing safety behaviour.
+1. Complete one inpatient session.
+2. Open another active session.
+3. Confirm authorized users can continue adding clinical items.
+4. Confirm the completed session remains read-only.
+5. Reopen the completed session with permission.
+6. Confirm the reopening is audited.
 
-## Scenario E — Nursing tasks
+## Scenario E — Nursing care
 
-1. Open `/nursing/tasks`.
-2. Claim a pending task.
-3. Complete the task.
-4. Confirm the patient’s case page updates.
-5. Confirm the redirect remains under `/nursing/*`.
+1. Record a nursing assessment.
+2. Create or update a care plan.
+3. Record vital signs.
+4. Complete a nursing task.
+5. Confirm the admission workspace updates.
+6. Confirm all redirects remain under `/inpatient/*`.
 
-## Scenario F — Same-day completed OPD case
+## Scenario F — Medication administration
 
-1. Complete an OPD consultation.
-2. Open the case again on the same day.
-3. Confirm authorized users can reopen the session.
-4. Add a permitted nursing item.
-5. Confirm the reopen action and new item are audited.
+1. Open medications due.
+2. Administer an authorized medication.
+3. Record a withheld or refused medication.
+4. Confirm safety warnings remain active.
+5. Confirm all actions are audited.
 
-## Scenario G — Previous-day completed case
+## Scenario G — Investigation follow-up
 
-1. Open an OPD visit completed on a previous day.
-2. Attempt to add a new nursing item.
-3. Confirm the system blocks the action.
-4. Reopen the visit with an authorized user.
-5. Confirm the action becomes available.
+1. Open pending investigations.
+2. Confirm overdue samples and unreviewed results are visible.
+3. Review a result.
+4. Confirm the admission timeline updates.
 
-## Scenario H — Department switching
+## Scenario H — Ward transfer
+
+1. Transfer a patient to another bed.
+2. Transfer the patient to another ward.
+3. Confirm source-bed release and destination assignment.
+4. Confirm the admission remains the same.
+5. Confirm the transfer is audited.
+
+## Scenario I — Discharge readiness
+
+1. Open discharge readiness.
+2. Confirm all required clearance areas appear.
+3. Leave one required clearance incomplete.
+4. Confirm discharge remains blocked.
+5. Complete the clearance.
+6. Confirm the patient becomes ready for discharge.
+
+## Scenario J — Discharge
+
+1. Complete discharge.
+2. Confirm the admission status changes.
+3. Confirm the patient leaves the active-admission list.
+4. Confirm the bed is released.
+5. Confirm clinical and billing history remain intact.
+
+## Scenario K — Session reopening after discharge
+
+1. Open a discharged admission.
+2. Reopen an eligible session with permission.
+3. Add a permitted late entry or correction.
+4. Confirm the admission does not silently become active.
+5. Confirm the bed does not become occupied.
+6. Confirm the action is audited.
+
+## Scenario L — Readmission
+
+1. Open a discharged patient.
+2. Select Readmit.
+3. Record the readmission reason.
+4. Assign a ward and bed.
+5. Confirm the previous admission remains preserved.
+6. Confirm the new or extended billing period is correct.
+7. Confirm the patient appears in active admissions.
+8. Confirm the readmission is audited.
+
+## Scenario M — Department switching
 
 1. Use a multi-department user.
-2. Switch to a Nursing department.
-3. Confirm redirect to `/nursing`.
+2. Switch to an Inpatient department.
+3. Confirm redirect to `/inpatient`.
 4. Switch to another department.
-5. Confirm that department’s menu and routes load.
+5. Confirm the correct menu and routes load.
 
-## Scenario I — Permission control
+## Scenario N — Permission control
 
-1. Remove a Nursing permission.
-2. Confirm the relevant menu item disappears.
-3. Directly enter the route.
+1. Remove an Inpatient permission.
+2. Confirm the related menu item disappears.
+3. Enter the route directly.
 4. Confirm access is denied.
 
-## Scenario J — Legacy compatibility
+## Scenario O — Legacy compatibility
 
-1. Enter a generic visit or triage browser route as a Nursing user.
-2. Confirm it safely resolves or redirects to the Nursing equivalent where configured.
-3. Confirm API, export, signed, callback, and print routes remain unaffected.
+1. Enter a generic admission or ward route as an Inpatient user.
+2. Confirm it safely resolves or redirects to the Inpatient equivalent where configured.
+3. Confirm APIs, signed URLs, callbacks, print routes, and exports remain unaffected.
 
 ---
 
@@ -1590,31 +2329,40 @@ Run one broad relevant suite after all Nursing workspace phases are complete.
 
 The implementation is accepted only when all the following are true:
 
-1. Users with an active department type of `nursing` receive a dedicated Nursing OPD menu.
-2. Their default dashboard uses `/nursing`.
-3. Supported Nursing pages use `/nursing/*` URLs.
-4. Route names use the `nursing.*` namespace.
-5. The Nursing queue includes only appropriate OPD cases.
-6. Forms submit through Nursing routes.
-7. Redirects remain inside the Nursing workspace.
-8. Breadcrumbs and active menu states are Nursing-aware.
-9. Permissions and enabled modules control menu visibility.
-10. A non-Nursing department user cannot access the Nursing workspace.
-11. Multi-department users are evaluated using the active department.
-12. Existing patient, visit, triage, consultation, treatment, task, and journey logic is reused.
-13. Core clinical business logic is not duplicated.
-14. Generic routes remain functional for other departments and integrations.
-15. API, callback, signed, print, and export routes are not incorrectly redirected.
-16. Active same-day OPD cases remain workable.
-17. Completed same-day OPD sessions can be reopened by authorized users.
-18. Previous-day OPD sessions require formal reopening before new clinical entries.
-19. Patient privacy protections remain fully active.
-20. Clinical safety restrictions remain fully active.
-21. Relevant Nursing actions are audited.
-22. English and French localisation are complete and in parity.
-23. Focused Nursing workspace tests pass.
-24. One broad relevant suite passes after all implementation phases are complete.
-25. No broken links, route loops, duplicate route names, generic URL leaks, or inpatient workflow contamination remain.
+1. Users with an active department type of `inpatient` receive a dedicated Inpatient menu.
+2. Their default dashboard uses `/inpatient`.
+3. Supported Inpatient pages use `/inpatient/*` URLs.
+4. Route names use the `inpatient.*` namespace.
+5. The workspace includes only normal inpatient admissions.
+6. Maternity, Emergency, and OPD cases do not incorrectly appear.
+7. Forms submit through Inpatient routes.
+8. Redirects remain inside the Inpatient workspace.
+9. Breadcrumbs and active menu states are Inpatient-aware.
+10. Permissions and enabled modules control menu visibility.
+11. A non-Inpatient department user cannot access the workspace.
+12. Multi-department users are evaluated using the active department.
+13. Existing admission, ward, bed, consultation, nursing, medication, treatment, investigation, billing, journey, discharge, and audit logic is reused.
+14. Core clinical, admission, and billing logic is not duplicated.
+15. Active inpatient admissions remain workable across multiple days.
+16. OPD next-day locking is not applied to active admissions.
+17. Completing one session does not block another active session.
+18. Completed sessions can be reopened by authorized users.
+19. Reopening is reasoned and audited.
+20. Reopening after discharge does not silently reactivate the admission or bed occupancy.
+21. Bed assignment and transfer remain transactionally consistent.
+22. Medication and clinical-safety protections remain active.
+23. Discharge uses the existing readiness and clearance architecture.
+24. Discharge preserves clinical and billing history.
+25. Readmission preserves the previous admission and discharge.
+26. Readmission correctly creates or extends the billing period.
+27. Generic routes remain functional for other departments and integrations.
+28. APIs, signed URLs, callbacks, print routes, and exports are not incorrectly redirected.
+29. Patient privacy protections remain fully active.
+30. Relevant Inpatient actions are audited.
+31. English and French localization are complete and in parity.
+32. Focused Inpatient workspace tests pass.
+33. One broad relevant suite passes after all phases are complete.
+34. No broken links, route loops, duplicate route names, generic URL leaks, incorrect bed occupancy, or OPD/maternity/Emergency workflow contamination remain.
 
 ---
 
@@ -1622,34 +2370,55 @@ The implementation is accepted only when all the following are true:
 
 Provide:
 
-1. Nursing workspace route group.
-2. Nursing-specific controllers or thin adapters where required.
-3. Nursing OPD dashboard.
-4. Nursing department menu profile.
-5. OPD nursing queue and worklists.
-6. Nursing OPD case workspace.
-7. Workspace-aware URL resolver updates.
-8. Workspace-aware redirect resolver updates.
-9. Updated shared links and forms.
-10. Login and department-switch integration.
-11. Nursing breadcrumbs and active-menu handling.
-12. Nursing permission integration.
-13. EN/FR localisation.
-14. Focused feature tests.
-15. A final implementation report containing:
+1. Inpatient workspace route group.
+2. Inpatient-specific controllers or thin adapters where required.
+3. Inpatient ward dashboard.
+4. Inpatient department menu profile.
+5. Admission worklists.
+6. Inpatient admission workspace.
+7. Ward and bed-management integration.
+8. Clinical-round integration.
+9. Inpatient-session integration.
+10. Nursing assessments and care plans.
+11. Vital-sign and intake/output monitoring.
+12. Nursing-task worklists.
+13. Medication, treatment, procedure, and investigation worklists.
+14. Observation and handoff integration.
+15. Transfer workflow integration.
+16. Discharge-readiness and clearance integration.
+17. Discharge workflow integration.
+18. Session reopening after discharge.
+19. Readmission workflow.
+20. Workspace-aware URL resolver updates.
+21. Workspace-aware redirect resolver updates.
+22. Updated shared links and forms.
+23. Login and department-switch integration.
+24. Inpatient breadcrumbs and active-menu handling.
+25. Permission integration.
+26. Patient privacy and clinical-safety integration.
+27. Billing and service-access integration.
+28. English and French localization.
+29. Focused feature tests.
+30. A final implementation report containing:
 
 * Files created
 * Files modified
-* Nursing route map
-* Nursing menu map
-* OPD queue categories
+* Inpatient route map
+* Inpatient menu map
+* Admission worklist categories
 * Dashboard metrics
+* Ward and bed behaviour
+* Clinical-session behaviour
+* Session reopening behaviour
+* Discharge-readiness workflow
+* Discharge behaviour
+* Readmission behaviour
+* Billing-period behaviour
 * Reused services
 * Redirect behaviour
 * Permissions used
-* Session reopening behaviour
 * Patient privacy checks
-* Clinical safety checks
+* Clinical-safety checks
 * Audit events
 * Tests executed
 * Test results
@@ -1657,4 +2426,4 @@ Provide:
 
 Implement the work fully.
 
-Do not stop at planning, architecture documentation, route registration, or menu configuration alone. The final implementation must provide a functional and consistent Nursing OPD workspace throughout the supported patient workflow. Make sure to take into considaration other changes needed
+Do not stop at planning, route registration, menu configuration, dashboard layout, or admission listing alone. The final implementation must provide a functional, safe, department-specific Inpatient workspace throughout the full normal-admission lifecycle.

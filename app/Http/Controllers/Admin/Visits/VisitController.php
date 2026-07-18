@@ -11,6 +11,7 @@ use App\Enums\VisitType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreVisitRequest;
 use App\Http\Requests\UpdateVisitRequest;
+use App\Models\AttendanceClass;
 use App\Models\Department;
 use App\Models\InsuranceProvider;
 use App\Models\Patient;
@@ -18,8 +19,11 @@ use App\Models\PatientInsurance;
 use App\Models\ServiceCatalog;
 use App\Models\User;
 use App\Models\Visit;
+use App\Services\ActivityLogService;
 use App\Services\BillingService;
 use App\Services\ConsultationPreviewDataService;
+use App\Services\EmergencyCaseService;
+use App\Services\InpatientWorkspaceScope;
 use App\Services\InsuranceService;
 use App\Services\PatientPrivacyService;
 use App\Services\QueueService;
@@ -40,13 +44,14 @@ class VisitController extends Controller
         protected QueueService $queueService,
         protected BillingService $billingService,
         protected VisitWorkflowService $visitWorkflowService,
-        protected \App\Services\EmergencyCaseService $emergencyCaseService,
+        protected EmergencyCaseService $emergencyCaseService,
         protected WorkspaceRouteResolver $workspaceRoutes,
     ) {}
 
     public function index(Request $request)
     {
         $isDoctorWorkspace = $request->routeIs('doctor.*');
+        $isInpatientWorkspace = $request->routeIs('inpatient.*');
         $filters = $request->all();
         unset($filters['status']);
 
@@ -58,7 +63,7 @@ class VisitController extends Controller
         }
 
         // Default to today's visits if no date filter is set.
-        if (empty($filters['date_from']) && empty($filters['date_to']) && empty($filters['search'])) {
+        if (! $isInpatientWorkspace && empty($filters['date_from']) && empty($filters['date_to']) && empty($filters['search'])) {
             $filters['date_from'] = today()->toDateString();
             $filters['date_to'] = today()->toDateString();
         }
@@ -85,6 +90,12 @@ class VisitController extends Controller
             }
         }
 
+        if ($isInpatientWorkspace) {
+            $filters['visit_type'] = VisitType::INPATIENT->value;
+            $filters['admission_department_id'] = app(InpatientWorkspaceScope::class)->departmentId();
+            unset($filters['department_id'], $filters['doctor_id']);
+        }
+
         $visits = $this->visitService->list($filters);
         $stats = $this->visitService->todayStats($filters);
 
@@ -104,7 +115,7 @@ class VisitController extends Controller
                 ])
         )->values();
 
-        return view('visits.index', compact('visits', 'stats', 'filters', 'insuranceProviderOptions', 'isDoctorWorkspace'));
+        return view('visits.index', compact('visits', 'stats', 'filters', 'insuranceProviderOptions', 'isDoctorWorkspace', 'isInpatientWorkspace'));
     }
 
     public function create(Request $request)
@@ -376,7 +387,7 @@ class VisitController extends Controller
         DB::transaction(function () use ($visit, $oldInsurance, $newInsurance) {
             $visit->forceFill(['visit_insurance_id' => $newInsurance->id])->save();
 
-            app(\App\Services\ActivityLogService::class)->log(
+            app(ActivityLogService::class)->log(
                 LogModule::INSURANCE,
                 'VISIT_INSURANCE_CHANGED',
                 [
@@ -447,7 +458,7 @@ class VisitController extends Controller
 
         $patient = Patient::findOrFail($request->integer('patient_id'));
         $date = $request->filled('visit_date')
-            ? \Carbon\Carbon::parse($request->input('visit_date'))
+            ? Carbon::parse($request->input('visit_date'))
             : today();
 
         $code = $flowService->determineAttendanceClass($patient, $date);
@@ -455,7 +466,7 @@ class VisitController extends Controller
         return response()->json([
             'attendance_class' => $code,
             'label' => __('visit_flow.attendance_class.'.$code),
-            'color' => \App\Models\AttendanceClass::where('code', $code)->value('color') ?? 'secondary',
+            'color' => AttendanceClass::where('code', $code)->value('color') ?? 'secondary',
         ]);
     }
 

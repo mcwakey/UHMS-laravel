@@ -84,7 +84,7 @@ class DeliveryRecordController extends Controller
             'placentaStatuses' => PlacentaStatus::cases(),
             'maternalConditions' => MaternalCondition::cases(),
             'statuses' => DeliveryRecordStatus::cases(),
-            'staff' => User::query()->orderBy('name')->limit(200)->get(),
+            'staff' => User::query()->orderBy('first_name')->orderBy('last_name')->limit(200)->get(),
         ];
     }
 

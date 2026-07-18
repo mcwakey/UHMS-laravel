@@ -3,8 +3,8 @@
 namespace App\Exports;
 
 use App\Models\Admission;
-use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
@@ -21,14 +21,17 @@ class DischargesExport implements FromQuery, WithHeadings, WithMapping, WithTitl
             ->whereNotNull('actual_discharge_date')
             ->latest('actual_discharge_date');
 
-        if (!empty($this->filters['date_from'])) {
+        if (! empty($this->filters['date_from'])) {
             $query->whereDate('actual_discharge_date', '>=', $this->filters['date_from']);
         }
-        if (!empty($this->filters['date_to'])) {
+        if (! empty($this->filters['date_to'])) {
             $query->whereDate('actual_discharge_date', '<=', $this->filters['date_to']);
         }
-        if (!empty($this->filters['ward_id'])) {
+        if (! empty($this->filters['ward_id'])) {
             $query->byWard($this->filters['ward_id']);
+        }
+        if (! empty($this->filters['department_id'])) {
+            $query->whereHas('bed.ward', fn ($ward) => $ward->where('department_id', $this->filters['department_id']));
         }
 
         return $query;

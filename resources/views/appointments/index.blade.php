@@ -263,7 +263,7 @@
                                         </li>
                                         @endif
                                         @if($appointment->status === \App\Enums\AppointmentStatus::CONFIRMED)
-                                        @can('appointments.create')
+                                        @can('appointments.checkin')
                                         <li>
                                                 <form method="POST" action="{{ $workspaceRoutes->route('admin.appointments.check-in', $appointment) }}" class="js-appointment-action-form" data-follow-up="visit">
                                                 @csrf

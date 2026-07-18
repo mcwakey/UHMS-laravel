@@ -2,13 +2,20 @@
 
 namespace App\Services\Department;
 
+use App\Services\WorkspaceRouteResolver;
 use Illuminate\Support\Facades\Route;
 
 class DepartmentDashboardDrilldownUrlBuilder
 {
+    public function __construct(private WorkspaceRouteResolver $workspaceRoutes) {}
+
     public function build(DepartmentDashboardContext $context, string $metricKey): ?string
     {
         $definition = $this->definition($metricKey);
+
+        if ($definition) {
+            $definition['route'] = $this->workspaceRoutes->routeName($definition['route']);
+        }
 
         if (! $definition || ! Route::has($definition['route'])) {
             return null;
@@ -29,7 +36,6 @@ class DepartmentDashboardDrilldownUrlBuilder
 
         return route($definition['route'], $filters);
     }
-
 
     private function definition(string $metricKey): ?array
     {

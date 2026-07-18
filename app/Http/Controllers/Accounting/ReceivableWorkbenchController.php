@@ -29,7 +29,7 @@ class ReceivableWorkbenchController extends Controller
                 ->orderByRaw('due_date IS NULL, due_date ASC')
                 ->limit(100)
                 ->get(),
-            'collectors' => User::orderBy('name')->get(['id', 'name']),
+            'collectors' => User::orderBy('first_name')->orderBy('last_name')->get(['id', 'first_name', 'last_name']),
             'statements' => ReceivableStatementRun::latest()->limit(10)->get(),
         ]);
     }

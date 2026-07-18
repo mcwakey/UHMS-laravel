@@ -16,7 +16,7 @@
     </div>
     <div class="card-body">
         @if($admission->status->value === 'admitted')
-        <form method="POST" action="{{ route('admin.admissions.vitals.store', $admission) }}">
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.vitals.store', $admission) }}">
             @csrf
             <div class="row g-2 mb-3">
                 <div class="col-6 col-md-3"><label class="form-label small">{{ __('admissions.bp_systolic') }}</label><div class="input-group input-group-sm"><input type="number" name="blood_pressure_systolic" class="form-control" placeholder="120" min="0" max="300"><span class="input-group-text">mmHg</span></div></div>

@@ -4,8 +4,8 @@
     $enforcement = $dischargeReadiness['enforcement'] ?? [];
     $overall = $dischargeReadiness['overall_status'] ?? \App\Enums\AdmissionDischargeReadinessStatus::WARNING;
     $summaryRoute = $summary
-        ? route('admin.admissions.discharge-summary.update', $admission)
-        : route('admin.admissions.discharge-summary.save', $admission);
+        ? $workspaceRoutes->route('admin.admissions.discharge-summary.update', $admission)
+        : $workspaceRoutes->route('admin.admissions.discharge-summary.save', $admission);
 @endphp
 
 <div class="row g-3">
@@ -73,7 +73,7 @@
             <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-calendar-time me-1"></i>{{ __('admissions.discharge_planning') }}</h5></div>
             <div class="card-body">
                 @can('admission.discharge.plan')
-                <form method="POST" action="{{ $admission->discharge_planning_started_at ? route('admin.admissions.discharge-planning.update', $admission) : route('admin.admissions.discharge-planning.start', $admission) }}">
+                <form method="POST" action="{{ $admission->discharge_planning_started_at ? $workspaceRoutes->route('admin.admissions.discharge-planning.update', $admission) : $workspaceRoutes->route('admin.admissions.discharge-planning.start', $admission) }}">
                     @csrf
                     @if($admission->discharge_planning_started_at) @method('PATCH') @endif
                     <div class="mb-2">
@@ -125,20 +125,20 @@
                                     <td class="text-end">
                                         @can('admission.discharge.clearance.manage')
                                         @if($clearance)
-                                            <form method="POST" action="{{ route('admin.admissions.discharge-clearances.update', [$admission, $clearance]) }}" class="d-inline-flex gap-1">
+                                            <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.discharge-clearances.update', [$admission, $clearance]) }}" class="d-inline-flex gap-1">
                                                 @csrf @method('PATCH')
                                                 <input type="hidden" name="status" value="{{ \App\Enums\AdmissionDischargeClearanceStatus::CLEARED->value }}">
                                                 <input type="hidden" name="note" value="">
                                                 <button class="btn btn-sm btn-outline-success" title="{{ __('admissions.clear_item') }}"><i class="ti ti-check"></i></button>
                                             </form>
-                                            <form method="POST" action="{{ route('admin.admissions.discharge-clearances.update', [$admission, $clearance]) }}" class="d-inline-flex gap-1">
+                                            <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.discharge-clearances.update', [$admission, $clearance]) }}" class="d-inline-flex gap-1">
                                                 @csrf @method('PATCH')
                                                 <input type="hidden" name="status" value="{{ \App\Enums\AdmissionDischargeClearanceStatus::BLOCKED->value }}">
                                                 <input type="hidden" name="note" value="{{ __('admissions.blocked_without_note') }}">
                                                 <button class="btn btn-sm btn-outline-danger" title="{{ __('admissions.block_item') }}"><i class="ti ti-alert-triangle"></i></button>
                                             </form>
                                             @if($clearance->status?->isReady())
-                                            <form method="POST" action="{{ route('admin.admissions.discharge-clearances.revoke', [$admission, $clearance]) }}" class="d-inline-flex gap-1">
+                                            <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.discharge-clearances.revoke', [$admission, $clearance]) }}" class="d-inline-flex gap-1">
                                                 @csrf @method('PATCH')
                                                 <input type="hidden" name="note" value="{{ __('admissions.revoked_from_workspace') }}">
                                                 <button class="btn btn-sm btn-outline-secondary" title="{{ __('admissions.revoke_clearance') }}"><i class="ti ti-rotate-2"></i></button>
@@ -163,7 +163,7 @@
                 @if($summary)
                     <div class="d-flex gap-1">
                         <span class="badge bg-{{ $summary->summary_status?->color() }}">{{ $summary->summary_status?->label() }}</span>
-                        <a href="{{ route('admin.admissions.discharge-summary.print', [$admission, $summary]) }}" class="btn btn-sm btn-outline-secondary" target="_blank"><i class="ti ti-printer me-1"></i>{{ __('admissions.print_summary') }}</a>
+                        <a href="{{ $workspaceRoutes->route('admin.admissions.discharge-summary.print', [$admission, $summary]) }}" class="btn btn-sm btn-outline-secondary" target="_blank"><i class="ti ti-printer me-1"></i>{{ __('admissions.print_summary') }}</a>
                     </div>
                 @endif
             </div>
@@ -229,7 +229,7 @@
                     <div class="d-flex justify-content-end gap-2 mt-3">
                         @can('admission.discharge.summary.update')
                         @if(! $summary->summary_status?->isLocked())
-                        <form method="POST" action="{{ route('admin.admissions.discharge-summary.prepare', [$admission, $summary]) }}">
+                        <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.discharge-summary.prepare', [$admission, $summary]) }}">
                             @csrf @method('PATCH')
                             <button class="btn btn-sm btn-outline-info">{{ __('admissions.mark_prepared') }}</button>
                         </form>
@@ -237,7 +237,7 @@
                         @endcan
                         @can('admission.discharge.summary.approve')
                         @if(! $summary->summary_status?->isApproved())
-                        <form method="POST" action="{{ route('admin.admissions.discharge-summary.approve', [$admission, $summary]) }}">
+                        <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.discharge-summary.approve', [$admission, $summary]) }}">
                             @csrf @method('PATCH')
                             <button class="btn btn-sm btn-success">{{ __('admissions.approve_summary') }}</button>
                         </form>

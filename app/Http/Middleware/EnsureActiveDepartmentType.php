@@ -23,9 +23,12 @@ class EnsureActiveDepartmentType
             ? $department->type->value
             : (string) ($department?->type ?? '');
 
-        $message = in_array(DepartmentType::NURSING->value, $allowedTypes, true)
-            ? __('nursing.unauthorized')
-            : __('records.unauthorized');
+        $message = match (true) {
+            in_array(DepartmentType::NURSING->value, $allowedTypes, true) => __('nursing.unauthorized'),
+            in_array(DepartmentType::EMERGENCY->value, $allowedTypes, true) => __('emergency.unauthorized'),
+            in_array(DepartmentType::INPATIENT->value, $allowedTypes, true) => __('inpatient.unauthorized'),
+            default => __('records.unauthorized'),
+        };
 
         abort_unless($department && in_array($type, $allowedTypes, true), 403, $message);
 

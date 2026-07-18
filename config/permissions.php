@@ -284,6 +284,7 @@ return [
         'consultation.followup.create'     => 'Create a follow-up appointment directly from a consultation session.',
         'consultation.followup.update'     => 'Update a follow-up appointment created from a consultation session.',
         'consultation.followup.cancel'     => 'Cancel a consultation follow-up appointment with a reason.',
+        'appointments.checkin'             => 'Check in a confirmed appointment and create its patient visit.',
         'appointments.update'              => 'Update appointment date, time, department, doctor, or clinical notes. Compatibility alias for appointments.edit.',
         'appointments.cancel'              => 'Cancel an appointment with a cancellation reason. Compatibility alias for appointments.edit.',
         'medication_administration.correct'=> 'Correct a previously recorded medication administration on the MAR.',

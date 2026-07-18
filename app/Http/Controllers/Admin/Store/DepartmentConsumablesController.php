@@ -8,9 +8,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\StockBalance;
 use App\Models\StockLocation;
+use App\Services\InpatientWorkspaceScope;
 use App\Services\ProductService;
 use App\Services\StockBalanceService;
 use App\Services\StockLocationService;
+use App\Services\WorkspaceRouteResolver;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,15 +28,18 @@ class DepartmentConsumablesController extends Controller
     public function ward(Request $request)
     {
         $allowedProductTypes = $this->allowedProductTypes();
+        $inpatientDepartmentId = app(InpatientWorkspaceScope::class)->departmentId();
         $locationIds = StockLocation::active()
             ->where(function ($query) {
                 $query->where('type', 'ward')
                     ->orWhereHas('department', fn ($department) => $department->whereIn('type', DepartmentType::valuesFor([...DepartmentType::wardTypes(), DepartmentType::TREATMENT])));
             })
+            ->when($inpatientDepartmentId, fn ($query, $departmentId) => $query->where('department_id', $departmentId))
             ->pluck('id');
 
         $products = $this->products
             ->queryProductsForDepartmentTypes([...DepartmentType::wardTypes(), DepartmentType::TREATMENT], $allowedProductTypes)
+            ->when($inpatientDepartmentId, fn ($query, $departmentId) => $query->whereHas('departments', fn ($department) => $department->whereKey($departmentId)))
             ->when($request->search, $this->searchFilter())
             ->when($request->product_type, fn ($query, $type) => $query->where('product_type', $type))
             ->orderBy('name')
@@ -43,7 +48,7 @@ class DepartmentConsumablesController extends Controller
 
         return $this->viewCatalogue($products, $locationIds->all(), [
             'title' => __('menu.ward_consumables'),
-            'routeName' => 'admin.wards.consumables.index',
+            'routeName' => app(WorkspaceRouteResolver::class)->routeName('admin.wards.consumables.index'),
             'locationLabel' => __('stock.ward_stock_location'),
             'departmentLabel' => __('stock.ward_treatment_departments'),
             'emptyMessage' => __('stock.no_ward_treatment_products'),

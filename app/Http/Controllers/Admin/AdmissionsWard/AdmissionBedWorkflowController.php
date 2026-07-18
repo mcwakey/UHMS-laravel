@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Admission;
 use App\Models\Bed;
 use App\Services\Admissions\BedWorkflowService;
+use App\Services\WorkspaceRouteResolver;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Enum;
 
@@ -24,7 +25,7 @@ class AdmissionBedWorkflowController extends Controller
         $this->beds->transferAdmission($admission, Bed::findOrFail($data['bed_id']), $request->user(), $data['reason']);
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route(app(WorkspaceRouteResolver::class)->routeName('admin.admissions.show'), $admission)
             ->with('success', __('admissions.transfer_messages.transferred'));
     }
 

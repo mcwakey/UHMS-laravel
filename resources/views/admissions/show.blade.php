@@ -28,14 +28,21 @@
         </div>
     </div>
     <div class="text-end d-flex gap-2">
+        @if(($workspaceContext['workspaceKey'] ?? null) === 'inpatient' && $admission->status->value === 'discharged')
+            @can('admissions.readmit')
+            <a href="{{ route('inpatient.readmissions.create', $admission) }}" class="btn btn-primary btn-md fs-13">
+                <i class="ti ti-refresh me-1"></i>{{ __('inpatient.actions.readmit') }}
+            </a>
+            @endcan
+        @endif
         @if($admission->status->value === 'admitted')
             @can('ward.discharge')
-            <a href="{{ route('admin.admissions.discharge', $admission) }}" class="btn btn-warning btn-md fs-13">
+            <a href="{{ $workspaceRoutes->route('admin.admissions.discharge', $admission) }}" class="btn btn-warning btn-md fs-13">
                 <i class="ti ti-logout me-1"></i>{{ __('admissions.discharge_patient') }}
             </a>
             @endcan
         @endif
-        <a href="{{ route('admin.admissions.index') }}" class="btn btn-outline-secondary btn-md fs-13">
+        <a href="{{ $workspaceRoutes->route('admin.admissions.index') }}" class="btn btn-outline-secondary btn-md fs-13">
             <i class="ti ti-arrow-left me-1"></i>{{ __('admissions.back') }}
         </a>
     </div>
@@ -85,9 +92,9 @@
                 <h5 class="card-title mb-0"><i class="ti ti-pill me-1"></i>{{ __('admissions.medication_admin') }}</h5>
                 <div class="d-flex gap-2 flex-wrap">
                     @can('admission.mar_chart.view')
-                    <a href="{{ route('admin.admissions.mar-chart', $admission) }}" class="btn btn-sm btn-primary">{{ __('admissions.mar_chart_btn') }}</a>
+                    <a href="{{ $workspaceRoutes->route('admin.admissions.mar-chart', $admission) }}" class="btn btn-sm btn-primary">{{ __('admissions.mar_chart_btn') }}</a>
                     @endcan
-                    <a href="{{ route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-outline-primary">{{ __('admissions.dose_board_btn') }}</a>
+                    <a href="{{ $workspaceRoutes->route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-outline-primary">{{ __('admissions.dose_board_btn') }}</a>
                 </div>
             </div>
             <div class="card-body">
@@ -209,7 +216,7 @@
             <div class="card-body">
                 <div class="table-responsive"><table class="table table-sm table-borderless mb-0">
                     <tr><td class="text-muted" style="width:45%">{{ __('admissions.admission_no') }}</td><td class="fw-medium">{{ $admission->admission_number }}</td></tr>
-                    <tr><td class="text-muted">{{ __('admissions.visit_no_label') }}</td><td><a href="{{ route('admin.visits.show', $admission->visit) }}" class="text-decoration-none">{{ $admission->visit->visit_number }}</a></td></tr>
+                    <tr><td class="text-muted">{{ __('admissions.visit_no_label') }}</td><td><a href="{{ $workspaceRoutes->route('admin.visits.show', $admission->visit) }}" class="text-decoration-none">{{ $admission->visit->visit_number }}</a></td></tr>
                     <tr><td class="text-muted">{{ __('admissions.ward_label') }}</td><td>{{ $admission->bed->ward->name }}</td></tr>
                     <tr><td class="text-muted">{{ __('admissions.bed_label_detail') }}</td><td>{{ $admission->bed->bed_number }} ({{ $admission->bed->bed_type->label() }})</td></tr>
                     <tr><td class="text-muted">{{ __('admissions.daily_rate_label') }}</td><td>GH&#8373; {{ number_format($admission->bed->daily_rate,2) }}</td></tr>
@@ -255,7 +262,7 @@
                 @endif
                 @can('beds.transfer')
                     @if($admission->status->value === 'admitted')
-                    <form method="POST" action="{{ route('admin.admissions.transfer-bed', $admission) }}" class="border rounded p-2">
+                    <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.transfer-bed', $admission) }}" class="border rounded p-2">
                         @csrf
                         <label class="form-label small fw-semibold">{{ __('admissions.transfer_to_bed') }}</label>
                         <select name="bed_id" class="form-select form-select-sm mb-2" required>
@@ -338,7 +345,7 @@
             <div class="card-body p-2">
                 @foreach($pendingSummary->take(3) as $task)
                 <div class="d-flex align-items-center gap-2 mb-2">
-                    <form method="POST" action="{{ route('admin.consultations.tasks.toggle', $task) }}" class="mb-0">
+                    <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.tasks.toggle', $task) }}" class="mb-0">
                         @csrf @method('PATCH')
                         <button type="submit" class="btn btn-sm btn-outline-success p-1" title="{{ __('admissions.mark_done_title') }}"><i class="ti ti-check fs-12"></i></button>
                     </form>
@@ -413,9 +420,9 @@
                         <h5 class="card-title mb-0"><i class="ti ti-pill me-1"></i>{{ __('admissions.medication_admin_record') }}</h5>
                         <div class="d-flex gap-2 flex-wrap">
                             @can('admission.mar_chart.view')
-                            <a href="{{ route('admin.admissions.mar-chart', $admission) }}" class="btn btn-sm btn-primary">{{ __('admissions.mar_chart_btn') }}</a>
+                            <a href="{{ $workspaceRoutes->route('admin.admissions.mar-chart', $admission) }}" class="btn btn-sm btn-primary">{{ __('admissions.mar_chart_btn') }}</a>
                             @endcan
-                            <a href="{{ route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-outline-primary">{{ __('admissions.dose_board_btn') }}</a>
+                            <a href="{{ $workspaceRoutes->route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-outline-primary">{{ __('admissions.dose_board_btn') }}</a>
                         </div>
                     </div>
                     <div class="card-body">
@@ -453,7 +460,7 @@
                 <div class="card mb-3">
                     <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-plus me-1"></i>{{ __('admissions.record_ward_round') }}</h5></div>
                     <div class="card-body">
-                        <form method="POST" action="{{ route('admin.admissions.rounds.store', $admission) }}">
+                        <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.rounds.store', $admission) }}">
                             @csrf
                             <div class="mb-3">
                                 <label class="form-label">{{ __('admissions.round_notes_label') }} <span class="text-danger">*</span></label>
@@ -548,7 +555,7 @@
                     <i class="ti ti-user-md me-1"></i>
                     {{ __('admissions.consultation_by') }} <strong>{{ $medicalRecord->doctor->name ?? 'N/A' }}</strong>
                     &mdash;
-                    <a href="{{ route('admin.consultations.show', $admission->visit) }}" target="_blank" class="link-primary ms-1">
+                    <a href="{{ $workspaceRoutes->route('admin.consultations.show', $admission->visit) }}" target="_blank" class="link-primary ms-1">
                         <i class="ti ti-external-link me-1"></i>{{ __('admissions.open_full_consultation') }}
                     </a>
                 </div>
@@ -594,7 +601,7 @@
                 <div class="card mb-3">
                     <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-plus me-1"></i>{{ __('admissions.add_service_charge') }}</h5></div>
                     <div class="card-body">
-                        <form method="POST" action="{{ route('admin.admissions.services.store', $admission) }}">
+                        <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.services.store', $admission) }}">
                             @csrf
                             <div class="row g-2 align-items-end">
                                 <div class="col-md-6">
@@ -638,7 +645,7 @@
                 <div class="card mb-3">
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <h5 class="card-title mb-0"><i class="ti ti-bed me-1"></i>{{ __('admissions.admission_charges') }}
-                            @if($invoice)<a href="{{ route('admin.billing.invoices.show', $invoice) }}" class="btn btn-outline-primary btn-xs ms-2 fs-11"><i class="ti ti-file-invoice me-1"></i>{{ $invoice->invoice_number }}</a>@endif
+                            @if($invoice)<a href="{{ $workspaceRoutes->route('admin.billing.invoices.show', $invoice) }}" class="btn btn-outline-primary btn-xs ms-2 fs-11"><i class="ti ti-file-invoice me-1"></i>{{ $invoice->invoice_number }}</a>@endif
                         </h5>
                         <span class="fw-bold text-primary">GH&#8373; {{ number_format($invoiceItems->sum('total_price'),2) }}</span>
                     </div>

@@ -24,7 +24,7 @@
             @php $isDone = $task->status === 'completed'; @endphp
             <tr class="{{ $isDone ? 'table-success' : '' }}">
                 <td class="text-center">
-                    <form method="POST" action="{{ route('admin.consultations.tasks.toggle', $task) }}">
+                    <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.tasks.toggle', $task) }}">
                         @csrf @method('PATCH')
                         <button type="submit" class="btn btn-sm {{ $isDone ? 'btn-success' : 'btn-outline-success' }} p-1" title="{{ $isDone ? __('admissions.mark_pending_title') : __('admissions.mark_done_title') }}">
                             <i class="ti ti-check fs-13"></i>

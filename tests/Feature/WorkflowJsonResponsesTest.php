@@ -23,6 +23,7 @@ use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
 use App\Services\VisitService;
+use App\Services\WorkspaceRouteResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -115,6 +116,7 @@ class WorkflowJsonResponsesTest extends TestCase
             'visits.create',
             'appointments.view',
             'appointments.create',
+            'appointments.checkin',
             'appointments.edit',
             'vitals.view',
             'vitals.create',
@@ -393,7 +395,7 @@ class WorkflowJsonResponsesTest extends TestCase
             ->assertJsonPath('appointment_id', $appointment->id)
             ->assertJsonPath('appointment_status', AppointmentStatus::CHECKED_IN->value)
             ->assertJsonPath('visit_id', $visit->id)
-            ->assertJsonPath('visit_redirect_url', route('admin.visits.show', $visit));
+            ->assertJsonPath('visit_redirect_url', app(WorkspaceRouteResolver::class)->visitShow($visit));
 
         $this->assertSame(AppointmentStatus::CHECKED_IN, $appointment->status);
         $this->assertNotNull($visit);
@@ -443,7 +445,7 @@ class WorkflowJsonResponsesTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('appointment_id', $appointment->id)
             ->assertJsonPath('appointment_status', AppointmentStatus::CONFIRMED->value)
-            ->assertJsonPath('redirect_url', route('admin.appointments.show', $appointment));
+            ->assertJsonPath('redirect_url', app(WorkspaceRouteResolver::class)->appointmentShow($appointment));
 
         $this->assertSame(AppointmentStatus::CONFIRMED, $appointment->status);
     }

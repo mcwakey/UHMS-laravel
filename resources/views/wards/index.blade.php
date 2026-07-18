@@ -8,15 +8,15 @@
         @can('ward.manage')
         <button type="button" class="btn btn-primary btn-md fs-13" data-bs-toggle="modal" data-bs-target="#addWardModal"><i class="ti ti-plus me-1"></i>{{ __('wards.new_ward') }}</button>
         @endcan
-        <a href="{{ route('admin.wards.beds') }}" class="btn btn-outline-info btn-md fs-13"><i class="ti ti-bed me-1"></i>{{ __('wards.manage_beds') }}</a>
-        <a href="{{ route('admin.wards.bed-map') }}" class="btn btn-outline-success btn-md fs-13"><i class="ti ti-map me-1"></i>{{ __('wards.bed_map') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.wards.beds') }}" class="btn btn-outline-info btn-md fs-13"><i class="ti ti-bed me-1"></i>{{ __('wards.manage_beds') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.wards.bed-map') }}" class="btn btn-outline-success btn-md fs-13"><i class="ti ti-map me-1"></i>{{ __('wards.bed_map') }}</a>
     </x-slot:actions>
 </x-page-header>
 
 <!-- Filters -->
 <div class="card mb-3">
     <div class="card-body py-2">
-        <form method="GET" action="{{ route('admin.wards.index') }}" class="row g-2 align-items-end">
+        <form method="GET" action="{{ $workspaceRoutes->route('admin.wards.index') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
                 <input type="text" name="search" class="form-control" placeholder="{{ __('wards.search_ward_placeholder') }}" value="{{ request('search') }}">
             </div>
@@ -29,7 +29,7 @@
             </div>
             <div class="col-md-auto">
                 <button type="submit" class="btn btn-outline-primary btn-md"><i class="ti ti-filter me-1"></i>{{ __('common.filter') }}</button>
-                <a href="{{ route('admin.wards.index') }}" class="btn btn-outline-secondary btn-md ms-1"><i class="ti ti-x me-1"></i>{{ __('common.clear') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.wards.index') }}" class="btn btn-outline-secondary btn-md ms-1"><i class="ti ti-x me-1"></i>{{ __('common.clear') }}</a>
             </div>
         </form>
     </div>
@@ -94,7 +94,7 @@
                                         </a>
                                     </li>
                                     <li>
-                                        <form method="POST" action="{{ route('admin.wards.toggle', $ward) }}">
+                                        <form method="POST" action="{{ $workspaceRoutes->route('admin.wards.toggle', $ward) }}">
                                             @csrf @method('PATCH')
                                             <button type="submit" class="dropdown-item">
                                                 <i class="ti ti-{{ $ward->is_active ? 'eye-off' : 'eye' }} me-1"></i>{{ $ward->is_active ? __('common.deactivate') : __('common.activate') }}
@@ -130,7 +130,7 @@
 @can('ward.manage')
 <div class="modal fade" id="addWardModal" tabindex="-1">
     <div class="modal-dialog">
-        <form method="POST" action="{{ route('admin.wards.store') }}">
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.wards.store') }}">
             @csrf
             <div class="modal-content">
                 <div class="modal-header">
@@ -185,7 +185,7 @@
 @foreach($wards as $ward)
 <div class="modal fade" id="editWardModal{{ $ward->id }}" tabindex="-1">
     <div class="modal-dialog">
-        <form method="POST" action="{{ route('admin.wards.update', $ward) }}">
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.wards.update', $ward) }}">
             @csrf @method('PUT')
             <div class="modal-content">
                 <div class="modal-header">

@@ -4,7 +4,7 @@
 @section('content')
 <x-page-header :title="__('admissions.discharge_title')" icon="ti-logout">
     <x-slot:actions>
-        <a href="{{ route('admin.admissions.show', $admission) }}" class="btn btn-outline-secondary btn-md fs-13">
+        <a href="{{ $workspaceRoutes->route('admin.admissions.show', $admission) }}" class="btn btn-outline-secondary btn-md fs-13">
             <i class="ti ti-arrow-left me-1"></i>{{ __('admissions.back_to_admission') }}
         </a>
     </x-slot:actions>
@@ -41,7 +41,7 @@
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('admin.admissions.process-discharge', $admission) }}">
+                <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.process-discharge', $admission) }}">
                     @csrf
 
                     <div class="mb-3">
@@ -57,7 +57,7 @@
                     </div>
 
                     <div class="text-end">
-                        <a href="{{ route('admin.admissions.show', $admission) }}" class="btn btn-secondary me-2">{{ __('admissions.cancel') }}</a>
+                        <a href="{{ $workspaceRoutes->route('admin.admissions.show', $admission) }}" class="btn btn-secondary me-2">{{ __('admissions.cancel') }}</a>
                         <button type="submit" class="btn btn-warning"
                                 onclick="return confirm('{{ __('admissions.discharge_confirm') }}')">
                             <i class="ti ti-logout me-1"></i>{{ __('admissions.discharge_patient_btn') }}

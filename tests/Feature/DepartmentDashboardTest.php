@@ -117,7 +117,7 @@ class DepartmentDashboardTest extends TestCase
 
         $this->actingAs($user)
             ->get(route('admin.my-dashboard'))
-            ->assertOk();
+            ->assertRedirect(route('emergency.dashboard'));
     }
 
     public function test_admin_preview_selects_requested_dashboard_and_rejects_invalid(): void

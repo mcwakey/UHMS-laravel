@@ -55,7 +55,7 @@
             @if($canCreateEntries)
             <div class="collapse mb-3" id="{{ $formId }}">
                 <div class="card card-body bg-light">
-                    <form data-ajax-form="{{ $section['key'] }}" data-consultation-form="specialty-entry" data-refresh-section="{{ $section['key'] }}" data-route-context-required="true" method="POST" action="{{ route('admin.consultations.specialty-entries.store', [$visit, $section['key']]) }}">
+                    <form data-ajax-form="{{ $section['key'] }}" data-consultation-form="specialty-entry" data-refresh-section="{{ $section['key'] }}" data-route-context-required="true" method="POST" action="{{ $workspaceRoutes->route('admin.consultations.specialty-entries.store', [$visit, $section['key']]) }}">
                         @csrf
                         <input type="hidden" name="consultation_route_id" value="{{ $selectedRoute?->id ?? '' }}">
                         <input type="hidden" name="specialty_profile_id" value="{{ $specialtyLayout['profile']['id'] ?? '' }}">
@@ -154,7 +154,7 @@
                             @if($canCreateEntries)
                             <div class="collapse mt-3" id="{{ $editFormId }}">
                                 <div class="card card-body bg-light border-0 p-3">
-                                    <form data-ajax-form="{{ $section['key'] }}" data-consultation-form="specialty-entry" data-refresh-section="{{ $section['key'] }}" data-route-context-required="true" method="POST" action="{{ route('admin.consultations.specialty-entries.store', [$visit, $section['key']]) }}">
+                                    <form data-ajax-form="{{ $section['key'] }}" data-consultation-form="specialty-entry" data-refresh-section="{{ $section['key'] }}" data-route-context-required="true" method="POST" action="{{ $workspaceRoutes->route('admin.consultations.specialty-entries.store', [$visit, $section['key']]) }}">
                                         @csrf
                                         <input type="hidden" name="consultation_route_id" value="{{ $selectedRoute?->id ?? '' }}">
                                         <input type="hidden" name="specialty_profile_id" value="{{ $specialtyLayout['profile']['id'] ?? '' }}">
@@ -203,7 +203,7 @@
                             @endif
 
                             @if($canDeleteEntry($specialtyEntry))
-                                <form id="delete-specialty-{{ $specialtyEntry->id }}" method="POST" action="{{ route('admin.consultations.specialty-entries.destroy', [$visit, $section['key']]) }}" class="d-none">
+                                <form id="delete-specialty-{{ $specialtyEntry->id }}" method="POST" action="{{ $workspaceRoutes->route('admin.consultations.specialty-entries.destroy', [$visit, $section['key']]) }}" class="d-none">
                                     @csrf
                                     @method('DELETE')
                                     <input type="hidden" name="consultation_route_id" value="{{ $selectedRoute?->id ?? '' }}">

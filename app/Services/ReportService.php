@@ -25,6 +25,9 @@ use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\PayrollRecord;
 use App\Models\Prescription;
+use App\Models\StockBalance;
+use App\Models\StockLocation;
+use App\Models\StockMovement;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
@@ -603,6 +606,9 @@ class ReportService
         if (! empty($filters['ward_id'])) {
             $query->whereHas('bed', fn ($q) => $q->where('ward_id', $filters['ward_id']));
         }
+        if (! empty($filters['department_id'])) {
+            $query->whereHas('bed.ward', fn ($q) => $q->where('department_id', $filters['department_id']));
+        }
         if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
@@ -611,6 +617,9 @@ class ReportService
 
         // Stats
         $baseQ = Admission::query();
+        if (! empty($filters['department_id'])) {
+            $baseQ->whereHas('bed.ward', fn ($q) => $q->where('department_id', $filters['department_id']));
+        }
         if (! empty($filters['date_from'])) {
             $baseQ->whereDate('admission_date', '>=', $filters['date_from']);
         }
@@ -624,10 +633,10 @@ class ReportService
             'total' => (clone $baseQ)->count(),
             'active' => (clone $baseQ)->where('status', AdmissionStatus::ADMITTED)->count(),
             'discharged' => (clone $baseQ)->where('status', AdmissionStatus::DISCHARGED)->count(),
-            'wards' => Ward::count(),
+            'wards' => Ward::when($filters['department_id'] ?? null, fn ($q, $departmentId) => $q->where('department_id', $departmentId))->count(),
         ];
 
-        $wards = Ward::orderBy('name')->get();
+        $wards = Ward::when($filters['department_id'] ?? null, fn ($q, $departmentId) => $q->where('department_id', $departmentId))->orderBy('name')->get();
 
         return compact('admissions', 'stats', 'wards');
     }
@@ -650,24 +659,28 @@ class ReportService
         if (! empty($filters['ward_id'])) {
             $query->whereHas('bed', fn ($q) => $q->where('ward_id', $filters['ward_id']));
         }
+        if (! empty($filters['department_id'])) {
+            $query->whereHas('bed.ward', fn ($q) => $q->where('department_id', $filters['department_id']));
+        }
 
         $discharges = $query->latest('actual_discharge_date')->paginate(25)->withQueryString();
 
         // Average length of stay
         $avgLos = Admission::where('status', AdmissionStatus::DISCHARGED)
             ->whereNotNull('actual_discharge_date')
+            ->when($filters['department_id'] ?? null, fn ($q, $departmentId) => $q->whereHas('bed.ward', fn ($ward) => $ward->where('department_id', $departmentId)))
             ->selectRaw($this->averageLengthOfStayExpression().' as avg_days')
             ->value('avg_days');
 
         $stats = [
             'total_discharges' => $discharges->total(),
             'avg_los' => round($avgLos ?? 0, 1),
-            'wards' => Ward::count(),
+            'wards' => Ward::when($filters['department_id'] ?? null, fn ($q, $departmentId) => $q->where('department_id', $departmentId))->count(),
             'total_discharged' => $discharges->total(),
             'avg_length_of_stay' => round($avgLos ?? 0, 1),
         ];
 
-        $wards = Ward::orderBy('name')->get();
+        $wards = Ward::when($filters['department_id'] ?? null, fn ($q, $departmentId) => $q->where('department_id', $departmentId))->orderBy('name')->get();
 
         return compact('discharges', 'stats', 'wards');
     }
@@ -844,7 +857,7 @@ class ReportService
      */
     public function stockValuationReport(array $filters = []): array
     {
-        $query = \App\Models\StockBalance::with(['product', 'location'])
+        $query = StockBalance::with(['product', 'location'])
             ->where('quantity_on_hand', '>', 0);
 
         if (! empty($filters['location'])) {
@@ -859,7 +872,7 @@ class ReportService
 
         $stocks = $query->orderBy('product_id')->paginate(25)->withQueryString();
 
-        $totalsQuery = \App\Models\StockBalance::where('quantity_on_hand', '>', 0)
+        $totalsQuery = StockBalance::where('quantity_on_hand', '>', 0)
             ->join('products', 'products.id', '=', 'stock_balances.product_id');
 
         if (! empty($filters['location'])) {
@@ -878,15 +891,15 @@ class ReportService
             ->first();
 
         $stats = [
-            'cost_value'       => $totals->cost_value ?? 0,
-            'sell_value'       => $totals->sell_value ?? 0,
+            'cost_value' => $totals->cost_value ?? 0,
+            'sell_value' => $totals->sell_value ?? 0,
             'total_cost_value' => $totals->cost_value ?? 0,
             'total_sell_value' => $totals->sell_value ?? 0,
-            'total_items'      => (clone $query)->count(),
-            'unique_drugs'     => (clone $query)->distinct('product_id')->count('product_id'),
+            'total_items' => (clone $query)->count(),
+            'unique_drugs' => (clone $query)->distinct('product_id')->count('product_id'),
         ];
 
-        $locations = \App\Models\StockLocation::query()
+        $locations = StockLocation::query()
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name']);
@@ -899,14 +912,14 @@ class ReportService
      */
     public function expiredStockReport(array $filters = []): array
     {
-        $query = \App\Models\StockMovement::with(['product', 'stockLocation'])
+        $query = StockMovement::with(['product', 'stockLocation'])
             ->whereNotNull('expiry_date')
             ->where('quantity', '>', 0);
 
         $type = $filters['type'] ?? 'expired';
         if ($type === 'expiring') {
             $query->where('expiry_date', '>', now())
-                  ->where('expiry_date', '<=', now()->addDays(90));
+                ->where('expiry_date', '<=', now()->addDays(90));
         } else {
             $query->where('expiry_date', '<', now());
         }
@@ -914,12 +927,12 @@ class ReportService
         $stocks = $query->orderBy('expiry_date')->paginate(25)->withQueryString();
 
         $stats = [
-            'expired_count'  => \App\Models\StockMovement::whereNotNull('expiry_date')->where('expiry_date', '<', now())->where('quantity', '>', 0)->count(),
-            'expiring_soon'  => \App\Models\StockMovement::whereNotNull('expiry_date')->where('expiry_date', '>', now())->where('expiry_date', '<=', now()->addDays(90))->where('quantity', '>', 0)->count(),
-            'expiring_count' => \App\Models\StockMovement::whereNotNull('expiry_date')->where('expiry_date', '>', now())->where('expiry_date', '<=', now()->addDays(90))->where('quantity', '>', 0)->count(),
-            'expired_value'  => \App\Models\StockMovement::whereNotNull('expiry_date')->where('expiry_date', '<', now())->where('quantity', '>', 0)
+            'expired_count' => StockMovement::whereNotNull('expiry_date')->where('expiry_date', '<', now())->where('quantity', '>', 0)->count(),
+            'expiring_soon' => StockMovement::whereNotNull('expiry_date')->where('expiry_date', '>', now())->where('expiry_date', '<=', now()->addDays(90))->where('quantity', '>', 0)->count(),
+            'expiring_count' => StockMovement::whereNotNull('expiry_date')->where('expiry_date', '>', now())->where('expiry_date', '<=', now()->addDays(90))->where('quantity', '>', 0)->count(),
+            'expired_value' => StockMovement::whereNotNull('expiry_date')->where('expiry_date', '<', now())->where('quantity', '>', 0)
                 ->selectRaw('SUM(quantity * COALESCE(unit_cost, 0)) as total')->value('total') ?? 0,
-            'expiring_value' => \App\Models\StockMovement::whereNotNull('expiry_date')->where('expiry_date', '>', now())->where('expiry_date', '<=', now()->addDays(90))->where('quantity', '>', 0)
+            'expiring_value' => StockMovement::whereNotNull('expiry_date')->where('expiry_date', '>', now())->where('expiry_date', '<=', now()->addDays(90))->where('quantity', '>', 0)
                 ->selectRaw('SUM(quantity * COALESCE(unit_cost, 0)) as total')->value('total') ?? 0,
         ];
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Lab;
 
 use App\Http\Controllers\Controller;
 use App\Models\LabRequest;
+use App\Services\InpatientWorkspaceScope;
 use App\Services\InvestigationRequestService;
 use App\Services\LabService;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ class LabRequestController extends Controller
     public function __construct(
         protected LabService $labService,
         protected InvestigationRequestService $investigationRequestService,
+        protected InpatientWorkspaceScope $inpatientScope,
     ) {}
 
     /**
@@ -23,12 +25,16 @@ class LabRequestController extends Controller
     {
         $filters = $request->only(['status', 'urgency', 'search', 'date_from', 'date_to', 'department_id']);
 
-        if (!empty($filters['department_id'])) {
+        if (! empty($filters['department_id'])) {
             $filters['target_department_id'] = $filters['department_id'];
         }
 
         if ($this->shouldScopeToLoggedInDoctor($request)) {
             $filters['requested_by'] = $request->user()->id;
+        }
+
+        if ($request->routeIs('inpatient.*')) {
+            $filters['admission_department_id'] = $this->inpatientScope->departmentId();
         }
 
         $requests = $this->labService->getRequests($filters);
@@ -44,6 +50,7 @@ class LabRequestController extends Controller
     public function show(LabRequest $labRequest)
     {
         $this->authorizeDoctorWorkspaceRequest($labRequest);
+        abort_if(request()->routeIs('inpatient.*') && ! $this->inpatientScope->contains($labRequest), 404);
 
         $request = $this->labService->getRequestDetails($labRequest);
         $billingPrices = $this->investigationRequestService->billingPreview($request);
@@ -58,6 +65,7 @@ class LabRequestController extends Controller
     {
         try {
             $this->labService->acceptRequest($labRequest);
+
             return redirect()
                 ->route('admin.lab.results.index', ['search' => $labRequest->request_number])
                 ->with('success', __('messages.lab.request_accepted'));
@@ -72,7 +80,7 @@ class LabRequestController extends Controller
     public function acceptSelected(Request $request, LabRequest $labRequest)
     {
         $data = $request->validate([
-            'item_ids'   => ['required', 'array', 'min:1'],
+            'item_ids' => ['required', 'array', 'min:1'],
             'item_ids.*' => ['integer'],
         ]);
 
@@ -86,6 +94,7 @@ class LabRequestController extends Controller
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json(['error' => $e->getMessage()], 422);
             }
+
             return back()->with('error', $e->getMessage());
         }
 
@@ -114,6 +123,7 @@ class LabRequestController extends Controller
     {
         try {
             $this->labService->cancelRequest($labRequest);
+
             return back()->with('success', __('messages.lab.request_cancelled'));
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\LogModule;
 use App\Enums\ResultType;
 use App\Events\LabRequestCreated;
 use App\Events\LabResultsCompleted;
@@ -18,6 +19,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+
 // use Illuminate\Support\Facades\Storage;
 
 class LabService
@@ -48,6 +51,7 @@ class LabService
     public function updateCategory(LabTestCategory $category, array $data): LabTestCategory
     {
         $category->update($data);
+
         return $category;
     }
 
@@ -57,6 +61,7 @@ class LabService
             return false;
         }
         $category->delete();
+
         return true;
     }
 
@@ -137,7 +142,8 @@ class LabService
 
     public function toggleTest(LabTest $test): LabTest
     {
-        $test->update(['is_active' => !$test->is_active]);
+        $test->update(['is_active' => ! $test->is_active]);
+
         return $test;
     }
 
@@ -160,31 +166,36 @@ class LabService
         ])
             ->latest();
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->byStatus($filters['status']);
         }
 
-        if (!empty($filters['urgency'])) {
+        if (! empty($filters['urgency'])) {
             $query->where('urgency', $filters['urgency']);
         }
 
-        if (!empty($filters['target_department_id'])) {
+        if (! empty($filters['target_department_id'])) {
             $query->where('target_department_id', $filters['target_department_id']);
         }
 
-        if (!empty($filters['requested_by'])) {
+        if (! empty($filters['requested_by'])) {
             $query->where('requested_by', $filters['requested_by']);
         }
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['admission_department_id'])) {
+            $query->whereHas('visit.admission.bed.ward', fn ($ward) => $ward
+                ->where('department_id', $filters['admission_department_id']));
+        }
+
+        if (! empty($filters['search'])) {
             $query->search($filters['search']);
         }
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('created_at', '>=', $filters['date_from']);
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('created_at', '<=', $filters['date_to']);
         }
 
@@ -199,20 +210,20 @@ class LabService
             }
 
             $request = LabRequest::create([
-                'request_number'       => LabRequest::generateRequestNumber(),
-                'visit_id'             => $visit->id,
-                'emergency_case_id'    => $data['emergency_case_id'] ?? null,
+                'request_number' => LabRequest::generateRequestNumber(),
+                'visit_id' => $visit->id,
+                'emergency_case_id' => $data['emergency_case_id'] ?? null,
                 'emergency_session_id' => $data['emergency_session_id'] ?? null,
-                'medical_record_id'    => $data['medical_record_id'] ?? null,
+                'medical_record_id' => $data['medical_record_id'] ?? null,
                 'consultation_route_id' => $data['consultation_route_id'] ?? null,
-                'patient_id'           => $visit->patient_id,
-                'requested_by'         => Auth::id(),
-                'department_id'        => $visit->department_id,
+                'patient_id' => $visit->patient_id,
+                'requested_by' => Auth::id(),
+                'department_id' => $visit->department_id,
                 'target_department_id' => $data['target_department_id'] ?? null,
-                'clinical_info'        => $data['clinical_info'] ?? null,
-                'urgency'              => $data['urgency'] ?? 'routine',
-                'is_emergency'         => (bool) ($data['is_emergency'] ?? (($data['urgency'] ?? null) === 'emergency')),
-                'status'               => 'pending',
+                'clinical_info' => $data['clinical_info'] ?? null,
+                'urgency' => $data['urgency'] ?? 'routine',
+                'is_emergency' => (bool) ($data['is_emergency'] ?? (($data['urgency'] ?? null) === 'emergency')),
+                'status' => 'pending',
             ]);
 
             foreach ($items as $item) {
@@ -220,20 +231,20 @@ class LabService
                     // Structured item — supports service_id, lab_test_id and free-text name
                     $request->items()->create([
                         'lab_test_id' => $item['lab_test_id'] ?? null,
-                        'service_id'  => $item['service_id'] ?? null,
-                        'name'        => $item['name'] ?? null,
-                        'status'      => $item['status'] ?? 'pending',
+                        'service_id' => $item['service_id'] ?? null,
+                        'name' => $item['name'] ?? null,
+                        'status' => $item['status'] ?? 'pending',
                     ]);
                 } elseif (is_numeric($item)) {
                     // Item is a test-catalog ID
                     $request->items()->create([
                         'lab_test_id' => (int) $item,
-                        'status'      => 'pending',
+                        'status' => 'pending',
                     ]);
                 } else {
                     // Item is a free-text description (non-catalog dept)
                     $request->items()->create([
-                        'name'   => $item,
+                        'name' => $item,
                         'status' => 'pending',
                     ]);
                 }
@@ -255,12 +266,12 @@ class LabService
             // skip those to avoid duplication.
             if (! $request->consultation_route_id) {
                 $names = $request->items->map(fn ($i) => $i->name ?? $i->service?->name ?? $i->labTest?->name)->filter()->implode(', ');
-                app(\App\Services\ActivityLogService::class)->log(
-                    \App\Enums\LogModule::INVESTIGATION,
+                app(ActivityLogService::class)->log(
+                    LogModule::INVESTIGATION,
                     'INVESTIGATION_REQUESTED',
                     $request->toActivityContext() + ['metadata' => ['urgency' => $request->urgency]],
                     $request,
-                    'Investigation requested: ' . ($names ?: $request->request_number),
+                    'Investigation requested: '.($names ?: $request->request_number),
                 );
             }
 
@@ -344,12 +355,12 @@ class LabService
             ]);
         }
 
-        app(\App\Services\ActivityLogService::class)->log(
-            \App\Enums\LogModule::INVESTIGATION,
+        app(ActivityLogService::class)->log(
+            LogModule::INVESTIGATION,
             'INVESTIGATION_ACCEPTED',
             $request->toActivityContext(),
             $request,
-            'Investigation accepted: ' . $request->request_number,
+            'Investigation accepted: '.$request->request_number,
         );
 
         return $request;
@@ -366,12 +377,12 @@ class LabService
             ->whereIn('status', ['pending', 'processing'])
             ->update(['status' => 'cancelled']);
 
-        app(\App\Services\ActivityLogService::class)->log(
-            \App\Enums\LogModule::INVESTIGATION,
+        app(ActivityLogService::class)->log(
+            LogModule::INVESTIGATION,
             'INVESTIGATION_CANCELLED',
             $request->toActivityContext(),
             $request,
-            'Investigation cancelled: ' . $request->request_number,
+            'Investigation cancelled: '.$request->request_number,
         );
 
         return $request;
@@ -411,12 +422,12 @@ class LabService
                 ?? ResultType::PARAMETERS;
 
             $payload = [
-                'lab_request_id'      => $item->lab_request_id,
-                'result_type'         => $resultType->value,
-                'is_abnormal'         => $data['is_abnormal'] ?? false,
-                'remarks'             => $data['remarks'] ?? null,
-                'performed_by'        => Auth::id(),
-                'performed_at'        => now(),
+                'lab_request_id' => $item->lab_request_id,
+                'result_type' => $resultType->value,
+                'is_abnormal' => $data['is_abnormal'] ?? false,
+                'remarks' => $data['remarks'] ?? null,
+                'performed_by' => Auth::id(),
+                'performed_at' => now(),
             ];
 
             // Configurable overall result (canonical storage). Copied through only
@@ -435,7 +446,7 @@ class LabService
             } elseif ($resultType->isFileBased()) {
                 if (isset($data['result_file']) && $data['result_file'] instanceof UploadedFile) {
                     $path = $data['result_file']->store('investigation-results', 'public');
-                    $payload['result_file']      = $path;
+                    $payload['result_file'] = $path;
                     $payload['result_file_name'] = $data['result_file']->getClientOriginalName();
                 }
             } else {
@@ -450,7 +461,7 @@ class LabService
                 && $data['result_file'] instanceof UploadedFile
             ) {
                 $path = $data['result_file']->store('investigation-results', 'public');
-                $payload['result_file']      = $path;
+                $payload['result_file'] = $path;
                 $payload['result_file_name'] = $data['result_file']->getClientOriginalName();
             }
 
@@ -480,15 +491,15 @@ class LabService
                 'invoice_item_id' => $item->invoice_item_id,
             ], fn ($v) => $v !== null);
 
-            app(\App\Services\ActivityLogService::class)->log(
-                \App\Enums\LogModule::INVESTIGATION,
+            app(ActivityLogService::class)->log(
+                LogModule::INVESTIGATION,
                 $result->wasRecentlyCreated ? 'RESULT_ENTERED' : 'RESULT_UPDATED',
                 $context + ['new_values' => array_filter([
-                    'result' => $result->result_value ?: (\Illuminate\Support\Str::limit((string) $result->result_text, 120) ?: $result->result_file_name),
+                    'result' => $result->result_value ?: (Str::limit((string) $result->result_text, 120) ?: $result->result_file_name),
                     'is_abnormal' => $result->is_abnormal,
                 ], fn ($v) => $v !== null && $v !== '')],
                 $result,
-                ($result->wasRecentlyCreated ? 'Result entered: ' : 'Result updated: ') . ($testName ?: $item->labRequest?->request_number),
+                ($result->wasRecentlyCreated ? 'Result entered: ' : 'Result updated: ').($testName ?: $item->labRequest?->request_number),
             );
 
             return $result;
@@ -518,15 +529,15 @@ class LabService
         }
 
         if ($request) {
-            app(\App\Services\ActivityLogService::class)->log(
-                \App\Enums\LogModule::INVESTIGATION,
+            app(ActivityLogService::class)->log(
+                LogModule::INVESTIGATION,
                 'RESULT_VERIFIED',
                 $request->toActivityContext() + array_filter([
                     'investigation_result_id' => $result->id,
                     'service_id' => $result->requestItem?->service_id,
                 ], fn ($v) => $v !== null),
                 $result,
-                'Result verified: ' . ($result->requestItem?->name ?: $request->request_number),
+                'Result verified: '.($result->requestItem?->name ?: $request->request_number),
             );
         }
 
@@ -538,7 +549,7 @@ class LabService
         return DB::transaction(function () use ($request, $results) {
             foreach ($results as $itemId => $data) {
                 $item = $request->items()->findOrFail($itemId);
-                if (!empty($data['result_value'])) {
+                if (! empty($data['result_value'])) {
                     $this->enterResult($item, $data);
                 }
             }
@@ -556,13 +567,13 @@ class LabService
             'verifiedBy',
         ])->latest('performed_at');
 
-        if (!empty($filters['verified']) && $filters['verified'] === 'yes') {
+        if (! empty($filters['verified']) && $filters['verified'] === 'yes') {
             $query->whereNotNull('verified_by');
-        } elseif (!empty($filters['verified']) && $filters['verified'] === 'no') {
+        } elseif (! empty($filters['verified']) && $filters['verified'] === 'no') {
             $query->whereNull('verified_by');
         }
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->whereHas('labRequest', function ($q) use ($filters) {
                 $q->search($filters['search']);
             });
@@ -592,7 +603,7 @@ class LabService
             ->where('status', '!=', 'cancelled')
             ->latest('updated_at');
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             if ($filters['status'] === 'pending_result') {
                 $query->whereHas('items', function ($q) {
                     $q->whereIn('status', ['accepted', 'processing'])
@@ -608,23 +619,23 @@ class LabService
             }
         }
 
-        if (!empty($filters['urgency'])) {
+        if (! empty($filters['urgency'])) {
             $query->where('urgency', $filters['urgency']);
         }
 
-        if (!empty($filters['target_department_id'])) {
+        if (! empty($filters['target_department_id'])) {
             $query->where('target_department_id', $filters['target_department_id']);
         }
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->search($filters['search']);
         }
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('created_at', '>=', $filters['date_from']);
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('created_at', '<=', $filters['date_to']);
         }
 
@@ -657,14 +668,16 @@ class LabService
         $scope = function ($query) use ($filters) {
             return $query
                 ->when($filters['requested_by'] ?? null, fn ($q, $userId) => $q->where('requested_by', $userId))
-                ->when($filters['target_department_id'] ?? null, fn ($q, $departmentId) => $q->where('target_department_id', $departmentId));
+                ->when($filters['target_department_id'] ?? null, fn ($q, $departmentId) => $q->where('target_department_id', $departmentId))
+                ->when($filters['admission_department_id'] ?? null, fn ($q, $departmentId) => $q
+                    ->whereHas('visit.admission.bed.ward', fn ($ward) => $ward->where('department_id', $departmentId)));
         };
 
         return [
-            'pending'         => $scope(LabRequest::pending())->count(),
-            'processing'      => $scope(LabRequest::processing())->count(),
+            'pending' => $scope(LabRequest::pending())->count(),
+            'processing' => $scope(LabRequest::processing())->count(),
             'completed_today' => $scope(LabRequest::completed()->whereDate('updated_at', today()))->count(),
-            'total_tests'     => LabTest::active()->count(),
+            'total_tests' => LabTest::active()->count(),
         ];
     }
 

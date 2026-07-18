@@ -5,7 +5,7 @@
 <x-page-header :title="__('admissions.request_ref', ['id' => $admissionRequest->id])" icon="ti-git-branch">
     <span class="badge bg-{{ $admissionRequest->status->color() }}">{{ $admissionRequest->status->label() }}</span>
     <x-slot:actions>
-        <a href="{{ route('admin.admissions.requests') }}" class="btn btn-outline-secondary btn-sm">
+        <a href="{{ $workspaceRoutes->route('admin.admissions.requests') }}" class="btn btn-outline-secondary btn-sm">
             <i class="ti ti-arrow-left me-1"></i>{{ __('admissions.admission_requests') }}
         </a>
     </x-slot:actions>
@@ -76,7 +76,7 @@
             <div class="card-body d-grid gap-2">
                 @if($admissionRequest->status === \App\Enums\AdmissionRequestStatus::REQUESTED)
                     @can('admission.requests.accept')
-                    <form method="POST" action="{{ route('admin.admissions.requests.accept', $admissionRequest) }}">
+                    <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.requests.accept', $admissionRequest) }}">
                         @csrf @method('PATCH')
                         <button class="btn btn-success w-100"><i class="ti ti-check me-1"></i>{{ __('admissions.accept_request') }}</button>
                     </form>
@@ -85,14 +85,14 @@
 
                 @if(! $admissionRequest->status->isClosed())
                     @can('admission.requests.bed_pending')
-                    <form method="POST" action="{{ route('admin.admissions.requests.bed-pending', $admissionRequest) }}">
+                    <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.requests.bed-pending', $admissionRequest) }}">
                         @csrf @method('PATCH')
                         <button class="btn btn-outline-warning w-100"><i class="ti ti-clock me-1"></i>{{ __('admissions.mark_bed_pending') }}</button>
                     </form>
                     @endcan
 
                     @can('admission.requests.reserve_bed')
-                    <form method="POST" action="{{ route('admin.admissions.requests.reserve-bed', $admissionRequest) }}" class="border rounded p-2">
+                    <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.requests.reserve-bed', $admissionRequest) }}" class="border rounded p-2">
                         @csrf @method('PATCH')
                         <label class="form-label small">{{ __('admissions.reserve_bed') }}</label>
                         <select name="bed_id" class="form-select mb-2" required>
@@ -107,7 +107,7 @@
 
                     @if($admissionRequest->status->canConvert())
                         @can('admission.requests.convert')
-                        <form method="POST" action="{{ route('admin.admissions.requests.convert', $admissionRequest) }}">
+                        <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.requests.convert', $admissionRequest) }}">
                             @csrf
                             <button class="btn btn-warning w-100"><i class="ti ti-bed me-1"></i>{{ __('admissions.convert_to_admission') }}</button>
                         </form>
@@ -115,7 +115,7 @@
                     @endif
 
                     @can('admission.requests.reject')
-                    <form method="POST" action="{{ route('admin.admissions.requests.reject', $admissionRequest) }}" class="border rounded p-2">
+                    <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.requests.reject', $admissionRequest) }}" class="border rounded p-2">
                         @csrf @method('PATCH')
                         <label class="form-label small">{{ __('admissions.reject_request') }}</label>
                         <textarea name="reason" class="form-control mb-2" rows="2" required></textarea>
@@ -124,7 +124,7 @@
                     @endcan
 
                     @can('admission.requests.cancel')
-                    <form method="POST" action="{{ route('admin.admissions.requests.cancel', $admissionRequest) }}" class="border rounded p-2">
+                    <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.requests.cancel', $admissionRequest) }}" class="border rounded p-2">
                         @csrf @method('PATCH')
                         <label class="form-label small">{{ __('admissions.cancel_request') }}</label>
                         <textarea name="reason" class="form-control mb-2" rows="2" required></textarea>

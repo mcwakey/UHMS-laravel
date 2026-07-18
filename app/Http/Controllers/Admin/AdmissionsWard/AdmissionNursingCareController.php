@@ -12,6 +12,7 @@ use App\Models\NursingNote;
 use App\Models\NursingTask;
 use App\Models\User;
 use App\Services\Admissions\AdmissionNursingCareService;
+use App\Services\WorkspaceRouteResolver;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -30,7 +31,7 @@ class AdmissionNursingCareController extends Controller
         $this->care->createNote($admission, $data, $request->user());
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route(app(WorkspaceRouteResolver::class)->routeName('admin.admissions.show'), $admission)
             ->withFragment('tab-nursing')
             ->with('success', __('admissions.nursing_note_saved'));
     }
@@ -48,7 +49,7 @@ class AdmissionNursingCareController extends Controller
         $this->care->updateNote($nursingNote, $data, $request->user());
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route(app(WorkspaceRouteResolver::class)->routeName('admin.admissions.show'), $admission)
             ->withFragment('tab-nursing')
             ->with('success', __('admissions.nursing_note_updated'));
     }
@@ -60,7 +61,7 @@ class AdmissionNursingCareController extends Controller
         $this->care->createTask($admission, $data, $request->user());
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route(app(WorkspaceRouteResolver::class)->routeName('admin.admissions.show'), $admission)
             ->withFragment('tab-nursing')
             ->with('success', __('admissions.nursing_task_saved'));
     }
@@ -74,7 +75,7 @@ class AdmissionNursingCareController extends Controller
         $this->care->updateTask($nursingTask, $data, $request->user());
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route(app(WorkspaceRouteResolver::class)->routeName('admin.admissions.show'), $admission)
             ->withFragment('tab-nursing')
             ->with('success', __('admissions.nursing_task_updated'));
     }
@@ -86,7 +87,7 @@ class AdmissionNursingCareController extends Controller
         $this->care->completeTask($nursingTask, $request->user());
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route(app(WorkspaceRouteResolver::class)->routeName('admin.admissions.show'), $admission)
             ->withFragment('tab-nursing')
             ->with('success', __('admissions.nursing_task_completed'));
     }
@@ -101,7 +102,7 @@ class AdmissionNursingCareController extends Controller
         $this->care->updateCareFlags($admission, $data['care_flags'] ?? [], $request->user());
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route(app(WorkspaceRouteResolver::class)->routeName('admin.admissions.show'), $admission)
             ->withFragment('tab-nursing')
             ->with('success', __('admissions.care_flags_updated'));
     }

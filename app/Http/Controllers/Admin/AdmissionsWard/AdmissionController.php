@@ -13,7 +13,6 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\Vital;
-use App\Models\Ward;
 use App\Services\AdmissionMedicationBoardService;
 use App\Services\Admissions\AdmissionCareOverviewService;
 use App\Services\Admissions\AdmissionDischargeReadinessService;
@@ -23,6 +22,7 @@ use App\Services\AdmissionService;
 use App\Services\ConsultationSummaryService;
 use App\Services\VisitService;
 use App\Services\WardService;
+use App\Services\WorkspaceRouteResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -36,7 +36,8 @@ class AdmissionController extends Controller
         private AdmissionMedicationBoardService $medicationBoardService,
         private AdmissionRequestService $admissionRequests,
         private AdmissionCareOverviewService $careOverviewService,
-        private AdmissionDischargeReadinessService $dischargeReadiness
+        private AdmissionDischargeReadinessService $dischargeReadiness,
+        private WorkspaceRouteResolver $workspaceRoutes,
     ) {}
 
     public function admissionRequests(Request $request)
@@ -62,11 +63,14 @@ class AdmissionController extends Controller
 
     public function index(Request $request)
     {
-        $admissions = $this->admissionService->list($request->all());
-        $wards = Ward::active()->orderBy('name')->get();
+        $filters = array_merge(array_filter([
+            'status' => $request->route('status'),
+        ]), $request->all());
+        $admissions = $this->admissionService->list($filters);
+        $wards = $this->wardService->activeWards();
         $stats = $this->admissionService->getStats();
 
-        return view('admissions.index', compact('admissions', 'wards', 'stats'));
+        return view('admissions.index', compact('admissions', 'wards', 'stats', 'filters'));
     }
 
     public function create(Request $request)
@@ -116,7 +120,7 @@ class AdmissionController extends Controller
         if ($preselectedAdmissionRequest?->reservedBed && ! $availableBeds->contains('id', $preselectedAdmissionRequest->reserved_bed_id)) {
             $availableBeds->push($preselectedAdmissionRequest->reservedBed);
         }
-        $wards = Ward::active()->orderBy('name')->get();
+        $wards = $this->wardService->activeWards();
 
         // Services for admission/consumable fee mapping
         $services = ServiceCatalog::where('is_active', true)->orderBy('name')->get();
@@ -143,7 +147,7 @@ class AdmissionController extends Controller
         }
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route($this->workspaceRoutes->routeName('admin.admissions.show'), $admission)
             ->with('success', __('messages.admissions.admitted', ['number' => $admission->admission_number]));
     }
 
@@ -190,7 +194,11 @@ class AdmissionController extends Controller
 
         $services = ServiceCatalog::where('is_active', true)->orderBy('name')->get();
         $availableTransferBeds = $this->wardService->getAvailableBeds();
-        $nursingAssignableUsers = User::query()->orderBy('name')->limit(100)->get(['id', 'name']);
+        $nursingAssignableUsers = User::query()
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->limit(100)
+            ->get(['id', 'first_name', 'last_name']);
 
         $medicalRecord = $admission->visit->medicalRecord;
         $consultationSummary = $this->summaryService->forRecord($medicalRecord);
@@ -231,7 +239,7 @@ class AdmissionController extends Controller
         $this->admissionService->discharge($admission, $request->validated());
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route($this->workspaceRoutes->routeName('admin.admissions.show'), $admission)
             ->with('success', __('messages.admissions.discharged'));
     }
 
@@ -244,7 +252,7 @@ class AdmissionController extends Controller
         $admission = $extensions->extend($admission, $request->user(), $data['reason']);
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route($this->workspaceRoutes->routeName('admin.admissions.show'), $admission)
             ->with('success', __('admissions.admission_extended'));
     }
 
@@ -259,7 +267,7 @@ class AdmissionController extends Controller
         $this->admissionService->addWardRound($admission, $request->only(['notes', 'instructions', 'round_date']));
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route($this->workspaceRoutes->routeName('admin.admissions.show'), $admission)
             ->with('success', __('messages.admissions.ward_round_saved'));
     }
 
@@ -290,7 +298,7 @@ class AdmissionController extends Controller
         ]));
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route($this->workspaceRoutes->routeName('admin.admissions.show'), $admission)
             ->withFragment('tab-vitals')
             ->with('success', __('messages.admissions.vitals_recorded'));
     }
@@ -316,7 +324,7 @@ class AdmissionController extends Controller
         // No additional bookkeeping is needed here.
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route($this->workspaceRoutes->routeName('admin.admissions.show'), $admission)
             ->withFragment('tab-billing')
             ->with('success', __('messages.admissions.charge_added'));
     }

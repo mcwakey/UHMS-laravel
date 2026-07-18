@@ -105,7 +105,7 @@
 <div class="modal fade" id="clinicalSummaryModal" tabindex="-1" aria-labelledby="clinicalSummaryModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <form method="POST" action="{{ route('admin.patients.medical-summary.update', $visit->patient) }}">
+            <form method="POST" action="{{ $workspaceRoutes->route('admin.patients.medical-summary.update', $visit->patient) }}">
                 @csrf
                 @method('PATCH')
                 <div class="modal-header">
@@ -330,7 +330,7 @@
                                 @if($canCreateEntries)
                                 <div class="collapse mb-3" id="addComplaintForm">
                                     <div class="card card-body bg-light">
-                                        <form data-ajax-form="complaints" data-consultation-form="complaints" data-refresh-section="complaints" data-route-context-required="true" action="{{ route('admin.consultations.complaints.store', $visit) }}" method="POST">
+                                        <form data-ajax-form="complaints" data-consultation-form="complaints" data-refresh-section="complaints" data-route-context-required="true" action="{{ $workspaceRoutes->route('admin.consultations.complaints.store', $visit) }}" method="POST">
                                             @csrf
                                             <x-consultation-idempotency-key action="complaint.create" />
                                             <div class="row g-2">
@@ -414,7 +414,7 @@
                                                     <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
                                                             data-consultation-action="edit-entry"
                                                             data-entry-type="complaint"
-                                                            data-url="{{ route('admin.consultations.complaints.update', $complaint) }}"
+                                                            data-url="{{ $workspaceRoutes->route('admin.consultations.complaints.update', $complaint) }}"
                                                             data-entry='@json($editEntryPayload)'>
                                                         <i class="ti ti-edit"></i>
                                                     </button>
@@ -422,7 +422,7 @@
                                                     @if($canDeleteEntry($complaint))
                                                     <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
                                                             data-consultation-action="delete-entry"
-                                                            data-url="{{ route('admin.consultations.complaints.destroy', $complaint) }}"
+                                                            data-url="{{ $workspaceRoutes->route('admin.consultations.complaints.destroy', $complaint) }}"
                                                             data-target="#complaint-{{ $complaint->id }}"
                                                             data-badge="badge-complaints"
                                                             data-confirm="{{ __('consultations.remove_complaint') }}" aria-label="{{ __('common.delete') }}" title="{{ __('common.delete') }}">
@@ -467,7 +467,7 @@
                                 @if($canCreateEntries)
                                 <div class="collapse mb-3" id="addHopcForm">
                                     <div class="card card-body bg-light">
-                                        <form data-ajax-form="hopc" data-consultation-form="hopc" data-refresh-section="hopc" data-route-context-required="true" action="{{ route('admin.consultations.hopc.store', $visit) }}" method="POST">
+                                        <form data-ajax-form="hopc" data-consultation-form="hopc" data-refresh-section="hopc" data-route-context-required="true" action="{{ $workspaceRoutes->route('admin.consultations.hopc.store', $visit) }}" method="POST">
                                             @csrf
                                             <x-consultation-idempotency-key action="hopc.create" />
                                             <div class="row g-2">
@@ -539,7 +539,7 @@
                                                     <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
                                                             data-consultation-action="edit-entry"
                                                             data-entry-type="hopc"
-                                                            data-url="{{ route('admin.consultations.hopc.update', $hopc) }}"
+                                                            data-url="{{ $workspaceRoutes->route('admin.consultations.hopc.update', $hopc) }}"
                                                             data-entry='@json($editEntryPayload)'>
                                                         <i class="ti ti-edit"></i>
                                                     </button>
@@ -547,7 +547,7 @@
                                                     @if($canDeleteEntry($hopc))
                                                     <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
                                                             data-consultation-action="delete-entry"
-                                                            data-url="{{ route('admin.consultations.hopc.destroy', $hopc) }}"
+                                                            data-url="{{ $workspaceRoutes->route('admin.consultations.hopc.destroy', $hopc) }}"
                                                             data-target="#hopc-{{ $hopc->id }}"
                                                             data-badge="badge-hopc"
                                                             data-confirm="{{ __('consultations.remove_history') }}" aria-label="{{ __('common.delete') }}" title="{{ __('common.delete') }}">
@@ -584,7 +584,7 @@
                                 @if($canCreateEntries)
                                 <div class="collapse mb-3" id="addExaminationForm">
                                     <div class="card card-body bg-light">
-                                        <form data-ajax-form="examination" data-consultation-form="examination" data-refresh-section="examination" data-route-context-required="true" action="{{ route('admin.consultations.examinations.store', $visit) }}" method="POST">
+                                        <form data-ajax-form="examination" data-consultation-form="examination" data-refresh-section="examination" data-route-context-required="true" action="{{ $workspaceRoutes->route('admin.consultations.examinations.store', $visit) }}" method="POST">
                                             @csrf
                                             <x-consultation-idempotency-key action="examination.create" />
                                             <div class="row g-2">
@@ -638,7 +638,7 @@
                                                     <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
                                                             data-consultation-action="edit-entry"
                                                             data-entry-type="examination"
-                                                            data-url="{{ route('admin.consultations.examinations.update', $exam) }}"
+                                                            data-url="{{ $workspaceRoutes->route('admin.consultations.examinations.update', $exam) }}"
                                                             data-entry='@json($editEntryPayload)'>
                                                         <i class="ti ti-edit"></i>
                                                     </button>
@@ -646,7 +646,7 @@
                                                     @if($canDeleteEntry($exam))
                                                     <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
                                                             data-consultation-action="delete-entry"
-                                                            data-url="{{ route('admin.consultations.examinations.destroy', $exam) }}"
+                                                            data-url="{{ $workspaceRoutes->route('admin.consultations.examinations.destroy', $exam) }}"
                                                             data-target="#examination-{{ $exam->id }}"
                                                             data-badge="badge-examination"
                                                             data-confirm="{{ __('consultations.remove_examination') }}" aria-label="{{ __('common.delete') }}" title="{{ __('common.delete') }}">
@@ -683,7 +683,7 @@
                                 @if($canCreateEntries)
                                 <div class="collapse mb-3" id="addDiagnosisForm">
                                     <div class="card card-body bg-light">
-                                        <form data-ajax-form="diagnoses" data-consultation-form="diagnoses" data-refresh-section="diagnoses" data-route-context-required="true" action="{{ route('admin.consultations.diagnoses.store', $visit) }}" method="POST">
+                                        <form data-ajax-form="diagnoses" data-consultation-form="diagnoses" data-refresh-section="diagnoses" data-route-context-required="true" action="{{ $workspaceRoutes->route('admin.consultations.diagnoses.store', $visit) }}" method="POST">
                                             @csrf
                                             <x-consultation-idempotency-key action="diagnosis.create" />
                                             @php
@@ -782,7 +782,7 @@
                                                     <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
                                                             data-consultation-action="edit-entry"
                                                             data-entry-type="diagnosis"
-                                                            data-url="{{ route('admin.consultations.diagnoses.update', $diagnosis) }}"
+                                                            data-url="{{ $workspaceRoutes->route('admin.consultations.diagnoses.update', $diagnosis) }}"
                                                             data-entry='@json($editEntryPayload)'>
                                                         <i class="ti ti-edit"></i>
                                                     </button>
@@ -791,7 +791,7 @@
                                                             data-consultation-action="mark-diagnosis-final"
                                                             title="{{ __('consultations.mark_as_final') }}"
                                                             data-id="{{ $diagnosis->id }}"
-                                                            data-url="{{ route('admin.consultations.diagnoses.update', $diagnosis) }}">
+                                                            data-url="{{ $workspaceRoutes->route('admin.consultations.diagnoses.update', $diagnosis) }}">
                                                         <i class="ti ti-check me-1"></i>{{ __('consultations.final') }}
                                                     </button>
                                                     @endif
@@ -800,13 +800,13 @@
                                                             title="{{ __('consultations.set_primary_diagnosis') }}"
                                                             id="set-primary-{{ $diagnosis->id }}"
                                                             data-id="{{ $diagnosis->id }}"
-                                                            data-url="{{ route('admin.consultations.diagnoses.primary', $diagnosis) }}">
+                                                            data-url="{{ $workspaceRoutes->route('admin.consultations.diagnoses.primary', $diagnosis) }}">
                                                         <i class="ti ti-star"></i>
                                                     </button>
                                                     @if($canDeleteEntry($diagnosis))
                                                     <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
                                                             data-consultation-action="delete-entry"
-                                                            data-url="{{ route('admin.consultations.diagnoses.destroy', $diagnosis) }}"
+                                                            data-url="{{ $workspaceRoutes->route('admin.consultations.diagnoses.destroy', $diagnosis) }}"
                                                             data-target="#diagnosis-{{ $diagnosis->id }}"
                                                             data-badge="badge-diagnoses"
                                                             data-confirm="{{ __('consultations.remove_diagnosis') }}" aria-label="{{ __('common.delete') }}" title="{{ __('common.delete') }}">
@@ -844,7 +844,7 @@
                                 @if($canCreateEntries)
                                 <div class="collapse mb-3" id="addInvestigationForm">
                                     <div class="card card-body bg-light">
-                                        <form data-ajax-form="investigations" data-consultation-form="investigations" data-refresh-section="investigations" data-route-context-required="true" action="{{ route('admin.consultations.investigations.store', $visit) }}" method="POST">
+                                        <form data-ajax-form="investigations" data-consultation-form="investigations" data-refresh-section="investigations" data-route-context-required="true" action="{{ $workspaceRoutes->route('admin.consultations.investigations.store', $visit) }}" method="POST">
                                             @csrf
                                             <x-consultation-idempotency-key action="investigation.create" />
                                             <div class="row g-2">
@@ -933,7 +933,7 @@
                                                 </h6>
                                                 @if($departmentSendable)
                                                 <form method="POST"
-                                                      action="{{ route('admin.consultations.investigation-departments.send-to-department', [$visit, $departmentId]) }}"
+                                                      action="{{ $workspaceRoutes->route('admin.consultations.investigation-departments.send-to-department', [$visit, $departmentId]) }}"
                                                       class="d-inline"
                                                       data-confirm="{{ __('messages.consultations.investigation_handoff_confirm', ['department' => $deptName]) }}">
                                                     @csrf
@@ -984,7 +984,7 @@
                                                                     <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
                                                                             data-consultation-action="edit-entry"
                                                                             data-entry-type="lab-request"
-                                                                            data-url="{{ route('admin.consultations.lab-request.update', $req) }}"
+                                                                            data-url="{{ $workspaceRoutes->route('admin.consultations.lab-request.update', $req) }}"
                                                                             data-entry='@json($editEntryPayload)'>
                                                                         <i class="ti ti-edit"></i>
                                                                     </button>
@@ -1013,17 +1013,17 @@
                                                                     @if($item->result)
                                                                     <button type="button" class="btn btn-xs btn-outline-info viewResultBtn"
                                                                             data-consultation-action="view-result"
-                                                                            data-url="{{ route('admin.lab.results.view', $item) }}"
+                                                                            data-url="{{ $workspaceRoutes->route('admin.lab.results.view', $item) }}"
                                                                             title="View Result"><i class="ti ti-eye"></i></button>
                                                                     @endif
                                                                     @if($item->result?->is_verified)
-                                                                    <a data-no-inertia href="{{ route('admin.lab.results.print', $item) }}" target="_blank" class="btn btn-xs btn-outline-secondary" title="Print"><i class="ti ti-printer"></i></a>
+                                                                    <a data-no-inertia href="{{ $workspaceRoutes->route('admin.lab.results.print', $item) }}" target="_blank" class="btn btn-xs btn-outline-secondary" title="Print"><i class="ti ti-printer"></i></a>
                                                                     @endif
                                                                     @if($canCreateEntries)
                                                                     @if($item->isDeletable() && $canEdit)
                                                                     <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
                                                                             data-consultation-action="delete-entry"
-                                                                            data-url="{{ route('admin.consultations.investigation-items.destroy', $item) }}"
+                                                                            data-url="{{ $workspaceRoutes->route('admin.consultations.investigation-items.destroy', $item) }}"
                                                                             data-method="DELETE"
                                                                             data-target="#lab-item-{{ $item->id }}"
                                                                             data-confirm="{{ __('consultations.remove_investigation_item') }}"
@@ -1064,7 +1064,7 @@
                                 @if($canCreateEntries)
                                 <div class="collapse mb-3" id="addTreatmentForm">
                                     <div class="card card-body bg-light">
-                                        <form data-ajax-form="treatments" data-consultation-form="treatments" data-refresh-section="treatments" data-route-context-required="true" action="{{ route('admin.consultations.treatments.store', $visit) }}" method="POST">
+                                        <form data-ajax-form="treatments" data-consultation-form="treatments" data-refresh-section="treatments" data-route-context-required="true" action="{{ $workspaceRoutes->route('admin.consultations.treatments.store', $visit) }}" method="POST">
                                             @csrf
                                             <x-consultation-idempotency-key action="treatment.create" />
                                             <div class="row g-2">
@@ -1123,7 +1123,7 @@
                                                     <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
                                                             data-consultation-action="edit-entry"
                                                             data-entry-type="treatment"
-                                                            data-url="{{ route('admin.consultations.treatments.update', $treatment) }}"
+                                                            data-url="{{ $workspaceRoutes->route('admin.consultations.treatments.update', $treatment) }}"
                                                             data-entry='@json($editEntryPayload)'>
                                                         <i class="ti ti-edit"></i>
                                                     </button>
@@ -1131,7 +1131,7 @@
                                                     @if($canDeleteEntry($treatment))
                                                     <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
                                                             data-consultation-action="delete-entry"
-                                                            data-url="{{ route('admin.consultations.treatments.destroy', $treatment) }}"
+                                                            data-url="{{ $workspaceRoutes->route('admin.consultations.treatments.destroy', $treatment) }}"
                                                             data-target="#treatment-{{ $treatment->id }}"
                                                             data-badge="badge-treatments"
                                                             data-confirm="{{ __('consultations.remove_treatment') }}" aria-label="{{ __('common.delete') }}" title="{{ __('common.delete') }}">
@@ -1168,7 +1168,7 @@
                                 @if($canCreateEntries && (auth()->user()?->can('prescriptions.create') ?? false))
                                 <div class="collapse mb-3" id="addPrescriptionForm">
                                     <div class="card card-body bg-light">
-                                        <form data-ajax-form="prescriptions" data-consultation-form="prescriptions" data-refresh-section="prescriptions" data-route-context-required="true" data-prepare="prescription" method="POST" action="{{ route('admin.consultations.prescriptions.store', $visit) }}" id="prescriptionForm">
+                                        <form data-ajax-form="prescriptions" data-consultation-form="prescriptions" data-refresh-section="prescriptions" data-route-context-required="true" data-prepare="prescription" method="POST" action="{{ $workspaceRoutes->route('admin.consultations.prescriptions.store', $visit) }}" id="prescriptionForm">
                                             @csrf
                                             <x-consultation-idempotency-key action="prescription.create" />
                                             <div id="prescriptionFormErrors" class="alert alert-danger d-none small py-2 mb-2"></div>
@@ -1294,7 +1294,7 @@
                                             </h6>
                                             @if($prescriptionSendable)
                                             <form method="POST"
-                                                  action="{{ route('admin.consultations.prescription-departments.send-to-department', [$visit, $prescriptionDepartmentId]) }}"
+                                                  action="{{ $workspaceRoutes->route('admin.consultations.prescription-departments.send-to-department', [$visit, $prescriptionDepartmentId]) }}"
                                                   class="d-inline"
                                                   data-confirm="{{ __('messages.consultations.investigation_handoff_confirm', ['department' => $prescriptionDepartmentName]) }}">
                                                 @csrf
@@ -1337,7 +1337,7 @@
                                                     <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
                                                             data-consultation-action="edit-entry"
                                                             data-entry-type="prescription"
-                                                            data-url="{{ route('admin.consultations.prescriptions.update', $prescription) }}"
+                                                            data-url="{{ $workspaceRoutes->route('admin.consultations.prescriptions.update', $prescription) }}"
                                                             data-entry='@json($editEntryPayload)'>
                                                         <i class="ti ti-edit"></i>
                                                     </button>
@@ -1345,7 +1345,7 @@
                                                         <small class="text-muted"><i class="ti ti-lock me-1"></i>Locked</small>
                                                     @endif
                                                     @if($canDeleteEntry($prescription) && in_array($prescription->status->value, ['pending', 'active']))
-                                                    <form method="POST" action="{{ route('admin.consultations.prescriptions.destroy', $prescription) }}"
+                                                    <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.prescriptions.destroy', $prescription) }}"
                                                         data-preserve-tab="prescriptions-section">
                                                         @csrf @method('DELETE')
                                                         <button type="submit" class="btn btn-xs btn-outline-danger" title="Delete prescription" data-confirm="{{ __('consultations.cancel_delete_prescription') }}">
@@ -1403,7 +1403,7 @@
                                 @if($canCreateEntries && (auth()->user()?->can('procedure.request') ?? false))
                                 <div class="collapse mb-3" id="addProcedureForm">
                                     <div class="card card-body bg-light">
-                                        <form data-ajax-form="procedures" data-consultation-form="procedures" data-refresh-section="procedures" data-route-context-required="true" method="POST" action="{{ route('admin.consultations.procedures.store', $visit) }}">
+                                        <form data-ajax-form="procedures" data-consultation-form="procedures" data-refresh-section="procedures" data-route-context-required="true" method="POST" action="{{ $workspaceRoutes->route('admin.consultations.procedures.store', $visit) }}">
                                             @csrf
                                             <x-consultation-idempotency-key action="procedure.create" />
                                             <div class="row g-2">
@@ -1486,7 +1486,7 @@
                                             </h6>
                                             @if($procedureSendable)
                                             <form method="POST"
-                                                  action="{{ route('admin.consultations.procedure-departments.send-to-department', [$visit, $procedureDepartmentId]) }}"
+                                                  action="{{ $workspaceRoutes->route('admin.consultations.procedure-departments.send-to-department', [$visit, $procedureDepartmentId]) }}"
                                                   class="d-inline"
                                                   data-confirm="{{ __('messages.consultations.investigation_handoff_confirm', ['department' => $deptName]) }}">
                                                 @csrf
@@ -1555,18 +1555,18 @@
                                                             <button aria-label="Edit" title="Edit" type="button" class="btn btn-sm btn-outline-primary edit-entry-btn"
                                                                     data-consultation-action="edit-entry"
                                                                     data-entry-type="procedure"
-                                                                    data-url="{{ route('admin.consultations.procedures.update', $pr) }}"
+                                                                    data-url="{{ $workspaceRoutes->route('admin.consultations.procedures.update', $pr) }}"
                                                                     data-entry='@json($editEntryPayload)'>
                                                                 <i class="ti ti-edit"></i>
                                                             </button>
                                                             @elseif($pr->status !== \App\Enums\ProcedureStatus::REQUESTED)
                                                                 <small class="text-muted mt-1"><i class="ti ti-lock me-1"></i>Locked: request already processed</small>
                                                             @endif
-                                                            <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.theatre.show', $pr) }}">
+                                                            <a class="btn btn-sm btn-outline-primary" href="{{ $workspaceRoutes->route('admin.theatre.show', $pr) }}">
                                                                 <i class="ti ti-eye me-1"></i>Open
                                                             </a>
                                                             @if($pr->status === \App\Enums\ProcedureStatus::COMPLETED)
-                                                                <a data-no-inertia class="btn btn-sm btn-outline-secondary" href="{{ route('admin.theatre.report', $pr) }}" target="_blank">Report</a>
+                                                                <a data-no-inertia class="btn btn-sm btn-outline-secondary" href="{{ $workspaceRoutes->route('admin.theatre.report', $pr) }}" target="_blank">Report</a>
                                                             @endif
                                                         </div>
                                                     </div>
@@ -1590,7 +1590,7 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0"><i class="ti ti-history me-1"></i>Medical History</h6>
-                                <a href="{{ route('admin.consultations.history', $visit) }}" class="btn btn-sm btn-outline-info">
+                                <a href="{{ $workspaceRoutes->route('admin.consultations.history', $visit) }}" class="btn btn-sm btn-outline-info">
                                     <i class="ti ti-external-link me-1"></i>Full History
                                 </a>
                             </div>
@@ -1622,7 +1622,7 @@
                                     @endforeach
                                     @if($history['total'] > 10)
                                     <div class="text-center">
-                                        <a href="{{ route('admin.consultations.history', $visit) }}" class="btn btn-outline-primary btn-sm">View All {{ $history['total'] }} Records</a>
+                                        <a href="{{ $workspaceRoutes->route('admin.consultations.history', $visit) }}" class="btn btn-outline-primary btn-sm">View All {{ $history['total'] }} Records</a>
                                     </div>
                                     @endif
                                 @else
@@ -1644,7 +1644,7 @@
                         <div class="card">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h6 class="fw-bold mb-0"><i class="ti ti-template me-1"></i>Medical Patterns</h6>
-                                <a href="{{ route('admin.patterns.create') }}" class="btn btn-sm btn-outline-primary">
+                                <a href="{{ $workspaceRoutes->route('admin.patterns.create') }}" class="btn btn-sm btn-outline-primary">
                                     <i class="ti ti-plus me-1"></i>Create Pattern
                                 </a>
                             </div>
@@ -1687,7 +1687,7 @@
                                 @else
                                     <div class="text-center text-muted py-4">
                                         <i class="ti ti-template fs-1 d-block mb-2"></i>No patterns available yet.
-                                        <br><a href="{{ route('admin.patterns.create') }}">{{ __('consultations.create_first_pattern') }}</a>
+                                        <br><a href="{{ $workspaceRoutes->route('admin.patterns.create') }}">{{ __('consultations.create_first_pattern') }}</a>
                                     </div>
                                 @endif
                             </div>
@@ -1709,7 +1709,7 @@
                                 @if($canCreateEntries)
                                 <div class="collapse mb-3" id="addTaskForm">
                                     <div class="card card-body bg-light">
-                                        <form data-ajax-form="tasks" data-consultation-form="tasks" data-refresh-section="tasks" data-route-context-required="true" method="POST" action="{{ route('admin.consultations.tasks.store', $visit) }}">
+                                        <form data-ajax-form="tasks" data-consultation-form="tasks" data-refresh-section="tasks" data-route-context-required="true" method="POST" action="{{ $workspaceRoutes->route('admin.consultations.tasks.store', $visit) }}">
                                             @csrf
                                             <x-consultation-idempotency-key action="task.create" />
                                             <div class="row g-2">
@@ -1795,7 +1795,7 @@
                                         @foreach($group as $task)
                                         <div class="d-flex align-items-start gap-2 mb-3 p-2 border rounded {{ $task->completed_at ? 'bg-light' : '' }}" id="task-{{ $task->id }}" data-owner-key="{{ $ownerKey($task) }}">
                                             @if($canEditEntry($task))
-                                            <form method="POST" action="{{ route('admin.consultations.tasks.toggle', $task) }}" data-preserve-tab="tasks-section">
+                                            <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.tasks.toggle', $task) }}" data-preserve-tab="tasks-section">
                                                 @csrf @method('PATCH')
                                                 <button type="submit" class="btn btn-sm {{ $task->completed_at ? 'btn-success' : 'btn-outline-secondary' }} rounded-circle p-1" style="width:28px;height:28px;" title="{{ $task->completed_at ? 'Mark incomplete' : 'Mark complete' }}">
                                                     <i class="ti ti-check fs-14"></i>
@@ -1813,13 +1813,13 @@
                                                         <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
                                                                 data-consultation-action="edit-entry"
                                                                 data-entry-type="task"
-                                                                data-url="{{ route('admin.consultations.tasks.update', $task) }}"
+                                                                data-url="{{ $workspaceRoutes->route('admin.consultations.tasks.update', $task) }}"
                                                                 data-entry='@json($editEntryPayload)'>
                                                             <i class="ti ti-edit"></i>
                                                         </button>
                                                         @endif
                                                         @if($canDeleteEntry($task))
-                                                        <form method="POST" action="{{ route('admin.consultations.tasks.destroy', $task) }}" class="d-inline" data-preserve-tab="tasks-section">
+                                                        <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.tasks.destroy', $task) }}" class="d-inline" data-preserve-tab="tasks-section">
                                                             @csrf @method('DELETE')
                                                             <button aria-label="Close" title="Close" type="submit" class="btn btn-xs btn-outline-danger" data-confirm="Delete this task?"><i class="ti ti-x"></i></button>
                                                         </form>
@@ -1884,8 +1884,8 @@
                                             ? auth()->user()?->can('consultation.followup.update')
                                             : auth()->user()?->can('consultation.followup.create'));
                                         $followUpAction = $followUpAppointment
-                                            ? route('admin.consultations.routes.follow-up.update', [$visit, $selectedRoute, $followUpAppointment])
-                                            : route('admin.consultations.routes.follow-up.store', [$visit, $selectedRoute]);
+                                            ? $workspaceRoutes->route('admin.consultations.routes.follow-up.update', [$visit, $selectedRoute, $followUpAppointment])
+                                            : $workspaceRoutes->route('admin.consultations.routes.follow-up.store', [$visit, $selectedRoute]);
                                     @endphp
 
                                     @if($followUpAppointment)
@@ -1910,7 +1910,7 @@
                                             @if($canCreateEntries && auth()->user()?->can('consultation.followup.cancel'))
                                                 <div class="ms-auto">
                                                     <x-confirm-form
-                                                        :action="route('admin.consultations.routes.follow-up.cancel', [$visit, $selectedRoute, $followUpAppointment])"
+                                                        :action="$workspaceRoutes->route('admin.consultations.routes.follow-up.cancel', [$visit, $selectedRoute, $followUpAppointment])"
                                                         method="POST"
                                                         :button-label="__('consultations.workspace.cancel_follow_up_button')"
                                                         button-class="btn btn-outline-danger btn-sm"
@@ -2039,7 +2039,7 @@
                                     </div>
                                 @endif
                                 @if($canCreateEntries)
-                                <form data-ajax-form="summary" data-consultation-form="final-note" data-route-context-required="true" data-preserve-values="true" method="POST" action="{{ route('admin.consultations.final-note.update', $visit) }}">
+                                <form data-ajax-form="summary" data-consultation-form="final-note" data-route-context-required="true" data-preserve-values="true" method="POST" action="{{ $workspaceRoutes->route('admin.consultations.final-note.update', $visit) }}">
                                     @csrf
                                     @method('PATCH')
                                     <textarea name="final_note" id="finalNoteTextarea" class="form-control" rows="4" placeholder="{{ __('consultations.final_note_placeholder') }}">{{ old('final_note', $record?->final_note) }}</textarea>

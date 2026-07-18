@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Admin\AdmissionsWard;
 
 use App\Enums\AdmissionDischargeClearanceStatus;
-use App\Enums\AdmissionDischargeClearanceType;
 use App\Http\Controllers\Controller;
 use App\Models\Admission;
 use App\Models\AdmissionDischargeClearance;
 use App\Models\AdmissionDischargeSummary;
 use App\Services\Admissions\AdmissionDischargeWorkflowService;
+use App\Services\WorkspaceRouteResolver;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -22,7 +22,7 @@ class AdmissionDischargeWorkflowController extends Controller
         $this->workflow->startPlanning($admission, $data, $request->user());
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route(app(WorkspaceRouteResolver::class)->routeName('admin.admissions.show'), $admission)
             ->withFragment('tab-discharge')
             ->with('success', __('admissions.discharge_planning_started'));
     }
@@ -33,7 +33,7 @@ class AdmissionDischargeWorkflowController extends Controller
         $this->workflow->updatePlanning($admission, $data, $request->user());
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route(app(WorkspaceRouteResolver::class)->routeName('admin.admissions.show'), $admission)
             ->withFragment('tab-discharge')
             ->with('success', __('admissions.expected_discharge_updated'));
     }
@@ -55,7 +55,7 @@ class AdmissionDischargeWorkflowController extends Controller
         $this->workflow->updateClearance($clearance, AdmissionDischargeClearanceStatus::from($data['status']), $data['note'] ?? null, $request->user());
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route(app(WorkspaceRouteResolver::class)->routeName('admin.admissions.show'), $admission)
             ->withFragment('tab-discharge')
             ->with('success', __('admissions.clearance_updated'));
     }
@@ -71,7 +71,7 @@ class AdmissionDischargeWorkflowController extends Controller
         $this->workflow->revokeClearance($clearance, $data['note'], $request->user());
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route(app(WorkspaceRouteResolver::class)->routeName('admin.admissions.show'), $admission)
             ->withFragment('tab-discharge')
             ->with('success', __('admissions.clearance_revoked'));
     }
@@ -82,7 +82,7 @@ class AdmissionDischargeWorkflowController extends Controller
         $this->workflow->saveSummary($admission, $this->normaliseSummaryData($data), $request->user());
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route(app(WorkspaceRouteResolver::class)->routeName('admin.admissions.show'), $admission)
             ->withFragment('tab-discharge')
             ->with('success', __('admissions.discharge_summary_saved'));
     }
@@ -93,7 +93,7 @@ class AdmissionDischargeWorkflowController extends Controller
         $this->workflow->prepareSummary($summary, $request->user());
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route(app(WorkspaceRouteResolver::class)->routeName('admin.admissions.show'), $admission)
             ->withFragment('tab-discharge')
             ->with('success', __('admissions.discharge_summary_prepared'));
     }
@@ -104,7 +104,7 @@ class AdmissionDischargeWorkflowController extends Controller
         $this->workflow->approveSummary($summary, $request->user());
 
         return redirect()
-            ->route('admin.admissions.show', $admission)
+            ->route(app(WorkspaceRouteResolver::class)->routeName('admin.admissions.show'), $admission)
             ->withFragment('tab-discharge')
             ->with('success', __('admissions.discharge_summary_approved'));
     }

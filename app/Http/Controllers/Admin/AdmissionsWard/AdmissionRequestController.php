@@ -12,16 +12,25 @@ use App\Models\Bed;
 use App\Models\Visit;
 use App\Models\Ward;
 use App\Services\Admissions\AdmissionRequestService;
+use App\Services\InpatientWorkspaceScope;
+use App\Services\WorkspaceRouteResolver;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Enum;
 
 class AdmissionRequestController extends Controller
 {
-    public function __construct(private AdmissionRequestService $requests) {}
+    public function __construct(
+        private AdmissionRequestService $requests,
+        private InpatientWorkspaceScope $inpatientScope,
+        private WorkspaceRouteResolver $workspaceRoutes,
+    ) {}
 
     public function index(Request $request)
     {
-        $admissionRequests = $this->requests->list($request->only(['search', 'status', 'source_type']));
+        $filters = array_merge(array_filter([
+            'status' => $request->route('status'),
+        ]), $request->only(['search', 'status', 'source_type']));
+        $admissionRequests = $this->requests->list($filters);
 
         $legacyVisitQuery = Visit::with(['patient', 'department', 'activeConsultationRoute.doctor'])
             ->where('status', VisitStatus::ADMITTING->value)
@@ -41,7 +50,7 @@ class AdmissionRequestController extends Controller
             'sources' => AdmissionRequestSource::cases(),
             'selectedStatus' => $request->input('status', ''),
             'selectedSource' => $request->input('source_type', ''),
-            'totalPending' => AdmissionRequest::open()->count() + $legacyVisitCount,
+            'totalPending' => $admissionRequests->total() + $legacyVisitCount,
         ]);
     }
 
@@ -52,7 +61,7 @@ class AdmissionRequestController extends Controller
                 ->where('status', VisitStatus::ADMITTING->value)
                 ->latest('updated_at')
                 ->get(),
-            'wards' => Ward::active()->orderBy('name')->get(),
+            'wards' => tap(Ward::active(), fn ($query) => $this->inpatientScope->wards($query))->orderBy('name')->get(),
             'sources' => AdmissionRequestSource::cases(),
         ]);
     }
@@ -86,7 +95,7 @@ class AdmissionRequestController extends Controller
         }
 
         return redirect()
-            ->route('admin.admissions.requests.show', $admissionRequest)
+            ->route($this->workspaceRoutes->routeName('admin.admissions.requests.show'), $admissionRequest)
             ->with('success', __('admissions.request_messages.created'));
     }
 
@@ -108,6 +117,8 @@ class AdmissionRequestController extends Controller
         $availableBeds = Bed::with('ward')
             ->where('status', BedStatus::AVAILABLE)
             ->when($admissionRequest->requested_ward_id, fn ($query) => $query->where('ward_id', $admissionRequest->requested_ward_id))
+            ->when($this->inpatientScope->departmentId(), fn ($query, $departmentId) => $query
+                ->whereHas('ward', fn ($ward) => $ward->where('department_id', $departmentId)))
             ->orderBy('ward_id')
             ->orderBy('bed_number')
             ->get();
@@ -131,7 +142,7 @@ class AdmissionRequestController extends Controller
         $this->requests->reject($admissionRequest, $data['reason'], $request->user());
 
         return redirect()
-            ->route('admin.admissions.requests')
+            ->route($this->workspaceRoutes->routeName('admin.admissions.requests'))
             ->with('success', __('admissions.request_messages.rejected'));
     }
 
@@ -141,7 +152,7 @@ class AdmissionRequestController extends Controller
         $this->requests->cancel($admissionRequest, $data['reason'], $request->user());
 
         return redirect()
-            ->route('admin.admissions.requests')
+            ->route($this->workspaceRoutes->routeName('admin.admissions.requests'))
             ->with('success', __('admissions.request_messages.cancelled'));
     }
 
@@ -164,11 +175,11 @@ class AdmissionRequestController extends Controller
     {
         if ($admissionRequest->converted_at || $admissionRequest->admission) {
             return redirect()
-                ->route('admin.admissions.show', $admissionRequest->admission)
+                ->route($this->workspaceRoutes->routeName('admin.admissions.show'), $admissionRequest->admission)
                 ->with('success', __('admissions.request_messages.already_converted'));
         }
 
-        return redirect()->route('admin.admissions.create', [
+        return redirect()->route($this->workspaceRoutes->routeName('admin.admissions.create'), [
             'admission_request_id' => $admissionRequest->id,
             'visit_id' => $admissionRequest->visit_id,
             'bed_id' => $admissionRequest->reserved_bed_id,

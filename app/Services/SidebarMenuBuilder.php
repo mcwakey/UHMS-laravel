@@ -45,6 +45,22 @@ class SidebarMenuBuilder
             );
         }
 
+        if ($activeType === DepartmentType::EMERGENCY) {
+            return $this->finaliseSections(
+                $this->emergencySections($unreadNotifications),
+                $user,
+                $currentRouteName,
+            );
+        }
+
+        if ($activeType === DepartmentType::INPATIENT) {
+            return $this->finaliseSections(
+                $this->inpatientSections($unreadNotifications),
+                $user,
+                $currentRouteName,
+            );
+        }
+
         // Non-admin clinical staff get a focused consultation sidebar
         if ($user->isConsultationUser() && ! $user->isAdminUser()) {
             return $this->finaliseSections(
@@ -2080,12 +2096,12 @@ class SidebarMenuBuilder
             [
                 'title' => __('nursing.menu.reports'),
                 'items' => [
-                //     [
-                //     'label' => __('nursing.menu.opd_reports'), 'icon' => 'ti ti-report-analytics', 'route' => 'nursing.reports.index', 'active_patterns' => ['nursing.reports.*'], 'permission' => 'reports.view', 'module' => 'reports',
-                // ],
-                 [
-                    'label' => __('nursing.menu.service_rendering_reports'), 'icon' => 'ti ti-report-medical', 'route' => 'nursing.service-renderings.reports', 'active_patterns' => ['nursing.service-renderings.reports'], 'permission' => 'service_rendering.reports',
-                ]],
+                    //     [
+                    //     'label' => __('nursing.menu.opd_reports'), 'icon' => 'ti ti-report-analytics', 'route' => 'nursing.reports.index', 'active_patterns' => ['nursing.reports.*'], 'permission' => 'reports.view', 'module' => 'reports',
+                    // ],
+                    [
+                        'label' => __('nursing.menu.service_rendering_reports'), 'icon' => 'ti ti-report-medical', 'route' => 'nursing.service-renderings.reports', 'active_patterns' => ['nursing.service-renderings.reports'], 'permission' => 'service_rendering.reports',
+                    ]],
             ],
             [
                 'title' => __('nursing.menu.general'),
@@ -2387,6 +2403,278 @@ class SidebarMenuBuilder
     }
 
     // ------------------------------------------------------------------
+    // Emergency Department focused sidebar
+    // ------------------------------------------------------------------
+    protected function emergencySections(int $unreadNotifications): array
+    {
+        return [
+            [
+                'title' => __('emergency.menu.workspace'),
+                'items' => [[
+                    'label' => __('emergency.menu.dashboard'),
+                    'icon' => 'ti ti-layout-dashboard',
+                    'route' => 'emergency.dashboard',
+                    'active_patterns' => ['emergency.dashboard', 'emergency.dashboard.expanded', 'emergency.board'],
+                    'permission' => 'emergency.board.view',
+                ]],
+            ],
+            [
+                'title' => __('emergency.menu.command'),
+                'items' => [
+                    [
+                        'label' => __('emergency.menu.emergency_board'),
+                        'icon' => 'ti ti-ambulance',
+                        'route' => 'emergency.board',
+                        'active_patterns' => ['emergency.board', 'emergency.queue.*', 'emergency.cases.index'],
+                        'permission' => 'emergency.board.view',
+                    ],
+                    [
+                        'label' => __('emergency.menu.critical_queue'),
+                        'icon' => 'ti ti-alert-triangle',
+                        'route' => 'emergency.queue.critical',
+                        'active_patterns' => ['emergency.queue.critical'],
+                        'permission' => 'emergency.board.view',
+                    ],
+                    [
+                        'label' => __('emergency.menu.resuscitation'),
+                        'icon' => 'ti ti-heartbeat',
+                        'route' => 'emergency.resuscitation.index',
+                        'active_patterns' => ['emergency.resuscitation.*'],
+                        'permission' => 'emergency.board.view',
+                    ],
+                    [
+                        'label' => __('emergency.menu.observation'),
+                        'icon' => 'ti ti-eye-heart',
+                        'route' => 'emergency.observations.index',
+                        'active_patterns' => ['emergency.observations.*'],
+                        'permission' => 'emergency.board.view',
+                    ],
+                    [
+                        'label' => __('emergency.menu.new_case'),
+                        'icon' => 'ti ti-plus',
+                        'route' => 'emergency.cases.create',
+                        'active_patterns' => ['emergency.cases.create'],
+                        'permission' => 'emergency.case.create',
+                    ],
+                ],
+            ],
+            [
+                'title' => __('emergency.menu.patient_flow'),
+                'items' => [
+                    [
+                        'label' => __('emergency.menu.patients'),
+                        'icon' => 'ti ti-users',
+                        'route' => 'emergency.patients.index',
+                        'active_patterns' => ['emergency.patients.*'],
+                        'permission' => 'patients.view',
+                        'module' => 'patients',
+                    ],
+                    [
+                        'label' => __('emergency.menu.visits'),
+                        'icon' => 'ti ti-calendar-check',
+                        'route' => 'emergency.visits.index',
+                        'active_patterns' => ['emergency.visits.*'],
+                        'permission' => 'visits.view',
+                        'module' => 'visits',
+                    ],
+                    [
+                        'label' => __('emergency.menu.triage'),
+                        'icon' => 'ti ti-triangles',
+                        'route' => 'emergency.triage.index',
+                        'active_patterns' => ['emergency.triage.*', 'emergency.vitals.*'],
+                        'permission' => 'vitals.view',
+                        'module' => 'triage',
+                    ],
+                    [
+                        'label' => __('emergency.menu.consultations'),
+                        'icon' => 'ti ti-stethoscope',
+                        'route' => 'emergency.consultations.index',
+                        'active_patterns' => ['emergency.consultations.*'],
+                        'permission' => 'consultations.view',
+                        'module' => 'consultation',
+                    ],
+                ],
+            ],
+            [
+                'title' => __('emergency.menu.clinical_care'),
+                'items' => [
+                    [
+                        'label' => __('emergency.menu.medications'),
+                        'icon' => 'ti ti-prescription',
+                        'route' => 'emergency.medications.index',
+                        'active_patterns' => ['emergency.medications.*', 'emergency.medication-board', 'emergency.mar-chart'],
+                        'permission' => 'emergency.medication_board.view',
+                    ],
+                    [
+                        'label' => __('emergency.menu.investigations'),
+                        'icon' => 'ti ti-test-pipe',
+                        'route' => 'emergency.lab.requests.index',
+                        'active_patterns' => ['emergency.lab.requests.*', 'emergency.investigations.*'],
+                        'permission' => 'lab.requests.view',
+                        'module' => 'investigations',
+                    ],
+                    [
+                        'label' => __('emergency.menu.procedures'),
+                        'icon' => 'ti ti-clipboard-pulse',
+                        'route' => 'emergency.theatre.index',
+                        'active_patterns' => ['emergency.theatre.*', 'emergency.procedures.*'],
+                        'permission' => 'procedure.view',
+                    ],
+                    [
+                        'label' => __('emergency.menu.consumables'),
+                        'icon' => 'ti ti-package',
+                        'route' => 'emergency.consumables.index',
+                        'active_patterns' => ['emergency.consumables.*'],
+                        'permission' => 'emergency.board.view',
+                    ],
+                ],
+            ],
+            [
+                'title' => __('emergency.menu.disposition'),
+                'items' => [
+                    [
+                        'label' => __('emergency.menu.admissions'),
+                        'icon' => 'ti ti-bed',
+                        'route' => 'emergency.admissions.index',
+                        'active_patterns' => ['emergency.admissions.*'],
+                        'permission' => 'ward.view',
+                    ],
+                    [
+                        'label' => __('emergency.menu.handoffs'),
+                        'icon' => 'ti ti-arrows-exchange',
+                        'route' => 'emergency.journey.worklist',
+                        'active_patterns' => ['emergency.journey.*'],
+                        'visible' => fn (User $user) => app(DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== [],
+                    ],
+                ],
+            ],
+            [
+                'title' => __('emergency.menu.operations'),
+                'items' => [
+                    [
+                        'label' => __('emergency.menu.bays'),
+                        'icon' => 'ti ti-building-hospital',
+                        'route' => 'emergency.bays.index',
+                        'active_patterns' => ['emergency.bays.*'],
+                        'permission' => 'emergency.settings.manage',
+                    ],
+                    [
+                        'label' => __('emergency.menu.reports'),
+                        'icon' => 'ti ti-report-medical',
+                        'route' => 'emergency.reports.index',
+                        'active_patterns' => ['emergency.reports.*'],
+                        'permission' => 'emergency.reports.view',
+                        'module' => 'reports',
+                    ],
+                ],
+            ],
+            [
+                'title' => __('emergency.menu.general'),
+                'items' => [
+                    [
+                        'label' => __('emergency.menu.notifications'),
+                        'icon' => 'ti ti-bell',
+                        'route' => 'admin.notifications.index',
+                        'active_patterns' => ['admin.notifications.*'],
+                        'permission' => 'notifications.view',
+                        'module' => 'notifications',
+                        'badge' => $unreadNotifications > 0 ? $unreadNotifications : null,
+                    ],
+                    [
+                        'label' => __('emergency.menu.profile'),
+                        'icon' => 'ti ti-user-circle',
+                        'route' => 'admin.profile',
+                        'active_patterns' => ['admin.profile'],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    // ------------------------------------------------------------------
+    // Inpatient Department focused sidebar
+    // ------------------------------------------------------------------
+    protected function inpatientSections(int $unreadNotifications): array
+    {
+        return [
+            [
+                'title' => 'Inpatient Workspace',
+                'items' => [
+                    ['label' => __('inpatient.menu.dashboard'), 'icon' => 'ti ti-layout-dashboard', 'route' => 'inpatient.dashboard', 'active_patterns' => ['inpatient.dashboard', 'inpatient.dashboard.redirect']],
+                    // ['label' => __('inpatient.menu.active_admissions'), 'icon' => 'ti ti-bed', 'route' => 'inpatient.admissions.active', 'active_patterns' => ['inpatient.admissions.active', 'inpatient.admissions.show'], 'permission' => 'ward.view', 'module' => 'ward'],
+                    // ['label' => __('inpatient.menu.pending_admissions'), 'icon' => 'ti ti-clock-hour-4', 'route' => 'inpatient.admissions.pending', 'active_patterns' => ['inpatient.admissions.pending', 'inpatient.admissions.requests*'], 'permission' => 'admission.requests.view', 'module' => 'ward'],
+                    // ['label' => __('inpatient.menu.discharged'), 'icon' => 'ti ti-door-exit', 'route' => 'inpatient.admissions.discharged', 'active_patterns' => ['inpatient.admissions.discharged'], 'permission' => 'ward.view', 'module' => 'ward'],
+                ],
+            ],
+            [
+                'title' => 'Inpatient Workspace',
+                'items' => [
+                    // ['label' => __('inpatient.menu.dashboard'), 'icon' => 'ti ti-layout-dashboard', 'route' => 'inpatient.dashboard', 'active_patterns' => ['inpatient.dashboard', 'inpatient.dashboard.redirect']],
+                    ['label' => __('inpatient.menu.active_admissions'), 'icon' => 'ti ti-bed', 'route' => 'inpatient.admissions.active', 'active_patterns' => ['inpatient.admissions.active', 'inpatient.admissions.show'], 'permission' => 'ward.view', 'module' => 'ward'],
+                    ['label' => __('inpatient.menu.pending_admissions'), 'icon' => 'ti ti-clock-hour-4', 'route' => 'inpatient.admissions.pending', 'active_patterns' => ['inpatient.admissions.pending', 'inpatient.admissions.requests*'], 'permission' => 'admission.requests.view', 'module' => 'ward'],
+                    ['label' => __('inpatient.menu.discharged'), 'icon' => 'ti ti-door-exit', 'route' => 'inpatient.admissions.discharged', 'active_patterns' => ['inpatient.admissions.discharged'], 'permission' => 'ward.view', 'module' => 'ward'],
+                ],
+            ],
+            [
+                'title' => __('inpatient.menu.wards_beds'),
+                'items' => [
+                    ['label' => __('inpatient.menu.ward_overview'), 'icon' => 'ti ti-building-hospital', 'route' => 'inpatient.wards.index', 'active_patterns' => ['inpatient.wards.*'], 'permission' => 'ward.view', 'module' => 'ward'],
+                    ['label' => __('inpatient.menu.bed_availability'), 'icon' => 'ti ti-bed-flat', 'route' => 'inpatient.beds.availability', 'active_patterns' => ['inpatient.beds.*'], 'permission' => 'ward.view', 'module' => 'ward'],
+                ],
+            ],
+            [
+                'title' => __('inpatient.menu.patient_care'),
+                'items' => [
+                    ['label' => __('inpatient.menu.patients'), 'icon' => 'ti ti-users', 'route' => 'inpatient.patients.index', 'active_patterns' => ['inpatient.patients.*'], 'permission' => 'patients.view', 'module' => 'patients'],
+                    ['label' => __('inpatient.menu.visits'), 'icon' => 'ti ti-calendar-check', 'route' => 'inpatient.visits.index', 'active_patterns' => ['inpatient.visits.*'], 'permission' => 'visits.view', 'module' => 'visits'],
+                    ['label' => __('inpatient.menu.rounds'), 'icon' => 'ti ti-stethoscope', 'route' => 'inpatient.rounds.index', 'active_patterns' => ['inpatient.rounds.*'], 'permission' => 'ward.view', 'module' => 'ward'],
+                    ['label' => __('inpatient.menu.sessions'), 'icon' => 'ti ti-notes', 'route' => 'inpatient.sessions.index', 'active_patterns' => ['inpatient.sessions.*', 'inpatient.consultations.*'], 'permission' => 'consultations.view', 'module' => 'consultation'],
+                    ['label' => __('inpatient.menu.vitals'), 'icon' => 'ti ti-heart-rate-monitor', 'route' => 'inpatient.vitals.index', 'active_patterns' => ['inpatient.vitals.*'], 'permission' => 'vitals.view', 'module' => 'ward'],
+                    ['label' => __('inpatient.menu.tasks'), 'icon' => 'ti ti-list-check', 'route' => 'inpatient.tasks.index', 'active_patterns' => ['inpatient.tasks.*'], 'permission' => 'clinical_tasks.view', 'module' => 'ward'],
+                ],
+            ],
+            [
+                'title' => __('inpatient.menu.medication_services'),
+                'items' => [
+                    ['label' => __('inpatient.menu.medications'), 'icon' => 'ti ti-pill', 'route' => 'inpatient.medications.index', 'active_patterns' => ['inpatient.medications.*', 'inpatient.mar-chart.*', 'inpatient.admissions.medications.*'], 'permission' => 'admission.medication_board.view', 'module' => 'ward'],
+                    ['label' => __('inpatient.menu.treatments'), 'icon' => 'ti ti-first-aid-kit', 'route' => 'inpatient.treatments.index', 'active_patterns' => ['inpatient.treatments.*'], 'permission' => 'visits.view', 'module' => 'visits'],
+                    ['label' => __('inpatient.menu.investigations'), 'icon' => 'ti ti-test-pipe', 'route' => 'inpatient.investigations.index', 'active_patterns' => ['inpatient.investigations.*', 'inpatient.lab.*'], 'permission' => 'lab.requests.view', 'module' => 'investigations'],
+                    ['label' => __('inpatient.menu.procedures'), 'icon' => 'ti ti-clipboard-pulse', 'route' => 'inpatient.procedures.index', 'active_patterns' => ['inpatient.procedures.*', 'inpatient.theatre.*'], 'permission' => 'procedure.view'],
+                    ['label' => __('inpatient.menu.consumables'), 'icon' => 'ti ti-package', 'route' => 'inpatient.consumables.index', 'active_patterns' => ['inpatient.consumables.*'], 'permission' => 'ward.view', 'module' => 'ward'],
+                ],
+            ],
+            [
+                'title' => __('inpatient.menu.coordination'),
+                'items' => [
+                    ['label' => __('inpatient.menu.handoffs'), 'icon' => 'ti ti-arrows-exchange', 'route' => 'inpatient.handoffs.index', 'active_patterns' => ['inpatient.handoffs.*'], 'visible' => fn (User $user) => app(DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== []],
+                    ['label' => __('inpatient.menu.transfers'), 'icon' => 'ti ti-transfer', 'route' => 'inpatient.transfers.index', 'active_patterns' => ['inpatient.transfers.*'], 'permission' => 'beds.transfer', 'module' => 'ward'],
+                ],
+            ],
+            [
+                'title' => __('inpatient.menu.discharge'),
+                'items' => [
+                    ['label' => __('inpatient.menu.discharge_readiness'), 'icon' => 'ti ti-clipboard-check', 'route' => 'inpatient.discharges.readiness', 'active_patterns' => ['inpatient.discharges.readiness'], 'permission' => 'admission.discharge.plan', 'module' => 'ward'],
+                    ['label' => __('inpatient.menu.discharges'), 'icon' => 'ti ti-door-exit', 'route' => 'inpatient.discharges.index', 'active_patterns' => ['inpatient.discharges.*'], 'permission' => 'ward.view', 'module' => 'ward'],
+                    ['label' => __('inpatient.menu.readmissions'), 'icon' => 'ti ti-refresh', 'route' => 'inpatient.readmissions.index', 'active_patterns' => ['inpatient.readmissions.*'], 'permission' => 'admissions.readmit', 'module' => 'ward'],
+                ],
+            ],
+            [
+                'title' => __('inpatient.menu.reports'),
+                'items' => [[
+                    'label' => __('inpatient.menu.inpatient_reports'), 'icon' => 'ti ti-report-medical', 'route' => 'inpatient.reports.index', 'active_patterns' => ['inpatient.reports.*'], 'permission' => 'reports.view', 'module' => 'reports',
+                ]],
+            ],
+            [
+                'title' => __('inpatient.menu.general'),
+                'items' => [
+                    ['label' => __('inpatient.menu.notifications'), 'icon' => 'ti ti-bell', 'route' => 'admin.notifications.index', 'active_patterns' => ['admin.notifications.*'], 'permission' => 'notifications.view', 'module' => 'notifications', 'badge' => $unreadNotifications > 0 ? $unreadNotifications : null],
+                    ['label' => __('inpatient.menu.profile'), 'icon' => 'ti ti-user-circle', 'route' => 'admin.profile', 'active_patterns' => ['admin.profile']],
+                ],
+            ],
+        ];
+    }
+
+    // ------------------------------------------------------------------
     // Consultation / Doctor focused sidebar
     // ------------------------------------------------------------------
     protected function consultationSections(int $unreadNotifications): array
@@ -2447,9 +2735,9 @@ class SidebarMenuBuilder
                     [
                         'label' => 'Emergency',
                         'icon' => 'ti ti-ambulance',
-                        'route' => 'doctor.emergency.index',
+                        'route' => 'admin.emergency.board',
                         'active_patterns' => ['doctor.emergency.*', 'admin.emergency.*'],
-                        'permission' => 'emergency.view',
+                        'permission' => 'emergency.board.view',
                     ],
                     [
                         'label' => 'Admissions',
@@ -2485,7 +2773,7 @@ class SidebarMenuBuilder
                     //     'permission' => 'consultation.view_results',
                     // ],
                     [
-                        'label' => 'Procedures',
+                        'label' => 'Procedures Requests',
                         'icon' => 'ti ti-test-pipe',
                         'route' => 'doctor.theatre.index',
                         'active_patterns' => ['doctor.theatre.*', 'admin.theatre.*'],

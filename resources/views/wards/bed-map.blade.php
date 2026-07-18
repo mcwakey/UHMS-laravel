@@ -23,8 +23,8 @@
         <h4 class="fw-bold mb-0">{{ __('admissions.capacity_board') }}</h4>
     </div>
     <div class="text-end d-flex gap-2">
-        <a href="{{ route('admin.wards.index') }}" class="btn btn-outline-secondary btn-md fs-13"><i class="ti ti-building-hospital me-1"></i>{{ __('wards.wards') }}</a>
-        <a href="{{ route('admin.wards.beds') }}" class="btn btn-outline-info btn-md fs-13"><i class="ti ti-bed me-1"></i>{{ __('wards.manage_beds') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.wards.index') }}" class="btn btn-outline-secondary btn-md fs-13"><i class="ti ti-building-hospital me-1"></i>{{ __('wards.wards') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.wards.beds') }}" class="btn btn-outline-info btn-md fs-13"><i class="ti ti-bed me-1"></i>{{ __('wards.manage_beds') }}</a>
     </div>
 </div>
 
@@ -66,7 +66,7 @@
 
 <div class="card mb-3">
     <div class="card-body py-2">
-        <form method="GET" action="{{ route('admin.wards.bed-map') }}" class="row g-2 align-items-end">
+        <form method="GET" action="{{ $workspaceRoutes->route('admin.wards.bed-map') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
                 <label class="form-label small text-muted mb-1">{{ __('wards.ward') }}</label>
                 <select name="ward_id" class="form-select">
@@ -100,7 +100,7 @@
             </div>
             <div class="col-md-2 d-flex gap-2">
                 <button class="btn btn-primary flex-fill"><i class="ti ti-filter"></i></button>
-                <a href="{{ route('admin.wards.bed-map') }}" class="btn btn-outline-secondary"><i class="ti ti-x"></i></a>
+                <a href="{{ $workspaceRoutes->route('admin.wards.bed-map') }}" class="btn btn-outline-secondary"><i class="ti ti-x"></i></a>
             </div>
         </form>
     </div>
@@ -149,7 +149,7 @@
                     };
                 @endphp
                 @if($isAvailable && auth()->user()?->can('ward.admit'))
-                <a href="{{ route('admin.admissions.create', ['bed_id' => $bed->id]) }}" class="d-block text-decoration-none text-reset border rounded p-2 {{ $colorClass }} bed-tile bed-available">
+                <a href="{{ $workspaceRoutes->route('admin.admissions.create', ['bed_id' => $bed->id]) }}" class="d-block text-decoration-none text-reset border rounded p-2 {{ $colorClass }} bed-tile bed-available">
                 @else
                 <div class="border rounded p-2 {{ $colorClass }} bed-tile">
                 @endif
@@ -175,7 +175,7 @@
                                 $billingWarning = $bedAdmission->visit?->latestInvoice && (float) $bedAdmission->visit->latestInvoice->balance > 0;
                                 $expectedToday = $bedAdmission->expected_discharge_at?->isToday();
                             @endphp
-                            <a href="{{ route('admin.admissions.show', $bed->currentAdmission) }}" class="text-decoration-none fw-semibold">
+                            <a href="{{ $workspaceRoutes->route('admin.admissions.show', $bed->currentAdmission) }}" class="text-decoration-none fw-semibold">
                                 {{ Str::limit($bed->currentAdmission->patient->full_name, 24) }}
                             </a>
                             <div class="text-muted">{{ __('admissions.length_of_stay_label') }}: {{ $bed->currentAdmission->length_of_stay }}d</div>
@@ -212,7 +212,7 @@
                                 @endif
                             </div>
                         @elseif($bed->activeReservation)
-                            <a href="{{ route('admin.admissions.requests.show', $bed->activeReservation->admissionRequest) }}" class="text-decoration-none fw-semibold">
+                            <a href="{{ $workspaceRoutes->route('admin.admissions.requests.show', $bed->activeReservation->admissionRequest) }}" class="text-decoration-none fw-semibold">
                                 {{ Str::limit($bed->activeReservation->admissionRequest?->patient?->full_name, 24) }}
                             </a>
                             <div class="{{ $bed->activeReservation->expires_at && $bed->activeReservation->expires_at->lte(now()->addHour()) ? 'text-danger fw-semibold' : 'text-muted' }}">

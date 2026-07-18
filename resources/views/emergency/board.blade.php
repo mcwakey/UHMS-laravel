@@ -14,13 +14,16 @@
 @endpush
 
 @section('content')
+@php
+    $erRoute = fn ($name, $parameters = []) => $workspaceRoutes->route($name, $parameters);
+@endphp
 <x-page-header :title="__('emergency.board')" :description="__('emergency.board_description')" icon="ti-ambulance">
     <x-slot:actions>
         <button class="btn btn-outline-secondary btn-sm" type="button" onclick="window.UhmsInertia.reload({ preserveScroll: true })">
             <i class="ti ti-refresh me-1"></i>{{ __('emergency.refresh') }}
         </button>
         @can('emergency.case.create')
-            <a href="{{ route('admin.emergency.cases.create') }}" class="btn btn-primary btn-sm">
+            <a href="{{ $erRoute('admin.emergency.cases.create') }}" class="btn btn-primary btn-sm">
                 <i class="ti ti-plus me-1"></i>{{ __('emergency.new_case') }}
             </a>
         @endcan
@@ -38,7 +41,7 @@
 
 <div class="card mb-3">
     <div class="card-body">
-        <form class="row g-2 align-items-end" method="GET" action="{{ route('admin.emergency.board') }}">
+        <form class="row g-2 align-items-end" method="GET" action="{{ $erRoute('admin.emergency.board') }}">
             <div class="col-md-3">
                 <label class="form-label">{{ __('emergency.search') }}</label>
                 <input type="text" class="form-control" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="{{ __('emergency.search_placeholder') }}">
@@ -72,7 +75,7 @@
             </div>
             <div class="col-md-2 d-flex gap-2">
                 <button class="btn btn-primary w-100" type="submit">{{ __('common.filter') }}</button>
-                <a class="btn btn-outline-secondary" href="{{ route('admin.emergency.board') }}">{{ __('common.clear') }}</a>
+                <a class="btn btn-outline-secondary" href="{{ $erRoute('admin.emergency.board') }}">{{ __('common.clear') }}</a>
             </div>
         </form>
     </div>
@@ -138,9 +141,9 @@
                             </td>
                             <td class="text-end">
                                 <div class="d-flex flex-wrap justify-content-end gap-1">
-                                    <a href="{{ route('admin.emergency.cases.show', $case) }}" class="btn btn-sm btn-outline-primary">{{ __('emergency.open') }}</a>
+                                    <a href="{{ $erRoute('admin.emergency.cases.show', $case) }}" class="btn btn-sm btn-outline-primary">{{ __('emergency.open') }}</a>
                                     @if($case->visit)
-                                        <a href="{{ route('admin.emergency.mar-chart', $case->visit) }}" class="btn btn-sm btn-outline-danger">{{ __('emergency.mar') }}</a>
+                                        <a href="{{ $erRoute('admin.emergency.mar-chart', $case->visit) }}" class="btn btn-sm btn-outline-danger">{{ __('emergency.mar') }}</a>
                                     @endif
                                 </div>
                             </td>

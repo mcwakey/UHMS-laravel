@@ -52,11 +52,11 @@
                         <td class="text-end">
                             <div class="d-flex justify-content-end gap-1 flex-wrap">
                                 @can('admission.mar_chart.view')
-                                <a href="{{ route('admin.admissions.mar-chart', $admission) }}" class="btn btn-sm btn-primary">
+                                <a href="{{ $workspaceRoutes->route('admin.admissions.mar-chart', $admission) }}" class="btn btn-sm btn-primary">
                                     <i class="ti ti-layout-grid me-1"></i>{{ __('medication_administration.view_mar') }}
                                 </a>
                                 @endcan
-                                <a href="{{ route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-outline-primary">
+                                <a href="{{ $workspaceRoutes->route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-outline-primary">
                                     <i class="ti ti-list-details me-1"></i>{{ __('medication_administration.board') }}
                                 </a>
                             </div>

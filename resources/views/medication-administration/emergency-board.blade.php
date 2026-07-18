@@ -7,7 +7,7 @@
         <h4 class="fw-bold mb-1">{{ __('medication_administration.emergency_medication_board') }}</h4>
         <p class="text-muted mb-0">{{ __('medication_administration.emergency_board_description') }}</p>
     </div>
-    <a href="{{ route('admin.medication-administration.reports') }}" class="btn btn-outline-primary btn-sm">{{ __('medication_administration.reports') }}</a>
+    <a href="{{ $workspaceRoutes->route('admin.medication-administration.reports') }}" class="btn btn-outline-primary btn-sm">{{ __('medication_administration.reports') }}</a>
 </div>
 
 <div class="row g-3 mb-3">
@@ -58,7 +58,7 @@
                             <div class="d-flex justify-content-end gap-1 flex-wrap">
                                 @if($order->visit)
                                     @can('emergency.mar_chart.view')
-                                    <a href="{{ route('admin.emergency.mar-chart', $order->visit) }}" class="btn btn-sm btn-outline-primary">{{ __('medication_administration.view_mar') }}</a>
+                                    <a href="{{ $workspaceRoutes->route('admin.emergency.mar-chart', $order->visit) }}" class="btn btn-sm btn-outline-primary">{{ __('medication_administration.view_mar') }}</a>
                                     @endcan
                                 @endif
                                 @if(!$schedule->administration && !in_array($schedule->status, ['GIVEN','CANCELLED','VOIDED'], true))

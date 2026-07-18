@@ -8,11 +8,11 @@
     </span>
     <x-slot:actions>
         @can('admission.requests.create')
-        <a href="{{ route('admin.admissions.requests.create') }}" class="btn btn-primary btn-md fs-13">
+        <a href="{{ $workspaceRoutes->route('admin.admissions.requests.create') }}" class="btn btn-primary btn-md fs-13">
             <i class="ti ti-plus me-1"></i>{{ __('admissions.new_request') }}
         </a>
         @endcan
-        <a href="{{ route('admin.admissions.index') }}" class="btn btn-outline-secondary btn-md fs-13">
+        <a href="{{ $workspaceRoutes->route('admin.admissions.index') }}" class="btn btn-outline-secondary btn-md fs-13">
             <i class="ti ti-bed me-1"></i>{{ __('admissions.all_admissions') }}
         </a>
     </x-slot:actions>
@@ -35,7 +35,7 @@
 
 <div class="card mb-3">
     <div class="card-body py-2">
-        <form method="GET" action="{{ route('admin.admissions.requests') }}" class="row g-2 align-items-end">
+        <form method="GET" action="{{ $workspaceRoutes->route('admin.admissions.requests') }}" class="row g-2 align-items-end">
             <div class="col-md-4">
                 <label class="form-label small text-muted mb-1">{{ __('common.search') }}</label>
                 <input type="text" name="search" class="form-control" placeholder="{{ __('admissions.search_requests_ph') }}" value="{{ $searchQuery }}">
@@ -63,7 +63,7 @@
                     <i class="ti ti-search"></i>
                 </button>
                 @if($searchQuery || $selectedStatus || $selectedSource)
-                    <a href="{{ route('admin.admissions.requests') }}" class="btn btn-outline-secondary">
+                    <a href="{{ $workspaceRoutes->route('admin.admissions.requests') }}" class="btn btn-outline-secondary">
                         <i class="ti ti-x"></i>
                     </a>
                 @endif
@@ -126,12 +126,12 @@
                                 </td>
                                 <td class="text-end pe-3">
                                     <div class="d-inline-flex gap-1 flex-wrap justify-content-end">
-                                        <a href="{{ route('admin.admissions.requests.show', $admissionRequest) }}" class="btn btn-sm btn-outline-primary">
+                                        <a href="{{ $workspaceRoutes->route('admin.admissions.requests.show', $admissionRequest) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="ti ti-eye"></i>
                                         </a>
                                         @if($admissionRequest->status === \App\Enums\AdmissionRequestStatus::REQUESTED)
                                             @can('admission.requests.accept')
-                                            <form method="POST" action="{{ route('admin.admissions.requests.accept', $admissionRequest) }}">
+                                            <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.requests.accept', $admissionRequest) }}">
                                                 @csrf @method('PATCH')
                                                 <button class="btn btn-sm btn-success" title="{{ __('admissions.accept_request') }}">
                                                     <i class="ti ti-check"></i>
@@ -141,7 +141,7 @@
                                         @endif
                                         @if($admissionRequest->status->canConvert())
                                             @can('admission.requests.convert')
-                                            <form method="POST" action="{{ route('admin.admissions.requests.convert', $admissionRequest) }}">
+                                            <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.requests.convert', $admissionRequest) }}">
                                                 @csrf
                                                 <button class="btn btn-sm btn-warning" title="{{ __('admissions.convert_to_admission') }}">
                                                     <i class="ti ti-bed"></i>
@@ -169,7 +169,7 @@
                                 <td class="text-end pe-3">
                                     <div class="d-inline-flex gap-1">
                                         @can('admission.requests.create')
-                                        <form method="POST" action="{{ route('admin.admissions.requests.store') }}">
+                                        <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.requests.store') }}">
                                             @csrf
                                             <input type="hidden" name="visit_id" value="{{ $visit->id }}">
                                             <input type="hidden" name="source_type" value="direct">
@@ -180,7 +180,7 @@
                                         </form>
                                         @endcan
                                         @can('ward.admit')
-                                        <a href="{{ route('admin.admissions.create', ['visit_id' => $visit->id]) }}" class="btn btn-sm btn-warning">
+                                        <a href="{{ $workspaceRoutes->route('admin.admissions.create', ['visit_id' => $visit->id]) }}" class="btn btn-sm btn-warning">
                                             <i class="ti ti-bed me-1"></i>{{ __('admissions.admit_now') }}
                                         </a>
                                         @endcan

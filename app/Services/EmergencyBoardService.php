@@ -2,11 +2,20 @@
 
 namespace App\Services;
 
+use App\Enums\DepartmentType;
 use App\Models\ClinicalTask;
 use App\Models\EmergencyCase;
+use App\Services\Department\DepartmentContextSwitcherService;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 
 class EmergencyBoardService
 {
+    public function __construct(
+        private DepartmentContextSwitcherService $departments,
+        private Request $request,
+    ) {}
+
     public function board(array $filters = []): array
     {
         $query = EmergencyCase::query()
@@ -22,6 +31,8 @@ class EmergencyBoardService
             ])
             ->active()
             ->latest('arrival_time');
+
+        $this->scopeToActiveEmergencyDepartment($query);
 
         if (! empty($filters['triage_category'])) {
             $query->where('triage_category', $filters['triage_category']);
@@ -57,13 +68,46 @@ class EmergencyBoardService
 
     public function counts(): array
     {
+        $active = EmergencyCase::active();
+        $waitingTriage = EmergencyCase::active()->where('emergency_status', EmergencyCase::STATUS_WAITING_TRIAGE);
+        $red = EmergencyCase::active()->where('triage_category', EmergencyCase::TRIAGE_RED);
+        $underCare = EmergencyCase::active()->where('emergency_status', EmergencyCase::STATUS_UNDER_CARE);
+        $observation = EmergencyCase::active()->where('emergency_status', EmergencyCase::STATUS_OBSERVATION);
+        $readyForDisposition = EmergencyCase::active()->where('emergency_status', EmergencyCase::STATUS_READY_FOR_DISPOSITION);
+
+        foreach ([$active, $waitingTriage, $red, $underCare, $observation, $readyForDisposition] as $query) {
+            $this->scopeToActiveEmergencyDepartment($query);
+        }
+
         return [
-            'active' => EmergencyCase::active()->count(),
-            'waiting_triage' => EmergencyCase::active()->where('emergency_status', EmergencyCase::STATUS_WAITING_TRIAGE)->count(),
-            'red' => EmergencyCase::active()->where('triage_category', EmergencyCase::TRIAGE_RED)->count(),
-            'under_care' => EmergencyCase::active()->where('emergency_status', EmergencyCase::STATUS_UNDER_CARE)->count(),
-            'observation' => EmergencyCase::active()->where('emergency_status', EmergencyCase::STATUS_OBSERVATION)->count(),
-            'ready_for_disposition' => EmergencyCase::active()->where('emergency_status', EmergencyCase::STATUS_READY_FOR_DISPOSITION)->count(),
+            'active' => $active->count(),
+            'waiting_triage' => $waitingTriage->count(),
+            'red' => $red->count(),
+            'under_care' => $underCare->count(),
+            'observation' => $observation->count(),
+            'ready_for_disposition' => $readyForDisposition->count(),
         ];
+    }
+
+    private function scopeToActiveEmergencyDepartment(Builder $query): void
+    {
+        $user = $this->request->user();
+        if (! $user || $user->isAdminUser()) {
+            return;
+        }
+
+        $department = $this->departments->currentDepartment($user, $this->request);
+        $type = $department?->type instanceof DepartmentType
+            ? $department->type
+            : DepartmentType::tryFrom((string) ($department?->type ?? ''));
+
+        if (! $department || $type !== DepartmentType::EMERGENCY) {
+            return;
+        }
+
+        $query->where(function (Builder $scope) use ($department) {
+            $scope->whereHas('visit', fn (Builder $visit) => $visit->where('current_department_id', $department->id))
+                ->orWhereHas('activeEmergencySession', fn (Builder $session) => $session->where('department_id', $department->id));
+        });
     }
 }

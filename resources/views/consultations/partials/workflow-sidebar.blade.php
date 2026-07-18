@@ -66,21 +66,8 @@
                                     <i class="ti ti-history me-1"></i>{{ __('consultations.workspace.preview') }}
                                 </button>
                             @endcan
-                            <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
+                            <a href="{{ $workspaceRoutes->route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
                                 <i class="ti ti-eye me-1"></i>{{ __('consultations.workspace.view_visit') }}
-                            </a>
-                            @php($canUseFollowUpQuickAction = $canCreateEntries && $selectedRoute)
-                            <a href="{{ $canUseFollowUpQuickAction ? '#follow-up-section' : '#' }}"
-                               class="btn btn-outline-primary btn-sm {{ $canUseFollowUpQuickAction ? '' : 'disabled' }}"
-                               @if($canUseFollowUpQuickAction) data-bs-toggle="pill" @endif
-                               role="tab"
-                               aria-disabled="{{ $canUseFollowUpQuickAction ? 'false' : 'true' }}"
-                               @if(! $canUseFollowUpQuickAction) tabindex="-1" @endif
-                               title="{{ $selectedRoute ? __('consultations.workspace.set_next_appointment') : __('consultations.workspace.select_session_first') }}">
-                                <i class="ti ti-calendar-plus me-1"></i>{{ $followUpAppointment ? __('consultations.workspace.update_next_appointment') : __('consultations.workspace.next_appointment') }}
-                                @if($followUpAppointment)
-                                    <span class="badge bg-primary-subtle text-primary ms-1">{{ __('consultations.workspace.set') }}</span>
-                                @endif
                             </a>
                             @if($canCreateEntries)
                             <button type="button" class="btn btn-outline-purple btn-sm" data-bs-toggle="modal" data-bs-target="#savePatternModal">
@@ -93,7 +80,7 @@
                             @foreach($visit->status->allowedTransitions() as $nextStatus)
                                 @if($nextStatus === \App\Enums\VisitStatus::ADMITTING)
                                 {{-- Special admit button → go straight to admission form --}}
-                                <form method="POST" action="{{ route('admin.consultations.transition', $visit) }}">
+                                <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.transition', $visit) }}">
                                     @csrf @method('PATCH')
                                     <input type="hidden" name="status" value="{{ $nextStatus->value }}">
                                     <button type="submit" class="btn btn-warning btn-sm w-100"
@@ -103,7 +90,7 @@
                                 </form>
                                 @elseif($nextStatus === \App\Enums\VisitStatus::CANCELLED)
 
-                                <form method="POST" action="{{ route('admin.consultations.transition', $visit) }}">
+                                <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.transition', $visit) }}">
                                     @csrf @method('PATCH')
                                     <input type="hidden" name="status" value="{{ $nextStatus->value }}">
                                     <button type="submit" class="btn btn-danger btn-sm w-100"
@@ -113,7 +100,7 @@
                                 </form>
 
                                 {{-- @else
-                                <form method="POST" action="{{ route('admin.consultations.transition', $visit) }}">
+                                <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.transition', $visit) }}">
                                     @csrf @method('PATCH')
                                     <input type="hidden" name="status" value="{{ $nextStatus->value }}">
                                     <button type="submit" class="btn btn-{{ $nextStatus->color() }} btn-sm w-100"
@@ -127,6 +114,18 @@
                             @if($visit->status === \App\Enums\VisitStatus::CONSULTING)
                             <hr class="my-1">
                             <small class="text-muted fw-bold px-1">{{ __('consultations.workspace.session_routing') }}</small>
+                            @php($canUseFollowUpQuickAction = $canCreateEntries && $selectedRoute)
+                            <button type="button"
+                               class="btn btn-outline-secondary btn-sm {{ $canUseFollowUpQuickAction ? '' : 'disabled' }}"
+                               @if($canUseFollowUpQuickAction) data-consultation-action="open-follow-up-modal" @endif
+                               @disabled(! $canUseFollowUpQuickAction)
+                               aria-disabled="{{ $canUseFollowUpQuickAction ? 'false' : 'true' }}"
+                               title="{{ $selectedRoute ? __('consultations.workspace.set_next_appointment') : __('consultations.workspace.select_session_first') }}">
+                                <i class="ti ti-calendar-plus me-1"></i>{{ $followUpAppointment ? __('consultations.workspace.update_next_appointment') : __('consultations.workspace.next_appointment') }}
+                                @if($followUpAppointment)
+                                    <span class="badge bg-primary-subtle text-primary ms-1">{{ __('consultations.workspace.set') }}</span>
+                                @endif
+                            </button>
                             <button type="button"
                                     class="btn btn-outline-indigo btn-sm w-100 mb-1"
                                     @if($canCreateEntries) data-bs-toggle="modal" data-bs-target="#sendSessionModal" @endif
@@ -142,4 +141,3 @@
                     </div>
                 </div>
             </div>
-            

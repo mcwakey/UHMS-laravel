@@ -34,7 +34,7 @@ class EmergencyPatientIdentityController extends Controller
             );
 
             return redirect()
-                ->route('admin.emergency.cases.show', $emergencyCase->fresh())
+                ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.emergency.cases.show'), $emergencyCase->fresh())
                 ->with('success', __('messages.emergency.identity_confirmed', ['number' => $mergeRequest->mainPatient->patient_number]));
         } catch (\InvalidArgumentException $e) {
             return back()->withInput()->withErrors(['confirmed_patient_id' => $e->getMessage()]);
@@ -76,7 +76,7 @@ class EmergencyPatientIdentityController extends Controller
             );
 
             return redirect()
-                ->route('admin.emergency.cases.show', $emergencyCase->fresh())
+                ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.emergency.cases.show'), $emergencyCase->fresh())
                 ->with('success', __('messages.emergency.patient_registered', ['number' => $mergeRequest->mainPatient->patient_number]));
         } catch (\InvalidArgumentException $e) {
             return back()->withInput()->withErrors(['first_name' => $e->getMessage()]);

@@ -4,6 +4,8 @@ namespace App\Services\Admissions;
 
 use App\Enums\AdmissionRequestSource;
 use App\Enums\AdmissionRequestStatus;
+use App\Enums\BedReservationStatus;
+use App\Enums\BedStatus;
 use App\Enums\LogModule;
 use App\Enums\LogSeverity;
 use App\Models\Admission;
@@ -13,6 +15,7 @@ use App\Models\User;
 use App\Models\Visit;
 use App\Services\ActivityLogService;
 use App\Services\AdmissionService;
+use App\Services\InpatientWorkspaceScope;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -23,6 +26,7 @@ class AdmissionRequestService
         private AdmissionService $admissions,
         private ActivityLogService $logger,
         private BedWorkflowService $beds,
+        private InpatientWorkspaceScope $inpatientScope,
     ) {}
 
     public function list(array $filters = []): LengthAwarePaginator
@@ -36,6 +40,7 @@ class AdmissionRequestService
             'reservedBed.ward',
             'admission',
         ]);
+        $this->inpatientScope->admissionRequests($query);
 
         if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -152,7 +157,7 @@ class AdmissionRequestService
             'reason' => $reason,
         ]);
 
-        $this->beds->releaseActiveReservationsForRequest($request, $user, \App\Enums\BedReservationStatus::CANCELLED, $reason);
+        $this->beds->releaseActiveReservationsForRequest($request, $user, BedReservationStatus::CANCELLED, $reason);
         $this->log($request->fresh(), 'ADMISSION_REQUEST_CANCELLED', 'Admission request cancelled', $user, [
             'reason' => $reason,
             'severity' => LogSeverity::NOTICE,
@@ -212,8 +217,8 @@ class AdmissionRequestService
 
         $bed = Bed::findOrFail($bedId);
         if (
-            $bed->status !== \App\Enums\BedStatus::AVAILABLE
-            && ! ($bed->status === \App\Enums\BedStatus::RESERVED && (int) $request->reserved_bed_id === (int) $bed->id)
+            $bed->status !== BedStatus::AVAILABLE
+            && ! ($bed->status === BedStatus::RESERVED && (int) $request->reserved_bed_id === (int) $bed->id)
         ) {
             throw ValidationException::withMessages([
                 'bed_id' => __('admissions.request_errors.bed_not_available'),

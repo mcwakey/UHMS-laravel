@@ -1,18 +1,18 @@
 @php
     $header = $chart['header'];
     $selectedDate = $chart['selected_date'];
-    $contextRoute = function ($date) use ($chart) {
+    $contextRoute = function ($date) use ($chart, $workspaceRoutes) {
         $params = ['date' => $date instanceof \Illuminate\Support\Carbon ? $date->toDateString() : $date];
 
         if ($chart['context'] === 'admission' && $chart['admission']) {
-            return route('admin.admissions.mar-chart', array_merge(['admission' => $chart['admission']], $params));
+            return $workspaceRoutes->route('admin.admissions.mar-chart', array_merge(['admission' => $chart['admission']], $params));
         }
 
         if ($chart['context'] === 'emergency') {
-            return route('admin.emergency.mar-chart', array_merge(['visit' => $chart['visit']], $params));
+            return $workspaceRoutes->route('admin.emergency.mar-chart', array_merge(['visit' => $chart['visit']], $params));
         }
 
-        return route('admin.visits.mar-chart', array_merge(['visit' => $chart['visit']], $params));
+        return $workspaceRoutes->route('admin.visits.mar-chart', array_merge(['visit' => $chart['visit']], $params));
     };
 @endphp
 
@@ -234,7 +234,7 @@
                             @if($cell['administration'])
                             <div class="modal-footer d-block">
                                 @can('medication_administration.correct')
-                                <form method="POST" action="{{ route('admin.medication-administration.records.correct', $cell['administration']) }}" class="row g-2 align-items-end">
+                                <form method="POST" action="{{ $workspaceRoutes->route('admin.medication-administration.records.correct', $cell['administration']) }}" class="row g-2 align-items-end">
                                     @csrf
                                     @method('PATCH')
                                     <div class="col-md-3"><label class="form-label">{{ __('medication_administration.status') }}</label><select name="status" class="form-select form-select-sm"><option value="{{ $cell['administration']->status }}">{{ str_replace('_', ' ', $cell['administration']->status) }}</option><option value="GIVEN">Given</option><option value="PARTIALLY_GIVEN">Partially given</option><option value="HELD">Held</option><option value="MISSED">Missed</option><option value="REFUSED">Refused</option><option value="SKIPPED">Skipped</option><option value="NOT_GIVEN">Not given</option></select></div>
@@ -257,7 +257,7 @@
         @php $order = $prn['order']; @endphp
         <div class="modal fade" id="mar-prn-{{ $order->id }}" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                <form method="POST" action="{{ route('admin.medication-administration.orders.prn', $order) }}" class="modal-content js-med-admin-form">
+                <form method="POST" action="{{ $workspaceRoutes->route('admin.medication-administration.orders.prn', $order) }}" class="modal-content js-med-admin-form">
                     @csrf
                     <div class="modal-header"><h5 class="modal-title">{{ __('medication_administration.administer_prn_sos_medication') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
                     <div class="modal-body">

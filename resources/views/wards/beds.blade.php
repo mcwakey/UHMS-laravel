@@ -11,15 +11,15 @@
         @can('beds.manage')
         <button type="button" class="btn btn-primary btn-md fs-13" data-bs-toggle="modal" data-bs-target="#addBedModal"><i class="ti ti-plus me-1"></i>{{ __('wards.new_bed') }}</button>
         @endcan
-        <a href="{{ route('admin.wards.index') }}" class="btn btn-outline-secondary btn-md fs-13"><i class="ti ti-building-hospital me-1"></i>{{ __('wards.wards') }}</a>
-        <a href="{{ route('admin.wards.bed-map') }}" class="btn btn-outline-success btn-md fs-13"><i class="ti ti-map me-1"></i>{{ __('wards.bed_map') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.wards.index') }}" class="btn btn-outline-secondary btn-md fs-13"><i class="ti ti-building-hospital me-1"></i>{{ __('wards.wards') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.wards.bed-map') }}" class="btn btn-outline-success btn-md fs-13"><i class="ti ti-map me-1"></i>{{ __('wards.bed_map') }}</a>
     </div>
 </div>
 
 <!-- Filters -->
 <div class="card mb-3">
     <div class="card-body py-2">
-        <form method="GET" action="{{ route('admin.wards.beds') }}" class="row g-2 align-items-end">
+        <form method="GET" action="{{ $workspaceRoutes->route('admin.wards.beds') }}" class="row g-2 align-items-end">
             <div class="col-md-2">
                 <select name="ward_id" class="form-select">
                     <option value="">{{ __('wards.all_wards') }}</option>
@@ -46,7 +46,7 @@
             </div>
             <div class="col-md-auto">
                 <button type="submit" class="btn btn-outline-primary btn-md"><i class="ti ti-filter me-1"></i>{{ __('common.filter') }}</button>
-                <a href="{{ route('admin.wards.beds') }}" class="btn btn-outline-secondary btn-md ms-1"><i class="ti ti-x me-1"></i>{{ __('common.clear') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.wards.beds') }}" class="btn btn-outline-secondary btn-md ms-1"><i class="ti ti-x me-1"></i>{{ __('common.clear') }}</a>
             </div>
         </form>
     </div>
@@ -79,11 +79,11 @@
                         <td><span class="badge badge-soft-{{ $bed->status->color() }}">{{ $bed->status->translatedLabel() }}</span></td>
                         <td>
                             @if($bed->currentAdmission)
-                                <a href="{{ route('admin.admissions.show', $bed->currentAdmission) }}" class="text-decoration-none">
+                                <a href="{{ $workspaceRoutes->route('admin.admissions.show', $bed->currentAdmission) }}" class="text-decoration-none">
                                     {{ $bed->currentAdmission->patient->full_name }}
                                 </a>
                             @elseif($bed->activeReservation)
-                                <a href="{{ route('admin.admissions.requests.show', $bed->activeReservation->admissionRequest) }}" class="text-decoration-none">
+                                <a href="{{ $workspaceRoutes->route('admin.admissions.requests.show', $bed->activeReservation->admissionRequest) }}" class="text-decoration-none">
                                     {{ $bed->activeReservation->admissionRequest?->patient?->full_name ?? __('statuses.default.reserved') }}
                                 </a>
                                 <div><small class="text-muted">{{ __('admissions.bed_reservation_statuses.active') }}</small></div>
@@ -134,7 +134,7 @@
 @can('beds.manage')
 <div class="modal fade" id="addBedModal" tabindex="-1">
     <div class="modal-dialog">
-        <form method="POST" action="{{ route('admin.wards.beds.store') }}">
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.wards.beds.store') }}">
             @csrf
             <div class="modal-content">
                 <div class="modal-header">
@@ -189,7 +189,7 @@
 @foreach($beds as $bed)
 <div class="modal fade" id="editBedModal{{ $bed->id }}" tabindex="-1">
     <div class="modal-dialog">
-        <form method="POST" action="{{ route('admin.wards.beds.update', $bed) }}">
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.wards.beds.update', $bed) }}">
             @csrf @method('PUT')
             <div class="modal-content">
                 <div class="modal-header">
@@ -247,7 +247,7 @@
 @foreach($beds as $bed)
 <div class="modal fade" id="bedStatusModal{{ $bed->id }}" tabindex="-1">
     <div class="modal-dialog">
-        <form method="POST" action="{{ route('admin.wards.beds.status', $bed) }}">
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.wards.beds.status', $bed) }}">
             @csrf @method('PATCH')
             <div class="modal-content">
                 <div class="modal-header">

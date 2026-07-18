@@ -2,9 +2,12 @@
 @section('title', __('emergency.bays_title'))
 
 @section('content')
+@php
+    $erRoute = fn ($name, $parameters = []) => $workspaceRoutes->route($name, $parameters);
+@endphp
 <x-page-header :title="__('emergency.bays_title')" :description="__('emergency.bays_description')" icon="ti-layout-grid">
     <x-slot:actions>
-        <a href="{{ route('admin.emergency.board') }}" class="btn btn-outline-secondary btn-sm">{{ __('emergency.emergency_board_btn') }}</a>
+        <a href="{{ $erRoute('admin.emergency.board') }}" class="btn btn-outline-secondary btn-sm">{{ __('emergency.emergency_board_btn') }}</a>
     </x-slot:actions>
 </x-page-header>
 
@@ -20,7 +23,7 @@
         <div class="card">
             <div class="card-header"><h5 class="card-title mb-0">{{ __('emergency.create_bay') }}</h5></div>
             <div class="card-body">
-                <form method="POST" action="{{ route('admin.emergency.bays.store') }}" class="row g-3">
+                <form method="POST" action="{{ $erRoute('admin.emergency.bays.store') }}" class="row g-3">
                     @csrf
                     <div class="col-12">
                         <label class="form-label">{{ __('emergency.name') }}</label>
@@ -87,7 +90,7 @@
                                     </td>
                                     <td>
                                         @if($bay->activeCase)
-                                            <a href="{{ route('admin.emergency.cases.show', $bay->activeCase) }}">{{ $bay->activeCase->emergency_number }}</a>
+                                            <a href="{{ $erRoute('admin.emergency.cases.show', $bay->activeCase) }}">{{ $bay->activeCase->emergency_number }}</a>
                                             <div class="small text-muted">{{ $bay->activeCase->patient->full_name ?? __('emergency.unknown_patient') }}</div>
                                         @else
                                             <span class="text-muted">—</span>

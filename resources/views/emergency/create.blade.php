@@ -2,9 +2,12 @@
 @section('title', __('emergency.create_title'))
 
 @section('content')
+@php
+    $erRoute = fn ($name, $parameters = []) => $workspaceRoutes->route($name, $parameters);
+@endphp
 <x-page-header :title="__('emergency.create_title')" :description="__('emergency.create_description')" icon="ti-ambulance">
     <x-slot:actions>
-        <a href="{{ route('admin.emergency.board') }}" class="btn btn-outline-secondary btn-sm">{{ __('emergency.back_to_board') }}</a>
+        <a href="{{ $erRoute('admin.emergency.board') }}" class="btn btn-outline-secondary btn-sm">{{ __('emergency.back_to_board') }}</a>
     </x-slot:actions>
 </x-page-header>
 
@@ -19,7 +22,7 @@
     </div>
 @endif
 
-<form method="POST" action="{{ route('admin.emergency.cases.store') }}">
+<form method="POST" action="{{ $erRoute('admin.emergency.cases.store') }}">
     @csrf
     @if(!empty($existingVisit))
         <input type="hidden" name="visit_id" value="{{ $existingVisit->id }}">
@@ -163,7 +166,7 @@
                     </div>
                 </div>
                 <div class="card-footer d-flex justify-content-end gap-2">
-                    <a href="{{ route('admin.emergency.board') }}" class="btn btn-outline-secondary">{{ __('emergency.cancel') }}</a>
+                    <a href="{{ $erRoute('admin.emergency.board') }}" class="btn btn-outline-secondary">{{ __('emergency.cancel') }}</a>
                     <button class="btn btn-primary" type="submit">{{ __('emergency.create_case') }}</button>
                 </div>
             </div>

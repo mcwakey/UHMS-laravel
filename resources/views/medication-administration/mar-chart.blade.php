@@ -47,11 +47,11 @@
         </button>
         @endcan
         @if($chart['admission'])
-            <a href="{{ route('admin.admissions.medications.show', $chart['admission']) }}" class="btn btn-outline-primary btn-sm">{{ __('medication_administration.medication_board') }}</a>
-            <a href="{{ route('admin.admissions.show', $chart['admission']) }}" class="btn btn-outline-secondary btn-sm">{{ __('medication_administration.admission') }}</a>
+            <a href="{{ $workspaceRoutes->route('admin.admissions.medications.show', $chart['admission']) }}" class="btn btn-outline-primary btn-sm">{{ __('medication_administration.medication_board') }}</a>
+            <a href="{{ $workspaceRoutes->route('admin.admissions.show', $chart['admission']) }}" class="btn btn-outline-secondary btn-sm">{{ __('medication_administration.admission') }}</a>
         @else
-            <a href="{{ route('admin.emergency.medication-board') }}" class="btn btn-outline-primary btn-sm">{{ __('medication_administration.emergency_board') }}</a>
-            <a href="{{ route('admin.visits.preview', $chart['visit']) }}" class="btn btn-outline-secondary btn-sm">{{ __('medication_administration.visit_preview') }}</a>
+            <a href="{{ $workspaceRoutes->route('admin.emergency.medication-board') }}" class="btn btn-outline-primary btn-sm">{{ __('medication_administration.emergency_board') }}</a>
+            <a href="{{ $workspaceRoutes->route('admin.visits.preview', $chart['visit']) }}" class="btn btn-outline-secondary btn-sm">{{ __('medication_administration.visit_preview') }}</a>
         @endif
     </div>
 </div>

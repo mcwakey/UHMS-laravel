@@ -56,6 +56,15 @@ class PermissionsAuditCommandTest extends TestCase
         $this->assertSame('consultation', \App\Support\PermissionMeta::module('consultation.preview'));
     }
 
+    public function test_appointment_checkin_permission_is_grouped_with_appointment_permissions(): void
+    {
+        $this->assertSame('appointments', \App\Support\PermissionMeta::module('appointments.checkin'));
+        $this->assertSame(
+            'Check in a confirmed appointment and create its patient visit.',
+            \App\Support\PermissionMeta::description('appointments.checkin')
+        );
+    }
+
     public function test_permission_meta_explains_permissions(): void
     {
         $this->assertSame(

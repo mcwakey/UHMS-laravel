@@ -41,6 +41,7 @@ class AsyncPageBehaviorTest extends TestCase
         foreach ([
             'appointments.view',
             'appointments.create',
+            'appointments.checkin',
             'appointments.edit',
             'invoices.view',
             'payments.create',

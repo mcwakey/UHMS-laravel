@@ -35,6 +35,18 @@ class DepartmentDashboardController extends Controller
             return redirect()->route($this->workspaceRoutes->dashboardRouteName());
         }
 
+        return $this->renderDashboard($request);
+    }
+
+    /** Render the existing department dashboard inside a dedicated workspace. */
+    public function workspace(Request $request)
+    {
+        return $this->renderDashboard($request);
+    }
+
+    private function renderDashboard(Request $request)
+    {
+
         $context = $this->contextResolver->resolve($request->user(), $request);
         $key = $context->dashboard_key;
         $resolvedKey = $this->resolver->resolveKey($request->user());

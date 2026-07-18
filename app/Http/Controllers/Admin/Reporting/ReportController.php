@@ -28,6 +28,7 @@ use App\Models\MedicalRecord;
 use App\Models\Patient;
 use App\Models\Prescription;
 use App\Models\User;
+use App\Services\InpatientWorkspaceScope;
 use App\Services\ReportService;
 use App\Services\StatementService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -259,6 +260,9 @@ class ReportController extends Controller
     public function admissions(Request $request)
     {
         $filters = $request->only(['date_from', 'date_to', 'ward_id', 'status']);
+        if ($request->routeIs('inpatient.*')) {
+            $filters['department_id'] = app(InpatientWorkspaceScope::class)->departmentId();
+        }
         $data = $this->reportService->admissionsReport($filters);
         $admissionStatuses = AdmissionStatus::cases();
 
@@ -275,6 +279,9 @@ class ReportController extends Controller
     public function discharges(Request $request)
     {
         $filters = $request->only(['date_from', 'date_to', 'ward_id']);
+        if ($request->routeIs('inpatient.*')) {
+            $filters['department_id'] = app(InpatientWorkspaceScope::class)->departmentId();
+        }
         $data = $this->reportService->dischargesReport($filters);
 
         if ($request->export === 'excel') {

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Patient;
+use App\Models\Visit;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -10,7 +11,8 @@ use Illuminate\Support\Facades\Storage;
 class PatientService
 {
     public function __construct(
-        private PatientIdGeneratorService $idGenerator
+        private PatientIdGeneratorService $idGenerator,
+        private InpatientWorkspaceScope $inpatientScope,
     ) {}
 
     public function list(array $filters = []): LengthAwarePaginator
@@ -22,54 +24,56 @@ class PatientService
             'insurances.insuranceTier',
         ])
             ->select('patients.*')
-            ->addSelect(['last_visit_date' => \App\Models\Visit::select('visit_date')
+            ->addSelect(['last_visit_date' => Visit::select('visit_date')
                 ->whereColumn('patient_id', 'patients.id')
                 ->latest('visit_date')
-                ->limit(1)
+                ->limit(1),
             ]);
 
-        if (!empty($filters['search'])) {
+        $this->inpatientScope->patients($query);
+
+        if (! empty($filters['search'])) {
             $query->search($filters['search']);
         }
 
         // Gender and blood_group filters removed from patient list (kept in DB).
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         } else {
             $query->where('status', '!=', 'archived');
         }
 
-        if (!empty($filters['city'])) {
-            $query->where('city', 'like', '%' . $filters['city'] . '%');
+        if (! empty($filters['city'])) {
+            $query->where('city', 'like', '%'.$filters['city'].'%');
         }
 
-        if (!empty($filters['insurance_provider_id'])) {
+        if (! empty($filters['insurance_provider_id'])) {
             $query->whereHas('insurances', function ($q) use ($filters) {
                 $q->where('insurance_provider_id', $filters['insurance_provider_id'])
-                  ->where('is_active', true);
+                    ->where('is_active', true);
             });
         }
 
-        if (!empty($filters['visit_from'])) {
+        if (! empty($filters['visit_from'])) {
             $query->whereExists(function ($q) use ($filters) {
                 $q->selectRaw('1')
-                  ->from('visits')
-                  ->whereColumn('visits.patient_id', 'patients.id')
-                  ->whereNull('visits.deleted_at')
-                  ->havingRaw('MAX(visit_date) >= ?', [$filters['visit_from']])
-                  ->groupBy('visits.patient_id');
+                    ->from('visits')
+                    ->whereColumn('visits.patient_id', 'patients.id')
+                    ->whereNull('visits.deleted_at')
+                    ->havingRaw('MAX(visit_date) >= ?', [$filters['visit_from']])
+                    ->groupBy('visits.patient_id');
             });
         }
 
-        if (!empty($filters['visit_to'])) {
+        if (! empty($filters['visit_to'])) {
             $query->whereExists(function ($q) use ($filters) {
                 $q->selectRaw('1')
-                  ->from('visits')
-                  ->whereColumn('visits.patient_id', 'patients.id')
-                  ->whereNull('visits.deleted_at')
-                  ->havingRaw('MAX(visit_date) <= ?', [$filters['visit_to']])
-                  ->groupBy('visits.patient_id');
+                    ->from('visits')
+                    ->whereColumn('visits.patient_id', 'patients.id')
+                    ->whereNull('visits.deleted_at')
+                    ->havingRaw('MAX(visit_date) <= ?', [$filters['visit_to']])
+                    ->groupBy('visits.patient_id');
             });
         }
 
@@ -105,6 +109,7 @@ class PatientService
         }
 
         $patient->update($data);
+
         return $patient->fresh();
     }
 
@@ -128,18 +133,19 @@ class PatientService
         $patient->status = $patient->status === 'active' ? 'inactive' : 'active';
         $patient->is_active = $patient->status === 'active';
         $patient->save();
+
         return $patient;
     }
 
     public function markDeceased(Patient $patient, array $data): Patient
     {
         $patient->update([
-            'status'              => 'deceased',
-            'is_deceased'         => true,
-            'deceased_at'         => $data['deceased_at'],
-            'cause_of_death'      => $data['cause_of_death'] ?? null,
-            'deceased_notes'      => $data['deceased_notes'] ?? null,
-            'marked_deceased_by'  => Auth::id(),
+            'status' => 'deceased',
+            'is_deceased' => true,
+            'deceased_at' => $data['deceased_at'],
+            'cause_of_death' => $data['cause_of_death'] ?? null,
+            'deceased_notes' => $data['deceased_notes'] ?? null,
+            'marked_deceased_by' => Auth::id(),
         ]);
 
         return $patient->fresh();

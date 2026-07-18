@@ -28,7 +28,16 @@
                         <span class="text-primary fw-bold fs-5">{{ strtoupper(substr($patient->first_name, 0, 1) . substr($patient->last_name, 0, 1)) }}</span>
                     </div>
                     <div>
-                        <h5 class="mb-0 fw-bold">{{ $patient->full_name }}</h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 class="mb-0 fw-bold">{{ $patient->full_name }}</h5>
+
+                            <a href="{{ $workspaceRoutes->route('admin.patients.show', $patient) }}"
+                            class="btn btn-sm btn-outline-primary patient-card__profile-btn ms-4"
+                            title="{{ __('patients.view_patient_profile') }}">
+                                <i class="ti ti-external-link"></i>
+                            </a>
+                        </div>
+
                         <div class="text-muted small">
                             {{ $patient->patient_number }} &middot;
                             {{ __('patients.age_years', ['age' => $patient->age]) }} &middot;

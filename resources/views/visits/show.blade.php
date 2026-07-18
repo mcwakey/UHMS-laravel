@@ -15,7 +15,7 @@
     <x-slot:actions>
         @can('emergency.case.create')
         @if(!in_array($visit->status, [\App\Enums\VisitStatus::COMPLETED, \App\Enums\VisitStatus::CANCELLED, \App\Enums\VisitStatus::NO_SHOW], true))
-        <a href="{{ route('admin.emergency.cases.create', ['visit_id' => $visit->id]) }}" class="btn btn-outline-danger btn-md">
+        <a href="{{ $workspaceRoutes->route('admin.emergency.cases.create', ['visit_id' => $visit->id]) }}" class="btn btn-outline-danger btn-md">
             <i class="ti ti-ambulance me-1"></i>{{ __('visits.create_emergency_case') }}
         </a>
         @endif
@@ -49,17 +49,17 @@
         <a href="{{ $workspaceRoutes->route('admin.visits.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i> </a>
     </h6>
     <div class="flex-grow-1">
-        {{-- <a href="{{ route('admin.visits.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>Create New Visit</a> --}}
+        {{-- <a href="{{ $workspaceRoutes->route('admin.visits.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>Create New Visit</a> --}}
         <h4 class="fw-bold mb-0">{{ __('visits.visit_number') }}{{ $visit->visit_number }}</h4>
         <small class="text-muted">{{ $visit->created_at->format('d M Y, h:i A') }} {{ $visit->createdBy?->full_name }}</small>
     </div>
     <div class="d-flex gap-2">
-        {{-- <a href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary btn-md">
+        {{-- <a href="{{ $workspaceRoutes->route('admin.visits.index') }}" class="btn btn-outline-secondary btn-md">
             <i class="ti ti-arrow-left me-1"></i>Back to Visits
         </a> --}}
         @can('emergency.case.create')
         @if(!in_array($visit->status, [\App\Enums\VisitStatus::COMPLETED, \App\Enums\VisitStatus::CANCELLED, \App\Enums\VisitStatus::NO_SHOW], true))
-        <a href="{{ route('admin.emergency.cases.create', ['visit_id' => $visit->id]) }}" class="btn btn-outline-danger btn-md">
+        <a href="{{ $workspaceRoutes->route('admin.emergency.cases.create', ['visit_id' => $visit->id]) }}" class="btn btn-outline-danger btn-md">
             <i class="ti ti-ambulance me-1"></i>{{ __('visits.create_emergency_case') }}
         </a>
         @endif
@@ -75,7 +75,7 @@
         </a>
         @endcan --}}
         {{-- @can('invoices.create')
-        <a href="{{ route('admin.billing.invoices.create', ['visit_id' => $visit->id]) }}" class="btn btn-success btn-md">
+        <a href="{{ $workspaceRoutes->route('admin.billing.invoices.create', ['visit_id' => $visit->id]) }}" class="btn btn-success btn-md">
             <i class="ti ti-file-invoice me-1"></i>Bill Visit
         </a>
         @endcan --}}
@@ -238,11 +238,11 @@
                 @endif --}}
 
                 <div>
-                    <a href="{{ route('admin.triage.show', $visit) }}" class="btn btn-outline-info btn-sm">
+                    <a href="{{ $workspaceRoutes->route('admin.triage.show', $visit) }}" class="btn btn-outline-info btn-sm">
                         <i class="ti ti-eye me-1"></i>{{ __('visits.full_triage_report') }}
                     </a>
                     @if($visit->status === \App\Enums\VisitStatus::TRIAGE)
-                        <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-info btn-sm">
+                        <a href="{{ $workspaceRoutes->route('admin.triage.create', $visit) }}" class="btn btn-info btn-sm">
                             <i class="ti ti-pencil me-1"></i>{{ __('visits.re_assess') }}
                         </a>
                     @endif
@@ -317,7 +317,7 @@
                         <h6 class="fw-bold mb-0"><i class="ti ti-route me-1 text-primary"></i>{{ __('visits.current_routing') }}</h6>
                         @can('consultations.view')
                         @if($activeConsultationRoute)
-                            <a href="{{ route('admin.consultations.routes.show', [$visit, $activeConsultationRoute]) }}" class="btn btn-sm btn-outline-primary">
+                            <a href="{{ $workspaceRoutes->route('admin.consultations.routes.show', [$visit, $activeConsultationRoute]) }}" class="btn btn-sm btn-outline-primary">
                                 <i class="ti ti-external-link me-1"></i>{{ __('visits.open_active_session') }}
                             </a>
                         @endif
@@ -384,11 +384,11 @@
                                     <td>
                                         <div class="d-flex flex-wrap gap-1">
                                             @can('consultations.view')
-                                            <a href="{{ route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-xs btn-outline-primary">{{ __('visits.open_btn') }}</a>
+                                            <a href="{{ $workspaceRoutes->route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-xs btn-outline-primary">{{ __('visits.open_btn') }}</a>
                                             @endcan
                                             @can('consultation.routes.activate')
                                             @if(in_array($route->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
-                                            <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $route]) }}">
+                                            <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.activate', [$visit, $route]) }}">
                                                 @csrf
                                                 <input type="hidden" name="return_to_visit" value="1">
                                                 <input type="hidden" name="reason" value="{{ __('consultations.reopen.visit_details_reason') }}">
@@ -399,7 +399,7 @@
 
                                             @can('consultation.routes.complete')
                                             @if($route->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
-                                            <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $route]) }}">
+                                            <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.complete', [$visit, $route]) }}">
                                                 @csrf
                                                 <input type="hidden" name="return_to_visit" value="1">
                                                 <button type="submit" class="btn btn-xs btn-success" onclick="return confirm('{{ __('visits.complete_session_confirm') }}')">{{ __('visits.complete_btn') }}</button>
@@ -409,7 +409,7 @@
 
                                             @can('consultation.routes.cancel')
                                             @if(in_array($route->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
-                                            <form method="POST" action="{{ route('admin.consultations.routes.cancel', [$visit, $route]) }}">
+                                            <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.cancel', [$visit, $route]) }}">
                                                 @csrf
                                                 <button type="submit" class="btn btn-xs btn-outline-danger" onclick="return confirm('{{ __('visits.cancel_route_confirm') }}')">{{ __('visits.cancel_btn') }}</button>
                                             </form>
@@ -417,7 +417,7 @@
                                             @endcan
                                             @can('consultations.reopen')
                                             @if($route->status === \App\Models\VisitConsultationRoute::STATUS_COMPLETED && $routeReopenEligibility?->allowed)
-                                            <form method="POST" action="{{ route('admin.consultations.routes.reopen', [$visit, $route]) }}">
+                                            <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.reopen', [$visit, $route]) }}">
                                                 @csrf
                                                 <input type="hidden" name="return_to_visit" value="1">
                                                 <input type="hidden" name="reason" value="{{ __('consultations.reopen.visit_details_reason') }}">
@@ -441,7 +441,7 @@
                         <i class="ti ti-plus text-primary"></i>
                         <h6 class="fw-bold mb-0">{{ __('visits.queue_another_dept') }}</h6>
                     </div>
-                    <form method="POST" action="{{ route('admin.consultations.routes.store', $visit) }}" class="row g-2 align-items-end js-queue-consultation-route-form">
+                    <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.store', $visit) }}" class="row g-2 align-items-end js-queue-consultation-route-form">
                         @csrf
                         <div class="col-md-3">
                             <label class="form-label small">{{ __('visits.consultation_dept') }}</label>
@@ -508,11 +508,11 @@
                 {{-- TRIAGE: primary action is triage assessment form --}}
                 @elseif($isTriage)
                 <div class="mb-3">
-                    <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-info">
+                    <a href="{{ $workspaceRoutes->route('admin.triage.create', $visit) }}" class="btn btn-info">
                         <i class="ti ti-stethoscope me-1"></i>{{ __('visits.start_triage') }}
                     </a>
                     @if($visit->triage)
-                        <a href="{{ route('admin.triage.show', $visit) }}" class="btn btn-outline-info btn-sm ms-2">
+                        <a href="{{ $workspaceRoutes->route('admin.triage.show', $visit) }}" class="btn btn-outline-info btn-sm ms-2">
                             <i class="ti ti-eye me-1"></i>{{ __('visits.view_triage_record') }}
                         </a>
                     @endif
@@ -676,7 +676,7 @@
                     <span class="badge bg-secondary ms-2">{{ $visitInvoice->invoice_number }}</span>
                 </h6>
                 @can('billing.view')
-                <a href="{{ route('admin.billing.invoices.show', $visitInvoice) }}" class="btn btn-sm btn-outline-primary">
+                <a href="{{ $workspaceRoutes->route('admin.billing.invoices.show', $visitInvoice) }}" class="btn btn-sm btn-outline-primary">
                     <i class="ti ti-external-link me-1"></i>{{ __('visits.open_invoice') }}
                 </a>
                 @endcan
@@ -1180,7 +1180,7 @@ document.addEventListener('DOMContentLoaded', () => {
 @endcan
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const endpointTemplate = @json(route('admin.departments.visit-options', ['department' => '__ID__']));
+    const endpointTemplate = @json($workspaceRoutes->route('admin.departments.visit-options', ['department' => '__ID__']));
 
     function optionList(select, placeholder, rows, labelFn, includePlaceholder = true) {
         select.innerHTML = '';

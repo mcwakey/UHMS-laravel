@@ -64,26 +64,26 @@
                         </td> -->
                         <td>
                             <div class="d-flex flex-wrap gap-1">
-                                <a href="{{ route('admin.consultations.routes.show', [$visit, $session]) }}" class="btn btn-xs btn-outline-primary">
+                                <a href="{{ $workspaceRoutes->route('admin.consultations.routes.show', [$visit, $session]) }}" class="btn btn-xs btn-outline-primary">
                                     <i class="ti ti-eye"></i> Open
                                 </a>
                                 @if($session->status !== \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
                                 @endif
                                 @if($canCreateEntries)
                                 @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
-                                    <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $session]) }}">
+                                    <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.activate', [$visit, $session]) }}">
                                         @csrf
                                         <button class="btn btn-xs btn-primary" type="submit">Start</button>
                                     </form>
                                 @endif
                                 @if($session->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
-                                    <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $session]) }}">
+                                    <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.complete', [$visit, $session]) }}">
                                         @csrf
                                         <button class="btn btn-xs btn-success" type="submit" data-confirm="{{ __('consultations.workspace.complete_current_session') }}">{{ __('consultations.workspace.complete_current_session') }}</button>
                                     </form>
                                 @endif
                                 @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
-                                    <form method="POST" action="{{ route('admin.consultations.routes.cancel', [$visit, $session]) }}">
+                                    <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.cancel', [$visit, $session]) }}">
                                         @csrf
                                         <button class="btn btn-xs btn-outline-danger" type="submit" data-confirm="Cancel this queued session?">Cancel</button>
                                     </form>
@@ -140,7 +140,7 @@
             @if($selectedRoute)
                 @if(in_array($selectedRoute->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
                     @if($canCreateEntries)
-                    <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $selectedRoute]) }}">
+                    <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.activate', [$visit, $selectedRoute]) }}">
                         @csrf
                         <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-player-play me-1"></i>{{ __('consultations.workspace.start_session') }}</button>
                     </form>
@@ -148,7 +148,7 @@
                 @endif
                 @if($selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
                     @if($canCreateEntries)
-                    <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $selectedRoute]) }}">
+                    <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.complete', [$visit, $selectedRoute]) }}">
                         @csrf
                         <button type="submit" class="btn btn-success btn-sm" data-confirm="{{ __('consultations.workspace.complete_session_confirm') }}">
                             <i class="ti ti-check me-1"></i>{{ __('consultations.workspace.complete_current_session') }}
@@ -188,7 +188,7 @@
             @if($selectedRoute)
                 @if(in_array($selectedRoute->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
                     @if($canCreateEntries)
-                    <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $selectedRoute]) }}">
+                    <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.activate', [$visit, $selectedRoute]) }}">
                         @csrf
                         <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-player-play me-1"></i>Start Session</button>
                     </form>
@@ -196,7 +196,7 @@
                 @endif
                 @if($selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
                     @if($canCreateEntries)
-                    <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $selectedRoute]) }}">
+                    <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.complete', [$visit, $selectedRoute]) }}">
                         @csrf
                         <button type="submit" class="btn btn-success btn-sm" data-confirm="Complete this consultation session?">
                             <i class="ti ti-check me-1"></i>Complete Current Session
@@ -342,7 +342,7 @@
         </div>
 
         <div class="mt-3">
-            <a href="{{ route('admin.emergency.cases.show', $emergencyCase) }}" class="btn btn-sm btn-outline-danger">
+            <a href="{{ $workspaceRoutes->route('admin.emergency.cases.show', $emergencyCase) }}" class="btn btn-sm btn-outline-danger">
                 <i class="ti ti-external-link me-1"></i>Open Emergency Control Sheet
             </a>
         </div>
@@ -431,7 +431,7 @@
             <div class="text-muted small py-1">
                 <i class="ti ti-heartbeat me-1"></i>{{ __('consultations.workspace.no_vitals') }}
                 @can('vitals.create')
-                    <a href="{{ route('admin.vitals.create', ['visit_id' => $visit->id]) }}" class="ms-2">{{ __('consultations.workspace.record_now') }}</a>
+                    <a href="{{ $workspaceRoutes->route('admin.vitals.create', ['visit_id' => $visit->id]) }}" class="ms-2">{{ __('consultations.workspace.record_now') }}</a>
                 @endcan
             </div>
         @endif

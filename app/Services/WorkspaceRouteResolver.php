@@ -33,6 +33,16 @@ class WorkspaceRouteResolver
         return $this->isType(DepartmentType::NURSING);
     }
 
+    public function isEmergency(): bool
+    {
+        return $this->isType(DepartmentType::EMERGENCY);
+    }
+
+    public function isInpatient(): bool
+    {
+        return $this->isType(DepartmentType::INPATIENT);
+    }
+
     public function isConsultation(): bool
     {
         $user = $this->request->user();
@@ -42,7 +52,7 @@ class WorkspaceRouteResolver
 
     public function isDepartmentWorkspace(): bool
     {
-        return $this->isRecords() || $this->isNursing() || $this->isConsultation();
+        return $this->isRecords() || $this->isNursing() || $this->isEmergency() || $this->isInpatient() || $this->isConsultation();
     }
 
     public function dashboardRouteName(): string
@@ -50,6 +60,8 @@ class WorkspaceRouteResolver
         return match (true) {
             $this->isRecords() => 'records.dashboard',
             $this->isNursing() => 'nursing.dashboard',
+            $this->isEmergency() => 'emergency.dashboard',
+            $this->isInpatient() => 'inpatient.dashboard',
             $this->isConsultation() => 'doctor.dashboard',
             default => 'admin.my-dashboard',
         };
@@ -60,6 +72,8 @@ class WorkspaceRouteResolver
         $prefix = match (true) {
             $this->isRecords() => 'records.',
             $this->isNursing() => 'nursing.',
+            $this->isEmergency() => 'emergency.',
+            $this->isInpatient() => 'inpatient.',
             $this->isConsultation() => 'doctor.',
             default => null,
         };
@@ -68,10 +82,33 @@ class WorkspaceRouteResolver
             return $genericRoute;
         }
 
-        $candidate = Str::startsWith($genericRoute, 'admin.')
-            ? Str::after($genericRoute, 'admin.')
-            : $genericRoute;
-        $candidate = $prefix.$candidate;
+        if ($this->isInpatient()) {
+            $candidate = match ($genericRoute) {
+                'admin.wards.beds' => 'inpatient.beds.index',
+                'admin.wards.beds.store' => 'inpatient.beds.store',
+                'admin.wards.beds.update' => 'inpatient.beds.update',
+                'admin.wards.beds.status' => 'inpatient.beds.status',
+                'admin.wards.bed-map' => 'inpatient.beds.availability',
+                'admin.wards.consumables.index' => 'inpatient.consumables.index',
+                'admin.journey.worklist' => 'inpatient.handoffs.index',
+                'admin.journey.worklist.refresh' => 'inpatient.handoffs.refresh',
+                default => Str::startsWith($genericRoute, 'admin.consultations.')
+                    ? 'inpatient.sessions.'.Str::after($genericRoute, 'admin.consultations.')
+                    : (Str::startsWith($genericRoute, 'admin.')
+                        ? 'inpatient.'.Str::after($genericRoute, 'admin.')
+                        : 'inpatient.'.$genericRoute),
+            };
+        } elseif ($this->isEmergency() && Str::startsWith($genericRoute, 'admin.emergency.')) {
+            $candidate = match ($genericRoute) {
+                'admin.emergency.triage.show' => 'emergency.case-triage.show',
+                default => 'emergency.'.Str::after($genericRoute, 'admin.emergency.'),
+            };
+        } else {
+            $candidate = Str::startsWith($genericRoute, 'admin.')
+                ? Str::after($genericRoute, 'admin.')
+                : $genericRoute;
+            $candidate = $prefix.$candidate;
+        }
 
         return Route::has($candidate) ? $candidate : $genericRoute;
     }
@@ -138,7 +175,12 @@ class WorkspaceRouteResolver
 
     public function opdQueue(): string
     {
-        return $this->isNursing() ? route('nursing.opd.queue') : $this->visitIndex();
+        return match (true) {
+            $this->isNursing() => route('nursing.opd.queue'),
+            $this->isEmergency() => route('emergency.queue.index'),
+            $this->isInpatient() => route('inpatient.admissions.active'),
+            default => $this->visitIndex(),
+        };
     }
 
     public function opdVisitShow(Visit $visit): string
@@ -153,23 +195,46 @@ class WorkspaceRouteResolver
 
     public function taskIndex(): string
     {
-        return $this->isNursing() ? route('nursing.tasks.index') : $this->dashboard();
+        return match (true) {
+            $this->isNursing() && Route::has('nursing.tasks.index') => route('nursing.tasks.index'),
+            $this->isInpatient() && Route::has('inpatient.tasks.index') => route('inpatient.tasks.index'),
+            default => $this->dashboard(),
+        };
     }
 
     public function treatmentIndex(): string
     {
-        return $this->isNursing() ? route('nursing.treatments.index') : $this->dashboard();
+        return match (true) {
+            $this->isNursing() && Route::has('nursing.treatments.index') => route('nursing.treatments.index'),
+            $this->isInpatient() && Route::has('inpatient.treatments.index') => route('inpatient.treatments.index'),
+            default => $this->dashboard(),
+        };
     }
 
     public function handoffIndex(): string
     {
-        return $this->isNursing() ? route('nursing.handoffs.index') : $this->route('admin.journey.worklist');
+        return match (true) {
+            $this->isNursing() => route('nursing.handoffs.index'),
+            $this->isEmergency() => route('emergency.journey.worklist'),
+            $this->isInpatient() => route('inpatient.handoffs.index'),
+            default => $this->route('admin.journey.worklist'),
+        };
     }
 
     public function handoffRouteName(string $action = 'index'): string
     {
         if ($this->isNursing()) {
             return $action === 'refresh' ? 'nursing.handoffs.refresh' : 'nursing.handoffs.'.$action;
+        }
+
+        if ($this->isEmergency()) {
+            return $action === 'refresh' ? 'emergency.journey.worklist.refresh' : 'emergency.journey.worklist';
+        }
+
+        if ($this->isInpatient()) {
+            return $action === 'refresh' ? 'inpatient.handoffs.refresh' : ($action === 'index'
+                ? 'inpatient.handoffs.index'
+                : 'inpatient.handoffs.'.$action);
         }
 
         return $action === 'index' ? 'admin.journey.worklist' : ($action === 'refresh'
@@ -185,6 +250,28 @@ class WorkspaceRouteResolver
                 'workspaceKey' => 'generic',
                 'workspaceRoutePrefix' => 'admin.',
                 'breadcrumbs' => null,
+            ];
+        }
+
+        if ($this->isEmergency()) {
+            return [
+                'workspaceKey' => 'emergency',
+                'workspaceRoutePrefix' => 'emergency.',
+                'workspaceTitle' => __('emergency.workspace.title'),
+                'workspaceDepartment' => $this->departments->currentDepartment($this->request->user(), $this->request),
+                'workspaceScope' => 'emergency',
+                'breadcrumbs' => $this->breadcrumbs(),
+            ];
+        }
+
+        if ($this->isInpatient()) {
+            return [
+                'workspaceKey' => 'inpatient',
+                'workspaceRoutePrefix' => 'inpatient.',
+                'workspaceTitle' => __('inpatient.workspace.title'),
+                'workspaceDepartment' => $this->departments->currentDepartment($this->request->user(), $this->request),
+                'workspaceScope' => 'normal_admission',
+                'breadcrumbs' => $this->breadcrumbs(),
             ];
         }
 
@@ -216,6 +303,14 @@ class WorkspaceRouteResolver
     {
         if ($this->isNursing()) {
             return $this->nursingBreadcrumbs();
+        }
+
+        if ($this->isEmergency()) {
+            return $this->emergencyBreadcrumbs();
+        }
+
+        if ($this->isInpatient()) {
+            return $this->inpatientBreadcrumbs();
         }
 
         if ($this->isConsultation()) {
@@ -364,6 +459,124 @@ class WorkspaceRouteResolver
             };
 
             $crumbs[] = ['label' => __('doctor.breadcrumbs.'.$detailKey), 'url' => null];
+        }
+
+        return $crumbs;
+    }
+
+    /** @return list<array{label:string,url:?string}> */
+    private function emergencyBreadcrumbs(): array
+    {
+        $name = (string) $this->request->route()?->getName();
+        $crumbs = [[
+            'label' => __('emergency.breadcrumbs.emergency'),
+            'url' => in_array($name, ['emergency.dashboard', 'emergency.dashboard.expanded', 'emergency.board'], true)
+                ? null
+                : route('emergency.dashboard'),
+        ]];
+
+        $resource = match (true) {
+            Str::startsWith($name, 'emergency.queue') => ['queue', 'emergency.queue.index'],
+            Str::startsWith($name, 'emergency.patients') => ['patients', 'emergency.patients.index'],
+            Str::startsWith($name, 'emergency.visits') => ['visits', 'emergency.visits.index'],
+            Str::startsWith($name, 'emergency.cases'), Str::startsWith($name, 'emergency.resuscitation'), Str::startsWith($name, 'emergency.observations') => ['cases', 'emergency.cases.index'],
+            Str::startsWith($name, 'emergency.triage'), Str::startsWith($name, 'emergency.vitals') => ['triage', 'emergency.triage.index'],
+            Str::startsWith($name, 'emergency.consultations') => ['consultations', 'emergency.consultations.index'],
+            Str::startsWith($name, 'emergency.medications'), Str::startsWith($name, 'emergency.medication-board'), Str::startsWith($name, 'emergency.mar-chart') => ['medications', 'emergency.medications.index'],
+            Str::startsWith($name, 'emergency.lab.requests'), Str::startsWith($name, 'emergency.investigations') => ['investigations', 'emergency.lab.requests.index'],
+            Str::startsWith($name, 'emergency.theatre'), Str::startsWith($name, 'emergency.procedures') => ['procedures', 'emergency.theatre.index'],
+            Str::startsWith($name, 'emergency.admissions') => ['admissions', 'emergency.admissions.index'],
+            Str::startsWith($name, 'emergency.journey') => ['handoffs', 'emergency.journey.worklist'],
+            Str::startsWith($name, 'emergency.bays') => ['bays', 'emergency.bays.index'],
+            Str::startsWith($name, 'emergency.consumables') => ['consumables', 'emergency.consumables.index'],
+            Str::startsWith($name, 'emergency.reports') => ['reports', 'emergency.reports.index'],
+            default => null,
+        };
+
+        if (! $resource) {
+            return $crumbs;
+        }
+
+        [$key, $indexRoute] = $resource;
+        $isIndex = $name === $indexRoute || in_array($name, [
+            'emergency.dashboard', 'emergency.dashboard.expanded', 'emergency.board',
+            'emergency.queue.critical', 'emergency.queue.resuscitation', 'emergency.queue.urgent',
+            'emergency.queue.observation', 'emergency.queue.awaiting-disposition',
+        ], true);
+
+        $crumbs[] = [
+            'label' => __('emergency.breadcrumbs.'.$key),
+            'url' => $isIndex || ! Route::has($indexRoute) ? null : route($indexRoute),
+        ];
+
+        if (! $isIndex) {
+            $action = Str::afterLast($name, '.');
+            $crumbs[] = ['label' => __('emergency.breadcrumbs.'.match ($action) {
+                'create' => 'create',
+                'edit' => 'edit',
+                'history' => 'history',
+                default => 'details',
+            }), 'url' => null];
+        }
+
+        return $crumbs;
+    }
+
+    /** @return list<array{label:string,url:?string}> */
+    private function inpatientBreadcrumbs(): array
+    {
+        $name = (string) $this->request->route()?->getName();
+        $crumbs = [[
+            'label' => __('inpatient.breadcrumbs.inpatient'),
+            'url' => in_array($name, ['inpatient.dashboard', 'inpatient.dashboard.redirect'], true)
+                ? null
+                : route('inpatient.dashboard'),
+        ]];
+
+        $resource = match (true) {
+            Str::startsWith($name, 'inpatient.admissions') => ['admissions', 'inpatient.admissions.index'],
+            Str::startsWith($name, 'inpatient.wards') => ['wards', 'inpatient.wards.index'],
+            Str::startsWith($name, 'inpatient.beds') => ['beds', 'inpatient.beds.index'],
+            Str::startsWith($name, 'inpatient.patients') => ['patients', 'inpatient.patients.index'],
+            Str::startsWith($name, 'inpatient.visits') => ['visits', 'inpatient.visits.index'],
+            Str::startsWith($name, 'inpatient.rounds') => ['rounds', 'inpatient.rounds.index'],
+            Str::startsWith($name, 'inpatient.sessions'), Str::startsWith($name, 'inpatient.consultations') => ['sessions', 'inpatient.sessions.index'],
+            Str::startsWith($name, 'inpatient.vitals') => ['vitals', 'inpatient.vitals.index'],
+            Str::startsWith($name, 'inpatient.tasks') => ['tasks', 'inpatient.tasks.index'],
+            Str::startsWith($name, 'inpatient.medications'), Str::startsWith($name, 'inpatient.mar-chart') => ['medications', 'inpatient.medications.index'],
+            Str::startsWith($name, 'inpatient.treatments') => ['treatments', 'inpatient.treatments.index'],
+            Str::startsWith($name, 'inpatient.procedures'), Str::startsWith($name, 'inpatient.theatre') => ['procedures', 'inpatient.procedures.index'],
+            Str::startsWith($name, 'inpatient.investigations'), Str::startsWith($name, 'inpatient.lab') => ['investigations', 'inpatient.investigations.index'],
+            Str::startsWith($name, 'inpatient.handoffs') => ['handoffs', 'inpatient.handoffs.index'],
+            Str::startsWith($name, 'inpatient.transfers') => ['transfers', 'inpatient.transfers.index'],
+            Str::startsWith($name, 'inpatient.discharges') => ['discharges', 'inpatient.discharges.index'],
+            Str::startsWith($name, 'inpatient.readmissions') => ['readmissions', 'inpatient.readmissions.index'],
+            Str::startsWith($name, 'inpatient.reports') => ['reports', 'inpatient.reports.index'],
+            default => null,
+        };
+
+        if (! $resource) {
+            return $crumbs;
+        }
+
+        [$key, $indexRoute] = $resource;
+        $isIndex = $name === $indexRoute || in_array($name, [
+            'inpatient.admissions.pending', 'inpatient.admissions.active', 'inpatient.admissions.discharged',
+            'inpatient.beds.availability', 'inpatient.discharges.readiness', 'inpatient.readmissions.index',
+        ], true);
+
+        $crumbs[] = [
+            'label' => __('inpatient.breadcrumbs.'.$key),
+            'url' => $isIndex || ! Route::has($indexRoute) ? null : route($indexRoute),
+        ];
+
+        if (! $isIndex) {
+            $action = Str::afterLast($name, '.');
+            $crumbs[] = ['label' => __('inpatient.breadcrumbs.'.match ($action) {
+                'create' => 'create',
+                'edit' => 'edit',
+                default => 'details',
+            }), 'url' => null];
         }
 
         return $crumbs;

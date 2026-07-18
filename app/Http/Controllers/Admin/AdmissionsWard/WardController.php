@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\AdmissionsWard;
 
+use App\Enums\BedStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreBedRequest;
 use App\Http\Requests\StoreWardRequest;
@@ -9,16 +10,17 @@ use App\Http\Requests\UpdateWardRequest;
 use App\Models\Bed;
 use App\Models\Department;
 use App\Models\Ward;
-use App\Enums\BedStatus;
 use App\Services\Admissions\BedWorkflowService;
 use App\Services\WardService;
+use App\Services\WorkspaceRouteResolver;
 use Illuminate\Http\Request;
 
 class WardController extends Controller
 {
     public function __construct(
         private WardService $wardService,
-        private BedWorkflowService $bedWorkflow
+        private BedWorkflowService $bedWorkflow,
+        private WorkspaceRouteResolver $workspaceRoutes,
     ) {}
 
     public function index(Request $request)
@@ -34,7 +36,7 @@ class WardController extends Controller
         $ward = $this->wardService->createWard($request->validated());
 
         return redirect()
-            ->route('admin.wards.index')
+            ->route($this->workspaceRoutes->routeName('admin.wards.index'))
             ->with('success', __('messages.wards.created', ['name' => $ward->name]));
     }
 
@@ -43,7 +45,7 @@ class WardController extends Controller
         $this->wardService->updateWard($ward, $request->validated());
 
         return redirect()
-            ->route('admin.wards.index')
+            ->route($this->workspaceRoutes->routeName('admin.wards.index'))
             ->with('success', __('messages.wards.updated', ['name' => $ward->name]));
     }
 
@@ -58,7 +60,7 @@ class WardController extends Controller
     public function beds(Request $request)
     {
         $beds = $this->wardService->listBeds($request->all());
-        $wards = Ward::active()->orderBy('name')->get();
+        $wards = $this->wardService->activeWards();
 
         return view('wards.beds', compact('beds', 'wards'));
     }
@@ -68,7 +70,7 @@ class WardController extends Controller
         $this->wardService->createBed($request->validated());
 
         return redirect()
-            ->route('admin.wards.beds')
+            ->route($this->workspaceRoutes->routeName('admin.wards.beds'))
             ->with('success', __('messages.wards.bed_created'));
     }
 
@@ -89,7 +91,7 @@ class WardController extends Controller
         }
 
         return redirect()
-            ->route('admin.wards.beds')
+            ->route($this->workspaceRoutes->routeName('admin.wards.beds'))
             ->with('success', __('messages.wards.bed_updated'));
     }
 
@@ -98,7 +100,7 @@ class WardController extends Controller
         $filters = $request->only(['ward_id', 'status', 'bed_type', 'search']);
         $wards = $this->wardService->getBedMap($filters);
         $capacity = $this->wardService->getBedCapacityStats($filters);
-        $allWards = Ward::active()->orderBy('name')->get();
+        $allWards = $this->wardService->activeWards();
 
         return view('wards.bed-map', compact('wards', 'capacity', 'allWards', 'filters'));
     }

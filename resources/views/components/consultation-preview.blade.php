@@ -162,6 +162,12 @@
         'tasks' => __('consultations.history.section.tasks'),
         'notes' => __('consultations.history.section.notes'),
     ];
+    $sessionSectionLabels = collect($sectionLabels)
+        ->except(['investigations', 'prescriptions'])
+        ->all();
+    $prescriptionEntries = collect($sessionSummaries)
+        ->flatMap(fn ($bundle) => collect($bundle['summary']['sections']['prescriptions'] ?? []))
+        ->values();
     $detailKeyMap = [
         'Catalogue' => 'catalogue', 'Category' => 'category', 'Duration' => 'duration',
         'Severity' => 'severity', 'Complaint' => 'complaint', 'Onset' => 'onset',
@@ -329,12 +335,12 @@
             @endif
 
             @php
-                $hasAnySectionEntry = collect($sectionLabels)->keys()->some(fn($k) => !empty($summary['sections'][$k]));
+                $hasAnySectionEntry = collect($sessionSectionLabels)->keys()->some(fn($k) => !empty($summary['sections'][$k]));
             @endphp
             @if(!$hasAnySectionEntry)
                 <div class="empty-state">{{ __('consultations.history.no_clinical_entries') }}</div>
             @else
-            @foreach($sectionLabels as $key => $label)
+            @foreach($sessionSectionLabels as $key => $label)
                 @php
                     $entries = collect($summary['sections'][$key] ?? []);
                     $groups = $entries->groupBy(fn ($e) => $e['owner_key'] ?? 'unknown');
@@ -454,6 +460,56 @@
                                     </div>
                                 @endforeach
                             @endforeach
+                        </div>
+                    @endforeach
+                </div>
+            @endforeach
+        @endif
+    </div>
+
+    {{-- Prescriptions (Owner) --}}
+    <div class="doc-section section-prescriptions">
+        <h2>{{ __('consultations.history.section.prescriptions') }}</h2>
+        @if($prescriptionEntries->isEmpty())
+            <div class="empty-state">{{ __('consultations.history.none_recorded') }}</div>
+        @else
+            @php
+                $prescriptionGroups = $prescriptionEntries->groupBy(fn ($e) => $e['owner_key'] ?? 'unknown');
+            @endphp
+            @foreach($prescriptionGroups as $ownerKey => $groupEntries)
+                @php
+                    $first = $groupEntries->first();
+                    $ownerName = $first['entered_by'] ?? __('consultations.history.unknown_user');
+                @endphp
+                <div class="owner-block owner-contrib">
+                    <div class="owner-head">
+                        <div>
+                            <strong>{{ $ownerName === __('consultations.history.unknown_user') ? $ownerName : 'Dr. '.$ownerName }}</strong>
+                            <span class="badge bg-secondary-subtle text-secondary ms-1">{{ __('consultations.requesting_clinician') }}</span>
+                            @if(!empty($first['owner_role']))<span class="text-muted small ms-1">&middot; {{ $first['owner_role'] }}</span>@endif
+                        </div>
+                        <span class="text-muted small">{{ trans_choice('consultations.history.entry_count', $groupEntries->count(), ['count' => $groupEntries->count()]) }}</span>
+                    </div>
+
+                    @foreach($groupEntries as $entry)
+                        <div class="entry">
+                            <div class="entry-text">{{ $entry['content'] }}</div>
+                            @if(!empty($entry['details']))
+                                <div class="details">
+                                    @foreach($entry['details'] as $name => $value)
+                                        <span class="b">{{ $translateDetailName($name) }}: {{ $translateDetailValue($value) }}</span>
+                                    @endforeach
+                                </div>
+                            @endif
+                            <div class="meta">
+                                @if($entry['created_at']) {{ __('consultations.history.recorded', ['date' => $entry['created_at']->translatedFormat('d M Y, h:i A')]) }} @endif
+                                @if(!empty($entry['updated_by']) && $entry['updated_at'] && $entry['created_at'] && $entry['updated_at']->gt($entry['created_at']))
+                                    &middot; {{ __('consultations.history.edited_by', ['name' => $entry['updated_by'], 'date' => $entry['updated_at']->translatedFormat('d M Y, h:i A')]) }}
+                                @endif
+                                @if(!empty($entry['source_pattern']))
+                                    &middot; {{ __('consultations.history.source_pattern', ['pattern' => $entry['source_pattern']]) }}
+                                @endif
+                            </div>
                         </div>
                     @endforeach
                 </div>

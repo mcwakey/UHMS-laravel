@@ -2,6 +2,7 @@
 @section('title', $case->emergency_number)
 
 @php
+    $erRoute = fn ($name, $parameters = []) => $workspaceRoutes->route($name, $parameters);
     $triageClass = $case->triage_badge_class;
     $activeInvoice = $case->visit?->latestInvoice;
     $temporaryPatient = $case->patient?->is_temporary ? $case->patient : null;
@@ -104,10 +105,10 @@
                 </button>
             @endcan
         @endif
-        <a href="{{ route('admin.emergency.board') }}" class="btn btn-outline-secondary btn-sm">{{ __('emergency.emergency_board_btn') }}</a>
+        <a href="{{ $erRoute('admin.emergency.board') }}" class="btn btn-outline-secondary btn-sm">{{ __('emergency.emergency_board_btn') }}</a>
         @if($case->visit)
-            <a href="{{ route('admin.emergency.mar-chart', $case->visit) }}" class="btn btn-outline-danger btn-sm">{{ __('emergency.mar') }}</a>
-            <a href="{{ route('admin.visits.preview', $case->visit) }}" class="btn btn-outline-primary btn-sm">{{ __('common.view') }}</a>
+            <a href="{{ $erRoute('admin.emergency.mar-chart', $case->visit) }}" class="btn btn-outline-danger btn-sm">{{ __('emergency.mar') }}</a>
+            <a href="{{ $erRoute('admin.visits.preview', $case->visit) }}" class="btn btn-outline-primary btn-sm">{{ __('common.view') }}</a>
         @endif
     </div>
 </div>
@@ -276,7 +277,7 @@
         <div class="card mb-3">
             <div class="card-header"><h5 class="card-title mb-0">{{ __('emergency.clinical_notes') }}</h5></div>
             <div class="card-body">
-                <form method="POST" action="{{ route('admin.emergency.notes.store', $case) }}" class="row g-2 mb-3">
+                <form method="POST" action="{{ $erRoute('admin.emergency.notes.store', $case) }}" class="row g-2 mb-3">
                     @csrf
                     <div class="col-md-4">
                         <select class="form-select" name="note_type" required>
@@ -352,7 +353,7 @@
                     <div class="tab-pane fade show active" id="erTabMedication" role="tabpanel">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h6 class="fw-bold mb-0">{{ __('emergency.medication_mar') }}</h6>
-                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.emergency.mar-chart', $case->visit) }}"><i class="ti ti-external-link me-1"></i>{{ __('emergency.open_mar') }}</a>
+                            <a class="btn btn-sm btn-outline-secondary" href="{{ $erRoute('admin.emergency.mar-chart', $case->visit) }}"><i class="ti ti-external-link me-1"></i>{{ __('emergency.open_mar') }}</a>
                         </div>
                         <div class="row g-2 text-center mb-3">
                             <div class="col-3"><div class="fw-bold text-danger">{{ $medCounts['due_now'] }}</div><small class="text-muted">{{ __('emergency.due_label') }}</small></div>
@@ -360,7 +361,7 @@
                             <div class="col-3"><div class="fw-bold text-primary">{{ $medCounts['upcoming'] }}</div><small class="text-muted">{{ __('emergency.next_label') }}</small></div>
                             <div class="col-3"><div class="fw-bold text-success">{{ $medCounts['administered_today'] }}</div><small class="text-muted">{{ __('emergency.given_label') }}</small></div>
                         </div>
-                        <form method="POST" action="{{ route('admin.emergency.medications.store', $case) }}" class="row g-2 mb-3">
+                        <form method="POST" action="{{ $erRoute('admin.emergency.medications.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-12">
                                 <select class="form-select" name="product_id" id="medicationProductSelect" data-er-select2 data-placeholder="{{ __('emergency.select_medication') }}" required>
@@ -417,7 +418,7 @@
                     {{-- Investigations --}}
                     <div class="tab-pane fade" id="erTabInvestigations" role="tabpanel">
                         <h6 class="fw-bold mb-3">{{ __('emergency.tab_investigations') }}</h6>
-                        <form method="POST" action="{{ route('admin.emergency.investigations.store', $case) }}" class="row g-2 mb-3">
+                        <form method="POST" action="{{ $erRoute('admin.emergency.investigations.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-12">
                                 <select class="form-select" name="target_department_id" id="emergencyInvestigationDepartment" required>
@@ -460,7 +461,7 @@
                     {{-- Procedures --}}
                     <div class="tab-pane fade" id="erTabProcedures" role="tabpanel">
                         <h6 class="fw-bold mb-3">{{ __('emergency.tab_procedures') }}</h6>
-                        <form method="POST" action="{{ route('admin.emergency.procedures.store', $case) }}" class="row g-2 mb-3">
+                        <form method="POST" action="{{ $erRoute('admin.emergency.procedures.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-12">
                                 <select class="form-select" name="department_id" id="emergencyProcedureDepartment" required>
@@ -505,7 +506,7 @@
                             <h6 class="fw-bold mb-0">{{ __('emergency.consumables_label') }}</h6>
                             <span class="badge bg-light text-dark">{{ __('emergency.emergency_stock_badge') }}</span>
                         </div>
-                        <form method="POST" action="{{ route('admin.emergency.consumables.store', $case) }}" class="row g-2 mb-3">
+                        <form method="POST" action="{{ $erRoute('admin.emergency.consumables.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-12">
                                 <select class="form-select" name="product_id" id="emergencyConsumableSelect" data-er-select2 data-placeholder="{{ __('emergency.select_consumable') }}" required>
@@ -540,7 +541,7 @@
                             <h6 class="fw-bold mb-0">{{ __('emergency.tasks_monitoring') }}</h6>
                             <span class="badge bg-light text-dark">{{ $pendingTasks->count() }} {{ __('emergency.pending_count_badge') }}</span>
                         </div>
-                        <form method="POST" action="{{ route('admin.emergency.tasks.store', $case) }}" class="row g-2 mb-3">
+                        <form method="POST" action="{{ $erRoute('admin.emergency.tasks.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-12"><input class="form-control form-control-sm" name="title" placeholder="{{ __('emergency.task_placeholder') }}" maxlength="255" required></div>
                             <div class="col-6">
@@ -572,7 +573,7 @@
                                 </div>
                                 <small class="text-muted">{{ $task->priority }} - {{ $task->scheduled_at?->format('d M H:i') ?: __('emergency.no_schedule') }} - {{ $task->assignedUser->name ?? $task->assigned_role ?? __('emergency.unassigned') }}</small>
                                 @unless($isMedTask)
-                                    <form method="POST" action="{{ route('admin.emergency.tasks.complete', [$case, $task]) }}" class="mt-1">
+                                    <form method="POST" action="{{ $erRoute('admin.emergency.tasks.complete', [$case, $task]) }}" class="mt-1">
                                         @csrf
                                         @method('PATCH')
                                         <button class="btn btn-sm {{ $taskDone ? 'btn-outline-secondary' : 'btn-outline-success' }} w-100" type="submit">
@@ -595,7 +596,7 @@
                                 <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.billing.invoices.show', $activeInvoice) }}"><i class="ti ti-file-invoice me-1"></i>{{ __('emergency.open_invoice_btn') }}</a>
                             @endif
                         </div>
-                        <form method="POST" action="{{ route('admin.emergency.services.store', $case) }}" class="row g-2 mb-3">
+                        <form method="POST" action="{{ $erRoute('admin.emergency.services.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-8">
                                 <select class="form-select" name="service_catalog_id" data-er-select2 data-placeholder="{{ __('emergency.add_billable_service') }}" required>
@@ -668,7 +669,7 @@
         <div class="card mb-3">
             <div class="card-header"><h5 class="card-title mb-0">{{ __('emergency.bay_team_title') }}</h5></div>
             <div class="card-body">
-                <form method="POST" action="{{ route('admin.emergency.bay.assign', $case) }}" class="mb-3">
+                <form method="POST" action="{{ $erRoute('admin.emergency.bay.assign', $case) }}" class="mb-3">
                     @csrf
                     <div class="er-section-title mb-1">{{ __('emergency.emergency_bay_section') }}</div>
                     <select class="form-select mb-2" name="emergency_bay_id" data-er-select2 data-placeholder="{{ __('emergency.bay') }}…" required>
@@ -683,7 +684,7 @@
                     <button class="btn btn-sm btn-outline-primary w-100" type="submit"><i class="ti ti-bed me-1"></i>{{ __('emergency.assign_bay_btn') }}</button>
                 </form>
 
-                <form method="POST" action="{{ route('admin.emergency.bay.assign-ward-bed', $case) }}" class="mb-3 border-top pt-3">
+                <form method="POST" action="{{ $erRoute('admin.emergency.bay.assign-ward-bed', $case) }}" class="mb-3 border-top pt-3">
                     @csrf
                     <div class="er-section-title mb-1">{{ __('emergency.ward_bed_section') }}</div>
                     <select class="form-select mb-2" name="ward_id" data-er-select2 data-placeholder="{{ __('emergency.no_ward_link') }}">
@@ -724,7 +725,7 @@
                     @endforelse
                 </div>
 
-                <form method="POST" action="{{ route('admin.emergency.cases.update', $case) }}" class="border-top pt-3">
+                <form method="POST" action="{{ $erRoute('admin.emergency.cases.update', $case) }}" class="border-top pt-3">
                     @csrf
                     @method('PATCH')
                     <div class="er-section-title mb-2">{{ __('emergency.care_team_status') }}</div>
@@ -782,7 +783,7 @@
 <div class="card mt-3">
     <div class="card-header"><h5 class="card-title mb-0">{{ __('emergency.disposition_title') }}</h5></div>
     <div class="card-body">
-        <form method="POST" action="{{ route('admin.emergency.disposition.store', $case) }}" class="row g-3">
+        <form method="POST" action="{{ $erRoute('admin.emergency.disposition.store', $case) }}" class="row g-3">
             @csrf
             <div class="col-md-3">
                 <label class="form-label">{{ __('emergency.disposition_label') }}</label>
@@ -814,7 +815,7 @@
 <div class="modal fade" id="controlSheetModal" tabindex="-1" aria-labelledby="controlSheetModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
-            <form method="POST" action="{{ route('admin.emergency.cases.update', $case) }}">
+            <form method="POST" action="{{ $erRoute('admin.emergency.cases.update', $case) }}">
                 @csrf
                 @method('PATCH')
                 <input type="hidden" name="_form" value="control_sheet">
@@ -881,7 +882,7 @@
 <div class="modal fade" id="triageModal" tabindex="-1" aria-labelledby="triageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
-            <form method="POST" action="{{ route('admin.emergency.triage.store', $case) }}">
+            <form method="POST" action="{{ $erRoute('admin.emergency.triage.store', $case) }}">
                 @csrf
                 <input type="hidden" name="_form" value="triage">
                 <div class="modal-header">
@@ -1115,7 +1116,7 @@ document.addEventListener('DOMContentLoaded', function () {
     );
 
     var frequencyMap = @json($frequencyMap);
-    var medicationForm = document.querySelector('form[action="{{ route('admin.emergency.medications.store', $case) }}"]');
+    var medicationForm = document.querySelector('form[action="{{ $erRoute('admin.emergency.medications.store', $case) }}"]');
     var hint = document.getElementById('medicationQuantityHint');
     function updateMedicationHint() {
         if (!medicationForm || !hint) return;
@@ -1171,7 +1172,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 <div class="tab-content">
                     <div class="tab-pane fade {{ old('_identity_action') === 'register' ? '' : 'show active' }}" id="existing-identity-pane" role="tabpanel" aria-labelledby="existing-identity-tab" tabindex="0">
-                        <form method="POST" action="{{ route('admin.emergency.cases.confirm-identity', $case) }}" class="row g-3">
+                        <form method="POST" action="{{ $erRoute('admin.emergency.cases.confirm-identity', $case) }}" class="row g-3">
                             @csrf
                             <input type="hidden" name="_identity_action" value="existing">
                             <div class="col-md-7">
@@ -1203,7 +1204,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
 
                     <div class="tab-pane fade {{ old('_identity_action') === 'register' ? 'show active' : '' }}" id="register-identity-pane" role="tabpanel" aria-labelledby="register-identity-tab" tabindex="0">
-                        <form method="POST" action="{{ route('admin.emergency.cases.register-identity', $case) }}" class="row g-3">
+                        <form method="POST" action="{{ $erRoute('admin.emergency.cases.register-identity', $case) }}" class="row g-3">
                             @csrf
                             <input type="hidden" name="_identity_action" value="register">
                             <div class="col-md-4">

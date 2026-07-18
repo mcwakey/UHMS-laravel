@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Enums\DepartmentType;
 use App\Enums\AdmissionStatus;
+use App\Enums\DepartmentType;
 use App\Enums\ServiceType;
 use App\Enums\TriageScore;
 use App\Enums\UserStatus;
@@ -41,6 +41,7 @@ class VisitService
         protected VisitStatusService $statusService,
         protected VisitPathwayService $pathway,
         protected VisitStatusFlowService $flowService,
+        protected InpatientWorkspaceScope $inpatientScope,
     ) {}
 
     public function list(array $filters = []): LengthAwarePaginator
@@ -55,6 +56,10 @@ class VisitService
             'admission',
             'consultationRoutes.doctor',
         ]);
+
+        if (! empty($filters['admission_department_id'])) {
+            $this->inpatientScope->visits($query);
+        }
 
         if (! empty($filters['search'])) {
             $query->search($filters['search']);

@@ -33,6 +33,7 @@ use App\Services\Consultation\Specialty\ConsultationSpecialtyReadinessService;
 use App\Services\Consultation\Specialty\DoctorSpecialtyWorkspaceService;
 use App\Services\ConsultationNextPatientService;
 use App\Services\ConsultationPreviewDataService;
+use App\Services\InpatientWorkspaceScope;
 use App\Services\MedicalRecordEntryLogService;
 use App\Services\ProcedureRequestService;
 use Illuminate\Http\Request;
@@ -52,7 +53,7 @@ trait HandlesConsultationWorkspace
         }
 
         // Default: today's active consultable routes across visit types.
-        if (! $request->hasAny(['search', 'visit_type', 'date_from', 'date_to', 'date_range', 'my_patients'])) {
+        if (! $request->routeIs('inpatient.*') && ! $request->hasAny(['search', 'visit_type', 'date_from', 'date_to', 'date_range', 'my_patients'])) {
             $filters['date_from'] = $filters['date_from'] ?? today()->toDateString();
             $filters['date_to'] = $filters['date_to'] ?? today()->toDateString();
         }
@@ -188,6 +189,12 @@ trait HandlesConsultationWorkspace
         $user = Auth::user();
         if ($request->routeIs('doctor.*') && $user && ! $user->hasRole('Super Admin') && $user->department_id) {
             $query->where('department_id', $user->department_id);
+        }
+
+        if ($request->routeIs('inpatient.*')) {
+            $departmentId = app(InpatientWorkspaceScope::class)->departmentId();
+            $filters['visit_type'] = VisitType::INPATIENT->value;
+            $query->whereHas('visit.admission.bed.ward', fn ($ward) => $ward->where('department_id', $departmentId));
         }
 
         if (! empty($filters['search'])) {

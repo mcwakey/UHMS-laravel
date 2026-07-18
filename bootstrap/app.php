@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\ConvertBladeViewsToInertia;
 use App\Http\Middleware\EnsureActiveDepartmentType;
+use App\Http\Middleware\EnsureInpatientWorkspaceScope;
 use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\EnsureNursingOpdScope;
 use App\Http\Middleware\EnsureUserHasRole;
@@ -57,6 +58,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'department.type' => EnsureActiveDepartmentType::class,
             'records.redirect' => RedirectRecordsWorkspace::class,
             'nursing.opd.scope' => EnsureNursingOpdScope::class,
+            'inpatient.scope' => EnsureInpatientWorkspaceScope::class,
         ]);
 
         $middleware->append(SecurityHeaders::class);

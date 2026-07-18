@@ -27,6 +27,7 @@ class AdmissionService
         protected VisitStatusService $statuses,
         protected VisitPathwayService $pathway,
         protected BedWorkflowService $bedWorkflow,
+        protected InpatientWorkspaceScope $inpatientScope,
         protected ?ActivityLogService $logger = null,
     ) {
         $this->logger = $this->logger ?: app(ActivityLogService::class);
@@ -35,6 +36,7 @@ class AdmissionService
     public function list(array $filters = []): LengthAwarePaginator
     {
         $query = Admission::with(['patient', 'bed.ward', 'admittedBy', 'visit']);
+        $this->inpatientScope->admissions($query);
 
         if (! empty($filters['search'])) {
             $query->search($filters['search']);
@@ -179,6 +181,7 @@ class AdmissionService
     {
         $query = Admission::with(['patient', 'bed.ward', 'admittedBy', 'visit'])
             ->where('status', AdmissionStatus::ADMITTED);
+        $this->inpatientScope->admissions($query);
 
         if (! empty($filters['search'])) {
             $query->search($filters['search']);
@@ -193,11 +196,14 @@ class AdmissionService
 
     public function getStats(): array
     {
+        $admissions = Admission::query();
+        $this->inpatientScope->admissions($admissions);
+
         return [
-            'total_admitted' => Admission::where('status', AdmissionStatus::ADMITTED)->count(),
-            'discharged_today' => Admission::where('status', AdmissionStatus::DISCHARGED)
+            'total_admitted' => (clone $admissions)->where('status', AdmissionStatus::ADMITTED)->count(),
+            'discharged_today' => (clone $admissions)->where('status', AdmissionStatus::DISCHARGED)
                 ->whereDate('actual_discharge_date', today())->count(),
-            'admitted_today' => Admission::whereDate('admission_date', today())->count(),
+            'admitted_today' => (clone $admissions)->whereDate('admission_date', today())->count(),
         ];
     }
 }

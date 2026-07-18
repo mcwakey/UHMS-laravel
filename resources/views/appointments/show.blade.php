@@ -90,7 +90,7 @@
                     @endif
 
                     @if($appointment->status === \App\Enums\AppointmentStatus::CONFIRMED)
-                        @can('appointments.create')
+                        @can('appointments.checkin')
                         <form method="POST" action="{{ $workspaceRoutes->route('admin.appointments.check-in', $appointment) }}" class="js-appointment-action-form" data-follow-up="visit" data-requires-insurance-verification="1">
                             @csrf
                             <input type="hidden" name="visit_insurance_id" id="checkInVisitInsuranceId" value="{{ $appointment->visit_insurance_id }}">
@@ -195,7 +195,7 @@
     </div>
 <!-- </div> -->
 
-@can('appointments.create')
+@can('appointments.checkin')
     @if($appointment->status === \App\Enums\AppointmentStatus::CONFIRMED)
     <div class="modal fade" id="appointmentCheckInInsuranceModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">

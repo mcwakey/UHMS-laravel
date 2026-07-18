@@ -27,7 +27,7 @@
                     </small>
                 </div>
             </div>
-            <form method="POST" action="{{ route('admin.consultations.preferences.layout.update') }}" class="d-flex align-items-center gap-2">
+            <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.preferences.layout.update') }}" class="d-flex align-items-center gap-2">
                 @csrf
                 @method('PATCH')
                 <input type="hidden" name="preferred_layout" value="{{ $compactWorkspace ? 'default' : 'compact' }}">

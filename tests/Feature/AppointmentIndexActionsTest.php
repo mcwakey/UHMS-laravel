@@ -39,6 +39,7 @@ class AppointmentIndexActionsTest extends TestCase
         foreach ([
             'appointments.view',
             'appointments.create',
+            'appointments.checkin',
             'appointments.edit',
             'patients.view',
             'visits.view',
@@ -106,6 +107,40 @@ class AppointmentIndexActionsTest extends TestCase
             ->assertJsonPath('visit_id', $visit->id)
             ->assertJsonPath('redirect_url', route('admin.appointments.show', $appointment))
             ->assertJsonPath('visit_redirect_url', route('admin.visits.show', $visit));
+    }
+
+    public function test_check_in_permission_is_independent_from_appointment_creation(): void
+    {
+        $appointment = $this->createAppointment(AppointmentStatus::CONFIRMED);
+        $creator = User::factory()->create(['department_id' => $this->department->id]);
+        $creator->givePermissionTo([
+            Permission::findOrCreate('appointments.view', 'web'),
+            Permission::findOrCreate('appointments.create', 'web'),
+        ]);
+
+        $creatorResponse = $this->actingAs($creator)->get(route('admin.appointments.index'));
+        $creatorHtml = $this->inertiaPage($creatorResponse->getContent())['props']['html'];
+
+        $creatorResponse->assertOk();
+        $this->assertStringNotContainsString(route('admin.appointments.check-in', $appointment), $creatorHtml);
+        $this->actingAs($creator)
+            ->postJson(route('admin.appointments.check-in', $appointment))
+            ->assertForbidden();
+
+        $checkinUser = User::factory()->create(['department_id' => $this->department->id]);
+        $checkinUser->givePermissionTo([
+            Permission::findOrCreate('appointments.view', 'web'),
+            Permission::findOrCreate('appointments.checkin', 'web'),
+        ]);
+
+        $checkinResponse = $this->actingAs($checkinUser)->get(route('admin.appointments.index'));
+        $checkinHtml = $this->inertiaPage($checkinResponse->getContent())['props']['html'];
+
+        $checkinResponse->assertOk();
+        $this->assertStringContainsString(route('admin.appointments.check-in', $appointment), $checkinHtml);
+        $this->actingAs($checkinUser)
+            ->postJson(route('admin.appointments.check-in', $appointment))
+            ->assertOk();
     }
 
     public function test_create_uses_appointment_patient_search_without_visit_view_permission(): void

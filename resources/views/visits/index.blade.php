@@ -5,7 +5,7 @@
 <x-page-header :title="__('visits.title')" :description="__('visits.description')" icon="ti-calendar-check">
     <x-slot:actions>
         @can('queue.view')
-        <a href="{{ route('admin.queue.board') }}" class="btn btn-outline-info btn-md">
+        <a href="{{ $workspaceRoutes->route('admin.queue.board') }}" class="btn btn-outline-info btn-md">
             <i class="ti ti-list-numbers me-1"></i>{{ __('visits.queue_board') }}
         </a>
         @endcan
@@ -291,11 +291,11 @@
                                     <li><a class="dropdown-item" href="{{ $workspaceRoutes->route('admin.visits.show', $visit) }}"><i class="ti ti-eye me-2"></i>{{ __('visits.view_details') }}</a></li>
                                     @if($consultationRoute)
                                         @if($consultationRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
-                                            <li><a class="dropdown-item" href="{{ route('admin.consultations.routes.show', [$visit, $consultationRoute]) }}"><i class="ti ti-stethoscope me-2"></i>{{ __('visits.actions.continue_consultation') }}</a></li>
+                                            <li><a class="dropdown-item" href="{{ $workspaceRoutes->route('admin.consultations.routes.show', [$visit, $consultationRoute]) }}"><i class="ti ti-stethoscope me-2"></i>{{ __('visits.actions.continue_consultation') }}</a></li>
                                         @elseif($reopenEligibility?->allowed)
-                                            <li><a class="dropdown-item" href="{{ route('admin.consultations.routes.show', [$visit, $consultationRoute]) }}"><i class="ti ti-lock-open me-2"></i>{{ __('visits.actions.reopen_consultation') }}</a></li>
+                                            <li><a class="dropdown-item" href="{{ $workspaceRoutes->route('admin.consultations.routes.show', [$visit, $consultationRoute]) }}"><i class="ti ti-lock-open me-2"></i>{{ __('visits.actions.reopen_consultation') }}</a></li>
                                         @else
-                                            <li><a class="dropdown-item" href="{{ route('admin.consultations.routes.show', [$visit, $consultationRoute]) }}"><i class="ti ti-eye me-2"></i>{{ __('visits.actions.view_readonly') }}</a></li>
+                                            <li><a class="dropdown-item" href="{{ $workspaceRoutes->route('admin.consultations.routes.show', [$visit, $consultationRoute]) }}"><i class="ti ti-eye me-2"></i>{{ __('visits.actions.view_readonly') }}</a></li>
                                         @endif
                                     @endif
                                     @can('visits.preview')

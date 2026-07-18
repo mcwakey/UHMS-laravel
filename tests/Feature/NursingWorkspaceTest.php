@@ -95,16 +95,20 @@ class NursingWorkspaceTest extends TestCase
             ->assertDontSee($inpatient->patient->patient_number)
             ->assertDontSee($other->patient->patient_number);
 
-        $this->actingAs($user)->get(route('nursing.dashboard'))
-            ->assertOk()
-            ->assertSee(__('role_dashboards.nurse.ward_occupancy'))
-            ->assertSee(__('nursing.metrics.waiting_for_triage'))
-            ->assertSee(__('nursing.metrics.triage_in_progress'))
-            ->assertSee(__('nursing.metrics.vitals_incomplete'))
-            ->assertSee(__('nursing.metrics.waiting_for_consultation'))
-            ->assertSee(__('nursing.metrics.nursing_action_required'))
-            ->assertSee(__('nursing.metrics.completed_today'))
-            ->assertSee('>1<', false);
+        $response = $this->actingAs($user)
+            ->get(route('nursing.dashboard'))
+            ->assertOk();
+        $html = $this->legacyHtml($response->getContent());
+        $this->assertStringContainsString(__('role_dashboards.nurse.ward_occupancy'), $html);
+        $this->assertStringNotContainsString(__('admissions.admitted_today'), $html);
+        $this->assertStringNotContainsString(__('emergency.red_critical'), $html);
+        $this->assertStringContainsString(__('nursing.metrics.waiting_for_triage'), $html);
+        $this->assertStringContainsString(__('nursing.metrics.triage_in_progress'), $html);
+        $this->assertStringContainsString(__('nursing.metrics.vitals_incomplete'), $html);
+        $this->assertStringContainsString(__('nursing.metrics.waiting_for_consultation'), $html);
+        $this->assertStringContainsString(__('nursing.metrics.nursing_action_required'), $html);
+        $this->assertStringContainsString(__('nursing.metrics.completed_today'), $html);
+        $this->assertStringContainsString('>1<', $html);
     }
 
     public function test_out_of_scope_or_inpatient_case_is_not_available(): void
@@ -370,5 +374,13 @@ class NursingWorkspaceTest extends TestCase
             Permission::findOrCreate($permission, 'web');
         }
         $user->givePermissionTo($permissions);
+    }
+
+    private function legacyHtml(string $content): string
+    {
+        preg_match('/<script data-page="app" type="application\/json">(.*?)<\/script>/s', $content, $matches);
+        $page = json_decode($matches[1] ?? '{}', true, flags: JSON_THROW_ON_ERROR);
+
+        return $page['props']['html'] ?? '';
     }
 }

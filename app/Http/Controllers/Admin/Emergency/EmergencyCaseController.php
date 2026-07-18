@@ -78,7 +78,7 @@ class EmergencyCaseController extends Controller
         }
 
         return redirect()
-            ->route('admin.emergency.cases.show', $case)
+            ->route(app(\App\Services\WorkspaceRouteResolver::class)->routeName('admin.emergency.cases.show'), $case)
             ->with('success', __('messages.emergency.case_created', ['number' => $case->emergency_number]));
     }
 

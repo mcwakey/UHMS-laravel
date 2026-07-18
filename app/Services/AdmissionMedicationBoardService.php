@@ -14,15 +14,19 @@ class AdmissionMedicationBoardService
     public function __construct(
         private ClinicalTaskReminderService $reminders,
         private MedicationProgressService $progress,
+        private InpatientWorkspaceScope $inpatientScope,
     ) {}
 
     public function index(array $filters = []): Collection
     {
         $this->reminders->syncMedicationTaskStatuses();
 
-        return Admission::query()
+        $query = Admission::query()
             ->with(['patient', 'bed.ward', 'medicationOrders.frequency', 'medicationOrders.schedules'])
-            ->where('status', AdmissionStatus::ADMITTED->value)
+            ->where('status', AdmissionStatus::ADMITTED->value);
+        $this->inpatientScope->admissions($query);
+
+        return $query
             ->when($filters['ward_id'] ?? null, fn ($q, $wardId) => $q->whereHas('bed', fn ($b) => $b->where('ward_id', $wardId)))
             ->orderByDesc('admission_date')
             ->get()

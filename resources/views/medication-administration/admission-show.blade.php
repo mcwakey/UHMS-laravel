@@ -12,10 +12,10 @@
     </div>
     <div class="d-flex gap-2">
         @can('admission.mar_chart.view')
-        <a href="{{ route('admin.admissions.mar-chart', $admission) }}" class="btn btn-primary btn-sm">{{ __('medication_administration.mar_chart') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.admissions.mar-chart', $admission) }}" class="btn btn-primary btn-sm">{{ __('medication_administration.mar_chart') }}</a>
         @endcan
-        <a href="{{ route('admin.admissions.medication-board') }}" class="btn btn-outline-secondary btn-sm">{{ __('medication_administration.board') }}</a>
-        <a href="{{ route('admin.admissions.show', $admission) }}" class="btn btn-outline-primary btn-sm">{{ __('medication_administration.admission') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.admissions.medication-board') }}" class="btn btn-outline-secondary btn-sm">{{ __('medication_administration.board') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.admissions.show', $admission) }}" class="btn btn-outline-primary btn-sm">{{ __('medication_administration.admission') }}</a>
     </div>
 </div>
 
@@ -63,14 +63,14 @@
                     </div>
                     <div class="d-flex gap-2 mt-3">
                         @can('medication_orders.hold')
-                        <form method="POST" action="{{ route('admin.medication-administration.orders.hold', $order) }}" class="d-flex gap-1">
+                        <form method="POST" action="{{ $workspaceRoutes->route('admin.medication-administration.orders.hold', $order) }}" class="d-flex gap-1">
                             @csrf
                             <input type="hidden" name="reason" value="{{ __('medication_administration.held_from_mar_board') }}">
                             <button class="btn btn-sm btn-outline-warning">{{ __('medication_administration.hold') }}</button>
                         </form>
                         @endcan
                         @can('medication_orders.stop')
-                        <x-confirm-form :action="route('admin.medication-administration.orders.stop', $order)" method="POST"
+                        <x-confirm-form :action="$workspaceRoutes->route('admin.medication-administration.orders.stop', $order)" method="POST"
                             :button-label="__('medication_administration.stop')" button-class="btn btn-sm btn-outline-danger" icon="ti-player-stop"
                             :confirm-title="__('medication_administration.stop_order_confirm_title')" :confirm-text="__('medication_administration.stop_order_confirm_text')"
                             :confirm-button="__('medication_administration.stop_order_confirm_button')" require-reason :reason-placeholder="__('medication_administration.stop_order_reason_placeholder')" />

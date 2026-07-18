@@ -1,24 +1,62 @@
 @extends('layouts.app')
-@section('title', __('role_dashboards.nurse.title'))
+@section('title', ($workspaceType ?? null) === \App\Enums\DepartmentType::INPATIENT
+    ? __('inpatient.workspace.title')
+    : ((($workspaceType ?? null) === \App\Enums\DepartmentType::EMERGENCY) ? __('emergency.workspace.title') : __('role_dashboards.nurse.title')))
 
 @section('content')
 @php($t = fn ($k, $r = []) => __('role_dashboards.nurse.'.$k, $r))
 @php($tc = fn ($k, $r = []) => __('role_dashboards.common.'.$k, $r))
 @php($vitalBadge = fn ($s) => match ($s) { 'critical' => 'danger', 'monitor' => 'warning', default => 'success' })
+@php($isInpatientWorkspace = ($workspaceType ?? null) === \App\Enums\DepartmentType::INPATIENT)
+@php($isEmergencyWorkspace = ($workspaceType ?? null) === \App\Enums\DepartmentType::EMERGENCY)
+@php($dashboardTitle = $isInpatientWorkspace ? __('inpatient.workspace.title') : ($isEmergencyWorkspace ? __('emergency.workspace.title') : $t('title')))
 
 {{-- Header --}}
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
-    <h4 class="fw-bold mb-0">{{ $t('title') }}</h4>
+    <div>
+        <h4 class="fw-bold mb-0">{{ $dashboardTitle }}</h4>
+        @if(($isInpatientWorkspace || $isEmergencyWorkspace) && $department)
+            <span class="text-muted small">{{ $department->name }}</span>
+        @endif
+    </div>
     <div class="d-flex gap-2">
         @if($nursingOpd ?? false)
             <a href="{{ route('nursing.opd.queue') }}" class="btn btn-primary"><i class="ti ti-list-numbers me-1"></i>{{ __('nursing.menu.opd_queue') }}</a>
             <a href="{{ route('nursing.vitals.create') }}" class="btn btn-outline-dark"><i class="ti ti-heartbeat me-1"></i>{{ __('nursing.menu.vital_signs') }}</a>
+        @elseif($isInpatientWorkspace)
+            <a href="{{ route('inpatient.admissions.active') }}" class="btn btn-primary"><i class="ti ti-bed me-1"></i>{{ $t('view_admissions') }}</a>
+            <a href="{{ route('inpatient.beds.availability') }}" class="btn btn-outline-dark"><i class="ti ti-bed-flat me-1"></i>{{ __('inpatient.menu.bed_availability') }}</a>
+        @elseif($isEmergencyWorkspace)
+            <a href="{{ route('emergency.board') }}" class="btn btn-primary"><i class="ti ti-ambulance me-1"></i>{{ __('emergency.board') }}</a>
+            @can('emergency.case.create')
+                <a href="{{ route('emergency.cases.create') }}" class="btn btn-outline-dark"><i class="ti ti-plus me-1"></i>{{ __('emergency.new_case') }}</a>
+            @endcan
         @else
             <a href="{{ route('admin.admissions.index') }}" class="btn btn-primary"><i class="ti ti-bed me-1"></i>{{ $t('view_admissions') }}</a>
             <a href="{{ route('admin.visits.index') }}" class="btn btn-outline-dark"><i class="ti ti-list-numbers me-1"></i>{{ $tc('view_full_queue') }}</a>
         @endif
     </div>
 </div>
+
+@if(($isInpatientWorkspace || $isEmergencyWorkspace) && ! empty($workspaceMetrics))
+    <div class="row g-3 mb-4">
+        @foreach($workspaceMetrics as $metric)
+            <div class="{{ $isEmergencyWorkspace ? 'col-xl-2 col-md-4 col-6' : 'col-xl-3 col-md-6' }}">
+                <a href="{{ $metric['url'] }}" class="card border shadow-sm h-100 text-decoration-none mb-0">
+                    <div class="card-body d-flex align-items-center justify-content-between gap-3">
+                        <div>
+                            <div class="text-muted small">{{ $metric['label'] }}</div>
+                            <div class="fs-2 fw-bold text-{{ $metric['color'] }}">{{ $metric['value'] }}</div>
+                        </div>
+                        <span class="avatar avatar-md bg-{{ $metric['color'] }}-subtle text-{{ $metric['color'] }} rounded-circle flex-shrink-0">
+                            <i class="ti {{ $metric['icon'] }}"></i>
+                        </span>
+                    </div>
+                </a>
+            </div>
+        @endforeach
+    </div>
+@endif
 
 @if($nursingOpd ?? false)
     @include('nursing.dashboard')
@@ -30,7 +68,7 @@
 {{-- KPI row --}}
 <div class="row g-3 mb-4">
     <div class="col-xl-3 col-md-6">
-        @include('dashboards.partials._kpi', ['label' => $t('patients_under_care'), 'value' => $kpis['under_care']['value'], 'trend' => null, 'icon' => 'ti-user-heart', 'color' => 'primary', 'caption' => $t('currently_assigned')])
+        @include('dashboards.partials._kpi', ['label' => $isEmergencyWorkspace ? __('emergency.under_care') : $t('patients_under_care'), 'value' => $kpis['under_care']['value'], 'trend' => null, 'icon' => 'ti-user-heart', 'color' => 'primary', 'caption' => $isEmergencyWorkspace ? __('emergency.active') : $t('currently_assigned')])
     </div>
     <div class="col-xl-3 col-md-6">
         @include('dashboards.partials._kpi', ['label' => $t('critical_alerts'), 'value' => $kpis['critical']['value'], 'badge' => $tc('live'), 'badgeColor' => 'danger', 'icon' => 'ti-alert-triangle', 'color' => 'danger', 'caption' => $t('need_immediate_action')])
@@ -59,7 +97,7 @@
     </div>
     <div class="col-xl-4">
         <div class="card border shadow-sm h-100 mb-0">
-            <div class="card-header"><h5 class="fw-bold mb-0">{{ $t('ward_occupancy') }}</h5></div>
+            <div class="card-header"><h5 class="fw-bold mb-0">{{ $isEmergencyWorkspace ? __('role_dashboards.nurse.emergency_bay_occupancy') : $t('ward_occupancy') }}</h5></div>
             <div class="card-body d-flex align-items-center justify-content-center"><div id="occupancyChart"></div></div>
         </div>
     </div>
@@ -77,7 +115,7 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light"><tr>
-                            <th>{{ $tc('patient') }}</th><th>{{ $t('bed') }}</th><th>{{ $t('heart_rate') }}</th><th>{{ $t('blood_pressure') }}</th><th>SpO2</th><th>{{ $tc('status') }}</th>
+                            <th>{{ $tc('patient') }}</th><th>{{ $isEmergencyWorkspace ? __('emergency.bay') : $t('bed') }}</th><th>{{ $t('heart_rate') }}</th><th>{{ $t('blood_pressure') }}</th><th>SpO2</th><th>{{ $tc('status') }}</th>
                         </tr></thead>
                         <tbody>
                         @forelse($liveVitals as $row)
@@ -100,7 +138,7 @@
                                 <td><span class="badge bg-{{ $vitalBadge($row['status']) }}">{{ $t($row['status']) }}</span></td>
                             </tr>
                         @empty
-                            <tr><td colspan="6" class="text-center text-muted py-4">{{ $t('no_admitted_vitals') }}</td></tr>
+                            <tr><td colspan="6" class="text-center text-muted py-4">{{ $isEmergencyWorkspace ? __('role_dashboards.nurse.no_emergency_vitals') : $t('no_admitted_vitals') }}</td></tr>
                         @endforelse
                         </tbody>
                     </table>
@@ -123,9 +161,13 @@
                 @empty
                     <p class="text-center text-muted my-4">{{ $t('no_meds_due') }}</p>
                 @endforelse
-                @unless($nursingOpd ?? false)
+                @if($isInpatientWorkspace)
+                    <a href="{{ route('inpatient.medications.index') }}" class="btn btn-light w-100 mt-2">{{ $tc('view_full_schedule') }}</a>
+                @elseif($isEmergencyWorkspace)
+                    <a href="{{ route('emergency.medications.index') }}" class="btn btn-light w-100 mt-2">{{ $tc('view_full_schedule') }}</a>
+                @elseif(! ($nursingOpd ?? false))
                     <a href="{{ route('admin.admissions.index') }}" class="btn btn-light w-100 mt-2">{{ $tc('view_full_schedule') }}</a>
-                @endunless
+                @endif
             </div>
         </div>
     </div>
@@ -143,9 +185,11 @@
         <div class="card border shadow-sm h-100 mb-0">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="fw-bold mb-0">{{ $t('shift_handover_notes') }}</h5>
-                @unless($nursingOpd ?? false)
+                @if($isInpatientWorkspace)
+                    <a href="{{ route('inpatient.admissions.active') }}" class="btn btn-sm btn-outline-secondary">{{ $t('add_note') }}</a>
+                @elseif(! ($nursingOpd ?? false) && ! $isEmergencyWorkspace)
                     <a href="{{ route('admin.admissions.index') }}" class="btn btn-sm btn-outline-secondary">{{ $t('add_note') }}</a>
-                @endunless
+                @endif
             </div>
             <div class="card-body">
                 @forelse($handoverNotes as $note)

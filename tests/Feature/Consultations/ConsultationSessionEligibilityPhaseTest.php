@@ -151,6 +151,7 @@ class ConsultationSessionEligibilityPhaseTest extends TestCase
         $route->forceFill(['reopened_at' => now()->subHours(2)])->save();
 
         $this->actingAs($this->doctor)
+            ->followingRedirects()
             ->get(route('admin.visits.show', $visit))
             ->assertOk()
             ->assertSee($route->department?->name)
@@ -172,6 +173,7 @@ class ConsultationSessionEligibilityPhaseTest extends TestCase
             ->assertStatus(422);
 
         $this->actingAs($this->doctor)
+            ->followingRedirects()
             ->get(route('admin.consultations.routes.show', [$visit, $route]))
             ->assertOk()
             ->assertDontSee('bg-warning text-dark ms-1', false);
@@ -240,6 +242,7 @@ class ConsultationSessionEligibilityPhaseTest extends TestCase
         $this->addCompletionReadyRecord($route);
 
         $this->actingAs($this->doctor)
+            ->followingRedirects()
             ->get(route('admin.consultations.routes.show', [$visit, $route]))
             ->assertOk()
             ->assertSee(__('consultations.reopen.title'))
@@ -311,6 +314,7 @@ class ConsultationSessionEligibilityPhaseTest extends TestCase
         [$visit, $route] = $this->visitWithRoute(VisitType::OUTPATIENT, VisitStatus::CONSULTING, now());
 
         $this->actingAs($this->doctor)
+            ->followingRedirects()
             ->get(route('admin.consultations.routes.show', [$visit, $route]))
             ->assertOk()
             ->assertDontSee(__('consultations.workspace.complete_consultation'));
@@ -380,6 +384,7 @@ class ConsultationSessionEligibilityPhaseTest extends TestCase
         [$oldOutpatient] = $this->completedOutpatient(now()->subDay());
 
         $this->actingAs($this->doctor)
+            ->followingRedirects()
             ->get(route('admin.consultations.index'))
             ->assertOk()
             ->assertSee($activeInpatient->visit_number)

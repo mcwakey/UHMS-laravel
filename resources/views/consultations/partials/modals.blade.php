@@ -51,7 +51,7 @@
 <div class="modal fade" id="savePatternModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ route('admin.patterns.from-record', $visit) }}">
+            <form method="POST" action="{{ $workspaceRoutes->route('admin.patterns.from-record', $visit) }}">
                 @csrf
                 @if($selectedRoute)
                     <input type="hidden" name="consultation_route_id" value="{{ $selectedRoute->id }}">
@@ -90,7 +90,7 @@
 <div class="modal fade" id="sendSessionModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ route('admin.consultations.refer', $visit) }}">
+            <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.refer', $visit) }}">
                 @csrf
                 <x-consultation-idempotency-key action="consultation.refer" />
                 <div class="modal-header">
@@ -201,7 +201,7 @@
                     {{-- Tab 1: Lab Request --}}
                     <div class="tab-pane fade show active" id="investTabLabReq">
                         @can('lab.requests.create')
-                        <form id="labRequestForm" data-consultation-form="lab-request" data-modal-form="true" data-refresh-section="investigations" data-route-context-required="true" data-error-target="#labReqErrors" method="POST" action="{{ route('admin.consultations.lab-request.store', $visit) }}">
+                        <form id="labRequestForm" data-consultation-form="lab-request" data-modal-form="true" data-refresh-section="investigations" data-route-context-required="true" data-error-target="#labReqErrors" method="POST" action="{{ $workspaceRoutes->route('admin.consultations.lab-request.store', $visit) }}">
                             @csrf
                             <x-consultation-idempotency-key action="lab_request.create" />
                             <div class="row g-3">
@@ -264,7 +264,7 @@
 
                     {{-- Tab 2: Route to Department --}}
                     <div class="tab-pane fade" id="investTabRoute">
-                        <form id="routeInvestigationForm" data-consultation-form="route-investigation" data-modal-form="true" data-refresh-section="investigations" data-route-context-required="true" data-error-target="#investRouteErrors" method="POST" action="{{ route('admin.consultations.investigation', $visit) }}">
+                        <form id="routeInvestigationForm" data-consultation-form="route-investigation" data-modal-form="true" data-refresh-section="investigations" data-route-context-required="true" data-error-target="#investRouteErrors" method="POST" action="{{ $workspaceRoutes->route('admin.consultations.investigation', $visit) }}">
                             @csrf
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Investigation Department <span class="text-danger">*</span></label>
@@ -298,6 +298,21 @@
         :preview="$consultationPreview"
     />
 @endcan
+
+{{-- Next Appointment / Follow-up Modal --}}
+<div class="modal fade" id="followUpAppointmentModal" tabindex="-1" aria-labelledby="followUpAppointmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="followUpAppointmentModalLabel">
+                    <i class="ti ti-calendar-time me-1"></i>{{ __('consultations.workspace.follow_up_title') }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('common.close') }}"></button>
+            </div>
+            <div class="modal-body bg-light" id="followUpAppointmentModalBody"></div>
+        </div>
+    </div>
+</div>
 
 {{-- View Result Modal (used by investigations tab) --}}
 <div class="modal fade" id="viewResultModal" tabindex="-1">

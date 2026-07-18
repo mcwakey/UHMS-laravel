@@ -60,7 +60,7 @@
         <div class="card mb-3">
             <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-flag me-1"></i>{{ __('admissions.manage_care_flags') }}</h5></div>
             <div class="card-body">
-                <form method="POST" action="{{ route('admin.admissions.care-flags.update', $admission) }}">
+                <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.care-flags.update', $admission) }}">
                     @csrf @method('PATCH')
                     <div class="row g-2">
                         @foreach(($careOverview['allowed_care_flags'] ?? collect()) as $flag)
@@ -89,7 +89,7 @@
             </div>
             <div class="card-body">
                 @can('admission.nursing.tasks.create')
-                <form method="POST" action="{{ route('admin.admissions.nursing-tasks.store', $admission) }}" class="border rounded p-2 mb-3">
+                <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.nursing-tasks.store', $admission) }}" class="border rounded p-2 mb-3">
                     @csrf
                     <div class="row g-2">
                         <div class="col-md-5">
@@ -154,7 +154,7 @@
                                         <td class="text-end">
                                             @if($task->status?->isOpen())
                                                 @can('admission.nursing.tasks.complete')
-                                                <form method="POST" action="{{ route('admin.admissions.nursing-tasks.complete', [$admission, $task]) }}" class="d-inline">
+                                                <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.nursing-tasks.complete', [$admission, $task]) }}" class="d-inline">
                                                     @csrf @method('PATCH')
                                                     <button class="btn btn-sm btn-outline-success"><i class="ti ti-check"></i></button>
                                                 </form>
@@ -176,7 +176,7 @@
             <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-notes me-1"></i>{{ __('admissions.nursing_notes') }}</h5></div>
             <div class="card-body">
                 @can('admission.nursing.notes.create')
-                <form method="POST" action="{{ route('admin.admissions.nursing-notes.store', $admission) }}" class="border rounded p-2 mb-3">
+                <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.nursing-notes.store', $admission) }}" class="border rounded p-2 mb-3">
                     @csrf
                     <div class="row g-2">
                         <div class="col-md-4">

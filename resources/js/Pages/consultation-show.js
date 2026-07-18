@@ -1477,6 +1477,94 @@ const prescriptions = {
 };
 
 const previousVisits = {
+    originalBodyHtml: null,
+    originalSubtitle: null,
+
+    init() {
+        const drawer = document.getElementById('consultationPreviewOffcanvas');
+        const body = drawer?.querySelector('.offcanvas-body');
+        const subtitle = drawer?.querySelector('.offcanvas-header .text-muted.small');
+
+        if (!drawer || !body || this.originalBodyHtml !== null) {
+            return;
+        }
+
+        this.originalBodyHtml = body.innerHTML;
+        this.originalSubtitle = subtitle?.textContent || '';
+    },
+
+    previewStyleHtml(doc = document) {
+        return Array.from(doc.querySelectorAll('style'))
+            .filter((style) => style.textContent.includes('.consult-doc'))
+            .map((style) => style.outerHTML)
+            .join('');
+    },
+
+    restoreCurrent() {
+        const drawer = document.getElementById('consultationPreviewOffcanvas');
+        const body = drawer?.querySelector('.offcanvas-body');
+        const subtitle = drawer?.querySelector('.offcanvas-header .text-muted.small');
+
+        if (!body || this.originalBodyHtml === null) {
+            return;
+        }
+
+        body.innerHTML = this.originalBodyHtml;
+        if (subtitle) {
+            subtitle.textContent = this.originalSubtitle || '';
+        }
+    },
+
+    openDrawer(button) {
+        this.init();
+
+        const url = button?.dataset?.url;
+        const drawer = document.getElementById('consultationPreviewOffcanvas');
+        const body = drawer?.querySelector('.offcanvas-body');
+        const subtitle = drawer?.querySelector('.offcanvas-header .text-muted.small');
+
+        if (!url || !drawer || !body) {
+            return;
+        }
+
+        if (subtitle) {
+            subtitle.textContent = t('modal.loading', 'Loading...');
+        }
+        body.innerHTML = `<div class="text-center text-muted py-5"><span class="spinner-border spinner-border-sm me-2"></span>${escapeHtml(t('modal.loading', 'Loading...'))}</div>`;
+        window.bootstrap?.Offcanvas.getOrCreateInstance(drawer).show();
+
+        fetch(url, {
+            cache: 'no-store',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' },
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`Preview request failed: ${response.status}`);
+                }
+
+                return response.text();
+            })
+            .then((html) => {
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const preview = doc.querySelector('.consult-doc');
+                const previewStyles = this.previewStyleHtml(doc) || this.previewStyleHtml();
+                const titleMeta = preview?.querySelector('.doc-meta')?.textContent?.trim();
+
+                if (!preview) {
+                    throw new Error('Preview content was not found.');
+                }
+
+                body.innerHTML = previewStyles;
+                body.appendChild(preview);
+                if (subtitle && titleMeta) {
+                    subtitle.textContent = titleMeta;
+                }
+            })
+            .catch(() => {
+                body.innerHTML = `<div class="alert alert-danger">${escapeHtml(t('ajax.section_refresh_failed', 'Could not refresh this section.'))}</div>`;
+            });
+    },
+
     preview(index) {
         const visit = (state.config.visitHistoryData || [])[index];
         if (!visit) {
@@ -1512,6 +1600,49 @@ const previousVisits = {
         if (modal && window.bootstrap?.Modal) {
             window.bootstrap.Modal.getOrCreateInstance(modal).show();
         }
+    },
+};
+
+const followUpModal = {
+    placeholder: null,
+
+    open() {
+        const modal = document.getElementById('followUpAppointmentModal');
+        const modalBody = document.getElementById('followUpAppointmentModalBody');
+        const followUpCard = document.querySelector('#follow-up-section > .card');
+
+        if (!modal || !modalBody || !followUpCard) {
+            tabs.activate('#follow-up-section');
+            document.getElementById('follow-up-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return;
+        }
+
+        if (!this.placeholder) {
+            this.placeholder = document.createComment('follow-up-appointment-card');
+        }
+
+        followUpCard.parentNode.insertBefore(this.placeholder, followUpCard);
+        modalBody.innerHTML = '';
+        modalBody.appendChild(followUpCard);
+        window.bootstrap?.Modal.getOrCreateInstance(modal).show();
+    },
+
+    init() {
+        const modal = document.getElementById('followUpAppointmentModal');
+        const modalBody = document.getElementById('followUpAppointmentModalBody');
+
+        if (!modal || modal.dataset.followUpBound === 'true') {
+            return;
+        }
+
+        modal.dataset.followUpBound = 'true';
+        modal.addEventListener('hidden.bs.modal', () => {
+            const followUpCard = modalBody?.querySelector('.card');
+            if (followUpCard && this.placeholder?.parentNode) {
+                this.placeholder.parentNode.insertBefore(followUpCard, this.placeholder);
+                this.placeholder.remove();
+            }
+        }, signalOptions());
     },
 };
 
@@ -1923,6 +2054,11 @@ function bindDelegatedEvents() {
             return;
         }
 
+        const previewDrawerToggle = event.target.closest('[data-bs-toggle="offcanvas"][data-bs-target="#consultationPreviewOffcanvas"]');
+        if (previewDrawerToggle && !previewDrawerToggle.closest('[data-consultation-action="preview-history"]')) {
+            previousVisits.restoreCurrent();
+        }
+
         const actionButton = event.target.closest('[data-consultation-action]');
         if (!actionButton) {
             return;
@@ -1937,6 +2073,10 @@ function bindDelegatedEvents() {
             window.location.href = actionButton.dataset.url;
             return;
         }
+        if (action === 'preview-history') {
+            previousVisits.openDrawer(actionButton);
+            return;
+        }
         if (action === 'toggle-sessions-drawer') {
             const drawer = document.getElementById('sessionsDrawer');
             const handle = document.getElementById('sessionsDrawerHandle');
@@ -1948,6 +2088,10 @@ function bindDelegatedEvents() {
         }
         if (action === 'open-send-session-modal') {
             sendSession.initPicker();
+            return;
+        }
+        if (action === 'open-follow-up-modal') {
+            followUpModal.open();
             return;
         }
         if (action === 'insert-favorite') {
@@ -2116,6 +2260,7 @@ function rehydrate(root = document) {
     icd.init();
     hopcHydration.init();
     followUp.init();
+    followUpModal.init();
     enhanceSelect(document.getElementById('procedureServiceSelect'), {
         placeholder: t('searchProcedureService', 'Search procedure service'),
         language: { noResults: () => t('noResultsFound', 'No results found') },
@@ -2134,6 +2279,7 @@ function init(root = document) {
         bindDelegatedEvents();
         modalHelper.init();
         sendSession.initPicker();
+        previousVisits.init();
         rehydrate(root);
     });
 }
@@ -2143,6 +2289,8 @@ function destroy() {
         state.abortController.abort();
     }
     state.abortController = new AbortController();
+    previousVisits.originalBodyHtml = null;
+    previousVisits.originalSubtitle = null;
 }
 
 window.UHMSConsultation = {

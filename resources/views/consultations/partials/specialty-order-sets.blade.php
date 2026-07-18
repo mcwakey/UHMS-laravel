@@ -21,8 +21,8 @@
                         <button type="button"
                                 class="btn btn-outline-primary btn-sm mt-2"
                                 data-order-set-preview
-                                data-preview-url="{{ route('admin.consultations.specialty-order-sets.preview', [$visit, $orderSet['id']]) }}"
-                                data-apply-url="{{ route('admin.consultations.specialty-order-sets.apply', [$visit, $orderSet['id']]) }}">
+                                data-preview-url="{{ $workspaceRoutes->route('admin.consultations.specialty-order-sets.preview', [$visit, $orderSet['id']]) }}"
+                                data-apply-url="{{ $workspaceRoutes->route('admin.consultations.specialty-order-sets.apply', [$visit, $orderSet['id']]) }}">
                             <i class="ti ti-eye me-1"></i>{{ __('consultation_specialties.order_sets.preview') }}
                         </button>
                     @endif

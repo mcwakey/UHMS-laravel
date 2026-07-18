@@ -5,18 +5,21 @@ namespace App\Http\Controllers\Admin\AdmissionsWard;
 use App\Http\Controllers\Controller;
 use App\Models\Admission;
 use App\Models\StockLocation;
-use App\Models\Ward;
 use App\Services\AdmissionMedicationBoardService;
+use App\Services\WardService;
 use Illuminate\Http\Request;
 
 class AdmissionMedicationBoardController extends Controller
 {
-    public function __construct(private AdmissionMedicationBoardService $board) {}
+    public function __construct(
+        private AdmissionMedicationBoardService $board,
+        private WardService $wards,
+    ) {}
 
     public function index(Request $request)
     {
         $rows = $this->board->index($request->only('ward_id'));
-        $wards = Ward::active()->orderBy('name')->get();
+        $wards = $this->wards->activeWards();
 
         return view('medication-administration.admission-board', [
             'rows' => $rows,

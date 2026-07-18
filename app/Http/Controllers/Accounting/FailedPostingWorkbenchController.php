@@ -37,7 +37,7 @@ class FailedPostingWorkbenchController extends Controller
             'sourceModules' => AccountingPostingAttempt::query()->distinct()->orderBy('source_module')->pluck('source_module'),
             'sourceTypes' => AccountingPostingAttempt::query()->distinct()->orderBy('source_type')->pluck('source_type'),
             'postingTypes' => AccountingPostingAttempt::query()->distinct()->orderBy('posting_type')->pluck('posting_type'),
-            'resolvers' => User::query()->whereIn('id', AccountingPostingAttempt::query()->whereNotNull('resolved_by')->pluck('resolved_by'))->orderBy('name')->get(),
+            'resolvers' => User::query()->whereIn('id', AccountingPostingAttempt::query()->whereNotNull('resolved_by')->pluck('resolved_by'))->orderBy('first_name')->orderBy('last_name')->get(),
         ]);
     }
 

@@ -46,14 +46,14 @@
                             </div>
                             @if($canCreateEntries)
                                 <div class="d-grid gap-2 mt-3">
-                                    <form method="POST" action="{{ route('admin.consultations.routes.next-patient.open', [$visit, $selectedRoute]) }}">
+                                    <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.next-patient.open', [$visit, $selectedRoute]) }}">
                                         @csrf
                                         <button type="submit" class="btn btn-outline-primary btn-sm w-100" @disabled(! $nextPatientInLine['payment_allowed']) title="{{ $nextPatientInLine['payment_allowed'] ? __('consultations.workspace.open_next_patient') : $nextPatientInLine['payment_message'] }}">
                                             <i class="ti ti-arrow-right me-1"></i>{{ __('consultations.workspace.open_next_patient') }}
                                         </button>
                                     </form>
-                                    <x-confirm-form
-                                        :action="route('admin.consultations.routes.next-patient.complete-open', [$visit, $selectedRoute])"
+                                    <!-- <x-confirm-form
+                                        :action="$workspaceRoutes->route('admin.consultations.routes.next-patient.complete-open', [$visit, $selectedRoute])"
                                         method="POST"
                                         :button-label="__('consultations.workspace.complete_and_open_next')"
                                         button-class="btn btn-success btn-sm w-100"
@@ -63,7 +63,7 @@
                                         :confirm-button="__('consultations.workspace.complete_and_open')"
                                         :disabled="! $nextPatientInLine['payment_allowed']"
                                         :disabled-reason="$nextPatientInLine['payment_message']"
-                                    />
+                                    /> -->
                                 </div>
                             @endif
                         @else
@@ -72,21 +72,20 @@
                     </div>
                 </div>
 
-                <div class="card">
+                <!-- <div class="card">
                     @php($canUseFollowUpQuickAction = $canCreateEntries && $selectedRoute)
-                    <a href="{{ $canUseFollowUpQuickAction ? '#follow-up-section' : '#' }}"
+                    <button type="button"
                        class="btn btn-outline-primary btn-sm {{ $canUseFollowUpQuickAction ? '' : 'disabled' }}"
-                       @if($canUseFollowUpQuickAction) data-bs-toggle="pill" @endif
-                       role="tab"
+                       @if($canUseFollowUpQuickAction) data-consultation-action="open-follow-up-modal" @endif
+                       @disabled(! $canUseFollowUpQuickAction)
                        aria-disabled="{{ $canUseFollowUpQuickAction ? 'false' : 'true' }}"
-                       @if(! $canUseFollowUpQuickAction) tabindex="-1" @endif
                        title="{{ $selectedRoute ? __('consultations.workspace.set_next_appointment') : __('consultations.workspace.select_session_first') }}">
                         <i class="ti ti-calendar-plus me-1"></i>{{ $followUpAppointment ? __('consultations.workspace.update_next_appointment') : __('consultations.workspace.next_appointment') }}
                         @if($followUpAppointment)
                             <span class="badge bg-primary-subtle text-primary ms-1">{{ __('consultations.workspace.set') }}</span>
                         @endif
-                    </a>
-                </div>
+                    </button>
+                </div> -->
 
                 <div class="card">
                     <div class="card-header py-2">
@@ -111,7 +110,9 @@
                                     </div>
                                     @can('consultation.preview')
                                         <button type="button" class="btn btn-xs btn-outline-primary flex-shrink-0"
-                                                data-consultation-action="open-url" data-url="{{ route('admin.consultations.history', $pastRecord->visit) }}" aria-label="{{ __('common.view') }}" title="{{ __('common.view') }}">
+                                                data-consultation-action="preview-history"
+                                                data-url="{{ $workspaceRoutes->route('admin.consultations.history', $pastRecord->visit) }}"
+                                                aria-label="{{ __('common.view') }}" title="{{ __('common.view') }}">
                                             <i class="ti ti-eye"></i>
                                         </button>
                                     @endcan
@@ -121,7 +122,7 @@
                             @if($history['total'] > 10)
                             @can('consultation.preview')
                             <div class="text-center mt-1">
-                                <a href="{{ route('admin.consultations.history', $visit) }}" class="btn btn-sm btn-outline-secondary w-100">
+                                <a href="{{ $workspaceRoutes->route('admin.consultations.history', $visit) }}" class="btn btn-sm btn-outline-secondary w-100">
                                     {{ trans_choice('consultations.workspace.more_visits', $history['total'] - 10, ['count' => $history['total'] - 10]) }}
                                 </a>
                             </div>

@@ -6,7 +6,7 @@
     <span class="badge badge-soft-primary fw-medium border py-1 px-2 border-primary fs-13 ms-1">{{ __('admissions.total') }}: {{ $admissions->total() }}</span>
     <x-slot:actions>
         @can('ward.admit')
-        <a href="{{ route('admin.admissions.create') }}" class="btn btn-primary btn-md fs-13"><i class="ti ti-plus me-1"></i>{{ __('admissions.new_admission') }}</a>
+        <a href="{{ $workspaceRoutes->route('admin.admissions.create') }}" class="btn btn-primary btn-md fs-13"><i class="ti ti-plus me-1"></i>{{ __('admissions.new_admission') }}</a>
         @endcan
     </x-slot:actions>
 </x-page-header>
@@ -63,7 +63,7 @@
 <!-- Filters -->
 <div class="card mb-3">
     <div class="card-body py-2">
-        <form method="GET" action="{{ route('admin.admissions.index') }}" class="row g-2 align-items-end">
+        <form method="GET" action="{{ $workspaceRoutes->route('admin.admissions.index') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
                 <input type="text" name="search" class="form-control" placeholder="{{ __('admissions.search_placeholder') }}" value="{{ request('search') }}">
             </div>
@@ -85,7 +85,7 @@
             </div>
             <div class="col-md-auto">
                 <button type="submit" class="btn btn-outline-primary btn-md"><i class="ti ti-filter me-1"></i>{{ __('common.filter') }}</button>
-                <a href="{{ route('admin.admissions.index') }}" class="btn btn-outline-secondary btn-md ms-1"><i class="ti ti-x me-1"></i>{{ __('common.clear') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.admissions.index') }}" class="btn btn-outline-secondary btn-md ms-1"><i class="ti ti-x me-1"></i>{{ __('common.clear') }}</a>
             </div>
         </form>
     </div>
@@ -112,13 +112,13 @@
                     @forelse($admissions as $admission)
                     <tr>
                         <td>
-                            <a href="{{ route('admin.admissions.show', $admission) }}" class="fw-medium text-decoration-none">
+                            <a href="{{ $workspaceRoutes->route('admin.admissions.show', $admission) }}" class="fw-medium text-decoration-none">
                                 {{ $admission->admission_number }}
                             </a>
                         </td>
                         <td>
                             <div>
-                                <a href="{{ route('admin.patients.show', $admission->patient) }}" class="text-decoration-none">
+                                <a href="{{ $workspaceRoutes->route('admin.patients.show', $admission->patient) }}" class="text-decoration-none">
                                     {{ $admission->patient->full_name }}
                                 </a>
                             </div>
@@ -137,14 +137,14 @@
                                 <button aria-label="{{ __('admissions.actions') }}" title="{{ __('admissions.actions') }}" class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('admin.admissions.show', $admission) }}">
+                                        <a class="dropdown-item" href="{{ $workspaceRoutes->route('admin.admissions.show', $admission) }}">
                                             <i class="ti ti-eye me-1"></i>{{ __('admissions.view_details') }}
                                         </a>
                                     </li>
                                     @if($admission->status->value === 'admitted')
                                     @can('ward.discharge')
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('admin.admissions.discharge', $admission) }}">
+                                        <a class="dropdown-item" href="{{ $workspaceRoutes->route('admin.admissions.discharge', $admission) }}">
                                             <i class="ti ti-logout me-1"></i>{{ __('admissions.discharge') }}
                                         </a>
                                     </li>

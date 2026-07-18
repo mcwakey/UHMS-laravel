@@ -4,7 +4,7 @@
 @section('content')
 <x-page-header :title="__('admissions.create_title')" icon="ti-bed-filled">
     <x-slot:actions>
-        <a href="{{ route('admin.admissions.index') }}" class="btn btn-outline-secondary btn-sm">
+        <a href="{{ $workspaceRoutes->route('admin.admissions.index') }}" class="btn btn-outline-secondary btn-sm">
             <i class="ti ti-arrow-left me-1"></i>{{ __('admissions.back_to_admissions') }}
         </a>
     </x-slot:actions>
@@ -25,7 +25,7 @@
 </div>
 @endif
 
-<form method="POST" action="{{ route('admin.admissions.store') }}" id="admissionForm">
+<form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.store') }}" id="admissionForm">
     @csrf
     @if($preselectedAdmissionRequest ?? null)
         <input type="hidden" name="admission_request_id" value="{{ $preselectedAdmissionRequest->id }}">
@@ -512,7 +512,7 @@
                 <button type="submit" class="btn btn-success btn-lg w-100" id="submitBtn">
                     <i class="ti ti-bed-filled me-2"></i>{{ __('admissions.complete_admission') }}
                 </button>
-                <a href="{{ route('admin.admissions.index') }}" class="btn btn-outline-secondary btn-sm mt-2 w-100">{{ __('admissions.cancel') }}</a>
+                <a href="{{ $workspaceRoutes->route('admin.admissions.index') }}" class="btn btn-outline-secondary btn-sm mt-2 w-100">{{ __('admissions.cancel') }}</a>
             </div>
         </div>
     </div>{{-- /col-lg-4 --}}

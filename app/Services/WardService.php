@@ -10,9 +10,12 @@ use App\Models\Bed;
 use App\Models\BedReservation;
 use App\Models\Ward;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class WardService
 {
+    public function __construct(private InpatientWorkspaceScope $inpatientScope) {}
+
     public function listWards(array $filters = []): LengthAwarePaginator
     {
         $query = Ward::with('department')
@@ -21,8 +24,9 @@ class WardService
             }, 'beds as occupied_beds_count' => function ($q) {
                 $q->where('status', 'occupied');
             }]);
+        $this->inpatientScope->wards($query);
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->search($filters['search']);
         }
 
@@ -41,28 +45,31 @@ class WardService
     public function updateWard(Ward $ward, array $data): Ward
     {
         $ward->update($data);
+
         return $ward->fresh();
     }
 
     public function toggleWard(Ward $ward): Ward
     {
-        $ward->update(['is_active' => !$ward->is_active]);
+        $ward->update(['is_active' => ! $ward->is_active]);
+
         return $ward;
     }
 
     public function listBeds(array $filters = []): LengthAwarePaginator
     {
         $query = Bed::with(['ward', 'currentAdmission.patient', 'activeReservation.admissionRequest.patient', 'statusChangedBy']);
+        $this->inpatientScope->beds($query);
 
-        if (!empty($filters['ward_id'])) {
+        if (! empty($filters['ward_id'])) {
             $query->where('ward_id', $filters['ward_id']);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['bed_type'])) {
+        if (! empty($filters['bed_type'])) {
             $query->where('bed_type', $filters['bed_type']);
         }
 
@@ -77,12 +84,14 @@ class WardService
     public function updateBed(Bed $bed, array $data): Bed
     {
         $bed->update($data);
+
         return $bed->fresh();
     }
 
     public function getAvailableBeds(?int $wardId = null)
     {
         $query = Bed::with('ward')->where('status', 'available');
+        $this->inpatientScope->beds($query);
 
         if ($wardId) {
             $query->where('ward_id', $wardId);
@@ -91,9 +100,20 @@ class WardService
         return $query->orderBy('ward_id')->orderBy('bed_number')->get();
     }
 
+    public function activeWards(): Collection
+    {
+        $query = Ward::active();
+        $this->inpatientScope->wards($query);
+
+        return $query->orderBy('name')->get();
+    }
+
     public function getBedMap(array $filters = [])
     {
-        return Ward::active()
+        $query = Ward::active();
+        $this->inpatientScope->wards($query);
+
+        return $query
             ->with(['beds' => function ($q) {
                 $q->orderBy('bed_number');
             }, 'beds.currentAdmission.patient', 'beds.currentAdmission.nursingTasks', 'beds.currentAdmission.dischargeClearances', 'beds.currentAdmission.dischargeSummaryRecord', 'beds.currentAdmission.visit.vitals', 'beds.currentAdmission.visit.latestInvoice', 'beds.activeReservation.admissionRequest.patient', 'beds.statusChangedBy'])
@@ -139,6 +159,7 @@ class WardService
     public function getBedCapacityStats(array $filters = []): array
     {
         $bedQuery = Bed::query();
+        $this->inpatientScope->beds($bedQuery);
         if (! empty($filters['ward_id'])) {
             $bedQuery->where('ward_id', $filters['ward_id']);
         }

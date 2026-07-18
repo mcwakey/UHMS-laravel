@@ -2,15 +2,18 @@
 @section('title', __('emergency.reports_title'))
 
 @section('content')
+@php
+    $erRoute = fn ($name, $parameters = []) => $workspaceRoutes->route($name, $parameters);
+@endphp
 <x-page-header :title="__('emergency.reports_title')" :description="__('emergency.reports_description')" icon="ti-report-analytics">
     <x-slot:actions>
-        <a href="{{ route('admin.emergency.board') }}" class="btn btn-outline-secondary btn-sm">{{ __('emergency.emergency_board_btn') }}</a>
+        <a href="{{ $erRoute('admin.emergency.board') }}" class="btn btn-outline-secondary btn-sm">{{ __('emergency.emergency_board_btn') }}</a>
     </x-slot:actions>
 </x-page-header>
 
 <div class="card mb-3">
     <div class="card-body">
-        <form class="row g-2 align-items-end" method="GET" action="{{ route('admin.emergency.reports.index') }}">
+        <form class="row g-2 align-items-end" method="GET" action="{{ $erRoute('admin.emergency.reports.index') }}">
             <div class="col-md-3">
                 <label class="form-label">{{ __('emergency.date_from') }}</label>
                 <input type="date" class="form-control" name="date_from" value="{{ $filters['date_from'] ?? '' }}">
@@ -80,7 +83,7 @@
                 <tbody>
                     @forelse($cases as $case)
                         <tr>
-                            <td><a href="{{ route('admin.emergency.cases.show', $case) }}">{{ $case->emergency_number }}</a></td>
+                            <td><a href="{{ $erRoute('admin.emergency.cases.show', $case) }}">{{ $case->emergency_number }}</a></td>
                             <td>
                                 <div class="fw-semibold">{{ $case->patient->full_name ?? __('emergency.unknown_patient_row') }}</div>
                                 <small class="text-muted">{{ $case->patient->patient_number ?? '' }}</small>

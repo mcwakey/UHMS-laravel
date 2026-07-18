@@ -5,7 +5,7 @@
 
 <div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <form method="POST" action="{{ route('admin.medication-administration.schedules.administer', $schedule) }}" class="modal-content js-med-admin-form">
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.medication-administration.schedules.administer', $schedule) }}" class="modal-content js-med-admin-form">
             @csrf
             <div class="modal-header">
                 <h5 class="modal-title">{{ __('medication_administration.record_medication_administration') }}</h5>

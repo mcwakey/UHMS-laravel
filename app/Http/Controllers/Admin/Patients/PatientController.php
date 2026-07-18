@@ -6,10 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\MarkPatientDeceasedRequest;
 use App\Http\Requests\StorePatientRequest;
 use App\Http\Requests\UpdatePatientRequest;
+use App\Models\Appointment;
 use App\Models\CountryRegion;
 use App\Models\InsuranceProvider;
 use App\Models\InsuranceTier;
 use App\Models\Patient;
+use App\Models\PatientPrivacyOverride;
+use App\Models\Visit;
+use App\Services\ActivityLogService;
+use App\Services\Billing\PatientFinancialRiskService;
+use App\Services\InpatientWorkspaceScope;
 use App\Services\PatientPrivacyService;
 use App\Services\PatientService;
 use App\Services\VisitService;
@@ -52,6 +58,10 @@ class PatientController extends Controller
             }
 
             $filters['date_range'] = $filters['visit_from'].' to '.$filters['visit_to'];
+        }
+
+        if ($request->routeIs('inpatient.*')) {
+            $filters['admission_department_id'] = app(InpatientWorkspaceScope::class)->departmentId();
         }
 
         $patients = $this->patientService->list($filters);
@@ -113,11 +123,11 @@ class PatientController extends Controller
                 continue;
             }
             $patient->emergencyContacts()->create([
-                'name'            => $ec['name'],
-                'phone'           => $ec['phone'],
+                'name' => $ec['name'],
+                'phone' => $ec['phone'],
                 'phone_secondary' => $ec['phone_secondary'] ?? null,
-                'relationship'    => $ec['relationship'] ?? null,
-                'is_primary'      => $index === 0,
+                'relationship' => $ec['relationship'] ?? null,
+                'is_primary' => $index === 0,
             ]);
         }
 
@@ -141,14 +151,14 @@ class PatientController extends Controller
 
             $patient->insurances()->create([
                 'insurance_provider_id' => $ins['provider_id'],
-                'insurance_tier_id'      => $tierId,
-                'member_type'            => 'holder',
-                'membership_number'     => ($ins['membership_number'] ?? null) ?: null,
-                'policy_number'         => ($ins['policy_number'] ?? null) ?: null,
-                'ccc_code'              => ($ins['ccc_code'] ?? null) ?: null,
-                'expiry_date'           => ($ins['expiry_date'] ?? null) ?: null,
-                'is_primary'            => $index === 0,
-                'is_active'             => true,
+                'insurance_tier_id' => $tierId,
+                'member_type' => 'holder',
+                'membership_number' => ($ins['membership_number'] ?? null) ?: null,
+                'policy_number' => ($ins['policy_number'] ?? null) ?: null,
+                'ccc_code' => ($ins['ccc_code'] ?? null) ?: null,
+                'expiry_date' => ($ins['expiry_date'] ?? null) ?: null,
+                'is_primary' => $index === 0,
+                'is_active' => true,
             ]);
         }
 
@@ -167,10 +177,11 @@ class PatientController extends Controller
             }
 
             $patient->load('insurances.insuranceProvider');
+
             return response()->json([
                 'insurances' => $patient->insurances
                     ->where('is_active', true)
-                    ->map(fn($ins) => [
+                    ->map(fn ($ins) => [
                         'id' => $ins->id,
                         'provider_name' => $ins->insuranceProvider->name,
                         'membership_number' => $privacy->display('membership_number', $ins->membership_number),
@@ -199,13 +210,13 @@ class PatientController extends Controller
 
         // All activity connected to this patient across EVERY module (not only
         // actions whose subject is the Patient row) + any merged-folder history.
-        $activityLogs = app(\App\Services\ActivityLogService::class)
+        $activityLogs = app(ActivityLogService::class)
             ->getPatientTimeline($patient)
             ->take(100)
             ->get();
 
         // Load visits separately to avoid window-function queries on older MariaDB
-        $visits = \App\Models\Visit::where('patient_id', $patient->id)
+        $visits = Visit::where('patient_id', $patient->id)
             ->with([
                 'currentDepartment',
                 'activeConsultationRoute.doctor',
@@ -224,7 +235,7 @@ class PatientController extends Controller
             ->orderBy('name')
             ->get();
         $upcomingVisits = app(VisitService::class)->upcomingForPatient($patient->id);
-        $upcomingAppointments = \App\Models\Appointment::with(['department', 'doctor', 'services'])
+        $upcomingAppointments = Appointment::with(['department', 'doctor', 'services'])
             ->where('patient_id', $patient->id)
             ->upcoming()
             ->orderBy('appointment_date')
@@ -234,7 +245,7 @@ class PatientController extends Controller
 
         app(PatientPrivacyService::class)->auditPatientProfileView($patient);
 
-        $activeBreakGlass = \App\Models\PatientPrivacyOverride::active()
+        $activeBreakGlass = PatientPrivacyOverride::active()
             ->where('patient_id', $patient->id)
             ->where('user_id', $request->user()->id)
             ->latest('expires_at')
@@ -246,7 +257,7 @@ class PatientController extends Controller
         $financialRisk = null;
         $financialRiskHistory = collect();
         if ($request->user()?->can('patients.financial_risk.view')) {
-            $financialRisk = app(\App\Services\Billing\PatientFinancialRiskService::class)->currentFor($patient);
+            $financialRisk = app(PatientFinancialRiskService::class)->currentFor($patient);
             $financialRisk?->load(['setter', 'reviewer', 'suspender', 'clearer']);
             if ($request->user()->can('patients.financial_risk.history')) {
                 $financialRiskHistory = $patient->financialRiskHistory()->with('performer')->take(50)->get();

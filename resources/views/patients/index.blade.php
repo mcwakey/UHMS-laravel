@@ -162,11 +162,11 @@
                         <td>{{ $patient->last_visit_date ? \Carbon\Carbon::parse($patient->last_visit_date)->translatedFormat('d M Y') : '—' }}</td>
                         <td class="text-end">
 
-                            @php $lastVisitDate = $patient->visits->first()?->visit_date; @endphp
+                            @php $lastVisitDate = $patient->last_visit_date; @endphp
                             <div class="d-flex align-items-center justify-content-end gap-1">
                                 @if(!$patient->isMerged() && !$patient->is_deceased && $patient->status === 'active')
                                 @can('visits.create')
-                                @if($lastVisitDate && $lastVisitDate->toDateString() === today()->toDateString())
+                                @if($lastVisitDate && $lastVisitDate === today()->toDateString())
                                 <button type="button" class="btn btn-sm btn-outline-secondary" title="{{ __('patients.merged_folder_no_visits') }}" disabled>
                                     <i class="ti ti-lock"></i>
                                 </button>
@@ -175,8 +175,8 @@
                                     <i class="ti ti-stethoscope"></i>
                                 </a>
                                 @endif
-                                @endif
                                 @endcan
+                                @endif
                                 {{-- @can('appointments.create')
                                 <a href="{{ $workspaceRoutes->route('admin.appointments.create', ['patient_id' => $patient->id]) }}" class="btn btn-sm btn-outline-primary" title="{{ __('appointments.schedule_appointment') }}">
                                     <i class="ti ti-calendar-plus"></i>

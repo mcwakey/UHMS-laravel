@@ -16,7 +16,7 @@ class DashboardController extends Controller
     {
         $department = $this->nursingDepartment($request);
 
-        return view('dashboards.nurse', array_merge($dashboard->build(), [
+        return view('dashboards.nurse', array_merge($dashboard->build($department), [
             'nursingOpd' => true,
             'department' => $department,
             'metrics' => $opd->metrics($department),

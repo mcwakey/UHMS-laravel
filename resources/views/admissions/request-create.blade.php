@@ -4,7 +4,7 @@
 @section('content')
 <x-page-header :title="__('admissions.new_request')" icon="ti-git-branch">
     <x-slot:actions>
-        <a href="{{ route('admin.admissions.requests') }}" class="btn btn-outline-secondary btn-sm">
+        <a href="{{ $workspaceRoutes->route('admin.admissions.requests') }}" class="btn btn-outline-secondary btn-sm">
             <i class="ti ti-arrow-left me-1"></i>{{ __('admissions.admission_requests') }}
         </a>
     </x-slot:actions>
@@ -18,7 +18,7 @@
 </div>
 @endif
 
-<form method="POST" action="{{ route('admin.admissions.requests.store') }}" class="card">
+<form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.requests.store') }}" class="card">
     @csrf
     <div class="card-body">
         <div class="row g-3">

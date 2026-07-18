@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const serviceFilterInput = document.getElementById('serviceFilter');
     const showExtraServicesInput = document.getElementById('showExtraServices');
     const defaultVisitDate = new Date().toISOString().split('T')[0];
-    const visitOptionsUrlTemplate = @json(route('admin.departments.visit-options', ['department' => '__DEPARTMENT__']));
+    const visitOptionsUrlTemplate = @json($workspaceRoutes->route('admin.departments.visit-options', ['department' => '__DEPARTMENT__']));
     const canManagePatientInsurance = @json(auth()->check() && auth()->user()->can('patients.edit'));
 
     let patientInsurances = [];
@@ -1123,7 +1123,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ==========================================
     // GENERIC INSURANCE VERIFICATION (provider-agnostic)
     // ==========================================
-    const verifyUrl = "{{ route('admin.insurance.verify') }}";
+    const verifyUrl = "{{ $workspaceRoutes->route('admin.insurance.verify') }}";
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
     function resetVerificationPanel() {

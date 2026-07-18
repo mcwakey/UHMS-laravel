@@ -9,7 +9,7 @@
             <small class="text-muted">{{ __('consultations.workspace.start_instruction') }}</small>
         </div>
         @if($canCreateEntries)
-        <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $selectedRoute]) }}">
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.activate', [$visit, $selectedRoute]) }}">
             @csrf
             <button type="submit" class="btn btn-warning"><i class="ti ti-player-play me-1"></i>{{ __('consultations.workspace.start_consultation') }}</button>
         </form>
@@ -30,7 +30,7 @@
             </div>
             <span class="badge bg-secondary">{{ __('visits.actions.view_readonly') }}</span>
         </div>
-        <form method="POST" action="{{ route('admin.consultations.routes.reopen', [$visit, $selectedRoute]) }}" class="row g-2 align-items-end">
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.reopen', [$visit, $selectedRoute]) }}" class="row g-2 align-items-end">
             @csrf
             <div class="col-md">
                 <label class="form-label small">{{ __('consultations.reopen.reason') }}</label>
@@ -70,7 +70,7 @@
                 <small class="text-muted">{{ __('consultations.lock_reasons.readmit_or_extend_to_continue') }}</small>
             </div>
         </div>
-        <form method="POST" action="{{ route('admin.admissions.extend', $visit->admission) }}" class="row g-2 align-items-end">
+        <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.extend', $visit->admission) }}" class="row g-2 align-items-end">
             @csrf
             <div class="col-md">
                 <label class="form-label small">{{ __('consultations.reopen.reason') }}</label>
