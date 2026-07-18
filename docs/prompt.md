@@ -1,8 +1,8 @@
-# UHMS Inpatient Department Workspace — Normal Admission and `/inpatient/*` Route Architecture
+# UHMS Investigations Department Workspace — Diagnostic Workflow and `/investigations/*` Route Architecture
 
-Implement a dedicated **Inpatient Department Workspace** for UHMS.
+Implement a dedicated **Investigations Department Workspace** for UHMS.
 
-This workspace is for clinical and operational staff managing normal hospital admissions from admission request and bed assignment through inpatient nursing care, clinical rounds, treatment, medication administration, investigations, procedures, monitoring, transfer, discharge, and readmission.
+This workspace is for staff managing laboratory and other non-radiology diagnostic investigations from request receipt through payment or authorization checks, specimen collection, accessioning, processing, result entry, verification, release, clinician review, critical-result escalation, and reporting.
 
 This implementation should follow the same department-aware workspace architecture already established for:
 
@@ -10,215 +10,216 @@ This implementation should follow the same department-aware workspace architectu
 * Records
 * Nursing OPD
 * Emergency
+* Inpatient
+
+The configured department type is:
+
+```php
+DepartmentType::INVESTIGATION
+```
+
+The browser workspace should use the plural URL prefix:
+
+```text
+/investigations/*
+```
 
 The objective is that when a logged-in user’s active department has:
 
 ```php
-DepartmentType::INPATIENT
+DepartmentType::INVESTIGATION
 ```
 
-the user should experience UHMS as a dedicated Inpatient application with:
+the user should experience UHMS as a dedicated Investigations application with:
 
-* An Inpatient-specific sidebar menu
-* An Inpatient ward dashboard
-* Inpatient-specific breadcrumbs
-* Inpatient-specific route names
-* Consistent `/inpatient/*` URLs
-* Workspace-aware links and redirects
-* Admission and ward worklists
-* Bed and ward visibility
-* Nursing session and clinical-round workflows
-* Medication, treatment, investigation, and procedure coordination
-* Discharge-readiness and clearance workflows
-* Transfer and readmission support
+* An Investigations-specific sidebar menu
+* A diagnostic operations dashboard
+* Investigation-specific breadcrumbs
+* Investigation-specific route names
+* Consistent `/investigations/*` URLs
+* Request, specimen, processing, and result worklists
+* Department and service-specific filtering
+* Critical-result management
+* Quality-control visibility where supported
+* Payment and insurance authorization awareness
 * Permission-controlled menu visibility
 * Active-department scoping
-* Patient privacy and clinical-safety enforcement
-* Reuse of existing admission, patient, visit, consultation, nursing, billing, journey, and audit logic
+* Patient privacy and result-security enforcement
+* Reuse of existing consultation, investigation, billing, inventory, reporting, journey, and audit logic
 
-Do not duplicate core admission, ward, patient, consultation, nursing, medication, treatment, investigation, discharge, or billing business logic merely to create the Inpatient workspace.
+Do not duplicate core investigation, billing, patient, consultation, specimen, inventory, result, or reporting logic merely to create the new workspace.
 
 ---
 
 # 1. Core Functional Requirement
 
-When the active department type is `inpatient`, all supported browser pages used for normal admitted-patient care must appear under the `/inpatient` URL prefix.
+When the active department type is `investigation`, all supported browser pages used by investigation staff must appear under the `/investigations` URL prefix.
 
 Examples:
 
 ```text
-/inpatient
-/inpatient/dashboard
+/investigations
+/investigations/dashboard
 
-/inpatient/admissions
-/inpatient/admissions/pending
-/inpatient/admissions/active
-/inpatient/admissions/discharged
-/inpatient/admissions/{admission}
+/investigations/requests
+/investigations/requests/pending
+/investigations/requests/authorized
+/investigations/requests/awaiting-payment
+/investigations/requests/{request}
 
-/inpatient/wards
-/inpatient/wards/{ward}
-/inpatient/beds
-/inpatient/beds/availability
+/investigations/specimens
+/investigations/specimens/collection
+/investigations/specimens/received
+/investigations/specimens/rejected
+/investigations/specimens/{specimen}
 
-/inpatient/patients
-/inpatient/patients/{patient}
+/investigations/worklist
+/investigations/worklist/pending
+/investigations/worklist/in-progress
+/investigations/worklist/overdue
 
-/inpatient/visits
-/inpatient/visits/{visit}
+/investigations/results
+/investigations/results/pending
+/investigations/results/entered
+/investigations/results/verification
+/investigations/results/released
+/investigations/results/critical
+/investigations/results/{result}
 
-/inpatient/rounds
-/inpatient/rounds/{admission}
+/investigations/patients
+/investigations/patients/{patient}
 
-/inpatient/sessions
-/inpatient/sessions/{session}
-
-/inpatient/vitals
-/inpatient/assessments
-/inpatient/care-plans
-/inpatient/tasks
-/inpatient/medications
-/inpatient/treatments
-/inpatient/procedures
-/inpatient/investigations
-/inpatient/observations
-/inpatient/intake-output
-
-/inpatient/handoffs
-/inpatient/transfers
-/inpatient/discharges
-/inpatient/readmissions
-/inpatient/reports
+/investigations/services
+/investigations/equipment
+/investigations/quality-control
+/investigations/consumables
+/investigations/handoffs
+/investigations/reports
 ```
 
-An Inpatient user should not enter through:
+An Investigations user should not enter through:
 
 ```text
-/inpatient/admissions/{admission}
+/investigations/requests/{request}
 ```
 
 and later be redirected to generic URLs such as:
 
 ```text
-/admissions/{admission}
+/investigation-requests/{request}
+/lab/requests/{request}
 /patients/{patient}
 /visits/{visit}
 /consultations/{consultation}
-/nursing-sessions/{session}
-/discharges/{discharge}
 ```
 
-All browser navigation, forms, dashboard links, ward lists, patient cards, session actions, breadcrumbs, notifications, worklists, and redirects must preserve the Inpatient workspace context.
+All browser navigation, forms, redirects, breadcrumbs, worklists, patient links, result actions, notifications, dashboard cards, and report drilldowns must preserve the Investigations workspace context.
 
 ---
 
-# 2. Inpatient Workspace Scope
+# 2. Investigations Workspace Scope
 
-The Inpatient workspace is responsible for normal admission and ward-care workflows, including:
+The Investigations workspace is responsible for non-radiology diagnostic investigation workflows, including:
 
-1. Admission requests
-2. Admission acceptance
-3. Ward selection
-4. Bed allocation
-5. Active admissions
-6. Inpatient clinical sessions
-7. Nursing assessments
-8. Nursing care plans
-9. Vital-sign monitoring
-10. Intake and output monitoring
-11. Clinical rounds
-12. Doctor reviews
-13. Medication administration
-14. Treatments
-15. Procedures
-16. Investigation requests and follow-up
-17. Nursing tasks
-18. Patient observation
-19. Diet and nutrition instructions where supported
-20. Mobility and fall-risk monitoring
-21. Pressure-injury monitoring where supported
-22. Handoffs between shifts and departments
-23. Internal ward transfers
-24. External transfers
-25. Discharge readiness
-26. Departmental discharge clearances
-27. Final discharge
-28. Same-admission session reopening
-29. Readmission
-30. Inpatient reports and operational analytics
+1. Receiving investigation requests
+2. Validating requested services
+3. Payment or insurance authorization awareness
+4. Emergency and urgent request prioritization
+5. Specimen collection
+6. Specimen labeling
+7. Specimen accessioning
+8. Specimen receipt
+9. Specimen rejection
+10. Specimen recollection
+11. Test worklist generation
+12. Manual result entry
+13. Numeric result entry
+14. Free-text result entry
+15. Boolean result entry
+16. Positive/negative result entry
+17. Instrument or analyzer result import where supported
+18. Result verification
+19. Result approval
+20. Result release
+21. Critical-result identification
+22. Critical-result acknowledgement
+23. Clinician notification
+24. Result correction and amendment
+25. Investigation cancellation
+26. Repeat testing
+27. Quality-control tracking where supported
+28. Equipment and analyzer awareness
+29. Consumable and reagent awareness
+30. Investigation reports and operational analytics
 
-This workspace is for **normal inpatient admissions**.
+This workspace should primarily cover laboratory and similar diagnostic investigations.
 
 It must remain distinct from:
 
-* Emergency care
-* Routine OPD care
-* Maternity-specific admission
-* Theatre operations
-* Intensive-care workflows unless the current system models them through normal inpatient departments
-* Mortuary workflows
+* Radiology
+* Pharmacy
+* Theatre
+* General consultation
+* Inpatient ward care
+* Blood-bank operations where blood-bank workflows have their own dedicated department type
 
-Shared services and components may be reused, but the Inpatient workspace must present a ward-oriented and admission-oriented experience.
+Shared services may be reused, but Radiology should retain its own future `/radiology/*` workspace.
 
 ---
 
-# Phase 1 — Inspect the Existing Admission Architecture
+# Phase 1 — Inspect the Existing Investigation Architecture
 
 Before implementing, inspect the current codebase and identify:
 
 1. How department-specific menus are selected.
-2. How the Records, Nursing, Emergency, and doctor workspaces are registered.
+2. How the existing department workspaces are registered.
 3. How active department context is resolved.
 4. How multi-department users switch active departments.
-5. Existing routes, controllers, models, services, policies, and views for:
+5. Existing routes, controllers, models, services, policies, jobs, commands, and views for:
 
-   * admissions
-   * admission requests
-   * wards
-   * beds
-   * bed allocation
-   * patients
-   * visits
-   * consultations
-   * inpatient sessions
-   * nursing sessions
-   * clinical rounds
-   * nursing assessments
-   * care plans
-   * vital signs
-   * intake and output
-   * medication administration
-   * treatments
-   * procedures
-   * investigations
-   * observation
-   * nursing tasks
-   * handoffs
-   * transfers
-   * discharge clearances
-   * discharge
-   * readmission
-6. Existing admission statuses.
-7. Existing bed and ward availability logic.
-8. Existing inpatient consultation-completion rules.
-9. Existing session reopen rules.
-10. Existing discharge and readmission services.
-11. Existing billing behaviour for active admissions.
-12. Existing Journey Intelligence stages for admitted patients.
-13. Existing patient privacy protections.
-14. Existing clinical-safety services.
-15. Existing activity-log events.
-16. Shared views that hardcode generic routes such as:
+   * investigation requests
+   * investigation request items
+   * services
+   * service categories
+   * laboratory departments or benches
+   * specimen collection
+   * specimen types
+   * specimen accessioning
+   * specimen receipt
+   * specimen rejection
+   * test processing
+   * result entry
+   * result verification
+   * result release
+   * result amendments
+   * analyzer integration
+   * patient and visit links
+   * billing
+   * insurance
+   * stock and consumables
+   * critical-result alerts
+   * notifications
+   * reporting
+6. Existing investigation statuses.
+7. Existing specimen statuses.
+8. Existing result types and formats.
+9. Existing result-validation rules.
+10. Existing positive and negative result aggregation.
+11. Existing critical-value configuration.
+12. Existing service-to-department mapping.
+13. Existing billing and payment-gate operations.
+14. Existing Journey Intelligence stages for investigations.
+15. Existing patient privacy and audit protections.
+16. Existing views that hardcode generic routes such as:
 
 ```php
-route('admissions.show', $admission)
+route('investigations.show', $request)
 route('patients.show', $patient)
 route('visits.show', $visit)
 route('consultations.show', $consultation)
-route('discharges.show', $discharge)
 ```
 
-Do not create a competing admission, menu, dashboard, session, or routing architecture where one already exists.
+Do not create a competing investigation, specimen, result, menu, or routing framework where one already exists.
 
 Extend the existing:
 
@@ -227,35 +228,36 @@ Extend the existing:
 * Active department context
 * Workspace route resolver
 * Workspace redirect resolver
-* Admission services
-* Bed-allocation services
-* Consultation workflow services
-* Nursing workflow services
+* Investigation request services
+* Specimen services
+* Result-entry services
+* Result-verification services
+* Billing services
 * Journey Intelligence services
-* Billing and receivable services
+* Notification infrastructure
 * Authorization policies
 * Patient privacy services
 * Activity logging
 
 ---
 
-# Phase 2 — Inpatient Workspace Route Group
+# Phase 2 — Investigations Workspace Route Group
 
-Create a dedicated Inpatient route group.
+Create a dedicated Investigations route group.
 
 Use a structure equivalent to:
 
 ```php
-Route::prefix('inpatient')
-    ->name('inpatient.')
+Route::prefix('investigations')
+    ->name('investigations.')
     ->middleware([
         'auth',
         'verified',
         'department.context',
-        'department.type:inpatient',
+        'department.type:investigation',
     ])
     ->group(function () {
-        // Inpatient workspace routes
+        // Investigations workspace routes
     });
 ```
 
@@ -264,123 +266,80 @@ Use the project’s actual middleware names and active-department authorization 
 Required route names should include, where the corresponding functionality already exists:
 
 ```text
-inpatient.dashboard
+investigations.dashboard
 
-inpatient.admissions.index
-inpatient.admissions.pending
-inpatient.admissions.active
-inpatient.admissions.discharged
-inpatient.admissions.show
-inpatient.admissions.accept
-inpatient.admissions.assign_bed
+investigations.requests.index
+investigations.requests.pending
+investigations.requests.authorized
+investigations.requests.awaiting_payment
+investigations.requests.urgent
+investigations.requests.overdue
+investigations.requests.show
+investigations.requests.accept
+investigations.requests.cancel
 
-inpatient.wards.index
-inpatient.wards.show
+investigations.specimens.index
+investigations.specimens.collection
+investigations.specimens.received
+investigations.specimens.rejected
+investigations.specimens.show
+investigations.specimens.collect
+investigations.specimens.receive
+investigations.specimens.reject
+investigations.specimens.recollect
 
-inpatient.beds.index
-inpatient.beds.availability
-inpatient.beds.assign
-inpatient.beds.release
+investigations.worklist.index
+investigations.worklist.pending
+investigations.worklist.in_progress
+investigations.worklist.overdue
+investigations.worklist.completed
 
-inpatient.patients.index
-inpatient.patients.show
+investigations.results.index
+investigations.results.pending
+investigations.results.entry
+investigations.results.verification
+investigations.results.released
+investigations.results.critical
+investigations.results.show
+investigations.results.store
+investigations.results.verify
+investigations.results.release
+investigations.results.amend
 
-inpatient.visits.index
-inpatient.visits.show
+investigations.patients.index
+investigations.patients.show
 
-inpatient.rounds.index
-inpatient.rounds.show
-inpatient.rounds.create
-inpatient.rounds.store
-inpatient.rounds.update
+investigations.services.index
+investigations.services.show
 
-inpatient.sessions.index
-inpatient.sessions.show
-inpatient.sessions.create
-inpatient.sessions.store
-inpatient.sessions.reopen
+investigations.equipment.index
+investigations.quality_control.index
+investigations.consumables.index
 
-inpatient.vitals.index
-inpatient.vitals.show
-inpatient.vitals.store
-inpatient.vitals.update
-
-inpatient.assessments.index
-inpatient.assessments.show
-inpatient.assessments.store
-inpatient.assessments.update
-
-inpatient.care_plans.index
-inpatient.care_plans.show
-inpatient.care_plans.store
-inpatient.care_plans.update
-
-inpatient.tasks.index
-inpatient.tasks.show
-inpatient.tasks.update
-
-inpatient.medications.index
-inpatient.medications.show
-inpatient.medications.administer
-
-inpatient.treatments.index
-inpatient.treatments.show
-inpatient.treatments.execute
-
-inpatient.procedures.index
-inpatient.procedures.show
-
-inpatient.investigations.index
-inpatient.investigations.show
-
-inpatient.observations.index
-inpatient.observations.show
-
-inpatient.intake_output.index
-inpatient.intake_output.show
-inpatient.intake_output.store
-
-inpatient.handoffs.index
-inpatient.handoffs.show
-inpatient.handoffs.update
-
-inpatient.transfers.index
-inpatient.transfers.create
-inpatient.transfers.store
-inpatient.transfers.show
-
-inpatient.discharges.index
-inpatient.discharges.readiness
-inpatient.discharges.create
-inpatient.discharges.store
-inpatient.discharges.show
-
-inpatient.readmissions.create
-inpatient.readmissions.store
-
-inpatient.reports.index
+investigations.handoffs.index
+investigations.reports.index
 ```
 
-Only register routes for real functionality.
+Only register routes for functionality that exists or is implemented in this phase.
 
-Do not add empty placeholder pages merely to populate the menu.
+Do not create empty placeholder pages merely to populate the menu.
 
 ---
 
-# Phase 3 — Inpatient Ward Dashboard
+# Phase 3 — Investigations Operations Dashboard
 
-Create or complete a dedicated Inpatient dashboard.
+Create or complete a dedicated Investigations dashboard.
 
 The canonical destination should be:
 
 ```text
-/inpatient
+/investigations
 ```
 
 or:
 
 ```text
-/inpatient/dashboard
+/investigations/dashboard
 ```
 
 Choose one canonical route and redirect the other to it.
@@ -388,152 +347,144 @@ Choose one canonical route and redirect the other to it.
 The department dashboard resolver should map:
 
 ```php
-DepartmentType::INPATIENT => 'inpatient.dashboard'
+DepartmentType::INVESTIGATION => 'investigations.dashboard'
 ```
 
-The dashboard should function as an inpatient ward command board.
+The dashboard should function as an operational command board for diagnostic investigations.
 
 Recommended metrics and widgets include, where reliable data exists:
 
-* Active admissions
-* Admissions today
-* Pending admission requests
-* Patients awaiting bed allocation
-* Occupied beds
-* Available beds
-* Bed occupancy rate
-* Patients without assigned beds
-* Patients requiring clinical review
-* Patients with overdue vital signs
-* Patients with incomplete nursing assessments
-* Patients with overdue nursing tasks
-* Medications due
-* Medications overdue
-* Treatments pending
-* Procedures pending
-* Investigations pending
-* Critical investigation results awaiting review
-* Patients with discharge planned today
-* Patients awaiting discharge clearances
-* Patients ready for discharge
-* Patients awaiting transfer
-* Handoffs awaiting acknowledgement
-* High-risk patients
-* Long-stay patients
-* Readmissions today
-* Discharges today
+* Requests received today
+* Requests awaiting authorization
+* Requests awaiting payment
+* Emergency requests
+* Urgent requests
+* Specimens awaiting collection
+* Specimens collected today
+* Specimens awaiting receipt
+* Rejected specimens
+* Recollection required
+* Tests pending
+* Tests in progress
+* Overdue investigations
+* Results awaiting entry
+* Results awaiting verification
+* Results awaiting release
+* Critical results
+* Critical results awaiting acknowledgement
+* Amended results today
+* Completed investigations today
+* Average request-to-collection time
+* Average collection-to-result time
+* Average turnaround time
+* Tests breaching SLA
+* Analyzer or equipment alerts where supported
+* Low-stock investigation consumables where supported
 
 Each dashboard metric must:
 
 * Respect permissions
 * Respect the active department
-* Scope data to normal inpatient admissions
-* Avoid maternity and Emergency cases unless explicitly assigned to the Inpatient department
+* Scope data to investigation services assigned to the active department
+* Exclude Radiology services unless explicitly mapped to the Investigation department
 * Avoid leaking protected patient information
-* Link to `/inpatient/*` routes
+* Link to `/investigations/*` routes
 * Use safe empty states
 * Avoid expensive unbounded queries
 * Reuse Journey Intelligence and department metrics where applicable
 
-Do not introduce misleading metrics that cannot be accurately calculated.
+Do not introduce metrics that cannot be calculated reliably.
 
 ---
 
-# Phase 4 — Inpatient-Specific Menu Profile
+# Phase 4 — Investigations-Specific Menu Profile
 
 Extend the existing department menu profile or menu registry so that:
 
 ```php
-DepartmentType::INPATIENT
+DepartmentType::INVESTIGATION
 ```
 
-receives a dedicated Inpatient menu.
+receives a dedicated Investigations menu.
 
 Recommended menu structure:
 
-## Inpatient Command
+## Investigations Command
 
 * Dashboard
-* Active Admissions
-* Pending Admissions
-* Discharged Today
-* Long-Stay Patients
-* High-Risk Patients
+* All Requests
+* Emergency Requests
+* Urgent Requests
+* Overdue Investigations
 
-## Wards and Beds
+## Request Management
 
-* Ward Overview
-* Bed Availability
-* Bed Occupancy
-* Patients Without Beds
-* Bed Transfers
+* Pending Requests
+* Authorized Requests
+* Awaiting Payment
+* Accepted Requests
+* Cancelled Requests
 
-## Patient Care
+## Specimen Management
 
-* Admitted Patients
-* Clinical Rounds
-* Inpatient Sessions
-* Nursing Assessments
-* Care Plans
-* Vital Signs
-* Intake and Output
-* Patient Observations
-* Nursing Notes
+* Collection Worklist
+* Collected Specimens
+* Awaiting Receipt
+* Received Specimens
+* Rejected Specimens
+* Recollection Required
 
-## Medication and Services
+## Testing Worklist
 
-* Medication Administration
-* Treatments
-* Procedures
-* Pending Investigations
-* Laboratory Follow-Up
-* Radiology Follow-Up
-* Pending Services
+* Pending Tests
+* Tests in Progress
+* Overdue Tests
+* Completed Tests
+* Assigned to Me
+* Unassigned Tests
 
-## Nursing Work
+## Results
 
-* Nursing Tasks
-* Tasks Due
-* Overdue Tasks
-* Assigned Tasks
-* Unassigned Tasks
+* Result Entry
+* Awaiting Verification
+* Awaiting Release
+* Released Results
+* Critical Results
+* Amended Results
+
+## Operations
+
+* Investigation Services
+* Equipment and Analyzers
+* Quality Control
+* Consumables and Reagents
 
 ## Coordination
 
-* Shift Handoffs
-* Department Handoffs
+* Handoffs
+* Critical Alerts
 * Escalations
-* Transfers
-* Admission Requests
-
-## Discharge
-
-* Discharge Readiness
-* Pending Clearances
-* Planned Discharges
-* Completed Discharges
-* Readmissions
+* Pending Clinician Review
 
 ## Patient Access
 
 * Patient Search
 * Patient Profiles
-* Admission History
+* Investigation History
 * Visit History
 
-## Inpatient Reports
+## Investigation Reports
 
-* Admission Report
-* Bed Occupancy Report
-* Ward Census Report
-* Length-of-Stay Report
-* Nursing Activity Report
-* Medication Administration Report
-* Treatment Report
-* Investigation Follow-Up Report
-* Discharge Report
-* Readmission Report
-* Mortality Report where authorized
+* Request Volume Report
+* Specimen Collection Report
+* Rejected Specimen Report
+* Turnaround-Time Report
+* Positive and Negative Result Report
+* Critical-Result Report
+* Staff Activity Report
+* Service Performance Report
+* Analyzer Performance Report where supported
+* Consumable Usage Report where supported
 
 ## General
 
@@ -544,657 +495,823 @@ Recommended menu structure:
 Only show a menu item when:
 
 1. The feature exists.
-2. The relevant module is enabled.
+2. The required module is enabled.
 3. The user possesses the required permission.
 4. The active department permits access.
-5. The functionality belongs to normal inpatient care.
+5. The functionality belongs to the Investigation department.
 
 Permissions remain authoritative.
 
-Do not expose actions solely because the user belongs to an Inpatient department.
+Do not expose menu items solely because the active department type is `investigation`.
 
 ---
 
-# Phase 5 — Admission Worklists
+# Phase 5 — Investigation Request Worklists
 
-Create or adapt Inpatient admission worklists under:
-
-```text
-/inpatient/admissions
-```
-
-Recommended admission categories include:
+Create or adapt investigation request worklists under:
 
 ```text
-pending_acceptance
-awaiting_bed
-admitted
-active
-clinical_review_due
-nursing_action_due
-transfer_pending
-discharge_planned
-clearance_pending
-ready_for_discharge
-discharged_today
-readmitted
+/investigations/requests
 ```
 
-Use existing admission statuses, bed-allocation state, journey stage, clinical-task state, and discharge-readiness services.
+Recommended request categories include:
 
-Do not introduce duplicate statuses where the worklist state can be derived by a resolver.
+```text
+new
+awaiting_authorization
+awaiting_payment
+authorized
+accepted
+urgent
+emergency
+awaiting_specimen
+in_progress
+completed
+cancelled
+overdue
+```
 
-Each worklist item should display only authorized information, such as:
+Use existing request, billing, insurance, specimen, result, and journey statuses.
+
+Do not introduce duplicate statuses where the worklist state can be derived through a resolver.
+
+Each worklist row should display only authorized information, such as:
 
 * Patient identifier
 * Patient name according to privacy rules
-* Admission number
 * Visit number
-* Admission date and time
-* Admission reason
-* Admitting clinician
-* Ward
-* Bed
-* Length of stay
-* Current clinical stage
-* Responsible doctor
-* Assigned nurse where applicable
-* Pending tasks
-* Pending medications
-* Pending investigations
-* Discharge-readiness state
-* Next recommended action
+* Request number
+* Requesting department
+* Requesting clinician
+* Requested service
+* Priority
+* Request date and time
+* Payment or authorization state
+* Specimen requirement
+* Current investigation stage
+* Assigned staff or bench
+* SLA status
+* Waiting duration
+* Next required action
 
 Support filters such as:
 
-* Ward
-* Bed status
-* Admission date
-* Length of stay
-* Responsible clinician
-* Assigned nurse
-* Admission status
-* Clinical-risk level
-* Discharge-readiness state
-* Pending task type
-* Payment or billing state where operationally relevant
+* Date
+* Priority
+* Requesting department
+* Requesting clinician
+* Investigation service
+* Service category
+* Specimen type
+* Payment state
+* Insurance state
+* Request status
+* Assigned staff
+* SLA state
 
 Use pagination and efficient queries.
 
 ---
 
-# Phase 6 — Inpatient Admission Workspace
+# Phase 6 — Investigation Request Workspace
 
-Create or adapt a dedicated Inpatient admission workspace.
+Create or adapt a dedicated investigation request workspace.
 
 Recommended route:
 
 ```text
-/inpatient/admissions/{admission}
+/investigations/requests/{request}
 ```
 
-The admission workspace should provide a coordinated view of the entire admission.
+The request workspace should coordinate the full investigation lifecycle.
 
 Recommended sections:
 
 1. Patient identity strip
-2. Admission details
-3. Ward and bed
-4. Admission date and length of stay
-5. Responsible clinician
-6. Assigned nursing team
-7. Diagnosis and problem list
-8. Allergies and clinical alerts
-9. Current admission status
-10. Current Journey Intelligence stage
-11. Vital-sign timeline
-12. Nursing assessment
-13. Care plan
-14. Clinical rounds
-15. Active clinical sessions
-16. Medication administration
-17. Treatments
-18. Procedures
-19. Investigations and results
-20. Intake and output
-21. Patient observations
-22. Nursing tasks
-23. Handoffs
-24. Transfer history
-25. Billing and service-access state
-26. Discharge readiness
-27. Clearances
-28. Activity timeline
-29. Authorized quick actions
+2. Visit details
+3. Request details
+4. Requesting clinician and department
+5. Investigation services requested
+6. Priority and SLA
+7. Payment or insurance authorization status
+8. Specimen requirements
+9. Specimen collection details
+10. Specimen acceptance or rejection history
+11. Current processing stage
+12. Assigned staff or laboratory section
+13. Result-entry status
+14. Verification status
+15. Release status
+16. Critical-result alerts
+17. Clinician acknowledgement
+18. Result amendment history
+19. Billing references where authorized
+20. Activity timeline
+21. Authorized quick actions
 
-Do not duplicate underlying module implementations.
+Do not duplicate underlying request, specimen, result, billing, or notification implementations.
 
-The Inpatient admission page should coordinate existing workflows through one ward-oriented interface.
+The workspace should act as a coordinated department-specific view of existing services.
 
 ---
 
-# Phase 7 — Ward and Bed Management Integration
+# Phase 7 — Payment and Authorization Awareness
 
-Expose ward and bed information within the Inpatient workspace.
+Investigation services may require payment, insurance approval, sponsorship, or an authorized exception.
 
-Examples:
+Display safe operational states such as:
 
 ```text
-/inpatient/wards
-/inpatient/wards/{ward}
-/inpatient/beds
-/inpatient/beds/availability
+authorized_to_proceed
+payment_required
+payment_pending
+insurance_pending
+insurance_approved
+sponsor_approved
+emergency_override
+authorized_override
+billing_context_missing
 ```
 
 Reuse existing:
 
-* Ward models
-* Bed models
-* Bed-allocation services
-* Admission services
-* Transfer services
-* Occupancy calculations
+* Payment-gate operation policy
+* Visit billing overrides
+* Insurance coverage services
+* Sponsor authorization
+* Invoice receivables
+* Emergency exceptions
 * Activity logging
-* Authorization policies
 
-The ward overview may display:
+Do not expose unnecessary financial information to Investigation users without finance permissions.
 
-* Ward capacity
-* Occupied beds
-* Available beds
-* Reserved beds
-* Out-of-service beds
-* Occupancy percentage
-* Patients awaiting beds
-* Planned discharges
-* Expected transfers
+Do not hardcode a universal payment bypass.
+
+Use operation-specific policy for actions such as:
+
+* Accept request
+* Collect specimen
+* Start processing
+* Release result
+
+Emergency stabilization-related investigations may proceed through the configured emergency policy.
+
+Any override must be:
+
+* Explicit
+* Permission-controlled
+* Reasoned
+* Visit-scoped or request-scoped
+* Audited
+
+---
+
+# Phase 8 — Specimen Collection Workflow
+
+Expose specimen collection under:
+
+```text
+/investigations/specimens/collection
+```
+
+Reuse existing specimen and request services.
+
+The collection worklist should support:
+
+* Patient identification
+* Request identification
+* Required specimen type
+* Collection container
+* Collection instructions
+* Fasting or preparation requirements
+* Priority
+* Collection status
+* Assigned collector
+* Collection time
+* Barcode or accession number where supported
+* Special precautions
 
 Authorized users may:
 
-* Assign a bed
-* Transfer a patient to another bed
-* Transfer a patient to another ward
-* Release a bed after discharge
-* Mark a bed unavailable where supported
-* View bed history
+* Confirm patient identity
+* Record specimen collection
+* Record collection date and time
+* Record collector
+* Print or confirm labels
+* Record collection notes
+* Mark collection unsuccessful
+* Request recollection
+* Record refusal where appropriate
 
-Do not allow a bed to be assigned concurrently to multiple active admissions.
+Specimen collection must not create duplicate request items.
 
-Bed assignment and release must be transactional and audited.
-
-Do not automatically release a bed before the configured discharge or transfer workflow considers the patient moved.
-
----
-
-# Phase 8 — Inpatient Clinical Sessions
-
-Expose inpatient clinical sessions under:
-
-```text
-/inpatient/sessions
-```
-
-A clinical session should represent an authorized episode of inpatient clinical work during an active admission.
-
-The session workflow must respect the established Inpatient rules:
-
-1. An active admission must remain workable across multiple calendar days.
-2. Do not apply the OPD next-day locking rule to active inpatient admissions.
-3. An inpatient admission must remain open for new authorized clinical work until the patient is discharged.
-4. Completing one session must not block work in another active session.
-5. Only the completed session itself should become read-only unless reopened.
-6. Any active session must continue allowing authorized users to add new clinical items.
-7. A completed session may be reopened by an authorized user.
-8. Reopening must require a reason where configured.
-9. Reopening must be audited.
-10. Discharge must not destroy or detach existing clinical sessions.
-11. Authorized users should be able to reopen a session after discharge where the established workflow permits clinical correction or completion.
-12. Reopening a session must not silently reactivate the entire admission unless that is explicitly requested.
-13. Readmission must use the formal readmission workflow.
-14. Manual consultation completion must not be reintroduced where consultation completion is already automatic.
-
-Session states may include:
-
-```text
-active
-completed
-reopened
-cancelled
-locked
-```
-
-Use the current consultation and session architecture.
-
-Do not create a parallel inpatient consultation implementation.
+Collection actions must remain under `/investigations/*`.
 
 ---
 
-# Phase 9 — Clinical Rounds
+# Phase 9 — Specimen Accessioning and Receipt
 
-Expose clinical rounds under:
+Expose specimen receipt and accessioning inside the Investigations workspace.
+
+Recommended routes:
 
 ```text
-/inpatient/rounds
+/investigations/specimens/received
+/investigations/specimens/{specimen}
 ```
 
-A clinical round may include:
+The workflow should support:
 
-* Date and time
-* Responsible clinician
-* Participating staff
-* Current condition
-* New complaints
-* Examination findings
-* Diagnosis review
-* Medication review
-* Investigation review
-* Treatment response
-* Updated plan
-* Procedures required
-* Discharge planning
-* Follow-up interval
-* Clinical summary
+* Accession number
+* Barcode
+* Collection time
+* Receipt time
+* Transport duration
+* Specimen condition
+* Specimen quantity
+* Container type
+* Temperature requirement where supported
+* Receiving staff
+* Laboratory section
+* Acceptance status
+* Rejection reason
+* Recollection requirement
 
-Rounds should be admission-scoped and linked to the active clinical session where applicable.
+A specimen should not silently move into processing without the required acceptance state.
 
-Authorized users should be able to:
-
-* Start a round
-* Record findings
-* Update the treatment plan
-* Request investigations
-* Request procedures
-* Update medication
-* Create tasks
-* Mark review due
-* Complete the round
-
-All redirects and links must remain inside `/inpatient/*`.
+Receipt and accessioning must be transactional and audited.
 
 ---
 
-# Phase 10 — Nursing Assessment and Care Plans
+# Phase 10 — Specimen Rejection and Recollection
 
-Expose inpatient nursing assessments and care plans under:
+Support structured specimen rejection.
 
-```text
-/inpatient/assessments
-/inpatient/care-plans
-```
-
-The nursing assessment may include existing fields such as:
-
-* General condition
-* Consciousness
-* Mobility
-* Fall risk
-* Pressure-injury risk
-* Pain
-* Nutrition risk
-* Hydration
-* Elimination
-* Skin condition
-* Infection risk
-* Mental state
-* Communication needs
-* Personal-care needs
-* Immediate nursing concerns
-* Escalation requirement
-
-The care plan may include:
-
-* Nursing problem
-* Goal
-* Planned intervention
-* Frequency
-* Responsible nurse
-* Start date
-* Review date
-* Status
-* Outcome
-* Completion note
-
-Assessments and care plans must be:
-
-* Admission-scoped
-* Time-stamped
-* Linked to the responsible user
-* Permission-controlled
-* Audited
-* Visible to authorized clinical staff
-
-Do not introduce duplicate care-plan models where existing nursing-task or care-plan infrastructure already exists.
-
----
-
-# Phase 11 — Vital Signs and Ongoing Monitoring
-
-Expose inpatient vital signs under:
+Potential rejection reasons may include:
 
 ```text
-/inpatient/vitals
+wrong_patient
+unlabelled
+mislabelled
+insufficient_quantity
+wrong_container
+haemolysed
+clotted
+leaking
+contaminated
+delayed_transport
+temperature_breach
+duplicate_specimen
+invalid_collection
+other
 ```
 
-Support:
+Use existing configured reasons where available.
 
-* Initial inpatient vital signs
-* Repeated observations
-* Time-stamped entries
-* Responsible staff
-* Abnormal-value indicators
-* Critical-value alerts
-* Trend display
-* Repeat-measurement schedules
-* Monitoring-frequency requirements
-* Escalation
-* Correction audit
+A rejection should record:
 
-The workspace should distinguish:
-
-```text
-missing
-complete
-abnormal
-critical
-repeat_due
-monitoring_active
-overdue
-```
-
-Do not assume that one completed vital-sign entry satisfies the entire admission.
-
-Vital monitoring must support repeated observations over the admission duration.
-
-Critical values must use the existing clinical-alert and escalation architecture.
-
----
-
-# Phase 12 — Intake and Output Monitoring
-
-Where supported, expose intake and output monitoring under:
-
-```text
-/inpatient/intake-output
-```
-
-Support records such as:
-
-* Oral fluids
-* IV fluids
-* Enteral feeds
-* Urine output
-* Drain output
-* Vomiting
-* Stool
-* Blood loss
-* Other measurable output
-* Running fluid balance
-* Shift totals
-* Daily totals
-
-Each entry should include:
-
-* Date and time
-* Quantity
-* Unit
-* Route or source
-* Responsible staff
+* Reason
 * Notes
+* Rejecting staff
+* Date and time
+* Whether recollection is required
+* Notification destination
+* Request and patient context
 
-Use centralized unit and calculation handling.
+The system should:
 
-Do not duplicate medication-infusion or treatment records where those already generate intake records.
+1. Preserve the rejected specimen record.
+2. Mark the affected test as blocked or recollection required.
+3. Create or expose a recollection action.
+4. Notify the requesting clinical area where supported.
+5. Audit the rejection.
+6. Avoid silently cancelling the entire request if unaffected items can continue.
+
+Do not overwrite the original specimen state.
 
 ---
 
-# Phase 13 — Nursing Tasks
+# Phase 11 — Testing Worklist
 
-Expose inpatient nursing tasks under:
+Expose the testing worklist under:
 
 ```text
-/inpatient/tasks
+/investigations/worklist
 ```
 
-Reuse existing clinical-task and Journey Intelligence infrastructure.
+The worklist should group tests by their operational area where supported, such as:
 
-Task categories may include:
+* Haematology
+* Chemistry
+* Microbiology
+* Serology
+* Parasitology
+* Histology
+* Immunology
+* Molecular diagnostics
+* Other configured investigation sections
 
-* Repeat vital signs
-* Medication administration
-* Patient repositioning
-* Wound care
-* Intake and output recording
-* Sample collection
-* Treatment administration
-* Preparation for procedure
-* Mobility assistance
-* Clinical review request
-* Discharge preparation
-* Handoff
-* Transfer preparation
+Use existing department, service-category, bench, or laboratory-section mappings.
 
-Task states may include:
+Recommended worklist states include:
 
 ```text
 pending
 assigned
-acknowledged
 in_progress
+paused
+awaiting_repeat
+awaiting_quality_control
 completed
 cancelled
 overdue
-escalated
 ```
 
-Where frequency-based task generation already exists, repeated occurrences must be displayed and completed correctly.
+Each worklist item may display:
+
+* Request number
+* Patient identifier
+* Service
+* Specimen
+* Priority
+* Received time
+* Assigned staff
+* Equipment or analyzer
+* Current state
+* SLA status
+* Result-entry status
+* Quality-control blocker
+* Next action
 
 Authorized users may:
 
 * Claim
 * Assign
-* Acknowledge
-* Start
-* Complete
-* Add a completion note
-* Escalate
-* Reassign
-* View task history
+* Start processing
+* Pause with reason
+* Mark processing complete
+* Request repeat testing
+* Escalate delay
+* View test history
 
-All task links and redirects must remain inside `/inpatient/*`.
+Do not treat result release as equivalent to processing completion.
 
 ---
 
-# Phase 14 — Medication Administration
+# Phase 12 — Result Format Support
 
-Expose inpatient medication administration under:
+Preserve and extend the existing investigation result formats.
+
+Each investigation service should use its configured result type.
+
+Supported formats may include:
 
 ```text
-/inpatient/medications
+free_text
+numeric
+boolean
+positive_negative
+structured
 ```
 
-Display:
-
-* Medication
-* Dose
-* Route
-* Frequency
-* Scheduled time
-* Prescribing clinician
-* Dispensing or availability state
-* Administration status
-* Last administered time
-* Next due time
-* Allergy warning
-* Duplicate-medication warning
-* Dose warning
-* Omitted or refused reason
-
-Authorized users may record:
+Where existing functionality supports them, also preserve:
 
 ```text
-administered
-delayed
-withheld
-refused
-not_available
+select
+multi_select
+range
+ratio
+date
+time
+organism_sensitivity
+```
+
+Do not force all investigation results into a free-text field.
+
+## Numeric Results
+
+Support:
+
+* Numeric value
+* Unit
+* Reference range
+* High or low indicator
+* Critical indicator
+* Decimal precision
+* Age-specific range where supported
+* Sex-specific range where supported
+
+## Boolean Results
+
+Support:
+
+```text
+true
+false
+```
+
+Display localized clinical labels configured for the service.
+
+## Positive/Negative Results
+
+Support:
+
+```text
+positive
+negative
+indeterminate
+equivocal
+```
+
+where configured.
+
+Positive and negative values must remain structured so they can be used for monthly and service-level statistics.
+
+## Free-Text Results
+
+Support free-text findings while preserving:
+
+* Responsible staff
+* Entry time
+* Verification state
+* Amendment history
+
+## Structured Results
+
+Reuse existing result schemas where a test has multiple analytes or fields.
+
+Do not duplicate investigation definitions inside result records.
+
+---
+
+# Phase 13 — Result Entry
+
+Expose result entry under:
+
+```text
+/investigations/results/entry
+```
+
+Result entry should:
+
+1. Use the configured result format.
+2. Validate required fields.
+3. Validate numeric ranges and units.
+4. Detect abnormal and critical values.
+5. Record the responsible user.
+6. Record the entry time.
+7. Preserve analyzer origin where applicable.
+8. Support draft state where currently allowed.
+9. Prevent unauthorized release.
+10. Preserve amendment history.
+
+Potential result states include:
+
+```text
+not_entered
+draft
+entered
+awaiting_verification
+verified
+released
+amended
 cancelled
-missed
 ```
 
-Do not bypass:
+Do not allow released results to be overwritten directly.
 
-* Prescription safety
-* Pharmacy dispensing
-* Stock control
-* Payment policy
-* Allergy checks
-* Duplicate-medication checks
+Corrections must use the result-amendment workflow.
+
+---
+
+# Phase 14 — Result Verification and Approval
+
+Expose result verification under:
+
+```text
+/investigations/results/verification
+```
+
+Verification should confirm:
+
+* Patient and request
+* Investigation service
+* Specimen suitability
+* Result completeness
+* Units
+* Reference ranges
+* Abnormal indicators
+* Critical indicators
+* Quality-control status where relevant
+* Analyzer flags where relevant
+* Previous related results where permitted
+
+Use the existing authorization and professional-role model.
+
+The same user should not perform entry and verification where the current configuration requires separation of duties.
+
+Support configuration for:
+
+* Entry-only users
+* Verifiers
+* Approvers
+* Auto-verification for eligible analyzer results
+* Mandatory manual verification for critical results
+
+Verification must be audited.
+
+---
+
+# Phase 15 — Result Release
+
+Expose releasable results under:
+
+```text
+/investigations/results
+```
+
+Result release should:
+
+1. Require verification where configured.
+2. Check critical-result handling requirements.
+3. Record the releasing user.
+4. Record release date and time.
+5. Make results visible to authorized clinicians.
+6. Update request and journey state.
+7. Trigger configured notifications.
+8. Preserve patient privacy.
+9. Preserve audit history.
+
+Do not mark the entire investigation request complete if some request items remain incomplete.
+
+Use item-level completion where the existing architecture supports multi-item requests.
+
+---
+
+# Phase 16 — Critical Results
+
+Expose critical results under:
+
+```text
+/investigations/results/critical
+```
+
+Critical-result logic should use a centralized configuration or service.
+
+A critical result should record:
+
+* Investigation service
+* Result
+* Critical rule triggered
+* Patient and visit
+* Requesting clinician
+* Requesting department
+* Detection time
+* Responsible Investigation staff
+* Notification attempt
+* Recipient
+* Acknowledgement
+* Acknowledgement time
+* Escalation state
+* Resolution state
+
+The workflow should support:
+
+* Identify
+* Confirm
+* Notify
+* Escalate
+* Acknowledge
+* Resolve
+
+Critical results must remain highly visible until acknowledged or resolved according to the configured workflow.
+
+Do not expose full result details in notifications where privacy controls prohibit it.
+
+Reuse the existing Journey Intelligence and notification infrastructure where appropriate.
+
+---
+
+# Phase 17 — Result Amendments and Corrections
+
+Released results must not be edited directly.
+
+Provide a formal amendment workflow.
+
+An amendment should record:
+
+* Original result
+* Corrected result
+* Amendment reason
+* Amending user
+* Amendment date and time
+* Verification
+* Release
+* Notification status
+* Whether clinical acknowledgement is required
+
+The system must:
+
+1. Preserve the original released result.
+2. Display the amendment history.
+3. Mark the current result as amended.
+4. Notify authorized clinical recipients where configured.
+5. Audit the amendment.
+6. Avoid altering historical reports silently.
+
+An amendment should not create an unrelated duplicate request.
+
+---
+
+# Phase 18 — Analyzer and Equipment Integration
+
+Where analyzer integration already exists, expose operational visibility in the Investigations workspace.
+
+Support existing HL7, ASTM, file-import, serial, network, or middleware integrations where applicable.
+
+The workspace may show:
+
+* Connected analyzers
+* Connection state
+* Last successful communication
+* Pending result imports
+* Import failures
+* Unmatched results
+* Analyzer flags
+* Equipment maintenance state
+* Quality-control blockers
+
+Do not rewrite established analyzer communication services solely for the workspace.
+
+Analyzer results must pass through:
+
+* Patient and request matching
+* Service matching
+* Validation
+* Critical-value detection
+* Verification policy
 * Audit logging
 
-Medication administration must not falsely imply that medication was dispensed, billed, or available where those steps are incomplete.
-
-Any urgent override must be explicit, permission-controlled, reasoned, and audited.
+Do not auto-release unmatched or invalid results.
 
 ---
 
-# Phase 15 — Treatments and Procedures
+# Phase 19 — Quality Control
 
-Expose inpatient treatment and procedure worklists under:
+Where quality-control functionality already exists, expose it under:
 
 ```text
-/inpatient/treatments
-/inpatient/procedures
+/investigations/quality-control
 ```
 
-Display:
+Potential visibility may include:
 
-* Patient
-* Admission
-* Ward and bed
-* Ordered treatment or procedure
-* Requesting clinician
-* Priority
-* Scheduled time
-* Assigned staff
-* Required consumables
-* Payment or authorization state where relevant
-* Safety warnings
-* Status
-* Completion time
+* Control run status
+* Control material
+* Lot number
+* Expected range
+* Recorded value
+* Pass or fail
+* Equipment
+* Investigation service
+* Responsible user
+* Date and time
+* Corrective action
 
-Reuse existing:
+If a failed quality-control state should block patient-result processing or release, enforce that rule centrally.
 
-* Treatment services
-* Procedure services
-* Theatre services where appropriate
-* Stock and consumable logic
+Do not create fake quality-control functionality merely to populate the menu.
+
+Where no quality-control model exists, omit the menu item and document it as a future limitation.
+
+---
+
+# Phase 20 — Consumables and Reagents
+
+Where stock integration already exists, expose investigation-relevant consumable awareness.
+
+Recommended route:
+
+```text
+/investigations/consumables
+```
+
+The workspace may show:
+
+* Reagents
+* Test kits
+* Collection tubes
+* Slides
+* Containers
+* Controls
+* Consumables
+* Available quantity
+* Reorder level
+* Expiry date
+* Lot number
+* Storage location
+* Stockout state
+
+Reuse the existing Stores and inventory services.
+
+Do not create a second stock ledger for Investigations.
+
+Investigation staff should only have access to stock actions allowed by their permissions.
+
+---
+
+# Phase 21 — Investigation Service Configuration Awareness
+
+Expose an investigation service list under:
+
+```text
+/investigations/services
+```
+
+The operational view may show:
+
+* Service name
+* Service code
+* Category
+* Department
+* Result format
+* Specimen requirement
+* Normal turnaround time
+* Emergency turnaround time
+* Reference range availability
+* Critical-value configuration
 * Billing mapping
-* Payment-gate policy
-* Activity logging
+* Active or inactive state
 
-Do not allow nursing or ward staff to perform doctor-only ordering actions unless explicitly permitted by the existing permission model.
+This operational view should not automatically grant permission to edit service definitions.
 
----
-
-# Phase 16 — Investigations and Result Follow-Up
-
-Expose inpatient investigation tracking under:
-
-```text
-/inpatient/investigations
-```
-
-Support:
-
-* Requested
-* Awaiting sample collection
-* Sample collected
-* In progress
-* Result available
-* Critical result
-* Result reviewed
-* Cancelled
-
-The worklist should help ward staff identify:
-
-* Pending investigations
-* Overdue sample collection
-* Results awaiting review
-* Critical results
-* Investigations blocking discharge
-* Investigations requiring repeat collection
-
-Reuse existing laboratory, radiology, billing, consultation, and journey services.
-
-Do not create duplicate investigation records for the Inpatient workspace.
+Service configuration should remain under the existing administrative permission model.
 
 ---
 
-# Phase 17 — Patient Observation and Risk Monitoring
+# Phase 22 — Department and Section Scoping
 
-Expose patient observation under:
+All Investigations worklists must respect the active department.
 
-```text
-/inpatient/observations
-```
+Where a hospital has multiple Investigation departments or sections, such as:
 
-Observation may include:
+* Main laboratory
+* Emergency laboratory
+* Haematology
+* Chemistry
+* Microbiology
+* Satellite laboratory
 
-* General clinical observations
-* Neurological monitoring
-* Pain monitoring
-* Wound monitoring
-* Mobility monitoring
-* Fall-risk monitoring
-* Pressure-injury monitoring
-* Treatment response
-* Fluid-balance concerns
-* Behavioural observation where supported
-* Escalation status
+the workspace must scope data through:
 
-High-risk patients should be visible on:
+* Active department
+* Service-to-department mapping
+* Laboratory section
+* User assignment
+* Authorized cross-department access
 
-* The dashboard
-* Ward overview
-* Active admissions list
-* Nursing worklists
-* Handoffs
+Do not rely only on a broad service type of `investigation`.
 
-Do not duplicate structured vital signs or medication records inside free-text observations.
+A user should not see every hospital investigation merely because their active department type is `investigation`.
+
+Use active `department_id` scoping where applicable.
 
 ---
 
-# Phase 18 — Shift and Department Handoffs
+# Phase 23 — Handoffs and Coordination
 
-Expose inpatient handoffs under:
+Expose Investigation handoffs under:
 
 ```text
-/inpatient/handoffs
+/investigations/handoffs
 ```
 
-Reuse the existing Journey Intelligence handoff and coordination services.
+Reuse the existing Journey Intelligence handoff infrastructure.
 
-Support:
+Support handoffs such as:
 
-* Shift handoff
-* Nurse-to-nurse handoff
-* Doctor-to-doctor handoff
-* Department handoff
-* Transfer handoff
-* Discharge handoff
-* Outstanding-action handoff
+* Specimen collection requested
+* Recollection required
+* Critical result notification
+* Result awaiting clinician review
+* Investigation delayed
+* Equipment failure escalation
+* Test referred externally
+* Investigation blocking discharge
+* Investigation blocking procedure
 
 The worklist should display:
 
-* Patient and admission context
-* Sending user or department
-* Receiving user or department
-* Expected action
+* Patient and visit context
+* Request
+* Sending department
+* Receiving department
+* Required action
 * Priority
 * Due time
-* SLA status
-* Acknowledgement state
-* Resolution state
+* SLA state
+* Acknowledgement
+* Resolution
 
 Authorized users may:
 
@@ -1205,252 +1322,19 @@ Authorized users may:
 * Escalate
 * Reassign
 
-All handoff links should use `/inpatient/*` routes where an Inpatient equivalent exists.
+All links should preserve `/investigations/*` context where an Investigation workspace destination exists.
 
 ---
 
-# Phase 19 — Inpatient Transfer Workflow
-
-Expose inpatient transfers under:
-
-```text
-/inpatient/transfers
-```
-
-Support:
-
-* Bed-to-bed transfer
-* Ward-to-ward transfer
-* Department transfer
-* Internal specialty transfer
-* External-facility transfer where supported
-
-A transfer may include:
-
-* Source ward and bed
-* Destination ward and bed
-* Reason
-* Priority
-* Responsible clinician
-* Accepting department
-* Acceptance status
-* Handoff
-* Transport status
-* Transfer date and time
-
-Reuse existing bed, ward, admission, ambulance, referral, and handoff services where applicable.
-
-A transfer must not create a duplicate active admission unless the established workflow explicitly requires it.
-
-Bed release and destination assignment must be transactional.
-
----
-
-# Phase 20 — Discharge Readiness
-
-Create or extend a centralized inpatient discharge-readiness process.
-
-Recommended readiness areas include:
-
-* Clinical stability
-* Final diagnosis
-* Clinical summary
-* Medication reconciliation
-* Discharge prescription
-* Investigation review
-* Pending-result plan
-* Treatment completion
-* Procedure follow-up
-* Nursing clearance
-* Pharmacy clearance
-* Finance or billing clearance
-* Insurance or claims clearance
-* Ward clearance
-* Follow-up appointment
-* Referral instructions
-* Patient education
-* Warning signs
-* Responsible clinician approval
-
-Reuse the existing admission discharge-clearance architecture.
-
-Do not create duplicate clearance tables or services where existing ones already exist.
-
-The readiness screen should clearly distinguish:
-
-```text
-not_started
-in_progress
-blocked
-ready
-overridden
-completed
-```
-
-Overrides must be:
-
-* Permission-controlled
-* Reasoned
-* Audited
-* Scoped to the admission and clearance type
-
----
-
-# Phase 21 — Inpatient Discharge
-
-Expose inpatient discharge under:
-
-```text
-/inpatient/discharges
-```
-
-The discharge process should:
-
-1. Validate discharge readiness.
-2. Record final diagnosis.
-3. Record discharge summary.
-4. Record discharge destination.
-5. Record medication and follow-up instructions.
-6. Resolve or safely carry forward outstanding actions.
-7. Complete required clearances.
-8. Update the admission status.
-9. Update the visit status.
-10. Release the bed at the correct workflow point.
-11. Update Journey Intelligence state.
-12. Preserve audit history.
-13. Preserve billing and receivable history.
-14. Preserve all clinical sessions and records.
-
-Do not silently cancel pending investigations, treatments, medications, or tasks.
-
-Outstanding items should be:
-
-* Completed
-* Cancelled with reason
-* Carried forward
-* Marked for outpatient follow-up
-* Explicitly overridden
-
-according to the existing workflow.
-
----
-
-# Phase 22 — Session Reopening After Discharge
-
-Preserve the established session-reopening behaviour for inpatient cases.
-
-After discharge:
-
-1. Existing sessions must remain visible.
-2. Authorized users may reopen a completed session where permitted.
-3. Reopening must require the appropriate permission.
-4. Reopening must require a reason where configured.
-5. Reopening must be audited.
-6. Adding a clinical item after discharge must not silently remove the discharge.
-7. Reopening one session must not automatically reopen every session.
-8. Reopening a session must not silently reactivate bed occupancy.
-9. Reopening a session must not silently restart billing periods.
-10. Clinical corrections and late documentation must remain distinguishable from readmission.
-
-The UI should clearly indicate:
-
-```text
-discharged
-session_reopened_after_discharge
-late_entry
-clinical_correction
-```
-
-where the current data model supports these distinctions.
-
----
-
-# Phase 23 — Readmission Workflow
-
-Expose readmission under:
-
-```text
-/inpatient/readmissions
-```
-
-The system should provide a formal **Readmit** action for eligible discharged patients.
-
-Readmission should:
-
-1. Use the existing patient record.
-2. Link to the previous admission.
-3. Preserve the previous discharge.
-4. Create or extend the appropriate admission episode according to the established domain model.
-5. Create a new active care period.
-6. Re-establish ward and bed allocation.
-7. Reopen or extend billing according to the configured admission and billing architecture.
-8. Preserve previous invoices, receivables, payments, and audit history.
-9. Record the readmission reason.
-10. Record the responsible clinician.
-11. Record the readmission date and time.
-12. Update Journey Intelligence.
-13. Create required handoffs.
-14. Audit the readmission.
-
-Do not accomplish readmission by simply changing a discharged admission back to `active` unless that is explicitly the established business model.
-
-Where the intended model is to extend the same admission and its billing period, use the existing extension service and preserve a clear readmission event.
-
-Where the intended model requires a linked new admission, use a parent or previous-admission relationship.
-
-Do not duplicate billing or clinical records.
-
----
-
-# Phase 24 — Billing and Service-Access Awareness
-
-Display billing and service-access status where operationally relevant.
-
-The Inpatient workspace may show safe states such as:
-
-```text
-cleared_to_proceed
-payment_deferred
-deposit_required
-insurance_pending
-billing_context_missing
-authorized_override
-previous_balance_present
-```
-
-Reuse existing:
-
-* Payment-gate operation policies
-* Per-visit billing overrides
-* Admission billing
-* Invoice receivables
-* Previous-balance policy
-* Payment allocation services
-* Insurance coverage
-* Claims workflow
-* Discharge clearances
-
-Do not expose unnecessary financial details to users without finance permissions.
-
-Do not block urgent inpatient clinical care merely because billing is incomplete.
-
-However, elective or non-urgent services must follow the configured payment rules.
-
-Any override must be explicit, permission-controlled, reasoned, and audited.
-
-Readmission must extend or restart billing according to the current admission billing model without losing previous financial history.
-
----
-
-# Phase 25 — Workspace-Aware URL Resolution
+# Phase 24 — Workspace-Aware URL Resolution
 
 Extend the centralized workspace route resolver.
 
 Do not scatter checks such as:
 
 ```php
-if ($department->type === DepartmentType::INPATIENT) {
-    return route('inpatient.admissions.show', $admission);
+if ($department->type === DepartmentType::INVESTIGATION) {
+    return route('investigations.requests.show', $request);
 }
 ```
 
@@ -1469,83 +1353,54 @@ The resolver should support methods equivalent to:
 ```php
 dashboard()
 
+requestIndex()
+requestShow(InvestigationRequest $request)
+
+specimenCollection()
+specimenShow(Specimen $specimen)
+
+worklist()
+resultEntry()
+resultShow(InvestigationResult $result)
+criticalResultList()
+
 patientIndex()
 patientShow(Patient $patient)
 
-admissionIndex()
-admissionShow(Admission $admission)
-
-wardIndex()
-wardShow(Ward $ward)
-
-bedAvailability()
-
-visitShow(Visit $visit)
-
-roundIndex()
-roundShow(Admission $admission)
-
-sessionIndex()
-sessionShow(ConsultationSession $session)
-
-vitalsShow(Admission $admission)
-assessmentShow(Admission $admission)
-carePlanShow(Admission $admission)
-
-taskIndex()
-taskShow(Task $task)
-
-medicationIndex()
-treatmentIndex()
-procedureIndex()
-investigationIndex()
-observationIndex()
+serviceIndex()
+equipmentIndex()
+qualityControlIndex()
+consumableIndex()
 handoffIndex()
-
-transferIndex()
-dischargeReadiness(Admission $admission)
-dischargeShow(Discharge $discharge)
-readmissionCreate(Admission $admission)
+reportIndex()
 ```
 
-For an Inpatient user, the resolver must return `inpatient.*` routes.
+For an Investigations user, the resolver must return `investigations.*` routes.
 
 For other users, preserve the appropriate existing workspace or generic route.
 
-Always use the currently active department context rather than only the user’s primary department.
+Always use the active department context rather than only the user’s primary department.
 
 ---
 
-# Phase 26 — Replace Hardcoded Shared Links
+# Phase 25 — Replace Hardcoded Shared Links
 
-Audit all shared pages accessed by Inpatient users.
+Audit all shared pages accessed by Investigation users.
 
 Replace hardcoded generic links that break workspace continuity.
 
 Review at minimum:
 
-* Admission lists
-* Ward dashboards
-* Bed lists
+* Investigation request lists
+* Specimen worklists
+* Result-entry pages
+* Verification pages
+* Released-result pages
+* Critical-result pages
 * Patient search
 * Patient profiles
 * Visit history
-* Admission history
-* Clinical rounds
-* Session pages
-* Vital-sign pages
-* Nursing assessments
-* Care plans
-* Task lists
-* Medication worklists
-* Treatment worklists
-* Procedure worklists
-* Investigation worklists
-* Observation pages
-* Handoff pages
-* Transfer pages
-* Discharge pages
-* Readmission actions
+* Consultation investigation sections
 * Journey worklists
 * Dashboard cards
 * Breadcrumbs
@@ -1553,107 +1408,100 @@ Review at minimum:
 * Escalation links
 * Action dropdowns
 * Empty-state actions
+* Report drilldowns
 * Flash-message action links
 
 Avoid shared-view code such as:
 
 ```php
-route('admissions.show', $admission)
+route('investigations.show', $request)
 ```
 
 Use the centralized workspace route resolver.
 
-Do not change API, callback, signed, payment, print, export, or background-job URLs unless they are explicitly part of the Inpatient browser workspace.
+Do not alter API, analyzer, callback, signed, payment, print, export, or background-job URLs unless they are explicitly part of the Investigations browser workspace.
 
 ---
 
-# Phase 27 — Workspace-Aware Redirects
+# Phase 26 — Workspace-Aware Redirects
 
-All successful Inpatient actions must redirect back into `/inpatient/*`.
+All successful Investigations actions must redirect back into `/investigations/*`.
 
 Examples:
 
-After accepting an admission:
+After accepting a request:
 
 ```text
-/inpatient/admissions/{admission}
+/investigations/requests/{request}
 ```
 
-After assigning a bed:
+After collecting a specimen:
 
 ```text
-/inpatient/admissions/{admission}
+/investigations/specimens/{specimen}
 ```
 
-After recording a clinical round:
+After rejecting a specimen:
 
 ```text
-/inpatient/admissions/{admission}
+/investigations/specimens/rejected
 ```
 
-After recording vital signs:
+After entering a result:
 
 ```text
-/inpatient/admissions/{admission}
+/investigations/results/verification
 ```
 
-After completing a nursing task:
+After verifying a result:
 
 ```text
-/inpatient/tasks
+/investigations/results/{result}
 ```
 
-or the admission workspace.
-
-After starting discharge:
+After releasing a result:
 
 ```text
-/inpatient/discharges/{admission}/readiness
+/investigations/requests/{request}
 ```
 
-After completing discharge:
+After amending a result:
 
 ```text
-/inpatient/admissions/discharged
+/investigations/results/{result}
 ```
 
-After readmission:
-
-```text
-/inpatient/admissions/{activeAdmission}
-```
-
-Avoid hardcoding Inpatient redirects inside domain services.
+Avoid hardcoding Investigation redirects inside domain services.
 
 Use a workspace redirect resolver such as:
 
 ```php
-$workspaceRedirects->toAdmission($admission);
-$workspaceRedirects->toWard($ward);
-$workspaceRedirects->toTaskList();
-$workspaceRedirects->toDischargeReadiness($admission);
-$workspaceRedirects->toActiveAdmissions();
+$workspaceRedirects->toInvestigationRequest($request);
+$workspaceRedirects->toSpecimen($specimen);
+$workspaceRedirects->toResult($result);
+$workspaceRedirects->toVerificationQueue();
+$workspaceRedirects->toInvestigationDashboard();
 ```
 
-Validation failures must return users to the same `/inpatient/*` route with input preserved.
+Validation failures must return the user to the same `/investigations/*` route with input preserved.
 
 ---
 
-# Phase 28 — Login and Department Switching
+# Phase 27 — Login and Department Switching
 
-When a user logs in and their active department type is `inpatient`, redirect them to:
-
-```text
-/inpatient
-```
-
-When a multi-department user switches to an Inpatient department, redirect them to:
+When a user logs in and their active department type is `investigation`, redirect them to:
 
 ```text
-/inpatient
+/investigations
 ```
 
-When switching away from Inpatient, redirect to the selected department’s corresponding workspace.
+When a multi-department user switches to an Investigation department, redirect them to:
+
+```text
+/investigations
+```
+
+When switching away from Investigations, redirect to the selected department’s appropriate workspace.
 
 The menu, dashboard, route context, and data scoping must always use the active department.
 
@@ -1663,31 +1511,31 @@ Do not rely only on:
 $user->department_id
 ```
 
-where the application supports multiple departments and an active department context.
+where the application supports multiple departments.
 
 ---
 
-# Phase 29 — Inpatient Workspace Authorization
+# Phase 28 — Investigations Workspace Authorization
 
-The `/inpatient` prefix is not authorization.
+The `/investigations` prefix is not authorization.
 
 Protect the workspace so access requires:
 
 1. An authenticated user.
 2. A valid active department.
-3. Active department type equal to `inpatient`, unless an authorized admin-preview mode applies.
+3. Active department type equal to `investigation`, unless authorized admin preview applies.
 4. The required permission.
 5. The relevant module being enabled.
-6. Access to the requested patient, visit, admission, ward, or bed.
-7. Appropriate ward or department assignment where required.
+6. Access to the requested patient, visit, request, specimen, or result.
+7. Active-department or laboratory-section assignment where required.
 
-A user from another department who enters:
+A user from another department who manually enters:
 
 ```text
-/inpatient/admissions
+/investigations/requests
 ```
 
-must not receive access merely because they possess a broad admission-view permission.
+must not receive access merely because they possess a broad investigation-view permission.
 
 Use the project’s existing unauthorized workspace behaviour:
 
@@ -1699,54 +1547,52 @@ Do not create inconsistent authorization behaviour.
 
 ---
 
-# Phase 30 — Permission Model
+# Phase 29 — Permission Model
 
 Reuse existing permissions wherever possible.
 
-Only add permissions where the current permission model does not correctly represent the action.
+Only add permissions where the current model does not represent the required action.
 
 Potential permissions may include:
 
 ```text
-inpatient.workspace.view
-inpatient.admissions.view
-inpatient.admissions.manage
-inpatient.admissions.accept
-inpatient.beds.view
-inpatient.beds.assign
-inpatient.wards.view
-inpatient.rounds.view
-inpatient.rounds.manage
-inpatient.sessions.view
-inpatient.sessions.manage
-inpatient.sessions.reopen
-inpatient.vitals.view
-inpatient.vitals.manage
-inpatient.assessments.view
-inpatient.assessments.manage
-inpatient.care_plans.view
-inpatient.care_plans.manage
-inpatient.tasks.view
-inpatient.tasks.manage
-inpatient.medications.view
-inpatient.medications.administer
-inpatient.treatments.view
-inpatient.treatments.execute
-inpatient.procedures.view
-inpatient.investigations.view
-inpatient.observations.view
-inpatient.observations.manage
-inpatient.handoffs.view
-inpatient.handoffs.manage
-inpatient.transfers.manage
-inpatient.discharges.view
-inpatient.discharges.manage
-inpatient.discharge_overrides.manage
-inpatient.readmissions.manage
-inpatient.reports.view
+investigations.workspace.view
+investigations.requests.view
+investigations.requests.manage
+investigations.requests.accept
+investigations.requests.cancel
+
+investigations.specimens.view
+investigations.specimens.collect
+investigations.specimens.receive
+investigations.specimens.reject
+investigations.specimens.recollect
+
+investigations.worklist.view
+investigations.worklist.manage
+
+investigations.results.view
+investigations.results.enter
+investigations.results.verify
+investigations.results.release
+investigations.results.amend
+
+investigations.critical_results.view
+investigations.critical_results.manage
+
+investigations.services.view
+investigations.equipment.view
+investigations.quality_control.view
+investigations.quality_control.manage
+investigations.consumables.view
+
+investigations.handoffs.view
+investigations.handoffs.manage
+investigations.reports.view
+investigations.overrides.manage
 ```
 
-Inspect current permission names before adding new ones.
+Inspect current permission names before adding new permissions.
 
 Avoid duplicating equivalent permissions.
 
@@ -1754,45 +1600,46 @@ Menu visibility must follow permissions, but controllers, policies, form request
 
 ---
 
-# Phase 31 — Legacy Route Compatibility
+# Phase 30 — Legacy Route Compatibility
 
-Keep existing generic routes operational for:
+Keep existing generic investigation routes operational for:
 
 * Other departments
+* Clinician result viewing
 * Existing bookmarks
 * APIs
+* Analyzer integrations
 * Print flows
 * Signed URLs
 * Internal notifications
 * Background jobs
-* Integrations
 * Payment callbacks
 * Export downloads
 
-For interactive browser requests from an active Inpatient department, generic routes may redirect to Inpatient equivalents where safe.
+For interactive browser requests from an active Investigation department, generic routes may redirect to Investigation equivalents where safe.
 
 Examples:
 
 ```text
-/admissions/{admission}
-→ /inpatient/admissions/{admission}
+/investigation-requests/{request}
+→ /investigations/requests/{request}
 
-/wards/{ward}
-→ /inpatient/wards/{ward}
+/lab/results/{result}
+→ /investigations/results/{result}
 
-/visits/{visit}
-→ /inpatient/visits/{visit}
+/specimens/{specimen}
+→ /investigations/specimens/{specimen}
 ```
 
 Do not blindly redirect:
 
 * JSON requests
 * APIs
+* analyzer callbacks
 * signed URLs
-* callbacks
+* payment callbacks
 * print routes
 * exports
-* payment endpoints
 * background requests
 * integration requests
 
@@ -1800,27 +1647,24 @@ Avoid redirect loops.
 
 ---
 
-# Phase 32 — Breadcrumbs and Active Menu State
+# Phase 31 — Breadcrumbs and Active Menu State
 
-Inpatient pages must display Inpatient-specific breadcrumbs.
+Investigations pages must display Investigation-specific breadcrumbs.
 
 Examples:
 
 ```text
-Inpatient > Dashboard
-Inpatient > Active Admissions
-Inpatient > Admissions > Patient Admission
-Inpatient > Wards
-Inpatient > Wards > Ward Details
-Inpatient > Beds
-Inpatient > Clinical Rounds
-Inpatient > Nursing Tasks
-Inpatient > Medications
-Inpatient > Investigations
-Inpatient > Discharge Readiness
-Inpatient > Discharges
-Inpatient > Readmission
-Inpatient > Reports
+Investigations > Dashboard
+Investigations > Requests
+Investigations > Requests > Request Details
+Investigations > Specimen Collection
+Investigations > Specimens > Specimen Details
+Investigations > Testing Worklist
+Investigations > Result Entry
+Investigations > Verification
+Investigations > Critical Results
+Investigations > Quality Control
+Investigations > Reports
 ```
 
 The sidebar must correctly highlight parent items for nested routes.
@@ -1828,30 +1672,30 @@ The sidebar must correctly highlight parent items for nested routes.
 For example:
 
 ```text
-inpatient.admissions.show
-inpatient.rounds.show
-inpatient.sessions.show
+investigations.requests.show
+investigations.specimens.show
+investigations.results.show
 ```
 
-should highlight the appropriate admission or patient-care section.
+should highlight the appropriate parent menu item.
 
-Use route patterns rather than exact route-name equality only.
+Use active-route patterns rather than exact route-name equality only.
 
 ---
 
-# Phase 33 — Shared View Workspace Context
+# Phase 32 — Shared View Workspace Context
 
-Pass a clear Inpatient workspace context to shared views.
+Pass a clear Investigations workspace context to shared views.
 
 The context may include:
 
 ```php
 [
-    'workspaceKey' => 'inpatient',
+    'workspaceKey' => 'investigations',
     'workspaceDepartment' => $activeDepartment,
-    'workspaceRoutePrefix' => 'inpatient.',
-    'workspaceTitle' => __('inpatient.workspace.title'),
-    'workspaceScope' => 'normal_admission',
+    'workspaceRoutePrefix' => 'investigations.',
+    'workspaceTitle' => __('investigations.workspace.title'),
+    'workspaceScope' => 'diagnostic_investigation',
 ]
 ```
 
@@ -1864,20 +1708,20 @@ Shared views should use this context for:
 * Links
 * Form actions
 * Back buttons
-* Admission navigation
-* Ward navigation
+* Request navigation
+* Specimen navigation
+* Result navigation
 * Quick actions
 * Empty states
 * Notifications
-* Discharge actions
 
 Do not repeatedly inspect session state or department type inside Blade templates.
 
 ---
 
-# Phase 34 — Patient Privacy and Clinical Safety
+# Phase 33 — Patient Privacy and Result Security
 
-The Inpatient workspace handles highly sensitive patient and admission information.
+The Investigations workspace handles highly sensitive patient and diagnostic information.
 
 Ensure all existing privacy controls remain active, including:
 
@@ -1887,79 +1731,101 @@ Ensure all existing privacy controls remain active, including:
 * Access auditing
 * Search-result masking
 * Export restrictions
-* Secure patient, visit, and admission lookup
+* Secure patient, visit, request, specimen, and result lookup
 * Privacy-aware notifications
 * Activity-log sanitization
 
-Do not bypass privacy controls because the patient is admitted.
+Result visibility must remain permission-controlled.
 
-Clinical-safety protections must remain active, including:
+Do not expose unreleased results to users who only possess released-result access.
 
-* Allergy warnings
-* Critical vital-sign alerts
-* Medication conflicts
-* Duplicate active medication warnings
-* Unusual dose warnings
-* Missing diagnosis policy where applicable
-* Treatment-readiness checks
-* Procedure-readiness checks
-* Investigation-result alerts
-* Discharge-readiness checks
-* Admission and transfer readiness
-* Clinical escalation
+Do not expose:
 
-Overrides must be explicit, permission-controlled, reasoned, scoped, and audited.
+* Draft results
+* Unverified results
+* Internal laboratory comments
+* Quality-control notes
+* Analyzer raw messages
+
+to unauthorized clinical users.
+
+Critical-result notifications must avoid unnecessary sensitive details.
+
+---
+
+# Phase 34 — Clinical and Operational Safety
+
+Preserve existing clinical and operational safeguards, including:
+
+* Correct patient identification
+* Correct specimen identification
+* Duplicate-request checks
+* Specimen suitability rules
+* Critical-result detection
+* Result-range validation
+* Unit validation
+* Result verification
+* Amendment history
+* Analyzer matching
+* Quality-control blocking
+* Permission-controlled release
+* Audit trails
+
+Do not allow:
+
+* Result release without required verification
+* Direct editing of released results
+* Silent replacement of rejected specimens
+* Silent cancellation of pending request items
+* Unmatched analyzer results to be released
+* Critical results to disappear without acknowledgement
+* Unauthorized users to amend results
+
+Overrides must be explicit, permission-controlled, reasoned, and audited.
 
 ---
 
 # Phase 35 — Activity Logging and Audit
 
-Record relevant Inpatient actions through the existing `ActivityLog` infrastructure.
+Record relevant Investigation actions through the existing `ActivityLog` infrastructure.
 
-Audit events should cover existing actions such as:
+Audit events should cover actions such as:
 
-* Admission accepted
-* Admission rejected
-* Bed assigned
-* Bed changed
-* Ward transfer initiated
-* Ward transfer completed
-* Clinical round created
-* Clinical session created
-* Clinical session completed
-* Clinical session reopened
-* Vital signs recorded
-* Vital signs corrected
-* Nursing assessment created
-* Care plan created
-* Care plan updated
-* Nursing task claimed
-* Nursing task completed
-* Medication administered
-* Medication withheld
-* Treatment completed
-* Procedure completed
-* Investigation reviewed
-* Observation recorded
-* Handoff acknowledged
-* Handoff resolved
-* Discharge clearance updated
-* Discharge override applied
-* Patient discharged
-* Session reopened after discharge
-* Readmission created
-* Admission billing period extended
+* Request accepted
+* Request cancelled
+* Payment or authorization override applied
+* Specimen collected
+* Specimen received
+* Specimen rejected
+* Recollection requested
+* Test assigned
+* Test processing started
+* Test processing completed
+* Result entered
+* Result corrected before release
+* Result verified
+* Result released
+* Critical result detected
+* Critical result notification recorded
+* Critical result acknowledged
+* Result amended
+* Analyzer result imported
+* Analyzer result unmatched
+* Quality-control failure recorded
+* Investigation handoff acknowledged
+* Investigation handoff resolved
 
-Do not log full sensitive values.
+Do not log full sensitive result values where the audit policy prohibits them.
 
 Audit records should include sufficient context such as:
 
 * Actor
 * Patient identifier
 * Visit identifier
-* Admission identifier
+* Request identifier
+* Specimen identifier
+* Result identifier
 * Department
-* Ward
 * Action
 * Timestamp
 * Reason where required
@@ -1969,13 +1835,13 @@ Audit records should include sufficient context such as:
 
 # Phase 36 — Localization
 
-Add complete English and French localization for the Inpatient workspace.
+Add complete English and French localization for the Investigations workspace.
 
-Prefer an existing inpatient localization file if one exists, otherwise use:
+Prefer an existing investigation localization file if one exists, otherwise use:
 
 ```text
-lang/en/inpatient.php
-lang/fr/inpatient.php
+lang/en/investigations.php
+lang/fr/investigations.php
 ```
 
 Include keys for:
@@ -1983,31 +1849,23 @@ Include keys for:
 * Workspace title
 * Dashboard
 * Menu sections
-* Admission states
-* Ward and bed states
-* Clinical rounds
-* Sessions
-* Vital signs
-* Nursing assessments
-* Care plans
-* Nursing tasks
-* Medication administration
-* Treatments
-* Procedures
-* Investigations
-* Observations
-* Intake and output
+* Request states
+* Payment and authorization states
+* Specimen states
+* Specimen rejection reasons
+* Testing worklist states
+* Result formats
+* Result states
+* Verification
+* Release
+* Critical results
+* Amendments
+* Analyzer and equipment states
+* Quality-control states
+* Consumables
 * Handoffs
-* Transfers
-* Discharge readiness
-* Clearances
-* Discharge
-* Session reopening
-* Readmission
-* Billing and service-access states
 * Empty states
 * Quick actions
-* Critical alerts
 * Reports
 * Breadcrumbs
 * Unauthorized workspace message
@@ -2015,13 +1873,67 @@ Include keys for:
 
 Maintain complete English and French parity.
 
-Do not hardcode visible Inpatient labels in controllers, services, Blade templates, or JavaScript.
+Do not hardcode visible Investigation labels in controllers, services, Blade templates, or JavaScript.
 
 ---
 
-# Phase 37 — Menu Configuration and Future Extensibility
+# Phase 37 — Investigation Reports and Statistics
 
-Implement the Inpatient menu through the existing menu registry or department menu profile service.
+Create or adapt Investigation reports under:
+
+```text
+/investigations/reports
+```
+
+Recommended reports include:
+
+* Request volume by date
+* Request volume by service
+* Request volume by department
+* Request volume by clinician
+* Emergency and urgent request report
+* Specimen collection report
+* Rejected specimen report
+* Recollection report
+* Test turnaround-time report
+* SLA breach report
+* Result completion report
+* Critical-result report
+* Result amendment report
+* Staff activity report
+* Equipment performance report where supported
+* Consumable usage report where supported
+
+Preserve structured statistics for positive and negative results.
+
+Monthly and period-based reporting should be able to calculate:
+
+* Total tests
+* Positive results
+* Negative results
+* Indeterminate results
+* Positivity rate
+* Result counts by service
+* Result counts by department
+* Result counts by patient category where authorized
+
+Do not attempt to derive positive or negative statistics from unstructured free text.
+
+Only configured positive/negative result fields should contribute to those statistics.
+
+Reports must respect:
+
+* Permissions
+* Active department
+* Patient privacy
+* Aggregation thresholds where applicable
+* Export permissions
+
+---
+
+# Phase 38 — Menu Configuration and Future Extensibility
+
+Implement the Investigations menu through the existing menu registry or department menu profile service.
 
 Do not define it directly inside the sidebar Blade template.
 
@@ -2035,18 +1947,19 @@ The menu configuration should support:
 * Active-route patterns
 * Badge counts
 * Department-type availability
-* Ward scoping
+* Active department scoping
+* Laboratory-section scoping
 * Feature flags
-* Overdue counts
-* Medication-due counts
-* Discharge-readiness counts
+* Emergency-request counts
+* Critical-result counts
+* Overdue-test counts
+* Specimen-rejection counts
 
 The architecture must remain extensible for future department menu personalization, including:
 
 ```text
-pharmacy
-investigation
 radiology
+pharmacy
 finance
 stores
 maternity
@@ -2062,124 +1975,116 @@ Do not implement those other workspaces in this phase.
 
 ---
 
-# Phase 38 — Focused Automated Verification
+# Phase 39 — Focused Automated Verification
 
-Add focused automated tests for the Inpatient workspace.
+Add focused automated tests for the Investigations workspace.
 
 ## Route tests
 
 Verify:
 
-* Inpatient routes exist.
-* Route names use `inpatient.*`.
-* URLs use `/inpatient/*`.
-* Inpatient department middleware is attached.
+* Investigation routes exist.
+* Route names use `investigations.*`.
+* URLs use `/investigations/*`.
+* Investigation department middleware is attached.
 * Generic routes remain available where required.
 
 ## Access tests
 
 Verify:
 
-* An Inpatient department user can access authorized Inpatient pages.
-* A non-Inpatient department user cannot access the workspace.
+* An Investigation department user can access authorized Investigation pages.
+* A non-Investigation department user cannot access the workspace.
 * Users without the required permission cannot access protected actions.
 * Admin preview continues working where supported.
 * Multi-department active context is respected.
+* Active `department_id` scoping is respected.
 
 ## Dashboard tests
 
 Verify:
 
-* The Inpatient dashboard loads.
-* Metrics include only normal inpatient admissions.
-* Maternity and Emergency cases do not leak into the workspace incorrectly.
-* Ward and bed metrics are accurate.
-* Links point to `/inpatient/*`.
+* The Investigations dashboard loads.
+* Metrics include only services mapped to the active Investigation department.
+* Radiology services do not leak into the workspace incorrectly.
+* Critical-result and overdue counts are accurate.
+* Links point to `/investigations/*`.
 * Sensitive information remains protected.
 * Empty states render safely.
 
-## Admission tests
+## Request tests
 
 Verify:
 
-* Admission acceptance uses the existing admission service.
-* Bed assignment is transactional.
-* A bed cannot be assigned to multiple active admissions.
-* Active admissions remain visible.
-* Discharged admissions leave the active-admission worklist.
-* Readmitted patients return through the correct workflow.
+* Requests appear in the correct worklist.
+* Payment and authorization states are reflected correctly.
+* Emergency and urgent requests are prioritized.
+* Multi-item requests retain item-level states.
+* Cancelling one item does not incorrectly cancel unrelated items.
 
-## Session-rule tests
-
-Verify:
-
-* Active inpatient admissions remain workable across multiple days.
-* OPD next-day locking is not applied.
-* Completing one session does not block another active session.
-* A completed session becomes read-only until reopened.
-* Authorized users can reopen a completed session.
-* Reopening requires a reason where configured.
-* Reopening is audited.
-* Reopening after discharge does not silently reactivate the admission.
-* Reopening after discharge does not silently restore bed occupancy.
-* Readmission uses the formal readmission workflow.
-
-## Ward and bed tests
+## Specimen tests
 
 Verify:
 
-* Ward occupancy counts are accurate.
-* Bed availability updates after assignment.
-* Transfers release and assign beds correctly.
-* Discharge releases the bed at the correct point.
-* Failed transactions do not leave inconsistent occupancy.
+* Specimen collection uses the existing request.
+* Duplicate specimen records are not created incorrectly.
+* Receipt and accessioning are audited.
+* Rejection preserves the original specimen.
+* Recollection is created or exposed correctly.
+* Unaffected request items remain processable.
 
-## Medication and task tests
-
-Verify:
-
-* Medication-due worklists are admission-scoped.
-* Administration actions remain under `/inpatient/*`.
-* Allergy and dose warnings remain active.
-* Frequency-based nursing tasks display correctly.
-* Completed tasks are audited.
-
-## Discharge tests
+## Result-format tests
 
 Verify:
 
-* Discharge readiness uses the existing clearance architecture.
-* Missing required clearances block discharge.
-* Authorized overrides require a reason.
-* Overrides are audited.
-* Discharge preserves clinical and billing history.
-* Outstanding items are not silently discarded.
-* Bed release occurs correctly.
+* Free-text results save correctly.
+* Numeric results validate values, units, and ranges.
+* Boolean results remain structured.
+* Positive and negative results remain structured.
+* Positive and negative statistics calculate correctly.
+* Structured result schemas remain supported.
 
-## Readmission tests
+## Verification and release tests
 
 Verify:
 
-* Readmission links to the previous admission.
-* Previous discharge remains preserved.
-* The correct billing period or new billing episode is created.
-* Previous invoices and payments are not modified incorrectly.
-* Ward and bed allocation is re-established.
-* Journey Intelligence updates correctly.
-* Readmission is audited.
+* Results requiring verification cannot be released early.
+* Unauthorized users cannot verify or release results.
+* Critical results follow the required workflow.
+* Multi-item requests complete only when all required items are complete.
+* Released results become visible to authorized clinicians.
+
+## Amendment tests
+
+Verify:
+
+* Released results cannot be overwritten directly.
+* Amendments preserve the original result.
+* Amendments require a reason.
+* Amendments are verified and released correctly.
+* Amendment actions are audited.
+
+## Analyzer tests
+
+Where analyzer integration exists, verify:
+
+* Matched results import correctly.
+* Unmatched results do not auto-release.
+* Invalid results are blocked.
+* Critical-result detection still runs.
+* Analyzer imports are audited.
 
 ## Redirect tests
 
 Verify:
 
-* Login redirects to `/inpatient`.
-* Switching to Inpatient redirects to `/inpatient`.
-* Admission actions remain under `/inpatient/*`.
-* Clinical round actions remain under `/inpatient/*`.
-* Session actions remain under `/inpatient/*`.
-* Medication, treatment, investigation, transfer, discharge, and readmission actions remain under `/inpatient/*`.
+* Login redirects to `/investigations`.
+* Switching to an Investigation department redirects to `/investigations`.
+* Request actions remain under `/investigations/*`.
+* Specimen actions remain under `/investigations/*`.
+* Result-entry, verification, release, and amendment actions remain under `/investigations/*`.
 * No redirect loops occur.
-* JSON and API requests are not incorrectly redirected.
+* JSON, analyzer, API, export, print, signed, and callback requests are not incorrectly redirected.
 
 ## Privacy and audit tests
 
@@ -2187,141 +2092,116 @@ Verify:
 
 * Patient masking remains active.
 * Protected fields require permission.
-* Clinical, admission, transfer, discharge, and readmission actions generate audit records.
-* Sensitive values are not exposed through alternate Inpatient views.
+* Draft and unverified results are not exposed to unauthorized users.
+* Investigation actions generate required audit records.
+* Sensitive result values are not exposed through alternate views.
 
-Run focused Inpatient workspace tests and essential route, view, localization, migration, billing, and audit checks during implementation.
+Run focused Investigations workspace tests and essential route, view, localization, billing, integration, and audit checks during implementation.
 
 Do not run the full UHMS suite after each phase.
 
-Run one broad relevant suite after all Inpatient workspace phases are complete.
+Run one broad relevant suite after all Investigations workspace phases are complete.
 
 ---
 
-# Phase 39 — Manual Acceptance Scenarios
+# Phase 40 — Manual Acceptance Scenarios
 
-## Scenario A — Inpatient login
+## Scenario A — Investigation login
 
-1. Log in as a user whose active department type is `inpatient`.
-2. Confirm the landing URL is `/inpatient`.
-3. Confirm the Inpatient menu is displayed.
+1. Log in as a user whose active department type is `investigation`.
+2. Confirm the landing URL is `/investigations`.
+3. Confirm the Investigations menu is displayed.
 4. Confirm unrelated department menus are absent.
 
-## Scenario B — Admission acceptance
+## Scenario B — Request receipt
 
-1. Open pending admissions.
-2. Accept an admission.
-3. Assign a ward and bed.
-4. Confirm the patient appears in active admissions.
-5. Confirm the URL remains under `/inpatient/*`.
-6. Confirm the actions are audited.
-
-## Scenario C — Multi-day active admission
-
-1. Open an admission created on a previous day.
-2. Confirm the admission remains active.
-3. Start a new clinical session.
-4. Add clinical items.
-5. Confirm the OPD next-day restriction is not applied.
-
-## Scenario D — Multiple clinical sessions
-
-1. Complete one inpatient session.
-2. Open another active session.
-3. Confirm authorized users can continue adding clinical items.
-4. Confirm the completed session remains read-only.
-5. Reopen the completed session with permission.
-6. Confirm the reopening is audited.
-
-## Scenario E — Nursing care
-
-1. Record a nursing assessment.
-2. Create or update a care plan.
-3. Record vital signs.
-4. Complete a nursing task.
-5. Confirm the admission workspace updates.
-6. Confirm all redirects remain under `/inpatient/*`.
-
-## Scenario F — Medication administration
-
-1. Open medications due.
-2. Administer an authorized medication.
-3. Record a withheld or refused medication.
-4. Confirm safety warnings remain active.
-5. Confirm all actions are audited.
-
-## Scenario G — Investigation follow-up
-
-1. Open pending investigations.
-2. Confirm overdue samples and unreviewed results are visible.
-3. Review a result.
-4. Confirm the admission timeline updates.
-
-## Scenario H — Ward transfer
-
-1. Transfer a patient to another bed.
-2. Transfer the patient to another ward.
-3. Confirm source-bed release and destination assignment.
-4. Confirm the admission remains the same.
-5. Confirm the transfer is audited.
-
-## Scenario I — Discharge readiness
-
-1. Open discharge readiness.
-2. Confirm all required clearance areas appear.
-3. Leave one required clearance incomplete.
-4. Confirm discharge remains blocked.
-5. Complete the clearance.
-6. Confirm the patient becomes ready for discharge.
-
-## Scenario J — Discharge
-
-1. Complete discharge.
-2. Confirm the admission status changes.
-3. Confirm the patient leaves the active-admission list.
-4. Confirm the bed is released.
-5. Confirm clinical and billing history remain intact.
-
-## Scenario K — Session reopening after discharge
-
-1. Open a discharged admission.
-2. Reopen an eligible session with permission.
-3. Add a permitted late entry or correction.
-4. Confirm the admission does not silently become active.
-5. Confirm the bed does not become occupied.
+1. Open the pending request worklist.
+2. Select a new request.
+3. Confirm payment or authorization state is visible.
+4. Accept the request.
+5. Confirm the redirect remains under `/investigations/*`.
 6. Confirm the action is audited.
 
-## Scenario L — Readmission
+## Scenario C — Specimen collection
 
-1. Open a discharged patient.
-2. Select Readmit.
-3. Record the readmission reason.
-4. Assign a ward and bed.
-5. Confirm the previous admission remains preserved.
-6. Confirm the new or extended billing period is correct.
-7. Confirm the patient appears in active admissions.
-8. Confirm the readmission is audited.
+1. Open the collection worklist.
+2. Select a patient.
+3. Record specimen collection.
+4. Confirm labeling and specimen type.
+5. Confirm the specimen appears in the receipt worklist.
+6. Confirm all URLs remain under `/investigations/*`.
 
-## Scenario M — Department switching
+## Scenario D — Specimen rejection
 
-1. Use a multi-department user.
-2. Switch to an Inpatient department.
-3. Confirm redirect to `/inpatient`.
-4. Switch to another department.
-5. Confirm the correct menu and routes load.
+1. Open a received specimen.
+2. Reject it with a structured reason.
+3. Confirm the original specimen remains preserved.
+4. Confirm recollection is required.
+5. Confirm the requesting department is notified where supported.
+6. Confirm the action is audited.
 
-## Scenario N — Permission control
+## Scenario E — Numeric result
 
-1. Remove an Inpatient permission.
-2. Confirm the related menu item disappears.
-3. Enter the route directly.
+1. Open a numeric test.
+2. Enter a result and unit.
+3. Confirm reference range and abnormal indicators.
+4. Submit for verification.
+5. Verify and release the result.
+6. Confirm the result appears in the clinician-facing workflow.
+
+## Scenario F — Positive/negative result
+
+1. Open a positive/negative investigation.
+2. Record a positive result.
+3. Verify and release it.
+4. Confirm the structured value is preserved.
+5. Confirm the report statistics count it as positive.
+
+## Scenario G — Critical result
+
+1. Enter a value that triggers a critical rule.
+2. Confirm the result appears in the critical worklist.
+3. Record notification to the clinician.
+4. Confirm acknowledgement and escalation states.
+5. Confirm the result remains visible until appropriately resolved.
+
+## Scenario H — Result amendment
+
+1. Open a released result.
+2. Attempt direct editing.
+3. Confirm direct editing is blocked.
+4. Start an amendment.
+5. Enter the reason and corrected result.
+6. Verify and release the amendment.
+7. Confirm the original result remains visible in history.
+
+## Scenario I — Multi-item request
+
+1. Open a request containing several investigation items.
+2. Complete only one item.
+3. Confirm the request does not become fully completed.
+4. Complete the remaining items.
+5. Confirm the request then reaches its final state.
+
+## Scenario J — Active department scoping
+
+1. Use a user assigned to multiple Investigation departments.
+2. Switch the active department.
+3. Confirm the worklists change to the selected department.
+4. Confirm requests from unauthorized sections are not displayed.
+
+## Scenario K — Permission control
+
+1. Remove result-verification permission.
+2. Confirm the verification menu item disappears.
+3. Enter the verification route directly.
 4. Confirm access is denied.
 
-## Scenario O — Legacy compatibility
+## Scenario L — Legacy compatibility
 
-1. Enter a generic admission or ward route as an Inpatient user.
-2. Confirm it safely resolves or redirects to the Inpatient equivalent where configured.
-3. Confirm APIs, signed URLs, callbacks, print routes, and exports remain unaffected.
+1. Enter a generic investigation route as an Investigation user.
+2. Confirm it safely resolves or redirects to the Investigations equivalent where configured.
+3. Confirm APIs, analyzer integrations, signed URLs, callbacks, print routes, and exports remain unaffected.
 
 ---
 
@@ -2329,40 +2209,37 @@ Run one broad relevant suite after all Inpatient workspace phases are complete.
 
 The implementation is accepted only when all the following are true:
 
-1. Users with an active department type of `inpatient` receive a dedicated Inpatient menu.
-2. Their default dashboard uses `/inpatient`.
-3. Supported Inpatient pages use `/inpatient/*` URLs.
-4. Route names use the `inpatient.*` namespace.
-5. The workspace includes only normal inpatient admissions.
-6. Maternity, Emergency, and OPD cases do not incorrectly appear.
-7. Forms submit through Inpatient routes.
-8. Redirects remain inside the Inpatient workspace.
-9. Breadcrumbs and active menu states are Inpatient-aware.
+1. Users with an active department type of `investigation` receive a dedicated Investigations menu.
+2. Their default dashboard uses `/investigations`.
+3. Supported investigation pages use `/investigations/*` URLs.
+4. Route names use the `investigations.*` namespace.
+5. Worklists are scoped to the active Investigation department.
+6. Radiology requests do not incorrectly appear unless explicitly mapped.
+7. Forms submit through Investigation routes.
+8. Redirects remain inside the Investigations workspace.
+9. Breadcrumbs and active menu states are Investigation-aware.
 10. Permissions and enabled modules control menu visibility.
-11. A non-Inpatient department user cannot access the workspace.
+11. A non-Investigation department user cannot access the workspace.
 12. Multi-department users are evaluated using the active department.
-13. Existing admission, ward, bed, consultation, nursing, medication, treatment, investigation, billing, journey, discharge, and audit logic is reused.
-14. Core clinical, admission, and billing logic is not duplicated.
-15. Active inpatient admissions remain workable across multiple days.
-16. OPD next-day locking is not applied to active admissions.
-17. Completing one session does not block another active session.
-18. Completed sessions can be reopened by authorized users.
-19. Reopening is reasoned and audited.
-20. Reopening after discharge does not silently reactivate the admission or bed occupancy.
-21. Bed assignment and transfer remain transactionally consistent.
-22. Medication and clinical-safety protections remain active.
-23. Discharge uses the existing readiness and clearance architecture.
-24. Discharge preserves clinical and billing history.
-25. Readmission preserves the previous admission and discharge.
-26. Readmission correctly creates or extends the billing period.
-27. Generic routes remain functional for other departments and integrations.
-28. APIs, signed URLs, callbacks, print routes, and exports are not incorrectly redirected.
-29. Patient privacy protections remain fully active.
-30. Relevant Inpatient actions are audited.
-31. English and French localization are complete and in parity.
-32. Focused Inpatient workspace tests pass.
-33. One broad relevant suite passes after all phases are complete.
-34. No broken links, route loops, duplicate route names, generic URL leaks, incorrect bed occupancy, or OPD/maternity/Emergency workflow contamination remain.
+13. Existing request, specimen, result, billing, insurance, inventory, journey, integration, reporting, and audit logic is reused.
+14. Core investigation and billing logic is not duplicated.
+15. Specimen collection, receipt, rejection, and recollection are fully tracked.
+16. Result formats remain structured and service-configurable.
+17. Numeric results preserve units and reference ranges.
+18. Positive and negative results remain usable for monthly statistics.
+19. Results requiring verification cannot be released early.
+20. Critical results use a visible acknowledgement and escalation workflow.
+21. Released results cannot be overwritten directly.
+22. Result amendments preserve the original result and audit history.
+23. Analyzer results cannot bypass matching, validation, verification, or critical-result checks.
+24. Generic routes remain functional for other departments and integrations.
+25. APIs, analyzer callbacks, signed URLs, print routes, exports, and payment callbacks are not incorrectly redirected.
+26. Patient privacy and result-security protections remain fully active.
+27. Relevant Investigation actions are audited.
+28. English and French localization are complete and in parity.
+29. Focused Investigations workspace tests pass.
+30. One broad relevant suite passes after all phases are complete.
+31. No broken links, route loops, duplicate route names, incorrect department leakage, silent result replacement, or Radiology workflow contamination remain.
 
 ---
 
@@ -2370,55 +2247,56 @@ The implementation is accepted only when all the following are true:
 
 Provide:
 
-1. Inpatient workspace route group.
-2. Inpatient-specific controllers or thin adapters where required.
-3. Inpatient ward dashboard.
-4. Inpatient department menu profile.
-5. Admission worklists.
-6. Inpatient admission workspace.
-7. Ward and bed-management integration.
-8. Clinical-round integration.
-9. Inpatient-session integration.
-10. Nursing assessments and care plans.
-11. Vital-sign and intake/output monitoring.
-12. Nursing-task worklists.
-13. Medication, treatment, procedure, and investigation worklists.
-14. Observation and handoff integration.
-15. Transfer workflow integration.
-16. Discharge-readiness and clearance integration.
-17. Discharge workflow integration.
-18. Session reopening after discharge.
-19. Readmission workflow.
-20. Workspace-aware URL resolver updates.
-21. Workspace-aware redirect resolver updates.
-22. Updated shared links and forms.
-23. Login and department-switch integration.
-24. Inpatient breadcrumbs and active-menu handling.
-25. Permission integration.
-26. Patient privacy and clinical-safety integration.
-27. Billing and service-access integration.
+1. Investigations workspace route group.
+2. Investigation-specific controllers or thin adapters where required.
+3. Investigations operations dashboard.
+4. Investigation department menu profile.
+5. Request worklists.
+6. Investigation request workspace.
+7. Payment and authorization integration.
+8. Specimen collection workflow.
+9. Specimen receipt and accessioning.
+10. Specimen rejection and recollection.
+11. Testing worklists.
+12. Result-format integration.
+13. Result-entry workflow.
+14. Verification and release workflow.
+15. Critical-result workflow.
+16. Result-amendment workflow.
+17. Analyzer and equipment integration where supported.
+18. Quality-control integration where supported.
+19. Consumable and reagent visibility.
+20. Positive and negative result reporting.
+21. Workspace-aware URL resolver updates.
+22. Workspace-aware redirect resolver updates.
+23. Updated shared links and forms.
+24. Login and department-switch integration.
+25. Investigation breadcrumbs and active-menu handling.
+26. Permission integration.
+27. Patient privacy and result-security integration.
 28. English and French localization.
 29. Focused feature tests.
 30. A final implementation report containing:
 
 * Files created
 * Files modified
-* Inpatient route map
-* Inpatient menu map
-* Admission worklist categories
+* Investigation route map
+* Investigation menu map
+* Request worklist categories
 * Dashboard metrics
-* Ward and bed behaviour
-* Clinical-session behaviour
-* Session reopening behaviour
-* Discharge-readiness workflow
-* Discharge behaviour
-* Readmission behaviour
-* Billing-period behaviour
+* Specimen workflow
+* Result formats
+* Verification and release behaviour
+* Critical-result behaviour
+* Result-amendment behaviour
+* Analyzer integration behaviour
+* Positive and negative reporting behaviour
+* Active department scoping
 * Reused services
 * Redirect behaviour
 * Permissions used
 * Patient privacy checks
-* Clinical-safety checks
+* Result-security checks
 * Audit events
 * Tests executed
 * Test results
@@ -2426,4 +2304,4 @@ Provide:
 
 Implement the work fully.
 
-Do not stop at planning, route registration, menu configuration, dashboard layout, or admission listing alone. The final implementation must provide a functional, safe, department-specific Inpatient workspace throughout the full normal-admission lifecycle.
+Do not stop at planning, route registration, menu configuration, dashboard layout, or request listing alone. The final implementation must provide a functional, secure, department-specific Investigations workspace throughout the complete diagnostic investigation lifecycle.

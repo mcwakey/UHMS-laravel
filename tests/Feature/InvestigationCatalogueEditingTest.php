@@ -57,8 +57,14 @@ class InvestigationCatalogueEditingTest extends TestCase
             'is_active' => true,
         ]);
 
+        // Managers in an investigation department are redirected into the
+        // workspace copy of the catalogue page; the content is the same.
         $this->actingAs($this->manager)
             ->get(route('admin.investigation-catalogue.show', $service))
+            ->assertRedirect(route('investigations.investigation-catalogue.show', $service));
+
+        $this->actingAs($this->manager)
+            ->get(route('investigations.investigation-catalogue.show', $service))
             ->assertOk()
             ->assertSee('edit-header-btn', false)
             ->assertSee('edit-crit-btn', false)

@@ -61,6 +61,14 @@ class SidebarMenuBuilder
             );
         }
 
+        if ($activeType === DepartmentType::INVESTIGATION) {
+            return $this->finaliseSections(
+                $this->investigationsSections($unreadNotifications),
+                $user,
+                $currentRouteName,
+            );
+        }
+
         // Non-admin clinical staff get a focused consultation sidebar
         if ($user->isConsultationUser() && ! $user->isAdminUser()) {
             return $this->finaliseSections(
@@ -2669,6 +2677,55 @@ class SidebarMenuBuilder
                 'items' => [
                     ['label' => __('inpatient.menu.notifications'), 'icon' => 'ti ti-bell', 'route' => 'admin.notifications.index', 'active_patterns' => ['admin.notifications.*'], 'permission' => 'notifications.view', 'module' => 'notifications', 'badge' => $unreadNotifications > 0 ? $unreadNotifications : null],
                     ['label' => __('inpatient.menu.profile'), 'icon' => 'ti ti-user-circle', 'route' => 'admin.profile', 'active_patterns' => ['admin.profile']],
+                ],
+            ],
+        ];
+    }
+
+    protected function investigationsSections(int $unreadNotifications): array
+    {
+        return [
+            [
+                'title' => __('investigations.workspace.title'),
+                'items' => [
+                    ['label' => __('investigations.menu.dashboard'), 'icon' => 'ti ti-layout-dashboard', 'route' => 'investigations.dashboard', 'active_patterns' => ['investigations.dashboard', 'investigations.dashboard.redirect']],
+                ],
+            ],
+            [
+                'title' => __('investigations.menu.diagnostics'),
+                'items' => [
+                    ['label' => __('investigations.menu.requests'), 'icon' => 'ti ti-test-pipe', 'route' => 'investigations.lab.requests.index', 'active_patterns' => ['investigations.lab.requests.*'], 'permission' => 'lab.requests.view', 'module' => 'investigations'],
+                    ['label' => __('investigations.menu.specimens'), 'icon' => 'ti ti-droplet', 'route' => 'investigations.lab.samples.index', 'active_patterns' => ['investigations.lab.samples.*'], 'permission' => 'lab.samples.view', 'module' => 'investigations'],
+                    ['label' => __('investigations.menu.results'), 'icon' => 'ti ti-report-medical', 'route' => 'investigations.lab.results.index', 'active_patterns' => ['investigations.lab.results.*'], 'permission' => 'lab.results.view', 'module' => 'investigations'],
+                ],
+            ],
+            [
+                'title' => __('investigations.menu.patients_title'),
+                'items' => [
+                    ['label' => __('investigations.menu.patients'), 'icon' => 'ti ti-users', 'route' => 'investigations.patients.index', 'active_patterns' => ['investigations.patients.*'], 'permission' => 'patients.view', 'module' => 'patients'],
+                    ['label' => __('investigations.menu.handoffs'), 'icon' => 'ti ti-arrows-exchange', 'route' => 'investigations.handoffs.index', 'active_patterns' => ['investigations.handoffs.*'], 'visible' => fn (User $user) => app(DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== []],
+                ],
+            ],
+            [
+                'title' => __('investigations.menu.catalogue_title'),
+                'items' => [
+                    ['label' => __('investigations.menu.services'), 'icon' => 'ti ti-flask', 'route' => 'investigations.investigation-catalogue.index', 'active_patterns' => ['investigations.investigation-catalogue.*'], 'permission' => 'lab.tests.manage', 'module' => 'investigations'],
+                    ['label' => __('investigations.menu.tests'), 'icon' => 'ti ti-vaccine', 'route' => 'investigations.lab.tests.index', 'active_patterns' => ['investigations.lab.tests.*'], 'permission' => 'lab.tests.manage', 'module' => 'investigations'],
+                    ['label' => __('investigations.menu.items'), 'icon' => 'ti ti-microscope', 'route' => 'investigations.items.index', 'active_patterns' => ['investigations.items.*'], 'permission' => 'lab.tests.manage', 'module' => 'investigations'],
+                    ['label' => __('investigations.menu.stock'), 'icon' => 'ti ti-packages', 'route' => 'investigations.stock.index', 'active_patterns' => ['investigations.stock.*'], 'permission' => 'pharmacy.stock.manage', 'module' => 'investigations'],
+                ],
+            ],
+            [
+                'title' => __('investigations.menu.reports_title'),
+                'items' => [[
+                    'label' => __('investigations.menu.reports'), 'icon' => 'ti ti-chart-bar', 'route' => 'investigations.reports.index', 'active_patterns' => ['investigations.reports.*'], 'permission' => 'reports.investigations', 'module' => 'reports',
+                ]],
+            ],
+            [
+                'title' => __('investigations.menu.general'),
+                'items' => [
+                    ['label' => __('investigations.menu.notifications'), 'icon' => 'ti ti-bell', 'route' => 'admin.notifications.index', 'active_patterns' => ['admin.notifications.*'], 'permission' => 'notifications.view', 'module' => 'notifications', 'badge' => $unreadNotifications > 0 ? $unreadNotifications : null],
+                    ['label' => __('investigations.menu.profile'), 'icon' => 'ti ti-user-circle', 'route' => 'admin.profile', 'active_patterns' => ['admin.profile']],
                 ],
             ],
         ];

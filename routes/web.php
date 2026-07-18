@@ -651,6 +651,72 @@ Route::middleware('auth')->group(function () {
         Route::get('reports/discharges', [ReportController::class, 'discharges'])->name('reports.discharges')->middleware(['module:reports', 'can:reports.view']);
     });
 
+    // Investigations (diagnostics) workspace. Browser adapters over the existing
+    // lab request/sample/result, catalogue, journey and reporting services —
+    // queries are bounded to the active performing (target) department by
+    // InvestigationWorkspaceScope inside the shared lab controllers.
+    Route::prefix('investigations')->name('investigations.')->middleware('department.type:investigation')->group(function () {
+        Route::get('/', App\Http\Controllers\Investigations\DashboardController::class)->name('dashboard');
+        Route::get('dashboard', fn () => redirect()->route('investigations.dashboard'))->name('dashboard.redirect');
+
+        Route::middleware('module:investigations')->group(function () {
+            Route::middleware('can:lab.requests.view')->prefix('requests')->name('lab.requests.')->group(function () {
+                Route::get('/', [LabRequestController::class, 'index'])->name('index');
+                Route::get('{labRequest}', [LabRequestController::class, 'show'])->name('show');
+                Route::patch('{labRequest}/accept', [LabRequestController::class, 'accept'])->name('accept')->middleware('can:lab.results.create');
+                Route::post('{labRequest}/accept-selected', [LabRequestController::class, 'acceptSelected'])->name('accept-selected')->middleware('can:lab.results.create');
+                Route::patch('{labRequest}/cancel', [LabRequestController::class, 'cancel'])->name('cancel')->middleware('can:lab.results.create');
+            });
+
+            Route::middleware('can:lab.samples.view')->prefix('specimens')->name('lab.samples.')->group(function () {
+                Route::get('/', [SampleController::class, 'index'])->name('index');
+                Route::post('requests/{labRequest}/generate', [SampleController::class, 'generate'])->name('generate')->middleware('can:lab.samples.manage');
+                Route::patch('{sample}/collect', [SampleController::class, 'collect'])->name('collect')->middleware('can:lab.samples.collect');
+                Route::patch('{sample}/receive', [SampleController::class, 'receive'])->name('receive')->middleware('can:lab.samples.receive');
+                Route::patch('{sample}/reject', [SampleController::class, 'reject'])->name('reject')->middleware('can:lab.samples.manage');
+                Route::patch('{sample}/dispose', [SampleController::class, 'dispose'])->name('dispose')->middleware('can:lab.samples.manage');
+            });
+
+            Route::middleware('can:lab.results.view')->prefix('results')->name('lab.results.')->group(function () {
+                Route::get('/', [LabResultController::class, 'index'])->name('index');
+                Route::get('requests/{labRequest}', [LabResultController::class, 'showRequest'])->name('show');
+                Route::post('batch/{labRequest}', [LabResultController::class, 'batchStore'])->name('batch')->middleware('can:lab.results.create');
+                Route::patch('{result}/verify', [LabResultController::class, 'verify'])->name('verify')->middleware('can:lab.results.verify');
+                Route::get('{item}/view', [LabResultController::class, 'view'])->name('view');
+                Route::get('requests/{labRequest}/print', [LabResultController::class, 'printRequest'])->name('print-request');
+                Route::get('{item}/print', [LabResultController::class, 'print'])->name('print');
+                Route::post('{item}', [LabResultController::class, 'store'])->name('store')->middleware('can:lab.results.create');
+            });
+
+            Route::middleware('can:lab.tests.manage')->group(function () {
+                Route::get('tests', [LabTestController::class, 'index'])->name('lab.tests.index');
+                Route::get('services', [InvestigationCatalogueController::class, 'index'])->name('investigation-catalogue.index');
+                Route::get('services/{service}', [InvestigationCatalogueController::class, 'show'])->name('investigation-catalogue.show');
+                Route::get('items', [InvestigationItemController::class, 'index'])->name('items.index');
+            });
+            Route::get('stock', [InvestigationItemController::class, 'stock'])->name('stock.index')->middleware('can:pharmacy.stock.manage');
+        });
+
+        Route::middleware(['module:patients', 'can:patients.view'])->prefix('patients')->name('patients.')->group(function () {
+            Route::get('/', [PatientController::class, 'index'])->name('index');
+            Route::get('{patient}', [PatientController::class, 'show'])->name('show');
+        });
+
+        Route::get('handoffs', [JourneyWorklistController::class, 'index'])->name('handoffs.index');
+        Route::get('handoffs/refresh', [JourneyWorklistController::class, 'refresh'])->name('handoffs.refresh');
+        Route::prefix('handoffs/actions')->name('handoffs.')->group(function () {
+            Route::post('claim', [JourneyHandoffAssignmentController::class, 'claim'])->name('claim')->middleware('can:journey.handoffs.claim');
+            Route::post('assign', [JourneyHandoffAssignmentController::class, 'assign'])->name('assign')->middleware('can:journey.handoffs.assign');
+            Route::post('{assignment}/acknowledge', [JourneyHandoffAssignmentController::class, 'acknowledge'])->name('acknowledge')->middleware('can:journey.handoffs.acknowledge');
+            Route::post('{assignment}/resolve', [JourneyHandoffAssignmentController::class, 'resolve'])->name('resolve')->middleware('can:journey.handoffs.resolve');
+        });
+
+        Route::get('reports', [OperationalReportController::class, 'show'])
+            ->defaults('report', 'investigations')
+            ->name('reports.index')
+            ->middleware(['module:reports', 'can:reports.investigations']);
+    });
+
     // Nursing Department OPD workspace. Clinical writes are delegated to the
     // existing triage/vitals controllers so validation, safety and audit rules
     // remain identical to the generic workflow.
@@ -2128,7 +2194,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Laboratory
-        Route::prefix('lab')->name('lab.')->middleware('module:investigations')->group(function () {
+        Route::prefix('lab')->name('lab.')->middleware(['module:investigations', 'records.redirect'])->group(function () {
             // Lab Requests
             Route::middleware('can:lab.requests.view')->group(function () {
                 Route::get('requests', [LabRequestController::class, 'index'])->name('requests.index');
@@ -2175,7 +2241,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Investigation Catalogue (services from investigation-type departments + per-service headers/criteria)
-        Route::prefix('investigation-catalogue')->name('investigation-catalogue.')->middleware(['module:investigations', 'can:lab.tests.manage'])->group(function () {
+        Route::prefix('investigation-catalogue')->name('investigation-catalogue.')->middleware(['module:investigations', 'can:lab.tests.manage', 'records.redirect'])->group(function () {
             Route::get('/', [InvestigationCatalogueController::class, 'index'])->name('index');
             Route::get('/{service}', [InvestigationCatalogueController::class, 'show'])->name('show');
             Route::put('/{service}/overall-result', [InvestigationCatalogueController::class, 'updateOverallResult'])->name('overall-result.update');
@@ -2890,7 +2956,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Investigation Items (Catalog + Stock for Lab/Radiology/Investigation departments)
-        Route::prefix('investigations')->name('investigations.')->middleware('module:investigations')->group(function () {
+        Route::prefix('investigations')->name('investigations.')->middleware(['module:investigations', 'records.redirect'])->group(function () {
             // Item Catalog
             Route::middleware('can:lab.tests.manage')->group(function () {
                 Route::get('items', [InvestigationItemController::class, 'index'])->name('items.index');

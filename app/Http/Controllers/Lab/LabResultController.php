@@ -9,6 +9,7 @@ use App\Models\LabRequestItem;
 use App\Models\LabResult;
 use App\Services\ConsumableUsageService;
 use App\Services\InvestigationResultFlagService;
+use App\Services\InvestigationWorkspaceScope;
 use App\Services\LabService;
 use Illuminate\Http\Request;
 
@@ -18,6 +19,7 @@ class LabResultController extends Controller
         protected LabService $labService,
         protected ConsumableUsageService $consumableUsage,
         protected InvestigationResultFlagService $resultFlagging,
+        protected InvestigationWorkspaceScope $investigationScope,
     ) {}
 
     /**
@@ -29,6 +31,12 @@ class LabResultController extends Controller
 
         if (!empty($filters['department_id'])) {
             $filters['target_department_id'] = $filters['department_id'];
+        }
+
+        // Investigations workspace: results are scoped to the active performing
+        // (target) department, regardless of any submitted department filter.
+        if ($request->routeIs('investigations.*')) {
+            $filters['target_department_id'] = $this->investigationScope->departmentId();
         }
 
         $requests = $this->labService->getResultRequests([
@@ -49,6 +57,7 @@ class LabResultController extends Controller
      */
     public function showRequest(LabRequest $labRequest)
     {
+        $this->guardWorkspaceRequest($labRequest);
         $request = $this->labService->getRequestDetails($labRequest);
         $hasAcceptedOrBilledItems = $request->items->contains(
             fn ($item) => $item->isAccepted() || $item->billed_at || $item->invoice_item_id
@@ -311,6 +320,7 @@ class LabResultController extends Controller
      */
     public function batchStore(Request $request, LabRequest $labRequest)
     {
+        $this->guardWorkspaceRequest($labRequest);
         $validated = $request->validate([
             'results'                   => ['required', 'array'],
             'results.*.result_value'    => ['nullable', 'string', 'max:5000'],
@@ -465,6 +475,12 @@ class LabResultController extends Controller
             'items' => collect([$item]),
             'separatePages' => false,
         ]);
+    }
+
+    /** In the Investigations workspace, requests outside the active department are invisible. */
+    private function guardWorkspaceRequest(LabRequest $labRequest): void
+    {
+        abort_if(request()->routeIs('investigations.*') && ! $this->investigationScope->contains($labRequest), 404);
     }
 
     private function logPrintedResult(LabRequestItem $item): void

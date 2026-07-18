@@ -114,8 +114,13 @@ class RoleDashboardTest extends TestCase
 
     public function test_doctor_dashboard_url_serves_new_dashboard_directly(): void
     {
+        // /doctor is canonical; the legacy /doctor/dashboard URL redirects to it.
         $this->actingAs($this->userWithRole('Doctor'))
             ->get('/doctor/dashboard')
+            ->assertRedirect(route('doctor.dashboard'));
+
+        $this->actingAs($this->userWithRole('Doctor'))
+            ->get(route('doctor.dashboard'))
             ->assertOk()
             ->assertSee(__('role_dashboards.doctor.my_consultation_queue'))
             ->assertSee(__('role_dashboards.doctor.next_patient'));
@@ -144,7 +149,7 @@ class RoleDashboardTest extends TestCase
             'status' => VisitConsultationRoute::STATUS_PENDING,
         ]);
 
-        $this->actingAs($doctor)->get('/doctor/dashboard')
+        $this->actingAs($doctor)->get(route('doctor.dashboard'))
             ->assertOk()
             ->assertSee($patient->full_name)
             ->assertSee('Severe headache');

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LabRequest;
 use App\Services\InpatientWorkspaceScope;
 use App\Services\InvestigationRequestService;
+use App\Services\InvestigationWorkspaceScope;
 use App\Services\LabService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +17,7 @@ class LabRequestController extends Controller
         protected LabService $labService,
         protected InvestigationRequestService $investigationRequestService,
         protected InpatientWorkspaceScope $inpatientScope,
+        protected InvestigationWorkspaceScope $investigationScope,
     ) {}
 
     /**
@@ -37,6 +39,12 @@ class LabRequestController extends Controller
             $filters['admission_department_id'] = $this->inpatientScope->departmentId();
         }
 
+        // Investigations workspace: requests are scoped to the active performing
+        // (target) department, regardless of any submitted department filter.
+        if ($request->routeIs('investigations.*')) {
+            $filters['target_department_id'] = $this->investigationScope->departmentId();
+        }
+
         $requests = $this->labService->getRequests($filters);
         $stats = $this->labService->getLabStats($filters);
         $departments = $this->labService->getInvestigationDepartments();
@@ -51,6 +59,7 @@ class LabRequestController extends Controller
     {
         $this->authorizeDoctorWorkspaceRequest($labRequest);
         abort_if(request()->routeIs('inpatient.*') && ! $this->inpatientScope->contains($labRequest), 404);
+        abort_if(request()->routeIs('investigations.*') && ! $this->investigationScope->contains($labRequest), 404);
 
         $request = $this->labService->getRequestDetails($labRequest);
         $billingPrices = $this->investigationRequestService->billingPreview($request);
@@ -63,6 +72,7 @@ class LabRequestController extends Controller
      */
     public function accept(LabRequest $labRequest)
     {
+        $this->guardInvestigationWorkspaceRequest($labRequest);
         try {
             $this->labService->acceptRequest($labRequest);
 
@@ -79,6 +89,7 @@ class LabRequestController extends Controller
      */
     public function acceptSelected(Request $request, LabRequest $labRequest)
     {
+        $this->guardInvestigationWorkspaceRequest($labRequest);
         $data = $request->validate([
             'item_ids' => ['required', 'array', 'min:1'],
             'item_ids.*' => ['integer'],
@@ -121,6 +132,7 @@ class LabRequestController extends Controller
      */
     public function cancel(LabRequest $labRequest)
     {
+        $this->guardInvestigationWorkspaceRequest($labRequest);
         try {
             $this->labService->cancelRequest($labRequest);
 
@@ -128,6 +140,12 @@ class LabRequestController extends Controller
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
+    }
+
+    /** In the Investigations workspace, requests outside the active department are invisible. */
+    private function guardInvestigationWorkspaceRequest(LabRequest $labRequest): void
+    {
+        abort_if(request()->routeIs('investigations.*') && ! $this->investigationScope->contains($labRequest), 404);
     }
 
     private function shouldScopeToLoggedInDoctor(Request $request): bool

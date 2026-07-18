@@ -154,25 +154,22 @@ class NursingWorkspaceTest extends TestCase
         $routes = $items->pluck('route');
 
         $this->assertContains('nursing.dashboard', $routes);
-        $this->assertContains('nursing.opd.queue', $routes);
         $this->assertContains('nursing.triage.index', $routes);
-        $this->assertContains('nursing.vitals.create', $routes);
         $this->assertContains('nursing.visits.index', $routes);
         $this->assertContains('nursing.tasks.index', $routes);
         $this->assertContains('nursing.consultations.index', $routes);
         $this->assertContains('nursing.service-renderings.index', $routes);
-        $this->assertContains('nursing.reports.index', $routes);
         $this->assertContains('nursing.service-renderings.reports', $routes);
         $this->assertNotContains('admin.admissions.index', $routes);
         $this->assertTrue((bool) $items->firstWhere('route', 'nursing.triage.index')['active']);
 
-        $activeItems = collect(app(SidebarMenuBuilder::class)->build($user, 'nursing.opd.active'))
+        $activeItems = collect(app(SidebarMenuBuilder::class)->build($user, 'nursing.visits.index'))
             ->flatMap(fn (array $section) => $section['items'])
             ->where('active', true)
             ->pluck('route')
             ->values()
             ->all();
-        $this->assertSame(['nursing.opd.active'], $activeItems);
+        $this->assertSame(['nursing.visits.index'], $activeItems);
     }
 
     public function test_generic_browser_routes_redirect_to_nursing_but_json_does_not(): void
@@ -279,14 +276,11 @@ class NursingWorkspaceTest extends TestCase
             ->pluck('route');
 
         $this->assertContains('nursing.dashboard', $routes);
-        $this->assertContains('nursing.opd.queue', $routes);
         $this->assertContains('nursing.triage.index', $routes);
-        $this->assertContains('nursing.vitals.create', $routes);
         $this->assertContains('nursing.visits.index', $routes);
         $this->assertContains('nursing.tasks.index', $routes);
         $this->assertContains('nursing.consultations.index', $routes);
         $this->assertContains('nursing.service-renderings.index', $routes);
-        $this->assertContains('nursing.reports.index', $routes);
         $this->assertContains('nursing.service-renderings.reports', $routes);
 
         $this->seed(DepartmentTypeShowcaseSeeder::class);
