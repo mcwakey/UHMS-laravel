@@ -82,10 +82,11 @@ class EmergencyWorkspaceTest extends TestCase
         $this->assertContains('emergency.dashboard', $routes);
         $this->assertContains('emergency.board', $routes);
         $this->assertContains('emergency.queue.critical', $routes);
-        $this->assertContains('emergency.cases.create', $routes);
+        // 'emergency.cases.create' was deliberately removed from the menu
+        // (cases are registered from the queue/board); the route itself stays.
         $this->assertContains('emergency.patients.index', $routes);
         $this->assertContains('emergency.visits.index', $routes);
-        $this->assertContains('emergency.triage.index', $routes);
+        // 'emergency.triage.index' was likewise removed from the curated menu.
         $this->assertContains('emergency.consultations.index', $routes);
         $this->assertContains('emergency.medications.index', $routes);
         $this->assertContains('emergency.lab.requests.index', $routes);

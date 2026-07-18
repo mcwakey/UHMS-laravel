@@ -1,8 +1,8 @@
-# UHMS Stores Department Workspace — Inventory Operations and `/stores/*` Route Architecture
+# UHMS Finance Department Workspace — Billing, Cashiering, Receivables, Accounting Control, and `/finance/*` Route Architecture
 
-Implement a dedicated **Stores Department Workspace** for UHMS.
+Implement a dedicated **Finance Department Workspace** for UHMS.
 
-This workspace is for Stores and inventory staff managing hospital supplies from receipt and storage through departmental requisitions, approvals, reservations, issuing, transfers, returns, adjustments, stock counts, expiry monitoring, quarantine, disposal, and inventory reporting.
+This workspace is for Finance, Accounts, Billing, Cashier, Insurance, Claims, and authorized financial-control staff managing the hospital’s financial operations from billing and payment collection through accounts receivable, insurance claims, sponsor accounts, refunds, credit notes, cashier reconciliation, journal review, financial reporting, and audit oversight.
 
 This implementation should follow the same department-aware workspace architecture already established for:
 
@@ -13,191 +13,237 @@ This implementation should follow the same department-aware workspace architectu
 * Inpatient
 * Investigations
 * Pharmacy
+* Stores
+* Maternity
 
 The configured department type is:
 
 ```php
-DepartmentType::STORES
+DepartmentType::FINANCE
 ```
 
 The browser workspace must use:
 
 ```text
-/stores/*
+/finance/*
 ```
 
 The objective is that when a logged-in user’s active department has:
 
 ```php
-DepartmentType::STORES
+DepartmentType::FINANCE
 ```
 
-the user should experience UHMS as a dedicated Stores application with:
+the user should experience UHMS as a dedicated Finance application with:
 
-* A Stores-specific sidebar menu
-* A Stores operations dashboard
-* Stores-specific breadcrumbs
-* Stores-specific route names
-* Consistent `/stores/*` URLs
-* Department requisition worklists
-* Goods receipt and stock-entry workflows
-* Stock issuing and transfer workflows
-* Batch, lot, serial, and expiry tracking
-* Stock-count and reconciliation workflows
-* Stock adjustment and approval controls
-* Quarantine, recall, damage, and disposal management
+* A Finance-specific sidebar menu
+* A Finance operations dashboard
+* Finance-specific breadcrumbs
+* Finance-specific route names
+* Consistent `/finance/*` URLs
+* Billing and invoice worklists
+* Cashier and payment-collection workflows
+* Accounts-receivable management
+* Previous-balance and cross-visit allocation visibility
+* Insurance and sponsor billing
+* Claims preparation and submission
+* Refund, reversal, discount, and credit-note controls
+* Cashier-session and shift reconciliation
+* Deposit and advance-payment management
+* General-ledger and journal visibility
+* Bank and payment-provider reconciliation
 * Permission-controlled menu visibility
-* Active-department and stock-location scoping
-* Transactional stock-ledger integrity
-* Reuse of existing products, inventory, procurement, billing, pharmacy, department, reporting, and audit logic
+* Active-department and cashier-context scoping
+* Separation of duties
+* Financial audit integrity
+* Reuse of existing billing, payment, receivable, insurance, claims, accounting, stock, payroll, reporting, and audit logic
 
-Do not duplicate core product, stock, inventory, stock-ledger, requisition, purchase, receiving, transfer, adjustment, or reporting logic merely to create the Stores workspace.
+Do not duplicate core billing, payment, invoice, receivable, insurance, claims, general-ledger, journal, refund, credit-note, or reconciliation logic merely to create the Finance workspace.
 
 ---
 
 # 1. Core Functional Requirement
 
-When the active department type is `stores`, all supported browser pages used by Stores staff must appear under the `/stores` URL prefix.
+When the active department type is `finance`, all supported browser pages used by Finance staff must appear under the `/finance` URL prefix.
 
 Examples:
 
 ```text
-/stores
-/stores/dashboard
+/finance
+/finance/dashboard
 
-/stores/requisitions
-/stores/requisitions/pending
-/stores/requisitions/approved
-/stores/requisitions/partially-issued
-/stores/requisitions/completed
-/stores/requisitions/rejected
-/stores/requisitions/{requisition}
+/finance/billing
+/finance/billing/pending
+/finance/billing/incomplete
+/finance/billing/exceptions
+/finance/billing/{visit}
 
-/stores/issues
-/stores/issues/pending
-/stores/issues/in-progress
-/stores/issues/completed
-/stores/issues/{issue}
+/finance/invoices
+/finance/invoices/draft
+/finance/invoices/unpaid
+/finance/invoices/partially-paid
+/finance/invoices/paid
+/finance/invoices/overdue
+/finance/invoices/cancelled
+/finance/invoices/{invoice}
 
-/stores/receipts
-/stores/receipts/pending
-/stores/receipts/completed
-/stores/receipts/{receipt}
+/finance/payments
+/finance/payments/collect
+/finance/payments/today
+/finance/payments/unallocated
+/finance/payments/reversed
+/finance/payments/{payment}
 
-/stores/transfers
-/stores/transfers/pending
-/stores/transfers/in-transit
-/stores/transfers/received
-/stores/transfers/{transfer}
+/finance/cashier
+/finance/cashier/session
+/finance/cashier/open
+/finance/cashier/close
+/finance/cashier/reconciliation
 
-/stores/returns
-/stores/adjustments
-/stores/stock-counts
-/stores/reconciliations
+/finance/receivables
+/finance/receivables/patient
+/finance/receivables/insurance
+/finance/receivables/sponsors
+/finance/receivables/aging
+/finance/receivables/{receivable}
 
-/stores/products
-/stores/products/{product}
+/finance/patient-balances
+/finance/patient-balances/{patient}
+/finance/payment-allocation
 
-/stores/stock
-/stores/stock/{stockItem}
-/stores/batches
-/stores/batches/{batch}
-/stores/expiries
-/stores/low-stock
-/stores/stock-outs
+/finance/insurance
+/finance/insurance/authorizations
+/finance/insurance/invoices
+/finance/insurance/claims
 
-/stores/quarantine
-/stores/recalls
-/stores/damages
-/stores/disposals
+/finance/claims
+/finance/claims/draft
+/finance/claims/validation
+/finance/claims/ready
+/finance/claims/submitted
+/finance/claims/rejected
+/finance/claims/paid
+/finance/claims/{claim}
 
-/stores/suppliers
-/stores/purchase-requests
-/stores/purchase-orders
-/stores/goods-received
+/finance/sponsors
+/finance/sponsors/accounts
+/finance/sponsors/statements
 
-/stores/handoffs
-/stores/reports
+/finance/discounts
+/finance/credit-notes
+/finance/refunds
+/finance/reversals
+/finance/write-offs
+
+/finance/deposits
+/finance/advances
+
+/finance/journals
+/finance/general-ledger
+/finance/trial-balance
+/finance/chart-of-accounts
+
+/finance/reconciliation
+/finance/reconciliation/cash
+/finance/reconciliation/bank
+/finance/reconciliation/digital-payments
+/finance/reconciliation/insurance
+
+/finance/reports
 ```
 
-A Stores user should not enter through:
+A Finance user should not enter through:
 
 ```text
-/stores/requisitions/{requisition}
+/finance/invoices/{invoice}
 ```
 
 and later be redirected to generic URLs such as:
 
 ```text
-/requisitions/{requisition}
-/stock/{stockItem}
-/products/{product}
-/inventory/transfers/{transfer}
-/goods-receipts/{receipt}
+/invoices/{invoice}
+/payments/{payment}
+/billing/{visit}
+/claims/{claim}
+/receivables/{receivable}
+/accounting/journals/{journal}
 ```
 
-All browser navigation, forms, redirects, breadcrumbs, worklists, stock links, product links, dashboard cards, notifications, approvals, and report drilldowns must preserve the Stores workspace context.
+All browser navigation, forms, payment actions, invoice actions, worklists, breadcrumbs, notifications, dashboard cards, report drilldowns, and redirects must preserve the Finance workspace context.
 
 ---
 
-# 2. Stores Workspace Scope
+# 2. Finance Workspace Scope
 
-The Stores workspace is responsible for hospital inventory operations, including:
+The Finance workspace is responsible for configured financial workflows, including:
 
-1. Product and supply visibility
-2. Active stock-location visibility
-3. Departmental requisitions
-4. Requisition approval
-5. Stock reservation
-6. Full and partial issuing
-7. Departmental receipt acknowledgement
-8. Goods receipt
-9. Purchase-order receipt where supported
-10. Direct stock receipt where authorized
-11. Batch and lot creation
-12. Serial-number capture where supported
-13. Expiry-date capture
-14. Stock transfers
-15. Transfer dispatch
-16. Transfer receipt
-17. Departmental returns
-18. Supplier returns where supported
-19. Stock adjustments
-20. Adjustment approval
-21. Physical stock counts
-22. Cycle counts
-23. Stock reconciliation
-24. Variance investigation
-25. Low-stock monitoring
-26. Stockout monitoring
-27. Expiry monitoring
-28. Quarantine
-29. Product recall
-30. Damage recording
-31. Disposal and destruction
-32. Stock valuation
-33. Inventory movement history
-34. Stock-ledger reporting
-35. Supplier and procurement awareness where supported
-36. Stores handoffs and escalations
-37. Inventory reports and analytics
+1. Patient billing review
+2. Visit billing review
+3. Invoice generation
+4. Draft invoice review
+5. Invoice finalization
+6. Payment collection
+7. Cash payments
+8. Digital payments
+9. Bank payments
+10. Card or TPE payments where supported
+11. Mobile Money payments where supported
+12. Receipt generation
+13. Partial payments
+14. Advance payments
+15. Patient deposits
+16. Payment allocation
+17. Cross-visit payment allocation
+18. Previous outstanding balance management
+19. Accounts receivable
+20. Patient receivables
+21. Insurance receivables
+22. Sponsor receivables
+23. Receivable aging
+24. Discounts
+25. Credit notes
+26. Refunds
+27. Payment reversals
+28. Invoice cancellations
+29. Write-offs
+30. Insurance authorization awareness
+31. Insurance invoice preparation
+32. Claims validation
+33. Claims submission
+34. Claims rejection management
+35. Claims payment posting
+36. Sponsor account management
+37. Sponsor statements
+38. Cashier opening and closing
+39. Cashier-session reconciliation
+40. Cash variance management
+41. Bank reconciliation
+42. Digital payment-provider reconciliation
+43. Journal and general-ledger review
+44. Trial balance
+45. Chart-of-accounts visibility
+46. Revenue and collection reporting
+47. Financial audit review
+48. Payment-gate policy administration where authorized
+49. Billing override review
+50. Financial reports and exports
 
-The Stores workspace must remain distinct from:
+The Finance workspace must remain distinct from:
 
-* Pharmacy prescription dispensing
-* Nursing medication administration
-* Departmental service consumption
-* Finance payments
-* Procurement approval where procurement is independently controlled
-* Clinical ordering
-* Patient billing
-* Pharmacy retail or patient collection
+* Clinical service ordering
+* Pharmacy dispensing
+* Stores inventory operations
+* Insurance clinical coding
+* Human-resources payroll processing unless Finance has specific payroll permissions
+* Procurement approval unless explicitly assigned
+* Patient registration
+* Clinical discharge decisions
 
-Stores may manage medical supplies, medications, consumables, equipment items, and general hospital products according to configuration, but it must not perform Pharmacy dispensing or clinical administration actions.
+Finance may review the financial effect of those workflows, but their specialist departments remain authoritative for clinical and operational decisions.
 
 ---
 
-# Phase 1 — Inspect the Existing Stores and Inventory Architecture
+# Phase 1 — Inspect the Existing Finance and Accounting Architecture
 
 Before implementing, inspect the current codebase and identify:
 
@@ -205,75 +251,80 @@ Before implementing, inspect the current codebase and identify:
 2. How existing department workspaces are registered.
 3. How active department context is resolved.
 4. How multi-department users switch active departments.
-5. How `DepartmentType::STORES` is currently mapped by:
+5. How `DepartmentType::FINANCE` is currently mapped by:
 
    * dashboard resolver
    * menu profile service
    * capability resolver
-   * stock-location resolver
-6. Existing routes, controllers, models, services, policies, commands, jobs, and views for:
+   * department metrics registry
+6. Whether Finance currently resolves to an internal dashboard key such as:
 
-   * products
-   * product categories
-   * product units
-   * stock items
-   * stock locations
-   * batches
-   * lots
-   * serial numbers
-   * expiry dates
-   * stock movements
-   * stock ledger
-   * departmental requisitions
-   * requisition approvals
-   * stock reservations
-   * stock issues
-   * goods receipts
-   * purchase requests
-   * purchase orders
-   * suppliers
-   * stock transfers
-   * departmental returns
-   * supplier returns
-   * stock adjustments
-   * stock counts
-   * reconciliation
-   * quarantine
-   * recall
-   * damage
-   * disposal
-   * reporting
-7. Existing requisition statuses.
-8. Existing issue statuses.
-9. Existing transfer statuses.
-10. Existing goods-receipt and purchase-order statuses.
-11. Existing stock-count and reconciliation processes.
-12. Existing batch-selection policies.
-13. Existing stock valuation method.
-14. Existing approval thresholds.
-15. Existing negative-stock protections.
-16. Existing department and stock-location scoping.
-17. Existing stock integration with:
-
-* Pharmacy
-* Investigations
-* Radiology
-* Theatre
-* Inpatient wards
-* Nursing
-
-18. Existing audit-event infrastructure.
-19. Existing views that hardcode generic routes such as:
-
-```php
-route('requisitions.show', $requisition)
-route('stock.show', $stockItem)
-route('products.show', $product)
-route('transfers.show', $transfer)
-route('goods-receipts.show', $receipt)
+```text
+accounting
+finance
+billing
+cashier
 ```
 
-Do not create a competing stock, inventory, requisition, transfer, receipt, menu, or routing framework where one already exists.
+Preserve the established internal dashboard key where required, while exposing the browser workspace under `/finance/*`.
+
+7. Existing routes, controllers, models, services, policies, commands, jobs, and views for:
+
+   * billing
+   * invoice generation
+   * invoices
+   * invoice items
+   * invoice receivables
+   * payments
+   * payment allocations
+   * payment methods
+   * cashier sessions
+   * receipts
+   * patient balances
+   * previous balances
+   * credit notes
+   * discounts
+   * refunds
+   * payment reversals
+   * write-offs
+   * insurance
+   * claims
+   * sponsors
+   * deposits
+   * advance payments
+   * general ledger
+   * journals
+   * journal entries
+   * chart of accounts
+   * trial balance
+   * bank reconciliation
+   * digital payment reconciliation
+   * payment gateways
+   * payment-gate policy
+   * visit billing overrides
+   * financial reports
+8. Existing invoice statuses.
+9. Existing payment statuses.
+10. Existing cashier-session statuses.
+11. Existing receivable states.
+12. Existing claim statuses.
+13. Existing credit-note and refund rules.
+14. Existing journal-posting behaviour.
+15. Existing accounting-period controls.
+16. Existing previous-balance policy.
+17. Existing cross-visit payment-allocation services.
+18. Existing patient privacy and audit protections.
+19. Existing views that hardcode routes such as:
+
+```php
+route('invoices.show', $invoice)
+route('payments.show', $payment)
+route('claims.show', $claim)
+route('patients.show', $patient)
+route('visits.show', $visit)
+```
+
+Do not create a competing finance, billing, receivable, claims, accounting, menu, or route-resolution framework where one already exists.
 
 Extend the existing:
 
@@ -281,40 +332,45 @@ Extend the existing:
 * Department menu profile service
 * Department capability resolver
 * Active department context
-* Workspace route resolver
+* Workspace URL resolver
 * Workspace redirect resolver
-* Stock location resolver
-* Product services
-* Stock-ledger services
-* Requisition services
-* Reservation services
-* Issue services
-* Receipt services
-* Transfer services
-* Stock-count services
-* Adjustment services
+* Billing services
+* Invoice services
+* Payment services
+* Payment allocation services
+* Receivable services
+* Previous-balance services
+* Insurance services
+* Claims services
+* Sponsor services
+* Refund and credit-note services
+* General-ledger services
+* Journal services
+* Reconciliation services
+* Payment-gate policy
 * Authorization policies
+* Patient privacy services
 * Activity logging
 
 ---
 
-# Phase 2 — Stores Workspace Route Group
+# Phase 2 — Finance Workspace Route Group
 
-Create a dedicated Stores route group.
+Create a dedicated Finance route group.
 
 Use a structure equivalent to:
 
 ```php
-Route::prefix('stores')
-    ->name('stores.')
+Route::prefix('finance')
+    ->name('finance.')
     ->middleware([
         'auth',
         'verified',
         'department.context',
-        'department.type:stores',
+        'department.type:finance',
     ])
     ->group(function () {
-        // Stores workspace routes
+        // Finance workspace routes
     });
 ```
 
@@ -323,141 +379,159 @@ Use the project’s actual middleware names and active-department authorization 
 Required route names should include, where the corresponding functionality already exists:
 
 ```text
-stores.dashboard
+finance.dashboard
 
-stores.requisitions.index
-stores.requisitions.pending
-stores.requisitions.approved
-stores.requisitions.partially_issued
-stores.requisitions.completed
-stores.requisitions.rejected
-stores.requisitions.show
-stores.requisitions.approve
-stores.requisitions.reject
-stores.requisitions.reserve
-stores.requisitions.issue
+finance.billing.index
+finance.billing.pending
+finance.billing.incomplete
+finance.billing.exceptions
+finance.billing.show
+finance.billing.review
+finance.billing.finalize
 
-stores.issues.index
-stores.issues.pending
-stores.issues.in_progress
-stores.issues.completed
-stores.issues.show
-stores.issues.create
-stores.issues.store
-stores.issues.complete
+finance.invoices.index
+finance.invoices.draft
+finance.invoices.unpaid
+finance.invoices.partially_paid
+finance.invoices.paid
+finance.invoices.overdue
+finance.invoices.cancelled
+finance.invoices.show
+finance.invoices.create
+finance.invoices.store
+finance.invoices.finalize
+finance.invoices.cancel
+finance.invoices.print
 
-stores.receipts.index
-stores.receipts.pending
-stores.receipts.completed
-stores.receipts.show
-stores.receipts.create
-stores.receipts.store
-stores.receipts.complete
+finance.payments.index
+finance.payments.collect
+finance.payments.store
+finance.payments.today
+finance.payments.unallocated
+finance.payments.reversed
+finance.payments.show
+finance.payments.allocate
+finance.payments.reverse
+finance.payments.receipt
 
-stores.transfers.index
-stores.transfers.pending
-stores.transfers.in_transit
-stores.transfers.received
-stores.transfers.show
-stores.transfers.create
-stores.transfers.store
-stores.transfers.dispatch
-stores.transfers.receive
-stores.transfers.cancel
+finance.cashier.index
+finance.cashier.session
+finance.cashier.open
+finance.cashier.close
+finance.cashier.reconciliation
 
-stores.returns.index
-stores.returns.create
-stores.returns.store
-stores.returns.show
-stores.returns.accept
-stores.returns.reject
+finance.receivables.index
+finance.receivables.patient
+finance.receivables.insurance
+finance.receivables.sponsors
+finance.receivables.aging
+finance.receivables.show
 
-stores.adjustments.index
-stores.adjustments.create
-stores.adjustments.store
-stores.adjustments.show
-stores.adjustments.approve
-stores.adjustments.reject
+finance.patient_balances.index
+finance.patient_balances.show
+finance.payment_allocation.index
+finance.payment_allocation.store
 
-stores.stock_counts.index
-stores.stock_counts.create
-stores.stock_counts.store
-stores.stock_counts.show
-stores.stock_counts.start
-stores.stock_counts.submit
-stores.stock_counts.approve
+finance.insurance.index
+finance.insurance.authorizations
+finance.insurance.invoices
+finance.insurance.claims
 
-stores.reconciliations.index
-stores.reconciliations.show
-stores.reconciliations.complete
+finance.claims.index
+finance.claims.draft
+finance.claims.validation
+finance.claims.ready
+finance.claims.submitted
+finance.claims.rejected
+finance.claims.paid
+finance.claims.show
+finance.claims.validate
+finance.claims.submit
+finance.claims.resubmit
+finance.claims.post_payment
 
-stores.products.index
-stores.products.show
+finance.sponsors.index
+finance.sponsors.accounts
+finance.sponsors.statements
+finance.sponsors.show
 
-stores.stock.index
-stores.stock.show
-stores.stock.low
-stores.stock.out
-stores.stock.expiring
-stores.stock.expired
+finance.discounts.index
+finance.discounts.create
+finance.discounts.store
+finance.discounts.show
+finance.discounts.approve
+finance.discounts.reject
 
-stores.batches.index
-stores.batches.show
+finance.credit_notes.index
+finance.credit_notes.create
+finance.credit_notes.store
+finance.credit_notes.show
+finance.credit_notes.approve
+finance.credit_notes.issue
 
-stores.quarantine.index
-stores.quarantine.show
-stores.quarantine.release
+finance.refunds.index
+finance.refunds.create
+finance.refunds.store
+finance.refunds.show
+finance.refunds.approve
+finance.refunds.complete
 
-stores.recalls.index
-stores.recalls.show
+finance.reversals.index
+finance.reversals.show
+finance.write_offs.index
+finance.write_offs.create
+finance.write_offs.store
+finance.write_offs.approve
 
-stores.damages.index
-stores.damages.create
-stores.damages.store
-stores.damages.show
+finance.deposits.index
+finance.deposits.create
+finance.deposits.store
+finance.deposits.show
 
-stores.disposals.index
-stores.disposals.create
-stores.disposals.store
-stores.disposals.show
-stores.disposals.approve
-stores.disposals.complete
+finance.advances.index
+finance.advances.show
 
-stores.purchase_requests.index
-stores.purchase_requests.show
-stores.purchase_requests.create
-stores.purchase_requests.store
+finance.journals.index
+finance.journals.show
+finance.general_ledger.index
+finance.general_ledger.show
+finance.trial_balance.index
+finance.chart_of_accounts.index
+finance.chart_of_accounts.show
 
-stores.purchase_orders.index
-stores.purchase_orders.show
+finance.reconciliation.index
+finance.reconciliation.cash
+finance.reconciliation.bank
+finance.reconciliation.digital_payments
+finance.reconciliation.insurance
 
-stores.suppliers.index
-stores.suppliers.show
+finance.payment_gate.index
+finance.payment_gate.overrides
+finance.payment_gate.audit
 
-stores.handoffs.index
-stores.reports.index
+finance.reports.index
 ```
 
-Only register routes for functionality that exists or is implemented in this phase.
+Only register routes for functionality that genuinely exists or is implemented in this phase.
 
-Do not create empty placeholder pages merely to populate the Stores menu.
+Do not create empty placeholder pages merely to populate the Finance menu.
 
 ---
 
-# Phase 3 — Stores Operations Dashboard
+# Phase 3 — Finance Operations Dashboard
 
-Create or complete a dedicated Stores dashboard.
+Create or complete a dedicated Finance dashboard.
 
 The canonical route should be:
 
 ```text
-/stores
+/finance
 ```
 
 or:
 
 ```text
-/stores/dashboard
+/finance/dashboard
 ```
 
 Choose one canonical route and redirect the other to it.
@@ -465,187 +539,217 @@ Choose one canonical route and redirect the other to it.
 The department dashboard resolver should map:
 
 ```php
-DepartmentType::STORES => 'stores.dashboard'
+DepartmentType::FINANCE => 'finance.dashboard'
 ```
 
-The dashboard should function as an inventory operations command board.
+If the existing dashboard registry uses an internal key such as `accounting`, update it safely so that the public Finance destination remains:
+
+```text
+/finance
+```
+
+The dashboard should function as a Finance command board.
 
 Recommended metrics and widgets include, where reliable data exists:
 
-* Pending requisitions
-* Urgent requisitions
-* Approved requisitions awaiting issue
-* Partially issued requisitions
-* Issues in progress
-* Transfers awaiting dispatch
-* Transfers in transit
-* Transfers awaiting receipt
-* Goods receipts pending completion
-* Purchase orders awaiting receipt
-* Departmental returns pending review
-* Adjustments awaiting approval
-* Open stock counts
-* Stock-count variances
-* Low-stock products
-* Out-of-stock products
-* Near-expiry batches
-* Expired batches
-* Quarantined stock
-* Recalled products
-* Damaged stock
-* Disposal requests awaiting approval
-* Negative-stock anomalies
-* Reservation anomalies
-* Stock without batches where batches are required
-* Products without reorder levels
-* Total stock value where authorized
-* Stock issued today
-* Stock received today
-* Stock transferred today
+* Gross billing today
+* Net billing today
+* Payments collected today
+* Cash collected today
+* Digital payments today
+* Insurance billing today
+* Sponsor billing today
+* Outstanding patient receivables
+* Outstanding insurance receivables
+* Outstanding sponsor receivables
+* Total accounts receivable
+* Receivables overdue
+* Unpaid invoices
+* Partially paid invoices
+* Payments awaiting allocation
+* Unreconciled payments
+* Open cashier sessions
+* Cashier sessions awaiting closure
+* Cashier variances
+* Refunds awaiting approval
+* Credit notes awaiting approval
+* Discounts awaiting approval
+* Write-offs awaiting approval
+* Claims awaiting validation
+* Claims ready for submission
+* Rejected claims
+* Claims awaiting payment
+* Claims paid today
+* Previous patient balances
+* Billing-context exceptions
+* Payment-gate overrides today
+* Journal-posting exceptions
+* Unbalanced journal alerts
+* Revenue by department
+* Collection rate
+* Average days receivable
+* AR aging distribution
+* Daily cash position where authorized
 
 Each dashboard metric must:
 
 * Respect permissions
-* Respect the active department
-* Respect the active Stores stock location
-* Avoid exposing unauthorized financial valuation
-* Link to valid `/stores/*` routes
+* Respect the active Finance department
+* Respect cashier or branch scoping where configured
+* Avoid exposing protected patient information unnecessarily
+* Avoid exposing financial valuation to unauthorized users
+* Link to valid `/finance/*` routes
 * Use safe empty states
 * Avoid expensive unbounded queries
-* Reuse existing inventory and department metrics where applicable
+* Reuse the existing department metrics and accounting services where applicable
 
 Do not introduce metrics that cannot be calculated reliably.
 
 ---
 
-# Phase 4 — Stores-Specific Menu Profile
+# Phase 4 — Finance-Specific Menu Profile
 
 Extend the existing department menu profile or menu registry so that:
 
 ```php
-DepartmentType::STORES
+DepartmentType::FINANCE
 ```
 
-receives a dedicated Stores menu.
+receives a dedicated Finance menu.
 
 Recommended menu structure:
 
-## Stores Command
+## Finance Command
 
 * Dashboard
-* Pending Requisitions
-* Urgent Requisitions
-* Pending Issues
-* Transfers in Transit
-* Open Stock Counts
+* Billing Exceptions
+* Unpaid Invoices
+* Open Cashier Sessions
+* Claims Requiring Attention
+* Approval Worklist
 
-## Requisitions
+## Billing
 
-* All Requisitions
-* Pending Approval
-* Approved for Issue
-* Partially Issued
-* Completed Requisitions
-* Rejected Requisitions
+* Billing Worklist
+* Pending Billing
+* Incomplete Billing
+* Billing Exceptions
+* Finalized Billing
+* Visit Billing Review
 
-## Stock Issues
+## Invoices
 
-* Pending Issues
-* Issues in Progress
-* Completed Issues
-* Department Collection
-* Issue History
+* All Invoices
+* Draft Invoices
+* Unpaid Invoices
+* Partially Paid
+* Paid Invoices
+* Overdue Invoices
+* Cancelled Invoices
 
-## Goods Receipt
+## Payments and Cashier
 
-* Pending Receipts
-* New Goods Receipt
-* Purchase Orders Awaiting Receipt
-* Completed Receipts
-* Supplier Delivery History
+* Collect Payment
+* Today’s Payments
+* All Payments
+* Unallocated Payments
+* Reversed Payments
+* Cashier Session
+* Open Cashier Session
+* Close Cashier Session
+* Cashier Reconciliation
+* Receipt History
 
-## Transfers
+## Accounts Receivable
 
-* New Transfer
-* Pending Transfers
-* Awaiting Dispatch
-* In Transit
-* Awaiting Receipt
-* Completed Transfers
-* Cancelled Transfers
+* Patient Receivables
+* Insurance Receivables
+* Sponsor Receivables
+* Receivable Aging
+* Patient Balances
+* Previous Balances
+* Statements
 
-## Returns
+## Insurance and Claims
 
-* Departmental Returns
-* Pending Return Review
-* Accepted Returns
-* Rejected Returns
-* Supplier Returns
+* Insurance Authorizations
+* Insurance Invoices
+* Claims Drafts
+* Claims Validation
+* Claims Ready for Submission
+* Submitted Claims
+* Rejected Claims
+* Paid Claims
+* Claims Reconciliation
 
-## Stock Control
+## Sponsor Accounts
 
-* Current Stock
-* Product Catalogue
-* Batches and Lots
-* Low Stock
-* Stock Outs
-* Near Expiry
-* Expired Stock
-* Stock Movement History
+* Sponsor Accounts
+* Sponsor Invoices
+* Sponsor Receivables
+* Sponsor Statements
+* Sponsor Payments
 
-## Inventory Control
+## Adjustments and Approvals
 
-* Stock Counts
-* Cycle Counts
-* Variance Review
-* Reconciliation
-* Stock Adjustments
-* Adjustment Approvals
+* Discounts
+* Credit Notes
+* Refunds
+* Payment Reversals
+* Invoice Cancellations
+* Write-Offs
+* Billing Overrides
+* Payment-Gate Overrides
 
-## Stock Safety
+## Deposits and Advances
 
-* Quarantined Stock
-* Product Recalls
-* Damaged Stock
-* Disposal Requests
-* Completed Disposals
+* Patient Deposits
+* Advance Payments
+* Deposit Allocation
+* Unused Deposits
+* Refundable Deposits
 
-## Procurement Awareness
+## Accounting
 
-* Purchase Requests
-* Purchase Orders
-* Suppliers
-* Awaiting Deliveries
+* Journal Entries
+* General Ledger
+* Trial Balance
+* Chart of Accounts
+* Posting Exceptions
+* Accounting Periods where supported
 
-Only show Procurement items when those features exist and the user possesses the required permissions.
+## Reconciliation
 
-## Coordination
+* Cash Reconciliation
+* Bank Reconciliation
+* Digital Payment Reconciliation
+* Insurance Reconciliation
+* Sponsor Reconciliation
+* Unmatched Transactions
 
-* Stores Handoffs
-* Department Clarifications
-* Escalations
-* Reservation Conflicts
-* Stockout Alerts
+## Finance Reports
 
-## Stores Reports
-
-* Stock Balance Report
-* Stock Movement Report
-* Requisition Report
-* Issue Report
-* Receipt Report
-* Transfer Report
-* Return Report
-* Adjustment Report
-* Stock Count Report
-* Variance Report
-* Expiry Report
-* Stockout Report
-* Low-Stock Report
-* Consumption Report
-* Stock Valuation Report
-* Supplier Delivery Report
-* Staff Activity Report
+* Revenue Report
+* Collection Report
+* Payment Method Report
+* Cashier Report
+* Invoice Report
+* Accounts Receivable Report
+* AR Aging Report
+* Patient Balance Report
+* Insurance Receivable Report
+* Claims Report
+* Sponsor Report
+* Discount Report
+* Credit-Note Report
+* Refund Report
+* Write-Off Report
+* General Ledger Report
+* Trial Balance Report
+* Reconciliation Report
+* Department Revenue Report
+* Daily Financial Summary
+* Audit Report
 
 ## General
 
@@ -659,1337 +763,1286 @@ Only show a menu item when:
 2. The required module is enabled.
 3. The user possesses the required permission.
 4. The active department permits access.
-5. The active stock location permits the operation.
+5. The user’s cashier, branch, facility, or accounting scope permits access.
 
 Permissions remain authoritative.
 
-Do not expose menu items solely because the active department type is `stores`.
+Do not expose menu items solely because the active department type is `finance`.
 
 ---
 
-# Phase 5 — Stock Location and Department Scoping
+# Phase 5 — Billing Worklist
 
-All Stores worklists, balances, movements, receipts, issues, counts, and alerts must respect:
-
-* Active department
-* Active Stores stock location
-* User stock-location assignment
-* Authorized cross-location access
-* Product-location configuration
-* Department-to-stock-location mapping
-
-Where multiple Stores departments or locations exist, such as:
-
-* Central Medical Store
-* General Store
-* Pharmacy Bulk Store
-* Laboratory Store
-* Theatre Store
-* Ward Supply Store
-* Satellite Store
-
-a user should only see stock and operations relevant to their active department unless explicitly granted cross-location access.
-
-Extend or reuse the existing:
-
-```php
-StockLocationResolver
-```
-
-Ensure:
-
-```php
-DepartmentType::STORES
-```
-
-resolves to the appropriate configured Stores stock location.
-
-Do not assume that every Stores department maps to one global stock location.
-
-Support explicit department-to-stock-location mapping where already available.
-
----
-
-# Phase 6 — Stores Requisition Worklists
-
-Create or adapt requisition worklists under:
+Create or adapt billing worklists under:
 
 ```text
-/stores/requisitions
+/finance/billing
 ```
 
-Recommended requisition states include:
+Recommended billing states include:
 
 ```text
-draft
-submitted
-pending_approval
-approved
-partially_approved
-rejected
-reserved
-ready_for_issue
-partially_issued
-fully_issued
-completed
+not_started
+in_progress
+incomplete
+billing_context_missing
+price_missing
+insurance_mapping_missing
+authorization_pending
+payment_gate_exception
+ready_for_invoice
+invoiced
 cancelled
-expired
 ```
 
-Use existing requisition, approval, reservation, and issue statuses.
+Use existing billing, service, price, insurance, visit, and payment-gate data.
 
-Do not introduce duplicate statuses where the worklist state can be derived through a centralized resolver.
+Do not introduce duplicate billing states where the worklist status can be derived through a centralized resolver.
 
-Each requisition row should display:
+Each billing row should display only authorized information, such as:
 
-* Requisition number
-* Requesting department
-* Requesting stock location where applicable
-* Requesting user
-* Request date and time
-* Priority
-* Number of items
-* Approval state
-* Reservation state
-* Issue state
-* Assigned Stores officer
-* Waiting duration
+* Patient identifier
+* Patient name according to privacy rules
+* Visit number
+* Department
+* Patient category
+* Payer type
+* Insurance or sponsor
+* Number of billable items
+* Gross amount
+* Discount
+* Insurance coverage
+* Patient responsibility
+* Billing state
+* Invoice state
+* Payment state
+* Billing exceptions
+* Responsible billing user
 * Next required action
 
 Support filters such as:
 
 * Date
-* Priority
-* Requesting department
-* Requesting user
-* Product category
-* Requisition status
-* Approval state
-* Reservation state
-* Issue state
-* Assigned Stores officer
-* Urgent or routine
-* Waiting duration
+* Department
+* Patient category
+* Payer
+* Insurance
+* Sponsor
+* Billing state
+* Invoice state
+* Payment state
+* Billing exception
+* Responsible user
+* Visit type
+* Admission or outpatient
+* Emergency or routine
 
 Use pagination and efficient queries.
 
 ---
 
-# Phase 7 — Requisition Workspace
+# Phase 6 — Visit Billing Workspace
 
-Create or adapt a dedicated requisition workspace.
+Create or adapt a Finance visit-billing workspace.
 
 Recommended route:
 
 ```text
-/stores/requisitions/{requisition}
+/finance/billing/{visit}
 ```
 
-The requisition workspace should coordinate the complete requisition-to-issue lifecycle.
+The page should coordinate all financial information relevant to the visit.
 
 Recommended sections:
 
-1. Requisition details
-2. Requesting department
-3. Requesting user
-4. Request date and priority
-5. Requested items
-6. Requested quantities
-7. Approved quantities
-8. Reserved quantities
-9. Previously issued quantities
-10. Outstanding quantities
-11. Available stock
-12. Batch availability
-13. Alternative products where authorized
-14. Approval history
-15. Reservation history
-16. Issue history
-17. Department receipt acknowledgement
-18. Clarification history
-19. Cancellation history
-20. Activity timeline
-21. Authorized quick actions
+1. Patient identity strip
+2. Visit information
+3. Payer and insurance information
+4. Sponsor information
+5. Billable services
+6. Service status
+7. Department
+8. Cash price
+9. Insurance price
+10. Insurance coverage
+11. Patient responsibility
+12. Discounts
+13. Gross total
+14. Net total
+15. Existing invoices
+16. Payments
+17. Previous balance
+18. Deposit or advance balance
+19. Billing overrides
+20. Payment-gate state
+21. Billing exceptions
+22. Receivable summary
+23. Financial timeline
+24. Authorized actions
 
-Do not duplicate the underlying requisition, stock, reservation, or issue logic.
+Reuse the existing billing-calculation services.
 
-The page should coordinate existing inventory services through a Stores-specific interface.
+Do not recalculate invoice totals independently inside the Finance controller or Blade view.
+
+The selected insurance price must remain authoritative for insurance coverage calculations.
+
+Do not calculate insurance coverage against the cash price where the project’s established rule is to calculate against the selected insurer’s price.
 
 ---
 
-# Phase 8 — Requisition Approval
+# Phase 7 — Invoice Lifecycle
 
-Where requisitions require approval, preserve the existing approval architecture.
+Expose invoices under:
 
-Approval should support:
+```text
+/finance/invoices
+```
 
-* Full approval
-* Partial approval
-* Rejection
-* Request for clarification
-* Approval by threshold
-* Multi-level approval where configured
-* Emergency approval where supported
+Potential invoice states may include:
 
-An approval record should include:
+```text
+draft
+finalized
+unpaid
+partially_paid
+paid
+overpaid
+overdue
+cancelled
+credited
+written_off
+```
 
-* Requisition
+Use existing configured statuses where available.
+
+The invoice workflow should support:
+
+* Draft creation
+* Billable-item review
+* Payer allocation
+* Insurance and patient-responsibility split
+* Sponsor allocation
+* Discount application
+* Finalization
+* Receipt and payment linking
+* Credit-note linking
+* Cancellation where permitted
+* Write-off where approved
+* Statement generation
+* Print or PDF where supported
+
+Finalized invoices must not be silently edited.
+
+Changes after finalization should use:
+
+* Credit notes
+* Debit adjustments where supported
+* Invoice cancellation and replacement
+* Approved correction workflow
+
+according to the established accounting architecture.
+
+---
+
+# Phase 8 — Payment Collection
+
+Expose payment collection under:
+
+```text
+/finance/payments/collect
+```
+
+Reuse the existing `PaymentService` or equivalent authoritative payment pipeline.
+
+Payment collection may support:
+
+* Cash
+* Mobile Money
+* Card or TPE
+* Bank transfer
+* Cheque where supported
+* Digital payment provider
+* Insurance settlement
+* Sponsor settlement
+* Deposit allocation
+* Advance-payment allocation
+
+A payment should record:
+
+* Patient or payer
+* Invoice
+* Visit
+* Amount
+* Currency
+* Payment method
+* Provider
+* External transaction reference
+* Cashier
+* Cashier session
+* Payment date and time
+* Allocation state
+* Receipt number
+* Notes where permitted
+
+Do not create a second payment-recording implementation for the Finance workspace.
+
+All financial postings must continue through the existing payment and journal services.
+
+---
+
+# Phase 9 — Partial Payments and Overpayments
+
+Support partial payment where a payer does not settle the full invoice.
+
+The system must preserve:
+
+* Invoice amount
+* Previously paid amount
+* Amount paid now
+* Remaining balance
+* Receivable state
+* Allocation history
+* Responsible cashier
+* Payment method
+* Date and time
+
+Overpayment should follow the existing policy.
+
+Potential outcomes may include:
+
+```text
+patient_credit
+unallocated_payment
+deposit_balance
+refund_required
+allocation_required
+```
+
+Do not silently apply an overpayment to unrelated invoices without an authorized allocation policy.
+
+All allocations must remain traceable.
+
+---
+
+# Phase 10 — Patient Deposits and Advance Payments
+
+Expose deposits and advances under:
+
+```text
+/finance/deposits
+/finance/advances
+```
+
+A deposit or advance may include:
+
+* Patient
+* Visit or admission where applicable
+* Amount
+* Payment method
+* Cashier
+* Receipt
+* Available balance
+* Allocated amount
+* Refunded amount
+* Expiry or closure state where configured
+
+The system should support:
+
+* Deposit collection
+* Deposit allocation
+* Partial allocation
+* Cross-invoice allocation where permitted
+* Deposit refund
+* Transfer to patient credit where configured
+
+Do not treat an unallocated deposit as earned revenue until the existing accounting policy recognizes it.
+
+Use the correct liability or control account where configured.
+
+---
+
+# Phase 11 — Previous Patient Balance
+
+Expose previous patient balances under:
+
+```text
+/finance/patient-balances
+```
+
+Reuse the existing:
+
+```php
+PatientOutstandingBalanceService
+```
+
+or its current equivalent.
+
+The patient balance summary should distinguish:
+
+* Previous-visit balance
+* Current-visit balance
+* Total balance
+* Oldest unpaid invoice
+* Age in days
+* Receivable bucket
+* Patient responsibility
+* Insurance responsibility
+* Sponsor responsibility
+
+Do not combine invoices into a single new invoice merely for display.
+
+Each visit must retain its own invoice and receivable history.
+
+Patient-balance views must preserve privacy and permission controls.
+
+---
+
+# Phase 12 — Cross-Visit Payment Allocation
+
+Expose payment allocation under:
+
+```text
+/finance/payment-allocation
+```
+
+Reuse the existing:
+
+```php
+PatientPaymentAllocationService
+```
+
+or its current equivalent.
+
+Support configured allocation strategies such as:
+
+```text
+oldest_first
+current_visit
+manual
+```
+
+Because the existing payment and accounting pipeline may be invoice-scoped, a cross-visit tender should continue to be recorded through the established design:
+
+* One tender may produce multiple invoice-scoped payments.
+* Each invoice keeps its own payment history.
+* Each visit keeps its own invoice.
+* Each payment posts through the unchanged payment pipeline.
+* Each journal entry remains balanced and invoice-specific.
+
+Do not create one synthetic cross-visit payment record that bypasses the accounting architecture.
+
+Manual allocation must:
+
+* Prevent allocation beyond the payment amount
+* Prevent allocation beyond eligible receivable amounts
+* Preserve outstanding balances
+* Record the user
+* Record the strategy
+* Record the allocation sequence
+* Be audited
+
+---
+
+# Phase 13 — Accounts Receivable
+
+Expose Accounts Receivable under:
+
+```text
+/finance/receivables
+```
+
+Reuse the existing `InvoiceReceivable` architecture.
+
+Receivables should be categorized by responsibility:
+
+```text
+patient
+insurance
+sponsor
+other_configured_payer
+```
+
+Potential states may include:
+
+```text
+current
+partially_paid
+overdue
+disputed
+under_claim
+settled
+written_off
+cancelled
+```
+
+Each receivable should display:
+
+* Invoice
+* Patient or payer
+* Original amount
+* Paid amount
+* Outstanding amount
+* Due date
+* Age
+* Aging bucket
+* Responsibility type
+* Claim state where relevant
+* Last payment
+* Next action
+
+Do not infer responsibility from invoice totals alone.
+
+Use the existing patient-responsibility and payer-allocation data.
+
+---
+
+# Phase 14 — Receivable Aging
+
+Expose receivable aging under:
+
+```text
+/finance/receivables/aging
+```
+
+Use configured aging buckets such as:
+
+```text
+current
+1_30_days
+31_60_days
+61_90_days
+91_120_days
+over_120_days
+```
+
+Use existing configured buckets where available.
+
+The aging report should support:
+
+* Patient receivables
+* Insurance receivables
+* Sponsor receivables
+* Department
+* Facility
+* Payer
+* Date range
+* Aging bucket
+* Invoice status
+
+Do not calculate aging from payment date when the established policy uses invoice due date or invoice finalization date.
+
+Use the authoritative receivable-aging service.
+
+---
+
+# Phase 15 — Cashier Sessions
+
+Expose cashier sessions under:
+
+```text
+/finance/cashier
+```
+
+A cashier session may include:
+
+* Cashier
+* Cash point
+* Department
+* Opening date and time
+* Opening float
+* Payments received
+* Refunds
+* Reversals
+* Cash expected
+* Cash counted
+* Variance
+* Closing date and time
+* Closing user
+* Supervisor approval
+* Session state
+
+Potential session states may include:
+
+```text
+not_open
+open
+closing
+closed
+variance_review
+approved
+```
+
+The system should prevent payment collection through a cashier account where an open session is required but absent.
+
+Do not allow one cashier to have conflicting active sessions where policy prohibits it.
+
+Cashier opening and closing must be audited.
+
+---
+
+# Phase 16 — Cashier Closing and Reconciliation
+
+Cashier closing should calculate:
+
+* Opening float
+* Cash payments
+* Non-cash payments
+* Refunds
+* Reversals
+* Cash expected
+* Cash declared
+* Variance
+* Payment count
+* Receipt range
+* Digital payment totals
+* Bank or cheque totals where supported
+
+A variance should record:
+
+* Expected amount
+* Counted amount
+* Variance amount
+* Variance type
+* Reason
+* Cashier
+* Supervisor
+* Resolution
+* Approval state
+
+Potential variance states may include:
+
+```text
+balanced
+shortage
+overage
+under_review
+approved
+resolved
+```
+
+Do not automatically write off cashier shortages or overages.
+
+Use the configured variance-review and journal-posting workflow.
+
+---
+
+# Phase 17 — Payment Reversal
+
+Completed payments must not be deleted directly.
+
+Provide a formal payment-reversal workflow.
+
+A reversal should record:
+
+* Original payment
+* Invoice
+* Patient or payer
+* Amount
+* Payment method
+* Reversal reason
+* Requesting user
+* Approving user where required
+* Reversal date and time
+* Cashier session
+* Journal reversal
+* Receipt effect
+* Receivable effect
+
+The system must:
+
+1. Preserve the original payment.
+2. Create a traceable reversal.
+3. Restore the receivable appropriately.
+4. Reverse accounting entries.
+5. Update the cashier session.
+6. Preserve external transaction references.
+7. Prevent duplicate reversal.
+8. Audit the action.
+
+Digital-payment reversals should also respect provider capabilities and settlement state.
+
+---
+
+# Phase 18 — Refund Workflow
+
+Expose refunds under:
+
+```text
+/finance/refunds
+```
+
+A refund may relate to:
+
+* Overpayment
+* Cancelled service
+* Cancelled invoice
+* Returned medication
+* Reversed dispensing
+* Unused deposit
+* Insurance correction
+* Sponsor correction
+* Duplicate payment
+
+A refund should record:
+
+* Patient or payer
+* Original payment
+* Invoice
+* Refund amount
+* Refund reason
+* Refund method
+* Requesting user
+* Approving user
+* Paying cashier
+* Date and time
+* Journal effect
+* Provider reference where applicable
+* Receipt or refund voucher
+
+Refunds must not exceed the refundable balance.
+
+Do not treat payment reversal and refund as identical unless the existing domain model explicitly does so.
+
+A reversal voids or negates a payment.
+
+A refund pays money back after a valid payment or credit balance.
+
+Preserve that distinction.
+
+---
+
+# Phase 19 — Discounts
+
+Expose discounts under:
+
+```text
+/finance/discounts
+```
+
+Discounts may apply to:
+
+* Invoice
+* Invoice item
+* Service category
+* Patient responsibility
+* Sponsor arrangement
+* Authorized welfare support
+
+A discount should record:
+
+* Invoice
+* Item where applicable
+* Original amount
+* Discount type
+* Discount value
+* Final amount
+* Reason
+* Requesting user
 * Approving user
 * Approval level
-* Approved items
-* Approved quantities
-* Rejected items
-* Reason
 * Date and time
 
-Do not allow approval of quantities greater than the requested quantity unless the existing workflow explicitly allows approved substitutions or package-size adjustments.
+Potential discount types may include:
 
-Do not allow the same user to submit and approve a requisition where separation of duties is configured.
+```text
+fixed_amount
+percentage
+full_waiver
+configured_scheme
+```
 
-Approval actions must be audited.
+Do not apply discounts by directly changing historical service prices after invoice finalization.
+
+Use the existing discount and invoice-adjustment architecture.
+
+Discounts above configured thresholds should require higher-level approval.
 
 ---
 
-# Phase 9 — Stock Reservation
+# Phase 20 — Credit Notes
 
-After approval, stock may be reserved for the requisition.
-
-Reservation must:
-
-1. Be tied to the requisition item.
-2. Be tied to the source stock location.
-3. Respect available quantity.
-4. Respect batch and expiry policy.
-5. Prevent double allocation.
-6. Support partial reservation.
-7. Preserve outstanding quantity.
-8. Release unused reservations after cancellation or expiry.
-9. Be transactionally safe.
-10. Be audited where required.
-
-Reservation states may include:
+Expose credit notes under:
 
 ```text
-not_reserved
-partially_reserved
-fully_reserved
-reservation_conflict
-released
-expired
+/finance/credit-notes
 ```
 
-Do not create a separate stock ledger for reserved quantities.
+A credit note should record:
 
-Use the existing inventory reservation architecture.
-
----
-
-# Phase 10 — Stock Issue Workflow
-
-Expose stock issuing under:
-
-```text
-/stores/issues
-```
-
-Authorized Stores users should be able to:
-
-* Start an issue
-* Select an approved requisition
-* Confirm source stock location
-* Select valid batches
-* Confirm issue quantities
-* Record partial issue
-* Record unavailable quantities
-* Record substitutions where authorized
-* Prepare issue documentation
-* Mark items ready for departmental collection
-* Confirm handover
-* Complete the issue
-
-Issue states may include:
-
-```text
-not_started
-in_progress
-partially_issued
-ready_for_collection
-handed_over
-completed
-cancelled
-reversed
-```
-
-Stock issuing must not:
-
-* Exceed the approved quantity
-* Exceed the outstanding quantity
-* Exceed available stock
-* Use expired or quarantined stock
-* Deduct stock twice
-* Issue from an unauthorized stock location
-* Silently modify the original requisition
-
-All issue actions must remain under `/stores/*`.
-
----
-
-# Phase 11 — Partial Stock Issue
-
-Support partial issue where the full approved quantity is not available or cannot be supplied immediately.
-
-A partial issue must preserve:
-
-* Requested quantity
-* Approved quantity
-* Previously issued quantity
-* Quantity issued now
-* Outstanding quantity
+* Original invoice
+* Patient or payer
+* Credited invoice items
+* Amount
+* Tax or charge adjustments where supported
 * Reason
-* Batch allocations
-* Responsible Stores user
-* Date and time
-* Follow-up requirement
+* Requesting user
+* Approving user
+* Issue date
+* Receivable effect
+* Journal effect
+* Remaining invoice balance
 
 Potential reasons include:
 
 ```text
-insufficient_stock
-package_size
-allocation_limit
-department_request
-substitution_pending
-stock_under_quarantine
+service_cancelled
+service_not_rendered
+billing_error
+price_correction
+insurance_adjustment
+returned_item
+duplicate_charge
 other
 ```
 
-The system should:
+Do not directly overwrite or delete finalized invoice items.
 
-1. Preserve the original requisition.
-2. Preserve every issue event.
-3. Maintain outstanding quantity.
-4. Prevent over-issuing.
-5. Keep the requisition visible in the partial-issue worklist.
-6. Allow later completion where valid.
-7. Update stock correctly.
-8. Audit every issue event.
-
-Do not mark the requisition fully completed while valid outstanding quantities remain unless those quantities are formally cancelled or waived.
+Credit notes must preserve the original invoice and create traceable accounting adjustments.
 
 ---
 
-# Phase 12 — Product Substitution
+# Phase 21 — Invoice Cancellation
 
-Where Stores product substitution is permitted, use a formal workflow.
+A finalized invoice should only be cancelled through an authorized workflow.
 
-Potential substitutions include:
+Cancellation should record:
 
-* Equivalent brand
-* Equivalent generic product
-* Equivalent pack size
-* Equivalent unit configuration
-* Approved alternative consumable
+* Invoice
+* Cancellation reason
+* Cancelling user
+* Approval
+* Payment state
+* Credit-note requirement
+* Replacement invoice where applicable
+* Receivable effect
+* Journal effect
+* Date and time
 
-A substitution should record:
+Do not cancel an invoice with payments, claims, or dependent transactions without resolving those dependencies.
 
-* Requested product
-* Supplied product
-* Equivalence basis
-* Requested quantity
-* Converted issue quantity
+Where replacement is required, link the original and replacement invoices.
+
+---
+
+# Phase 22 — Write-Offs
+
+Expose write-offs under:
+
+```text
+/finance/write-offs
+```
+
+A write-off may apply to approved unrecoverable receivables.
+
+A write-off should record:
+
+* Receivable
+* Invoice
+* Payer
+* Outstanding amount
+* Write-off amount
 * Reason
+* Collection history
+* Requesting user
 * Approving user
-* Requesting department acceptance where required
-* Stock impact
+* Approval level
+* Journal effect
 * Date and time
 
-Do not allow arbitrary substitution through direct editing of the requisition item.
-
-Substitution must respect:
-
-* Product equivalence configuration
-* Permission
-* Approval policy
-* Unit conversion
-* Clinical restrictions where relevant
-* Audit requirements
-
----
-
-# Phase 13 — Departmental Collection and Handover
-
-Where the requesting department physically collects supplies, support a formal handover process.
-
-Handover should record:
-
-* Requisition
-* Issue
-* Requesting department
-* Collecting user
-* Issuing Stores user
-* Collection date and time
-* Items and quantities
-* Condition at handover
-* Acknowledgement
-* Notes
-
-Potential handover states include:
+Potential reasons may include:
 
 ```text
-not_ready
-ready_for_collection
-partially_collected
-collected
-receipt_acknowledged
-```
-
-Do not mark issued stock as received by the requesting department merely because the Stores issue was prepared.
-
-Where departmental receipt acknowledgement exists, keep:
-
-* Stores handover
-* Department receipt
-
-as distinct states.
-
----
-
-# Phase 14 — Goods Receipt Workflow
-
-Expose goods receipt under:
-
-```text
-/stores/receipts
-```
-
-Goods receipt may originate from:
-
-* Purchase order
-* Supplier delivery
-* Donation
-* Opening balance
-* Approved direct receipt
-* Inter-facility transfer
-* Return from another location
-
-The receipt workflow should support:
-
-* Supplier or source
-* Purchase order
-* Delivery note
-* Invoice reference where authorized
-* Product
-* Ordered quantity
-* Delivered quantity
-* Accepted quantity
-* Rejected quantity
-* Unit of measure
-* Batch or lot
-* Serial number where supported
-* Manufacturing date
-* Expiry date
-* Unit cost where authorized
-* Receiving location
-* Receiving user
-* Inspection state
-* Receipt date and time
-
-Do not allow receipt completion without required batch or expiry information for configured products.
-
-Goods receipt must:
-
-1. Validate the source.
-2. Validate products and quantities.
-3. Create or update batches correctly.
-4. Post stock movements transactionally.
-5. Preserve rejected quantities.
-6. Update purchase-order receipt state where applicable.
-7. Preserve valuation data where authorized.
-8. Audit the receipt.
-
----
-
-# Phase 15 — Goods Inspection and Rejection
-
-Before receipt completion, support inspection where applicable.
-
-Inspection may validate:
-
-* Product identity
-* Quantity
-* Packaging
-* Seal integrity
-* Batch number
-* Expiry date
-* Temperature state
-* Damage
-* Recall state
-* Purchase-order match
-* Unit-of-measure match
-
-Rejected delivery quantities should record:
-
-* Product
-* Quantity
-* Reason
-* Supplier
-* Delivery reference
-* Rejecting user
-* Date and time
-* Return or replacement requirement
-
-Potential rejection reasons include:
-
-```text
-wrong_product
-wrong_quantity
-damaged
-expired
-near_expiry
-incorrect_batch
-temperature_breach
-packaging_failure
-purchase_order_mismatch
-quality_failure
+uncollectible
+deceased_estate
+charity_approval
+insurance_denial_final
+sponsor_default
+administrative_decision
 other
 ```
 
-Do not add rejected quantities to available stock.
+Write-off does not mean deletion.
+
+The receivable, invoice, payment history, and write-off record must remain visible.
 
 ---
 
-# Phase 16 — Batch, Lot, Serial, and Expiry Tracking
+# Phase 23 — Insurance Billing
 
-Preserve product-level configuration for whether an item requires:
-
-* Batch tracking
-* Lot tracking
-* Serial tracking
-* Expiry tracking
-
-Batch records may include:
-
-* Product
-* Batch or lot number
-* Stock location
-* Received quantity
-* Available quantity
-* Reserved quantity
-* Expiry date
-* Manufacturing date
-* Supplier
-* Receipt reference
-* Unit cost
-* Quarantine state
-* Recall state
-* Disposal state
-
-Serial-tracked products must prevent duplicate serial numbers.
-
-Do not require batch or serial tracking for products that are not configured for it.
-
-Do not allow expired, quarantined, recalled, damaged, or disposed stock to appear as available.
-
----
-
-# Phase 17 — Stock Transfer Workflow
-
-Expose transfers under:
+Expose insurance financial workflows under:
 
 ```text
-/stores/transfers
+/finance/insurance
 ```
 
-Support:
+Finance should be able to view:
 
-* Store-to-store transfer
-* Central-to-satellite transfer
-* Store-to-Pharmacy transfer
-* Store-to-Laboratory transfer
-* Store-to-Theatre transfer
-* Store-to-Ward transfer
-* Inter-facility transfer where supported
+* Patient insurer
+* Insurance plan
+* Authorization state
+* Covered services
+* Excluded services
+* Insurance price
+* Insurance coverage
+* Patient responsibility
+* Claimable amount
+* Non-claimable amount
+* Insurance invoice state
+* Claim state
+* Receivable state
 
-A transfer should include:
+The selected insurance price must remain the basis for insurance coverage calculation.
 
-* Source location
-* Destination location
-* Requested items
-* Approved quantities
-* Dispatched quantities
-* Received quantities
-* Batch allocations
+Do not calculate insurance coverage from the cash price when an insurer-specific price exists.
+
+Reuse the existing insurance-pricing and coverage services.
+
+Finance must not override clinical service delivery merely because insurance authorization is pending unless the configured payment policy requires it.
+
+---
+
+# Phase 24 — Claims Workflow
+
+Expose claims under:
+
+```text
+/finance/claims
+```
+
+Potential claim states may include:
+
+```text
+draft
+incomplete
+validation_failed
+ready
+submitted
+acknowledged
+under_review
+partially_approved
+approved
+rejected
+paid
+partially_paid
+cancelled
+resubmission_required
+```
+
+Use existing configured states where available.
+
+Claims workflow may include:
+
+1. Claim generation
+2. Patient and insurer validation
+3. Service validation
+4. Diagnosis and code validation
+5. Price validation
+6. Coverage validation
+7. Supporting-document validation
+8. Claim readiness
+9. Submission
+10. Submission reference
+11. Insurer acknowledgement
+12. Rejection or query
+13. Correction
+14. Resubmission
+15. Approval
+16. Settlement
+17. Receivable allocation
+18. Variance management
+
+Do not duplicate clinical coding or diagnosis data.
+
+Reuse the existing consultation, insurance, claims, and billing records.
+
+---
+
+# Phase 25 — Claims Validation
+
+Claims validation should identify issues such as:
+
+* Missing insurer
+* Missing policy number
+* Missing authorization
+* Missing diagnosis
+* Missing procedure code
+* Missing service code
+* Price mismatch
+* Coverage mismatch
+* Duplicate claim item
+* Missing supporting document
+* Invalid service date
+* Invalid patient category
+* Claim amount mismatch
+* Billing item not finalized
+
+Validation findings should distinguish:
+
+```text
+blocking
+warning
+informational
+```
+
+Do not silently remove claim items to make a claim pass validation.
+
+Every excluded or corrected item must remain traceable.
+
+---
+
+# Phase 26 — Claims Settlement
+
+When an insurer payment is received, Finance should be able to:
+
+* Record settlement
+* Link insurer payment reference
+* Allocate payment to claims
+* Allocate payment to invoices
+* Record approved amount
+* Record rejected amount
+* Record deductions
+* Record withholding where applicable
+* Record unexplained variance
+* Update insurance receivables
+* Update claim status
+* Post accounting entries
+
+Do not mark the full claim paid when only part of the amount was received.
+
+Claims settlement should support partial payment and deductions.
+
+---
+
+# Phase 27 — Sponsor Accounts
+
+Expose sponsor accounts under:
+
+```text
+/finance/sponsors
+```
+
+A sponsor account may include:
+
+* Sponsor
+* Agreement
+* Credit limit
+* Covered services
+* Covered beneficiaries
+* Billing cycle
+* Invoice state
+* Receivable balance
+* Payment history
+* Statement history
+* Account status
+
+Finance may generate:
+
+* Sponsor invoices
+* Sponsor statements
+* Receivable-aging reports
+* Payment allocations
+* Account reconciliations
+
+Do not expose sponsor contract details without the required permission.
+
+---
+
+# Phase 28 — Payment-Gate Policy Visibility
+
+Expose authorized payment-gate policy visibility under:
+
+```text
+/finance/payment-gate
+```
+
+Reuse the existing:
+
+* `PaymentGateOperationPolicy`
+* `PaymentGateEnforcementEligibility`
+* Configuration resolver
+* Eligibility service
+* Compatibility service
+* Payment-gate audit command
+* Visit billing overrides
+
+The Finance workspace may show:
+
+* Operation
+* Current mode
+* Department rule
+* Visit context rule
+* Missing billing-context policy
+* Override scope
+* Wired or unwired state
+* Enforcement eligibility
+* Recent overrides
+* Policy-audit findings
+
+Do not allow Finance users to modify wired hard-gate operations where the existing admin UI marks them read-only.
+
+Policy editing must remain under the established permission and audit architecture.
+
+---
+
+# Phase 29 — Visit Billing Overrides
+
+Expose billing overrides where authorized.
+
+An override may include:
+
+* Visit
+* Patient
+* Operation
+* Scope
+* Reason
 * Requested user
 * Approving user
-* Dispatching user
-* Receiving user
-* Priority
-* Transfer date
-* Transport information where supported
+* Start time
+* Expiry
+* Status
+* Audit reference
 
-Transfer states may include:
+Potential override reasons may include:
 
 ```text
-draft
-submitted
-approved
-reserved
-awaiting_dispatch
-dispatched
-in_transit
-partially_received
-received
-rejected
-cancelled
+emergency
+payment_deferred
+insurance_pending
+sponsor_pending
+authorized_exception
+clinical_priority
+billing_context_issue
+other
 ```
 
-Transfers must:
+Overrides must be:
 
-1. Prevent source stock from being issued twice.
-2. Preserve stock in transit.
-3. Avoid adding destination stock before receipt confirmation where the existing model uses in-transit stock.
-4. Support partial receipt.
-5. Record damaged or missing quantities.
-6. Maintain batch traceability.
-7. Be transactionally safe.
-8. Be audited.
+* Explicit
+* Permission-controlled
+* Time-scoped where appropriate
+* Visit-scoped
+* Operation-scoped
+* Reasoned
+* Audited
+
+Do not create a universal “allow all services” override unless the existing policy explicitly supports it.
 
 ---
 
-# Phase 18 — Departmental Returns
+# Phase 30 — General Ledger and Journal Visibility
 
-Expose returns under:
-
-```text
-/stores/returns
-```
-
-A departmental return may include:
-
-* Requesting or returning department
-* Original issue
-* Product
-* Batch
-* Quantity
-* Return reason
-* Packaging condition
-* Storage-condition confidence
-* Expiry state
-* Tamper state
-* Receiving Stores user
-* Return date and time
-* Stock disposition
-
-Potential outcomes include:
+Expose accounting visibility under:
 
 ```text
-accepted_return_to_stock
-accepted_to_quarantine
-accepted_for_disposal
-rejected
+/finance/journals
+/finance/general-ledger
 ```
 
-Do not assume every returned item can return to available stock.
+Reuse the existing journal and ledger architecture.
 
-Stock should only return to available inventory where:
+The journal view may display:
 
-* The product is eligible
-* Packaging is acceptable
-* Storage conditions are trustworthy
-* The batch is valid
-* The item is not expired, recalled, or damaged
-
-Use the existing quarantine, adjustment, and disposal services where applicable.
-
----
-
-# Phase 19 — Supplier Returns
-
-Where supplier-return functionality exists, expose it through Stores.
-
-Supplier returns may relate to:
-
-* Damaged delivery
-* Wrong product
-* Wrong quantity
-* Recall
-* Quality failure
-* Near expiry
-* Expired product
-* Contract rejection
-
-A supplier return should record:
-
-* Supplier
-* Original receipt
-* Product
-* Batch
-* Quantity
-* Reason
-* Return date
-* Dispatch reference
-* Replacement expected
-* Credit note reference where authorized
+* Journal reference
+* Date
+* Source transaction
+* Source module
+* Description
+* Debit account
+* Credit account
+* Amount
+* Currency
+* Posting state
+* Accounting period
 * Responsible user
+* Reversal link
 
-Do not reduce stock twice when a rejected receipt quantity was never accepted into inventory.
+The ledger view may display:
 
----
+* Account
+* Date
+* Reference
+* Description
+* Debit
+* Credit
+* Running balance
+* Source transaction
+* Department or cost center where supported
 
-# Phase 20 — Stock Adjustments
+Do not allow direct deletion or editing of posted journal entries.
 
-Expose stock adjustments under:
+Corrections must use:
 
-```text
-/stores/adjustments
-```
+* Reversal
+* Correcting journal
+* Approved adjustment
 
-Adjustments should only be used for authorized inventory corrections.
-
-Potential adjustment types include:
-
-```text
-increase
-decrease
-correction
-opening_balance
-damage
-loss
-expiry
-found_stock
-unit_conversion
-system_correction
-```
-
-An adjustment must record:
-
-* Product
-* Stock location
-* Batch where applicable
-* Previous quantity
-* Adjustment quantity
-* New quantity
-* Adjustment type
-* Reason
-* Supporting reference
-* Requesting user
-* Approving user where required
-* Date and time
-
-Do not allow direct editing of stock balances.
-
-All balance changes must be represented by stock-ledger movements.
-
-Adjustments above configured thresholds should require approval.
+according to the existing accounting architecture.
 
 ---
 
-# Phase 21 — Physical Stock Counts
+# Phase 31 — Chart of Accounts
 
-Expose physical stock counts under:
-
-```text
-/stores/stock-counts
-```
-
-Support:
-
-* Full stock count
-* Cycle count
-* Category count
-* Location count
-* Batch count
-* Spot count
-
-A stock count should include:
-
-* Count reference
-* Stock location
-* Scope
-* Count date
-* Count team
-* Count status
-* Product
-* Batch
-* System quantity
-* Counted quantity
-* Variance
-* Recount quantity
-* Final approved quantity
-* Notes
-
-Potential states include:
+Expose Chart of Accounts visibility under:
 
 ```text
-draft
-scheduled
-in_progress
-submitted
-recount_required
-awaiting_approval
-approved
-reconciled
-cancelled
+/finance/chart-of-accounts
 ```
 
-During a count, follow the existing policy regarding whether stock movement is:
+The operational view may display:
 
-* Frozen
-* Restricted
-* Allowed with movement tracking
-* Counted using a cut-off timestamp
+* Account code
+* Account name
+* Account type
+* Parent account
+* Normal balance
+* Active state
+* Posting permission
+* Financial statement classification
 
-Do not create unexplained adjustment movements automatically.
+Editing the Chart of Accounts must remain restricted to users with the existing administrative accounting permission.
 
-Variance resolution must remain explicit and audited.
+Do not grant account-editing permission merely because a user belongs to Finance.
 
 ---
 
-# Phase 22 — Stock Reconciliation
+# Phase 32 — Trial Balance
+
+Expose Trial Balance under:
+
+```text
+/finance/trial-balance
+```
+
+The report should display:
+
+* Account
+* Opening debit
+* Opening credit
+* Period debit
+* Period credit
+* Closing debit
+* Closing credit
+
+The Trial Balance must use the authoritative journal-posting data.
+
+Do not calculate it independently from invoices and payments where the system already posts to the General Ledger.
+
+The report should support:
+
+* Date range
+* Accounting period
+* Facility
+* Department or cost center where supported
+* Posted entries only
+* Draft-entry exclusion
+
+---
+
+# Phase 33 — Accounting Period Controls
+
+Where accounting-period functionality exists, Finance should respect:
+
+* Open period
+* Closed period
+* Locked period
+* Adjustment period
+
+Do not allow normal transaction posting into a closed or locked accounting period.
+
+Authorized late adjustments should use the existing adjustment-period or reopening workflow.
+
+Period reopening must be permission-controlled, reasoned, and audited.
+
+---
+
+# Phase 34 — Cash and Bank Reconciliation
 
 Expose reconciliation under:
 
 ```text
-/stores/reconciliations
+/finance/reconciliation
 ```
 
-Reconciliation should compare:
+Cash reconciliation should compare:
 
-* Opening stock
-* Receipts
-* Transfers in
-* Returns in
-* Issues
-* Transfers out
-* Disposals
-* Adjustments
-* Expected closing stock
-* Physical count
-* Variance
+* Cashier sessions
+* Expected cash
+* Counted cash
+* Deposited cash
+* Variances
 
-A reconciliation should record:
+Bank reconciliation should compare:
 
-* Count reference
-* Products and batches
-* Variance reasons
-* Approved adjustments
-* Responsible user
-* Approving user
-* Completion date
+* Bank statement transactions
+* Recorded bank payments
+* Deposits
+* Refunds
+* Charges
+* Transfers
+* Unmatched transactions
 
-Potential variance reasons include:
+Potential reconciliation states may include:
 
 ```text
-counting_error
-unposted_receipt
-unposted_issue
-incorrect_unit
-damage
-loss
-theft
-expired_stock
-system_error
-unknown
+unmatched
+partially_matched
+matched
+exception
+resolved
 ```
 
-Do not reconcile by silently replacing ledger balances.
+Do not delete unmatched transactions merely to complete reconciliation.
 
-Use authorized adjustment movements tied to the reconciliation.
+Preserve exceptions and resolution history.
 
 ---
 
-# Phase 23 — Low Stock and Stockout Management
+# Phase 35 — Digital Payment Reconciliation
 
-Expose stock alerts under:
-
-```text
-/stores/low-stock
-/stores/stock-outs
-```
-
-The alert system should use existing product or location configuration such as:
-
-* Reorder level
-* Minimum stock
-* Maximum stock
-* Safety stock
-* Average consumption
-* Lead time
-* Reserved quantity
-* Available quantity
-
-The workspace should distinguish:
+Expose digital-payment reconciliation under:
 
 ```text
-healthy
-below_reorder
-low_stock
-critical_stock
-out_of_stock
-overstock
+/finance/reconciliation/digital-payments
 ```
 
-Where consumption history exists, display useful planning indicators such as:
+Support configured providers such as:
 
-* Average daily consumption
-* Estimated days of stock remaining
-* Last issue date
-* Pending purchase quantity
-* Pending transfer quantity
-* Outstanding requisition quantity
+* Mobile Money
+* Card or TPE
+* Bank gateway
+* Payment aggregator
+* Other active payment providers
 
-Do not generate procurement actions automatically unless the existing workflow supports it.
+The worklist may display:
 
----
-
-# Phase 24 — Expiry Management
-
-Expose expiry management under:
-
-```text
-/stores/expiries
-```
-
-Expiry views should support configurable windows such as:
-
-* Expired
-* Expiring within 30 days
-* Expiring within 60 days
-* Expiring within 90 days
-* Expiring within 180 days
-
-Display:
-
-* Product
-* Batch
-* Location
-* Available quantity
-* Reserved quantity
-* Expiry date
-* Days to expiry
-* Last movement
-* Related requisitions
-* Suggested action where supported
-
-Potential actions include:
-
-* Prioritize issue
-* Transfer to higher-consumption location
-* Quarantine
-* Return to supplier
-* Dispose
-* Mark reviewed
-
-Do not permit issue or transfer of expired stock as available inventory.
-
-Near-expiry restrictions should follow configured policy.
-
----
-
-# Phase 25 — Quarantine
-
-Expose quarantined stock under:
-
-```text
-/stores/quarantine
-```
-
-Stock may be quarantined because of:
-
-* Quality concern
-* Damage
-* Temperature breach
-* Recall investigation
-* Pending inspection
-* Return assessment
-* Suspected counterfeit
-* Documentation problem
-* Near-expiry review
-
-A quarantine record should include:
-
-* Product
-* Batch
-* Quantity
-* Location
-* Reason
-* Quarantine date
-* Responsible user
-* Review date
-* Review outcome
-* Release or disposal decision
-
-Quarantined stock must not be available for:
-
-* Reservation
-* Issue
-* Transfer
-* Dispensing
-* Clinical consumption
-
-unless formally released by an authorized user.
-
----
-
-# Phase 26 — Recall Management
-
-Expose product recalls under:
-
-```text
-/stores/recalls
-```
-
-A recall may include:
-
-* Product
-* Batch or lot
-* Recall source
-* Recall level
-* Reason
-* Effective date
-* Affected locations
-* Quantity on hand
-* Quantity issued
-* Quantity recovered
-* Quantity disposed
+* Internal payment reference
+* Provider transaction reference
+* Amount
+* Provider amount
+* Fees
+* Settlement amount
+* Payment date
+* Settlement date
 * Status
+* Match state
+* Variance
+* Provider response
 
-The system should support:
+Do not expose payment-provider credentials or secrets.
 
-1. Identifying affected stock.
-2. Blocking further use.
-3. Locating affected batches across authorized stock locations.
-4. Recording recovery.
-5. Recording department notifications.
-6. Recording supplier or regulator communication where supported.
-7. Recording final disposition.
-8. Auditing all actions.
-
-Do not expose patient-level dispensing details unless the user possesses the required permission and the recall workflow requires them.
+Provider callbacks and APIs must remain outside browser-route redirects.
 
 ---
 
-# Phase 27 — Damage and Loss
-
-Expose damage and loss recording under:
-
-```text
-/stores/damages
-```
-
-A damage or loss record should include:
-
-* Product
-* Batch
-* Quantity
-* Location
-* Type
-* Reason
-* Date and time
-* Discovering user
-* Supporting notes
-* Investigation state
-* Stock disposition
-* Approval state
-
-Potential types include:
-
-```text
-physical_damage
-breakage
-spillage
-temperature_damage
-water_damage
-fire_damage
-loss
-theft
-unknown
-```
-
-Stock must not be reduced without an authorized stock movement.
-
-High-value or unusual losses should support escalation and approval.
-
----
-
-# Phase 28 — Disposal and Destruction
-
-Expose disposal under:
-
-```text
-/stores/disposals
-```
-
-Disposal may apply to:
-
-* Expired stock
-* Damaged stock
-* Recalled stock
-* Contaminated stock
-* Failed quality inspection
-* Unusable returned stock
-
-A disposal record should include:
-
-* Product
-* Batch
-* Quantity
-* Reason
-* Disposal method
-* Requested user
-* Approving user
-* Witnesses where required
-* Disposal date
-* Disposal reference
-* Supporting documentation
-* Final stock movement
-
-Potential states include:
-
-```text
-requested
-awaiting_approval
-approved
-scheduled
-completed
-rejected
-cancelled
-```
-
-Do not reduce available stock twice if the item was already moved to quarantine or damaged stock.
-
-Use clear inventory states and one final disposal movement.
-
----
-
-# Phase 29 — Purchase Requests and Procurement Awareness
-
-Where purchase-request functionality exists, expose Stores operational access under:
-
-```text
-/stores/purchase-requests
-```
-
-Stores users may be allowed to:
-
-* Create a purchase request
-* Suggest quantity
-* Link low-stock or stockout evidence
-* Link consumption history
-* Submit for approval
-* Track status
-* View related purchase orders
-
-The purchase-request process should not automatically grant Stores users authority to:
-
-* Approve purchases
-* Select suppliers
-* Confirm prices
-* Create financial commitments
-
-unless explicitly permitted.
-
-Reuse the existing procurement and approval architecture.
-
----
-
-# Phase 30 — Purchase Orders and Supplier Deliveries
-
-Where purchase orders exist, expose a read or operational receipt view under:
-
-```text
-/stores/purchase-orders
-```
-
-Stores staff may need to see:
-
-* Supplier
-* Purchase-order number
-* Expected products
-* Ordered quantities
-* Previously received quantities
-* Outstanding quantities
-* Expected delivery date
-* Delivery state
-* Related receipts
-
-Purchase-order financial details should remain permission-controlled.
-
-Goods receipt must update purchase-order receipt progress without altering approved financial values improperly.
-
----
-
-# Phase 31 — Product Catalogue Visibility
-
-Expose the product catalogue under:
-
-```text
-/stores/products
-```
-
-The operational Stores view may include:
-
-* Product name
-* Product code
-* Category
-* Unit
-* Pack size
-* Batch-tracking requirement
-* Expiry-tracking requirement
-* Serial-tracking requirement
-* Reorder level
-* Stock locations
-* Active or inactive state
-* Current balance
-* Reserved quantity
-* Available quantity
-
-The ability to view a product must not automatically grant permission to edit:
-
-* Product definitions
-* Prices
-* Billing mappings
-* Clinical mappings
-* Insurance prices
-* Procurement settings
-
-Use existing administrative permissions.
-
----
-
-# Phase 32 — Stock Ledger and Movement History
-
-Every inventory balance change must be traceable through the existing stock ledger.
-
-Expose movement history under Stores where permitted.
-
-Movement types may include:
-
-```text
-receipt
-issue
-transfer_out
-transfer_in
-return_in
-return_out
-adjustment_in
-adjustment_out
-disposal
-quarantine_in
-quarantine_out
-reservation
-reservation_release
-```
-
-The ledger view should display:
-
-* Date and time
-* Product
-* Batch
-* Stock location
-* Movement type
-* Quantity in
-* Quantity out
-* Running balance where supported
-* Reference type
-* Reference number
-* Responsible user
-* Notes
-
-Do not permit direct editing or deletion of posted stock-ledger movements.
-
-Corrections must use reversals or adjustment workflows.
-
----
-
-# Phase 33 — Stock Valuation
-
-Where stock valuation exists, preserve the configured valuation method, such as:
-
-* Weighted average
-* FIFO
-* Specific batch cost
-* Standard cost
-
-Do not implement a competing valuation method for the Stores workspace.
-
-Valuation views and reports should be permission-controlled.
-
-The workspace may show:
-
-* Quantity
-* Unit cost
-* Total value
-* Location value
-* Category value
-* Expired-stock value
-* Quarantined-stock value
-* Damaged-stock value
-
-Do not expose supplier pricing or inventory value to users without financial inventory permissions.
-
----
-
-# Phase 34 — Stores Handoffs and Coordination
-
-Expose Stores handoffs under:
-
-```text
-/stores/handoffs
-```
-
-Reuse the existing Journey Intelligence handoff infrastructure where appropriate.
-
-Support handoffs such as:
-
-* Requisition clarification required
-* Item unavailable
-* Alternative product proposed
-* Department collection ready
-* Transfer awaiting receipt
-* Goods receipt awaiting inspection
-* Purchase-order discrepancy
-* Stockout escalation
-* Near-expiry action required
-* Recall notification
-* Adjustment awaiting approval
-* Stock-count variance review
-* Disposal awaiting authorization
-
-The handoff worklist should show:
-
-* Related requisition, issue, transfer, receipt, or stock item
-* Sending department
-* Receiving department
-* Required action
-* Priority
-* Due time
-* SLA state
-* Acknowledgement
-* Resolution
-
-Authorized users may:
-
-* Claim
-* Assign
-* Acknowledge
-* Resolve
-* Escalate
-* Reassign
-
-All Stores-side links must preserve `/stores/*` context.
-
----
-
-# Phase 35 — Workspace-Aware URL Resolution
+# Phase 36 — Finance Workspace URL Resolution
 
 Extend the centralized workspace route resolver.
 
 Do not scatter checks such as:
 
 ```php
-if ($department->type === DepartmentType::STORES) {
-    return route('stores.requisitions.show', $requisition);
+if ($department->type === DepartmentType::FINANCE) {
+    return route('finance.invoices.show', $invoice);
 }
 ```
 
@@ -2008,88 +2061,96 @@ The resolver should support methods equivalent to:
 ```php
 dashboard()
 
-requisitionIndex()
-requisitionShow(Requisition $requisition)
+billingIndex()
+billingShow(Visit $visit)
 
-issueIndex()
-issueShow(StockIssue $issue)
+invoiceIndex()
+invoiceShow(Invoice $invoice)
 
-receiptIndex()
-receiptShow(GoodsReceipt $receipt)
+paymentIndex()
+paymentShow(Payment $payment)
+paymentCollect()
 
-transferIndex()
-transferShow(StockTransfer $transfer)
+cashierSession()
 
-returnIndex()
-returnShow(StockReturn $return)
+receivableIndex()
+receivableShow(InvoiceReceivable $receivable)
 
-adjustmentIndex()
-adjustmentShow(StockAdjustment $adjustment)
+patientBalanceIndex()
+patientBalanceShow(Patient $patient)
 
-stockCountIndex()
-stockCountShow(StockCount $stockCount)
+paymentAllocation()
 
-productIndex()
-productShow(Product $product)
+insuranceIndex()
+claimIndex()
+claimShow(Claim $claim)
 
-stockIndex()
-stockShow(StockItem $stockItem)
+sponsorIndex()
+sponsorShow(Sponsor $sponsor)
 
-batchIndex()
-batchShow(Batch $batch)
+discountIndex()
+creditNoteIndex()
+refundIndex()
+reversalIndex()
+writeOffIndex()
 
-quarantineIndex()
-recallIndex()
-damageIndex()
-disposalIndex()
+depositIndex()
 
-purchaseRequestIndex()
-purchaseOrderIndex()
-supplierIndex()
+journalIndex()
+journalShow(Journal $journal)
+generalLedger()
+trialBalance()
+chartOfAccounts()
 
-handoffIndex()
+reconciliationIndex()
+paymentGateIndex()
 reportIndex()
 ```
 
-For a Stores user, the resolver must return `stores.*` routes.
+For a Finance user, the resolver must return `finance.*` routes.
 
 For other users, preserve the appropriate existing workspace or generic route.
 
-Always use the active department and stock-location context rather than only the user’s primary department.
+Always use the active department context rather than only the user’s primary department.
 
 ---
 
-# Phase 36 — Replace Hardcoded Shared Links
+# Phase 37 — Replace Hardcoded Shared Links
 
-Audit all shared pages accessed by Stores users.
+Audit all shared pages accessed by Finance users.
 
 Replace hardcoded generic links that break workspace continuity.
 
 Review at minimum:
 
-* Requisition worklists
-* Requisition details
-* Issue pages
-* Goods-receipt pages
-* Transfer pages
-* Return pages
-* Adjustment pages
-* Stock-count pages
+* Billing worklists
+* Invoice lists
+* Invoice details
+* Payment collection
+* Payment history
+* Receipt pages
+* Cashier sessions
+* Receivable pages
+* Patient balances
+* Insurance pages
+* Claims pages
+* Sponsor pages
+* Discounts
+* Credit notes
+* Refunds
+* Reversals
+* Write-offs
+* Deposits
+* Journals
+* General Ledger
 * Reconciliation pages
-* Product lists
-* Stock pages
-* Batch pages
-* Expiry pages
-* Quarantine pages
-* Recall pages
-* Disposal pages
-* Purchase-request pages
-* Purchase-order pages
-* Supplier pages
+* Patient search
+* Patient profile
+* Visit history
 * Dashboard cards
 * Breadcrumbs
 * Notifications
-* Handoff links
+* Approval links
 * Action dropdowns
 * Empty-state actions
 * Report drilldowns
@@ -2098,103 +2159,103 @@ Review at minimum:
 Avoid shared-view code such as:
 
 ```php
-route('requisitions.show', $requisition)
+route('invoices.show', $invoice)
 ```
 
 Use the centralized workspace route resolver.
 
-Do not alter API, integration, signed, print, export, procurement callback, or background-job URLs unless explicitly part of the Stores browser workspace.
+Do not alter API, payment callback, insurance callback, provider webhook, signed, print, export, integration, or background-job URLs unless explicitly part of the Finance browser workspace.
 
 ---
 
-# Phase 37 — Workspace-Aware Redirects
+# Phase 38 — Workspace-Aware Redirects
 
-All successful Stores actions must redirect back into `/stores/*`.
+All successful Finance actions must redirect back into `/finance/*`.
 
 Examples:
 
-After approving a requisition:
+After finalizing billing:
 
 ```text
-/stores/requisitions/{requisition}
+/finance/invoices/{invoice}
 ```
 
-After issuing stock:
+After collecting payment:
 
 ```text
-/stores/issues/{issue}
+/finance/payments/{payment}
 ```
 
-After completing a goods receipt:
+After allocating a payment:
 
 ```text
-/stores/receipts/{receipt}
+/finance/patient-balances/{patient}
 ```
 
-After dispatching a transfer:
+After reversing a payment:
 
 ```text
-/stores/transfers/{transfer}
+/finance/payments/{payment}
 ```
 
-After receiving a transfer:
+After issuing a credit note:
 
 ```text
-/stores/transfers/{transfer}
+/finance/credit-notes/{creditNote}
 ```
 
-After submitting a stock adjustment:
+After approving a refund:
 
 ```text
-/stores/adjustments/{adjustment}
+/finance/refunds/{refund}
 ```
 
-After completing a stock count:
+After submitting a claim:
 
 ```text
-/stores/stock-counts/{stockCount}
+/finance/claims/{claim}
 ```
 
-After recording a disposal:
+After closing a cashier session:
 
 ```text
-/stores/disposals/{disposal}
+/finance/cashier/reconciliation
 ```
 
-Avoid hardcoding Stores redirects inside domain services.
+Avoid hardcoding Finance redirects inside domain services.
 
 Use a workspace redirect resolver such as:
 
 ```php
-$workspaceRedirects->toRequisition($requisition);
-$workspaceRedirects->toStockIssue($issue);
-$workspaceRedirects->toGoodsReceipt($receipt);
-$workspaceRedirects->toStockTransfer($transfer);
-$workspaceRedirects->toStockCount($stockCount);
-$workspaceRedirects->toStoresDashboard();
+$workspaceRedirects->toInvoice($invoice);
+$workspaceRedirects->toPayment($payment);
+$workspaceRedirects->toPatientBalance($patient);
+$workspaceRedirects->toClaim($claim);
+$workspaceRedirects->toRefund($refund);
+$workspaceRedirects->toFinanceDashboard();
 ```
 
-Validation failures must return users to the same `/stores/*` route with input preserved.
+Validation failures must return users to the same `/finance/*` route with input preserved.
 
 ---
 
-# Phase 38 — Login and Department Switching
+# Phase 39 — Login and Department Switching
 
-When a user logs in and their active department type is `stores`, redirect them to:
-
-```text
-/stores
-```
-
-When a multi-department user switches to a Stores department, redirect them to:
+When a user logs in and their active department type is `finance`, redirect them to:
 
 ```text
-/stores
+/finance
 ```
 
-When switching away from Stores, redirect to the selected department’s appropriate workspace.
+When a multi-department user switches to a Finance department, redirect them to:
 
-The menu, dashboard, route context, inventory data, and stock-location scoping must always use the active department.
+```text
+/finance
+```
+
+When switching away from Finance, redirect to the selected department’s appropriate workspace.
+
+The menu, dashboard, route context, cashier context, and data scoping must always use the active department.
 
 Do not rely only on:
 
@@ -2206,27 +2267,27 @@ where the application supports active department selection.
 
 ---
 
-# Phase 39 — Stores Workspace Authorization
+# Phase 40 — Finance Workspace Authorization
 
-The `/stores` prefix is not authorization.
+The `/finance` prefix is not authorization.
 
 Protect the workspace so access requires:
 
 1. An authenticated user.
 2. A valid active department.
-3. Active department type equal to `stores`, unless authorized admin preview applies.
+3. Active department type equal to `finance`, unless authorized admin preview applies.
 4. The required permission.
 5. The relevant module being enabled.
-6. Access to the requested stock location, product, requisition, receipt, issue, transfer, return, or count.
-7. Active-department or stock-location assignment where required.
+6. Access to the requested invoice, payment, receivable, claim, sponsor, journal, cashier session, or accounting scope.
+7. Facility, branch, cashier, payer, or accounting-scope authorization where required.
 
 A user from another department who manually enters:
 
 ```text
-/stores/stock
+/finance/invoices
 ```
 
-must not receive access merely because they possess a broad inventory-view permission.
+must not receive access merely because they possess a broad billing-view permission.
 
 Use the project’s existing unauthorized workspace behaviour:
 
@@ -2238,7 +2299,7 @@ Do not create inconsistent authorization behaviour.
 
 ---
 
-# Phase 40 — Permission Model
+# Phase 41 — Permission Model
 
 Reuse existing permissions wherever possible.
 
@@ -2247,316 +2308,262 @@ Only add permissions where the current model does not represent the required act
 Potential permissions may include:
 
 ```text
-stores.workspace.view
+finance.workspace.view
 
-stores.requisitions.view
-stores.requisitions.approve
-stores.requisitions.reject
-stores.requisitions.reserve
-stores.requisitions.issue
+finance.billing.view
+finance.billing.review
+finance.billing.finalize
 
-stores.issues.view
-stores.issues.manage
-stores.issues.complete
+finance.invoices.view
+finance.invoices.create
+finance.invoices.finalize
+finance.invoices.cancel
+finance.invoices.print
 
-stores.receipts.view
-stores.receipts.create
-stores.receipts.complete
+finance.payments.view
+finance.payments.collect
+finance.payments.allocate
+finance.payments.reverse
+finance.receipts.view
 
-stores.transfers.view
-stores.transfers.create
-stores.transfers.approve
-stores.transfers.dispatch
-stores.transfers.receive
+finance.cashier.view
+finance.cashier.open
+finance.cashier.close
+finance.cashier.reconcile
+finance.cashier.variance_approve
 
-stores.returns.view
-stores.returns.manage
+finance.receivables.view
+finance.patient_balances.view
+finance.payment_allocation.manage
 
-stores.adjustments.view
-stores.adjustments.create
-stores.adjustments.approve
+finance.insurance.view
+finance.claims.view
+finance.claims.validate
+finance.claims.submit
+finance.claims.resubmit
+finance.claims.post_payment
 
-stores.stock_counts.view
-stores.stock_counts.manage
-stores.stock_counts.approve
+finance.sponsors.view
+finance.sponsors.manage
 
-stores.reconciliations.view
-stores.reconciliations.manage
+finance.discounts.view
+finance.discounts.request
+finance.discounts.approve
 
-stores.products.view
-stores.stock.view
-stores.batches.view
-stores.expiries.view
+finance.credit_notes.view
+finance.credit_notes.create
+finance.credit_notes.approve
+finance.credit_notes.issue
 
-stores.quarantine.view
-stores.quarantine.manage
-stores.recalls.view
-stores.recalls.manage
-stores.damages.view
-stores.damages.manage
-stores.disposals.view
-stores.disposals.manage
-stores.disposals.approve
+finance.refunds.view
+finance.refunds.request
+finance.refunds.approve
+finance.refunds.complete
 
-stores.purchase_requests.view
-stores.purchase_requests.create
-stores.purchase_orders.view
-stores.suppliers.view
+finance.reversals.view
+finance.reversals.manage
 
-stores.stock_valuation.view
-stores.handoffs.view
-stores.handoffs.manage
-stores.reports.view
+finance.write_offs.view
+finance.write_offs.request
+finance.write_offs.approve
+
+finance.deposits.view
+finance.deposits.manage
+
+finance.journals.view
+finance.journals.post
+finance.journals.reverse
+finance.general_ledger.view
+finance.trial_balance.view
+finance.chart_of_accounts.view
+finance.chart_of_accounts.manage
+
+finance.reconciliation.view
+finance.reconciliation.manage
+
+finance.payment_gate.view
+finance.payment_gate.manage
+finance.billing_overrides.view
+finance.billing_overrides.manage
+
+finance.reports.view
+finance.reports.export
 ```
 
 Inspect current permission names before adding new permissions.
 
 Avoid duplicating equivalent permissions.
 
-Menu visibility must follow permissions, but controllers, policies, form requests, approval services, and inventory services must independently enforce authorization.
+Menu visibility must follow permissions, but controllers, policies, form requests, approval services, and financial domain services must independently enforce authorization.
 
 ---
 
-# Phase 41 — Separation of Duties
+# Phase 42 — Separation of Duties
 
-Where configured, enforce separation of duties for high-risk inventory actions.
+Enforce separation of duties for high-risk financial actions where configured.
 
 Examples:
 
-* Requisition submitter should not approve their own requisition.
-* Adjustment creator should not approve the adjustment.
-* Stock-count recorder should not be the only count approver.
-* Disposal requester should not complete disposal alone.
-* Transfer dispatcher and receiver should be distinct where operationally required.
-* Goods receipt and purchase-order approval should remain distinct.
+* A cashier should not approve their own cash variance.
+* A refund requester should not approve and complete the same refund.
+* A credit-note creator should not approve the credit note.
+* A discount requester should not approve the same discount above configured thresholds.
+* A payment collector should not reverse the payment without additional authority where configured.
+* A write-off requester should not approve the write-off.
+* A claim preparer should not be the final claim approver where separation is required.
+* A journal preparer should not post the same journal where maker-checker control is enabled.
+* A bank-reconciliation preparer should not approve the reconciliation where configured.
 
 Use configurable rules rather than hardcoding one universal workflow.
 
-Separation-of-duty exceptions must be explicit, permission-controlled, reasoned, and audited.
+Exceptions must be:
+
+* Permission-controlled
+* Reasoned
+* Time-stamped
+* Audited
 
 ---
 
-# Phase 42 — Legacy Route Compatibility
+# Phase 43 — Patient Privacy and Financial Data Security
 
-Keep existing generic stock, product, requisition, transfer, and receipt routes operational for:
+The Finance workspace handles highly sensitive patient and financial information.
 
-* Other departments
-* Existing bookmarks
-* APIs
-* Print flows
-* Signed URLs
-* Internal notifications
-* Background jobs
-* Procurement integrations
-* Export downloads
-* Stock integrations
+Ensure existing privacy controls remain active, including:
 
-For interactive browser requests from an active Stores department, generic routes may redirect to Stores equivalents where safe.
+* Patient-name masking where applicable
+* Protected phone and email fields
+* Sensitive-field permission checks
+* Patient search masking
+* Export restrictions
+* Secure patient, visit, invoice, payment, and claim lookups
+* Privacy-aware notifications
+* Activity-log sanitization
 
-Examples:
+Finance users should only see clinical information necessary to understand billing, insurance, claims, and authorization.
 
-```text
-/requisitions/{requisition}
-→ /stores/requisitions/{requisition}
+Do not expose full consultation notes, unrelated diagnoses, or clinical records without permission.
 
-/stock/{stockItem}
-→ /stores/stock/{stockItem}
+Financial information must also remain permission-controlled, including:
 
-/inventory/transfers/{transfer}
-→ /stores/transfers/{transfer}
-```
-
-Do not blindly redirect:
-
-* JSON requests
-* APIs
-* signed URLs
-* print routes
-* exports
-* integration callbacks
-* background requests
-* procurement integrations
-
-Avoid redirect loops.
+* Patient balances
+* Insurance balances
+* Sponsor balances
+* Revenue
+* Cash positions
+* Bank details
+* Payment-provider references
+* General Ledger
+* Trial Balance
+* Stock valuation where linked
+* Payroll information where integrated
 
 ---
 
-# Phase 43 — Breadcrumbs and Active Menu State
+# Phase 44 — Financial Integrity and Accounting Safety
 
-Stores pages must display Stores-specific breadcrumbs.
+Preserve existing financial safeguards, including:
 
-Examples:
-
-```text
-Stores > Dashboard
-Stores > Requisitions
-Stores > Requisitions > Requisition Details
-Stores > Issues
-Stores > Goods Receipts
-Stores > Transfers
-Stores > Returns
-Stores > Current Stock
-Stores > Batches
-Stores > Stock Counts
-Stores > Reconciliation
-Stores > Quarantine
-Stores > Disposals
-Stores > Reports
-```
-
-The sidebar must correctly highlight parent items for nested routes.
-
-For example:
-
-```text
-stores.requisitions.show
-stores.issues.show
-stores.transfers.show
-stores.stock_counts.show
-```
-
-should highlight the appropriate parent menu item.
-
-Use active-route patterns rather than exact route-name equality only.
-
----
-
-# Phase 44 — Shared View Workspace Context
-
-Pass a clear Stores workspace context to shared views.
-
-The context may include:
-
-```php
-[
-    'workspaceKey' => 'stores',
-    'workspaceDepartment' => $activeDepartment,
-    'workspaceRoutePrefix' => 'stores.',
-    'workspaceTitle' => __('stores.workspace.title'),
-    'workspaceScope' => 'inventory_operations',
-    'workspaceStockLocation' => $stockLocation,
-]
-```
-
-Use an existing DTO or view-context object where available.
-
-Shared views should use this context for:
-
-* Page headings
-* Breadcrumbs
-* Links
-* Form actions
-* Back buttons
-* Requisition navigation
-* Issue navigation
-* Receipt navigation
-* Transfer navigation
-* Product and stock navigation
-* Quick actions
-* Empty states
-* Notifications
-
-Do not repeatedly inspect session state or department type inside Blade templates.
-
----
-
-# Phase 45 — Inventory Integrity and Operational Safety
-
-Preserve existing inventory safeguards, including:
-
-* Negative-stock prevention
-* Double-allocation prevention
-* Duplicate issue prevention
-* Duplicate receipt prevention
-* Batch and expiry validation
-* Unit-conversion validation
-* Serial-number uniqueness
-* Transactional stock movement
-* Reservation integrity
-* Transfer in-transit integrity
-* Stock-count variance approval
-* Adjustment approval
-* Quarantine blocking
-* Recall blocking
-* Disposal traceability
-* Stock-ledger auditability
+* Balanced journal entries
+* Invoice immutability after finalization
+* Payment traceability
+* Receipt uniqueness
+* Cashier-session integrity
+* Receivable integrity
+* Payment-allocation integrity
+* Insurance-coverage accuracy
+* Refund limits
+* Credit-note limits
+* Write-off approval
+* Accounting-period controls
+* Bank-reconciliation traceability
+* Digital-payment reconciliation
+* Separation of duties
+* Audit trails
 
 Do not allow:
 
-* Direct stock-balance editing
-* Issue beyond approved quantity
-* Issue beyond available quantity
-* Expired or quarantined stock to be issued
-* The same receipt to post stock twice
-* Transfer receipt beyond dispatched quantity
-* Returned stock to become available without assessment
-* Disposal without an approved inventory movement
-* Ledger movements to be silently deleted
-* Stock counts to overwrite balances directly
+* Direct editing of posted payments
+* Direct deletion of finalized invoices
+* Direct deletion of posted journals
+* Refunds beyond refundable balances
+* Credit notes beyond eligible invoice balances
+* Duplicate payment reversal
+* Duplicate provider transaction posting
+* Cross-visit payment allocation beyond the tender amount
+* Insurance coverage to be calculated against the wrong price basis
+* Receivables to disappear without settlement, credit, write-off, or cancellation
+* Cashier sessions to close without required reconciliation
+* Unbalanced journal posting
+* Posting into closed accounting periods
+* Financial history to be silently overwritten
 
-Overrides must be explicit, permission-controlled, reasoned, and audited.
+Overrides must be explicit, permission-controlled, reasoned, scoped, and audited.
 
 ---
 
-# Phase 46 — Activity Logging and Audit
+# Phase 45 — Activity Logging and Audit
 
-Record relevant Stores actions through the existing `ActivityLog` infrastructure.
+Record relevant Finance actions through the existing `ActivityLog` infrastructure.
 
 Audit events should cover actions such as:
 
-* Requisition submitted
-* Requisition approved
-* Requisition partially approved
-* Requisition rejected
-* Stock reserved
-* Reservation released
-* Stock issue started
-* Stock partially issued
-* Stock issue completed
-* Department handover confirmed
-* Goods receipt created
-* Goods receipt completed
-* Delivery quantity rejected
-* Batch created
-* Stock transfer requested
-* Stock transfer approved
-* Stock transfer dispatched
-* Stock transfer received
-* Departmental return accepted
-* Departmental return rejected
-* Stock adjustment requested
-* Stock adjustment approved
-* Stock count started
-* Stock count submitted
-* Stock-count variance approved
+* Billing reviewed
+* Billing finalized
+* Invoice created
+* Invoice finalized
+* Invoice cancelled
+* Payment collected
+* Receipt issued
+* Payment allocated
+* Cross-visit allocation completed
+* Payment reversed
+* Deposit collected
+* Deposit allocated
+* Cashier session opened
+* Cashier session closed
+* Cash variance recorded
+* Cash variance approved
+* Discount requested
+* Discount approved
+* Credit note created
+* Credit note approved
+* Credit note issued
+* Refund requested
+* Refund approved
+* Refund completed
+* Write-off requested
+* Write-off approved
+* Claim generated
+* Claim validated
+* Claim submitted
+* Claim rejected
+* Claim resubmitted
+* Claim payment posted
+* Sponsor statement generated
+* Billing override created
+* Payment-gate override created
+* Journal posted
+* Journal reversed
 * Reconciliation completed
-* Stock quarantined
-* Quarantine released
-* Recall initiated
-* Damaged stock recorded
-* Disposal requested
-* Disposal approved
-* Disposal completed
-* Purchase request created
-* Handoff acknowledged
-* Handoff resolved
+* Accounting period reopened where supported
 
-Do not log sensitive supplier financial details where audit policy prohibits them.
+Do not log full payment credentials, bank details, card data, provider secrets, or unnecessary patient clinical information.
 
 Audit records should include sufficient context such as:
 
 * Actor
+* Patient identifier where relevant
+* Visit identifier
+* Invoice identifier
+* Payment identifier
+* Receivable identifier
+* Claim identifier
+* Cashier session identifier
+* Journal identifier
 * Department
-* Stock location
-* Product
-* Batch
-* Quantity
-* Requisition identifier
-* Issue identifier
-* Receipt identifier
-* Transfer identifier
-* Adjustment identifier
-* Count identifier
+* Facility or branch where applicable
+* Amount where audit policy permits
 * Action
 * Timestamp
 * Reason where required
@@ -2564,15 +2571,17 @@ Audit records should include sufficient context such as:
 
 ---
 
-# Phase 47 — Localization
+# Phase 46 — Localization
 
-Add complete English and French localization for the Stores workspace.
+Add complete English and French localization for the Finance workspace.
 
-Prefer an existing Stores localization file if one exists, otherwise use:
+Prefer existing Finance, Billing, Accounting, and Claims localization files where available.
+
+Otherwise, use or extend:
 
 ```text
-lang/en/stores.php
-lang/fr/stores.php
+lang/en/finance.php
+lang/fr/finance.php
 ```
 
 Include keys for:
@@ -2580,101 +2589,121 @@ Include keys for:
 * Workspace title
 * Dashboard
 * Menu sections
-* Requisition states
-* Approval states
-* Reservation states
-* Issue states
-* Receipt states
-* Transfer states
-* Return states
-* Adjustment types and states
-* Stock-count states
-* Variance reasons
-* Stock alert states
-* Expiry states
-* Quarantine reasons
-* Recall states
-* Damage types
-* Disposal states
-* Goods-rejection reasons
-* Handoffs
+* Billing states
+* Invoice states
+* Payment states
+* Payment methods
+* Allocation states
+* Cashier-session states
+* Cash-variance states
+* Receivable states
+* Aging buckets
+* Insurance states
+* Claim states
+* Sponsor states
+* Discount types and states
+* Credit-note states
+* Refund states
+* Reversal states
+* Write-off states
+* Deposit states
+* Journal states
+* Reconciliation states
+* Payment-gate states
+* Override reasons
 * Empty states
 * Quick actions
 * Reports
 * Breadcrumbs
 * Unauthorized workspace message
-* Override reasons
 
 Maintain complete English and French parity.
 
-Do not hardcode visible Stores labels in controllers, services, Blade templates, or JavaScript.
+Do not hardcode visible Finance labels in controllers, services, Blade templates, or JavaScript.
 
 ---
 
-# Phase 48 — Stores Reports and Statistics
+# Phase 47 — Finance Reports and Statistics
 
-Create or adapt Stores reports under:
+Create or adapt Finance reports under:
 
 ```text
-/stores/reports
+/finance/reports
 ```
 
 Recommended reports include:
 
-* Stock balance report
-* Stock movement report
-* Stock ledger report
-* Requisition volume report
-* Requisition fulfilment report
-* Partial issue report
-* Department consumption report
-* Product consumption report
-* Goods receipt report
-* Supplier delivery report
-* Transfer report
-* Return report
-* Adjustment report
-* Stock-count report
-* Variance report
-* Reconciliation report
-* Low-stock report
-* Stockout report
-* Expiry report
-* Quarantine report
-* Recall report
-* Damage and loss report
-* Disposal report
-* Stock valuation report
-* Inventory ageing report
-* Staff activity report
-* Stock-location performance report
+* Daily billing report
+* Daily collection report
+* Revenue report
+* Revenue by department
+* Revenue by service
+* Revenue by payer
+* Payment-method report
+* Cashier collection report
+* Cashier variance report
+* Invoice-status report
+* Unpaid-invoice report
+* Patient-balance report
+* Previous-balance report
+* Accounts-receivable report
+* AR aging report
+* Insurance-receivable report
+* Sponsor-receivable report
+* Claims-status report
+* Claims-rejection report
+* Claims-settlement report
+* Discount report
+* Credit-note report
+* Refund report
+* Reversal report
+* Write-off report
+* Deposit and advance-payment report
+* General Ledger report
+* Trial Balance report
+* Journal report
+* Bank-reconciliation report
+* Digital-payment reconciliation report
+* Billing-override report
+* Payment-gate override report
+* Financial audit report
 
 Reports must respect:
 
 * Permissions
 * Active department
-* Stock location
-* Product visibility
-* Financial valuation permissions
+* Facility or branch scope
+* Cashier scope
+* Payer scope
+* Patient privacy
+* Financial-data security
+* Accounting period
 * Export permissions
 
-Consumption statistics should distinguish between:
+Reports should distinguish:
 
-* Issued quantity
-* Returned quantity
-* Net issued quantity
-* Reserved quantity
-* Transferred quantity
-* Disposed quantity
-* Adjusted quantity
+* Gross billing
+* Discounts
+* Credits
+* Net billing
+* Payments
+* Refunds
+* Reversals
+* Net collections
+* Patient receivables
+* Insurance receivables
+* Sponsor receivables
+* Write-offs
 
-Do not treat stock issued to a department as confirmed patient consumption unless the clinical consumption workflow records it separately.
+Do not present billing as cash collected.
+
+Do not present payments as revenue without following the configured accounting basis and journal architecture.
 
 ---
 
-# Phase 49 — Menu Configuration and Future Extensibility
+# Phase 48 — Menu Configuration and Future Extensibility
 
-Implement the Stores menu through the existing menu registry or department menu profile service.
+Implement the Finance menu through the existing menu registry or department menu profile service.
 
 Do not define it directly inside the sidebar Blade template.
 
@@ -2688,25 +2717,22 @@ The menu configuration should support:
 * Active-route patterns
 * Badge counts
 * Department-type availability
-* Active-department scoping
-* Stock-location scoping
+* Facility or branch scoping
+* Cashier scoping
 * Feature flags
-* Pending requisition counts
-* Pending issue counts
-* Transfer counts
-* Stock-count variance counts
-* Low-stock counts
-* Stockout counts
-* Expiry-alert counts
-* Quarantine counts
-* Disposal-approval counts
+* Unpaid-invoice counts
+* Unallocated-payment counts
+* Open-cashier-session counts
+* Refund-approval counts
+* Claims-rejection counts
+* Receivable-overdue counts
+* Payment-gate override counts
+* Reconciliation-exception counts
 
 The architecture must remain extensible for future department menu personalization, including:
 
 ```text
 radiology
-finance
-maternity
 theatre
 blood_bank
 mortuary
@@ -2719,284 +2745,334 @@ Do not implement those other workspaces in this phase.
 
 ---
 
-# Phase 50 — Focused Automated Verification
+# Phase 49 — Focused Automated Verification
 
-Add focused automated tests for the Stores workspace.
+Add focused automated tests for the Finance workspace.
 
 ## Route tests
 
 Verify:
 
-* Stores routes exist.
-* Route names use `stores.*`.
-* URLs use `/stores/*`.
-* Stores department middleware is attached.
+* Finance routes exist.
+* Route names use `finance.*`.
+* URLs use `/finance/*`.
+* Finance department middleware is attached.
 * Generic routes remain available where required.
 
 ## Access tests
 
 Verify:
 
-* A Stores department user can access authorized Stores pages.
-* A non-Stores department user cannot access the workspace.
+* A Finance department user can access authorized Finance pages.
+* A non-Finance department user cannot access the workspace.
 * Users without the required permission cannot access protected actions.
 * Admin preview continues working where supported.
 * Multi-department active context is respected.
-* Stock-location scoping is respected.
+* Facility, branch, cashier, and accounting scopes are respected.
 
 ## Dashboard tests
 
 Verify:
 
-* The Stores dashboard loads.
-* Metrics use the active Stores stock location.
-* Pending requisition and transfer counts are accurate.
-* Low-stock, stockout, expiry, and quarantine counts are accurate.
-* Stock valuation is hidden without permission.
-* Links point to `/stores/*`.
+* The Finance dashboard loads.
+* Billing, payment, receivable, claim, and cashier metrics are accurate.
+* Sensitive financial values are hidden without permission.
+* Links point to `/finance/*`.
 * Empty states render safely.
+* Metrics do not confuse billing with collections.
 
-## Requisition tests
-
-Verify:
-
-* Requisitions appear in the correct worklists.
-* Approval state is reflected correctly.
-* Partial approval preserves unapproved quantities.
-* Rejection requires a reason.
-* Reservation cannot exceed approved or available quantity.
-* Requisition completion reflects issued quantities correctly.
-
-## Issue tests
+## Billing and invoice tests
 
 Verify:
 
-* Issue cannot exceed approved quantity.
-* Issue cannot exceed outstanding quantity.
-* Issue cannot exceed available stock.
-* Partial issue preserves outstanding quantity.
-* Batch traceability is preserved.
-* Expired or quarantined batches cannot be issued.
-* Duplicate stock deductions are prevented.
+* Billing uses the existing calculation services.
+* Insurance coverage uses the selected insurance price.
+* Billing exceptions are surfaced.
+* Finalized invoices cannot be silently edited.
+* Credit notes or replacement workflows handle corrections.
+* Invoice totals remain consistent.
 
-## Receipt tests
-
-Verify:
-
-* Goods receipt creates correct stock movements.
-* Purchase-order receipt progress updates correctly.
-* Rejected quantities do not enter available stock.
-* Batch and expiry requirements are enforced.
-* Duplicate receipt posting is prevented.
-* Receipt actions are audited.
-
-## Transfer tests
+## Payment tests
 
 Verify:
 
-* Transfer reserves or deducts source stock correctly.
-* Dispatched stock enters the correct in-transit state.
-* Destination stock is updated at the correct workflow point.
-* Partial receipt preserves outstanding quantity.
-* Received quantity cannot exceed dispatched quantity.
-* Missing or damaged quantities are recorded.
-* Transfers are audited.
+* Payments use the existing payment service.
+* Journal entries remain balanced.
+* Partial payments update receivables correctly.
+* Overpayments follow the configured policy.
+* Duplicate provider references are rejected where required.
+* Receipts remain unique.
+* Payment actions are audited.
 
-## Return tests
-
-Verify:
-
-* Department returns preserve the original issue.
-* Valid returns can restore available stock.
-* Invalid returns go to quarantine or disposal.
-* Returned quantities cannot exceed issued quantities.
-* Return actions are audited.
-
-## Adjustment tests
+## Previous-balance tests
 
 Verify:
 
-* Direct balance editing is not available.
-* Adjustments create stock-ledger movements.
-* Approval is required where configured.
-* Creator and approver separation works where configured.
-* Adjustments are audited.
+* Previous and current balances are separated.
+* Only patient-responsibility receivables are counted in patient balances.
+* Oldest invoice and aging data are accurate.
+* Previous visits retain their original invoices.
 
-## Stock-count tests
-
-Verify:
-
-* Physical counts preserve system quantities.
-* Variances are calculated correctly.
-* Recounts work where required.
-* Approval creates linked adjustment movements.
-* Count reconciliation does not silently replace ledger balances.
-* Count actions are audited.
-
-## Expiry and quarantine tests
+## Cross-visit allocation tests
 
 Verify:
 
-* Expired stock cannot be issued.
-* Quarantined stock cannot be reserved, issued, transferred, or dispensed.
-* Authorized release restores the appropriate state.
-* Recall blocks affected stock.
-* Disposal removes stock through one traceable movement.
+* `oldest_first` allocation works correctly.
+* `current_visit` allocation works correctly.
+* Manual allocation validates all amounts.
+* A tender may create multiple invoice-scoped payments.
+* Each invoice retains a clean payment and journal history.
+* Allocation cannot exceed the tender or receivable.
+* Allocation is audited.
+
+## Cashier tests
+
+Verify:
+
+* Cashier sessions open and close correctly.
+* Required open-session rules are enforced.
+* Expected cash is calculated correctly.
+* Refunds and reversals affect the session correctly.
+* Variances require review where configured.
+* A cashier cannot approve their own variance where separation is enabled.
+
+## Refund and reversal tests
+
+Verify:
+
+* Posted payments cannot be deleted directly.
+* Payment reversal preserves the original payment.
+* Payment reversal restores the receivable.
+* Refunds cannot exceed refundable balances.
+* Refund and reversal remain distinct.
+* Journal entries and cashier totals update correctly.
+* Approval controls are enforced.
+
+## Discount and credit-note tests
+
+Verify:
+
+* Discounts respect approval thresholds.
+* Finalized invoice prices are not directly changed.
+* Credit notes preserve the original invoice.
+* Credit notes cannot exceed eligible balances.
+* Credit-note journal and receivable effects are correct.
+
+## Receivable tests
+
+Verify:
+
+* Patient, insurance, and sponsor receivables remain separate.
+* Aging buckets are correct.
+* Partial payment updates balances correctly.
+* Receivables remain until settled, credited, cancelled, or written off.
+* Write-offs preserve the original financial history.
+
+## Claims tests
+
+Verify:
+
+* Claim validation identifies blocking and warning findings.
+* Claims cannot be submitted with unresolved blocking findings.
+* Claim submission preserves references.
+* Rejected claims can be corrected and resubmitted.
+* Partial settlement updates claim and receivable balances correctly.
+* Claim payments post through the accounting pipeline.
+
+## General Ledger tests
+
+Verify:
+
+* Posted transactions create balanced journal entries.
+* General Ledger reports derive from posted journal data.
+* Trial Balance remains balanced.
+* Posted journals cannot be directly edited or deleted.
+* Reversals create traceable correcting entries.
+* Closed accounting periods block normal posting.
+
+## Reconciliation tests
+
+Verify:
+
+* Cash reconciliation matches cashier sessions.
+* Bank transactions can remain unmatched without being deleted.
+* Digital-payment transactions reconcile by provider reference and amount.
+* Variances remain visible until resolved.
+* Reconciliation actions are audited.
 
 ## Redirect tests
 
 Verify:
 
-* Login redirects to `/stores`.
-* Switching to Stores redirects to `/stores`.
-* Requisition actions remain under `/stores/*`.
-* Issue, receipt, transfer, return, adjustment, count, and disposal actions remain under `/stores/*`.
+* Login redirects to `/finance`.
+* Switching to Finance redirects to `/finance`.
+* Billing, invoice, payment, cashier, claim, refund, credit-note, journal, and reconciliation actions remain under `/finance/*`.
 * No redirect loops occur.
-* JSON, API, signed, print, export, and integration requests are not incorrectly redirected.
+* JSON, API, payment callback, insurance callback, provider webhook, signed, print, export, and integration requests are not incorrectly redirected.
 
-## Privacy, authorization, and audit tests
+## Privacy and audit tests
 
 Verify:
 
-* Supplier financial data is permission-controlled.
-* Stock valuation is permission-controlled.
-* Cross-location stock is not exposed without authorization.
-* Stores actions generate required audit records.
-* Ledger history cannot be silently altered.
+* Patient masking remains active.
+* Protected fields require permission.
+* Clinical context is limited to what Finance requires.
+* Bank, provider, and financial details are permission-controlled.
+* Finance actions generate required audit records.
+* Sensitive values are not exposed through alternate Finance views.
 
-Run focused Stores workspace tests and essential route, view, localization, stock-ledger, transaction, permission, and audit checks during implementation.
+Run focused Finance workspace tests and essential route, view, localization, billing, journal, reconciliation, privacy, and audit checks during implementation.
 
 Do not run the full UHMS suite after each phase.
 
-Run one broad relevant suite after all Stores workspace phases are complete.
+Run one broad relevant suite after all Finance workspace phases are complete.
 
 ---
 
-# Phase 51 — Manual Acceptance Scenarios
+# Phase 50 — Manual Acceptance Scenarios
 
-## Scenario A — Stores login
+## Scenario A — Finance login
 
-1. Log in as a user whose active department type is `stores`.
-2. Confirm the landing URL is `/stores`.
-3. Confirm the Stores-specific menu is displayed.
+1. Log in as a user whose active department type is `finance`.
+2. Confirm the landing URL is `/finance`.
+3. Confirm the Finance-specific menu is displayed.
 4. Confirm unrelated department menus are absent.
 
-## Scenario B — Requisition approval
+## Scenario B — Visit billing review
 
-1. Open pending requisitions.
-2. Select a department requisition.
-3. Approve full or partial quantities.
-4. Confirm the route remains under `/stores/*`.
-5. Confirm the approval is audited.
+1. Open the billing worklist.
+2. Select a patient visit.
+3. Confirm services, prices, payer allocation, discounts, and responsibilities.
+4. Resolve any billing exceptions.
+5. Finalize the invoice.
+6. Confirm all routes remain under `/finance/*`.
 
-## Scenario C — Stock reservation and issue
+## Scenario C — Insurance-price calculation
 
-1. Open an approved requisition.
-2. Reserve available stock.
-3. Start an issue.
-4. Select valid batches.
-5. Issue the approved quantity.
-6. Confirm stock, reservation, and requisition states update correctly.
+1. Open an insured visit.
+2. Confirm the selected insurer’s price is used.
+3. Confirm coverage is calculated from the insurance price.
+4. Confirm patient responsibility is correct.
+5. Confirm the cash price is not incorrectly used as the coverage basis.
 
-## Scenario D — Partial issue
+## Scenario D — Partial payment
 
-1. Open a requisition with insufficient stock.
-2. Issue the available quantity.
-3. Confirm the requisition becomes partially issued.
-4. Confirm outstanding quantity is preserved.
-5. Complete the remaining issue later.
-6. Confirm over-issuing is prevented.
+1. Open an unpaid invoice.
+2. Collect part of the invoice amount.
+3. Confirm the invoice becomes partially paid.
+4. Confirm the remaining receivable is correct.
+5. Confirm the payment and journal entries are recorded.
 
-## Scenario E — Departmental collection
+## Scenario E — Previous balance
 
-1. Mark an issue ready for collection.
-2. Record the collecting department user.
-3. Complete the handover.
-4. Confirm departmental receipt remains distinct where acknowledgement is required.
-5. Confirm the action is audited.
+1. Open a patient with an unpaid previous visit.
+2. Confirm previous, current, and total balances are displayed separately.
+3. Confirm the oldest unpaid invoice and age are correct.
+4. Confirm each visit keeps its original invoice.
 
-## Scenario F — Goods receipt
+## Scenario F — Cross-visit allocation
 
-1. Open a purchase order awaiting delivery.
-2. Record delivered products.
-3. Capture batches and expiry dates.
-4. Reject one damaged quantity.
-5. Complete the receipt.
-6. Confirm only accepted quantities enter available stock.
+1. Collect a payment intended for several unpaid invoices.
+2. Select oldest-first allocation.
+3. Confirm multiple invoice-scoped payments are created.
+4. Confirm each invoice receives the correct allocation.
+5. Confirm each payment posts through the normal payment service.
 
-## Scenario G — Stock transfer
+## Scenario G — Cashier session
 
-1. Create a transfer to another stock location.
-2. Approve and dispatch it.
-3. Confirm the stock enters the correct in-transit state.
-4. Receive it at the destination.
-5. Confirm both locations update correctly.
-6. Confirm batch traceability remains intact.
+1. Open a cashier session with a float.
+2. Collect cash and digital payments.
+3. Record a refund or reversal.
+4. Close the session.
+5. Count cash.
+6. Confirm expected cash and variance are correct.
+7. Confirm a supervisor reviews the variance where required.
 
-## Scenario H — Departmental return
+## Scenario H — Payment reversal
 
-1. Open a completed stock issue.
-2. Record a return.
-3. Assess condition and storage suitability.
-4. Return eligible stock to available inventory.
-5. Move unsuitable stock to quarantine or disposal.
-6. Confirm stock movements are correct.
+1. Open a posted payment.
+2. Request a reversal.
+3. Record the reason.
+4. Complete the required approval.
+5. Confirm the original payment remains visible.
+6. Confirm the receivable and journal entries are restored correctly.
 
-## Scenario I — Stock adjustment
+## Scenario I — Refund
 
-1. Create a stock adjustment.
-2. Record the reason and supporting reference.
-3. Submit it for approval.
-4. Approve it with a separate authorized user.
-5. Confirm the ledger records the adjustment.
-6. Confirm direct balance editing is unavailable.
+1. Open an eligible credit balance.
+2. Request a refund.
+3. Approve it using a separate authorized user.
+4. Complete the refund.
+5. Confirm the refundable balance, cashier session, and journal entries update correctly.
 
-## Scenario J — Physical stock count
+## Scenario J — Credit note
 
-1. Create a stock count.
-2. Record physical quantities.
-3. Submit the count.
-4. Review variances.
-5. Approve reconciliation.
-6. Confirm linked adjustment movements are created.
-7. Confirm historical stock movements remain preserved.
+1. Open a finalized invoice containing an incorrect charge.
+2. Create a credit note.
+3. Approve and issue it.
+4. Confirm the original invoice remains preserved.
+5. Confirm the receivable and journal effects are correct.
 
-## Scenario K — Expired stock
+## Scenario K — Claim submission
 
-1. Open an expired batch.
-2. Attempt to reserve or issue it.
-3. Confirm the system blocks the action.
-4. Move the batch through quarantine or disposal.
-5. Confirm the final stock movement is audited.
+1. Open a draft insurance claim.
+2. Run validation.
+3. Resolve blocking findings.
+4. Submit the claim.
+5. Record the insurer reference.
+6. Confirm the claim state and insurance receivable update.
 
-## Scenario L — Recall
+## Scenario L — Claim rejection and resubmission
 
-1. Create or open a product recall.
-2. Confirm affected batches are blocked.
-3. Identify quantities across authorized stock locations.
-4. Record recovered quantities.
-5. Complete the final disposition.
-6. Confirm recall actions are audited.
+1. Open a rejected claim.
+2. Record the rejection reasons.
+3. Correct the eligible items.
+4. Resubmit the claim.
+5. Confirm the full claim history remains visible.
 
-## Scenario M — Active stock-location scoping
+## Scenario M — Claim payment
 
-1. Use a user assigned to multiple Stores departments.
+1. Record an insurer settlement.
+2. Allocate the payment to claims and invoices.
+3. Record deductions and rejected balances.
+4. Confirm partially paid claims remain open.
+5. Confirm receivables and journals update correctly.
+
+## Scenario N — General Ledger
+
+1. Open a payment’s journal entry.
+2. Confirm debit and credit entries balance.
+3. Open the General Ledger.
+4. Confirm the payment appears in the expected accounts.
+5. Confirm the Trial Balance remains balanced.
+
+## Scenario O — Digital payment reconciliation
+
+1. Import or view provider transactions.
+2. Match an internal payment to a provider reference.
+3. Leave one transaction unmatched.
+4. Confirm the unmatched item remains visible.
+5. Resolve a variance with an audited reason.
+
+## Scenario P — Active department scoping
+
+1. Use a user assigned to multiple Finance departments or branches.
 2. Switch the active department.
-3. Confirm stock, requisitions, receipts, and transfers change to the selected location.
-4. Confirm unauthorized locations are not visible.
+3. Confirm cashier sessions, invoices, reports, and approval worklists change to the selected Finance context.
+4. Confirm unauthorized branches are not visible.
 
-## Scenario N — Permission control
+## Scenario Q — Permission control
 
-1. Remove stock-adjustment approval permission.
+1. Remove refund-approval permission.
 2. Confirm the approval action disappears.
 3. Enter the approval route directly.
 4. Confirm access is denied.
 
-## Scenario O — Legacy compatibility
+## Scenario R — Legacy compatibility
 
-1. Enter a generic requisition, stock, or transfer route as a Stores user.
-2. Confirm it safely resolves or redirects to the Stores equivalent where configured.
-3. Confirm APIs, signed URLs, print routes, exports, and integrations remain unaffected.
+1. Enter a generic invoice, payment, claim, or receivable route as a Finance user.
+2. Confirm it safely resolves or redirects to the Finance equivalent where configured.
+3. Confirm APIs, provider callbacks, insurance callbacks, signed URLs, print routes, and exports remain unaffected.
 
 ---
 
@@ -3004,41 +3080,49 @@ Run one broad relevant suite after all Stores workspace phases are complete.
 
 The implementation is accepted only when all the following are true:
 
-1. Users with an active department type of `stores` receive a dedicated Stores menu.
-2. Their default dashboard uses `/stores`.
-3. Supported Stores pages use `/stores/*` URLs.
-4. Route names use the `stores.*` namespace.
-5. Requisitions, stock, receipts, issues, and transfers are scoped to the active Stores department and stock location.
-6. Forms submit through Stores routes.
-7. Redirects remain inside the Stores workspace.
-8. Breadcrumbs and active menu states are Stores-aware.
+1. Users with an active department type of `finance` receive a dedicated Finance menu.
+2. Their default dashboard uses `/finance`.
+3. Supported Finance pages use `/finance/*` URLs.
+4. Route names use the `finance.*` namespace.
+5. Billing, invoices, payments, receivables, claims, journals, and reconciliation pages preserve Finance workspace context.
+6. Forms submit through Finance routes.
+7. Redirects remain inside the Finance workspace.
+8. Breadcrumbs and active menu states are Finance-aware.
 9. Permissions and enabled modules control menu visibility.
-10. A non-Stores department user cannot access the workspace.
+10. A non-Finance department user cannot access the workspace.
 11. Multi-department users are evaluated using the active department.
-12. Existing product, inventory, requisition, stock-ledger, receipt, issue, transfer, count, procurement, reporting, and audit logic is reused.
-13. Core inventory and stock-ledger logic is not duplicated.
-14. Requisition approval and reservation are fully tracked.
-15. Stock reservation prevents double allocation.
-16. Stock issue cannot exceed approved, outstanding, or available quantity.
-17. Partial issues preserve outstanding quantities.
-18. Goods receipts preserve purchase-order and batch traceability.
-19. Rejected delivery quantities do not enter available stock.
-20. Transfers preserve source, in-transit, and destination integrity.
-21. Returned stock is assessed before returning to available inventory.
-22. Direct stock-balance editing is not permitted.
-23. Stock adjustments use traceable ledger movements.
-24. Stock counts preserve system quantities and create approved reconciliation movements.
-25. Expired, quarantined, recalled, damaged, or disposed stock cannot be issued.
-26. Disposal and destruction remain approval-controlled and traceable.
-27. Separation of duties is enforced where configured.
-28. Stock valuation and supplier financial data remain permission-controlled.
-29. Generic routes remain functional for other departments and integrations.
-30. APIs, signed URLs, print routes, exports, and integrations are not incorrectly redirected.
-31. Relevant Stores actions are audited.
-32. English and French localization are complete and in parity.
-33. Focused Stores workspace tests pass.
-34. One broad relevant suite passes after all phases are complete.
-35. No broken links, route loops, duplicate route names, stock-location leakage, duplicate stock deductions, unexplained balance replacements, or Pharmacy-dispensing contamination remain.
+12. Facility, branch, cashier, payer, and accounting scopes are respected.
+13. Existing billing, invoice, payment, receivable, insurance, claims, journal, reconciliation, and audit logic is reused.
+14. Core accounting and payment logic is not duplicated.
+15. Insurance coverage uses the selected insurer’s price.
+16. Finalized invoices cannot be silently edited.
+17. Payments post through the existing payment and journal pipeline.
+18. Partial payments preserve accurate receivable balances.
+19. Previous and current patient balances remain separated.
+20. Cross-visit tenders use multiple invoice-scoped payments where required by the accounting architecture.
+21. Each visit keeps its own invoice and journal history.
+22. Cashier sessions preserve opening, collection, refund, reversal, and closing integrity.
+23. Cash variances require review where configured.
+24. Completed payments cannot be silently deleted.
+25. Reversals preserve original payments and restore receivables correctly.
+26. Refunds cannot exceed refundable balances.
+27. Refunds and reversals remain distinct workflows.
+28. Discounts and credit notes preserve invoice history.
+29. Patient, insurance, and sponsor receivables remain separately identifiable.
+30. Claims validation, submission, rejection, resubmission, and settlement remain traceable.
+31. General Ledger and Trial Balance derive from posted journal entries.
+32. Posted journals cannot be silently edited or deleted.
+33. Accounting-period controls remain active.
+34. Reconciliation preserves unmatched transactions and exception history.
+35. Separation of duties is enforced where configured.
+36. Patient privacy and financial-data security remain fully active.
+37. Generic routes remain functional for other departments and integrations.
+38. APIs, payment callbacks, provider webhooks, insurance callbacks, signed URLs, print routes, and exports are not incorrectly redirected.
+39. Relevant Finance actions are audited.
+40. English and French localization are complete and in parity.
+41. Focused Finance workspace tests pass.
+42. One broad relevant suite passes after all phases are complete.
+43. No broken links, route loops, duplicate route names, branch leakage, unbalanced journals, duplicate payments, silent receivable deletion, or accounting-history replacement remains.
 
 ---
 
@@ -3046,65 +3130,75 @@ The implementation is accepted only when all the following are true:
 
 Provide:
 
-1. Stores workspace route group.
-2. Stores-specific controllers or thin adapters where required.
-3. Stores operations dashboard.
-4. Stores department menu profile.
-5. Active-department and stock-location scoping.
-6. Requisition worklists.
-7. Requisition approval integration.
-8. Stock reservation workflow.
-9. Full and partial stock issuing.
-10. Product substitution workflow.
-11. Department collection and handover.
-12. Goods-receipt workflow.
-13. Delivery inspection and rejection.
-14. Batch, lot, serial, and expiry tracking.
-15. Stock-transfer workflow.
-16. Departmental and supplier returns.
-17. Stock-adjustment workflow.
-18. Physical stock-count workflow.
-19. Stock reconciliation.
-20. Low-stock and stockout monitoring.
-21. Expiry management.
-22. Quarantine and recall management.
-23. Damage, loss, disposal, and destruction workflows.
-24. Purchase-request and purchase-order awareness.
-25. Product catalogue and stock-ledger views.
-26. Stock valuation permission integration.
-27. Stores handoff integration.
-28. Workspace-aware URL resolver updates.
-29. Workspace-aware redirect resolver updates.
-30. Updated shared links and forms.
-31. Login and department-switch integration.
-32. Stores breadcrumbs and active-menu handling.
-33. Permission and separation-of-duty integration.
-34. English and French localization.
-35. Focused feature tests.
-36. A final implementation report containing:
+1. Finance workspace route group.
+2. Finance-specific controllers or thin adapters where required.
+3. Finance operations dashboard.
+4. Finance department menu profile.
+5. Billing worklists.
+6. Visit billing workspace.
+7. Invoice lifecycle integration.
+8. Payment-collection integration.
+9. Partial-payment and overpayment handling.
+10. Deposit and advance-payment workflows.
+11. Previous patient balance integration.
+12. Cross-visit payment allocation.
+13. Accounts Receivable worklists.
+14. Receivable-aging integration.
+15. Cashier-session workflow.
+16. Cashier closing and variance reconciliation.
+17. Payment-reversal workflow.
+18. Refund workflow.
+19. Discount workflow.
+20. Credit-note workflow.
+21. Invoice-cancellation workflow.
+22. Write-off workflow.
+23. Insurance billing integration.
+24. Claims validation, submission, rejection, resubmission, and settlement.
+25. Sponsor-account integration.
+26. Payment-gate policy visibility.
+27. Visit billing override integration.
+28. Journal and General Ledger visibility.
+29. Chart of Accounts visibility.
+30. Trial Balance.
+31. Accounting-period controls.
+32. Cash, bank, digital-payment, insurance, and sponsor reconciliation.
+33. Workspace-aware URL resolver updates.
+34. Workspace-aware redirect resolver updates.
+35. Updated shared links and forms.
+36. Login and department-switch integration.
+37. Finance breadcrumbs and active-menu handling.
+38. Permission and separation-of-duty integration.
+39. Patient privacy and financial-data security integration.
+40. English and French localization.
+41. Focused feature tests.
+42. A final implementation report containing:
 
 * Files created
 * Files modified
-* Stores route map
-* Stores menu map
-* Stock-location mapping
+* Finance route map
+* Finance menu map
 * Dashboard metrics
-* Requisition workflow
-* Reservation behaviour
-* Full and partial issue behaviour
-* Goods-receipt behaviour
-* Batch and expiry behaviour
-* Transfer behaviour
-* Return behaviour
-* Adjustment behaviour
-* Stock-count and reconciliation behaviour
-* Quarantine, recall, damage, and disposal behaviour
-* Procurement integration
+* Billing workflow
+* Invoice lifecycle
+* Payment behaviour
+* Previous-balance behaviour
+* Cross-visit allocation behaviour
+* Cashier-session behaviour
+* Refund and reversal behaviour
+* Discount and credit-note behaviour
+* Receivable behaviour
+* Insurance and claims behaviour
+* Sponsor-account behaviour
+* Payment-gate and billing-override behaviour
+* Journal and General Ledger behaviour
+* Reconciliation behaviour
+* Active-department and branch scoping
 * Reused services
 * Redirect behaviour
 * Permissions used
 * Separation-of-duty rules
-* Inventory-integrity checks
+* Patient privacy checks
+* Financial-integrity checks
 * Audit events
 * Tests executed
 * Test results
@@ -3112,4 +3206,4 @@ Provide:
 
 Implement the work fully.
 
-Do not stop at planning, route registration, menu configuration, dashboard layout, stock listing, or requisition listing alone. The final implementation must provide a functional, traceable, stock-location-aware, department-specific Stores workspace throughout the complete hospital inventory lifecycle.
+Do not stop at planning, route registration, menu configuration, dashboard layout, invoice listing, payment collection, or report creation alone. The final implementation must provide a functional, secure, auditable, department-specific Finance workspace throughout the complete hospital billing, payment, receivable, claims, accounting, and reconciliation lifecycle.

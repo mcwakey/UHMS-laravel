@@ -58,6 +58,11 @@ class WorkspaceRouteResolver
         return $this->isType(DepartmentType::STORES);
     }
 
+    public function isFinance(): bool
+    {
+        return $this->isType(DepartmentType::FINANCE);
+    }
+
     public function isConsultation(): bool
     {
         $user = $this->request->user();
@@ -67,7 +72,7 @@ class WorkspaceRouteResolver
 
     public function isDepartmentWorkspace(): bool
     {
-        return $this->isRecords() || $this->isNursing() || $this->isEmergency() || $this->isInpatient() || $this->isInvestigation() || $this->isPharmacy() || $this->isStores() || $this->isConsultation();
+        return $this->isRecords() || $this->isNursing() || $this->isEmergency() || $this->isInpatient() || $this->isInvestigation() || $this->isPharmacy() || $this->isStores() || $this->isFinance() || $this->isConsultation();
     }
 
     public function dashboardRouteName(): string
@@ -80,6 +85,7 @@ class WorkspaceRouteResolver
             $this->isInvestigation() => 'investigations.dashboard',
             $this->isPharmacy() => 'pharmacy.dashboard',
             $this->isStores() => 'stores.dashboard',
+            $this->isFinance() => 'finance.dashboard',
             $this->isConsultation() => 'doctor.dashboard',
             default => 'admin.my-dashboard',
         };
@@ -95,6 +101,7 @@ class WorkspaceRouteResolver
             $this->isInvestigation() => 'investigations.',
             $this->isPharmacy() => 'pharmacy.',
             $this->isStores() => 'stores.',
+            $this->isFinance() => 'finance.',
             $this->isConsultation() => 'doctor.',
             default => null,
         };
@@ -154,6 +161,16 @@ class WorkspaceRouteResolver
                     : (Str::startsWith($genericRoute, 'admin.')
                         ? 'stores.'.Str::after($genericRoute, 'admin.')
                         : 'stores.'.$genericRoute),
+            };
+        } elseif ($this->isFinance()) {
+            // Finance workspace names mirror the full admin names (billing.*,
+            // claims.*, accounts.*, accounting.*), so only handoffs need a map.
+            $candidate = match ($genericRoute) {
+                'admin.journey.worklist' => 'finance.handoffs.index',
+                'admin.journey.worklist.refresh' => 'finance.handoffs.refresh',
+                default => Str::startsWith($genericRoute, 'admin.')
+                    ? 'finance.'.Str::after($genericRoute, 'admin.')
+                    : 'finance.'.$genericRoute,
             };
         } elseif ($this->isEmergency() && Str::startsWith($genericRoute, 'admin.emergency.')) {
             $candidate = match ($genericRoute) {
@@ -277,6 +294,7 @@ class WorkspaceRouteResolver
             $this->isInvestigation() => route('investigations.handoffs.index'),
             $this->isPharmacy() => route('pharmacy.handoffs.index'),
             $this->isStores() => route('stores.handoffs.index'),
+            $this->isFinance() => route('finance.handoffs.index'),
             default => $this->route('admin.journey.worklist'),
         };
     }
@@ -315,6 +333,14 @@ class WorkspaceRouteResolver
 
         if ($this->isStores()) {
             $candidate = 'stores.handoffs.'.$action;
+
+            return Route::has($candidate) ? $candidate : ($action === 'refresh'
+                ? 'admin.journey.worklist.refresh'
+                : 'admin.journey.handoffs.'.$action);
+        }
+
+        if ($this->isFinance()) {
+            $candidate = 'finance.handoffs.'.$action;
 
             return Route::has($candidate) ? $candidate : ($action === 'refresh'
                 ? 'admin.journey.worklist.refresh'
@@ -392,6 +418,17 @@ class WorkspaceRouteResolver
             ];
         }
 
+        if ($this->isFinance()) {
+            return [
+                'workspaceKey' => 'finance',
+                'workspaceRoutePrefix' => 'finance.',
+                'workspaceTitle' => __('finance.workspace.title'),
+                'workspaceDepartment' => $this->departments->currentDepartment($this->request->user(), $this->request),
+                'workspaceScope' => 'financial_operations',
+                'breadcrumbs' => $this->breadcrumbs(),
+            ];
+        }
+
         if ($this->isConsultation()) {
             return [
                 'workspaceKey' => 'doctor',
@@ -440,6 +477,10 @@ class WorkspaceRouteResolver
 
         if ($this->isStores()) {
             return $this->storesBreadcrumbs();
+        }
+
+        if ($this->isFinance()) {
+            return $this->financeBreadcrumbs();
         }
 
         if ($this->isConsultation()) {
@@ -788,6 +829,61 @@ class WorkspaceRouteResolver
             $action = Str::afterLast($name, '.');
             $crumbs[] = ['label' => __('stores.breadcrumbs.'.match ($action) {
                 'create' => 'create',
+                'edit' => 'edit',
+                default => 'details',
+            }), 'url' => null];
+        }
+
+        return $crumbs;
+    }
+
+    /** @return list<array{label:string,url:?string}> */
+    private function financeBreadcrumbs(): array
+    {
+        $name = (string) $this->request->route()?->getName();
+        $crumbs = [[
+            'label' => __('finance.breadcrumbs.finance'),
+            'url' => in_array($name, ['finance.dashboard', 'finance.dashboard.redirect'], true)
+                ? null
+                : route('finance.dashboard'),
+        ]];
+
+        $resource = match (true) {
+            Str::startsWith($name, 'finance.billing.invoices') => ['invoices', 'finance.billing.invoices.index'],
+            Str::startsWith($name, 'finance.billing.payments') => ['payments', 'finance.billing.payments.index'],
+            Str::startsWith($name, 'finance.billing.credit-notes') => ['credit_notes', 'finance.billing.credit-notes.index'],
+            Str::startsWith($name, 'finance.billing.sponsors') => ['sponsors', 'finance.billing.sponsors.index'],
+            Str::startsWith($name, 'finance.billing.statements') => ['statements', 'finance.billing.statements.index'],
+            Str::startsWith($name, 'finance.billing.reports.aging') => ['aging', 'finance.billing.reports.aging'],
+            Str::startsWith($name, 'finance.claims') => ['claims', 'finance.claims.index'],
+            Str::startsWith($name, 'finance.accounts.handover') => ['cashier', 'finance.accounts.handover.index'],
+            Str::startsWith($name, 'finance.accounts.daily-collection') => ['daily_collection', 'finance.accounts.daily-collection'],
+            Str::startsWith($name, 'finance.accounts.reconciliation') => ['reconciliation', 'finance.accounts.reconciliation'],
+            Str::startsWith($name, 'finance.accounting.journals') => ['journals', 'finance.accounting.journals.index'],
+            Str::startsWith($name, 'finance.accounting.trial-balance') => ['trial_balance', 'finance.accounting.trial-balance'],
+            Str::startsWith($name, 'finance.accounting.general-ledger') => ['general_ledger', 'finance.accounting.general-ledger'],
+            Str::startsWith($name, 'finance.accounting.accounts') => ['chart_of_accounts', 'finance.accounting.accounts.index'],
+            Str::startsWith($name, 'finance.patients') => ['patients', 'finance.patients.index'],
+            Str::startsWith($name, 'finance.handoffs') => ['handoffs', 'finance.handoffs.index'],
+            Str::startsWith($name, 'finance.reports') => ['reports', 'finance.reports.index'],
+            default => null,
+        };
+
+        if (! $resource) {
+            return $crumbs;
+        }
+
+        [$key, $indexRoute] = $resource;
+        $isIndex = $name === $indexRoute;
+        $crumbs[] = [
+            'label' => __('finance.breadcrumbs.'.$key),
+            'url' => $isIndex || ! Route::has($indexRoute) ? null : route($indexRoute),
+        ];
+
+        if (! $isIndex) {
+            $action = Str::afterLast($name, '.');
+            $crumbs[] = ['label' => __('finance.breadcrumbs.'.match ($action) {
+                'create', 'receive' => 'create',
                 'edit' => 'edit',
                 default => 'details',
             }), 'url' => null];

@@ -85,6 +85,14 @@ class SidebarMenuBuilder
             );
         }
 
+        if ($activeType === DepartmentType::FINANCE) {
+            return $this->finaliseSections(
+                $this->financeSections($unreadNotifications),
+                $user,
+                $currentRouteName,
+            );
+        }
+
         // Non-admin clinical staff get a focused consultation sidebar
         if ($user->isConsultationUser() && ! $user->isAdminUser()) {
             return $this->finaliseSections(
@@ -2920,6 +2928,79 @@ class SidebarMenuBuilder
                 'items' => [
                     ['label' => __('stores.menu.notifications'), 'icon' => 'ti ti-bell', 'route' => 'admin.notifications.index', 'active_patterns' => ['admin.notifications.*'], 'permission' => 'notifications.view', 'module' => 'notifications', 'badge' => $unreadNotifications > 0 ? $unreadNotifications : null],
                     ['label' => __('stores.menu.profile'), 'icon' => 'ti ti-user-circle', 'route' => 'admin.profile', 'active_patterns' => ['admin.profile']],
+                ],
+            ],
+        ];
+    }
+
+    protected function financeSections(int $unreadNotifications): array
+    {
+        return [
+            [
+                'title' => __('finance.workspace.title'),
+                'items' => [
+                    ['label' => __('finance.menu.dashboard'), 'icon' => 'ti ti-layout-dashboard', 'route' => 'finance.dashboard', 'active_patterns' => ['finance.dashboard', 'finance.dashboard.redirect']],
+                ],
+            ],
+            [
+                'title' => __('finance.menu.billing'),
+                'items' => [
+                    ['label' => __('finance.menu.invoices'), 'icon' => 'ti ti-file-invoice', 'route' => 'finance.billing.invoices.index', 'active_patterns' => ['finance.billing.invoices.*'], 'permission' => 'invoices.view', 'module' => 'billing'],
+                    ['label' => __('finance.menu.collect_payment'), 'icon' => 'ti ti-cash', 'route' => 'finance.billing.payments.receive', 'active_patterns' => ['finance.billing.payments.receive'], 'permission' => 'payments.create', 'module' => 'billing'],
+                    ['label' => __('finance.menu.payments'), 'icon' => 'ti ti-credit-card', 'route' => 'finance.billing.payments.index', 'active_patterns' => ['finance.billing.payments.index'], 'permission' => 'payments.view', 'module' => 'billing'],
+                    ['label' => __('finance.menu.counter_sale'), 'icon' => 'ti ti-cash-register', 'route' => 'admin.billing.counter-sale.create', 'active_patterns' => ['admin.billing.counter-sale.*'], 'permission' => 'invoices.create', 'module' => 'billing'],
+                    ['label' => __('finance.menu.credit_notes'), 'icon' => 'ti ti-receipt-refund', 'route' => 'finance.billing.credit-notes.index', 'active_patterns' => ['finance.billing.credit-notes.*'], 'permission' => 'credit_notes.view', 'module' => 'billing'],
+                ],
+            ],
+            [
+                'title' => __('finance.menu.receivables'),
+                'items' => [
+                    ['label' => __('finance.menu.aging'), 'icon' => 'ti ti-hourglass-high', 'route' => 'finance.billing.reports.aging', 'active_patterns' => ['finance.billing.reports.aging'], 'permission' => 'reports.ar_aging.view', 'module' => 'billing'],
+                    ['label' => __('finance.menu.statements'), 'icon' => 'ti ti-file-description', 'route' => 'finance.billing.statements.index', 'active_patterns' => ['finance.billing.statements.*'], 'permission' => 'invoices.view', 'module' => 'billing'],
+                    ['label' => __('finance.menu.sponsors'), 'icon' => 'ti ti-building-bank', 'route' => 'finance.billing.sponsors.index', 'active_patterns' => ['finance.billing.sponsors.*'], 'permission' => 'sponsors.view', 'module' => 'billing'],
+                ],
+            ],
+            [
+                'title' => __('finance.menu.claims_title'),
+                'items' => [
+                    ['label' => __('finance.menu.claims'), 'icon' => 'ti ti-shield-check', 'route' => 'finance.claims.index', 'active_patterns' => ['finance.claims.*'], 'permission' => 'claims.view', 'module' => 'claims'],
+                ],
+            ],
+            [
+                'title' => __('finance.menu.cashier_title'),
+                'items' => [
+                    ['label' => __('finance.menu.cashier'), 'icon' => 'ti ti-cash-banknote', 'route' => 'finance.accounts.handover.index', 'active_patterns' => ['finance.accounts.handover.*'], 'permission' => 'accounts.cashier', 'module' => 'accounting_basic'],
+                    ['label' => __('finance.menu.daily_collection'), 'icon' => 'ti ti-calendar-dollar', 'route' => 'finance.accounts.daily-collection', 'active_patterns' => ['finance.accounts.daily-collection'], 'permission' => 'accounts.entries.view', 'module' => 'accounting_basic'],
+                    ['label' => __('finance.menu.reconciliation'), 'icon' => 'ti ti-scale', 'route' => 'finance.accounts.reconciliation', 'active_patterns' => ['finance.accounts.reconciliation'], 'permission' => 'accounts.entries.view', 'module' => 'accounting_basic'],
+                ],
+            ],
+            [
+                'title' => __('finance.menu.accounting_title'),
+                'items' => [
+                    ['label' => __('finance.menu.journals'), 'icon' => 'ti ti-notebook', 'route' => 'finance.accounting.journals.index', 'active_patterns' => ['finance.accounting.journals.*'], 'permission' => 'accounting.journals.view', 'module' => 'accounting_advanced'],
+                    ['label' => __('finance.menu.general_ledger'), 'icon' => 'ti ti-book', 'route' => 'finance.accounting.general-ledger', 'active_patterns' => ['finance.accounting.general-ledger'], 'permission' => 'accounting.reports.general_ledger', 'module' => 'accounting_advanced'],
+                    ['label' => __('finance.menu.trial_balance'), 'icon' => 'ti ti-scale-outline', 'route' => 'finance.accounting.trial-balance', 'active_patterns' => ['finance.accounting.trial-balance'], 'permission' => 'accounting.reports.trial_balance', 'module' => 'accounting_advanced'],
+                    ['label' => __('finance.menu.chart_of_accounts'), 'icon' => 'ti ti-list-tree', 'route' => 'finance.accounting.accounts.index', 'active_patterns' => ['finance.accounting.accounts.*'], 'permission' => 'accounting.accounts.view', 'module' => 'accounting_advanced'],
+                ],
+            ],
+            [
+                'title' => __('finance.menu.patients_title'),
+                'items' => [
+                    ['label' => __('finance.menu.patients'), 'icon' => 'ti ti-users', 'route' => 'finance.patients.index', 'active_patterns' => ['finance.patients.*'], 'permission' => 'patients.view', 'module' => 'patients'],
+                    ['label' => __('finance.menu.handoffs'), 'icon' => 'ti ti-arrows-exchange', 'route' => 'finance.handoffs.index', 'active_patterns' => ['finance.handoffs.*'], 'visible' => fn (User $user) => app(DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== []],
+                ],
+            ],
+            [
+                'title' => __('finance.menu.reports_title'),
+                'items' => [[
+                    'label' => __('finance.menu.reports'), 'icon' => 'ti ti-chart-bar', 'route' => 'finance.reports.index', 'active_patterns' => ['finance.reports.*'], 'permission' => 'reports.billing', 'module' => 'reports',
+                ]],
+            ],
+            [
+                'title' => __('finance.menu.general'),
+                'items' => [
+                    ['label' => __('finance.menu.notifications'), 'icon' => 'ti ti-bell', 'route' => 'admin.notifications.index', 'active_patterns' => ['admin.notifications.*'], 'permission' => 'notifications.view', 'module' => 'notifications', 'badge' => $unreadNotifications > 0 ? $unreadNotifications : null],
+                    ['label' => __('finance.menu.profile'), 'icon' => 'ti ti-user-circle', 'route' => 'admin.profile', 'active_patterns' => ['admin.profile']],
                 ],
             ],
         ];

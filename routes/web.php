@@ -843,6 +843,104 @@ Route::middleware('auth')->group(function () {
             ->middleware(['module:reports', 'can:reports.stock']);
     });
 
+    // Finance (billing / cashiering / receivables / accounting) workspace.
+    // Browser adapters over the existing invoice, payment, claims, cashier,
+    // accounting, journey and reporting services — payment posting, journal
+    // balancing and audit rules stay inside those services. Workspace route
+    // names mirror the full admin names so the resolver maps them generically.
+    Route::prefix('finance')->name('finance.')->middleware('department.type:finance')->group(function () {
+        Route::get('/', App\Http\Controllers\Finance\DashboardController::class)->name('dashboard');
+        Route::get('dashboard', fn () => redirect()->route('finance.dashboard'))->name('dashboard.redirect');
+
+        Route::middleware('module:billing')->name('billing.')->group(function () {
+            Route::middleware('can:invoices.view')->group(function () {
+                Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+                Route::get('invoices/create', [InvoiceController::class, 'create'])->name('invoices.create')->middleware('can:invoices.create');
+                Route::post('invoices', [InvoiceController::class, 'store'])->name('invoices.store')->middleware('can:invoices.create');
+                Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
+                Route::patch('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel')->middleware('can:invoices.void');
+            });
+
+            Route::middleware('can:payments.view')->group(function () {
+                Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
+                Route::get('payments/receive', [PaymentController::class, 'receive'])->name('payments.receive')->middleware('can:payments.create');
+                Route::post('payments/{invoice}', [PaymentController::class, 'store'])->name('payments.store')->middleware('can:payments.create');
+                Route::post('payments/{payment}/reverse', [PaymentController::class, 'reverse'])->name('payments.reverse')->middleware('can:payments.refund');
+                Route::post('previous-balance/{patient}/allocate', [PreviousBalanceController::class, 'allocate'])
+                    ->name('previous-balance.allocate')
+                    ->middleware('can:billing.payment.allocate_cross_visit');
+            });
+
+            Route::middleware('can:credit_notes.view')->prefix('credit-notes')->name('credit-notes.')->group(function () {
+                Route::get('/', [CreditNoteController::class, 'index'])->name('index');
+                Route::get('create', [CreditNoteController::class, 'create'])->name('create')->middleware('can:credit_notes.create');
+                Route::post('/', [CreditNoteController::class, 'store'])->name('store')->middleware('can:credit_notes.create');
+            });
+
+            Route::get('sponsors', [SponsorController::class, 'index'])->name('sponsors.index')->middleware('can:sponsors.view');
+
+            Route::middleware('can:invoices.view')->prefix('statements')->name('statements.')->group(function () {
+                Route::get('/', [BillingReportController::class, 'statements'])->name('index');
+                Route::get('{patient}', [BillingReportController::class, 'statementShow'])->name('show');
+            });
+
+            Route::get('receivables/aging', [BillingReportController::class, 'aging'])
+                ->name('reports.aging')
+                ->middleware('can:reports.ar_aging.view');
+        });
+
+        Route::middleware(['module:insurance', 'module:claims', 'can:claims.view'])->prefix('claims')->name('claims.')->group(function () {
+            Route::get('/', [ClaimController::class, 'index'])->name('index');
+            Route::get('create', [ClaimController::class, 'create'])->name('create')->middleware('can:claims.create');
+            Route::get('{claim}', [ClaimController::class, 'show'])->whereNumber('claim')->name('show');
+            Route::get('{claim}/review', [ClaimController::class, 'review'])->whereNumber('claim')->name('review')->middleware('can:claims.approve');
+            Route::post('{claim}/validate', [ClaimController::class, 'validateClaim'])->name('validate')->middleware('can:claims.create');
+            Route::post('{claim}/mark-ready', [ClaimController::class, 'markReady'])->name('mark-ready')->middleware('can:claims.create');
+            Route::post('{claim}/submit', [ClaimController::class, 'submit'])->name('submit')->middleware('can:claims.create');
+            Route::post('{claim}/payments', [ClaimController::class, 'recordPayment'])->name('payments.store')->middleware('can:claims.approve');
+        });
+
+        Route::middleware('module:accounting_basic')->name('accounts.')->group(function () {
+            Route::middleware('can:accounts.cashier')->group(function () {
+                Route::get('cashier', [CashierShiftController::class, 'index'])->name('handover.index');
+                Route::post('cashier/open', [CashierShiftController::class, 'open'])->name('handover.open');
+                Route::post('cashier/{shift}/close', [CashierShiftController::class, 'close'])->name('handover.close');
+                Route::post('cashier/{shift}/verify', [CashierShiftController::class, 'verify'])->name('handover.verify')->middleware('can:accounts.entries.approve');
+            });
+            Route::middleware('can:accounts.entries.view')->group(function () {
+                Route::get('daily-collection', [FinancialEntryController::class, 'dailyCollection'])->name('daily-collection');
+                Route::get('reconciliation', [FinancialEntryController::class, 'reconciliation'])->name('reconciliation');
+            });
+        });
+
+        Route::middleware('module:accounting_advanced')->name('accounting.')->group(function () {
+            Route::get('journals', [JournalEntryController::class, 'index'])->name('journals.index')->middleware('can:accounting.journals.view');
+            Route::get('journals/{journal}', [JournalEntryController::class, 'show'])->whereNumber('journal')->name('journals.show')->middleware('can:accounting.journals.view');
+            Route::get('trial-balance', [AccountingReportController::class, 'trialBalance'])->name('trial-balance')->middleware('can:accounting.reports.trial_balance');
+            Route::get('general-ledger', [AccountingReportController::class, 'generalLedger'])->name('general-ledger')->middleware('can:accounting.reports.general_ledger');
+            Route::get('chart-of-accounts', [AccountingAccountController::class, 'index'])->name('accounts.index')->middleware('can:accounting.accounts.view');
+        });
+
+        Route::middleware(['module:patients', 'can:patients.view'])->prefix('patients')->name('patients.')->group(function () {
+            Route::get('/', [PatientController::class, 'index'])->name('index');
+            Route::get('{patient}', [PatientController::class, 'show'])->name('show');
+        });
+
+        Route::get('handoffs', [JourneyWorklistController::class, 'index'])->name('handoffs.index');
+        Route::get('handoffs/refresh', [JourneyWorklistController::class, 'refresh'])->name('handoffs.refresh');
+        Route::prefix('handoffs/actions')->name('handoffs.')->group(function () {
+            Route::post('claim', [JourneyHandoffAssignmentController::class, 'claim'])->name('claim')->middleware('can:journey.handoffs.claim');
+            Route::post('assign', [JourneyHandoffAssignmentController::class, 'assign'])->name('assign')->middleware('can:journey.handoffs.assign');
+            Route::post('{assignment}/acknowledge', [JourneyHandoffAssignmentController::class, 'acknowledge'])->name('acknowledge')->middleware('can:journey.handoffs.acknowledge');
+            Route::post('{assignment}/resolve', [JourneyHandoffAssignmentController::class, 'resolve'])->name('resolve')->middleware('can:journey.handoffs.resolve');
+        });
+
+        Route::get('reports', [OperationalReportController::class, 'show'])
+            ->defaults('report', 'billing')
+            ->name('reports.index')
+            ->middleware(['module:reports', 'can:reports.billing']);
+    });
+
     // Nursing Department OPD workspace. Clinical writes are delegated to the
     // existing triage/vitals controllers so validation, safety and audit rules
     // remain identical to the generic workflow.
@@ -1049,7 +1147,7 @@ Route::middleware('auth')->group(function () {
                 Route::patch('/{serviceRendering}/notes', [ServiceRenderingActionController::class, 'updateNotes'])->name('notes')->middleware('can:service_rendering.edit_notes');
             });
 
-        Route::middleware(['module:insurance', 'module:claims', 'can:claims.view'])->group(function () {
+        Route::middleware(['module:insurance', 'module:claims', 'can:claims.view', 'records.redirect'])->group(function () {
             Route::get('claims', [ClaimController::class, 'index'])->name('claims.index');
             Route::get('claims/eligible-visits', [ClaimController::class, 'eligibleVisits'])->name('claims.eligible-visits');
             Route::post('claims/visits/{visit}/prepare', [ClaimController::class, 'prepareFromVisit'])->name('claims.prepare-from-visit')->middleware('can:claims.create');
@@ -1794,7 +1892,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Accounts & Finance
-        Route::prefix('accounts')->name('accounts.')->middleware('module:accounting_basic')->group(function () {
+        Route::prefix('accounts')->name('accounts.')->middleware(['module:accounting_basic', 'records.redirect'])->group(function () {
             // Categories
             Route::middleware('can:accounts.manage')->group(function () {
                 Route::get('categories', [AccountCategoryController::class, 'index'])->name('categories.index');
@@ -1844,7 +1942,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Double-entry Accounting Foundation
-        Route::prefix('accounting')->name('accounting.')->middleware('module:accounting_advanced')->group(function () {
+        Route::prefix('accounting')->name('accounting.')->middleware(['module:accounting_advanced', 'records.redirect'])->group(function () {
             Route::get('/', AccountingDashboardController::class)
                 ->name('dashboard')
                 ->middleware('can:accounting.dashboard.view');
@@ -2420,7 +2518,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Billing
-        Route::prefix('billing')->name('billing.')->middleware('module:billing')->group(function () {
+        Route::prefix('billing')->name('billing.')->middleware(['module:billing', 'records.redirect'])->group(function () {
             // Billing dashboard
             Route::get('dashboard', [BillingReportController::class, 'dashboard'])
                 ->name('dashboard')->middleware('can:invoices.view');
