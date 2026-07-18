@@ -123,6 +123,38 @@ class InpatientWorkspaceTest extends TestCase
         $this->actingAs($user)->get(route('inpatient.admissions.show', $excluded))->assertNotFound();
     }
 
+    public function test_ward_census_page_is_scoped_and_shows_beds_and_admitted_patients(): void
+    {
+        $department = $this->department(DepartmentType::INPATIENT, 'WARD');
+        $other = $this->department(DepartmentType::INPATIENT, 'OTHER');
+        $user = User::factory()->create(['department_id' => $department->id]);
+        $this->give($user, ['ward.view']);
+
+        $included = $this->admission($department, $user, 'ADM-IN', 'PAT-IN');
+        $excluded = $this->admission($other, $user, 'ADM-OUT', 'PAT-OUT');
+        $includedWard = $included->bed->ward;
+        $excludedWard = $excluded->bed->ward;
+
+        // In-scope ward: census renders under /inpatient with beds + patients.
+        $response = $this->actingAs($user)
+            ->get(route('inpatient.wards.show', $includedWard))
+            ->assertOk()
+            ->assertSee($includedWard->name)
+            ->assertSee('B-1')
+            ->assertSee($included->patient->full_name)
+            ->assertSee(__('wards.admitted_patients'))
+            ->assertSee(__('wards.occupancy'));
+        $this->assertStringContainsString('/inpatient/wards', route('inpatient.wards.show', $includedWard));
+        $this->assertStringContainsString('inpatient/admissions/'.$included->id, $this->legacyHtml($response->getContent()));
+
+        // Another department's ward is invisible in the workspace.
+        $this->actingAs($user)->get(route('inpatient.wards.show', $excludedWard))->assertNotFound();
+
+        // Permission still gates the page.
+        $bare = User::factory()->create(['department_id' => $department->id]);
+        $this->actingAs($bare)->get(route('inpatient.wards.show', $includedWard))->assertForbidden();
+    }
+
     public function test_legacy_browser_admission_route_redirects_but_json_stays_compatible(): void
     {
         $department = $this->department(DepartmentType::INPATIENT, 'WARD');

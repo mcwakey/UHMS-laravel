@@ -53,4 +53,12 @@ return [
     'admit' => 'Admettre',
     'no_beds_configured' => 'Aucun lit configuré pour cette unité.',
     'no_active_wards_map' => 'Aucune unité active trouvée. Créez des unités et ajoutez des lits pour voir le plan des lits.',
+    // Ward overview (census)
+    'ward_overview' => 'Unité — :name',
+    'back_to_wards' => 'Toutes les unités',
+    'inactive' => 'Inactive',
+    'out_of_service' => 'Hors service',
+    'admitted_patients' => 'Patients admis',
+    'no_admitted_patients' => "Aucun patient n'est actuellement admis dans cette unité.",
+    'view_ward' => "Voir l'unité",
 ];

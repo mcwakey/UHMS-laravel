@@ -31,6 +31,34 @@ class WardController extends Controller
         return view('wards.index', compact('wards', 'departments'));
     }
 
+    /**
+     * Ward census: capacity, per-bed status with current patients, and the
+     * admitted-patient list for one ward. Workspace-scoped — an Inpatient user
+     * can only open wards belonging to their active department.
+     */
+    public function show(Ward $ward, \App\Services\InpatientWorkspaceScope $scope)
+    {
+        abort_unless($scope->wards(Ward::query())->whereKey($ward->id)->exists(), 404);
+
+        $census = $this->wardService->getBedMap(['ward_id' => $ward->id])->first();
+        $capacity = $this->wardService->getBedCapacityStats(['ward_id' => $ward->id]);
+        $ward->load('department');
+
+        $admissions = $census
+            ? $census->beds
+                ->filter(fn (Bed $bed) => $bed->currentAdmission !== null)
+                ->map(fn (Bed $bed) => ['bed' => $bed, 'admission' => $bed->currentAdmission])
+                ->values()
+            : collect();
+
+        return view('wards.show', [
+            'ward' => $ward,
+            'census' => $census,
+            'capacity' => $capacity,
+            'admissions' => $admissions,
+        ]);
+    }
+
     public function store(StoreWardRequest $request)
     {
         $ward = $this->wardService->createWard($request->validated());

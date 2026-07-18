@@ -59,7 +59,7 @@
                     @forelse($wards as $ward)
                     <tr>
                         <td><span class="fw-medium">{{ $ward->code }}</span></td>
-                        <td>{{ $ward->name }}</td>
+                        <td><a href="{{ $workspaceRoutes->route('admin.wards.show', $ward) }}" class="fw-semibold text-decoration-none" title="{{ __('wards.view_ward') }}">{{ $ward->name }}</a></td>
                         <td>{{ $ward->department?->name ?? '—' }}</td>
                         <td>{{ $ward->floor ?? '—' }}</td>
                         <td>{{ $ward->capacity }}</td>

@@ -53,4 +53,13 @@ return [
     'admit' => 'Admit',
     'no_beds_configured' => 'No beds configured for this ward.',
     'no_active_wards_map' => 'No active wards found. Create wards and add beds to see the bed map.',
+
+    // Ward overview (census)
+    'ward_overview' => 'Ward — :name',
+    'back_to_wards' => 'All Wards',
+    'inactive' => 'Inactive',
+    'out_of_service' => 'Out of Service',
+    'admitted_patients' => 'Admitted Patients',
+    'no_admitted_patients' => 'No patients are currently admitted to this ward.',
+    'view_ward' => 'View Ward',
 ];
