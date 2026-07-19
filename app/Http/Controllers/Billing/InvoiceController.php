@@ -9,12 +9,16 @@ use App\Http\Requests\StoreInvoiceRequest;
 use App\Models\CorporateClient;
 use App\Models\Invoice;
 use App\Models\Patient;
+use App\Models\PaymentProviderTransaction;
 use App\Models\ServiceCatalog;
+use App\Models\Setting;
 use App\Models\Sponsor;
 use App\Models\Visit;
 use App\Services\BillingService;
 use App\Services\InvoiceBalanceService;
 use App\Services\InvoiceReceivableService;
+use App\Services\Integrations\Payment\PaymentProviderResolver;
+use App\Services\ModuleService;
 use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
@@ -110,7 +114,13 @@ class InvoiceController extends Controller
     /**
      * Show invoice details.
      */
-    public function show(Invoice $invoice, InvoiceBalanceService $balanceService, InvoiceReceivableService $receivableService)
+    public function show(
+        Invoice $invoice,
+        InvoiceBalanceService $balanceService,
+        InvoiceReceivableService $receivableService,
+        ModuleService $modules,
+        PaymentProviderResolver $paymentProviders,
+    )
     {
         $receivableService->syncFromInvoice($invoice);
 
@@ -146,8 +156,20 @@ class InvoiceController extends Controller
             'creditNotes.reversalJournalEntry',
         ]);
 
+        $gatewayModuleActive = $modules->enabled('payment_gateway')
+            && $paymentProviders->activeProvider() !== null;
+        $pendingMomoCharges = $gatewayModuleActive
+            ? PaymentProviderTransaction::query()
+                ->where('invoice_id', $invoice->id)
+                ->whereIn('status', ['initiated', 'pending', 'requires_customer_action'])
+                ->latest()
+                ->get()
+            : collect();
+
         return view('billing.invoices.show', [
             'invoice' => $invoice,
+            'organizationSettings' => Setting::getGroup('organization'),
+            'pendingMomoCharges' => $pendingMomoCharges,
             'invoiceBalanceSummary' => $balanceService->summary($invoice),
             'adjustmentHistory' => $balanceService->history($invoice),
             'receivablePayerOptions' => [

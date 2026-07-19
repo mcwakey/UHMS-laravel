@@ -1261,11 +1261,6 @@
 
                                 <div id="prescriptions-list">
                                     @php
-                                        $pharmacyFallbackDepartment = \App\Models\Department::query()
-                                            ->where('type', \App\Enums\DepartmentType::PHARMACY->value)
-                                            ->where('status', 'active')
-                                            ->orderBy('name')
-                                            ->first();
                                         $prescriptionTargetDepartment = function($prescription) use ($pharmacyFallbackDepartment) {
                                             $department = $prescription->department;
                                             $type = $department?->type instanceof \App\Enums\DepartmentType ? $department->type->value : (string) $department?->type;

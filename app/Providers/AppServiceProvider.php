@@ -20,8 +20,13 @@ use App\Listeners\NotifyStockManagers;
 use App\Listeners\NotifyWardStaffAdmission;
 use App\Models\User;
 use App\Services\ModuleService;
+use App\Services\NotificationService;
 use App\Services\SidebarMenuBuilder;
 use App\Services\WorkspaceRouteResolver;
+use App\Services\Department\DepartmentContextSwitcherService;
+use App\Support\DatabaseQueryProfiler;
+use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Auth;
@@ -41,8 +46,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(ModuleService::class);
-        $this->app->singleton(SidebarMenuBuilder::class);
+        $this->app->scoped(DatabaseQueryProfiler::class);
+        $this->app->scoped(ModuleService::class);
+        $this->app->scoped(NotificationService::class);
+        $this->app->scoped(SidebarMenuBuilder::class);
+        $this->app->scoped(DepartmentContextSwitcherService::class);
         $this->app->singleton(\App\Services\Insurance\Verification\VerificationManager::class);
         $this->app->singleton(\App\Services\Insurance\Verification\InsuranceVerificationService::class);
     }
@@ -53,6 +61,29 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Schema::defaultStringLength(191);
+
+        if ($this->app->environment(['local', 'testing'])) {
+            \Illuminate\Support\Facades\DB::listen(
+                fn (QueryExecuted $query) => app(DatabaseQueryProfiler::class)->record($query),
+            );
+        }
+
+        if (config('performance.lazy_loading.detect') && $this->app->environment(['local', 'testing'])) {
+            Model::preventLazyLoading();
+            Model::handleLazyLoadingViolationUsing(function (Model $model, string $relation): void {
+                if (! config('performance.lazy_loading.log')) {
+                    return;
+                }
+
+                \Illuminate\Support\Facades\Log::warning('Eloquent lazy loading detected.', [
+                    'model' => $model::class,
+                    'relation' => $relation,
+                    'route' => request()->route()?->getName(),
+                    'method' => request()->method(),
+                    'path' => request()->path(),
+                ]);
+            });
+        }
 
         // Rate limiters. `api` backs the default API middleware group; the
         // dedicated `integration-callbacks` limiter throttles inbound provider
@@ -121,9 +152,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Payment Timing Policy Phase 8 — request-scoped memoisation/de-dup for the
         // operational resolver and cutover diagnostics (bounded gate performance).
-        $this->app->singleton(\App\Services\Billing\OperationalVisitPaymentTimingResolver::class);
-        $this->app->singleton(\App\Services\Billing\PaymentTimingCutoverDiagnostics::class);
-        $this->app->singleton(\App\Services\Billing\PaymentTimingCutoverConfigurationService::class);
+        $this->app->scoped(\App\Services\Billing\OperationalVisitPaymentTimingResolver::class);
+        $this->app->scoped(\App\Services\Billing\PaymentTimingCutoverDiagnostics::class);
+        $this->app->scoped(\App\Services\Billing\PaymentTimingCutoverConfigurationService::class);
 
         // ---- Module feature-flag Blade directives ----
         // @module('pharmacy') ... @endmodule  → renders only when module enabled
@@ -139,7 +170,7 @@ class AppServiceProvider extends ServiceProvider
             $unreadNotifications = $user instanceof User
                 && $moduleService->enabled('notifications')
                 && $user->can('notifications.view')
-                    ? $user->unreadNotifications()->count()
+                    ? app(NotificationService::class)->unreadCount($user)
                     : 0;
 
             $view->with('sidebarSections', app(SidebarMenuBuilder::class)->build(

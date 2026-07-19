@@ -69,8 +69,11 @@ class PurchaseOrderController extends Controller
         $purchaseOrder->load([
             'supplier', 'items.product', 'createdByUser', 'approvedByUser',
         ]);
+        $products = $purchaseOrder->is_editable
+            ? Product::active()->orderBy('name')->get(['id', 'name', 'code'])
+            : collect();
 
-        return view('store.purchase-orders.show', compact('purchaseOrder'));
+        return view('store.purchase-orders.show', compact('purchaseOrder', 'products'));
     }
 
     public function submit(PurchaseOrder $purchaseOrder)

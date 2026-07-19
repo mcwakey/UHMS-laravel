@@ -7,6 +7,7 @@ use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\EnsureNursingOpdScope;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\ProfileDatabaseQueries;
 use App\Http\Middleware\RedirectRecordsWorkspace;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
@@ -52,6 +53,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('integrations:sms-send-appointment-reminders')->dailyAt('08:00')->withoutOverlapping();
     })
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->prepend(ProfileDatabaseQueries::class);
+
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
             'module' => EnsureModuleEnabled::class,
@@ -102,14 +105,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (QueryException $e, Request $request) {
             Log::error('Database error shielded from user', [
                 'exception' => $e::class,
-                'message' => $e->getMessage(),
-                'sql_state' => $e->getCode(),
+                'error_code' => $e->getCode(),
                 'user_id' => optional($request->user())->getAuthIdentifier(),
                 'route' => optional($request->route())->getName(),
-                'url' => $request->fullUrl(),
+                'path' => $request->path(),
                 'method' => $request->method(),
-                'ip' => $request->ip(),
-                'user_agent' => substr((string) $request->userAgent(), 0, 255),
             ]);
 
             if (config('app.debug')) {

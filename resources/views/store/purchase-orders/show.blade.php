@@ -290,7 +290,7 @@
                         <label class="form-label">{{ __('stock.product') }} <span class="text-danger">*</span></label>
                         <select name="product_id" class="form-select select2-modal" required>
                             <option value="">{{ __('store.select_product') }}</option>
-                            @foreach(\App\Models\Product::query()->active()->orderBy('name')->get() as $product)
+                            @foreach($products as $product)
                                 <option value="{{ $product->id }}">{{ $product->name }}@if($product->code) — {{ $product->code }}@endif</option>
                             @endforeach
                         </select>
@@ -316,4 +316,3 @@
 </div>
 @endif
 @endsection
-

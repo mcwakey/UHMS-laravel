@@ -12,6 +12,15 @@ use Illuminate\Support\Str;
 
 class SidebarMenuBuilder
 {
+    /** @var array<string, array<int, array<string, mixed>>> */
+    private array $resolvedMenus = [];
+
+    /** @var array<string, bool> */
+    private array $permissionChecks = [];
+
+    /** @var array<string, bool> */
+    private array $roleChecks = [];
+
     public function __construct(
         protected ModuleService $moduleService,
         protected DepartmentMenuProfileService $menuProfile,
@@ -23,6 +32,27 @@ class SidebarMenuBuilder
         if (! $user) {
             return [];
         }
+
+        $cacheKey = implode(':', [
+            $user->getAuthIdentifier(),
+            $currentRouteName,
+            $unreadNotifications,
+            app()->getLocale(),
+            request()->hasSession()
+                ? request()->session()->get(DepartmentContextSwitcherService::SESSION_KEY, 'primary')
+                : 'primary',
+        ]);
+
+        if (isset($this->resolvedMenus[$cacheKey])) {
+            return $this->resolvedMenus[$cacheKey];
+        }
+
+        return $this->resolvedMenus[$cacheKey] = $this->buildMenu($user, $currentRouteName, $unreadNotifications);
+    }
+
+    private function buildMenu(User $user, string $currentRouteName, int $unreadNotifications): array
+    {
+        $user->loadMissing(['roles.permissions', 'permissions']);
 
         $activeDepartment = $this->departmentContextSwitcher->currentDepartment($user, request());
         $activeType = $activeDepartment?->type instanceof DepartmentType
@@ -3388,19 +3418,23 @@ class SidebarMenuBuilder
             return false;
         }
 
-        if (! empty($item['permission']) && ! $user->can($item['permission'])) {
+        if (! empty($item['permission']) && ! $this->can($user, $item['permission'])) {
             return false;
         }
 
-        if (! empty($item['permissions_any']) && ! $user->canAny($item['permissions_any'])) {
+        if (! empty($item['permissions_any']) && ! collect($item['permissions_any'])->contains(
+            fn (string $permission) => $this->can($user, $permission),
+        )) {
             return false;
         }
 
-        if (! empty($item['role']) && ! $user->hasRole($item['role'])) {
+        if (! empty($item['role']) && ! $this->hasRole($user, $item['role'])) {
             return false;
         }
 
-        if (! empty($item['roles_any']) && ! $user->hasAnyRole($item['roles_any'])) {
+        if (! empty($item['roles_any']) && ! collect($item['roles_any'])->contains(
+            fn (string $role) => $this->hasRole($user, $role),
+        )) {
             return false;
         }
 
@@ -3410,6 +3444,20 @@ class SidebarMenuBuilder
         }
 
         return true;
+    }
+
+    private function can(User $user, string $permission): bool
+    {
+        $key = $user->getAuthIdentifier().':'.$permission;
+
+        return $this->permissionChecks[$key] ??= $user->can($permission);
+    }
+
+    private function hasRole(User $user, string $role): bool
+    {
+        $key = $user->getAuthIdentifier().':'.$role;
+
+        return $this->roleChecks[$key] ??= $user->hasRole($role);
     }
 
     protected function isActive(array $item, string $currentRouteName): bool
