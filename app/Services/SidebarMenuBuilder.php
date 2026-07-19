@@ -93,6 +93,22 @@ class SidebarMenuBuilder
             );
         }
 
+        if ($activeType === DepartmentType::MATERNITY) {
+            return $this->finaliseSections(
+                $this->maternitySections($unreadNotifications),
+                $user,
+                $currentRouteName,
+            );
+        }
+
+        if ($activeType === DepartmentType::ADMINISTRATIVE) {
+            return $this->finaliseSections(
+                $this->administrativeSections($unreadNotifications),
+                $user,
+                $currentRouteName,
+            );
+        }
+
         // Non-admin clinical staff get a focused consultation sidebar
         if ($user->isConsultationUser() && ! $user->isAdminUser()) {
             return $this->finaliseSections(
@@ -3001,6 +3017,100 @@ class SidebarMenuBuilder
                 'items' => [
                     ['label' => __('finance.menu.notifications'), 'icon' => 'ti ti-bell', 'route' => 'admin.notifications.index', 'active_patterns' => ['admin.notifications.*'], 'permission' => 'notifications.view', 'module' => 'notifications', 'badge' => $unreadNotifications > 0 ? $unreadNotifications : null],
                     ['label' => __('finance.menu.profile'), 'icon' => 'ti ti-user-circle', 'route' => 'admin.profile', 'active_patterns' => ['admin.profile']],
+                ],
+            ],
+        ];
+    }
+
+    protected function maternitySections(int $unreadNotifications): array
+    {
+        return [
+            [
+                'title' => __('maternity.workspace.title'),
+                'items' => [
+                    ['label' => __('maternity.workspace.menu.dashboard'), 'icon' => 'ti ti-layout-dashboard', 'route' => 'maternity.dashboard', 'active_patterns' => ['maternity.dashboard', 'maternity.dashboard.redirect'], 'permission' => 'maternity.dashboard.view', 'module' => 'maternity'],
+                ],
+            ],
+            [
+                'title' => __('maternity.workspace.menu.care'),
+                'items' => [
+                    ['label' => __('maternity.workspace.menu.pregnancies'), 'icon' => 'ti ti-heart-plus', 'route' => 'maternity.pregnancies.index', 'active_patterns' => ['maternity.pregnancies.*', 'maternity.antenatal.*', 'maternity.cases.*'], 'permission' => 'maternity.pregnancy.view', 'module' => 'maternity'],
+                    ['label' => __('maternity.workspace.menu.labour'), 'icon' => 'ti ti-activity-heartbeat', 'route' => 'maternity.labor.index', 'active_patterns' => ['maternity.labor.*', 'maternity.deliveries.*', 'maternity.newborns.*'], 'permission' => 'maternity.labor.view', 'module' => 'maternity'],
+                    ['label' => __('maternity.workspace.menu.postnatal'), 'icon' => 'ti ti-baby-carriage', 'route' => 'maternity.postnatal.index', 'active_patterns' => ['maternity.postnatal.*'], 'permission' => 'maternity.postnatal.view', 'module' => 'maternity'],
+                ],
+            ],
+            [
+                'title' => __('maternity.workspace.menu.coordination'),
+                'items' => [
+                    ['label' => __('maternity.workspace.menu.patients'), 'icon' => 'ti ti-users', 'route' => 'maternity.patients.index', 'active_patterns' => ['maternity.patients.*'], 'permission' => 'patients.view', 'module' => 'patients'],
+                    ['label' => __('maternity.workspace.menu.handoffs'), 'icon' => 'ti ti-arrows-exchange', 'route' => 'maternity.handoffs.index', 'active_patterns' => ['maternity.handoffs.*'], 'visible' => fn (User $user) => app(DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== []],
+                    ['label' => __('maternity.workspace.menu.billing_readiness'), 'icon' => 'ti ti-report-money', 'route' => 'maternity.billing-readiness.show', 'active_patterns' => ['maternity.billing-readiness.*'], 'permission' => 'maternity.billing_readiness.view', 'module' => 'maternity'],
+                ],
+            ],
+            [
+                'title' => __('maternity.workspace.menu.reports_title'),
+                'items' => [[
+                    'label' => __('maternity.workspace.menu.reports'), 'icon' => 'ti ti-chart-bar', 'route' => 'maternity.reports.index', 'active_patterns' => ['maternity.reports.*'], 'permission' => 'maternity.reports.view', 'module' => 'maternity',
+                ]],
+            ],
+            [
+                'title' => __('maternity.workspace.menu.general'),
+                'items' => [
+                    ['label' => __('maternity.workspace.menu.notifications'), 'icon' => 'ti ti-bell', 'route' => 'admin.notifications.index', 'active_patterns' => ['admin.notifications.*'], 'permission' => 'notifications.view', 'module' => 'notifications', 'badge' => $unreadNotifications > 0 ? $unreadNotifications : null],
+                    ['label' => __('maternity.workspace.menu.profile'), 'icon' => 'ti ti-user-circle', 'route' => 'admin.profile', 'active_patterns' => ['admin.profile']],
+                ],
+            ],
+        ];
+    }
+
+    protected function administrativeSections(int $unreadNotifications): array
+    {
+        return [
+            [
+                'title' => __('administrative.workspace.title'),
+                'items' => [
+                    ['label' => __('administrative.menu.dashboard'), 'icon' => 'ti ti-layout-dashboard', 'route' => 'administrative.dashboard', 'active_patterns' => ['administrative.dashboard', 'administrative.dashboard.redirect']],
+                ],
+            ],
+            [
+                'title' => __('administrative.menu.oversight'),
+                'items' => [
+                    ['label' => __('administrative.menu.departments'), 'icon' => 'ti ti-building-hospital', 'route' => 'administrative.departments.index', 'active_patterns' => ['administrative.departments.*'], 'permission' => 'departments.view'],
+                    ['label' => __('administrative.menu.designations'), 'icon' => 'ti ti-id-badge-2', 'route' => 'administrative.designations.index', 'active_patterns' => ['administrative.designations.*'], 'permission' => 'departments.view'],
+                    ['label' => __('administrative.menu.users'), 'icon' => 'ti ti-users', 'route' => 'administrative.users.index', 'active_patterns' => ['administrative.users.*'], 'permission' => 'users.view'],
+                    ['label' => __('administrative.menu.roles'), 'icon' => 'ti ti-shield-lock', 'route' => 'administrative.roles.index', 'active_patterns' => ['administrative.roles.*'], 'permission' => 'roles.manage'],
+                ],
+            ],
+            [
+                'title' => __('administrative.menu.staff_title'),
+                'items' => [
+                    ['label' => __('administrative.menu.employees'), 'icon' => 'ti ti-id', 'route' => 'administrative.hr.employees.index', 'active_patterns' => ['administrative.hr.employees.*'], 'permission' => 'hr.employees.view', 'module' => 'hr'],
+                    ['label' => __('administrative.menu.attendance'), 'icon' => 'ti ti-clock-check', 'route' => 'administrative.hr.attendance.index', 'active_patterns' => ['administrative.hr.attendance.*'], 'permission' => 'hr.attendance.view', 'module' => 'hr'],
+                    ['label' => __('administrative.menu.leave'), 'icon' => 'ti ti-calendar-pause', 'route' => 'administrative.hr.leave.index', 'active_patterns' => ['administrative.hr.leave.*'], 'permission' => 'hr.leave.view', 'module' => 'hr'],
+                ],
+            ],
+            [
+                'title' => __('administrative.menu.governance'),
+                'items' => [
+                    ['label' => __('administrative.menu.audit'), 'icon' => 'ti ti-clipboard-check', 'route' => 'administrative.logs.index', 'active_patterns' => ['administrative.logs.*'], 'permission' => 'logs.view'],
+                    ['label' => __('administrative.menu.announcements'), 'icon' => 'ti ti-speakerphone', 'route' => 'administrative.notifications.broadcast.create', 'active_patterns' => ['administrative.notifications.broadcast.*'], 'permission' => 'notifications.broadcast', 'module' => 'notifications'],
+                    ['label' => __('administrative.menu.handoffs'), 'icon' => 'ti ti-arrows-exchange', 'route' => 'administrative.handoffs.index', 'active_patterns' => ['administrative.handoffs.*'], 'visible' => fn (User $user) => app(DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== []],
+                ],
+            ],
+            [
+                'title' => __('administrative.menu.reports_title'),
+                'items' => [
+                    ['label' => __('administrative.menu.reports_hub'), 'icon' => 'ti ti-chart-bar', 'route' => 'administrative.reports.index', 'active_patterns' => ['administrative.reports.index'], 'permission' => 'reports.view', 'module' => 'reports'],
+                    ['label' => __('administrative.menu.department_metrics'), 'icon' => 'ti ti-chart-dots', 'route' => 'administrative.reports.department-metrics', 'active_patterns' => ['administrative.reports.department-metrics'], 'permission' => 'reports.view', 'module' => 'reports'],
+                    ['label' => __('administrative.menu.department_comparison'), 'icon' => 'ti ti-chart-arrows', 'route' => 'administrative.reports.department-comparison.index', 'active_patterns' => ['administrative.reports.department-comparison.*'], 'permission' => 'reports.department_comparison.view', 'module' => 'reports'],
+                    ['label' => __('administrative.menu.journey_analytics'), 'icon' => 'ti ti-route', 'route' => 'administrative.journey.analytics', 'active_patterns' => ['administrative.journey.analytics'], 'visible' => fn (User $user) => app(DepartmentDashboardCapabilityService::class)->capabilitiesFor($user) !== []],
+                ],
+            ],
+            [
+                'title' => __('administrative.menu.general'),
+                'items' => [
+                    ['label' => __('administrative.menu.notifications'), 'icon' => 'ti ti-bell', 'route' => 'admin.notifications.index', 'active_patterns' => ['admin.notifications.*'], 'permission' => 'notifications.view', 'module' => 'notifications', 'badge' => $unreadNotifications > 0 ? $unreadNotifications : null],
+                    ['label' => __('administrative.menu.profile'), 'icon' => 'ti ti-user-circle', 'route' => 'admin.profile', 'active_patterns' => ['admin.profile']],
                 ],
             ],
         ];

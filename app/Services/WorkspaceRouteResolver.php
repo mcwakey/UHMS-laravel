@@ -63,6 +63,16 @@ class WorkspaceRouteResolver
         return $this->isType(DepartmentType::FINANCE);
     }
 
+    public function isMaternity(): bool
+    {
+        return $this->isType(DepartmentType::MATERNITY);
+    }
+
+    public function isAdministrative(): bool
+    {
+        return $this->isType(DepartmentType::ADMINISTRATIVE);
+    }
+
     public function isConsultation(): bool
     {
         $user = $this->request->user();
@@ -72,7 +82,7 @@ class WorkspaceRouteResolver
 
     public function isDepartmentWorkspace(): bool
     {
-        return $this->isRecords() || $this->isNursing() || $this->isEmergency() || $this->isInpatient() || $this->isInvestigation() || $this->isPharmacy() || $this->isStores() || $this->isFinance() || $this->isConsultation();
+        return $this->isRecords() || $this->isNursing() || $this->isEmergency() || $this->isInpatient() || $this->isInvestigation() || $this->isPharmacy() || $this->isStores() || $this->isFinance() || $this->isMaternity() || $this->isAdministrative() || $this->isConsultation();
     }
 
     public function dashboardRouteName(): string
@@ -86,6 +96,8 @@ class WorkspaceRouteResolver
             $this->isPharmacy() => 'pharmacy.dashboard',
             $this->isStores() => 'stores.dashboard',
             $this->isFinance() => 'finance.dashboard',
+            $this->isMaternity() => 'maternity.dashboard',
+            $this->isAdministrative() => 'administrative.dashboard',
             $this->isConsultation() => 'doctor.dashboard',
             default => 'admin.my-dashboard',
         };
@@ -102,6 +114,8 @@ class WorkspaceRouteResolver
             $this->isPharmacy() => 'pharmacy.',
             $this->isStores() => 'stores.',
             $this->isFinance() => 'finance.',
+            $this->isMaternity() => 'maternity.',
+            $this->isAdministrative() => 'administrative.',
             $this->isConsultation() => 'doctor.',
             default => null,
         };
@@ -171,6 +185,26 @@ class WorkspaceRouteResolver
                 default => Str::startsWith($genericRoute, 'admin.')
                     ? 'finance.'.Str::after($genericRoute, 'admin.')
                     : 'finance.'.$genericRoute,
+            };
+        } elseif ($this->isMaternity()) {
+            $candidate = match ($genericRoute) {
+                'admin.journey.worklist' => 'maternity.handoffs.index',
+                'admin.journey.worklist.refresh' => 'maternity.handoffs.refresh',
+                default => Str::startsWith($genericRoute, 'admin.maternity.')
+                    // admin.maternity.* maps straight to maternity.* (the generic
+                    // fallback would double the prefix).
+                    ? 'maternity.'.Str::after($genericRoute, 'admin.maternity.')
+                    : (Str::startsWith($genericRoute, 'admin.')
+                        ? 'maternity.'.Str::after($genericRoute, 'admin.')
+                        : 'maternity.'.$genericRoute),
+            };
+        } elseif ($this->isAdministrative()) {
+            $candidate = match ($genericRoute) {
+                'admin.journey.worklist' => 'administrative.handoffs.index',
+                'admin.journey.worklist.refresh' => 'administrative.handoffs.refresh',
+                default => Str::startsWith($genericRoute, 'admin.')
+                    ? 'administrative.'.Str::after($genericRoute, 'admin.')
+                    : 'administrative.'.$genericRoute,
             };
         } elseif ($this->isEmergency() && Str::startsWith($genericRoute, 'admin.emergency.')) {
             $candidate = match ($genericRoute) {
@@ -295,6 +329,8 @@ class WorkspaceRouteResolver
             $this->isPharmacy() => route('pharmacy.handoffs.index'),
             $this->isStores() => route('stores.handoffs.index'),
             $this->isFinance() => route('finance.handoffs.index'),
+            $this->isMaternity() => route('maternity.handoffs.index'),
+            $this->isAdministrative() => route('administrative.handoffs.index'),
             default => $this->route('admin.journey.worklist'),
         };
     }
@@ -341,6 +377,22 @@ class WorkspaceRouteResolver
 
         if ($this->isFinance()) {
             $candidate = 'finance.handoffs.'.$action;
+
+            return Route::has($candidate) ? $candidate : ($action === 'refresh'
+                ? 'admin.journey.worklist.refresh'
+                : 'admin.journey.handoffs.'.$action);
+        }
+
+        if ($this->isMaternity()) {
+            $candidate = 'maternity.handoffs.'.$action;
+
+            return Route::has($candidate) ? $candidate : ($action === 'refresh'
+                ? 'admin.journey.worklist.refresh'
+                : 'admin.journey.handoffs.'.$action);
+        }
+
+        if ($this->isAdministrative()) {
+            $candidate = 'administrative.handoffs.'.$action;
 
             return Route::has($candidate) ? $candidate : ($action === 'refresh'
                 ? 'admin.journey.worklist.refresh'
@@ -429,6 +481,28 @@ class WorkspaceRouteResolver
             ];
         }
 
+        if ($this->isMaternity()) {
+            return [
+                'workspaceKey' => 'maternity',
+                'workspaceRoutePrefix' => 'maternity.',
+                'workspaceTitle' => __('maternity.workspace.title'),
+                'workspaceDepartment' => $this->departments->currentDepartment($this->request->user(), $this->request),
+                'workspaceScope' => 'maternity_care',
+                'breadcrumbs' => $this->breadcrumbs(),
+            ];
+        }
+
+        if ($this->isAdministrative()) {
+            return [
+                'workspaceKey' => 'administrative',
+                'workspaceRoutePrefix' => 'administrative.',
+                'workspaceTitle' => __('administrative.workspace.title'),
+                'workspaceDepartment' => $this->departments->currentDepartment($this->request->user(), $this->request),
+                'workspaceScope' => 'hospital_operations',
+                'breadcrumbs' => $this->breadcrumbs(),
+            ];
+        }
+
         if ($this->isConsultation()) {
             return [
                 'workspaceKey' => 'doctor',
@@ -481,6 +555,14 @@ class WorkspaceRouteResolver
 
         if ($this->isFinance()) {
             return $this->financeBreadcrumbs();
+        }
+
+        if ($this->isMaternity()) {
+            return $this->maternityBreadcrumbs();
+        }
+
+        if ($this->isAdministrative()) {
+            return $this->administrativeBreadcrumbs();
         }
 
         if ($this->isConsultation()) {
@@ -885,6 +967,106 @@ class WorkspaceRouteResolver
             $crumbs[] = ['label' => __('finance.breadcrumbs.'.match ($action) {
                 'create', 'receive' => 'create',
                 'edit' => 'edit',
+                default => 'details',
+            }), 'url' => null];
+        }
+
+        return $crumbs;
+    }
+
+    /** @return list<array{label:string,url:?string}> */
+    private function maternityBreadcrumbs(): array
+    {
+        $name = (string) $this->request->route()?->getName();
+        $crumbs = [[
+            'label' => __('maternity.workspace.breadcrumb_root'),
+            'url' => in_array($name, ['maternity.dashboard', 'maternity.dashboard.redirect'], true)
+                ? null
+                : route('maternity.dashboard'),
+        ]];
+
+        $resource = match (true) {
+            Str::startsWith($name, 'maternity.pregnancies') => ['pregnancies', 'maternity.pregnancies.index'],
+            Str::startsWith($name, 'maternity.antenatal') => ['antenatal', 'maternity.pregnancies.index'],
+            Str::startsWith($name, 'maternity.labor') => ['labour', 'maternity.labor.index'],
+            Str::startsWith($name, 'maternity.deliveries') => ['deliveries', 'maternity.labor.index'],
+            Str::startsWith($name, 'maternity.newborns') => ['newborns', 'maternity.labor.index'],
+            Str::startsWith($name, 'maternity.postnatal') => ['postnatal', 'maternity.postnatal.index'],
+            Str::startsWith($name, 'maternity.cases') => ['cases', 'maternity.dashboard'],
+            Str::startsWith($name, 'maternity.billing-readiness') => ['billing_readiness', 'maternity.billing-readiness.show'],
+            Str::startsWith($name, 'maternity.patients') => ['patients', 'maternity.patients.index'],
+            Str::startsWith($name, 'maternity.handoffs') => ['handoffs', 'maternity.handoffs.index'],
+            Str::startsWith($name, 'maternity.reports') => ['reports', 'maternity.reports.index'],
+            default => null,
+        };
+
+        if (! $resource) {
+            return $crumbs;
+        }
+
+        [$key, $indexRoute] = $resource;
+        $isIndex = $name === $indexRoute;
+        $crumbs[] = [
+            'label' => __('maternity.workspace.breadcrumbs.'.$key),
+            'url' => $isIndex || ! Route::has($indexRoute) ? null : route($indexRoute),
+        ];
+
+        if (! $isIndex) {
+            $action = Str::afterLast($name, '.');
+            $crumbs[] = ['label' => __('maternity.workspace.breadcrumbs.'.match ($action) {
+                'create' => 'create',
+                'edit' => 'edit',
+                default => 'details',
+            }), 'url' => null];
+        }
+
+        return $crumbs;
+    }
+
+    /** @return list<array{label:string,url:?string}> */
+    private function administrativeBreadcrumbs(): array
+    {
+        $name = (string) $this->request->route()?->getName();
+        $crumbs = [[
+            'label' => __('administrative.breadcrumbs.administrative'),
+            'url' => in_array($name, ['administrative.dashboard', 'administrative.dashboard.redirect'], true)
+                ? null
+                : route('administrative.dashboard'),
+        ]];
+
+        $resource = match (true) {
+            Str::startsWith($name, 'administrative.departments') => ['departments', 'administrative.departments.index'],
+            Str::startsWith($name, 'administrative.designations') => ['designations', 'administrative.designations.index'],
+            Str::startsWith($name, 'administrative.users') => ['users', 'administrative.users.index'],
+            Str::startsWith($name, 'administrative.roles') => ['roles', 'administrative.roles.index'],
+            Str::startsWith($name, 'administrative.hr.employees') => ['staff', 'administrative.hr.employees.index'],
+            Str::startsWith($name, 'administrative.hr.attendance') => ['attendance', 'administrative.hr.attendance.index'],
+            Str::startsWith($name, 'administrative.hr.leave') => ['leave', 'administrative.hr.leave.index'],
+            Str::startsWith($name, 'administrative.logs') => ['audit', 'administrative.logs.index'],
+            Str::startsWith($name, 'administrative.notifications.broadcast') => ['announcements', 'administrative.notifications.broadcast.create'],
+            Str::startsWith($name, 'administrative.journey.analytics') => ['analytics', 'administrative.journey.analytics'],
+            Str::startsWith($name, 'administrative.handoffs') => ['handoffs', 'administrative.handoffs.index'],
+            Str::startsWith($name, 'administrative.reports') => ['reports', 'administrative.reports.index'],
+            default => null,
+        };
+
+        if (! $resource) {
+            return $crumbs;
+        }
+
+        [$key, $indexRoute] = $resource;
+        $isIndex = $name === $indexRoute;
+        $crumbs[] = [
+            'label' => __('administrative.breadcrumbs.'.$key),
+            'url' => $isIndex || ! Route::has($indexRoute) ? null : route($indexRoute),
+        ];
+
+        if (! $isIndex) {
+            $action = Str::afterLast($name, '.');
+            $crumbs[] = ['label' => __('administrative.breadcrumbs.'.match ($action) {
+                'create' => 'create',
+                'edit' => 'edit',
+                'summary' => 'summary',
                 default => 'details',
             }), 'url' => null];
         }

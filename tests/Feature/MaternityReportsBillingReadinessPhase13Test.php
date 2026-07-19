@@ -50,13 +50,13 @@ class MaternityReportsBillingReadinessPhase13Test extends TestCase
     public function test_maternity_reports_pages_render(): void
     {
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.reports.index'))
+            ->get(route('maternity.reports.index'))
             ->assertOk()
             ->assertSee('Maternity Reports');
 
         foreach (['antenatal', 'labor', 'deliveries', 'newborns', 'postnatal', 'risk'] as $report) {
             $this->actingAs($this->user)
-                ->get(route('admin.maternity.reports.'.$report))
+                ->get(route('maternity.reports.'.$report))
                 ->assertOk()
                 ->assertSee('Export CSV');
         }
@@ -65,7 +65,7 @@ class MaternityReportsBillingReadinessPhase13Test extends TestCase
     public function test_csv_export_returns_download_response(): void
     {
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.reports.export', ['report' => 'antenatal']))
+            ->get(route('maternity.reports.export', ['report' => 'antenatal']))
             ->assertOk()
             ->assertHeader('content-type', 'text/csv; charset=UTF-8');
     }
@@ -82,7 +82,7 @@ class MaternityReportsBillingReadinessPhase13Test extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.billing-readiness.show'))
+            ->get(route('maternity.billing-readiness.show'))
             ->assertOk()
             ->assertSee('Billing Mapping Readiness')
             ->assertSee('Mapping missing');
@@ -111,7 +111,7 @@ class MaternityReportsBillingReadinessPhase13Test extends TestCase
             'service_id' => $service->id,
         ]);
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.billing-readiness.show'))
+            ->get(route('maternity.billing-readiness.show'))
             ->assertOk()
             ->assertSee('Service used by multiple mappings');
         $this->assertSame($invoiceItemsBefore, InvoiceItem::count());
@@ -131,7 +131,7 @@ class MaternityReportsBillingReadinessPhase13Test extends TestCase
     public function test_non_permitted_user_cannot_view_reports(): void
     {
         $this->actingAs(User::factory()->create())
-            ->get(route('admin.maternity.reports.index'))
+            ->get(route('maternity.reports.index'))
             ->assertForbidden();
     }
 

@@ -1,8 +1,8 @@
-# UHMS Finance Department Workspace — Billing, Cashiering, Receivables, Accounting Control, and `/finance/*` Route Architecture
+# UHMS Administrative Department Workspace — Hospital Operations, Governance, Oversight, and `/administrative/*` Route Architecture
 
-Implement a dedicated **Finance Department Workspace** for UHMS.
+Implement a dedicated **Administrative Department Workspace** for UHMS.
 
-This workspace is for Finance, Accounts, Billing, Cashier, Insurance, Claims, and authorized financial-control staff managing the hospital’s financial operations from billing and payment collection through accounts receivable, insurance claims, sponsor accounts, refunds, credit notes, cashier reconciliation, journal review, financial reporting, and audit oversight.
+This workspace is for hospital administrators, management personnel, departmental coordinators, executive officers, compliance staff, and other authorized administrative users responsible for coordinating hospital operations and overseeing departments.
 
 This implementation should follow the same department-aware workspace architecture already established for:
 
@@ -15,316 +15,269 @@ This implementation should follow the same department-aware workspace architectu
 * Pharmacy
 * Stores
 * Maternity
+* Finance
 
 The configured department type is:
 
 ```php
-DepartmentType::FINANCE
+DepartmentType::ADMINISTRATIVE
 ```
 
 The browser workspace must use:
 
 ```text
-/finance/*
+/administrative/*
 ```
 
 The objective is that when a logged-in user’s active department has:
 
 ```php
-DepartmentType::FINANCE
+DepartmentType::ADMINISTRATIVE
 ```
 
-the user should experience UHMS as a dedicated Finance application with:
+the user should experience UHMS as a dedicated Administrative application with:
 
-* A Finance-specific sidebar menu
-* A Finance operations dashboard
-* Finance-specific breadcrumbs
-* Finance-specific route names
-* Consistent `/finance/*` URLs
-* Billing and invoice worklists
-* Cashier and payment-collection workflows
-* Accounts-receivable management
-* Previous-balance and cross-visit allocation visibility
-* Insurance and sponsor billing
-* Claims preparation and submission
-* Refund, reversal, discount, and credit-note controls
-* Cashier-session and shift reconciliation
-* Deposit and advance-payment management
-* General-ledger and journal visibility
-* Bank and payment-provider reconciliation
+* An Administrative-specific sidebar menu
+* A hospital operations dashboard
+* Administrative-specific breadcrumbs
+* Administrative-specific route names
+* Consistent `/administrative/*` URLs
+* Departmental oversight
+* Operational approval worklists
+* Hospital activity summaries
+* Staff and department coordination
+* Policy and procedure management
+* Compliance and audit follow-up
+* Incident and complaint management
+* Meeting, committee, and action tracking
+* Announcements and internal communication
+* Document and correspondence tracking
+* Facility and service availability awareness
+* Executive and operational reporting
 * Permission-controlled menu visibility
-* Active-department and cashier-context scoping
-* Separation of duties
-* Financial audit integrity
-* Reuse of existing billing, payment, receivable, insurance, claims, accounting, stock, payroll, reporting, and audit logic
+* Active-department and facility scoping
+* Separation between administrative oversight and specialist department operations
+* Reuse of existing user, department, workflow, reporting, audit, HR, Finance, Stores, and clinical services
 
-Do not duplicate core billing, payment, invoice, receivable, insurance, claims, general-ledger, journal, refund, credit-note, or reconciliation logic merely to create the Finance workspace.
+Do not duplicate core clinical, Finance, HR, Records, Stores, billing, admission, patient, user-management, reporting, or audit logic merely to create the Administrative workspace.
 
 ---
 
 # 1. Core Functional Requirement
 
-When the active department type is `finance`, all supported browser pages used by Finance staff must appear under the `/finance` URL prefix.
+When the active department type is `administrative`, all supported browser pages used by administrative staff must appear under the `/administrative` URL prefix.
 
 Examples:
 
 ```text
-/finance
-/finance/dashboard
+/administrative
+/administrative/dashboard
 
-/finance/billing
-/finance/billing/pending
-/finance/billing/incomplete
-/finance/billing/exceptions
-/finance/billing/{visit}
+/administrative/departments
+/administrative/departments/{department}
+/administrative/departments/{department}/performance
 
-/finance/invoices
-/finance/invoices/draft
-/finance/invoices/unpaid
-/finance/invoices/partially-paid
-/finance/invoices/paid
-/finance/invoices/overdue
-/finance/invoices/cancelled
-/finance/invoices/{invoice}
+/administrative/operations
+/administrative/operations/worklist
+/administrative/operations/exceptions
+/administrative/operations/escalations
 
-/finance/payments
-/finance/payments/collect
-/finance/payments/today
-/finance/payments/unallocated
-/finance/payments/reversed
-/finance/payments/{payment}
+/administrative/approvals
+/administrative/approvals/pending
+/administrative/approvals/completed
+/administrative/approvals/{approval}
 
-/finance/cashier
-/finance/cashier/session
-/finance/cashier/open
-/finance/cashier/close
-/finance/cashier/reconciliation
+/administrative/users
+/administrative/users/{user}
+/administrative/staff
+/administrative/staff/{staff}
 
-/finance/receivables
-/finance/receivables/patient
-/finance/receivables/insurance
-/finance/receivables/sponsors
-/finance/receivables/aging
-/finance/receivables/{receivable}
+/administrative/schedules
+/administrative/duty-rosters
+/administrative/coverage
 
-/finance/patient-balances
-/finance/patient-balances/{patient}
-/finance/payment-allocation
+/administrative/policies
+/administrative/policies/{policy}
+/administrative/procedures
+/administrative/guidelines
 
-/finance/insurance
-/finance/insurance/authorizations
-/finance/insurance/invoices
-/finance/insurance/claims
+/administrative/documents
+/administrative/correspondence
+/administrative/memos
+/administrative/announcements
 
-/finance/claims
-/finance/claims/draft
-/finance/claims/validation
-/finance/claims/ready
-/finance/claims/submitted
-/finance/claims/rejected
-/finance/claims/paid
-/finance/claims/{claim}
+/administrative/incidents
+/administrative/incidents/{incident}
+/administrative/complaints
+/administrative/complaints/{complaint}
 
-/finance/sponsors
-/finance/sponsors/accounts
-/finance/sponsors/statements
+/administrative/compliance
+/administrative/audits
+/administrative/audits/{audit}
+/administrative/findings
+/administrative/risk-register
 
-/finance/discounts
-/finance/credit-notes
-/finance/refunds
-/finance/reversals
-/finance/write-offs
+/administrative/meetings
+/administrative/committees
+/administrative/action-items
 
-/finance/deposits
-/finance/advances
+/administrative/facilities
+/administrative/service-availability
+/administrative/department-status
 
-/finance/journals
-/finance/general-ledger
-/finance/trial-balance
-/finance/chart-of-accounts
-
-/finance/reconciliation
-/finance/reconciliation/cash
-/finance/reconciliation/bank
-/finance/reconciliation/digital-payments
-/finance/reconciliation/insurance
-
-/finance/reports
+/administrative/handoffs
+/administrative/reports
 ```
 
-A Finance user should not enter through:
+An Administrative user should not enter through:
 
 ```text
-/finance/invoices/{invoice}
+/administrative/departments/{department}
 ```
 
 and later be redirected to generic URLs such as:
 
 ```text
-/invoices/{invoice}
-/payments/{payment}
-/billing/{visit}
-/claims/{claim}
-/receivables/{receivable}
-/accounting/journals/{journal}
+/departments/{department}
+/admin/users/{user}
+/approvals/{approval}
+/incidents/{incident}
+/reports/operations
 ```
 
-All browser navigation, forms, payment actions, invoice actions, worklists, breadcrumbs, notifications, dashboard cards, report drilldowns, and redirects must preserve the Finance workspace context.
+All browser navigation, forms, redirects, breadcrumbs, dashboard links, worklists, approval actions, notifications, report drilldowns, and administrative records must preserve the Administrative workspace context.
 
 ---
 
-# 2. Finance Workspace Scope
+# 2. Administrative Workspace Scope
 
-The Finance workspace is responsible for configured financial workflows, including:
+The Administrative workspace is responsible for hospital administration and operational oversight, including:
 
-1. Patient billing review
-2. Visit billing review
-3. Invoice generation
-4. Draft invoice review
-5. Invoice finalization
-6. Payment collection
-7. Cash payments
-8. Digital payments
-9. Bank payments
-10. Card or TPE payments where supported
-11. Mobile Money payments where supported
-12. Receipt generation
-13. Partial payments
-14. Advance payments
-15. Patient deposits
-16. Payment allocation
-17. Cross-visit payment allocation
-18. Previous outstanding balance management
-19. Accounts receivable
-20. Patient receivables
-21. Insurance receivables
-22. Sponsor receivables
-23. Receivable aging
-24. Discounts
-25. Credit notes
-26. Refunds
-27. Payment reversals
-28. Invoice cancellations
-29. Write-offs
-30. Insurance authorization awareness
-31. Insurance invoice preparation
-32. Claims validation
-33. Claims submission
-34. Claims rejection management
-35. Claims payment posting
-36. Sponsor account management
-37. Sponsor statements
-38. Cashier opening and closing
-39. Cashier-session reconciliation
-40. Cash variance management
-41. Bank reconciliation
-42. Digital payment-provider reconciliation
-43. Journal and general-ledger review
-44. Trial balance
-45. Chart-of-accounts visibility
-46. Revenue and collection reporting
-47. Financial audit review
-48. Payment-gate policy administration where authorized
-49. Billing override review
-50. Financial reports and exports
+1. Departmental oversight
+2. Hospital operations monitoring
+3. Service availability monitoring
+4. Department performance summaries
+5. Operational exceptions
+6. Administrative escalation
+7. Approval worklists
+8. Cross-department coordination
+9. Department creation and configuration where authorized
+10. Staff and departmental assignment awareness
+11. Duty-roster and coverage awareness
+12. Policy management
+13. Standard operating procedure management
+14. Administrative guidelines
+15. Internal memos
+16. Announcements
+17. Correspondence tracking
+18. Document registers
+19. Committee management
+20. Meeting management
+21. Action-item tracking
+22. Complaint management
+23. Incident management
+24. Administrative investigations
+25. Compliance monitoring
+26. Internal audit follow-up
+27. Audit findings
+28. Corrective-action tracking
+29. Risk-register management
+30. Facility and operational issue tracking
+31. Executive reporting
+32. Departmental comparison
+33. Operational trends
+34. Management summaries
+35. System-configuration awareness where authorized
+36. Administrative activity auditing
 
-The Finance workspace must remain distinct from:
+The Administrative workspace must remain distinct from:
 
-* Clinical service ordering
+* Clinical consultation
+* Patient registration and Records operations
+* Finance transactions
 * Pharmacy dispensing
 * Stores inventory operations
-* Insurance clinical coding
-* Human-resources payroll processing unless Finance has specific payroll permissions
-* Procurement approval unless explicitly assigned
-* Patient registration
-* Clinical discharge decisions
+* HR payroll and attendance processing
+* Investigation result processing
+* Inpatient ward care
+* Emergency care
+* Maternity care
+* Theatre operations
+* Technical system administration
 
-Finance may review the financial effect of those workflows, but their specialist departments remain authoritative for clinical and operational decisions.
+Administrative users may oversee and review those areas, but specialist workspaces and domain services remain authoritative for performing specialist actions.
 
 ---
 
-# Phase 1 — Inspect the Existing Finance and Accounting Architecture
+# Phase 1 — Inspect the Existing Administrative Architecture
 
 Before implementing, inspect the current codebase and identify:
 
 1. How department-specific menus are selected.
-2. How existing department workspaces are registered.
+2. How existing departmental workspaces are registered.
 3. How active department context is resolved.
 4. How multi-department users switch active departments.
-5. How `DepartmentType::FINANCE` is currently mapped by:
+5. How `DepartmentType::ADMINISTRATIVE` is currently mapped by:
 
-   * dashboard resolver
-   * menu profile service
+   * department dashboard resolver
+   * department dashboard registry
+   * department menu profile service
    * capability resolver
    * department metrics registry
-6. Whether Finance currently resolves to an internal dashboard key such as:
+6. Whether the current internal dashboard key is:
 
 ```text
-accounting
-finance
-billing
-cashier
+management
+administrative
+admin
+operations
 ```
 
-Preserve the established internal dashboard key where required, while exposing the browser workspace under `/finance/*`.
+Preserve established internal keys where required while exposing the browser workspace under `/administrative/*`.
 
-7. Existing routes, controllers, models, services, policies, commands, jobs, and views for:
+7. Existing routes, controllers, services, policies, models, and views for:
 
-   * billing
-   * invoice generation
-   * invoices
-   * invoice items
-   * invoice receivables
-   * payments
-   * payment allocations
-   * payment methods
-   * cashier sessions
-   * receipts
-   * patient balances
-   * previous balances
-   * credit notes
-   * discounts
-   * refunds
-   * payment reversals
-   * write-offs
-   * insurance
-   * claims
-   * sponsors
-   * deposits
-   * advance payments
-   * general ledger
-   * journals
-   * journal entries
-   * chart of accounts
-   * trial balance
-   * bank reconciliation
-   * digital payment reconciliation
-   * payment gateways
-   * payment-gate policy
-   * visit billing overrides
-   * financial reports
-8. Existing invoice statuses.
-9. Existing payment statuses.
-10. Existing cashier-session statuses.
-11. Existing receivable states.
-12. Existing claim statuses.
-13. Existing credit-note and refund rules.
-14. Existing journal-posting behaviour.
-15. Existing accounting-period controls.
-16. Existing previous-balance policy.
-17. Existing cross-visit payment-allocation services.
-18. Existing patient privacy and audit protections.
-19. Existing views that hardcode routes such as:
+   * departments
+   * users
+   * roles
+   * permissions
+   * department assignments
+   * facility configuration
+   * operational dashboards
+   * approval workflows
+   * notifications
+   * announcements
+   * documents
+   * reports
+   * activity logs
+   * audit findings
+   * incidents
+   * complaints
+   * schedules
+   * duty rosters
+   * committees
+   * meetings
+   * tasks
+   * risk registers
+8. Existing management and department dashboard widgets.
+9. Existing departmental analytics.
+10. Existing cross-department comparison services.
+11. Existing approval infrastructure.
+12. Existing Journey Intelligence oversight functionality.
+13. Existing audit and ActivityLog infrastructure.
+14. Existing file and document-storage architecture.
+15. Existing permission naming conventions.
+16. Existing admin-preview behaviour.
+17. Existing views that hardcode generic routes such as:
 
 ```php
-route('invoices.show', $invoice)
-route('payments.show', $payment)
-route('claims.show', $claim)
-route('patients.show', $patient)
-route('visits.show', $visit)
+route('admin.departments.show', $department)
+route('admin.users.show', $user)
+route('approvals.show', $approval)
+route('reports.department-metrics')
 ```
 
-Do not create a competing finance, billing, receivable, claims, accounting, menu, or route-resolution framework where one already exists.
+Do not create a competing administrative menu, dashboard, approval, department, user-management, or reporting system where one already exists.
 
 Extend the existing:
 
@@ -332,206 +285,189 @@ Extend the existing:
 * Department menu profile service
 * Department capability resolver
 * Active department context
-* Workspace URL resolver
+* Workspace route resolver
 * Workspace redirect resolver
-* Billing services
-* Invoice services
-* Payment services
-* Payment allocation services
-* Receivable services
-* Previous-balance services
-* Insurance services
-* Claims services
-* Sponsor services
-* Refund and credit-note services
-* General-ledger services
-* Journal services
-* Reconciliation services
-* Payment-gate policy
+* Department management services
+* User and assignment services
+* Approval infrastructure
+* Journey Intelligence oversight services
+* Reporting services
+* Notification services
+* Document services
 * Authorization policies
-* Patient privacy services
 * Activity logging
 
 ---
 
-# Phase 2 — Finance Workspace Route Group
+# Phase 2 — Administrative Workspace Route Group
 
-Create a dedicated Finance route group.
+Create a dedicated Administrative route group.
 
 Use a structure equivalent to:
 
 ```php
-Route::prefix('finance')
-    ->name('finance.')
+Route::prefix('administrative')
+    ->name('administrative.')
     ->middleware([
         'auth',
         'verified',
         'department.context',
-        'department.type:finance',
+        'department.type:administrative',
     ])
     ->group(function () {
-        // Finance workspace routes
+        // Administrative workspace routes
     });
 ```
 
 Use the project’s actual middleware names and active-department authorization architecture.
 
-Required route names should include, where the corresponding functionality already exists:
+Required route names should include, where the corresponding functionality exists:
 
 ```text
-finance.dashboard
+administrative.dashboard
 
-finance.billing.index
-finance.billing.pending
-finance.billing.incomplete
-finance.billing.exceptions
-finance.billing.show
-finance.billing.review
-finance.billing.finalize
+administrative.departments.index
+administrative.departments.show
+administrative.departments.performance
+administrative.departments.status
+administrative.departments.services
+administrative.departments.staff
 
-finance.invoices.index
-finance.invoices.draft
-finance.invoices.unpaid
-finance.invoices.partially_paid
-finance.invoices.paid
-finance.invoices.overdue
-finance.invoices.cancelled
-finance.invoices.show
-finance.invoices.create
-finance.invoices.store
-finance.invoices.finalize
-finance.invoices.cancel
-finance.invoices.print
+administrative.operations.index
+administrative.operations.worklist
+administrative.operations.exceptions
+administrative.operations.escalations
+administrative.operations.show
 
-finance.payments.index
-finance.payments.collect
-finance.payments.store
-finance.payments.today
-finance.payments.unallocated
-finance.payments.reversed
-finance.payments.show
-finance.payments.allocate
-finance.payments.reverse
-finance.payments.receipt
+administrative.approvals.index
+administrative.approvals.pending
+administrative.approvals.completed
+administrative.approvals.show
+administrative.approvals.approve
+administrative.approvals.reject
+administrative.approvals.return
 
-finance.cashier.index
-finance.cashier.session
-finance.cashier.open
-finance.cashier.close
-finance.cashier.reconciliation
+administrative.users.index
+administrative.users.show
+administrative.users.departments
+administrative.users.permissions
 
-finance.receivables.index
-finance.receivables.patient
-finance.receivables.insurance
-finance.receivables.sponsors
-finance.receivables.aging
-finance.receivables.show
+administrative.staff.index
+administrative.staff.show
+administrative.staff.coverage
 
-finance.patient_balances.index
-finance.patient_balances.show
-finance.payment_allocation.index
-finance.payment_allocation.store
+administrative.schedules.index
+administrative.duty_rosters.index
+administrative.coverage.index
 
-finance.insurance.index
-finance.insurance.authorizations
-finance.insurance.invoices
-finance.insurance.claims
+administrative.policies.index
+administrative.policies.show
+administrative.policies.create
+administrative.policies.store
+administrative.policies.update
+administrative.policies.publish
+administrative.policies.archive
 
-finance.claims.index
-finance.claims.draft
-finance.claims.validation
-finance.claims.ready
-finance.claims.submitted
-finance.claims.rejected
-finance.claims.paid
-finance.claims.show
-finance.claims.validate
-finance.claims.submit
-finance.claims.resubmit
-finance.claims.post_payment
+administrative.procedures.index
+administrative.procedures.show
+administrative.guidelines.index
+administrative.guidelines.show
 
-finance.sponsors.index
-finance.sponsors.accounts
-finance.sponsors.statements
-finance.sponsors.show
+administrative.documents.index
+administrative.documents.show
+administrative.documents.create
+administrative.documents.store
+administrative.documents.update
+administrative.documents.archive
 
-finance.discounts.index
-finance.discounts.create
-finance.discounts.store
-finance.discounts.show
-finance.discounts.approve
-finance.discounts.reject
+administrative.correspondence.index
+administrative.correspondence.show
+administrative.correspondence.create
+administrative.correspondence.store
 
-finance.credit_notes.index
-finance.credit_notes.create
-finance.credit_notes.store
-finance.credit_notes.show
-finance.credit_notes.approve
-finance.credit_notes.issue
+administrative.memos.index
+administrative.memos.show
+administrative.memos.create
+administrative.memos.store
+administrative.memos.publish
 
-finance.refunds.index
-finance.refunds.create
-finance.refunds.store
-finance.refunds.show
-finance.refunds.approve
-finance.refunds.complete
+administrative.announcements.index
+administrative.announcements.show
+administrative.announcements.create
+administrative.announcements.store
+administrative.announcements.publish
 
-finance.reversals.index
-finance.reversals.show
-finance.write_offs.index
-finance.write_offs.create
-finance.write_offs.store
-finance.write_offs.approve
+administrative.incidents.index
+administrative.incidents.show
+administrative.incidents.create
+administrative.incidents.store
+administrative.incidents.update
+administrative.incidents.assign
+administrative.incidents.resolve
 
-finance.deposits.index
-finance.deposits.create
-finance.deposits.store
-finance.deposits.show
+administrative.complaints.index
+administrative.complaints.show
+administrative.complaints.create
+administrative.complaints.store
+administrative.complaints.assign
+administrative.complaints.resolve
 
-finance.advances.index
-finance.advances.show
+administrative.compliance.index
+administrative.audits.index
+administrative.audits.show
+administrative.findings.index
+administrative.findings.show
+administrative.findings.assign
+administrative.findings.resolve
 
-finance.journals.index
-finance.journals.show
-finance.general_ledger.index
-finance.general_ledger.show
-finance.trial_balance.index
-finance.chart_of_accounts.index
-finance.chart_of_accounts.show
+administrative.risks.index
+administrative.risks.show
+administrative.risks.create
+administrative.risks.store
+administrative.risks.update
 
-finance.reconciliation.index
-finance.reconciliation.cash
-finance.reconciliation.bank
-finance.reconciliation.digital_payments
-finance.reconciliation.insurance
+administrative.meetings.index
+administrative.meetings.show
+administrative.meetings.create
+administrative.meetings.store
 
-finance.payment_gate.index
-finance.payment_gate.overrides
-finance.payment_gate.audit
+administrative.committees.index
+administrative.committees.show
 
-finance.reports.index
+administrative.action_items.index
+administrative.action_items.show
+administrative.action_items.assign
+administrative.action_items.complete
+
+administrative.facilities.index
+administrative.facilities.show
+administrative.service_availability.index
+administrative.department_status.index
+
+administrative.handoffs.index
+administrative.reports.index
 ```
 
-Only register routes for functionality that genuinely exists or is implemented in this phase.
+Only register routes for functionality that exists or is being implemented.
 
-Do not create empty placeholder pages merely to populate the Finance menu.
+Do not create empty placeholder pages merely to populate the menu.
 
 ---
 
-# Phase 3 — Finance Operations Dashboard
+# Phase 3 — Administrative Operations Dashboard
 
-Create or complete a dedicated Finance dashboard.
+Create or complete a dedicated Administrative dashboard.
 
 The canonical route should be:
 
 ```text
-/finance
+/administrative
 ```
 
 or:
 
 ```text
-/finance/dashboard
+/administrative/dashboard
 ```
 
 Choose one canonical route and redirect the other to it.
@@ -539,217 +475,193 @@ Choose one canonical route and redirect the other to it.
 The department dashboard resolver should map:
 
 ```php
-DepartmentType::FINANCE => 'finance.dashboard'
+DepartmentType::ADMINISTRATIVE => 'administrative.dashboard'
 ```
 
-If the existing dashboard registry uses an internal key such as `accounting`, update it safely so that the public Finance destination remains:
+If the existing registry uses an internal dashboard key such as `management`, preserve compatibility while exposing `/administrative`.
 
-```text
-/finance
-```
-
-The dashboard should function as a Finance command board.
+The dashboard should function as a hospital operations command board.
 
 Recommended metrics and widgets include, where reliable data exists:
 
-* Gross billing today
-* Net billing today
-* Payments collected today
-* Cash collected today
-* Digital payments today
-* Insurance billing today
-* Sponsor billing today
-* Outstanding patient receivables
-* Outstanding insurance receivables
-* Outstanding sponsor receivables
-* Total accounts receivable
-* Receivables overdue
-* Unpaid invoices
-* Partially paid invoices
-* Payments awaiting allocation
-* Unreconciled payments
-* Open cashier sessions
-* Cashier sessions awaiting closure
-* Cashier variances
-* Refunds awaiting approval
-* Credit notes awaiting approval
-* Discounts awaiting approval
-* Write-offs awaiting approval
-* Claims awaiting validation
-* Claims ready for submission
-* Rejected claims
-* Claims awaiting payment
-* Claims paid today
-* Previous patient balances
-* Billing-context exceptions
-* Payment-gate overrides today
-* Journal-posting exceptions
-* Unbalanced journal alerts
-* Revenue by department
-* Collection rate
-* Average days receivable
-* AR aging distribution
-* Daily cash position where authorized
+* Active departments
+* Departments currently operational
+* Departments with service interruptions
+* Departments with critical alerts
+* Active staff today
+* Departments with inadequate coverage
+* Pending administrative approvals
+* Overdue approvals
+* Open incidents
+* Critical incidents
+* Open complaints
+* Complaints awaiting response
+* Outstanding audit findings
+* Overdue corrective actions
+* High-risk items
+* Pending policy reviews
+* Policies awaiting approval
+* Unpublished administrative documents
+* Open meeting action items
+* Overdue action items
+* Journey Intelligence critical cases
+* Departments with SLA breaches
+* Departments with supervisor configuration missing
+* System-wide patient volume today
+* Current active visits
+* Current admissions
+* Emergency activity
+* Discharges today
+* Service bottlenecks
+* Department performance ranking
+* Operational escalations
+* Notifications requiring management attention
 
 Each dashboard metric must:
 
 * Respect permissions
-* Respect the active Finance department
-* Respect cashier or branch scoping where configured
-* Avoid exposing protected patient information unnecessarily
-* Avoid exposing financial valuation to unauthorized users
-* Link to valid `/finance/*` routes
+* Respect the active Administrative department
+* Respect facility or branch scoping
+* Avoid exposing patient-identifiable information unnecessarily
+* Avoid exposing financial, HR, or clinical details without permission
+* Link to valid `/administrative/*` routes
 * Use safe empty states
 * Avoid expensive unbounded queries
-* Reuse the existing department metrics and accounting services where applicable
+* Reuse existing department metrics, Journey Intelligence, analytics, and reporting services
 
 Do not introduce metrics that cannot be calculated reliably.
 
 ---
 
-# Phase 4 — Finance-Specific Menu Profile
+# Phase 4 — Administrative-Specific Menu Profile
 
 Extend the existing department menu profile or menu registry so that:
 
 ```php
-DepartmentType::FINANCE
+DepartmentType::ADMINISTRATIVE
 ```
 
-receives a dedicated Finance menu.
+receives a dedicated Administrative menu.
 
 Recommended menu structure:
 
-## Finance Command
+## Administrative Command
 
 * Dashboard
-* Billing Exceptions
-* Unpaid Invoices
-* Open Cashier Sessions
-* Claims Requiring Attention
-* Approval Worklist
+* Operational Overview
+* Pending Approvals
+* Critical Escalations
+* Department Status
+* Executive Summary
 
-## Billing
+## Departments
 
-* Billing Worklist
-* Pending Billing
-* Incomplete Billing
-* Billing Exceptions
-* Finalized Billing
-* Visit Billing Review
+* All Departments
+* Department Performance
+* Department Services
+* Department Staffing
+* Department Configuration
+* Department Comparison
 
-## Invoices
+## Operations
 
-* All Invoices
-* Draft Invoices
-* Unpaid Invoices
-* Partially Paid
-* Paid Invoices
-* Overdue Invoices
-* Cancelled Invoices
+* Operations Worklist
+* Service Availability
+* Operational Exceptions
+* SLA Breaches
+* Bottlenecks
+* Critical Alerts
+* Escalations
 
-## Payments and Cashier
+## People and Coverage
 
-* Collect Payment
-* Today’s Payments
-* All Payments
-* Unallocated Payments
-* Reversed Payments
-* Cashier Session
-* Open Cashier Session
-* Close Cashier Session
-* Cashier Reconciliation
-* Receipt History
+* Staff Directory
+* User Directory
+* Department Assignments
+* Duty Rosters
+* Staff Coverage
+* Supervisors
+* Unassigned Responsibilities
 
-## Accounts Receivable
+Do not expose HR payroll, attendance modification, or confidential employee records unless the user possesses the relevant HR permissions.
 
-* Patient Receivables
-* Insurance Receivables
-* Sponsor Receivables
-* Receivable Aging
-* Patient Balances
-* Previous Balances
-* Statements
+## Approvals
 
-## Insurance and Claims
+* Pending Approvals
+* My Approval Queue
+* Overdue Approvals
+* Completed Approvals
+* Rejected Requests
+* Returned for Correction
 
-* Insurance Authorizations
-* Insurance Invoices
-* Claims Drafts
-* Claims Validation
-* Claims Ready for Submission
-* Submitted Claims
-* Rejected Claims
-* Paid Claims
-* Claims Reconciliation
+## Policies and Governance
 
-## Sponsor Accounts
+* Policies
+* Standard Operating Procedures
+* Guidelines
+* Policy Review Calendar
+* Archived Policies
 
-* Sponsor Accounts
-* Sponsor Invoices
-* Sponsor Receivables
-* Sponsor Statements
-* Sponsor Payments
+## Communication and Documents
 
-## Adjustments and Approvals
+* Announcements
+* Memos
+* Correspondence
+* Administrative Documents
+* Circulars
+* Document Register
 
-* Discounts
-* Credit Notes
-* Refunds
-* Payment Reversals
-* Invoice Cancellations
-* Write-Offs
-* Billing Overrides
-* Payment-Gate Overrides
+## Incidents and Complaints
 
-## Deposits and Advances
+* Incidents
+* Critical Incidents
+* Complaints
+* Pending Investigations
+* Corrective Actions
+* Resolved Cases
 
-* Patient Deposits
-* Advance Payments
-* Deposit Allocation
-* Unused Deposits
-* Refundable Deposits
+## Compliance and Risk
 
-## Accounting
+* Compliance Dashboard
+* Internal Audits
+* Audit Findings
+* Corrective Actions
+* Risk Register
+* High-Risk Items
+* Compliance Deadlines
 
-* Journal Entries
-* General Ledger
-* Trial Balance
-* Chart of Accounts
-* Posting Exceptions
-* Accounting Periods where supported
+## Meetings and Committees
 
-## Reconciliation
+* Meetings
+* Committees
+* Meeting Minutes
+* Action Items
+* Overdue Actions
 
-* Cash Reconciliation
-* Bank Reconciliation
-* Digital Payment Reconciliation
-* Insurance Reconciliation
-* Sponsor Reconciliation
-* Unmatched Transactions
+## Facilities and Availability
 
-## Finance Reports
+* Facility Overview
+* Department Availability
+* Service Interruptions
+* Facility Issues
+* Operational Notices
 
-* Revenue Report
-* Collection Report
-* Payment Method Report
-* Cashier Report
-* Invoice Report
-* Accounts Receivable Report
-* AR Aging Report
-* Patient Balance Report
-* Insurance Receivable Report
-* Claims Report
-* Sponsor Report
-* Discount Report
-* Credit-Note Report
-* Refund Report
-* Write-Off Report
-* General Ledger Report
-* Trial Balance Report
-* Reconciliation Report
-* Department Revenue Report
-* Daily Financial Summary
-* Audit Report
+Only expose maintenance or technical actions where supported and authorized.
+
+## Reports
+
+* Department Performance Report
+* Operational Activity Report
+* Service Availability Report
+* Approval Report
+* Incident Report
+* Complaint Report
+* Audit Findings Report
+* Risk Report
+* Staff Coverage Report
+* Executive Summary Report
+* Department Comparison Report
+* Management Activity Report
 
 ## General
 
@@ -760,1289 +672,960 @@ Recommended menu structure:
 Only show a menu item when:
 
 1. The feature exists.
-2. The required module is enabled.
+2. The corresponding module is enabled.
 3. The user possesses the required permission.
-4. The active department permits access.
-5. The user’s cashier, branch, facility, or accounting scope permits access.
+4. The active department and facility permit access.
+5. The action belongs to administrative operations.
 
 Permissions remain authoritative.
 
-Do not expose menu items solely because the active department type is `finance`.
+Do not expose menu items solely because the active department type is `administrative`.
 
 ---
 
-# Phase 5 — Billing Worklist
+# Phase 5 — Department Oversight
 
-Create or adapt billing worklists under:
-
-```text
-/finance/billing
-```
-
-Recommended billing states include:
+Expose departmental oversight under:
 
 ```text
-not_started
-in_progress
-incomplete
-billing_context_missing
-price_missing
-insurance_mapping_missing
-authorization_pending
-payment_gate_exception
-ready_for_invoice
-invoiced
-cancelled
+/administrative/departments
 ```
 
-Use existing billing, service, price, insurance, visit, and payment-gate data.
+Reuse the existing department management and metrics services.
 
-Do not introduce duplicate billing states where the worklist status can be derived through a centralized resolver.
+Each department overview may display:
 
-Each billing row should display only authorized information, such as:
+* Department name
+* Department type
+* Department status
+* Facility
+* Department head
+* Supervisor
+* Active staff
+* Available services
+* Current patient volume
+* Active work queue
+* Critical alerts
+* SLA breaches
+* Operational state
+* Latest activity
+* Outstanding approvals
+* Outstanding risks
+* Quick links
 
-* Patient identifier
-* Patient name according to privacy rules
-* Visit number
+Administrative users must not automatically gain permission to edit every department.
+
+Separate:
+
+```text
+view
+manage
+configure
+activate
+deactivate
+assign_staff
+manage_services
+```
+
+through permissions and policies.
+
+---
+
+# Phase 6 — Department Performance and Comparison
+
+Reuse the existing Department Metrics Registry and comparison services.
+
+Expose department performance under:
+
+```text
+/administrative/departments/{department}/performance
+```
+
+and comparison under an authorized Administrative report or dashboard.
+
+Potential metrics include:
+
+* Patient volume
+* Active visits
+* Completed visits
+* Revenue where authorized
+* Average waiting time
+* SLA compliance
+* Worklist volume
+* Critical alerts
+* Service completion rate
+* Pending handoffs
+* Discharge rate
+* Investigation turnaround time
+* Prescription turnaround time
+* Bed occupancy
+* Department staffing coverage
+
+Only show metrics appropriate to each department type.
+
+Do not compare unrelated departments using meaningless metrics.
+
+Use department-type-specific metric definitions and clearly label shared versus type-specific KPIs.
+
+---
+
+# Phase 7 — Administrative Operations Worklist
+
+Create or adapt an operations worklist under:
+
+```text
+/administrative/operations/worklist
+```
+
+Recommended worklist categories include:
+
+```text
+approval_required
+department_exception
+service_interruption
+staffing_gap
+sla_breach
+critical_escalation
+policy_review_due
+audit_action_due
+complaint_action_due
+incident_action_due
+meeting_action_due
+configuration_issue
+```
+
+Each item should display:
+
+* Type
+* Title
 * Department
-* Patient category
-* Payer type
-* Insurance or sponsor
-* Number of billable items
-* Gross amount
-* Discount
-* Insurance coverage
-* Patient responsibility
-* Billing state
-* Invoice state
-* Payment state
-* Billing exceptions
-* Responsible billing user
+* Facility
+* Priority
+* Owner
+* Due date
+* Current status
+* Age
 * Next required action
+* Escalation state
 
 Support filters such as:
 
-* Date
 * Department
-* Patient category
-* Payer
-* Insurance
-* Sponsor
-* Billing state
-* Invoice state
-* Payment state
-* Billing exception
-* Responsible user
-* Visit type
-* Admission or outpatient
-* Emergency or routine
+* Facility
+* Priority
+* Owner
+* Status
+* Due date
+* Category
+* Escalation state
 
-Use pagination and efficient queries.
+Reuse existing Journey Intelligence coordination, task, notification, and approval services where appropriate.
 
 ---
 
-# Phase 6 — Visit Billing Workspace
+# Phase 8 — Service Availability and Operational Status
 
-Create or adapt a Finance visit-billing workspace.
-
-Recommended route:
+Expose service availability under:
 
 ```text
-/finance/billing/{visit}
+/administrative/service-availability
 ```
 
-The page should coordinate all financial information relevant to the visit.
+The page may show:
 
-Recommended sections:
+* Department
+* Service
+* Availability state
+* Operating hours
+* Staff coverage
+* Equipment availability where supported
+* Stock dependency where supported
+* Current interruption
+* Expected restoration
+* Responsible department
+* Operational notice
 
-1. Patient identity strip
-2. Visit information
-3. Payer and insurance information
-4. Sponsor information
-5. Billable services
-6. Service status
-7. Department
-8. Cash price
-9. Insurance price
-10. Insurance coverage
-11. Patient responsibility
-12. Discounts
-13. Gross total
-14. Net total
-15. Existing invoices
-16. Payments
-17. Previous balance
-18. Deposit or advance balance
-19. Billing overrides
-20. Payment-gate state
-21. Billing exceptions
-22. Receivable summary
-23. Financial timeline
-24. Authorized actions
+Potential availability states may include:
 
-Reuse the existing billing-calculation services.
+```text
+available
+limited
+temporarily_unavailable
+scheduled_downtime
+emergency_only
+closed
+unknown
+```
 
-Do not recalculate invoice totals independently inside the Finance controller or Blade view.
+Do not automatically mark services unavailable based only on one missing input unless the existing service-availability resolver supports it.
 
-The selected insurance price must remain authoritative for insurance coverage calculations.
-
-Do not calculate insurance coverage against the cash price where the project’s established rule is to calculate against the selected insurer’s price.
+Availability changes must be permission-controlled and audited.
 
 ---
 
-# Phase 7 — Invoice Lifecycle
+# Phase 9 — Approval Worklists
 
-Expose invoices under:
+Expose Administrative approvals under:
 
 ```text
-/finance/invoices
+/administrative/approvals
 ```
 
-Potential invoice states may include:
+Reuse existing module-specific approval services.
+
+Approval requests may originate from:
+
+* Finance
+* Discounts
+* Refunds
+* Credit notes
+* Write-offs
+* Stores adjustments
+* Stock disposals
+* Department configuration
+* User assignment
+* Policy publication
+* Incident closure
+* Audit finding closure
+* Other configured workflows
+
+The Administrative workspace should aggregate approvals but must not replace the originating domain’s validation and approval services.
+
+Each approval item should display:
+
+* Request type
+* Reference
+* Requesting department
+* Requesting user
+* Requested action
+* Amount or impact where authorized
+* Priority
+* Current approval level
+* Required decision
+* Supporting details
+* Due date
+
+Administrative approval actions should call the authoritative domain service.
+
+Do not update source records directly from a generic approval controller.
+
+---
+
+# Phase 10 — Approval Decisions and Separation of Duties
+
+Approval actions may include:
+
+```text
+approve
+reject
+return_for_correction
+request_information
+escalate
+```
+
+Each decision should record:
+
+* Approval request
+* Decision
+* Approving user
+* Approval level
+* Reason
+* Date and time
+* Source module
+* Source record
+* Next state
+
+Where configured:
+
+* A requester must not approve their own request.
+* One approval level must not impersonate another.
+* High-impact requests must require multiple approvals.
+* Final approval must remain distinct from execution.
+* Emergency approval exceptions must be reasoned and audited.
+
+Do not bypass source-module permissions or business rules.
+
+---
+
+# Phase 11 — User and Staff Oversight
+
+Expose authorized staff and user visibility under:
+
+```text
+/administrative/users
+/administrative/staff
+```
+
+Administrative users may be allowed to view:
+
+* Name
+* Staff identifier
+* Job title
+* Department assignments
+* Primary department
+* Active department
+* Role
+* Account status
+* Supervisor
+* Schedule coverage
+* Last activity where authorized
+* Required training or compliance state where supported
+
+Do not expose:
+
+* Payroll
+* salary
+* bank details
+* medical information
+* disciplinary information
+* private contact details
+
+without the relevant permission.
+
+Administrative user-management actions should reuse the existing user, role, permission, and department-assignment services.
+
+Do not create a second user-management system.
+
+---
+
+# Phase 12 — Department Assignments
+
+Where authorized, expose department assignment management.
+
+The workflow may support:
+
+* Assign user to department
+* Remove user from department
+* Set primary department
+* Set supervisor
+* Set department-specific role
+* Configure active/inactive assignment
+* Set start and end dates
+* Record reason
+
+Reuse the existing `department_user` pivot and primary-department synchronization.
+
+Changes must:
+
+* Preserve valid active-department context
+* Prevent removal of required primary assignments without replacement
+* Avoid unauthorized privilege escalation
+* Be audited
+
+Do not grant permissions solely through department assignment unless the existing role and permission model explicitly does so.
+
+---
+
+# Phase 13 — Staff Coverage and Duty Rosters
+
+Expose schedule and coverage awareness under:
+
+```text
+/administrative/duty-rosters
+/administrative/coverage
+```
+
+Reuse existing HR, scheduling, attendance, and department services where available.
+
+The Administrative workspace may show:
+
+* Department
+* Shift
+* Scheduled staff
+* Present staff where authorized
+* Required minimum coverage
+* Coverage gap
+* Supervisor
+* On-call staff
+* Escalation state
+
+Administrative users should not modify attendance or payroll records through this workspace unless they possess the appropriate HR permissions.
+
+Coverage should remain an operational view, not an alternative HR system.
+
+---
+
+# Phase 14 — Policy Management
+
+Expose policies under:
+
+```text
+/administrative/policies
+```
+
+A policy record may include:
+
+* Title
+* Policy code
+* Category
+* Owning department
+* Version
+* Effective date
+* Review date
+* Status
+* Approving authority
+* Document
+* Summary
+* Superseded policy
+* Distribution list
+
+Potential policy states may include:
 
 ```text
 draft
-finalized
-unpaid
-partially_paid
-paid
-overpaid
-overdue
-cancelled
-credited
-written_off
+under_review
+approved
+published
+superseded
+archived
 ```
 
-Use existing configured statuses where available.
+Policy publication should:
 
-The invoice workflow should support:
+1. Preserve version history.
+2. Record approval.
+3. Record publication date.
+4. Preserve previous versions.
+5. Notify relevant users where supported.
+6. Be audited.
 
-* Draft creation
-* Billable-item review
-* Payer allocation
-* Insurance and patient-responsibility split
-* Sponsor allocation
-* Discount application
-* Finalization
-* Receipt and payment linking
-* Credit-note linking
-* Cancellation where permitted
-* Write-off where approved
-* Statement generation
-* Print or PDF where supported
-
-Finalized invoices must not be silently edited.
-
-Changes after finalization should use:
-
-* Credit notes
-* Debit adjustments where supported
-* Invoice cancellation and replacement
-* Approved correction workflow
-
-according to the established accounting architecture.
+Do not overwrite published policy content silently.
 
 ---
 
-# Phase 8 — Payment Collection
+# Phase 15 — Standard Operating Procedures and Guidelines
 
-Expose payment collection under:
+Expose procedures and guidelines under:
 
 ```text
-/finance/payments/collect
+/administrative/procedures
+/administrative/guidelines
 ```
 
-Reuse the existing `PaymentService` or equivalent authoritative payment pipeline.
+Reuse the document and policy architecture where possible.
 
-Payment collection may support:
+Each document should support:
 
-* Cash
-* Mobile Money
-* Card or TPE
-* Bank transfer
-* Cheque where supported
-* Digital payment provider
-* Insurance settlement
-* Sponsor settlement
-* Deposit allocation
-* Advance-payment allocation
+* Department ownership
+* Version
+* Review date
+* Approval
+* Publication
+* Archive
+* Related policy
+* Related forms
+* Distribution
 
-A payment should record:
+Do not store separate uncontrolled copies of the same official procedure across multiple modules.
 
-* Patient or payer
-* Invoice
-* Visit
-* Amount
-* Currency
-* Payment method
-* Provider
-* External transaction reference
-* Cashier
-* Cashier session
-* Payment date and time
-* Allocation state
-* Receipt number
-* Notes where permitted
-
-Do not create a second payment-recording implementation for the Finance workspace.
-
-All financial postings must continue through the existing payment and journal services.
+Use one authoritative published version with controlled links.
 
 ---
 
-# Phase 9 — Partial Payments and Overpayments
+# Phase 16 — Administrative Documents and Correspondence
 
-Support partial payment where a payer does not settle the full invoice.
-
-The system must preserve:
-
-* Invoice amount
-* Previously paid amount
-* Amount paid now
-* Remaining balance
-* Receivable state
-* Allocation history
-* Responsible cashier
-* Payment method
-* Date and time
-
-Overpayment should follow the existing policy.
-
-Potential outcomes may include:
+Expose document and correspondence tracking under:
 
 ```text
-patient_credit
-unallocated_payment
-deposit_balance
-refund_required
-allocation_required
+/administrative/documents
+/administrative/correspondence
 ```
 
-Do not silently apply an overpayment to unrelated invoices without an authorized allocation policy.
+Document records may include:
 
-All allocations must remain traceable.
+* Reference number
+* Title
+* Category
+* Sender
+* Recipient
+* Department
+* Date
+* Confidentiality level
+* File attachment
+* Status
+* Assigned officer
+* Required response
+* Due date
+
+Potential correspondence states may include:
+
+```text
+received
+registered
+assigned
+in_review
+response_required
+responded
+closed
+archived
+```
+
+Document access must respect:
+
+* Confidentiality
+* Department
+* role
+* explicit permission
+* facility scope
+
+Do not expose confidential correspondence through broad administrative access.
 
 ---
 
-# Phase 10 — Patient Deposits and Advance Payments
+# Phase 17 — Memos and Announcements
 
-Expose deposits and advances under:
-
-```text
-/finance/deposits
-/finance/advances
-```
-
-A deposit or advance may include:
-
-* Patient
-* Visit or admission where applicable
-* Amount
-* Payment method
-* Cashier
-* Receipt
-* Available balance
-* Allocated amount
-* Refunded amount
-* Expiry or closure state where configured
-
-The system should support:
-
-* Deposit collection
-* Deposit allocation
-* Partial allocation
-* Cross-invoice allocation where permitted
-* Deposit refund
-* Transfer to patient credit where configured
-
-Do not treat an unallocated deposit as earned revenue until the existing accounting policy recognizes it.
-
-Use the correct liability or control account where configured.
-
----
-
-# Phase 11 — Previous Patient Balance
-
-Expose previous patient balances under:
+Expose internal memos and announcements under:
 
 ```text
-/finance/patient-balances
+/administrative/memos
+/administrative/announcements
 ```
 
-Reuse the existing:
+A memo or announcement may include:
 
-```php
-PatientOutstandingBalanceService
-```
-
-or its current equivalent.
-
-The patient balance summary should distinguish:
-
-* Previous-visit balance
-* Current-visit balance
-* Total balance
-* Oldest unpaid invoice
-* Age in days
-* Receivable bucket
-* Patient responsibility
-* Insurance responsibility
-* Sponsor responsibility
-
-Do not combine invoices into a single new invoice merely for display.
-
-Each visit must retain its own invoice and receivable history.
-
-Patient-balance views must preserve privacy and permission controls.
-
----
-
-# Phase 12 — Cross-Visit Payment Allocation
-
-Expose payment allocation under:
-
-```text
-/finance/payment-allocation
-```
-
-Reuse the existing:
-
-```php
-PatientPaymentAllocationService
-```
-
-or its current equivalent.
-
-Support configured allocation strategies such as:
-
-```text
-oldest_first
-current_visit
-manual
-```
-
-Because the existing payment and accounting pipeline may be invoice-scoped, a cross-visit tender should continue to be recorded through the established design:
-
-* One tender may produce multiple invoice-scoped payments.
-* Each invoice keeps its own payment history.
-* Each visit keeps its own invoice.
-* Each payment posts through the unchanged payment pipeline.
-* Each journal entry remains balanced and invoice-specific.
-
-Do not create one synthetic cross-visit payment record that bypasses the accounting architecture.
-
-Manual allocation must:
-
-* Prevent allocation beyond the payment amount
-* Prevent allocation beyond eligible receivable amounts
-* Preserve outstanding balances
-* Record the user
-* Record the strategy
-* Record the allocation sequence
-* Be audited
-
----
-
-# Phase 13 — Accounts Receivable
-
-Expose Accounts Receivable under:
-
-```text
-/finance/receivables
-```
-
-Reuse the existing `InvoiceReceivable` architecture.
-
-Receivables should be categorized by responsibility:
-
-```text
-patient
-insurance
-sponsor
-other_configured_payer
-```
+* Title
+* Message
+* Audience
+* Departments
+* Roles
+* Facility
+* Effective date
+* Expiry date
+* Priority
+* Attachment
+* Publishing user
+* Publication state
 
 Potential states may include:
 
 ```text
-current
-partially_paid
-overdue
-disputed
-under_claim
-settled
-written_off
-cancelled
-```
-
-Each receivable should display:
-
-* Invoice
-* Patient or payer
-* Original amount
-* Paid amount
-* Outstanding amount
-* Due date
-* Age
-* Aging bucket
-* Responsibility type
-* Claim state where relevant
-* Last payment
-* Next action
-
-Do not infer responsibility from invoice totals alone.
-
-Use the existing patient-responsibility and payer-allocation data.
-
----
-
-# Phase 14 — Receivable Aging
-
-Expose receivable aging under:
-
-```text
-/finance/receivables/aging
-```
-
-Use configured aging buckets such as:
-
-```text
-current
-1_30_days
-31_60_days
-61_90_days
-91_120_days
-over_120_days
-```
-
-Use existing configured buckets where available.
-
-The aging report should support:
-
-* Patient receivables
-* Insurance receivables
-* Sponsor receivables
-* Department
-* Facility
-* Payer
-* Date range
-* Aging bucket
-* Invoice status
-
-Do not calculate aging from payment date when the established policy uses invoice due date or invoice finalization date.
-
-Use the authoritative receivable-aging service.
-
----
-
-# Phase 15 — Cashier Sessions
-
-Expose cashier sessions under:
-
-```text
-/finance/cashier
-```
-
-A cashier session may include:
-
-* Cashier
-* Cash point
-* Department
-* Opening date and time
-* Opening float
-* Payments received
-* Refunds
-* Reversals
-* Cash expected
-* Cash counted
-* Variance
-* Closing date and time
-* Closing user
-* Supervisor approval
-* Session state
-
-Potential session states may include:
-
-```text
-not_open
-open
-closing
-closed
-variance_review
-approved
-```
-
-The system should prevent payment collection through a cashier account where an open session is required but absent.
-
-Do not allow one cashier to have conflicting active sessions where policy prohibits it.
-
-Cashier opening and closing must be audited.
-
----
-
-# Phase 16 — Cashier Closing and Reconciliation
-
-Cashier closing should calculate:
-
-* Opening float
-* Cash payments
-* Non-cash payments
-* Refunds
-* Reversals
-* Cash expected
-* Cash declared
-* Variance
-* Payment count
-* Receipt range
-* Digital payment totals
-* Bank or cheque totals where supported
-
-A variance should record:
-
-* Expected amount
-* Counted amount
-* Variance amount
-* Variance type
-* Reason
-* Cashier
-* Supervisor
-* Resolution
-* Approval state
-
-Potential variance states may include:
-
-```text
-balanced
-shortage
-overage
-under_review
-approved
-resolved
-```
-
-Do not automatically write off cashier shortages or overages.
-
-Use the configured variance-review and journal-posting workflow.
-
----
-
-# Phase 17 — Payment Reversal
-
-Completed payments must not be deleted directly.
-
-Provide a formal payment-reversal workflow.
-
-A reversal should record:
-
-* Original payment
-* Invoice
-* Patient or payer
-* Amount
-* Payment method
-* Reversal reason
-* Requesting user
-* Approving user where required
-* Reversal date and time
-* Cashier session
-* Journal reversal
-* Receipt effect
-* Receivable effect
-
-The system must:
-
-1. Preserve the original payment.
-2. Create a traceable reversal.
-3. Restore the receivable appropriately.
-4. Reverse accounting entries.
-5. Update the cashier session.
-6. Preserve external transaction references.
-7. Prevent duplicate reversal.
-8. Audit the action.
-
-Digital-payment reversals should also respect provider capabilities and settlement state.
-
----
-
-# Phase 18 — Refund Workflow
-
-Expose refunds under:
-
-```text
-/finance/refunds
-```
-
-A refund may relate to:
-
-* Overpayment
-* Cancelled service
-* Cancelled invoice
-* Returned medication
-* Reversed dispensing
-* Unused deposit
-* Insurance correction
-* Sponsor correction
-* Duplicate payment
-
-A refund should record:
-
-* Patient or payer
-* Original payment
-* Invoice
-* Refund amount
-* Refund reason
-* Refund method
-* Requesting user
-* Approving user
-* Paying cashier
-* Date and time
-* Journal effect
-* Provider reference where applicable
-* Receipt or refund voucher
-
-Refunds must not exceed the refundable balance.
-
-Do not treat payment reversal and refund as identical unless the existing domain model explicitly does so.
-
-A reversal voids or negates a payment.
-
-A refund pays money back after a valid payment or credit balance.
-
-Preserve that distinction.
-
----
-
-# Phase 19 — Discounts
-
-Expose discounts under:
-
-```text
-/finance/discounts
-```
-
-Discounts may apply to:
-
-* Invoice
-* Invoice item
-* Service category
-* Patient responsibility
-* Sponsor arrangement
-* Authorized welfare support
-
-A discount should record:
-
-* Invoice
-* Item where applicable
-* Original amount
-* Discount type
-* Discount value
-* Final amount
-* Reason
-* Requesting user
-* Approving user
-* Approval level
-* Date and time
-
-Potential discount types may include:
-
-```text
-fixed_amount
-percentage
-full_waiver
-configured_scheme
-```
-
-Do not apply discounts by directly changing historical service prices after invoice finalization.
-
-Use the existing discount and invoice-adjustment architecture.
-
-Discounts above configured thresholds should require higher-level approval.
-
----
-
-# Phase 20 — Credit Notes
-
-Expose credit notes under:
-
-```text
-/finance/credit-notes
-```
-
-A credit note should record:
-
-* Original invoice
-* Patient or payer
-* Credited invoice items
-* Amount
-* Tax or charge adjustments where supported
-* Reason
-* Requesting user
-* Approving user
-* Issue date
-* Receivable effect
-* Journal effect
-* Remaining invoice balance
-
-Potential reasons include:
-
-```text
-service_cancelled
-service_not_rendered
-billing_error
-price_correction
-insurance_adjustment
-returned_item
-duplicate_charge
-other
-```
-
-Do not directly overwrite or delete finalized invoice items.
-
-Credit notes must preserve the original invoice and create traceable accounting adjustments.
-
----
-
-# Phase 21 — Invoice Cancellation
-
-A finalized invoice should only be cancelled through an authorized workflow.
-
-Cancellation should record:
-
-* Invoice
-* Cancellation reason
-* Cancelling user
-* Approval
-* Payment state
-* Credit-note requirement
-* Replacement invoice where applicable
-* Receivable effect
-* Journal effect
-* Date and time
-
-Do not cancel an invoice with payments, claims, or dependent transactions without resolving those dependencies.
-
-Where replacement is required, link the original and replacement invoices.
-
----
-
-# Phase 22 — Write-Offs
-
-Expose write-offs under:
-
-```text
-/finance/write-offs
-```
-
-A write-off may apply to approved unrecoverable receivables.
-
-A write-off should record:
-
-* Receivable
-* Invoice
-* Payer
-* Outstanding amount
-* Write-off amount
-* Reason
-* Collection history
-* Requesting user
-* Approving user
-* Approval level
-* Journal effect
-* Date and time
-
-Potential reasons may include:
-
-```text
-uncollectible
-deceased_estate
-charity_approval
-insurance_denial_final
-sponsor_default
-administrative_decision
-other
-```
-
-Write-off does not mean deletion.
-
-The receivable, invoice, payment history, and write-off record must remain visible.
-
----
-
-# Phase 23 — Insurance Billing
-
-Expose insurance financial workflows under:
-
-```text
-/finance/insurance
-```
-
-Finance should be able to view:
-
-* Patient insurer
-* Insurance plan
-* Authorization state
-* Covered services
-* Excluded services
-* Insurance price
-* Insurance coverage
-* Patient responsibility
-* Claimable amount
-* Non-claimable amount
-* Insurance invoice state
-* Claim state
-* Receivable state
-
-The selected insurance price must remain the basis for insurance coverage calculation.
-
-Do not calculate insurance coverage from the cash price when an insurer-specific price exists.
-
-Reuse the existing insurance-pricing and coverage services.
-
-Finance must not override clinical service delivery merely because insurance authorization is pending unless the configured payment policy requires it.
-
----
-
-# Phase 24 — Claims Workflow
-
-Expose claims under:
-
-```text
-/finance/claims
-```
-
-Potential claim states may include:
-
-```text
 draft
-incomplete
-validation_failed
-ready
-submitted
-acknowledged
-under_review
-partially_approved
-approved
-rejected
-paid
-partially_paid
-cancelled
-resubmission_required
+scheduled
+published
+expired
+archived
 ```
 
-Use existing configured states where available.
+Announcements should use the existing notification infrastructure where available.
 
-Claims workflow may include:
-
-1. Claim generation
-2. Patient and insurer validation
-3. Service validation
-4. Diagnosis and code validation
-5. Price validation
-6. Coverage validation
-7. Supporting-document validation
-8. Claim readiness
-9. Submission
-10. Submission reference
-11. Insurer acknowledgement
-12. Rejection or query
-13. Correction
-14. Resubmission
-15. Approval
-16. Settlement
-17. Receivable allocation
-18. Variance management
-
-Do not duplicate clinical coding or diagnosis data.
-
-Reuse the existing consultation, insurance, claims, and billing records.
+Do not send confidential administrative information to broad audiences without explicit targeting.
 
 ---
 
-# Phase 25 — Claims Validation
+# Phase 18 — Incident Management
 
-Claims validation should identify issues such as:
-
-* Missing insurer
-* Missing policy number
-* Missing authorization
-* Missing diagnosis
-* Missing procedure code
-* Missing service code
-* Price mismatch
-* Coverage mismatch
-* Duplicate claim item
-* Missing supporting document
-* Invalid service date
-* Invalid patient category
-* Claim amount mismatch
-* Billing item not finalized
-
-Validation findings should distinguish:
+Expose administrative incidents under:
 
 ```text
-blocking
-warning
-informational
+/administrative/incidents
 ```
 
-Do not silently remove claim items to make a claim pass validation.
-
-Every excluded or corrected item must remain traceable.
-
----
-
-# Phase 26 — Claims Settlement
-
-When an insurer payment is received, Finance should be able to:
-
-* Record settlement
-* Link insurer payment reference
-* Allocate payment to claims
-* Allocate payment to invoices
-* Record approved amount
-* Record rejected amount
-* Record deductions
-* Record withholding where applicable
-* Record unexplained variance
-* Update insurance receivables
-* Update claim status
-* Post accounting entries
-
-Do not mark the full claim paid when only part of the amount was received.
-
-Claims settlement should support partial payment and deductions.
-
----
-
-# Phase 27 — Sponsor Accounts
-
-Expose sponsor accounts under:
-
-```text
-/finance/sponsors
-```
-
-A sponsor account may include:
-
-* Sponsor
-* Agreement
-* Credit limit
-* Covered services
-* Covered beneficiaries
-* Billing cycle
-* Invoice state
-* Receivable balance
-* Payment history
-* Statement history
-* Account status
-
-Finance may generate:
-
-* Sponsor invoices
-* Sponsor statements
-* Receivable-aging reports
-* Payment allocations
-* Account reconciliations
-
-Do not expose sponsor contract details without the required permission.
-
----
-
-# Phase 28 — Payment-Gate Policy Visibility
-
-Expose authorized payment-gate policy visibility under:
-
-```text
-/finance/payment-gate
-```
-
-Reuse the existing:
-
-* `PaymentGateOperationPolicy`
-* `PaymentGateEnforcementEligibility`
-* Configuration resolver
-* Eligibility service
-* Compatibility service
-* Payment-gate audit command
-* Visit billing overrides
-
-The Finance workspace may show:
-
-* Operation
-* Current mode
-* Department rule
-* Visit context rule
-* Missing billing-context policy
-* Override scope
-* Wired or unwired state
-* Enforcement eligibility
-* Recent overrides
-* Policy-audit findings
-
-Do not allow Finance users to modify wired hard-gate operations where the existing admin UI marks them read-only.
-
-Policy editing must remain under the established permission and audit architecture.
-
----
-
-# Phase 29 — Visit Billing Overrides
-
-Expose billing overrides where authorized.
-
-An override may include:
-
-* Visit
-* Patient
-* Operation
-* Scope
-* Reason
-* Requested user
-* Approving user
-* Start time
-* Expiry
-* Status
-* Audit reference
-
-Potential override reasons may include:
-
-```text
-emergency
-payment_deferred
-insurance_pending
-sponsor_pending
-authorized_exception
-clinical_priority
-billing_context_issue
-other
-```
-
-Overrides must be:
-
-* Explicit
-* Permission-controlled
-* Time-scoped where appropriate
-* Visit-scoped
-* Operation-scoped
-* Reasoned
-* Audited
-
-Do not create a universal “allow all services” override unless the existing policy explicitly supports it.
-
----
-
-# Phase 30 — General Ledger and Journal Visibility
-
-Expose accounting visibility under:
-
-```text
-/finance/journals
-/finance/general-ledger
-```
-
-Reuse the existing journal and ledger architecture.
-
-The journal view may display:
-
-* Journal reference
-* Date
-* Source transaction
-* Source module
-* Description
-* Debit account
-* Credit account
-* Amount
-* Currency
-* Posting state
-* Accounting period
-* Responsible user
-* Reversal link
-
-The ledger view may display:
-
-* Account
-* Date
-* Reference
-* Description
-* Debit
-* Credit
-* Running balance
-* Source transaction
-* Department or cost center where supported
-
-Do not allow direct deletion or editing of posted journal entries.
-
-Corrections must use:
-
-* Reversal
-* Correcting journal
-* Approved adjustment
-
-according to the existing accounting architecture.
-
----
-
-# Phase 31 — Chart of Accounts
-
-Expose Chart of Accounts visibility under:
-
-```text
-/finance/chart-of-accounts
-```
-
-The operational view may display:
-
-* Account code
-* Account name
-* Account type
-* Parent account
-* Normal balance
-* Active state
-* Posting permission
-* Financial statement classification
-
-Editing the Chart of Accounts must remain restricted to users with the existing administrative accounting permission.
-
-Do not grant account-editing permission merely because a user belongs to Finance.
-
----
-
-# Phase 32 — Trial Balance
-
-Expose Trial Balance under:
-
-```text
-/finance/trial-balance
-```
-
-The report should display:
-
-* Account
-* Opening debit
-* Opening credit
-* Period debit
-* Period credit
-* Closing debit
-* Closing credit
-
-The Trial Balance must use the authoritative journal-posting data.
-
-Do not calculate it independently from invoices and payments where the system already posts to the General Ledger.
-
-The report should support:
-
-* Date range
-* Accounting period
+Incidents may include:
+
+* Operational incidents
+* Facility incidents
+* Administrative errors
+* Security incidents
+* Service interruptions
+* Documentation incidents
+* Compliance incidents
+* Patient-safety incidents where the user is authorized
+* Data-quality incidents
+
+An incident record may include:
+
+* Incident number
+* Category
+* Severity
+* Department
 * Facility
-* Department or cost center where supported
-* Posted entries only
-* Draft-entry exclusion
+* Date and time
+* Reported by
+* Description
+* Immediate action
+* Assigned owner
+* Investigation state
+* Corrective action
+* Resolution
+* Closure approval
 
----
-
-# Phase 33 — Accounting Period Controls
-
-Where accounting-period functionality exists, Finance should respect:
-
-* Open period
-* Closed period
-* Locked period
-* Adjustment period
-
-Do not allow normal transaction posting into a closed or locked accounting period.
-
-Authorized late adjustments should use the existing adjustment-period or reopening workflow.
-
-Period reopening must be permission-controlled, reasoned, and audited.
-
----
-
-# Phase 34 — Cash and Bank Reconciliation
-
-Expose reconciliation under:
+Potential incident states may include:
 
 ```text
-/finance/reconciliation
-```
-
-Cash reconciliation should compare:
-
-* Cashier sessions
-* Expected cash
-* Counted cash
-* Deposited cash
-* Variances
-
-Bank reconciliation should compare:
-
-* Bank statement transactions
-* Recorded bank payments
-* Deposits
-* Refunds
-* Charges
-* Transfers
-* Unmatched transactions
-
-Potential reconciliation states may include:
-
-```text
-unmatched
-partially_matched
-matched
-exception
+reported
+triaged
+assigned
+under_investigation
+corrective_action_required
 resolved
+closed
+reopened
 ```
 
-Do not delete unmatched transactions merely to complete reconciliation.
+Do not expose clinical incident details beyond the user’s permission.
 
-Preserve exceptions and resolution history.
+Incident management must preserve history and audit all changes.
 
 ---
 
-# Phase 35 — Digital Payment Reconciliation
+# Phase 19 — Complaint Management
 
-Expose digital-payment reconciliation under:
+Expose complaints under:
 
 ```text
-/finance/reconciliation/digital-payments
+/administrative/complaints
 ```
 
-Support configured providers such as:
+A complaint may originate from:
 
-* Mobile Money
-* Card or TPE
-* Bank gateway
-* Payment aggregator
-* Other active payment providers
+* Patient
+* Relative
+* Staff member
+* Department
+* External stakeholder
+* Anonymous source where allowed
 
-The worklist may display:
+Complaint records may include:
 
-* Internal payment reference
-* Provider transaction reference
-* Amount
-* Provider amount
-* Fees
-* Settlement amount
-* Payment date
-* Settlement date
-* Status
-* Match state
-* Variance
-* Provider response
+* Complaint number
+* Complainant type
+* Department
+* Category
+* Priority
+* Date
+* Summary
+* Assigned officer
+* Response deadline
+* Investigation
+* Resolution
+* Feedback
+* Closure state
 
-Do not expose payment-provider credentials or secrets.
+Potential states may include:
 
-Provider callbacks and APIs must remain outside browser-route redirects.
+```text
+received
+acknowledged
+assigned
+under_review
+response_pending
+resolved
+closed
+reopened
+```
+
+Patient identity and contact information must remain protected.
+
+Do not expose complaint records across departments without authorization.
 
 ---
 
-# Phase 36 — Finance Workspace URL Resolution
+# Phase 20 — Compliance Monitoring
+
+Expose compliance oversight under:
+
+```text
+/administrative/compliance
+```
+
+Compliance may include:
+
+* Policy review deadlines
+* License or certification expiry
+* Departmental compliance checks
+* Mandatory reporting deadlines
+* Training compliance where supported
+* Audit action deadlines
+* Documentation compliance
+* Service standards
+* Data-completeness checks
+
+The workspace should distinguish:
+
+```text
+compliant
+attention_required
+non_compliant
+overdue
+under_review
+exempted
+```
+
+Exemptions must be reasoned, time-scoped, approved, and audited.
+
+Do not fabricate compliance checks where the system has no reliable source data.
+
+---
+
+# Phase 21 — Internal Audits and Findings
+
+Expose internal audits under:
+
+```text
+/administrative/audits
+/administrative/findings
+```
+
+An audit may include:
+
+* Audit title
+* Scope
+* Department
+* Period
+* Lead auditor
+* Audit team
+* Start date
+* Completion date
+* Findings
+* Recommendations
+* Corrective actions
+* Follow-up date
+* Status
+
+An audit finding may include:
+
+* Finding reference
+* Severity
+* Description
+* Requirement
+* Evidence
+* Responsible department
+* Assigned owner
+* Corrective action
+* Due date
+* Verification
+* Closure state
+
+Potential finding states may include:
+
+```text
+open
+assigned
+action_in_progress
+verification_pending
+resolved
+closed
+overdue
+```
+
+Do not allow findings to be silently deleted or closed without the required verification.
+
+---
+
+# Phase 22 — Risk Register
+
+Expose an Administrative risk register under:
+
+```text
+/administrative/risk-register
+```
+
+A risk record may include:
+
+* Risk title
+* Category
+* Department
+* Description
+* Likelihood
+* Impact
+* Risk score
+* Existing controls
+* Mitigation plan
+* Owner
+* Review date
+* Residual risk
+* Status
+
+Potential states may include:
+
+```text
+identified
+assessed
+mitigation_planned
+mitigation_in_progress
+accepted
+closed
+overdue
+```
+
+Risk-scoring rules should be centralized and configurable.
+
+Do not hardcode risk calculations across views and controllers.
+
+Risk acceptance must require permission and be audited.
+
+---
+
+# Phase 23 — Meetings and Committees
+
+Expose meetings and committees under:
+
+```text
+/administrative/meetings
+/administrative/committees
+```
+
+A meeting may include:
+
+* Title
+* Committee
+* Date and time
+* Location
+* Chairperson
+* Attendees
+* Agenda
+* Minutes
+* Decisions
+* Action items
+* Attachments
+* Status
+
+A committee may include:
+
+* Name
+* Mandate
+* Members
+* Chairperson
+* Secretary
+* Meeting schedule
+* Active state
+
+Do not automatically expose confidential committee records to all Administrative users.
+
+Use committee membership and permissions.
+
+---
+
+# Phase 24 — Action Item Tracking
+
+Expose administrative action items under:
+
+```text
+/administrative/action-items
+```
+
+Action items may originate from:
+
+* Meetings
+* Audits
+* Complaints
+* Incidents
+* Approvals
+* Risk mitigation
+* Management decisions
+
+Each action item should include:
+
+* Source
+* Description
+* Owner
+* Department
+* Priority
+* Due date
+* Status
+* Completion note
+* Verification
+* Escalation state
+
+Potential states may include:
+
+```text
+pending
+assigned
+acknowledged
+in_progress
+completed
+verified
+cancelled
+overdue
+```
+
+Reuse existing task or coordination infrastructure where appropriate.
+
+Do not create duplicate task records when the existing task model can represent administrative actions safely.
+
+---
+
+# Phase 25 — Journey Intelligence and Operational Oversight
+
+Reuse the existing Journey Intelligence infrastructure to provide management oversight.
+
+Administrative users with appropriate permission may view:
+
+* Department bottlenecks
+* SLA breaches
+* Unassigned actions
+* Supervisor escalations
+* High-priority handoffs
+* Department queues
+* Journey analytics
+* Prediction summaries
+* Prediction accuracy summaries
+
+Administrative users should not automatically receive patient-identifiable details.
+
+Use aggregate or masked views unless detailed clinical oversight permission exists.
+
+Do not allow Administrative users to claim or complete clinical actions unless they possess the appropriate clinical permission and department context.
+
+---
+
+# Phase 26 — Facility and Branch Scoping
+
+Where the hospital system supports multiple facilities or branches, all Administrative data must respect:
+
+* Active facility
+* Active Administrative department
+* User facility assignments
+* Authorized cross-facility access
+* Department-facility mapping
+
+A user should not see all facilities merely because their department type is `administrative`.
+
+Support explicit permissions for:
+
+```text
+facility_local
+facility_group
+organization_wide
+```
+
+where the existing authorization model supports such scopes.
+
+---
+
+# Phase 27 — System Configuration Awareness
+
+Administrative users may need visibility into operational configuration such as:
+
+* Enabled modules
+* Department status
+* Service status
+* Missing supervisors
+* Missing department assignments
+* Incomplete configuration
+* Policy-audit findings
+* Missing billing context
+* Localization parity warnings
+* Integration status
+
+Visibility does not automatically grant edit permission.
+
+System configuration changes must remain under the existing settings and system-administration permissions.
+
+Do not turn the Administrative workspace into unrestricted technical administration.
+
+---
+
+# Phase 28 — Workspace-Aware URL Resolution
 
 Extend the centralized workspace route resolver.
 
 Do not scatter checks such as:
 
 ```php
-if ($department->type === DepartmentType::FINANCE) {
-    return route('finance.invoices.show', $invoice);
+if ($department->type === DepartmentType::ADMINISTRATIVE) {
+    return route('administrative.departments.show', $department);
 }
 ```
 
@@ -2061,201 +1644,196 @@ The resolver should support methods equivalent to:
 ```php
 dashboard()
 
-billingIndex()
-billingShow(Visit $visit)
+departmentIndex()
+departmentShow(Department $department)
+departmentPerformance(Department $department)
 
-invoiceIndex()
-invoiceShow(Invoice $invoice)
+operationsWorklist()
+operationsExceptions()
+operationsEscalations()
 
-paymentIndex()
-paymentShow(Payment $payment)
-paymentCollect()
+approvalIndex()
+approvalShow(Approval $approval)
 
-cashierSession()
+userIndex()
+userShow(User $user)
 
-receivableIndex()
-receivableShow(InvoiceReceivable $receivable)
+staffIndex()
+coverageIndex()
 
-patientBalanceIndex()
-patientBalanceShow(Patient $patient)
+policyIndex()
+policyShow(Policy $policy)
 
-paymentAllocation()
+documentIndex()
+documentShow(Document $document)
 
-insuranceIndex()
-claimIndex()
-claimShow(Claim $claim)
+announcementIndex()
+memoIndex()
+correspondenceIndex()
 
-sponsorIndex()
-sponsorShow(Sponsor $sponsor)
+incidentIndex()
+incidentShow(Incident $incident)
 
-discountIndex()
-creditNoteIndex()
-refundIndex()
-reversalIndex()
-writeOffIndex()
+complaintIndex()
+complaintShow(Complaint $complaint)
 
-depositIndex()
+auditIndex()
+auditShow(Audit $audit)
 
-journalIndex()
-journalShow(Journal $journal)
-generalLedger()
-trialBalance()
-chartOfAccounts()
+findingIndex()
+findingShow(AuditFinding $finding)
 
-reconciliationIndex()
-paymentGateIndex()
+riskIndex()
+riskShow(Risk $risk)
+
+meetingIndex()
+meetingShow(Meeting $meeting)
+
+actionItemIndex()
+actionItemShow(ActionItem $actionItem)
+
+serviceAvailability()
+handoffIndex()
 reportIndex()
 ```
 
-For a Finance user, the resolver must return `finance.*` routes.
+For an Administrative user, the resolver must return `administrative.*` routes.
 
 For other users, preserve the appropriate existing workspace or generic route.
 
-Always use the active department context rather than only the user’s primary department.
+Always use the active department and facility context rather than only the user’s primary department.
 
 ---
 
-# Phase 37 — Replace Hardcoded Shared Links
+# Phase 29 — Replace Hardcoded Shared Links
 
-Audit all shared pages accessed by Finance users.
+Audit all shared pages accessed by Administrative users.
 
 Replace hardcoded generic links that break workspace continuity.
 
 Review at minimum:
 
-* Billing worklists
-* Invoice lists
-* Invoice details
-* Payment collection
-* Payment history
-* Receipt pages
-* Cashier sessions
-* Receivable pages
-* Patient balances
-* Insurance pages
-* Claims pages
-* Sponsor pages
-* Discounts
-* Credit notes
-* Refunds
-* Reversals
-* Write-offs
-* Deposits
-* Journals
-* General Ledger
-* Reconciliation pages
-* Patient search
-* Patient profile
-* Visit history
+* Department lists
+* Department dashboards
+* User and staff lists
+* Approval worklists
+* Operations worklists
+* Policy pages
+* Document pages
+* Announcement pages
+* Incident pages
+* Complaint pages
+* Audit pages
+* Finding pages
+* Risk pages
+* Meeting pages
+* Committee pages
+* Action-item pages
+* Journey oversight pages
 * Dashboard cards
 * Breadcrumbs
 * Notifications
-* Approval links
+* Escalation links
 * Action dropdowns
 * Empty-state actions
 * Report drilldowns
-* Flash-message action links
+* Flash-message links
 
 Avoid shared-view code such as:
 
 ```php
-route('invoices.show', $invoice)
+route('admin.departments.show', $department)
 ```
 
 Use the centralized workspace route resolver.
 
-Do not alter API, payment callback, insurance callback, provider webhook, signed, print, export, integration, or background-job URLs unless explicitly part of the Finance browser workspace.
+Do not alter API, integration, signed, print, export, webhook, or background-job URLs unless explicitly part of the Administrative browser workspace.
 
 ---
 
-# Phase 38 — Workspace-Aware Redirects
+# Phase 30 — Workspace-Aware Redirects
 
-All successful Finance actions must redirect back into `/finance/*`.
+All successful Administrative actions must redirect back into `/administrative/*`.
 
 Examples:
 
-After finalizing billing:
+After approving a request:
 
 ```text
-/finance/invoices/{invoice}
+/administrative/approvals/{approval}
 ```
 
-After collecting payment:
+After publishing a policy:
 
 ```text
-/finance/payments/{payment}
+/administrative/policies/{policy}
 ```
 
-After allocating a payment:
+After publishing an announcement:
 
 ```text
-/finance/patient-balances/{patient}
+/administrative/announcements/{announcement}
 ```
 
-After reversing a payment:
+After assigning an incident:
 
 ```text
-/finance/payments/{payment}
+/administrative/incidents/{incident}
 ```
 
-After issuing a credit note:
+After resolving a complaint:
 
 ```text
-/finance/credit-notes/{creditNote}
+/administrative/complaints/{complaint}
 ```
 
-After approving a refund:
+After updating an audit finding:
 
 ```text
-/finance/refunds/{refund}
+/administrative/findings/{finding}
 ```
 
-After submitting a claim:
+After completing an action item:
 
 ```text
-/finance/claims/{claim}
+/administrative/action-items/{actionItem}
 ```
 
-After closing a cashier session:
-
-```text
-/finance/cashier/reconciliation
-```
-
-Avoid hardcoding Finance redirects inside domain services.
+Avoid hardcoding Administrative redirects inside domain services.
 
 Use a workspace redirect resolver such as:
 
 ```php
-$workspaceRedirects->toInvoice($invoice);
-$workspaceRedirects->toPayment($payment);
-$workspaceRedirects->toPatientBalance($patient);
-$workspaceRedirects->toClaim($claim);
-$workspaceRedirects->toRefund($refund);
-$workspaceRedirects->toFinanceDashboard();
+$workspaceRedirects->toDepartment($department);
+$workspaceRedirects->toApproval($approval);
+$workspaceRedirects->toPolicy($policy);
+$workspaceRedirects->toIncident($incident);
+$workspaceRedirects->toComplaint($complaint);
+$workspaceRedirects->toAuditFinding($finding);
+$workspaceRedirects->toAdministrativeDashboard();
 ```
 
-Validation failures must return users to the same `/finance/*` route with input preserved.
+Validation failures must return users to the same `/administrative/*` route with input preserved.
 
 ---
 
-# Phase 39 — Login and Department Switching
+# Phase 31 — Login and Department Switching
 
-When a user logs in and their active department type is `finance`, redirect them to:
-
-```text
-/finance
-```
-
-When a multi-department user switches to a Finance department, redirect them to:
+When a user logs in and their active department type is `administrative`, redirect them to:
 
 ```text
-/finance
+/administrative
 ```
 
-When switching away from Finance, redirect to the selected department’s appropriate workspace.
+When a multi-department user switches to an Administrative department, redirect them to:
 
-The menu, dashboard, route context, cashier context, and data scoping must always use the active department.
+```text
+/administrative
+```
+
+When switching away from Administrative, redirect to the selected department’s appropriate workspace.
+
+The menu, dashboard, route context, facility, and data scoping must always use the active department.
 
 Do not rely only on:
 
@@ -2267,27 +1845,27 @@ where the application supports active department selection.
 
 ---
 
-# Phase 40 — Finance Workspace Authorization
+# Phase 32 — Administrative Workspace Authorization
 
-The `/finance` prefix is not authorization.
+The `/administrative` prefix is not authorization.
 
 Protect the workspace so access requires:
 
 1. An authenticated user.
 2. A valid active department.
-3. Active department type equal to `finance`, unless authorized admin preview applies.
+3. Active department type equal to `administrative`, unless authorized admin preview applies.
 4. The required permission.
 5. The relevant module being enabled.
-6. Access to the requested invoice, payment, receivable, claim, sponsor, journal, cashier session, or accounting scope.
-7. Facility, branch, cashier, payer, or accounting-scope authorization where required.
+6. Access to the requested facility, department, user, document, approval, incident, complaint, audit, risk, or meeting.
+7. Appropriate organization, facility, branch, department, or committee scope.
 
 A user from another department who manually enters:
 
 ```text
-/finance/invoices
+/administrative/departments
 ```
 
-must not receive access merely because they possess a broad billing-view permission.
+must not receive access merely because they possess a broad department-view permission.
 
 Use the project’s existing unauthorized workspace behaviour:
 
@@ -2299,125 +1877,117 @@ Do not create inconsistent authorization behaviour.
 
 ---
 
-# Phase 41 — Permission Model
+# Phase 33 — Permission Model
 
 Reuse existing permissions wherever possible.
 
-Only add permissions where the current model does not represent the required action.
+Only add permissions where the current permission model does not represent the action.
 
 Potential permissions may include:
 
 ```text
-finance.workspace.view
+administrative.workspace.view
 
-finance.billing.view
-finance.billing.review
-finance.billing.finalize
+administrative.dashboard.view
+administrative.operations.view
+administrative.operations.manage
+administrative.escalations.view
+administrative.escalations.manage
 
-finance.invoices.view
-finance.invoices.create
-finance.invoices.finalize
-finance.invoices.cancel
-finance.invoices.print
+administrative.departments.view
+administrative.departments.manage
+administrative.departments.configure
+administrative.departments.compare
 
-finance.payments.view
-finance.payments.collect
-finance.payments.allocate
-finance.payments.reverse
-finance.receipts.view
+administrative.users.view
+administrative.users.manage
+administrative.user_departments.manage
+administrative.staff.view
+administrative.coverage.view
 
-finance.cashier.view
-finance.cashier.open
-finance.cashier.close
-finance.cashier.reconcile
-finance.cashier.variance_approve
+administrative.approvals.view
+administrative.approvals.manage
 
-finance.receivables.view
-finance.patient_balances.view
-finance.payment_allocation.manage
+administrative.policies.view
+administrative.policies.create
+administrative.policies.manage
+administrative.policies.approve
+administrative.policies.publish
 
-finance.insurance.view
-finance.claims.view
-finance.claims.validate
-finance.claims.submit
-finance.claims.resubmit
-finance.claims.post_payment
+administrative.documents.view
+administrative.documents.manage
+administrative.correspondence.view
+administrative.correspondence.manage
 
-finance.sponsors.view
-finance.sponsors.manage
+administrative.announcements.view
+administrative.announcements.manage
+administrative.memos.view
+administrative.memos.manage
 
-finance.discounts.view
-finance.discounts.request
-finance.discounts.approve
+administrative.incidents.view
+administrative.incidents.manage
+administrative.incidents.close
 
-finance.credit_notes.view
-finance.credit_notes.create
-finance.credit_notes.approve
-finance.credit_notes.issue
+administrative.complaints.view
+administrative.complaints.manage
+administrative.complaints.close
 
-finance.refunds.view
-finance.refunds.request
-finance.refunds.approve
-finance.refunds.complete
+administrative.compliance.view
+administrative.compliance.manage
+administrative.audits.view
+administrative.audits.manage
+administrative.findings.view
+administrative.findings.manage
 
-finance.reversals.view
-finance.reversals.manage
+administrative.risks.view
+administrative.risks.manage
+administrative.risks.accept
 
-finance.write_offs.view
-finance.write_offs.request
-finance.write_offs.approve
+administrative.meetings.view
+administrative.meetings.manage
+administrative.committees.view
+administrative.committees.manage
+administrative.action_items.view
+administrative.action_items.manage
 
-finance.deposits.view
-finance.deposits.manage
+administrative.service_availability.view
+administrative.service_availability.manage
 
-finance.journals.view
-finance.journals.post
-finance.journals.reverse
-finance.general_ledger.view
-finance.trial_balance.view
-finance.chart_of_accounts.view
-finance.chart_of_accounts.manage
+administrative.handoffs.view
+administrative.handoffs.manage
 
-finance.reconciliation.view
-finance.reconciliation.manage
-
-finance.payment_gate.view
-finance.payment_gate.manage
-finance.billing_overrides.view
-finance.billing_overrides.manage
-
-finance.reports.view
-finance.reports.export
+administrative.reports.view
+administrative.reports.export
+administrative.system_status.view
 ```
 
-Inspect current permission names before adding new permissions.
+Inspect existing permission names before adding new ones.
 
 Avoid duplicating equivalent permissions.
 
-Menu visibility must follow permissions, but controllers, policies, form requests, approval services, and financial domain services must independently enforce authorization.
+Menu visibility must follow permissions, but controllers, policies, form requests, approval services, and domain services must independently enforce authorization.
 
 ---
 
-# Phase 42 — Separation of Duties
+# Phase 34 — Separation of Duties
 
-Enforce separation of duties for high-risk financial actions where configured.
+Enforce separation of duties where configured.
 
 Examples:
 
-* A cashier should not approve their own cash variance.
-* A refund requester should not approve and complete the same refund.
-* A credit-note creator should not approve the credit note.
-* A discount requester should not approve the same discount above configured thresholds.
-* A payment collector should not reverse the payment without additional authority where configured.
-* A write-off requester should not approve the write-off.
-* A claim preparer should not be the final claim approver where separation is required.
-* A journal preparer should not post the same journal where maker-checker control is enabled.
-* A bank-reconciliation preparer should not approve the reconciliation where configured.
+* A policy author should not be the only policy approver.
+* A complaint investigator should not approve final closure where independent review is required.
+* An incident reporter should not close a critical incident without verification.
+* An audit finding owner should not independently verify their own corrective action.
+* A department-change requester should not approve the same change.
+* A risk owner should not approve risk acceptance above configured thresholds.
+* An approval requester should not approve their own request.
 
 Use configurable rules rather than hardcoding one universal workflow.
 
 Exceptions must be:
 
+* Explicit
 * Permission-controlled
 * Reasoned
 * Time-stamped
@@ -2425,145 +1995,129 @@ Exceptions must be:
 
 ---
 
-# Phase 43 — Patient Privacy and Financial Data Security
+# Phase 35 — Privacy and Confidentiality
 
-The Finance workspace handles highly sensitive patient and financial information.
+The Administrative workspace handles sensitive operational, staff, patient, complaint, audit, and governance information.
 
 Ensure existing privacy controls remain active, including:
 
-* Patient-name masking where applicable
+* Patient masking where patient context appears
 * Protected phone and email fields
-* Sensitive-field permission checks
-* Patient search masking
+* Staff contact protection
+* Complaint confidentiality
+* Incident confidentiality
+* Committee confidentiality
+* Document access classification
+* Audit access control
 * Export restrictions
-* Secure patient, visit, invoice, payment, and claim lookups
 * Privacy-aware notifications
 * Activity-log sanitization
 
-Finance users should only see clinical information necessary to understand billing, insurance, claims, and authorization.
+Administrative users should only see the minimum information required for their role.
 
-Do not expose full consultation notes, unrelated diagnoses, or clinical records without permission.
+Do not expose:
 
-Financial information must also remain permission-controlled, including:
+* Full clinical notes
+* Payroll
+* Bank information
+* confidential HR cases
+* protected complaint identities
+* security-sensitive system details
+* patient-identifiable analytics
 
-* Patient balances
-* Insurance balances
-* Sponsor balances
-* Revenue
-* Cash positions
-* Bank details
-* Payment-provider references
-* General Ledger
-* Trial Balance
-* Stock valuation where linked
-* Payroll information where integrated
+without explicit permission.
 
 ---
 
-# Phase 44 — Financial Integrity and Accounting Safety
+# Phase 36 — Administrative Integrity and Operational Safety
 
-Preserve existing financial safeguards, including:
+Preserve existing operational safeguards, including:
 
-* Balanced journal entries
-* Invoice immutability after finalization
-* Payment traceability
-* Receipt uniqueness
-* Cashier-session integrity
-* Receivable integrity
-* Payment-allocation integrity
-* Insurance-coverage accuracy
-* Refund limits
-* Credit-note limits
-* Write-off approval
-* Accounting-period controls
-* Bank-reconciliation traceability
-* Digital-payment reconciliation
-* Separation of duties
-* Audit trails
+* Department authorization
+* User and role authorization
+* Approval traceability
+* Policy version history
+* Document confidentiality
+* Incident-history preservation
+* Complaint-history preservation
+* Audit finding traceability
+* Risk acceptance control
+* Corrective-action verification
+* Meeting-action accountability
+* Notification targeting
+* Activity logging
 
 Do not allow:
 
-* Direct editing of posted payments
-* Direct deletion of finalized invoices
-* Direct deletion of posted journals
-* Refunds beyond refundable balances
-* Credit notes beyond eligible invoice balances
-* Duplicate payment reversal
-* Duplicate provider transaction posting
-* Cross-visit payment allocation beyond the tender amount
-* Insurance coverage to be calculated against the wrong price basis
-* Receivables to disappear without settlement, credit, write-off, or cancellation
-* Cashier sessions to close without required reconciliation
-* Unbalanced journal posting
-* Posting into closed accounting periods
-* Financial history to be silently overwritten
+* Published policies to be silently overwritten
+* Closed complaints to be edited without reopening
+* Critical incidents to be closed without required verification
+* Audit findings to disappear without resolution
+* Risks to be deleted merely because they are accepted
+* Approval decisions to be edited silently
+* Department access to be expanded without authorization
+* Confidential documents to become globally visible
+* Administrative oversight to bypass specialist-domain rules
+* Management users to perform clinical or financial transactions without corresponding permissions
 
 Overrides must be explicit, permission-controlled, reasoned, scoped, and audited.
 
 ---
 
-# Phase 45 — Activity Logging and Audit
+# Phase 37 — Activity Logging and Audit
 
-Record relevant Finance actions through the existing `ActivityLog` infrastructure.
+Record relevant Administrative actions through the existing `ActivityLog` infrastructure.
 
 Audit events should cover actions such as:
 
-* Billing reviewed
-* Billing finalized
-* Invoice created
-* Invoice finalized
-* Invoice cancelled
-* Payment collected
-* Receipt issued
-* Payment allocated
-* Cross-visit allocation completed
-* Payment reversed
-* Deposit collected
-* Deposit allocated
-* Cashier session opened
-* Cashier session closed
-* Cash variance recorded
-* Cash variance approved
-* Discount requested
-* Discount approved
-* Credit note created
-* Credit note approved
-* Credit note issued
-* Refund requested
-* Refund approved
-* Refund completed
-* Write-off requested
-* Write-off approved
-* Claim generated
-* Claim validated
-* Claim submitted
-* Claim rejected
-* Claim resubmitted
-* Claim payment posted
-* Sponsor statement generated
-* Billing override created
-* Payment-gate override created
-* Journal posted
-* Journal reversed
-* Reconciliation completed
-* Accounting period reopened where supported
+* Administrative department opened
+* Department status changed
+* Department configuration updated
+* Department assignment changed
+* Approval approved
+* Approval rejected
+* Approval returned for correction
+* Policy created
+* Policy approved
+* Policy published
+* Policy superseded
+* Document registered
+* Document archived
+* Announcement published
+* Memo published
+* Incident created
+* Incident assigned
+* Incident severity changed
+* Incident resolved
+* Incident closed
+* Complaint created
+* Complaint assigned
+* Complaint resolved
+* Complaint closed
+* Audit created
+* Audit finding created
+* Audit finding assigned
+* Corrective action recorded
+* Audit finding closed
+* Risk created
+* Risk score changed
+* Risk accepted
+* Meeting created
+* Meeting minutes published
+* Action item assigned
+* Action item completed
+* Service availability changed
+* Operational escalation created
+* Operational escalation resolved
 
-Do not log full payment credentials, bank details, card data, provider secrets, or unnecessary patient clinical information.
+Do not log full confidential document content, complaint details, clinical notes, authentication credentials, or security-sensitive values.
 
 Audit records should include sufficient context such as:
 
 * Actor
-* Patient identifier where relevant
-* Visit identifier
-* Invoice identifier
-* Payment identifier
-* Receivable identifier
-* Claim identifier
-* Cashier session identifier
-* Journal identifier
 * Department
-* Facility or branch where applicable
-* Amount where audit policy permits
+* Facility
+* Source record
 * Action
 * Timestamp
 * Reason where required
@@ -2571,17 +2125,17 @@ Audit records should include sufficient context such as:
 
 ---
 
-# Phase 46 — Localization
+# Phase 38 — Localization
 
-Add complete English and French localization for the Finance workspace.
+Add complete English and French localization for the Administrative workspace.
 
-Prefer existing Finance, Billing, Accounting, and Claims localization files where available.
+Prefer existing Administration, Management, Departments, Reports, and Settings localization files where appropriate.
 
 Otherwise, use or extend:
 
 ```text
-lang/en/finance.php
-lang/fr/finance.php
+lang/en/administrative.php
+lang/fr/administrative.php
 ```
 
 Include keys for:
@@ -2589,121 +2143,92 @@ Include keys for:
 * Workspace title
 * Dashboard
 * Menu sections
-* Billing states
-* Invoice states
-* Payment states
-* Payment methods
-* Allocation states
-* Cashier-session states
-* Cash-variance states
-* Receivable states
-* Aging buckets
-* Insurance states
-* Claim states
-* Sponsor states
-* Discount types and states
-* Credit-note states
-* Refund states
-* Reversal states
-* Write-off states
-* Deposit states
-* Journal states
-* Reconciliation states
-* Payment-gate states
-* Override reasons
+* Department states
+* Operational states
+* Approval states
+* Policy states
+* Document states
+* Correspondence states
+* Announcement states
+* Incident states and severities
+* Complaint states
+* Compliance states
+* Audit states
+* Finding states
+* Risk states
+* Meeting states
+* Action-item states
+* Service-availability states
 * Empty states
 * Quick actions
 * Reports
 * Breadcrumbs
 * Unauthorized workspace message
+* Override and exception reasons
 
 Maintain complete English and French parity.
 
-Do not hardcode visible Finance labels in controllers, services, Blade templates, or JavaScript.
+Do not hardcode visible Administrative labels in controllers, services, Blade templates, or JavaScript.
 
 ---
 
-# Phase 47 — Finance Reports and Statistics
+# Phase 39 — Administrative Reports and Analytics
 
-Create or adapt Finance reports under:
+Create or adapt Administrative reports under:
 
 ```text
-/finance/reports
+/administrative/reports
 ```
 
 Recommended reports include:
 
-* Daily billing report
-* Daily collection report
-* Revenue report
-* Revenue by department
-* Revenue by service
-* Revenue by payer
-* Payment-method report
-* Cashier collection report
-* Cashier variance report
-* Invoice-status report
-* Unpaid-invoice report
-* Patient-balance report
-* Previous-balance report
-* Accounts-receivable report
-* AR aging report
-* Insurance-receivable report
-* Sponsor-receivable report
-* Claims-status report
-* Claims-rejection report
-* Claims-settlement report
-* Discount report
-* Credit-note report
-* Refund report
-* Reversal report
-* Write-off report
-* Deposit and advance-payment report
-* General Ledger report
-* Trial Balance report
-* Journal report
-* Bank-reconciliation report
-* Digital-payment reconciliation report
-* Billing-override report
-* Payment-gate override report
-* Financial audit report
+* Department performance report
+* Department comparison report
+* Operational status report
+* Service availability report
+* SLA breach report
+* Bottleneck report
+* Approval turnaround report
+* Staff coverage report
+* Department assignment report
+* Policy review report
+* Document register report
+* Correspondence report
+* Announcement report
+* Incident report
+* Critical-incident report
+* Complaint report
+* Complaint-resolution report
+* Compliance report
+* Internal-audit report
+* Audit-findings report
+* Corrective-action report
+* Risk-register report
+* High-risk-item report
+* Meeting activity report
+* Action-item report
+* Executive summary
+* Management activity report
 
 Reports must respect:
 
 * Permissions
 * Active department
-* Facility or branch scope
-* Cashier scope
-* Payer scope
+* Facility and branch scope
+* Department scope
+* Confidentiality level
 * Patient privacy
-* Financial-data security
-* Accounting period
+* Staff privacy
+* Minimum aggregation safeguards
 * Export permissions
 
-Reports should distinguish:
-
-* Gross billing
-* Discounts
-* Credits
-* Net billing
-* Payments
-* Refunds
-* Reversals
-* Net collections
-* Patient receivables
-* Insurance receivables
-* Sponsor receivables
-* Write-offs
-
-Do not present billing as cash collected.
-
-Do not present payments as revenue without following the configured accounting basis and journal architecture.
+Do not expose identifiable patient, complaint, incident, or staff details in aggregate reports without detailed-report permission.
 
 ---
 
-# Phase 48 — Menu Configuration and Future Extensibility
+# Phase 40 — Menu Configuration and Future Extensibility
 
-Implement the Finance menu through the existing menu registry or department menu profile service.
+Implement the Administrative menu through the existing menu registry or department menu profile service.
 
 Do not define it directly inside the sidebar Blade template.
 
@@ -2717,19 +2242,18 @@ The menu configuration should support:
 * Active-route patterns
 * Badge counts
 * Department-type availability
-* Facility or branch scoping
-* Cashier scoping
+* Facility scoping
 * Feature flags
-* Unpaid-invoice counts
-* Unallocated-payment counts
-* Open-cashier-session counts
-* Refund-approval counts
-* Claims-rejection counts
-* Receivable-overdue counts
-* Payment-gate override counts
-* Reconciliation-exception counts
+* Pending-approval counts
+* Critical-incident counts
+* Open-complaint counts
+* Overdue-audit-finding counts
+* High-risk-item counts
+* Service-interruption counts
+* Overdue-action-item counts
+* Coverage-gap counts
 
-The architecture must remain extensible for future department menu personalization, including:
+The architecture must remain extensible for remaining department menu personalization, including:
 
 ```text
 radiology
@@ -2738,341 +2262,282 @@ blood_bank
 mortuary
 ambulance
 support
-administrative
 ```
 
-Do not implement those other workspaces in this phase.
+Do not implement those workspaces in this phase.
 
 ---
 
-# Phase 49 — Focused Automated Verification
+# Phase 41 — Focused Automated Verification
 
-Add focused automated tests for the Finance workspace.
+Add focused automated tests for the Administrative workspace.
 
 ## Route tests
 
 Verify:
 
-* Finance routes exist.
-* Route names use `finance.*`.
-* URLs use `/finance/*`.
-* Finance department middleware is attached.
+* Administrative routes exist.
+* Route names use `administrative.*`.
+* URLs use `/administrative/*`.
+* Administrative department middleware is attached.
 * Generic routes remain available where required.
 
 ## Access tests
 
 Verify:
 
-* A Finance department user can access authorized Finance pages.
-* A non-Finance department user cannot access the workspace.
+* An Administrative department user can access authorized Administrative pages.
+* A non-Administrative department user cannot access the workspace.
 * Users without the required permission cannot access protected actions.
 * Admin preview continues working where supported.
 * Multi-department active context is respected.
-* Facility, branch, cashier, and accounting scopes are respected.
+* Facility and branch scope are respected.
 
 ## Dashboard tests
 
 Verify:
 
-* The Finance dashboard loads.
-* Billing, payment, receivable, claim, and cashier metrics are accurate.
-* Sensitive financial values are hidden without permission.
-* Links point to `/finance/*`.
+* The Administrative dashboard loads.
+* Department, approval, incident, complaint, audit, and risk metrics are accurate.
+* Patient-identifiable information is masked or omitted.
+* Confidential metrics are hidden without permission.
+* Links point to `/administrative/*`.
 * Empty states render safely.
-* Metrics do not confuse billing with collections.
 
-## Billing and invoice tests
-
-Verify:
-
-* Billing uses the existing calculation services.
-* Insurance coverage uses the selected insurance price.
-* Billing exceptions are surfaced.
-* Finalized invoices cannot be silently edited.
-* Credit notes or replacement workflows handle corrections.
-* Invoice totals remain consistent.
-
-## Payment tests
+## Department oversight tests
 
 Verify:
 
-* Payments use the existing payment service.
-* Journal entries remain balanced.
-* Partial payments update receivables correctly.
-* Overpayments follow the configured policy.
-* Duplicate provider references are rejected where required.
-* Receipts remain unique.
-* Payment actions are audited.
+* Department lists respect facility scope.
+* Department performance uses existing metrics.
+* Department-type-specific KPIs are displayed correctly.
+* Administrative users without management permission cannot modify departments.
+* Department changes are audited.
 
-## Previous-balance tests
+## Approval tests
 
 Verify:
 
-* Previous and current balances are separated.
-* Only patient-responsibility receivables are counted in patient balances.
-* Oldest invoice and aging data are accurate.
-* Previous visits retain their original invoices.
+* Approval worklists aggregate supported source workflows.
+* Approval actions call the source domain service.
+* Requesters cannot approve their own requests where separation is enabled.
+* Rejection and return require reasons.
+* Approval history remains preserved.
+* Source records update correctly.
 
-## Cross-visit allocation tests
-
-Verify:
-
-* `oldest_first` allocation works correctly.
-* `current_visit` allocation works correctly.
-* Manual allocation validates all amounts.
-* A tender may create multiple invoice-scoped payments.
-* Each invoice retains a clean payment and journal history.
-* Allocation cannot exceed the tender or receivable.
-* Allocation is audited.
-
-## Cashier tests
+## Policy tests
 
 Verify:
 
-* Cashier sessions open and close correctly.
-* Required open-session rules are enforced.
-* Expected cash is calculated correctly.
-* Refunds and reversals affect the session correctly.
-* Variances require review where configured.
-* A cashier cannot approve their own variance where separation is enabled.
+* Policies preserve version history.
+* Published policies cannot be silently overwritten.
+* Policy publication requires approval where configured.
+* Superseded policies remain available in history.
+* Policy actions are audited.
 
-## Refund and reversal tests
-
-Verify:
-
-* Posted payments cannot be deleted directly.
-* Payment reversal preserves the original payment.
-* Payment reversal restores the receivable.
-* Refunds cannot exceed refundable balances.
-* Refund and reversal remain distinct.
-* Journal entries and cashier totals update correctly.
-* Approval controls are enforced.
-
-## Discount and credit-note tests
+## Document tests
 
 Verify:
 
-* Discounts respect approval thresholds.
-* Finalized invoice prices are not directly changed.
-* Credit notes preserve the original invoice.
-* Credit notes cannot exceed eligible balances.
-* Credit-note journal and receivable effects are correct.
+* Documents respect confidentiality classifications.
+* Unauthorized departments cannot access restricted documents.
+* Archived documents remain traceable.
+* Attachments follow existing security controls.
 
-## Receivable tests
-
-Verify:
-
-* Patient, insurance, and sponsor receivables remain separate.
-* Aging buckets are correct.
-* Partial payment updates balances correctly.
-* Receivables remain until settled, credited, cancelled, or written off.
-* Write-offs preserve the original financial history.
-
-## Claims tests
+## Incident and complaint tests
 
 Verify:
 
-* Claim validation identifies blocking and warning findings.
-* Claims cannot be submitted with unresolved blocking findings.
-* Claim submission preserves references.
-* Rejected claims can be corrected and resubmitted.
-* Partial settlement updates claim and receivable balances correctly.
-* Claim payments post through the accounting pipeline.
+* Incidents and complaints preserve full state history.
+* Critical incidents require the configured closure checks.
+* Complaints respect identity protection.
+* Closed records require formal reopening before modification.
+* Assignment and resolution actions are audited.
 
-## General Ledger tests
-
-Verify:
-
-* Posted transactions create balanced journal entries.
-* General Ledger reports derive from posted journal data.
-* Trial Balance remains balanced.
-* Posted journals cannot be directly edited or deleted.
-* Reversals create traceable correcting entries.
-* Closed accounting periods block normal posting.
-
-## Reconciliation tests
+## Audit and compliance tests
 
 Verify:
 
-* Cash reconciliation matches cashier sessions.
-* Bank transactions can remain unmatched without being deleted.
-* Digital-payment transactions reconcile by provider reference and amount.
-* Variances remain visible until resolved.
-* Reconciliation actions are audited.
+* Audit findings cannot be deleted silently.
+* Corrective actions require verification where configured.
+* Overdue findings remain visible.
+* Compliance exemptions require reason and approval.
+* Audit closure is permission-controlled.
+
+## Risk tests
+
+Verify:
+
+* Risk scoring uses the centralized service.
+* Risk acceptance requires permission.
+* High-risk items remain visible.
+* Accepted risks remain in history.
+* Risk changes are audited.
+
+## Meeting and action-item tests
+
+Verify:
+
+* Meetings preserve minutes and decisions.
+* Committee access is restricted appropriately.
+* Action items remain linked to their source.
+* Overdue actions remain visible.
+* Completion and verification are distinct where configured.
 
 ## Redirect tests
 
 Verify:
 
-* Login redirects to `/finance`.
-* Switching to Finance redirects to `/finance`.
-* Billing, invoice, payment, cashier, claim, refund, credit-note, journal, and reconciliation actions remain under `/finance/*`.
+* Login redirects to `/administrative`.
+* Switching to Administrative redirects to `/administrative`.
+* Department, approval, policy, incident, complaint, audit, risk, and meeting actions remain under `/administrative/*`.
 * No redirect loops occur.
-* JSON, API, payment callback, insurance callback, provider webhook, signed, print, export, and integration requests are not incorrectly redirected.
+* JSON, API, signed, print, export, webhook, and integration requests are not incorrectly redirected.
 
 ## Privacy and audit tests
 
 Verify:
 
 * Patient masking remains active.
-* Protected fields require permission.
-* Clinical context is limited to what Finance requires.
-* Bank, provider, and financial details are permission-controlled.
-* Finance actions generate required audit records.
-* Sensitive values are not exposed through alternate Finance views.
+* Staff and complaint confidentiality are enforced.
+* Confidential documents require permission.
+* Administrative actions generate required audit records.
+* Sensitive content is not exposed through alternate Administrative views.
 
-Run focused Finance workspace tests and essential route, view, localization, billing, journal, reconciliation, privacy, and audit checks during implementation.
+Run focused Administrative workspace tests and essential route, view, localization, permission, privacy, and audit checks during implementation.
 
 Do not run the full UHMS suite after each phase.
 
-Run one broad relevant suite after all Finance workspace phases are complete.
+Run one broad relevant suite after all Administrative workspace phases are complete.
 
 ---
 
-# Phase 50 — Manual Acceptance Scenarios
+# Phase 42 — Manual Acceptance Scenarios
 
-## Scenario A — Finance login
+## Scenario A — Administrative login
 
-1. Log in as a user whose active department type is `finance`.
-2. Confirm the landing URL is `/finance`.
-3. Confirm the Finance-specific menu is displayed.
-4. Confirm unrelated department menus are absent.
+1. Log in as a user whose active department type is `administrative`.
+2. Confirm the landing URL is `/administrative`.
+3. Confirm the Administrative-specific menu is displayed.
+4. Confirm unrelated specialist menus are absent.
 
-## Scenario B — Visit billing review
+## Scenario B — Department oversight
 
-1. Open the billing worklist.
-2. Select a patient visit.
-3. Confirm services, prices, payer allocation, discounts, and responsibilities.
-4. Resolve any billing exceptions.
-5. Finalize the invoice.
-6. Confirm all routes remain under `/finance/*`.
+1. Open the department list.
+2. Select a department.
+3. Confirm operational status, staffing, services, metrics, and alerts.
+4. Confirm links remain under `/administrative/*`.
+5. Confirm unauthorized configuration actions are hidden.
 
-## Scenario C — Insurance-price calculation
+## Scenario C — Department comparison
 
-1. Open an insured visit.
-2. Confirm the selected insurer’s price is used.
-3. Confirm coverage is calculated from the insurance price.
-4. Confirm patient responsibility is correct.
-5. Confirm the cash price is not incorrectly used as the coverage basis.
+1. Open department comparison.
+2. Compare two departments with compatible metrics.
+3. Confirm shared and type-specific KPIs are clearly distinguished.
+4. Confirm unrelated metrics are not used misleadingly.
 
-## Scenario D — Partial payment
+## Scenario D — Approval workflow
 
-1. Open an unpaid invoice.
-2. Collect part of the invoice amount.
-3. Confirm the invoice becomes partially paid.
-4. Confirm the remaining receivable is correct.
-5. Confirm the payment and journal entries are recorded.
+1. Open pending approvals.
+2. Select a request from another module.
+3. Review supporting information.
+4. Approve or reject it.
+5. Confirm the originating module updates through its domain service.
+6. Confirm the decision is audited.
 
-## Scenario E — Previous balance
+## Scenario E — Self-approval restriction
 
-1. Open a patient with an unpaid previous visit.
-2. Confirm previous, current, and total balances are displayed separately.
-3. Confirm the oldest unpaid invoice and age are correct.
-4. Confirm each visit keeps its original invoice.
+1. Submit an approval request as one user.
+2. Attempt to approve it using the same user.
+3. Confirm the system blocks the action where separation is configured.
+4. Approve using another authorized user.
 
-## Scenario F — Cross-visit allocation
+## Scenario F — Policy publication
 
-1. Collect a payment intended for several unpaid invoices.
-2. Select oldest-first allocation.
-3. Confirm multiple invoice-scoped payments are created.
-4. Confirm each invoice receives the correct allocation.
-5. Confirm each payment posts through the normal payment service.
+1. Create or update a draft policy.
+2. Submit it for review.
+3. Approve and publish it.
+4. Confirm the previous version remains preserved.
+5. Confirm relevant users are notified where supported.
 
-## Scenario G — Cashier session
+## Scenario G — Confidential document
 
-1. Open a cashier session with a float.
-2. Collect cash and digital payments.
-3. Record a refund or reversal.
-4. Close the session.
-5. Count cash.
-6. Confirm expected cash and variance are correct.
-7. Confirm a supervisor reviews the variance where required.
+1. Register a confidential document.
+2. Assign it to specific departments or roles.
+3. Confirm unauthorized users cannot access it.
+4. Archive it.
+5. Confirm it remains traceable.
 
-## Scenario H — Payment reversal
+## Scenario H — Incident management
 
-1. Open a posted payment.
-2. Request a reversal.
-3. Record the reason.
-4. Complete the required approval.
-5. Confirm the original payment remains visible.
-6. Confirm the receivable and journal entries are restored correctly.
+1. Record an operational incident.
+2. Assign an owner.
+3. Record immediate and corrective actions.
+4. Resolve the incident.
+5. Complete required verification.
+6. Confirm the full history remains visible.
 
-## Scenario I — Refund
+## Scenario I — Complaint management
 
-1. Open an eligible credit balance.
-2. Request a refund.
-3. Approve it using a separate authorized user.
-4. Complete the refund.
-5. Confirm the refundable balance, cashier session, and journal entries update correctly.
+1. Record a complaint.
+2. Assign it to an authorized officer.
+3. Record investigation and response.
+4. Resolve and close the complaint.
+5. Confirm complainant information remains protected.
 
-## Scenario J — Credit note
+## Scenario J — Audit finding
 
-1. Open a finalized invoice containing an incorrect charge.
-2. Create a credit note.
-3. Approve and issue it.
-4. Confirm the original invoice remains preserved.
-5. Confirm the receivable and journal effects are correct.
+1. Create an audit finding.
+2. Assign a corrective action.
+3. Mark the action complete.
+4. Verify the correction with an authorized reviewer.
+5. Close the finding.
+6. Confirm it cannot be silently deleted.
 
-## Scenario K — Claim submission
+## Scenario K — Risk register
 
-1. Open a draft insurance claim.
-2. Run validation.
-3. Resolve blocking findings.
-4. Submit the claim.
-5. Record the insurer reference.
-6. Confirm the claim state and insurance receivable update.
+1. Create a risk.
+2. Record likelihood, impact, controls, and mitigation.
+3. Update the risk score.
+4. Accept or close it with the required authority.
+5. Confirm the complete risk history remains visible.
 
-## Scenario L — Claim rejection and resubmission
+## Scenario L — Meeting action items
 
-1. Open a rejected claim.
-2. Record the rejection reasons.
-3. Correct the eligible items.
-4. Resubmit the claim.
-5. Confirm the full claim history remains visible.
+1. Create a meeting.
+2. Record minutes and decisions.
+3. Assign action items.
+4. Complete one action.
+5. Confirm overdue actions remain visible.
+6. Confirm source linkage is preserved.
 
-## Scenario M — Claim payment
+## Scenario M — Service availability
 
-1. Record an insurer settlement.
-2. Allocate the payment to claims and invoices.
-3. Record deductions and rejected balances.
-4. Confirm partially paid claims remain open.
-5. Confirm receivables and journals update correctly.
+1. Mark a service as temporarily unavailable.
+2. Record the reason and expected restoration.
+3. Confirm the status appears on the Administrative dashboard.
+4. Restore availability.
+5. Confirm both actions are audited.
 
-## Scenario N — General Ledger
+## Scenario N — Active department and facility scoping
 
-1. Open a payment’s journal entry.
-2. Confirm debit and credit entries balance.
-3. Open the General Ledger.
-4. Confirm the payment appears in the expected accounts.
-5. Confirm the Trial Balance remains balanced.
-
-## Scenario O — Digital payment reconciliation
-
-1. Import or view provider transactions.
-2. Match an internal payment to a provider reference.
-3. Leave one transaction unmatched.
-4. Confirm the unmatched item remains visible.
-5. Resolve a variance with an audited reason.
-
-## Scenario P — Active department scoping
-
-1. Use a user assigned to multiple Finance departments or branches.
+1. Use a user assigned to multiple Administrative departments or facilities.
 2. Switch the active department.
-3. Confirm cashier sessions, invoices, reports, and approval worklists change to the selected Finance context.
-4. Confirm unauthorized branches are not visible.
+3. Confirm departments, approvals, reports, incidents, and documents change to the selected context.
+4. Confirm unauthorized facilities are not visible.
 
-## Scenario Q — Permission control
+## Scenario O — Permission control
 
-1. Remove refund-approval permission.
-2. Confirm the approval action disappears.
-3. Enter the approval route directly.
+1. Remove policy-publishing permission.
+2. Confirm the Publish action disappears.
+3. Enter the route directly.
 4. Confirm access is denied.
 
-## Scenario R — Legacy compatibility
+## Scenario P — Legacy compatibility
 
-1. Enter a generic invoice, payment, claim, or receivable route as a Finance user.
-2. Confirm it safely resolves or redirects to the Finance equivalent where configured.
-3. Confirm APIs, provider callbacks, insurance callbacks, signed URLs, print routes, and exports remain unaffected.
+1. Enter a generic department, user, approval, or incident route as an Administrative user.
+2. Confirm it safely resolves or redirects to the Administrative equivalent where configured.
+3. Confirm APIs, signed URLs, print routes, exports, webhooks, and integrations remain unaffected.
 
 ---
 
@@ -3080,49 +2545,38 @@ Run one broad relevant suite after all Finance workspace phases are complete.
 
 The implementation is accepted only when all the following are true:
 
-1. Users with an active department type of `finance` receive a dedicated Finance menu.
-2. Their default dashboard uses `/finance`.
-3. Supported Finance pages use `/finance/*` URLs.
-4. Route names use the `finance.*` namespace.
-5. Billing, invoices, payments, receivables, claims, journals, and reconciliation pages preserve Finance workspace context.
-6. Forms submit through Finance routes.
-7. Redirects remain inside the Finance workspace.
-8. Breadcrumbs and active menu states are Finance-aware.
-9. Permissions and enabled modules control menu visibility.
-10. A non-Finance department user cannot access the workspace.
-11. Multi-department users are evaluated using the active department.
-12. Facility, branch, cashier, payer, and accounting scopes are respected.
-13. Existing billing, invoice, payment, receivable, insurance, claims, journal, reconciliation, and audit logic is reused.
-14. Core accounting and payment logic is not duplicated.
-15. Insurance coverage uses the selected insurer’s price.
-16. Finalized invoices cannot be silently edited.
-17. Payments post through the existing payment and journal pipeline.
-18. Partial payments preserve accurate receivable balances.
-19. Previous and current patient balances remain separated.
-20. Cross-visit tenders use multiple invoice-scoped payments where required by the accounting architecture.
-21. Each visit keeps its own invoice and journal history.
-22. Cashier sessions preserve opening, collection, refund, reversal, and closing integrity.
-23. Cash variances require review where configured.
-24. Completed payments cannot be silently deleted.
-25. Reversals preserve original payments and restore receivables correctly.
-26. Refunds cannot exceed refundable balances.
-27. Refunds and reversals remain distinct workflows.
-28. Discounts and credit notes preserve invoice history.
-29. Patient, insurance, and sponsor receivables remain separately identifiable.
-30. Claims validation, submission, rejection, resubmission, and settlement remain traceable.
-31. General Ledger and Trial Balance derive from posted journal entries.
-32. Posted journals cannot be silently edited or deleted.
-33. Accounting-period controls remain active.
-34. Reconciliation preserves unmatched transactions and exception history.
-35. Separation of duties is enforced where configured.
-36. Patient privacy and financial-data security remain fully active.
-37. Generic routes remain functional for other departments and integrations.
-38. APIs, payment callbacks, provider webhooks, insurance callbacks, signed URLs, print routes, and exports are not incorrectly redirected.
-39. Relevant Finance actions are audited.
-40. English and French localization are complete and in parity.
-41. Focused Finance workspace tests pass.
-42. One broad relevant suite passes after all phases are complete.
-43. No broken links, route loops, duplicate route names, branch leakage, unbalanced journals, duplicate payments, silent receivable deletion, or accounting-history replacement remains.
+1. Users with an active department type of `administrative` receive a dedicated Administrative menu.
+2. Their default dashboard uses `/administrative`.
+3. Supported Administrative pages use `/administrative/*` URLs.
+4. Route names use the `administrative.*` namespace.
+5. Administrative links, forms, breadcrumbs, and redirects preserve the workspace context.
+6. Permissions and enabled modules control menu visibility.
+7. A non-Administrative department user cannot access the workspace.
+8. Multi-department users are evaluated using the active department.
+9. Facility, branch, department, committee, and confidentiality scopes are respected.
+10. Existing department, user, approval, reporting, notification, document, task, and audit services are reused.
+11. Core clinical, Finance, HR, Stores, Records, and specialist logic is not duplicated.
+12. Administrative oversight does not bypass specialist-domain authorization.
+13. Department performance uses reliable shared and type-specific KPIs.
+14. Approval actions call the authoritative source-domain service.
+15. Separation of duties is enforced where configured.
+16. Published policies preserve version history.
+17. Confidential documents remain access-controlled.
+18. Incident and complaint histories cannot be silently overwritten.
+19. Audit findings remain visible until properly verified and closed.
+20. Risk acceptance remains permission-controlled and traceable.
+21. Meeting decisions and action items remain linked.
+22. Service-availability changes are permission-controlled and audited.
+23. Administrative users do not automatically gain unrestricted system-admin access.
+24. Administrative users do not automatically gain clinical, Finance, HR, or inventory transaction permissions.
+25. Patient, staff, complaint, document, and audit confidentiality remain fully active.
+26. Generic routes remain functional for other departments and integrations.
+27. APIs, signed URLs, print routes, exports, webhooks, and integrations are not incorrectly redirected.
+28. Relevant Administrative actions are audited.
+29. English and French localization are complete and in parity.
+30. Focused Administrative workspace tests pass.
+31. One broad relevant suite passes after all phases are complete.
+32. No broken links, route loops, duplicate route names, facility leakage, confidentiality leakage, self-approval bypass, policy-history loss, or specialist-workflow contamination remains.
 
 ---
 
@@ -3130,75 +2584,64 @@ The implementation is accepted only when all the following are true:
 
 Provide:
 
-1. Finance workspace route group.
-2. Finance-specific controllers or thin adapters where required.
-3. Finance operations dashboard.
-4. Finance department menu profile.
-5. Billing worklists.
-6. Visit billing workspace.
-7. Invoice lifecycle integration.
-8. Payment-collection integration.
-9. Partial-payment and overpayment handling.
-10. Deposit and advance-payment workflows.
-11. Previous patient balance integration.
-12. Cross-visit payment allocation.
-13. Accounts Receivable worklists.
-14. Receivable-aging integration.
-15. Cashier-session workflow.
-16. Cashier closing and variance reconciliation.
-17. Payment-reversal workflow.
-18. Refund workflow.
-19. Discount workflow.
-20. Credit-note workflow.
-21. Invoice-cancellation workflow.
-22. Write-off workflow.
-23. Insurance billing integration.
-24. Claims validation, submission, rejection, resubmission, and settlement.
-25. Sponsor-account integration.
-26. Payment-gate policy visibility.
-27. Visit billing override integration.
-28. Journal and General Ledger visibility.
-29. Chart of Accounts visibility.
-30. Trial Balance.
-31. Accounting-period controls.
-32. Cash, bank, digital-payment, insurance, and sponsor reconciliation.
-33. Workspace-aware URL resolver updates.
-34. Workspace-aware redirect resolver updates.
-35. Updated shared links and forms.
-36. Login and department-switch integration.
-37. Finance breadcrumbs and active-menu handling.
-38. Permission and separation-of-duty integration.
-39. Patient privacy and financial-data security integration.
-40. English and French localization.
-41. Focused feature tests.
-42. A final implementation report containing:
+1. Administrative workspace route group.
+2. Administrative-specific controllers or thin adapters where required.
+3. Administrative operations dashboard.
+4. Administrative department menu profile.
+5. Departmental oversight pages.
+6. Department performance and comparison integration.
+7. Administrative operations worklist.
+8. Service-availability monitoring.
+9. Aggregated approval worklists.
+10. Separation-of-duty integration.
+11. User and staff oversight.
+12. Department-assignment integration.
+13. Duty-roster and coverage awareness.
+14. Policy-management workflow.
+15. Procedure and guideline management.
+16. Document and correspondence tracking.
+17. Memo and announcement management.
+18. Incident-management workflow.
+19. Complaint-management workflow.
+20. Compliance monitoring.
+21. Internal audit and finding management.
+22. Risk-register management.
+23. Meeting and committee management.
+24. Administrative action-item tracking.
+25. Journey Intelligence management oversight.
+26. Facility and branch scoping.
+27. System-configuration awareness without unrestricted administration.
+28. Workspace-aware URL resolver updates.
+29. Workspace-aware redirect resolver updates.
+30. Updated shared links and forms.
+31. Login and department-switch integration.
+32. Administrative breadcrumbs and active-menu handling.
+33. Permission and confidentiality integration.
+34. English and French localization.
+35. Focused feature tests.
+36. A final implementation report containing:
 
 * Files created
 * Files modified
-* Finance route map
-* Finance menu map
+* Administrative route map
+* Administrative menu map
 * Dashboard metrics
-* Billing workflow
-* Invoice lifecycle
-* Payment behaviour
-* Previous-balance behaviour
-* Cross-visit allocation behaviour
-* Cashier-session behaviour
-* Refund and reversal behaviour
-* Discount and credit-note behaviour
-* Receivable behaviour
-* Insurance and claims behaviour
-* Sponsor-account behaviour
-* Payment-gate and billing-override behaviour
-* Journal and General Ledger behaviour
-* Reconciliation behaviour
-* Active-department and branch scoping
+* Department oversight behaviour
+* Department comparison behaviour
+* Approval aggregation behaviour
+* Separation-of-duty rules
+* Policy and document behaviour
+* Incident and complaint behaviour
+* Audit and compliance behaviour
+* Risk-register behaviour
+* Meeting and action-item behaviour
+* Service-availability behaviour
+* Active-department and facility scoping
 * Reused services
 * Redirect behaviour
 * Permissions used
-* Separation-of-duty rules
-* Patient privacy checks
-* Financial-integrity checks
+* Confidentiality checks
+* Operational-integrity checks
 * Audit events
 * Tests executed
 * Test results
@@ -3206,4 +2649,4 @@ Provide:
 
 Implement the work fully.
 
-Do not stop at planning, route registration, menu configuration, dashboard layout, invoice listing, payment collection, or report creation alone. The final implementation must provide a functional, secure, auditable, department-specific Finance workspace throughout the complete hospital billing, payment, receivable, claims, accounting, and reconciliation lifecycle.
+Do not stop at planning, route registration, menu configuration, dashboard layout, department listing, approval aggregation, policy management, or report creation alone. The final implementation must provide a functional, secure, permission-aware, department-specific Administrative workspace for hospital governance and operational oversight without bypassing specialist department boundaries.

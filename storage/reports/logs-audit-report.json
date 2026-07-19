@@ -1,13 +1,13 @@
 {
-    "generated_at": "2026-07-15T22:59:10+00:00",
-    "controllers_flagged": 114,
+    "generated_at": "2026-07-19T00:38:56+00:00",
+    "controllers_flagged": 115,
     "logging_services_detected": 177,
     "summary": {
         "MISSING_LOG": 0,
         "NEEDS_REVIEW": 0,
         "KNOWN_BACKLOG": 19,
         "INTENTIONALLY_SKIPPED": 1,
-        "SERVICE_FUNNEL_COVERED": 94
+        "SERVICE_FUNNEL_COVERED": 95
     },
     "real_missing_logs": 0,
     "findings": [
@@ -468,7 +468,8 @@
             "severity": "HIGH",
             "reason": "Delegates to BedWorkflowService (logs direct).",
             "services": [
-                "BedWorkflowService"
+                "BedWorkflowService",
+                "WorkspaceRouteResolver"
             ],
             "in_baseline": false
         },
@@ -494,7 +495,8 @@
                 "AdmissionService",
                 "ConsultationSummaryService",
                 "VisitService",
-                "WardService"
+                "WardService",
+                "WorkspaceRouteResolver"
             ],
             "in_baseline": true
         },
@@ -514,7 +516,9 @@
             "severity": "HIGH",
             "reason": "Delegates to AdmissionRequestService (logs direct).",
             "services": [
-                "AdmissionRequestService"
+                "AdmissionRequestService",
+                "InpatientWorkspaceScope",
+                "WorkspaceRouteResolver"
             ],
             "in_baseline": false
         },
@@ -532,9 +536,12 @@
             ],
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
-            "reason": "Delegates to AppointmentService, VisitStatusFlowService (logs transitive).",
+            "reason": "Delegates to AppointmentService, PatientPrivacyService, VisitService, VisitStatusFlowService (logs transitive).",
             "services": [
                 "AppointmentService",
+                "InsuranceService",
+                "PatientPrivacyService",
+                "VisitService",
                 "VisitStatusFlowService",
                 "WorkspaceRouteResolver"
             ],
@@ -1073,7 +1080,9 @@
             "severity": "HIGH",
             "reason": "Delegates to InvestigationRequestService, LabService (logs direct).",
             "services": [
+                "InpatientWorkspaceScope",
                 "InvestigationRequestService",
+                "InvestigationWorkspaceScope",
                 "LabService"
             ],
             "in_baseline": true
@@ -1090,6 +1099,7 @@
             "severity": "HIGH",
             "reason": "Delegates to LabService, SampleService (logs direct).",
             "services": [
+                "InvestigationWorkspaceScope",
                 "LabService",
                 "SampleService"
             ],
@@ -1112,6 +1122,7 @@
             "reason": "Delegates to ConsumableUsageService, ProcedureRequestService, ProcedureWorkflowService (logs direct).",
             "services": [
                 "ConsumableUsageService",
+                "InpatientWorkspaceScope",
                 "ProcedureCatalogueService",
                 "ProcedureClinicalService",
                 "ProcedureReportService",
@@ -1246,7 +1257,9 @@
             "reason": "Delegates to BedWorkflowService (logs direct).",
             "services": [
                 "BedWorkflowService",
-                "WardService"
+                "WardService",
+                "WorkspaceRouteResolver",
+                "InpatientWorkspaceScope"
             ],
             "in_baseline": true
         },
@@ -1380,7 +1393,8 @@
             "services": [
                 "EmergencyCaseService",
                 "EmergencySessionService",
-                "PatientComplaintService"
+                "PatientComplaintService",
+                "WorkspaceRouteResolver"
             ],
             "in_baseline": true
         },
@@ -1477,7 +1491,8 @@
             "severity": "MEDIUM",
             "reason": "Delegates to EmergencyPatientIdentityService (logs direct).",
             "services": [
-                "EmergencyPatientIdentityService"
+                "EmergencyPatientIdentityService",
+                "WorkspaceRouteResolver"
             ],
             "in_baseline": true
         },
@@ -2137,6 +2152,22 @@
             "reason": "Delegates to RolePermissionAuditService (logs direct).",
             "services": [
                 "RolePermissionAuditService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Inpatient/ReadmissionController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to AdmissionExtensionService (logs direct).",
+            "services": [
+                "AdmissionExtensionService"
             ],
             "in_baseline": false
         },

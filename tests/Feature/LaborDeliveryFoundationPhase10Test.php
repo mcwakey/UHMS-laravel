@@ -145,7 +145,7 @@ class LaborDeliveryFoundationPhase10Test extends TestCase
         $this->assertSame($anc->id, $episode->antenatal_visit_id);
 
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.antenatal.show', $anc))
+            ->get(route('maternity.antenatal.show', $anc))
             ->assertOk()
             ->assertSee('Start Labor Episode');
     }
@@ -199,7 +199,7 @@ class LaborDeliveryFoundationPhase10Test extends TestCase
         $this->assertContains(LaborRiskFlag::ABNORMAL_FETAL_HEART_RATE->value, $observation->risk_flags);
 
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.labor.show', $episode))
+            ->get(route('maternity.labor.show', $episode))
             ->assertOk()
             ->assertSee('Labor Observations')
             ->assertSee('170');
@@ -263,13 +263,13 @@ class LaborDeliveryFoundationPhase10Test extends TestCase
         LaborObservation::create($this->observationModelPayload($episode));
 
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.dashboard'))
+            ->get(route('maternity.dashboard'))
             ->assertOk()
             ->assertSee('Active Labor Episodes')
             ->assertSee('Recent Labor Observations');
 
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.pregnancies.show', $profile))
+            ->get(route('maternity.pregnancies.show', $profile))
             ->assertOk()
             ->assertSee('Labor and Delivery')
             ->assertSee('Active Labor Episode');

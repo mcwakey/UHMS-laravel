@@ -190,13 +190,13 @@ class MaternityFoundationPhase8Test extends TestCase
         $profile = $this->createProfile();
 
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.dashboard'))
+            ->get(route('maternity.dashboard'))
             ->assertOk()
             ->assertSee('Maternity Dashboard')
             ->assertSee('ANC Visits Today');
 
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.pregnancies.show', $profile))
+            ->get(route('maternity.pregnancies.show', $profile))
             ->assertOk()
             ->assertSee($this->patient->first_name)
             ->assertSee('Open Maternity Case');

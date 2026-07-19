@@ -129,7 +129,7 @@ class MaternityBillingPostingPhase14_1Test extends TestCase
         $invoiceItemsBefore = InvoiceItem::count();
 
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.antenatal.show', $ancVisit))
+            ->get(route('maternity.antenatal.show', $ancVisit))
             ->assertOk()
             ->assertSee('Billing Preview')
             ->assertSee('Preview only')

@@ -193,7 +193,7 @@ class NewbornBirthOutcomePhase11Test extends TestCase
         $this->assertFalse($delivery->fresh()->newborn_records_pending);
 
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.deliveries.show', $delivery))
+            ->get(route('maternity.deliveries.show', $delivery))
             ->assertOk()
             ->assertSee('Newborn Records Complete')
             ->assertSee('Live birth');
@@ -205,13 +205,13 @@ class NewbornBirthOutcomePhase11Test extends TestCase
         NewbornRecord::create($this->newbornModelPayload($delivery));
 
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.pregnancies.show', $delivery->pregnancyProfile))
+            ->get(route('maternity.pregnancies.show', $delivery->pregnancyProfile))
             ->assertOk()
             ->assertSee('Newborn Records')
             ->assertSee('Live birth');
 
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.dashboard'))
+            ->get(route('maternity.dashboard'))
             ->assertOk()
             ->assertSee('Newborns Recorded Today')
             ->assertSee('Recent Newborn Records');

@@ -141,7 +141,7 @@ class PostnatalCarePhase12Test extends TestCase
         $this->assertSame(PostnatalCaseStatus::OPEN, $case->status);
 
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.deliveries.show', $delivery))
+            ->get(route('maternity.deliveries.show', $delivery))
             ->assertOk()
             ->assertSee('Postnatal Care')
             ->assertSee('Postnatal Case');
@@ -249,18 +249,18 @@ class PostnatalCarePhase12Test extends TestCase
         $newborn = $delivery->newbornRecords()->firstOrFail();
 
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.pregnancies.show', $delivery->pregnancyProfile))
+            ->get(route('maternity.pregnancies.show', $delivery->pregnancyProfile))
             ->assertOk()
             ->assertSee('Postnatal Care');
 
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.dashboard'))
+            ->get(route('maternity.dashboard'))
             ->assertOk()
             ->assertSee('Active Postnatal Cases')
             ->assertSee('Recent Postnatal Cases');
 
         $this->actingAs($this->user)
-            ->get(route('admin.maternity.newborns.show', $newborn))
+            ->get(route('maternity.newborns.show', $newborn))
             ->assertOk()
             ->assertSee('Postnatal Care');
 
