@@ -261,9 +261,17 @@ trait HandlesConsultationWorkspace
 
         $sessions = $this->consultationSessionService->getAllSessionsForVisit($visit);
         $activeRoute = $sessions->firstWhere('status', VisitConsultationRoute::STATUS_ACTIVE);
-        $selectedRoute = $route
+        $requestedRoute = $route ? $sessions->firstWhere('id', $route->id) : null;
+        $selectedRoute = $requestedRoute
             ?? $activeRoute
             ?? ($sessions->count() === 1 ? $sessions->first() : null);
+
+        $visit->setRelation('consultationRoutes', $sessions);
+        $visit->setRelation('activeConsultationRoute', $activeRoute);
+        $visit->setRelation(
+            'pendingConsultationRoutes',
+            $sessions->where('status', VisitConsultationRoute::STATUS_PENDING)->values(),
+        );
 
         $selectedRoute?->loadMissing([
             'department',
@@ -300,7 +308,7 @@ trait HandlesConsultationWorkspace
 
         // Load tasks on the record
         if ($data['record']) {
-            $data['record']->load([
+            $data['record']->loadMissing([
                 'tasks.assignedUser', 'tasks.creator', 'tasks.completedBy',
                 'historiesOfPresentingComplaint.creator',
                 'physicalExaminations.creator',
@@ -393,9 +401,15 @@ trait HandlesConsultationWorkspace
             ? app(ConsultationNextPatientService::class)->preview($selectedRoute, Auth::user())
             : null;
         $completionReadiness = $selectedRoute
-            ? $this->completionReadiness->forRoute($selectedRoute)
+            ? $this->completionReadiness->forRoute($selectedRoute, refresh: false)
             : null;
-        $consultationPreview = $this->buildConsultationPreviewData($visit);
+        $consultationPreview = $this->buildConsultationPreviewData(
+            $visit,
+            $sessions,
+            $labRequests,
+            $procedureRequests,
+            $selectedRoute ? [$selectedRoute->id => $consultationSummary] : [],
+        );
         $specialtyContext = app(ConsultationSpecialtyProfileResolver::class)->resolve(
             user: $request->user(),
             visit: $visit,
@@ -404,12 +418,11 @@ trait HandlesConsultationWorkspace
         );
         $specialtyLayout = app(ConsultationSpecialtyLayoutService::class)->buildLayout($specialtyContext);
         $specialtyEntryService = app(ConsultationSpecialtyEntryService::class);
-        $specialtyEntries = $selectedRoute
-            ? $specialtyEntryService->entriesAsArray($selectedRoute, $specialtyContext->profile)
-            : [];
-        $specialtyEntryGroups = $selectedRoute
-            ? $specialtyEntryService->entriesGroupedForWorkspace($selectedRoute, $specialtyContext->profile)
-            : [];
+        $specialtyEntryModels = $selectedRoute
+            ? $specialtyEntryService->getEntriesForConsultation($selectedRoute, $specialtyContext->profile)
+            : new \Illuminate\Database\Eloquent\Collection();
+        $specialtyEntries = $specialtyEntryService->entriesAsArrayFrom($specialtyEntryModels);
+        $specialtyEntryGroups = $specialtyEntryService->entriesGroupedForWorkspaceFrom($specialtyEntryModels);
         $specialtyFavorites = app(ConsultationSpecialtyFavoriteService::class)->getWorkspaceDefaults($specialtyContext->profile);
         $specialtyOrderSets = app(ConsultationSpecialtyOrderSetService::class)->getWorkspaceOrderSets($specialtyContext);
         $specialtyReadiness = $selectedRoute
@@ -490,9 +503,21 @@ trait HandlesConsultationWorkspace
         return view('consultations.history', $this->buildConsultationPreviewData($visit));
     }
 
-    private function buildConsultationPreviewData(Visit $visit): array
+    private function buildConsultationPreviewData(
+        Visit $visit,
+        $sessions = null,
+        $labRequests = null,
+        $procedureRequests = null,
+        array $sessionSummaries = [],
+    ): array
     {
-        return app(ConsultationPreviewDataService::class)->build($visit);
+        return app(ConsultationPreviewDataService::class)->build(
+            $visit,
+            $sessions,
+            $labRequests,
+            $procedureRequests,
+            $sessionSummaries,
+        );
     }
 
     public function summaryFragment(Request $request, Visit $visit)

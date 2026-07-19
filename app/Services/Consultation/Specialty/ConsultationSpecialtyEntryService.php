@@ -115,7 +115,12 @@ class ConsultationSpecialtyEntryService
 
     public function entriesAsArray($consultation, ConsultationSpecialtyProfile $profile): array
     {
-        return $this->getEntriesForConsultation($consultation, $profile)
+        return $this->entriesAsArrayFrom($this->getEntriesForConsultation($consultation, $profile));
+    }
+
+    public function entriesAsArrayFrom(Collection $entries): array
+    {
+        return $entries
             ->groupBy('section_key')
             ->map(fn (Collection $entries) => $entries->first()?->entry ?? [])
             ->all();
@@ -123,7 +128,12 @@ class ConsultationSpecialtyEntryService
 
     public function entriesGroupedForWorkspace($consultation, ConsultationSpecialtyProfile $profile): array
     {
-        return $this->getEntriesForConsultation($consultation, $profile)
+        return $this->entriesGroupedForWorkspaceFrom($this->getEntriesForConsultation($consultation, $profile));
+    }
+
+    public function entriesGroupedForWorkspaceFrom(Collection $entries): array
+    {
+        return $entries
             ->groupBy('section_key')
             ->all();
     }

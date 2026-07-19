@@ -6,11 +6,16 @@ use App\Models\MedicalRecord;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
+use App\Services\Consultation\ConsultationUserRelationLoader;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class ConsultationSessionService
 {
+    public function __construct(
+        private readonly ConsultationUserRelationLoader $userRelations,
+    ) {}
+
     public function getCurrentSession(Visit $visit): ?VisitConsultationRoute
     {
         return $visit->consultationRoutes()
@@ -22,11 +27,23 @@ class ConsultationSessionService
 
     public function getAllSessionsForVisit(Visit $visit): Collection
     {
-        return $visit->consultationRoutes()
-            ->with(['department', 'service', 'services', 'routeServices.service', 'doctor', 'mainDoctor', 'primaryNurse', 'contributors.user', 'medicalRecord.doctor', 'logs.performedBy', 'emergencyCase', 'emergencySession.contributors.user'])
+        $sessions = $visit->consultationRoutes()
+            ->with(['department', 'service', 'services', 'routeServices.service', 'contributors', 'medicalRecord', 'logs', 'emergencyCase', 'emergencySession.contributors'])
             ->orderByRaw("CASE status WHEN 'ACTIVE' THEN 0 WHEN 'PENDING' THEN 1 WHEN 'PAUSED' THEN 2 WHEN 'COMPLETED' THEN 3 ELSE 4 END")
             ->oldest()
             ->get();
+
+        $emergencySessions = $sessions->pluck('emergencySession')->filter();
+        $this->userRelations->load([
+            [$sessions, ['doctor', 'mainDoctor', 'primaryNurse']],
+            [$sessions->pluck('contributors'), ['user']],
+            [$sessions->pluck('logs'), ['performedBy']],
+            [$sessions->pluck('medicalRecord'), ['doctor']],
+            [$emergencySessions, ['mainDoctor', 'primaryNurse']],
+            [$emergencySessions->pluck('contributors'), ['user']],
+        ]);
+
+        return $sessions;
     }
 
     public function getOrCreateMedicalRecordForRoute(VisitConsultationRoute $route, User $user): MedicalRecord
@@ -35,7 +52,9 @@ class ConsultationSessionService
         $visit = $route->visit;
 
         return DB::transaction(function () use ($route, $visit, $user) {
-            $record = MedicalRecord::where('consultation_route_id', $route->id)->first();
+            $record = $route->relationLoaded('medicalRecord')
+                ? $route->medicalRecord
+                : MedicalRecord::where('consultation_route_id', $route->id)->first();
             if ($record) {
                 return $this->syncRecordContext($record, $route, $user);
             }
@@ -84,9 +103,13 @@ class ConsultationSessionService
             'department_id' => $route->department_id,
             'service_id' => $this->primaryServiceId($route),
             'consultation_route_id' => $route->id,
-        ])->save();
+        ]);
 
-        return $record->fresh(['doctor', 'department', 'service', 'consultationRoute']);
+        if ($record->isDirty()) {
+            $record->save();
+        }
+
+        return $record->loadMissing(['doctor', 'department', 'service', 'consultationRoute']);
     }
 
     private function primaryServiceId(VisitConsultationRoute $route): ?int

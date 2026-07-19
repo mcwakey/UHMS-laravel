@@ -23,6 +23,7 @@ use App\Services\ModuleService;
 use App\Services\NotificationService;
 use App\Services\SidebarMenuBuilder;
 use App\Services\WorkspaceRouteResolver;
+use App\Services\Consultation\ConsultationUserRelationLoader;
 use App\Services\Department\DepartmentContextSwitcherService;
 use App\Support\DatabaseQueryProfiler;
 use Illuminate\Database\Events\QueryExecuted;
@@ -47,6 +48,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->scoped(DatabaseQueryProfiler::class);
+        $this->app->scoped(ConsultationUserRelationLoader::class);
         $this->app->scoped(ModuleService::class);
         $this->app->scoped(NotificationService::class);
         $this->app->scoped(SidebarMenuBuilder::class);

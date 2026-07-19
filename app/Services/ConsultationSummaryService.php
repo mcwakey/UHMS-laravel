@@ -5,10 +5,21 @@ namespace App\Services;
 use App\Enums\AppointmentStatus;
 use App\Models\MedicalRecord;
 use App\Models\Visit;
+use App\Services\Consultation\ConsultationUserRelationLoader;
 use Carbon\Carbon;
 
 class ConsultationSummaryService
 {
+    /** @var array<int, string|null> */
+    private array $roleNamesByUserId = [];
+
+    /** @var array<int, string|null> */
+    private array $departmentNamesByRecordId = [];
+
+    public function __construct(
+        private readonly ConsultationUserRelationLoader $userRelations,
+    ) {}
+
     public function forRecord(?MedicalRecord $record): array
     {
         if (! $record) {
@@ -17,54 +28,53 @@ class ConsultationSummaryService
 
         $record->loadMissing([
             'department',
-            'consultationRoute.doctor',
-            'consultationRoute.mainDoctor',
-            'consultationRoute.contributors.user',
+            'consultationRoute',
+            'consultationRoute.contributors',
             'consultationRoute.routeServices.service',
             'consultationRoute.followUpAppointments.department',
-            'consultationRoute.followUpAppointments.doctor',
             'consultationRoute.followUpAppointments.services',
-            'consultationRoute.followUpAppointments.createdBy',
-            'consultationRoute.emergencyCase.triagedBy',
-            'consultationRoute.emergencyCase.notes.creator',
-            'consultationRoute.emergencyCase.vitals.recordedBy',
-            'consultationRoute.emergencyCase.medicationOrders.prescriber',
+            'consultationRoute.emergencyCase.notes',
+            'consultationRoute.emergencyCase.vitals',
+            'consultationRoute.emergencyCase.medicationOrders',
             'consultationRoute.emergencyCase.medicationOrders.frequency',
             'consultationRoute.emergencyCase.labRequests.items',
-            'consultationRoute.emergencyCase.labRequests.requestedBy',
             'consultationRoute.emergencyCase.procedureRequests.service',
-            'consultationRoute.emergencyCase.procedureRequests.requestingDoctor',
             'consultationRoute.emergencyCase.consumableUsages.product',
-            'consultationRoute.emergencyCase.consumableUsages.user',
-            'complaints.creator',
-            'complaints.updater',
             'complaints.sourcePattern',
             'complaints.complaintCatalogue',
-            'historiesOfPresentingComplaint.creator',
-            'historiesOfPresentingComplaint.updater',
             'historiesOfPresentingComplaint.sourcePattern',
-            'physicalExaminations.creator',
-            'physicalExaminations.updater',
             'physicalExaminations.sourcePattern',
-            'diagnoses.creator',
-            'diagnoses.updater',
             'diagnoses.sourcePattern',
-            'investigations.creator',
-            'investigations.updater',
             'investigations.sourcePattern',
-            'treatments.creator',
-            'treatments.updater',
             'treatments.sourcePattern',
-            'prescriptions.creator',
-            'prescriptions.updater',
-            'prescriptions.doctor',
             'prescriptions.sourcePattern',
             'prescriptions.items',
-            'tasks.creator',
-            'tasks.assignedUser',
-            'tasks.completedBy',
             'tasks.sourcePattern',
         ]);
+
+        $route = $record->consultationRoute;
+        $emergencyCase = $route?->emergencyCase;
+        $this->userRelations->load([
+            [[$route], ['doctor', 'mainDoctor']],
+            [$route?->contributors, ['user']],
+            [$route?->followUpAppointments, ['doctor', 'createdBy']],
+            [[$emergencyCase], ['triagedBy']],
+            [$emergencyCase?->notes, ['creator']],
+            [$emergencyCase?->vitals, ['recordedBy']],
+            [$emergencyCase?->medicationOrders, ['prescriber']],
+            [$emergencyCase?->labRequests, ['requestedBy']],
+            [$emergencyCase?->procedureRequests, ['requestingDoctor']],
+            [$emergencyCase?->consumableUsages, ['user']],
+            [$record->complaints, ['creator', 'updater']],
+            [$record->historiesOfPresentingComplaint, ['creator', 'updater']],
+            [$record->physicalExaminations, ['creator', 'updater']],
+            [$record->diagnoses, ['creator', 'updater']],
+            [$record->investigations, ['creator', 'updater']],
+            [$record->treatments, ['creator', 'updater']],
+            [$record->prescriptions, ['creator', 'updater', 'doctor']],
+            [$record->tasks, ['creator', 'assignedUser', 'completedBy']],
+        ]);
+        $this->departmentNamesByRecordId[$record->id] = $record->department?->name;
 
         $summary = $this->emptySummary();
         $summary['main_doctor'] = $record->consultationRoute?->doctor?->full_name
@@ -302,14 +312,41 @@ class ConsultationSummaryService
             'content' => $content ?: '-',
             'owner_id' => $creator?->id,
             'owner_key' => $creator?->id ? 'user-'.$creator->id : 'unknown',
-            'owner_role' => $creator?->getRoleNames()?->first(),
+            'owner_role' => $this->roleName($creator),
             'entered_by' => $creator?->full_name ?? 'Unknown user',
             'created_at' => $entry->created_at,
             'updated_by' => $updater?->full_name,
             'updated_at' => $entry->updated_at,
-            'department' => $entry->department?->name ?? $entry->medicalRecord?->department?->name ?? null,
+            'department' => $this->departmentName($entry),
             'source_pattern' => $entry->sourcePattern?->name,
             'details' => collect($details)->filter(fn ($value) => filled($value))->all(),
         ];
+    }
+
+    private function roleName(?object $user): ?string
+    {
+        if (! $user?->id || ! method_exists($user, 'getRoleNames')) {
+            return null;
+        }
+
+        if (! array_key_exists($user->id, $this->roleNamesByUserId)) {
+            $this->roleNamesByUserId[$user->id] = $user->getRoleNames()->first();
+        }
+
+        return $this->roleNamesByUserId[$user->id];
+    }
+
+    private function departmentName(object $entry): ?string
+    {
+        if (method_exists($entry, 'relationLoaded') && $entry->relationLoaded('department')) {
+            $departmentName = $entry->getRelation('department')?->name;
+            if ($departmentName) {
+                return $departmentName;
+            }
+        }
+
+        $recordId = $entry->medical_record_id ?? null;
+
+        return $recordId ? ($this->departmentNamesByRecordId[$recordId] ?? null) : null;
     }
 }

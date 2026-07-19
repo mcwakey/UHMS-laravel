@@ -10,6 +10,11 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ConsultationSpecialtyProfileService
 {
+    private ?ConsultationSpecialtyProfile $defaultProfile = null;
+
+    /** @var array<int, Collection<int, ConsultationSpecialtySection>> */
+    private array $visibleSections = [];
+
     private const GENERAL_SECTIONS = [
         'patient_summary',
         'complaints',
@@ -27,7 +32,10 @@ class ConsultationSpecialtyProfileService
 
     public function getDefaultProfile(): ConsultationSpecialtyProfile
     {
-        return $this->ensureGeneralProfileExists();
+        return $this->defaultProfile ??= ConsultationSpecialtyProfile::query()
+            ->byCode(ConsultationSpecialtyProfile::GENERAL_MEDICINE)
+            ->first()
+            ?? $this->ensureGeneralProfileExists();
     }
 
     /**
@@ -75,7 +83,7 @@ class ConsultationSpecialtyProfileService
      */
     public function getVisibleOrderedSections(ConsultationSpecialtyProfile $profile): Collection
     {
-        return $profile->activeSections()->get();
+        return $this->visibleSections[$profile->id] ??= $profile->activeSections()->get();
     }
 
     public function fallbackResolvedContext(
@@ -123,6 +131,8 @@ class ConsultationSpecialtyProfileService
             );
         }
 
-        return $profile;
+        $this->visibleSections[$profile->id] = $profile->activeSections()->get();
+
+        return $this->defaultProfile = $profile;
     }
 }

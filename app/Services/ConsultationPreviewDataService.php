@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Visit;
+use Illuminate\Support\Collection;
 
 class ConsultationPreviewDataService
 {
@@ -12,21 +13,27 @@ class ConsultationPreviewDataService
         private readonly ProcedureRequestService $procedureRequestService,
     ) {}
 
-    public function build(Visit $visit): array
-    {
-        $visit->load([
+    public function build(
+        Visit $visit,
+        ?Collection $sessions = null,
+        ?Collection $labRequests = null,
+        ?Collection $procedureRequests = null,
+        array $summariesBySessionId = [],
+    ): array {
+        $visit->loadMissing([
             'patient',
             'department',
             'visitInsurance.insuranceProvider',
             'vitals' => fn ($q) => $q->with('recordedBy')->latest(),
         ]);
 
-        $sessions = $visit->consultationRoutes()
+        $sessions ??= $visit->consultationRoutes()
             ->with([
                 'department',
                 'doctor',
                 'mainDoctor',
                 'primaryNurse',
+                'medicalRecord',
                 'emergencyCase',
                 'emergencySession',
             ])
@@ -42,7 +49,8 @@ class ConsultationPreviewDataService
                 $sessionSummaries->push([
                     'session' => $session,
                     'record' => $record,
-                    'summary' => $this->summaryService->forRecord($record),
+                    'summary' => $summariesBySessionId[$session->id]
+                        ?? $this->summaryService->forRecord($record),
                 ]);
             }
         } else {
@@ -53,8 +61,8 @@ class ConsultationPreviewDataService
             ]);
         }
 
-        $labRequests = $this->labService->getVisitLabRequests($visit);
-        $procedureRequests = $this->procedureRequestService->forVisit($visit->id);
+        $labRequests ??= $this->labService->getVisitLabRequests($visit);
+        $procedureRequests ??= $this->procedureRequestService->forVisit($visit->id);
 
         return [
             'visit' => $visit,

@@ -27,8 +27,11 @@ No raw bindings or patient, clinical, billing or identity values were retained d
 | `/admin/users` | GET | 441 | supplied Debugbar screenshot |
 | `/admin/patients` | GET, AJAX | 445 | supplied Debugbar screenshot |
 | `/admin/notifications/recent` | GET, AJAX | 9 | supplied Debugbar screenshot |
+| `/doctor/consultations/3/routes/3` | GET | 280 total, 90 unique, 190 duplicate | supplied Debugbar screenshot |
 
 The screenshots did not preserve database time, request time, memory, or normalized SQL, so those fields cannot be reconstructed accurately.
+
+The local safe profiler captured the same consultation detail route immediately before its focused optimisation: 280 total queries, 109 normalized fingerprints, 171 normalized duplicates, 185.74 ms database time and 2,297.07 ms request time. Debugbar and the safe profiler use different duplicate grouping rules, which explains the `190` versus `171` duplicate counts.
 
 ## Uncapped reproduction
 

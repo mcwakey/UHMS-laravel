@@ -18,9 +18,11 @@ class ConsultationCompletionReadinessService
         private readonly ConsultationSpecialtyReadinessService $specialtyReadiness,
     ) {}
 
-    public function forRoute(VisitConsultationRoute $route): ConsultationCompletionReadinessResult
+    public function forRoute(VisitConsultationRoute $route, bool $refresh = true): ConsultationCompletionReadinessResult
     {
-        $route = $route->fresh(['visit', 'medicalRecord']) ?? $route;
+        $route = $refresh
+            ? ($route->fresh(['visit', 'medicalRecord']) ?? $route)
+            : $route->loadMissing(['visit', 'medicalRecord']);
         $record = $route->medicalRecord;
 
         if (! $record) {
@@ -32,7 +34,9 @@ class ConsultationCompletionReadinessService
             ]));
         }
 
-        $record = $record->fresh(['complaints', 'physicalExaminations', 'diagnoses', 'treatments', 'prescriptions', 'tasks']) ?? $record;
+        $record = $refresh
+            ? ($record->fresh(['complaints', 'physicalExaminations', 'diagnoses', 'treatments', 'prescriptions', 'tasks']) ?? $record)
+            : $record->loadMissing(['complaints', 'physicalExaminations', 'diagnoses', 'treatments', 'prescriptions', 'tasks']);
 
         return new ConsultationCompletionReadinessResult($this->requirements([
             'complaint' => $record->complaints->isNotEmpty() || filled($route->visit?->chief_complaint),

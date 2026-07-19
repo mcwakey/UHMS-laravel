@@ -9,6 +9,7 @@ use App\Models\MedicalRecord;
 use App\Models\Treatment;
 use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
+use App\Services\Consultation\ConsultationUserRelationLoader;
 use Illuminate\Support\Facades\Auth;
 
 class ConsultationService
@@ -19,6 +20,7 @@ class ConsultationService
         protected ConsultationContributorService $contributors,
         protected MedicalRecordEntryLogService $entryLogs,
         protected PatientComplaintService $patientComplaints,
+        protected ConsultationUserRelationLoader $userRelations,
     ) {}
 
     /**
@@ -75,8 +77,7 @@ class ConsultationService
             $record = $visit->medicalRecord;
         }
 
-        return [
-            'visit' => $visit->load([
+        $visit->loadMissing([
                 'patient',
                 'visitInsurance.insuranceProvider',
                 'consultationRoutes.department',
@@ -94,19 +95,43 @@ class ConsultationService
                 'pendingConsultationRoutes.doctor',
                 'pendingConsultationRoutes.routeServices.service',
                 'latestVitals',
-            ]),
-            'record' => $record?->load([
-                'consultationRoute.contributors.user',
-                'complaints.creator', 'complaints.updater', 'complaints.sourcePattern', 'complaints.complaintCatalogue',
-                'historiesOfPresentingComplaint.creator', 'historiesOfPresentingComplaint.updater', 'historiesOfPresentingComplaint.complaint', 'historiesOfPresentingComplaint.sourcePattern',
-                'physicalExaminations.creator', 'physicalExaminations.updater', 'physicalExaminations.sourcePattern',
-                'diagnoses.creator', 'diagnoses.updater', 'diagnoses.icdCodeEntry', 'diagnoses.sourcePattern',
-                'investigations.creator', 'investigations.updater', 'investigations.sourcePattern',
-                'treatments.creator', 'treatments.updater', 'treatments.sourcePattern',
-                'prescriptions.creator', 'prescriptions.updater', 'prescriptions.doctor', 'prescriptions.items', 'prescriptions.sourcePattern',
-                'tasks.creator', 'tasks.assignedUser', 'tasks.completedBy', 'tasks.sourcePattern',
-            ]),
-            'vitals' => $visit->vitals()->with('recordedBy')->latest()->get(),
+                'queueEntries.department',
+                'departmentHistory.department',
+            ]);
+
+        $record?->loadMissing([
+            'consultationRoute.contributors',
+            'complaints.sourcePattern', 'complaints.complaintCatalogue',
+            'historiesOfPresentingComplaint.complaint', 'historiesOfPresentingComplaint.sourcePattern',
+            'physicalExaminations.sourcePattern',
+            'diagnoses.icdCodeEntry', 'diagnoses.sourcePattern',
+            'investigations.sourcePattern', 'investigations.department',
+            'treatments.sourcePattern',
+            'prescriptions.items', 'prescriptions.sourcePattern',
+            'tasks.sourcePattern',
+        ]);
+
+        $vitals = $visit->vitals()->latest()->get();
+        $relationGroups = [[$vitals, ['recordedBy']]];
+        if ($record) {
+            $relationGroups = array_merge($relationGroups, [
+                [$record->consultationRoute?->contributors, ['user']],
+                [$record->complaints, ['creator', 'updater']],
+                [$record->historiesOfPresentingComplaint, ['creator', 'updater']],
+                [$record->physicalExaminations, ['creator', 'updater']],
+                [$record->diagnoses, ['creator', 'updater']],
+                [$record->investigations, ['creator', 'updater']],
+                [$record->treatments, ['creator', 'updater']],
+                [$record->prescriptions, ['creator', 'updater', 'doctor']],
+                [$record->tasks, ['creator', 'assignedUser', 'completedBy']],
+            ]);
+        }
+        $this->userRelations->load($relationGroups);
+
+        return [
+            'visit' => $visit,
+            'record' => $record,
+            'vitals' => $vitals,
             'history' => $this->getPatientHistory($visit->patient_id, $visit->id),
         ];
     }

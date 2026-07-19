@@ -93,10 +93,32 @@ class ConsultationSpecialtyFavoriteService
 
     public function getWorkspaceDefaults(ConsultationSpecialtyProfile $profile): array
     {
+        if (! $profile->is_active) {
+            $defaults = collect(self::TYPES)
+                ->mapWithKeys(fn (string $type) => [$type => []])
+                ->all();
+            $defaults['frequency_defaults'] = $this->mergeFavoritesWithGlobalOptions(
+                [],
+                $this->frequencies->options(),
+                ConsultationSpecialtyFavorite::TYPE_FREQUENCY,
+            );
+
+            return $defaults;
+        }
+
+        $favoritesByType = ConsultationSpecialtyFavorite::query()
+            ->with('favoritable')
+            ->forProfile($profile)
+            ->whereIn('favorite_type', self::TYPES)
+            ->active()
+            ->ordered()
+            ->get()
+            ->filter(fn (ConsultationSpecialtyFavorite $favorite) => $this->linkedModelIsUsable($favorite))
+            ->groupBy('favorite_type');
         $defaults = [];
 
         foreach (self::TYPES as $type) {
-            $favorites = $this->getFavoritesForProfile($profile, $type);
+            $favorites = $favoritesByType->get($type, collect());
             $defaults[$type] = $favorites
                 ->map(fn (ConsultationSpecialtyFavorite $favorite) => $this->favoriteToPayload($favorite))
                 ->values()
@@ -104,7 +126,7 @@ class ConsultationSpecialtyFavoriteService
         }
 
         $defaults['frequency_defaults'] = $this->mergeFavoritesWithGlobalOptions(
-            $this->getFavoritesForProfile($profile, ConsultationSpecialtyFavorite::TYPE_FREQUENCY),
+            $favoritesByType->get(ConsultationSpecialtyFavorite::TYPE_FREQUENCY, collect()),
             $this->frequencies->options(),
             ConsultationSpecialtyFavorite::TYPE_FREQUENCY,
         );
