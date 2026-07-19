@@ -64,21 +64,13 @@ class LoginController extends Controller
                 ->withProperties(['ip' => $request->ip(), 'user_agent' => $request->userAgent()])
                 ->log('logged in');
 
-            $workspaceRoutes = app(WorkspaceRouteResolver::class);
-            if ($workspaceRoutes->isDepartmentWorkspace()) {
-                return redirect()->route($workspaceRoutes->dashboardRouteName());
-            }
-
             if ($user->hasRole('Super Admin') || $user->hasRole('Admin')) {
                 return redirect()->intended(route('admin.dashboard'));
             }
 
-            if ($user->hasRole('Doctor')) {
-                return redirect()->intended(route('doctor.dashboard'));
-            }
-
-            if ($user->department_id) {
-                return redirect()->intended(route('admin.my-dashboard'));
+            $workspaceRoutes = app(WorkspaceRouteResolver::class);
+            if ($workspaceRoutes->isDepartmentWorkspace()) {
+                return redirect()->intended(route($workspaceRoutes->dashboardRouteName()));
             }
 
             return redirect()->intended(route('admin.my-dashboard'));

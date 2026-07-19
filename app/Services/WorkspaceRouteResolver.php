@@ -76,8 +76,20 @@ class WorkspaceRouteResolver
     public function isConsultation(): bool
     {
         $user = $this->request->user();
+        if (! $user) {
+            return false;
+        }
 
-        return ($user?->isConsultationUser() ?? false) || $this->isType(DepartmentType::CONSULTATION);
+        $department = $this->departments->currentDepartment($user, $this->request);
+        if ($department) {
+            $type = $department->type;
+
+            return $type instanceof DepartmentType
+                ? $type === DepartmentType::CONSULTATION
+                : (string) $type === DepartmentType::CONSULTATION->value;
+        }
+
+        return $user->isConsultationUser();
     }
 
     public function isDepartmentWorkspace(): bool

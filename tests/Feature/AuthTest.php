@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Enums\DepartmentType;
+use App\Models\Department;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
@@ -76,9 +78,18 @@ class AuthTest extends TestCase
 
     // ── Role-Based Redirect ─────────────────────
 
-    public function test_doctor_redirected_to_doctor_dashboard(): void
+    public function test_consultation_doctor_redirected_to_doctor_dashboard(): void
     {
-        $user = User::factory()->create(['password' => bcrypt('Password123!')]);
+        $department = Department::create([
+            'name' => 'General Medicine',
+            'code' => 'GEN',
+            'type' => DepartmentType::CONSULTATION->value,
+            'status' => 'active',
+        ]);
+        $user = User::factory()->create([
+            'department_id' => $department->id,
+            'password' => bcrypt('Password123!'),
+        ]);
         $role = Role::create(['name' => 'Doctor']);
         $user->assignRole($role);
 
@@ -89,6 +100,30 @@ class AuthTest extends TestCase
 
         $this->assertAuthenticatedAs($user);
         $response->assertRedirect(route('doctor.dashboard'));
+    }
+
+    public function test_doctor_role_does_not_override_non_consultation_department_dashboard(): void
+    {
+        $department = Department::create([
+            'name' => 'Radiology',
+            'code' => 'RAD',
+            'type' => DepartmentType::RADIOLOGY->value,
+            'status' => 'active',
+        ]);
+        $user = User::factory()->create([
+            'department_id' => $department->id,
+            'password' => bcrypt('Password123!'),
+        ]);
+        $role = Role::create(['name' => 'Doctor']);
+        $user->assignRole($role);
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'Password123!',
+        ]);
+
+        $this->assertAuthenticatedAs($user);
+        $response->assertRedirect(route('admin.my-dashboard'));
     }
 
     public function test_admin_redirected_to_admin_dashboard(): void

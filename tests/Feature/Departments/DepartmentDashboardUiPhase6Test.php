@@ -128,7 +128,7 @@ class DepartmentDashboardUiPhase6Test extends TestCase
         $this->assertFalse($staffData['is_preview']);
     }
 
-    public function test_login_redirects_department_user_to_my_dashboard(): void
+    public function test_login_redirects_department_user_to_resolved_workspace_dashboard(): void
     {
         $department = Department::create(['name' => 'Laboratory', 'code' => 'LAB', 'type' => DepartmentType::INVESTIGATION->value, 'status' => 'active']);
         $user = User::factory()->create([
@@ -138,7 +138,7 @@ class DepartmentDashboardUiPhase6Test extends TestCase
         ]);
 
         $this->post(route('login'), ['email' => $user->email, 'password' => 'password'])
-            ->assertRedirect(route('admin.my-dashboard'));
+            ->assertRedirect(route('investigations.dashboard'));
     }
 
     public function test_all_department_types_have_theme_and_layout_fallback(): void
