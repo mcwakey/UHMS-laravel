@@ -324,6 +324,9 @@ trait HandlesConsultationWorkspace
 
         // All departments that accept investigation requests (have a result_type set)
         $investigationDepts = $this->labService->getInvestigationDepartments();
+        $investigationRouteDepartments = $investigationDepts->isNotEmpty()
+            ? $investigationDepts
+            : Department::active()->orderBy('name')->get();
 
         // Doctors for task assignment
         $doctors = User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get();
@@ -371,6 +374,10 @@ trait HandlesConsultationWorkspace
                 'category' => $service->category,
             ])->values())
             ->all();
+        $pharmacyFallbackDepartment = Department::active()
+            ->where('type', DepartmentType::PHARMACY->value)
+            ->orderBy('name')
+            ->first();
         $followUpAppointment = $selectedRoute
             ? Appointment::with(['department', 'doctor', 'services', 'createdByUser'])
                 ->where('consultation_route_id', $selectedRoute->id)
@@ -443,6 +450,7 @@ trait HandlesConsultationWorkspace
             'labRequests' => $labRequests,
             'labCategories' => $labCategories,
             'investigationDepts' => $investigationDepts,
+            'investigationRouteDepartments' => $investigationRouteDepartments,
             'doctors' => $doctors,
             'drugs' => $drugs,
             'procedures' => $procedures,
@@ -453,6 +461,7 @@ trait HandlesConsultationWorkspace
             'consultationServices' => $consultationServices,
             'referralDepts' => $referralDepts,
             'referralServicesPayloadByDept' => $referralServicesPayloadByDept,
+            'pharmacyFallbackDepartment' => $pharmacyFallbackDepartment,
             'followUpAppointment' => $followUpAppointment,
             'nextPatientInLine' => $nextPatientInLine,
             'completionReadiness' => $completionReadiness,

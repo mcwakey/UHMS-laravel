@@ -26,6 +26,12 @@ class NotificationService
 {
     public const DEFAULT_DEDUPE_MINUTES = 15;
 
+    /** @var array<int, int> */
+    private array $unreadCounts = [];
+
+    /** @var array<string, EloquentCollection> */
+    private array $latestNotifications = [];
+
     public function notifyUser(?User $user, array $payload, ?int $dedupeMinutes = null): bool
     {
         if (! $user || ! $user->exists) {
@@ -57,6 +63,7 @@ class NotificationService
 
         try {
             $user->notify(new DatabaseNotification($payload));
+            $this->forgetReads($user);
             return true;
         } catch (\Throwable $e) {
             Log::warning('NotificationService.notifyUser failed', [
@@ -131,12 +138,14 @@ class NotificationService
 
     public function unreadCount(User $user): int
     {
-        return (int) $user->unreadNotifications()->count();
+        return $this->unreadCounts[$user->id] ??= (int) $user->unreadNotifications()->count();
     }
 
     public function latest(User $user, int $limit = 10): EloquentCollection
     {
-        return $user->notifications()->latest()->take($limit)->get();
+        $key = $user->id.':'.$limit;
+
+        return $this->latestNotifications[$key] ??= $user->notifications()->latest()->take($limit)->get();
     }
 
     public function markAsRead(User $user, string $notificationId): bool
@@ -146,12 +155,27 @@ class NotificationService
             return false;
         }
         $notification->markAsRead();
+        $this->forgetReads($user);
         return true;
     }
 
     public function markAllAsRead(User $user): int
     {
-        return (int) $user->unreadNotifications()->update(['read_at' => now()]);
+        $count = (int) $user->unreadNotifications()->update(['read_at' => now()]);
+        $this->forgetReads($user);
+
+        return $count;
+    }
+
+    private function forgetReads(User $user): void
+    {
+        unset($this->unreadCounts[$user->id]);
+
+        foreach (array_keys($this->latestNotifications) as $key) {
+            if (str_starts_with($key, $user->id.':')) {
+                unset($this->latestNotifications[$key]);
+            }
+        }
     }
 
     /* ── Internals ─────────────────────────────────────────────── */

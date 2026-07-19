@@ -100,27 +100,6 @@
                 <div class="modal-body">
                     @php
                         $historyDeptIds = $visit->departmentHistory->pluck('department_id')->toArray();
-                        $currentDeptId  = $visit->current_department_id;
-                        $referralDepts  = \App\Models\Department::active()
-                            ->where('id', '!=', $currentDeptId)
-                            ->where('type', \App\Enums\DepartmentType::CONSULTATION->value)
-                            ->orderBy('name')->get();
-                        // Pre-load consultation services per referral department so the
-                        // service picker can react to the department dropdown without
-                        // an extra HTTP call.
-                        $referralServicesByDept = \App\Models\ServiceCatalog::where('is_active', true)
-                            ->where('category', \App\Enums\ServiceType::CONSULTATION->value)
-                            ->whereIn('department_id', $referralDepts->pluck('id'))
-                            ->orderBy('name')
-                            ->get()
-                            ->groupBy('department_id');
-                        $referralServicesPayloadByDept = $referralServicesByDept
-                            ->map(fn ($services) => $services->map(fn ($service) => [
-                                'id' => $service->id,
-                                'name' => $service->name,
-                                'category' => $service->category,
-                            ])->values())
-                            ->all();
                     @endphp
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Target Consultation Department <span class="text-danger">*</span></label>
@@ -270,7 +249,7 @@
                                 <label class="form-label fw-semibold">Investigation Department <span class="text-danger">*</span></label>
                                 <select name="department_id" class="form-select" required>
                                     <option value="">— Select department —</option>
-                                    @foreach($investigationDepts->isNotEmpty() ? $investigationDepts : \App\Models\Department::active()->orderBy('name')->get() as $dept)
+                                    @foreach($investigationRouteDepartments as $dept)
                                         <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                                     @endforeach
                                 </select>

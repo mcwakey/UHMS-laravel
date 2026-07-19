@@ -50,7 +50,7 @@
         </div>
         <div class="d-flex gap-2">
             <span class="badge bg-soft-info text-info">
-                {{ $tier->patientInsurances()->count() }} enrolled
+                {{ $tier->patient_insurances_count }} enrolled
             </span>
             @can('claims.create')
             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editTierModal-{{ $tier->id }}">

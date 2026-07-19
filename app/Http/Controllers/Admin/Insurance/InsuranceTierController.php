@@ -12,7 +12,7 @@ class InsuranceTierController extends Controller
     /** Show all tiers for a provider. */
     public function index(InsuranceProvider $provider)
     {
-        $tiers = $provider->tiers()->get();
+        $tiers = $provider->tiers()->withCount('patientInsurances')->get();
         return view('insurance.tiers', compact('provider', 'tiers'));
     }
 

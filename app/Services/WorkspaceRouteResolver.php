@@ -18,6 +18,8 @@ use Illuminate\Support\Str;
  */
 class WorkspaceRouteResolver
 {
+    private const VIEW_CONTEXT_ATTRIBUTE = '_uhms_workspace_view_context';
+
     public function __construct(
         private DepartmentContextSwitcherService $departments,
         private Request $request,
@@ -406,6 +408,19 @@ class WorkspaceRouteResolver
 
     /** @return array<string, mixed> */
     public function viewContext(): array
+    {
+        if ($this->request->attributes->has(self::VIEW_CONTEXT_ATTRIBUTE)) {
+            return $this->request->attributes->get(self::VIEW_CONTEXT_ATTRIBUTE);
+        }
+
+        $context = $this->resolveViewContext();
+        $this->request->attributes->set(self::VIEW_CONTEXT_ATTRIBUTE, $context);
+
+        return $context;
+    }
+
+    /** @return array<string, mixed> */
+    private function resolveViewContext(): array
     {
         if (! $this->isDepartmentWorkspace()) {
             return [

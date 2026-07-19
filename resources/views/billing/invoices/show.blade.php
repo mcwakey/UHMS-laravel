@@ -3,7 +3,7 @@
 
 @section('content')
 @php
-    $org = \App\Models\Setting::getGroup('organization');
+    $org = $organizationSettings;
     $orgName = $org['name'] ?? config('app.name', 'UHMS');
     $orgLogo = !empty($org['logo']) ? asset('storage/'.$org['logo']) : URL::asset('build/img/logo.svg');
     $orgAddress = collect([$org['address'] ?? null, $org['city'] ?? null, $org['region'] ?? null])->filter()->implode(', ');
@@ -775,15 +775,6 @@
 
         {{-- Awaiting Mobile Money payment: pending gateway charges for this invoice,
              with a manual Recheck and a live status poll. Only shows while pending. --}}
-        @php
-            $gatewayModuleActive = app(\App\Services\ModuleService::class)->enabled('payment_gateway')
-                && app(\App\Services\Integrations\Payment\PaymentProviderResolver::class)->activeProvider() !== null;
-            $pendingMomoCharges = $gatewayModuleActive
-                ? \App\Models\PaymentProviderTransaction::where('invoice_id', $invoice->id)
-                    ->whereIn('status', ['initiated', 'pending', 'requires_customer_action'])
-                    ->latest()->get()
-                : collect();
-        @endphp
         @if($pendingMomoCharges->isNotEmpty())
         <div class="card border-warning mb-3" id="pendingMomoCard"
             data-status-url="{{ route('admin.integrations.payments.transactions.status', $pendingMomoCharges->first()) }}">
