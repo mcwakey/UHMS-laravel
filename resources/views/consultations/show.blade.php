@@ -172,10 +172,12 @@
     $selectedRouteServiceNames = $routeServiceNames($selectedRoute);
     $canCorrectLocked = auth()->user()?->can('consultation.entries.correct_completed') || auth()->user()?->can('visits.reopen_locked_session');
     $isSelectedRouteLocked = $selectedRoute && $selectedRoute->locked_at;
+    $needsStart = $selectedRoute && (in_array($selectedRoute->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true) || ($selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE && ! $selectedRoute->started_at));
     $canEdit = (bool) ($sessionEligibilityActions['can_add_item'] ?? false);
     $canCreateEntries = $canEdit && (auth()->user()?->can('consultations.create') ?? false);
+    $canStartSession = $needsStart && (auth()->user()?->can('consultations.create') ?? false) && ! ($sessionEligibilityActions['is_visit_clinically_locked'] ?? false);
+    $canTransitionSession = (auth()->user()?->can('consultations.create') ?? false) && ! ($sessionEligibilityActions['is_visit_clinically_locked'] ?? false);
     $eligibilityLockMessage = $sessionEligibilityActions['lock_reason'] ?? null;
-    $needsStart = $selectedRoute && (in_array($selectedRoute->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true) || ($selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE && in_array($visit->status, [\App\Enums\VisitStatus::WAITING, \App\Enums\VisitStatus::ACTIVE], true)));
     $ownerOf = fn ($entry) => $entry?->creator ?? $entry?->createdBy ?? $entry?->doctor ?? $entry?->requestedBy ?? $entry?->requestingDoctor ?? null;
     $ownerKey = fn ($entry) => ($ownerOf($entry)?->id) ? 'user-'.$ownerOf($entry)->id : 'unknown';
     $ownerName = fn ($entry) => $ownerOf($entry)?->full_name ?? __('consultations.workspace.unknown');

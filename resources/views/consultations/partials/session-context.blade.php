@@ -69,25 +69,29 @@
                                 </a>
                                 @if($session->status !== \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
                                 @endif
-                                @if($canCreateEntries)
                                 @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
+                                    @if($canTransitionSession)
                                     <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.activate', [$visit, $session]) }}">
                                         @csrf
                                         <button class="btn btn-xs btn-primary" type="submit">Start</button>
                                     </form>
+                                    @endif
                                 @endif
                                 @if($session->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
+                                    @if($canCreateEntries)
                                     <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.complete', [$visit, $session]) }}">
                                         @csrf
                                         <button class="btn btn-xs btn-success" type="submit" data-confirm="{{ __('consultations.workspace.complete_current_session') }}">{{ __('consultations.workspace.complete_current_session') }}</button>
                                     </form>
+                                    @endif
                                 @endif
                                 @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
+                                    @if($canTransitionSession)
                                     <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.cancel', [$visit, $session]) }}">
                                         @csrf
                                         <button class="btn btn-xs btn-outline-danger" type="submit" data-confirm="Cancel this queued session?">Cancel</button>
                                     </form>
-                                @endif
+                                    @endif
                                 @endif
                             </div>
                         </td>
@@ -139,7 +143,7 @@
             @endif --}}
             @if($selectedRoute)
                 @if(in_array($selectedRoute->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
-                    @if($canCreateEntries)
+                    @if($canStartSession)
                     <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.activate', [$visit, $selectedRoute]) }}">
                         @csrf
                         <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-player-play me-1"></i>{{ __('consultations.workspace.start_session') }}</button>

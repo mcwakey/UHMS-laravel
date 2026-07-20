@@ -245,6 +245,8 @@ class AdmissionController extends Controller
 
     public function extend(Request $request, Admission $admission, AdmissionExtensionService $extensions)
     {
+        $extensions->assertWithinExtensionWindow($admission);
+
         $data = $request->validate([
             'reason' => ['required', 'string', 'min:5', 'max:1000'],
         ]);

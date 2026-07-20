@@ -145,6 +145,8 @@ return [
         'visit_details_reason' => 'Reopened from visit details to continue consultation care.',
     ],
     'lock_reasons' => [
+        'session_not_started' => 'Start this consultation session before adding clinical items.',
+        'session_paused' => 'Resume this consultation session before adding clinical items.',
         'session_completed' => 'This session is completed. Reopen the session before adding new items.',
         'visit_closed_after_visit_day' => 'This outpatient visit is closed because it is no longer the visit day.',
         'discharged_inpatient_grace_expired' => 'This inpatient admission has been discharged and the same-day edit window has passed.',

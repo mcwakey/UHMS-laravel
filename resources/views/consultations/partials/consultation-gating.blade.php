@@ -8,7 +8,7 @@
             <h6 class="fw-bold mb-1 text-warning"><i class="ti ti-player-play me-1"></i>{{ __('consultations.workspace.consultation_not_started') }}</h6>
             <small class="text-muted">{{ __('consultations.workspace.start_instruction') }}</small>
         </div>
-        @if($canCreateEntries)
+        @if($canStartSession)
         <form method="POST" action="{{ $workspaceRoutes->route('admin.consultations.routes.activate', [$visit, $selectedRoute]) }}">
             @csrf
             <button type="submit" class="btn btn-warning"><i class="ti ti-player-play me-1"></i>{{ __('consultations.workspace.start_consultation') }}</button>

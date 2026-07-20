@@ -10,6 +10,7 @@ use App\Models\Admission;
 use App\Models\User;
 use App\Services\ActivityLogService;
 use App\Services\AdmissionBedBillingService;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -25,6 +26,8 @@ class AdmissionExtensionService
         if (! $user->can('admissions.extend') && ! $user->can('admissions.readmit')) {
             throw ValidationException::withMessages(['permission' => __('consultations.reopen.permission_denied')]);
         }
+
+        $this->assertWithinExtensionWindow($admission);
 
         if (blank($reason) || mb_strlen($reason) < 5) {
             throw ValidationException::withMessages(['reason' => __('validation.min.string', ['attribute' => 'reason', 'min' => 5])]);
@@ -90,5 +93,31 @@ class AdmissionExtensionService
 
             return $admission->fresh(['visit', 'bed.ward']);
         });
+    }
+
+    public function canExtend(Admission $admission): bool
+    {
+        return $admission->status === AdmissionStatus::DISCHARGED
+            && $admission->actual_discharge_date !== null
+            && $this->hospitalDay($admission->actual_discharge_date)->isSameDay($this->today());
+    }
+
+    public function assertWithinExtensionWindow(Admission $admission): void
+    {
+        if (! $this->canExtend($admission)) {
+            throw ValidationException::withMessages([
+                'admission' => __('admissions.extension_window_expired'),
+            ]);
+        }
+    }
+
+    private function today(): Carbon
+    {
+        return Carbon::today(config('app.timezone'));
+    }
+
+    private function hospitalDay($value): Carbon
+    {
+        return Carbon::parse($value)->timezone(config('app.timezone'));
     }
 }

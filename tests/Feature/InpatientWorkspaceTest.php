@@ -307,6 +307,34 @@ class InpatientWorkspaceTest extends TestCase
         ]);
     }
 
+    public function test_readmission_is_not_available_after_discharge_day(): void
+    {
+        $department = $this->department(DepartmentType::INPATIENT, 'WARD2');
+        $user = User::factory()->create(['department_id' => $department->id]);
+        $this->give($user, ['ward.view', 'admissions.readmit']);
+        $admission = $this->admission($department, $user, 'ADM-READMIT-OLD', 'PAT-READMIT-OLD');
+
+        $admission->update([
+            'status' => AdmissionStatus::DISCHARGED->value,
+            'actual_discharge_date' => now()->subDay(),
+            'discharged_by' => $user->id,
+        ]);
+        $admission->bed->update(['status' => BedStatus::AVAILABLE->value]);
+
+        $this->actingAs($user)
+            ->get(route('inpatient.readmissions.create', $admission))
+            ->assertStatus(409);
+
+        $this->actingAs($user)
+            ->post(route('inpatient.readmissions.store', $admission), ['reason' => 'Late extension should not be allowed'])
+            ->assertSessionHasErrors('admission');
+
+        $this->assertDatabaseHas('admissions', [
+            'id' => $admission->id,
+            'status' => AdmissionStatus::DISCHARGED->value,
+        ]);
+    }
+
     private function admission(Department $department, User $actor, string $number, string $patientNumber): Admission
     {
         $ward = Ward::create([

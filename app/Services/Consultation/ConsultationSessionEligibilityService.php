@@ -9,10 +9,13 @@ use App\Models\Admission;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
+use App\Services\Admissions\AdmissionExtensionService;
 use Illuminate\Support\Carbon;
 
 class ConsultationSessionEligibilityService
 {
+    public function __construct(private readonly AdmissionExtensionService $admissionExtensions) {}
+
     public function canAddItem(Visit $visit, VisitConsultationRoute $session, User $user): bool
     {
         return $this->addItemDecision($visit, $session, $user)['allowed'];
@@ -110,7 +113,8 @@ class ConsultationSessionEligibilityService
     {
         $visit->loadMissing('admission');
 
-        return (bool) $visit->admission?->actual_discharge_date
+        return (bool) $visit->admission
+            && $this->admissionExtensions->canExtend($visit->admission)
             && (! $user || $user->can('admissions.extend') || $user->can('admissions.readmit'));
     }
 
@@ -138,6 +142,18 @@ class ConsultationSessionEligibilityService
 
         if ($session->isLocked()) {
             return $this->deny('locked_session', __('consultations.lock_reasons.session_completed'), 423);
+        }
+
+        if ($session->status === VisitConsultationRoute::STATUS_PENDING) {
+            return $this->deny('session_not_started', __('consultations.lock_reasons.session_not_started'), 423);
+        }
+
+        if ($session->status === VisitConsultationRoute::STATUS_PAUSED) {
+            return $this->deny('session_paused', __('consultations.lock_reasons.session_paused'), 423);
+        }
+
+        if ($session->status === VisitConsultationRoute::STATUS_ACTIVE && ! $session->started_at) {
+            return $this->deny('session_not_started', __('consultations.lock_reasons.session_not_started'), 423);
         }
 
         if ($session->status === VisitConsultationRoute::STATUS_COMPLETED) {

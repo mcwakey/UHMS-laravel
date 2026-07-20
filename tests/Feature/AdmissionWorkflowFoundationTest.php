@@ -209,6 +209,48 @@ class AdmissionWorkflowFoundationTest extends TestCase
         ]);
     }
 
+    public function test_duplicate_active_admission_for_same_visit_is_rejected(): void
+    {
+        $this->actingAs($this->user);
+
+        app(AdmissionService::class)->admit([
+            'visit_id' => $this->visit->id,
+            'patient_id' => $this->patient->id,
+            'bed_id' => $this->bed->id,
+            'admission_type' => 'admission',
+            'admitting_diagnosis' => 'Observation',
+        ]);
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('already has an active admission');
+
+        app(AdmissionService::class)->admit([
+            'visit_id' => $this->visit->id,
+            'patient_id' => $this->patient->id,
+            'bed_id' => $this->bed->id,
+            'admission_type' => 'admission',
+            'admitting_diagnosis' => 'Duplicate submit',
+        ]);
+    }
+
+    public function test_discharged_admission_is_not_returned_as_patient_active_admission(): void
+    {
+        Admission::create([
+            'admission_number' => Admission::generateAdmissionNumber(),
+            'visit_id' => $this->visit->id,
+            'patient_id' => $this->patient->id,
+            'bed_id' => $this->bed->id,
+            'admitted_by' => $this->user->id,
+            'admitting_diagnosis' => 'Observation',
+            'admission_date' => now()->subDay(),
+            'actual_discharge_date' => now(),
+            'discharged_by' => $this->user->id,
+            'status' => AdmissionStatus::DISCHARGED,
+        ]);
+
+        $this->assertNull($this->patient->fresh()->activeAdmission);
+    }
+
     public function test_user_without_accept_permission_cannot_accept_request(): void
     {
         $viewer = User::factory()->create();

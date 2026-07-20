@@ -17,6 +17,7 @@ use App\Services\Consultation\ConsultationAutoCompletionService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AdmissionService
 {
@@ -56,6 +57,8 @@ class AdmissionService
     public function admit(array $data): Admission
     {
         $admission = DB::transaction(function () use ($data) {
+            $this->assertCanAdmit($data);
+
             $admissionFields = array_intersect_key($data, array_flip([
                 'admission_number', 'admission_request_id', 'visit_id', 'patient_id', 'bed_id', 'admitted_by',
                 'admitting_diagnosis', 'admission_date', 'expected_discharge_date',
@@ -105,6 +108,44 @@ class AdmissionService
         ], $admission, 'Patient admitted');
 
         return $admission;
+    }
+
+    private function assertCanAdmit(array $data): void
+    {
+        $patientId = (int) ($data['patient_id'] ?? 0);
+        $visitId = (int) ($data['visit_id'] ?? 0);
+        $bedId = (int) ($data['bed_id'] ?? 0);
+
+        $existingAdmission = Admission::query()
+            ->active()
+            ->where(function ($query) use ($patientId, $visitId) {
+                $query
+                    ->where('patient_id', $patientId)
+                    ->orWhere('visit_id', $visitId);
+            })
+            ->lockForUpdate()
+            ->latest('admission_date')
+            ->first();
+
+        if ($existingAdmission) {
+            throw ValidationException::withMessages([
+                'patient_id' => __('admissions.request_errors.patient_already_admitted', [
+                    'number' => $existingAdmission->admission_number,
+                ]),
+            ]);
+        }
+
+        $bedHasCurrentAdmission = Admission::query()
+            ->active()
+            ->where('bed_id', $bedId)
+            ->lockForUpdate()
+            ->exists();
+
+        if ($bedHasCurrentAdmission) {
+            throw ValidationException::withMessages([
+                'bed_id' => __('admissions.request_errors.bed_not_available'),
+            ]);
+        }
     }
 
     private function releaseEmergencyBedIfPresent(Admission $admission): void

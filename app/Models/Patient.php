@@ -183,7 +183,7 @@ class Patient extends Model
     public function activeAdmission()
     {
         return $this->hasOne(Admission::class)
-            ->whereNotIn('status', ['discharged', 'transferred', 'deceased'])
+            ->active()
             ->latestOfMany('admission_date');
     }
 

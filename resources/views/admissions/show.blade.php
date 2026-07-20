@@ -28,7 +28,7 @@
         </div>
     </div>
     <div class="text-end d-flex gap-2">
-        @if(($workspaceContext['workspaceKey'] ?? null) === 'inpatient' && $admission->status->value === 'discharged')
+        @if(($workspaceContext['workspaceKey'] ?? null) === 'inpatient' && app(\App\Services\Admissions\AdmissionExtensionService::class)->canExtend($admission))
             @can('admissions.readmit')
             <a href="{{ route('inpatient.readmissions.create', $admission) }}" class="btn btn-primary btn-md fs-13">
                 <i class="ti ti-refresh me-1"></i>{{ __('inpatient.actions.readmit') }}

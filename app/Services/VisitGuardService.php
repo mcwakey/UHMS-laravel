@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\AdmissionStatus;
 use App\Enums\LogModule;
 use App\Models\Admission;
 use App\Models\Patient;
@@ -51,11 +50,7 @@ class VisitGuardService
         return Admission::query()
             ->with(['bed.ward'])
             ->where('patient_id', $patient->id)
-            ->whereNotIn('status', [
-                AdmissionStatus::DISCHARGED->value,
-                AdmissionStatus::TRANSFERRED->value,
-                AdmissionStatus::DECEASED->value,
-            ])
+            ->active()
             ->latest('admission_date')
             ->first();
     }

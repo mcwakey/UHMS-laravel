@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Inpatient;
 
-use App\Enums\AdmissionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Admission;
 use App\Services\Admissions\AdmissionExtensionService;
@@ -12,7 +11,8 @@ class ReadmissionController extends Controller
 {
     public function create(Admission $admission)
     {
-        $this->assertDischarged($admission);
+        abort_unless(app(AdmissionExtensionService::class)->canExtend($admission), 409, __('admissions.extension_window_expired'));
+
         $admission->loadMissing(['patient', 'visit', 'bed.ward']);
 
         return view('inpatient.readmissions.create', compact('admission'));
@@ -20,7 +20,6 @@ class ReadmissionController extends Controller
 
     public function store(Request $request, Admission $admission, AdmissionExtensionService $extensions)
     {
-        $this->assertDischarged($admission);
         $data = $request->validate([
             'reason' => ['required', 'string', 'min:5', 'max:1000'],
         ]);
@@ -32,8 +31,4 @@ class ReadmissionController extends Controller
             ->with('success', __('inpatient.readmission.success'));
     }
 
-    private function assertDischarged(Admission $admission): void
-    {
-        abort_unless($admission->status === AdmissionStatus::DISCHARGED, 409);
-    }
 }

@@ -33,6 +33,7 @@ return [
     'readmit_extend_patient' => 'Re-admit / Extend Admission',
     'extend_admission' => 'Extend Admission',
     'admission_extended' => 'Admission extended for continued inpatient care.',
+    'extension_window_expired' => 'This admission can only be re-admitted or extended until the end of the discharge day.',
     'duplicate_active_admission' => 'This patient already has an active admission.',
 
     // Discharge
@@ -201,6 +202,7 @@ return [
     ],
     'request_errors' => [
         'bed_not_available' => 'The selected bed is not available.',
+        'patient_already_admitted' => 'This patient already has an active admission (:number).',
         'cannot_convert_status' => 'This admission request cannot be converted in its current status.',
         'already_converted' => 'This admission request has already been converted.',
         'bed_required' => 'Select or reserve a bed before converting this request.',

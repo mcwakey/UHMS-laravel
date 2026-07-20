@@ -240,7 +240,18 @@ class Admission extends Model
 
     public function scopeActive($query)
     {
-        return $query->whereIn('status', [AdmissionStatus::ADMITTED, AdmissionStatus::ON_LEAVE]);
+        return $query
+            ->whereIn('status', [AdmissionStatus::ADMITTED->value, AdmissionStatus::ON_LEAVE->value])
+            ->whereNull('actual_discharge_date');
+    }
+
+    public function scopeTerminal($query)
+    {
+        return $query->whereIn('status', [
+            AdmissionStatus::DISCHARGED->value,
+            AdmissionStatus::TRANSFERRED->value,
+            AdmissionStatus::DECEASED->value,
+        ]);
     }
 
     public function scopeByStatus($query, AdmissionStatus $status)
@@ -290,7 +301,8 @@ class Admission extends Model
 
     public function getIsActiveAttribute(): bool
     {
-        return $this->status === AdmissionStatus::ADMITTED;
+        return in_array($this->status, [AdmissionStatus::ADMITTED, AdmissionStatus::ON_LEAVE], true)
+            && $this->actual_discharge_date === null;
     }
 
     /*

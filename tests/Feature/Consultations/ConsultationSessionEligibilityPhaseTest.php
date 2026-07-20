@@ -202,6 +202,68 @@ class ConsultationSessionEligibilityPhaseTest extends TestCase
         $this->assertSame(1, Complaint::where('visit_id', $visit->id)->count());
     }
 
+    public function test_pending_consultation_session_cannot_accept_clinical_items_before_start(): void
+    {
+        [$visit, $route] = $this->visitWithRoute(VisitType::OUTPATIENT, VisitStatus::WAITING, now(), [
+            'status' => VisitConsultationRoute::STATUS_PENDING,
+            'started_by' => null,
+            'started_at' => null,
+            'activated_at' => null,
+        ]);
+
+        $decision = app(ConsultationSessionEligibilityService::class)->addItemDecision($visit, $route, $this->doctor);
+        $this->assertFalse($decision['allowed']);
+        $this->assertSame('session_not_started', $decision['code']);
+
+        $this->postComplaint($visit, $route)
+            ->assertStatus(423);
+
+        $this->assertSame(0, Complaint::where('visit_id', $visit->id)->count());
+    }
+
+    public function test_active_consultation_session_without_started_at_cannot_accept_clinical_items(): void
+    {
+        [$visit, $route] = $this->visitWithRoute(VisitType::OUTPATIENT, VisitStatus::WAITING, now(), [
+            'status' => VisitConsultationRoute::STATUS_ACTIVE,
+            'started_by' => null,
+            'started_at' => null,
+            'activated_at' => now(),
+        ]);
+
+        $decision = app(ConsultationSessionEligibilityService::class)->addItemDecision($visit, $route, $this->doctor);
+        $this->assertFalse($decision['allowed']);
+        $this->assertSame('session_not_started', $decision['code']);
+
+        $this->postComplaint($visit, $route)
+            ->assertStatus(423);
+
+        $this->actingAs($this->doctor)
+            ->followingRedirects()
+            ->get(route('admin.consultations.routes.show', [$visit, $route]))
+            ->assertOk()
+            ->assertSee(__('consultations.workspace.consultation_not_started'))
+            ->assertSee(__('consultations.workspace.start_consultation'))
+            ->assertDontSee('addComplaintForm', false)
+            ->assertDontSee('data-consultation-form="complaints"', false);
+    }
+
+    public function test_paused_consultation_session_cannot_accept_clinical_items_until_resumed(): void
+    {
+        [$visit, $route] = $this->visitWithRoute(VisitType::OUTPATIENT, VisitStatus::CONSULTING, now(), [
+            'status' => VisitConsultationRoute::STATUS_PAUSED,
+            'paused_at' => now(),
+        ]);
+
+        $decision = app(ConsultationSessionEligibilityService::class)->addItemDecision($visit, $route, $this->doctor);
+        $this->assertFalse($decision['allowed']);
+        $this->assertSame('session_paused', $decision['code']);
+
+        $this->postComplaint($visit, $route)
+            ->assertStatus(423);
+
+        $this->assertSame(0, Complaint::where('visit_id', $visit->id)->count());
+    }
+
     public function test_completed_session_is_locked_but_other_active_session_remains_editable(): void
     {
         [$visit, $completed] = $this->visitWithRoute(VisitType::INPATIENT, VisitStatus::ADMITTED, now()->subDays(2), [
@@ -285,9 +347,9 @@ class ConsultationSessionEligibilityPhaseTest extends TestCase
     public function test_extend_admission_reopens_active_session_workflow_without_duplicate_active_admission(): void
     {
         [$visit, $route] = $this->visitWithRoute(VisitType::INPATIENT, VisitStatus::DISCHARGED, now()->subDays(4));
-        $admission = $this->admission($visit, AdmissionStatus::DISCHARGED, now()->subDay());
+        $admission = $this->admission($visit, AdmissionStatus::DISCHARGED, now());
 
-        $this->assertFalse(app(ConsultationSessionEligibilityService::class)->canAddItem($visit->fresh('admission'), $route, $this->doctor));
+        $this->assertTrue(app(ConsultationSessionEligibilityService::class)->shouldOfferReadmitOrExtend($visit->fresh('admission'), $this->doctor));
 
         app(AdmissionExtensionService::class)->extend($admission, $this->doctor, 'Continue inpatient care');
 
@@ -298,10 +360,23 @@ class ConsultationSessionEligibilityPhaseTest extends TestCase
             ->count());
     }
 
-    public function test_extend_admission_does_not_create_or_allow_duplicate_active_admissions(): void
+    public function test_extend_admission_is_blocked_after_discharge_day(): void
     {
         [$visit] = $this->visitWithRoute(VisitType::INPATIENT, VisitStatus::DISCHARGED, now()->subDays(4));
         $admission = $this->admission($visit, AdmissionStatus::DISCHARGED, now()->subDay());
+
+        $this->assertFalse(app(ConsultationSessionEligibilityService::class)->shouldOfferReadmitOrExtend($visit->fresh('admission'), $this->doctor));
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('end of the discharge day');
+
+        app(AdmissionExtensionService::class)->extend($admission, $this->doctor, 'Late extension should be blocked');
+    }
+
+    public function test_extend_admission_does_not_create_or_allow_duplicate_active_admissions(): void
+    {
+        [$visit] = $this->visitWithRoute(VisitType::INPATIENT, VisitStatus::DISCHARGED, now()->subDays(4));
+        $admission = $this->admission($visit, AdmissionStatus::DISCHARGED, now());
         $this->admission($visit, AdmissionStatus::ADMITTED);
 
         $this->expectException(ValidationException::class);

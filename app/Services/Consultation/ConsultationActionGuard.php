@@ -87,6 +87,8 @@ class ConsultationActionGuard
         if (! $decision['allowed']) {
             $event = match ($decision['code']) {
                 'locked_session' => 'CONSULTATION_ACTION_BLOCKED_LOCKED_ROUTE',
+                'session_not_started' => 'CONSULTATION_ACTION_BLOCKED_SESSION_NOT_STARTED',
+                'session_paused' => 'CONSULTATION_ACTION_BLOCKED_SESSION_PAUSED',
                 'completed_session' => 'CONSULTATION_ACTION_BLOCKED_COMPLETED_ROUTE',
                 'cancelled_session' => 'CONSULTATION_ACTION_BLOCKED_CANCELLED_ROUTE',
                 'outpatient_visit_day_expired' => 'CONSULTATION_ACTION_BLOCKED_OUTPATIENT_WINDOW_EXPIRED',

@@ -84,7 +84,7 @@ class Bed extends Model
 
     public function currentAdmission()
     {
-        return $this->hasOne(Admission::class)->where('status', 'admitted')->latestOfMany();
+        return $this->hasOne(Admission::class)->active()->latestOfMany();
     }
 
     /*
