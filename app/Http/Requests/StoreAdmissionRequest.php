@@ -6,9 +6,24 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreAdmissionRequest extends FormRequest
 {
+    public const EDIT_BILLING_AMOUNTS_PERMISSION = 'admissions.billing_amounts.edit';
+
     public function authorize(): bool
     {
         return $this->user()->can('ward.admit');
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->user()?->can(self::EDIT_BILLING_AMOUNTS_PERMISSION)) {
+            return;
+        }
+
+        $this->merge([
+            'admission_fee_amount' => null,
+            'bed_fee_amount' => null,
+            'consumable_fee_amount' => null,
+        ]);
     }
 
     public function rules(): array

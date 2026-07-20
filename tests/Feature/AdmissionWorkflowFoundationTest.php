@@ -6,16 +6,22 @@ use App\Enums\AdmissionRequestSource;
 use App\Enums\AdmissionRequestStatus;
 use App\Enums\AdmissionStatus;
 use App\Enums\BedStatus;
+use App\Enums\ServiceType;
 use App\Enums\VisitStatus;
 use App\Events\PatientDischarged;
 use App\Models\Admission;
 use App\Models\AdmissionRequest;
 use App\Models\Bed;
 use App\Models\Department;
+use App\Models\InvoiceItem;
+use App\Models\MedicalRecord;
 use App\Models\Patient;
+use App\Models\ServiceCatalog;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\Ward;
+use App\Http\Requests\StoreAdmissionRequest;
 use App\Services\AdmissionService;
 use App\Services\Admissions\AdmissionRequestService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -207,6 +213,103 @@ class AdmissionWorkflowFoundationTest extends TestCase
             'bed_id' => $this->bed->id,
             'status' => AdmissionStatus::ADMITTED->value,
         ]);
+    }
+
+    public function test_admission_create_prefills_primary_consultation_diagnosis(): void
+    {
+        $record = MedicalRecord::create([
+            'visit_id' => $this->visit->id,
+            'patient_id' => $this->patient->id,
+            'doctor_id' => $this->user->id,
+            'department_id' => $this->user->department_id,
+        ]);
+
+        $record->diagnoses()->create([
+            'visit_id' => $this->visit->id,
+            'patient_id' => $this->patient->id,
+            'doctor_id' => $this->user->id,
+            'description' => 'Unspecified malaria',
+            'icd_code' => 'B54',
+            'type' => 'provisional',
+            'is_primary' => true,
+        ]);
+        $record->diagnoses()->create([
+            'visit_id' => $this->visit->id,
+            'patient_id' => $this->patient->id,
+            'doctor_id' => $this->user->id,
+            'description' => 'Dehydration',
+            'type' => 'provisional',
+            'is_primary' => false,
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('admin.admissions.create', ['visit_id' => $this->visit->id]))
+            ->assertOk()
+            ->assertSee('Primary diagnosis: B54 - Unspecified malaria')
+            ->assertSee('Other diagnosis: Dehydration');
+    }
+
+    public function test_admission_amount_overrides_are_ignored_without_permission(): void
+    {
+        $service = ServiceCatalog::create([
+            'name' => 'Admission Fee',
+            'code' => 'ADM-FEE-TEST',
+            'category' => ServiceType::OTHER->value,
+            'price' => 200,
+            'is_active' => true,
+            'is_billable' => true,
+        ]);
+        Setting::setValue('ward', 'admission_fee_service_id', $service->id, 'integer');
+
+        $this->actingAs($this->user)->post(route('admin.admissions.store'), [
+            'visit_id' => $this->visit->id,
+            'patient_id' => $this->patient->id,
+            'bed_id' => $this->bed->id,
+            'admission_type' => 'admission',
+            'admitting_diagnosis' => 'Observation',
+            'admission_fee_service_id' => $service->id,
+            'admission_fee_amount' => 0,
+        ])->assertRedirect();
+
+        $item = InvoiceItem::query()
+            ->where('visit_id', $this->visit->id)
+            ->where('service_catalog_id', $service->id)
+            ->firstOrFail();
+
+        $this->assertSame(200.0, (float) $item->selected_price);
+        $this->assertSame('cash_price', $item->pricing_source);
+    }
+
+    public function test_admission_amount_overrides_require_permission(): void
+    {
+        $this->user->givePermissionTo(Permission::findOrCreate(StoreAdmissionRequest::EDIT_BILLING_AMOUNTS_PERMISSION, 'web'));
+
+        $service = ServiceCatalog::create([
+            'name' => 'Admission Fee',
+            'code' => 'ADM-FEE-OVERRIDE',
+            'category' => ServiceType::OTHER->value,
+            'price' => 200,
+            'is_active' => true,
+            'is_billable' => true,
+        ]);
+
+        $this->actingAs($this->user)->post(route('admin.admissions.store'), [
+            'visit_id' => $this->visit->id,
+            'patient_id' => $this->patient->id,
+            'bed_id' => $this->bed->id,
+            'admission_type' => 'admission',
+            'admitting_diagnosis' => 'Observation',
+            'admission_fee_service_id' => $service->id,
+            'admission_fee_amount' => 50,
+        ])->assertRedirect();
+
+        $item = InvoiceItem::query()
+            ->where('visit_id', $this->visit->id)
+            ->where('service_catalog_id', $service->id)
+            ->firstOrFail();
+
+        $this->assertSame(50.0, (float) $item->selected_price);
+        $this->assertSame('manual_override', $item->pricing_source);
     }
 
     public function test_duplicate_active_admission_for_same_visit_is_rejected(): void

@@ -25,6 +25,19 @@
 </div>
 @endif
 
+@php
+    $currentAdmissionType = old('admission_type', 'admission');
+    $initialAdmissionFeeServiceId = old(
+        'admission_fee_service_id',
+        $currentAdmissionType === 'detention' ? $defaultDetentionFeeServiceId : $defaultAdmissionFeeServiceId
+    );
+    $initialAdmissionFeeMapped = $currentAdmissionType === 'detention'
+        ? filled($defaultDetentionFeeServiceId)
+        : filled($defaultAdmissionFeeServiceId);
+    $initialConsumableFeeServiceId = old('consumable_fee_service_id', $defaultConsumableFeeServiceId);
+    $consumableFeeMapped = filled($defaultConsumableFeeServiceId);
+@endphp
+
 <form method="POST" action="{{ $workspaceRoutes->route('admin.admissions.store') }}" id="admissionForm">
     @csrf
     @if($preselectedAdmissionRequest ?? null)
@@ -85,6 +98,7 @@
                                             data-ins-annual-remaining="{{ $vHasReal ? ($vIns->remaining_annual_limit ?? '') : '' }}"
                                             data-ins-monthly-remaining="{{ $vHasReal ? ($vIns->remaining_monthly_limit ?? '') : '' }}"
                                             data-ins-membership="{{ $vHasReal ? e($vIns->membership_number ?? '') : '' }}"
+                                            data-admitting-diagnosis="{{ e($admittingDiagnosisByVisit[$v->id] ?? '') }}"
                                             {{ old('visit_id') == $v->id ? 'selected' : '' }}>
                                         {{ $v->visit_number }} — {{ $v->patient->full_name }} ({{ $v->patient->patient_number }})
                                     </option>
@@ -204,8 +218,8 @@
                 <h6 class="card-title mb-0 fw-semibold"><i class="ti ti-stethoscope me-2 text-purple"></i>{{ __('admissions.admitting_diagnosis') }}</h6>
             </div>
             <div class="card-body">
-                <textarea name="admitting_diagnosis" class="form-control" rows="3"
-                          placeholder="{{ __('admissions.admitting_diagnosis_ph') }}">{{ old('admitting_diagnosis', $preselectedAdmissionRequest->provisional_diagnosis ?? '') }}</textarea>
+                <textarea name="admitting_diagnosis" id="admittingDiagnosis" class="form-control" rows="3"
+                          placeholder="{{ __('admissions.admitting_diagnosis_ph') }}">{{ old('admitting_diagnosis', $defaultAdmittingDiagnosis ?? ($preselectedAdmissionRequest->provisional_diagnosis ?? '')) }}</textarea>
             </div>
         </div>
 
@@ -218,13 +232,18 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold" id="admFeeServiceLabel">{{ __('admissions.admission_fee_service') }}</label>
+                        <input type="hidden" name="admission_fee_service_id" id="admissionFeeServiceHidden"
+                               value="{{ $initialAdmissionFeeServiceId }}" {{ $initialAdmissionFeeMapped ? '' : 'disabled' }}>
                         <select name="admission_fee_service_id" id="admissionFeeService" class="form-select"
                                 data-default-admission="{{ $defaultAdmissionFeeServiceId ?? '' }}"
-                                data-default-detention="{{ $defaultDetentionFeeServiceId ?? '' }}">
+                                data-default-detention="{{ $defaultDetentionFeeServiceId ?? '' }}"
+                                data-admission-mapped="{{ $defaultAdmissionFeeServiceId ? '1' : '0' }}"
+                                data-detention-mapped="{{ $defaultDetentionFeeServiceId ? '1' : '0' }}"
+                                {{ $initialAdmissionFeeMapped ? 'disabled' : '' }}>
                             <option value="">{{ __('admissions.none_manual') }}</option>
                             @foreach($services as $svc)
-                                <option value="{{ $svc->id }}" data-price="{{ $svc->price }}"
-                                        {{ old('admission_fee_service_id', $defaultAdmissionFeeServiceId) == $svc->id ? 'selected' : '' }}>
+                                <option value="{{ $svc->id }}" data-price="{{ $servicePreviewPrices[$svc->id] ?? $svc->price }}" data-cash-price="{{ $svc->price }}"
+                                        {{ (string) $initialAdmissionFeeServiceId === (string) $svc->id ? 'selected' : '' }}>
                                     {{ $svc->name }} — GH₵{{ number_format($svc->price, 2) }}
                                 </option>
                             @endforeach
@@ -233,11 +252,15 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">{{ __('admissions.consumable_daily_fee') }}</label>
-                        <select name="consumable_fee_service_id" id="consumableFeeService" class="form-select">
+                        <input type="hidden" name="consumable_fee_service_id" id="consumableFeeServiceHidden"
+                               value="{{ $initialConsumableFeeServiceId }}" {{ $consumableFeeMapped ? '' : 'disabled' }}>
+                        <select name="consumable_fee_service_id" id="consumableFeeService" class="form-select"
+                                data-consumable-mapped="{{ $consumableFeeMapped ? '1' : '0' }}"
+                                {{ $consumableFeeMapped ? 'disabled' : '' }}>
                             <option value="">{{ __('admissions.none_manual') }}</option>
                             @foreach($services as $svc)
-                                <option value="{{ $svc->id }}" data-price="{{ $svc->price }}"
-                                        {{ old('consumable_fee_service_id', $defaultConsumableFeeServiceId) == $svc->id ? 'selected' : '' }}>
+                                <option value="{{ $svc->id }}" data-price="{{ $servicePreviewPrices[$svc->id] ?? $svc->price }}" data-cash-price="{{ $svc->price }}"
+                                        {{ (string) $initialConsumableFeeServiceId === (string) $svc->id ? 'selected' : '' }}>
                                     {{ $svc->name }} — GH₵{{ number_format($svc->price, 2) }}
                                 </option>
                             @endforeach
@@ -413,7 +436,6 @@
                     <thead class="table-light">
                         <tr>
                             <th>{{ __('admissions.description') }}</th>
-                            <th class="text-center">{{ __('admissions.qty') }}</th>
                             <th class="text-end">{{ __('admissions.amount') }}</th>
                         </tr>
                     </thead>
@@ -423,12 +445,12 @@
                                 <span id="admFeeLabel">{{ __('admissions.admission_fee') }}</span>
                                 <small class="d-block text-muted">{{ __('admissions.one_time_label') }}</small>
                             </td>
-                            <td class="text-center">1</td>
                             <td class="text-end">
-                                <div class="input-group input-group-sm" style="width:100px;margin-left:auto">
+                                <div class="input-group input-group-sm" style="width:150px;margin-left:auto">
                                     <span class="input-group-text p-1 small">GH₵</span>
                                     <input type="number" name="admission_fee_amount" id="admFeeInput" class="form-control form-control-sm text-end billing-input"
-                                           min="0" step="0.01" value="{{ old('admission_fee_amount', 0) }}" placeholder="0.00">
+                                           min="0" step="0.01" value="{{ old('admission_fee_amount', 0) }}" placeholder="0.00"
+                                           {{ $canEditAdmissionBillingAmounts ? '' : 'readonly aria-readonly=true' }}>
                                 </div>
                             </td>
                         </tr>
@@ -437,12 +459,12 @@
                                 {{ __('admissions.bed_fee') }}
                                 <small class="d-block text-muted" id="bedRateHint">{{ __('admissions.select_bed_hint') }}</small>
                             </td>
-                            <td class="text-center" id="daysQty">1</td>
                             <td class="text-end">
-                                <div class="input-group input-group-sm" style="width:100px;margin-left:auto">
+                                <div class="input-group input-group-sm" style="width:150px;margin-left:auto">
                                     <span class="input-group-text p-1 small">GH₵</span>
                                     <input type="number" name="bed_fee_amount" id="bedFeeInput" class="form-control form-control-sm text-end billing-input"
-                                           min="0" step="0.01" value="{{ old('bed_fee_amount', 0) }}" placeholder="0.00" readonly>
+                                           min="0" step="0.01" value="{{ old('bed_fee_amount', 0) }}" placeholder="0.00"
+                                           {{ $canEditAdmissionBillingAmounts ? '' : 'readonly aria-readonly=true' }}>
                                 </div>
                                 <small class="text-muted" id="bedFeeCalc">per day × days</small>
                             </td>
@@ -452,32 +474,34 @@
                                 {{ __('admissions.consumable_fee') }}
                                 <small class="d-block text-muted">{{ __('admissions.daily_label') }}</small>
                             </td>
-                            <td class="text-center" id="daysQty2">1</td>
                             <td class="text-end">
-                                <div class="input-group input-group-sm" style="width:100px;margin-left:auto">
+                                <div class="input-group input-group-sm" style="width:150px;margin-left:auto">
                                     <span class="input-group-text p-1 small">GH₵</span>
                                     <input type="number" name="consumable_fee_amount" id="consumableFeeInput" class="form-control form-control-sm text-end billing-input"
-                                           min="0" step="0.01" value="{{ old('consumable_fee_amount', 0) }}" placeholder="0.00">
+                                           min="0" step="0.01" value="{{ old('consumable_fee_amount', 0) }}" placeholder="0.00"
+                                           {{ $canEditAdmissionBillingAmounts ? '' : 'readonly aria-readonly=true' }}>
                                 </div>
                             </td>
                         </tr>
                     </tbody>
                     <tfoot class="border-top-2">
                         <tr id="insRow" class="text-success d-none">
-                            <td colspan="2"><i class="ti ti-shield-check me-1"></i>{{ __('admissions.insurance_coverage_row') }}</td>
+                            <td><i class="ti ti-shield-check me-1"></i>{{ __('admissions.insurance_coverage_row') }}</td>
                             <td class="text-end text-success" id="insCoveredDisplay">— GH₵ 0.00</td>
                         </tr>
                         <tr id="patientPayRow" class="text-info d-none">
-                            <td colspan="2">{{ __('admissions.patient_pays') }}</td>
+                            <td>{{ __('admissions.patient_pays') }}</td>
                             <td class="text-end text-info" id="patientPayDisplay">GH₵ 0.00</td>
                         </tr>
                         <tr class="fw-bold">
-                            <td colspan="2">{{ __('admissions.estimated_total') }}</td>
+                            <td>{{ __('admissions.estimated_total') }}</td>
                             <td class="text-end text-primary" id="billingTotal">GH₵ 0.00</td>
                         </tr>
                     </tfoot>
                 </table></div>
-                <small class="text-muted d-block pb-2 text-center">{{ __('admissions.amounts_editable') }}</small>
+                <small class="text-muted d-block pb-2 text-center">
+                    {{ $canEditAdmissionBillingAmounts ? __('admissions.amounts_editable') : __('admissions.amounts_locked') }}
+                </small>
             </div>
         </div>
 
@@ -532,6 +556,8 @@
     var days           = 1;
     var insuranceCovPct = 0;   // effective coverage %
     var hasInsurance    = false;
+    var canEditBillingAmounts = {{ $canEditAdmissionBillingAmounts ? 'true' : 'false' }};
+    var manualBedOverride = false;
 
     // Preselected visit insurance (PHP-injected)
     @if($preselectedVisit)
@@ -549,6 +575,40 @@
     // ─── Helpers ─────────────────────────────────────────────────────────
     function fmt(n) { return 'GH₵ ' + parseFloat(n || 0).toFixed(2); }
 
+    function selectedServicePrice(selectEl) {
+        if (!selectEl || selectEl.selectedIndex < 0) return 0;
+        var opt = selectEl.options[selectEl.selectedIndex];
+        return opt && opt.value ? parseFloat(opt.dataset.price || 0) : 0;
+    }
+
+    function formatDateInput(date) {
+        var y = date.getFullYear();
+        var m = String(date.getMonth() + 1).padStart(2, '0');
+        var d = String(date.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + d;
+    }
+
+    function isDetentionSelected() {
+        var t = document.querySelector('input[name="admission_type"]:checked');
+        return t && t.value === 'detention';
+    }
+
+    function setDetentionExpectedDischarge(force) {
+        if (!isDetentionSelected()) return;
+
+        var expected = document.getElementById('expectedDischarge');
+        if (!expected) return;
+        if (!force && expected.value && expected.dataset.autoDetention !== '1') return;
+
+        var admDate = document.getElementById('admissionDate').value;
+        var base = admDate ? new Date(admDate) : new Date();
+        if (Number.isNaN(base.getTime())) base = new Date();
+        base.setDate(base.getDate() + 1);
+
+        expected.value = formatDateInput(base);
+        expected.dataset.autoDetention = '1';
+    }
+
     function calcDays() {
         var admDate = document.getElementById('admissionDate').value;
         var disDate = document.getElementById('expectedDischarge').value;
@@ -564,16 +624,18 @@
         var admFee     = parseFloat(document.getElementById('admFeeInput').value || 0);
         var bedPerDay  = bedRate;
         var consPerDay = parseFloat(document.getElementById('consumableFeeInput').value || 0);
+        var bedFeeInput = document.getElementById('bedFeeInput');
 
-        var bedTotal   = bedPerDay * days;
+        var bedTotal   = canEditBillingAmounts && manualBedOverride ? parseFloat(bedFeeInput.value || 0) : bedPerDay * days;
+        if (canEditBillingAmounts && manualBedOverride) {
+            bedPerDay = bedTotal / Math.max(1, days);
+        }
         var consTotal  = consPerDay * days;
         var grandTotal = admFee + bedTotal + consTotal;
 
-        document.getElementById('daysQty').textContent  = days;
-        document.getElementById('daysQty2').textContent = days;
-
-        var bedFeeInput = document.getElementById('bedFeeInput');
-        bedFeeInput.value = bedTotal.toFixed(2);
+        if (!canEditBillingAmounts || !manualBedOverride) {
+            bedFeeInput.value = bedTotal.toFixed(2);
+        }
         document.getElementById('bedFeeCalc').textContent = 'GH₵ ' + bedPerDay.toFixed(2) + '/day × ' + days + ' day(s)';
         document.getElementById('bedRateHint').textContent = bedRate > 0
             ? 'GH₵ ' + bedRate.toFixed(2) + '/day'
@@ -677,6 +739,32 @@
     }
 
     // ─── Admission Type Labels + Fee Service Swap ────────────────────────
+    function syncAdmissionFeeAmount() {
+        var sel = document.getElementById('admissionFeeService');
+        var hidden = document.getElementById('admissionFeeServiceHidden');
+        if (hidden && !hidden.disabled) hidden.value = sel.value || '';
+
+        admFeeRate = selectedServicePrice(sel);
+        document.getElementById('admFeeInput').value = admFeeRate.toFixed(2);
+        refreshBilling();
+    }
+
+    function syncConsumableFeeAmount() {
+        var sel = document.getElementById('consumableFeeService');
+        var hidden = document.getElementById('consumableFeeServiceHidden');
+        var mapped = sel && sel.dataset.consumableMapped === '1';
+
+        if (sel) sel.disabled = mapped;
+        if (hidden) {
+            hidden.disabled = !mapped;
+            hidden.value = sel ? (sel.value || '') : '';
+        }
+
+        consumableRate = selectedServicePrice(sel);
+        document.getElementById('consumableFeeInput').value = consumableRate.toFixed(2);
+        refreshBilling();
+    }
+
     function updateTypeLabel() {
         var t = document.querySelector('input[name="admission_type"]:checked');
         var isDetention = t && t.value === 'detention';
@@ -687,16 +775,30 @@
         var serviceLabel = document.getElementById('admFeeServiceLabel');
         if (serviceLabel) serviceLabel.textContent = isDetention ? 'Detention Fee Service' : 'Admission Fee Service';
 
-        // Swap pre-selected default only when the user hasn't already made a choice
         var sel = document.getElementById('admissionFeeService');
-        if (sel && !sel.dataset.userPicked) {
+        var hidden = document.getElementById('admissionFeeServiceHidden');
+        if (sel) {
             var defaultId = isDetention ? sel.dataset.defaultDetention : sel.dataset.defaultAdmission;
-            if (defaultId) sel.value = defaultId;
+            var mapped = isDetention ? sel.dataset.detentionMapped === '1' : sel.dataset.admissionMapped === '1';
+
+            if (mapped || !sel.dataset.userPicked) {
+                sel.value = defaultId || '';
+            }
+
+            sel.disabled = mapped;
+            if (hidden) {
+                hidden.disabled = !mapped;
+                hidden.value = sel.value || '';
+            }
+            syncAdmissionFeeAmount();
         }
+
+        setDetentionExpectedDischarge(true);
     }
 
     document.getElementById('admissionFeeService').addEventListener('change', function() {
         this.dataset.userPicked = '1';
+        syncAdmissionFeeAmount();
     });
 
     document.querySelectorAll('input[name="admission_type"]').forEach(function(el) {
@@ -723,38 +825,51 @@
     document.getElementById('bedSelect').addEventListener('change', function() {
         var opt = this.options[this.selectedIndex];
         bedRate = opt.value ? parseFloat(opt.dataset.rate || 0) : 0;
+        manualBedOverride = false;
         refreshBilling();
     });
 
     // ─── Date Changes ────────────────────────────────────────────────────
-    document.getElementById('admissionDate').addEventListener('change', refreshBilling);
-    document.getElementById('expectedDischarge').addEventListener('change', refreshBilling);
+    document.getElementById('admissionDate').addEventListener('change', function() {
+        manualBedOverride = false;
+        setDetentionExpectedDischarge(false);
+        refreshBilling();
+    });
+    document.getElementById('expectedDischarge').addEventListener('change', function() {
+        this.dataset.autoDetention = '0';
+        manualBedOverride = false;
+        refreshBilling();
+    });
 
     // ─── Service Fee Selectors ───────────────────────────────────────────
-    document.getElementById('admissionFeeService').addEventListener('change', function() {
-        var opt = this.options[this.selectedIndex];
-        admFeeRate = opt.value ? parseFloat(opt.dataset.price || 0) : 0;
-        document.getElementById('admFeeInput').value = admFeeRate.toFixed(2);
-        refreshBilling();
-    });
-
-    document.getElementById('consumableFeeService').addEventListener('change', function() {
-        var opt = this.options[this.selectedIndex];
-        consumableRate = opt.value ? parseFloat(opt.dataset.price || 0) : 0;
-        document.getElementById('consumableFeeInput').value = consumableRate.toFixed(2);
-        refreshBilling();
-    });
+    document.getElementById('consumableFeeService').addEventListener('change', syncConsumableFeeAmount);
 
     // ─── Manual Fee Override ─────────────────────────────────────────────
     document.getElementById('admFeeInput').addEventListener('input', refreshBilling);
+    document.getElementById('bedFeeInput').addEventListener('input', function() {
+        manualBedOverride = canEditBillingAmounts;
+        refreshBilling();
+    });
     document.getElementById('consumableFeeInput').addEventListener('input', refreshBilling);
 
     // ─── Visit Selector ──────────────────────────────────────────────────
+    var diagnosisInput = document.getElementById('admittingDiagnosis');
+    var diagnosisTouched = false;
+    if (diagnosisInput) {
+        diagnosisInput.addEventListener('input', function() {
+            diagnosisTouched = true;
+        });
+    }
+
     var visitSel = document.getElementById('visitSelect');
     if (visitSel) {
         visitSel.addEventListener('change', function() {
             var opt = this.options[this.selectedIndex];
             if (opt.value) {
+                if (diagnosisInput && opt.dataset.admittingDiagnosis && (!diagnosisTouched || !diagnosisInput.value.trim())) {
+                    diagnosisInput.value = opt.dataset.admittingDiagnosis;
+                    diagnosisTouched = false;
+                }
                 document.getElementById('patientId').value       = opt.dataset.patientId;
                 document.getElementById('patientDisplay').value  = opt.dataset.patientName + ' (' + opt.dataset.patientNumber + ')';
                 // Populate patient-card skeleton
@@ -803,7 +918,14 @@
     }
 
     // ─── Init ─────────────────────────────────────────────────────────────
+    var initialBedSelect = document.getElementById('bedSelect');
+    if (initialBedSelect && initialBedSelect.selectedIndex >= 0) {
+        var initialBedOpt = initialBedSelect.options[initialBedSelect.selectedIndex];
+        bedRate = initialBedOpt && initialBedOpt.value ? parseFloat(initialBedOpt.dataset.rate || 0) : 0;
+    }
+
     updateTypeLabel();
+    syncConsumableFeeAmount();
     refreshBilling();
 
 })();

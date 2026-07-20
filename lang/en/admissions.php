@@ -109,6 +109,7 @@ return [
     'patient_pays' => 'Patient Pays',
     'estimated_total' => 'Estimated Total',
     'amounts_editable' => 'Amounts are editable before completing admission',
+    'amounts_locked' => 'Mapped prices are used unless you have billing amount edit permission',
     'available_beds' => 'Available Beds',
     'ward_col' => 'Ward',
     'free_col' => 'Free',

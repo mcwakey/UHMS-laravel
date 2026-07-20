@@ -20,6 +20,7 @@ use App\Services\Admissions\AdmissionExtensionService;
 use App\Services\Admissions\AdmissionRequestService;
 use App\Services\AdmissionService;
 use App\Services\ConsultationSummaryService;
+use App\Services\ServicePriceResolver;
 use App\Services\VisitService;
 use App\Services\WardService;
 use App\Services\WorkspaceRouteResolver;
@@ -38,6 +39,7 @@ class AdmissionController extends Controller
         private AdmissionCareOverviewService $careOverviewService,
         private AdmissionDischargeReadinessService $dischargeReadiness,
         private WorkspaceRouteResolver $workspaceRoutes,
+        private ServicePriceResolver $priceResolver,
     ) {}
 
     public function admissionRequests(Request $request)
@@ -100,6 +102,8 @@ class AdmissionController extends Controller
                 'patient.insurances.insuranceTier',
                 'visitInsurance.insuranceProvider',
                 'visitInsurance.insuranceTier',
+                'medicalRecord.diagnoses.icdCodeEntry',
+                'medicalRecords.diagnoses.icdCodeEntry',
             ])
                 ->where('id', $visitId)
                 ->where('status', VisitStatus::ADMITTING)
@@ -111,6 +115,8 @@ class AdmissionController extends Controller
             'patient',
             'visitInsurance.insuranceProvider',
             'visitInsurance.insuranceTier',
+            'medicalRecord.diagnoses.icdCodeEntry',
+            'medicalRecords.diagnoses.icdCodeEntry',
         ])
             ->where('status', VisitStatus::ADMITTING)
             ->orderByDesc('created_at')
@@ -123,17 +129,69 @@ class AdmissionController extends Controller
         $wards = $this->wardService->activeWards();
 
         // Services for admission/consumable fee mapping
-        $services = ServiceCatalog::where('is_active', true)->orderBy('name')->get();
+        $services = ServiceCatalog::with('prices')->where('is_active', true)->orderBy('name')->get();
 
         // Load saved defaults from settings (can be overridden by ?bed_id param but not service defaults)
         $defaultAdmissionFeeServiceId = (int) Setting::getValue('ward', 'admission_fee_service_id', 0) ?: null;
         $defaultDetentionFeeServiceId = (int) Setting::getValue('ward', 'detention_fee_service_id', 0) ?: null;
         $defaultConsumableFeeServiceId = (int) Setting::getValue('ward', 'consumable_fee_service_id', 0) ?: null;
+        $defaultAdmittingDiagnosis = $this->admittingDiagnosisFromVisit($preselectedVisit)
+            ?: ($preselectedAdmissionRequest->provisional_diagnosis ?? '');
+        $admittingDiagnosisByVisit = $admittingVisits
+            ->mapWithKeys(fn (Visit $visit) => [$visit->id => $this->admittingDiagnosisFromVisit($visit)])
+            ->all();
+        $servicePreviewPrices = $preselectedVisit
+            ? $services->mapWithKeys(fn (ServiceCatalog $service) => [
+                $service->id => (float) ($this->priceResolver->resolveForVisit($service, $preselectedVisit)['selected_price'] ?? $service->price),
+            ])->all()
+            : [];
+        $canEditAdmissionBillingAmounts = $request->user()?->can(StoreAdmissionRequest::EDIT_BILLING_AMOUNTS_PERMISSION) ?? false;
 
         return view('admissions.create', compact(
             'preselectedVisit', 'preselectedAdmissionRequest', 'preselectedBedId', 'admittingVisits', 'availableBeds', 'wards', 'services',
-            'defaultAdmissionFeeServiceId', 'defaultDetentionFeeServiceId', 'defaultConsumableFeeServiceId'
+            'defaultAdmissionFeeServiceId', 'defaultDetentionFeeServiceId', 'defaultConsumableFeeServiceId',
+            'defaultAdmittingDiagnosis', 'admittingDiagnosisByVisit', 'servicePreviewPrices', 'canEditAdmissionBillingAmounts'
         ));
+    }
+
+    private function admittingDiagnosisFromVisit(?Visit $visit): string
+    {
+        if (! $visit) {
+            return '';
+        }
+
+        $visit->loadMissing(['medicalRecord.diagnoses.icdCodeEntry', 'medicalRecords.diagnoses.icdCodeEntry']);
+
+        $records = $visit->medicalRecords?->isNotEmpty()
+            ? $visit->medicalRecords
+            : collect($visit->medicalRecord ? [$visit->medicalRecord] : []);
+
+        $diagnoses = $records
+            ->flatMap(fn ($record) => $record->diagnoses ?? collect())
+            ->filter(fn ($diagnosis) => filled($diagnosis->description))
+            ->sortByDesc(fn ($diagnosis) => (int) $diagnosis->is_primary)
+            ->unique(fn ($diagnosis) => mb_strtolower(trim((string) $diagnosis->description)))
+            ->values();
+
+        if ($diagnoses->isEmpty()) {
+            return '';
+        }
+
+        $primary = $diagnoses->firstWhere('is_primary', true) ?? $diagnoses->first();
+        $lines = ['Primary diagnosis: ' . $this->diagnosisDisplay($primary)];
+
+        foreach ($diagnoses->reject(fn ($diagnosis) => $diagnosis->is($primary))->take(4) as $diagnosis) {
+            $lines[] = 'Other diagnosis: ' . $this->diagnosisDisplay($diagnosis);
+        }
+
+        return implode("\n", $lines);
+    }
+
+    private function diagnosisDisplay($diagnosis): string
+    {
+        $code = $diagnosis->icdCodeEntry?->code ?? $diagnosis->icd_code;
+
+        return trim(($code ? $code . ' - ' : '') . $diagnosis->description);
     }
 
     public function store(StoreAdmissionRequest $request)
