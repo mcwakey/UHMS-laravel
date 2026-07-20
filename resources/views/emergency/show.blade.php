@@ -65,7 +65,6 @@
 
 @push('styles')
 <style>
-    .emergency-kpi { border-left: 4px solid rgba(220, 53, 69, .65); }
     .vitals-val { font-size: 1.1rem; font-weight: 700; }
     .vitals-label { font-size: .68rem; color: #6c757d; }
     /* Vitals small multiples — each vital gets its own auto-scaled mini chart. */
@@ -84,22 +83,99 @@
         line-height: calc(1.5em + .75rem); padding-left: .75rem; color: #212529;
     }
     .select2-container--default .select2-selection--single .select2-selection__arrow { height: calc(1.5em + .75rem); }
+
+    /* ── Command bar ─────────────────────────────────────────── */
+    .er-cmd { display:flex; align-items:center; gap:1rem; flex-wrap:wrap;
+        padding:1rem 1.25rem; background:var(--bs-card-bg,#fff);
+        border:1px solid var(--bs-border-color); border-radius:14px;
+        box-shadow:0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.045);
+        border-left:4px solid var(--bs-danger); }
+    .er-cmd__avatar { width:52px; height:52px; border-radius:50%; flex-shrink:0;
+        display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.05rem;
+        color:#fff; background:linear-gradient(135deg,#c1121f,#dc3545); box-shadow:0 4px 12px rgba(220,53,69,.3); }
+    .er-cmd__who { min-width:0; }
+    .er-cmd__name { font-size:1.2rem; font-weight:700; line-height:1.2; margin:0;
+        display:flex; align-items:center; gap:.45rem; flex-wrap:wrap; }
+    .er-cmd__meta { display:flex; gap:.9rem; flex-wrap:wrap; font-size:.78rem;
+        color:var(--bs-secondary-color); margin-top:.3rem; }
+    .er-cmd__meta span { display:inline-flex; align-items:center; gap:.25rem; }
+    .er-cmd__divider { width:1px; align-self:stretch; background:var(--bs-border-color); margin:.15rem 0; }
+    .er-cmd__fact { display:flex; flex-direction:column; gap:.15rem; }
+    .er-cmd__lab { font-size:.63rem; text-transform:uppercase; letter-spacing:.06em; color:var(--bs-tertiary-color); }
+    .er-cmd__val { font-weight:600; font-size:.85rem; display:inline-flex; align-items:center; gap:.35rem; white-space:nowrap; }
+    .er-cmd__actions { margin-left:auto; display:flex; gap:.5rem; flex-wrap:wrap; }
+    @media (max-width: 767px){ .er-cmd__actions { margin-left:0; width:100%; } .er-cmd__divider { display:none; } }
+
+    /* ── Stat tiles ──────────────────────────────────────────── */
+    .er-tiles { display:grid; grid-template-columns:repeat(6,1fr); gap:.6rem; }
+    @media (max-width: 1199px){ .er-tiles { grid-template-columns:repeat(3,1fr); } }
+    @media (max-width: 575px){ .er-tiles { grid-template-columns:repeat(2,1fr); } }
+    .er-tile { text-align:left; width:100%; background:var(--bs-card-bg,#fff);
+        border:1px solid var(--bs-border-color); border-radius:10px; padding:.7rem .8rem;
+        position:relative; overflow:hidden; cursor:pointer; transition:transform .14s ease, border-color .14s ease; }
+    .er-tile:hover { transform:translateY(-2px); border-color:var(--bs-primary); }
+    .er-tile::before { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--bs-border-color); }
+    .er-tile--ok::before { background:var(--bs-success); }
+    .er-tile--warn::before { background:var(--bs-warning); }
+    .er-tile--crit::before { background:var(--bs-danger); }
+    .er-tile--info::before { background:var(--bs-info); }
+    .er-tile--primary::before { background:var(--bs-primary); }
+    .er-tile__lab { font-size:.62rem; text-transform:uppercase; letter-spacing:.05em;
+        color:var(--bs-tertiary-color); display:flex; align-items:center; gap:.3rem; }
+    .er-tile__val { font-size:1.1rem; font-weight:700; margin-top:.25rem; line-height:1.15; }
+    .er-tile__sub { font-size:.68rem; color:var(--bs-secondary-color); margin-top:.1rem; }
+    .er-num { font-variant-numeric: tabular-nums; }
+    .er-thread { display:flex; flex-direction:column; gap:.75rem; }
+    .er-message { display:flex; gap:.65rem; align-items:flex-start; max-width:84%; }
+    .er-message--mine { align-self:flex-end; flex-direction:row-reverse; }
+    .er-message__avatar { width:34px; height:34px; border-radius:50%; flex:0 0 34px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.72rem; color:#fff; background:linear-gradient(135deg,#64748b,#94a3b8); }
+    .er-message--mine .er-message__avatar { background:linear-gradient(135deg,#c1121f,#dc3545); }
+    .er-message__bubble { border:1px solid var(--bs-border-color); border-radius:12px; border-top-left-radius:4px; padding:.65rem .8rem; background:#fff; min-width:220px; box-shadow:0 1px 2px rgba(15,23,42,.04); }
+    .er-message--mine .er-message__bubble { border-color:rgba(var(--bs-danger-rgb),.24); border-top-left-radius:12px; border-top-right-radius:4px; background:rgba(var(--bs-danger-rgb),.05); }
+    .er-message__meta { display:flex; align-items:center; justify-content:space-between; gap:.75rem; color:var(--bs-secondary-color); font-size:.72rem; margin-bottom:.35rem; }
+    .er-message__body { color:var(--bs-body-color); white-space:pre-wrap; overflow-wrap:anywhere; }
+    @media (prefers-reduced-motion: reduce){ .er-tile:hover { transform:none; } }
+    @media (max-width: 767px) {
+        .er-message { max-width:100%; }
+        .er-message__bubble { min-width:0; flex:1; }
+    }
 </style>
 @endpush
 
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
-    <div>
-        <h4 class="fw-bold mb-1">
-            {{ $case->emergency_number }}
-            <span class="badge {{ $triageClass }} ms-1">{{ $currentTriage }}</span>
-            <x-status-badge :status="$case->emergency_status" domain="emergency" class="ms-1" />
-        </h4>
-        <p class="text-muted mb-0">
-            {{ $case->patient->full_name ?? __('emergency.unknown_patient') }} - {{ $case->patient->patient_number ?? '' }} - {{ $case->visit->visit_number ?? '' }} - {{ __('emergency.min') }}: {{ $case->waiting_minutes }}
-        </p>
+@php
+    $erPatient = $case->patient;
+    $erInitials = $erPatient
+        ? strtoupper(mb_substr($erPatient->first_name ?? $erPatient->full_name ?? 'E', 0, 1) . mb_substr($erPatient->last_name ?? '', 0, 1))
+        : 'ER';
+@endphp
+{{-- ═══════════════════════════════════════════════════════════════════════
+     COMMAND BAR — single source of truth for identity, triage & status
+═══════════════════════════════════════════════════════════════════════ --}}
+<div class="er-cmd mb-3">
+    <div class="er-cmd__avatar">{{ $erInitials }}</div>
+    <div class="er-cmd__who">
+        <h1 class="er-cmd__name">
+            {{ $case->patient->full_name ?? __('emergency.unknown_patient') }}
+            <span class="badge {{ $triageClass }}">{{ $currentTriage }}</span>
+            <x-status-badge :status="$case->emergency_status" domain="emergency" />
+            <span class="badge badge-soft-secondary er-num">{{ $case->emergency_number }}</span>
+            @if($temporaryPatient)<span class="badge bg-warning-subtle text-warning">{{ __('emergency.temporary') }}</span>@endif
+        </h1>
+        <div class="er-cmd__meta">
+            @if($case->patient?->patient_number)<span class="er-num"><i class="ti ti-hash fs-12"></i> {{ $case->patient->patient_number }}</span>@endif
+            @if($case->visit?->visit_number)<span class="er-num"><i class="ti ti-file-text fs-12"></i> {{ $case->visit->visit_number }}</span>@endif
+            <span><i class="ti ti-ambulance fs-12"></i> {{ str_replace('_', ' ', $case->arrival_mode) }}</span>
+        </div>
     </div>
-    <div class="d-flex flex-wrap gap-2">
+
+    <div class="er-cmd__divider d-none d-md-block"></div>
+    <div class="er-cmd__fact">
+        <span class="er-cmd__lab">{{ __('emergency.min') }}</span>
+        <span class="er-cmd__val er-num"><i class="ti ti-clock-hour-4"></i> {{ $case->waiting_minutes }}</span>
+    </div>
+
+    <div class="er-cmd__actions">
         @if($temporaryPatient)
             @can('patients.merge.confirm_identity')
                 <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#confirmEmergencyIdentityModal">
@@ -113,6 +189,8 @@
             <a href="{{ $erRoute('admin.visits.preview', $case->visit) }}" class="btn btn-outline-primary btn-sm">{{ __('common.view') }}</a>
         @endif
     </div>
+
+    @include('partials.visit-insurance-strip', ['visit' => $case->visit])
 </div>
 
 @if(session('success'))
@@ -129,43 +207,58 @@
     </div>
 @endif
 
-<div class="row g-3 mb-3">
-    <div class="col-md-6 col-xl-3">
-        <div class="card h-100 border-0 bg-light emergency-kpi">
-            <div class="card-body">
-                <div class="text-muted small">{{ __('emergency.triage_label') }}</div>
-                <div class="h5 mb-1"><span class="badge {{ $triageClass }}">{{ $currentTriage }}</span></div>
-                <small class="text-muted">{{ __('emergency.auto_prefix') }}: {{ $case->auto_triage_category ?: __('emergency.pending_calc') }} @if($case->triage_score) - {{ __('emergency.score') }} {{ $case->triage_score }} @endif</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card h-100 border-0 bg-light">
-            <div class="card-body">
-                <div class="text-muted small">{{ __('emergency.bay_bed') }}</div>
-                <div class="h5 mb-1">{{ $case->activeBayAssignment?->bed?->bed_number ?: ($case->bay->name ?? __('emergency.unassigned')) }}</div>
-                <small class="text-muted">{{ $case->activeBayAssignment?->ward?->name ?: ($case->bay?->ward?->name ?: __('emergency.no_emergency_bed_linked')) }}</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card h-100 border-0 bg-light">
-            <div class="card-body">
-                <div class="text-muted small">{{ __('emergency.emergency_team') }}</div>
-                <div class="small">{{ __('emergency.doctor_prefix') }}: <span class="fw-semibold">{{ $session?->mainDoctor?->name ?? $case->assignedDoctor->name ?? __('emergency.unassigned') }}</span></div>
-                <div class="small">{{ __('emergency.nurse_prefix_team') }}: <span class="fw-semibold">{{ $session?->primaryNurse?->name ?? $case->assignedNurse->name ?? __('emergency.unassigned') }}</span></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card h-100 border-0 bg-light">
-            <div class="card-body">
-                <div class="text-muted small">{{ __('emergency.contributors_label') }}</div>
-                <div class="small fw-semibold">{{ $contributors->isNotEmpty() ? $contributors->take(3)->implode(', ') : __('emergency.none_yet') }}</div>
-                <small class="text-muted">{{ __('emergency.session_label') }}: {{ $session?->status ?? __('emergency.pending_calc') }}</small>
-            </div>
-        </div>
-    </div>
+@php
+    $triageTileClass = match($currentTriage) {
+        'RED', 'BLACK'     => 'crit',
+        'ORANGE', 'YELLOW' => 'warn',
+        'GREEN'            => 'ok',
+        default            => 'info',
+    };
+    $erBayLabel   = $case->activeBayAssignment?->bed?->bed_number ?: ($case->bay->name ?? __('emergency.unassigned'));
+    $erBayWard    = $case->activeBayAssignment?->ward?->name ?: ($case->bay?->ward?->name ?: __('emergency.no_emergency_bed_linked'));
+    $erBayClass   = ($case->activeBayAssignment?->bed?->bed_number || $case->bay) ? 'primary' : 'warn';
+    $erDoctorName = $session?->mainDoctor?->name ?? $case->assignedDoctor?->name ?? __('emergency.unassigned');
+    $erNurseName  = $session?->primaryNurse?->name ?? $case->assignedNurse?->name ?? __('emergency.unassigned');
+    $erMedsClass  = ($medCounts['overdue'] ?? 0) > 0 ? 'crit' : (($medCounts['due_now'] ?? 0) > 0 ? 'warn' : 'ok');
+    $erTasksClass = $pendingTasks->count() > 0 ? 'warn' : 'ok';
+@endphp
+{{-- ── Stat tiles ─────────────────────────────────────────── --}}
+<div class="er-tiles mb-3">
+    <button type="button" class="er-tile er-tile--{{ $triageTileClass }}" onclick="erShowTab('erTabOverview')">
+        <span class="er-tile__lab"><i class="ti ti-activity-heartbeat"></i>{{ __('emergency.triage_label') }}</span>
+        <span class="er-tile__val"><span class="badge {{ $triageClass }}">{{ $currentTriage }}</span></span>
+        <span class="er-tile__sub">{{ __('emergency.auto_prefix') }}: {{ $case->auto_triage_category ?: __('emergency.pending_calc') }}@if($case->triage_score) · {{ __('emergency.score') }} {{ $case->triage_score }}@endif</span>
+    </button>
+
+    <button type="button" class="er-tile er-tile--info" onclick="erShowTab('erTabOverview')">
+        <span class="er-tile__lab"><i class="ti ti-clock-hour-4"></i>{{ __('emergency.min') }}</span>
+        <span class="er-tile__val er-num">{{ $case->waiting_minutes }}</span>
+        <span class="er-tile__sub">{{ str_replace('_', ' ', $case->arrival_mode) }}</span>
+    </button>
+
+    <button type="button" class="er-tile er-tile--{{ $erBayClass }}" onclick="erShowTab('erTabCoordination')">
+        <span class="er-tile__lab"><i class="ti ti-bed"></i>{{ __('emergency.bay_bed') }}</span>
+        <span class="er-tile__val">{{ $erBayLabel }}</span>
+        <span class="er-tile__sub">{{ $erBayWard }}</span>
+    </button>
+
+    <button type="button" class="er-tile er-tile--info" onclick="erShowTab('erTabCoordination')">
+        <span class="er-tile__lab"><i class="ti ti-users"></i>{{ __('emergency.emergency_team') }}</span>
+        <span class="er-tile__val" style="font-size:.9rem">{{ __('emergency.doctor_prefix') }}: {{ $erDoctorName }}</span>
+        <span class="er-tile__sub">{{ __('emergency.nurse_prefix_team') }}: {{ $erNurseName }}</span>
+    </button>
+
+    <button type="button" class="er-tile er-tile--{{ $erMedsClass }}" onclick="erShowTab('erTabMedication')">
+        <span class="er-tile__lab"><i class="ti ti-pill"></i>{{ __('emergency.tab_medication') }}</span>
+        <span class="er-tile__val er-num">{{ $medCounts['due_now'] }}</span>
+        <span class="er-tile__sub er-num">{{ $medCounts['overdue'] }} {{ __('emergency.late_label') }} · {{ $medCounts['upcoming'] }} {{ __('emergency.next_label') }}</span>
+    </button>
+
+    <button type="button" class="er-tile er-tile--{{ $erTasksClass }}" onclick="erShowTab('erTabTasks')">
+        <span class="er-tile__lab"><i class="ti ti-checklist"></i>{{ __('emergency.tab_tasks') }}</span>
+        <span class="er-tile__val er-num">{{ $pendingTasks->count() }}</span>
+        <span class="er-tile__sub">{{ __('emergency.pending_count_badge') }}</span>
+    </button>
 </div>
 
 @if($criticalAlerts->isNotEmpty())
@@ -179,8 +272,42 @@
     </div>
 @endif
 
-<div class="row g-3">
-    <div class="col-xl-8">
+{{-- ═══════════════════════════════════════════════════════════════════════
+     UNIFIED FULL-WIDTH WORKSPACE
+═══════════════════════════════════════════════════════════════════════ --}}
+<ul class="nav nav-tabs mb-3 flex-nowrap overflow-auto" id="erActionTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabOverview" type="button" role="tab"><i class="ti ti-layout-dashboard me-1"></i>{{ __('emergency.tab_overview') }}</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabMedication" type="button" role="tab"><i class="ti ti-pill me-1"></i>{{ __('emergency.tab_medication') }}@if($case->medicationOrders->count())<span class="badge rounded-pill bg-danger-subtle text-danger ms-1">{{ $case->medicationOrders->count() }}</span>@endif</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabInvestigations" type="button" role="tab"><i class="ti ti-test-pipe me-1"></i>{{ __('emergency.tab_investigations') }}@if($case->labRequests->count())<span class="badge rounded-pill bg-secondary ms-1">{{ $case->labRequests->count() }}</span>@endif</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabProcedures" type="button" role="tab"><i class="ti ti-stethoscope me-1"></i>{{ __('emergency.tab_procedures') }}@if($case->procedureRequests->count())<span class="badge rounded-pill bg-secondary ms-1">{{ $case->procedureRequests->count() }}</span>@endif</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabConsumables" type="button" role="tab"><i class="ti ti-box me-1"></i>{{ __('emergency.tab_consumables') }}@if($case->consumableUsages->count())<span class="badge rounded-pill bg-secondary ms-1">{{ $case->consumableUsages->count() }}</span>@endif</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabTasks" type="button" role="tab"><i class="ti ti-checklist me-1"></i>{{ __('emergency.tab_tasks') }}@if($pendingTasks->count())<span class="badge rounded-pill bg-warning text-dark ms-1">{{ $pendingTasks->count() }}</span>@endif</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabBilling" type="button" role="tab"><i class="ti ti-receipt me-1"></i>{{ __('emergency.tab_billing') }}</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabCoordination" type="button" role="tab"><i class="ti ti-map-pin me-1"></i>{{ __('emergency.coordination_title') }}</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabDisposition" type="button" role="tab"><i class="ti ti-logout me-1"></i>{{ __('emergency.disposition_title') }}</button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    {{-- ── OVERVIEW ── --}}
+    <div class="tab-pane fade show active" id="erTabOverview" role="tabpanel">
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="card-title mb-0">{{ __('emergency.control_sheet') }}</h5>
@@ -318,29 +445,34 @@
         </div>
 
         <div class="card mb-3">
-            <div class="card-header"><h5 class="card-title mb-0">{{ __('emergency.clinical_notes') }}</h5></div>
+            <div class="card-header d-flex align-items-center justify-content-between gap-2">
+                <h5 class="card-title mb-0">{{ __('emergency.clinical_notes') }}</h5>
+                @can('emergency.notes.create')
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addEmergencyNoteModal">
+                    <i class="ti ti-plus me-1"></i>{{ __('emergency.add_note_btn') }}
+                </button>
+                @endcan
+            </div>
             <div class="card-body">
-                <form method="POST" action="{{ $erRoute('admin.emergency.notes.store', $case) }}" class="row g-2 mb-3">
-                    @csrf
-                    <div class="col-md-4">
-                        <select class="form-select" name="note_type" required>
-                            @foreach(['DOCTOR_ASSESSMENT','NURSING_NOTE','RESUSCITATION_NOTE','OBSERVATION_NOTE','GENERAL_NOTE'] as $type)
-                                <option value="{{ $type }}">{{ str_replace('_', ' ', $type) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-6"><textarea class="form-control" name="content" rows="2" placeholder="{{ __('emergency.add_rapid_note') }}" required></textarea></div>
-                    <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">{{ __('emergency.add_note_btn') }}</button></div>
-                </form>
-                <div class="list-group list-group-flush">
+                <div class="er-thread">
                     @forelse($case->notes->sortByDesc('created_at') as $note)
-                        <div class="list-group-item px-0">
-                            <div class="d-flex justify-content-between gap-2">
-                                <span class="badge bg-light text-dark">{{ str_replace('_', ' ', $note->note_type) }}</span>
-                                <small class="text-muted">{{ $note->created_at?->format('d M Y H:i') }}</small>
+                        @php
+                            $noteMine = (int) ($note->created_by ?? $note->creator_id ?? 0) === (int) auth()->id();
+                            $noteAuthor = $note->creator->name ?? __('emergency.unknown_user');
+                            $noteInitials = collect(explode(' ', trim($noteAuthor)))->filter()->take(2)->map(fn ($part) => strtoupper(substr($part, 0, 1)))->implode('') ?: 'ER';
+                        @endphp
+                        <div class="er-message {{ $noteMine ? 'er-message--mine' : '' }}">
+                            <div class="er-message__avatar">{{ $noteInitials }}</div>
+                            <div class="er-message__bubble">
+                                <div class="er-message__meta">
+                                    <span>
+                                        <span class="badge bg-light text-dark me-1">{{ str_replace('_', ' ', $note->note_type) }}</span>
+                                        {{ $noteAuthor }}
+                                    </span>
+                                    <span>{{ $note->created_at?->format('d M H:i') }}</span>
+                                </div>
+                                <div class="er-message__body">{{ $note->content }}</div>
                             </div>
-                            <div class="mt-1">{{ $note->content }}</div>
-                            <small class="text-muted">{{ __('emergency.entered_by') }} {{ $note->creator->name ?? __('emergency.unknown_user') }}</small>
                         </div>
                     @empty
                         <div class="text-muted py-3">{{ __('emergency.no_notes') }}</div>
@@ -348,55 +480,18 @@
                 </div>
             </div>
         </div>
+    </div>{{-- ── /OVERVIEW ── --}}
 
-        {{-- Action area: tabbed (medication · investigations · procedures · consumables · tasks · billing) --}}
-        <div class="card mb-3">
-            <div class="card-header bg-white pt-2 px-2 pb-0">
-                <ul class="nav nav-tabs card-header-tabs flex-nowrap overflow-auto" id="erActionTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabMedication" type="button" role="tab">
-                            <i class="ti ti-pill me-1"></i>{{ __('emergency.tab_medication') }}
-                            @if($case->medicationOrders->count())<span class="badge rounded-pill bg-danger-subtle text-danger ms-1">{{ $case->medicationOrders->count() }}</span>@endif
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabInvestigations" type="button" role="tab">
-                            <i class="ti ti-test-pipe me-1"></i>{{ __('emergency.tab_investigations') }}
-                            @if($case->labRequests->count())<span class="badge rounded-pill bg-secondary ms-1">{{ $case->labRequests->count() }}</span>@endif
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabProcedures" type="button" role="tab">
-                            <i class="ti ti-stethoscope me-1"></i>{{ __('emergency.tab_procedures') }}
-                            @if($case->procedureRequests->count())<span class="badge rounded-pill bg-secondary ms-1">{{ $case->procedureRequests->count() }}</span>@endif
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabConsumables" type="button" role="tab">
-                            <i class="ti ti-box me-1"></i>{{ __('emergency.tab_consumables') }}
-                            @if($case->consumableUsages->count())<span class="badge rounded-pill bg-secondary ms-1">{{ $case->consumableUsages->count() }}</span>@endif
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabTasks" type="button" role="tab">
-                            <i class="ti ti-checklist me-1"></i>{{ __('emergency.tab_tasks') }}
-                            @if($pendingTasks->count())<span class="badge rounded-pill bg-warning text-dark ms-1">{{ $pendingTasks->count() }}</span>@endif
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabBilling" type="button" role="tab">
-                            <i class="ti ti-receipt me-1"></i>{{ __('emergency.tab_billing') }}
-                        </button>
-                    </li>
-                </ul>
-            </div>
-            <div class="card-body">
-                <div class="tab-content">
                     {{-- Medication / MAR --}}
-                    <div class="tab-pane fade show active" id="erTabMedication" role="tabpanel">
+                    <div class="tab-pane fade" id="erTabMedication" role="tabpanel">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h6 class="fw-bold mb-0">{{ __('emergency.medication_mar') }}</h6>
-                            <a class="btn btn-sm btn-outline-secondary" href="{{ $erRoute('admin.emergency.mar-chart', $case->visit) }}"><i class="ti ti-external-link me-1"></i>{{ __('emergency.open_mar') }}</a>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#addEmergencyMedicationModal">
+                                    <i class="ti ti-plus me-1"></i>{{ __('emergency.order_medication_btn') }}
+                                </button>
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ $erRoute('admin.emergency.mar-chart', $case->visit) }}"><i class="ti ti-external-link me-1"></i>{{ __('emergency.open_mar') }}</a>
+                            </div>
                         </div>
                         <div class="row g-2 text-center mb-3">
                             <div class="col-3"><div class="fw-bold text-danger">{{ $medCounts['due_now'] }}</div><small class="text-muted">{{ __('emergency.due_label') }}</small></div>
@@ -404,42 +499,6 @@
                             <div class="col-3"><div class="fw-bold text-primary">{{ $medCounts['upcoming'] }}</div><small class="text-muted">{{ __('emergency.next_label') }}</small></div>
                             <div class="col-3"><div class="fw-bold text-success">{{ $medCounts['administered_today'] }}</div><small class="text-muted">{{ __('emergency.given_label') }}</small></div>
                         </div>
-                        <form method="POST" action="{{ $erRoute('admin.emergency.medications.store', $case) }}" class="row g-2 mb-3">
-                            @csrf
-                            <div class="col-12">
-                                <select class="form-select" name="product_id" id="medicationProductSelect" data-er-select2 data-placeholder="{{ __('emergency.select_medication') }}" required>
-                                    <option value="">{{ __('emergency.select_medication') }}</option>
-                                    @foreach($products as $product)
-                                        <option value="{{ $product->id }}" data-emergency-stock="{{ $product->emergency_available_quantity ?? 0 }}" data-pharmacy-stock="{{ $product->pharmacy_available_quantity ?? 0 }}">
-                                            {{ $product->name }} - ER {{ number_format($product->emergency_available_quantity ?? 0, 0) }} / Pharmacy {{ number_format($product->pharmacy_available_quantity ?? 0, 0) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <small class="text-muted">{{ __('emergency.er_pharmacy_stock_note') }}</small>
-                            </div>
-                            <div class="col-4"><input class="form-control" name="dose" placeholder="{{ __('emergency.dose_placeholder') }}" required></div>
-                            <div class="col-4"><input class="form-control" name="route" placeholder="{{ __('emergency.route_placeholder') }}" required></div>
-                            <div class="col-4">
-                                <select class="form-select" name="frequency_code" required>
-                                    @foreach($frequencies as $frequency)
-                                        <option value="{{ $frequency->code }}">{{ $frequency->code }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-4"><input class="form-control" type="number" min="1" name="duration_value" value="1" placeholder="{{ __('emergency.duration_placeholder') }}"></div>
-                            <div class="col-4">
-                                <select class="form-select" name="duration_unit">
-                                    <option value="days">{{ __('emergency.duration_days') }}</option>
-                                    <option value="weeks">{{ __('emergency.duration_weeks') }}</option>
-                                    <option value="months">{{ __('emergency.duration_months') }}</option>
-                                </select>
-                            </div>
-                            <div class="col-4"><input class="form-control" type="number" min="0" name="quantity_ordered" placeholder="{{ __('emergency.qty_override_placeholder') }}"></div>
-                            <div class="col-12"><input class="form-control" type="datetime-local" name="start_at"></div>
-                            <div class="col-12"><div class="small text-muted" id="medicationQuantityHint">{{ __('emergency.er_pharmacy_stock_note') }}</div></div>
-                            <div class="col-12"><textarea class="form-control" name="instructions" rows="2" placeholder="{{ __('emergency.instructions_placeholder') }}"></textarea></div>
-                            <div class="col-12"><button class="btn btn-outline-danger w-100" type="submit">{{ __('emergency.order_medication_btn') }}</button></div>
-                        </form>
                         <div class="er-scroll">
                         @forelse($case->medicationOrders as $order)
                             <div class="border rounded p-2 mb-2">
@@ -460,31 +519,12 @@
 
                     {{-- Investigations --}}
                     <div class="tab-pane fade" id="erTabInvestigations" role="tabpanel">
-                        <h6 class="fw-bold mb-3">{{ __('emergency.tab_investigations') }}</h6>
-                        <form method="POST" action="{{ $erRoute('admin.emergency.investigations.store', $case) }}" class="row g-2 mb-3">
-                            @csrf
-                            <div class="col-12">
-                                <select class="form-select" name="target_department_id" id="emergencyInvestigationDepartment" required>
-                                    <option value="">{{ __('emergency.investigation_dept_ph') }}</option>
-                                    @foreach($investigationDepartments as $department)
-                                        <option value="{{ $department->id }}" @selected(old('target_department_id') == $department->id)>{{ $department->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <select class="form-select" name="service_id[]" id="emergencyInvestigationService" multiple data-placeholder="{{ __('emergency.tab_investigations') }}" required disabled>
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <select class="form-select" name="urgency">
-                                    <option value="emergency" @selected(old('urgency', 'emergency') === 'emergency')>{{ __('emergency.urgency_emergency') }}</option>
-                                    <option value="urgent" @selected(old('urgency') === 'urgent')>{{ __('emergency.urgency_urgent') }}</option>
-                                    <option value="routine" @selected(old('urgency') === 'routine')>{{ __('emergency.urgency_routine') }}</option>
-                                </select>
-                            </div>
-                            <div class="col-12"><textarea class="form-control" name="clinical_info" rows="2" placeholder="Clinical information">{{ old('clinical_info') }}</textarea></div>
-                            <div class="col-12"><button class="btn btn-outline-primary w-100" type="submit">{{ __('emergency.request_investigation_btn') }}</button></div>
-                        </form>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0">{{ __('emergency.tab_investigations') }}</h6>
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addEmergencyInvestigationModal">
+                                <i class="ti ti-plus me-1"></i>{{ __('emergency.request_investigation_btn') }}
+                            </button>
+                        </div>
                         <div class="er-scroll">
                         @forelse($case->labRequests as $request)
                             @php $requestItems = $request->items->map(fn ($item) => $item->display_name ?? $item->name ?? $item->labTest?->name)->filter()->implode(', '); @endphp
@@ -503,31 +543,12 @@
 
                     {{-- Procedures --}}
                     <div class="tab-pane fade" id="erTabProcedures" role="tabpanel">
-                        <h6 class="fw-bold mb-3">{{ __('emergency.tab_procedures') }}</h6>
-                        <form method="POST" action="{{ $erRoute('admin.emergency.procedures.store', $case) }}" class="row g-2 mb-3">
-                            @csrf
-                            <div class="col-12">
-                                <select class="form-select" name="department_id" id="emergencyProcedureDepartment" required>
-                                    <option value="">{{ __('emergency.procedure_dept_ph') }}</option>
-                                    @foreach($procedureDepartments as $department)
-                                        <option value="{{ $department->id }}" @selected(old('department_id') == $department->id)>{{ $department->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <select class="form-select" name="service_catalog_id[]" id="emergencyProcedureService" multiple data-placeholder="{{ __('emergency.tab_procedures') }}" required disabled>
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <select class="form-select" name="priority" required>
-                                    <option value="emergency" @selected(old('priority', 'emergency') === 'emergency')>{{ __('emergency.urgency_emergency') }}</option>
-                                    <option value="urgent" @selected(old('priority') === 'urgent')>{{ __('emergency.urgency_urgent') }}</option>
-                                    <option value="routine" @selected(old('priority') === 'routine')>{{ __('emergency.urgency_routine') }}</option>
-                                </select>
-                            </div>
-                            <div class="col-12"><textarea class="form-control" name="indication" rows="2" placeholder="Indication" required>{{ old('indication') }}</textarea></div>
-                            <div class="col-12"><button class="btn btn-outline-primary w-100" type="submit">{{ __('emergency.request_procedure_btn') }}</button></div>
-                        </form>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0">{{ __('emergency.tab_procedures') }}</h6>
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addEmergencyProcedureModal">
+                                <i class="ti ti-plus me-1"></i>{{ __('emergency.request_procedure_btn') }}
+                            </button>
+                        </div>
                         <div class="er-scroll">
                         @forelse($case->procedureRequests as $request)
                             <div class="border rounded p-2 mb-2">
@@ -547,22 +568,13 @@
                     <div class="tab-pane fade" id="erTabConsumables" role="tabpanel">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h6 class="fw-bold mb-0">{{ __('emergency.consumables_label') }}</h6>
-                            <span class="badge bg-light text-dark">{{ __('emergency.emergency_stock_badge') }}</span>
-                        </div>
-                        <form method="POST" action="{{ $erRoute('admin.emergency.consumables.store', $case) }}" class="row g-2 mb-3">
-                            @csrf
-                            <div class="col-12">
-                                <select class="form-select" name="product_id" id="emergencyConsumableSelect" data-er-select2 data-placeholder="{{ __('emergency.select_consumable') }}" required>
-                                    <option value="">{{ __('emergency.select_consumable') }}</option>
-                                    @foreach($consumableProducts as $product)
-                                        <option value="{{ $product->id }}">{{ $product->name }} - ER {{ number_format($product->emergency_available_quantity ?? 0, 0) }}</option>
-                                    @endforeach
-                                </select>
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="badge bg-light text-dark">{{ __('emergency.emergency_stock_badge') }}</span>
+                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#addEmergencyConsumableModal">
+                                    <i class="ti ti-plus me-1"></i>{{ __('emergency.use_consumable_btn') }}
+                                </button>
                             </div>
-                            <div class="col-4"><input class="form-control" type="number" min="0.0001" step="0.01" name="quantity" value="1" required></div>
-                            <div class="col-8"><input class="form-control" name="notes" placeholder="{{ __('emergency.usage_notes_ph') }}"></div>
-                            <div class="col-12"><button class="btn btn-outline-danger w-100" type="submit">{{ __('emergency.use_consumable_btn') }}</button></div>
-                        </form>
+                        </div>
                         <div class="er-scroll">
                             @forelse($case->consumableUsages->sortByDesc('used_at') as $usage)
                                 <div class="border rounded p-2 mb-2 small">
@@ -582,48 +594,50 @@
                     <div class="tab-pane fade" id="erTabTasks" role="tabpanel">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h6 class="fw-bold mb-0">{{ __('emergency.tasks_monitoring') }}</h6>
-                            <span class="badge bg-light text-dark">{{ $pendingTasks->count() }} {{ __('emergency.pending_count_badge') }}</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-light text-dark">{{ $pendingTasks->count() }} {{ __('emergency.pending_count_badge') }}</span>
+                                @can('emergency.case.update')
+                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addEmergencyTaskModal">
+                                    <i class="ti ti-plus me-1"></i>{{ __('emergency.add_task_btn') }}
+                                </button>
+                                @endcan
+                            </div>
                         </div>
-                        <form method="POST" action="{{ $erRoute('admin.emergency.tasks.store', $case) }}" class="row g-2 mb-3">
-                            @csrf
-                            <div class="col-12"><input class="form-control form-control-sm" name="title" placeholder="{{ __('emergency.task_placeholder') }}" maxlength="255" required></div>
-                            <div class="col-6">
-                                <select class="form-select form-select-sm" name="priority">
-                                    <option value="normal">{{ __('emergency.priority_normal') }}</option>
-                                    <option value="high">{{ __('emergency.priority_high') }}</option>
-                                    <option value="critical">{{ __('emergency.priority_critical') }}</option>
-                                    <option value="low">{{ __('emergency.priority_low') }}</option>
-                                </select>
-                            </div>
-                            <div class="col-6"><input class="form-control form-control-sm" type="datetime-local" name="scheduled_at"></div>
-                            <div class="col-12">
-                                <select class="form-select form-select-sm" name="assigned_to" data-er-select2 data-placeholder="{{ __('emergency.assign_to_ph') }}">
-                                    <option value="">{{ __('emergency.assign_to_ph') }}</option>
-                                    @foreach($users as $user)
-                                        <option value="{{ $user->id }}">{{ $user->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-12"><button class="btn btn-sm btn-outline-primary w-100" type="submit">{{ __('emergency.add_task_btn') }}</button></div>
-                        </form>
-                        <div class="er-scroll">
+                        <div class="er-thread er-scroll">
                         @forelse($case->clinicalTasks->sortByDesc('scheduled_at') as $task)
                             @php $taskDone = in_array($task->status, ['COMPLETED', 'CANCELLED'], true); $isMedTask = $task->task_type === \App\Models\ClinicalTask::TYPE_MEDICATION_ADMINISTRATION; @endphp
-                            <div class="border rounded p-2 mb-2 {{ $taskDone ? 'bg-light' : '' }}">
-                                <div class="d-flex justify-content-between gap-2">
-                                    <div class="fw-semibold {{ $taskDone ? 'text-decoration-line-through text-muted' : '' }}">{{ $task->title }}</div>
-                                    <x-status-badge :status="$task->status" domain="default" />
-                                </div>
-                                <small class="text-muted">{{ $task->priority }} - {{ $task->scheduled_at?->format('d M H:i') ?: __('emergency.no_schedule') }} - {{ $task->assignedUser->name ?? $task->assigned_role ?? __('emergency.unassigned') }}</small>
-                                @unless($isMedTask)
-                                    <form method="POST" action="{{ $erRoute('admin.emergency.tasks.complete', [$case, $task]) }}" class="mt-1">
+                            @php
+                                $taskMine = (int) ($task->assigned_to ?? 0) === (int) auth()->id();
+                                $taskOwner = $task->assignedUser->name ?? $task->assigned_role ?? __('emergency.unassigned');
+                                $taskInitials = collect(explode(' ', trim($taskOwner)))->filter()->take(2)->map(fn ($part) => strtoupper(substr($part, 0, 1)))->implode('') ?: 'ER';
+                            @endphp
+                            <div class="er-message {{ $taskMine ? 'er-message--mine' : '' }}">
+                                <div class="er-message__avatar">{{ $taskInitials }}</div>
+                                <div class="er-message__bubble {{ $taskDone ? 'bg-light' : '' }}">
+                                    <div class="er-message__meta">
+                                        <span>
+                                            <span class="badge bg-light text-dark me-1">{{ $task->priority }}</span>
+                                            {{ $taskOwner }}
+                                        </span>
+                                        <span>{{ $task->scheduled_at?->format('d M H:i') ?: __('emergency.no_schedule') }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between gap-2">
+                                        <div class="fw-semibold {{ $taskDone ? 'text-decoration-line-through text-muted' : '' }}">{{ $task->title }}</div>
+                                        <x-status-badge :status="$task->status" domain="default" />
+                                    </div>
+                                    @if($task->description)
+                                        <div class="er-message__body small text-muted mt-1">{{ $task->description }}</div>
+                                    @endif
+                                    @unless($isMedTask)
+                                    <form method="POST" action="{{ $erRoute('admin.emergency.tasks.complete', [$case, $task]) }}" class="mt-2">
                                         @csrf
                                         @method('PATCH')
-                                        <button class="btn btn-sm {{ $taskDone ? 'btn-outline-secondary' : 'btn-outline-success' }} w-100" type="submit">
+                                        <button class="btn btn-sm {{ $taskDone ? 'btn-outline-secondary' : 'btn-outline-success' }}" type="submit">
                                             <i class="ti {{ $taskDone ? 'ti-rotate' : 'ti-check' }} me-1"></i>{{ $taskDone ? __('emergency.reopen') : __('emergency.mark_complete') }}
                                         </button>
                                     </form>
-                                @endunless
+                                    @endunless
+                                </div>
                             </div>
                         @empty
                             <div class="text-muted">{{ __('emergency.no_tasks') }}</div>
@@ -633,50 +647,20 @@
 
                     {{-- Billing --}}
                     <div class="tab-pane fade" id="erTabBilling" role="tabpanel">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="fw-bold mb-0">{{ __('emergency.tab_billing') }}</h6>
-                            @if($activeInvoice)
-                                <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.billing.invoices.show', $activeInvoice) }}"><i class="ti ti-file-invoice me-1"></i>{{ __('emergency.open_invoice_btn') }}</a>
-                            @endif
-                        </div>
-                        <form method="POST" action="{{ $erRoute('admin.emergency.services.store', $case) }}" class="row g-2 mb-3">
-                            @csrf
-                            <div class="col-8">
-                                <select class="form-select" name="service_catalog_id" data-er-select2 data-placeholder="{{ __('emergency.add_billable_service') }}" required>
-                                    <option value="">{{ __('emergency.add_billable_service') }}</option>
-                                    @foreach($services as $service)
-                                        <option value="{{ $service->id }}">{{ $service->name }} - {{ $service->formatted_price }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-4"><input class="form-control" type="number" name="quantity" min="1" value="1"></div>
-                            <div class="col-12"><button class="btn btn-outline-success w-100" type="submit">{{ __('emergency.add_to_invoice_btn') }}</button></div>
-                        </form>
-                        <div class="er-scroll">
-                        @if($billingGroups)
-                            @foreach($billingGroups as $group => $items)
-                                <div class="mb-2">
-                                    <div class="er-section-title mb-1">{{ $group }}</div>
-                                    @foreach($items as $item)
-                                        <div class="d-flex justify-content-between small border-bottom py-1">
-                                            <span>{{ $item->description }}</span>
-                                            <span>{{ number_format((float) $item->total_price, 2) }}</span>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @endforeach
-                        @else
-                            <div class="text-muted">{{ __('emergency.no_invoice_items') }}</div>
-                        @endif
-                        </div>
+                        @include('partials.visit-invoice-preview', [
+                            'visit' => $case->visit,
+                            'invoice' => $activeInvoice,
+                            'title' => __('emergency.tab_billing'),
+                            'emptyText' => __('emergency.no_invoice_items'),
+                            'actions' => auth()->user()?->can('invoices.create')
+                                ? new \Illuminate\Support\HtmlString('<button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addEmergencyServiceModal"><i class="ti ti-plus me-1"></i>'.e(__('emergency.add_billable_service')).'</button>')
+                                : null,
+                        ])
                     </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="col-xl-4">
+    {{-- ── COORDINATION (triage · bay & team · timeline) ── --}}
+    <div class="tab-pane fade" id="erTabCoordination" role="tabpanel">
+        <div class="row g-3">
+            <div class="col-lg-6">
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="card-title mb-0">{{ __('emergency.triage_title') }}</h5>
@@ -802,7 +786,8 @@
                 </form>
             </div>
         </div>
-
+            </div>{{-- /col-lg-6 --}}
+            <div class="col-lg-6">
         <div class="card mb-3">
             <div class="card-header"><h5 class="card-title mb-0">{{ __('emergency.timeline_title') }}</h5></div>
             <div class="card-body">
@@ -820,13 +805,16 @@
                 @endforelse
             </div>
         </div>
-    </div>
-</div>
+            </div>{{-- /col-lg-6 --}}
+        </div>{{-- /row --}}
+    </div>{{-- ── /COORDINATION ── --}}
 
-<div class="card mt-3">
-    <div class="card-header"><h5 class="card-title mb-0">{{ __('emergency.disposition_title') }}</h5></div>
-    <div class="card-body">
-        <form method="POST" action="{{ $erRoute('admin.emergency.disposition.store', $case) }}" class="row g-3">
+    {{-- ── DISPOSITION ── --}}
+    <div class="tab-pane fade" id="erTabDisposition" role="tabpanel">
+        <div class="card">
+            <div class="card-header"><h5 class="card-title mb-0">{{ __('emergency.disposition_title') }}</h5></div>
+            <div class="card-body">
+                <form method="POST" action="{{ $erRoute('admin.emergency.disposition.store', $case) }}" class="row g-3">
             @csrf
             <div class="col-md-3">
                 <label class="form-label">{{ __('emergency.disposition_label') }}</label>
@@ -851,9 +839,328 @@
                 <label class="form-label">{{ __('emergency.disposition_notes_label') }}</label>
                 <textarea class="form-control" name="disposition_notes" rows="2">{{ $case->disposition_notes }}</textarea>
             </div>
+                </form>
+            </div>
+        </div>
+    </div>{{-- ── /DISPOSITION ── --}}
+</div>{{-- /tab-content --}}
+
+<div class="modal fade" id="addEmergencyMedicationModal" tabindex="-1" aria-labelledby="addEmergencyMedicationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <form method="POST" action="{{ $erRoute('admin.emergency.medications.store', $case) }}" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEmergencyMedicationModalLabel"><i class="ti ti-pill me-1"></i>{{ __('emergency.order_medication_btn') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">{{ __('emergency.select_medication') }}</label>
+                        <select class="form-select" name="product_id" id="medicationProductSelect" data-er-select2 data-placeholder="{{ __('emergency.select_medication') }}" required>
+                            <option value="">{{ __('emergency.select_medication') }}</option>
+                            @foreach($products as $product)
+                                <option value="{{ $product->id }}" data-emergency-stock="{{ $product->emergency_available_quantity ?? 0 }}" data-pharmacy-stock="{{ $product->pharmacy_available_quantity ?? 0 }}" @selected(old('product_id') == $product->id)>
+                                    {{ $product->name }} - ER {{ number_format($product->emergency_available_quantity ?? 0, 0) }} / Pharmacy {{ number_format($product->pharmacy_available_quantity ?? 0, 0) }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">{{ __('emergency.er_pharmacy_stock_note') }}</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">{{ __('emergency.dose_placeholder') }}</label>
+                        <input class="form-control" name="dose" placeholder="{{ __('emergency.dose_placeholder') }}" required value="{{ old('dose') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">{{ __('emergency.route_placeholder') }}</label>
+                        <input class="form-control" name="route" placeholder="{{ __('emergency.route_placeholder') }}" required value="{{ old('route') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">{{ __('emergency.frequency_label') }}</label>
+                        <select class="form-select" name="frequency_code" required>
+                            @foreach($frequencies as $frequency)
+                                <option value="{{ $frequency->code }}" @selected(old('frequency_code') === $frequency->code)>{{ $frequency->code }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">{{ __('emergency.duration_placeholder') }}</label>
+                        <input class="form-control" type="number" min="1" name="duration_value" value="{{ old('duration_value', 1) }}" placeholder="{{ __('emergency.duration_placeholder') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">{{ __('emergency.duration_label') }}</label>
+                        <select class="form-select" name="duration_unit">
+                            <option value="days" @selected(old('duration_unit', 'days') === 'days')>{{ __('emergency.duration_days') }}</option>
+                            <option value="weeks" @selected(old('duration_unit') === 'weeks')>{{ __('emergency.duration_weeks') }}</option>
+                            <option value="months" @selected(old('duration_unit') === 'months')>{{ __('emergency.duration_months') }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">{{ __('emergency.qty_override_placeholder') }}</label>
+                        <input class="form-control" type="number" min="0" name="quantity_ordered" placeholder="{{ __('emergency.qty_override_placeholder') }}" value="{{ old('quantity_ordered') }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">{{ __('emergency.start_at_label') }}</label>
+                        <input class="form-control" type="datetime-local" name="start_at" value="{{ old('start_at') }}">
+                    </div>
+                    <div class="col-12"><div class="small text-muted" id="medicationQuantityHint">{{ __('emergency.er_pharmacy_stock_note') }}</div></div>
+                    <div class="col-12">
+                        <label class="form-label">{{ __('emergency.instructions_label') }}</label>
+                        <textarea class="form-control" name="instructions" rows="3" placeholder="{{ __('emergency.instructions_placeholder') }}">{{ old('instructions') }}</textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                <button class="btn btn-danger"><i class="ti ti-plus me-1"></i>{{ __('emergency.order_medication_btn') }}</button>
+            </div>
         </form>
     </div>
 </div>
+
+<div class="modal fade" id="addEmergencyInvestigationModal" tabindex="-1" aria-labelledby="addEmergencyInvestigationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form method="POST" action="{{ $erRoute('admin.emergency.investigations.store', $case) }}" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEmergencyInvestigationModalLabel"><i class="ti ti-microscope me-1"></i>{{ __('emergency.request_investigation_btn') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">{{ __('emergency.investigation_dept_ph') }}</label>
+                        <select class="form-select" name="target_department_id" id="emergencyInvestigationDepartment" required>
+                            <option value="">{{ __('emergency.investigation_dept_ph') }}</option>
+                            @foreach($investigationDepartments as $department)
+                                <option value="{{ $department->id }}" @selected(old('target_department_id') == $department->id)>{{ $department->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">{{ __('emergency.tab_investigations') }}</label>
+                        <select class="form-select" name="service_id[]" id="emergencyInvestigationService" multiple data-placeholder="{{ __('emergency.tab_investigations') }}" required disabled></select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">{{ __('emergency.urgency_label') }}</label>
+                        <select class="form-select" name="urgency">
+                            <option value="emergency" @selected(old('urgency', 'emergency') === 'emergency')>{{ __('emergency.urgency_emergency') }}</option>
+                            <option value="urgent" @selected(old('urgency') === 'urgent')>{{ __('emergency.urgency_urgent') }}</option>
+                            <option value="routine" @selected(old('urgency') === 'routine')>{{ __('emergency.urgency_routine') }}</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">{{ __('emergency.clinical_info_label') }}</label>
+                        <textarea class="form-control" name="clinical_info" rows="3" placeholder="{{ __('emergency.clinical_info_label') }}">{{ old('clinical_info') }}</textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                <button class="btn btn-primary"><i class="ti ti-plus me-1"></i>{{ __('emergency.request_investigation_btn') }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="addEmergencyProcedureModal" tabindex="-1" aria-labelledby="addEmergencyProcedureModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form method="POST" action="{{ $erRoute('admin.emergency.procedures.store', $case) }}" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEmergencyProcedureModalLabel"><i class="ti ti-activity me-1"></i>{{ __('emergency.request_procedure_btn') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">{{ __('emergency.procedure_dept_ph') }}</label>
+                        <select class="form-select" name="department_id" id="emergencyProcedureDepartment" required>
+                            <option value="">{{ __('emergency.procedure_dept_ph') }}</option>
+                            @foreach($procedureDepartments as $department)
+                                <option value="{{ $department->id }}" @selected(old('department_id') == $department->id)>{{ $department->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">{{ __('emergency.tab_procedures') }}</label>
+                        <select class="form-select" name="service_catalog_id[]" id="emergencyProcedureService" multiple data-placeholder="{{ __('emergency.tab_procedures') }}" required disabled></select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">{{ __('admissions.priority_col') }}</label>
+                        <select class="form-select" name="priority" required>
+                            <option value="emergency" @selected(old('priority', 'emergency') === 'emergency')>{{ __('emergency.urgency_emergency') }}</option>
+                            <option value="urgent" @selected(old('priority') === 'urgent')>{{ __('emergency.urgency_urgent') }}</option>
+                            <option value="routine" @selected(old('priority') === 'routine')>{{ __('emergency.urgency_routine') }}</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">{{ __('emergency.indication_label') }}</label>
+                        <textarea class="form-control" name="indication" rows="3" placeholder="{{ __('emergency.indication_label') }}" required>{{ old('indication') }}</textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                <button class="btn btn-primary"><i class="ti ti-plus me-1"></i>{{ __('emergency.request_procedure_btn') }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="addEmergencyConsumableModal" tabindex="-1" aria-labelledby="addEmergencyConsumableModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form method="POST" action="{{ $erRoute('admin.emergency.consumables.store', $case) }}" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEmergencyConsumableModalLabel"><i class="ti ti-package me-1"></i>{{ __('emergency.use_consumable_btn') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">{{ __('emergency.select_consumable') }}</label>
+                        <select class="form-select" name="product_id" id="emergencyConsumableSelect" data-er-select2 data-placeholder="{{ __('emergency.select_consumable') }}" required>
+                            <option value="">{{ __('emergency.select_consumable') }}</option>
+                            @foreach($consumableProducts as $product)
+                                <option value="{{ $product->id }}" @selected(old('product_id') == $product->id)>{{ $product->name }} - ER {{ number_format($product->emergency_available_quantity ?? 0, 0) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">{{ __('admissions.qty_field') }}</label>
+                        <input class="form-control" type="number" min="0.0001" step="0.01" name="quantity" value="{{ old('quantity', 1) }}" required>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">{{ __('emergency.usage_notes_ph') }}</label>
+                        <input class="form-control" name="notes" placeholder="{{ __('emergency.usage_notes_ph') }}" value="{{ old('notes') }}">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                <button class="btn btn-danger"><i class="ti ti-plus me-1"></i>{{ __('emergency.use_consumable_btn') }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@can('emergency.notes.create')
+<div class="modal fade" id="addEmergencyNoteModal" tabindex="-1" aria-labelledby="addEmergencyNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form method="POST" action="{{ $erRoute('admin.emergency.notes.store', $case) }}" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEmergencyNoteModalLabel"><i class="ti ti-notes me-1"></i>{{ __('emergency.add_note_btn') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">{{ __('admissions.type_col') }}</label>
+                        <select class="form-select" name="note_type" required>
+                            @foreach(['DOCTOR_ASSESSMENT','NURSING_NOTE','RESUSCITATION_NOTE','OBSERVATION_NOTE','GENERAL_NOTE'] as $type)
+                                <option value="{{ $type }}" @selected(old('note_type') === $type)>{{ str_replace('_', ' ', $type) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">{{ __('emergency.clinical_notes') }}</label>
+                        <textarea class="form-control" name="content" rows="5" placeholder="{{ __('emergency.add_rapid_note') }}" required>{{ old('content') }}</textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                <button class="btn btn-primary"><i class="ti ti-device-floppy me-1"></i>{{ __('emergency.add_note_btn') }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endcan
+
+@can('emergency.case.update')
+<div class="modal fade" id="addEmergencyTaskModal" tabindex="-1" aria-labelledby="addEmergencyTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form method="POST" action="{{ $erRoute('admin.emergency.tasks.store', $case) }}" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEmergencyTaskModalLabel"><i class="ti ti-checklist me-1"></i>{{ __('emergency.add_task_btn') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">{{ __('emergency.tab_tasks') }}</label>
+                        <input class="form-control" name="title" placeholder="{{ __('emergency.task_placeholder') }}" maxlength="255" required value="{{ old('title') }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ __('admissions.priority_col') }}</label>
+                        <select class="form-select" name="priority">
+                            <option value="normal" @selected(old('priority', 'normal') === 'normal')>{{ __('emergency.priority_normal') }}</option>
+                            <option value="high" @selected(old('priority') === 'high')>{{ __('emergency.priority_high') }}</option>
+                            <option value="critical" @selected(old('priority') === 'critical')>{{ __('emergency.priority_critical') }}</option>
+                            <option value="low" @selected(old('priority') === 'low')>{{ __('emergency.priority_low') }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ __('admissions.due_col') }}</label>
+                        <input class="form-control" type="datetime-local" name="scheduled_at" value="{{ old('scheduled_at') }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">{{ __('admissions.assigned_to_col') }}</label>
+                        <select class="form-select" name="assigned_to" data-er-select2 data-placeholder="{{ __('emergency.assign_to_ph') }}">
+                            <option value="">{{ __('emergency.assign_to_ph') }}</option>
+                            @foreach($users as $user)
+                                <option value="{{ $user->id }}" @selected((string) old('assigned_to') === (string) $user->id)>{{ $user->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                <button class="btn btn-primary"><i class="ti ti-plus me-1"></i>{{ __('emergency.add_task_btn') }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endcan
+
+@can('invoices.create')
+<div class="modal fade" id="addEmergencyServiceModal" tabindex="-1" aria-labelledby="addEmergencyServiceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form method="POST" action="{{ $erRoute('admin.emergency.services.store', $case) }}" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEmergencyServiceModalLabel"><i class="ti ti-receipt me-1"></i>{{ __('emergency.add_billable_service') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label">{{ __('admissions.service_field') }}</label>
+                        <select class="form-select" name="service_catalog_id" data-er-select2 data-placeholder="{{ __('emergency.add_billable_service') }}" required>
+                            <option value="">{{ __('emergency.add_billable_service') }}</option>
+                            @foreach($services as $service)
+                                <option value="{{ $service->id }}" @selected(old('service_catalog_id') == $service->id)>{{ $service->name }} - {{ $service->formatted_price }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">{{ __('admissions.qty_field') }}</label>
+                        <input class="form-control" type="number" name="quantity" min="1" value="{{ old('quantity', 1) }}">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                <button class="btn btn-primary" @disabled($services->isEmpty())><i class="ti ti-plus me-1"></i>{{ __('emergency.add_to_invoice_btn') }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endcan
 
 <div class="modal fade" id="controlSheetModal" tabindex="-1" aria-labelledby="controlSheetModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -1025,9 +1332,29 @@
 
 @push('scripts')
 <script>
+// Jump to a workspace tab from the stat tiles.
+function erShowTab(id) {
+    var btn = document.querySelector('[data-bs-target="#' + id + '"]');
+    if (btn && window.bootstrap) { bootstrap.Tab.getOrCreateInstance(btn).show(); }
+    var pane = document.getElementById(id);
+    if (pane) { setTimeout(function () { pane.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100); }
+}
 document.addEventListener('DOMContentLoaded', function () {
     var vitalsChartData = @json($vitalsChartData);
     if (window.Chart && vitalsChartData.labels && vitalsChartData.labels.length) {
+        var rangeStatus = function (value, range) {
+            if (value === null || value === undefined || !range) return 'normal';
+            var numeric = Number(value);
+            if (Number.isNaN(numeric)) return 'normal';
+            if (numeric < range.min) return 'low';
+            if (numeric > range.max) return 'high';
+            return 'normal';
+        };
+        var abnormalPointColor = function (status, fallback) {
+            if (status === 'low') return '#0d6efd';
+            if (status === 'high') return '#dc3545';
+            return fallback;
+        };
         var vitalsSpark = function (id, series) {
             var el = document.getElementById(id);
             if (!el || !series.some(function (s) { return s.data && s.data.some(function (v) { return v !== null && v !== undefined; }); })) {
@@ -1041,7 +1368,28 @@ document.addEventListener('DOMContentLoaded', function () {
                         return {
                             label: s.label, data: s.data, borderColor: s.color,
                             backgroundColor: s.color, borderWidth: 2,
-                            tension: .3, spanGaps: true, pointRadius: 2.5, pointHoverRadius: 4
+                            tension: .3, spanGaps: true,
+                            pointStyle: function(ctx) {
+                                return rangeStatus(ctx.parsed.y, s.normalRange) === 'normal' ? 'circle' : 'triangle';
+                            },
+                            pointRotation: function(ctx) {
+                                return rangeStatus(ctx.parsed.y, s.normalRange) === 'low' ? 180 : 0;
+                            },
+                            pointRadius: function(ctx) {
+                                return rangeStatus(ctx.parsed.y, s.normalRange) === 'normal' ? 2.5 : 4.5;
+                            },
+                            pointHoverRadius: function(ctx) {
+                                return rangeStatus(ctx.parsed.y, s.normalRange) === 'normal' ? 4 : 6;
+                            },
+                            pointBackgroundColor: function(ctx) {
+                                return abnormalPointColor(rangeStatus(ctx.parsed.y, s.normalRange), s.color);
+                            },
+                            pointBorderColor: function(ctx) {
+                                return abnormalPointColor(rangeStatus(ctx.parsed.y, s.normalRange), s.color);
+                            },
+                            pointBorderWidth: function(ctx) {
+                                return rangeStatus(ctx.parsed.y, s.normalRange) === 'normal' ? 1 : 2;
+                            }
                         };
                     })
                 },
@@ -1061,13 +1409,13 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         };
         vitalsSpark('vitalsSparkBp', [
-            { label: 'Systolic', data: vitalsChartData.systolic, color: '#6f42c1' },
-            { label: 'Diastolic', data: vitalsChartData.diastolic, color: '#20c997' }
+            { label: 'Systolic', data: vitalsChartData.systolic, color: '#6f42c1', normalRange: { min: 90, max: 120 } },
+            { label: 'Diastolic', data: vitalsChartData.diastolic, color: '#20c997', normalRange: { min: 60, max: 80 } }
         ]);
-        vitalsSpark('vitalsSparkHr', [{ label: 'Heart Rate', data: vitalsChartData.heart_rate, color: '#dc3545' }]);
-        vitalsSpark('vitalsSparkRr', [{ label: 'Respiratory Rate', data: vitalsChartData.respiratory_rate, color: '#0d6efd' }]);
-        vitalsSpark('vitalsSparkSpo2', [{ label: 'SpO2', data: vitalsChartData.spo2, color: '#198754' }]);
-        vitalsSpark('vitalsSparkTemp', [{ label: 'Temperature', data: vitalsChartData.temperature, color: '#fd7e14' }]);
+        vitalsSpark('vitalsSparkHr', [{ label: 'Heart Rate', data: vitalsChartData.heart_rate, color: '#dc3545', normalRange: { min: 60, max: 100 } }]);
+        vitalsSpark('vitalsSparkRr', [{ label: 'Respiratory Rate', data: vitalsChartData.respiratory_rate, color: '#0d6efd', normalRange: { min: 12, max: 20 } }]);
+        vitalsSpark('vitalsSparkSpo2', [{ label: 'SpO2', data: vitalsChartData.spo2, color: '#198754', normalRange: { min: 95, max: 100 } }]);
+        vitalsSpark('vitalsSparkTemp', [{ label: 'Temperature', data: vitalsChartData.temperature, color: '#fd7e14', normalRange: { min: 36.1, max: 37.2 } }]);
     }
 
     var modalToOpen = @json($shouldOpenTriageModal ? 'triageModal' : ($shouldOpenControlSheetModal ? 'controlSheetModal' : null));
@@ -1100,11 +1448,16 @@ document.addEventListener('DOMContentLoaded', function () {
         if ($el.hasClass('select2-hidden-accessible')) {
             $el.select2('destroy');
         }
-        $el.select2({
+        var options = {
             width: '100%',
             placeholder: el.dataset.placeholder || placeholder || 'Select…',
             allowClear: !el.multiple,
-        });
+        };
+        var modal = el.closest('.modal');
+        if (modal) {
+            options.dropdownParent = jQuery(modal);
+        }
+        $el.select2(options);
     }
 
     // Generic searchable selects (drug picker, bay, ward, bed, billable service…).

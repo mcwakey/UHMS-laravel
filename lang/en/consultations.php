@@ -175,6 +175,8 @@ return [
 
     'workspace' => [
         'page_title' => 'Consultation - :visit',
+        'open_admission' => 'Open Admission',
+        'open_admission_title' => 'Open admission :admission',
         'current_session' => 'Current Session',
         'contributors' => 'Contributors',
         'no_contributors_yet' => 'No contributors yet',

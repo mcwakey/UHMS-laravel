@@ -183,6 +183,8 @@ return [
     'unknown_user'              => 'Unknown user',
 
     // Tabs
+    'tab_overview'              => 'Overview',
+    'coordination_title'        => 'Bay, Team & Timeline',
     'tab_medication'            => 'Medication',
     'tab_investigations'        => 'Investigations',
     'tab_procedures'            => 'Procedures',
@@ -204,6 +206,10 @@ return [
     'duration_placeholder'      => 'Duration',
     'qty_override_placeholder'  => 'Qty override',
     'instructions_placeholder'  => 'Instructions',
+    'frequency_label'           => 'Frequency',
+    'duration_label'            => 'Duration unit',
+    'start_at_label'            => 'Start at',
+    'instructions_label'        => 'Instructions',
     'order_medication_btn'      => 'Order Emergency Medication',
     'no_medication_orders'      => 'No emergency medication orders yet.',
     'next_dose'                 => 'Next',
@@ -214,6 +220,8 @@ return [
 
     // Investigations tab
     'investigation_dept_ph'     => 'Investigation department',
+    'urgency_label'             => 'Urgency',
+    'clinical_info_label'       => 'Clinical information',
     'request_investigation_btn' => 'Request Investigation',
     'no_investigations'         => 'No emergency investigations yet.',
     'dept_pending'              => 'Department pending',
@@ -221,6 +229,7 @@ return [
 
     // Procedures tab
     'procedure_dept_ph'         => 'Procedure department',
+    'indication_label'          => 'Indication',
     'request_procedure_btn'     => 'Request Procedure',
     'no_procedures'             => 'No emergency procedures yet.',
 

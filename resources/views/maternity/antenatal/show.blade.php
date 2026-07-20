@@ -22,6 +22,9 @@
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.patient') }}</small><strong>{{ $ancVisit->patient?->full_name }}</strong><div class="small text-muted">{{ $ancVisit->patient?->patient_number }}</div></div>
+                    <div class="col-12">
+                        @include('partials.visit-insurance-strip', ['visit' => $ancVisit->visit ?? $ancVisit->admission?->visit])
+                    </div>
                     <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.visit_date') }}</small><strong>{{ $ancVisit->visit_date?->format('d M Y H:i') }}</strong></div>
                     <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.gestational_age') }}</small><strong>{{ $ancVisit->gestational_age_weeks !== null ? $ancVisit->gestational_age_weeks.'w '.($ancVisit->gestational_age_days ?? 0).'d' : __('common.not_available') }}</strong></div>
                     <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.recorded_by') }}</small><strong>{{ $ancVisit->recordedBy?->name ?? __('common.not_available') }}</strong></div>

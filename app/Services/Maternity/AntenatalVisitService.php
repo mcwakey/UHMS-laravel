@@ -122,7 +122,17 @@ class AntenatalVisitService
 
     public function relations(): array
     {
-        return ['patient', 'pregnancyProfile', 'maternityCase', 'visit', 'admission', 'department', 'recordedBy'];
+        return [
+            'patient',
+            'pregnancyProfile',
+            'maternityCase',
+            'visit.visitInsurance.insuranceProvider',
+            'visit.visitInsurance.insuranceTier',
+            'admission.visit.visitInsurance.insuranceProvider',
+            'admission.visit.visitInsurance.insuranceTier',
+            'department',
+            'recordedBy',
+        ];
     }
 
     private function normalise(PregnancyProfile $profile, array $data, ?AntenatalVisit $existing = null): array

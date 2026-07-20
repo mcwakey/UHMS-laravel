@@ -49,6 +49,7 @@ return [
     // Show/detail
     'admission_details' => 'Admission Details',
     'ward_rounds' => 'Ward Rounds',
+    'ward_round' => 'Ward Round',
     'add_ward_round' => 'Add Ward Round',
     'vitals' => 'Vitals',
     'billing_charges' => 'Billing Charges',
@@ -259,7 +260,14 @@ return [
     'mark_pending_title' => 'Mark as pending',
     'more_tasks' => 'more...',
 
+    // Show — redesign additions
+    'years_short' => 'yrs',
+    'clinical_snapshot' => 'Clinical snapshot',
+    'cleared' => 'Cleared',
+    'not_cleared' => 'Not cleared',
+
     // Show — tabs
+    'tab_overview' => 'Overview',
     'tab_consultation' => 'Consultation',
     'tab_mar' => 'MAR',
     'tab_tasks' => 'Tasks',
@@ -280,6 +288,35 @@ return [
     'next_due_col' => 'Next Due',
     'given_doses' => 'given',
     'no_medication_orders' => 'No medication administration orders are linked to this admission yet.',
+    'billing_summary' => 'Billing Summary',
+    'bill_admission_service' => 'Bill Admission Service',
+    'gross_charges' => 'Gross Charges',
+    'insurance_cover' => 'Insurance Cover',
+    'patient_responsibility' => 'Patient Responsibility',
+    'balance_due' => 'Balance Due',
+    'invoice_items' => 'Invoice Items',
+    'no_invoice_items' => 'No invoice items recorded for this admission.',
+    'no_admission_services_available' => 'No billable services are linked to this admission department.',
+    'add_to_invoice' => 'Add to Invoice',
+    'open_invoice' => 'Open Invoice',
+    'service_not_available_for_admission' => 'This service is not available for this admission department.',
+    'visit_invoice' => 'Visit Invoice',
+    'service_description' => 'Service / Description',
+    'pricing_col' => 'Pricing',
+    'price_col' => 'Price',
+    'covered_col' => 'Covered',
+    'balance_col' => 'Balance',
+    'ward_admission' => 'Ward / Admission',
+    'consultation_visit_services' => 'Consultation / Visit Services',
+    'investigations_group' => 'Investigations',
+    'investigation_consumables_group' => 'Investigation Consumables',
+    'pharmacy_group' => 'Pharmacy',
+    'scans_group' => 'Scans',
+    'xray_group' => 'X-Ray',
+    'procedures_group' => 'Procedures',
+    'procedure_consumables_group' => 'Procedure Consumables',
+    'emergency_group' => 'Emergency',
+    'unassigned_department' => 'Unassigned Department',
 
     // Show — ward rounds tab
     'record_ward_round' => 'Record Ward Round',
@@ -315,6 +352,8 @@ return [
     'sugar_col' => 'Sugar',
     'by_col' => 'By',
     'no_vitals_yet' => 'No vitals recorded yet.',
+    'vitals_trend' => 'Vitals Trend',
+    'readings_count' => '{0} 0 readings|{1} 1 reading|[2,*] :count readings',
 
     // Show — consultation tab
     'consultation_by' => 'Consultation by',
@@ -324,6 +363,7 @@ return [
 
     // Show — tasks tab
     'nursing_clinical_tasks' => 'Nursing / Clinical Tasks',
+    'doctor_clinical_tasks' => 'Doctor Clinical Tasks',
     'no_tasks' => 'No tasks assigned.',
 
     // Show — nursing care tab
@@ -347,6 +387,7 @@ return [
     'nursing_task_completed' => 'Nursing task completed.',
     'no_nursing_tasks' => 'No nursing tasks recorded for this admission.',
     'nursing_notes' => 'Nursing Notes',
+    'add_nursing_note' => 'Add Nursing Note',
     'save_nursing_note' => 'Save Nursing Note',
     'nursing_note_saved' => 'Nursing note saved.',
     'nursing_note_updated' => 'Nursing note updated.',
@@ -449,7 +490,10 @@ return [
     'investigations_summary' => 'Investigations Summary',
     'procedures_summary' => 'Procedures Summary',
     'treatment_given' => 'Treatment Given',
+    'discharge_condition' => 'Discharge Condition',
     'discharge_medications' => 'Discharge Medications',
+    'follow_up_instructions' => 'Follow-up Instructions',
+    'follow_up_date' => 'Follow-up Date',
     'warning_signs' => 'Warning Signs',
     'final_outcome' => 'Final Outcome',
     'prepared_by' => 'Prepared By',

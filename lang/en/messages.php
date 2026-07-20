@@ -75,6 +75,7 @@ return [
         'discharged'        => 'Patient discharged successfully.',
         'charge_added'      => 'Service charge added.',
         'vitals_recorded'   => 'Vitals recorded.',
+        'vitals_updated'    => 'Vitals updated.',
         'ward_round_saved'  => 'Ward round recorded successfully.',
     ],
 

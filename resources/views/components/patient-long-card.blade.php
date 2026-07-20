@@ -1,6 +1,7 @@
 @props([
     'visit',
     'showAlerts' => true,
+    'activeAdmission' => null,
 ])
 
 @php
@@ -17,6 +18,7 @@
     $insuranceUsageSummary = $hasRealInsurance
         ? app(\App\Services\InsuranceService::class)->getUsageSummary($insurance)
         : null;
+    $admissionShortcut = $activeAdmission;
 @endphp
 
 <div {{ $attributes->merge(['class' => 'card mb-3 border-primary']) }}>
@@ -36,6 +38,13 @@
                             title="{{ __('patients.view_patient_profile') }}">
                                 <i class="ti ti-external-link"></i>
                             </a>
+                            @if($admissionShortcut)
+                                <a href="{{ $workspaceRoutes->route('admin.admissions.show', $admissionShortcut) }}"
+                                   class="btn btn-sm btn-outline-info patient-card__admission-btn"
+                                   title="{{ __('consultations.workspace.open_admission_title', ['admission' => $admissionShortcut->admission_number]) }}">
+                                    <i class="ti ti-bed me-1"></i>{{ __('consultations.workspace.open_admission') }}
+                                </a>
+                            @endif
                         </div>
 
                         <div class="text-muted small">

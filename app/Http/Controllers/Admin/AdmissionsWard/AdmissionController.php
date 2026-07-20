@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\AdmissionsWard;
 
+use App\Enums\LogModule;
 use App\Enums\VisitStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DischargeRequest;
@@ -14,8 +15,10 @@ use App\Models\User;
 use App\Models\Visit;
 use App\Models\Vital;
 use App\Services\AdmissionMedicationBoardService;
+use App\Services\ActivityLogService;
 use App\Services\Admissions\AdmissionCareOverviewService;
 use App\Services\Admissions\AdmissionDischargeReadinessService;
+use App\Services\Admissions\AdmissionDischargeSummaryPrefillService;
 use App\Services\Admissions\AdmissionExtensionService;
 use App\Services\Admissions\AdmissionRequestService;
 use App\Services\AdmissionService;
@@ -26,6 +29,7 @@ use App\Services\WardService;
 use App\Services\WorkspaceRouteResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class AdmissionController extends Controller
 {
@@ -38,6 +42,7 @@ class AdmissionController extends Controller
         private AdmissionRequestService $admissionRequests,
         private AdmissionCareOverviewService $careOverviewService,
         private AdmissionDischargeReadinessService $dischargeReadiness,
+        private AdmissionDischargeSummaryPrefillService $dischargeSummaryPrefill,
         private WorkspaceRouteResolver $workspaceRoutes,
         private ServicePriceResolver $priceResolver,
     ) {}
@@ -213,7 +218,7 @@ class AdmissionController extends Controller
     {
         $admission->load([
             'patient',
-            'bed.ward',
+            'bed.ward.department',
             'admissionRequest.requestedBy',
             'admissionRequest.acceptedBy',
             'admissionRequest.reservedBed.ward',
@@ -229,20 +234,31 @@ class AdmissionController extends Controller
             'visit.visitInsurance.insuranceProvider',
             'visit.visitInsurance.insuranceTier',
             'visit.vitals.recordedBy',
-            'visit.latestInvoice.items',
+            'visit.latestInvoice.items.department',
+            'visit.latestInvoice.items.serviceCatalog.department',
             'visit.medicalRecord.complaints',
+            'visit.medicalRecord.historiesOfPresentingComplaint',
+            'visit.medicalRecord.physicalExaminations',
             'visit.medicalRecord.diagnoses.icdCodeEntry',
+            'visit.medicalRecord.investigations',
             'visit.medicalRecord.treatments',
             'visit.medicalRecord.prescriptions.items.drug',
+            'visit.medicalRecord.consultationRoute.specialtyEntries',
             'visit.medicalRecord.tasks.assignedUser',
             'visit.medicalRecord.doctor',
             'wardRounds.recordedBy',
+            'medicationOrders.drug',
+            'medicationOrders.product',
+            'medicationOrders.frequency',
+            'medicationAdministrations.medicationOrder.drug',
+            'clinicalTasks',
             'nursingNotes.nurse',
             'nursingNotes.createdBy',
             'nursingNotes.updatedBy',
             'nursingTasks.assignedTo',
             'nursingTasks.createdBy',
             'nursingTasks.completedBy',
+            'serviceRenderings.service',
             'dischargePlanningStartedBy',
             'dischargeClearances.clearedBy',
             'dischargeClearances.revokedBy',
@@ -250,7 +266,18 @@ class AdmissionController extends Controller
             'dischargeSummaryRecord.approvedBy',
         ]);
 
-        $services = ServiceCatalog::where('is_active', true)->orderBy('name')->get();
+        $admissionDepartment = $admission->bed?->ward?->department;
+        $admissionBillingServices = ServiceCatalog::query()
+            ->where('is_active', true)
+            ->where('is_billable', true)
+            ->where(function ($query) use ($admissionDepartment) {
+                if ($admissionDepartment) {
+                    $query->where('department_id', $admissionDepartment->id)
+                        ->orWhere('department_type', $admissionDepartment->type?->value);
+                }
+            })
+            ->orderBy('name')
+            ->get();
         $availableTransferBeds = $this->wardService->getAvailableBeds();
         $nursingAssignableUsers = User::query()
             ->orderBy('first_name')
@@ -263,8 +290,9 @@ class AdmissionController extends Controller
         $medicationBoard = $this->medicationBoardService->forAdmission($admission);
         $careOverview = $this->careOverviewService->forAdmission($admission, $medicationBoard);
         $dischargeReadiness = $this->dischargeReadiness->forAdmission($admission, $medicationBoard);
+        $dischargeSummaryPrefill = $this->dischargeSummaryPrefill->forAdmission($admission);
 
-        return view('admissions.show', compact('admission', 'services', 'medicalRecord', 'consultationSummary', 'medicationBoard', 'careOverview', 'dischargeReadiness', 'availableTransferBeds', 'nursingAssignableUsers'));
+        return view('admissions.show', compact('admission', 'admissionBillingServices', 'medicalRecord', 'consultationSummary', 'medicationBoard', 'careOverview', 'dischargeReadiness', 'dischargeSummaryPrefill', 'availableTransferBeds', 'nursingAssignableUsers'));
     }
 
     public function discharge(Admission $admission)
@@ -363,20 +391,116 @@ class AdmissionController extends Controller
             ->with('success', __('messages.admissions.vitals_recorded'));
     }
 
+    public function updateVital(Request $request, Admission $admission, Vital $vital)
+    {
+        $belongsToAdmission = (int) $vital->admission_id === (int) $admission->id;
+        $belongsToVisit = (int) $vital->visit_id === (int) $admission->visit_id
+            && (int) $vital->patient_id === (int) $admission->patient_id;
+
+        abort_unless($belongsToAdmission || $belongsToVisit, 404);
+
+        $data = $request->validate([
+            'blood_pressure_systolic' => ['nullable', 'integer', 'min:0', 'max:300'],
+            'blood_pressure_diastolic' => ['nullable', 'integer', 'min:0', 'max:200'],
+            'heart_rate' => ['nullable', 'integer', 'min:0', 'max:300'],
+            'temperature' => ['nullable', 'numeric', 'min:30', 'max:45'],
+            'respiratory_rate' => ['nullable', 'integer', 'min:0', 'max:60'],
+            'spo2' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'weight' => ['nullable', 'numeric', 'min:0', 'max:500'],
+            'blood_sugar' => ['nullable', 'numeric', 'min:0'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+            'recorded_at' => ['nullable', 'date'],
+        ]);
+
+        $trackedFields = [
+            'blood_pressure_systolic',
+            'blood_pressure_diastolic',
+            'heart_rate',
+            'temperature',
+            'respiratory_rate',
+            'spo2',
+            'weight',
+            'blood_sugar',
+            'notes',
+            'recorded_at',
+        ];
+        $oldValues = $this->vitalAuditValues($vital, $trackedFields);
+
+        $vital->update(array_merge($data, [
+            'admission_id' => $admission->id,
+            'visit_id' => $admission->visit_id,
+            'patient_id' => $admission->patient_id,
+            'recorded_at' => $data['recorded_at'] ?? $vital->recorded_at ?? now(),
+        ]));
+        $vital->refresh();
+
+        $newValues = $this->vitalAuditValues($vital, $trackedFields);
+        [$changedOldValues, $changedNewValues] = $this->vitalAuditChanges($oldValues, $newValues);
+
+        if (! empty($changedNewValues)) {
+            app(ActivityLogService::class)->log(
+                LogModule::ADMISSION,
+                'VITALS_UPDATED',
+                [
+                    'old_values' => $changedOldValues,
+                    'new_values' => $changedNewValues,
+                    'patient_id' => $admission->patient_id,
+                    'visit_id' => $admission->visit_id,
+                    'admission_id' => $admission->id,
+                    'source_type' => 'vital',
+                    'source_id' => $vital->id,
+                    'metadata' => [
+                        'vital_id' => $vital->id,
+                        'linked_from_visit' => ! $belongsToAdmission && $belongsToVisit,
+                    ],
+                    'description' => 'Admission vitals updated',
+                    'causer' => $request->user(),
+                ],
+                $vital,
+                'Admission vitals updated'
+            );
+        }
+
+        return redirect()
+            ->route($this->workspaceRoutes->routeName('admin.admissions.show'), $admission)
+            ->withFragment('tab-vitals')
+            ->with('success', __('messages.admissions.vitals_updated'));
+    }
+
     public function storeService(Request $request, Admission $admission)
     {
-        $request->validate([
+        $data = $request->validate([
             'service_catalog_id' => ['required', 'exists:service_catalog,id'],
             'quantity' => ['nullable', 'integer', 'min:1', 'max:99'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $qty = $request->quantity ?? 1;
+        $admission->loadMissing('bed.ward.department');
+        $department = $admission->bed?->ward?->department;
+        $service = ServiceCatalog::query()
+            ->whereKey($data['service_catalog_id'])
+            ->where('is_active', true)
+            ->where('is_billable', true)
+            ->where(function ($query) use ($department) {
+                if ($department) {
+                    $query->where('department_id', $department->id)
+                        ->orWhere('department_type', $department->type?->value);
+                }
+            })
+            ->first();
+
+        if (! $service) {
+            throw ValidationException::withMessages([
+                'service_catalog_id' => __('admissions.service_not_available_for_admission'),
+            ]);
+        }
+
+        $qty = $data['quantity'] ?? 1;
 
         $this->visitService->attachServices($admission->visit, [[
-            'service_catalog_id' => $request->service_catalog_id,
+            'service_catalog_id' => $service->id,
             'quantity' => $qty,
-            'notes' => $request->notes,
+            'notes' => $data['notes'] ?? null,
         ]]);
 
         // VisitService::attachServices already creates the invoice line item via
@@ -387,5 +511,36 @@ class AdmissionController extends Controller
             ->route($this->workspaceRoutes->routeName('admin.admissions.show'), $admission)
             ->withFragment('tab-billing')
             ->with('success', __('messages.admissions.charge_added'));
+    }
+
+    private function vitalAuditValues(Vital $vital, array $fields): array
+    {
+        return collect($fields)
+            ->mapWithKeys(function (string $field) use ($vital) {
+                $value = $vital->{$field};
+                if ($value instanceof \DateTimeInterface) {
+                    $value = $value->format('Y-m-d H:i:s');
+                }
+
+                return [$field => $value];
+            })
+            ->all();
+    }
+
+    private function vitalAuditChanges(array $oldValues, array $newValues): array
+    {
+        $old = [];
+        $new = [];
+
+        foreach ($newValues as $field => $value) {
+            if (($oldValues[$field] ?? null) === $value) {
+                continue;
+            }
+
+            $old[$field] = $oldValues[$field] ?? null;
+            $new[$field] = $value;
+        }
+
+        return [$old, $new];
     }
 }

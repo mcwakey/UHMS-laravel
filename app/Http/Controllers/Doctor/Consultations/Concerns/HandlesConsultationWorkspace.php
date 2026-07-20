@@ -305,6 +305,13 @@ trait HandlesConsultationWorkspace
             : null;
 
         $data = $this->consultationService->getConsultationData($visit, $record, ! $routeSelectorRequired);
+        $data['visit']->loadMissing([
+            'admission.bed.ward',
+            'patient.activeAdmission.bed.ward',
+        ]);
+        $consultationAdmission = ($data['visit']->admission?->is_active ?? false)
+            ? $data['visit']->admission
+            : $data['visit']->patient?->activeAdmission;
 
         // Load tasks on the record
         if ($data['record']) {
@@ -479,6 +486,7 @@ trait HandlesConsultationWorkspace
             'nextPatientInLine' => $nextPatientInLine,
             'completionReadiness' => $completionReadiness,
             'consultationSummary' => $consultationSummary,
+            'consultationAdmission' => $consultationAdmission,
             'consultationPreview' => $consultationPreview,
             'specialtyContext' => $specialtyContext->toArray(),
             'specialtyLayout' => $specialtyLayout,

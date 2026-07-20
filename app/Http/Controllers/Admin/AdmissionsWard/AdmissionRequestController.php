@@ -29,7 +29,7 @@ class AdmissionRequestController extends Controller
     {
         $filters = array_merge(array_filter([
             'status' => $request->route('status'),
-        ]), $request->only(['search', 'status', 'source_type']));
+        ]), $request->only(['search', 'status', 'source_type', 'per_page']));
         $admissionRequests = $this->requests->list($filters);
 
         $legacyVisitQuery = Visit::with(['patient', 'department', 'activeConsultationRoute.doctor'])

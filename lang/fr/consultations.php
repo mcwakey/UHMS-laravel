@@ -173,6 +173,8 @@ return [
 
     'workspace' => [
         'page_title' => 'Consultation - :visit',
+        'open_admission' => 'Ouvrir l\'admission',
+        'open_admission_title' => 'Ouvrir l\'admission :admission',
         'current_session' => 'Séance en cours',
         'contributors' => 'Contributeurs',
         'no_contributors_yet' => 'Aucun contributeur pour le moment',

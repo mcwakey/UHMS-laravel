@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Admission;
 use App\Models\AdmissionDischargeClearance;
 use App\Models\AdmissionDischargeSummary;
+use App\Services\Admissions\AdmissionDischargeSummaryPrefillService;
 use App\Services\Admissions\AdmissionDischargeWorkflowService;
 use App\Services\WorkspaceRouteResolver;
 use Illuminate\Http\Request;
@@ -14,7 +15,10 @@ use Illuminate\Validation\Rule;
 
 class AdmissionDischargeWorkflowController extends Controller
 {
-    public function __construct(private AdmissionDischargeWorkflowService $workflow) {}
+    public function __construct(
+        private AdmissionDischargeWorkflowService $workflow,
+        private AdmissionDischargeSummaryPrefillService $prefill,
+    ) {}
 
     public function startPlanning(Request $request, Admission $admission)
     {
@@ -79,6 +83,8 @@ class AdmissionDischargeWorkflowController extends Controller
     public function saveSummary(Request $request, Admission $admission)
     {
         $data = $request->validate($this->summaryRules());
+        $admission->loadMissing($this->prefillRelations());
+        $data = $this->applyPrefill($data, $this->prefill->forAdmission($admission));
         $this->workflow->saveSummary($admission, $this->normaliseSummaryData($data), $request->user());
 
         return redirect()
@@ -159,5 +165,44 @@ class AdmissionDischargeWorkflowController extends Controller
         }
 
         return $data;
+    }
+
+    private function applyPrefill(array $data, array $prefill): array
+    {
+        foreach ($prefill as $key => $value) {
+            if (! array_key_exists($key, $data) || filled($data[$key]) || blank($value)) {
+                continue;
+            }
+
+            $data[$key] = $value instanceof \Illuminate\Support\Collection
+                ? $value->implode("\n")
+                : $value;
+        }
+
+        return $data;
+    }
+
+    private function prefillRelations(): array
+    {
+        return [
+            'visit.vitals.recordedBy',
+            'visit.medicalRecord.complaints',
+            'visit.medicalRecord.historiesOfPresentingComplaint',
+            'visit.medicalRecord.physicalExaminations',
+            'visit.medicalRecord.diagnoses.icdCodeEntry',
+            'visit.medicalRecord.investigations',
+            'visit.medicalRecord.treatments',
+            'visit.medicalRecord.prescriptions.items.drug',
+            'visit.medicalRecord.consultationRoute.specialtyEntries',
+            'wardRounds.recordedBy',
+            'medicationOrders.drug',
+            'medicationOrders.product',
+            'medicationOrders.frequency',
+            'medicationAdministrations.medicationOrder.drug',
+            'clinicalTasks',
+            'nursingNotes.nurse',
+            'nursingTasks',
+            'serviceRenderings.service',
+        ];
     }
 }

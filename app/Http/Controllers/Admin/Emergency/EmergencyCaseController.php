@@ -89,6 +89,7 @@ class EmergencyCaseController extends Controller
         $emergencyCase->load([
             'patient',
             'visit.visitInsurance.insuranceProvider',
+            'visit.visitInsurance.insuranceTier',
             'visit.latestInvoice.items.creator',
             'visit.latestInvoice.payments',
             'bay.ward',

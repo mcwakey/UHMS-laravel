@@ -59,7 +59,20 @@ class PregnancyProfileController extends Controller
 
     public function show(PregnancyProfile $pregnancyProfile)
     {
-        $pregnancyProfile->load(['patient.activeAdmission', 'visit', 'admission', 'department', 'maternityCases.openedBy']);
+        $pregnancyProfile->load([
+            'patient.activeAdmission',
+            'visit.visitInsurance.insuranceProvider',
+            'visit.visitInsurance.insuranceTier',
+            'visit.latestInvoice.items.department',
+            'visit.latestInvoice.items.serviceCatalog.department',
+            'admission.visit.visitInsurance.insuranceProvider',
+            'admission.visit.visitInsurance.insuranceTier',
+            'admission.visit.latestInvoice.items.department',
+            'admission.visit.latestInvoice.items.serviceCatalog.department',
+            'admission.bed.ward',
+            'department',
+            'maternityCases.openedBy',
+        ]);
 
         return view('maternity.pregnancies.show', [
             'profile' => $pregnancyProfile,

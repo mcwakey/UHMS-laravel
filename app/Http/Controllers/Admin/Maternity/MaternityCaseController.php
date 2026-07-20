@@ -29,7 +29,18 @@ class MaternityCaseController extends Controller
 
     public function show(MaternityCase $maternityCase)
     {
-        $maternityCase->load(['patient', 'pregnancyProfile', 'visit', 'admission.bed.ward', 'department', 'openedBy', 'closedBy']);
+        $maternityCase->load([
+            'patient',
+            'pregnancyProfile',
+            'visit.visitInsurance.insuranceProvider',
+            'visit.visitInsurance.insuranceTier',
+            'admission.bed.ward',
+            'admission.visit.visitInsurance.insuranceProvider',
+            'admission.visit.visitInsurance.insuranceTier',
+            'department',
+            'openedBy',
+            'closedBy',
+        ]);
 
         return view('maternity.cases.show', [
             'case' => $maternityCase,

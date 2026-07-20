@@ -75,6 +75,7 @@ return [
         'discharged'        => 'Patient sorti avec succès.',
         'charge_added'      => 'Frais de service ajouté.',
         'vitals_recorded'   => 'Constantes enregistrées.',
+        'vitals_updated'    => 'Constantes mises à jour.',
         'ward_round_saved'  => 'Visite de salle enregistrée avec succès.',
     ],
 

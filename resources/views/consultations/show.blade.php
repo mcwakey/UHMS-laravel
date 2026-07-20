@@ -72,7 +72,7 @@
 
 @section('content')
 
-<x-patient-long-card :visit="$visit" :show-alerts="true" />
+<x-patient-long-card :visit="$visit" :show-alerts="true" :active-admission="$consultationAdmission" />
 
 @can('patients.edit')
 {{-- <div class="card mb-3 border-danger-subtle"> --}}

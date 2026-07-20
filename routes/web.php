@@ -489,6 +489,7 @@ Route::middleware('auth')->group(function () {
             Route::post('admissions/{admission}/extend', [AdmissionController::class, 'extend'])->name('admissions.extend')->middleware('can:admissions.extend');
             Route::post('admissions/{admission}/rounds', [AdmissionController::class, 'storeRound'])->name('admissions.rounds.store');
             Route::post('admissions/{admission}/vitals', [AdmissionController::class, 'storeVital'])->name('admissions.vitals.store');
+            Route::patch('admissions/{admission}/vitals/{vital}', [AdmissionController::class, 'updateVital'])->name('admissions.vitals.update');
             Route::post('admissions/{admission}/services', [AdmissionController::class, 'storeService'])->name('admissions.services.store');
             Route::post('admissions/{admission}/transfer-bed', [AdmissionBedWorkflowController::class, 'transfer'])->name('admissions.transfer-bed')->middleware('can:beds.transfer');
             Route::post('admissions/{admission}/nursing-notes', [AdmissionNursingCareController::class, 'storeNote'])->name('admissions.nursing-notes.store')->middleware('can:admission.nursing.notes.create');
@@ -1664,6 +1665,7 @@ Route::middleware('auth')->group(function () {
             Route::post('admissions/{admission}/extend', [AdmissionController::class, 'extend'])->name('admissions.extend')->middleware('can:admissions.extend');
             Route::post('admissions/{admission}/rounds', [AdmissionController::class, 'storeRound'])->name('admissions.rounds.store');
             Route::post('admissions/{admission}/vitals', [AdmissionController::class, 'storeVital'])->name('admissions.vitals.store');
+            Route::patch('admissions/{admission}/vitals/{vital}', [AdmissionController::class, 'updateVital'])->name('admissions.vitals.update');
             Route::post('admissions/{admission}/services', [AdmissionController::class, 'storeService'])->name('admissions.services.store');
             Route::post('admissions/{admission}/transfer-bed', [AdmissionBedWorkflowController::class, 'transfer'])->name('admissions.transfer-bed')->middleware('can:beds.transfer');
             Route::post('admissions/{admission}/nursing-notes', [AdmissionNursingCareController::class, 'storeNote'])->name('admissions.nursing-notes.store')->middleware('can:admission.nursing.notes.create');

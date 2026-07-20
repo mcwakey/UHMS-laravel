@@ -37,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('logs:cleanup')->dailyAt('02:45')->withoutOverlapping();
         $schedule->command('medications:check-overdue')->everyFifteenMinutes()->withoutOverlapping();
         $schedule->command('clinical-tasks:check-due')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('nursing-tasks:check-due')->everyFiveMinutes()->withoutOverlapping();
         $schedule->command('claims:check-stale')->dailyAt('06:00')->withoutOverlapping();
         $schedule->command('blood-bank:expire-units')->dailyAt('05:30')->withoutOverlapping();
         $schedule->command('blood-bank:notify-expiring --days=7')->dailyAt('06:15')->withoutOverlapping();

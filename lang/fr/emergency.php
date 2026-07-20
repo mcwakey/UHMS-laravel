@@ -183,6 +183,8 @@ return [
     'unknown_user'              => 'Utilisateur inconnu',
 
     // Tabs
+    'tab_overview'              => 'Aperçu',
+    'coordination_title'        => 'Baie, équipe et chronologie',
     'tab_medication'            => 'Médicaments',
     'tab_investigations'        => 'Examens',
     'tab_procedures'            => 'Procédures',
@@ -204,6 +206,10 @@ return [
     'duration_placeholder'      => 'Durée',
     'qty_override_placeholder'  => 'Qté manuelle',
     'instructions_placeholder'  => 'Instructions',
+    'frequency_label'           => 'Fréquence',
+    'duration_label'            => 'Unité de durée',
+    'start_at_label'            => 'Début',
+    'instructions_label'        => 'Instructions',
     'order_medication_btn'      => 'Ordonner médicament d\'urgence',
     'no_medication_orders'      => 'Aucune ordonnance d\'urgence encore.',
     'next_dose'                 => 'Prochain',
@@ -214,6 +220,8 @@ return [
 
     // Investigations tab
     'investigation_dept_ph'     => 'Service d\'examens',
+    'urgency_label'             => 'Urgence',
+    'clinical_info_label'       => 'Informations cliniques',
     'request_investigation_btn' => 'Demander un examen',
     'no_investigations'         => 'Aucun examen d\'urgence encore.',
     'dept_pending'              => 'Service en attente',
@@ -221,6 +229,7 @@ return [
 
     // Procedures tab
     'procedure_dept_ph'         => 'Service de procédures',
+    'indication_label'          => 'Indication',
     'request_procedure_btn'     => 'Demander une procédure',
     'no_procedures'             => 'Aucune procédure d\'urgence encore.',
 

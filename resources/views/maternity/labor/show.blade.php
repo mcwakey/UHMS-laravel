@@ -26,6 +26,9 @@
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.patient') }}</small><strong>{{ $episode->patient?->full_name }}</strong><div class="small text-muted">{{ $episode->patient?->patient_number }}</div></div>
+                    <div class="col-12">
+                        @include('partials.visit-insurance-strip', ['visit' => $episode->visit ?? $episode->admission?->visit])
+                    </div>
                     <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.labor_stage') }}</small><strong>{{ $episode->labor_stage?->label() }}</strong></div>
                     <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.risk_level') }}</small><span class="badge badge-soft-{{ $episode->risk_level?->color() ?? 'secondary' }}">{{ $episode->risk_level?->label() ?? __('common.none') }}</span></div>
                     <div class="col-md-3"><small class="text-muted d-block">{{ __('maternity.started_at') }}</small><strong>{{ $episode->started_at?->format('d M Y H:i') ?? __('common.none') }}</strong></div>

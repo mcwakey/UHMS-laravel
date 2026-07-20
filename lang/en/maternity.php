@@ -63,6 +63,7 @@ return [
     'future_newborn_placeholder' => 'Newborn workflow will be added in a later phase.',
     'future_postnatal_placeholder' => 'Postnatal workflow will be added in a later phase.',
     'profile_warnings' => 'Profile Warnings',
+    'overview' => 'Overview',
     'profile_summary' => 'Profile Summary',
     'risk_snapshot' => 'Risk Snapshot',
     'no_risk_flags' => 'No risk flags recorded.',

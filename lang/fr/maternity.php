@@ -63,6 +63,7 @@ return [
     'future_newborn_placeholder' => 'Le flux nouveau-né sera ajouté dans une phase ultérieure.',
     'future_postnatal_placeholder' => 'Le flux postnatal sera ajouté dans une phase ultérieure.',
     'profile_warnings' => 'Alertes du profil',
+    'overview' => 'Aperçu',
     'profile_summary' => 'Résumé du profil',
     'risk_snapshot' => 'Résumé des risques',
     'no_risk_flags' => 'Aucun facteur de risque enregistré.',

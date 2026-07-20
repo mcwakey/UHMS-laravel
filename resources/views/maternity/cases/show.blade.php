@@ -22,6 +22,9 @@
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-4"><small class="text-muted d-block">{{ __('maternity.patient') }}</small><strong>{{ $case->patient?->full_name }}</strong><div class="text-muted small">{{ $case->patient?->patient_number }}</div></div>
+                    <div class="col-12">
+                        @include('partials.visit-insurance-strip', ['visit' => $case->visit ?? $case->admission?->visit])
+                    </div>
                     <div class="col-md-4"><small class="text-muted d-block">{{ __('maternity.case_type') }}</small><strong>{{ $case->case_type?->label() ?? __('common.not_available') }}</strong></div>
                     <div class="col-md-4"><small class="text-muted d-block">{{ __('maternity.risk_level') }}</small><span class="badge badge-soft-{{ $case->risk_level?->color() ?? 'secondary' }}">{{ $case->risk_level?->label() ?? __('common.not_available') }}</span></div>
                     <div class="col-md-4"><small class="text-muted d-block">{{ __('maternity.priority') }}</small><strong>{{ $case->priority ?? __('common.none') }}</strong></div>
