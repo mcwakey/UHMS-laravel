@@ -25,10 +25,10 @@
     "required_unallowlisted_finding_count": 0
   },
   "scan_evidence": {
-    "scan_scope_manifest_hash": "fa756afcdc1d5a96926351997d23f25cca5fde95db5bd667aaca96793e9fb774",
+    "scan_scope_manifest_hash": "a74c8c7fdd8f5d0ebc16ac4f291c5eea5c849b47bb2fc51422ac08d3b72a7231",
     "scanner_version": "P2F-PRIVACY-SCANNER-2",
     "allowlist_version": "P2F-SYNTHETIC-ALLOWLIST-1",
-    "file_count": 286,
+    "file_count": 329,
     "coverage_difference": 0,
     "unallowlisted_finding_count": 0,
     "finding_handling": "redacted detector/path diagnostics only"

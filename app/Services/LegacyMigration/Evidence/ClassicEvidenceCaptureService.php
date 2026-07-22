@@ -100,6 +100,12 @@ final class ClassicEvidenceCaptureService
             [self::APPROVED_DATABASE],
             'Capture privilege names on approved uuhms only; account identity is not returned.',
         ));
+        $allSchemaPrivileges = $this->rows($query->select(
+            'classic.current_account_all_schema_privileges',
+            'SELECT TABLE_SCHEMA, PRIVILEGE_TYPE FROM information_schema.SCHEMA_PRIVILEGES WHERE GRANTEE = CONCAT(CHAR(39), SUBSTRING_INDEX(CURRENT_USER(), CHAR(64), 1), CHAR(39), CHAR(64), CHAR(39), SUBSTRING_INDEX(CURRENT_USER(), CHAR(64), -1), CHAR(39)) ORDER BY TABLE_SCHEMA, PRIVILEGE_TYPE',
+            purpose: 'Prove the dedicated account has no privilege on another schema; account identity is not returned.',
+        ));
+        $this->assertDedicatedReadOnlyPrivileges($privileges, $schemaPrivileges, $allSchemaPrivileges);
 
         $tables = $this->rows($query->select(
             'classic.tables',
@@ -354,6 +360,40 @@ final class ClassicEvidenceCaptureService
             'total_rows' => array_sum($rowCounts),
             'fingerprint' => $fingerprint,
         ];
+    }
+
+    /**
+     * @param list<array<string, mixed>> $global
+     * @param list<array<string, mixed>> $approvedSchema
+     * @param list<array<string, mixed>> $allSchemas
+     */
+    private function assertDedicatedReadOnlyPrivileges(array $global, array $approvedSchema, array $allSchemas): void
+    {
+        $allowedSchemaPrivileges = ['SELECT', 'SHOW VIEW'];
+        foreach ($global as $row) {
+            if (strtoupper((string) ($row['PRIVILEGE_TYPE'] ?? '')) !== 'USAGE') {
+                throw new RuntimeException('Classic evidence capture rejected a broad or privileged account.');
+            }
+        }
+
+        $hasSelect = false;
+        foreach ($approvedSchema as $row) {
+            $privilege = strtoupper((string) ($row['PRIVILEGE_TYPE'] ?? ''));
+            if (! in_array($privilege, $allowedSchemaPrivileges, true)) {
+                throw new RuntimeException('Classic evidence capture rejected an account with unapproved schema privileges.');
+            }
+            $hasSelect = $hasSelect || $privilege === 'SELECT';
+        }
+        if (! $hasSelect) {
+            throw new RuntimeException('Classic evidence capture requires dedicated SELECT access on exact uuhms.');
+        }
+
+        foreach ($allSchemas as $row) {
+            if (! hash_equals(self::APPROVED_DATABASE, (string) ($row['TABLE_SCHEMA'] ?? ''))
+                || ! in_array(strtoupper((string) ($row['PRIVILEGE_TYPE'] ?? '')), $allowedSchemaPrivileges, true)) {
+                throw new RuntimeException('Classic evidence capture rejected cross-schema or unapproved privileges.');
+            }
+        }
     }
 
     /** @return array<string, array<int, array<string,mixed>>> */

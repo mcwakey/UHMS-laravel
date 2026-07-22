@@ -1,0 +1,8 @@
+{
+  "specification_version": "3.0.0",
+  "phase": "3",
+  "compare_and_set_required": true,
+  "states": ["NOT_STARTED", "EXTRACTED", "CLASSIFIED", "DRY_RUN_ACCEPTED", "CORE_COMMITTING", "CORE_COMMITTED", "ALIAS_PENDING", "ALIAS_COMMITTED", "ALIAS_WITHHELD", "CONTACT_PENDING", "CONTACT_COMMITTED", "CONTACT_WITHHELD", "INSURANCE_HISTORY_PENDING", "INSURANCE_HISTORY_COMMITTED", "INSURANCE_CURRENT_PENDING", "INSURANCE_CURRENT_COMMITTED", "INSURANCE_CURRENT_WITHHELD", "RECONCILIATION_PENDING", "RECONCILIATION_PASSED", "RECONCILIATION_FAILED", "QUARANTINED", "ROLLBACK_REQUIRED", "COMPENSATION_REQUIRED", "COMPLETED"],
+  "crash_boundaries": ["PILOT-RESUME-001", "PILOT-RESUME-002", "PILOT-RESUME-003", "PILOT-RESUME-004", "PILOT-RESUME-005", "PILOT-RESUME-006", "PILOT-RESUME-007", "PILOT-RESUME-008", "PILOT-RESUME-009", "PILOT-RESUME-010"],
+  "rules": ["expected_prior_state_required", "attempt_counter_required", "complete_unit_not_replayed", "missing_checkpoint_repaired_only_after_exact_verification", "conflicting_lineage_fails_closed", "compensation_is_unit_specific", "hard_delete_not_universal_rollback"]
+}

@@ -1,0 +1,11 @@
+{
+  "specification_version": "3.0.0",
+  "phase": "3",
+  "fixture_policy": "synthetic_only",
+  "required_group_count": 25,
+  "groups": ["environment_and_production_rejection", "exact_schema_database_guard", "source_privilege_verifier", "read_only_transaction", "fingerprint_configuration_drift", "hmac_domain_version_separation", "protected_store_constraints", "crosswalk_cardinality", "quarantine_root_integrity", "reconciliation_zero_difference", "idempotency", "checkpoints", "ten_crash_boundaries", "recovery_compensation", "patient_number_concurrency_rerun", "dry_run_zero_write", "existing_target_immutability", "side_effect_isolation", "target_state_blockers", "insurance_initialization_blockers", "privacy_scanner_coverage", "no_phi_credentials", "no_business_domain_rows", "no_classic_write_path", "no_production_write_path"],
+  "broad_suite_policy": "once_after_workstreams_and_reviews",
+  "focused_suite": {"status":"passing","tests":164,"assertions":644,"command":"php artisan test tests/Unit/LegacyMigration/Foundation tests/Feature/LegacyMigration/Foundation --compact"},
+  "known_evidence_gaps": ["persistent_recovery_crash_restart", "concurrent_mariadb_allocator", "real_side_effect_control_bindings"],
+  "status": "focused_passing_exit_blocked"
+}

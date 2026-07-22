@@ -1,0 +1,11 @@
+{
+  "specification_version": "3.0.0",
+  "phase": "3",
+  "table_prefix": "legacy_migration_",
+  "logical_tables": ["runs", "contract_bundles", "snapshots", "target_collision_snapshots", "crosswalks", "remediations", "provenance_records", "quarantine_roots", "quarantine_exceptions", "reconciliation_results", "audit_events", "idempotency_records", "checkpoints", "atomic_intents", "compensation_records", "number_reservations"],
+  "constraints": ["one_active_patient_mapping_per_source_coordinate", "one_compatible_outcome_per_idempotency_key", "one_authoritative_quarantine_root_per_typed_root_domain_source_snapshot", "one_primary_exception_per_sealed_root", "passed_reconciliation_requires_exact_zero_difference", "number_reservation_lineage_unique", "foundation_only_restrict_foreign_keys", "immutable_lineage_coordinates", "no_delete_protected_lineage", "exact_run_state_edges_and_lock_increment"],
+  "protected_payload_policy": {"encrypted_at_rest": true, "hidden_from_serialization": true, "searchable_plaintext_identifiers": false},
+  "business_domain_tables_created": 0,
+  "runtime_write_policy": "phase3_non_test_protected_store_writes_blocked",
+  "known_blocker": "protected_store_access_and_keyed_integrity_guard_not_integrated_into_each_repository"
+}

@@ -58,8 +58,8 @@ final class LegacyMigrationInspectTargetCommand extends Command
             $this->line('Fingerprint: '.$result['fingerprint']);
 
             return self::SUCCESS;
-        } catch (Throwable $exception) {
-            $this->error($exception->getMessage());
+        } catch (Throwable) {
+            $this->error('Target inspection failed closed; sensitive connection diagnostics were suppressed.');
 
             return self::FAILURE;
         }

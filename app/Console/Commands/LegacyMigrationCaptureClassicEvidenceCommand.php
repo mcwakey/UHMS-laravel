@@ -56,8 +56,8 @@ final class LegacyMigrationCaptureClassicEvidenceCommand extends Command
             $this->line('Fingerprint: '.$result['fingerprint']);
 
             return self::SUCCESS;
-        } catch (Throwable $exception) {
-            $this->error($exception->getMessage());
+        } catch (Throwable) {
+            $this->error('Classic evidence capture failed closed; sensitive connection diagnostics were suppressed.');
 
             return self::FAILURE;
         }

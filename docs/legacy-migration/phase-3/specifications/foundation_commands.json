@@ -1,0 +1,14 @@
+{
+  "specification_version": "3.0.0",
+  "phase": "3",
+  "default_write_count": 0,
+  "commands": [
+    {"name": "legacy-migration:foundation-preflight", "mode": "inspection", "business_writes": false},
+    {"name": "legacy-migration:verify-source-account", "mode": "inspection", "business_writes": false},
+    {"name": "legacy-migration:foundation-status", "mode": "inspection", "business_writes": false},
+    {"name": "legacy-migration:privacy-scan", "mode": "inspection", "business_writes": false},
+    {"name": "legacy-migration:foundation-reconcile", "mode": "inspection", "business_writes": false},
+    {"name": "legacy-migration:foundation-recovery-audit", "mode": "inspection", "business_writes": false}
+  ],
+  "forbidden_command_fragments": ["migrate-patients", "import-patients", "run-patient-pilot", "import-staff", "import-insurance", "import-reference"]
+}

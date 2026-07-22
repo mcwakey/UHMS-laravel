@@ -1,0 +1,10 @@
+{
+  "specification_version": "3.0.0",
+  "phase": "3",
+  "algorithm": "HMAC-SHA-256",
+  "canonicalization": "typed-length-prefix/1",
+  "key_source": "external_configuration_only",
+  "domains": ["patient_source", "staff_source", "insurance_source", "contact_source", "reference_source", "target_record", "idempotency", "artifact_integrity"],
+  "required_envelope": ["domain", "key_id", "key_version", "canonicalization_version", "digest"],
+  "rules": ["cross_domain_tokens_are_unequal", "unknown_domain_fails_closed", "missing_key_fails_closed", "raw_input_not_logged", "rotation_preserves_versioned_lineage"]
+}
