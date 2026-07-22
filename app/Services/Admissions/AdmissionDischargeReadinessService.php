@@ -20,7 +20,7 @@ class AdmissionDischargeReadinessService
         private ActivityLogService $logger,
     ) {}
 
-    public function forAdmission(Admission $admission, array $medicationBoard = [], bool $ensureClearances = true): array
+    public function forAdmission(Admission $admission, array $medicationBoard = [], bool $ensureClearances = true, ?array $care = null): array
     {
         if ($ensureClearances) {
             $this->workflow->ensureClearances($admission);
@@ -42,7 +42,7 @@ class AdmissionDischargeReadinessService
             'wardRounds',
         ]);
 
-        $care = $this->careOverview->forAdmission($admission, $medicationBoard);
+        $care ??= $this->careOverview->forAdmission($admission, $medicationBoard);
         $clearances = $admission->dischargeClearances->keyBy(fn ($clearance) => $clearance->clearance_type->value);
         $summary = $admission->dischargeSummaryRecord;
         $invoice = $admission->visit?->latestInvoice;

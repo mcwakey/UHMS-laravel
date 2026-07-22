@@ -16,7 +16,7 @@
     $recentNursingNotes = ($admission->nursingNotes ?? collect())->sortByDesc('observed_at')->take(3);
 @endphp
 
-<!-- <div class="adm-tiles mb-3">
+<div class="adm-tiles mb-3">
     <button type="button" class="adm-tile adm-tile--primary" onclick="showTab('tab-simplified-overview')">
         <span class="adm-tile__lab"><i class="ti ti-layout-dashboard"></i>{{ __('admissions.tab_overview') }}</span>
         <div class="d-flex align-items-center justify-content-between gap-2">
@@ -80,9 +80,9 @@
         </div>
     </button>
     @endif
-</div> -->
+</div>
 
-<!-- <ul class="nav nav-tabs mb-3" id="admSimplifiedTabs" role="tablist">
+<ul class="nav nav-tabs mb-3" id="admSimplifiedTabs" role="tablist">
     <li class="nav-item">
         <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-simplified-overview" type="button">
             <i class="ti ti-layout-dashboard me-1"></i>{{ __('admissions.tab_overview') }}
@@ -148,9 +148,9 @@
         </button>
     </li>
     @endcan
-</ul> -->
+</ul>
 
-<!-- <div class="tab-content">
+<div class="tab-content">
     <div class="tab-pane fade show active" id="tab-simplified-overview" role="tabpanel">
         <div class="row g-3">
             <div class="col-xl-4">
@@ -443,7 +443,7 @@
         @include('admissions.partials.discharge-readiness-tab')
     </div>
     @endcan
-</div> -->
+</div>
 
 @if($admission->status->value === 'admitted')
 <div class="modal fade" id="recordWardRoundModal" tabindex="-1" aria-labelledby="recordWardRoundModalLabel" aria-hidden="true">

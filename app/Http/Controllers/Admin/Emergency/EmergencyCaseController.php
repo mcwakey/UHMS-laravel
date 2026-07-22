@@ -90,7 +90,8 @@ class EmergencyCaseController extends Controller
             'patient',
             'visit.visitInsurance.insuranceProvider',
             'visit.visitInsurance.insuranceTier',
-            'visit.latestInvoice.items.creator',
+            'visit.latestInvoice.items.department',
+            'visit.latestInvoice.items.serviceCatalog.department',
             'visit.latestInvoice.payments',
             'bay.ward',
             'bay.bed',
@@ -104,6 +105,9 @@ class EmergencyCaseController extends Controller
             'activeBayAssignment.ward',
             'activeBayAssignment.bed',
             'activeBayAssignment.emergencyBay',
+            'bayAssignments.ward',
+            'bayAssignments.bed',
+            'bayAssignments.emergencyBay',
             'triagedBy',
             'disposedBy',
             'latestVitals.recordedBy',
@@ -150,8 +154,6 @@ class EmergencyCaseController extends Controller
             'respiratory_rate' => $vitalsChartRows->pluck('respiratory_rate')->all(),
         ];
 
-        $billingGroups = $this->groupEmergencyBillingItems($emergencyCase);
-
         $medicationProducts = $this->productsWithStock([ProductType::DRUG->value]);
         $consumableProducts = $this->productsWithStock([
             ProductType::CONSUMABLE->value,
@@ -184,7 +186,6 @@ class EmergencyCaseController extends Controller
             'procedureDepartments' => $procedureDepartments,
             'procedureServices' => ServiceCatalog::active()->whereIn('department_id', $procedureDepartments->pluck('id'))->orderBy('name')->get(),
             'vitalsChartData' => $vitalsChartData,
-            'billingGroups' => $billingGroups,
             'identityCandidates' => Patient::active()
                 ->where('is_temporary', false)
                 ->where('id', '!=', $emergencyCase->patient_id)
@@ -241,21 +242,6 @@ class EmergencyCaseController extends Controller
                 ->value('id');
     }
 
-    private function groupEmergencyBillingItems(EmergencyCase $case): array
-    {
-        $items = $case->visit?->latestInvoice?->items ?? collect();
-
-        return $items->groupBy(function ($item) {
-            return match ($item->source_type) {
-                'emergency_service' => __('emergency.billing_group_services'),
-                'emergency_medication_order' => __('emergency.billing_group_medications'),
-                'emergency_consumable' => __('menu.emergency_consumables'),
-                'investigation_service', 'emergency_investigation' => __('emergency.billing_group_investigations'),
-                'procedure_service', 'emergency_procedure' => __('emergency.billing_group_procedures'),
-                default => str_starts_with((string) $item->source_type, 'emergency') ? __('emergency.billing_group_other') : __('emergency.billing_group_visit_charges'),
-            };
-        })->all();
-    }
 
     private function productsWithStock(array $productTypes)
     {

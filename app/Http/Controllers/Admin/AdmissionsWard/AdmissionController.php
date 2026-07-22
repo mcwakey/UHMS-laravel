@@ -289,7 +289,7 @@ class AdmissionController extends Controller
         $consultationSummary = $this->summaryService->forRecord($medicalRecord);
         $medicationBoard = $this->medicationBoardService->forAdmission($admission);
         $careOverview = $this->careOverviewService->forAdmission($admission, $medicationBoard);
-        $dischargeReadiness = $this->dischargeReadiness->forAdmission($admission, $medicationBoard);
+        $dischargeReadiness = $this->dischargeReadiness->forAdmission($admission, $medicationBoard, true, $careOverview);
         $dischargeSummaryPrefill = $this->dischargeSummaryPrefill->forAdmission($admission);
 
         return view('admissions.show', compact('admission', 'admissionBillingServices', 'medicalRecord', 'consultationSummary', 'medicationBoard', 'careOverview', 'dischargeReadiness', 'dischargeSummaryPrefill', 'availableTransferBeds', 'nursingAssignableUsers'));

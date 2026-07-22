@@ -35,7 +35,10 @@ class AdmissionMedicationBoardService
 
     public function forAdmission(Admission $admission): array
     {
-        $this->reminders->countsForAdmission($admission->id);
+        // Syncs medication-task statuses (side effect) BEFORE relations load so
+        // the loaded clinicalTask statuses are fresh; the counts are reused below
+        // instead of recomputing the same aggregates a second time.
+        $counts = $this->reminders->countsForAdmission($admission->id);
 
         $admission->loadMissing([
             'patient',
@@ -66,7 +69,7 @@ class AdmissionMedicationBoardService
             'admission' => $admission,
             'orders' => $orders,
             'schedules' => $schedules,
-            'counts' => $this->reminders->countsForAdmission($admission->id),
+            'counts' => $counts,
             'due_now' => $this->filterByTaskStatus($schedules, [ClinicalTask::STATUS_DUE]),
             'overdue' => $this->filterByTaskStatus($schedules, [ClinicalTask::STATUS_OVERDUE]),
             'upcoming' => $schedules->filter(fn ($s) => $s->clinicalTask?->status === ClinicalTask::STATUS_SCHEDULED && $s->scheduled_at->between(now(), now()->addMinutes(30)))->values(),

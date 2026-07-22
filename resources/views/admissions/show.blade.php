@@ -256,12 +256,12 @@
 </div>
 
 @cannot('ward.manage')
-{{-- @include('admissions.partials.simplified-activity-view') --}}
-<!-- @if(false) -->
+@include('admissions.partials.simplified-activity-view')
+@if(false)
 {{-- ═══════════════════════════════════════════════════════════════════════
      SIMPLIFIED WARD ACTIVITY VIEW — for Nurses and limited-access roles
 ═══════════════════════════════════════════════════════════════════════ --}}
-<!-- <div class="row g-3">
+<div class="row g-3">
     {{-- Medication administration --}}
     @can('admission.medication_board.view')
     <div class="col-12">
@@ -375,8 +375,9 @@
     </div>
     @endif
     @endif
-</div> -->
-<!-- @endif -->
+</div>
+@endif
+@else
 {{-- ═══════════════════════════════════════════════════════════════════════
      FULL MANAGEMENT VIEW — Doctors, Admin, Ward Manager, etc.
      Command bar (above) + stat tiles + full-width tabbed workspace

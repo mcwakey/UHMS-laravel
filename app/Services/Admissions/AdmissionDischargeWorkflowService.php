@@ -20,16 +20,41 @@ class AdmissionDischargeWorkflowService
 
     public function ensureClearances(Admission $admission): void
     {
-        foreach (AdmissionDischargeClearanceType::cases() as $type) {
-            AdmissionDischargeClearance::firstOrCreate([
-                'admission_id' => $admission->id,
-                'clearance_type' => $type->value,
-            ], [
-                'patient_id' => $admission->patient_id,
-                'visit_id' => $admission->visit_id,
-                'status' => AdmissionDischargeClearanceStatus::PENDING,
-            ]);
+        // Reuse the already eager-loaded relation when present; otherwise fetch
+        // once. This avoids the previous per-type firstOrCreate (7 selects +
+        // up to 7 inserts) on every page render.
+        $existing = $admission->relationLoaded('dischargeClearances')
+            ? $admission->dischargeClearances
+            : $admission->dischargeClearances()->get();
+
+        $existingTypes = $existing
+            ->map(fn ($clearance) => $clearance->clearance_type instanceof AdmissionDischargeClearanceType
+                ? $clearance->clearance_type->value
+                : $clearance->clearance_type)
+            ->all();
+
+        $missing = array_filter(
+            AdmissionDischargeClearanceType::cases(),
+            fn ($type) => ! in_array($type->value, $existingTypes, true),
+        );
+
+        if ($missing === []) {
+            return;
         }
+
+        $now = now();
+        AdmissionDischargeClearance::insert(array_map(fn ($type) => [
+            'admission_id' => $admission->id,
+            'clearance_type' => $type->value,
+            'patient_id' => $admission->patient_id,
+            'visit_id' => $admission->visit_id,
+            'status' => AdmissionDischargeClearanceStatus::PENDING->value,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ], array_values($missing)));
+
+        // Refresh so downstream reads (and the caller's loadMissing) see the new rows.
+        $admission->load(['dischargeClearances.clearedBy', 'dischargeClearances.revokedBy']);
     }
 
     public function startPlanning(Admission $admission, array $data, User $user): Admission
