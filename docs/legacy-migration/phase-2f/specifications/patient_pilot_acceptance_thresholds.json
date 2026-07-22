@@ -1,0 +1,58 @@
+{
+  "specification_version": "2F.1.0",
+  "phase": "2F",
+  "approved_source": {"connection": "legacy_uhms", "database": "uuhms", "read_only": true},
+  "approved_target": {"environment": "approved_non_production", "read_only": true, "production_forbidden": true},
+  "implementation_authorized": false,
+  "policy_authority": {"source": "APPROVED_DECISION_SPECIFICATIONS.md", "decision_register": "DECISIONS.md", "decisions": ["D-004", "D-005", "D-006", "D-007", "D-106", "D-201", "D-211", "D-212", "D-213"]},
+  "upstream_contracts": ["PATIENT-REC-ENTITY-001", "PATIENT-REC-CHAIN-100", "PATIENT-CHILD-REC-001", "INS-REC-015"],
+  "required_tolerance": 0,
+  "record_count": 6,
+  "records": [
+    {
+      "id": "PILOT-ACCEPT-001",
+      "class": "mandatory_zero_difference",
+      "required_percent": 100,
+      "requirements": ["cohort_rows_classified", "source_fields_classified", "direct_relationships_classified", "children_accounted", "insurance_rows_accounted", "exceptions_have_stable_codes", "quarantine_chains_have_one_valid_root", "target_collisions_have_deterministic_outcome", "checkpoints_match_durable_outcomes", "idempotency_keys_have_at_most_one_compatible_result"],
+      "difference": 0
+    },
+    {
+      "id": "PILOT-ACCEPT-002",
+      "class": "mandatory_safety_zero",
+      "required_zero": [
+        "source_writes", "target_writes_during_specification_or_dry_run", "automatic_patient_merges", "name_only_matches", "phone_only_matches", "opd_only_target_matches", "fuzzy_or_weighted_matches", "classic_primary_key_reuse", "duplicate_patient_numbers", "replacement_patient_numbers_on_rerun", "unexplained_patient_number_consumptions", "automatically_assigned_duplicate_opd_aliases", "alias_ownership_from_child_similarity", "existing_target_identity_changes", "existing_target_child_enrichment", "existing_target_membership_mutation", "soft_deleted_or_merged_target_mutation", "invented_patient_values", "invented_actors", "classic_password_role_permission_login_mapping", "invented_providers", "invented_member_policy_ccc_numbers", "coerced_guessed_replaced_truncated_or_swapped_dates", "fabricated_eligibility_or_verification", "verification_rows_or_actors", "duplicate_emergency_contacts", "multiple_migration_created_primary_contacts", "duplicate_patient_provider_memberships", "patient_provider_groups_with_more_than_one_current", "silent_source_row_loss", "insurance_rows_without_provenance", "claims_billing_payment_receivable_allocation_journal_or_accounting_projection", "prohibited_operational_service_calls", "queue_scheduler_notification_sms_email_events", "contact_search_side_effects", "billing_accounting_stock_pathway_or_bed_side_effects", "operational_audit_history_fabrication", "fallback_patient_registrar", "non_uuhms_classic_access", "raw_phi_in_artifacts", "raw_source_or_target_identifiers_in_artifacts", "row_level_tokens_or_dates_in_artifacts", "raw_remediation_member_contact_address_company_or_eligibility_values", "plain_low_entropy_hashes", "cross_domain_hmac_comparisons", "missing_or_wrong_version_root_tokens", "cross_chain_union_or_patient_reassignment", "children_released_before_parent", "unresolved_reconciliation_differences"
+      ]
+    },
+    {
+      "id": "PILOT-ACCEPT-003",
+      "class": "allowed_nonzero_classified_outcomes",
+      "outcomes": ["classified_expected_exceptions", "quarantined_or_remediation_pending_patients", "withheld_aliases", "withheld_optional_children", "successful_optional_absence", "suspected_duplicate_review_flags", "historical_only_insurance_rows", "provider_unresolved_or_ambiguous_insurance_rows", "unknown_date_or_expired_or_chronology_exception_insurance_rows", "exact_duplicate_insurance_provenance_rows", "conflicting_insurance_groups_withheld", "existing_target_immutable_evidence", "deterministically_withheld_target_collisions"],
+      "acceptance_conditions": ["matches scenario or stratum contract", "exactly one primary bucket", "stable codes owner SLA root and release condition", "source provenance complete", "no unsafe target projection", "equation difference and safety assertions equal zero"]
+    },
+    {
+      "id": "PILOT-ACCEPT-004",
+      "class": "verdict_hierarchy",
+      "verdicts": [
+        {"value": "FAIL_CLOSED", "condition": "privacy leak, write, drift, nonzero safety assertion, nonzero equation difference, unclassified outcome or missing provenance"},
+        {"value": "BLOCKED_PREREQUISITE", "condition": "safety and accounting pass but a mandatory target-representation or Phase 3 prerequisite is absent"},
+        {"value": "DRY_RUN_ACCEPTED_NOT_COMMIT_AUTHORIZED", "condition": "dry-run evidence complete, classified and exact with every safety gate passed"},
+        {"value": "COMMIT_PILOT_ELIGIBLE_AFTER_PHASE3_REVIEW", "condition": "reserved for a later reviewed Phase 3 foundation and commit-specific authorization; Phase 2F cannot emit this verdict"}
+      ]
+    },
+    {
+      "id": "PILOT-ACCEPT-005",
+      "class": "pilot_entry_criteria",
+      "future_dry_run_required": ["independently_reviewed_phase_2f_contract", "bounded_versioned_cohort_manifest", "dedicated_d101_select_metadata_only_uuhms_account", "exact_source_and_nonproduction_target_guards_and_fingerprints", "coordinated_read_only_snapshots", "approved_phase_2a_reference_and_phase_2b_actor_crosswalk_inputs", "protected_hmac_crosswalk_remediation_provenance_quarantine_reconciliation_and_audit_capabilities", "privacy_scan_and_aggregate_only_reporting", "target_collision_snapshot", "zero_write_dry_run_runtime"],
+      "future_commit_additional_required": ["phase_3_foundation_implemented_tested_and_independently_reviewed", "protected_required_field_and_name_remediation_for_each_candidate", "approved_coherent_patient_state_and_timestamp_tuple", "approved_insurance_member_type_is_active_is_primary_and_timestamp_representation", "migration_safe_patient_number_allocator", "migration_specific_atomic_persistence", "complete_side_effect_isolation", "idempotency_checkpoint_resume_and_compensation_tests", "fresh_precommit_collision_and_drift_checks", "no_critical_or_high_review_findings", "separate_explicit_commit_pilot_authorization"],
+      "phase_2f_entry_verdict": "NOT_AUTHORIZED_FOR_EXECUTION"
+    },
+    {
+      "id": "PILOT-ACCEPT-006",
+      "class": "pilot_exit_criteria",
+      "required": ["all_selected_roots_have_one_terminal_primary_disposition", "all_children_aliases_and_insurance_rows_reconcile_independently", "all_source_rows_have_provenance", "all_quarantines_have_one_valid_root_owner_sla_and_release_condition", "all_equation_differences_equal_zero", "all_mandatory_safety_counts_equal_zero", "all_expected_nonzero_outcomes_are_classified_and_not_reported_as_success", "existing_target_mutation_equals_zero", "rerun_and_resume_are_duplicate_free", "rollback_or_compensation_evidence_is_complete", "privacy_scan_has_zero_unallowlisted_findings", "independent_review_has_no_critical_or_high_finding"],
+      "dry_run_exit_verdict": "DRY_RUN_ACCEPTED_NOT_COMMIT_AUTHORIZED",
+      "commit_exit_verdict": "AVAILABLE_ONLY_AFTER_PHASE3_AND_SEPARATE_COMMIT_AUTHORIZATION"
+    }
+  ],
+  "privacy": {"contains_raw_phi": false, "contains_raw_source_or_target_identifiers": false, "repository_output": "aggregate-only"}
+}

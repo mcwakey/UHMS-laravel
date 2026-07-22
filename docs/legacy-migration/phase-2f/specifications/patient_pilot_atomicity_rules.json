@@ -1,0 +1,15 @@
+{
+  "specification_version":"2F.1.0","phase":"2F","approved_source":{"connection":"legacy_uhms","database":"uuhms","read_only":true},"approved_target":{"environment":"local","database":"uhms_clean","read_only":true,"production":false},
+  "upstream_contracts":["PATIENT-NUM-004","PATIENT-NUM-005","PATIENT-NUM-006","PATIENT-NUM-010","PATIENT-NUM-011","PATIENT-ALIAS-010","PATIENT-ALIAS-013","PATIENT-CHILD-CONTACT-002","PATIENT-CHILD-CONTACT-011","INS-CONS-001","INS-CONS-002","INS-CONS-012"],
+  "implementation_authorized":false,"privacy":{"contains_phi":false,"contains_raw_phi":false},"record_count":8,
+  "records":[
+    {"id":"PILOT-ATOM-001","unit":"A_PATIENT_CORE","rule":"crosswalk-first check, sequence lock/increment, patient insert, approved state, absence provenance, mapping, core reconciliation and checkpoint commit together or none succeeds","idempotency_required":true,"rollback":"transaction rollback before commit; no replacement number after commit"},
+    {"id":"PILOT-ATOM-002","unit":"A_EXISTING_TARGET_LINK","rule":"protected link, audit and zero-mutation proof commit together; target patient is never mutated","idempotency_required":true,"rollback":"ledger compensation only"},
+    {"id":"PILOT-ATOM-003","unit":"B_OPD_ALIAS","rule":"after parent success, alias row or durable withheld outcome, provenance, reconciliation and checkpoint are atomic","idempotency_required":true,"rollback":"Unit B only"},
+    {"id":"PILOT-ATOM-004","unit":"C_EMERGENCY_CONTACT","rule":"after parent success, valid contact, child provenance, one-primary reconciliation and checkpoint are atomic","idempotency_required":true,"rollback":"Unit C only; patient core remains"},
+    {"id":"PILOT-ATOM-005","unit":"D_INSURANCE_HISTORY","rule":"every source insurance row receives durable history/provenance before it is accounted","idempotency_required":true,"rollback":"group rollback or explicit pending intents; no source-row loss"},
+    {"id":"PILOT-ATOM-006","unit":"D_INSURANCE_CURRENT","rule":"complete history, patient/provider group, at-most-one current representation, outcome, reconciliation and checkpoint are atomic","idempotency_required":true,"rollback":"Unit D group only; unrelated target row immutable"},
+    {"id":"PILOT-ATOM-007","unit":"CROSS_RESOURCE_PROTOCOL","rule":"if protected ledgers are not on the same transactional resource, use a reviewed prepare/commit protocol with durable intent, unique keys, recovery proof and compensation state; otherwise atomicity must not be claimed","idempotency_required":true,"rollback":"protocol-specific, proven by crash injection"},
+    {"id":"PILOT-ATOM-008","unit":"OPERATIONAL_VISIBILITY","rule":"an incomplete patient must not become operationally visible; require environment isolation or owner-approved staging/activation semantics","idempotency_required":true,"rollback":"no universal hard delete","approval_state":"PHASE3_BLOCKER"}
+  ]
+}

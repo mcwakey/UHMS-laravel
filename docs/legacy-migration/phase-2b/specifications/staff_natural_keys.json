@@ -1,0 +1,125 @@
+{
+    "specification_version": "2B.1.0",
+    "phase": "Phase 2B â€” Staff Identity and Historical Attribution Mapping Specifications",
+    "generated_at_utc": "2026-07-21T19:11:40Z",
+    "approved_source": {
+        "connection": "legacy_uhms",
+        "schema": "uuhms",
+        "access": "read-only",
+        "expected_tables": 55,
+        "expected_columns": 479
+    },
+    "policy_authority": [
+        "D-202",
+        "D-008",
+        "Q-304"
+    ],
+    "privacy": {
+        "raw_staff_identity_values": false,
+        "credentials": false,
+        "permission_values": false,
+        "personal_contacts": false,
+        "phi": false
+    },
+    "implementation_authorized": false,
+    "record_count": 7,
+    "records": [
+        {
+            "id": "STAFF-NK-001",
+            "scope": "Classic extraction identity",
+            "fields": [
+                "uuhms.users.USER_ID"
+            ],
+            "purpose": "Deterministic source row extraction and protected linkage only.",
+            "automatic_identity_match": false,
+            "uniqueness": "Primary key confirmed.",
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-NK-002",
+            "scope": "Approved explicit crosswalk",
+            "fields": [
+                "protected classic USER_ID",
+                "protected target user ID",
+                "approval version"
+            ],
+            "purpose": "Highest matching rung.",
+            "automatic_identity_match": true,
+            "uniqueness": "One-to-one unless explicit reviewed many-source-to-one contract.",
+            "exception_code": "LEGACY-STAFF-MATCH-003"
+        },
+        {
+            "id": "STAFF-NK-003",
+            "scope": "Verified employment number",
+            "fields": [
+                "external protected issuer",
+                "external protected employee number"
+            ],
+            "purpose": "Employment match evidence.",
+            "automatic_identity_match": true,
+            "uniqueness": "Must be unique source and target.",
+            "exception_code": "LEGACY-STAFF-IDENTITY-002"
+        },
+        {
+            "id": "STAFF-NK-004",
+            "scope": "Verified professional registration",
+            "fields": [
+                "external protected regulator",
+                "external protected registration number"
+            ],
+            "purpose": "Employment/professional match evidence.",
+            "automatic_identity_match": true,
+            "uniqueness": "Must be unique and current/valid as defined by issuer.",
+            "exception_code": "LEGACY-STAFF-IDENTITY-002"
+        },
+        {
+            "id": "STAFF-NK-005",
+            "scope": "Verified organization email",
+            "fields": [
+                "external protected verified organization email"
+            ],
+            "purpose": "Lower matching rung, never login provisioning.",
+            "automatic_identity_match": true,
+            "uniqueness": "Unique verified source and target.",
+            "exception_code": "LEGACY-STAFF-TARGET-013"
+        },
+        {
+            "id": "STAFF-NK-006",
+            "scope": "Historical candidate technical key",
+            "fields": [
+                "source system code",
+                "classic USER_ID",
+                "mapping rule version"
+            ],
+            "purpose": "Generated non-login idempotency key, not identity proof or renewed PK.",
+            "automatic_identity_match": false,
+            "uniqueness": "Unique future migration mapping.",
+            "exception_code": "LEGACY-STAFF-TARGET-013"
+        },
+        {
+            "id": "STAFF-NK-007",
+            "scope": "Legacy Actor Unknown technical identity",
+            "fields": [
+                "constant LEGACY_ACTOR_UNKNOWN",
+                "environment-approved migration namespace"
+            ],
+            "purpose": "Exactly one controlled unknown actor candidate.",
+            "automatic_identity_match": false,
+            "uniqueness": "Exactly one target representation after Phase 3 approval.",
+            "exception_code": "LEGACY-STAFF-SECURITY-017"
+        }
+    ],
+    "protected_fingerprint_policy": {
+        "algorithm": "HMAC-SHA-256",
+        "domain_separation": "required per field group and purpose",
+        "key_source": "environment-controlled secret; never repository or report",
+        "key_version": "required",
+        "canonicalization_version": "required",
+        "cross_environment_comparison": "prohibited",
+        "raw_low_entropy_sha256": "prohibited"
+    },
+    "phase2b_evidence_references": [
+        "../../evidence/PHASE_2B_STAFF_QUERY_MANIFEST.json",
+        "../../evidence/PHASE_2B_STAFF_AGGREGATE_RESULTS.json"
+    ]
+}

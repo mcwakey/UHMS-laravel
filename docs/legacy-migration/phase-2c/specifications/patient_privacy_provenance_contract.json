@@ -1,0 +1,22 @@
+{
+  "specification_version":"2C.1.0","phase":"2C","approved_source":{"database":"uuhms"},"policy_authority":["D-106","D-201","D-209","D-213","Q-204"],"classification":"restricted patient identity migration data","implementation_authorized":false,
+  "prohibited_artifacts":["patient names","OPD values","phone values","email values","national identifiers","addresses","insurance numbers","clinical text","emergency-contact values","exact patient-derived DOB/date/time extrema","exact clinical-event timestamp extrema","plain result hashes over exact low-entropy patient/event extrema","raw crosswalk keys","row-level HMACs"],
+  "hmac":{"algorithm":"HMAC-SHA-256","key_location":"environment-controlled protected secret; never repository","key_version_required":true,"canonicalization_version_required":true,"cross_environment_comparison":false,"serialization":"length-prefixed UTF-8 with explicit type/null markers"},
+  "token_domains":[
+    {"id":"PATIENT-PRIV-001","domain":"patient-source-key-v1","purpose":"protected Classic source identity"},
+    {"id":"PATIENT-PRIV-002","domain":"patient-row-content-v1","purpose":"24-column snapshot/update detection"},
+    {"id":"PATIENT-PRIV-003","domain":"legacy-opd-comparison-v1","purpose":"protected duplicate/collision grouping"},
+    {"id":"PATIENT-PRIV-004","domain":"patient-name-review-v1","purpose":"protected duplicate-review signal only"},
+    {"id":"PATIENT-PRIV-005","domain":"patient-phone-review-v1","purpose":"protected quality/review signal only"},
+    {"id":"PATIENT-PRIV-006","domain":"target-patient-immutability-v1","purpose":"same-environment pre/post target comparison"},
+    {"id":"PATIENT-PRIV-007","domain":"legacy-patient-chain-v1","purpose":"opaque patient-root quarantine chain"},
+    {"id":"PATIENT-PRIV-008","domain":"legacy-attendance-chain-v1","purpose":"opaque orphan-attendance chain"},
+    {"id":"PATIENT-PRIV-009","domain":"legacy-insurance-chain-v1","purpose":"opaque orphan-insurance chain"},
+    {"id":"PATIENT-PRIV-010","domain":"legacy-bed-occupancy-chain-v1","purpose":"opaque unresolved patient-specific bed-occupancy subchain; never bed master identity"},
+    {"id":"PATIENT-PRIV-011","domain":"legacy-claim-chain-v1","purpose":"opaque claim-rooted subchain when attendance root is unresolved or separately held"},
+    {"id":"PATIENT-PRIV-012","domain":"legacy-patient-child-subchain-v1","purpose":"opaque other-child subchain for unresolved/conflicting parent paths"}
+  ],
+  "controls":["aggregate-only repository evidence","date/time evidence uses counts/coarse predicates in source control; exact extrema remain protected or hash-only","separate protected migration audit","no Spatie operational activity for historical facts","no archive payload duplication","no profile-view/break-glass events","no raw values in logs/screenshots/fixtures/prompts","fail closed on lost key/version or provenance mismatch"],
+  "exception_code":"LEGACY-PATIENT-PRIVACY-036",
+  "reconciliation_id":"PATIENT-REC-PRIVACY-050"
+}

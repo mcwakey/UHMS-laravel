@@ -1,0 +1,15 @@
+{
+  "specification_version":"2D.1.0","phase":"2D","approved_source":{"database":"uuhms","table":"patients","column":"MaritalStatus"},"target":{"field":"patients.marital_status","database_nullable":true,"enum":"App.Enums.MaritalStatus","enum_values":["single","married","divorced","widowed"]},"implementation_authorized":false,"record_count":4,
+  "records":[
+    {"id":"PATIENT-CHILD-MARITAL-XW-001","source_safe_category":"SINGLE","target":"single","state":"exact semantic match","aggregate_count":8240,"exception_code":null},
+    {"id":"PATIENT-CHILD-MARITAL-XW-002","source_safe_category":"MARRIED","target":"married","state":"exact semantic match","aggregate_count":6976,"exception_code":null},
+    {"id":"PATIENT-CHILD-MARITAL-XW-003","source_safe_category":"WIDOW(ER)","target":"widowed","state":"approved technical semantic normalization","aggregate_count":353,"exception_code":null},
+    {"id":"PATIENT-CHILD-MARITAL-XW-004","source_safe_category":"__BLANK__","target":null,"state":"blank/null absence","aggregate_count":1381,"exception_code":"LEGACY-PATIENT-CHILD-MARITAL-025"}
+  ],
+  "unobserved_categories":{"separated":"withhold; no target enum member","cohabiting":"withhold; no target enum member","child_or_minor":"withhold; not a marital-status inference","misspelling":"withhold unless a later versioned crosswalk explicitly lists it","combined":"withhold","unknown":"withhold","divorced":"target-supported but not observed in captured source allow-list"},
+  "fail_closed_rule":"Every nonblank value not exactly present in this versioned source crosswalk is field-level withheld; it is never defaulted or silently converted to null.",
+  "fail_closed_exception_codes":["LEGACY-PATIENT-CHILD-MARITAL-026","LEGACY-PATIENT-CHILD-MARITAL-027","LEGACY-PATIENT-CHILD-TARGET-028","LEGACY-PATIENT-CHILD-TEXT-029","LEGACY-PATIENT-CHILD-TEXT-030"],
+  "parent_exception_codes":["LEGACY-PATIENT-CHILD-PARENT-001","LEGACY-PATIENT-CHILD-PARENT-002"],
+  "extraction_exception_code":"LEGACY-PATIENT-CHILD-EXTRACT-033",
+  "existing_target":"immutable comparison evidence only","existing_target_exception_code":"LEGACY-PATIENT-CHILD-TARGET-036","privacy":{"contains_raw_phi":false}
+}

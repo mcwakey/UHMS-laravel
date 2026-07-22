@@ -1,0 +1,105 @@
+{
+  "specification_version": "2E.1.0",
+  "phase": "2E",
+  "approved_source": {
+    "connection": "legacy_uhms",
+    "database": "uuhms",
+    "read_only": true
+  },
+  "implementation_authorized": false,
+  "policy_authority": {
+    "source": "APPROVED_DECISION_SPECIFICATIONS.md",
+    "decision_register": "DECISIONS.md",
+    "decisions": ["D-205", "D-206", "D-207", "D-212"],
+    "questions": ["Q-004", "Q-005", "Q-009", "Q-301"]
+  },
+  "upstream_contracts": [
+    "phase-2a.reference_natural_keys:NK-004",
+    "phase-2a.reference_extraction_strategies:EXTRACT-SETT_PRIVATE",
+    "phase-2a.reference_reconciliation_contracts:RECON-SETT_PRIVATE",
+    "phase-2c.patient_relationship_rules:PATIENT-REL-003",
+    "phase-2c.patient_sentinel_rules:PATIENT-SENT-003",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-REL-003",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-001",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-022",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-007",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-009",
+    "phase-2c.existing_target_patient_rules:PATIENT-TARGET-009",
+    "phase-2d.patient_child_relationship_rules:PATIENT-CHILD-REL-005",
+    "phase-2d.patient_child_extraction_strategies:PATIENT-CHILD-EXT-001",
+    "phase-2d.patient_child_privacy_provenance_contract:PATIENT-CHILD-PRIV-010"
+  ],
+  "installed_aggregate": {
+    "small_cell_policy": "suppress nonzero counts below 10 because synthetic/de-identification status is not evidenced",
+    "memberships": "SUPPRESSED_LT_10",
+    "providers": "SUPPRESSED_LT_10",
+    "verification_rows": "SUPPRESSED_LT_10",
+    "duplicate_patient_provider_groups": 0,
+    "patients_with_multiple_primary_rows": 0
+  },
+  "record_count": 10,
+  "records": [
+    {
+      "id": "INS-TARGET-001",
+      "condition": "no target membership in group",
+      "action": "candidate may proceed only for a newly migrated patient after all prerequisites; an explicitly linked pre-existing target patient remains evidence-only",
+      "allowed_change": false
+    },
+    {
+      "id": "INS-TARGET-002",
+      "condition": "target membership exists and protected prior-run lineage matches",
+      "action": "idempotent comparison only; Phase 3 may define no-op",
+      "allowed_change": false
+    },
+    {
+      "id": "INS-TARGET-003",
+      "condition": "target membership exists without verified lineage",
+      "action": "immutable conflict/evidence only",
+      "allowed_change": false,
+      "exception_code": "LEGACY-INSURANCE-TARGET-030"
+    },
+    {
+      "id": "INS-TARGET-004",
+      "condition": "member number differs",
+      "action": "no overwrite/clear/merge",
+      "allowed_change": false
+    },
+    {
+      "id": "INS-TARGET-005",
+      "condition": "provider/patient differs",
+      "action": "no reassignment",
+      "allowed_change": false
+    },
+    {
+      "id": "INS-TARGET-006",
+      "condition": "duplicate target patient/provider state",
+      "action": "stop",
+      "allowed_change": false,
+      "exception_code": "LEGACY-INSURANCE-TARGET-032"
+    },
+    {
+      "id": "INS-TARGET-007",
+      "rule": "No soft-delete assumption: installed patient_insurances has no soft-delete column."
+    },
+    {
+      "id": "INS-TARGET-008",
+      "rule": "Refresh sanitized target collision snapshot before every execution; Phase 2E snapshot is evidence only."
+    },
+    {
+      "id": "INS-TARGET-009",
+      "rule": "Phase 2C prohibits general child enrichment for an explicitly linked existing target patient; no membership create/update/delete is authorized.",
+      "exception_code": "LEGACY-INSURANCE-TARGET-040"
+    },
+    {
+      "id": "INS-TARGET-010",
+      "condition": "claimed prior migration lineage is missing, mismatched, stale or non-verifiable",
+      "action": "idempotency failure; stop and retain evidence only",
+      "allowed_change": false,
+      "exception_code": "LEGACY-INSURANCE-TARGET-041"
+    }
+  ],
+  "privacy": {
+    "contains_raw_phi": false,
+    "repository_output": "aggregate-only"
+  }
+}

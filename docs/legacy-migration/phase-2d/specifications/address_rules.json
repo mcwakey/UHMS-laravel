@@ -1,0 +1,16 @@
+{
+  "specification_version":"2D.1.0","phase":"2D","approved_source":{"database":"uuhms","table":"patients","column":"Address"},"target":{"field":"patients.address","database_type":"text","operational_max":500},"implementation_authorized":false,"record_count":11,
+  "records":[
+    {"id":"PATIENT-CHILD-ADDR-001","rule":"Address is one unstructured patient-address candidate mapped only to patients.address."},
+    {"id":"PATIENT-CHILD-ADDR-002","rule":"Decode latin1, NFC and outer-trim; preserve internal display text; comparison whitespace collapse only."},
+    {"id":"PATIENT-CHILD-ADDR-003","rule":"Blank maps null plus absence provenance.","exception_codes":["LEGACY-PATIENT-CHILD-ADDR-018"]},
+    {"id":"PATIENT-CHILD-ADDR-004","rule":"Reject decode failure, controls/noncharacters and values over operational max 500 at field level.","exception_codes":["LEGACY-PATIENT-CHILD-ADDR-019","LEGACY-PATIENT-CHILD-ADDR-020","LEGACY-PATIENT-CHILD-TEXT-029","LEGACY-PATIENT-CHILD-TEXT-030"]},
+    {"id":"PATIENT-CHILD-ADDR-005","rule":"Do not parse, geocode, split punctuation or infer city, town, region, postal code or digital address."},
+    {"id":"PATIENT-CHILD-ADDR-006","rule":"Do not copy organisation address into a patient address."},
+    {"id":"PATIENT-CHILD-ADDR-007","rule":"Address is prohibited for patient identity, matching and deduplication."},
+    {"id":"PATIENT-CHILD-ADDR-008","rule":"Existing target address and locality fields are immutable; record protected comparison only.","exception_codes":["LEGACY-PATIENT-CHILD-TARGET-036"]},
+    {"id":"PATIENT-CHILD-ADDR-009","rule":"Raw address is protected; repository/log output is aggregate only.","exception_codes":["LEGACY-PATIENT-CHILD-PRIVACY-034","LEGACY-PATIENT-CHILD-PRIVACY-035"]},
+    {"id":"PATIENT-CHILD-ADDR-010","rule":"Parent unresolved or quarantined holds the field under the patient root.","exception_codes":["LEGACY-PATIENT-CHILD-PARENT-001","LEGACY-PATIENT-CHILD-PARENT-002"]},
+    {"id":"PATIENT-CHILD-ADDR-011","rule":"Extraction/snapshot failure withholds the field and root until reproducible.","exception_codes":["LEGACY-PATIENT-CHILD-EXTRACT-033"]}
+  ],"privacy":{"contains_raw_phi":false,"classification":"protected contact/location"}
+}

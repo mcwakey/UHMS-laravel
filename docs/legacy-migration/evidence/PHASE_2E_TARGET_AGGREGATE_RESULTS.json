@@ -1,0 +1,188 @@
+{
+  "result_version": "2E.TARGET.1.0",
+  "phase": "2E",
+  "query_manifest": "docs/legacy-migration/evidence/PHASE_2E_TARGET_QUERY_MANIFEST.json",
+  "captured_at_utc": "2026-07-21T22:44:37.578830Z",
+  "capture_status": "complete_read_only_suppression_safe",
+  "target": {
+    "environment": "local",
+    "database": "uhms_clean",
+    "database_version": "10.4.32-MariaDB",
+    "session_transaction_read_only": true,
+    "transaction_completion": "ROLLBACK",
+    "schema_fingerprint": "12e3a4c6ca80a0c1a54ea9267d9c4935453b7a36d27c7f8ad900062c1c12bff0",
+    "schema_fingerprint_match": true
+  },
+  "suppression": {
+    "marker": "SUPPRESSED_LT_10",
+    "threshold": 10,
+    "rule": "Every nonzero patient/provider/membership/verification population below 10 is suppressed. Zero and safe installed schema/enum/reference facts are publishable.",
+    "exact_suppressed_values_retained_in_repository": false,
+    "hash_disclosure_control": "All result hashes cover only the public suppression-safe representation and cannot be used to enumerate an exact suppressed count."
+  },
+  "results": {
+    "guard": {
+      "database_name": "uhms_clean",
+      "database_version": "10.4.32-MariaDB",
+      "session_read_only": true,
+      "captured_at_utc": "2026-07-21T22:44:37.578830Z"
+    },
+    "membership_population": {
+      "total": "SUPPRESSED_LT_10",
+      "active_count": "SUPPRESSED_LT_10",
+      "primary_count": "SUPPRESSED_LT_10",
+      "tier_null_count": "SUPPRESSED_LT_10",
+      "start_date_null_count": "SUPPRESSED_LT_10",
+      "expiry_date_null_count": "SUPPRESSED_LT_10",
+      "reversed_date_count": 0
+    },
+    "membership_groups": {
+      "duplicate_patient_provider_groups": 0,
+      "multiple_primary_patient_groups": 0
+    },
+    "member_collisions": {
+      "blank_count": "SUPPRESSED_LT_10",
+      "nonblank_count": "SUPPRESSED_LT_10",
+      "normalized_duplicate_groups": 0,
+      "cross_patient_duplicate_groups": 0,
+      "cross_provider_duplicate_groups": 0
+    },
+    "provider_state": {
+      "total": "SUPPRESSED_LT_10",
+      "active_count": "SUPPRESSED_LT_10",
+      "default_count": "SUPPRESSED_LT_10",
+      "missing_type_fk_count": 0,
+      "missing_code_count": 0,
+      "duplicate_name_type_groups": 0
+    },
+    "type_state": {
+      "total": "SUPPRESSED_LT_10",
+      "active_count": "SUPPRESSED_LT_10"
+    },
+    "tier_state": {
+      "total": 11,
+      "active_count": 11,
+      "default_count": "SUPPRESSED_LT_10",
+      "providers_multiple_default_tiers": 0,
+      "providers_without_default_tier": 0,
+      "membership_tier_provider_mismatches": 0
+    },
+    "verification_state": {
+      "total": "SUPPRESSED_LT_10",
+      "missing_actor_count": 0,
+      "missing_time_count": 0
+    },
+    "structural_absence": {
+      "soft_delete_columns": 0,
+      "insurance_scheme_plan_tables": 0,
+      "membership_scheme_plan_eligibility_columns": 0
+    },
+    "column_fingerprint": {
+      "item_count": 95,
+      "sha256": "3176bb8e634f07bcc3720394710e0e24a42389bbf1f963b803a3af0e8c2b1a2a"
+    },
+    "constraint_fingerprint": {
+      "item_count": 18,
+      "sha256": "74f729c19eea0dc3a8624fc3888617e827feaf2bf444c0054bacc6dc5f74ee84"
+    },
+    "index_fingerprint": {
+      "item_count": 22,
+      "sha256": "62fd6871939841c3c0b8d14edfff586c8e3aa4db08bef00802720f421a2c1113"
+    },
+    "safe_reference_values": [
+      {
+        "domain": "insurance_type_code",
+        "value": "CORPORATE"
+      },
+      {
+        "domain": "insurance_type_code",
+        "value": "NHIA"
+      },
+      {
+        "domain": "insurance_type_code",
+        "value": "PRIVATE"
+      },
+      {
+        "domain": "insurance_type_code",
+        "value": "SELF"
+      },
+      {
+        "domain": "member_type_native_enum",
+        "value": "beneficiary"
+      },
+      {
+        "domain": "member_type_native_enum",
+        "value": "holder"
+      },
+      {
+        "domain": "provider_type_enum_compatible",
+        "value": "corporate"
+      },
+      {
+        "domain": "provider_type_enum_compatible",
+        "value": "nhia"
+      },
+      {
+        "domain": "provider_type_enum_compatible",
+        "value": "private"
+      },
+      {
+        "domain": "provider_type_enum_compatible",
+        "value": "self"
+      }
+    ]
+  },
+  "interpretation": {
+    "soft_delete_applicable": false,
+    "scheme_plan_destination": "No installed dedicated insurance scheme/plan table or patient-membership scheme/plan column; insurance_tiers must not be assumed equivalent without a provider-scoped approved crosswalk.",
+    "patient_membership_eligibility_or_verification_status_columns": 0,
+    "installed_safe_verification_enum_cases": ["pending", "valid", "invalid", "expired", "not_required", "error", "manual_override"],
+    "raw_values_published": 0,
+    "operational_events_created_by_capture": 0
+  },
+  "confirmed_constraints": {
+    "patient_provider_unique": "patient_insurance_unique(patient_id, insurance_provider_id)",
+    "patient_fk": "patient_insurances.patient_id -> patients.id; ON DELETE CASCADE",
+    "provider_fk": "patient_insurances.insurance_provider_id -> insurance_providers.id; ON DELETE CASCADE",
+    "tier_fk": "patient_insurances.insurance_tier_id -> insurance_tiers.id; nullable; ON DELETE SET NULL",
+    "card_holder_fk": "patient_insurances.card_holder_insurance_id -> patient_insurances.id; nullable; ON DELETE SET NULL",
+    "member_type": "native enum(holder, beneficiary); default holder",
+    "active_default": "patient_insurances.is_active defaults true",
+    "one_primary_per_patient": "service-only; no installed unique constraint",
+    "tier_belongs_to_provider": "service-only; no composite installed foreign key",
+    "membership_history_structure": "absent",
+    "database_triggers": 0
+  },
+  "result_hashes": {
+    "guard": "1cff3e2c7fa812cba7fdd78fe7bd4783615ce2e788a7d0ecda4f53caa74d1be5",
+    "membership_population": "b510b3223f4fecc9b8a0a89bdbf782f2884f40dcc46d8321cd00d032b8bc7f6d",
+    "membership_groups": "916ee8c1a783e0a1bce7d241ff82e3ff3697f7e79bdb5b5a109473407e2cd85d",
+    "member_collisions": "cc54f99f502c03649884c2f5a21fe395f11cae01d1aaaba9dfd18bfab36449d1",
+    "provider_state": "dd84045d5e31062f97b6d3df5f60fdb87334ddcad29de0bcf67d246f74df3726",
+    "type_state": "db61755f32e95bdc8c5f101c51fc0578260d10d147f1ed3611e076a5b488df97",
+    "tier_state": "9f175e3caab77322bdfe03a4ec643a2716c0f2b909a0b0c3f59837079fa5c77a",
+    "verification_state": "2af89924c0ad20cb2a988e43613c9d2c5ea45dee86a317a0ec3a127d8391e0f4",
+    "structural_absence": "3ff7a9e9cbff3419abfc57ca881be3f3cde1fac231c46419e3b21445cd68682b",
+    "column_fingerprint": "e7646e8d87905303d91b026d40de00167e4231bb0b0c2a1ec6ea9c3fcb68cddb",
+    "constraint_fingerprint": "e8325efdb8b208212fcfbadd74f73df8cdf4a2f7662e397e4c1920539b1753a3",
+    "index_fingerprint": "ce7b693db4dd009abd951df986c25ff6f056b56dcc43fdea5a81cfdadc266602",
+    "safe_reference_values": "240fe5c13f5f20383582af9d3bd45ac6f7033bdb04d1133f2a7d901224b45feb"
+  },
+  "bundle_identity": {
+    "implementation_sha256": "6ad57bffb356b0156bc617629940d61fdae251cbdf41f34d1499bfecaa0d0b94",
+    "content_sha256": "03f37f6f4f33071298074497dedf5bacfeb72e7b8424c14a4eeb2df92c6997ff",
+    "capture_instance_sha256": "a09eaf1c5da9192bf782358eec513677fe92f92ad72cef17a29a2176810c222e",
+    "canonicalization": "Recursive lexicographic object keys; stable arrays; UTF-8; unescaped Unicode/slashes; no insignificant whitespace. Content identity binds implementation, normalized query hashes, public result hashes and target fingerprint; capture instance additionally binds capture time."
+  },
+  "privacy_and_safety": {
+    "small_cell_suppression_passed": true,
+    "raw_target_ids": 0,
+    "patient_or_member_values": 0,
+    "provider_names": 0,
+    "row_level_dates": 0,
+    "row_tokens_or_hmacs": 0,
+    "credentials": 0,
+    "classic_queries": 0,
+    "database_writes": 0
+  }
+}

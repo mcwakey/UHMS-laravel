@@ -1,0 +1,77 @@
+{
+  "specification_version": "2E.1.0",
+  "phase": "2E",
+  "approved_source": {
+    "connection": "legacy_uhms",
+    "database": "uuhms",
+    "read_only": true
+  },
+  "implementation_authorized": false,
+  "policy_authority": {
+    "source": "APPROVED_DECISION_SPECIFICATIONS.md",
+    "decision_register": "DECISIONS.md",
+    "decisions": ["D-205", "D-206", "D-207", "D-212"],
+    "questions": ["Q-004", "Q-005", "Q-009", "Q-301"]
+  },
+  "upstream_contracts": [
+    "phase-2a.reference_natural_keys:NK-004",
+    "phase-2a.reference_extraction_strategies:EXTRACT-SETT_PRIVATE",
+    "phase-2a.reference_reconciliation_contracts:RECON-SETT_PRIVATE",
+    "phase-2c.patient_relationship_rules:PATIENT-REL-003",
+    "phase-2c.patient_sentinel_rules:PATIENT-SENT-003",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-REL-003",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-001",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-022",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-007",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-009",
+    "phase-2c.existing_target_patient_rules:PATIENT-TARGET-009",
+    "phase-2d.patient_child_relationship_rules:PATIENT-CHILD-REL-005",
+    "phase-2d.patient_child_extraction_strategies:PATIENT-CHILD-EXT-001",
+    "phase-2d.patient_child_privacy_provenance_contract:PATIENT-CHILD-PRIV-010"
+  ],
+  "population": {
+    "patients": 16950,
+    "nonblank": 5298,
+    "blank": 11652
+  },
+  "record_count": 5,
+  "records": [
+    {
+      "id": "INS-COMPANY-001",
+      "value_class": "blank",
+      "outcome": "not evidenced",
+      "creates_membership": false
+    },
+    {
+      "id": "INS-COMPANY-002",
+      "value_class": "single Classic provider name/short-name diagnostic candidate",
+      "outcome": "evidence only; may corroborate only through INSURANCE-COMPANY-TO-PROVIDER-PROJECTION-V1 and an approved Phase 2A target-provider crosswalk",
+      "creates_membership": false
+    },
+    {
+      "id": "INS-COMPANY-003",
+      "value_class": "unmatched",
+      "outcome": "classified exception",
+      "creates_membership": false,
+      "exception_code": "LEGACY-INSURANCE-PROVIDER-007"
+    },
+    {
+      "id": "INS-COMPANY-004",
+      "value_class": "ambiguous",
+      "outcome": "quarantine affected membership group",
+      "creates_membership": false,
+      "exception_code": "LEGACY-INSURANCE-PROVIDER-008"
+    },
+    {
+      "id": "INS-COMPANY-005",
+      "value_class": "conflicts with insurance.Company",
+      "outcome": "conflict review; source values preserved",
+      "creates_membership": false,
+      "exception_code": "LEGACY-INSURANCE-PROVIDER-010"
+    }
+  ],
+  "privacy": {
+    "contains_raw_phi": false,
+    "repository_output": "aggregate-only"
+  }
+}

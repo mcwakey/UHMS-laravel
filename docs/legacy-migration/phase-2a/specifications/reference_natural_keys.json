@@ -1,0 +1,533 @@
+{
+    "specification_version":  "2A.1.0",
+    "normalization_policy":  "Comparison normalization never overwrites protected raw provenance. No fuzzy matching or name-only merge is automatic.",
+    "natural_keys":  [
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-001",
+                             "domain":  "organisation-settings",
+                             "source_table":  "hospitalinfo",
+                             "source_columns":  [
+                                                    "ID"
+                                                ],
+                             "canonicalization":  "Single captured row plus approved settings key; not a business natural key",
+                             "known_duplicate_groups":  0,
+                             "known_duplicate_rows":  0,
+                             "target_existing_match_rule":  "Configure against unique settings(group,key); conflicts require governance review.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-002",
+                             "domain":  "department",
+                             "source_table":  "departements",
+                             "source_columns":  [
+                                                    "Departement"
+                                                ],
+                             "canonicalization":  "NFC(trim/collapse whitespace/casefold name) plus approved mapped type; generated target code is configuration, never source identity",
+                             "known_duplicate_groups":  null,
+                             "known_duplicate_rows":  null,
+                             "target_existing_match_rule":  "Exact target code mapping first; normalized name/type is review-only where multiple candidates exist.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-003",
+                             "domain":  "specialty",
+                             "source_table":  "claims_specialty",
+                             "source_columns":  [
+                                                    "SpecDesc",
+                                                    "SpecCode"
+                                                ],
+                             "canonicalization":  "Approved explicit specialty crosswalk; source code alone is unsafe because OPDC is reused",
+                             "known_duplicate_groups":  1,
+                             "known_duplicate_rows":  2,
+                             "target_existing_match_rule":  "Do not seed the claims classification table wholesale; nonclinical classifications remain evidence/exceptions.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-004",
+                             "domain":  "insurance-provider",
+                             "source_table":  "sett_private",
+                             "source_columns":  [
+                                                    "PrivateName",
+                                                    "PrivateType"
+                                                ],
+                             "canonicalization":  "NFC/trim/collapse/casefold name plus mapped provider type; punctuation remains significant",
+                             "known_duplicate_groups":  5,
+                             "known_duplicate_rows":  10,
+                             "target_existing_match_rule":  "38 rows form 33 normalized keys; many-source-to-one requires an approved duplicate group and individual provenance.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-005",
+                             "domain":  "service",
+                             "source_table":  "services",
+                             "source_columns":  [
+                                                    "Departement",
+                                                    "Service"
+                                                ],
+                             "canonicalization":  "Department crosswalk plus NFC/trim/collapse/casefold service name",
+                             "known_duplicate_groups":  5,
+                             "known_duplicate_rows":  10,
+                             "target_existing_match_rule":  "14 incomplete rows; normalized service name alone has 7 duplicate groups/16 rows. Never auto-merge.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-006",
+                             "domain":  "investigation-header",
+                             "source_table":  "serv_group",
+                             "source_columns":  [
+                                                    "SERV_ID",
+                                                    "GroupName"
+                                                ],
+                             "canonicalization":  "Mapped service plus normalized nonblank group name",
+                             "known_duplicate_groups":  14,
+                             "known_duplicate_rows":  36,
+                             "target_existing_match_rule":  "90 incomplete rows; source GROUP_ID remains mapping identity.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-007",
+                             "domain":  "investigation-criterion",
+                             "source_table":  "serv_criterias",
+                             "source_columns":  [
+                                                    "GROUP_ID",
+                                                    "Criteria"
+                                                ],
+                             "canonicalization":  "Mapped header plus normalized nonblank criterion name; sort is ordering, not identity",
+                             "known_duplicate_groups":  3,
+                             "known_duplicate_rows":  10,
+                             "target_existing_match_rule":  "12 incomplete rows; 7 zero parent sentinels are exceptions.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-008",
+                             "domain":  "criterion-option",
+                             "source_table":  "serv_options_cri",
+                             "source_columns":  [
+                                                    "CRI_ID",
+                                                    "OptionCri"
+                                                ],
+                             "canonicalization":  "Mapped criterion plus normalized option and multiplicity ordinal computed inside canonical sorted multiset",
+                             "known_duplicate_groups":  2,
+                             "known_duplicate_rows":  8,
+                             "target_existing_match_rule":  "All OPTC_ID values are zero and all 20 parent joins are orphaned; no row is creatable until resolved.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-009",
+                             "domain":  "service-option",
+                             "source_table":  "serv_options_out",
+                             "source_columns":  [
+                                                    "SERV_ID",
+                                                    "OptionOut"
+                                                ],
+                             "canonicalization":  "Mapped service plus normalized option and multiplicity ordinal",
+                             "known_duplicate_groups":  1,
+                             "known_duplicate_rows":  12,
+                             "target_existing_match_rule":  "20 incomplete rows; option semantics remain deferred.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-010",
+                             "domain":  "complaint",
+                             "source_table":  "list_complaints",
+                             "source_columns":  [
+                                                    "Complaint"
+                                                ],
+                             "canonicalization":  "NFC/trim/collapse/casefold complaint text",
+                             "known_duplicate_groups":  366,
+                             "known_duplicate_rows":  900,
+                             "target_existing_match_rule":  "12 incomplete rows; duplicates may crosswalk many-to-one only after exact canonical equality and target review.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-011",
+                             "domain":  "diagnosis",
+                             "source_table":  "list_diagnosis",
+                             "source_columns":  [
+                                                    "Icd10",
+                                                    "Diagnosis"
+                                                ],
+                             "canonicalization":  "Validated uppercase ICD code plus normalized description; source ID is authoritative linkage",
+                             "known_duplicate_groups":  485,
+                             "known_duplicate_rows":  1205,
+                             "target_existing_match_rule":  "2,522 incomplete rows. A code match with conflicting description is not an automatic merge.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-012",
+                             "domain":  "procedure",
+                             "source_table":  "list_procedures",
+                             "source_columns":  [
+                                                    "Gdrg",
+                                                    "Operation"
+                                                ],
+                             "canonicalization":  "Preserved code plus normalized operation name and approved category",
+                             "known_duplicate_groups":  1,
+                             "known_duplicate_rows":  2,
+                             "target_existing_match_rule":  "At least one incomplete name; category and price semantics must be approved.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-013",
+                             "domain":  "product",
+                             "source_table":  "medicine",
+                             "source_columns":  [
+                                                    "MedCode",
+                                                    "MedName",
+                                                    "MedType",
+                                                    "Serve"
+                                                ],
+                             "canonicalization":  "Unique nonblank preserved code is preferred; otherwise normalized name/type/approved unit is manual-review only",
+                             "known_duplicate_groups":  2,
+                             "known_duplicate_rows":  4,
+                             "target_existing_match_rule":  "Name and code completeness are poor, and unit mapping is unresolved; never accept target default unit.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-014",
+                             "domain":  "drug-companion",
+                             "source_table":  "medicine",
+                             "source_columns":  [
+                                                    "MED_ID"
+                                                ],
+                             "canonicalization":  "Exactly one optional target drugs row per mapped product when type=DRUG and all mandatory drug fields resolve",
+                             "known_duplicate_groups":  null,
+                             "known_duplicate_rows":  null,
+                             "target_existing_match_rule":  "Target lacks uniqueness on drugs.product_id; preflight must enforce zero-or-one existing companion.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-015",
+                             "domain":  "supplier",
+                             "source_table":  "suppliers",
+                             "source_columns":  [
+                                                    "SuppName"
+                                                ],
+                             "canonicalization":  "NFC/trim/collapse/casefold trading/legal name as a review queue key only",
+                             "known_duplicate_groups":  null,
+                             "known_duplicate_rows":  null,
+                             "target_existing_match_rule":  "Name-only auto-merge and contact overwrite are prohibited.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-016",
+                             "domain":  "stock-location",
+                             "source_table":  null,
+                             "source_columns":  [
+
+                                                ],
+                             "canonicalization":  "Explicit configured target ID for Main Store and Pharmacy",
+                             "known_duplicate_groups":  0,
+                             "known_duplicate_rows":  0,
+                             "target_existing_match_rule":  "Validate active, distinct IDs and exactly one approved main store; Classic snapshot row IDs are not locations.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Configured",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "configuration_inputs":  [
+                                                          "approved target facility context",
+                                                          "logical location type",
+                                                          "approved target location name/id"
+                                                      ],
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-017",
+                             "domain":  "ward",
+                             "source_table":  null,
+                             "source_columns":  [
+
+                                                ],
+                             "canonicalization":  "Explicit target ward code; no Classic ward master exists",
+                             "known_duplicate_groups":  0,
+                             "known_duplicate_rows":  0,
+                             "target_existing_match_rule":  "No ward may be inferred from BedName or description.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Configured",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "configuration_inputs":  [
+                                                          "approved target facility context",
+                                                          "target ward code"
+                                                      ],
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-018",
+                             "domain":  "bed",
+                             "source_table":  "beds",
+                             "source_columns":  [
+                                                    "BedName"
+                                                ],
+                             "canonicalization":  "Approved ward assignment plus NFC/trim bed number",
+                             "known_duplicate_groups":  null,
+                             "known_duplicate_rows":  null,
+                             "target_existing_match_rule":  "All 18 require ward assignment; occupancy fields do not participate.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "required_dependency":  [
+                                                         "approved target ward_id"
+                                                     ],
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-019",
+                             "domain":  "account-category",
+                             "source_table":  "acc_titles",
+                             "source_columns":  [
+                                                    "Title",
+                                                    "ExpInc"
+                                                ],
+                             "canonicalization":  "NFC/trim/collapse/casefold title plus exact INC/EXP mapped type",
+                             "known_duplicate_groups":  3,
+                             "known_duplicate_rows":  20,
+                             "target_existing_match_rule":  "31 rows yield 13 distinct nonblank keys and one blank title; match target categories, do not default to miscellaneous.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         },
+                         {
+                             "specification_version":  "2A.1.0",
+                             "natural_key_id":  "NK-020",
+                             "domain":  "bank-account",
+                             "source_table":  "bank",
+                             "source_columns":  [
+                                                    "AccNum",
+                                                    "BankName"
+                                                ],
+                             "canonicalization":  "In-memory normalized account-number SHA-256 plus approved currency and compatible normalized bank name",
+                             "known_duplicate_groups":  0,
+                             "known_duplicate_rows":  0,
+                             "target_existing_match_rule":  "Clear account number must never be logged; target GL account and currency are mandatory configuration.",
+                             "leading_zero_rule":  "Preserve leading zeros for codes and identifiers; never numeric-cast a textual key.",
+                             "encoding_rule":  "Decode Classic latin1 to Unicode, normalize NFC, reject undecodable input, retain protected raw-value hash.",
+                             "confidence":  "Candidate",
+                             "automatic_match_allowed":  false,
+                             "ambiguous_result":  "LEGACY-REF-COMMON-004",
+                             "many_to_one_rule":  "Only an explicit approved duplicate group may map multiple source IDs to one target ID; retain one provenance record per source row.",
+                             "exception_codes":  [
+                                                     "LEGACY-REF-COMMON-001",
+                                                     "LEGACY-REF-COMMON-010",
+                                                     "LEGACY-REF-COMMON-014",
+                                                     "LEGACY-REF-COMMON-015"
+                                                 ]
+                         }
+                     ],
+    "approved_source_database":  "uuhms"
+}

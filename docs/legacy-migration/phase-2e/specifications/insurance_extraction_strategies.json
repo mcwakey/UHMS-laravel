@@ -1,0 +1,161 @@
+{
+  "specification_version": "2E.1.0",
+  "phase": "2E",
+  "approved_source": {
+    "connection": "legacy_uhms",
+    "database": "uuhms",
+    "read_only": true
+  },
+  "implementation_authorized": false,
+  "policy_authority": {
+    "source": "APPROVED_DECISION_SPECIFICATIONS.md",
+    "decision_register": "DECISIONS.md",
+    "decisions": ["D-205", "D-206", "D-207", "D-212"],
+    "questions": ["Q-004", "Q-005", "Q-009", "Q-301"]
+  },
+  "upstream_contracts": [
+    "phase-2a.reference_natural_keys:NK-004",
+    "phase-2a.reference_extraction_strategies:EXTRACT-SETT_PRIVATE",
+    "phase-2a.reference_reconciliation_contracts:RECON-SETT_PRIVATE",
+    "phase-2c.patient_relationship_rules:PATIENT-REL-003",
+    "phase-2c.patient_sentinel_rules:PATIENT-SENT-003",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-REL-003",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-001",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-022",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-007",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-009",
+    "phase-2c.existing_target_patient_rules:PATIENT-TARGET-009",
+    "phase-2d.patient_child_relationship_rules:PATIENT-CHILD-REL-005",
+    "phase-2d.patient_child_extraction_strategies:PATIENT-CHILD-EXT-001",
+    "phase-2d.patient_child_privacy_provenance_contract:PATIENT-CHILD-PRIV-010"
+  ],
+  "query_hash_rule": "At execution, record SHA-256 of the reviewed canonical query manifest; no unevidenced hash is committed by this specification.",
+  "evidence_manifest": {
+    "manifest_version": "phase2e-query-manifest/1.0.0",
+    "execution_status": "Classic aggregate bundle executed read-only and rolled back; normalized minimum query set is rerunnable; future execution must regenerate result and bundle hashes",
+    "connection": "legacy_uhms",
+    "database": "uuhms",
+    "database_version": "MariaDB 10.4.32",
+    "transaction": "REPEATABLE READ; TRANSACTION READ ONLY; ROLLBACK",
+    "executed_at_utc_date": "2026-07-21",
+    "evaluation_timezone": "UTC",
+    "schema_fingerprint": "150fcf4783fcb8bdc25f7e17fe0ece5050955f0c68e7dd03651ee8bd58498977",
+    "table_count": 55,
+    "column_count": 479,
+    "aggregate_result_contract": "phase2e-classic-aggregate-v1|rows=31307|columns=9|pk_null=0|pk_nonpositive=0|pk_duplicate=0|patient_null=0|patient_zero=0|patient_matched=30991|patient_orphan=316|ins_nhis=15653|ins_private=15654|company_blank=25042|company_candidate_single=2247|company_candidate_ambiguous=1|company_unmatched=4017|member_blank=17029|member_duplicate_groups=1019|member_duplicate_rows=2555|issue_zero=17091|expiry_zero=15717|reversed=66|future_issue=19|future_expiry=54",
+    "aggregate_result_hash_sha256": "61860f5a2ec23e29a8315a8892e9293751b07a04181e1be5047b47b309d35147",
+    "bundle_identity_sha256": "1c80f2d4b7f71c9dfd67cad4ced1e4bcf61a7191e177f0daa8d145f9a72e9156",
+    "bundle_identity_canonicalization": "UTF-8 text joined with literal | in this order: manifest_version, database, schema_fingerprint, executed_at_utc_date, evaluation_timezone, aggregate_result_hash_sha256",
+    "snapshot_limitation": "This is an aggregate evidence bundle identity, not a reusable row-level database snapshot. Row selection requires a newly coordinated protected snapshot.",
+    "queries": [
+      {"id":"phase2e.insurance.full.v1","normalized_sql":"SELECT INS_ID, PAT_ID, InsType, Scheme, MemberNo, Company, IssueDate, ExpiryDate, Plan FROM uuhms.insurance ORDER BY INS_ID ASC","query_hash_sha256":"ccc9922c1e507d97d74bbbe83ee742656c9f9d056b26277bfee46a44937a989e","output":"protected runtime only"},
+      {"id":"phase2e.patient.projection.v1","normalized_sql":"SELECT PAT_ID, Company, BillStatus FROM uuhms.patients ORDER BY PAT_ID ASC","query_hash_sha256":"3ae0e7a3112fd79cff689513c6fd95c5b1edad9688ec1771b1f757a880fbbea2","output":"protected runtime only; same PATIENT-EXT-001 snapshot"},
+      {"id":"phase2e.insurance.keys.v1","normalized_sql":"SELECT COUNT(*) AS rows_total, SUM(INS_ID IS NULL) AS key_null, SUM(INS_ID <= 0) AS key_nonpositive, COUNT(*) - COUNT(DISTINCT INS_ID) AS key_duplicate FROM uuhms.insurance","query_hash_sha256":"8efca528825e14953cdcec5de4238b3661eb2d99bb22c7031886a995bae7dbfa","output":"aggregate only"},
+      {"id":"phase2e.insurance.patient-edge.v1","normalized_sql":"SELECT SUM(i.PAT_ID IS NULL) AS null_ref, SUM(i.PAT_ID = 0) AS zero_ref, SUM(i.PAT_ID <> 0 AND p.PAT_ID IS NOT NULL) AS matched_ref, SUM(i.PAT_ID <> 0 AND p.PAT_ID IS NULL) AS orphan_ref FROM uuhms.insurance i LEFT JOIN uuhms.patients p ON p.PAT_ID = i.PAT_ID","query_hash_sha256":"508d117fdc9451580b56a68afbc6e3c8a88850274fc04a2b93fad5c99ea54c5a","output":"aggregate only"},
+      {"id":"phase2e.insurance.type.v1","normalized_sql":"SELECT InsType, COUNT(*) AS row_count FROM uuhms.insurance GROUP BY InsType ORDER BY InsType","query_hash_sha256":"e01522cc1d89a5dc96e2935a4f9afc1ebb6c283985c2c752ffb81ce4441c0a90","output":"allow-listed categories or collapse to unknown"},
+      {"id":"phase2e.insurance.company.v1","normalized_sql":"SELECT SUM(TRIM(Company) = '') AS blank_rows, COUNT(DISTINCT NULLIF(TRIM(Company), '')) AS distinct_nonblank FROM uuhms.insurance","query_hash_sha256":"7059f6dd9502f8cabccc0bbd2c62041a8ed6baf8978324e63f9f50d3327c0c62","output":"aggregate only"},
+      {"id":"phase2e.insurance.member.v1","normalized_sql":"SELECT SUM(TRIM(MemberNo) = '') AS blank_rows, COUNT(DISTINCT NULLIF(TRIM(MemberNo), '')) AS distinct_nonblank FROM uuhms.insurance","query_hash_sha256":"2947dc0eab0106092ff6b5aa777474d39773366bce62f930ab7b23127139b94d","output":"aggregate only; no values"},
+      {"id":"phase2e.insurance.date.v1","normalized_sql":"SELECT SUM(IssueDate = '0000-00-00') AS issue_zero, SUM(ExpiryDate = '0000-00-00') AS expiry_zero, SUM(IssueDate <> '0000-00-00' AND ExpiryDate <> '0000-00-00' AND ExpiryDate < IssueDate) AS reversed FROM uuhms.insurance","query_hash_sha256":"840a97db6bd75aa92665a769ddd6fc4b9a4332d284a2bf1f211ec19a30c2a09c","output":"aggregate only"},
+      {"id":"phase2e.patient.bill-status.v1","normalized_sql":"SELECT BillStatus, COUNT(*) AS row_count FROM uuhms.patients GROUP BY BillStatus ORDER BY BillStatus","query_hash_sha256":"0097e079782c1294c075ec048d94415c81d6372093da073e2592b5ada96a0fee","output":"allow-listed categories or collapse to unknown"},
+      {"id":"phase2e.insurance.scheme-plan.v1","normalized_sql":"SELECT SUM(TRIM(Scheme) = '') AS scheme_blank, SUM(TRIM(Scheme) = '-') AS scheme_hyphen, SUM(TRIM(Plan) = '') AS plan_blank FROM uuhms.insurance","query_hash_sha256":"91204324798a7ed1760ae870f98af7b38693c66beb9783490879cf35f07a3f4f","output":"aggregate only"},
+      {"id":"phase2e.insurance.provider-candidate-diagnostic.v1","normalized_sql":"SELECT match_count, COUNT(*) AS row_count FROM (SELECT i.INS_ID, COUNT(DISTINCT p.PINS_ID) AS match_count FROM uuhms.insurance i LEFT JOIN uuhms.sett_private p ON UPPER(REGEXP_REPLACE(TRIM(i.Company), '[[:space:]]+', ' ')) IN (UPPER(REGEXP_REPLACE(TRIM(p.PrivateName), '[[:space:]]+', ' ')), UPPER(REGEXP_REPLACE(TRIM(p.PrivateShort), '[[:space:]]+', ' '))) WHERE TRIM(i.Company) <> '' GROUP BY i.INS_ID) candidates GROUP BY match_count ORDER BY match_count","query_hash_sha256":"67546771cd175a3f76aa67389db0a0ed2e7d9ff3eba540a82e9e4c902987a3fb","output":"aggregate diagnostic only; never a target provider map"}
+    ],
+    "detailed_evidence_dependencies": ["docs/legacy-migration/evidence/PHASE_2E_CLASSIC_QUERY_MANIFEST.json","docs/legacy-migration/evidence/PHASE_2E_CLASSIC_AGGREGATE_RESULTS.json","docs/legacy-migration/evidence/PHASE_2E_TARGET_QUERY_MANIFEST.json","docs/legacy-migration/evidence/PHASE_2E_TARGET_AGGREGATE_RESULTS.json"],
+    "stop_conditions": ["connection is not legacy_uhms","database is not exactly uuhms","read-only transaction unavailable","55/479 or schema fingerprint mismatch","database version incompatible","query/hash/result manifest mismatch","non-aggregate repository output"]
+  },
+  "no_timestamp_change_proof": true,
+  "update_delete_detection": "full key/content comparison",
+  "record_count": 4,
+  "records": [
+    {
+      "id": "INS-EXT-001",
+      "source": "uuhms.insurance",
+      "columns": [
+        "INS_ID",
+        "PAT_ID",
+        "InsType",
+        "Scheme",
+        "MemberNo",
+        "Company",
+        "IssueDate",
+        "ExpiryDate",
+        "Plan"
+      ],
+      "order": "INS_ID ASC",
+      "chunk_size": 2000,
+      "mode": "full ordered snapshot + protected content hash",
+      "watermark": null,
+      "business_dates_only": [
+        "IssueDate",
+        "ExpiryDate"
+      ],
+      "dependency": [
+        "PATIENT-EXT-001",
+        "PATIENT-EXT-022"
+      ],
+      "repository_output": "aggregate-only",
+      "query_contract_id": "phase2e-insurance-full-v1"
+      ,"normalized_sql_manifest_id":"phase2e.insurance.full.v1"
+      ,"query_version":"2E.1.0"
+      ,"resume":"last fully emitted protected INS_ID plus unchanged bundle/snapshot/query/key versions"
+      ,"stop":"key/shape/order/snapshot/fingerprint/query/key-version drift"
+    },
+    {
+      "id": "INS-EXT-002",
+      "source": "uuhms.patients",
+      "columns": [
+        "PAT_ID",
+        "Company",
+        "BillStatus"
+      ],
+      "order": "PAT_ID ASC",
+      "chunk_size": 2000,
+      "mode": "projection of identical Phase 2C patient snapshot",
+      "upstream_strategy": "PATIENT-EXT-001",
+      "separate_snapshot_forbidden": true,
+      "repository_output": "aggregate-only",
+      "query_contract_id": "phase2e-patient-projection-v1"
+      ,"normalized_sql_manifest_id":"phase2e.patient.projection.v1"
+      ,"query_version":"2E.1.0"
+      ,"resume":"same PATIENT-EXT-001 checkpoint and unchanged patient snapshot only"
+      ,"stop":"separately timed patient snapshot or upstream drift"
+    },
+    {
+      "id": "INS-EXT-003",
+      "source": "Phase 2A provider evidence",
+      "columns": [
+        "protected NK-004 outcome",
+        "provider type outcome"
+      ],
+      "order": "EXTRACT-SETT_PRIVATE contract",
+      "mode": "consume versioned crosswalk; no re-canonicalization",
+      "dependency": [
+        "NK-004",
+        "EXTRACT-SETT_PRIVATE"
+      ],
+      "repository_output": "aggregate-only",
+      "query_contract_id": "phase2a-provider-dependency-v1"
+    },
+    {
+      "id": "INS-EXT-004",
+      "source": "non-production target",
+      "columns": [
+        "patient/provider collision counts",
+        "member-token collisions",
+        "provider/tier/verification aggregate state",
+        "constraints/fingerprint"
+      ],
+      "order": "stable aggregate/key-token order",
+      "mode": "read-only preflight snapshot",
+      "dependency": [
+        "target fingerprint"
+      ],
+      "repository_output": "aggregate-only",
+      "query_contract_id": "phase2e-target-collision-v1"
+    }
+  ],
+  "privacy": {
+    "contains_raw_phi": false,
+    "repository_output": "aggregate-only"
+  }
+}

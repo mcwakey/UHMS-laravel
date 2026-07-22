@@ -1,0 +1,365 @@
+{
+    "manifest_version": 1,
+    "specification_version": "2B.1.0",
+    "tool_version": "phase2b-staff-evidence/1.0.0",
+    "captured_at_utc": "2026-07-21T19:08:49+00:00",
+    "approved_database": "uuhms",
+    "schema_guard": {
+        "expected_database": "uuhms",
+        "expected_tables": 55,
+        "expected_columns": 479,
+        "fail_closed": true
+    },
+    "transaction": {
+        "setup_sql": [
+            "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+            "SET TRANSACTION READ ONLY",
+            "BEGIN"
+        ],
+        "read_only": true,
+        "isolation": "REPEATABLE-READ",
+        "rolled_back": true
+    },
+    "privacy": {
+        "raw_staff_values": false,
+        "credentials": false,
+        "permission_values": false,
+        "contacts": false,
+        "phi": false
+    },
+    "query_count": 33,
+    "queries": [
+        {
+            "query_id": "phase2b.guard.shape",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(DISTINCT TABLE_NAME) table_count, COUNT(*) column_count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ?",
+            "bindings": [
+                "uuhms"
+            ],
+            "query_hash_sha256": "01d3372fe5fdc793725c794152d9a04fb87cadafadeb2613ce3c8e4644c2101c",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "b5ca2c227a253063868de442e5e22dba784b678191986ee96bc2c02f847eece3"
+        },
+        {
+            "query_id": "phase2b.staff.master",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) total_rows, SUM(FullName IS NULL OR TRIM(FullName)='') blank_full_name_count, COUNT(DISTINCT CASE WHEN FullName IS NOT NULL AND TRIM(FullName)<>'' THEN UPPER(TRIM(FullName)) END) distinct_normalized_full_name_count, SUM(UserName IS NULL OR TRIM(UserName)='') blank_username_count, COUNT(DISTINCT CASE WHEN UserName IS NOT NULL AND TRIM(UserName)<>'' THEN UPPER(TRIM(UserName)) END) distinct_normalized_username_count, SUM(Password IS NOT NULL AND LENGTH(Password)>0) nonempty_password_count, SUM(CanAdd IS NOT NULL) can_add_present_count, SUM(CanEdit IS NOT NULL) can_edit_present_count, SUM(CanDelete IS NOT NULL) can_delete_present_count, SUM(CanPrint IS NOT NULL) can_print_present_count, SUM(Status='ACTIVE') active_count, SUM(Status='INACTIVE') inactive_count, MIN(RegDate) registration_min, MAX(RegDate) registration_max FROM users",
+            "bindings": [],
+            "query_hash_sha256": "ea0e108355762b2d5c3eb98f5843d92aa300e44de2704672c812a6e784596104",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "28136a73a276af5889119560e962c0d958af64589839f9db3fa73a7d59cb161d"
+        },
+        {
+            "query_id": "phase2b.staff.duplicate_name",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) duplicate_group_count, COALESCE(SUM(group_rows),0) duplicate_row_count FROM (SELECT COUNT(*) group_rows FROM users WHERE FullName IS NOT NULL AND TRIM(FullName)<>'' GROUP BY UPPER(TRIM(FullName)) HAVING COUNT(*)>1) g",
+            "bindings": [],
+            "query_hash_sha256": "8a6481cbf5bf1556de37a1fc7126beae677d8658d5da6487309cad317827000a",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "487b8f12e4ce1cd223490baa7e8665c3eea1d3e657198135b0329909c70e21eb"
+        },
+        {
+            "query_id": "phase2b.staff.duplicate_username",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) duplicate_group_count, COALESCE(SUM(group_rows),0) duplicate_row_count FROM (SELECT COUNT(*) group_rows FROM users WHERE UserName IS NOT NULL AND TRIM(UserName)<>'' GROUP BY UPPER(TRIM(UserName)) HAVING COUNT(*)>1) g",
+            "bindings": [],
+            "query_hash_sha256": "27571356d7e209bb7ce63216916228d5d7e4648e4af13605d7694a26fcb3d21b",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "487b8f12e4ce1cd223490baa7e8665c3eea1d3e657198135b0329909c70e21eb"
+        },
+        {
+            "query_id": "phase2b.staff.department",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(u.DEP_ID IS NULL) null_count, SUM(TRIM(COALESCE(u.DEP_ID,'')) IN ('','0')) sentinel_count, SUM(TRIM(COALESCE(u.DEP_ID,'')) NOT IN ('','0') AND d.DEP_ID IS NOT NULL) matched_count, SUM(TRIM(COALESCE(u.DEP_ID,'')) NOT IN ('','0') AND d.DEP_ID IS NULL) orphan_count FROM users u LEFT JOIN departements d ON TRIM(u.DEP_ID)=CAST(d.DEP_ID AS CHAR)",
+            "bindings": [],
+            "query_hash_sha256": "52e63080e9370219a37927c8d445bda3cb226c63850bc988bbb06eb462018116",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "84c9b4cb6a6420881e623cd4041bc5e39525311fd1b641cba31c0823bf7b84ce"
+        },
+        {
+            "query_id": "phase2b.actor.attendance.USER_ID",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`USER_ID` IS NULL) null_count, SUM(c.`USER_ID`=0) zero_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NOT NULL) matched_classic_parent_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NULL) orphan_classic_parent_count FROM `attendance` c LEFT JOIN users u ON c.`USER_ID`=u.USER_ID",
+            "bindings": [],
+            "query_hash_sha256": "165efc958d7f26316968f70f84d69426a49cfc1d500876d359f623d67773e8f4",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "d52f71892dfd69baf55d51641a5f938d4de6f331b1d8ac42f428e867e2b479c6"
+        },
+        {
+            "query_id": "phase2b.actor.batch.USER_ID",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`USER_ID` IS NULL) null_count, SUM(c.`USER_ID`=0) zero_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NOT NULL) matched_classic_parent_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NULL) orphan_classic_parent_count FROM `batch` c LEFT JOIN users u ON c.`USER_ID`=u.USER_ID",
+            "bindings": [],
+            "query_hash_sha256": "98c0a7c168212e513ddb1224348dc51ad1726453b824d6beec53fffbe797aec6",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "aa8d3ef111c0cd094c848a3cfb1349544a1ac773badd04d1aa6fd5d1a7363651"
+        },
+        {
+            "query_id": "phase2b.actor.billing.USER_ID",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`USER_ID` IS NULL) null_count, SUM(c.`USER_ID`=0) zero_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NOT NULL) matched_classic_parent_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NULL) orphan_classic_parent_count FROM `billing` c LEFT JOIN users u ON c.`USER_ID`=u.USER_ID",
+            "bindings": [],
+            "query_hash_sha256": "66dda0627cb99498616d73f50a230f1e04aafbb7bb6ac995245caf86e74d297f",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "b80c6c95f6da862fda3177de00abadff746752c1ecddb2d5eb1821456b8f92fd"
+        },
+        {
+            "query_id": "phase2b.actor.consult_prescriptions.USER_ID",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`USER_ID` IS NULL) null_count, SUM(c.`USER_ID`=0) zero_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NOT NULL) matched_classic_parent_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NULL) orphan_classic_parent_count FROM `consult_prescriptions` c LEFT JOIN users u ON c.`USER_ID`=u.USER_ID",
+            "bindings": [],
+            "query_hash_sha256": "423f3994d708949401806f5dd1569f09456adb1fbc04bbe70bffa5faeefb2d76",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "57d196d8649f48635c3e8495faae4700a8d51ba413d5b4034b584e2b5fb60081"
+        },
+        {
+            "query_id": "phase2b.actor.consult_scan_lab.USER_ID",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`USER_ID` IS NULL) null_count, SUM(c.`USER_ID`=0) zero_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NOT NULL) matched_classic_parent_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NULL) orphan_classic_parent_count FROM `consult_scan_lab` c LEFT JOIN users u ON c.`USER_ID`=u.USER_ID",
+            "bindings": [],
+            "query_hash_sha256": "d4e1b08d0b72bf9aafb7ddb9b771bce378ff394416a3e556361c9dc6c472d7ff",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "3522a72c89a31497214040a2f89bda47af36cc90281118651c94deab6ce73f06"
+        },
+        {
+            "query_id": "phase2b.actor.nurses_note.USER_ID",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`USER_ID` IS NULL) null_count, SUM(c.`USER_ID`=0) zero_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NOT NULL) matched_classic_parent_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NULL) orphan_classic_parent_count FROM `nurses_note` c LEFT JOIN users u ON c.`USER_ID`=u.USER_ID",
+            "bindings": [],
+            "query_hash_sha256": "e468ae6686fac4b49cadb27ea32db7513f20ba7f5ac48a037b2736a93879107d",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "50dbe76ef2d1c41f9671ae8cadb0532435b26d9c728463044267409b4b921c26"
+        },
+        {
+            "query_id": "phase2b.actor.request.USER_ID",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`USER_ID` IS NULL) null_count, SUM(c.`USER_ID`=0) zero_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NOT NULL) matched_classic_parent_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NULL) orphan_classic_parent_count FROM `request` c LEFT JOIN users u ON c.`USER_ID`=u.USER_ID",
+            "bindings": [],
+            "query_hash_sha256": "4e3b67439973dd7eb952fbd215a6e5530b1967b458d32ade3327cd0961c24665",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "f2d8cb86d90148fdce176c2f92e923a9c444c291792febd19cd2efd321fe8ee8"
+        },
+        {
+            "query_id": "phase2b.actor.treatment.USER_ID",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`USER_ID` IS NULL) null_count, SUM(c.`USER_ID`=0) zero_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NOT NULL) matched_classic_parent_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NULL) orphan_classic_parent_count FROM `treatment` c LEFT JOIN users u ON c.`USER_ID`=u.USER_ID",
+            "bindings": [],
+            "query_hash_sha256": "a2265a36373e8ef75276fa58f1e9db486c5f7a7985077de1e2ec4d61e8bebac0",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "905fbf4a647484808dc35741f28d859c45aa8a87c1294395ffc0d9a0edf5775f"
+        },
+        {
+            "query_id": "phase2b.actor.vitals.USER_ID",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`USER_ID` IS NULL) null_count, SUM(c.`USER_ID`=0) zero_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NOT NULL) matched_classic_parent_count, SUM(c.`USER_ID` IS NOT NULL AND c.`USER_ID`<>0 AND u.USER_ID IS NULL) orphan_classic_parent_count FROM `vitals` c LEFT JOIN users u ON c.`USER_ID`=u.USER_ID",
+            "bindings": [],
+            "query_hash_sha256": "fce70bb4333c11b9438387e3f20d50aa435ea8e6d0063d5b31300b54d5b4d790",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "3115e52525b2d22f1093c76cb8618546b75809f1068956b74c77fef3d6aa2a13"
+        },
+        {
+            "query_id": "phase2b.actor.claims.Doctor",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`Doctor` IS NULL) null_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)='') blank_count, COUNT(DISTINCT CASE WHEN c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' THEN UPPER(TRIM(c.`Doctor`)) END) distinct_normalized_nonblank_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count=1) one_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count>1) ambiguous_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count IS NULL) unmatched_text_count FROM `claims` c LEFT JOIN (SELECT UPPER(TRIM(FullName)) k, COUNT(*) parent_count FROM users WHERE FullName IS NOT NULL AND TRIM(FullName)<>'' GROUP BY UPPER(TRIM(FullName))) p ON UPPER(TRIM(c.`Doctor`))=p.k",
+            "bindings": [],
+            "query_hash_sha256": "af7850971dfe7e160a1823f0b1d451d7e2bd6c5d13cca3c6d66da6d22b464892",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "d44dee686c3397e28eb777dfd5be0e6e2658c1f83f0e517a137aec7f8aba7611"
+        },
+        {
+            "query_id": "phase2b.actor.consult_complaints.Doctor",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`Doctor` IS NULL) null_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)='') blank_count, COUNT(DISTINCT CASE WHEN c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' THEN UPPER(TRIM(c.`Doctor`)) END) distinct_normalized_nonblank_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count=1) one_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count>1) ambiguous_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count IS NULL) unmatched_text_count FROM `consult_complaints` c LEFT JOIN (SELECT UPPER(TRIM(FullName)) k, COUNT(*) parent_count FROM users WHERE FullName IS NOT NULL AND TRIM(FullName)<>'' GROUP BY UPPER(TRIM(FullName))) p ON UPPER(TRIM(c.`Doctor`))=p.k",
+            "bindings": [],
+            "query_hash_sha256": "c61f3aa5d34d1e15e4ef3b2ef495d5755509bc34377a7f3fb04323d48e64194a",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "a6a4515a02e9e9ccab6e0cac8aaea2df5b25469f85f241603988f1a018dd6682"
+        },
+        {
+            "query_id": "phase2b.actor.consult_diagnosis.Doctor",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`Doctor` IS NULL) null_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)='') blank_count, COUNT(DISTINCT CASE WHEN c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' THEN UPPER(TRIM(c.`Doctor`)) END) distinct_normalized_nonblank_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count=1) one_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count>1) ambiguous_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count IS NULL) unmatched_text_count FROM `consult_diagnosis` c LEFT JOIN (SELECT UPPER(TRIM(FullName)) k, COUNT(*) parent_count FROM users WHERE FullName IS NOT NULL AND TRIM(FullName)<>'' GROUP BY UPPER(TRIM(FullName))) p ON UPPER(TRIM(c.`Doctor`))=p.k",
+            "bindings": [],
+            "query_hash_sha256": "4c092dde385803f3906e52c95238d36f3439b727fa9e59356a35b31c16e2ef38",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "4bb14a608bba39ec7fab96517daa80d237e1741a48d9b30280dbfeb8d1716e8d"
+        },
+        {
+            "query_id": "phase2b.actor.consult_history.Doctor",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`Doctor` IS NULL) null_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)='') blank_count, COUNT(DISTINCT CASE WHEN c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' THEN UPPER(TRIM(c.`Doctor`)) END) distinct_normalized_nonblank_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count=1) one_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count>1) ambiguous_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count IS NULL) unmatched_text_count FROM `consult_history` c LEFT JOIN (SELECT UPPER(TRIM(FullName)) k, COUNT(*) parent_count FROM users WHERE FullName IS NOT NULL AND TRIM(FullName)<>'' GROUP BY UPPER(TRIM(FullName))) p ON UPPER(TRIM(c.`Doctor`))=p.k",
+            "bindings": [],
+            "query_hash_sha256": "55fa2e4f6f9f4c6ae399ce72250f54700bd939f7300d3092ade2ac225d98613b",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "5462e635c9cf3c3bd9e126005d8f5d64904c7675ddd84ccac526c20964968a3a"
+        },
+        {
+            "query_id": "phase2b.actor.consult_prescriptions.Doctor",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`Doctor` IS NULL) null_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)='') blank_count, COUNT(DISTINCT CASE WHEN c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' THEN UPPER(TRIM(c.`Doctor`)) END) distinct_normalized_nonblank_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count=1) one_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count>1) ambiguous_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count IS NULL) unmatched_text_count FROM `consult_prescriptions` c LEFT JOIN (SELECT UPPER(TRIM(FullName)) k, COUNT(*) parent_count FROM users WHERE FullName IS NOT NULL AND TRIM(FullName)<>'' GROUP BY UPPER(TRIM(FullName))) p ON UPPER(TRIM(c.`Doctor`))=p.k",
+            "bindings": [],
+            "query_hash_sha256": "d1fc823802498aa15275fce011feacfe9f61d9c8cce1c8134d272ec078372a93",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "e5277c3922596ec826c73df51b32a1e961859d828da07ae8cceec32f7cfd837f"
+        },
+        {
+            "query_id": "phase2b.actor.consult_procedures.Doctor",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`Doctor` IS NULL) null_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)='') blank_count, COUNT(DISTINCT CASE WHEN c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' THEN UPPER(TRIM(c.`Doctor`)) END) distinct_normalized_nonblank_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count=1) one_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count>1) ambiguous_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count IS NULL) unmatched_text_count FROM `consult_procedures` c LEFT JOIN (SELECT UPPER(TRIM(FullName)) k, COUNT(*) parent_count FROM users WHERE FullName IS NOT NULL AND TRIM(FullName)<>'' GROUP BY UPPER(TRIM(FullName))) p ON UPPER(TRIM(c.`Doctor`))=p.k",
+            "bindings": [],
+            "query_hash_sha256": "f596e1c129c79c06334f9a9002f78cd30c625dfbba93dd5c142209d098a0b04b",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "ebca0d0103b79a3068e04d0f99c12b8acee827fb22cccdb4ed16e081a33da3b4"
+        },
+        {
+            "query_id": "phase2b.actor.consult_scan_lab.Doctor",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`Doctor` IS NULL) null_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)='') blank_count, COUNT(DISTINCT CASE WHEN c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' THEN UPPER(TRIM(c.`Doctor`)) END) distinct_normalized_nonblank_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count=1) one_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count>1) ambiguous_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count IS NULL) unmatched_text_count FROM `consult_scan_lab` c LEFT JOIN (SELECT UPPER(TRIM(FullName)) k, COUNT(*) parent_count FROM users WHERE FullName IS NOT NULL AND TRIM(FullName)<>'' GROUP BY UPPER(TRIM(FullName))) p ON UPPER(TRIM(c.`Doctor`))=p.k",
+            "bindings": [],
+            "query_hash_sha256": "318155b7093d66edfe89a4db0a1e1bc069c7d889108e699d7c78d5f8410b02e7",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "d8fbe48a9c7f3ec3d52452e163f487470e17a6785122ea5f657bde28a01a1aa9"
+        },
+        {
+            "query_id": "phase2b.actor.consult_services.Doctor",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`Doctor` IS NULL) null_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)='') blank_count, COUNT(DISTINCT CASE WHEN c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' THEN UPPER(TRIM(c.`Doctor`)) END) distinct_normalized_nonblank_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count=1) one_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count>1) ambiguous_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count IS NULL) unmatched_text_count FROM `consult_services` c LEFT JOIN (SELECT UPPER(TRIM(FullName)) k, COUNT(*) parent_count FROM users WHERE FullName IS NOT NULL AND TRIM(FullName)<>'' GROUP BY UPPER(TRIM(FullName))) p ON UPPER(TRIM(c.`Doctor`))=p.k",
+            "bindings": [],
+            "query_hash_sha256": "41c9572f9a3cd1a6b603cc23356d8cc9b64148ee7739b342edbd30c0a97b2048",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "ede1186629e68b9d1041d7ca8b135e8313a79d0d3838cb88069d24a6e0d35fcc"
+        },
+        {
+            "query_id": "phase2b.actor.consult_treatment.Doctor",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`Doctor` IS NULL) null_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)='') blank_count, COUNT(DISTINCT CASE WHEN c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' THEN UPPER(TRIM(c.`Doctor`)) END) distinct_normalized_nonblank_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count=1) one_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count>1) ambiguous_name_candidate_count, SUM(c.`Doctor` IS NOT NULL AND TRIM(c.`Doctor`)<>'' AND p.parent_count IS NULL) unmatched_text_count FROM `consult_treatment` c LEFT JOIN (SELECT UPPER(TRIM(FullName)) k, COUNT(*) parent_count FROM users WHERE FullName IS NOT NULL AND TRIM(FullName)<>'' GROUP BY UPPER(TRIM(FullName))) p ON UPPER(TRIM(c.`Doctor`))=p.k",
+            "bindings": [],
+            "query_hash_sha256": "10bdfb75a2016f1d73ffea84f8c3c8167ab126f5cd8d2873ca25e64af9665f86",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "916efd7e2352c4d78bca55238b3e20a3448691c8eeed0d31fd1224a237661272"
+        },
+        {
+            "query_id": "phase2b.actorlike.billing.CASH_ID",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(c.`CASH_ID` IS NULL) null_count, SUM(c.`CASH_ID`=0) zero_count, COUNT(DISTINCT CASE WHEN c.`CASH_ID`<>0 THEN c.`CASH_ID` END) distinct_nonzero_count, SUM(c.`CASH_ID`<>0 AND u.USER_ID IS NOT NULL) diagnostic_user_match_count, SUM(c.`CASH_ID`<>0 AND u.USER_ID IS NULL) diagnostic_user_orphan_count FROM `billing` c LEFT JOIN users u ON c.`CASH_ID`=u.USER_ID",
+            "bindings": [],
+            "query_hash_sha256": "da5f1e9ff76e13a9bb979d3f36fcebd1b1288acd921dea53da80b81bdfcf8148",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "492de153e6740faee04646f6e1f509822891e17e573c5c9faa05144ac4f6a94e"
+        },
+        {
+            "query_id": "phase2b.actorlike.notifications.ReqFrom",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(`ReqFrom` IS NULL) null_count, SUM(`ReqFrom` IS NOT NULL AND TRIM(`ReqFrom`)='') blank_count, SUM(`ReqFrom` IS NOT NULL AND TRIM(`ReqFrom`)='0') literal_zero_count, COUNT(DISTINCT CASE WHEN `ReqFrom` IS NOT NULL AND TRIM(`ReqFrom`) NOT IN ('','0') THEN SHA2(CONCAT('aggregate-distinct-only:',TRIM(`ReqFrom`)),256) END) distinct_nonblank_nonzero_count FROM `notifications`",
+            "bindings": [],
+            "query_hash_sha256": "bc2f31c494f7b8239170f066ca78fcbf987064c0e3d081b7b11fba05a17f71e4",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "c248f6a9804beb9a62ac1838bb4bd52cc43982a5a93c4c214be2b44fc97f8352"
+        },
+        {
+            "query_id": "phase2b.actorlike.notifications.ReqTo",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(`ReqTo` IS NULL) null_count, SUM(`ReqTo` IS NOT NULL AND TRIM(`ReqTo`)='') blank_count, SUM(`ReqTo` IS NOT NULL AND TRIM(`ReqTo`)='0') literal_zero_count, COUNT(DISTINCT CASE WHEN `ReqTo` IS NOT NULL AND TRIM(`ReqTo`) NOT IN ('','0') THEN SHA2(CONCAT('aggregate-distinct-only:',TRIM(`ReqTo`)),256) END) distinct_nonblank_nonzero_count FROM `notifications`",
+            "bindings": [],
+            "query_hash_sha256": "fb84a459486f4e24756b900d9bf188a6260cc38083312122dd3f2eaa8a1b0427",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "4ddbbe1da0d95ff3ff3fbfe9250ae496968c616fa646e0b3b44b9a6bf0d5debd"
+        },
+        {
+            "query_id": "phase2b.actorlike.mat_family.DocName",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(`DocName` IS NULL) null_count, SUM(`DocName` IS NOT NULL AND TRIM(`DocName`)='') blank_count, SUM(`DocName` IS NOT NULL AND TRIM(`DocName`)='0') literal_zero_count, COUNT(DISTINCT CASE WHEN `DocName` IS NOT NULL AND TRIM(`DocName`) NOT IN ('','0') THEN SHA2(CONCAT('aggregate-distinct-only:',TRIM(`DocName`)),256) END) distinct_nonblank_nonzero_count FROM `mat_family`",
+            "bindings": [],
+            "query_hash_sha256": "3e8132174d62543eb58d16a81891be51317238f61664cd7a20d7847eb4d152c9",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "d961fac29771a1259c7dc0b788a602d35528f616916e09a7da4193fa27765a9e"
+        },
+        {
+            "query_id": "phase2b.actorlike.mat_family.DocPhone",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(`DocPhone` IS NULL) null_count, SUM(`DocPhone` IS NOT NULL AND TRIM(`DocPhone`)='') blank_count, SUM(`DocPhone` IS NOT NULL AND TRIM(`DocPhone`)='0') literal_zero_count, COUNT(DISTINCT CASE WHEN `DocPhone` IS NOT NULL AND TRIM(`DocPhone`) NOT IN ('','0') THEN SHA2(CONCAT('aggregate-distinct-only:',TRIM(`DocPhone`)),256) END) distinct_nonblank_nonzero_count FROM `mat_family`",
+            "bindings": [],
+            "query_hash_sha256": "dd7a685c51d2a61be3d84c64a3c4560f95327a520fb0f00bf54dddb31aeb0623",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "d961fac29771a1259c7dc0b788a602d35528f616916e09a7da4193fa27765a9e"
+        },
+        {
+            "query_id": "phase2b.actorlike.hospitalinfo.ClaimOfficer",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(`ClaimOfficer` IS NULL) null_count, SUM(`ClaimOfficer` IS NOT NULL AND TRIM(`ClaimOfficer`)='') blank_count, SUM(`ClaimOfficer` IS NOT NULL AND TRIM(`ClaimOfficer`)='0') literal_zero_count, COUNT(DISTINCT CASE WHEN `ClaimOfficer` IS NOT NULL AND TRIM(`ClaimOfficer`) NOT IN ('','0') THEN SHA2(CONCAT('aggregate-distinct-only:',TRIM(`ClaimOfficer`)),256) END) distinct_nonblank_nonzero_count FROM `hospitalinfo`",
+            "bindings": [],
+            "query_hash_sha256": "2079c3abcd54ba3e83370a7769bffd6adeab622cc8af46fa301dbeee57894a3d",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "fcc29c3a240451d7c5b78969dd7fed2757be53ff7635ff7af556ab22a5df7b82"
+        },
+        {
+            "query_id": "phase2b.actorlike.hospitalinfo.ClaimSignature",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(`ClaimSignature` IS NULL) null_count, SUM(`ClaimSignature` IS NOT NULL AND TRIM(`ClaimSignature`)='') blank_count, SUM(`ClaimSignature` IS NOT NULL AND TRIM(`ClaimSignature`)='0') literal_zero_count, COUNT(DISTINCT CASE WHEN `ClaimSignature` IS NOT NULL AND TRIM(`ClaimSignature`) NOT IN ('','0') THEN SHA2(CONCAT('aggregate-distinct-only:',TRIM(`ClaimSignature`)),256) END) distinct_nonblank_nonzero_count FROM `hospitalinfo`",
+            "bindings": [],
+            "query_hash_sha256": "0bb2ccbda1bdde6c7ff92ec6bf59f86e1e630210afce42d349876a897aae7347",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "fcc29c3a240451d7c5b78969dd7fed2757be53ff7635ff7af556ab22a5df7b82"
+        },
+        {
+            "query_id": "phase2b.actorlike.hospitalinfo.Admn",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(`Admn` IS NULL) null_count, SUM(`Admn` IS NOT NULL AND TRIM(`Admn`)='') blank_count, SUM(`Admn` IS NOT NULL AND TRIM(`Admn`)='0') literal_zero_count, COUNT(DISTINCT CASE WHEN `Admn` IS NOT NULL AND TRIM(`Admn`) NOT IN ('','0') THEN SHA2(CONCAT('aggregate-distinct-only:',TRIM(`Admn`)),256) END) distinct_nonblank_nonzero_count FROM `hospitalinfo`",
+            "bindings": [],
+            "query_hash_sha256": "b9105260632394bce84ea2b9e2d06b797f587372448104df8625652ee90ad659",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "fcc29c3a240451d7c5b78969dd7fed2757be53ff7635ff7af556ab22a5df7b82"
+        },
+        {
+            "query_id": "phase2b.actorlike.consult_diagnosis.MdfId",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(`MdfId` IS NULL) null_count, SUM(`MdfId` IS NOT NULL AND TRIM(`MdfId`)='') blank_count, SUM(`MdfId` IS NOT NULL AND TRIM(`MdfId`)='0') literal_zero_count, COUNT(DISTINCT CASE WHEN `MdfId` IS NOT NULL AND TRIM(`MdfId`) NOT IN ('','0') THEN SHA2(CONCAT('aggregate-distinct-only:',TRIM(`MdfId`)),256) END) distinct_nonblank_nonzero_count FROM `consult_diagnosis`",
+            "bindings": [],
+            "query_hash_sha256": "5b897f743bd109b4ccfc1002136a56075292fa90700e6148e081b1113900c9fd",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "51b26d64be1a56c72b8dae4df4463b3bd6308dd168b3189761959ad165b37129"
+        },
+        {
+            "query_id": "phase2b.actorlike.list_diagnosis.MdfId",
+            "query_version": 1,
+            "normalized_sql": "SELECT COUNT(*) child_rows, SUM(`MdfId` IS NULL) null_count, SUM(`MdfId` IS NOT NULL AND TRIM(`MdfId`)='') blank_count, SUM(`MdfId` IS NOT NULL AND TRIM(`MdfId`)='0') literal_zero_count, COUNT(DISTINCT CASE WHEN `MdfId` IS NOT NULL AND TRIM(`MdfId`) NOT IN ('','0') THEN SHA2(CONCAT('aggregate-distinct-only:',TRIM(`MdfId`)),256) END) distinct_nonblank_nonzero_count FROM `list_diagnosis`",
+            "bindings": [],
+            "query_hash_sha256": "8aee14d3e75a8095d0a4f8a9e4ed2bfe1def89f4c8b73d4f97ca06b02cfc875a",
+            "started_at_utc": "2026-07-21T19:08:42+00:00",
+            "finished_at_utc": "2026-07-21T19:08:49+00:00",
+            "result_hash_sha256": "0940de9e193f26e59c257ecbb54eb8eb82860718e46011b4a9eba353a54b5076"
+        }
+    ]
+}

@@ -1,0 +1,23 @@
+{
+  "specification_version":"2C.1.0","phase":"2C","approved_source":{"database":"uuhms"},"policy_authority":["D-201","Q-001","D-214"],"installed_target_evidence":{"database":"uhms_clean","effective_prefix":"UHMS","effective_pattern":"{PREFIX}-{SEQUENCE}/{YEAR}","sequence_width":6,"reset_period":"yearly","timezone":"UTC","patients":100,"sequence_rows":1,"current_period_last_sequence":100},"privacy":{"contains_phi":false},"implementation_authorized":false,"record_count":18,
+  "records":[
+    {"id":"PATIENT-NUM-001","topic":"authority","rule":"Renewed numbering configuration and sequence are the only number source; Classic PAT_ID/OpdNo/OriginalOpd are prohibited."},
+    {"id":"PATIENT-NUM-002","topic":"configuration fingerprint","rule":"Hash effective prefix, pattern, width, reset period, timezone, supported placeholders and active period at every dry-run/commit; stop on drift."},
+    {"id":"PATIENT-NUM-003","topic":"format validation","rule":"Pattern contains SEQUENCE exactly once, uses supported placeholders, is injective within period and fits target width."},
+    {"id":"PATIENT-NUM-004","topic":"mapping first","rule":"Lock and resolve protected source crosswalk before any allocation; successful mapping returns existing target/number with zero sequence mutation."},
+    {"id":"PATIENT-NUM-005","topic":"atomicity","rule":"Mapping reservation, sequence increment, patient insert, migration audit and crosswalk success share one transaction or reviewed equivalent protocol."},
+    {"id":"PATIENT-NUM-006","topic":"sequence locking","rule":"Lock exact (prefix,period_type,period_key); missing-row creation uses duplicate-key retry/upsert-and-lock, not check-then-insert only."},
+    {"id":"PATIENT-NUM-007","topic":"collision","rule":"Check all live/soft-deleted/merged patients, archived numbers and aliases; stop on collision. Random suffix/decorating is prohibited.","exception_code":"LEGACY-PATIENT-NUMBER-037"},
+    {"id":"PATIENT-NUM-008","topic":"dry run","rule":"Allocate/reserve nothing; output symbolic TARGET_GENERATED_AT_COMMIT and capacity/invariant aggregates only."},
+    {"id":"PATIENT-NUM-009","topic":"commit allocation","rule":"Allocate only after entity eligibility and target preflight pass; existing-target links and quarantined rows allocate zero."},
+    {"id":"PATIENT-NUM-010","topic":"resume","rule":"Crosswalk is authoritative after crash/checkpoint lag; never allocate a replacement number.","exception_code":"LEGACY-PATIENT-NUMBER-038"},
+    {"id":"PATIENT-NUM-011","topic":"rollback","rule":"Precommit failure rolls back sequence/patient/mapping together. After commit never decrement, recycle, delete/recreate or replace the number."},
+    {"id":"PATIENT-NUM-012","topic":"period rollover","rule":"Pin active UTC period; close/reconcile and start a new run coordinate before crossing reset boundary."},
+    {"id":"PATIENT-NUM-013","topic":"concurrency","rule":"Use same sequence lock as operations plus exact unified allocation ledger, otherwise require operational registration freeze."},
+    {"id":"PATIENT-NUM-014","topic":"sequence equation","rule":"Under freeze: S_after-S_before = migration_committed + explained_consumptions; expected explained_consumptions=0.","reconciliation_id":"PATIENT-REC-NUMBER-020"},
+    {"id":"PATIENT-NUM-015","topic":"unfrozen equation","rule":"Without freeze: S_after-S_before = migration_committed + operational_committed + explained_consumptions; stop if operational_committed is not exactly ledgered."},
+    {"id":"PATIENT-NUM-016","topic":"generator exclusions","rule":"PatientService::create unchanged, Patient::generatePatientNumber, GeneratesNumbers and uniqid collision suffix are unreachable from migration."},
+    {"id":"PATIENT-NUM-017","topic":"stop conditions","rule":"Stop on config drift, sequence underflow/overflow, coordinate multiplicity, collision, period crossing, non-atomic outcome, missing crosswalk or rerun allocation.","exception_code":"LEGACY-PATIENT-NUMBER-039"},
+    {"id":"PATIENT-NUM-018","topic":"invariants","rule":"Classic keys/numbers reused=0; duplicate generated numbers=0; successful source with >1 target number=0; replacement numbers on rerun=0."}
+  ]
+}

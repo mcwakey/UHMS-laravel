@@ -1,0 +1,270 @@
+{
+  "manifest_version": 2,
+  "tool_version": "phase-2e-classic-readonly-manifest/1.1.0",
+  "recorded_at_utc": "2026-07-21T22:55:18Z",
+  "approved_connection": "legacy_uhms",
+  "approved_database": "uuhms",
+  "schema_fingerprint": "150fcf4783fcb8bdc25f7e17fe0ece5050955f0c68e7dd03651ee8bd58498977",
+  "evaluation_coordinate": "2026-07-21T00:00:00Z",
+  "canonicalization": "SHA-256 of compact UTF-8 JSON result_contract with stored key order and JSON_UNESCAPED_SLASHES",
+  "privacy": {
+    "aggregate_only": true,
+    "contains_raw_phi": false,
+    "small_cells_are_classic_source_quality_counts": true
+  },
+  "record_count": 15,
+  "records": [
+    {
+      "id": "source_core",
+      "query_id": "P2E-CQ-001",
+      "result_contract": {
+        "total_rows": 31307,
+        "source_key_null": 0,
+        "source_key_nonpositive": 0,
+        "source_key_duplicate_rows": 0,
+        "patient_ref_null": 0,
+        "patient_ref_zero": 0,
+        "patient_ref_matched": 30991,
+        "patient_ref_orphan": 316,
+        "type_nhis": 15653,
+        "type_private": 15654,
+        "type_blank": 0,
+        "type_unknown": 0,
+        "company_blank": 25042,
+        "scheme_blank": 21444,
+        "plan_blank": 31299,
+        "member_blank": 17029,
+        "issue_zero": 17091,
+        "expiry_zero": 15717,
+        "difference": 0
+      },
+      "result_hash_sha256": "f9158906c67a596f248068ceed4f94844c0349febfabb0b20724c025166513ef"
+    },
+    {
+      "id": "provider_union_source_candidates",
+      "query_id": "P2E-CQ-002",
+      "result_contract": {
+        "total_rows": 31307,
+        "company_blank": 25042,
+        "no_source_candidate": 4017,
+        "one_source_candidate": 2247,
+        "ambiguous_source_candidates": 1,
+        "difference": 0,
+        "target_mapped_claim": false
+      },
+      "result_hash_sha256": "9878307e2933ea3f108bb42137ec8f8d84f33557fb1a362d16a7f181707cf230"
+    },
+    {
+      "id": "member_scope_diagnostics_exact",
+      "query_id": "P2E-CQ-003",
+      "result_contract": {
+        "duplicate_groups": 1019,
+        "duplicate_rows": 2555,
+        "cross_patient_groups": 1002,
+        "cross_patient_rows": 2521,
+        "cross_provider_groups": 255,
+        "cross_provider_rows": 621,
+        "same_patient_provider_groups": 14,
+        "same_patient_provider_rows": 28,
+        "diagnostic_overlap": true
+      },
+      "result_hash_sha256": "f7596deb5285af475d75e4fd00bcb5681b4eabdd5ed44788780c98d385fb0031"
+    },
+    {
+      "id": "member_primary_precedence_exact",
+      "query_id": "P2E-CQ-004",
+      "result_contract": {
+        "population": 31307,
+        "buckets": {
+          "blank": 17029,
+          "duplicate_cross_patient": 2516,
+          "duplicate_cross_provider_same_patient": 18,
+          "duplicate_same_patient_provider": 16,
+          "placeholder": 5,
+          "valid_single_scope": 11723
+        },
+        "difference": 0
+      },
+      "result_hash_sha256": "dc89611859fedb3f293842b5b39a679e7a4bdbb8599f782cd467810a6e59b7e6"
+    },
+    {
+      "id": "duplicate_groups",
+      "query_id": "P2E-CQ-005",
+      "result_contract": {
+        "patient_type_company_groups": 37,
+        "patient_type_company_rows": 90,
+        "patient_type_company_scheme_groups": 36,
+        "patient_type_company_scheme_rows": 88,
+        "exact_complete_groups": 32,
+        "exact_complete_rows": 80
+      },
+      "result_hash_sha256": "9b2243d4c996e027c0f6f4f99620d1b074483ead4e3c272d823e142d4f9958ed"
+    },
+    {
+      "id": "conflicting_tuple",
+      "query_id": "P2E-CQ-006",
+      "result_contract": {
+        "conflicting_groups": 4,
+        "conflicting_rows": 8,
+        "group_difference": 0,
+        "row_difference": 0
+      },
+      "result_hash_sha256": "0b32b883dbfe24856d39411d4c0bf2971eecb52226d42ff4d8b8319f04fe0553"
+    },
+    {
+      "id": "chronology_primary",
+      "query_id": "P2E-CQ-007",
+      "result_contract": {
+        "population": 31307,
+        "buckets": {
+          "both_unknown": 15683,
+          "issue_known_expiry_unknown": 34,
+          "issue_unknown_expiry_known": 1408,
+          "reversed": 66,
+          "equal_known": 28,
+          "future_issue": 0,
+          "future_expiry_nonfuture_issue": 51,
+          "valid_ordered_nonfuture": 14037
+        },
+        "difference": 0
+      },
+      "result_hash_sha256": "da9f80afde2a6bf6f91b6d253566951ab4abf536b6535f11279db7ea01630949"
+    },
+    {
+      "id": "current_state_primary",
+      "query_id": "P2E-CQ-008",
+      "result_contract": {
+        "population": 31307,
+        "buckets": {
+          "date_unknown": 17125,
+          "chronology_invalid": 66,
+          "future_looking": 0,
+          "expired_looking": 14065,
+          "active_looking": 51
+        },
+        "difference": 0,
+        "active_is_not_eligibility": true
+      },
+      "result_hash_sha256": "325b79d07f976c7a5b63abf6845a3c99166c40a58f356f0fc66c035081d7c2a8"
+    },
+    {
+      "id": "patient_company_primary",
+      "query_id": "P2E-CQ-009",
+      "result_contract": {
+        "population": 16950,
+        "buckets": {
+          "company_without_insurance": 1,
+          "conflicts": 4104,
+          "corroborates": 1193,
+          "insurance_with_blank_company": 10181,
+          "blank_without_insurance": 1471
+        },
+        "difference": 0,
+        "target_provider_claim": false
+      },
+      "result_hash_sha256": "7e77ec4cc35136e9900f1a6513ad4ee6d0647d6d327dd56ab11142ab2149c38b"
+    },
+    {
+      "id": "provider_name_short_diagnostic",
+      "query_id": "P2E-CQ-010",
+      "result_contract": {
+        "total_nonblank": 6265,
+        "no_candidate": 4017,
+        "name_only": 0,
+        "short_only": 0,
+        "both_fields": 2248,
+        "one_union_candidate": 2247,
+        "ambiguous_union": 1,
+        "difference": 0,
+        "private_short_authority": false
+      },
+      "result_hash_sha256": "e021a2892e7fa21365487dad3f27b65617c1185e2ccb2fd75e168e2d65b1a339"
+    },
+    {
+      "id": "scheme_plan_primary",
+      "query_id": "P2E-CQ-011",
+      "result_contract": {
+        "population": 31307,
+        "buckets": {
+          "both_blank": 21443,
+          "scheme_only": 9856,
+          "plan_only": 1,
+          "equal_nonblank": 1,
+          "different_nonblank": 6
+        },
+        "scheme_hyphen": 1954,
+        "plan_hyphen": 0,
+        "difference": 0
+      },
+      "result_hash_sha256": "b75e683871624d00c7dc6abfac9b4daf33e22be23a9e22d4c9917c1339388385"
+    },
+    {
+      "id": "text_quality",
+      "query_id": "P2E-CQ-012",
+      "result_contract": {
+        "type_control": 0,
+        "company_control": 0,
+        "scheme_control": 0,
+        "member_control": 0,
+        "plan_control": 0,
+        "member_at_limit": 1,
+        "company_at_limit": 2,
+        "scheme_at_limit": 0,
+        "plan_at_limit": 0
+      },
+      "result_hash_sha256": "5b8da559861773e580137f72dd404dd621f9ab90392b2a991c228332f339581b"
+    },
+    {
+      "id": "provider_catalogue",
+      "query_id": "P2E-CQ-013",
+      "result_contract": {
+        "source_rows": 38,
+        "blank_name": 0,
+        "blank_short": 0,
+        "blank_type": 0,
+        "type_corporate": 19,
+        "type_private": 19,
+        "type_unknown": 0,
+        "difference": 0
+      },
+      "result_hash_sha256": "8157e7ff795327cd604914a8d78b60ac86b8b675b3747717236617b762a34a69"
+    },
+    {
+      "id": "provider_catalogue_duplicates",
+      "query_id": "P2E-CQ-014",
+      "result_contract": {
+        "duplicate_groups": 5,
+        "duplicate_rows": 10
+      },
+      "result_hash_sha256": "2cb707536948af80a631105bd10932e108d8300b81b4cdaf0762745101b706d1"
+    },
+    {
+      "id": "bill_status",
+      "query_id": "P2E-CQ-015",
+      "result_contract": {
+        "population": 16950,
+        "buckets": {
+          "CASH AND CARRY": 2518,
+          "NHIS": 10587,
+          "PRIVATE INSURANCE": 3416,
+          "PRIVATE INSURANCE +": 5,
+          "PRIVATE INSURANCE + NHIS": 384,
+          "__BLANK__": 40
+        },
+        "difference": 0
+      },
+      "result_hash_sha256": "c63fe6075d4b81c7cfe49ef67fe4e4a3d22343582afeeb6806bb5dbec75e9da2"
+    }
+  ],
+  "required_zero_assertions": {
+    "database_writes": 0,
+    "non_uuhms_access": 0,
+    "raw_member_values_emitted": 0,
+    "raw_patient_identifiers_emitted": 0,
+    "target_provider_mappings_claimed_from_candidates": 0,
+    "eligibility_fabricated": 0
+  },
+  "aggregate_payload_hash_sha256": "ae9adf9a3dce30279dd4668defb614956fd175e200afc8c24de06de293a1c3e4",
+  "bundle_identity_sha256": "037aab45c41adab35d41fe10460c159b215c523b15622b79f288422d641c11a3",
+  "status": "complete_for_published_classic_aggregates"
+}

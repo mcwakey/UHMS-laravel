@@ -1,0 +1,28 @@
+{
+  "specification_version": "2F.1.0",
+  "phase": "2F",
+  "approved_source": {"connection": "legacy_uhms", "database": "uuhms", "read_only": true},
+  "approved_target": {"environment": "local", "database": "uhms_clean", "read_only": true, "production": false},
+  "upstream_contracts": ["NK-004", "INS-CONS-001", "INS-CONS-002", "INS-CONS-008", "INS-CONS-009", "INS-CONS-010", "INS-CONS-011", "INS-CONS-012", "INS-ELIG-001", "INS-ELIG-002", "INS-TARGET-003", "INS-TARGET-009"],
+  "defaults_are_migration_authority": false,
+  "implementation_authorized": false,
+  "privacy": {"contains_phi": false, "contains_raw_phi": false, "contains_raw_identifiers": false},
+  "record_count": 15,
+  "records": [
+    {"id":"PILOT-INS-INIT-001","field":"patient_id","installed":"required patients FK","rule":"resolved new-patient mapping only","existing_target":"no enrichment","approval_state":"UPSTREAM_PARENT_REQUIRED"},
+    {"id":"PILOT-INS-INIT-002","field":"insurance_provider_id","installed":"required provider FK","rule":"exact approved Phase 2A provider crosswalk only","existing_target":"preserve","approval_state":"UPSTREAM_CROSSWALK_REQUIRED"},
+    {"id":"PILOT-INS-INIT-003","field":"insurance_tier_id","installed":"nullable tier FK","rule":"null/not evidenced exactly as required by INS-CONS-010; no tier crosswalk or default-tier lookup may populate it","existing_target":"preserve","approval_state":"UPSTREAM_REQUIRED_NULL_NOT_EVIDENCED"},
+    {"id":"PILOT-INS-INIT-004","field":"member_type","installed":"enum holder|beneficiary NOT NULL DEFAULT holder","rule":"source does not evidence either value; default is prohibited","existing_target":"preserve","approval_state":"COMMIT_BLOCKER_TARGET_REPRESENTATION"},
+    {"id":"PILOT-INS-INIT-005","field":"card_holder_insurance_id","installed":"nullable self FK","rule":"null/not evidenced exactly as required by INS-CONS-010; no card-holder relationship may be inferred","existing_target":"preserve","approval_state":"UPSTREAM_REQUIRED_NULL_NOT_EVIDENCED"},
+    {"id":"PILOT-INS-INIT-006","field":"membership_number","installed":"nullable varchar","rule":"Phase 2E evidenced value or null; never generated","existing_target":"preserve","approval_state":"UPSTREAM_RULED"},
+    {"id":"PILOT-INS-INIT-007","field":"policy_number","installed":"nullable varchar","rule":"null/not evidenced exactly as required by INS-CONS-010; never copy membership_number or scheme/plan evidence into policy_number","existing_target":"preserve","approval_state":"UPSTREAM_REQUIRED_NULL_NOT_EVIDENCED"},
+    {"id":"PILOT-INS-INIT-008","field":"ccc_code","installed":"nullable varchar(64)","rule":"null/not evidenced exactly as required by INS-CONS-010; no CCC or verification value may be inferred","existing_target":"preserve","approval_state":"UPSTREAM_REQUIRED_NULL_NOT_EVIDENCED"},
+    {"id":"PILOT-INS-INIT-009","field":"start_date","installed":"nullable date","rule":"valid evidenced issue/start date only","existing_target":"preserve","approval_state":"D-206_FIELD_SPECIFIC"},
+    {"id":"PILOT-INS-INIT-010","field":"expiry_date","installed":"nullable date","rule":"valid evidenced expiry date only; never swapped/coerced","existing_target":"preserve","approval_state":"D-206_FIELD_SPECIFIC"},
+    {"id":"PILOT-INS-INIT-011","field":"is_primary","installed":"boolean NOT NULL DEFAULT false","rule":"recommend explicit false and target-owned later selection; source does not evidence primary","existing_target":"preserve","approval_state":"BLOCKING_OWNER_APPROVAL"},
+    {"id":"PILOT-INS-INIT-012","field":"is_active","installed":"boolean NOT NULL DEFAULT true","rule":"active-looking dates do not authorize target activation or eligibility","existing_target":"preserve","approval_state":"COMMIT_BLOCKER_TARGET_REPRESENTATION"},
+    {"id":"PILOT-INS-INIT-013","field":"created_at,updated_at","installed":"nullable timestamps; Eloquent normally stamps current time","rule":"recommend explicit null/not-evidenced plus protected provenance","existing_target":"preserve","approval_state":"BLOCKING_TIMESTAMP_REPRESENTATION"},
+    {"id":"PILOT-INS-INIT-014","field":"verification_and_eligibility","installed":"separate insurance_verifications table","rule":"create no verification, actor, status, visit link or eligibility fact","existing_target":"preserve","approval_state":"PROHIBITED_BY_INS-ELIG-001_TO_006"},
+    {"id":"PILOT-INS-INIT-015","field":"current_representation","installed":"unique patient_id+insurance_provider_id","rule":"history classification/provenance proceeds, but current membership insert is blocked until member_type and active/primary state are approved","existing_target":"immutable evidence only","approval_state":"COMMIT_BLOCKED"}
+  ]
+}

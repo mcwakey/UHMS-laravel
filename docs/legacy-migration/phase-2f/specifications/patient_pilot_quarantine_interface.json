@@ -1,0 +1,60 @@
+{
+  "specification_version": "2F.1.0",
+  "phase": "2F",
+  "approved_source": {"connection": "legacy_uhms", "database": "uuhms", "read_only": true},
+  "approved_target": {"environment": "approved_non_production", "read_only": true, "production_forbidden": true},
+  "implementation_authorized": false,
+  "policy_authority": {"source": "APPROVED_DECISION_SPECIFICATIONS.md", "decision_register": "DECISIONS.md", "decisions": ["D-207", "D-211", "D-212", "D-213"]},
+  "upstream_contracts": [
+    "phase-2c.patient_dependency_chain_rules:PATIENT-CHAIN-001",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-007",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-008",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-009",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-CHAIN-100",
+    "phase-2d.patient_child_reconciliation_contracts:PATIENT-CHILD-REC-010",
+    "phase-2e.insurance_reconciliation_contracts:INS-REC-012"
+  ],
+  "interface_only": true,
+  "record_count": 7,
+  "records": [
+    {
+      "id": "PILOT-QUAR-001",
+      "interface": "quarantine record",
+      "required_fields": ["root_token", "subchain_token", "primary_exception_code", "secondary_exception_codes", "blocking_scope", "manual_review_owner", "manual_review_sla", "release_conditions", "dependency_edges", "current_disposition", "release_approval_ref"]
+    },
+    {
+      "id": "PILOT-QUAR-002",
+      "interface": "root domains",
+      "root_domains": {"patient": "PATIENT-PRIV-007", "orphan_attendance": "PATIENT-PRIV-008", "orphan_insurance": "PATIENT-PRIV-009"},
+      "rule": "Every quarantined outcome has exactly one authoritative typed root."
+    },
+    {
+      "id": "PILOT-QUAR-003",
+      "interface": "subchain",
+      "rule": "A typed subchain links to but never replaces the authoritative root; Phase 2E patient-insurance-orphan-v1 is secondary correlation only."
+    },
+    {
+      "id": "PILOT-QUAR-004",
+      "interface": "blocking scope",
+      "allowed_values": ["run", "snapshot", "patient_root", "subchain", "field", "alias", "contact", "insurance_row", "insurance_group", "reference_parent"]
+    },
+    {
+      "id": "PILOT-QUAR-005",
+      "interface": "disposition",
+      "allowed_values": ["held", "review_pending", "remediated_pending_recheck", "released", "permanently_withheld", "superseded", "failed_closed"]
+    },
+    {
+      "id": "PILOT-QUAR-006",
+      "interface": "topological release",
+      "release_order": ["environment_snapshot", "reference_actor", "patient_identity_state", "patient_core", "alias_contact_insurance_row", "insurance_group", "reconciliation"],
+      "rule": "No descendant releases before its valid parent; release reruns child rules, collision checks and reconciliation at the current coordinate."
+    },
+    {
+      "id": "PILOT-QUAR-007",
+      "interface": "no reassignment",
+      "rule": "No orphan or held child is assigned to a similar, current, first, administrator, importer, generic or guessed patient; conflicting roots remain held.",
+      "exception_codes": ["LEGACY-PATIENT-RELATIONSHIP-029", "LEGACY-PATIENT-CHAIN-042", "LEGACY-INSURANCE-PATIENT-005"]
+    }
+  ],
+  "privacy": {"contains_raw_phi": false, "contains_raw_source_or_target_identifiers": false, "repository_output": "aggregate-only"}
+}

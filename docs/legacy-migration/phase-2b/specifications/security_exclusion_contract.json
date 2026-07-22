@@ -1,0 +1,128 @@
+{
+    "specification_version": "2B.1.0",
+    "phase": "Phase 2B â€” Staff Identity and Historical Attribution Mapping Specifications",
+    "generated_at_utc": "2026-07-21T19:11:40Z",
+    "approved_source": {
+        "connection": "legacy_uhms",
+        "schema": "uuhms",
+        "access": "read-only",
+        "expected_tables": 55,
+        "expected_columns": 479
+    },
+    "policy_authority": [
+        "D-202",
+        "D-008",
+        "Q-304"
+    ],
+    "privacy": {
+        "raw_staff_identity_values": false,
+        "credentials": false,
+        "permission_values": false,
+        "personal_contacts": false,
+        "phi": false
+    },
+    "implementation_authorized": false,
+    "contract_id": "STAFF-SECURITY-001",
+    "classification": "Approved policy and Phase 2B technical specification",
+    "source_exclusions": [
+        {
+            "columns": [
+                "uuhms.users.Password"
+            ],
+            "disposition": "Security-excluded",
+            "values_exported": false,
+            "target_mapping": false,
+            "exception_code": "LEGACY-STAFF-SECURITY-015"
+        },
+        {
+            "columns": [
+                "uuhms.users.CanAdd",
+                "uuhms.users.CanEdit",
+                "uuhms.users.CanDelete",
+                "uuhms.users.CanPrint"
+            ],
+            "disposition": "Security-excluded",
+            "values_exported": false,
+            "target_mapping": false,
+            "exception_code": "LEGACY-STAFF-SECURITY-016"
+        }
+    ],
+    "historical_identity_assertions": {
+        "status": "inactive/disabled",
+        "login_credentials": 0,
+        "roles": 0,
+        "direct_permissions": 0,
+        "effective_permissions": 0,
+        "sessions": 0,
+        "password_reset_tokens": 0,
+        "invitations": 0,
+        "notification_routes": 0,
+        "external_identities": 0,
+        "total_department_access": 0,
+        "total_specialty_and_clinical_privileges": 0
+    },
+    "installed_target_risk_evidence": {
+        "user_foreign_keys": 426,
+        "non_nullable_user_foreign_keys": 53,
+        "nullable_user_foreign_keys": 373,
+        "actor_shaped_columns_without_user_fk": 34,
+        "inactive_status_blocks_new_login_only": true,
+        "existing_session_revalidation_confirmed": false,
+        "inactive_password_reset_exclusion_confirmed": false,
+        "universal_inactive_notification_exclusion_confirmed": false,
+        "polymorphic_role_permission_user_fk_enforced": false
+    },
+    "existing_user_preservation": [
+        "target id",
+        "credentials",
+        "roles",
+        "permissions",
+        "name",
+        "email",
+        "phone",
+        "department",
+        "specialties",
+        "status"
+    ],
+    "forbidden_attribution_fallbacks": [
+        "current authenticated user",
+        "first target user",
+        "administrator",
+        "importer account",
+        "system operator",
+        "guessed user",
+        "department supervisor"
+    ],
+    "runtime_side_effects_to_suppress": [
+        "UserObserver activity/security logs for historical creation",
+        "Spatie LogsActivity operational entries",
+        "welcome/verification/password-reset flows",
+        "notifications",
+        "role/permission audit events",
+        "external critical-activity forwarding"
+    ],
+    "unsafe_runtime_fallbacks": [
+        "authenticated-current-user stamping",
+        "first-user accounting posting fallback"
+    ],
+    "validation_stop_conditions": [
+        "any secret/contact/raw staff name in generated specs",
+        "any Classic permission value exported",
+        "any historical identity access state nonzero",
+        "any forbidden fallback configured",
+        "any operational observer/event used as historical evidence"
+    ],
+    "protected_fingerprint_policy": {
+        "algorithm": "HMAC-SHA-256",
+        "domain_separation": "required per field group and purpose",
+        "key_source": "environment-controlled secret; never repository or report",
+        "key_version": "required",
+        "canonicalization_version": "required",
+        "cross_environment_comparison": "prohibited",
+        "raw_low_entropy_sha256": "prohibited"
+    },
+    "phase2b_evidence_references": [
+        "../../evidence/PHASE_2B_STAFF_QUERY_MANIFEST.json",
+        "../../evidence/PHASE_2B_STAFF_AGGREGATE_RESULTS.json"
+    ]
+}

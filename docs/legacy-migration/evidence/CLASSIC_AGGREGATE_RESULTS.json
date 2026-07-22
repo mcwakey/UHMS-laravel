@@ -1,0 +1,1526 @@
+{
+    "manifest_version": 2,
+    "tool_version": "phase-1b-classic-evidence/2.1.0",
+    "tool_code_hash_sha256": "781dcbe7b5ad186f5bfec1847a494199d2672dd2757564e55dd5a0064f313473",
+    "captured_at_utc": "2026-07-21T01:57:29+00:00",
+    "approved_database": "uuhms",
+    "privacy": {
+        "record_level_values_included": false,
+        "patient_identifiers_included": false,
+        "free_text_included": false,
+        "patient_derived_temporal_extrema_included": false,
+        "temporal_extrema_repository_policy": "valid_min and valid_max are null in source control; exact query-result hashes remain in CLASSIC_QUERY_MANIFEST.json and raw extrema, if operationally required, belong only in protected evidence storage",
+        "categorical_values_restricted_to_safe_allowlist": true,
+        "unapproved_categorical_literals": "collapsed inside the database; only combined row count and distinct-value count are returned"
+    },
+    "repository_sanitization": {
+        "policy_version": "phase-2c-temporal-extrema-redaction/1.0.0",
+        "scope": "temporal_column_profiles.*.results.valid_min and valid_max",
+        "redacted_field_count": 92,
+        "replacement": null,
+        "raw_query_result_hashes_retained": false,
+        "note": "Counts and quality buckets are preserved; exact patient/event extrema and their historical plain result hashes are not source-controlled evidence."
+    },
+    "row_counts": {
+        "accounts": 1,
+        "acc_petty": 1,
+        "acc_titles": 31,
+        "appointement": 1364,
+        "attendance": 51927,
+        "bank": 1,
+        "batch": 253,
+        "beds": 18,
+        "billing": 111731,
+        "claims": 31892,
+        "claims_diagnosis": 57776,
+        "claims_prescriptions": 112152,
+        "claims_procedures": 3648,
+        "claims_scan_lab": 3,
+        "claims_specialty": 9,
+        "consult_complaints": 65244,
+        "consult_diagnosis": 123940,
+        "consult_history": 34532,
+        "consult_prescriptions": 210902,
+        "consult_procedures": 121,
+        "consult_scan_lab": 72680,
+        "consult_services": 60260,
+        "consult_treatment": 1926,
+        "departements": 18,
+        "gens": 2,
+        "hospitalinfo": 1,
+        "insurance": 31307,
+        "list_causes": 18,
+        "list_complaints": 8924,
+        "list_diagnosis": 5948,
+        "list_disorder": 1,
+        "list_procedures": 768,
+        "list_signs": 2,
+        "list_symptoms": 6,
+        "mat_family": 0,
+        "mat_obstetrics": 0,
+        "medicine": 4303,
+        "med_pharm": 8360,
+        "med_store": 8356,
+        "notifications": 141,
+        "nurses_note": 29,
+        "patients": 16950,
+        "request": 146,
+        "services": 203,
+        "serv_criterias": 200,
+        "serv_group": 155,
+        "serv_options_cri": 20,
+        "serv_options_out": 32,
+        "serv_results": 460758,
+        "sett_ocuupation": 0,
+        "sett_private": 38,
+        "suppliers": 2,
+        "treatment": 69,
+        "users": 86,
+        "vitals": 60803
+    },
+    "total_rows": 1548058,
+    "categorical_status_counts": {
+        "attendance.AttStatus": [
+            {
+                "value": "OUTPATIENT",
+                "count": 42708,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "INPATIENT",
+                "count": 7998,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "OUTSIDER",
+                "count": 1221,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "attendance.Billing": [
+            {
+                "value": "NHIS",
+                "count": 33959,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "CASH AND CARRY",
+                "count": 10527,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "PRIVATE INSURANCE",
+                "count": 7012,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "PRIVATE INSURANCE + NHIS",
+                "count": 291,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "__NULL__",
+                "count": 98,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "STAFF/PROTOCOL",
+                "count": 40,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "attendance.Status": [
+            {
+                "value": "DOCTOR",
+                "count": 40435,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "DISCHARGING",
+                "count": 6820,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "VITALS",
+                "count": 1260,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "DONE",
+                "count": 930,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "DISCHARGE",
+                "count": 753,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "PHARMACY",
+                "count": 678,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "LAB",
+                "count": 454,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "INPATIENT-DISCH",
+                "count": 381,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "ADMISSION",
+                "count": 124,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "SCAN",
+                "count": 88,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "ADMISSION-DETENTION",
+                "count": 2,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "ADMISSION-ADMISSION",
+                "count": 1,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "WARD",
+                "count": 1,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "attendance.Triage": [
+            {
+                "value": "__NULL__",
+                "count": 35271,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "NORMAL",
+                "count": 16463,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "MANAGEABLE",
+                "count": 96,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "EMERGENCY",
+                "count": 88,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "__REDACTED_UNAPPROVED_LITERAL__",
+                "count": 9,
+                "distinct_value_count": 7,
+                "redacted": true
+            }
+        ],
+        "attendance.NewOld": [
+            {
+                "value": "NEW",
+                "count": 34534,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "__NULL__",
+                "count": 17347,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "OLD",
+                "count": 46,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "patients.Sex": [
+            {
+                "value": "FEMALE",
+                "count": 9080,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "MALE",
+                "count": 7282,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "f",
+                "count": 224,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "M",
+                "count": 198,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "__NULL__",
+                "count": 151,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "__REDACTED_UNAPPROVED_LITERAL__",
+                "count": 12,
+                "distinct_value_count": 12,
+                "redacted": true
+            },
+            {
+                "value": "EMALE",
+                "count": 1,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "FEMLE",
+                "count": 1,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "MAL",
+                "count": 1,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "patients.BillStatus": [
+            {
+                "value": "NHIS",
+                "count": 10587,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "PRIVATE INSURANCE",
+                "count": 3416,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "CASH AND CARRY",
+                "count": 2518,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "PRIVATE INSURANCE + NHIS",
+                "count": 384,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "__NULL__",
+                "count": 40,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "PRIVATE INSURANCE +",
+                "count": 5,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "billing.Status": [
+            {
+                "value": "PAID",
+                "count": 104938,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "OWING",
+                "count": 6793,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "claims.ClaimStatus": [
+            {
+                "value": "ACTIVE",
+                "count": 31692,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "ARCHIVES",
+                "count": 200,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "claims.TypeBill": [
+            {
+                "value": "ALL INCLUSIVE",
+                "count": 31892,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "claims.TypeServ": [
+            {
+                "value": "OUTPATIENT",
+                "count": 28263,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "INPATIENT",
+                "count": 3629,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "consult_prescriptions.Status": [
+            {
+                "value": "DONE",
+                "count": 188144,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "REQUESTED",
+                "count": 22758,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "consult_prescriptions.BillingStatus": [
+            {
+                "value": "BILLED",
+                "count": 141314,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "OWING",
+                "count": 69588,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "consult_scan_lab.Status": [
+            {
+                "value": "DONE",
+                "count": 64951,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "REQUESTED",
+                "count": 7705,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "SERVED",
+                "count": 24,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "insurance.InsType": [
+            {
+                "value": "PRIVATE INSURANCE",
+                "count": 15654,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "NHIS",
+                "count": 15653,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "medicine.MedType": [
+            {
+                "value": "DRUG",
+                "count": 4127,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "__NULL__",
+                "count": 154,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "CONSUMABLE",
+                "count": 22,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "medicine.Category": [
+            {
+                "value": "__NULL__",
+                "count": 3874,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "__REDACTED_UNAPPROVED_LITERAL__",
+                "count": 429,
+                "distinct_value_count": 86,
+                "redacted": true
+            }
+        ],
+        "medicine.Serve": [
+            {
+                "value": "__NULL__",
+                "count": 2903,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "__REDACTED_UNAPPROVED_LITERAL__",
+                "count": 1400,
+                "distinct_value_count": 85,
+                "redacted": true
+            }
+        ],
+        "services.ResultType": [
+            {
+                "value": "__NULL__",
+                "count": 203,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "serv_criterias.ResultType": [
+            {
+                "value": "__NULL__",
+                "count": 200,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "serv_results.Uploaded": [
+            {
+                "value": "0",
+                "count": 460758,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "serv_results.ResFlag": [
+            {
+                "value": "__NULL__",
+                "count": 460752,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "1",
+                "count": 3,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": ".",
+                "count": 1,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "C",
+                "count": 1,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "T",
+                "count": 1,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "users.Status": [
+            {
+                "value": "ACTIVE",
+                "count": 85,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "INACTIVE",
+                "count": 1,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "users.CanAdd": [
+            {
+                "value": "Y",
+                "count": 86,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "users.CanEdit": [
+            {
+                "value": "Y",
+                "count": 86,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "users.CanDelete": [
+            {
+                "value": "Y",
+                "count": 86,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "users.CanPrint": [
+            {
+                "value": "Y",
+                "count": 86,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "beds.BedStatus": [
+            {
+                "value": "AVAILABLE",
+                "count": 12,
+                "distinct_value_count": 1,
+                "redacted": false
+            },
+            {
+                "value": "OCCUPIED",
+                "count": 6,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "batch.BatchStatus": [
+            {
+                "value": "DONE",
+                "count": 253,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ],
+        "notifications.ReqStatus": [
+            {
+                "value": "UNCHECKED",
+                "count": 141,
+                "distinct_value_count": 1,
+                "redacted": false
+            }
+        ]
+    },
+    "duplicate_identity_aggregates": {
+        "patients.opd_number": {
+            "duplicate_group_count": 275,
+            "duplicate_row_count": 1259
+        },
+        "patients.normalized_name": {
+            "duplicate_group_count": 1001,
+            "duplicate_row_count": 2278
+        },
+        "insurance.member_number": {
+            "duplicate_group_count": 1019,
+            "duplicate_row_count": 2555
+        },
+        "insurance.patient_provider_tuple": {
+            "duplicate_group_count": 36,
+            "duplicate_row_count": 88
+        },
+        "users.normalized_username": {
+            "duplicate_group_count": 2,
+            "duplicate_row_count": 4
+        },
+        "medicine.code": {
+            "duplicate_group_count": 2,
+            "duplicate_row_count": 4
+        },
+        "services.normalized_name": {
+            "duplicate_group_count": 7,
+            "duplicate_row_count": 16
+        },
+        "batch.number": {
+            "duplicate_group_count": 1,
+            "duplicate_row_count": 252
+        },
+        "serv_options_cri.id": {
+            "duplicate_group_count": 1,
+            "duplicate_row_count": 20
+        },
+        "serv_options_out.id": {
+            "duplicate_group_count": 1,
+            "duplicate_row_count": 32
+        }
+    },
+    "date_quality_aggregates": {
+        "patients.dob": {
+            "total_rows": 16950,
+            "zero_date_count": 0,
+            "pre_1900_count": 1,
+            "future_count": 0,
+            "dob_after_registration_count": 18
+        },
+        "insurance.coverage_dates": {
+            "total_rows": 31307,
+            "zero_issue_count": 17091,
+            "zero_expiry_count": 15717,
+            "future_issue_count": 19,
+            "future_expiry_count": 54,
+            "expiry_before_issue_count": 66
+        },
+        "attendance.admission_dates": {
+            "total_rows": 51927,
+            "discharge_before_admission_count": 1003,
+            "same_admit_discharge_count": 50531,
+            "admission_equals_attendance_count": 50607,
+            "discharge_equals_attendance_count": 51251
+        },
+        "claims.admission_dates": {
+            "total_rows": 31892,
+            "discharge_before_admission_count": 20,
+            "future_discharge_count": 1
+        },
+        "claims_prescriptions.prescription_date": {
+            "total_rows": 112152,
+            "zero_date_count": 63
+        },
+        "appointement.app_date": {
+            "total_rows": 1364,
+            "null_count": 0,
+            "midnight_count": 0,
+            "future_count": 5,
+            "year_2100_or_later_count": 1
+        },
+        "batch.expiry": {
+            "total_rows": 253,
+            "future_expiry_count": 1,
+            "past_but_not_flagged_count": 252
+        },
+        "request.timeline": {
+            "total_rows": 146,
+            "supplied_before_request_count": 144
+        }
+    },
+    "temporal_column_profiles": {
+        "accounts.IncDate": {
+            "data_type": "date",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 1,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "accounts.RegDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 1,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "appointement.AppDate": {
+            "data_type": "datetime",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 1364,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 5
+            }
+        },
+        "attendance.AttDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 51927,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "attendance.AdmitDate": {
+            "data_type": "date",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 51927,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "attendance.DischDate": {
+            "data_type": "date",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 51927,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "bank.RegDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 1,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "batch.ExpiryDate": {
+            "data_type": "date",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 253,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 1
+            }
+        },
+        "batch.BatchDate": {
+            "data_type": "timestamp",
+            "on_update": true,
+            "watermark_semantics": "mutable schema-managed timestamp candidate; business meaning and delete coverage require approval",
+            "results": {
+                "total_rows": 253,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "beds.BedDate": {
+            "data_type": "timestamp",
+            "on_update": true,
+            "watermark_semantics": "mutable schema-managed timestamp candidate; business meaning and delete coverage require approval",
+            "results": {
+                "total_rows": 18,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "billing.BillDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 111731,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "billing.PayDate": {
+            "data_type": "timestamp",
+            "on_update": true,
+            "watermark_semantics": "mutable schema-managed timestamp candidate; business meaning and delete coverage require approval",
+            "results": {
+                "total_rows": 111731,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "claims.AdmitClaim": {
+            "data_type": "date",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 31892,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "claims.DischClaim": {
+            "data_type": "date",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 31892,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 1
+            }
+        },
+        "claims.ClaimDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 31892,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "claims_diagnosis.DiagDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 57776,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "claims_prescriptions.PresDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 112152,
+                "null_count": 0,
+                "zero_date_count": 63,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "claims_procedures.ProDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 3648,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "claims_scan_lab.SclDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 3,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "consult_complaints.CompDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 65244,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "consult_diagnosis.DiagDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 123940,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "consult_history.HistDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 34532,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "consult_prescriptions.PresDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 210902,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "consult_procedures.ProDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 121,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "consult_scan_lab.SclDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 72680,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "consult_scan_lab.SclUpdate": {
+            "data_type": "timestamp",
+            "on_update": true,
+            "watermark_semantics": "mutable schema-managed timestamp candidate; business meaning and delete coverage require approval",
+            "results": {
+                "total_rows": 72680,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "consult_services.RecDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 60260,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "consult_treatment.TreatPDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 1926,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "insurance.IssueDate": {
+            "data_type": "date",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 31307,
+                "null_count": 0,
+                "zero_date_count": 17091,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 19
+            }
+        },
+        "insurance.ExpiryDate": {
+            "data_type": "date",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 31307,
+                "null_count": 0,
+                "zero_date_count": 15717,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 54
+            }
+        },
+        "mat_family.BookDate": {
+            "data_type": "datetime",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 0,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "mat_family.FaDOB": {
+            "data_type": "date",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 0,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "mat_obstetrics.BirthDate": {
+            "data_type": "date",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 0,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "medicine.RegDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 4303,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "notifications.RecDate": {
+            "data_type": "timestamp",
+            "on_update": true,
+            "watermark_semantics": "mutable schema-managed timestamp candidate; business meaning and delete coverage require approval",
+            "results": {
+                "total_rows": 141,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "nurses_note.NurDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 29,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "patients.DOB": {
+            "data_type": "date",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 16950,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 1,
+                "future_count": 0
+            }
+        },
+        "patients.LastVisit": {
+            "data_type": "datetime",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 16950,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "patients.EditDate": {
+            "data_type": "timestamp",
+            "on_update": true,
+            "watermark_semantics": "mutable schema-managed timestamp candidate; business meaning and delete coverage require approval",
+            "results": {
+                "total_rows": 16950,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "patients.RegDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 16950,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "request.ReqDate": {
+            "data_type": "timestamp",
+            "on_update": true,
+            "watermark_semantics": "mutable schema-managed timestamp candidate; business meaning and delete coverage require approval",
+            "results": {
+                "total_rows": 146,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "request.SuppDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 146,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "suppliers.RegDate": {
+            "data_type": "timestamp",
+            "on_update": true,
+            "watermark_semantics": "mutable schema-managed timestamp candidate; business meaning and delete coverage require approval",
+            "results": {
+                "total_rows": 2,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "treatment.TreatDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 69,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "users.RegDate": {
+            "data_type": "timestamp",
+            "on_update": false,
+            "watermark_semantics": "business/event date only; not evidence of row-change chronology",
+            "results": {
+                "total_rows": 86,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        },
+        "vitals.VitDate": {
+            "data_type": "timestamp",
+            "on_update": true,
+            "watermark_semantics": "mutable schema-managed timestamp candidate; business meaning and delete coverage require approval",
+            "results": {
+                "total_rows": 60803,
+                "null_count": 0,
+                "zero_date_count": 0,
+                "valid_min": null,
+                "valid_max": null,
+                "pre_1900_count": 0,
+                "future_count": 0
+            }
+        }
+    },
+    "critical_field_quality_aggregates": {
+        "patients.required_and_identity_fields": {
+            "total_rows": 16950,
+            "empty_name_count": 211,
+            "empty_opd_count": 141,
+            "empty_sex_count": 151,
+            "empty_phone_count": 5050,
+            "empty_original_name_count": 16950,
+            "empty_original_opd_count": 16950
+        },
+        "insurance.identity_fields": {
+            "total_rows": 31307,
+            "empty_member_number_count": 17029,
+            "empty_company_count": 25042,
+            "empty_scheme_count": 21444
+        },
+        "medicine.catalogue_fields": {
+            "total_rows": 4303,
+            "empty_name_count": 2669,
+            "empty_code_count": 3853,
+            "empty_category_count": 3874,
+            "empty_serve_count": 2903
+        },
+        "services.catalogue_fields": {
+            "total_rows": 203,
+            "empty_name_count": 0,
+            "empty_department_count": 14,
+            "empty_result_type_count": 203
+        },
+        "consult_history.content_fields": {
+            "total_rows": 34532,
+            "empty_plain_count": 4477,
+            "empty_rtf_count": 2132
+        },
+        "consult_treatment.content_fields": {
+            "total_rows": 1926,
+            "empty_plain_count": 699,
+            "empty_rtf_count": 57
+        },
+        "consult_scan_lab.result_fields": {
+            "total_rows": 72680,
+            "empty_result_count": 11892,
+            "empty_interpretation_count": 72680,
+            "empty_description_count": 72647
+        },
+        "serv_results.result_fields": {
+            "total_rows": 460758,
+            "empty_result_count": 126066,
+            "empty_outcome_count": 460758
+        }
+    },
+    "financial_reconciliation": {
+        "billing_candidate_equation": {
+            "equation": "Bill - Discount - Paid = Balance",
+            "approval_status": "stakeholder decision required",
+            "results": {
+                "total_rows": 111731,
+                "bill_total": "6588851.33",
+                "discount_total": "5055.00",
+                "paid_total": "5764343.70",
+                "balance_total": "819795.39",
+                "mismatch_count": 906,
+                "aggregate_difference": "-342.76",
+                "negative_component_count": 1,
+                "paid_with_positive_balance_count": 0,
+                "owing_with_non_positive_balance_count": 79
+            }
+        },
+        "claim_candidate_equation": {
+            "equation": "ClaimTotal = ServTariff + InvTariff + PharmTariff",
+            "approval_status": "stakeholder decision required",
+            "results": {
+                "total_rows": 31892,
+                "claim_total": "4116482.48",
+                "service_total": "1905117.96",
+                "investigation_total": "0.00",
+                "pharmacy_total": "2210257.96",
+                "mismatch_count": 43,
+                "aggregate_difference": "1106.56",
+                "negative_component_count": 0
+            }
+        }
+    },
+    "stock_snapshot_and_batch_reconciliation": {
+        "med_pharm.snapshot": {
+            "total_rows": 8360,
+            "quantity_total": "11752954.0000",
+            "negative_component_count": 323,
+            "duplicate_product_group_count": 10
+        },
+        "med_store.snapshot": {
+            "total_rows": 8356,
+            "quantity_total": "-3832473.0000",
+            "negative_component_count": 111,
+            "duplicate_product_group_count": 2
+        },
+        "batch.snapshot": {
+            "total_rows": 253,
+            "quantity_total": "18327.0000",
+            "negative_component_count": 0,
+            "past_but_not_flagged_count": 252
+        },
+        "request.snapshot": {
+            "total_rows": 146,
+            "negative_quantity_row_count": 52
+        },
+        "pharmacy_vs_store.product_reconciliation": {
+            "shared_product_count": 8336,
+            "equal_quantity_product_count": 7419,
+            "aggregate_quantity_difference": "15576914.0000"
+        },
+        "pharmacy_vs_store.unmatched_products": {
+            "pharmacy_only_product_count": 14,
+            "store_only_product_count": 18
+        },
+        "batch_vs_combined_snapshot.product_reconciliation": {
+            "shared_product_count": 176,
+            "equal_quantity_product_count": 19,
+            "aggregate_quantity_difference": "-3142448.0000"
+        },
+        "batch_vs_combined_snapshot.unmatched_products": {
+            "batch_only_product_count": 70,
+            "snapshot_only_product_count": 8192
+        },
+        "interpretation": {
+            "confirmed": "Classic contains stock snapshots, batches and requests, not a complete stock-movement ledger.",
+            "decision_required": "Approve source-evidenced facts and/or a labelled opening position; never synthesize full movement history."
+        }
+    }
+}

@@ -1,0 +1,33 @@
+{
+  "specification_version": "2F.1.0",
+  "phase": "2F",
+  "approved_source": {"connection": "legacy_uhms", "database": "uuhms", "read_only": true},
+  "approved_target": {"environment": "approved_non_production", "read_only": true},
+  "policy_authority": ["D-201", "D-213", "Q-002", "Q-007"],
+  "upstream_contracts": ["PATIENT-REQ-001", "PATIENT-REQ-002", "PATIENT-REQ-006", "PATIENT-REQ-007", "PATIENT-REQ-008", "PATIENT-PRIV-001"],
+  "privacy": {"contains_phi": false, "contains_raw_phi": false, "values_stored_in_repository": false, "protected_operational_store_required": true},
+  "implementation_authorized": false,
+  "record_count": 20,
+  "records": [
+    {"id":"PILOT-REMED-001","field":"protected_source_patient_token","required":true,"rule":"patient-source-key-v1_domain_key_and_canonicalization_versions_required"},
+    {"id":"PILOT-REMED-002","field":"first_name","required":"for_future_new_patient","rule":"independently_evidenced_never_derived_by_automatic_combined_name_split"},
+    {"id":"PILOT-REMED-003","field":"last_name","required":"for_future_new_patient","rule":"independently_evidenced_never_copied_from_first_name"},
+    {"id":"PILOT-REMED-004","field":"other_names","required":false,"rule":"only_if_independently_evidenced"},
+    {"id":"PILOT-REMED-005","field":"corrected_date_of_birth","required":"when_source_DOB_invalid_or_missing","rule":"full_valid_date_evidence_only"},
+    {"id":"PILOT-REMED-006","field":"corrected_gender","required":"when_source_gender_invalid_or_missing","rule":"approved_target_enum_only"},
+    {"id":"PILOT-REMED-007","field":"corrected_phone","required":"when_source_phone_invalid_or_missing","rule":"versioned_patient_phone_validation_no_NOK_copy"},
+    {"id":"PILOT-REMED-008","field":"evidence_type","required":true,"rule":"controlled_evidence_class"},
+    {"id":"PILOT-REMED-009","field":"evidence_issuer_source","required":true,"rule":"protected_authoritative_source_reference"},
+    {"id":"PILOT-REMED-010","field":"reviewer","required":true,"rule":"protected_verified_reviewer_identity"},
+    {"id":"PILOT-REMED-011","field":"approval_status","required":true,"rule":"accepted_required_before_consumption"},
+    {"id":"PILOT-REMED-012","field":"validity_period","required":true,"rule":"must_cover_pinned_pilot_coordinate"},
+    {"id":"PILOT-REMED-013","field":"revocation","required":true,"rule":"revoked_or_superseded_input_is_not_consumed"},
+    {"id":"PILOT-REMED-014","field":"rule_version","required":true,"rule":"exact_match_to_pinned_contract_bundle"},
+    {"id":"PILOT-REMED-015","field":"conflict_flags","required":true,"rule":"any_unresolved_conflict_blocks_future_commit_candidate"},
+    {"id":"PILOT-REMED-016","prohibition":"guess_name_order_or_copy_one_name_into_both_components","outcome":"quarantine_LEGACY-PATIENT-REMEDIATION-040"},
+    {"id":"PILOT-REMED-017","prohibition":"infer_from_another_patient_or_duplicate_review_candidate","outcome":"quarantine_and_privacy_review"},
+    {"id":"PILOT-REMED-018","prohibition":"use_insurance_or_child_contact_to_repair_patient_identity_automatically","outcome":"quarantine_LEGACY-PATIENT-REMEDIATION-040"},
+    {"id":"PILOT-REMED-019","prohibition":"use_remediation_as_general_target_patient_match","outcome":"existing_target_ambiguity_quarantine"},
+    {"id":"PILOT-REMED-020","precedence":"token_integrity_then_approval_nonrevocation_then_evidence_independence_then_field_validity_then_conflicts_then_snapshot_validity","outcome":"accepted_candidate_or_remediation_required"}
+  ]
+}

@@ -1,0 +1,1621 @@
+{
+    "specification_version": "2B.1.0",
+    "phase": "Phase 2B ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Staff Identity and Historical Attribution Mapping Specifications",
+    "generated_at_utc": "2026-07-21T19:11:40Z",
+    "approved_source": {
+        "connection": "legacy_uhms",
+        "schema": "uuhms",
+        "access": "read-only",
+        "expected_tables": 55,
+        "expected_columns": 479
+    },
+    "policy_authority": [
+        "D-202",
+        "D-008",
+        "Q-304"
+    ],
+    "privacy": {
+        "raw_staff_identity_values": false,
+        "credentials": false,
+        "permission_values": false,
+        "personal_contacts": false,
+        "phi": false
+    },
+    "implementation_authorized": false,
+    "record_count": 28,
+    "all_55_tables_scanned": true,
+    "actor_reference_columns_inventoried": 28,
+    "records": [
+        {
+            "id": "STAFF-REL-001",
+            "kind": "numeric Classic user reference",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "attendance",
+                "column": "USER_ID"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "USER_ID"
+            },
+            "exact_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "null_behavior": "Null is no actor evidence; route under this relationship only.",
+            "zero_behavior": "Not observed; if introduced, fail relationship snapshot and classify before use.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 51927,
+                "null_count": 0,
+                "approved_or_candidate_zero_count": 0,
+                "valid_matched_count": 15186,
+                "orphan_count": 36741,
+                "duplicate_parent_count": 0
+            },
+            "duplicate_parent_handling": "Classic users.USER_ID is primary-key unique; any duplicate is schema drift.",
+            "source_snapshot_fields": [
+                "USER_ID"
+            ],
+            "target_domain": "visits",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "blocking_scope": "parent aggregate or dependency chain as defined in downstream phase",
+            "quarantine_scope": "Preserve child key and original actor reference in protected provenance.",
+            "reconciliation_equation": "51927 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "extraction_dependency": "STAFF-EXT-002",
+            "sentinel_rule_id": "STAFF-SENT-001",
+            "evidence_reference": "Phase 1B relationship manifest plus Phase 2B read-only aggregate rerun 2026-07-21",
+            "source_partition_equation": "51927 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "target_resolution_partition_equation": "51927 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-approved zero sentinel",
+                "nonzero matched Classic parent",
+                "nonzero Classic orphan",
+                "verified target actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-051",
+                "TARGET-ACTOR-001",
+                "TARGET-ACTOR-047",
+                "TARGET-ACTOR-050"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-002",
+            "kind": "numeric Classic user reference",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "batch",
+                "column": "USER_ID"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "USER_ID"
+            },
+            "exact_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "null_behavior": "Null is no actor evidence; route under this relationship only.",
+            "zero_behavior": "Not observed; if introduced, fail relationship snapshot and classify before use.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 253,
+                "null_count": 0,
+                "approved_or_candidate_zero_count": 0,
+                "valid_matched_count": 253,
+                "orphan_count": 0,
+                "duplicate_parent_count": 0
+            },
+            "duplicate_parent_handling": "Classic users.USER_ID is primary-key unique; any duplicate is schema drift.",
+            "source_snapshot_fields": [
+                "USER_ID"
+            ],
+            "target_domain": "pharmacy/stock evidence",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-RECON-026",
+            "blocking_scope": "attribution or child record; field-specific",
+            "quarantine_scope": "Preserve child key and original actor reference in protected provenance.",
+            "reconciliation_equation": "253 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "extraction_dependency": "STAFF-EXT-003",
+            "sentinel_rule_id": "STAFF-SENT-002",
+            "evidence_reference": "Phase 1B relationship manifest plus Phase 2B read-only aggregate rerun 2026-07-21",
+            "source_partition_equation": "253 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "target_resolution_partition_equation": "253 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-approved zero sentinel",
+                "nonzero matched Classic parent",
+                "nonzero Classic orphan",
+                "verified target actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-079"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-003",
+            "kind": "numeric Classic user reference",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "billing",
+                "column": "USER_ID"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "USER_ID"
+            },
+            "exact_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "null_behavior": "Null is no actor evidence; route under this relationship only.",
+            "zero_behavior": "Not observed; if introduced, fail relationship snapshot and classify before use.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 111731,
+                "null_count": 0,
+                "approved_or_candidate_zero_count": 0,
+                "valid_matched_count": 24545,
+                "orphan_count": 87186,
+                "duplicate_parent_count": 0
+            },
+            "duplicate_parent_handling": "Classic users.USER_ID is primary-key unique; any duplicate is schema drift.",
+            "source_snapshot_fields": [
+                "USER_ID"
+            ],
+            "target_domain": "billing",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "blocking_scope": "parent aggregate or dependency chain as defined in downstream phase",
+            "quarantine_scope": "Preserve child key and original actor reference in protected provenance.",
+            "reconciliation_equation": "111731 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "extraction_dependency": "STAFF-EXT-004",
+            "sentinel_rule_id": "STAFF-SENT-003",
+            "evidence_reference": "Phase 1B relationship manifest plus Phase 2B read-only aggregate rerun 2026-07-21",
+            "source_partition_equation": "111731 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "target_resolution_partition_equation": "111731 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-approved zero sentinel",
+                "nonzero matched Classic parent",
+                "nonzero Classic orphan",
+                "verified target actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-026"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-004",
+            "kind": "numeric Classic user reference",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "consult_prescriptions",
+                "column": "USER_ID"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "USER_ID"
+            },
+            "exact_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "null_behavior": "Null is no actor evidence; route under this relationship only.",
+            "zero_behavior": "Approved field-specific candidate sentinel meaning no Classic user parent; not automatic target assignment.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 210902,
+                "null_count": 0,
+                "approved_or_candidate_zero_count": 14144,
+                "valid_matched_count": 93823,
+                "orphan_count": 102935,
+                "duplicate_parent_count": 0
+            },
+            "duplicate_parent_handling": "Classic users.USER_ID is primary-key unique; any duplicate is schema drift.",
+            "source_snapshot_fields": [
+                "USER_ID"
+            ],
+            "target_domain": "prescriptions/clinical",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "blocking_scope": "attribution or child record; field-specific",
+            "quarantine_scope": "Preserve child key and original actor reference in protected provenance.",
+            "reconciliation_equation": "210902 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "extraction_dependency": "STAFF-EXT-005",
+            "sentinel_rule_id": "STAFF-SENT-004",
+            "evidence_reference": "Phase 1B relationship manifest plus Phase 2B read-only aggregate rerun 2026-07-21",
+            "source_partition_equation": "210902 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "target_resolution_partition_equation": "210902 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-approved zero sentinel",
+                "nonzero matched Classic parent",
+                "nonzero Classic orphan",
+                "verified target actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-072",
+                "TARGET-ACTOR-013"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-005",
+            "kind": "numeric Classic user reference",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "consult_scan_lab",
+                "column": "USER_ID"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "USER_ID"
+            },
+            "exact_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "null_behavior": "Null is no actor evidence; route under this relationship only.",
+            "zero_behavior": "Approved field-specific candidate sentinel meaning no Classic user parent; not automatic target assignment.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 72680,
+                "null_count": 0,
+                "approved_or_candidate_zero_count": 72680,
+                "valid_matched_count": 0,
+                "orphan_count": 0,
+                "duplicate_parent_count": 0
+            },
+            "duplicate_parent_handling": "Classic users.USER_ID is primary-key unique; any duplicate is schema drift.",
+            "source_snapshot_fields": [
+                "USER_ID"
+            ],
+            "target_domain": "investigations/results",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-SENTINEL-011",
+            "blocking_scope": "attribution or child record; field-specific",
+            "quarantine_scope": "Preserve child key and original actor reference in protected provenance.",
+            "reconciliation_equation": "72680 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "extraction_dependency": "STAFF-EXT-006",
+            "sentinel_rule_id": "STAFF-SENT-005",
+            "evidence_reference": "Phase 1B relationship manifest plus Phase 2B read-only aggregate rerun 2026-07-21",
+            "source_partition_equation": "72680 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "target_resolution_partition_equation": "72680 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-approved zero sentinel",
+                "nonzero matched Classic parent",
+                "nonzero Classic orphan",
+                "verified target actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-067",
+                "TARGET-ACTOR-027",
+                "TARGET-ACTOR-028"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-006",
+            "kind": "numeric Classic user reference",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "nurses_note",
+                "column": "USER_ID"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "USER_ID"
+            },
+            "exact_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "null_behavior": "Null is no actor evidence; route under this relationship only.",
+            "zero_behavior": "Not observed; if introduced, fail relationship snapshot and classify before use.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 29,
+                "null_count": 0,
+                "approved_or_candidate_zero_count": 0,
+                "valid_matched_count": 29,
+                "orphan_count": 0,
+                "duplicate_parent_count": 0
+            },
+            "duplicate_parent_handling": "Classic users.USER_ID is primary-key unique; any duplicate is schema drift.",
+            "source_snapshot_fields": [
+                "USER_ID"
+            ],
+            "target_domain": "nursing notes",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-RECON-026",
+            "blocking_scope": "attribution or child record; field-specific",
+            "quarantine_scope": "Preserve child key and original actor reference in protected provenance.",
+            "reconciliation_equation": "29 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "extraction_dependency": "STAFF-EXT-007",
+            "sentinel_rule_id": "STAFF-SENT-006",
+            "evidence_reference": "Phase 1B relationship manifest plus Phase 2B read-only aggregate rerun 2026-07-21",
+            "source_partition_equation": "29 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "target_resolution_partition_equation": "29 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-approved zero sentinel",
+                "nonzero matched Classic parent",
+                "nonzero Classic orphan",
+                "verified target actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-086"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-007",
+            "kind": "numeric Classic user reference",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "request",
+                "column": "USER_ID"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "USER_ID"
+            },
+            "exact_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "null_behavior": "Null is no actor evidence; route under this relationship only.",
+            "zero_behavior": "Approved field-specific candidate sentinel meaning no Classic user parent; not automatic target assignment.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 146,
+                "null_count": 0,
+                "approved_or_candidate_zero_count": 146,
+                "valid_matched_count": 0,
+                "orphan_count": 0,
+                "duplicate_parent_count": 0
+            },
+            "duplicate_parent_handling": "Classic users.USER_ID is primary-key unique; any duplicate is schema drift.",
+            "source_snapshot_fields": [
+                "USER_ID"
+            ],
+            "target_domain": "stock requests",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-SENTINEL-011",
+            "blocking_scope": "attribution or child record; field-specific",
+            "quarantine_scope": "Preserve child key and original actor reference in protected provenance.",
+            "reconciliation_equation": "146 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "extraction_dependency": "STAFF-EXT-008",
+            "sentinel_rule_id": "STAFF-SENT-007",
+            "evidence_reference": "Phase 1B relationship manifest plus Phase 2B read-only aggregate rerun 2026-07-21",
+            "source_partition_equation": "146 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "target_resolution_partition_equation": "146 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-approved zero sentinel",
+                "nonzero matched Classic parent",
+                "nonzero Classic orphan",
+                "verified target actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-044"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-008",
+            "kind": "numeric Classic user reference",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "treatment",
+                "column": "USER_ID"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "USER_ID"
+            },
+            "exact_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "null_behavior": "Null is no actor evidence; route under this relationship only.",
+            "zero_behavior": "Not observed; if introduced, fail relationship snapshot and classify before use.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 69,
+                "null_count": 0,
+                "approved_or_candidate_zero_count": 0,
+                "valid_matched_count": 66,
+                "orphan_count": 3,
+                "duplicate_parent_count": 0
+            },
+            "duplicate_parent_handling": "Classic users.USER_ID is primary-key unique; any duplicate is schema drift.",
+            "source_snapshot_fields": [
+                "USER_ID"
+            ],
+            "target_domain": "treatment administration",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "blocking_scope": "attribution or child record; field-specific",
+            "quarantine_scope": "Preserve child key and original actor reference in protected provenance.",
+            "reconciliation_equation": "69 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "extraction_dependency": "STAFF-EXT-009",
+            "sentinel_rule_id": "STAFF-SENT-008",
+            "evidence_reference": "Phase 1B relationship manifest plus Phase 2B read-only aggregate rerun 2026-07-21",
+            "source_partition_equation": "69 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "target_resolution_partition_equation": "69 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-approved zero sentinel",
+                "nonzero matched Classic parent",
+                "nonzero Classic orphan",
+                "verified target actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-083",
+                "TARGET-ACTOR-030"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-009",
+            "kind": "numeric Classic user reference",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "vitals",
+                "column": "USER_ID"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "USER_ID"
+            },
+            "exact_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "null_behavior": "Null is no actor evidence; route under this relationship only.",
+            "zero_behavior": "Not observed; if introduced, fail relationship snapshot and classify before use.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 60803,
+                "null_count": 0,
+                "approved_or_candidate_zero_count": 0,
+                "valid_matched_count": 52325,
+                "orphan_count": 8478,
+                "duplicate_parent_count": 0
+            },
+            "duplicate_parent_handling": "Classic users.USER_ID is primary-key unique; any duplicate is schema drift.",
+            "source_snapshot_fields": [
+                "USER_ID"
+            ],
+            "target_domain": "vitals",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "blocking_scope": "attribution or child record; field-specific",
+            "quarantine_scope": "Preserve child key and original actor reference in protected provenance.",
+            "reconciliation_equation": "60803 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "extraction_dependency": "STAFF-EXT-010",
+            "sentinel_rule_id": "STAFF-SENT-009",
+            "evidence_reference": "Phase 1B relationship manifest plus Phase 2B read-only aggregate rerun 2026-07-21",
+            "source_partition_equation": "60803 = null + field_zero_sentinel + matched_classic_user_parent + orphan_classic_user_parent",
+            "target_resolution_partition_equation": "60803 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-approved zero sentinel",
+                "nonzero matched Classic parent",
+                "nonzero Classic orphan",
+                "verified target actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-052"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-010",
+            "kind": "free-text clinician snapshot; not a verified user foreign key",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "claims",
+                "column": "Doctor"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "FullName"
+            },
+            "exact_predicate": "UPPER(TRIM(c.`Doctor`)) = UPPER(TRIM(p.`FullName`)) [diagnostic only; prohibited as identity proof]",
+            "null_behavior": "Null is no actor evidence.",
+            "zero_behavior": "Not applicable to text field; literal text zero is not approved.",
+            "other_sentinel_behavior": "Blank is a field-specific candidate no-actor sentinel; no other literal approved.",
+            "counts": {
+                "child_rows": 31892,
+                "null_count": 0,
+                "blank_count": 1502,
+                "normalized_name_single_parent_candidate_count": 30333,
+                "normalized_name_ambiguous_parent_count": 26,
+                "normalized_name_unmatched_count": 31,
+                "valid_verified_actor_count": 0
+            },
+            "duplicate_parent_handling": "Any normalized-name multiplicity is ambiguous; even one name candidate is not verified identity.",
+            "source_snapshot_fields": [
+                "Doctor"
+            ],
+            "target_domain": "claims",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-ACTOR-022",
+            "blocking_scope": "clinical attribution; may block child or consultation aggregate when a verified clinician is mandatory",
+            "quarantine_scope": "Never publish text; retain protected value/fingerprint and child key.",
+            "reconciliation_equation": "31892 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "extraction_dependency": "STAFF-EXT-011",
+            "sentinel_rule_id": "STAFF-SENT-010",
+            "evidence_reference": "Phase 2B read-only aggregate rerun 2026-07-21; normalized-name counts are diagnostics only",
+            "source_partition_equation": "31892 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "target_resolution_partition_equation": "31892 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "blank",
+                "ambiguous normalized-name diagnostic",
+                "single normalized-name diagnostic (not identity proof)",
+                "unmatched text",
+                "verified external actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-070"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-011",
+            "kind": "free-text clinician snapshot; not a verified user foreign key",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "consult_complaints",
+                "column": "Doctor"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "FullName"
+            },
+            "exact_predicate": "UPPER(TRIM(c.`Doctor`)) = UPPER(TRIM(p.`FullName`)) [diagnostic only; prohibited as identity proof]",
+            "null_behavior": "Null is no actor evidence.",
+            "zero_behavior": "Not applicable to text field; literal text zero is not approved.",
+            "other_sentinel_behavior": "Blank is a field-specific candidate no-actor sentinel; no other literal approved.",
+            "counts": {
+                "child_rows": 65244,
+                "null_count": 0,
+                "blank_count": 28378,
+                "normalized_name_single_parent_candidate_count": 139,
+                "normalized_name_ambiguous_parent_count": 0,
+                "normalized_name_unmatched_count": 36727,
+                "valid_verified_actor_count": 0
+            },
+            "duplicate_parent_handling": "Any normalized-name multiplicity is ambiguous; even one name candidate is not verified identity.",
+            "source_snapshot_fields": [
+                "Doctor"
+            ],
+            "target_domain": "clinical complaints",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-ACTOR-022",
+            "blocking_scope": "clinical attribution; may block child or consultation aggregate when a verified clinician is mandatory",
+            "quarantine_scope": "Never publish text; retain protected value/fingerprint and child key.",
+            "reconciliation_equation": "65244 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "extraction_dependency": "STAFF-EXT-012",
+            "sentinel_rule_id": "STAFF-SENT-011",
+            "evidence_reference": "Phase 2B read-only aggregate rerun 2026-07-21; normalized-name counts are diagnostics only",
+            "source_partition_equation": "65244 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "target_resolution_partition_equation": "65244 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "blank",
+                "ambiguous normalized-name diagnostic",
+                "single normalized-name diagnostic (not identity proof)",
+                "unmatched text",
+                "verified external actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-061",
+                "TARGET-ACTOR-059"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-012",
+            "kind": "free-text clinician snapshot; not a verified user foreign key",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "consult_diagnosis",
+                "column": "Doctor"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "FullName"
+            },
+            "exact_predicate": "UPPER(TRIM(c.`Doctor`)) = UPPER(TRIM(p.`FullName`)) [diagnostic only; prohibited as identity proof]",
+            "null_behavior": "Null is no actor evidence.",
+            "zero_behavior": "Not applicable to text field; literal text zero is not approved.",
+            "other_sentinel_behavior": "Blank is a field-specific candidate no-actor sentinel; no other literal approved.",
+            "counts": {
+                "child_rows": 123940,
+                "null_count": 0,
+                "blank_count": 79422,
+                "normalized_name_single_parent_candidate_count": 4588,
+                "normalized_name_ambiguous_parent_count": 0,
+                "normalized_name_unmatched_count": 39930,
+                "valid_verified_actor_count": 0
+            },
+            "duplicate_parent_handling": "Any normalized-name multiplicity is ambiguous; even one name candidate is not verified identity.",
+            "source_snapshot_fields": [
+                "Doctor"
+            ],
+            "target_domain": "diagnoses",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-ACTOR-022",
+            "blocking_scope": "clinical attribution; may block child or consultation aggregate when a verified clinician is mandatory",
+            "quarantine_scope": "Never publish text; retain protected value/fingerprint and child key.",
+            "reconciliation_equation": "123940 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "extraction_dependency": "STAFF-EXT-013",
+            "sentinel_rule_id": "STAFF-SENT-012",
+            "evidence_reference": "Phase 2B read-only aggregate rerun 2026-07-21; normalized-name counts are diagnostics only",
+            "source_partition_equation": "123940 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "target_resolution_partition_equation": "123940 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "blank",
+                "ambiguous normalized-name diagnostic",
+                "single normalized-name diagnostic (not identity proof)",
+                "unmatched text",
+                "verified external actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-064",
+                "TARGET-ACTOR-062"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-013",
+            "kind": "free-text clinician snapshot; not a verified user foreign key",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "consult_history",
+                "column": "Doctor"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "FullName"
+            },
+            "exact_predicate": "UPPER(TRIM(c.`Doctor`)) = UPPER(TRIM(p.`FullName`)) [diagnostic only; prohibited as identity proof]",
+            "null_behavior": "Null is no actor evidence.",
+            "zero_behavior": "Not applicable to text field; literal text zero is not approved.",
+            "other_sentinel_behavior": "Blank is a field-specific candidate no-actor sentinel; no other literal approved.",
+            "counts": {
+                "child_rows": 34532,
+                "null_count": 0,
+                "blank_count": 1755,
+                "normalized_name_single_parent_candidate_count": 6782,
+                "normalized_name_ambiguous_parent_count": 0,
+                "normalized_name_unmatched_count": 25995,
+                "valid_verified_actor_count": 0
+            },
+            "duplicate_parent_handling": "Any normalized-name multiplicity is ambiguous; even one name candidate is not verified identity.",
+            "source_snapshot_fields": [
+                "Doctor"
+            ],
+            "target_domain": "clinical history",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-ACTOR-022",
+            "blocking_scope": "clinical attribution; may block child or consultation aggregate when a verified clinician is mandatory",
+            "quarantine_scope": "Never publish text; retain protected value/fingerprint and child key.",
+            "reconciliation_equation": "34532 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "extraction_dependency": "STAFF-EXT-014",
+            "sentinel_rule_id": "STAFF-SENT-013",
+            "evidence_reference": "Phase 2B read-only aggregate rerun 2026-07-21; normalized-name counts are diagnostics only",
+            "source_partition_equation": "34532 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "target_resolution_partition_equation": "34532 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "blank",
+                "ambiguous normalized-name diagnostic",
+                "single normalized-name diagnostic (not identity proof)",
+                "unmatched text",
+                "verified external actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-066",
+                "TARGET-ACTOR-025"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-014",
+            "kind": "free-text clinician snapshot; not a verified user foreign key",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "consult_prescriptions",
+                "column": "Doctor"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "FullName"
+            },
+            "exact_predicate": "UPPER(TRIM(c.`Doctor`)) = UPPER(TRIM(p.`FullName`)) [diagnostic only; prohibited as identity proof]",
+            "null_behavior": "Null is no actor evidence.",
+            "zero_behavior": "Not applicable to text field; literal text zero is not approved.",
+            "other_sentinel_behavior": "Blank is a field-specific candidate no-actor sentinel; no other literal approved.",
+            "counts": {
+                "child_rows": 210902,
+                "null_count": 0,
+                "blank_count": 103165,
+                "normalized_name_single_parent_candidate_count": 6682,
+                "normalized_name_ambiguous_parent_count": 0,
+                "normalized_name_unmatched_count": 101055,
+                "valid_verified_actor_count": 0
+            },
+            "duplicate_parent_handling": "Any normalized-name multiplicity is ambiguous; even one name candidate is not verified identity.",
+            "source_snapshot_fields": [
+                "Doctor"
+            ],
+            "target_domain": "prescriptions/clinical",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-ACTOR-022",
+            "blocking_scope": "clinical attribution; may block child or consultation aggregate when a verified clinician is mandatory",
+            "quarantine_scope": "Never publish text; retain protected value/fingerprint and child key.",
+            "reconciliation_equation": "210902 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "extraction_dependency": "STAFF-EXT-015",
+            "sentinel_rule_id": "STAFF-SENT-014",
+            "evidence_reference": "Phase 2B read-only aggregate rerun 2026-07-21; normalized-name counts are diagnostics only",
+            "source_partition_equation": "210902 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "target_resolution_partition_equation": "210902 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "blank",
+                "ambiguous normalized-name diagnostic",
+                "single normalized-name diagnostic (not identity proof)",
+                "unmatched text",
+                "verified external actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-039"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-015",
+            "kind": "free-text clinician snapshot; not a verified user foreign key",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "consult_procedures",
+                "column": "Doctor"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "FullName"
+            },
+            "exact_predicate": "UPPER(TRIM(c.`Doctor`)) = UPPER(TRIM(p.`FullName`)) [diagnostic only; prohibited as identity proof]",
+            "null_behavior": "Null is no actor evidence.",
+            "zero_behavior": "Not applicable to text field; literal text zero is not approved.",
+            "other_sentinel_behavior": "Blank is a field-specific candidate no-actor sentinel; no other literal approved.",
+            "counts": {
+                "child_rows": 121,
+                "null_count": 0,
+                "blank_count": 121,
+                "normalized_name_single_parent_candidate_count": 0,
+                "normalized_name_ambiguous_parent_count": 0,
+                "normalized_name_unmatched_count": 0,
+                "valid_verified_actor_count": 0
+            },
+            "duplicate_parent_handling": "Any normalized-name multiplicity is ambiguous; even one name candidate is not verified identity.",
+            "source_snapshot_fields": [
+                "Doctor"
+            ],
+            "target_domain": "procedures",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-ACTOR-022",
+            "blocking_scope": "clinical attribution; may block child or consultation aggregate when a verified clinician is mandatory",
+            "quarantine_scope": "Never publish text; retain protected value/fingerprint and child key.",
+            "reconciliation_equation": "121 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "extraction_dependency": "STAFF-EXT-016",
+            "sentinel_rule_id": "STAFF-SENT-015",
+            "evidence_reference": "Phase 2B read-only aggregate rerun 2026-07-21; normalized-name counts are diagnostics only",
+            "source_partition_equation": "121 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "target_resolution_partition_equation": "121 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "blank",
+                "ambiguous normalized-name diagnostic",
+                "single normalized-name diagnostic (not identity proof)",
+                "unmatched text",
+                "verified external actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-093",
+                "TARGET-ACTOR-094"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-016",
+            "kind": "free-text clinician snapshot; not a verified user foreign key",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "consult_scan_lab",
+                "column": "Doctor"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "FullName"
+            },
+            "exact_predicate": "UPPER(TRIM(c.`Doctor`)) = UPPER(TRIM(p.`FullName`)) [diagnostic only; prohibited as identity proof]",
+            "null_behavior": "Null is no actor evidence.",
+            "zero_behavior": "Not applicable to text field; literal text zero is not approved.",
+            "other_sentinel_behavior": "Blank is a field-specific candidate no-actor sentinel; no other literal approved.",
+            "counts": {
+                "child_rows": 72680,
+                "null_count": 0,
+                "blank_count": 32445,
+                "normalized_name_single_parent_candidate_count": 2809,
+                "normalized_name_ambiguous_parent_count": 0,
+                "normalized_name_unmatched_count": 37426,
+                "valid_verified_actor_count": 0
+            },
+            "duplicate_parent_handling": "Any normalized-name multiplicity is ambiguous; even one name candidate is not verified identity.",
+            "source_snapshot_fields": [
+                "Doctor"
+            ],
+            "target_domain": "investigations/results",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-ACTOR-022",
+            "blocking_scope": "clinical attribution; may block child or consultation aggregate when a verified clinician is mandatory",
+            "quarantine_scope": "Never publish text; retain protected value/fingerprint and child key.",
+            "reconciliation_equation": "72680 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "extraction_dependency": "STAFF-EXT-017",
+            "sentinel_rule_id": "STAFF-SENT-016",
+            "evidence_reference": "Phase 2B read-only aggregate rerun 2026-07-21; normalized-name counts are diagnostics only",
+            "source_partition_equation": "72680 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "target_resolution_partition_equation": "72680 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "blank",
+                "ambiguous normalized-name diagnostic",
+                "single normalized-name diagnostic (not identity proof)",
+                "unmatched text",
+                "verified external actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-069",
+                "TARGET-ACTOR-027",
+                "TARGET-ACTOR-028"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-017",
+            "kind": "free-text clinician snapshot; not a verified user foreign key",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "consult_services",
+                "column": "Doctor"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "FullName"
+            },
+            "exact_predicate": "UPPER(TRIM(c.`Doctor`)) = UPPER(TRIM(p.`FullName`)) [diagnostic only; prohibited as identity proof]",
+            "null_behavior": "Null is no actor evidence.",
+            "zero_behavior": "Not applicable to text field; literal text zero is not approved.",
+            "other_sentinel_behavior": "Blank is a field-specific candidate no-actor sentinel; no other literal approved.",
+            "counts": {
+                "child_rows": 60260,
+                "null_count": 0,
+                "blank_count": 60260,
+                "normalized_name_single_parent_candidate_count": 0,
+                "normalized_name_ambiguous_parent_count": 0,
+                "normalized_name_unmatched_count": 0,
+                "valid_verified_actor_count": 0
+            },
+            "duplicate_parent_handling": "Any normalized-name multiplicity is ambiguous; even one name candidate is not verified identity.",
+            "source_snapshot_fields": [
+                "Doctor"
+            ],
+            "target_domain": "clinical services",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-ACTOR-022",
+            "blocking_scope": "clinical attribution; may block child or consultation aggregate when a verified clinician is mandatory",
+            "quarantine_scope": "Never publish text; retain protected value/fingerprint and child key.",
+            "reconciliation_equation": "60260 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "extraction_dependency": "STAFF-EXT-018",
+            "sentinel_rule_id": "STAFF-SENT-017",
+            "evidence_reference": "Phase 2B read-only aggregate rerun 2026-07-21; normalized-name counts are diagnostics only",
+            "source_partition_equation": "60260 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "target_resolution_partition_equation": "60260 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "blank",
+                "ambiguous normalized-name diagnostic",
+                "single normalized-name diagnostic (not identity proof)",
+                "unmatched text",
+                "verified external actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-089"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-018",
+            "kind": "free-text clinician snapshot; not a verified user foreign key",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "consult_treatment",
+                "column": "Doctor"
+            },
+            "parent_source": {
+                "schema": "uuhms",
+                "table": "users",
+                "column": "FullName"
+            },
+            "exact_predicate": "UPPER(TRIM(c.`Doctor`)) = UPPER(TRIM(p.`FullName`)) [diagnostic only; prohibited as identity proof]",
+            "null_behavior": "Null is no actor evidence.",
+            "zero_behavior": "Not applicable to text field; literal text zero is not approved.",
+            "other_sentinel_behavior": "Blank is a field-specific candidate no-actor sentinel; no other literal approved.",
+            "counts": {
+                "child_rows": 1926,
+                "null_count": 0,
+                "blank_count": 0,
+                "normalized_name_single_parent_candidate_count": 53,
+                "normalized_name_ambiguous_parent_count": 0,
+                "normalized_name_unmatched_count": 1873,
+                "valid_verified_actor_count": 0
+            },
+            "duplicate_parent_handling": "Any normalized-name multiplicity is ambiguous; even one name candidate is not verified identity.",
+            "source_snapshot_fields": [
+                "Doctor"
+            ],
+            "target_domain": "clinical treatments",
+            "target_actor_requirement": "Each candidate target field is governed by its enumerated target_field_rule_id; Classic-parent/text evidence alone does not prove the target action role.",
+            "target_nullability": "Enumerated per target_field_rule_id.",
+            "approved_fallback": "Enumerated per target_field_rule_id; no universal fallback.",
+            "exception_code": "LEGACY-STAFF-ACTOR-012",
+            "blocking_scope": "clinical attribution; may block child or consultation aggregate when a verified clinician is mandatory",
+            "quarantine_scope": "Never publish text; retain protected value/fingerprint and child key.",
+            "reconciliation_equation": "1926 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "extraction_dependency": "STAFF-EXT-019",
+            "sentinel_rule_id": "STAFF-SENT-018",
+            "evidence_reference": "Phase 2B read-only aggregate rerun 2026-07-21; normalized-name counts are diagnostics only",
+            "source_partition_equation": "1926 = null + blank_field_sentinel + diagnostic_single_name_candidate + diagnostic_ambiguous_name_candidate + unmatched_nonblank_text",
+            "target_resolution_partition_equation": "1926 = verified_target_actor_candidate + target_null_or_provenance_only + mapping_blocked_or_quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "blank",
+                "ambiguous normalized-name diagnostic",
+                "single normalized-name diagnostic (not identity proof)",
+                "unmatched text",
+                "verified external actor resolution",
+                "permitted unknown or null/provenance",
+                "quarantined"
+            ],
+            "target_field_rule_ids": [
+                "TARGET-ACTOR-085"
+            ],
+            "source_role_semantics_status": "candidate only; downstream role semantics unproven",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-019",
+            "kind": "ambiguous cashier-like numeric field; no user relationship approved",
+            "actor_semantics_status": "explicitly unapproved or excluded",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "billing",
+                "column": "CASH_ID"
+            },
+            "parent_source": null,
+            "exact_predicate": "No actor-parent join approved.",
+            "null_behavior": "Classify as absence only; no actor creation.",
+            "zero_behavior": "Zero is the observed all-row baseline; it is not a verified user sentinel or actor mapping.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 111731,
+                "null_count": 0,
+                "zero_count": 111731,
+                "distinct_nonzero_count": 0,
+                "user_match_count": 0,
+                "user_orphan_count": 0
+            },
+            "duplicate_parent_handling": "Not applicable; no parent relationship approved.",
+            "source_snapshot_fields": [
+                "CASH_ID"
+            ],
+            "target_domain": "billing",
+            "target_actor_requirement": "No target actor mapping in Phase 2B.",
+            "target_nullability": "not applicable",
+            "approved_fallback": "none",
+            "primary_disposition": "Evidence-only",
+            "exception_code": "LEGACY-STAFF-SEMANTICS-031",
+            "blocking_scope": "field only unless drift changes approved scope",
+            "quarantine_scope": "Values remain protected/excluded; documentation contains counts only.",
+            "source_partition_equation": "111731 = null + zero_baseline + nonzero_user_match_diagnostic + nonzero_user_orphan_diagnostic",
+            "target_resolution_partition_equation": "111731 = provenance_only_or_excluded + quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-specific sentinel/baseline",
+                "non-sentinel evidence",
+                "excluded/provenance-only",
+                "quarantined"
+            ],
+            "reconciliation_equation": "111731 = null + zero_baseline + nonzero_user_match_diagnostic + nonzero_user_orphan_diagnostic",
+            "extraction_dependency": "STAFF-EXT-020",
+            "sentinel_rule_id": "STAFF-SENT-019",
+            "target_field_rule_ids": [],
+            "evidence_reference": "Phase 2B read-only sanitized aggregate query 2026-07-21",
+            "source_role_semantics_status": "no target action-role mapping approved",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-020",
+            "kind": "excluded operational-notification sender snapshot",
+            "actor_semantics_status": "explicitly unapproved or excluded",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "notifications",
+                "column": "ReqFrom"
+            },
+            "parent_source": null,
+            "exact_predicate": "No actor-parent join approved.",
+            "null_behavior": "Classify as absence only; no actor creation.",
+            "zero_behavior": "No sentinel observed; all content remains excluded.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 141,
+                "null_count": 0,
+                "blank_count": 0,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 7
+            },
+            "duplicate_parent_handling": "Not applicable; no parent relationship approved.",
+            "source_snapshot_fields": [
+                "ReqFrom"
+            ],
+            "target_domain": "privacy/notifications",
+            "target_actor_requirement": "No target actor mapping in Phase 2B.",
+            "target_nullability": "not applicable",
+            "approved_fallback": "none",
+            "primary_disposition": "No approved destination",
+            "exception_code": "LEGACY-STAFF-PRIVACY-027",
+            "blocking_scope": "field only unless drift changes approved scope",
+            "quarantine_scope": "Values remain protected/excluded; documentation contains counts only.",
+            "source_partition_equation": "141 = null + blank + literal_zero + nonblank_nonzero",
+            "target_resolution_partition_equation": "141 = provenance_only_or_excluded + quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-specific sentinel/baseline",
+                "non-sentinel evidence",
+                "excluded/provenance-only",
+                "quarantined"
+            ],
+            "reconciliation_equation": "141 = null + blank + literal_zero + nonblank_nonzero",
+            "extraction_dependency": "STAFF-EXT-021",
+            "sentinel_rule_id": "STAFF-SENT-020",
+            "target_field_rule_ids": [],
+            "evidence_reference": "Phase 2B read-only sanitized aggregate query 2026-07-21",
+            "source_role_semantics_status": "no target action-role mapping approved",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-021",
+            "kind": "excluded operational-notification recipient snapshot",
+            "actor_semantics_status": "explicitly unapproved or excluded",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "notifications",
+                "column": "ReqTo"
+            },
+            "parent_source": null,
+            "exact_predicate": "No actor-parent join approved.",
+            "null_behavior": "Classify as absence only; no actor creation.",
+            "zero_behavior": "No sentinel observed; all content remains excluded.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 141,
+                "null_count": 0,
+                "blank_count": 0,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 1
+            },
+            "duplicate_parent_handling": "Not applicable; no parent relationship approved.",
+            "source_snapshot_fields": [
+                "ReqTo"
+            ],
+            "target_domain": "privacy/notifications",
+            "target_actor_requirement": "No target actor mapping in Phase 2B.",
+            "target_nullability": "not applicable",
+            "approved_fallback": "none",
+            "primary_disposition": "No approved destination",
+            "exception_code": "LEGACY-STAFF-PRIVACY-027",
+            "blocking_scope": "field only unless drift changes approved scope",
+            "quarantine_scope": "Values remain protected/excluded; documentation contains counts only.",
+            "source_partition_equation": "141 = null + blank + literal_zero + nonblank_nonzero",
+            "target_resolution_partition_equation": "141 = provenance_only_or_excluded + quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-specific sentinel/baseline",
+                "non-sentinel evidence",
+                "excluded/provenance-only",
+                "quarantined"
+            ],
+            "reconciliation_equation": "141 = null + blank + literal_zero + nonblank_nonzero",
+            "extraction_dependency": "STAFF-EXT-022",
+            "sentinel_rule_id": "STAFF-SENT-021",
+            "target_field_rule_ids": [],
+            "evidence_reference": "Phase 2B read-only sanitized aggregate query 2026-07-21",
+            "source_role_semantics_status": "no target action-role mapping approved",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-022",
+            "kind": "dormant maternity clinician-like field",
+            "actor_semantics_status": "explicitly unapproved or excluded",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "mat_family",
+                "column": "DocName"
+            },
+            "parent_source": null,
+            "exact_predicate": "No actor-parent join approved.",
+            "null_behavior": "Classify as absence only; no actor creation.",
+            "zero_behavior": "Empty-table baseline; any nonzero row/nonblank value is a scope-review stop.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 0,
+                "null_count": 0,
+                "blank_count": 0,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 0
+            },
+            "duplicate_parent_handling": "Not applicable; no parent relationship approved.",
+            "source_snapshot_fields": [
+                "DocName"
+            ],
+            "target_domain": "excluded dormant maternity",
+            "target_actor_requirement": "No target actor mapping in Phase 2B.",
+            "target_nullability": "not applicable",
+            "approved_fallback": "none",
+            "primary_disposition": "No approved destination",
+            "exception_code": "LEGACY-STAFF-DRIFT-028",
+            "blocking_scope": "changed fingerprint/nonzero count blocks affected domain",
+            "quarantine_scope": "Values remain protected/excluded; documentation contains counts only.",
+            "source_partition_equation": "0 = null + blank + literal_zero + nonblank_nonzero",
+            "target_resolution_partition_equation": "0 = provenance_only_or_excluded + quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-specific sentinel/baseline",
+                "non-sentinel evidence",
+                "excluded/provenance-only",
+                "quarantined"
+            ],
+            "reconciliation_equation": "0 = null + blank + literal_zero + nonblank_nonzero",
+            "extraction_dependency": "STAFF-EXT-023",
+            "sentinel_rule_id": "STAFF-SENT-022",
+            "target_field_rule_ids": [],
+            "evidence_reference": "Phase 2B read-only sanitized aggregate query 2026-07-21",
+            "source_role_semantics_status": "no target action-role mapping approved",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-023",
+            "kind": "dormant maternity clinician contact field; never identity proof",
+            "actor_semantics_status": "explicitly unapproved or excluded",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "mat_family",
+                "column": "DocPhone"
+            },
+            "parent_source": null,
+            "exact_predicate": "No actor-parent join approved.",
+            "null_behavior": "Classify as absence only; no actor creation.",
+            "zero_behavior": "Empty-table baseline; any nonzero row/nonblank value is a privacy/scope-review stop.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 0,
+                "null_count": 0,
+                "blank_count": 0,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 0
+            },
+            "duplicate_parent_handling": "Not applicable; no parent relationship approved.",
+            "source_snapshot_fields": [
+                "DocPhone"
+            ],
+            "target_domain": "excluded dormant maternity",
+            "target_actor_requirement": "No target actor mapping in Phase 2B.",
+            "target_nullability": "not applicable",
+            "approved_fallback": "none",
+            "primary_disposition": "No approved destination",
+            "exception_code": "LEGACY-STAFF-DRIFT-028",
+            "blocking_scope": "changed fingerprint/nonzero count blocks affected domain",
+            "quarantine_scope": "Values remain protected/excluded; documentation contains counts only.",
+            "source_partition_equation": "0 = null + blank + literal_zero + nonblank_nonzero",
+            "target_resolution_partition_equation": "0 = provenance_only_or_excluded + quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-specific sentinel/baseline",
+                "non-sentinel evidence",
+                "excluded/provenance-only",
+                "quarantined"
+            ],
+            "reconciliation_equation": "0 = null + blank + literal_zero + nonblank_nonzero",
+            "extraction_dependency": "STAFF-EXT-024",
+            "sentinel_rule_id": "STAFF-SENT-023",
+            "target_field_rule_ids": [],
+            "evidence_reference": "Phase 2B read-only sanitized aggregate query 2026-07-21",
+            "source_role_semantics_status": "no target action-role mapping approved",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-024",
+            "kind": "hospital configuration actor-like field",
+            "actor_semantics_status": "explicitly unapproved or excluded",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "hospitalinfo",
+                "column": "ClaimOfficer"
+            },
+            "parent_source": null,
+            "exact_predicate": "No actor-parent join approved.",
+            "null_behavior": "Classify as absence only; no actor creation.",
+            "zero_behavior": "No sentinel observed.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 1,
+                "null_count": 0,
+                "blank_count": 0,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 1
+            },
+            "duplicate_parent_handling": "Not applicable; no parent relationship approved.",
+            "source_snapshot_fields": [
+                "ClaimOfficer"
+            ],
+            "target_domain": "organisation/configuration",
+            "target_actor_requirement": "No target actor mapping in Phase 2B.",
+            "target_nullability": "not applicable",
+            "approved_fallback": "none",
+            "primary_disposition": "No approved destination",
+            "exception_code": "LEGACY-STAFF-CONFIG-029",
+            "blocking_scope": "field only unless drift changes approved scope",
+            "quarantine_scope": "Values remain protected/excluded; documentation contains counts only.",
+            "source_partition_equation": "1 = null + blank + literal_zero + nonblank_nonzero",
+            "target_resolution_partition_equation": "1 = provenance_only_or_excluded + quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-specific sentinel/baseline",
+                "non-sentinel evidence",
+                "excluded/provenance-only",
+                "quarantined"
+            ],
+            "reconciliation_equation": "1 = null + blank + literal_zero + nonblank_nonzero",
+            "extraction_dependency": "STAFF-EXT-025",
+            "sentinel_rule_id": "STAFF-SENT-024",
+            "target_field_rule_ids": [],
+            "evidence_reference": "Phase 2B read-only sanitized aggregate query 2026-07-21",
+            "source_role_semantics_status": "no target action-role mapping approved",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-025",
+            "kind": "hospital configuration signature/private field; not an actor key",
+            "actor_semantics_status": "explicitly unapproved or excluded",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "hospitalinfo",
+                "column": "ClaimSignature"
+            },
+            "parent_source": null,
+            "exact_predicate": "No actor-parent join approved.",
+            "null_behavior": "Classify as absence only; no actor creation.",
+            "zero_behavior": "No sentinel observed; signature content must never enter docs/specs.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 1,
+                "null_count": 0,
+                "blank_count": 0,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 1
+            },
+            "duplicate_parent_handling": "Not applicable; no parent relationship approved.",
+            "source_snapshot_fields": [
+                "ClaimSignature"
+            ],
+            "target_domain": "organisation/configuration",
+            "target_actor_requirement": "No target actor mapping in Phase 2B.",
+            "target_nullability": "not applicable",
+            "approved_fallback": "none",
+            "primary_disposition": "No approved destination",
+            "exception_code": "LEGACY-STAFF-CONFIG-029",
+            "blocking_scope": "field only unless drift changes approved scope",
+            "quarantine_scope": "Values remain protected/excluded; documentation contains counts only.",
+            "source_partition_equation": "1 = null + blank + literal_zero + nonblank_nonzero",
+            "target_resolution_partition_equation": "1 = provenance_only_or_excluded + quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-specific sentinel/baseline",
+                "non-sentinel evidence",
+                "excluded/provenance-only",
+                "quarantined"
+            ],
+            "reconciliation_equation": "1 = null + blank + literal_zero + nonblank_nonzero",
+            "extraction_dependency": "STAFF-EXT-026",
+            "sentinel_rule_id": "STAFF-SENT-025",
+            "target_field_rule_ids": [],
+            "evidence_reference": "Phase 2B read-only sanitized aggregate query 2026-07-21",
+            "source_role_semantics_status": "no target action-role mapping approved",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-026",
+            "kind": "hospital configuration administrator-like field",
+            "actor_semantics_status": "explicitly unapproved or excluded",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "hospitalinfo",
+                "column": "Admn"
+            },
+            "parent_source": null,
+            "exact_predicate": "No actor-parent join approved.",
+            "null_behavior": "Classify as absence only; no actor creation.",
+            "zero_behavior": "No sentinel observed.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 1,
+                "null_count": 0,
+                "blank_count": 0,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 1
+            },
+            "duplicate_parent_handling": "Not applicable; no parent relationship approved.",
+            "source_snapshot_fields": [
+                "Admn"
+            ],
+            "target_domain": "organisation/configuration",
+            "target_actor_requirement": "No target actor mapping in Phase 2B.",
+            "target_nullability": "not applicable",
+            "approved_fallback": "none",
+            "primary_disposition": "No approved destination",
+            "exception_code": "LEGACY-STAFF-CONFIG-029",
+            "blocking_scope": "field only unless drift changes approved scope",
+            "quarantine_scope": "Values remain protected/excluded; documentation contains counts only.",
+            "source_partition_equation": "1 = null + blank + literal_zero + nonblank_nonzero",
+            "target_resolution_partition_equation": "1 = provenance_only_or_excluded + quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-specific sentinel/baseline",
+                "non-sentinel evidence",
+                "excluded/provenance-only",
+                "quarantined"
+            ],
+            "reconciliation_equation": "1 = null + blank + literal_zero + nonblank_nonzero",
+            "extraction_dependency": "STAFF-EXT-027",
+            "sentinel_rule_id": "STAFF-SENT-026",
+            "target_field_rule_ids": [],
+            "evidence_reference": "Phase 2B read-only sanitized aggregate query 2026-07-21",
+            "source_role_semantics_status": "no target action-role mapping approved",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-027",
+            "kind": "ambiguous actor-like field; current content is blank and no parent semantics are evidenced",
+            "actor_semantics_status": "explicitly unapproved or excluded",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "consult_diagnosis",
+                "column": "MdfId"
+            },
+            "parent_source": null,
+            "exact_predicate": "No actor-parent join approved.",
+            "null_behavior": "Classify as absence only; no actor creation.",
+            "zero_behavior": "Blank is current baseline; it proves no actor. Nonblank drift requires semantics review.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 123940,
+                "null_count": 0,
+                "blank_count": 123940,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 0
+            },
+            "duplicate_parent_handling": "Not applicable; no parent relationship approved.",
+            "source_snapshot_fields": [
+                "MdfId"
+            ],
+            "target_domain": "diagnoses",
+            "target_actor_requirement": "No target actor mapping in Phase 2B.",
+            "target_nullability": "not applicable",
+            "approved_fallback": "none",
+            "primary_disposition": "Evidence-only",
+            "exception_code": "LEGACY-STAFF-SEMANTICS-030",
+            "blocking_scope": "field only unless drift changes approved scope",
+            "quarantine_scope": "Values remain protected/excluded; documentation contains counts only.",
+            "source_partition_equation": "123940 = null + blank + literal_zero + nonblank_nonzero",
+            "target_resolution_partition_equation": "123940 = provenance_only_or_excluded + quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-specific sentinel/baseline",
+                "non-sentinel evidence",
+                "excluded/provenance-only",
+                "quarantined"
+            ],
+            "reconciliation_equation": "123940 = null + blank + literal_zero + nonblank_nonzero",
+            "extraction_dependency": "STAFF-EXT-028",
+            "sentinel_rule_id": "STAFF-SENT-027",
+            "target_field_rule_ids": [],
+            "evidence_reference": "Phase 2B read-only sanitized aggregate query 2026-07-21",
+            "source_role_semantics_status": "no target action-role mapping approved",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        },
+        {
+            "id": "STAFF-REL-028",
+            "kind": "ambiguous catalogue modifier-like field; current content is blank and no parent semantics are evidenced",
+            "actor_semantics_status": "explicitly unapproved or excluded",
+            "child_source": {
+                "schema": "uuhms",
+                "table": "list_diagnosis",
+                "column": "MdfId"
+            },
+            "parent_source": null,
+            "exact_predicate": "No actor-parent join approved.",
+            "null_behavior": "Classify as absence only; no actor creation.",
+            "zero_behavior": "Blank is current baseline; it proves no actor. Nonblank drift requires semantics review.",
+            "other_sentinel_behavior": "No other sentinel approved.",
+            "counts": {
+                "child_rows": 5948,
+                "null_count": 0,
+                "blank_count": 5948,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 0
+            },
+            "duplicate_parent_handling": "Not applicable; no parent relationship approved.",
+            "source_snapshot_fields": [
+                "MdfId"
+            ],
+            "target_domain": "diagnosis catalogue",
+            "target_actor_requirement": "No target actor mapping in Phase 2B.",
+            "target_nullability": "not applicable",
+            "approved_fallback": "none",
+            "primary_disposition": "Evidence-only",
+            "exception_code": "LEGACY-STAFF-SEMANTICS-030",
+            "blocking_scope": "field only unless drift changes approved scope",
+            "quarantine_scope": "Values remain protected/excluded; documentation contains counts only.",
+            "source_partition_equation": "5948 = null + blank + literal_zero + nonblank_nonzero",
+            "target_resolution_partition_equation": "5948 = provenance_only_or_excluded + quarantined + failed",
+            "classification_precedence": [
+                "failed extraction/fingerprint",
+                "null",
+                "field-specific sentinel/baseline",
+                "non-sentinel evidence",
+                "excluded/provenance-only",
+                "quarantined"
+            ],
+            "reconciliation_equation": "5948 = null + blank + literal_zero + nonblank_nonzero",
+            "extraction_dependency": "STAFF-EXT-029",
+            "sentinel_rule_id": "STAFF-SENT-028",
+            "target_field_rule_ids": [],
+            "evidence_reference": "Phase 2B read-only sanitized aggregate query 2026-07-21",
+            "source_role_semantics_status": "no target action-role mapping approved",
+            "unknown_actor_resolution": "Target-field-only; use bound TARGET-ACTOR policy. No source-column aggregate can authorize unknown attribution."
+        }
+    ],
+    "actor_like_inventory_definition": "Direct user IDs, clinician/name snapshots, actor-like IDs/configuration/contact fields, and ambiguous modifier fields; explicit non-actor/excluded dispositions included.",
+    "phase2b_evidence_references": [
+        "../../evidence/PHASE_2B_STAFF_QUERY_MANIFEST.json",
+        "../../evidence/PHASE_2B_STAFF_AGGREGATE_RESULTS.json"
+    ]
+}

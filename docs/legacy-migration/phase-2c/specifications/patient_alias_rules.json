@@ -1,0 +1,22 @@
+{
+  "specification_version":"2C.1.0","phase":"2C","approved_source":{"database":"uuhms","table":"patients","column":"OpdNo"},"policy_authority":["D-201","D-211","Q-001","Q-008"],"alias_type":"legacy_opd","canonicalization_version":"legacy-opd-comparison-v1","privacy":{"contains_phi":false,"raw_values_in_specs":false},"implementation_authorized":false,"record_count":17,
+  "records":[
+    {"id":"PATIENT-ALIAS-001","topic":"raw provenance","rule":"Exact decoded Classic representation exists only in protected provenance; never logs/docs."},
+    {"id":"PATIENT-ALIAS-002","topic":"display","rule":"Unicode NFC plus outer-whitespace trim; preserve case-independent display semantics, leading zeros and punctuation without decoration."},
+    {"id":"PATIENT-ALIAS-003","topic":"comparison","rule":"Decode declared latin1, NFC, trim outer Unicode whitespace, remove remaining Unicode whitespace, deterministic Unicode casefold/uppercase; preserve every non-whitespace code point."},
+    {"id":"PATIENT-ALIAS-004","topic":"blank","rule":"Blank after canonical trim creates no alias.","exception_code":"LEGACY-PATIENT-ALIAS-003"},
+    {"id":"PATIENT-ALIAS-005","topic":"invalid","rule":"Decode failure, controls/noncharacters, approved-grammar failure, display >191 or comparison >120 creates no alias.","exception_code":"LEGACY-PATIENT-ALIAS-005"},
+    {"id":"PATIENT-ALIAS-006","topic":"source duplicate","rule":"Every member of a final-normalized source group >1 is withheld; no best owner, suffix, punctuation change or merge.","exception_code":"LEGACY-PATIENT-ALIAS-004"},
+    {"id":"PATIENT-ALIAS-007","topic":"source canonical evidence","rule":"Trim, remove all POSIX whitespace and uppercase: 141 blank, 15550 unique nonblank candidates, 1259 duplicate rows/275 groups, difference zero. Refresh under the versioned Unicode/NFC runtime implementation and target collision snapshot before persistence."},
+    {"id":"PATIENT-ALIAS-008","topic":"target alias collision","rule":"Different target owner, missing/contradictory provenance, or soft-deleted/merged owner => withhold/manual review.","exception_code":"LEGACY-PATIENT-ALIAS-006"},
+    {"id":"PATIENT-ALIAS-009","topic":"patient-number namespace","rule":"Collision with another live/soft-deleted/merged/archived patient number is withheld even though DB lacks cross-table uniqueness.","exception_code":"LEGACY-PATIENT-ALIAS-007"},
+    {"id":"PATIENT-ALIAS-010","topic":"same-owner idempotency","rule":"Same normalized alias, mapped target, protected source token and version is already-satisfied with zero write."},
+    {"id":"PATIENT-ALIAS-011","topic":"source_patient_id","rule":"Must be null for direct legacy OPD alias; it is a target-patient FK and never stores Classic PAT_ID."},
+    {"id":"PATIENT-ALIAS-012","topic":"created_by","rule":"Null plus provenance; no Classic creator exists and Phase 2B prohibits fallback/Legacy Actor Unknown."},
+    {"id":"PATIENT-ALIAS-013","topic":"owner dependency","rule":"Persist only after patient mapping exists; entity quarantine leaves unique alias outcome pending rather than discarded."},
+    {"id":"PATIENT-ALIAS-014","topic":"soft delete","rule":"Aliases are not soft-deleted; soft-deleted patient owner continues to reserve alias. Never auto-release or recycle."},
+    {"id":"PATIENT-ALIAS-015","topic":"collation","rule":"Preflight both application canonical equality and target utf8mb4_unicode_ci uniqueness; mismatch stops."},
+    {"id":"PATIENT-ALIAS-016","topic":"manual release","rule":"Only controlled post-migration identity review may establish ownership; no document existence or SLA expiry releases it."},
+    {"id":"PATIENT-ALIAS-017","topic":"reconciliation","rule":"Each source patient gets exactly one alias outcome; duplicate exception count equals duplicate-withheld rows.","reconciliation_id":"PATIENT-REC-ALIAS-002"}
+  ]
+}

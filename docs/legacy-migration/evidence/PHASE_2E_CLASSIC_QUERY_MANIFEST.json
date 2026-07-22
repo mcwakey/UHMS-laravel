@@ -1,0 +1,218 @@
+{
+  "manifest_version": 2,
+  "tool_version": "phase-2e-classic-readonly-manifest/1.1.0",
+  "tool_contract": "existing Phase 1B ReadOnlyQueryRecorder semantics: static aggregate SELECT only; exact legacy_uhms/uuhms guard; REPEATABLE READ; SET TRANSACTION READ ONLY; rollback; no row values",
+  "tool_contract_hash_sha256": "1f6ec8ec5f20a1639facfcdfeec08b4b297338f84a3aff326be4d056b2fd23b0",
+  "recorded_at_utc": "2026-07-21T22:55:18Z",
+  "approved_connection": "legacy_uhms",
+  "approved_database": "uuhms",
+  "schema_guard": {
+    "structural_fingerprint": "150fcf4783fcb8bdc25f7e17fe0ece5050955f0c68e7dd03651ee8bd58498977",
+    "table_count": 55,
+    "column_count": 479,
+    "insurance_column_count": 9,
+    "database_version": "10.4.32-MariaDB",
+    "match": true
+  },
+  "snapshot": {
+    "evaluation_coordinate": "2026-07-21T00:00:00Z",
+    "timezone": "UTC",
+    "transaction_isolation": "REPEATABLE-READ",
+    "session_transaction_read_only": true,
+    "completion": "rolled_back",
+    "source_coordinate": "unavailable",
+    "row_snapshot_reusable": false
+  },
+  "canonicalization": {
+    "query_hash": "SHA-256 of normalized_sql UTF-8 bytes exactly as stored",
+    "result_hash": "SHA-256 of compact UTF-8 JSON result_contract with stored key order and JSON_UNESCAPED_SLASHES",
+    "bundle": "SHA-256 of compact UTF-8 JSON array [tool_version,approved_connection,approved_database,structural_fingerprint,evaluation_coordinate,ordered query id/query hash/result hash triples]"
+  },
+  "privacy": {
+    "aggregate_only": true,
+    "credentials": false,
+    "raw_identifiers": false,
+    "raw_member_company_scheme_plan": false,
+    "row_dates": false,
+    "row_hashes_or_tokens": false,
+    "placeholder_bindings": "protected allowlist version only; no literals"
+  },
+  "migration_account_boundary": "The broad discovery account was used read-only only and is prohibited for migration execution; D-101 remains mandatory.",
+  "query_count": 15,
+  "queries": [
+    {
+      "id": "P2E-CQ-001",
+      "result_id": "source_core",
+      "query_version": 1,
+      "normalized_sql": "SELECT COUNT(*) AS total_rows, SUM(i.INS_ID IS NULL) AS source_key_null, SUM(i.INS_ID <= 0) AS source_key_nonpositive, COUNT(*) - COUNT(DISTINCT i.INS_ID) AS source_key_duplicate_rows, SUM(i.PAT_ID IS NULL) AS patient_ref_null, SUM(i.PAT_ID = 0) AS patient_ref_zero, SUM(i.PAT_ID <> 0 AND p.PAT_ID IS NOT NULL) AS patient_ref_matched, SUM(i.PAT_ID <> 0 AND p.PAT_ID IS NULL) AS patient_ref_orphan, SUM(TRIM(i.InsType) = 'NHIS') AS type_nhis, SUM(TRIM(i.InsType) = 'PRIVATE INSURANCE') AS type_private, SUM(TRIM(i.Company) = '') AS company_blank, SUM(TRIM(i.Scheme) = '') AS scheme_blank, SUM(TRIM(i.Plan) = '') AS plan_blank, SUM(TRIM(i.MemberNo) = '') AS member_blank, SUM(CAST(i.IssueDate AS CHAR) = '0000-00-00') AS issue_zero, SUM(CAST(i.ExpiryDate AS CHAR) = '0000-00-00') AS expiry_zero FROM uuhms.insurance i LEFT JOIN uuhms.patients p ON i.PAT_ID = p.PAT_ID",
+      "query_hash_sha256": "67cd33a77784de89235285c0a2c3e968ae7d7b95a65af83d8d30624a5ef113ef",
+      "executed_at_utc": "2026-07-21T22:50:39Z",
+      "result_hash_sha256": "f9158906c67a596f248068ceed4f94844c0349febfabb0b20724c025166513ef",
+      "status": "completed",
+      "repository_output": "aggregate-only"
+    },
+    {
+      "id": "P2E-CQ-002",
+      "result_id": "provider_union_source_candidates",
+      "query_version": 1,
+      "normalized_sql": "SELECT COUNT(*) AS total_rows, SUM(company_blank) AS company_blank, SUM(NOT company_blank AND candidate_count = 0) AS no_source_candidate, SUM(NOT company_blank AND candidate_count = 1) AS one_source_candidate, SUM(NOT company_blank AND candidate_count > 1) AS ambiguous_source_candidates FROM (SELECT TRIM(i.Company) = '' AS company_blank, (SELECT COUNT(*) FROM uuhms.sett_private s WHERE UPPER(TRIM(i.Company)) = UPPER(TRIM(s.PrivateName)) OR UPPER(TRIM(i.Company)) = UPPER(TRIM(s.PrivateShort))) AS candidate_count FROM uuhms.insurance i) candidates",
+      "query_hash_sha256": "7d0adf29e6af3d8df90b537d4a7af49de2ad6006c496af16af38b71385e0a96a",
+      "executed_at_utc": "2026-07-21T22:50:39Z",
+      "result_hash_sha256": "9878307e2933ea3f108bb42137ec8f8d84f33557fb1a362d16a7f181707cf230",
+      "status": "completed",
+      "repository_output": "aggregate-only"
+    },
+    {
+      "id": "P2E-CQ-003",
+      "result_id": "member_scope_diagnostics_exact",
+      "query_version": 1,
+      "normalized_sql": "SELECT (SELECT COUNT(*) FROM (SELECT 1 FROM uuhms.insurance WHERE TRIM(MemberNo)<>'' GROUP BY CONVERT(TRIM(MemberNo) USING utf8mb4) COLLATE utf8mb4_bin HAVING COUNT(*)>1) q) duplicate_groups,(SELECT COALESCE(SUM(n),0) FROM (SELECT COUNT(*) n FROM uuhms.insurance WHERE TRIM(MemberNo)<>'' GROUP BY CONVERT(TRIM(MemberNo) USING utf8mb4) COLLATE utf8mb4_bin HAVING COUNT(*)>1) q) duplicate_rows,(SELECT COUNT(*) FROM (SELECT 1 FROM uuhms.insurance WHERE TRIM(MemberNo)<>'' GROUP BY CONVERT(TRIM(MemberNo) USING utf8mb4) COLLATE utf8mb4_bin HAVING COUNT(DISTINCT PAT_ID)>1) q) cross_patient_groups,(SELECT COALESCE(SUM(n),0) FROM (SELECT COUNT(*) n FROM uuhms.insurance WHERE TRIM(MemberNo)<>'' GROUP BY CONVERT(TRIM(MemberNo) USING utf8mb4) COLLATE utf8mb4_bin HAVING COUNT(DISTINCT PAT_ID)>1) q) cross_patient_rows,(SELECT COUNT(*) FROM (SELECT 1 FROM uuhms.insurance WHERE TRIM(MemberNo)<>'' GROUP BY CONVERT(TRIM(MemberNo) USING utf8mb4) COLLATE utf8mb4_bin HAVING COUNT(DISTINCT CONVERT(TRIM(Company) USING utf8mb4) COLLATE utf8mb4_bin)>1) q) cross_provider_groups,(SELECT COALESCE(SUM(n),0) FROM (SELECT COUNT(*) n FROM uuhms.insurance WHERE TRIM(MemberNo)<>'' GROUP BY CONVERT(TRIM(MemberNo) USING utf8mb4) COLLATE utf8mb4_bin HAVING COUNT(DISTINCT CONVERT(TRIM(Company) USING utf8mb4) COLLATE utf8mb4_bin)>1) q) cross_provider_rows,(SELECT COUNT(*) FROM (SELECT 1 FROM uuhms.insurance WHERE TRIM(MemberNo)<>'' GROUP BY PAT_ID,CONVERT(TRIM(Company) USING utf8mb4) COLLATE utf8mb4_bin,CONVERT(TRIM(MemberNo) USING utf8mb4) COLLATE utf8mb4_bin HAVING COUNT(*)>1) q) same_patient_provider_groups,(SELECT COALESCE(SUM(n),0) FROM (SELECT COUNT(*) n FROM uuhms.insurance WHERE TRIM(MemberNo)<>'' GROUP BY PAT_ID,CONVERT(TRIM(Company) USING utf8mb4) COLLATE utf8mb4_bin,CONVERT(TRIM(MemberNo) USING utf8mb4) COLLATE utf8mb4_bin HAVING COUNT(*)>1) q) same_patient_provider_rows",
+      "query_hash_sha256": "cce5d90723ea69c57e018dd95fb60e16f2f039b774077f9310d054c2aaafae23",
+      "executed_at_utc": "2026-07-21T22:53:55Z",
+      "result_hash_sha256": "f7596deb5285af475d75e4fd00bcb5681b4eabdd5ed44788780c98d385fb0031",
+      "status": "completed",
+      "repository_output": "aggregate-only"
+    },
+    {
+      "id": "P2E-CQ-004",
+      "result_id": "member_primary_precedence_exact",
+      "query_version": 1,
+      "normalized_sql": "WITH member_stats AS (SELECT CONVERT(TRIM(MemberNo) USING utf8mb4) COLLATE utf8mb4_bin member_key,COUNT(DISTINCT PAT_ID) patient_count FROM uuhms.insurance WHERE TRIM(MemberNo)<>'' GROUP BY member_key),patient_member_stats AS (SELECT PAT_ID,CONVERT(TRIM(MemberNo) USING utf8mb4) COLLATE utf8mb4_bin member_key,COUNT(DISTINCT CONVERT(TRIM(Company) USING utf8mb4) COLLATE utf8mb4_bin) provider_count FROM uuhms.insurance WHERE TRIM(MemberNo)<>'' GROUP BY PAT_ID,member_key),patient_provider_member_stats AS (SELECT PAT_ID,CONVERT(TRIM(Company) USING utf8mb4) COLLATE utf8mb4_bin provider_key,CONVERT(TRIM(MemberNo) USING utf8mb4) COLLATE utf8mb4_bin member_key,COUNT(*) group_rows FROM uuhms.insurance WHERE TRIM(MemberNo)<>'' GROUP BY PAT_ID,provider_key,member_key) SELECT outcome,COUNT(*) row_count FROM (SELECT CASE WHEN TRIM(i.MemberNo)='' THEN 'blank' WHEN i.MemberNo REGEXP '[[:cntrl:]]' THEN 'invalid_control' WHEN UPPER(TRIM(i.MemberNo)) IN (?,?,?,?,?) THEN 'placeholder' WHEN ms.patient_count>1 THEN 'duplicate_cross_patient' WHEN pms.provider_count>1 THEN 'duplicate_cross_provider_same_patient' WHEN ppms.group_rows>1 THEN 'duplicate_same_patient_provider' ELSE 'valid_single_scope' END outcome FROM uuhms.insurance i LEFT JOIN member_stats ms ON ms.member_key=CONVERT(TRIM(i.MemberNo) USING utf8mb4) COLLATE utf8mb4_bin LEFT JOIN patient_member_stats pms ON pms.PAT_ID=i.PAT_ID AND pms.member_key=CONVERT(TRIM(i.MemberNo) USING utf8mb4) COLLATE utf8mb4_bin LEFT JOIN patient_provider_member_stats ppms ON ppms.PAT_ID=i.PAT_ID AND ppms.provider_key=CONVERT(TRIM(i.Company) USING utf8mb4) COLLATE utf8mb4_bin AND ppms.member_key=CONVERT(TRIM(i.MemberNo) USING utf8mb4) COLLATE utf8mb4_bin) classified GROUP BY outcome ORDER BY outcome",
+      "bindings_contract": "protected-member-placeholder-allowlist-v1; five values; literals excluded from repository",
+      "query_hash_sha256": "b090c7221da62bbef2fe0fdc3093bff03a444383b69c6f4fee6d8a9200a4d60a",
+      "executed_at_utc": "2026-07-21T22:50:39Z",
+      "result_hash_sha256": "dc89611859fedb3f293842b5b39a679e7a4bdbb8599f782cd467810a6e59b7e6",
+      "status": "completed",
+      "repository_output": "aggregate-only"
+    },
+    {
+      "id": "P2E-CQ-005",
+      "result_id": "duplicate_groups",
+      "query_version": 1,
+      "normalized_sql": "SELECT (SELECT COUNT(*) FROM (SELECT 1 FROM uuhms.insurance GROUP BY PAT_ID,UPPER(TRIM(InsType)),UPPER(TRIM(Company)) HAVING COUNT(*)>1) q) patient_type_company_groups,(SELECT COALESCE(SUM(n),0) FROM (SELECT COUNT(*) n FROM uuhms.insurance GROUP BY PAT_ID,UPPER(TRIM(InsType)),UPPER(TRIM(Company)) HAVING COUNT(*)>1) q) patient_type_company_rows,(SELECT COUNT(*) FROM (SELECT 1 FROM uuhms.insurance GROUP BY PAT_ID,UPPER(TRIM(InsType)),UPPER(TRIM(Company)),UPPER(TRIM(Scheme)) HAVING COUNT(*)>1) q) tuple_scheme_groups,(SELECT COALESCE(SUM(n),0) FROM (SELECT COUNT(*) n FROM uuhms.insurance GROUP BY PAT_ID,UPPER(TRIM(InsType)),UPPER(TRIM(Company)),UPPER(TRIM(Scheme)) HAVING COUNT(*)>1) q) tuple_scheme_rows,(SELECT COUNT(*) FROM (SELECT 1 FROM uuhms.insurance GROUP BY PAT_ID,BINARY InsType,BINARY Scheme,BINARY MemberNo,BINARY Company,IssueDate,ExpiryDate,BINARY Plan HAVING COUNT(*)>1) q) exact_complete_groups,(SELECT COALESCE(SUM(n),0) FROM (SELECT COUNT(*) n FROM uuhms.insurance GROUP BY PAT_ID,BINARY InsType,BINARY Scheme,BINARY MemberNo,BINARY Company,IssueDate,ExpiryDate,BINARY Plan HAVING COUNT(*)>1) q) exact_complete_rows",
+      "query_hash_sha256": "927ad21b37a653c401e3e548fa3497102711737fdbdc66748daf5740b3d39e71",
+      "executed_at_utc": "2026-07-21T22:53:55Z",
+      "result_hash_sha256": "9b2243d4c996e027c0f6f4f99620d1b074483ead4e3c272d823e142d4f9958ed",
+      "status": "completed",
+      "repository_output": "aggregate-only"
+    },
+    {
+      "id": "P2E-CQ-006",
+      "result_id": "conflicting_tuple",
+      "query_version": 1,
+      "normalized_sql": "SELECT COUNT(*) conflicting_groups, COALESCE(SUM(group_rows),0) conflicting_rows FROM (SELECT COUNT(*) group_rows, COUNT(DISTINCT SHA2(CONCAT(LENGTH(MemberNo),':',MemberNo,'|',LENGTH(Plan),':',Plan,'|',CAST(IssueDate AS CHAR),'|',CAST(ExpiryDate AS CHAR)),256)) variants FROM uuhms.insurance GROUP BY PAT_ID,UPPER(TRIM(InsType)),UPPER(TRIM(Company)),UPPER(TRIM(Scheme)) HAVING COUNT(*)>1 AND variants>1) q",
+      "query_hash_sha256": "dfbe6dba45d1fb3bb487ed7e1e33164b17c3206cef89fae95bbd019846912229",
+      "executed_at_utc": "2026-07-21T22:53:55Z",
+      "result_hash_sha256": "0b32b883dbfe24856d39411d4c0bf2971eecb52226d42ff4d8b8319f04fe0553",
+      "status": "completed",
+      "repository_output": "aggregate-only"
+    },
+    {
+      "id": "P2E-CQ-007",
+      "result_id": "chronology_primary",
+      "query_version": 1,
+      "normalized_sql": "SELECT COUNT(*) total, SUM(IssueDate='0000-00-00' AND ExpiryDate='0000-00-00') both_unknown, SUM(IssueDate<>'0000-00-00' AND ExpiryDate='0000-00-00') issue_known_expiry_unknown, SUM(IssueDate='0000-00-00' AND ExpiryDate<>'0000-00-00') issue_unknown_expiry_known, SUM(IssueDate<>'0000-00-00' AND ExpiryDate<>'0000-00-00' AND ExpiryDate<IssueDate) reversed, SUM(IssueDate<>'0000-00-00' AND ExpiryDate=IssueDate) equal_known, SUM(IssueDate<>'0000-00-00' AND ExpiryDate>IssueDate AND IssueDate>'2026-07-21') future_issue, SUM(IssueDate<>'0000-00-00' AND ExpiryDate>IssueDate AND IssueDate<='2026-07-21' AND ExpiryDate>'2026-07-21') future_expiry_nonfuture_issue, SUM(IssueDate<>'0000-00-00' AND ExpiryDate>IssueDate AND IssueDate<='2026-07-21' AND ExpiryDate<='2026-07-21') valid_ordered_nonfuture FROM uuhms.insurance",
+      "query_hash_sha256": "5efe22cc304b844c253036e0476821c14a9c5d97c83877294e3dc3a6b4bd4757",
+      "executed_at_utc": "2026-07-21T22:53:55Z",
+      "result_hash_sha256": "da9f80afde2a6bf6f91b6d253566951ab4abf536b6535f11279db7ea01630949",
+      "status": "completed",
+      "repository_output": "aggregate-only"
+    },
+    {
+      "id": "P2E-CQ-008",
+      "result_id": "current_state_primary",
+      "query_version": 1,
+      "normalized_sql": "SELECT COUNT(*) total, SUM(IssueDate='0000-00-00' OR ExpiryDate='0000-00-00') date_unknown, SUM(IssueDate<>'0000-00-00' AND ExpiryDate<>'0000-00-00' AND ExpiryDate<IssueDate) chronology_invalid, SUM(IssueDate<>'0000-00-00' AND ExpiryDate>=IssueDate AND IssueDate>'2026-07-21') future_looking, SUM(IssueDate<>'0000-00-00' AND ExpiryDate>=IssueDate AND IssueDate<='2026-07-21' AND ExpiryDate<'2026-07-21') expired_looking, SUM(IssueDate<>'0000-00-00' AND ExpiryDate>=IssueDate AND IssueDate<='2026-07-21' AND ExpiryDate>='2026-07-21') active_looking FROM uuhms.insurance",
+      "query_hash_sha256": "a064c25a4895f4f565935f12412bcd56599f678034b63dfcb5b19f1d291629df",
+      "executed_at_utc": "2026-07-21T22:53:55Z",
+      "result_hash_sha256": "325b79d07f976c7a5b63abf6845a3c99166c40a58f356f0fc66c035081d7c2a8",
+      "status": "completed",
+      "repository_output": "aggregate-only"
+    },
+    {
+      "id": "P2E-CQ-009",
+      "result_id": "patient_company_primary",
+      "query_version": 1,
+      "normalized_sql": "SELECT COUNT(*) total, SUM(company_nonblank=1 AND insurance_count=0) company_without_insurance, SUM(company_nonblank=1 AND insurance_count>0 AND agree_count=0) conflicts, SUM(company_nonblank=1 AND agree_count>0) corroborates, SUM(company_nonblank=0 AND insurance_count>0) insurance_with_blank_company, SUM(company_nonblank=0 AND insurance_count=0) blank_without_insurance FROM (SELECT p.PAT_ID,TRIM(p.Company)<>'' company_nonblank,COALESCE(s.insurance_count,0) insurance_count,CASE WHEN a.PAT_ID IS NULL THEN 0 ELSE 1 END agree_count FROM uuhms.patients p LEFT JOIN (SELECT PAT_ID,COUNT(*) insurance_count FROM uuhms.insurance GROUP BY PAT_ID) s ON s.PAT_ID=p.PAT_ID LEFT JOIN (SELECT DISTINCT PAT_ID,UPPER(TRIM(Company)) company_norm FROM uuhms.insurance) a ON a.PAT_ID=p.PAT_ID AND a.company_norm=UPPER(TRIM(p.Company))) x",
+      "query_hash_sha256": "d465a79d0cb0a751b49e4c4080417f08e105505904cc8e6be8a0f71888f0d936",
+      "executed_at_utc": "2026-07-21T22:53:55Z",
+      "result_hash_sha256": "7e77ec4cc35136e9900f1a6513ad4ee6d0647d6d327dd56ab11142ab2149c38b",
+      "status": "completed",
+      "repository_output": "aggregate-only"
+    },
+    {
+      "id": "P2E-CQ-010",
+      "result_id": "provider_name_short_diagnostic",
+      "query_version": 1,
+      "normalized_sql": "SELECT COUNT(*) total_nonblank,SUM(name_count=0 AND short_count=0) no_candidate,SUM(name_count>0 AND short_count=0) name_only,SUM(name_count=0 AND short_count>0) short_only,SUM(name_count>0 AND short_count>0) both_fields,SUM(union_count=1) one_union_candidate,SUM(union_count>1) ambiguous_union FROM (SELECT i.INS_ID,(SELECT COUNT(DISTINCT s.PINS_ID) FROM uuhms.sett_private s WHERE UPPER(TRIM(i.Company))=UPPER(TRIM(s.PrivateName))) name_count,(SELECT COUNT(DISTINCT s.PINS_ID) FROM uuhms.sett_private s WHERE UPPER(TRIM(i.Company))=UPPER(TRIM(s.PrivateShort))) short_count,(SELECT COUNT(DISTINCT s.PINS_ID) FROM uuhms.sett_private s WHERE UPPER(TRIM(i.Company))=UPPER(TRIM(s.PrivateName)) OR UPPER(TRIM(i.Company))=UPPER(TRIM(s.PrivateShort))) union_count FROM uuhms.insurance i WHERE TRIM(i.Company)<>'') q",
+      "query_hash_sha256": "725bb43434caf4c995b65a8e8d9cf4c63c6122de3f502fea94ea393be06d419a",
+      "executed_at_utc": "2026-07-21T22:53:55Z",
+      "result_hash_sha256": "e021a2892e7fa21365487dad3f27b65617c1185e2ccb2fd75e168e2d65b1a339",
+      "status": "completed",
+      "repository_output": "aggregate-only"
+    },
+    {
+      "id": "P2E-CQ-011",
+      "result_id": "scheme_plan_primary",
+      "query_version": 1,
+      "normalized_sql": "SELECT COUNT(*) total,SUM(TRIM(Scheme)='' AND TRIM(Plan)='') both_blank,SUM(TRIM(Scheme)<>'' AND TRIM(Plan)='') scheme_only,SUM(TRIM(Scheme)='' AND TRIM(Plan)<>'') plan_only,SUM(TRIM(Scheme)<>'' AND TRIM(Plan)<>'' AND BINARY TRIM(Scheme)=BINARY TRIM(Plan)) equal_nonblank,SUM(TRIM(Scheme)<>'' AND TRIM(Plan)<>'' AND BINARY TRIM(Scheme)<>BINARY TRIM(Plan)) different_nonblank,SUM(TRIM(Scheme)='-') scheme_hyphen,SUM(TRIM(Plan)='-') plan_hyphen FROM uuhms.insurance",
+      "query_hash_sha256": "465b91d99f36e0374ff75788dc3486c37bb2bd2f16be05a0752889684c2ee76f",
+      "executed_at_utc": "2026-07-21T22:55:18Z",
+      "result_hash_sha256": "b75e683871624d00c7dc6abfac9b4daf33e22be23a9e22d4c9917c1339388385",
+      "status": "completed",
+      "repository_output": "aggregate-only"
+    },
+    {
+      "id": "P2E-CQ-012",
+      "result_id": "text_quality",
+      "query_version": 1,
+      "normalized_sql": "SELECT SUM(InsType REGEXP '[[:cntrl:]]') type_control,SUM(Company REGEXP '[[:cntrl:]]') company_control,SUM(Scheme REGEXP '[[:cntrl:]]') scheme_control,SUM(MemberNo REGEXP '[[:cntrl:]]') member_control,SUM(Plan REGEXP '[[:cntrl:]]') plan_control,SUM(CHAR_LENGTH(MemberNo)>=15) member_at_limit,SUM(CHAR_LENGTH(Company)>=25) company_at_limit,SUM(CHAR_LENGTH(Scheme)>=200) scheme_at_limit,SUM(CHAR_LENGTH(Plan)>=255) plan_at_limit FROM uuhms.insurance",
+      "query_hash_sha256": "c42cfaf8318b0b667c3b6a07260edb7bc7f9c12c789782b6b0ef1b117b5456bb",
+      "executed_at_utc": "2026-07-21T22:55:18Z",
+      "result_hash_sha256": "5b8da559861773e580137f72dd404dd621f9ab90392b2a991c228332f339581b",
+      "status": "completed",
+      "repository_output": "aggregate-only"
+    },
+    {
+      "id": "P2E-CQ-013",
+      "result_id": "provider_catalogue",
+      "query_version": 1,
+      "normalized_sql": "SELECT COUNT(*) source_rows,SUM(TRIM(PrivateName)='') blank_name,SUM(TRIM(PrivateShort)='') blank_short,SUM(TRIM(PrivateType)='') blank_type,SUM(UPPER(TRIM(PrivateType))='CORPORATE') type_corporate,SUM(UPPER(TRIM(PrivateType))='PRIVATE INSURANCE') type_private,SUM(UPPER(TRIM(PrivateType)) NOT IN ('CORPORATE','PRIVATE INSURANCE')) type_unknown FROM uuhms.sett_private",
+      "query_hash_sha256": "c408fb21d84e16fdda740373889dca7374f29b50de538f4aed086428efcb9372",
+      "executed_at_utc": "2026-07-21T22:55:18Z",
+      "result_hash_sha256": "8157e7ff795327cd604914a8d78b60ac86b8b675b3747717236617b762a34a69",
+      "status": "completed",
+      "repository_output": "aggregate-only"
+    },
+    {
+      "id": "P2E-CQ-014",
+      "result_id": "provider_catalogue_duplicates",
+      "query_version": 1,
+      "normalized_sql": "SELECT COUNT(*) duplicate_groups,COALESCE(SUM(n),0) duplicate_rows FROM (SELECT COUNT(*) n FROM uuhms.sett_private GROUP BY UPPER(TRIM(PrivateName)),UPPER(TRIM(PrivateType)) HAVING COUNT(*)>1) q",
+      "query_hash_sha256": "cc110b932c2c03869048652558b2ba4aa348a9139033e0e9b2fc36f4be912950",
+      "executed_at_utc": "2026-07-21T22:55:18Z",
+      "result_hash_sha256": "2cb707536948af80a631105bd10932e108d8300b81b4cdaf0762745101b706d1",
+      "status": "completed",
+      "repository_output": "aggregate-only"
+    },
+    {
+      "id": "P2E-CQ-015",
+      "result_id": "bill_status",
+      "query_version": 1,
+      "normalized_sql": "SELECT CASE WHEN TRIM(BillStatus)='' THEN '__BLANK__' WHEN TRIM(BillStatus) IN ('CASH AND CARRY','NHIS','PRIVATE INSURANCE','PRIVATE INSURANCE +','PRIVATE INSURANCE + NHIS') THEN TRIM(BillStatus) ELSE '__UNKNOWN__' END category,COUNT(*) patient_count FROM uuhms.patients GROUP BY category ORDER BY category",
+      "query_hash_sha256": "c4a42e25ce8610b5b1e4ab3ae17302c0978eea880d27c711ee6487c9a7ac2c9b",
+      "executed_at_utc": "2026-07-21T22:55:18Z",
+      "result_hash_sha256": "c63fe6075d4b81c7cfe49ef67fe4e4a3d22343582afeeb6806bb5dbec75e9da2",
+      "status": "completed",
+      "repository_output": "aggregate-only"
+    }
+  ],
+  "bundle_identity_sha256": "037aab45c41adab35d41fe10460c159b215c523b15622b79f288422d641c11a3",
+  "reproducibility_status": "complete_for_published_classic_aggregates",
+  "runtime_boundaries": {
+    "target_provider_mapped_population": "requires protected Phase 2A crosswalk at future dry-run; source diagnostics do not claim it",
+    "patient_quarantine_population": "requires Phase 2C runtime parent outcomes",
+    "mapped_patient_provider_groups": "requires protected patient/provider crosswalks",
+    "target_collisions": "separate PHASE_2E_TARGET manifests"
+  }
+}

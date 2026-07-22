@@ -1,0 +1,568 @@
+{
+    "specification_version": "2B.1.0",
+    "phase": "Phase 2B â€” Staff Identity and Historical Attribution Mapping Specifications",
+    "generated_at_utc": "2026-07-21T19:11:40Z",
+    "approved_source": {
+        "connection": "legacy_uhms",
+        "schema": "uuhms",
+        "access": "read-only",
+        "expected_tables": 55,
+        "expected_columns": 479
+    },
+    "policy_authority": [
+        "D-202",
+        "D-008",
+        "Q-304"
+    ],
+    "privacy": {
+        "raw_staff_identity_values": false,
+        "credentials": false,
+        "permission_values": false,
+        "personal_contacts": false,
+        "phi": false
+    },
+    "implementation_authorized": false,
+    "record_count": 28,
+    "global_zero_rule": false,
+    "records": [
+        {
+            "id": "STAFF-SENT-001",
+            "relationship_id": "STAFF-REL-001",
+            "source": {
+                "schema": "uuhms",
+                "table": "attendance",
+                "column": "USER_ID"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Not approved as sentinel because absent from snapshot; appearance is drift/exception.",
+            "other_sentinel_rule": "None approved.",
+            "observed_counts": {
+                "null_count": 0,
+                "zero_count": 0
+            },
+            "unknown_actor_eligibility": "not established",
+            "exception_code": "LEGACY-STAFF-RECON-026"
+        },
+        {
+            "id": "STAFF-SENT-002",
+            "relationship_id": "STAFF-REL-002",
+            "source": {
+                "schema": "uuhms",
+                "table": "batch",
+                "column": "USER_ID"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Not approved as sentinel because absent from snapshot; appearance is drift/exception.",
+            "other_sentinel_rule": "None approved.",
+            "observed_counts": {
+                "null_count": 0,
+                "zero_count": 0
+            },
+            "unknown_actor_eligibility": "not established",
+            "exception_code": "LEGACY-STAFF-RECON-026"
+        },
+        {
+            "id": "STAFF-SENT-003",
+            "relationship_id": "STAFF-REL-003",
+            "source": {
+                "schema": "uuhms",
+                "table": "billing",
+                "column": "USER_ID"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Not approved as sentinel because absent from snapshot; appearance is drift/exception.",
+            "other_sentinel_rule": "None approved.",
+            "observed_counts": {
+                "null_count": 0,
+                "zero_count": 0
+            },
+            "unknown_actor_eligibility": "not established",
+            "exception_code": "LEGACY-STAFF-RECON-026"
+        },
+        {
+            "id": "STAFF-SENT-004",
+            "relationship_id": "STAFF-REL-004",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_prescriptions",
+                "column": "USER_ID"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Field-specific approved candidate sentinel for unknown/not-evidenced actor; use of Legacy Actor Unknown still depends on target field.",
+            "other_sentinel_rule": "None approved.",
+            "observed_counts": {
+                "null_count": 0,
+                "zero_count": 14144
+            },
+            "unknown_actor_eligibility": "conditional",
+            "exception_code": "LEGACY-STAFF-SENTINEL-011"
+        },
+        {
+            "id": "STAFF-SENT-005",
+            "relationship_id": "STAFF-REL-005",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_scan_lab",
+                "column": "USER_ID"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Field-specific approved candidate sentinel for unknown/not-evidenced actor; use of Legacy Actor Unknown still depends on target field.",
+            "other_sentinel_rule": "None approved.",
+            "observed_counts": {
+                "null_count": 0,
+                "zero_count": 72680
+            },
+            "unknown_actor_eligibility": "conditional",
+            "exception_code": "LEGACY-STAFF-SENTINEL-011"
+        },
+        {
+            "id": "STAFF-SENT-006",
+            "relationship_id": "STAFF-REL-006",
+            "source": {
+                "schema": "uuhms",
+                "table": "nurses_note",
+                "column": "USER_ID"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Not approved as sentinel because absent from snapshot; appearance is drift/exception.",
+            "other_sentinel_rule": "None approved.",
+            "observed_counts": {
+                "null_count": 0,
+                "zero_count": 0
+            },
+            "unknown_actor_eligibility": "not established",
+            "exception_code": "LEGACY-STAFF-RECON-026"
+        },
+        {
+            "id": "STAFF-SENT-007",
+            "relationship_id": "STAFF-REL-007",
+            "source": {
+                "schema": "uuhms",
+                "table": "request",
+                "column": "USER_ID"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Field-specific approved candidate sentinel for unknown/not-evidenced actor; use of Legacy Actor Unknown still depends on target field.",
+            "other_sentinel_rule": "None approved.",
+            "observed_counts": {
+                "null_count": 0,
+                "zero_count": 146
+            },
+            "unknown_actor_eligibility": "conditional",
+            "exception_code": "LEGACY-STAFF-SENTINEL-011"
+        },
+        {
+            "id": "STAFF-SENT-008",
+            "relationship_id": "STAFF-REL-008",
+            "source": {
+                "schema": "uuhms",
+                "table": "treatment",
+                "column": "USER_ID"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Not approved as sentinel because absent from snapshot; appearance is drift/exception.",
+            "other_sentinel_rule": "None approved.",
+            "observed_counts": {
+                "null_count": 0,
+                "zero_count": 0
+            },
+            "unknown_actor_eligibility": "not established",
+            "exception_code": "LEGACY-STAFF-RECON-026"
+        },
+        {
+            "id": "STAFF-SENT-009",
+            "relationship_id": "STAFF-REL-009",
+            "source": {
+                "schema": "uuhms",
+                "table": "vitals",
+                "column": "USER_ID"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Not approved as sentinel because absent from snapshot; appearance is drift/exception.",
+            "other_sentinel_rule": "None approved.",
+            "observed_counts": {
+                "null_count": 0,
+                "zero_count": 0
+            },
+            "unknown_actor_eligibility": "not established",
+            "exception_code": "LEGACY-STAFF-RECON-026"
+        },
+        {
+            "id": "STAFF-SENT-010",
+            "relationship_id": "STAFF-REL-010",
+            "source": {
+                "schema": "uuhms",
+                "table": "claims",
+                "column": "Doctor"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Literal numeric/text zero is not approved.",
+            "other_sentinel_rule": "Blank is an approved field-specific no-actor evidence class; target routing remains dependency-specific.",
+            "observed_counts": {
+                "null_count": 0,
+                "blank_count": 1502
+            },
+            "unknown_actor_eligibility": "conditional; never name-derived",
+            "exception_code": "LEGACY-STAFF-ACTOR-022"
+        },
+        {
+            "id": "STAFF-SENT-011",
+            "relationship_id": "STAFF-REL-011",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_complaints",
+                "column": "Doctor"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Literal numeric/text zero is not approved.",
+            "other_sentinel_rule": "Blank is an approved field-specific no-actor evidence class; target routing remains dependency-specific.",
+            "observed_counts": {
+                "null_count": 0,
+                "blank_count": 28378
+            },
+            "unknown_actor_eligibility": "conditional; never name-derived",
+            "exception_code": "LEGACY-STAFF-ACTOR-022"
+        },
+        {
+            "id": "STAFF-SENT-012",
+            "relationship_id": "STAFF-REL-012",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_diagnosis",
+                "column": "Doctor"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Literal numeric/text zero is not approved.",
+            "other_sentinel_rule": "Blank is an approved field-specific no-actor evidence class; target routing remains dependency-specific.",
+            "observed_counts": {
+                "null_count": 0,
+                "blank_count": 79422
+            },
+            "unknown_actor_eligibility": "conditional; never name-derived",
+            "exception_code": "LEGACY-STAFF-ACTOR-022"
+        },
+        {
+            "id": "STAFF-SENT-013",
+            "relationship_id": "STAFF-REL-013",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_history",
+                "column": "Doctor"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Literal numeric/text zero is not approved.",
+            "other_sentinel_rule": "Blank is an approved field-specific no-actor evidence class; target routing remains dependency-specific.",
+            "observed_counts": {
+                "null_count": 0,
+                "blank_count": 1755
+            },
+            "unknown_actor_eligibility": "conditional; never name-derived",
+            "exception_code": "LEGACY-STAFF-ACTOR-022"
+        },
+        {
+            "id": "STAFF-SENT-014",
+            "relationship_id": "STAFF-REL-014",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_prescriptions",
+                "column": "Doctor"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Literal numeric/text zero is not approved.",
+            "other_sentinel_rule": "Blank is an approved field-specific no-actor evidence class; target routing remains dependency-specific.",
+            "observed_counts": {
+                "null_count": 0,
+                "blank_count": 103165
+            },
+            "unknown_actor_eligibility": "conditional; never name-derived",
+            "exception_code": "LEGACY-STAFF-ACTOR-022"
+        },
+        {
+            "id": "STAFF-SENT-015",
+            "relationship_id": "STAFF-REL-015",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_procedures",
+                "column": "Doctor"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Literal numeric/text zero is not approved.",
+            "other_sentinel_rule": "Blank is an approved field-specific no-actor evidence class; target routing remains dependency-specific.",
+            "observed_counts": {
+                "null_count": 0,
+                "blank_count": 121
+            },
+            "unknown_actor_eligibility": "conditional; never name-derived",
+            "exception_code": "LEGACY-STAFF-ACTOR-022"
+        },
+        {
+            "id": "STAFF-SENT-016",
+            "relationship_id": "STAFF-REL-016",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_scan_lab",
+                "column": "Doctor"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Literal numeric/text zero is not approved.",
+            "other_sentinel_rule": "Blank is an approved field-specific no-actor evidence class; target routing remains dependency-specific.",
+            "observed_counts": {
+                "null_count": 0,
+                "blank_count": 32445
+            },
+            "unknown_actor_eligibility": "conditional; never name-derived",
+            "exception_code": "LEGACY-STAFF-ACTOR-022"
+        },
+        {
+            "id": "STAFF-SENT-017",
+            "relationship_id": "STAFF-REL-017",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_services",
+                "column": "Doctor"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Literal numeric/text zero is not approved.",
+            "other_sentinel_rule": "Blank is an approved field-specific no-actor evidence class; target routing remains dependency-specific.",
+            "observed_counts": {
+                "null_count": 0,
+                "blank_count": 60260
+            },
+            "unknown_actor_eligibility": "conditional; never name-derived",
+            "exception_code": "LEGACY-STAFF-ACTOR-022"
+        },
+        {
+            "id": "STAFF-SENT-018",
+            "relationship_id": "STAFF-REL-018",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_treatment",
+                "column": "Doctor"
+            },
+            "null_rule": "No actor evidenced; never invent a parent.",
+            "zero_rule": "Literal numeric/text zero is not approved.",
+            "other_sentinel_rule": "Blank not observed; appearance is drift but would mean no actor evidence only after review.",
+            "observed_counts": {
+                "null_count": 0,
+                "blank_count": 0
+            },
+            "unknown_actor_eligibility": "conditional; never name-derived",
+            "exception_code": "LEGACY-STAFF-RECON-026"
+        },
+        {
+            "id": "STAFF-SENT-019",
+            "relationship_id": "STAFF-REL-019",
+            "source": {
+                "schema": "uuhms",
+                "table": "billing",
+                "column": "CASH_ID"
+            },
+            "null_rule": "Absence only; no actor inferred.",
+            "zero_rule": "Zero is the observed all-row baseline; it is not a verified user sentinel or actor mapping.",
+            "other_sentinel_rule": "Zero is the observed all-row baseline; it is not a verified user sentinel or actor mapping.",
+            "observed_counts": {
+                "child_rows": 111731,
+                "null_count": 0,
+                "zero_count": 111731,
+                "distinct_nonzero_count": 0,
+                "user_match_count": 0,
+                "user_orphan_count": 0
+            },
+            "unknown_actor_eligibility": "prohibited",
+            "exception_code": "LEGACY-STAFF-SEMANTICS-031"
+        },
+        {
+            "id": "STAFF-SENT-020",
+            "relationship_id": "STAFF-REL-020",
+            "source": {
+                "schema": "uuhms",
+                "table": "notifications",
+                "column": "ReqFrom"
+            },
+            "null_rule": "Absence only; no actor inferred.",
+            "zero_rule": "Literal zero is not an approved actor.",
+            "other_sentinel_rule": "No sentinel observed; all content remains excluded.",
+            "observed_counts": {
+                "child_rows": 141,
+                "null_count": 0,
+                "blank_count": 0,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 7
+            },
+            "unknown_actor_eligibility": "prohibited",
+            "exception_code": "LEGACY-STAFF-PRIVACY-027"
+        },
+        {
+            "id": "STAFF-SENT-021",
+            "relationship_id": "STAFF-REL-021",
+            "source": {
+                "schema": "uuhms",
+                "table": "notifications",
+                "column": "ReqTo"
+            },
+            "null_rule": "Absence only; no actor inferred.",
+            "zero_rule": "Literal zero is not an approved actor.",
+            "other_sentinel_rule": "No sentinel observed; all content remains excluded.",
+            "observed_counts": {
+                "child_rows": 141,
+                "null_count": 0,
+                "blank_count": 0,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 1
+            },
+            "unknown_actor_eligibility": "prohibited",
+            "exception_code": "LEGACY-STAFF-PRIVACY-027"
+        },
+        {
+            "id": "STAFF-SENT-022",
+            "relationship_id": "STAFF-REL-022",
+            "source": {
+                "schema": "uuhms",
+                "table": "mat_family",
+                "column": "DocName"
+            },
+            "null_rule": "Absence only; no actor inferred.",
+            "zero_rule": "Literal zero is not an approved actor.",
+            "other_sentinel_rule": "Empty-table baseline; any nonzero row/nonblank value is a scope-review stop.",
+            "observed_counts": {
+                "child_rows": 0,
+                "null_count": 0,
+                "blank_count": 0,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 0
+            },
+            "unknown_actor_eligibility": "prohibited",
+            "exception_code": "LEGACY-STAFF-DRIFT-028"
+        },
+        {
+            "id": "STAFF-SENT-023",
+            "relationship_id": "STAFF-REL-023",
+            "source": {
+                "schema": "uuhms",
+                "table": "mat_family",
+                "column": "DocPhone"
+            },
+            "null_rule": "Absence only; no actor inferred.",
+            "zero_rule": "Literal zero is not an approved actor.",
+            "other_sentinel_rule": "Empty-table baseline; any nonzero row/nonblank value is a privacy/scope-review stop.",
+            "observed_counts": {
+                "child_rows": 0,
+                "null_count": 0,
+                "blank_count": 0,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 0
+            },
+            "unknown_actor_eligibility": "prohibited",
+            "exception_code": "LEGACY-STAFF-DRIFT-028"
+        },
+        {
+            "id": "STAFF-SENT-024",
+            "relationship_id": "STAFF-REL-024",
+            "source": {
+                "schema": "uuhms",
+                "table": "hospitalinfo",
+                "column": "ClaimOfficer"
+            },
+            "null_rule": "Absence only; no actor inferred.",
+            "zero_rule": "Literal zero is not an approved actor.",
+            "other_sentinel_rule": "No sentinel observed.",
+            "observed_counts": {
+                "child_rows": 1,
+                "null_count": 0,
+                "blank_count": 0,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 1
+            },
+            "unknown_actor_eligibility": "prohibited",
+            "exception_code": "LEGACY-STAFF-CONFIG-029"
+        },
+        {
+            "id": "STAFF-SENT-025",
+            "relationship_id": "STAFF-REL-025",
+            "source": {
+                "schema": "uuhms",
+                "table": "hospitalinfo",
+                "column": "ClaimSignature"
+            },
+            "null_rule": "Absence only; no actor inferred.",
+            "zero_rule": "Literal zero is not an approved actor.",
+            "other_sentinel_rule": "No sentinel observed; signature content must never enter docs/specs.",
+            "observed_counts": {
+                "child_rows": 1,
+                "null_count": 0,
+                "blank_count": 0,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 1
+            },
+            "unknown_actor_eligibility": "prohibited",
+            "exception_code": "LEGACY-STAFF-CONFIG-029"
+        },
+        {
+            "id": "STAFF-SENT-026",
+            "relationship_id": "STAFF-REL-026",
+            "source": {
+                "schema": "uuhms",
+                "table": "hospitalinfo",
+                "column": "Admn"
+            },
+            "null_rule": "Absence only; no actor inferred.",
+            "zero_rule": "Literal zero is not an approved actor.",
+            "other_sentinel_rule": "No sentinel observed.",
+            "observed_counts": {
+                "child_rows": 1,
+                "null_count": 0,
+                "blank_count": 0,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 1
+            },
+            "unknown_actor_eligibility": "prohibited",
+            "exception_code": "LEGACY-STAFF-CONFIG-029"
+        },
+        {
+            "id": "STAFF-SENT-027",
+            "relationship_id": "STAFF-REL-027",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_diagnosis",
+                "column": "MdfId"
+            },
+            "null_rule": "Absence only; no actor inferred.",
+            "zero_rule": "Literal zero is not an approved actor.",
+            "other_sentinel_rule": "Blank is current baseline; it proves no actor. Nonblank drift requires semantics review.",
+            "observed_counts": {
+                "child_rows": 123940,
+                "null_count": 0,
+                "blank_count": 123940,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 0
+            },
+            "unknown_actor_eligibility": "prohibited",
+            "exception_code": "LEGACY-STAFF-SEMANTICS-030"
+        },
+        {
+            "id": "STAFF-SENT-028",
+            "relationship_id": "STAFF-REL-028",
+            "source": {
+                "schema": "uuhms",
+                "table": "list_diagnosis",
+                "column": "MdfId"
+            },
+            "null_rule": "Absence only; no actor inferred.",
+            "zero_rule": "Literal zero is not an approved actor.",
+            "other_sentinel_rule": "Blank is current baseline; it proves no actor. Nonblank drift requires semantics review.",
+            "observed_counts": {
+                "child_rows": 5948,
+                "null_count": 0,
+                "blank_count": 5948,
+                "literal_zero_count": 0,
+                "distinct_nonblank_nonzero_count": 0
+            },
+            "unknown_actor_eligibility": "prohibited",
+            "exception_code": "LEGACY-STAFF-SEMANTICS-030"
+        }
+    ],
+    "phase2b_evidence_references": [
+        "../../evidence/PHASE_2B_STAFF_QUERY_MANIFEST.json",
+        "../../evidence/PHASE_2B_STAFF_AGGREGATE_RESULTS.json"
+    ]
+}

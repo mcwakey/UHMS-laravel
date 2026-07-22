@@ -1,0 +1,20 @@
+{
+  "specification_version":"2F.1.0","phase":"2F","approved_source":{"connection":"legacy_uhms","database":"uuhms","read_only":true},"approved_target":{"environment":"local","database":"uhms_clean","read_only":true,"production":false},
+  "upstream_contracts":["PATIENT-NUM-004","PATIENT-NUM-008","PATIENT-NUM-010","PATIENT-ALIAS-010","PATIENT-CHILD-CONTACT-011","INS-TARGET-002","INS-TARGET-003","INS-TARGET-010"],
+  "key_algorithm":"domain-separated HMAC over typed length-prefixed canonical inputs in protected runtime","plain_low_entropy_hashes_allowed":false,"implementation_authorized":false,"privacy":{"contains_phi":false,"contains_raw_phi":false,"row_level_tokens_published":false},"record_count":13,
+  "records":[
+    {"id":"PILOT-IDEM-001","outcome":"patient_core","key_inputs":["domain","protected_source_patient_token","transformation_bundle","canonicalization_version"],"rerun":"resolve prior success before sequence allocation"},
+    {"id":"PILOT-IDEM-002","outcome":"existing_target_link","key_inputs":["domain","source_token","protected_target_token","approved_crosswalk_version"],"rerun":"same immutable target or conflict"},
+    {"id":"PILOT-IDEM-003","outcome":"patient_number","key_inputs":["patient_core_key","number_config_fingerprint","pinned_period"],"rerun":"same durable number; never replacement"},
+    {"id":"PILOT-IDEM-004","outcome":"legacy_opd_alias","key_inputs":["source_token","target_mapping_token","canonical_alias_token","alias_rule_version"],"rerun":"exact lineage no-op; otherwise collision"},
+    {"id":"PILOT-IDEM-005","outcome":"emergency_contact","key_inputs":["source_token","target_parent_token","tuple_HMAC","child_rule_version"],"rerun":"exact lineage no-op; row equality alone insufficient"},
+    {"id":"PILOT-IDEM-006","outcome":"inline_demographics","key_inputs":["patient_core_key","field_bundle_version"],"rerun":"same core projection only"},
+    {"id":"PILOT-IDEM-007","outcome":"insurance_history_row","key_inputs":["protected_source_insurance_token","extraction_version","transformation_version"],"rerun":"resume missing history only"},
+    {"id":"PILOT-IDEM-008","outcome":"insurance_patient_provider_group","key_inputs":["mapped_patient_token","provider_target_token","consolidation_version"],"rerun":"same lineage no-op; duplicate unique key is not success"},
+    {"id":"PILOT-IDEM-009","outcome":"exception_record","key_inputs":["quarantine_chain_key","exception_code","rule_version","evidence_version"],"rerun":"same ordered exception membership unless versioned evidence changes; one exception key does not create another chain"},
+    {"id":"PILOT-IDEM-010","outcome":"reconciliation_result","key_inputs":["run","cohort","contract_id","evidence_hashes"],"rerun":"same measurements or explicit drift failure"},
+    {"id":"PILOT-IDEM-011","outcome":"checkpoint","key_inputs":["run","dependency_chain_token","stage","attempt_contract_version"],"rerun":"advance only after durable target and reconciliation agree"},
+    {"id":"PILOT-IDEM-012","outcome":"drift","key_inputs":["source_snapshot","target_snapshot","contract_bundle","canonicalization_versions"],"rerun":"new reviewable evaluation; never overwrite or interpret partial state as success"},
+    {"id":"PILOT-IDEM-013","outcome":"quarantine_chain","key_inputs":["typed_authoritative_root_token","root_domain","source_snapshot","contract_bundle_version"],"rerun":"resolve the single existing chain; attach ordered primary and secondary exception records without creating another root identity"}
+  ]
+}

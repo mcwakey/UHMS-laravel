@@ -1,0 +1,1151 @@
+{
+    "specification_version": "2B.1.0",
+    "phase": "Phase 2B Ã¢â‚¬â€ Staff Identity and Historical Attribution Mapping Specifications",
+    "generated_at_utc": "2026-07-21T19:11:40Z",
+    "approved_source": {
+        "connection": "legacy_uhms",
+        "schema": "uuhms",
+        "access": "read-only",
+        "expected_tables": 55,
+        "expected_columns": 479
+    },
+    "policy_authority": [
+        "D-202",
+        "D-008",
+        "Q-304"
+    ],
+    "privacy": {
+        "raw_staff_identity_values": false,
+        "credentials": false,
+        "permission_values": false,
+        "personal_contacts": false,
+        "phi": false
+    },
+    "implementation_authorized": false,
+    "record_count": 30,
+    "records": [
+        {
+            "id": "STAFF-EXT-001",
+            "scope": "Classic staff master",
+            "source": {
+                "schema": "uuhms",
+                "table": "users",
+                "columns": [
+                    "USER_ID",
+                    "DEP_ID",
+                    "FullName",
+                    "UserName",
+                    "RegDate",
+                    "Status"
+                ]
+            },
+            "security_excluded_columns": [
+                "Password",
+                "CanAdd",
+                "CanEdit",
+                "CanDelete",
+                "CanPrint"
+            ],
+            "ordering_key": [
+                "USER_ID"
+            ],
+            "primary_key": [
+                "USER_ID"
+            ],
+            "timestamp_candidate": [
+                "RegDate"
+            ],
+            "timestamp_reliability": "event/registration timestamp only; does not prove updates or deletion",
+            "snapshot_identity": [
+                "USER_ID",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version"
+            ],
+            "chunk_recommendation": "Full ordered snapshot; 86 rows. Future implementation may chunk by USER_ID.",
+            "resume_coordinate": [
+                "USER_ID"
+            ],
+            "delete_detection": "Full snapshot key-set comparison only; never infer deletion from missing delta.",
+            "source_fingerprint": "Classic approved fingerprint + users schema/index hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "table/column shape != 55/479",
+                "fingerprint drift",
+                "row count/hash drift outside approved window",
+                "credential value enters output"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-002",
+            "scope": "Actor field attendance.USER_ID",
+            "relationship_id": "STAFF-REL-001",
+            "source": {
+                "schema": "uuhms",
+                "table": "attendance",
+                "column": "USER_ID"
+            },
+            "ordering_key": [
+                "ATT_ID"
+            ],
+            "primary_key": [
+                "ATT_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "ATT_ID",
+                "USER_ID",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "ATT_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-003",
+            "scope": "Actor field batch.USER_ID",
+            "relationship_id": "STAFF-REL-002",
+            "source": {
+                "schema": "uuhms",
+                "table": "batch",
+                "column": "USER_ID"
+            },
+            "ordering_key": [
+                "BATCH_ID"
+            ],
+            "primary_key": [
+                "BATCH_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "BATCH_ID",
+                "USER_ID",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "BATCH_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-004",
+            "scope": "Actor field billing.USER_ID",
+            "relationship_id": "STAFF-REL-003",
+            "source": {
+                "schema": "uuhms",
+                "table": "billing",
+                "column": "USER_ID"
+            },
+            "ordering_key": [
+                "BILL_ID"
+            ],
+            "primary_key": [
+                "BILL_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "BILL_ID",
+                "USER_ID",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "BILL_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-005",
+            "scope": "Actor field consult_prescriptions.USER_ID",
+            "relationship_id": "STAFF-REL-004",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_prescriptions",
+                "column": "USER_ID"
+            },
+            "ordering_key": [
+                "PRES_ID"
+            ],
+            "primary_key": [
+                "PRES_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "PRES_ID",
+                "USER_ID",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "PRES_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-006",
+            "scope": "Actor field consult_scan_lab.USER_ID",
+            "relationship_id": "STAFF-REL-005",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_scan_lab",
+                "column": "USER_ID"
+            },
+            "ordering_key": [
+                "SCL_ID"
+            ],
+            "primary_key": [
+                "SCL_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "SCL_ID",
+                "USER_ID",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "SCL_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-007",
+            "scope": "Actor field nurses_note.USER_ID",
+            "relationship_id": "STAFF-REL-006",
+            "source": {
+                "schema": "uuhms",
+                "table": "nurses_note",
+                "column": "USER_ID"
+            },
+            "ordering_key": [
+                "NUR_ID"
+            ],
+            "primary_key": [
+                "NUR_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "NUR_ID",
+                "USER_ID",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "NUR_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-008",
+            "scope": "Actor field request.USER_ID",
+            "relationship_id": "STAFF-REL-007",
+            "source": {
+                "schema": "uuhms",
+                "table": "request",
+                "column": "USER_ID"
+            },
+            "ordering_key": [
+                "REQ_ID"
+            ],
+            "primary_key": [
+                "REQ_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "REQ_ID",
+                "USER_ID",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "REQ_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-009",
+            "scope": "Actor field treatment.USER_ID",
+            "relationship_id": "STAFF-REL-008",
+            "source": {
+                "schema": "uuhms",
+                "table": "treatment",
+                "column": "USER_ID"
+            },
+            "ordering_key": [
+                "TREAT_ID"
+            ],
+            "primary_key": [
+                "TREAT_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "TREAT_ID",
+                "USER_ID",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "TREAT_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-010",
+            "scope": "Actor field vitals.USER_ID",
+            "relationship_id": "STAFF-REL-009",
+            "source": {
+                "schema": "uuhms",
+                "table": "vitals",
+                "column": "USER_ID"
+            },
+            "ordering_key": [
+                "VIT_ID"
+            ],
+            "primary_key": [
+                "VIT_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "VIT_ID",
+                "USER_ID",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "VIT_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-011",
+            "scope": "Actor field claims.Doctor",
+            "relationship_id": "STAFF-REL-010",
+            "source": {
+                "schema": "uuhms",
+                "table": "claims",
+                "column": "Doctor"
+            },
+            "ordering_key": [
+                "CLAIM_ID"
+            ],
+            "primary_key": [
+                "CLAIM_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "CLAIM_ID",
+                "Doctor",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "CLAIM_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-012",
+            "scope": "Actor field consult_complaints.Doctor",
+            "relationship_id": "STAFF-REL-011",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_complaints",
+                "column": "Doctor"
+            },
+            "ordering_key": [
+                "COMP_ID"
+            ],
+            "primary_key": [
+                "COMP_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "COMP_ID",
+                "Doctor",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "COMP_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-013",
+            "scope": "Actor field consult_diagnosis.Doctor",
+            "relationship_id": "STAFF-REL-012",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_diagnosis",
+                "column": "Doctor"
+            },
+            "ordering_key": [
+                "DIAG_ID"
+            ],
+            "primary_key": [
+                "DIAG_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "DIAG_ID",
+                "Doctor",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "DIAG_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-014",
+            "scope": "Actor field consult_history.Doctor",
+            "relationship_id": "STAFF-REL-013",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_history",
+                "column": "Doctor"
+            },
+            "ordering_key": [
+                "HIST_ID"
+            ],
+            "primary_key": [
+                "HIST_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "HIST_ID",
+                "Doctor",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "HIST_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-015",
+            "scope": "Actor field consult_prescriptions.Doctor",
+            "relationship_id": "STAFF-REL-014",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_prescriptions",
+                "column": "Doctor"
+            },
+            "ordering_key": [
+                "PRES_ID"
+            ],
+            "primary_key": [
+                "PRES_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "PRES_ID",
+                "Doctor",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "PRES_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-016",
+            "scope": "Actor field consult_procedures.Doctor",
+            "relationship_id": "STAFF-REL-015",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_procedures",
+                "column": "Doctor"
+            },
+            "ordering_key": [
+                "PRO_ID"
+            ],
+            "primary_key": [
+                "PRO_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "PRO_ID",
+                "Doctor",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "PRO_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-017",
+            "scope": "Actor field consult_scan_lab.Doctor",
+            "relationship_id": "STAFF-REL-016",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_scan_lab",
+                "column": "Doctor"
+            },
+            "ordering_key": [
+                "SCL_ID"
+            ],
+            "primary_key": [
+                "SCL_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "SCL_ID",
+                "Doctor",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "SCL_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-018",
+            "scope": "Actor field consult_services.Doctor",
+            "relationship_id": "STAFF-REL-017",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_services",
+                "column": "Doctor"
+            },
+            "ordering_key": [
+                "REC_ID"
+            ],
+            "primary_key": [
+                "REC_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "REC_ID",
+                "Doctor",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "REC_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-019",
+            "scope": "Actor field consult_treatment.Doctor",
+            "relationship_id": "STAFF-REL-018",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_treatment",
+                "column": "Doctor"
+            },
+            "ordering_key": [
+                "TREATP_ID"
+            ],
+            "primary_key": [
+                "TREATP_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Actor-field extraction follows the table-level strategy; actor value is not a watermark.",
+            "snapshot_identity": [
+                "TREATP_ID",
+                "Doctor",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version and canonicalization version"
+            ],
+            "chunk_recommendation": "Use downstream table chunk specification; snapshot actor classifications in the same repeatable-read extraction.",
+            "resume_coordinate": [
+                "TREATP_ID"
+            ],
+            "delete_detection": "Inherited table snapshot/hash or approved watermark overlap; never infer deletion without evidence.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "relationship count drift",
+                "missing/duplicate extraction key",
+                "unclassified sentinel/orphan",
+                "raw actor text in report"
+            ],
+            "exception_code": "LEGACY-STAFF-EXTRACTION-021"
+        },
+        {
+            "id": "STAFF-EXT-020",
+            "scope": "Actor-like field billing.CASH_ID",
+            "relationship_id": "STAFF-REL-019",
+            "source": {
+                "schema": "uuhms",
+                "table": "billing",
+                "column": "CASH_ID"
+            },
+            "ordering_key": [
+                "BILL_ID"
+            ],
+            "primary_key": [
+                "BILL_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Field is not a watermark.",
+            "snapshot_identity": [
+                "BILL_ID",
+                "CASH_ID",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version or excluded-content aggregate hash"
+            ],
+            "chunk_recommendation": "Follow table snapshot strategy under repeatable read.",
+            "resume_coordinate": [
+                "BILL_ID"
+            ],
+            "delete_detection": "Full snapshot/hash or inherited approved table strategy; never infer deletion.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "field count/fingerprint drift",
+                "nonblank drift in dormant/ambiguous field",
+                "raw restricted content in report"
+            ],
+            "exception_code": "LEGACY-STAFF-SEMANTICS-031"
+        },
+        {
+            "id": "STAFF-EXT-021",
+            "scope": "Actor-like field notifications.ReqFrom",
+            "relationship_id": "STAFF-REL-020",
+            "source": {
+                "schema": "uuhms",
+                "table": "notifications",
+                "column": "ReqFrom"
+            },
+            "ordering_key": [
+                "NOTID"
+            ],
+            "primary_key": [
+                "NOTID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Field is not a watermark.",
+            "snapshot_identity": [
+                "NOTID",
+                "ReqFrom",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version or excluded-content aggregate hash"
+            ],
+            "chunk_recommendation": "Follow table snapshot strategy under repeatable read.",
+            "resume_coordinate": [
+                "NOTID"
+            ],
+            "delete_detection": "Full snapshot/hash or inherited approved table strategy; never infer deletion.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "field count/fingerprint drift",
+                "nonblank drift in dormant/ambiguous field",
+                "raw restricted content in report"
+            ],
+            "exception_code": "LEGACY-STAFF-PRIVACY-027"
+        },
+        {
+            "id": "STAFF-EXT-022",
+            "scope": "Actor-like field notifications.ReqTo",
+            "relationship_id": "STAFF-REL-021",
+            "source": {
+                "schema": "uuhms",
+                "table": "notifications",
+                "column": "ReqTo"
+            },
+            "ordering_key": [
+                "NOTID"
+            ],
+            "primary_key": [
+                "NOTID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Field is not a watermark.",
+            "snapshot_identity": [
+                "NOTID",
+                "ReqTo",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version or excluded-content aggregate hash"
+            ],
+            "chunk_recommendation": "Follow table snapshot strategy under repeatable read.",
+            "resume_coordinate": [
+                "NOTID"
+            ],
+            "delete_detection": "Full snapshot/hash or inherited approved table strategy; never infer deletion.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "field count/fingerprint drift",
+                "nonblank drift in dormant/ambiguous field",
+                "raw restricted content in report"
+            ],
+            "exception_code": "LEGACY-STAFF-PRIVACY-027"
+        },
+        {
+            "id": "STAFF-EXT-023",
+            "scope": "Actor-like field mat_family.DocName",
+            "relationship_id": "STAFF-REL-022",
+            "source": {
+                "schema": "uuhms",
+                "table": "mat_family",
+                "column": "DocName"
+            },
+            "ordering_key": [
+                "MAFA_ID"
+            ],
+            "primary_key": [
+                "MAFA_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Field is not a watermark.",
+            "snapshot_identity": [
+                "MAFA_ID",
+                "DocName",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version or excluded-content aggregate hash"
+            ],
+            "chunk_recommendation": "Follow table snapshot strategy under repeatable read.",
+            "resume_coordinate": [
+                "MAFA_ID"
+            ],
+            "delete_detection": "Full snapshot/hash or inherited approved table strategy; never infer deletion.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "field count/fingerprint drift",
+                "nonblank drift in dormant/ambiguous field",
+                "raw restricted content in report"
+            ],
+            "exception_code": "LEGACY-STAFF-DRIFT-028"
+        },
+        {
+            "id": "STAFF-EXT-024",
+            "scope": "Actor-like field mat_family.DocPhone",
+            "relationship_id": "STAFF-REL-023",
+            "source": {
+                "schema": "uuhms",
+                "table": "mat_family",
+                "column": "DocPhone"
+            },
+            "ordering_key": [
+                "MAFA_ID"
+            ],
+            "primary_key": [
+                "MAFA_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Field is not a watermark.",
+            "snapshot_identity": [
+                "MAFA_ID",
+                "DocPhone",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version or excluded-content aggregate hash"
+            ],
+            "chunk_recommendation": "Follow table snapshot strategy under repeatable read.",
+            "resume_coordinate": [
+                "MAFA_ID"
+            ],
+            "delete_detection": "Full snapshot/hash or inherited approved table strategy; never infer deletion.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "field count/fingerprint drift",
+                "nonblank drift in dormant/ambiguous field",
+                "raw restricted content in report"
+            ],
+            "exception_code": "LEGACY-STAFF-DRIFT-028"
+        },
+        {
+            "id": "STAFF-EXT-025",
+            "scope": "Actor-like field hospitalinfo.ClaimOfficer",
+            "relationship_id": "STAFF-REL-024",
+            "source": {
+                "schema": "uuhms",
+                "table": "hospitalinfo",
+                "column": "ClaimOfficer"
+            },
+            "ordering_key": [
+                "ID"
+            ],
+            "primary_key": [
+                "ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Field is not a watermark.",
+            "snapshot_identity": [
+                "ID",
+                "ClaimOfficer",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version or excluded-content aggregate hash"
+            ],
+            "chunk_recommendation": "Follow table snapshot strategy under repeatable read.",
+            "resume_coordinate": [
+                "ID"
+            ],
+            "delete_detection": "Full snapshot/hash or inherited approved table strategy; never infer deletion.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "field count/fingerprint drift",
+                "nonblank drift in dormant/ambiguous field",
+                "raw restricted content in report"
+            ],
+            "exception_code": "LEGACY-STAFF-CONFIG-029"
+        },
+        {
+            "id": "STAFF-EXT-026",
+            "scope": "Actor-like field hospitalinfo.ClaimSignature",
+            "relationship_id": "STAFF-REL-025",
+            "source": {
+                "schema": "uuhms",
+                "table": "hospitalinfo",
+                "column": "ClaimSignature"
+            },
+            "ordering_key": [
+                "ID"
+            ],
+            "primary_key": [
+                "ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Field is not a watermark.",
+            "snapshot_identity": [
+                "ID",
+                "ClaimSignature",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version or excluded-content aggregate hash"
+            ],
+            "chunk_recommendation": "Follow table snapshot strategy under repeatable read.",
+            "resume_coordinate": [
+                "ID"
+            ],
+            "delete_detection": "Full snapshot/hash or inherited approved table strategy; never infer deletion.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "field count/fingerprint drift",
+                "nonblank drift in dormant/ambiguous field",
+                "raw restricted content in report"
+            ],
+            "exception_code": "LEGACY-STAFF-CONFIG-029"
+        },
+        {
+            "id": "STAFF-EXT-027",
+            "scope": "Actor-like field hospitalinfo.Admn",
+            "relationship_id": "STAFF-REL-026",
+            "source": {
+                "schema": "uuhms",
+                "table": "hospitalinfo",
+                "column": "Admn"
+            },
+            "ordering_key": [
+                "ID"
+            ],
+            "primary_key": [
+                "ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Field is not a watermark.",
+            "snapshot_identity": [
+                "ID",
+                "Admn",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version or excluded-content aggregate hash"
+            ],
+            "chunk_recommendation": "Follow table snapshot strategy under repeatable read.",
+            "resume_coordinate": [
+                "ID"
+            ],
+            "delete_detection": "Full snapshot/hash or inherited approved table strategy; never infer deletion.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "field count/fingerprint drift",
+                "nonblank drift in dormant/ambiguous field",
+                "raw restricted content in report"
+            ],
+            "exception_code": "LEGACY-STAFF-CONFIG-029"
+        },
+        {
+            "id": "STAFF-EXT-028",
+            "scope": "Actor-like field consult_diagnosis.MdfId",
+            "relationship_id": "STAFF-REL-027",
+            "source": {
+                "schema": "uuhms",
+                "table": "consult_diagnosis",
+                "column": "MdfId"
+            },
+            "ordering_key": [
+                "DIAG_ID"
+            ],
+            "primary_key": [
+                "DIAG_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Field is not a watermark.",
+            "snapshot_identity": [
+                "DIAG_ID",
+                "MdfId",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version or excluded-content aggregate hash"
+            ],
+            "chunk_recommendation": "Follow table snapshot strategy under repeatable read.",
+            "resume_coordinate": [
+                "DIAG_ID"
+            ],
+            "delete_detection": "Full snapshot/hash or inherited approved table strategy; never infer deletion.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "field count/fingerprint drift",
+                "nonblank drift in dormant/ambiguous field",
+                "raw restricted content in report"
+            ],
+            "exception_code": "LEGACY-STAFF-SEMANTICS-030"
+        },
+        {
+            "id": "STAFF-EXT-029",
+            "scope": "Actor-like field list_diagnosis.MdfId",
+            "relationship_id": "STAFF-REL-028",
+            "source": {
+                "schema": "uuhms",
+                "table": "list_diagnosis",
+                "column": "MdfId"
+            },
+            "ordering_key": [
+                "LDIAG_ID"
+            ],
+            "primary_key": [
+                "LDIAG_ID"
+            ],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "Field is not a watermark.",
+            "snapshot_identity": [
+                "LDIAG_ID",
+                "MdfId",
+                "domain-separated HMAC-SHA-256 protected row fingerprint with environment key/version or excluded-content aggregate hash"
+            ],
+            "chunk_recommendation": "Follow table snapshot strategy under repeatable read.",
+            "resume_coordinate": [
+                "LDIAG_ID"
+            ],
+            "delete_detection": "Full snapshot/hash or inherited approved table strategy; never infer deletion.",
+            "source_fingerprint": "Classic approved fingerprint plus table/column hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "field count/fingerprint drift",
+                "nonblank drift in dormant/ambiguous field",
+                "raw restricted content in report"
+            ],
+            "exception_code": "LEGACY-STAFF-SEMANTICS-030"
+        },
+        {
+            "id": "STAFF-EXT-030",
+            "scope": "Aggregate-only Classic staff security exclusion count",
+            "source": {
+                "schema": "uuhms",
+                "table": "users",
+                "columns": [
+                    "Password",
+                    "CanAdd",
+                    "CanEdit",
+                    "CanDelete",
+                    "CanPrint"
+                ]
+            },
+            "ordering_key": [],
+            "primary_key": [],
+            "timestamp_candidate": [],
+            "timestamp_reliability": "not applicable",
+            "snapshot_identity": [
+                "query version",
+                "query hash",
+                "aggregate result hash"
+            ],
+            "chunk_recommendation": "Single allowlisted aggregate SELECT returning only populated/null/blank/cardinality counts; never return values.",
+            "resume_coordinate": [],
+            "delete_detection": "not applicable; rerun aggregate at each snapshot",
+            "source_fingerprint": "Classic approved fingerprint plus users security-column schema hash",
+            "stop_conditions": [
+                "database != uuhms",
+                "any raw password/hash/permission value returned",
+                "any prohibited column included in staff row hash",
+                "artifact/log scanner detects credential or permission value",
+                "aggregate query/hash drift"
+            ],
+            "exception_code": "LEGACY-STAFF-SECURITY-015",
+            "privacy_controls": {
+                "values_selected": false,
+                "values_hashed": false,
+                "values_logged": false,
+                "artifact_scan_required": true
+            }
+        }
+    ],
+    "phase2b_evidence_references": [
+        "../../evidence/PHASE_2B_STAFF_QUERY_MANIFEST.json",
+        "../../evidence/PHASE_2B_STAFF_AGGREGATE_RESULTS.json"
+    ]
+}

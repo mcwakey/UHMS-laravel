@@ -1,0 +1,1323 @@
+{
+    "specification_version":  "2A.1.0",
+    "approved_source_database":  "uuhms",
+    "classic_account_requirement":  "Final execution requires SELECT+metadata-only Classic account; broad-privilege discovery account is not approved.",
+    "strategies":  [
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-HOSPITALINFO",
+                           "source_database":  "uuhms",
+                           "source_table":  "hospitalinfo",
+                           "captured_row_count":  1,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "ID ASC",
+                           "chunk_key":  "ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Produce candidates/exceptions only; no writes in Phase 2A.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.hospitalinfo",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-DEPARTEMENTS",
+                           "source_database":  "uuhms",
+                           "source_table":  "departements",
+                           "captured_row_count":  18,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "DEP_ID ASC",
+                           "chunk_key":  "DEP_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Produce candidates/exceptions only; no writes in Phase 2A.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "DEP_ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.departements",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted DEP_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-CLAIMS_SPECIALTY",
+                           "source_database":  "uuhms",
+                           "source_table":  "claims_specialty",
+                           "captured_row_count":  9,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "SPEC_ID ASC",
+                           "chunk_key":  "SPEC_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Produce candidates/exceptions only; no writes in Phase 2A.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "SPEC_ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.claims_specialty",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted SPEC_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-SETT_PRIVATE",
+                           "source_database":  "uuhms",
+                           "source_table":  "sett_private",
+                           "captured_row_count":  38,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "PINS_ID ASC",
+                           "chunk_key":  "PINS_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Produce candidates/exceptions only; no writes in Phase 2A.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "PINS_ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.sett_private",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted PINS_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-SERVICES",
+                           "source_database":  "uuhms",
+                           "source_table":  "services",
+                           "captured_row_count":  203,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "SERV_ID ASC",
+                           "chunk_key":  "SERV_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Produce candidates/exceptions only; no writes in Phase 2A.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "SERV_ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.services",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted SERV_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-SERV_GROUP",
+                           "source_database":  "uuhms",
+                           "source_table":  "serv_group",
+                           "captured_row_count":  155,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "GROUP_ID ASC",
+                           "chunk_key":  "GROUP_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Produce candidates/exceptions only; no writes in Phase 2A.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "GROUP_ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.serv_group",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted GROUP_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-SERV_CRITERIAS",
+                           "source_database":  "uuhms",
+                           "source_table":  "serv_criterias",
+                           "captured_row_count":  200,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "CRI_ID ASC",
+                           "chunk_key":  "CRI_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Produce candidates/exceptions only; no writes in Phase 2A.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "CRI_ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.serv_criterias",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted CRI_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-SERV_OPTIONS_CRI",
+                           "source_database":  "uuhms",
+                           "source_table":  "serv_options_cri",
+                           "captured_row_count":  20,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "Sort by all columns using binary-stable canonical encodings; retain duplicate multiplicity",
+                           "chunk_key":  null,
+                           "chunk_size_recommendation":  500,
+                           "mode":  "Canonical multiset full snapshot",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Produce candidates/exceptions only; no writes in Phase 2A.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  null,
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.serv_options_cri",
+                           "resume_coordinate":  null,
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-SERV_OPTIONS_OUT",
+                           "source_database":  "uuhms",
+                           "source_table":  "serv_options_out",
+                           "captured_row_count":  32,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "Sort by all columns using binary-stable canonical encodings; retain duplicate multiplicity",
+                           "chunk_key":  null,
+                           "chunk_size_recommendation":  500,
+                           "mode":  "Canonical multiset full snapshot",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Produce candidates/exceptions only; no writes in Phase 2A.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  null,
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.serv_options_out",
+                           "resume_coordinate":  null,
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-LIST_COMPLAINTS",
+                           "source_database":  "uuhms",
+                           "source_table":  "list_complaints",
+                           "captured_row_count":  8924,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "LCOMP_ID ASC",
+                           "chunk_key":  "LCOMP_ID",
+                           "chunk_size_recommendation":  1000,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Re-extract at controlled freeze or use an approved consistent snapshot; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Produce candidates/exceptions only; no writes in Phase 2A.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "LCOMP_ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.list_complaints",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted LCOMP_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-LIST_DIAGNOSIS",
+                           "source_database":  "uuhms",
+                           "source_table":  "list_diagnosis",
+                           "captured_row_count":  5948,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "LDIAG_ID ASC",
+                           "chunk_key":  "LDIAG_ID",
+                           "chunk_size_recommendation":  1000,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Re-extract at controlled freeze or use an approved consistent snapshot; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Produce candidates/exceptions only; no writes in Phase 2A.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "LDIAG_ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.list_diagnosis",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted LDIAG_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-LIST_PROCEDURES",
+                           "source_database":  "uuhms",
+                           "source_table":  "list_procedures",
+                           "captured_row_count":  768,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "LPRO_ID ASC",
+                           "chunk_key":  "LPRO_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Produce candidates/exceptions only; no writes in Phase 2A.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "LPRO_ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.list_procedures",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted LPRO_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-LIST_CAUSES",
+                           "source_database":  "uuhms",
+                           "source_table":  "list_causes",
+                           "captured_row_count":  18,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "LCOS_ID ASC",
+                           "chunk_key":  "LCOS_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Extract only for dependency/evidence reconciliation; create zero Phase 2A target rows.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "LCOS_ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.list_causes",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted LCOS_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-LIST_DISORDER",
+                           "source_database":  "uuhms",
+                           "source_table":  "list_disorder",
+                           "captured_row_count":  1,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "LDIS_ID ASC",
+                           "chunk_key":  "LDIS_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Extract only for dependency/evidence reconciliation; create zero Phase 2A target rows.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "LDIS_ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.list_disorder",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted LDIS_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-LIST_SIGNS",
+                           "source_database":  "uuhms",
+                           "source_table":  "list_signs",
+                           "captured_row_count":  2,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "LSIGN_ID ASC",
+                           "chunk_key":  "LSIGN_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Extract only for dependency/evidence reconciliation; create zero Phase 2A target rows.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "LSIGN_ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.list_signs",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted LSIGN_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-LIST_SYMPTOMS",
+                           "source_database":  "uuhms",
+                           "source_table":  "list_symptoms",
+                           "captured_row_count":  6,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "LSYMP_ID ASC",
+                           "chunk_key":  "LSYMP_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Extract only for dependency/evidence reconciliation; create zero Phase 2A target rows.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "LSYMP_ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.list_symptoms",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted LSYMP_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-MEDICINE",
+                           "source_database":  "uuhms",
+                           "source_table":  "medicine",
+                           "captured_row_count":  4303,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "MED_ID ASC",
+                           "chunk_key":  "MED_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  "RegDate",
+                                                          "quality":  "insert discovery only; not update/delete proof"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Produce candidates/exceptions only; no writes in Phase 2A.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "MED_ID",
+                           "timestamp_column":  "RegDate",
+                           "timestamp_reliability":  "insert discovery only; not update/delete proof",
+                           "overlap_window":  "Not used as the sole Phase 2A strategy; full snapshot/hash remains mandatory.",
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.medicine",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted MED_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-SUPPLIERS",
+                           "source_database":  "uuhms",
+                           "source_table":  "suppliers",
+                           "captured_row_count":  2,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "SUP_ID ASC",
+                           "chunk_key":  "SUP_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  "RegDate",
+                                                          "quality":  "mutable ON UPDATE; full snapshot required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Produce candidates/exceptions only; no writes in Phase 2A.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "SUP_ID",
+                           "timestamp_column":  "RegDate",
+                           "timestamp_reliability":  "mutable ON UPDATE; full snapshot required",
+                           "overlap_window":  "Not used as the sole Phase 2A strategy; full snapshot/hash remains mandatory.",
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.suppliers",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted SUP_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-BEDS",
+                           "source_database":  "uuhms",
+                           "source_table":  "beds",
+                           "captured_row_count":  18,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "BED_ID ASC",
+                           "chunk_key":  "BED_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  "BedDate",
+                                                          "quality":  "mutable ON UPDATE; full snapshot required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Produce candidates/exceptions only; no writes in Phase 2A.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "BED_ID",
+                           "timestamp_column":  "BedDate",
+                           "timestamp_reliability":  "mutable ON UPDATE; full snapshot required",
+                           "overlap_window":  "Not used as the sole Phase 2A strategy; full snapshot/hash remains mandatory.",
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.beds",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted BED_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-MED_PHARM",
+                           "source_database":  "uuhms",
+                           "source_table":  "med_pharm",
+                           "captured_row_count":  8360,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "PHARM_ID ASC",
+                           "chunk_key":  "PHARM_ID",
+                           "chunk_size_recommendation":  1000,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Re-extract at controlled freeze or use an approved consistent snapshot; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Extract only for dependency/evidence reconciliation; create zero Phase 2A target rows.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "PHARM_ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.med_pharm",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted PHARM_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-MED_STORE",
+                           "source_database":  "uuhms",
+                           "source_table":  "med_store",
+                           "captured_row_count":  8356,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "STORE_ID ASC",
+                           "chunk_key":  "STORE_ID",
+                           "chunk_size_recommendation":  1000,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Re-extract at controlled freeze or use an approved consistent snapshot; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Extract only for dependency/evidence reconciliation; create zero Phase 2A target rows.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "STORE_ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.med_store",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted STORE_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-BATCH",
+                           "source_database":  "uuhms",
+                           "source_table":  "batch",
+                           "captured_row_count":  253,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "BATCH_ID ASC",
+                           "chunk_key":  "BATCH_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  "BatchDate",
+                                                          "quality":  "mutable ON UPDATE; full snapshot required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Extract only for dependency/evidence reconciliation; create zero Phase 2A target rows.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "BATCH_ID",
+                           "timestamp_column":  "BatchDate",
+                           "timestamp_reliability":  "mutable ON UPDATE; full snapshot required",
+                           "overlap_window":  "Not used as the sole Phase 2A strategy; full snapshot/hash remains mandatory.",
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.batch",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted BATCH_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-REQUEST",
+                           "source_database":  "uuhms",
+                           "source_table":  "request",
+                           "captured_row_count":  146,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "REQ_ID ASC",
+                           "chunk_key":  "REQ_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  "ReqDate",
+                                                          "quality":  "mutable ON UPDATE; full snapshot required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Extract only for dependency/evidence reconciliation; create zero Phase 2A target rows.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "REQ_ID",
+                           "timestamp_column":  "ReqDate",
+                           "timestamp_reliability":  "mutable ON UPDATE; full snapshot required",
+                           "overlap_window":  "Not used as the sole Phase 2A strategy; full snapshot/hash remains mandatory.",
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.request",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted REQ_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-GENS",
+                           "source_database":  "uuhms",
+                           "source_table":  "gens",
+                           "captured_row_count":  2,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "ID ASC",
+                           "chunk_key":  "ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Extract only for dependency/evidence reconciliation; create zero Phase 2A target rows.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.gens",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-ACC_TITLES",
+                           "source_database":  "uuhms",
+                           "source_table":  "acc_titles",
+                           "captured_row_count":  31,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "TI_ID ASC",
+                           "chunk_key":  "TI_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Produce candidates/exceptions only; no writes in Phase 2A.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "TI_ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.acc_titles",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted TI_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-ACCOUNTS",
+                           "source_database":  "uuhms",
+                           "source_table":  "accounts",
+                           "captured_row_count":  1,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "ACC_ID ASC",
+                           "chunk_key":  "ACC_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  "RegDate",
+                                                          "quality":  "not sufficient for updates/deletes"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Extract only for dependency/evidence reconciliation; create zero Phase 2A target rows.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "ACC_ID",
+                           "timestamp_column":  "RegDate",
+                           "timestamp_reliability":  "not sufficient for updates/deletes",
+                           "overlap_window":  "Not used as the sole Phase 2A strategy; full snapshot/hash remains mandatory.",
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.accounts",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted ACC_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-ACC_PETTY",
+                           "source_database":  "uuhms",
+                           "source_table":  "acc_petty",
+                           "captured_row_count":  1,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "PET_ID ASC",
+                           "chunk_key":  "PET_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  null,
+                                                          "quality":  "no reliable timestamp; full snapshot/hash required"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Extract only for dependency/evidence reconciliation; create zero Phase 2A target rows.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "PET_ID",
+                           "timestamp_column":  null,
+                           "timestamp_reliability":  "no reliable timestamp; full snapshot/hash required",
+                           "overlap_window":  null,
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.acc_petty",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted PET_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       },
+                       {
+                           "specification_version":  "2A.1.0",
+                           "strategy_id":  "EXTRACT-BANK",
+                           "source_database":  "uuhms",
+                           "source_table":  "bank",
+                           "captured_row_count":  1,
+                           "read_only_guard":  [
+                                                   "connection database must equal uuhms",
+                                                   "session transaction READ ONLY",
+                                                   "schema fingerprint/table count/column count/version must match",
+                                                   "metadata and SELECT only"
+                                               ],
+                           "ordering":  "BANK_ACC_ID ASC",
+                           "chunk_key":  "BANK_ACC_ID",
+                           "chunk_size_recommendation":  500,
+                           "mode":  "PK-ordered full snapshot and row/content hash",
+                           "incremental_capability":  {
+                                                          "column":  "RegDate",
+                                                          "quality":  "not sufficient for updates/deletes"
+                                                      },
+                           "delete_detection":  "Compare ordered canonical row/content hashes between snapshots; never infer a deletion from a missing incremental page.",
+                           "encoding":  "Read source bytes as latin1, convert to Unicode NFC for canonical comparison, retain protected raw hash.",
+                           "sensitive_value_rule":  "Do not log/export raw values; machine evidence contains aggregates, hashes and rules only.",
+                           "freeze_rule":  "Repeat full snapshot at preflight and freeze; changed fingerprint is a stop condition.",
+                           "out_of_scope_behavior":  "Produce candidates/exceptions only; no writes in Phase 2A.",
+                           "query_manifest_requirement":  "Record query ID/version/SHA-256, tool code version, execution timestamp, database version and schema fingerprint.",
+                           "stable_key":  "BANK_ACC_ID",
+                           "timestamp_column":  "RegDate",
+                           "timestamp_reliability":  "not sufficient for updates/deletes",
+                           "overlap_window":  "Not used as the sole Phase 2A strategy; full snapshot/hash remains mandatory.",
+                           "snapshot_identity":  "SHA-256(schema fingerprint + query version/hash + ordered canonical row hashes + row multiplicity) for uuhms.bank",
+                           "resume_coordinate":  "Within one verified consistent snapshot only: last fully emitted BANK_ACC_ID plus immutable snapshot identity; restart if identity changes.",
+                           "required_source_fingerprint":  "docs/legacy-migration/evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+                           "table_specific_stop_conditions":  [
+                                                                  "connection database is not exactly uuhms",
+                                                                  "schema/database-version/table/column fingerprint mismatch",
+                                                                  "row count or canonical snapshot hash changes outside the controlled snapshot/freeze",
+                                                                  "query/tool hash mismatch",
+                                                                  "read-only session guard fails",
+                                                                  "an unclassified value, orphan or duplicate exceeds the specification categories"
+                                                              ],
+                           "stop_exception_codes":  [
+                                                        "LEGACY-REF-COMMON-006",
+                                                        "LEGACY-REF-COMMON-007",
+                                                        "LEGACY-REF-COMMON-008"
+                                                    ]
+                       }
+                   ]
+}

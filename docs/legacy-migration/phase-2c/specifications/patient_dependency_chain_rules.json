@@ -1,0 +1,452 @@
+{
+    "specification_version":  "2C.1.0",
+    "phase":  "2C",
+    "approved_source":  {
+                            "database":  "uuhms"
+                        },
+    "policy_authority":  [
+                             "D-207",
+                             "D-213",
+                             "Q-005",
+                             "Q-006",
+                             "Q-007"
+                         ],
+    "chain_token_contract":  [
+                                  "PATIENT-PRIV-007",
+                                  "PATIENT-PRIV-008",
+                                  "PATIENT-PRIV-009",
+                                  "PATIENT-PRIV-010",
+                                  "PATIENT-PRIV-011",
+                                  "PATIENT-PRIV-012"
+                              ],
+    "chain_token_domain_by_root":  {
+                                         "patient-rooted": "PATIENT-PRIV-007",
+                                         "attendance-rooted-orphan": "PATIENT-PRIV-008",
+                                         "insurance-rooted-orphan": "PATIENT-PRIV-009",
+                                         "bed-occupancy-rooted": "PATIENT-PRIV-010",
+                                         "claim-rooted-subchain": "PATIENT-PRIV-011",
+                                         "other-child-subchain": "PATIENT-PRIV-012"
+                                     },
+    "root_rule":  "Only exact PAT_ID or registered parent-edge traversal establishes chain membership; weak identity fields and reverse reference traversal are prohibited.",
+    "release_rule":  "patient -\u003e direct parent edge -\u003e encounter/claim/consultation aggregate -\u003e descendants; no partial descendant release while root unresolved",
+    "privacy":  {
+                    "contains_phi":  false
+                },
+    "implementation_authorized":  false,
+    "record_count":  28,
+    "records":  [
+                    {
+                        "id":  "PATIENT-CHAIN-001",
+                        "kind":  "root",
+                        "edge":  "patients-\u003eattendance",
+                        "relationship_id":  "PATIENT-REL-001",
+                        "predicate":  "attendance.PAT_ID = patients.PAT_ID",
+                        "blocking":  "patient or attendance-root chain",
+                        "reconciliation_id":  "PATIENT-REC-REL-001"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-002",
+                        "kind":  "root",
+                        "edge":  "patients-\u003einsurance",
+                        "relationship_id":  "PATIENT-REL-003",
+                        "predicate":  "insurance.PAT_ID = patients.PAT_ID",
+                        "blocking":  "patient or insurance row/subchain",
+                        "reconciliation_id":  "PATIENT-REC-REL-003"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-003",
+                        "kind":  "root",
+                        "edge":  "patients-\u003ebeds occupancy",
+                        "relationship_id":  "PATIENT-REL-002",
+                        "predicate":  "beds.PAT_ID = patients.PAT_ID",
+                        "blocking":  "occupancy link only; never bed master",
+                        "reconciliation_id":  "PATIENT-REC-REL-002"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-004",
+                        "kind":  "dormant",
+                        "edge":  "patients-\u003emat_family",
+                        "relationship_id":  "PATIENT-REL-004",
+                        "predicate":  "mat_family.PAT_ID = patients.PAT_ID",
+                        "blocking":  "nonzero baseline stops scope",
+                        "reconciliation_id":  "PATIENT-REC-REL-004"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-005",
+                        "kind":  "dormant",
+                        "edge":  "patients-\u003emat_obstetrics",
+                        "relationship_id":  "PATIENT-REL-005",
+                        "predicate":  "mat_obstetrics.PAT_ID = patients.PAT_ID",
+                        "blocking":  "nonzero baseline stops scope",
+                        "reconciliation_id":  "PATIENT-REC-REL-005"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-006",
+                        "kind":  "attendance-child",
+                        "edge":  "attendance-\u003eappointement",
+                        "predicate":  "appointement.ATT_ID = attendance.ATT_ID",
+                        "counts":  {
+                                       "rows":  1364,
+                                       "null":  0,
+                                       "zero":  1,
+                                       "matched":  1297,
+                                       "orphan":  66
+                                   },
+                        "blocking":  "appointment row/subchain",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-001",
+                        "sentinel_rule_id":  "PATIENT-SENT-006"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-007",
+                        "kind":  "attendance-child",
+                        "edge":  "attendance-\u003ebilling",
+                        "predicate":  "billing.ATT_ID = attendance.ATT_ID",
+                        "counts":  {
+                                       "rows":  111731,
+                                       "null":  0,
+                                       "zero":  30,
+                                       "matched":  108857,
+                                       "orphan":  2844
+                                   },
+                        "blocking":  "billing/opening row; no posting",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-002",
+                        "sentinel_rule_id":  "PATIENT-SENT-007"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-008",
+                        "kind":  "attendance-child",
+                        "edge":  "attendance-\u003eclaims",
+                        "predicate":  "claims.ATT_ID = attendance.ATT_ID",
+                        "counts":  {
+                                       "rows":  31892,
+                                       "null":  0,
+                                       "zero":  0,
+                                       "matched":  30103,
+                                       "orphan":  1789
+                                   },
+                        "blocking":  "claim and descendants; no posting",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-003",
+                        "sentinel_rule_id":  "PATIENT-SENT-008"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-009",
+                        "kind":  "attendance-child",
+                        "edge":  "attendance-\u003econsult_complaints",
+                        "predicate":  "consult_complaints.ATT_ID = attendance.ATT_ID",
+                        "counts":  {
+                                       "rows":  65244,
+                                       "null":  0,
+                                       "zero":  0,
+                                       "matched":  62886,
+                                       "orphan":  2358
+                                   },
+                        "blocking":  "clinical child/aggregate",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-004",
+                        "sentinel_rule_id":  "PATIENT-SENT-009"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-010",
+                        "kind":  "attendance-child",
+                        "edge":  "attendance-\u003econsult_diagnosis",
+                        "predicate":  "consult_diagnosis.ATT_ID = attendance.ATT_ID",
+                        "counts":  {
+                                       "rows":  123940,
+                                       "null":  0,
+                                       "zero":  4,
+                                       "matched":  122975,
+                                       "orphan":  961
+                                   },
+                        "blocking":  "clinical child/aggregate",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-005",
+                        "sentinel_rule_id":  "PATIENT-SENT-010"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-011",
+                        "kind":  "attendance-child",
+                        "edge":  "attendance-\u003econsult_history",
+                        "predicate":  "consult_history.ATT_ID = attendance.ATT_ID",
+                        "counts":  {
+                                       "rows":  34532,
+                                       "null":  0,
+                                       "zero":  10,
+                                       "matched":  33992,
+                                       "orphan":  530
+                                   },
+                        "blocking":  "clinical child/aggregate",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-006",
+                        "sentinel_rule_id":  "PATIENT-SENT-011"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-012",
+                        "kind":  "attendance-child",
+                        "edge":  "attendance-\u003econsult_prescriptions",
+                        "predicate":  "consult_prescriptions.ATT_ID = attendance.ATT_ID",
+                        "counts":  {
+                                       "rows":  210902,
+                                       "null":  0,
+                                       "zero":  9,
+                                       "matched":  208591,
+                                       "orphan":  2302
+                                   },
+                        "blocking":  "prescription/medication subchain",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-007",
+                        "sentinel_rule_id":  "PATIENT-SENT-012"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-013",
+                        "kind":  "attendance-child",
+                        "edge":  "attendance-\u003econsult_procedures",
+                        "predicate":  "consult_procedures.ATT_ID = attendance.ATT_ID",
+                        "counts":  {
+                                       "rows":  121,
+                                       "null":  0,
+                                       "zero":  0,
+                                       "matched":  120,
+                                       "orphan":  1
+                                   },
+                        "blocking":  "procedure child",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-008",
+                        "sentinel_rule_id":  "PATIENT-SENT-013"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-014",
+                        "kind":  "attendance-child",
+                        "edge":  "attendance-\u003econsult_scan_lab",
+                        "predicate":  "consult_scan_lab.ATT_ID = attendance.ATT_ID",
+                        "counts":  {
+                                       "rows":  72680,
+                                       "null":  0,
+                                       "zero":  0,
+                                       "matched":  71390,
+                                       "orphan":  1290
+                                   },
+                        "blocking":  "investigation/order aggregate",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-009",
+                        "sentinel_rule_id":  "PATIENT-SENT-014"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-015",
+                        "kind":  "attendance-child",
+                        "edge":  "attendance-\u003econsult_services",
+                        "predicate":  "consult_services.ATT_ID = attendance.ATT_ID",
+                        "counts":  {
+                                       "rows":  60260,
+                                       "null":  0,
+                                       "zero":  2,
+                                       "matched":  57576,
+                                       "orphan":  2682
+                                   },
+                        "blocking":  "service child",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-010",
+                        "sentinel_rule_id":  "PATIENT-SENT-015"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-016",
+                        "kind":  "attendance-child",
+                        "edge":  "attendance-\u003econsult_treatment",
+                        "predicate":  "consult_treatment.ATT_ID = attendance.ATT_ID",
+                        "counts":  {
+                                       "rows":  1926,
+                                       "null":  0,
+                                       "zero":  1,
+                                       "matched":  1893,
+                                       "orphan":  32
+                                   },
+                        "blocking":  "treatment-plan aggregate",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-011",
+                        "sentinel_rule_id":  "PATIENT-SENT-016"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-017",
+                        "kind":  "attendance-child",
+                        "edge":  "attendance-\u003enurses_note",
+                        "predicate":  "nurses_note.ATT_ID = attendance.ATT_ID",
+                        "counts":  {
+                                       "rows":  29,
+                                       "null":  0,
+                                       "zero":  0,
+                                       "matched":  29,
+                                       "orphan":  0
+                                   },
+                        "blocking":  "nursing-note child",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-012",
+                        "sentinel_rule_id":  "PATIENT-SENT-017"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-018",
+                        "kind":  "attendance-child",
+                        "edge":  "attendance-\u003eserv_results",
+                        "predicate":  "serv_results.ATT_ID = attendance.ATT_ID",
+                        "counts":  {
+                                       "rows":  460758,
+                                       "null":  0,
+                                       "zero":  1,
+                                       "matched":  454900,
+                                       "orphan":  5857
+                                   },
+                        "blocking":  "result child; never synthesize result",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-013",
+                        "sentinel_rule_id":  "PATIENT-SENT-018"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-019",
+                        "kind":  "attendance-child",
+                        "edge":  "attendance-\u003etreatment",
+                        "predicate":  "treatment.ATT_ID = attendance.ATT_ID",
+                        "counts":  {
+                                       "rows":  69,
+                                       "null":  0,
+                                       "zero":  2,
+                                       "matched":  52,
+                                       "orphan":  15
+                                   },
+                        "blocking":  "administered treatment child",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-014",
+                        "sentinel_rule_id":  "PATIENT-SENT-019"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-020",
+                        "kind":  "attendance-child",
+                        "edge":  "attendance-\u003evitals",
+                        "predicate":  "vitals.ATT_ID = attendance.ATT_ID",
+                        "counts":  {
+                                       "rows":  60803,
+                                       "null":  0,
+                                       "zero":  1198,
+                                       "matched":  57019,
+                                       "orphan":  2586
+                                   },
+                        "blocking":  "vitals child",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-015",
+                        "sentinel_rule_id":  "PATIENT-SENT-020"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-021",
+                        "kind":  "claim-child",
+                        "edge":  "claims-\u003eclaims_diagnosis",
+                        "predicate":  "claims_diagnosis.CLAIM_ID = claims.CLAIM_ID",
+                        "counts":  {
+                                       "rows":  57776,
+                                       "null":  0,
+                                       "zero":  0,
+                                       "matched":  57507,
+                                       "orphan":  269
+                                   },
+                        "blocking":  "claim diagnosis child",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-016",
+                        "sentinel_rule_id":  "PATIENT-SENT-021"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-022",
+                        "kind":  "claim-child",
+                        "edge":  "claims-\u003eclaims_prescriptions",
+                        "predicate":  "claims_prescriptions.CLAIM_ID = claims.CLAIM_ID",
+                        "counts":  {
+                                       "rows":  112152,
+                                       "null":  0,
+                                       "zero":  0,
+                                       "matched":  107411,
+                                       "orphan":  4741
+                                   },
+                        "blocking":  "claim pharmacy component",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-017",
+                        "sentinel_rule_id":  "PATIENT-SENT-022"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-023",
+                        "kind":  "claim-child",
+                        "edge":  "claims-\u003eclaims_procedures",
+                        "predicate":  "claims_procedures.CLAIM_ID = claims.CLAIM_ID",
+                        "counts":  {
+                                       "rows":  3648,
+                                       "null":  0,
+                                       "zero":  0,
+                                       "matched":  3629,
+                                       "orphan":  19
+                                   },
+                        "blocking":  "claim procedure child",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-018",
+                        "sentinel_rule_id":  "PATIENT-SENT-023"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-024",
+                        "kind":  "claim-child",
+                        "edge":  "claims-\u003eclaims_scan_lab",
+                        "predicate":  "claims_scan_lab.CLAIM_ID = claims.CLAIM_ID",
+                        "counts":  {
+                                       "rows":  3,
+                                       "null":  0,
+                                       "zero":  0,
+                                       "matched":  3,
+                                       "orphan":  0
+                                   },
+                        "blocking":  "claim investigation child",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-019",
+                        "sentinel_rule_id":  "PATIENT-SENT-024"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-025",
+                        "kind":  "secondary-consistency",
+                        "edge":  "consult_prescriptions-\u003ebilling",
+                        "predicate":  "consult_prescriptions.BILL_ID = billing.BILL_ID",
+                        "counts":  {
+                                       "rows":  210902,
+                                       "null":  0,
+                                       "zero":  91329,
+                                       "matched":  116620,
+                                       "orphan":  2953
+                                   },
+                        "blocking":  "cross-link only; ATT_ID remains root; conflicting attendance/patient quarantines",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-020",
+                        "sentinel_rule_id":  "PATIENT-SENT-025"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-026",
+                        "kind":  "secondary-consistency",
+                        "edge":  "serv_results-\u003econsult_scan_lab",
+                        "predicate":  "serv_results.SCL_ID = consult_scan_lab.SCL_ID",
+                        "counts":  {
+                                       "rows":  460758,
+                                       "null":  0,
+                                       "zero":  460730,
+                                       "matched":  6,
+                                       "orphan":  22
+                                   },
+                        "blocking":  "consistency only; ATT_ID remains root",
+                        "sentinel_rule_id":  "PATIENT-SENT-026",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-021"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-027",
+                        "kind":  "context-only",
+                        "edge":  "attendance-\u003ebeds",
+                        "predicate":  "attendance.BED_ID = beds.BED_ID",
+                        "counts":  {
+                                       "rows":  51927,
+                                       "null":  6,
+                                       "zero":  51785,
+                                       "matched":  120,
+                                       "orphan":  16
+                                   },
+                        "blocking":  "admission/bed context only; never patient traversal",
+                        "sentinel_rule_id":  "PATIENT-SENT-028",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-022"
+                    },
+                    {
+                        "id":  "PATIENT-CHAIN-028",
+                        "kind":  "prohibited-alternative",
+                        "edge":  "serv_results-\u003eclaims_scan_lab",
+                        "predicate":  "serv_results.SCL_ID = claims_scan_lab.SCL_ID",
+                        "counts":  {
+                                       "rows":  460758,
+                                       "null":  0,
+                                       "zero":  460730,
+                                       "matched":  0,
+                                       "orphan":  28
+                                   },
+                        "blocking":  "not an approved traversal path; ATT_ID root remains",
+                        "sentinel_rule_id":  "PATIENT-SENT-027",
+                        "reconciliation_id":  "PATIENT-REC-EDGE-023"
+                    }
+                ]
+}

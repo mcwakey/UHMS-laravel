@@ -1,0 +1,10 @@
+{
+  "specification_version":"2D.1.0","phase":"2D","approved_source":{"database":"uuhms"},"policy_authority":["D-207","Q-005","Q-006"],"implementation_authorized":false,"record_count":5,
+  "records":[
+    {"id":"PATIENT-CHILD-SENT-001","relationship_id":"PATIENT-CHILD-REL-001","rule":"No relationship sentinel. Per-field blank after approved normalization is optional absence; invalid nonblank is withheld. No global blank/zero rule."},
+    {"id":"PATIENT-CHILD-SENT-002","relationship_id":"PATIENT-CHILD-REL-002","rule":"No tuple-parent sentinel. Three blanks mean all-blank tuple; one/two populated means partial. Placeholder-looking content has no automatic sentinel meaning."},
+    {"id":"PATIENT-CHILD-SENT-003","relationship_id":"PATIENT-CHILD-REL-003","rule":"No mapped target is parent-not-released. Null/zero/guessed/current/first/admin/importer target identifiers and synthetic parents are prohibited."},
+    {"id":"PATIENT-CHILD-SENT-004","relationship_id":"PATIENT-CHILD-REL-004","rule":"Delegate fully to PATIENT-ALIAS-004..009 and PATIENT-REC-ALIAS-002; Phase 2D adds no sentinel/canonical rule."},
+    {"id":"PATIENT-CHILD-SENT-005","relationship_id":"PATIENT-CHILD-REL-005","rule":"Chain token has no sentinel/substitute. Missing or mismatched domain/key/canonicalization/snapshot version is privacy/provenance failure and holds every child."}
+  ],"privacy":{"contains_raw_phi":false}
+}

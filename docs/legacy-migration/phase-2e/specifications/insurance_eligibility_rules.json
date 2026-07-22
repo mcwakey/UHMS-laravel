@@ -1,0 +1,65 @@
+{
+  "specification_version": "2E.1.0",
+  "phase": "2E",
+  "approved_source": {
+    "connection": "legacy_uhms",
+    "database": "uuhms",
+    "read_only": true
+  },
+  "implementation_authorized": false,
+  "policy_authority": {
+    "source": "APPROVED_DECISION_SPECIFICATIONS.md",
+    "decision_register": "DECISIONS.md",
+    "decisions": ["D-205", "D-206", "D-207", "D-212"],
+    "questions": ["Q-004", "Q-005", "Q-009", "Q-301"]
+  },
+  "upstream_contracts": [
+    "phase-2a.reference_natural_keys:NK-004",
+    "phase-2a.reference_extraction_strategies:EXTRACT-SETT_PRIVATE",
+    "phase-2a.reference_reconciliation_contracts:RECON-SETT_PRIVATE",
+    "phase-2c.patient_relationship_rules:PATIENT-REL-003",
+    "phase-2c.patient_sentinel_rules:PATIENT-SENT-003",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-REL-003",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-001",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-022",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-007",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-009",
+    "phase-2c.existing_target_patient_rules:PATIENT-TARGET-009",
+    "phase-2d.patient_child_relationship_rules:PATIENT-CHILD-REL-005",
+    "phase-2d.patient_child_extraction_strategies:PATIENT-CHILD-EXT-001",
+    "phase-2d.patient_child_privacy_provenance_contract:PATIENT-CHILD-PRIV-010"
+  ],
+  "record_count": 6,
+  "records": [
+    {
+      "id": "INS-ELIG-001",
+      "rule": "Classic insurance rows do not evidence eligibility verification.",
+      "outcome": "INSURANCE_ELIGIBILITY_NOT_EVIDENCED"
+    },
+    {
+      "id": "INS-ELIG-002",
+      "rule": "No insurance_verifications row is created."
+    },
+    {
+      "id": "INS-ELIG-003",
+      "rule": "Do not infer pending, valid, invalid, expired, not_required, error or manual_override."
+    },
+    {
+      "id": "INS-ELIG-004",
+      "rule": "Do not use current/importer/admin/first/Legacy Actor Unknown as verifier.",
+      "exception_code": "LEGACY-INSURANCE-ELIGIBILITY-029"
+    },
+    {
+      "id": "INS-ELIG-005",
+      "rule": "Migration execution is recorded only in separate migration audit."
+    },
+    {
+      "id": "INS-ELIG-006",
+      "rule": "CCC checks, APIs, visit linking and notification/event dispatch are outside Phase 2E and prohibited."
+    }
+  ],
+  "privacy": {
+    "contains_raw_phi": false,
+    "repository_output": "aggregate-only"
+  }
+}

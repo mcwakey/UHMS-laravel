@@ -1,0 +1,3350 @@
+{
+    "specification_version": "2B.1.0",
+    "phase": "Phase 2B Ã¢â‚¬â€ Staff Identity and Historical Attribution Mapping Specifications",
+    "generated_at_utc": "2026-07-21T19:11:40Z",
+    "approved_source": {
+        "connection": "legacy_uhms",
+        "schema": "uuhms",
+        "access": "read-only",
+        "expected_tables": 55,
+        "expected_columns": 479
+    },
+    "policy_authority": [
+        "D-202",
+        "D-008",
+        "Q-304"
+    ],
+    "privacy": {
+        "raw_staff_identity_values": false,
+        "credentials": false,
+        "permission_values": false,
+        "personal_contacts": false,
+        "phi": false
+    },
+    "implementation_authorized": false,
+    "record_count": 116,
+    "records": [
+        {
+            "id": "DOMAIN-SUMMARY-001",
+            "domain": "Patients and registration",
+            "target_actor_fields": "patients.registered_by",
+            "classic_actor_evidence": "No direct Classic patient creator field confirmed.",
+            "verified_actor_mandatory": "no",
+            "legacy_actor_unknown_permitted": "no; target null/provenance-only",
+            "actor_link_nullable": "yes",
+            "missing_actor_blocks": "no",
+            "historical_text_attribution": "Preserve absence in migration provenance.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source rows = null actor + permitted unknown + quarantined + failed",
+            "phase_dependency": "Phase 2C patient identity",
+            "no_universal_fallback": true,
+            "record_type": "domain_summary"
+        },
+        {
+            "id": "DOMAIN-SUMMARY-002",
+            "domain": "Appointments",
+            "target_actor_fields": "appointments.created_by (required); doctor_id nullable",
+            "classic_actor_evidence": "Classic appointement has no actor field confirmed.",
+            "verified_actor_mandatory": "yes for creator",
+            "legacy_actor_unknown_permitted": "no",
+            "actor_link_nullable": "no for required creator",
+            "missing_actor_blocks": "yes, row blocks",
+            "historical_text_attribution": "Protected no-actor evidence only.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "appointments = verified creator + quarantined + failed",
+            "phase_dependency": "Phase 2G visits/workflow; Q-010",
+            "no_universal_fallback": true,
+            "record_type": "domain_summary"
+        },
+        {
+            "id": "DOMAIN-SUMMARY-003",
+            "domain": "Visits",
+            "target_actor_fields": "visits.created_by (required)",
+            "classic_actor_evidence": "attendance.USER_ID",
+            "verified_actor_mandatory": "field-specific",
+            "legacy_actor_unknown_permitted": "conditional only after domain approval",
+            "actor_link_nullable": "no",
+            "missing_actor_blocks": "yes if required creator unresolved",
+            "historical_text_attribution": "Original USER_ID protected.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "attendance actor refs = matched + sentinel + unknown + orphan + quarantine + failed",
+            "phase_dependency": "Phase 2G",
+            "no_universal_fallback": true,
+            "record_type": "domain_summary"
+        },
+        {
+            "id": "DOMAIN-SUMMARY-004",
+            "domain": "Consultation routes",
+            "target_actor_fields": "visit_consultation_routes.main_doctor_id/doctor_id nullable but logical clinician required by D-214/Q-011",
+            "classic_actor_evidence": "attendance.USER_ID plus compatible Doctor fields",
+            "verified_actor_mandatory": "yes",
+            "legacy_actor_unknown_permitted": "no",
+            "actor_link_nullable": "database yes; policy no for grouped consultation",
+            "missing_actor_blocks": "yes, aggregate blocks",
+            "historical_text_attribution": "Protected text/source refs.",
+            "exception_code": "LEGACY-STAFF-CHAIN-019",
+            "reconciliation_equation": "routes = one verified clinician + quarantined grouping",
+            "phase_dependency": "Phase 2H clinical history",
+            "no_universal_fallback": true,
+            "record_type": "domain_summary"
+        },
+        {
+            "id": "DOMAIN-SUMMARY-005",
+            "domain": "Medical records",
+            "target_actor_fields": "medical_records.doctor_id required",
+            "classic_actor_evidence": "attendance.USER_ID and consultation Doctor fields",
+            "verified_actor_mandatory": "yes",
+            "legacy_actor_unknown_permitted": "no",
+            "actor_link_nullable": "no",
+            "missing_actor_blocks": "yes, aggregate blocks",
+            "historical_text_attribution": "Protected clinician text/source refs.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "medical records = verified doctor + quarantined",
+            "phase_dependency": "Phase 2H",
+            "no_universal_fallback": true,
+            "record_type": "domain_summary"
+        },
+        {
+            "id": "DOMAIN-SUMMARY-006",
+            "domain": "Clinical children",
+            "target_actor_fields": "complaints/diagnoses/history/investigations doctor_id and created_by fields (mixed nullability)",
+            "classic_actor_evidence": "Nine Doctor text fields and selected USER_ID fields",
+            "verified_actor_mandatory": "yes for doctor attribution where policy requires",
+            "legacy_actor_unknown_permitted": "conditional only for non-privilege descriptive created_by fields after field approval",
+            "actor_link_nullable": "field-specific",
+            "missing_actor_blocks": "child or parent aggregate",
+            "historical_text_attribution": "Protected text allowed; never rendered unsanitized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-012",
+            "reconciliation_equation": "each source field = verified + blank + unsupported + unknown + quarantine + failed",
+            "phase_dependency": "Phase 2H",
+            "no_universal_fallback": true,
+            "record_type": "domain_summary"
+        },
+        {
+            "id": "DOMAIN-SUMMARY-007",
+            "domain": "Investigations and results",
+            "target_actor_fields": "lab_requests.requested_by required; lab_results.performed_by required",
+            "classic_actor_evidence": "consult_scan_lab.USER_ID is all zero; Doctor text mixed",
+            "verified_actor_mandatory": "yes",
+            "legacy_actor_unknown_permitted": "no for clinical performer/requester",
+            "actor_link_nullable": "no",
+            "missing_actor_blocks": "child/aggregate blocks",
+            "historical_text_attribution": "Order/result source evidence retained without synthesizing performer.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "requests/results = verified actor + quarantined",
+            "phase_dependency": "Phase 2H",
+            "no_universal_fallback": true,
+            "record_type": "domain_summary"
+        },
+        {
+            "id": "DOMAIN-SUMMARY-008",
+            "domain": "Prescriptions",
+            "target_actor_fields": "prescriptions.doctor_id required; created_by nullable",
+            "classic_actor_evidence": "consult_prescriptions.USER_ID and Doctor",
+            "verified_actor_mandatory": "yes for doctor",
+            "legacy_actor_unknown_permitted": "no for doctor; conditional for descriptive creator only",
+            "actor_link_nullable": "no for doctor",
+            "missing_actor_blocks": "child/aggregate blocks",
+            "historical_text_attribution": "Protected original refs/text.",
+            "exception_code": "LEGACY-STAFF-CHAIN-019",
+            "reconciliation_equation": "prescriptions = verified doctor + quarantined",
+            "phase_dependency": "Phase 2H",
+            "no_universal_fallback": true,
+            "record_type": "domain_summary"
+        },
+        {
+            "id": "DOMAIN-SUMMARY-009",
+            "domain": "Admissions",
+            "target_actor_fields": "admissions.admitted_by required; discharged_by nullable",
+            "classic_actor_evidence": "attendance.USER_ID; no dedicated admission/discharge actor confirmed",
+            "verified_actor_mandatory": "yes for admitted_by",
+            "legacy_actor_unknown_permitted": "no",
+            "actor_link_nullable": "no for admitted_by",
+            "missing_actor_blocks": "admission chain blocks",
+            "historical_text_attribution": "Preserve absent/indirect evidence.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "admissions = verified admitted_by + quarantined",
+            "phase_dependency": "Phase 2I",
+            "no_universal_fallback": true,
+            "record_type": "domain_summary"
+        },
+        {
+            "id": "DOMAIN-SUMMARY-010",
+            "domain": "Discharge",
+            "target_actor_fields": "admissions.discharged_by and summaries.approved_by nullable",
+            "classic_actor_evidence": "No dedicated Classic fields confirmed",
+            "verified_actor_mandatory": "field-specific",
+            "legacy_actor_unknown_permitted": "conditional only if later approved and semantics are descriptive",
+            "actor_link_nullable": "yes",
+            "missing_actor_blocks": "discharge attribution only unless workflow invariant requires",
+            "historical_text_attribution": "Preserve absence.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "discharge facts = null + verified + permitted unknown + quarantined",
+            "phase_dependency": "Phase 2I",
+            "no_universal_fallback": true,
+            "record_type": "domain_summary"
+        },
+        {
+            "id": "DOMAIN-SUMMARY-011",
+            "domain": "Billing",
+            "target_actor_fields": "invoices.created_by required",
+            "classic_actor_evidence": "billing.USER_ID",
+            "verified_actor_mandatory": "yes",
+            "legacy_actor_unknown_permitted": "no for financial creation attribution",
+            "actor_link_nullable": "no",
+            "missing_actor_blocks": "billing row/opening aggregate blocks",
+            "historical_text_attribution": "Original USER_ID protected.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "billing refs = matched + orphan + quarantined + failed",
+            "phase_dependency": "Phase 2J",
+            "no_universal_fallback": true,
+            "record_type": "domain_summary"
+        },
+        {
+            "id": "DOMAIN-SUMMARY-012",
+            "domain": "Claims",
+            "target_actor_fields": "claims.created_by required; assigned_doctor_id/approved_by nullable",
+            "classic_actor_evidence": "claims.Doctor text",
+            "verified_actor_mandatory": "yes for created_by; field-specific for doctor",
+            "legacy_actor_unknown_permitted": "no for required creator or clinical doctor",
+            "actor_link_nullable": "mixed",
+            "missing_actor_blocks": "claim blocks from posting when unresolved",
+            "historical_text_attribution": "Protected Doctor text and source claim key.",
+            "exception_code": "LEGACY-STAFF-ACTOR-012",
+            "reconciliation_equation": "claims = verified creator/doctor + quarantined",
+            "phase_dependency": "Phase 2J",
+            "no_universal_fallback": true,
+            "record_type": "domain_summary"
+        },
+        {
+            "id": "DOMAIN-SUMMARY-013",
+            "domain": "Payments and accounting openings",
+            "target_actor_fields": "payments.received_by required; journal actor fields nullable",
+            "classic_actor_evidence": "No supported Classic payment/allocation history; billing.USER_ID is not payment receiver proof.",
+            "verified_actor_mandatory": "yes for payments",
+            "legacy_actor_unknown_permitted": "no",
+            "actor_link_nullable": "mixed",
+            "missing_actor_blocks": "unsupported histories remain empty; openings require approved actor design",
+            "historical_text_attribution": "Absence/provenance only.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "historical payments created = 0; openings = verified actor + quarantined",
+            "phase_dependency": "Phase 2J",
+            "no_universal_fallback": true,
+            "record_type": "domain_summary"
+        },
+        {
+            "id": "DOMAIN-SUMMARY-014",
+            "domain": "Pharmacy and stock evidence",
+            "target_actor_fields": "stock_batches.created_by/stock_movements.performed_by nullable",
+            "classic_actor_evidence": "batch.USER_ID; request.USER_ID; no movement ledger",
+            "verified_actor_mandatory": "no for evidence-only snapshot; yes for any future operational movement",
+            "legacy_actor_unknown_permitted": "no operational fallback",
+            "actor_link_nullable": "yes",
+            "missing_actor_blocks": "opening operation blocks until controlled system/authority design",
+            "historical_text_attribution": "Protected source actor ref.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "historical stock movements created = 0; evidence refs classified exactly once",
+            "phase_dependency": "Phase 2K",
+            "no_universal_fallback": true,
+            "record_type": "domain_summary"
+        },
+        {
+            "id": "DOMAIN-SUMMARY-015",
+            "domain": "Procurement",
+            "target_actor_fields": "purchase_orders.created_by required; approved_by nullable",
+            "classic_actor_evidence": "request.USER_ID all zero; not purchase-order creator proof",
+            "verified_actor_mandatory": "yes",
+            "legacy_actor_unknown_permitted": "no",
+            "actor_link_nullable": "no for creator",
+            "missing_actor_blocks": "row blocks; no invented purchase history",
+            "historical_text_attribution": "Protected source request actor sentinel.",
+            "exception_code": "LEGACY-STAFF-SENTINEL-011",
+            "reconciliation_equation": "historical purchase orders created = source-evidenced only; otherwise 0",
+            "phase_dependency": "Phase 2K",
+            "no_universal_fallback": true,
+            "record_type": "domain_summary"
+        },
+        {
+            "id": "DOMAIN-SUMMARY-016",
+            "domain": "Migration audit",
+            "target_actor_fields": "separate migration audit run/decision actor representation",
+            "classic_actor_evidence": "Project-owner directive and migration runtime identity; not Classic operational actor fields",
+            "verified_actor_mandatory": "yes for migration action, separate from historical attribution",
+            "legacy_actor_unknown_permitted": "Legacy Actor Unknown prohibited as execution actor",
+            "actor_link_nullable": "implementation-specific",
+            "missing_actor_blocks": "migration run blocks",
+            "historical_text_attribution": "Record run identity separately; never create fake Classic operational audit events.",
+            "exception_code": "LEGACY-STAFF-SECURITY-017",
+            "reconciliation_equation": "audit events = actual migration actions only",
+            "phase_dependency": "Phase 3 foundation",
+            "no_universal_fallback": true,
+            "record_type": "domain_summary"
+        },
+        {
+            "id": "DOMAIN-SUMMARY-017",
+            "domain": "Activity log/provenance",
+            "target_actor_fields": "activity_log.causer polymorphic nullable; separate protected provenance required",
+            "classic_actor_evidence": "All actor relationships",
+            "verified_actor_mandatory": "no for preserved historical fact; yes for migration executor in separate audit",
+            "legacy_actor_unknown_permitted": "not in operational activity_log as fabricated causer",
+            "actor_link_nullable": "yes",
+            "missing_actor_blocks": "operational historical activity creation prohibited",
+            "historical_text_attribution": "Original refs in migration provenance only.",
+            "exception_code": "LEGACY-STAFF-SECURITY-017",
+            "reconciliation_equation": "fabricated operational activity rows = 0",
+            "phase_dependency": "Phase 3 foundation",
+            "no_universal_fallback": true,
+            "record_type": "domain_summary"
+        },
+        {
+            "id": "TARGET-ACTOR-001",
+            "record_type": "target_field_rule",
+            "domain": "admissions/inpatient",
+            "target": {
+                "table": "admissions",
+                "column": "admitted_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.attendance.USER_ID"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "admissions/inpatient",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-002",
+            "record_type": "target_field_rule",
+            "domain": "procedures/theatre",
+            "target": {
+                "table": "anaesthesia_notes",
+                "column": "anaesthetist_id",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "procedures/theatre",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-003",
+            "record_type": "target_field_rule",
+            "domain": "appointments",
+            "target": {
+                "table": "appointments",
+                "column": "created_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "appointments",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-004",
+            "record_type": "target_field_rule",
+            "domain": "blood bank",
+            "target": {
+                "table": "blood_issues",
+                "column": "issued_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "blood bank",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-005",
+            "record_type": "target_field_rule",
+            "domain": "blood bank",
+            "target": {
+                "table": "blood_requests",
+                "column": "requested_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "blood bank",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-006",
+            "record_type": "target_field_rule",
+            "domain": "finance",
+            "target": {
+                "table": "cashier_shifts",
+                "column": "user_id",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "finance",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-007",
+            "record_type": "target_field_rule",
+            "domain": "claims",
+            "target": {
+                "table": "claims",
+                "column": "created_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "claims",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-008",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "consultation_session_contributors",
+                "column": "user_id",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-009",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "consultation_specialty_billing_applications",
+                "column": "applied_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-010",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "consultation_specialty_order_set_applications",
+                "column": "applied_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-011",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "consultation_tasks",
+                "column": "created_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-012",
+            "record_type": "target_field_rule",
+            "domain": "access/privilege",
+            "target": {
+                "table": "department_user",
+                "column": "user_id",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "access/privilege",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-013",
+            "record_type": "target_field_rule",
+            "domain": "pharmacy/stock/procurement",
+            "target": {
+                "table": "dispensing_records",
+                "column": "dispensed_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.consult_prescriptions.USER_ID"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "pharmacy/stock/procurement",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-014",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "doctor_consultation_preferences",
+                "column": "user_id",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-015",
+            "record_type": "target_field_rule",
+            "domain": "access/privilege",
+            "target": {
+                "table": "doctor_specialty",
+                "column": "user_id",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "access/privilege",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-016",
+            "record_type": "target_field_rule",
+            "domain": "front desk/emergency",
+            "target": {
+                "table": "emergency_notes",
+                "column": "created_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "front desk/emergency",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-017",
+            "record_type": "target_field_rule",
+            "domain": "front desk/emergency",
+            "target": {
+                "table": "emergency_session_contributors",
+                "column": "user_id",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "front desk/emergency",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-018",
+            "record_type": "target_field_rule",
+            "domain": "finance",
+            "target": {
+                "table": "financial_entries",
+                "column": "recorded_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "finance",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-019",
+            "record_type": "target_field_rule",
+            "domain": "front desk/emergency",
+            "target": {
+                "table": "front_desk_call_logs",
+                "column": "handled_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "front desk/emergency",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-020",
+            "record_type": "target_field_rule",
+            "domain": "front desk/emergency",
+            "target": {
+                "table": "front_desk_courier_handoffs",
+                "column": "created_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "front desk/emergency",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-021",
+            "record_type": "target_field_rule",
+            "domain": "front desk/emergency",
+            "target": {
+                "table": "front_desk_incident_logs",
+                "column": "created_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "front desk/emergency",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-022",
+            "record_type": "target_field_rule",
+            "domain": "front desk/emergency",
+            "target": {
+                "table": "front_desk_lost_found_items",
+                "column": "created_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "front desk/emergency",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-023",
+            "record_type": "target_field_rule",
+            "domain": "front desk/emergency",
+            "target": {
+                "table": "front_desk_shift_handovers",
+                "column": "outgoing_user_id",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "front desk/emergency",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-024",
+            "record_type": "target_field_rule",
+            "domain": "visits/workflow",
+            "target": {
+                "table": "front_desk_visitor_logs",
+                "column": "checked_in_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "visits/workflow",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-025",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "history_of_presenting_complaints",
+                "column": "created_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.consult_history.Doctor"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-026",
+            "record_type": "target_field_rule",
+            "domain": "finance",
+            "target": {
+                "table": "invoices",
+                "column": "created_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.billing.USER_ID"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "finance",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-027",
+            "record_type": "target_field_rule",
+            "domain": "investigations/results",
+            "target": {
+                "table": "lab_requests",
+                "column": "requested_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.consult_scan_lab.USER_ID",
+                "uuhms.consult_scan_lab.Doctor"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "investigations/results",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-028",
+            "record_type": "target_field_rule",
+            "domain": "investigations/results",
+            "target": {
+                "table": "lab_results",
+                "column": "performed_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.consult_scan_lab.USER_ID",
+                "uuhms.consult_scan_lab.Doctor"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "investigations/results",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-029",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "medical_records",
+                "column": "doctor_id",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-030",
+            "record_type": "target_field_rule",
+            "domain": "prescriptions/medication",
+            "target": {
+                "table": "medication_administrations",
+                "column": "administered_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.treatment.USER_ID"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "prescriptions/medication",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-031",
+            "record_type": "target_field_rule",
+            "domain": "notification/audit",
+            "target": {
+                "table": "notification_digest_queue",
+                "column": "user_id",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "notification/audit",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-032",
+            "record_type": "target_field_rule",
+            "domain": "notification/audit",
+            "target": {
+                "table": "notification_preferences",
+                "column": "user_id",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "notification/audit",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-033",
+            "record_type": "target_field_rule",
+            "domain": "procedures/theatre",
+            "target": {
+                "table": "operative_notes",
+                "column": "surgeon_id",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "procedures/theatre",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-034",
+            "record_type": "target_field_rule",
+            "domain": "patients/privacy",
+            "target": {
+                "table": "patient_privacy_directives",
+                "column": "created_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "patients/privacy",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-035",
+            "record_type": "target_field_rule",
+            "domain": "patients/privacy",
+            "target": {
+                "table": "patient_privacy_overrides",
+                "column": "user_id",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "patients/privacy",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-036",
+            "record_type": "target_field_rule",
+            "domain": "finance",
+            "target": {
+                "table": "payments",
+                "column": "received_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "finance",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-037",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "physical_examinations",
+                "column": "created_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-038",
+            "record_type": "target_field_rule",
+            "domain": "procedures/theatre",
+            "target": {
+                "table": "post_op_notes",
+                "column": "recorded_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "procedures/theatre",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-039",
+            "record_type": "target_field_rule",
+            "domain": "prescriptions/medication",
+            "target": {
+                "table": "prescriptions",
+                "column": "doctor_id",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.consult_prescriptions.Doctor",
+                "uuhms.consult_prescriptions.USER_ID"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "prescriptions/medication",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-040",
+            "record_type": "target_field_rule",
+            "domain": "procedures/theatre",
+            "target": {
+                "table": "procedure_checklists",
+                "column": "completed_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "procedures/theatre",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-041",
+            "record_type": "target_field_rule",
+            "domain": "procedures/theatre",
+            "target": {
+                "table": "procedure_requests",
+                "column": "requested_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "procedures/theatre",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-042",
+            "record_type": "target_field_rule",
+            "domain": "procedures/theatre",
+            "target": {
+                "table": "procedure_schedules",
+                "column": "scheduled_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "procedures/theatre",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-043",
+            "record_type": "target_field_rule",
+            "domain": "procedures/theatre",
+            "target": {
+                "table": "procedure_vitals",
+                "column": "recorded_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "procedures/theatre",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-044",
+            "record_type": "target_field_rule",
+            "domain": "pharmacy/stock/procurement",
+            "target": {
+                "table": "purchase_orders",
+                "column": "created_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.request.USER_ID"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "pharmacy/stock/procurement",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-045",
+            "record_type": "target_field_rule",
+            "domain": "finance",
+            "target": {
+                "table": "receivable_assignments",
+                "column": "assigned_to",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "finance",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-046",
+            "record_type": "target_field_rule",
+            "domain": "pharmacy/stock/procurement",
+            "target": {
+                "table": "stock_transfers",
+                "column": "transferred_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "pharmacy/stock/procurement",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-047",
+            "record_type": "target_field_rule",
+            "domain": "visits/workflow",
+            "target": {
+                "table": "triages",
+                "column": "triaged_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.attendance.USER_ID"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "visits/workflow",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-048",
+            "record_type": "target_field_rule",
+            "domain": "visits/workflow",
+            "target": {
+                "table": "visit_billing_overrides",
+                "column": "authorized_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "visits/workflow",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-049",
+            "record_type": "target_field_rule",
+            "domain": "visits/workflow",
+            "target": {
+                "table": "visit_department_history",
+                "column": "assigned_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "visits/workflow",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-050",
+            "record_type": "target_field_rule",
+            "domain": "visits/workflow",
+            "target": {
+                "table": "visit_status_logs",
+                "column": "changed_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.attendance.USER_ID"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "visits/workflow",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-051",
+            "record_type": "target_field_rule",
+            "domain": "visits/workflow",
+            "target": {
+                "table": "visits",
+                "column": "created_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.attendance.USER_ID"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PERMITTED only under enumerated conditions and D-202; not an automatic fallback.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "visits/workflow",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PERMITTED",
+            "unknown_actor_expected_count": "Count only reviewed no-valid-actor cases; no fixed nonzero expectation.",
+            "unknown_actor_approval_id": "D-202",
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-032",
+            "unknown_actor_conditions": [
+                "source attendance row exists",
+                "actor reference is sentinel/orphan/unverifiable after approved matching",
+                "no valid actor can be determined",
+                "one controlled Legacy Actor Unknown identity",
+                "protected original reference",
+                "manual domain review",
+                "field-level reconciliation passes"
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-052",
+            "record_type": "target_field_rule",
+            "domain": "other",
+            "target": {
+                "table": "vitals",
+                "column": "recorded_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.vitals.USER_ID"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "other",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-053",
+            "record_type": "target_field_rule",
+            "domain": "admissions/inpatient",
+            "target": {
+                "table": "ward_rounds",
+                "column": "recorded_by",
+                "nullability": "NO",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "yes unless this exact field explicitly permits the controlled unknown actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Not nullable; unresolved rows remain quarantined unless this exact field conditionally permits the controlled unknown actor.",
+            "missing_actor_blocks": "target row and its approved dependency chain",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-018",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "admissions/inpatient",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-054",
+            "record_type": "target_field_rule",
+            "domain": "patients/privacy",
+            "target": {
+                "table": "patients",
+                "column": "registered_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "patients/privacy",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-055",
+            "record_type": "target_field_rule",
+            "domain": "appointments",
+            "target": {
+                "table": "appointments",
+                "column": "doctor_id",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "appointments",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-056",
+            "record_type": "target_field_rule",
+            "domain": "visits/workflow",
+            "target": {
+                "table": "visit_consultation_routes",
+                "column": "main_doctor_id",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "visits/workflow",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-057",
+            "record_type": "target_field_rule",
+            "domain": "visits/workflow",
+            "target": {
+                "table": "visit_consultation_routes",
+                "column": "doctor_id",
+                "nullability": "YES",
+                "user_fk_enforced": false
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "visits/workflow",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-058",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "medical_records",
+                "column": "final_note_updated_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-059",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "complaints",
+                "column": "created_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.consult_complaints.Doctor"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-060",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "complaints",
+                "column": "updated_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-061",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "complaints",
+                "column": "doctor_id",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.consult_complaints.Doctor"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-062",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "diagnoses",
+                "column": "created_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.consult_diagnosis.Doctor"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-063",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "diagnoses",
+                "column": "updated_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-064",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "diagnoses",
+                "column": "doctor_id",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.consult_diagnosis.Doctor"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-065",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "history_of_presenting_complaints",
+                "column": "updated_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-066",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "history_of_presenting_complaints",
+                "column": "doctor_id",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.consult_history.Doctor"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-067",
+            "record_type": "target_field_rule",
+            "domain": "investigations/results",
+            "target": {
+                "table": "investigations",
+                "column": "created_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.consult_scan_lab.USER_ID"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "investigations/results",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-068",
+            "record_type": "target_field_rule",
+            "domain": "investigations/results",
+            "target": {
+                "table": "investigations",
+                "column": "updated_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "investigations/results",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-069",
+            "record_type": "target_field_rule",
+            "domain": "investigations/results",
+            "target": {
+                "table": "investigations",
+                "column": "doctor_id",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.consult_scan_lab.Doctor"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "investigations/results",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-070",
+            "record_type": "target_field_rule",
+            "domain": "claims",
+            "target": {
+                "table": "claims",
+                "column": "assigned_doctor_id",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.claims.Doctor"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "claims",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-071",
+            "record_type": "target_field_rule",
+            "domain": "claims",
+            "target": {
+                "table": "claims",
+                "column": "approved_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "claims",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-072",
+            "record_type": "target_field_rule",
+            "domain": "prescriptions/medication",
+            "target": {
+                "table": "prescriptions",
+                "column": "created_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.consult_prescriptions.USER_ID"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "prescriptions/medication",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-073",
+            "record_type": "target_field_rule",
+            "domain": "prescriptions/medication",
+            "target": {
+                "table": "prescriptions",
+                "column": "updated_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "prescriptions/medication",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-074",
+            "record_type": "target_field_rule",
+            "domain": "admissions/inpatient",
+            "target": {
+                "table": "admissions",
+                "column": "discharged_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "admissions/inpatient",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-075",
+            "record_type": "target_field_rule",
+            "domain": "admissions/inpatient",
+            "target": {
+                "table": "admissions",
+                "column": "discharge_planning_started_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "admissions/inpatient",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-076",
+            "record_type": "target_field_rule",
+            "domain": "admissions/inpatient",
+            "target": {
+                "table": "admission_discharge_summaries",
+                "column": "approved_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "admissions/inpatient",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-077",
+            "record_type": "target_field_rule",
+            "domain": "other",
+            "target": {
+                "table": "journal_entries",
+                "column": "created_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "other",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-078",
+            "record_type": "target_field_rule",
+            "domain": "other",
+            "target": {
+                "table": "journal_entries",
+                "column": "approved_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "other",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-079",
+            "record_type": "target_field_rule",
+            "domain": "pharmacy/stock/procurement",
+            "target": {
+                "table": "stock_batches",
+                "column": "created_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.batch.USER_ID"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "pharmacy/stock/procurement",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-080",
+            "record_type": "target_field_rule",
+            "domain": "pharmacy/stock/procurement",
+            "target": {
+                "table": "stock_movements",
+                "column": "performed_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "pharmacy/stock/procurement",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-081",
+            "record_type": "target_field_rule",
+            "domain": "pharmacy/stock/procurement",
+            "target": {
+                "table": "purchase_orders",
+                "column": "approved_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "pharmacy/stock/procurement",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-082",
+            "record_type": "target_field_rule",
+            "domain": "notification/audit",
+            "target": {
+                "table": "activity_log",
+                "column": "causer_id",
+                "nullability": "YES",
+                "user_fk_enforced": false
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "notification/audit",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-083",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "treatments",
+                "column": "created_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.treatment.USER_ID"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-084",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "treatments",
+                "column": "updated_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-085",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "treatments",
+                "column": "doctor_id",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.consult_treatment.Doctor"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-086",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "nursing_notes",
+                "column": "created_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.nurses_note.USER_ID"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-087",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "nursing_notes",
+                "column": "updated_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-088",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "service_renderings",
+                "column": "created_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-089",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "service_renderings",
+                "column": "rendered_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.consult_services.Doctor"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-090",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "service_renderings",
+                "column": "started_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-091",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "service_renderings",
+                "column": "updated_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-092",
+            "record_type": "target_field_rule",
+            "domain": "clinical",
+            "target": {
+                "table": "service_rendering_logs",
+                "column": "performed_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "clinical",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-093",
+            "record_type": "target_field_rule",
+            "domain": "patients/privacy",
+            "target": {
+                "table": "patient_procedures",
+                "column": "performed_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.consult_procedures.Doctor"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "patients/privacy",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-094",
+            "record_type": "target_field_rule",
+            "domain": "procedures/theatre",
+            "target": {
+                "table": "procedure_requests",
+                "column": "performed_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [
+                "uuhms.consult_procedures.Doctor"
+            ],
+            "source_role_semantics_status": "candidate relationship evidence only; it does not yet prove the target action role",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "Blocked until the named downstream detailed-mapping phase proves action-role semantics and resolves employment identity.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "procedures/theatre",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-095",
+            "record_type": "target_field_rule",
+            "domain": "procedures/theatre",
+            "target": {
+                "table": "procedure_requests",
+                "column": "accepted_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "procedures/theatre",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-096",
+            "record_type": "target_field_rule",
+            "domain": "procedures/theatre",
+            "target": {
+                "table": "procedure_requests",
+                "column": "billed_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "procedures/theatre",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-097",
+            "record_type": "target_field_rule",
+            "domain": "procedures/theatre",
+            "target": {
+                "table": "procedure_requests",
+                "column": "completed_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "procedures/theatre",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-098",
+            "record_type": "target_field_rule",
+            "domain": "procedures/theatre",
+            "target": {
+                "table": "procedure_requests",
+                "column": "cancelled_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "procedures/theatre",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        },
+        {
+            "id": "TARGET-ACTOR-099",
+            "record_type": "target_field_rule",
+            "domain": "procedures/theatre",
+            "target": {
+                "table": "procedure_requests",
+                "column": "rejected_by",
+                "nullability": "YES",
+                "user_fk_enforced": true
+            },
+            "classic_actor_evidence": [],
+            "source_role_semantics_status": "no approved Classic actor evidence identified",
+            "verified_actor_mandatory": "only when the downstream historical fact semantically requires a named actor",
+            "legacy_actor_unknown_policy": "PROHIBITED.",
+            "target_null_policy": "Use null/provenance-only when actor cannot be verified; Legacy Actor Unknown is prohibited.",
+            "missing_actor_blocks": "attribution only unless a domain logical invariant makes the actor mandatory",
+            "historical_text_attribution": "Protected provenance only; never a target identity key.",
+            "mapping_authorization": "No source-to-target actor mapping authorized.",
+            "exception_code": "LEGACY-STAFF-ACTOR-010",
+            "reconciliation_equation": "source candidates = verified target actor + permitted unknown + target null/provenance-only + quarantined + failed",
+            "phase_dependency": "procedures/theatre",
+            "no_current_first_admin_importer_fallback": true,
+            "unknown_actor_policy": "PROHIBITED",
+            "unknown_actor_expected_count": 0,
+            "unknown_actor_approval_id": null,
+            "unknown_actor_reason_code": "LEGACY-STAFF-ACTOR-018",
+            "unknown_actor_conditions": [
+                "Any unknown use stops reconciliation."
+            ]
+        }
+    ],
+    "coverage": {
+        "installed_user_foreign_keys": 426,
+        "installed_required_user_foreign_keys": 53,
+        "installed_nullable_user_foreign_keys": 373,
+        "required_user_fk_fields_enumerated": 53,
+        "relevant_nullable_or_actor_shaped_fields_enumerated": 46,
+        "actor_shaped_columns_without_fk_installed": 34,
+        "note": "All 53 non-nullable user FKs are explicitly enumerated. Relevant nullable and non-FK actor fields for approved migration domains are enumerated; other nullable operational domains have no source mapping and remain out of current mapping scope."
+    },
+    "phase2b_evidence_references": [
+        "../../evidence/PHASE_2B_STAFF_QUERY_MANIFEST.json",
+        "../../evidence/PHASE_2B_STAFF_AGGREGATE_RESULTS.json"
+    ]
+}

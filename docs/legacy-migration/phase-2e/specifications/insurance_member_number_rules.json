@@ -1,0 +1,121 @@
+{
+  "specification_version": "2E.1.0",
+  "phase": "2E",
+  "approved_source": {
+    "connection": "legacy_uhms",
+    "database": "uuhms",
+    "read_only": true
+  },
+  "implementation_authorized": false,
+  "policy_authority": {
+    "source": "APPROVED_DECISION_SPECIFICATIONS.md",
+    "decision_register": "DECISIONS.md",
+    "decisions": ["D-205", "D-206", "D-207", "D-212"],
+    "questions": ["Q-004", "Q-005", "Q-009", "Q-301"]
+  },
+  "upstream_contracts": [
+    "phase-2a.reference_natural_keys:NK-004",
+    "phase-2a.reference_extraction_strategies:EXTRACT-SETT_PRIVATE",
+    "phase-2a.reference_reconciliation_contracts:RECON-SETT_PRIVATE",
+    "phase-2c.patient_relationship_rules:PATIENT-REL-003",
+    "phase-2c.patient_sentinel_rules:PATIENT-SENT-003",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-REL-003",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-001",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-022",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-007",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-009",
+    "phase-2c.existing_target_patient_rules:PATIENT-TARGET-009",
+    "phase-2d.patient_child_relationship_rules:PATIENT-CHILD-REL-005",
+    "phase-2d.patient_child_extraction_strategies:PATIENT-CHILD-EXT-001",
+    "phase-2d.patient_child_privacy_provenance_contract:PATIENT-CHILD-PRIV-010"
+  ],
+  "baseline": {
+    "comparison": "exact case-sensitive, punctuation-preserving text after outer trim",
+    "duplicate_groups": 1019,
+    "duplicate_rows": 2555,
+    "cross_patient_groups": 1002,
+    "cross_patient_rows": 2521,
+    "cross_provider_groups": 255,
+    "cross_provider_rows": 621,
+    "same_patient_provider_groups": 14,
+    "same_patient_provider_rows": 28,
+    "primary_partition": {
+      "blank": 17029,
+      "duplicate_cross_patient": 2516,
+      "duplicate_cross_provider_same_patient": 18,
+      "duplicate_same_patient_provider": 16,
+      "placeholder": 5,
+      "valid_single_scope": 11723,
+      "difference": 0
+    }
+  },
+  "record_count": 10,
+  "records": [
+    {
+      "id": "INS-MEMBER-001",
+      "class": "blank",
+      "count": 17029,
+      "target": null,
+      "outcome": "not evidenced",
+      "exception_code": "LEGACY-INSURANCE-MEMBER-015"
+    },
+    {
+      "id": "INS-MEMBER-002",
+      "class": "structurally valid",
+      "rule": "Preserve source text after encoding validation and outer trim; retain protected raw provenance."
+    },
+    {
+      "id": "INS-MEMBER-003",
+      "class": "overlength/invalid",
+      "rule": "Withhold; no truncation or repair.",
+      "exception_code": "LEGACY-INSURANCE-MEMBER-016"
+    },
+    {
+      "id": "INS-MEMBER-004",
+      "class": "duplicate same patient/provider",
+      "rule": "Diagnose under the approved exact case/punctuation comparison; preserve each source row and withhold automatic consolidation.",
+      "exception_code": "LEGACY-INSURANCE-MEMBER-017"
+    },
+    {
+      "id": "INS-MEMBER-005",
+      "class": "duplicate cross-patient",
+      "rule": "Do not merge/reassign; manual review.",
+      "exception_code": "LEGACY-INSURANCE-MEMBER-018"
+    },
+    {
+      "id": "INS-MEMBER-006",
+      "class": "target collision",
+      "rule": "Existing target immutable; withhold new representation.",
+      "exception_code": "LEGACY-INSURANCE-MEMBER-019"
+    },
+    {
+      "id": "INS-MEMBER-007",
+      "comparison": "strict Latin1 decode + NFC + outer trim; preserve and compare case and punctuation exactly; never numeric cast; broader provider-specific normalization requires separate approval",
+      "provenance": "original bytes/text protected; HMAC domain patient-insurance-member-v1"
+    },
+    {
+      "id": "INS-MEMBER-008",
+      "class": "duplicate across providers",
+      "baseline": "255 exact-comparison diagnostic groups / 621 rows",
+      "rule": "Diagnostic only; provider identities remain distinct and no membership is merged.",
+      "exception_code": "LEGACY-INSURANCE-MEMBER-017"
+    },
+    {
+      "id": "INS-MEMBER-009",
+      "class": "multiple numbers in one field",
+      "rule": "Do not split or select a component automatically; withhold and preserve protected source text.",
+      "exception_code": "LEGACY-INSURANCE-MEMBER-016"
+    },
+    {
+      "id": "INS-MEMBER-010",
+      "class": "placeholder-looking",
+      "baseline": "5 rows by protected diagnostic",
+      "rule": "Do not treat as valid identity or replace it; classify for manual review.",
+      "exception_code": "LEGACY-INSURANCE-MEMBER-016"
+    }
+  ],
+  "privacy": {
+    "contains_raw_phi": false,
+    "repository_output": "aggregate-only"
+  }
+}

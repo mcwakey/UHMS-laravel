@@ -1,0 +1,13 @@
+{
+  "specification_version":"2C.1.0","phase":"2C","approved_source":{"database":"uuhms","table":"patients"},"policy_authority":["D-202","D-213","Q-003","Q-007","Q-304","PHASE2B:TARGET-ACTOR-054"],"privacy":{"contains_phi":false},"implementation_authorized":false,"record_count":8,
+  "records":[
+    {"id":"PATIENT-ACTOR-001","topic":"source evidence","rule":"Classic patients has no registration actor/creator/user column and no patient-to-users relationship."},
+    {"id":"PATIENT-ACTOR-002","topic":"target constraint","rule":"patients.registered_by is nullable user FK with ON DELETE SET NULL."},
+    {"id":"PATIENT-ACTOR-003","topic":"approved outcome","rule":"registered_by=null plus protected provenance that no source actor was evidenced."},
+    {"id":"PATIENT-ACTOR-004","topic":"prohibited fallbacks","rule":"Current user, first user, administrator, importer/system operator and department supervisor are all prohibited.","exception_code":"LEGACY-PATIENT-ACTOR-032"},
+    {"id":"PATIENT-ACTOR-005","topic":"unknown actor","rule":"Legacy Actor Unknown is prohibited for patients.registered_by and patient_aliases.created_by.","exception_code":"LEGACY-PATIENT-ACTOR-032"},
+    {"id":"PATIENT-ACTOR-006","topic":"future discovered field","rule":"Must return through Phase 2B verified employment plus exact registration-role semantic approval; FK compatibility is insufficient."},
+    {"id":"PATIENT-ACTOR-007","topic":"eligibility","rule":"Null registrar does not block an otherwise valid patient because target permits null."},
+    {"id":"PATIENT-ACTOR-008","topic":"reconciliation","rule":"All created patients have null registrar and protected absence record; every prohibited fallback counter is zero.","reconciliation_id":"PATIENT-REC-ACTOR-040"}
+  ]
+}

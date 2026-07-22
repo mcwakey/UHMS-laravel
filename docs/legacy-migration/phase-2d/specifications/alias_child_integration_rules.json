@@ -1,0 +1,16 @@
+{
+  "specification_version":"2D.1.0","phase":"2D","approved_source":{"database":"uuhms","table":"patients","column":"OpdNo"},
+  "authoritative_upstream_contract":"LEGACY_OPD_ALIAS_CONTRACT","canonicalization_contract":"PATIENT-ALIAS-003","implementation_authorized":false,"record_count":10,
+  "records":[
+    {"id":"PATIENT-CHILD-ALIAS-001","rule":"Patient mapping commits before alias processing.","upstream":"PATIENT-ALIAS-013"},
+    {"id":"PATIENT-CHILD-ALIAS-002","rule":"Alias, contact and demographic outcomes are independent child reconciliations."},
+    {"id":"PATIENT-CHILD-ALIAS-003","rule":"Duplicate-withheld alias does not block valid contact or demographic outcomes.","upstream":"PATIENT-ALIAS-006"},
+    {"id":"PATIENT-CHILD-ALIAS-004","rule":"Patient quarantine blocks alias persistence and every Phase 2D child.","upstream":"PATIENT-CHAIN-001"},
+    {"id":"PATIENT-CHILD-ALIAS-005","rule":"created_by is null with protected absence provenance; source_patient_id is null.","upstream":["PATIENT-ALIAS-011","PATIENT-ALIAS-012"]},
+    {"id":"PATIENT-CHILD-ALIAS-006","rule":"Existing aliases, patient numbers and owners are never changed, transferred, deleted or recycled.","upstream":["PATIENT-ALIAS-014","PATIENT-TARGET-009"]},
+    {"id":"PATIENT-CHILD-ALIAS-007","rule":"OriginalName and OriginalOpd create no alias; nonblank drift stops semantic review.","exception_codes":["LEGACY-PATIENT-CHILD-ALIAS-004","LEGACY-PATIENT-CHILD-ALIAS-005"]},
+    {"id":"PATIENT-CHILD-ALIAS-008","rule":"No Phase 2D canonicalizer, collision rule or duplicate-owner rule is permitted."},
+    {"id":"PATIENT-CHILD-ALIAS-009","rule":"No contact or demographic similarity influences alias ownership or patient identity."},
+    {"id":"PATIENT-CHILD-ALIAS-010","rule":"Phase 2D creates zero alias rows; future persistence consumes Phase 2C only.","reconciliation_id":"PATIENT-REC-ALIAS-002","phase_2d_zero_assertion":"PATIENT-CHILD-REC-007"}
+  ],"privacy":{"contains_raw_phi":false}
+}

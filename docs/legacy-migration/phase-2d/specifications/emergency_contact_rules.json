@@ -1,0 +1,19 @@
+{
+  "specification_version":"2D.1.0","phase":"2D","approved_source":{"database":"uuhms","table":"patients","tuple":["NOK","NOKPhoneNo","NOKRel"]},"target":{"table":"emergency_contacts"},"implementation_authorized":false,"record_count":14,
+  "records":[
+    {"id":"PATIENT-CHILD-CONTACT-001","rule":"One Classic patient row yields at most one candidate tuple; the tuple is not patient identity evidence."},
+    {"id":"PATIENT-CHILD-CONTACT-002","rule":"A committed protected patient map is mandatory before contact release."},
+    {"id":"PATIENT-CHILD-CONTACT-003","rule":"Name and phone are required for a creatable child; relationship is nullable free text."},
+    {"id":"PATIENT-CHILD-CONTACT-004","rule":"A complete valid tuple for a newly created patient is the initial primary contact technical candidate; validate exactly one migration-created primary and zero pre-existing contacts before commit."},
+    {"id":"PATIENT-CHILD-CONTACT-005","rule":"A partial or invalid tuple is withheld and is never primary; it does not block an otherwise eligible patient."},
+    {"id":"PATIENT-CHILD-CONTACT-006","rule":"All-blank tuple creates no contact and is a successful absence outcome."},
+    {"id":"PATIENT-CHILD-CONTACT-007","rule":"For explicitly linked existing targets, create, update, delete, merge and primary-flag changes are prohibited; retain protected comparison evidence only."},
+    {"id":"PATIENT-CHILD-CONTACT-008","rule":"Multiple existing primary contacts are a target-state stop, never automatically repaired.","exception_code":"LEGACY-PATIENT-CHILD-CONTACT-013"},
+    {"id":"PATIENT-CHILD-CONTACT-009","rule":"Dormant patients.emergency_contact_* columns remain null and are never the destination."},
+    {"id":"PATIENT-CHILD-CONTACT-010","rule":"No source or target contact is matched or deduplicated across patients."},
+    {"id":"PATIENT-CHILD-CONTACT-011","rule":"Same-parent idempotency requires protected parent token, tuple HMAC domain/version and contract version; no raw tuple in logs."},
+    {"id":"PATIENT-CHILD-CONTACT-012","rule":"Within one source row there is only one tuple, so no source-child merge occurs."},
+    {"id":"PATIENT-CHILD-CONTACT-013","rule":"Normal controller/service paths are not historical persistence authority; future boundary suppresses activity, notification, SMS and search-index side effects."},
+    {"id":"PATIENT-CHILD-CONTACT-014","rule":"Contact type is migration-origin emergency/next-of-kin provenance; target has no contact_type column, so type remains protected provenance rather than invented storage."}
+  ],"privacy":{"contains_raw_phi":false,"classification":"protected patient/contact data"}
+}

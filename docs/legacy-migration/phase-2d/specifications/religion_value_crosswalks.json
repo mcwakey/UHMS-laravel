@@ -1,0 +1,14 @@
+{
+  "specification_version":"2D.1.0","phase":"2D","approved_source":{"database":"uuhms","table":"patients","column":"Religion"},"target":{"field":"patients.religion","database_nullable":true,"operational_max":100,"controlled_enum":false},"implementation_authorized":false,"record_count":4,
+  "records":[
+    {"id":"PATIENT-CHILD-RELIGION-XW-001","source_safe_category":"CHRISTIANITY","normalized_source":"CHRISTIANITY","target":"Christianity","state":"normalized display","aggregate_count":12438,"exception_code":null},
+    {"id":"PATIENT-CHILD-RELIGION-XW-002","source_safe_category":"MUSLIM","normalized_source":"MUSLIM","target":"Muslim","state":"normalized display","aggregate_count":2749,"exception_code":null},
+    {"id":"PATIENT-CHILD-RELIGION-XW-003","source_safe_category":"OTHER","normalized_source":"OTHER","target":"Other","state":"exact semantic label in nullable free text","aggregate_count":112,"exception_code":null},
+    {"id":"PATIENT-CHILD-RELIGION-XW-004","source_safe_category":"__BLANK__","normalized_source":null,"target":null,"state":"blank/null absence","aggregate_count":1651,"exception_code":"LEGACY-PATIENT-CHILD-RELIGION-021"}
+  ],
+  "fail_closed_rule":"Any nonblank category outside this captured allow-list, decode failure, control content or overlength is withheld under a classified exception; no default and no inference from other fields.",
+  "fail_closed_exception_codes":["LEGACY-PATIENT-CHILD-RELIGION-022","LEGACY-PATIENT-CHILD-RELIGION-023","LEGACY-PATIENT-CHILD-RELIGION-024","LEGACY-PATIENT-CHILD-TEXT-029","LEGACY-PATIENT-CHILD-TEXT-030"],
+  "parent_exception_codes":["LEGACY-PATIENT-CHILD-PARENT-001","LEGACY-PATIENT-CHILD-PARENT-002"],
+  "extraction_exception_code":"LEGACY-PATIENT-CHILD-EXTRACT-033",
+  "existing_target":"immutable comparison evidence only","existing_target_exception_code":"LEGACY-PATIENT-CHILD-TARGET-036","privacy":{"contains_raw_phi":false}
+}

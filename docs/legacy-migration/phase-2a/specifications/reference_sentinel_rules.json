@@ -1,0 +1,425 @@
+{
+    "specification_version":  "2A.1.0",
+    "policy":  "D-207/Q-005: sentinels are defined per relationship. There is no global zero-is-null rule.",
+    "sentinel_rules":  [
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "accounts.title",
+                               "source_column":  "uuhms.accounts.TITLE_ID",
+                               "candidate_sentinel_predicate":  "No observed sentinel; numeric zero remains relationship-specific if later observed",
+                               "observed_candidate_sentinel_count":  0,
+                               "approved_interpretation":  "No sentinel rows observed; null/blank/zero still fail closed if encountered outside the captured fingerprint.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-COMMON-003",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#accounts.title; query=classic.relationship.accounts.title; hash=6b11a317007e5a82903fe026edc09f2ea445c15cb7078b2114a23ba1d7520583",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "accounts.bank",
+                               "source_column":  "uuhms.accounts.BANK_ACC_ID",
+                               "candidate_sentinel_predicate":  "c.`BANK_ACC_ID` = 0",
+                               "observed_candidate_sentinel_count":  1,
+                               "approved_interpretation":  "Treat only the documented zero/blank predicate as \u0027relationship not evidenced\u0027; never create a parent and never generalize to other columns.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-FINANCE-004",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#accounts.bank; query=classic.relationship.accounts.bank; hash=1bbd9308bff9d4be5881480b7a33cf1006efa8c5b3a328dafa05fd101990d701",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "batch.medicine",
+                               "source_column":  "uuhms.batch.MED_ID",
+                               "candidate_sentinel_predicate":  "No observed sentinel; numeric zero remains relationship-specific if later observed",
+                               "observed_candidate_sentinel_count":  0,
+                               "approved_interpretation":  "No sentinel rows observed; null/blank/zero still fail closed if encountered outside the captured fingerprint.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-PRODUCT-010",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#batch.medicine; query=classic.relationship.batch.medicine; hash=7755fe4f94c274526e0d83e6eb03269d8fdcbecdd44dfacdb06f71cbe94ef3b6",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "batch.supplier",
+                               "source_column":  "uuhms.batch.SUP_ID",
+                               "candidate_sentinel_predicate":  "No observed sentinel; numeric zero remains relationship-specific if later observed",
+                               "observed_candidate_sentinel_count":  0,
+                               "approved_interpretation":  "No sentinel rows observed; null/blank/zero still fail closed if encountered outside the captured fingerprint.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-SUPPLIER-003",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#batch.supplier; query=classic.relationship.batch.supplier; hash=ce04f8f306f0b6859086d4f581a5884da44fac45cff9aef2dc06aedcdf775ae7",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "batch.user",
+                               "source_column":  "uuhms.batch.USER_ID",
+                               "candidate_sentinel_predicate":  "No observed sentinel; numeric zero remains relationship-specific if later observed",
+                               "observed_candidate_sentinel_count":  0,
+                               "approved_interpretation":  "No sentinel rows observed; null/blank/zero still fail closed if encountered outside the captured fingerprint.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-COMMON-005",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#batch.user; query=classic.relationship.batch.user; hash=c7cf48d92e05ff6cd03885575d96cc30c199cc6954eb2fcfa614529a40b6e9d9",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "beds.patient",
+                               "source_column":  "uuhms.beds.PAT_ID",
+                               "candidate_sentinel_predicate":  "c.`PAT_ID` = 0",
+                               "observed_candidate_sentinel_count":  15,
+                               "approved_interpretation":  "Treat only the documented zero/blank predicate as \u0027relationship not evidenced\u0027; never create a parent and never generalize to other columns.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-BED-004",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#beds.patient; query=classic.relationship.beds.patient; hash=87bfc37d1b2d798c906709de041d85b0f9437403afde721ea542bd5734280705",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "list_causes.diagnosis",
+                               "source_column":  "uuhms.list_causes.LDIAG_ID",
+                               "candidate_sentinel_predicate":  "No observed sentinel; numeric zero remains relationship-specific if later observed",
+                               "observed_candidate_sentinel_count":  0,
+                               "approved_interpretation":  "No sentinel rows observed; null/blank/zero still fail closed if encountered outside the captured fingerprint.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-CLINICAL-006",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#list_causes.diagnosis; query=classic.relationship.list_causes.diagnosis; hash=a5d50ea1e36124b66438158c2b189e466c8544e4194a145ed5f983d653302d10",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "list_diagnosis.disorder",
+                               "source_column":  "uuhms.list_diagnosis.LDIS_ID",
+                               "candidate_sentinel_predicate":  "c.`LDIS_ID` = 0",
+                               "observed_candidate_sentinel_count":  5948,
+                               "approved_interpretation":  "Treat only the documented zero/blank predicate as \u0027relationship not evidenced\u0027; never create a parent and never generalize to other columns.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-CLINICAL-007",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#list_diagnosis.disorder; query=classic.relationship.list_diagnosis.disorder; hash=9182572e69b2852e14826e13e791e3e56f4ed3b456677bdbb469b204491a892c",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "list_signs.diagnosis",
+                               "source_column":  "uuhms.list_signs.LDIAG_ID",
+                               "candidate_sentinel_predicate":  "No observed sentinel; numeric zero remains relationship-specific if later observed",
+                               "observed_candidate_sentinel_count":  0,
+                               "approved_interpretation":  "No sentinel rows observed; null/blank/zero still fail closed if encountered outside the captured fingerprint.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-CLINICAL-006",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#list_signs.diagnosis; query=classic.relationship.list_signs.diagnosis; hash=7aac955586ba1121c10775421cfa7382796025dc7c8377d71ee09f73c56dafce",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "medicine.department",
+                               "source_column":  "uuhms.medicine.DEP_ID",
+                               "candidate_sentinel_predicate":  "c.`DEP_ID` = 0",
+                               "observed_candidate_sentinel_count":  153,
+                               "approved_interpretation":  "Treat only the documented zero/blank predicate as \u0027relationship not evidenced\u0027; never create a parent and never generalize to other columns.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-PRODUCT-007",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#medicine.department; query=classic.relationship.medicine.department; hash=658689ed511d7a34baf8ceb261f1bca4d2e4beb8ce1cae94b6bb4eb09cd69611",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "med_pharm.medicine",
+                               "source_column":  "uuhms.med_pharm.MED_ID",
+                               "candidate_sentinel_predicate":  "c.`MED_ID` = 0",
+                               "observed_candidate_sentinel_count":  1,
+                               "approved_interpretation":  "Treat only the documented zero/blank predicate as \u0027relationship not evidenced\u0027; never create a parent and never generalize to other columns.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-PRODUCT-010",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#med_pharm.medicine; query=classic.relationship.med_pharm.medicine; hash=9641f9306240a7c82ee4a11bb1397bdaf10eaad0218c68bd629bb7a75c467fcd",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "med_store.medicine",
+                               "source_column":  "uuhms.med_store.MED_ID",
+                               "candidate_sentinel_predicate":  "No observed sentinel; numeric zero remains relationship-specific if later observed",
+                               "observed_candidate_sentinel_count":  0,
+                               "approved_interpretation":  "No sentinel rows observed; null/blank/zero still fail closed if encountered outside the captured fingerprint.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-PRODUCT-010",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#med_store.medicine; query=classic.relationship.med_store.medicine; hash=6928979229768ff27067048261b41d49191ab7493748ff21456c0df3138a381e",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "request.medicine",
+                               "source_column":  "uuhms.request.MED_ID",
+                               "candidate_sentinel_predicate":  "No observed sentinel; numeric zero remains relationship-specific if later observed",
+                               "observed_candidate_sentinel_count":  0,
+                               "approved_interpretation":  "No sentinel rows observed; null/blank/zero still fail closed if encountered outside the captured fingerprint.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-PRODUCT-010",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#request.medicine; query=classic.relationship.request.medicine; hash=69173a56a81259ef7bd17ac21290b183cd0520b900e7791579fd8a63d5bd3fd1",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "request.department",
+                               "source_column":  "uuhms.request.DEP_ID",
+                               "candidate_sentinel_predicate":  "No observed sentinel; numeric zero remains relationship-specific if later observed",
+                               "observed_candidate_sentinel_count":  0,
+                               "approved_interpretation":  "No sentinel rows observed; null/blank/zero still fail closed if encountered outside the captured fingerprint.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-DEPARTMENT-003",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#request.department; query=classic.relationship.request.department; hash=272ed392c232d5c1545d0359e98d6d729b30bbc063cf3339159984c87faad7fd",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "request.user",
+                               "source_column":  "uuhms.request.USER_ID",
+                               "candidate_sentinel_predicate":  "c.`USER_ID` = 0",
+                               "observed_candidate_sentinel_count":  146,
+                               "approved_interpretation":  "Treat only the documented zero/blank predicate as \u0027relationship not evidenced\u0027; never create a parent and never generalize to other columns.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-COMMON-005",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#request.user; query=classic.relationship.request.user; hash=f007acf12404a1cabdd48b7219854021b33e50c6e003cd6a7f6027415f460036",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "serv_criterias.group",
+                               "source_column":  "uuhms.serv_criterias.GROUP_ID",
+                               "candidate_sentinel_predicate":  "c.`GROUP_ID` = 0",
+                               "observed_candidate_sentinel_count":  7,
+                               "approved_interpretation":  "Treat only the documented zero/blank predicate as \u0027relationship not evidenced\u0027; never create a parent and never generalize to other columns.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-INVESTIGATION-004",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#serv_criterias.group; query=classic.relationship.serv_criterias.group; hash=e27b620e8bcf44a4efd16d5385d5e4276d80d0963286924561e72007d699a636",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "serv_group.service",
+                               "source_column":  "uuhms.serv_group.SERV_ID",
+                               "candidate_sentinel_predicate":  "No observed sentinel; numeric zero remains relationship-specific if later observed",
+                               "observed_candidate_sentinel_count":  0,
+                               "approved_interpretation":  "No sentinel rows observed; null/blank/zero still fail closed if encountered outside the captured fingerprint.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-INVESTIGATION-003",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#serv_group.service; query=classic.relationship.serv_group.service; hash=9c086a5a4560829c673fe57bfce328d4a95583cf6911d0ea4f5a6e7010b7c7bc",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "serv_options_cri.criteria",
+                               "source_column":  "uuhms.serv_options_cri.CRI_ID",
+                               "candidate_sentinel_predicate":  "No observed sentinel; numeric zero remains relationship-specific if later observed",
+                               "observed_candidate_sentinel_count":  0,
+                               "approved_interpretation":  "No sentinel rows observed; null/blank/zero still fail closed if encountered outside the captured fingerprint.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-INVESTIGATION-005",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#serv_options_cri.criteria; query=classic.relationship.serv_options_cri.criteria; hash=125faf34cc01e1f9f1fdfceccceb6c58cfff66e4b34c74258da95578b4c4253e",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "serv_options_out.service",
+                               "source_column":  "uuhms.serv_options_out.SERV_ID",
+                               "candidate_sentinel_predicate":  "No observed sentinel; numeric zero remains relationship-specific if later observed",
+                               "observed_candidate_sentinel_count":  0,
+                               "approved_interpretation":  "No sentinel rows observed; null/blank/zero still fail closed if encountered outside the captured fingerprint.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-INVESTIGATION-003",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#serv_options_out.service; query=classic.relationship.serv_options_out.service; hash=03f9d7262343978b976d5d1e6789cc5783e998c460c104061c2fdd1d9db5fc99",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "list_symptoms.diagnosis",
+                               "source_column":  "uuhms.list_symptoms.LDIAG_ID",
+                               "candidate_sentinel_predicate":  "TRIM(c.`LDIAG_ID`) IN (\u0027\u0027, \u00270\u0027)",
+                               "observed_candidate_sentinel_count":  0,
+                               "approved_interpretation":  "No sentinel rows observed; null/blank/zero still fail closed if encountered outside the captured fingerprint.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-CLINICAL-006",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#list_symptoms.diagnosis; query=classic.relationship.list_symptoms.diagnosis; hash=9e8c5ecfc2ad780fd4319e3debdccc0fbf17826dff9c413074a87eea277ef2ac",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "services.department_name",
+                               "source_column":  "uuhms.services.Departement",
+                               "candidate_sentinel_predicate":  "TRIM(c.`Departement`) = \u0027\u0027",
+                               "observed_candidate_sentinel_count":  14,
+                               "approved_interpretation":  "Treat only the documented zero/blank predicate as \u0027relationship not evidenced\u0027; never create a parent and never generalize to other columns.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-SERVICE-003",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#services.department_name; query=classic.relationship.services.department_name; hash=1944d0ce057f0fc2ed2a60e3cdd20b537bc6041f56f5fe4982f61afb08a62957",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           },
+                           {
+                               "specification_version":  "2A.1.0",
+                               "relationship_id":  "gens.department_name",
+                               "source_column":  "uuhms.gens.Departement",
+                               "candidate_sentinel_predicate":  "TRIM(c.`Departement`) = \u0027\u0027",
+                               "observed_candidate_sentinel_count":  0,
+                               "approved_interpretation":  "No sentinel rows observed; null/blank/zero still fail closed if encountered outside the captured fingerprint.",
+                               "not_allowed":  [
+                                                   "global zero-is-null",
+                                                   "synthetic parent",
+                                                   "default parent",
+                                                   "dropping the dependent row without an exception"
+                                               ],
+                               "null_rule":  "Null means relationship not evidenced only where the source column permits null; otherwise classify as invalid relationship.",
+                               "orphan_rule":  "Quarantine or defer the dependent row with the listed exception. Never synthesize a parent.",
+                               "exception_code":  "LEGACY-REF-DEPARTMENT-003",
+                               "evidence":  "CLASSIC_RELATIONSHIP_MANIFEST.json#gens.department_name; query=classic.relationship.gens.department_name; hash=39e0bd5fea0c76e6342d212bf85756a7ee140974c27677e580131a33d4d02339",
+                               "sentinel_exception_code":  "LEGACY-REF-COMMON-012"
+                           }
+                       ],
+    "approved_source_database":  "uuhms"
+}

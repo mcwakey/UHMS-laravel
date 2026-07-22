@@ -1,0 +1,50 @@
+{
+  "specification_version": "2F.1.0",
+  "phase": "2F",
+  "approved_source": {"connection": "legacy_uhms", "database": "uuhms", "read_only": true},
+  "approved_target": {"environment": "approved_non_production", "read_only": true, "production_forbidden": true},
+  "implementation_authorized": false,
+  "policy_authority": {"source": "APPROVED_DECISION_SPECIFICATIONS.md", "decision_register": "DECISIONS.md", "decisions": ["D-106", "D-209"]},
+  "upstream_contracts": [
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-001",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-007",
+    "phase-2d.patient_child_privacy_provenance_contract:PATIENT-CHILD-PRIV-002",
+    "phase-2d.patient_child_privacy_provenance_contract:PATIENT-CHILD-PRIV-004",
+    "phase-2e.insurance_privacy_provenance_contract:INS-PRIV-006",
+    "phase-2e.insurance_privacy_provenance_contract:INS-PRIV-008"
+  ],
+  "scan_contract": {
+    "scope": ["docs/legacy-migration/**", "tests/Unit/LegacyMigration/Evidence/Phase2FSpecificationConsistencyTest.php"],
+    "scope_manifest_algorithm": "SHA-256 over ordinal-sorted repository-relative UTF-8 paths joined by LF",
+    "scanner_version": "P2F-PRIVACY-SCANNER-2",
+    "allowlist_version": "P2F-SYNTHETIC-ALLOWLIST-1",
+    "pattern_classes": ["ghana_phone", "email", "assigned_opd_or_member_value", "credential_or_secret_assignment", "raw_identifier_property", "forbidden_phase2f_structured_flag"],
+    "structured_checks": ["all_phase2f_specs_exact_uuhms_read_only", "all_phase2f_specs_contains_raw_phi_false", "scenario_values_rigidly_synthetic", "no_implementation_or_write_authorization"],
+    "finding_handling": "fail with path, detector ID and redacted location only; never print matched content",
+    "required_coverage_difference": 0,
+    "required_unallowlisted_finding_count": 0
+  },
+  "scan_evidence": {
+    "scan_scope_manifest_hash": "fa756afcdc1d5a96926351997d23f25cca5fde95db5bd667aaca96793e9fb774",
+    "scanner_version": "P2F-PRIVACY-SCANNER-2",
+    "allowlist_version": "P2F-SYNTHETIC-ALLOWLIST-1",
+    "file_count": 286,
+    "coverage_difference": 0,
+    "unallowlisted_finding_count": 0,
+    "finding_handling": "redacted detector/path diagnostics only"
+  },
+  "record_count": 10,
+  "records": [
+    {"id": "PILOT-PRIV-001", "rule": "Patient identity, OPD alias, NOK/contact, address, occupation, insurance, provider/company, remediation, target comparison and quarantine facts are protected data."},
+    {"id": "PILOT-PRIV-002", "rule": "Repository artifacts contain no Classic, target-derived or plausibly real names, OPD values, phone numbers, addresses, contact values, member/policy/CCC values, raw source keys, raw target IDs, row-level dates, row tokens, remediation values or eligibility facts. The only value-bearing exception is the rigidly namespaced, independently invented Cohort A synthetic contract file governed by PILOT-PRIV-006 and the versioned scanner allow-list."},
+    {"id": "PILOT-PRIV-003", "rule": "Repository-safe evidence is limited to aggregate counts, stable contract IDs, approved nonidentifying allow-list values and nonsecret specification/query/result hashes."},
+    {"id": "PILOT-PRIV-004", "rule": "Runtime tokens use domain-separated HMAC-SHA-256, environment-protected secret material, pinned key and canonicalization versions and typed length-prefixed UTF-8 inputs with explicit null/type markers."},
+    {"id": "PILOT-PRIV-005", "rule": "Plain hashes of low-entropy identity/contact/member values and comparison across domain, environment, key or canonicalization versions are prohibited."},
+    {"id": "PILOT-PRIV-006", "rule": "Synthetic fixture values are permitted only inside patient_pilot_scenarios.json, must carry fixture_namespace SYNTHETIC-ONLY-P2F and per-record synthetic markers, must be obviously fictitious and independently generated, and must never be copied or lightly modified from Classic or target data."},
+    {"id": "PILOT-PRIV-007", "rule": "Artifact scanning covers every file under docs/legacy-migration and Phase 2F focused tests, not only new artifacts."},
+    {"id": "PILOT-PRIV-008", "scan_required_fields": ["scan_scope_manifest_hash", "scanner_version", "allowlist_version", "file_count", "coverage_difference", "pattern_classes", "structured_checks", "finding_count", "finding_handling"], "required_zero": ["coverage_difference", "unallowlisted_finding_count"]},
+    {"id": "PILOT-PRIV-009", "rule": "Scan diagnostics print only path, detector ID and redacted line/field location; matched sensitive content is never printed."},
+    {"id": "PILOT-PRIV-010", "rule": "A suspected leak stops the run, triggers containment and purge, rotates affected secrets/keys where necessary, and requires a complete artifact rescan before release.", "exception_codes": ["LEGACY-PATIENT-PRIVACY-036", "LEGACY-PATIENT-CHILD-PRIVACY-034", "LEGACY-INSURANCE-PRIVACY-036"]}
+  ],
+  "privacy": {"contains_raw_phi": false, "contains_raw_source_or_target_identifiers": false, "contains_credentials": false, "repository_output": "aggregate-only"}
+}

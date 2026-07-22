@@ -1,0 +1,2114 @@
+{
+    "manifest_version": 2,
+    "tool_version": "phase-1b-classic-evidence/2.1.0",
+    "tool_code_hash_sha256": "781dcbe7b5ad186f5bfec1847a494199d2672dd2757564e55dd5a0064f313473",
+    "captured_at_utc": "2026-07-21T01:57:29+00:00",
+    "approved_database": "uuhms",
+    "declared_foreign_key_count": 0,
+    "declared_foreign_key_evidence": {
+        "key_column_usage_rows": 0,
+        "referential_constraints_rows": 0,
+        "query_ids": [
+            "classic.foreign_key_columns",
+            "classic.referential_constraints"
+        ]
+    },
+    "interpretation": "All registry relationships are inferred. Candidate sentinel rules are evidence labels, not approved mappings.",
+    "relationships": [
+        {
+            "id": "accounts.title",
+            "child_table": "accounts",
+            "child_column": "TITLE_ID",
+            "parent_table": "acc_titles",
+            "parent_column": "TI_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`TITLE_ID` = p.`TI_ID`",
+            "counts": {
+                "child_rows": 1,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 1,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 0
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.accounts.title",
+                "query_version": 1,
+                "query_hash_sha256": "6b11a317007e5a82903fe026edc09f2ea445c15cb7078b2114a23ba1d7520583",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T01:59:28+00:00",
+                "finished_at_utc": "2026-07-21T01:59:28+00:00",
+                "result_hash_sha256": "ae5f8670adabff3e6550f5b01390708a48189d377202e954fec6af044dcf341e"
+            }
+        },
+        {
+            "id": "accounts.bank",
+            "child_table": "accounts",
+            "child_column": "BANK_ACC_ID",
+            "parent_table": "bank",
+            "parent_column": "BANK_ACC_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`BANK_ACC_ID` = p.`BANK_ACC_ID`",
+            "counts": {
+                "child_rows": 1,
+                "null_count": 0,
+                "candidate_sentinel_count": 1,
+                "matched_non_sentinel_count": 0,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 1
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.accounts.bank",
+                "query_version": 1,
+                "query_hash_sha256": "1bbd9308bff9d4be5881480b7a33cf1006efa8c5b3a328dafa05fd101990d701",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T01:59:28+00:00",
+                "finished_at_utc": "2026-07-21T01:59:28+00:00",
+                "result_hash_sha256": "9f49c6f2a8de663586d910a483856cea0564b6c1f7109ecfe995bee88d6366f2"
+            }
+        },
+        {
+            "id": "appointement.attendance",
+            "child_table": "appointement",
+            "child_column": "ATT_ID",
+            "parent_table": "attendance",
+            "parent_column": "ATT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`ATT_ID` = p.`ATT_ID`",
+            "counts": {
+                "child_rows": 1364,
+                "null_count": 0,
+                "candidate_sentinel_count": 1,
+                "matched_non_sentinel_count": 1297,
+                "orphan_excluding_candidate_sentinel_count": 66,
+                "unmatched_including_candidate_sentinel_count": 67
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.appointement.attendance",
+                "query_version": 1,
+                "query_hash_sha256": "ebec87e269c49a4c14596908a2502331dddecd0cadcc690c6be12b6887896064",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T01:59:28+00:00",
+                "finished_at_utc": "2026-07-21T01:59:32+00:00",
+                "result_hash_sha256": "28ea789ab353590daadff623db06817709f28c43d50088fe18fccd2b6e581c1b"
+            }
+        },
+        {
+            "id": "attendance.patient",
+            "child_table": "attendance",
+            "child_column": "PAT_ID",
+            "parent_table": "patients",
+            "parent_column": "PAT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`PAT_ID` = p.`PAT_ID`",
+            "counts": {
+                "child_rows": 51927,
+                "null_count": 0,
+                "candidate_sentinel_count": 155,
+                "matched_non_sentinel_count": 48589,
+                "orphan_excluding_candidate_sentinel_count": 3183,
+                "unmatched_including_candidate_sentinel_count": 3338
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.attendance.patient",
+                "query_version": 1,
+                "query_hash_sha256": "f39f600c79ee25cbf3cb8096e57b5041ca3d96f80a69bdc615f05990c1358f26",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T01:59:32+00:00",
+                "finished_at_utc": "2026-07-21T01:59:40+00:00",
+                "result_hash_sha256": "1974e3a518605f0f53909590cff871384fea0936dd9137d57b37016821d53ec3"
+            }
+        },
+        {
+            "id": "attendance.bed",
+            "child_table": "attendance",
+            "child_column": "BED_ID",
+            "parent_table": "beds",
+            "parent_column": "BED_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`BED_ID` = p.`BED_ID`",
+            "counts": {
+                "child_rows": 51927,
+                "null_count": 6,
+                "candidate_sentinel_count": 51785,
+                "matched_non_sentinel_count": 120,
+                "orphan_excluding_candidate_sentinel_count": 16,
+                "unmatched_including_candidate_sentinel_count": 51801
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.attendance.bed",
+                "query_version": 1,
+                "query_hash_sha256": "52114d215f3ce67b39386b64abc45d3241fc004626cd914818fcccb5d98dacdd",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T01:59:40+00:00",
+                "finished_at_utc": "2026-07-21T01:59:46+00:00",
+                "result_hash_sha256": "a528792d29c60a5a07079a7f58bdf2ece4df306826cb41adc6c3a8ba78082607"
+            }
+        },
+        {
+            "id": "attendance.user",
+            "child_table": "attendance",
+            "child_column": "USER_ID",
+            "parent_table": "users",
+            "parent_column": "USER_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "counts": {
+                "child_rows": 51927,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 15186,
+                "orphan_excluding_candidate_sentinel_count": 36741,
+                "unmatched_including_candidate_sentinel_count": 36741
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.attendance.user",
+                "query_version": 1,
+                "query_hash_sha256": "92eaf1254c83e17f930ade1296faa61e878b422ff6250d8ea9196d1217e8312c",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T01:59:46+00:00",
+                "finished_at_utc": "2026-07-21T01:59:58+00:00",
+                "result_hash_sha256": "74b443dd5b0e88702a0ab69a139d5746a948e71f7d91e01e111c6b8e3d461386"
+            }
+        },
+        {
+            "id": "batch.medicine",
+            "child_table": "batch",
+            "child_column": "MED_ID",
+            "parent_table": "medicine",
+            "parent_column": "MED_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`MED_ID` = p.`MED_ID`",
+            "counts": {
+                "child_rows": 253,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 180,
+                "orphan_excluding_candidate_sentinel_count": 73,
+                "unmatched_including_candidate_sentinel_count": 73
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.batch.medicine",
+                "query_version": 1,
+                "query_hash_sha256": "7755fe4f94c274526e0d83e6eb03269d8fdcbecdd44dfacdb06f71cbe94ef3b6",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T01:59:58+00:00",
+                "finished_at_utc": "2026-07-21T01:59:58+00:00",
+                "result_hash_sha256": "7e1329f600fb830be9562622a5e250410e1bd84424657b132f1387c6e1ba7d84"
+            }
+        },
+        {
+            "id": "batch.supplier",
+            "child_table": "batch",
+            "child_column": "SUP_ID",
+            "parent_table": "suppliers",
+            "parent_column": "SUP_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`SUP_ID` = p.`SUP_ID`",
+            "counts": {
+                "child_rows": 253,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 253,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 0
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.batch.supplier",
+                "query_version": 1,
+                "query_hash_sha256": "ce04f8f306f0b6859086d4f581a5884da44fac45cff9aef2dc06aedcdf775ae7",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T01:59:58+00:00",
+                "finished_at_utc": "2026-07-21T01:59:58+00:00",
+                "result_hash_sha256": "d35dae75e1e76396ad27cb17b396c9c35e1312b11c129468312cd447ef9d28b2"
+            }
+        },
+        {
+            "id": "batch.user",
+            "child_table": "batch",
+            "child_column": "USER_ID",
+            "parent_table": "users",
+            "parent_column": "USER_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "counts": {
+                "child_rows": 253,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 253,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 0
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.batch.user",
+                "query_version": 1,
+                "query_hash_sha256": "c7cf48d92e05ff6cd03885575d96cc30c199cc6954eb2fcfa614529a40b6e9d9",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T01:59:58+00:00",
+                "finished_at_utc": "2026-07-21T01:59:58+00:00",
+                "result_hash_sha256": "d35dae75e1e76396ad27cb17b396c9c35e1312b11c129468312cd447ef9d28b2"
+            }
+        },
+        {
+            "id": "beds.patient",
+            "child_table": "beds",
+            "child_column": "PAT_ID",
+            "parent_table": "patients",
+            "parent_column": "PAT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`PAT_ID` = p.`PAT_ID`",
+            "counts": {
+                "child_rows": 18,
+                "null_count": 0,
+                "candidate_sentinel_count": 15,
+                "matched_non_sentinel_count": 3,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 15
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.beds.patient",
+                "query_version": 1,
+                "query_hash_sha256": "87bfc37d1b2d798c906709de041d85b0f9437403afde721ea542bd5734280705",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T01:59:58+00:00",
+                "finished_at_utc": "2026-07-21T01:59:58+00:00",
+                "result_hash_sha256": "8fbd5d4b02c7bf3baefa9f92ea31940d8444a6a361d0271602a4ab19919b3a07"
+            }
+        },
+        {
+            "id": "billing.attendance",
+            "child_table": "billing",
+            "child_column": "ATT_ID",
+            "parent_table": "attendance",
+            "parent_column": "ATT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`ATT_ID` = p.`ATT_ID`",
+            "counts": {
+                "child_rows": 111731,
+                "null_count": 0,
+                "candidate_sentinel_count": 30,
+                "matched_non_sentinel_count": 108857,
+                "orphan_excluding_candidate_sentinel_count": 2844,
+                "unmatched_including_candidate_sentinel_count": 2874
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.billing.attendance",
+                "query_version": 1,
+                "query_hash_sha256": "21f1792711c635744bff4c07850f61c39c09b37421cd82f3ceaccc2ea06b00e4",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T01:59:58+00:00",
+                "finished_at_utc": "2026-07-21T02:00:12+00:00",
+                "result_hash_sha256": "245368d8b5b0e720792a0f837453250ff225da968d8a8e56ae85c63d10f1db23"
+            }
+        },
+        {
+            "id": "billing.department",
+            "child_table": "billing",
+            "child_column": "DEP_ID",
+            "parent_table": "departements",
+            "parent_column": "DEP_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`DEP_ID` = p.`DEP_ID`",
+            "counts": {
+                "child_rows": 111731,
+                "null_count": 0,
+                "candidate_sentinel_count": 16,
+                "matched_non_sentinel_count": 111715,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 16
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.billing.department",
+                "query_version": 1,
+                "query_hash_sha256": "1814c3a993800d214075ecc879630edc43e88ca060d5fa3490c2f7087d62eaa0",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:12+00:00",
+                "finished_at_utc": "2026-07-21T02:00:12+00:00",
+                "result_hash_sha256": "87604b2f9f33e0bf5c39767914d8254b03be64cbd37189aa9b30e8265ec55661"
+            }
+        },
+        {
+            "id": "billing.service",
+            "child_table": "billing",
+            "child_column": "SERV_ID",
+            "parent_table": "services",
+            "parent_column": "SERV_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`SERV_ID` = p.`SERV_ID`",
+            "counts": {
+                "child_rows": 111731,
+                "null_count": 0,
+                "candidate_sentinel_count": 111731,
+                "matched_non_sentinel_count": 0,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 111731
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.billing.service",
+                "query_version": 1,
+                "query_hash_sha256": "d5d60ea8f2369ccac4fa6f81d154b22592e1859ce9a8cbbed0549b8ed6144aaf",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:12+00:00",
+                "finished_at_utc": "2026-07-21T02:00:12+00:00",
+                "result_hash_sha256": "a81d75d355a1f948df5ac42e7c55651c3a23b35d1b90d8c3ce60b2bc25733577"
+            }
+        },
+        {
+            "id": "billing.user",
+            "child_table": "billing",
+            "child_column": "USER_ID",
+            "parent_table": "users",
+            "parent_column": "USER_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "counts": {
+                "child_rows": 111731,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 24545,
+                "orphan_excluding_candidate_sentinel_count": 87186,
+                "unmatched_including_candidate_sentinel_count": 87186
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.billing.user",
+                "query_version": 1,
+                "query_hash_sha256": "cfb918066c22213cf6391b5b1374e22a5975e16524cb8638897512c6fda6f4d5",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:12+00:00",
+                "finished_at_utc": "2026-07-21T02:00:13+00:00",
+                "result_hash_sha256": "87e2ccacc881b6205f0df977dec42d07c963748de6098ab2960536b3d8b140d8"
+            }
+        },
+        {
+            "id": "claims.attendance",
+            "child_table": "claims",
+            "child_column": "ATT_ID",
+            "parent_table": "attendance",
+            "parent_column": "ATT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`ATT_ID` = p.`ATT_ID`",
+            "counts": {
+                "child_rows": 31892,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 30103,
+                "orphan_excluding_candidate_sentinel_count": 1789,
+                "unmatched_including_candidate_sentinel_count": 1789
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.claims.attendance",
+                "query_version": 1,
+                "query_hash_sha256": "8001acce40f66d69a28c9fbbab458c63628616e7695611eaac043aedb1fb0994",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:13+00:00",
+                "finished_at_utc": "2026-07-21T02:00:19+00:00",
+                "result_hash_sha256": "eb2e6ee043b1aaa9905dae9ff2fd6538a8790a5a951d35a702520dd2eef560c5"
+            }
+        },
+        {
+            "id": "claims.specialty",
+            "child_table": "claims",
+            "child_column": "SPEC_ID",
+            "parent_table": "claims_specialty",
+            "parent_column": "SPEC_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`SPEC_ID` = p.`SPEC_ID`",
+            "counts": {
+                "child_rows": 31892,
+                "null_count": 0,
+                "candidate_sentinel_count": 1,
+                "matched_non_sentinel_count": 31891,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 1
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.claims.specialty",
+                "query_version": 1,
+                "query_hash_sha256": "b2df2193de4be94bb31d14e710771634db7b12ba1dd944e3551849f626e7880b",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:19+00:00",
+                "finished_at_utc": "2026-07-21T02:00:19+00:00",
+                "result_hash_sha256": "3f6cfb5c3dd4975760ce242bdca697b3a11bde2185b83ef84441ea96f6dffc25"
+            }
+        },
+        {
+            "id": "claims_diagnosis.claim",
+            "child_table": "claims_diagnosis",
+            "child_column": "CLAIM_ID",
+            "parent_table": "claims",
+            "parent_column": "CLAIM_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`CLAIM_ID` = p.`CLAIM_ID`",
+            "counts": {
+                "child_rows": 57776,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 57507,
+                "orphan_excluding_candidate_sentinel_count": 269,
+                "unmatched_including_candidate_sentinel_count": 269
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.claims_diagnosis.claim",
+                "query_version": 1,
+                "query_hash_sha256": "76537d7b62ce2f69e9ba92d91c200a68ad55d1c7e28dafcab2e554a791b42de0",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:19+00:00",
+                "finished_at_utc": "2026-07-21T02:00:19+00:00",
+                "result_hash_sha256": "fae35c039951be2392af63cee0cef0c32c743789e7943a373fc1dcc59071b130"
+            }
+        },
+        {
+            "id": "claims_diagnosis.diagnosis",
+            "child_table": "claims_diagnosis",
+            "child_column": "LDIAG_ID",
+            "parent_table": "list_diagnosis",
+            "parent_column": "LDIAG_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`LDIAG_ID` = p.`LDIAG_ID`",
+            "counts": {
+                "child_rows": 57776,
+                "null_count": 0,
+                "candidate_sentinel_count": 8,
+                "matched_non_sentinel_count": 54665,
+                "orphan_excluding_candidate_sentinel_count": 3103,
+                "unmatched_including_candidate_sentinel_count": 3111
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.claims_diagnosis.diagnosis",
+                "query_version": 1,
+                "query_hash_sha256": "dac9a56368ceeeb2e368d1fdf6eff11592a4785b393366343124a6109d15f345",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:19+00:00",
+                "finished_at_utc": "2026-07-21T02:00:20+00:00",
+                "result_hash_sha256": "ae0aaf80e95904420de19c3d07b4931e6370f952bd4af1005390caa8850240fc"
+            }
+        },
+        {
+            "id": "claims_prescriptions.claim",
+            "child_table": "claims_prescriptions",
+            "child_column": "CLAIM_ID",
+            "parent_table": "claims",
+            "parent_column": "CLAIM_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`CLAIM_ID` = p.`CLAIM_ID`",
+            "counts": {
+                "child_rows": 112152,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 107411,
+                "orphan_excluding_candidate_sentinel_count": 4741,
+                "unmatched_including_candidate_sentinel_count": 4741
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.claims_prescriptions.claim",
+                "query_version": 1,
+                "query_hash_sha256": "0976f3a5b71690a315e5a521f84965bd7b078fe3d087f255964ac357f5dc9b31",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:20+00:00",
+                "finished_at_utc": "2026-07-21T02:00:20+00:00",
+                "result_hash_sha256": "af2d9b975a984de9f85573ae715ca7a2d1b77d72d91966c6e6003ca3ab4a9c7b"
+            }
+        },
+        {
+            "id": "claims_prescriptions.medicine",
+            "child_table": "claims_prescriptions",
+            "child_column": "MED_ID",
+            "parent_table": "medicine",
+            "parent_column": "MED_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`MED_ID` = p.`MED_ID`",
+            "counts": {
+                "child_rows": 112152,
+                "null_count": 18,
+                "candidate_sentinel_count": 4,
+                "matched_non_sentinel_count": 110762,
+                "orphan_excluding_candidate_sentinel_count": 1368,
+                "unmatched_including_candidate_sentinel_count": 1372
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.claims_prescriptions.medicine",
+                "query_version": 1,
+                "query_hash_sha256": "cd7ea178133806ea4b27b4e538065fbc844b2162c7b04a98d44b97b379ab696c",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:20+00:00",
+                "finished_at_utc": "2026-07-21T02:00:21+00:00",
+                "result_hash_sha256": "f9baf742f20a128048361a19482052dd6df2ad359fbf19a814e1c84a3343645e"
+            }
+        },
+        {
+            "id": "claims_procedures.claim",
+            "child_table": "claims_procedures",
+            "child_column": "CLAIM_ID",
+            "parent_table": "claims",
+            "parent_column": "CLAIM_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`CLAIM_ID` = p.`CLAIM_ID`",
+            "counts": {
+                "child_rows": 3648,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 3629,
+                "orphan_excluding_candidate_sentinel_count": 19,
+                "unmatched_including_candidate_sentinel_count": 19
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.claims_procedures.claim",
+                "query_version": 1,
+                "query_hash_sha256": "8c694dad281c9d74528598d8f6a32002d54badb84273e0032ff68508e225e53a",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:21+00:00",
+                "finished_at_utc": "2026-07-21T02:00:21+00:00",
+                "result_hash_sha256": "d739b2be9cba05c7571958840e02e0e4d5b7ede56d8a6a296996522d02fe154d"
+            }
+        },
+        {
+            "id": "claims_procedures.procedure",
+            "child_table": "claims_procedures",
+            "child_column": "LPRO_ID",
+            "parent_table": "list_procedures",
+            "parent_column": "LPRO_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`LPRO_ID` = p.`LPRO_ID`",
+            "counts": {
+                "child_rows": 3648,
+                "null_count": 5,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 3643,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 0
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.claims_procedures.procedure",
+                "query_version": 1,
+                "query_hash_sha256": "99c1addf7db1cc32a56c3a9d67eec04da14ebb4fbcd1690bab72b6e37e8907ad",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:21+00:00",
+                "finished_at_utc": "2026-07-21T02:00:21+00:00",
+                "result_hash_sha256": "175986d6fa0e39d88fd5ef4f578ec75631a719f3932d041eeedc47f3148d1d78"
+            }
+        },
+        {
+            "id": "claims_scan_lab.claim",
+            "child_table": "claims_scan_lab",
+            "child_column": "CLAIM_ID",
+            "parent_table": "claims",
+            "parent_column": "CLAIM_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`CLAIM_ID` = p.`CLAIM_ID`",
+            "counts": {
+                "child_rows": 3,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 3,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 0
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.claims_scan_lab.claim",
+                "query_version": 1,
+                "query_hash_sha256": "6065f612357860964f420a5e033736206fb99e5d35fc0b71b3be2e4083001d86",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:21+00:00",
+                "finished_at_utc": "2026-07-21T02:00:21+00:00",
+                "result_hash_sha256": "159569927adf1b7469d96c270447510756379a3fe3d1ac5acf6fdd4b0257c795"
+            }
+        },
+        {
+            "id": "claims_scan_lab.procedure",
+            "child_table": "claims_scan_lab",
+            "child_column": "LPRO_ID",
+            "parent_table": "list_procedures",
+            "parent_column": "LPRO_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`LPRO_ID` = p.`LPRO_ID`",
+            "counts": {
+                "child_rows": 3,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 3,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 0
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.claims_scan_lab.procedure",
+                "query_version": 1,
+                "query_hash_sha256": "4567d94ea860815d2798b18d83b1ac785ddc72e8f0ff9509557b35937b540673",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:21+00:00",
+                "finished_at_utc": "2026-07-21T02:00:21+00:00",
+                "result_hash_sha256": "159569927adf1b7469d96c270447510756379a3fe3d1ac5acf6fdd4b0257c795"
+            }
+        },
+        {
+            "id": "consult_complaints.attendance",
+            "child_table": "consult_complaints",
+            "child_column": "ATT_ID",
+            "parent_table": "attendance",
+            "parent_column": "ATT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`ATT_ID` = p.`ATT_ID`",
+            "counts": {
+                "child_rows": 65244,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 62886,
+                "orphan_excluding_candidate_sentinel_count": 2358,
+                "unmatched_including_candidate_sentinel_count": 2358
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_complaints.attendance",
+                "query_version": 1,
+                "query_hash_sha256": "1ccdebb35bb1a07930165d4c74b2fb1a128d8777dff7d2cee3db2feb94b96374",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:21+00:00",
+                "finished_at_utc": "2026-07-21T02:00:34+00:00",
+                "result_hash_sha256": "2656feb0d24c3a926033e6ca821a9e90bf72919b7ce4a790dfcbd3fd947d7c55"
+            }
+        },
+        {
+            "id": "consult_complaints.catalogue",
+            "child_table": "consult_complaints",
+            "child_column": "LCOMP_ID",
+            "parent_table": "list_complaints",
+            "parent_column": "LCOMP_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`LCOMP_ID` = p.`LCOMP_ID`",
+            "counts": {
+                "child_rows": 65244,
+                "null_count": 0,
+                "candidate_sentinel_count": 95,
+                "matched_non_sentinel_count": 65149,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 95
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_complaints.catalogue",
+                "query_version": 1,
+                "query_hash_sha256": "a3e4ec14b19283a6dab4a6e6793d926d8980fb072d67114ff1861ad37e797877",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:34+00:00",
+                "finished_at_utc": "2026-07-21T02:00:35+00:00",
+                "result_hash_sha256": "bc8f414d50a9138a282e72c7e730e889a657de4ea4c5f7698836856b4c68691f"
+            }
+        },
+        {
+            "id": "consult_diagnosis.attendance",
+            "child_table": "consult_diagnosis",
+            "child_column": "ATT_ID",
+            "parent_table": "attendance",
+            "parent_column": "ATT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`ATT_ID` = p.`ATT_ID`",
+            "counts": {
+                "child_rows": 123940,
+                "null_count": 0,
+                "candidate_sentinel_count": 4,
+                "matched_non_sentinel_count": 122975,
+                "orphan_excluding_candidate_sentinel_count": 961,
+                "unmatched_including_candidate_sentinel_count": 965
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_diagnosis.attendance",
+                "query_version": 1,
+                "query_hash_sha256": "8a567102cb67d7e8350c142801a219219983eb6328dbda136619e5845a44cc5f",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:35+00:00",
+                "finished_at_utc": "2026-07-21T02:00:48+00:00",
+                "result_hash_sha256": "8026af42733a6156ee4cb0ad9d216e577dd636601b77becce86fcde70c971bf8"
+            }
+        },
+        {
+            "id": "consult_diagnosis.catalogue",
+            "child_table": "consult_diagnosis",
+            "child_column": "LDIAG_ID",
+            "parent_table": "list_diagnosis",
+            "parent_column": "LDIAG_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`LDIAG_ID` = p.`LDIAG_ID`",
+            "counts": {
+                "child_rows": 123940,
+                "null_count": 0,
+                "candidate_sentinel_count": 137,
+                "matched_non_sentinel_count": 19321,
+                "orphan_excluding_candidate_sentinel_count": 104482,
+                "unmatched_including_candidate_sentinel_count": 104619
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_diagnosis.catalogue",
+                "query_version": 1,
+                "query_hash_sha256": "f4e79d1d4620e55b07aeb5759e977ca1f668594597dde2acaaf0511e03089d6a",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:48+00:00",
+                "finished_at_utc": "2026-07-21T02:00:48+00:00",
+                "result_hash_sha256": "00612bc0f93379880feb54d2df29969ba61d654eb0b2cacc673c54e7a83612c4"
+            }
+        },
+        {
+            "id": "consult_history.attendance",
+            "child_table": "consult_history",
+            "child_column": "ATT_ID",
+            "parent_table": "attendance",
+            "parent_column": "ATT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`ATT_ID` = p.`ATT_ID`",
+            "counts": {
+                "child_rows": 34532,
+                "null_count": 0,
+                "candidate_sentinel_count": 10,
+                "matched_non_sentinel_count": 33992,
+                "orphan_excluding_candidate_sentinel_count": 530,
+                "unmatched_including_candidate_sentinel_count": 540
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_history.attendance",
+                "query_version": 1,
+                "query_hash_sha256": "153029b6387419d2995166dad445814ab42cf05ff5738a8772145eddb02ca057",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:48+00:00",
+                "finished_at_utc": "2026-07-21T02:00:52+00:00",
+                "result_hash_sha256": "71b47da2f0c91b75ffa47280e319a80c7bbe91e6ad5d85116c06d74ebef855b7"
+            }
+        },
+        {
+            "id": "consult_prescriptions.attendance",
+            "child_table": "consult_prescriptions",
+            "child_column": "ATT_ID",
+            "parent_table": "attendance",
+            "parent_column": "ATT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`ATT_ID` = p.`ATT_ID`",
+            "counts": {
+                "child_rows": 210902,
+                "null_count": 0,
+                "candidate_sentinel_count": 9,
+                "matched_non_sentinel_count": 208591,
+                "orphan_excluding_candidate_sentinel_count": 2302,
+                "unmatched_including_candidate_sentinel_count": 2311
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_prescriptions.attendance",
+                "query_version": 1,
+                "query_hash_sha256": "b64e993bb9884c6a8e05260ef68aa718b50d9e7ddc715c847069b338ffe7ae8a",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:52+00:00",
+                "finished_at_utc": "2026-07-21T02:00:55+00:00",
+                "result_hash_sha256": "b990a69cd3e239bb493a0f02926b949d402e8e32867ba48055560f6a0b80f74a"
+            }
+        },
+        {
+            "id": "consult_prescriptions.medicine",
+            "child_table": "consult_prescriptions",
+            "child_column": "MED_ID",
+            "parent_table": "medicine",
+            "parent_column": "MED_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`MED_ID` = p.`MED_ID`",
+            "counts": {
+                "child_rows": 210902,
+                "null_count": 0,
+                "candidate_sentinel_count": 278,
+                "matched_non_sentinel_count": 161421,
+                "orphan_excluding_candidate_sentinel_count": 49203,
+                "unmatched_including_candidate_sentinel_count": 49481
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_prescriptions.medicine",
+                "query_version": 1,
+                "query_hash_sha256": "ff20801199306da5c8f7e2cc5e0b29d65778b9f1d12236f3f535192b51571fed",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:55+00:00",
+                "finished_at_utc": "2026-07-21T02:00:56+00:00",
+                "result_hash_sha256": "6f2b53d265bbc44ba5bf4f01bf91fa30f3dbe09530e82570db94f98f28334041"
+            }
+        },
+        {
+            "id": "consult_prescriptions.billing",
+            "child_table": "consult_prescriptions",
+            "child_column": "BILL_ID",
+            "parent_table": "billing",
+            "parent_column": "BILL_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`BILL_ID` = p.`BILL_ID`",
+            "counts": {
+                "child_rows": 210902,
+                "null_count": 0,
+                "candidate_sentinel_count": 91329,
+                "matched_non_sentinel_count": 116620,
+                "orphan_excluding_candidate_sentinel_count": 2953,
+                "unmatched_including_candidate_sentinel_count": 94282
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_prescriptions.billing",
+                "query_version": 1,
+                "query_hash_sha256": "868d11ab341cb9dee0db1d8c3a2e555005c4a0f86c0248c04d22aa8324cc8539",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:56+00:00",
+                "finished_at_utc": "2026-07-21T02:00:56+00:00",
+                "result_hash_sha256": "ce19faa0f55802a4a9bf7a94bf25476e87cd4c7814209886a6473d091b0d19fb"
+            }
+        },
+        {
+            "id": "consult_prescriptions.user",
+            "child_table": "consult_prescriptions",
+            "child_column": "USER_ID",
+            "parent_table": "users",
+            "parent_column": "USER_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "counts": {
+                "child_rows": 210902,
+                "null_count": 0,
+                "candidate_sentinel_count": 14144,
+                "matched_non_sentinel_count": 93823,
+                "orphan_excluding_candidate_sentinel_count": 102935,
+                "unmatched_including_candidate_sentinel_count": 117079
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_prescriptions.user",
+                "query_version": 1,
+                "query_hash_sha256": "e0c967827c51c1046165f231dac166731f6baf66bb6de943c980140467525e7a",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:56+00:00",
+                "finished_at_utc": "2026-07-21T02:00:57+00:00",
+                "result_hash_sha256": "313a5c5a87168a3490a79ddf5cd1e8d1733630221061ffaaf1f5da5a2cec183d"
+            }
+        },
+        {
+            "id": "consult_prescriptions.department",
+            "child_table": "consult_prescriptions",
+            "child_column": "DEP_ID",
+            "parent_table": "departements",
+            "parent_column": "DEP_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`DEP_ID` = p.`DEP_ID`",
+            "counts": {
+                "child_rows": 210902,
+                "null_count": 0,
+                "candidate_sentinel_count": 1,
+                "matched_non_sentinel_count": 210901,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 1
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_prescriptions.department",
+                "query_version": 1,
+                "query_hash_sha256": "4ccd30b6b530ebb0ade1d00262232b3d15002c29380ebdd644b4d3a54f807795",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:57+00:00",
+                "finished_at_utc": "2026-07-21T02:00:57+00:00",
+                "result_hash_sha256": "f606c87f1e469502aa5b2396414d372c2d58c2fe294cb4ed801e61debe3291db"
+            }
+        },
+        {
+            "id": "consult_procedures.attendance",
+            "child_table": "consult_procedures",
+            "child_column": "ATT_ID",
+            "parent_table": "attendance",
+            "parent_column": "ATT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`ATT_ID` = p.`ATT_ID`",
+            "counts": {
+                "child_rows": 121,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 120,
+                "orphan_excluding_candidate_sentinel_count": 1,
+                "unmatched_including_candidate_sentinel_count": 1
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_procedures.attendance",
+                "query_version": 1,
+                "query_hash_sha256": "a3793bcf692aa0ea66426151281fd9148ea6e2d909079c9160811a32a7722090",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:57+00:00",
+                "finished_at_utc": "2026-07-21T02:00:58+00:00",
+                "result_hash_sha256": "b90afab17cdfca470448e22adf9af076fdefa29fcf609c3b36d296843979df5a"
+            }
+        },
+        {
+            "id": "consult_procedures.procedure",
+            "child_table": "consult_procedures",
+            "child_column": "LPRO_ID",
+            "parent_table": "list_procedures",
+            "parent_column": "LPRO_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`LPRO_ID` = p.`LPRO_ID`",
+            "counts": {
+                "child_rows": 121,
+                "null_count": 0,
+                "candidate_sentinel_count": 1,
+                "matched_non_sentinel_count": 120,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 1
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_procedures.procedure",
+                "query_version": 1,
+                "query_hash_sha256": "86b1e4c74d077b3f928848c3707966b9a5092cbca501a724272857c7ed6a4204",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:58+00:00",
+                "finished_at_utc": "2026-07-21T02:00:58+00:00",
+                "result_hash_sha256": "ca8d6cfd5727b546314b4537f447ffee7e9c0471121c0ac13c770cfe1bb594ab"
+            }
+        },
+        {
+            "id": "consult_scan_lab.attendance",
+            "child_table": "consult_scan_lab",
+            "child_column": "ATT_ID",
+            "parent_table": "attendance",
+            "parent_column": "ATT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`ATT_ID` = p.`ATT_ID`",
+            "counts": {
+                "child_rows": 72680,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 71390,
+                "orphan_excluding_candidate_sentinel_count": 1290,
+                "unmatched_including_candidate_sentinel_count": 1290
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_scan_lab.attendance",
+                "query_version": 1,
+                "query_hash_sha256": "9197e5a6912fcce745af307b14d49657fd5faf1cac2b937a211c7dd77faabbb8",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:00:58+00:00",
+                "finished_at_utc": "2026-07-21T02:01:00+00:00",
+                "result_hash_sha256": "94a7f2b268c26aa19eef05fcf6d6f92519eb73cd17450fac6b4cf71ae24ef7d1"
+            }
+        },
+        {
+            "id": "consult_scan_lab.service",
+            "child_table": "consult_scan_lab",
+            "child_column": "SERV_ID",
+            "parent_table": "services",
+            "parent_column": "SERV_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`SERV_ID` = p.`SERV_ID`",
+            "counts": {
+                "child_rows": 72680,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 68634,
+                "orphan_excluding_candidate_sentinel_count": 4046,
+                "unmatched_including_candidate_sentinel_count": 4046
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_scan_lab.service",
+                "query_version": 1,
+                "query_hash_sha256": "5855a6e9aa10018bcb4c32f3d5ba4345074355bba0ffbbcd8b98582b3512fe35",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:00+00:00",
+                "finished_at_utc": "2026-07-21T02:01:00+00:00",
+                "result_hash_sha256": "d634a794ebb7c5ba9fa88c2c91d4e9f265e2ac73676ea2996c1de5d61d1d0b09"
+            }
+        },
+        {
+            "id": "consult_scan_lab.user",
+            "child_table": "consult_scan_lab",
+            "child_column": "USER_ID",
+            "parent_table": "users",
+            "parent_column": "USER_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "counts": {
+                "child_rows": 72680,
+                "null_count": 0,
+                "candidate_sentinel_count": 72680,
+                "matched_non_sentinel_count": 0,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 72680
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_scan_lab.user",
+                "query_version": 1,
+                "query_hash_sha256": "f874005a35456134a63375e3530b28dd1656db841877dfae8b18d1e788443742",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:00+00:00",
+                "finished_at_utc": "2026-07-21T02:01:01+00:00",
+                "result_hash_sha256": "bc27e34ee09522283e99a5b7d15d22b28159b9d8546dfab1de90863974cc3c5a"
+            }
+        },
+        {
+            "id": "consult_services.attendance",
+            "child_table": "consult_services",
+            "child_column": "ATT_ID",
+            "parent_table": "attendance",
+            "parent_column": "ATT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`ATT_ID` = p.`ATT_ID`",
+            "counts": {
+                "child_rows": 60260,
+                "null_count": 0,
+                "candidate_sentinel_count": 2,
+                "matched_non_sentinel_count": 57576,
+                "orphan_excluding_candidate_sentinel_count": 2682,
+                "unmatched_including_candidate_sentinel_count": 2684
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_services.attendance",
+                "query_version": 1,
+                "query_hash_sha256": "e841f1b175c255b1a51855414650398b23a2cb7638c48e5739bab3aef34b98f4",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:01+00:00",
+                "finished_at_utc": "2026-07-21T02:01:03+00:00",
+                "result_hash_sha256": "6b4dc71891a988b6c6b5e855d1469679917f51d87d174b6fe790a213fec6d0b0"
+            }
+        },
+        {
+            "id": "consult_services.service",
+            "child_table": "consult_services",
+            "child_column": "SERV_ID",
+            "parent_table": "services",
+            "parent_column": "SERV_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`SERV_ID` = p.`SERV_ID`",
+            "counts": {
+                "child_rows": 60260,
+                "null_count": 0,
+                "candidate_sentinel_count": 40,
+                "matched_non_sentinel_count": 47416,
+                "orphan_excluding_candidate_sentinel_count": 12804,
+                "unmatched_including_candidate_sentinel_count": 12844
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_services.service",
+                "query_version": 1,
+                "query_hash_sha256": "e225fb95b3fed4d86fe08040f4cb86626b8bb159fa1936efbfbdb2543accf607",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:03+00:00",
+                "finished_at_utc": "2026-07-21T02:01:04+00:00",
+                "result_hash_sha256": "1502989eb0010000fcba9296d9b13e284d774b5ae28bbd2e6dc5ac0ee28c511a"
+            }
+        },
+        {
+            "id": "consult_treatment.attendance",
+            "child_table": "consult_treatment",
+            "child_column": "ATT_ID",
+            "parent_table": "attendance",
+            "parent_column": "ATT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`ATT_ID` = p.`ATT_ID`",
+            "counts": {
+                "child_rows": 1926,
+                "null_count": 0,
+                "candidate_sentinel_count": 1,
+                "matched_non_sentinel_count": 1893,
+                "orphan_excluding_candidate_sentinel_count": 32,
+                "unmatched_including_candidate_sentinel_count": 33
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.consult_treatment.attendance",
+                "query_version": 1,
+                "query_hash_sha256": "0d6f6312f43dbba16a2ee0414b18d2a8a8eb16aab6b4bf52f327cfe9b5408b5b",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:04+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "0101ed0ae6117fe807a5612ab40982afb5fdab369131fc6554f2457e7725ffb4"
+            }
+        },
+        {
+            "id": "insurance.patient",
+            "child_table": "insurance",
+            "child_column": "PAT_ID",
+            "parent_table": "patients",
+            "parent_column": "PAT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`PAT_ID` = p.`PAT_ID`",
+            "counts": {
+                "child_rows": 31307,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 30991,
+                "orphan_excluding_candidate_sentinel_count": 316,
+                "unmatched_including_candidate_sentinel_count": 316
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.insurance.patient",
+                "query_version": 1,
+                "query_hash_sha256": "d2ce22f5f34bbb9e06daeee8b274f35bbc9d719ca7abe53934e4584ff4384547",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "7c7595cd64cd5797587e0f2639ea1e87ed3c071569b9cbf5312b8657ff504160"
+            }
+        },
+        {
+            "id": "list_causes.diagnosis",
+            "child_table": "list_causes",
+            "child_column": "LDIAG_ID",
+            "parent_table": "list_diagnosis",
+            "parent_column": "LDIAG_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`LDIAG_ID` = p.`LDIAG_ID`",
+            "counts": {
+                "child_rows": 18,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 0,
+                "orphan_excluding_candidate_sentinel_count": 18,
+                "unmatched_including_candidate_sentinel_count": 18
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.list_causes.diagnosis",
+                "query_version": 1,
+                "query_hash_sha256": "a5d50ea1e36124b66438158c2b189e466c8544e4194a145ed5f983d653302d10",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "dcb62b311a5cdda538b4265b4189e0c3cb1c42c781c9b9d875bca06d1443336a"
+            }
+        },
+        {
+            "id": "list_diagnosis.disorder",
+            "child_table": "list_diagnosis",
+            "child_column": "LDIS_ID",
+            "parent_table": "list_disorder",
+            "parent_column": "LDIS_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`LDIS_ID` = p.`LDIS_ID`",
+            "counts": {
+                "child_rows": 5948,
+                "null_count": 0,
+                "candidate_sentinel_count": 5948,
+                "matched_non_sentinel_count": 0,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 5948
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.list_diagnosis.disorder",
+                "query_version": 1,
+                "query_hash_sha256": "9182572e69b2852e14826e13e791e3e56f4ed3b456677bdbb469b204491a892c",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "127d90f84f538555342c92ff844e77a950c6a846084e719d356a0af9694ddbff"
+            }
+        },
+        {
+            "id": "list_signs.diagnosis",
+            "child_table": "list_signs",
+            "child_column": "LDIAG_ID",
+            "parent_table": "list_diagnosis",
+            "parent_column": "LDIAG_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`LDIAG_ID` = p.`LDIAG_ID`",
+            "counts": {
+                "child_rows": 2,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 0,
+                "orphan_excluding_candidate_sentinel_count": 2,
+                "unmatched_including_candidate_sentinel_count": 2
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.list_signs.diagnosis",
+                "query_version": 1,
+                "query_hash_sha256": "7aac955586ba1121c10775421cfa7382796025dc7c8377d71ee09f73c56dafce",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "d9027068aa07d94e316bac2afada10b8e6d929e409e963fac4a87629b17eabfe"
+            }
+        },
+        {
+            "id": "mat_family.patient",
+            "child_table": "mat_family",
+            "child_column": "PAT_ID",
+            "parent_table": "patients",
+            "parent_column": "PAT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`PAT_ID` = p.`PAT_ID`",
+            "counts": {
+                "child_rows": 0,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 0,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 0
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.mat_family.patient",
+                "query_version": 1,
+                "query_hash_sha256": "995013d23c23ab1de670e0f6421156eb1abccc47aaffa28d0d1f2f110ae8e9b2",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "07e050b3e91a6ffe01191cec1e8ccbba0c25b3b1ed0675db3ce16aa6ae8dc4c4"
+            }
+        },
+        {
+            "id": "mat_obstetrics.patient",
+            "child_table": "mat_obstetrics",
+            "child_column": "PAT_ID",
+            "parent_table": "patients",
+            "parent_column": "PAT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`PAT_ID` = p.`PAT_ID`",
+            "counts": {
+                "child_rows": 0,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 0,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 0
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.mat_obstetrics.patient",
+                "query_version": 1,
+                "query_hash_sha256": "11fa6cc1f1df763f882578691d75d5c60f31e57abddffcdb072129136ea7709d",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "07e050b3e91a6ffe01191cec1e8ccbba0c25b3b1ed0675db3ce16aa6ae8dc4c4"
+            }
+        },
+        {
+            "id": "medicine.department",
+            "child_table": "medicine",
+            "child_column": "DEP_ID",
+            "parent_table": "departements",
+            "parent_column": "DEP_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`DEP_ID` = p.`DEP_ID`",
+            "counts": {
+                "child_rows": 4303,
+                "null_count": 0,
+                "candidate_sentinel_count": 153,
+                "matched_non_sentinel_count": 4150,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 153
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.medicine.department",
+                "query_version": 1,
+                "query_hash_sha256": "658689ed511d7a34baf8ceb261f1bca4d2e4beb8ce1cae94b6bb4eb09cd69611",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "943cc299177c383b6445e69a1fa22f99b83ed519789f8827fa36216337d80892"
+            }
+        },
+        {
+            "id": "med_pharm.medicine",
+            "child_table": "med_pharm",
+            "child_column": "MED_ID",
+            "parent_table": "medicine",
+            "parent_column": "MED_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`MED_ID` = p.`MED_ID`",
+            "counts": {
+                "child_rows": 8360,
+                "null_count": 0,
+                "candidate_sentinel_count": 1,
+                "matched_non_sentinel_count": 4081,
+                "orphan_excluding_candidate_sentinel_count": 4278,
+                "unmatched_including_candidate_sentinel_count": 4279
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.med_pharm.medicine",
+                "query_version": 1,
+                "query_hash_sha256": "9641f9306240a7c82ee4a11bb1397bdaf10eaad0218c68bd629bb7a75c467fcd",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "e108842aedd5a680ac02b8140e0ba1f2fb5fbd6528ed1563c5b6657680c691bf"
+            }
+        },
+        {
+            "id": "med_store.medicine",
+            "child_table": "med_store",
+            "child_column": "MED_ID",
+            "parent_table": "medicine",
+            "parent_column": "MED_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`MED_ID` = p.`MED_ID`",
+            "counts": {
+                "child_rows": 8356,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 4091,
+                "orphan_excluding_candidate_sentinel_count": 4265,
+                "unmatched_including_candidate_sentinel_count": 4265
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.med_store.medicine",
+                "query_version": 1,
+                "query_hash_sha256": "6928979229768ff27067048261b41d49191ab7493748ff21456c0df3138a381e",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "ca1588155361744aa8f899932d6f7817e8fef0a907236c6348495c4c7b7d0398"
+            }
+        },
+        {
+            "id": "notifications.from_department",
+            "child_table": "notifications",
+            "child_column": "ReqFromDep",
+            "parent_table": "departements",
+            "parent_column": "DEP_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`ReqFromDep` = p.`DEP_ID`",
+            "counts": {
+                "child_rows": 141,
+                "null_count": 0,
+                "candidate_sentinel_count": 141,
+                "matched_non_sentinel_count": 0,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 141
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.notifications.from_department",
+                "query_version": 1,
+                "query_hash_sha256": "78d64d0a0a00a62f4ebd9ae0a0dd31d82d570c467909cba67f6d1e9e9c758dad",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "c915324719d0d20d3362ec05148617fdaa4f61d0cccbdb3bb8d9eb04025af5bc"
+            }
+        },
+        {
+            "id": "notifications.to_department",
+            "child_table": "notifications",
+            "child_column": "ReqToDep",
+            "parent_table": "departements",
+            "parent_column": "DEP_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`ReqToDep` = p.`DEP_ID`",
+            "counts": {
+                "child_rows": 141,
+                "null_count": 0,
+                "candidate_sentinel_count": 141,
+                "matched_non_sentinel_count": 0,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 141
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.notifications.to_department",
+                "query_version": 1,
+                "query_hash_sha256": "ecd37faeac2ad6945937914de6a74cc05f1d12a0ab8d44fa34816b177226fbcc",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "c915324719d0d20d3362ec05148617fdaa4f61d0cccbdb3bb8d9eb04025af5bc"
+            }
+        },
+        {
+            "id": "nurses_note.attendance",
+            "child_table": "nurses_note",
+            "child_column": "ATT_ID",
+            "parent_table": "attendance",
+            "parent_column": "ATT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`ATT_ID` = p.`ATT_ID`",
+            "counts": {
+                "child_rows": 29,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 29,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 0
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.nurses_note.attendance",
+                "query_version": 1,
+                "query_hash_sha256": "631f19928c041a1b81b77e47c5ad86abb1ac0116a65252f2c012b06ae2206205",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "3748d559aee66662869ce632c8861ae7440383b9cb4caa9f8dca799bf9d62cf8"
+            }
+        },
+        {
+            "id": "nurses_note.user",
+            "child_table": "nurses_note",
+            "child_column": "USER_ID",
+            "parent_table": "users",
+            "parent_column": "USER_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "counts": {
+                "child_rows": 29,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 29,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 0
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.nurses_note.user",
+                "query_version": 1,
+                "query_hash_sha256": "ae45dccdf5add10cc3176694babded7652597a22a2fc5437b1e1c8e4357b08ed",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "3748d559aee66662869ce632c8861ae7440383b9cb4caa9f8dca799bf9d62cf8"
+            }
+        },
+        {
+            "id": "request.medicine",
+            "child_table": "request",
+            "child_column": "MED_ID",
+            "parent_table": "medicine",
+            "parent_column": "MED_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`MED_ID` = p.`MED_ID`",
+            "counts": {
+                "child_rows": 146,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 135,
+                "orphan_excluding_candidate_sentinel_count": 11,
+                "unmatched_including_candidate_sentinel_count": 11
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.request.medicine",
+                "query_version": 1,
+                "query_hash_sha256": "69173a56a81259ef7bd17ac21290b183cd0520b900e7791579fd8a63d5bd3fd1",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "1dbe14478b5a221e5d2b9d9e1b9755309a0d1087f871955f95b9eb40f1f84bfe"
+            }
+        },
+        {
+            "id": "request.department",
+            "child_table": "request",
+            "child_column": "DEP_ID",
+            "parent_table": "departements",
+            "parent_column": "DEP_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`DEP_ID` = p.`DEP_ID`",
+            "counts": {
+                "child_rows": 146,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 146,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 0
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.request.department",
+                "query_version": 1,
+                "query_hash_sha256": "272ed392c232d5c1545d0359e98d6d729b30bbc063cf3339159984c87faad7fd",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "7e5bde9e8a954c775e8c1b3ffac437492801f2f47ecb0d82388b282a899967c2"
+            }
+        },
+        {
+            "id": "request.user",
+            "child_table": "request",
+            "child_column": "USER_ID",
+            "parent_table": "users",
+            "parent_column": "USER_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "counts": {
+                "child_rows": 146,
+                "null_count": 0,
+                "candidate_sentinel_count": 146,
+                "matched_non_sentinel_count": 0,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 146
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.request.user",
+                "query_version": 1,
+                "query_hash_sha256": "f007acf12404a1cabdd48b7219854021b33e50c6e003cd6a7f6027415f460036",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "3038d3ff07ebfa1f4e3329372b9ac03cb2e1f49f70d3f06609518090554e0a06"
+            }
+        },
+        {
+            "id": "serv_criterias.group",
+            "child_table": "serv_criterias",
+            "child_column": "GROUP_ID",
+            "parent_table": "serv_group",
+            "parent_column": "GROUP_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`GROUP_ID` = p.`GROUP_ID`",
+            "counts": {
+                "child_rows": 200,
+                "null_count": 0,
+                "candidate_sentinel_count": 7,
+                "matched_non_sentinel_count": 193,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 7
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.serv_criterias.group",
+                "query_version": 1,
+                "query_hash_sha256": "e27b620e8bcf44a4efd16d5385d5e4276d80d0963286924561e72007d699a636",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "c25f0ec7e1dd61be82e20ec8ee40266921dd6063122dee996985c03de16c2947"
+            }
+        },
+        {
+            "id": "serv_group.service",
+            "child_table": "serv_group",
+            "child_column": "SERV_ID",
+            "parent_table": "services",
+            "parent_column": "SERV_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`SERV_ID` = p.`SERV_ID`",
+            "counts": {
+                "child_rows": 155,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 146,
+                "orphan_excluding_candidate_sentinel_count": 9,
+                "unmatched_including_candidate_sentinel_count": 9
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.serv_group.service",
+                "query_version": 1,
+                "query_hash_sha256": "9c086a5a4560829c673fe57bfce328d4a95583cf6911d0ea4f5a6e7010b7c7bc",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "fbfaef65ffa183a136720e5048d463c192b4350c7bd4b4ec102f722ab986faf3"
+            }
+        },
+        {
+            "id": "serv_options_cri.criteria",
+            "child_table": "serv_options_cri",
+            "child_column": "CRI_ID",
+            "parent_table": "serv_criterias",
+            "parent_column": "CRI_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`CRI_ID` = p.`CRI_ID`",
+            "counts": {
+                "child_rows": 20,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 0,
+                "orphan_excluding_candidate_sentinel_count": 20,
+                "unmatched_including_candidate_sentinel_count": 20
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.serv_options_cri.criteria",
+                "query_version": 1,
+                "query_hash_sha256": "125faf34cc01e1f9f1fdfceccceb6c58cfff66e4b34c74258da95578b4c4253e",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "b39df3d8387cf055e32841fd20c9c319493ffe2c3fd90ab67b4f072bfd0a7d3e"
+            }
+        },
+        {
+            "id": "serv_options_out.service",
+            "child_table": "serv_options_out",
+            "child_column": "SERV_ID",
+            "parent_table": "services",
+            "parent_column": "SERV_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`SERV_ID` = p.`SERV_ID`",
+            "counts": {
+                "child_rows": 32,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 32,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 0
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.serv_options_out.service",
+                "query_version": 1,
+                "query_hash_sha256": "03f9d7262343978b976d5d1e6789cc5783e998c460c104061c2fdd1d9db5fc99",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:05+00:00",
+                "result_hash_sha256": "9c01663e963a4355a02c0e45336898f715ce97337b1091785d251cd1213ec7b4"
+            }
+        },
+        {
+            "id": "serv_results.attendance",
+            "child_table": "serv_results",
+            "child_column": "ATT_ID",
+            "parent_table": "attendance",
+            "parent_column": "ATT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`ATT_ID` = p.`ATT_ID`",
+            "counts": {
+                "child_rows": 460758,
+                "null_count": 0,
+                "candidate_sentinel_count": 1,
+                "matched_non_sentinel_count": 454900,
+                "orphan_excluding_candidate_sentinel_count": 5857,
+                "unmatched_including_candidate_sentinel_count": 5858
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.serv_results.attendance",
+                "query_version": 1,
+                "query_hash_sha256": "150c2c52c79768c73a5d746f203be85415d90343d764d270e071bda8d0073615",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:05+00:00",
+                "finished_at_utc": "2026-07-21T02:01:07+00:00",
+                "result_hash_sha256": "b57be0c427fc6980685a2efa44c6be1809e43d177dd28d4208bbf4e00d5e97ec"
+            }
+        },
+        {
+            "id": "serv_results.criteria",
+            "child_table": "serv_results",
+            "child_column": "CRI_ID",
+            "parent_table": "serv_criterias",
+            "parent_column": "CRI_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`CRI_ID` = p.`CRI_ID`",
+            "counts": {
+                "child_rows": 460758,
+                "null_count": 0,
+                "candidate_sentinel_count": 256,
+                "matched_non_sentinel_count": 405965,
+                "orphan_excluding_candidate_sentinel_count": 54537,
+                "unmatched_including_candidate_sentinel_count": 54793
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.serv_results.criteria",
+                "query_version": 1,
+                "query_hash_sha256": "5e168ecbec6627ec6cda2571711ab163760101097a43727e63c88b7807707c5a",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:07+00:00",
+                "finished_at_utc": "2026-07-21T02:01:08+00:00",
+                "result_hash_sha256": "f7012a8e18af2b64fc2165f4d1c8cd80d05440a969057a7d97d3f9c74e98c947"
+            }
+        },
+        {
+            "id": "serv_results.service",
+            "child_table": "serv_results",
+            "child_column": "SERV_ID",
+            "parent_table": "services",
+            "parent_column": "SERV_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`SERV_ID` = p.`SERV_ID`",
+            "counts": {
+                "child_rows": 460758,
+                "null_count": 0,
+                "candidate_sentinel_count": 70089,
+                "matched_non_sentinel_count": 378236,
+                "orphan_excluding_candidate_sentinel_count": 12433,
+                "unmatched_including_candidate_sentinel_count": 82522
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.serv_results.service",
+                "query_version": 1,
+                "query_hash_sha256": "548689ecb989d99367d1469b87b44da13e51a70d9d013cec1d204b01536cfc15",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:08+00:00",
+                "finished_at_utc": "2026-07-21T02:01:09+00:00",
+                "result_hash_sha256": "6cc6089a9812b9c61efb825a510beb8b049f183384da8326bb80425367423c76"
+            }
+        },
+        {
+            "id": "serv_results.scan_lab",
+            "child_table": "serv_results",
+            "child_column": "SCL_ID",
+            "parent_table": "consult_scan_lab",
+            "parent_column": "SCL_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`SCL_ID` = p.`SCL_ID`",
+            "counts": {
+                "child_rows": 460758,
+                "null_count": 0,
+                "candidate_sentinel_count": 460730,
+                "matched_non_sentinel_count": 6,
+                "orphan_excluding_candidate_sentinel_count": 22,
+                "unmatched_including_candidate_sentinel_count": 460752
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.serv_results.scan_lab",
+                "query_version": 1,
+                "query_hash_sha256": "d305c13a48215a295e7d91b797bc4009e813f4689f4fdaed452b9bd919126ede",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:09+00:00",
+                "finished_at_utc": "2026-07-21T02:01:10+00:00",
+                "result_hash_sha256": "6c4b2d9e6e9907b53652d16915527c00500c25b88db35ae9e33e5b003f3543b7"
+            }
+        },
+        {
+            "id": "serv_results.claim_scan_lab_alternative",
+            "child_table": "serv_results",
+            "child_column": "SCL_ID",
+            "parent_table": "claims_scan_lab",
+            "parent_column": "SCL_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`SCL_ID` = p.`SCL_ID`",
+            "counts": {
+                "child_rows": 460758,
+                "null_count": 0,
+                "candidate_sentinel_count": 460730,
+                "matched_non_sentinel_count": 0,
+                "orphan_excluding_candidate_sentinel_count": 28,
+                "unmatched_including_candidate_sentinel_count": 460758
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.serv_results.claim_scan_lab_alternative",
+                "query_version": 1,
+                "query_hash_sha256": "1bd35e5fe6c00ed6c42f012ea465c85d288598a0bab66c1814eb70eabd50f198",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:10+00:00",
+                "finished_at_utc": "2026-07-21T02:01:10+00:00",
+                "result_hash_sha256": "dbdcea39fff8475618e276b19ae18036b3d677368606a958531c566515a2bd14"
+            }
+        },
+        {
+            "id": "treatment.attendance",
+            "child_table": "treatment",
+            "child_column": "ATT_ID",
+            "parent_table": "attendance",
+            "parent_column": "ATT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`ATT_ID` = p.`ATT_ID`",
+            "counts": {
+                "child_rows": 69,
+                "null_count": 0,
+                "candidate_sentinel_count": 2,
+                "matched_non_sentinel_count": 52,
+                "orphan_excluding_candidate_sentinel_count": 15,
+                "unmatched_including_candidate_sentinel_count": 17
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.treatment.attendance",
+                "query_version": 1,
+                "query_hash_sha256": "fd6da235e612dfe4c647008d312b970f3d897468cf74fc52d0e8762e92af4e70",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:10+00:00",
+                "finished_at_utc": "2026-07-21T02:01:11+00:00",
+                "result_hash_sha256": "90fe7c4b1fbc3b1ef8f788063a2f1574f8d98ab936d1223f1b66c5237c5d6654"
+            }
+        },
+        {
+            "id": "treatment.medicine",
+            "child_table": "treatment",
+            "child_column": "MED_ID",
+            "parent_table": "medicine",
+            "parent_column": "MED_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`MED_ID` = p.`MED_ID`",
+            "counts": {
+                "child_rows": 69,
+                "null_count": 7,
+                "candidate_sentinel_count": 16,
+                "matched_non_sentinel_count": 41,
+                "orphan_excluding_candidate_sentinel_count": 5,
+                "unmatched_including_candidate_sentinel_count": 21
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.treatment.medicine",
+                "query_version": 1,
+                "query_hash_sha256": "ad97143bc71c13804d0bf87c0a9b5fd4b845bbd80a7c0c95e6c85e44b94d55b6",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:11+00:00",
+                "finished_at_utc": "2026-07-21T02:01:11+00:00",
+                "result_hash_sha256": "c011ace40f2804f080c63d64d1714f8b4fd84c592157c9738a6ac73c96b6497d"
+            }
+        },
+        {
+            "id": "treatment.user",
+            "child_table": "treatment",
+            "child_column": "USER_ID",
+            "parent_table": "users",
+            "parent_column": "USER_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "counts": {
+                "child_rows": 69,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 66,
+                "orphan_excluding_candidate_sentinel_count": 3,
+                "unmatched_including_candidate_sentinel_count": 3
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.treatment.user",
+                "query_version": 1,
+                "query_hash_sha256": "6191386bd2445e0444d81c6621b1e251d6c82063e8257eaa69f8e2d1745962a2",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:11+00:00",
+                "finished_at_utc": "2026-07-21T02:01:11+00:00",
+                "result_hash_sha256": "5a5e633c8164414d4948ddd6cfe349854dcbb3b03e952051ae9e04272cd916fe"
+            }
+        },
+        {
+            "id": "vitals.attendance",
+            "child_table": "vitals",
+            "child_column": "ATT_ID",
+            "parent_table": "attendance",
+            "parent_column": "ATT_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`ATT_ID` = p.`ATT_ID`",
+            "counts": {
+                "child_rows": 60803,
+                "null_count": 0,
+                "candidate_sentinel_count": 1198,
+                "matched_non_sentinel_count": 57019,
+                "orphan_excluding_candidate_sentinel_count": 2586,
+                "unmatched_including_candidate_sentinel_count": 3784
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.vitals.attendance",
+                "query_version": 1,
+                "query_hash_sha256": "77d1d35d97367c3a2b1e0053f8fde86e9d67aedb9c5a371a8adc60ea172fddba",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:11+00:00",
+                "finished_at_utc": "2026-07-21T02:01:14+00:00",
+                "result_hash_sha256": "93e67bbecddd931b8b650538e296d402f5ca119c669549f43a285c8803fd1409"
+            }
+        },
+        {
+            "id": "vitals.user",
+            "child_table": "vitals",
+            "child_column": "USER_ID",
+            "parent_table": "users",
+            "parent_column": "USER_ID",
+            "relationship_status": "inferred",
+            "sentinel_assumption": "Numeric zero is treated as a candidate sentinel for reporting only; stakeholder approval remains required.",
+            "join_predicate": "c.`USER_ID` = p.`USER_ID`",
+            "counts": {
+                "child_rows": 60803,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 52325,
+                "orphan_excluding_candidate_sentinel_count": 8478,
+                "unmatched_including_candidate_sentinel_count": 8478
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.vitals.user",
+                "query_version": 1,
+                "query_hash_sha256": "fb647f2d569dabb472ddfed16d0ad4b5a79276d996de3d8486cb1cfd7964f007",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:14+00:00",
+                "finished_at_utc": "2026-07-21T02:01:14+00:00",
+                "result_hash_sha256": "7311f508eee184dcc9589159aa3a3e21a4eeb03104dc8821d85cf967ef5d17fd"
+            }
+        },
+        {
+            "id": "list_symptoms.diagnosis",
+            "child_table": "list_symptoms",
+            "child_column": "LDIAG_ID",
+            "parent_table": "list_diagnosis",
+            "parent_column": "LDIAG_ID",
+            "join_sql": "TRIM(c.`LDIAG_ID`) = CAST(p.`LDIAG_ID` AS CHAR)",
+            "sentinel_sql": "TRIM(c.`LDIAG_ID`) IN ('', '0')",
+            "sentinel_assumption": "Only blank or literal zero is a candidate sentinel; nonnumeric text remains an explicit unmatched value.",
+            "relationship_status": "inferred",
+            "relationship_match_mode": "exists",
+            "join_predicate": "TRIM(c.`LDIAG_ID`) = CAST(p.`LDIAG_ID` AS CHAR)",
+            "counts": {
+                "child_rows": 6,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 0,
+                "orphan_excluding_candidate_sentinel_count": 6,
+                "unmatched_including_candidate_sentinel_count": 6
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.list_symptoms.diagnosis",
+                "query_version": 1,
+                "query_hash_sha256": "9e8c5ecfc2ad780fd4319e3debdccc0fbf17826dff9c413074a87eea277ef2ac",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:14+00:00",
+                "finished_at_utc": "2026-07-21T02:01:14+00:00",
+                "result_hash_sha256": "de2de62b640246cd5d1e9bc365eac414d5feccf9df55068d7c8fb8b4a14d8eb3"
+            }
+        },
+        {
+            "id": "users.department",
+            "child_table": "users",
+            "child_column": "DEP_ID",
+            "parent_table": "departements",
+            "parent_column": "DEP_ID",
+            "join_sql": "TRIM(c.`DEP_ID`) = CAST(p.`DEP_ID` AS CHAR)",
+            "sentinel_sql": "TRIM(c.`DEP_ID`) IN ('', '0')",
+            "sentinel_assumption": "Blank or literal zero is a candidate sentinel; the varchar-to-numeric join remains inferred.",
+            "relationship_status": "inferred",
+            "relationship_match_mode": "exists",
+            "join_predicate": "TRIM(c.`DEP_ID`) = CAST(p.`DEP_ID` AS CHAR)",
+            "counts": {
+                "child_rows": 86,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 86,
+                "orphan_excluding_candidate_sentinel_count": 0,
+                "unmatched_including_candidate_sentinel_count": 0
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.users.department",
+                "query_version": 1,
+                "query_hash_sha256": "e921bb664247a8e731c71160f9e821a6af773bf573081bce21fa98955866100c",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:14+00:00",
+                "finished_at_utc": "2026-07-21T02:01:14+00:00",
+                "result_hash_sha256": "085477141e6d93417789b4802ce7b8f64b12ae64420895047155ef072983a632"
+            }
+        },
+        {
+            "id": "services.department_name",
+            "child_table": "services",
+            "child_column": "Departement",
+            "parent_table": "departements",
+            "parent_column": "Departement",
+            "join_sql": "UPPER(TRIM(c.`Departement`)) = UPPER(TRIM(p.`Departement`))",
+            "sentinel_sql": "TRIM(c.`Departement`) = ''",
+            "sentinel_assumption": "Blank is a candidate sentinel; normalized-name matching is inferred and is not an approved natural key.",
+            "relationship_status": "inferred",
+            "relationship_match_mode": "exists",
+            "join_predicate": "UPPER(TRIM(c.`Departement`)) = UPPER(TRIM(p.`Departement`))",
+            "counts": {
+                "child_rows": 203,
+                "null_count": 0,
+                "candidate_sentinel_count": 14,
+                "matched_non_sentinel_count": 188,
+                "orphan_excluding_candidate_sentinel_count": 1,
+                "unmatched_including_candidate_sentinel_count": 15
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.services.department_name",
+                "query_version": 1,
+                "query_hash_sha256": "1944d0ce057f0fc2ed2a60e3cdd20b537bc6041f56f5fe4982f61afb08a62957",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:14+00:00",
+                "finished_at_utc": "2026-07-21T02:01:14+00:00",
+                "result_hash_sha256": "5638d756446b0c2613f96cd5b4098566ebbfd9ed08ee5be754edc43bef89cb1d"
+            }
+        },
+        {
+            "id": "gens.department_name",
+            "child_table": "gens",
+            "child_column": "Departement",
+            "parent_table": "departements",
+            "parent_column": "Departement",
+            "join_sql": "UPPER(TRIM(c.`Departement`)) = UPPER(TRIM(p.`Departement`))",
+            "sentinel_sql": "TRIM(c.`Departement`) = ''",
+            "sentinel_assumption": "Blank is a candidate sentinel; normalized-name matching is inferred and is not an approved natural key.",
+            "relationship_status": "inferred",
+            "relationship_match_mode": "exists",
+            "join_predicate": "UPPER(TRIM(c.`Departement`)) = UPPER(TRIM(p.`Departement`))",
+            "counts": {
+                "child_rows": 2,
+                "null_count": 0,
+                "candidate_sentinel_count": 0,
+                "matched_non_sentinel_count": 0,
+                "orphan_excluding_candidate_sentinel_count": 2,
+                "unmatched_including_candidate_sentinel_count": 2
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.gens.department_name",
+                "query_version": 1,
+                "query_hash_sha256": "39e0bd5fea0c76e6342d212bf85756a7ee140974c27677e580131a33d4d02339",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:14+00:00",
+                "finished_at_utc": "2026-07-21T02:01:14+00:00",
+                "result_hash_sha256": "d9027068aa07d94e316bac2afada10b8e6d929e409e963fac4a87629b17eabfe"
+            }
+        },
+        {
+            "id": "insurance.provider_name_candidate",
+            "child_table": "insurance",
+            "child_column": "Company",
+            "parent_table": "sett_private",
+            "parent_column": "PrivateName",
+            "join_sql": "UPPER(TRIM(c.`Company`)) = UPPER(TRIM(p.`PrivateName`)) OR UPPER(TRIM(c.`Company`)) = UPPER(TRIM(p.`PrivateShort`))",
+            "sentinel_sql": "TRIM(c.`Company`) = ''",
+            "sentinel_assumption": "Blank is a candidate sentinel; provider name/short-name matching is a tested alternative, not an approved natural key.",
+            "relationship_status": "inferred",
+            "relationship_match_mode": "exists",
+            "join_predicate": "UPPER(TRIM(c.`Company`)) = UPPER(TRIM(p.`PrivateName`)) OR UPPER(TRIM(c.`Company`)) = UPPER(TRIM(p.`PrivateShort`))",
+            "counts": {
+                "child_rows": 31307,
+                "null_count": 0,
+                "candidate_sentinel_count": 25042,
+                "matched_non_sentinel_count": 2248,
+                "orphan_excluding_candidate_sentinel_count": 4017,
+                "unmatched_including_candidate_sentinel_count": 29059
+            },
+            "evidence_query": {
+                "query_id": "classic.relationship.insurance.provider_name_candidate",
+                "query_version": 1,
+                "query_hash_sha256": "5b41c90cee6ff02f29542ce2ee6f3523c9a0574586623f82e6fc7a4cc4bb817b",
+                "bindings_hash_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                "started_at_utc": "2026-07-21T02:01:14+00:00",
+                "finished_at_utc": "2026-07-21T02:01:15+00:00",
+                "result_hash_sha256": "71d027e65679dbc73b653b91c377f462d426f9e9ab8cfa32e58e01b987e2cedc"
+            }
+        }
+    ],
+    "source_schema_fingerprint": "150fcf4783fcb8bdc25f7e17fe0ece5050955f0c68e7dd03651ee8bd58498977"
+}

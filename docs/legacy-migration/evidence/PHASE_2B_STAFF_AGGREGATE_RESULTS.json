@@ -1,0 +1,450 @@
+{
+  "manifest_version": 1,
+  "specification_version": "2B.1.0",
+  "tool_version": "phase2b-staff-evidence/1.0.0",
+  "captured_at_utc": "2026-07-21T19:08:49+00:00",
+  "approved_database": "uuhms",
+  "schema_guard": {
+    "expected_database": "uuhms",
+    "expected_tables": 55,
+    "expected_columns": 479,
+    "fail_closed": true
+  },
+  "transaction": {
+    "setup_sql": [
+      "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+      "SET TRANSACTION READ ONLY",
+      "BEGIN"
+    ],
+    "read_only": true,
+    "isolation": "REPEATABLE-READ",
+    "rolled_back": true
+  },
+  "privacy": {
+    "raw_staff_values": false,
+    "credentials": false,
+    "permission_values": false,
+    "contacts": false,
+    "phi": false
+  },
+  "result_count": 33,
+  "results": [
+    {
+      "query_id": "phase2b.guard.shape",
+      "query_version": 1,
+      "result_hash_sha256": "b5ca2c227a253063868de442e5e22dba784b678191986ee96bc2c02f847eece3",
+      "sanitized_result": {
+        "table_count": 55,
+        "column_count": 479
+      }
+    },
+    {
+      "query_id": "phase2b.staff.master",
+      "query_version": 1,
+      "result_hash_sha256": "28136a73a276af5889119560e962c0d958af64589839f9db3fa73a7d59cb161d",
+      "sanitized_result": {
+        "total_rows": 86,
+        "blank_full_name_count": 0,
+        "distinct_normalized_full_name_count": 84,
+        "blank_username_count": 0,
+        "distinct_normalized_username_count": 84,
+        "nonempty_password_count": 86,
+        "can_add_present_count": 86,
+        "can_edit_present_count": 86,
+        "can_delete_present_count": 86,
+        "can_print_present_count": 86,
+        "active_count": 85,
+        "inactive_count": 1,
+        "registration_min": "2018-10-06 04:09:06",
+        "registration_max": "2022-09-24 10:07:29"
+      }
+    },
+    {
+      "query_id": "phase2b.staff.duplicate_name",
+      "query_version": 1,
+      "result_hash_sha256": "487b8f12e4ce1cd223490baa7e8665c3eea1d3e657198135b0329909c70e21eb",
+      "sanitized_result": {
+        "duplicate_group_count": 2,
+        "duplicate_row_count": 4
+      }
+    },
+    {
+      "query_id": "phase2b.staff.duplicate_username",
+      "query_version": 1,
+      "result_hash_sha256": "487b8f12e4ce1cd223490baa7e8665c3eea1d3e657198135b0329909c70e21eb",
+      "sanitized_result": {
+        "duplicate_group_count": 2,
+        "duplicate_row_count": 4
+      }
+    },
+    {
+      "query_id": "phase2b.staff.department",
+      "query_version": 1,
+      "result_hash_sha256": "84c9b4cb6a6420881e623cd4041bc5e39525311fd1b641cba31c0823bf7b84ce",
+      "sanitized_result": {
+        "child_rows": 86,
+        "null_count": 0,
+        "sentinel_count": 0,
+        "matched_count": 86,
+        "orphan_count": 0
+      }
+    },
+    {
+      "query_id": "phase2b.actor.attendance.USER_ID",
+      "query_version": 1,
+      "result_hash_sha256": "d52f71892dfd69baf55d51641a5f938d4de6f331b1d8ac42f428e867e2b479c6",
+      "sanitized_result": {
+        "child_rows": 51927,
+        "null_count": 0,
+        "zero_count": 0,
+        "matched_classic_parent_count": 15186,
+        "orphan_classic_parent_count": 36741
+      }
+    },
+    {
+      "query_id": "phase2b.actor.batch.USER_ID",
+      "query_version": 1,
+      "result_hash_sha256": "aa8d3ef111c0cd094c848a3cfb1349544a1ac773badd04d1aa6fd5d1a7363651",
+      "sanitized_result": {
+        "child_rows": 253,
+        "null_count": 0,
+        "zero_count": 0,
+        "matched_classic_parent_count": 253,
+        "orphan_classic_parent_count": 0
+      }
+    },
+    {
+      "query_id": "phase2b.actor.billing.USER_ID",
+      "query_version": 1,
+      "result_hash_sha256": "b80c6c95f6da862fda3177de00abadff746752c1ecddb2d5eb1821456b8f92fd",
+      "sanitized_result": {
+        "child_rows": 111731,
+        "null_count": 0,
+        "zero_count": 0,
+        "matched_classic_parent_count": 24545,
+        "orphan_classic_parent_count": 87186
+      }
+    },
+    {
+      "query_id": "phase2b.actor.consult_prescriptions.USER_ID",
+      "query_version": 1,
+      "result_hash_sha256": "57d196d8649f48635c3e8495faae4700a8d51ba413d5b4034b584e2b5fb60081",
+      "sanitized_result": {
+        "child_rows": 210902,
+        "null_count": 0,
+        "zero_count": 14144,
+        "matched_classic_parent_count": 93823,
+        "orphan_classic_parent_count": 102935
+      }
+    },
+    {
+      "query_id": "phase2b.actor.consult_scan_lab.USER_ID",
+      "query_version": 1,
+      "result_hash_sha256": "3522a72c89a31497214040a2f89bda47af36cc90281118651c94deab6ce73f06",
+      "sanitized_result": {
+        "child_rows": 72680,
+        "null_count": 0,
+        "zero_count": 72680,
+        "matched_classic_parent_count": 0,
+        "orphan_classic_parent_count": 0
+      }
+    },
+    {
+      "query_id": "phase2b.actor.nurses_note.USER_ID",
+      "query_version": 1,
+      "result_hash_sha256": "50dbe76ef2d1c41f9671ae8cadb0532435b26d9c728463044267409b4b921c26",
+      "sanitized_result": {
+        "child_rows": 29,
+        "null_count": 0,
+        "zero_count": 0,
+        "matched_classic_parent_count": 29,
+        "orphan_classic_parent_count": 0
+      }
+    },
+    {
+      "query_id": "phase2b.actor.request.USER_ID",
+      "query_version": 1,
+      "result_hash_sha256": "f2d8cb86d90148fdce176c2f92e923a9c444c291792febd19cd2efd321fe8ee8",
+      "sanitized_result": {
+        "child_rows": 146,
+        "null_count": 0,
+        "zero_count": 146,
+        "matched_classic_parent_count": 0,
+        "orphan_classic_parent_count": 0
+      }
+    },
+    {
+      "query_id": "phase2b.actor.treatment.USER_ID",
+      "query_version": 1,
+      "result_hash_sha256": "905fbf4a647484808dc35741f28d859c45aa8a87c1294395ffc0d9a0edf5775f",
+      "sanitized_result": {
+        "child_rows": 69,
+        "null_count": 0,
+        "zero_count": 0,
+        "matched_classic_parent_count": 66,
+        "orphan_classic_parent_count": 3
+      }
+    },
+    {
+      "query_id": "phase2b.actor.vitals.USER_ID",
+      "query_version": 1,
+      "result_hash_sha256": "3115e52525b2d22f1093c76cb8618546b75809f1068956b74c77fef3d6aa2a13",
+      "sanitized_result": {
+        "child_rows": 60803,
+        "null_count": 0,
+        "zero_count": 0,
+        "matched_classic_parent_count": 52325,
+        "orphan_classic_parent_count": 8478
+      }
+    },
+    {
+      "query_id": "phase2b.actor.claims.Doctor",
+      "query_version": 1,
+      "result_hash_sha256": "d44dee686c3397e28eb777dfd5be0e6e2658c1f83f0e517a137aec7f8aba7611",
+      "sanitized_result": {
+        "child_rows": 31892,
+        "null_count": 0,
+        "blank_count": 1502,
+        "distinct_normalized_nonblank_count": 9,
+        "one_name_candidate_count": 30333,
+        "ambiguous_name_candidate_count": 26,
+        "unmatched_text_count": 31
+      }
+    },
+    {
+      "query_id": "phase2b.actor.consult_complaints.Doctor",
+      "query_version": 1,
+      "result_hash_sha256": "a6a4515a02e9e9ccab6e0cac8aaea2df5b25469f85f241603988f1a018dd6682",
+      "sanitized_result": {
+        "child_rows": 65244,
+        "null_count": 0,
+        "blank_count": 28378,
+        "distinct_normalized_nonblank_count": 25,
+        "one_name_candidate_count": 139,
+        "ambiguous_name_candidate_count": 0,
+        "unmatched_text_count": 36727
+      }
+    },
+    {
+      "query_id": "phase2b.actor.consult_diagnosis.Doctor",
+      "query_version": 1,
+      "result_hash_sha256": "4bb14a608bba39ec7fab96517daa80d237e1741a48d9b30280dbfeb8d1716e8d",
+      "sanitized_result": {
+        "child_rows": 123940,
+        "null_count": 0,
+        "blank_count": 79422,
+        "distinct_normalized_nonblank_count": 27,
+        "one_name_candidate_count": 4588,
+        "ambiguous_name_candidate_count": 0,
+        "unmatched_text_count": 39930
+      }
+    },
+    {
+      "query_id": "phase2b.actor.consult_history.Doctor",
+      "query_version": 1,
+      "result_hash_sha256": "5462e635c9cf3c3bd9e126005d8f5d64904c7675ddd84ccac526c20964968a3a",
+      "sanitized_result": {
+        "child_rows": 34532,
+        "null_count": 0,
+        "blank_count": 1755,
+        "distinct_normalized_nonblank_count": 31,
+        "one_name_candidate_count": 6782,
+        "ambiguous_name_candidate_count": 0,
+        "unmatched_text_count": 25995
+      }
+    },
+    {
+      "query_id": "phase2b.actor.consult_prescriptions.Doctor",
+      "query_version": 1,
+      "result_hash_sha256": "e5277c3922596ec826c73df51b32a1e961859d828da07ae8cceec32f7cfd837f",
+      "sanitized_result": {
+        "child_rows": 210902,
+        "null_count": 0,
+        "blank_count": 103165,
+        "distinct_normalized_nonblank_count": 28,
+        "one_name_candidate_count": 6682,
+        "ambiguous_name_candidate_count": 0,
+        "unmatched_text_count": 101055
+      }
+    },
+    {
+      "query_id": "phase2b.actor.consult_procedures.Doctor",
+      "query_version": 1,
+      "result_hash_sha256": "ebca0d0103b79a3068e04d0f99c12b8acee827fb22cccdb4ed16e081a33da3b4",
+      "sanitized_result": {
+        "child_rows": 121,
+        "null_count": 0,
+        "blank_count": 121,
+        "distinct_normalized_nonblank_count": 0,
+        "one_name_candidate_count": 0,
+        "ambiguous_name_candidate_count": 0,
+        "unmatched_text_count": 0
+      }
+    },
+    {
+      "query_id": "phase2b.actor.consult_scan_lab.Doctor",
+      "query_version": 1,
+      "result_hash_sha256": "d8fbe48a9c7f3ec3d52452e163f487470e17a6785122ea5f657bde28a01a1aa9",
+      "sanitized_result": {
+        "child_rows": 72680,
+        "null_count": 0,
+        "blank_count": 32445,
+        "distinct_normalized_nonblank_count": 25,
+        "one_name_candidate_count": 2809,
+        "ambiguous_name_candidate_count": 0,
+        "unmatched_text_count": 37426
+      }
+    },
+    {
+      "query_id": "phase2b.actor.consult_services.Doctor",
+      "query_version": 1,
+      "result_hash_sha256": "ede1186629e68b9d1041d7ca8b135e8313a79d0d3838cb88069d24a6e0d35fcc",
+      "sanitized_result": {
+        "child_rows": 60260,
+        "null_count": 0,
+        "blank_count": 60260,
+        "distinct_normalized_nonblank_count": 0,
+        "one_name_candidate_count": 0,
+        "ambiguous_name_candidate_count": 0,
+        "unmatched_text_count": 0
+      }
+    },
+    {
+      "query_id": "phase2b.actor.consult_treatment.Doctor",
+      "query_version": 1,
+      "result_hash_sha256": "916efd7e2352c4d78bca55238b3e20a3448691c8eeed0d31fd1224a237661272",
+      "sanitized_result": {
+        "child_rows": 1926,
+        "null_count": 0,
+        "blank_count": 0,
+        "distinct_normalized_nonblank_count": 23,
+        "one_name_candidate_count": 53,
+        "ambiguous_name_candidate_count": 0,
+        "unmatched_text_count": 1873
+      }
+    },
+    {
+      "query_id": "phase2b.actorlike.billing.CASH_ID",
+      "query_version": 1,
+      "result_hash_sha256": "492de153e6740faee04646f6e1f509822891e17e573c5c9faa05144ac4f6a94e",
+      "sanitized_result": {
+        "child_rows": 111731,
+        "null_count": 0,
+        "zero_count": 111731,
+        "distinct_nonzero_count": 0,
+        "diagnostic_user_match_count": 0,
+        "diagnostic_user_orphan_count": 0
+      }
+    },
+    {
+      "query_id": "phase2b.actorlike.notifications.ReqFrom",
+      "query_version": 1,
+      "result_hash_sha256": "c248f6a9804beb9a62ac1838bb4bd52cc43982a5a93c4c214be2b44fc97f8352",
+      "sanitized_result": {
+        "child_rows": 141,
+        "null_count": 0,
+        "blank_count": 0,
+        "literal_zero_count": 0,
+        "distinct_nonblank_nonzero_count": 7
+      }
+    },
+    {
+      "query_id": "phase2b.actorlike.notifications.ReqTo",
+      "query_version": 1,
+      "result_hash_sha256": "4ddbbe1da0d95ff3ff3fbfe9250ae496968c616fa646e0b3b44b9a6bf0d5debd",
+      "sanitized_result": {
+        "child_rows": 141,
+        "null_count": 0,
+        "blank_count": 0,
+        "literal_zero_count": 0,
+        "distinct_nonblank_nonzero_count": 1
+      }
+    },
+    {
+      "query_id": "phase2b.actorlike.mat_family.DocName",
+      "query_version": 1,
+      "result_hash_sha256": "d961fac29771a1259c7dc0b788a602d35528f616916e09a7da4193fa27765a9e",
+      "sanitized_result": {
+        "child_rows": 0,
+        "null_count": null,
+        "blank_count": null,
+        "literal_zero_count": null,
+        "distinct_nonblank_nonzero_count": 0
+      }
+    },
+    {
+      "query_id": "phase2b.actorlike.mat_family.DocPhone",
+      "query_version": 1,
+      "result_hash_sha256": "d961fac29771a1259c7dc0b788a602d35528f616916e09a7da4193fa27765a9e",
+      "sanitized_result": {
+        "child_rows": 0,
+        "null_count": null,
+        "blank_count": null,
+        "literal_zero_count": null,
+        "distinct_nonblank_nonzero_count": 0
+      }
+    },
+    {
+      "query_id": "phase2b.actorlike.hospitalinfo.ClaimOfficer",
+      "query_version": 1,
+      "result_hash_sha256": "fcc29c3a240451d7c5b78969dd7fed2757be53ff7635ff7af556ab22a5df7b82",
+      "sanitized_result": {
+        "child_rows": 1,
+        "null_count": 0,
+        "blank_count": 0,
+        "literal_zero_count": 0,
+        "distinct_nonblank_nonzero_count": 1
+      }
+    },
+    {
+      "query_id": "phase2b.actorlike.hospitalinfo.ClaimSignature",
+      "query_version": 1,
+      "result_hash_sha256": "fcc29c3a240451d7c5b78969dd7fed2757be53ff7635ff7af556ab22a5df7b82",
+      "sanitized_result": {
+        "child_rows": 1,
+        "null_count": 0,
+        "blank_count": 0,
+        "literal_zero_count": 0,
+        "distinct_nonblank_nonzero_count": 1
+      }
+    },
+    {
+      "query_id": "phase2b.actorlike.hospitalinfo.Admn",
+      "query_version": 1,
+      "result_hash_sha256": "fcc29c3a240451d7c5b78969dd7fed2757be53ff7635ff7af556ab22a5df7b82",
+      "sanitized_result": {
+        "child_rows": 1,
+        "null_count": 0,
+        "blank_count": 0,
+        "literal_zero_count": 0,
+        "distinct_nonblank_nonzero_count": 1
+      }
+    },
+    {
+      "query_id": "phase2b.actorlike.consult_diagnosis.MdfId",
+      "query_version": 1,
+      "result_hash_sha256": "51b26d64be1a56c72b8dae4df4463b3bd6308dd168b3189761959ad165b37129",
+      "sanitized_result": {
+        "child_rows": 123940,
+        "null_count": 0,
+        "blank_count": 123940,
+        "literal_zero_count": 0,
+        "distinct_nonblank_nonzero_count": 0
+      }
+    },
+    {
+      "query_id": "phase2b.actorlike.list_diagnosis.MdfId",
+      "query_version": 1,
+      "result_hash_sha256": "0940de9e193f26e59c257ecbb54eb8eb82860718e46011b4a9eba353a54b5076",
+      "sanitized_result": {
+        "child_rows": 5948,
+        "null_count": 0,
+        "blank_count": 5948,
+        "literal_zero_count": 0,
+        "distinct_nonblank_nonzero_count": 0
+      }
+    }
+  ],
+  "interpretation": "Normalized-name comparisons are diagnostic only, Classic-parent matches do not prove employment identity or target action role, and no raw value was returned."
+}
+

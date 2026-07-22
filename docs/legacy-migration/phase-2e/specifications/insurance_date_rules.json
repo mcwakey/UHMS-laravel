@@ -1,0 +1,223 @@
+{
+  "specification_version": "2E.1.0",
+  "phase": "2E",
+  "approved_source": {
+    "connection": "legacy_uhms",
+    "database": "uuhms",
+    "read_only": true
+  },
+  "implementation_authorized": false,
+  "policy_authority": {
+    "source": "APPROVED_DECISION_SPECIFICATIONS.md",
+    "decision_register": "DECISIONS.md",
+    "decisions": [
+      "D-205",
+      "D-206",
+      "D-207",
+      "D-212"
+    ],
+    "questions": [
+      "Q-004",
+      "Q-005",
+      "Q-009",
+      "Q-301"
+    ]
+  },
+  "upstream_contracts": [
+    "phase-2a.reference_natural_keys:NK-004",
+    "phase-2a.reference_extraction_strategies:EXTRACT-SETT_PRIVATE",
+    "phase-2a.reference_reconciliation_contracts:RECON-SETT_PRIVATE",
+    "phase-2c.patient_relationship_rules:PATIENT-REL-003",
+    "phase-2c.patient_sentinel_rules:PATIENT-SENT-003",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-REL-003",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-001",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-022",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-007",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-009",
+    "phase-2c.existing_target_patient_rules:PATIENT-TARGET-009",
+    "phase-2d.patient_child_relationship_rules:PATIENT-CHILD-REL-005",
+    "phase-2d.patient_child_extraction_strategies:PATIENT-CHILD-EXT-001",
+    "phase-2d.patient_child_privacy_provenance_contract:PATIENT-CHILD-PRIV-010"
+  ],
+  "decision": "D-206/Q-301",
+  "baseline_joint_partition": {
+    "both_unknown": 15683,
+    "issue_unknown_expiry_known": 1408,
+    "issue_known_expiry_unknown": 34,
+    "ordered": 14088,
+    "equal": 28,
+    "reversed": 66,
+    "total": 31307
+  },
+  "baseline_diagnostics": {
+    "future_issue": 19,
+    "future_expiry": 54,
+    "pre_1900_issue": 0,
+    "pre_1900_expiry": 0,
+    "active_looking_known_window": 36
+  },
+  "diagnostic_overlap_note": "Future flags overlap the baseline chronology topology; execution primary buckets apply INS-REC-006 precedence.",
+  "record_count": 13,
+  "records": [
+    {
+      "id": "INS-DATE-001",
+      "field": "IssueDate",
+      "class": "valid_nonfuture",
+      "valid_range": "valid Gregorian date representable by both installed source and target; no invented business cutoff",
+      "patient_registration_relation": "diagnostic only; registration is not coverage inception and imposes no ordering",
+      "target": "start_date",
+      "outcome": "preserve exact date",
+      "current_state": "eligible for later known-date window evaluation",
+      "exception_code": null,
+      "reconciliation_id": "INS-REC-005-ISSUE",
+      "provenance": "protected raw/date class and rule version"
+    },
+    {
+      "id": "INS-DATE-002",
+      "field": "IssueDate",
+      "class": "zero_unknown",
+      "condition": "0000-00-00",
+      "target": null,
+      "outcome": "unknown/not evidenced and historical-only",
+      "count": 17091,
+      "exception_code": "LEGACY-INSURANCE-DATE-020",
+      "reconciliation_id": "INS-REC-005-ISSUE",
+      "provenance": "protected raw zero-date evidence"
+    },
+    {
+      "id": "INS-DATE-003",
+      "field": "IssueDate",
+      "class": "future",
+      "condition": "valid date after pinned evaluation date",
+      "target": null,
+      "outcome": "future-looking; withhold current representation",
+      "count": 19,
+      "exception_code": "LEGACY-INSURANCE-DATE-022",
+      "reconciliation_id": "INS-REC-005-ISSUE",
+      "provenance": "protected exact date"
+    },
+    {
+      "id": "INS-DATE-004",
+      "field": "IssueDate",
+      "class": "invalid",
+      "condition": "invalid calendar/parse or impossible stored representation other than approved zero classifier",
+      "target": null,
+      "outcome": "quarantine; never repair",
+      "count": null,
+      "exception_code": "LEGACY-INSURANCE-DATE-021",
+      "reconciliation_id": "INS-REC-005-ISSUE",
+      "provenance": "protected raw representation and parse failure"
+    },
+    {
+      "id": "INS-DATE-005",
+      "field": "IssueDate",
+      "class": "unrepresentable",
+      "condition": "valid source value cannot be represented by installed target DATE or approved nullable state",
+      "target": null,
+      "outcome": "quarantine",
+      "count": null,
+      "exception_code": "LEGACY-INSURANCE-DATE-021",
+      "reconciliation_id": "INS-REC-005-ISSUE",
+      "provenance": "protected source/target compatibility evidence"
+    },
+    {
+      "id": "INS-DATE-006",
+      "field": "ExpiryDate",
+      "class": "valid",
+      "valid_range": "valid Gregorian date representable by both installed source and target; past and future are retained",
+      "target": "expiry_date",
+      "outcome": "preserve exact date",
+      "exception_code": null,
+      "reconciliation_id": "INS-REC-005-EXPIRY",
+      "provenance": "protected raw/date class and rule version"
+    },
+    {
+      "id": "INS-DATE-007",
+      "field": "ExpiryDate",
+      "class": "zero_unknown",
+      "condition": "0000-00-00",
+      "target": null,
+      "outcome": "unknown/not evidenced and historical-only; not open-ended coverage",
+      "count": 15717,
+      "exception_code": "LEGACY-INSURANCE-DATE-023",
+      "reconciliation_id": "INS-REC-005-EXPIRY",
+      "provenance": "protected raw zero-date evidence"
+    },
+    {
+      "id": "INS-DATE-008",
+      "field": "ExpiryDate",
+      "class": "future",
+      "condition": "valid date after pinned evaluation date",
+      "target": "expiry_date",
+      "outcome": "preserve as future coverage evidence; not invalid or eligible by itself",
+      "count": 54,
+      "exception_code": null,
+      "reconciliation_id": "INS-REC-005-EXPIRY",
+      "provenance": "protected exact date"
+    },
+    {
+      "id": "INS-DATE-009",
+      "field": "ExpiryDate",
+      "class": "invalid",
+      "condition": "invalid calendar/parse or impossible stored representation other than approved zero classifier",
+      "target": null,
+      "outcome": "quarantine; never repair",
+      "count": null,
+      "exception_code": "LEGACY-INSURANCE-DATE-024",
+      "reconciliation_id": "INS-REC-005-EXPIRY",
+      "provenance": "protected raw representation and parse failure"
+    },
+    {
+      "id": "INS-DATE-010",
+      "field": "ExpiryDate",
+      "class": "unrepresentable",
+      "condition": "valid source value cannot be represented by installed target DATE or approved nullable state",
+      "target": null,
+      "outcome": "quarantine",
+      "count": null,
+      "exception_code": "LEGACY-INSURANCE-DATE-024",
+      "reconciliation_id": "INS-REC-005-EXPIRY",
+      "provenance": "protected source/target compatibility evidence"
+    },
+    {
+      "id": "INS-DATE-011",
+      "field": "IssueDate+ExpiryDate",
+      "class": "reversed",
+      "condition": "both known and ExpiryDate < IssueDate",
+      "outcome": "quarantine; never swap/coerce",
+      "count": 66,
+      "exception_code": "LEGACY-INSURANCE-DATE-025",
+      "reconciliation_id": "INS-REC-006",
+      "provenance": "protected chronology facts"
+    },
+    {
+      "id": "INS-DATE-012",
+      "field": "IssueDate+ExpiryDate",
+      "class": "equal",
+      "condition": "both known and equal",
+      "outcome": "preserve; zero-length/equal period does not evidence eligibility",
+      "count": 28,
+      "exception_code": null,
+      "reconciliation_id": "INS-REC-006",
+      "provenance": "protected chronology facts"
+    },
+    {
+      "id": "INS-DATE-013",
+      "field": "current_state",
+      "class": "evaluation_coordinate",
+      "coordinate": {
+        "date": "2026-07-21",
+        "timezone": "UTC",
+        "rule_version": "insurance-current-state-v1",
+        "source_snapshot_identity": "aggregate evidence coordinate only; not a reusable row snapshot"
+      },
+      "rule": "active-looking requires known valid IssueDate <= coordinate date <= ExpiryDate; unknown, invalid, reversed, or future-issue rows produce no current candidate",
+      "runtime_clock_forbidden": true,
+      "reconciliation_id": "INS-REC-006"
+    }
+  ],
+  "privacy": {
+    "contains_raw_phi": false,
+    "repository_output": "aggregate-only"
+  }
+}

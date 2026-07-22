@@ -1,0 +1,19 @@
+{
+  "specification_version":"2D.1.0","phase":"2D","approved_source":{"database":"uuhms"},"upstream_contracts":["PATIENT-TARGET-001","PATIENT-TARGET-009","PATIENT-TARGET-013","PATIENT-REC-EXISTING-030"],"implementation_authorized":false,"record_count":14,
+  "records":[
+    {"id":"PATIENT-CHILD-IMMUT-001","target":"patients.occupation","allowed_change":false},
+    {"id":"PATIENT-CHILD-IMMUT-002","target":"patients.address","allowed_change":false},
+    {"id":"PATIENT-CHILD-IMMUT-003","target":"patients.city/town/region/postal_code/digital_address","allowed_change":false},
+    {"id":"PATIENT-CHILD-IMMUT-004","target":"patients.religion","allowed_change":false},
+    {"id":"PATIENT-CHILD-IMMUT-005","target":"patients.marital_status","allowed_change":false},
+    {"id":"PATIENT-CHILD-IMMUT-006","target":"emergency_contacts rows","allowed_change":false},
+    {"id":"PATIENT-CHILD-IMMUT-007","target":"emergency_contacts.is_primary","allowed_change":false},
+    {"id":"PATIENT-CHILD-IMMUT-008","target":"existing patient_aliases","allowed_change":false,"note":"separate collision-free D-201 legacy_opd stage remains governed by Phase 2C"},
+    {"id":"PATIENT-CHILD-IMMUT-009","target":"patient/contact timestamps","allowed_change":false},
+    {"id":"PATIENT-CHILD-IMMUT-010","target":"patient activity/audit history","allowed_change":false},
+    {"id":"PATIENT-CHILD-IMMUT-011","rule":"Do not fill a target blank from Classic."},
+    {"id":"PATIENT-CHILD-IMMUT-012","rule":"Do not resolve conflicts, deduplicate contacts, change primary state or merge/delete children."},
+    {"id":"PATIENT-CHILD-IMMUT-013","rule":"Store source comparison result only in protected provenance; no child enrichment is authorized."},
+    {"id":"PATIENT-CHILD-IMMUT-014","rule":"A future enrichment workflow requires a separate owner-approved contract and is outside Phase 2D."}
+  ],"reconciliation_id":"PATIENT-CHILD-REC-008","privacy":{"contains_raw_phi":false}
+}

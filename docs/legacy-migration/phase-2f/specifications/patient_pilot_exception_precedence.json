@@ -1,0 +1,29 @@
+{
+  "specification_version": "2F.1.0",
+  "phase": "2F",
+  "approved_source": {"connection": "legacy_uhms", "database": "uuhms", "read_only": true},
+  "approved_target": {"environment": "approved_non_production", "read_only": true, "production_forbidden": true},
+  "implementation_authorized": false,
+  "policy_authority": {"source": "APPROVED_DECISION_SPECIFICATIONS.md", "decision_register": "DECISIONS.md", "decisions": ["D-004", "D-207", "D-211", "D-212", "D-213"]},
+  "upstream_contracts": ["LEGACY-REF-COMMON-001", "LEGACY-STAFF-ACTOR-018", "LEGACY-PATIENT-CHAIN-030", "LEGACY-PATIENT-CHILD-CONTACT-011", "LEGACY-INSURANCE-CONSOLIDATION-026"],
+  "catalogues": ["phase-2a.reference_exception_codes", "phase-2b.staff_exception_codes", "phase-2c.patient_exception_codes", "phase-2d.patient_child_exception_codes", "phase-2e.insurance_exception_codes"],
+  "selection_rule": "Apply records in ascending precedence. The most specific existing catalogue code at the first applicable level is primary; other applicable codes remain ordered secondary exceptions.",
+  "record_count": 13,
+  "records": [
+    {"id": "PILOT-EXC-PRE-001", "precedence": 1, "class": "environment_fingerprint_privacy_stop", "representative_codes": ["LEGACY-REF-COMMON-006", "LEGACY-PATIENT-DRIFT-033", "LEGACY-PATIENT-PRIVACY-036", "LEGACY-INSURANCE-PRIVACY-036"], "disposition": "stop run or snapshot; contain privacy event"},
+    {"id": "PILOT-EXC-PRE-002", "precedence": 2, "class": "extraction_key_query_snapshot_checkpoint", "representative_codes": ["LEGACY-REF-COMMON-007", "LEGACY-PATIENT-KEY-001", "LEGACY-PATIENT-EXTRACTION-034", "LEGACY-INSURANCE-EXTRACT-035"], "disposition": "stop extraction and descendants"},
+    {"id": "PILOT-EXC-PRE-003", "precedence": 3, "class": "reference_parent_actor", "representative_codes": ["LEGACY-REF-COMMON-003", "LEGACY-STAFF-ACTOR-018", "LEGACY-INSURANCE-PROVIDER-039"], "disposition": "hold dependent; no artificial parent or actor"},
+    {"id": "PILOT-EXC-PRE-004", "precedence": 4, "class": "existing_target_ambiguity_drift_conflict", "representative_codes": ["LEGACY-PATIENT-TARGET-023", "LEGACY-PATIENT-TARGET-035", "LEGACY-PATIENT-CHILD-TARGET-036", "LEGACY-INSURANCE-TARGET-040", "LEGACY-INSURANCE-TARGET-041"], "disposition": "stop root or group; immutable evidence only"},
+    {"id": "PILOT-EXC-PRE-005", "precedence": 5, "class": "required_patient_identity_remediation", "representative_codes": ["LEGACY-PATIENT-NAME-009", "LEGACY-PATIENT-DOB-013", "LEGACY-PATIENT-GENDER-017", "LEGACY-PATIENT-PHONE-019", "LEGACY-PATIENT-REMEDIATION-040"], "disposition": "quarantine patient root and descendants"},
+    {"id": "PILOT-EXC-PRE-006", "precedence": 6, "class": "patient_state_number", "representative_codes": ["LEGACY-PATIENT-STATUS-044", "LEGACY-PATIENT-NUMBER-037"], "disposition": "not commit eligible; no default or allocation"},
+    {"id": "PILOT-EXC-PRE-007", "precedence": 7, "class": "patient_core_eligibility", "representative_codes": ["LEGACY-PATIENT-CHAIN-030", "LEGACY-PATIENT-CHAIN-042"], "disposition": "fix immutable core branch before children"},
+    {"id": "PILOT-EXC-PRE-008", "precedence": 8, "class": "alias_only", "representative_codes": ["LEGACY-PATIENT-ALIAS-004", "LEGACY-PATIENT-ALIAS-006", "LEGACY-PATIENT-ALIAS-041"], "disposition": "withhold or reconcile alias independently"},
+    {"id": "PILOT-EXC-PRE-009", "precedence": 9, "class": "optional_demographic_contact", "representative_codes": ["LEGACY-PATIENT-CHILD-CONTACT-011", "LEGACY-PATIENT-CHILD-OCC-016", "LEGACY-PATIENT-CHILD-ADDR-019", "LEGACY-PATIENT-CHILD-RELIGION-022", "LEGACY-PATIENT-CHILD-MARITAL-026"], "disposition": "withhold optional field or child; preserve eligible core"},
+    {"id": "PILOT-EXC-PRE-010", "precedence": 10, "class": "insurance_row_provider_group", "representative_codes": ["LEGACY-INSURANCE-PATIENT-005", "LEGACY-INSURANCE-PROVIDER-007", "LEGACY-INSURANCE-MEMBER-018", "LEGACY-INSURANCE-CONSOLIDATION-026"], "disposition": "preserve history; withhold unsafe current representation"},
+    {"id": "PILOT-EXC-PRE-011", "precedence": 11, "class": "side_effect_violation", "representative_codes": ["LEGACY-PATIENT-ACTOR-032", "LEGACY-STAFF-SECURITY-017", "LEGACY-INSURANCE-ELIGIBILITY-029"], "disposition": "stop and prove zero delta"},
+    {"id": "PILOT-EXC-PRE-012", "precedence": 12, "class": "reconciliation_failure", "representative_codes": ["LEGACY-STAFF-RECON-026", "LEGACY-PATIENT-NUMBER-039"], "disposition": "no acceptance until all differences are zero"},
+    {"id": "PILOT-EXC-PRE-013", "precedence": 13, "class": "commit_lineage_idempotency", "representative_codes": ["LEGACY-PATIENT-NUMBER-038", "LEGACY-PATIENT-DELETE-043", "LEGACY-INSURANCE-TARGET-041"], "disposition": "stop; reconstruct durable facts and use reviewed compensation"}
+  ],
+  "invariants": ["optional child does not replace patient-core exception", "duplicate alias does not become duplicate-patient decision", "insurance conflict does not alter patient identity", "orphan child is never reassigned", "one authoritative root per quarantine outcome"],
+  "privacy": {"contains_raw_phi": false, "contains_raw_source_or_target_identifiers": false, "repository_output": "aggregate-only"}
+}

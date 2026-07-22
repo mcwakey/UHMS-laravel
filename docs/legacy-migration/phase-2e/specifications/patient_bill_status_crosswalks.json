@@ -1,0 +1,141 @@
+{
+  "specification_version": "2E.1.0",
+  "phase": "2E",
+  "approved_source": {
+    "connection": "legacy_uhms",
+    "database": "uuhms",
+    "read_only": true
+  },
+  "implementation_authorized": false,
+  "policy_authority": {
+    "source": "APPROVED_DECISION_SPECIFICATIONS.md",
+    "decision_register": "DECISIONS.md",
+    "decisions": [
+      "D-205",
+      "D-206",
+      "D-207",
+      "D-212"
+    ],
+    "questions": [
+      "Q-004",
+      "Q-005",
+      "Q-009",
+      "Q-301"
+    ]
+  },
+  "upstream_contracts": [
+    "phase-2a.reference_natural_keys:NK-004",
+    "phase-2a.reference_extraction_strategies:EXTRACT-SETT_PRIVATE",
+    "phase-2a.reference_reconciliation_contracts:RECON-SETT_PRIVATE",
+    "phase-2c.patient_relationship_rules:PATIENT-REL-003",
+    "phase-2c.patient_sentinel_rules:PATIENT-SENT-003",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-REL-003",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-001",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-022",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-007",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-009",
+    "phase-2c.existing_target_patient_rules:PATIENT-TARGET-009",
+    "phase-2d.patient_child_relationship_rules:PATIENT-CHILD-REL-005",
+    "phase-2d.patient_child_extraction_strategies:PATIENT-CHILD-EXT-001",
+    "phase-2d.patient_child_privacy_provenance_contract:PATIENT-CHILD-PRIV-010"
+  ],
+  "normalization": "strict Latin1 decode, NFC and outer trim; exact controlled value; no global default",
+  "reconciliation_id": "INS-REC-011",
+  "record_count": 6,
+  "records": [
+    {
+      "id": "INS-BILL-001",
+      "source_value": "NHIS",
+      "normalized_value": "NHIS",
+      "count": 10587,
+      "source_class": "nhia",
+      "payer_representation": "nhia",
+      "eligibility_representation": "not evidenced",
+      "mapping_state": "Exact",
+      "can_corroborate_insurance_row": true,
+      "can_establish_membership": false,
+      "conflict_behavior": "preserve both facts; classify conflict; never select provider/default",
+      "exception_code": null,
+      "reconciliation_contribution": "explicit_crosswalk_or_blank"
+    },
+    {
+      "id": "INS-BILL-002",
+      "source_value": "PRIVATE INSURANCE",
+      "normalized_value": "PRIVATE INSURANCE",
+      "count": 3416,
+      "source_class": "private",
+      "payer_representation": "private",
+      "eligibility_representation": "not evidenced",
+      "mapping_state": "Exact",
+      "can_corroborate_insurance_row": true,
+      "can_establish_membership": false,
+      "conflict_behavior": "preserve both facts; classify conflict; never select provider/default",
+      "exception_code": null,
+      "reconciliation_contribution": "explicit_crosswalk_or_blank"
+    },
+    {
+      "id": "INS-BILL-003",
+      "source_value": "CASH AND CARRY",
+      "normalized_value": "CASH AND CARRY",
+      "count": 2518,
+      "source_class": "self",
+      "payer_representation": "self",
+      "eligibility_representation": "not evidenced",
+      "mapping_state": "Exact",
+      "can_corroborate_insurance_row": false,
+      "can_establish_membership": false,
+      "conflict_behavior": "preserve both facts; classify conflict; never select provider/default",
+      "exception_code": null,
+      "reconciliation_contribution": "explicit_crosswalk_or_blank"
+    },
+    {
+      "id": "INS-BILL-004",
+      "source_value": "PRIVATE INSURANCE + NHIS",
+      "normalized_value": "PRIVATE INSURANCE + NHIS",
+      "count": 384,
+      "source_class": "mixed_private_nhia",
+      "payer_representation": "mixed_private_nhia",
+      "eligibility_representation": "not evidenced",
+      "mapping_state": "Approved transform",
+      "can_corroborate_insurance_row": true,
+      "can_establish_membership": false,
+      "conflict_behavior": "preserve both facts; classify conflict; never select provider/default",
+      "exception_code": null,
+      "reconciliation_contribution": "explicit_crosswalk_or_blank"
+    },
+    {
+      "id": "INS-BILL-005",
+      "source_value": "",
+      "normalized_value": "",
+      "count": 40,
+      "source_class": "not_evidenced",
+      "payer_representation": null,
+      "eligibility_representation": "not evidenced",
+      "mapping_state": "Blank",
+      "can_corroborate_insurance_row": false,
+      "can_establish_membership": false,
+      "conflict_behavior": "preserve both facts; classify conflict; never select provider/default",
+      "exception_code": null,
+      "reconciliation_contribution": "explicit_crosswalk_or_blank"
+    },
+    {
+      "id": "INS-BILL-006",
+      "source_value": "PRIVATE INSURANCE +",
+      "normalized_value": "PRIVATE INSURANCE +",
+      "count": 5,
+      "source_class": "not_evidenced",
+      "payer_representation": null,
+      "eligibility_representation": "not evidenced",
+      "mapping_state": "Invalid",
+      "can_corroborate_insurance_row": false,
+      "can_establish_membership": false,
+      "conflict_behavior": "preserve both facts; classify conflict; never select provider/default",
+      "exception_code": "LEGACY-INSURANCE-TYPE-013",
+      "reconciliation_contribution": "invalid"
+    }
+  ],
+  "privacy": {
+    "contains_raw_phi": false,
+    "repository_output": "aggregate-only"
+  }
+}

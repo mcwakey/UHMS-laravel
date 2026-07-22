@@ -1,0 +1,22 @@
+{
+  "specification_version":"2D.1.0","phase":"2D","approved_source":{"database":"uuhms"},"implementation_authorized":false,
+  "record_count":16,
+  "records":[
+    {"id":"PATIENT-CHILD-CLASS-CONTACT-001","value":"CONTACT_COMPLETE_VALID","terminal":true,"patient_blocking":false},
+    {"id":"PATIENT-CHILD-CLASS-CONTACT-002","value":"CONTACT_PARTIAL_REVIEW","terminal":true,"patient_blocking":false},
+    {"id":"PATIENT-CHILD-CLASS-CONTACT-003","value":"CONTACT_ALL_FIELDS_BLANK","terminal":true,"patient_blocking":false},
+    {"id":"PATIENT-CHILD-CLASS-CONTACT-004","value":"CONTACT_INVALID","terminal":true,"patient_blocking":false},
+    {"id":"PATIENT-CHILD-CLASS-CONTACT-005","value":"CONTACT_PARENT_QUARANTINED","terminal":true,"patient_blocking":true},
+    {"id":"PATIENT-CHILD-CLASS-CONTACT-006","value":"CONTACT_EXISTING_TARGET_IMMUTABLE","terminal":true,"patient_blocking":false},
+    {"id":"PATIENT-CHILD-CLASS-CONTACT-007","value":"CONTACT_FAILED","terminal":true,"patient_blocking":false},
+    {"id":"PATIENT-CHILD-CLASS-FIELD-001","value":"VALUE_VALID","terminal":true,"patient_blocking":false},
+    {"id":"PATIENT-CHILD-CLASS-FIELD-002","value":"VALUE_BLANK_NULL","terminal":true,"patient_blocking":false},
+    {"id":"PATIENT-CHILD-CLASS-FIELD-003","value":"VALUE_INVALID_WITHHELD","terminal":true,"patient_blocking":false},
+    {"id":"PATIENT-CHILD-CLASS-FIELD-004","value":"VALUE_OVERLENGTH_WITHHELD","terminal":true,"patient_blocking":false},
+    {"id":"PATIENT-CHILD-CLASS-FIELD-005","value":"VALUE_UNREPRESENTABLE","terminal":true,"patient_blocking":false},
+    {"id":"PATIENT-CHILD-CLASS-FIELD-006","value":"VALUE_PARENT_QUARANTINED","terminal":true,"patient_blocking":true},
+    {"id":"PATIENT-CHILD-CLASS-FIELD-007","value":"VALUE_EXISTING_TARGET_IMMUTABLE","terminal":true,"patient_blocking":false},
+    {"id":"PATIENT-CHILD-CLASS-FIELD-008","value":"VALUE_EXTRACTION_FAILURE","terminal":true,"patient_blocking":false},
+    {"id":"PATIENT-CHILD-CLASS-FIELD","value":"FIELD_OUTCOME_PARTITION","members":["PATIENT-CHILD-CLASS-FIELD-001","PATIENT-CHILD-CLASS-FIELD-002","PATIENT-CHILD-CLASS-FIELD-003","PATIENT-CHILD-CLASS-FIELD-004","PATIENT-CHILD-CLASS-FIELD-005","PATIENT-CHILD-CLASS-FIELD-006","PATIENT-CHILD-CLASS-FIELD-007","PATIENT-CHILD-CLASS-FIELD-008"]}
+  ],"privacy":{"contains_raw_phi":false}
+}

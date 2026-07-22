@@ -1,0 +1,18 @@
+{
+  "specification_version":"2C.1.0","phase":"2C","approved_source":{"database":"uuhms"},"policy_authority":["Q-002","D-211","Q-008"],"privacy":{"contains_phi":false,"review_ledgers_are_protected":true},"implementation_authorized":false,"record_count":13,
+  "records":[
+    {"id":"PATIENT-DUP-001","signal":"normalized name","action":"protected review flag only","automatic_match":false,"automatic_merge":false,"evidence":"1001 groups/2278 rows"},
+    {"id":"PATIENT-DUP-002","signal":"name+DOB+gender","action":"protected review flag only","automatic_match":false,"automatic_merge":false,"evidence":"230 groups/466 rows"},
+    {"id":"PATIENT-DUP-003","signal":"name+DOB+gender+phone","action":"protected review flag only","automatic_match":false,"automatic_merge":false,"evidence":"190 groups/384 rows"},
+    {"id":"PATIENT-DUP-004","signal":"OPD only","action":"alias duplicate/collision classification only","automatic_match":false,"automatic_merge":false},
+    {"id":"PATIENT-DUP-005","signal":"phone only","action":"contact-quality/review evidence only","automatic_match":false,"automatic_merge":false},
+    {"id":"PATIENT-DUP-006","signal":"email/national id/address/DOB/gender alone","action":"supporting protected review only","automatic_match":false,"automatic_merge":false},
+    {"id":"PATIENT-DUP-007","signal":"fuzzy/similarity/weighted score","action":"prohibited migration decision path","automatic_match":false,"automatic_merge":false,"exception_code":"LEGACY-PATIENT-DUPLICATE-028"},
+    {"id":"PATIENT-DUP-008","signal":"suspected duplicate","action":"separate eligible candidates plus post-migration review flag","automatic_match":false,"automatic_merge":false,"exception_code":"LEGACY-PATIENT-DUPLICATE-027"},
+    {"id":"PATIENT-DUP-009","signal":"duplicate OPD","action":"withhold alias only unless separate entity blocker exists","automatic_match":false,"automatic_merge":false,"exception_code":"LEGACY-PATIENT-ALIAS-004"},
+    {"id":"PATIENT-DUP-010","signal":"existing target candidate","action":"explicit protected crosswalk or separately reviewed deterministic decision only","automatic_match":false,"automatic_merge":false},
+    {"id":"PATIENT-DUP-011","signal":"operational merge workflow","action":"not called or populated by migration; later controlled workflow only","automatic_match":false,"automatic_merge":false},
+    {"id":"PATIENT-DUP-012","signal":"review SLA expiry","action":"remain pending; never default, merge, discard or select an owner","automatic_match":false,"automatic_merge":false},
+    {"id":"PATIENT-DUP-013","signal":"reconciliation","action":"all prohibited accepted-match/merge counters equal zero","reconciliation_id":"PATIENT-REC-DUPLICATE-010"}
+  ]
+}

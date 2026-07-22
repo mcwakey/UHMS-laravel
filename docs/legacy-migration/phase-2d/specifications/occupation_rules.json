@@ -1,0 +1,15 @@
+{
+  "specification_version":"2D.1.0","phase":"2D","approved_source":{"database":"uuhms","table":"patients","column":"Work"},"target":{"field":"patients.occupation","database_nullable":true,"operational_max":100},"implementation_authorized":false,"record_count":10,
+  "records":[
+    {"id":"PATIENT-CHILD-OCC-001","rule":"Work is occupation-like free text; its business semantics are inferred, not a source catalogue key."},
+    {"id":"PATIENT-CHILD-OCC-002","rule":"Decode latin1, NFC, trim outer whitespace; preserve internal display text; collapse whitespace only for comparison."},
+    {"id":"PATIENT-CHILD-OCC-003","rule":"Valid nonblank max-100 control-free text is a direct nullable free-text candidate.","exception_codes":[]},
+    {"id":"PATIENT-CHILD-OCC-004","rule":"Blank maps null plus absence provenance; never unknown, unemployed or other.","exception_codes":["LEGACY-PATIENT-CHILD-OCC-015"]},
+    {"id":"PATIENT-CHILD-OCC-005","rule":"Invalid/control/encoding/overlength value is withheld at field level and does not block patient.","exception_codes":["LEGACY-PATIENT-CHILD-OCC-016","LEGACY-PATIENT-CHILD-OCC-017","LEGACY-PATIENT-CHILD-TEXT-029","LEGACY-PATIENT-CHILD-TEXT-030"]},
+    {"id":"PATIENT-CHILD-OCC-006","rule":"Do not populate sett_ocuupation, fabricate a catalogue, or force config occupation labels."},
+    {"id":"PATIENT-CHILD-OCC-007","rule":"Occupation is prohibited for identity, matching, deduplication and payer inference."},
+    {"id":"PATIENT-CHILD-OCC-008","rule":"Existing target value, including null, is immutable; differences are protected comparison outcomes.","exception_codes":["LEGACY-PATIENT-CHILD-TARGET-036"]},
+    {"id":"PATIENT-CHILD-OCC-009","rule":"Parent unresolved or quarantined holds the field under the patient root.","exception_codes":["LEGACY-PATIENT-CHILD-PARENT-001","LEGACY-PATIENT-CHILD-PARENT-002"]},
+    {"id":"PATIENT-CHILD-OCC-010","rule":"Extraction/snapshot failure withholds the field and root until reproducible.","exception_codes":["LEGACY-PATIENT-CHILD-EXTRACT-033"]}
+  ],"privacy":{"contains_raw_phi":false,"classification":"protected demographic"}
+}

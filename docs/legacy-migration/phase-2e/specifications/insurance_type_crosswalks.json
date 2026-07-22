@@ -1,0 +1,79 @@
+{
+  "specification_version": "2E.1.0",
+  "phase": "2E",
+  "approved_source": {
+    "connection": "legacy_uhms",
+    "database": "uuhms",
+    "read_only": true
+  },
+  "implementation_authorized": false,
+  "policy_authority": {
+    "source": "APPROVED_DECISION_SPECIFICATIONS.md",
+    "decision_register": "DECISIONS.md",
+    "decisions": ["D-205", "D-206", "D-207", "D-212"],
+    "questions": ["Q-004", "Q-005", "Q-009", "Q-301"]
+  },
+  "upstream_contracts": [
+    "phase-2a.reference_natural_keys:NK-004",
+    "phase-2a.reference_extraction_strategies:EXTRACT-SETT_PRIVATE",
+    "phase-2a.reference_reconciliation_contracts:RECON-SETT_PRIVATE",
+    "phase-2c.patient_relationship_rules:PATIENT-REL-003",
+    "phase-2c.patient_sentinel_rules:PATIENT-SENT-003",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-REL-003",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-001",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-022",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-007",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-009",
+    "phase-2c.existing_target_patient_rules:PATIENT-TARGET-009",
+    "phase-2d.patient_child_relationship_rules:PATIENT-CHILD-REL-005",
+    "phase-2d.patient_child_extraction_strategies:PATIENT-CHILD-EXT-001",
+    "phase-2d.patient_child_privacy_provenance_contract:PATIENT-CHILD-PRIV-010"
+  ],
+  "decision": "D-205/Q-004",
+  "default_mapping": null,
+  "record_count": 4,
+  "records": [
+    {
+      "id": "INS-TYPE-001",
+      "source_value": "NHIS",
+      "count": 15653,
+      "provider_type": "insurance_types.code=NHIA; provider enum=nhia; type alone cannot select a provider",
+      "patient_membership_type": null,
+      "payer_category": "nhia",
+      "claims_dependency": "deferred to claims phase; no claim effect in Phase 2E",
+      "unknown": false
+    },
+    {
+      "id": "INS-TYPE-002",
+      "source_value": "PRIVATE INSURANCE",
+      "count": 15654,
+      "provider_type": "Phase 2A provider type PRIVATE or CORPORATE; exact provider crosswalk still required",
+      "patient_membership_type": null,
+      "payer_category": "private",
+      "claims_dependency": "deferred to claims phase; no claim effect in Phase 2E",
+      "unknown": false
+    },
+    {
+      "id": "INS-TYPE-003",
+      "source_value_class": "blank",
+      "provider_type": null,
+      "patient_membership_type": null,
+      "payer_category": null,
+      "claims_dependency": "none",
+      "exception_code": "LEGACY-INSURANCE-TYPE-011"
+    },
+    {
+      "id": "INS-TYPE-004",
+      "source_value_class": "out_of_domain",
+      "provider_type": null,
+      "patient_membership_type": null,
+      "payer_category": null,
+      "claims_dependency": "none",
+      "exception_code": "LEGACY-INSURANCE-TYPE-012"
+    }
+  ],
+  "privacy": {
+    "contains_raw_phi": false,
+    "repository_output": "aggregate-only"
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "specification_version": "2F.1.0",
+  "phase": "2F",
+  "approved_source": {"connection": "legacy_uhms", "database": "uuhms", "read_only": true},
+  "approved_target": {"environment": "approved_non_production", "read_only": true, "production_forbidden": true},
+  "implementation_authorized": false,
+  "policy_authority": {"source": "APPROVED_DECISION_SPECIFICATIONS.md", "decision_register": "DECISIONS.md", "decisions": ["D-006", "D-101", "D-102", "D-201", "D-211", "D-212", "D-213"]},
+  "upstream_contracts": [
+    "phase-2a.reference_natural_keys:NK-004",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-001",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-007",
+    "phase-2c.existing_target_patient_rules:PATIENT-TARGET-009",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-EXISTING-030",
+    "phase-2e.existing_target_insurance_rules:INS-TARGET-009"
+  ],
+  "interface_only": true,
+  "record_count": 6,
+  "records": [
+    {
+      "id": "PILOT-XW-001",
+      "interface": "common envelope",
+      "required_fields": ["interface_version", "pilot_contract_version", "contract_bundle_hash", "run_token", "cohort_token", "source_snapshot_token", "target_snapshot_token", "source_schema_fingerprint", "target_schema_fingerprint", "hmac_key_version", "canonicalization_version", "created_at_utc", "record_checksum", "retention_class", "access_class"],
+      "rule": "All tokens and checksums are protected, version-bound and non-PHI; raw identifiers and secrets are prohibited."
+    },
+    {
+      "id": "PILOT-XW-002",
+      "interface": "patient crosswalk",
+      "required_fields": ["source_patient_token", "patient_root_token", "target_patient_ref", "branch", "mapping_state", "patient_number_action", "patient_number_result_ref", "authoritative_rule_ids", "transformation_versions", "existing_target_evidence_ref", "idempotency_key_ref", "mapping_checksum", "revocation_state", "run_provenance_ref"],
+      "branch_values": ["new_target", "explicit_existing_target", "quarantined", "not_commit_eligible"],
+      "patient_number_actions": ["allocate_on_commit", "reuse_verified_prior_migration_allocation", "existing_target_unchanged", "none"]
+    },
+    {
+      "id": "PILOT-XW-003",
+      "interface": "reference crosswalk",
+      "required_fields": ["source_reference_token", "reference_domain", "target_reference_ref", "phase2a_crosswalk_version", "phase2a_rule_id", "match_authority", "status", "conflict_state", "snapshot_token"],
+      "status_values": ["resolved_unique", "unresolved", "ambiguous", "conflict", "inactive_target", "drifted"],
+      "release_status": "resolved_unique"
+    },
+    {
+      "id": "PILOT-XW-004",
+      "interface": "patient cardinality",
+      "rule": "One source patient token has at most one active target mapping at the same contract and snapshot coordinate; one approved mapping resolves exactly one target patient.",
+      "exception_codes": ["LEGACY-PATIENT-TARGET-023", "LEGACY-PATIENT-TARGET-025"]
+    },
+    {
+      "id": "PILOT-XW-005",
+      "interface": "immutability and lineage",
+      "rule": "Resolve an exact prior successful mapping before allocation. Existing-target links authorize no patient, child, alias or membership mutation and do not follow merge pointers automatically.",
+      "exception_codes": ["LEGACY-PATIENT-TARGET-026", "LEGACY-PATIENT-NUMBER-038", "LEGACY-PATIENT-DELETE-043", "LEGACY-INSURANCE-TARGET-041"]
+    },
+    {
+      "id": "PILOT-XW-006",
+      "interface": "source key boundary",
+      "rule": "Classic primary keys are source linkage facts only, never renewed primary keys, and remain in protected runtime. Repository artifacts contain no source or target row identifiers.",
+      "reconciliation_ids": ["PATIENT-REC-EXISTING-030", "PATIENT-REC-PRIVACY-050"]
+    }
+  ],
+  "privacy": {"contains_raw_phi": false, "contains_raw_source_or_target_identifiers": false, "repository_output": "aggregate-only"}
+}

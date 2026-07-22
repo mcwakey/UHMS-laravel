@@ -1,0 +1,19 @@
+{
+  "specification_version":"2C.1.0","phase":"2C","approved_source":{"database":"uuhms"},"policy_authority":["Q-002","D-201","D-213"],"installed_target_baseline":{"patients":100,"soft_deleted_patients":0,"patient_aliases":0,"captured_state_must_be_refreshed":true},"privacy":{"contains_phi":false,"crosswalk_is_protected":true},"implementation_authorized":false,"record_count":14,
+  "records":[
+    {"id":"PATIENT-TARGET-001","case":"permitted link","rule":"Explicit protected pre-approved one-source-to-one-target crosswalk."},
+    {"id":"PATIENT-TARGET-002","case":"permitted reviewed link","rule":"Separately reviewed deterministic identity decision recorded in protected crosswalk."},
+    {"id":"PATIENT-TARGET-003","case":"prohibited automatic keys","rule":"No name, normalized name, OPD/alias, phone, email, DOB, gender, address, Ghana Card alone, fuzzy or weighted matching."},
+    {"id":"PATIENT-TARGET-004","case":"unique explicit match","rule":"Query unscoped/withTrashed; exactly one live, unmerged target; retain target row/number unchanged."},
+    {"id":"PATIENT-TARGET-005","case":"missing target","rule":"Quarantine crosswalk; do not allocate replacement automatically.","exception_code":"LEGACY-PATIENT-TARGET-025"},
+    {"id":"PATIENT-TARGET-006","case":"multiple/conflicting candidates","rule":"Quarantine; no scoring or best candidate.","exception_code":"LEGACY-PATIENT-TARGET-023"},
+    {"id":"PATIENT-TARGET-007","case":"soft-deleted/merged target","rule":"Block controlled review; never restore, follow merge pointer or recycle identity automatically.","exception_code":"LEGACY-PATIENT-TARGET-026"},
+    {"id":"PATIENT-TARGET-008","case":"field conflict","rule":"Record protected conflict flags only; do not overwrite target fields.","exception_code":"LEGACY-PATIENT-TARGET-024"},
+    {"id":"PATIENT-TARGET-009","case":"target immutability","rule":"Zero changes to id, number, identity/contact, registered_by, timestamps, status, deleted/merge state, pre-existing aliases or pre-existing children. After link commit, the separate D-201 alias stage may create one new eligible legacy_opd without changing the immutable pre-existing set."},
+    {"id":"PATIENT-TARGET-010","case":"many-to-one","rule":"Prohibited unless an explicit reviewed identity decision authorizes it; never inferred from duplicate signals."},
+    {"id":"PATIENT-TARGET-011","case":"alias collision","rule":"Collision is an alias exception, not existing-target identity evidence."},
+    {"id":"PATIENT-TARGET-012","case":"Ghana Card","rule":"Target unique but source field absent; no inferred value or target link."},
+    {"id":"PATIENT-TARGET-013","case":"fingerprint","rule":"Domain-separated HMAC pre/post protected target field groups; any delta stops."},
+    {"id":"PATIENT-TARGET-014","case":"reconciliation","rule":"Explicit links map one source/target; patient rows created/updated, numbers changed, and aliases created/reassigned by the existing-link path are zero. A later eligible legacy_opd creation is counted only by PATIENT-REC-ALIAS-002.","reconciliation_id":"PATIENT-REC-EXISTING-030"}
+  ]
+}

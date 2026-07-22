@@ -1,0 +1,94 @@
+{
+  "specification_version": "2E.1.0",
+  "phase": "2E",
+  "approved_source": {
+    "connection": "legacy_uhms",
+    "database": "uuhms",
+    "read_only": true
+  },
+  "implementation_authorized": false,
+  "policy_authority": {
+    "source": "APPROVED_DECISION_SPECIFICATIONS.md",
+    "decision_register": "DECISIONS.md",
+    "decisions": ["D-205", "D-206", "D-207", "D-212"],
+    "questions": ["Q-004", "Q-005", "Q-009", "Q-301"]
+  },
+  "upstream_contracts": [
+    "phase-2a.reference_natural_keys:NK-004",
+    "phase-2a.reference_extraction_strategies:EXTRACT-SETT_PRIVATE",
+    "phase-2a.reference_reconciliation_contracts:RECON-SETT_PRIVATE",
+    "phase-2c.patient_relationship_rules:PATIENT-REL-003",
+    "phase-2c.patient_sentinel_rules:PATIENT-SENT-003",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-REL-003",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-001",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-022",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-007",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-009",
+    "phase-2c.existing_target_patient_rules:PATIENT-TARGET-009",
+    "phase-2d.patient_child_relationship_rules:PATIENT-CHILD-REL-005",
+    "phase-2d.patient_child_extraction_strategies:PATIENT-CHILD-EXT-001",
+    "phase-2d.patient_child_privacy_provenance_contract:PATIENT-CHILD-PRIV-010"
+  ],
+  "baseline": {
+    "rows": 31307,
+    "blank_or_not_evidenced": 25042,
+    "source_candidate_single": 2247,
+    "source_candidate_ambiguous": 1,
+    "unmatched_nonblank": 4017
+  },
+  "record_count": 8,
+  "records": [
+    {
+      "id": "INS-PROVIDER-001",
+      "dependency": "Phase 2A NK-004",
+      "predicate": "Consume the approved Phase 2A sett_private source-row-to-target-provider crosswalk result; NK-004 itself has no insurance.Company input",
+      "fuzzy": false
+    },
+    {
+      "id": "INS-PROVIDER-002",
+      "outcome": "unique Classic sett_private name/short-name diagnostic candidate only",
+      "target": null,
+      "rule": "Not a target provider mapping. Requires an explicit approved Phase 2A source-to-target provider crosswalk result."
+    },
+    {
+      "id": "INS-PROVIDER-003",
+      "outcome": "blank",
+      "target": null,
+      "exception_code": "LEGACY-INSURANCE-PROVIDER-006"
+    },
+    {
+      "id": "INS-PROVIDER-004",
+      "outcome": "unmatched",
+      "target": null,
+      "exception_code": "LEGACY-INSURANCE-PROVIDER-007"
+    },
+    {
+      "id": "INS-PROVIDER-005",
+      "outcome": "ambiguous source provider candidate",
+      "target": null,
+      "exception_code": "LEGACY-INSURANCE-PROVIDER-008"
+    },
+    {
+      "id": "INS-PROVIDER-006",
+      "rule": "No artificial provider, Standard tier, or provider-side default may be created. A source candidate count must never be reported as a target mapped count."
+    },
+    {
+      "id": "INS-PROVIDER-007",
+      "outcome": "duplicate Phase 2A provider source group",
+      "target": null,
+      "rule": "Requires the explicit Phase 2A duplicate-group decision and individual provenance.",
+      "exception_code": "LEGACY-INSURANCE-PROVIDER-039"
+    },
+    {
+      "id": "INS-PROVIDER-008",
+      "projection_id": "INSURANCE-COMPANY-TO-PROVIDER-PROJECTION-V1",
+      "predicate": "strictly decode and NFC/trim/collapse/casefold insurance.Company for name comparison only; require exact equality to canonical sett_private.PrivateName, explicit InsType-to-PrivateType compatibility, a unique approved Phase 2A source-row-to-target-provider crosswalk result, and matching versions",
+      "short_name_authority": false,
+      "rule": "PrivateShort matches remain diagnostics only. NHIS/type-only evidence never selects a provider. Any ambiguity or absent approved target crosswalk withholds the group."
+    }
+  ],
+  "privacy": {
+    "contains_raw_phi": false,
+    "repository_output": "aggregate-only"
+  }
+}

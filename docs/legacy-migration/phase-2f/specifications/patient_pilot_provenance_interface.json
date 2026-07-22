@@ -1,0 +1,57 @@
+{
+  "specification_version": "2F.1.0",
+  "phase": "2F",
+  "approved_source": {"connection": "legacy_uhms", "database": "uuhms", "read_only": true},
+  "approved_target": {"environment": "approved_non_production", "read_only": true, "production_forbidden": true},
+  "implementation_authorized": false,
+  "policy_authority": {"source": "APPROVED_DECISION_SPECIFICATIONS.md", "decision_register": "DECISIONS.md", "decisions": ["D-106", "D-201", "D-209", "D-212"]},
+  "upstream_contracts": [
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-001",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-007",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-PRIVACY-050",
+    "phase-2d.patient_child_privacy_provenance_contract:PATIENT-CHILD-PRIV-010",
+    "phase-2e.insurance_history_provenance_rules:INS-HISTORY-001",
+    "phase-2e.insurance_history_provenance_rules:INS-HISTORY-004",
+    "phase-2e.insurance_reconciliation_contracts:INS-REC-014"
+  ],
+  "interface_only": true,
+  "record_count": 6,
+  "records": [
+    {
+      "id": "PILOT-PROV-001",
+      "interface": "source outcome record",
+      "required_fields": ["source_row_token", "patient_root_token", "subchain_token", "raw_protected_payload_ref", "source_query_id", "query_hash", "source_snapshot_token", "field_disposition_set", "transformation_version", "target_outcome", "target_outcome_ref", "exception_set", "reconciliation_refs", "retention_class", "access_class"]
+    },
+    {
+      "id": "PILOT-PROV-002",
+      "interface": "target outcome",
+      "allowed_values": ["none", "candidate", "created", "linked_existing", "withheld", "historical_only", "quarantined", "failed"],
+      "dry_run_rule": "Dry-run uses projected outcomes and never reports a projection as a persisted result."
+    },
+    {
+      "id": "PILOT-PROV-003",
+      "interface": "field disposition",
+      "rule": "Every consumed source field has exactly one primary disposition and may have ordered secondary exceptions; one authoritative Phase 2A-2E transformation owner is referenced."
+    },
+    {
+      "id": "PILOT-PROV-004",
+      "interface": "insurance completeness",
+      "rule": "Every Classic insurance source row has a separate protected provenance record, including exact duplicates and rows that produce no target membership.",
+      "baseline_population": 31307,
+      "reconciliation_id": "INS-REC-014"
+    },
+    {
+      "id": "PILOT-PROV-005",
+      "interface": "audit separation",
+      "rule": "Run, rule, transformation, exception and reconciliation facts belong to a separately labelled migration audit; no contemporaneous operational activity is fabricated.",
+      "upstream_id": "PATIENT-CHILD-PRIV-012"
+    },
+    {
+      "id": "PILOT-PROV-006",
+      "interface": "integrity failure",
+      "rule": "Missing, unverifiable, wrong-version or mismatched provenance holds the affected root or subchain and never reconstructs a source fact from target state.",
+      "exception_codes": ["LEGACY-PATIENT-PRIVACY-036", "LEGACY-PATIENT-CHILD-PRIVACY-035", "LEGACY-INSURANCE-PRIVACY-037"]
+    }
+  ],
+  "privacy": {"contains_raw_phi": false, "contains_raw_source_or_target_identifiers": false, "repository_output": "aggregate-only"}
+}

@@ -1,0 +1,54 @@
+{
+  "specification_version": "2F.1.0",
+  "phase": "2F",
+  "approved_source": {"connection": "legacy_uhms", "database": "uuhms", "read_only": true},
+  "approved_target": {"environment": "approved_non_production", "read_only": true, "production_prohibited": true},
+  "policy_authority": ["D-101", "D-102", "D-201", "D-202", "D-205", "D-206", "D-207", "D-211", "D-212", "D-213", "D-214"],
+  "upstream_contracts": ["NK-004", "TARGET-ACTOR-054", "PATIENT-EXT-001", "PATIENT-PRIV-001", "PATIENT-PRIV-007", "PATIENT-PRIV-008", "PATIENT-PRIV-009", "PATIENT-REC-ENTITY-001", "PATIENT-REC-ALIAS-002", "PATIENT-CHILD-EXT-001", "PATIENT-CHILD-REC-001", "INS-EXT-001", "INS-REC-001", "INS-REC-007-ROW"],
+  "privacy": {"contains_phi": false, "contains_raw_phi": false, "repository_output": "scenario_ids_aggregate_counts_and_nonsecret_contract_hashes_only"},
+  "implementation_authorized": false,
+  "future_ready_source_rows": 0,
+  "record_count": 3,
+  "records": [
+    {
+      "id": "PILOT-COHORT-A",
+      "name": "synthetic_contract_fixtures",
+      "size": 66,
+      "source": "independently_generated_SYNTHETIC-ONLY-P2F_values",
+      "selection": "all_scenarios_A-001_through_A-066",
+      "expected_outcome": "contract_only_zero_database_writes",
+      "required_assertions": ["no_value_copied_or_perturbed_from_Classic", "all_patient_alias_child_insurance_exception_provenance_reconciliation_outcomes_explicit", "notifications_and_external_calls_zero"]
+    },
+    {
+      "id": "PILOT-COHORT-B",
+      "name": "protected_source_derived_dry_run",
+      "maximum_primary_roots": 148,
+      "exact_size_formula": "N_B=sum_s(min(q_s,A_s_after_prior_assignment))",
+      "strata": 24,
+      "selection_algorithm": "PILOT-COHORT-SELECTION-V1",
+      "future_commit_ready_count": 0,
+      "expected_outcome": "mapping_classification_remediation_demand_and_quarantine_only",
+      "required_assertions": ["one_pinned_uuhms_snapshot", "domain_separated_HMAC_order", "no_raw_source_ids_or_values", "underfill_not_silently_refilled", "all_secondary_coverage_flags_retained"]
+    },
+    {
+      "id": "PILOT-COHORT-C",
+      "name": "protected_target_collision_and_immutability",
+      "size_formula": "one_protected_case_for_each_available_required_branch_at_the_pinned_target_snapshot",
+      "creates_or_changes_target_rows": 0,
+      "branches": [
+        {"id": "C-001", "condition": "explicit_existing_target_crosswalk_valid", "outcome": "link_projection_only_existing_patient_and_children_immutable"},
+        {"id": "C-002", "condition": "approved_target_missing", "outcome": "patient_chain_quarantine_no_fallthrough_create", "exception": "LEGACY-PATIENT-TARGET-025"},
+        {"id": "C-003", "condition": "approved_target_soft_deleted", "outcome": "patient_chain_quarantine_no_restore", "exception": "LEGACY-PATIENT-TARGET-026"},
+        {"id": "C-004", "condition": "approved_target_merged_or_redirected", "outcome": "patient_chain_quarantine_no_pointer_follow", "exception": "LEGACY-PATIENT-TARGET-026"},
+        {"id": "C-005", "condition": "patient_number_collision", "outcome": "stop_unit_A_no_suffix_reallocation_or_recycle", "exception": "LEGACY-PATIENT-NUMBER-037"},
+        {"id": "C-006", "condition": "legacy_opd_alias_collision", "outcome": "withhold_alias_only_no_patient_match", "exception": "LEGACY-PATIENT-ALIAS-006"},
+        {"id": "C-007", "condition": "existing_target_contact_difference", "outcome": "comparison_evidence_only_no_existing_contact_mutation", "exception": "LEGACY-PATIENT-CHILD-CONTACT-012"},
+        {"id": "C-008", "condition": "existing_patient_provider_membership", "outcome": "verified_same_lineage_noop_else_immutable_conflict", "exception": "LEGACY-INSURANCE-TARGET-030"},
+        {"id": "C-009", "condition": "target_member_number_collision", "outcome": "history_only_no_overwrite_or_reassignment", "exception": "LEGACY-INSURANCE-MEMBER-019"},
+        {"id": "C-010", "condition": "target_schema_constraint_or_configuration_drift", "outcome": "stop_entire_run_and_recapture", "exception": "LEGACY-PATIENT-TARGET-035"},
+        {"id": "C-011", "condition": "multiple_target_primary_contacts", "outcome": "stop_unit_C_no_clear_or_reselection_and_zero_existing_contact_mutation", "exception": "LEGACY-PATIENT-CHILD-CONTACT-013"}
+      ],
+      "required_assertions": ["fresh_protected_target_snapshot", "unscoped_soft_delete_merge_archive_checks", "preexisting_target_delta_zero", "row_level_tokens_not_published"]
+    }
+  ]
+}

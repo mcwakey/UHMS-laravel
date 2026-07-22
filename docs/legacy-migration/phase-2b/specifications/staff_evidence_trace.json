@@ -1,0 +1,309 @@
+{
+    "specification_version": "2B.1.0",
+    "phase": "Phase 2B evidence trace",
+    "generated_at_utc": "2026-07-21T19:11:40Z",
+    "approved_source": {
+        "connection": "legacy_uhms",
+        "schema": "uuhms",
+        "access": "read-only",
+        "expected_tables": 55,
+        "expected_columns": 479
+    },
+    "database_write_count": 0,
+    "privacy": {
+        "raw_identity_values": false,
+        "raw_contacts": false,
+        "credentials": false,
+        "permission_values": false,
+        "phi": false
+    },
+    "execution": {
+        "executed_on_utc_date": "2026-07-21",
+        "timestamp_precision": "date; the original ephemeral query runner did not persist an exact wall-clock timestamp",
+        "transaction": "READ ONLY, REPEATABLE READ, rolled back",
+        "query_tool_context": "repository Laravel bootstrap; no command or importer file created"
+    },
+    "authoritative_baseline_references": [
+        "../../evidence/CLASSIC_SCHEMA_MANIFEST.json",
+        "../../evidence/CLASSIC_SCHEMA_FINGERPRINT.json",
+        "../../evidence/CLASSIC_RELATIONSHIP_MANIFEST.json",
+        "../../evidence/CLASSIC_QUERY_MANIFEST.json",
+        "../../evidence/CLASSIC_AGGREGATE_RESULTS.json"
+    ],
+    "queries": [
+        {
+            "id": "phase2b.staff.master.aggregate",
+            "version": 1,
+            "definition": "Exact uuhms guard (55 tables/479 columns), read-only repeatable-read transaction; aggregate users row/null/blank/distinct/duplicate/length/status/timestamp/credential-presence/permission-presence and department-predicate counts; never select raw identity, credential or permission values.",
+            "query_hash_sha256": "79b8d57173361e336246e96a4163ad7db5e0c96780bb7d60753748f6d3da9fa2"
+        },
+        {
+            "id": "phase2b.actor.numeric.aggregate",
+            "version": 1,
+            "definition": "For each actor-like numeric field, count child/null/zero/nonzero distinct and diagnostic equality to uuhms.users.USER_ID under exact table/column allow-list; no raw actor value returned.",
+            "query_hash_sha256": "d70d5cf06ab97303eb0d4929ff82a7153d0c14fff223b5d0ca23adea35d50aab"
+        },
+        {
+            "id": "phase2b.actor.text.aggregate",
+            "version": 1,
+            "definition": "For each approved Doctor field, count child/null/blank/distinct normalized fingerprints and diagnostic normalized equality multiplicity to users.FullName; normalized name is never identity proof and no text returned.",
+            "query_hash_sha256": "732b913ec4ceb300a1ecf877142bc4e5ed342f5bb48e00be29a094088e61947e"
+        },
+        {
+            "id": "phase2b.actor.additional.aggregate",
+            "version": 1,
+            "definition": "For billing.CASH_ID, notifications.ReqFrom/ReqTo, mat_family.DocName/DocPhone, hospitalinfo.ClaimOfficer/ClaimSignature/Admn, consult_diagnosis.MdfId and list_diagnosis.MdfId, return only null/blank/zero/distinct-hash/user-diagnostic aggregate counts under exact uuhms read-only guard.",
+            "query_hash_sha256": "1aa8b210a4e0afd4a3bd8531956f00651f4428a6a32466be8075eb5cc3be5877"
+        }
+    ],
+    "results": [
+        {
+            "id": "staff_master",
+            "result_hash_sha256": "d3b76929fe03b0c00aa2c4f1c77ada3acfc350382c37590e88554e5260d97435",
+            "sanitized_result": {
+                "rows": 86,
+                "blank_full_name": 0,
+                "blank_username": 0,
+                "normalized_full_name_duplicate_groups": 2,
+                "normalized_full_name_duplicate_rows": 4,
+                "normalized_username_duplicate_groups": 2,
+                "normalized_username_duplicate_rows": 4,
+                "active": 85,
+                "inactive": 1,
+                "department_matched": 86,
+                "department_orphan": 0,
+                "credential_values_returned": 0,
+                "permission_values_returned": 0
+            }
+        },
+        {
+            "id": "numeric_actor_counts",
+            "result_hash_sha256": "f48f489982fbe22fe822e6845511a78428a5343434c2663a5e390dbebf42bfe3",
+            "sanitized_result": {
+                "attendance.USER_ID": [
+                    51927,
+                    0,
+                    0,
+                    15186,
+                    36741
+                ],
+                "batch.USER_ID": [
+                    253,
+                    0,
+                    0,
+                    253,
+                    0
+                ],
+                "billing.USER_ID": [
+                    111731,
+                    0,
+                    0,
+                    24545,
+                    87186
+                ],
+                "consult_prescriptions.USER_ID": [
+                    210902,
+                    0,
+                    14144,
+                    93823,
+                    102935
+                ],
+                "consult_scan_lab.USER_ID": [
+                    72680,
+                    0,
+                    72680,
+                    0,
+                    0
+                ],
+                "nurses_note.USER_ID": [
+                    29,
+                    0,
+                    0,
+                    29,
+                    0
+                ],
+                "request.USER_ID": [
+                    146,
+                    0,
+                    146,
+                    0,
+                    0
+                ],
+                "treatment.USER_ID": [
+                    69,
+                    0,
+                    0,
+                    66,
+                    3
+                ],
+                "vitals.USER_ID": [
+                    60803,
+                    0,
+                    0,
+                    52325,
+                    8478
+                ]
+            }
+        },
+        {
+            "id": "text_actor_counts",
+            "result_hash_sha256": "9620159a96f1bd4e0dc3d085c12c97aa022c9d7f29fe67084fc64127b39013a6",
+            "sanitized_result": {
+                "claims.Doctor": [
+                    31892,
+                    0,
+                    1502,
+                    30333,
+                    26,
+                    31
+                ],
+                "consult_complaints.Doctor": [
+                    65244,
+                    0,
+                    28378,
+                    139,
+                    0,
+                    36727
+                ],
+                "consult_diagnosis.Doctor": [
+                    123940,
+                    0,
+                    79422,
+                    4588,
+                    0,
+                    39930
+                ],
+                "consult_history.Doctor": [
+                    34532,
+                    0,
+                    1755,
+                    6782,
+                    0,
+                    25995
+                ],
+                "consult_prescriptions.Doctor": [
+                    210902,
+                    0,
+                    103165,
+                    6682,
+                    0,
+                    101055
+                ],
+                "consult_procedures.Doctor": [
+                    121,
+                    0,
+                    121,
+                    0,
+                    0,
+                    0
+                ],
+                "consult_scan_lab.Doctor": [
+                    72680,
+                    0,
+                    32445,
+                    2809,
+                    0,
+                    37426
+                ],
+                "consult_services.Doctor": [
+                    60260,
+                    0,
+                    60260,
+                    0,
+                    0,
+                    0
+                ],
+                "consult_treatment.Doctor": [
+                    1926,
+                    0,
+                    0,
+                    53,
+                    0,
+                    1873
+                ]
+            }
+        },
+        {
+            "id": "additional_actor_like_counts",
+            "result_hash_sha256": "a0f43be67edf78636a9c3d5ee42cf44812ed0e2fe6d04b400cd0aefbb0b395e5",
+            "sanitized_result": {
+                "billing.CASH_ID": [
+                    111731,
+                    0,
+                    111731,
+                    0,
+                    0,
+                    0
+                ],
+                "notifications.ReqFrom": [
+                    141,
+                    0,
+                    0,
+                    0,
+                    7
+                ],
+                "notifications.ReqTo": [
+                    141,
+                    0,
+                    0,
+                    0,
+                    1
+                ],
+                "mat_family.DocName": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "mat_family.DocPhone": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "hospitalinfo.ClaimOfficer": [
+                    1,
+                    0,
+                    0,
+                    0,
+                    1
+                ],
+                "hospitalinfo.ClaimSignature": [
+                    1,
+                    0,
+                    0,
+                    0,
+                    1
+                ],
+                "hospitalinfo.Admn": [
+                    1,
+                    0,
+                    0,
+                    0,
+                    1
+                ],
+                "consult_diagnosis.MdfId": [
+                    123940,
+                    0,
+                    123940,
+                    0,
+                    0
+                ],
+                "list_diagnosis.MdfId": [
+                    5948,
+                    0,
+                    5948,
+                    0,
+                    0
+                ]
+            }
+        }
+    ],
+    "interpretation": "Hashes version the sanitized query definitions and aggregate results. This trace contains no operational staff crosswalk and is not extraction runtime code.",
+    "phase2b_evidence_references": [
+        "../../evidence/PHASE_2B_STAFF_QUERY_MANIFEST.json",
+        "../../evidence/PHASE_2B_STAFF_AGGREGATE_RESULTS.json"
+    ]
+}

@@ -1,0 +1,62 @@
+{
+  "specification_version": "2F.1.0",
+  "phase": "2F",
+  "approved_source": {"connection": "legacy_uhms", "database": "uuhms", "read_only": true},
+  "approved_target": {"environment": "approved_non_production", "read_only": true, "production_forbidden": true},
+  "implementation_authorized": false,
+  "policy_authority": {"source": "APPROVED_DECISION_SPECIFICATIONS.md", "decision_register": "DECISIONS.md", "decisions": ["D-002", "D-101", "D-102", "D-104", "D-105", "D-106", "D-210"]},
+  "upstream_contracts": [
+    "phase-2a.reference_extraction_strategies:EXTRACT-SETT_PRIVATE",
+    "phase-2b.security_exclusion_contract:STAFF-SECURITY-001",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-001",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-007",
+    "phase-2d.patient_child_extraction_strategies:PATIENT-CHILD-EXT-001",
+    "phase-2e.insurance_extraction_strategies:INS-EXT-001",
+    "phase-2e.insurance_extraction_strategies:INS-EXT-004"
+  ],
+  "zero_write_simulation": true,
+  "record_count": 8,
+  "records": [
+    {
+      "id": "PILOT-DRY-001",
+      "contract": "environment inputs",
+      "required_inputs": ["approved_source_environment", "approved_target_environment", "source_fingerprint", "target_fingerprint", "source_snapshot_coordinate", "target_collision_snapshot_coordinate"]
+    },
+    {
+      "id": "PILOT-DRY-002",
+      "contract": "versioned inputs",
+      "required_inputs": ["contract_version_bundle", "cohort_manifest", "protected_remediation_input", "reference_crosswalk_inputs", "existing_target_crosswalk_inputs", "patient_state_matrix", "insurance_initialization_matrix", "hmac_key_metadata", "configuration_fingerprints", "evaluation_datetime_timezone", "expected_scenario_matrix"]
+    },
+    {
+      "id": "PILOT-DRY-003",
+      "contract": "preflight outputs",
+      "required_outputs": ["preflight_verdict", "cohort_inclusion_exclusion_counts", "environment_guard_results", "snapshot_and_contract_guard_results"]
+    },
+    {
+      "id": "PILOT-DRY-004",
+      "contract": "domain outputs",
+      "required_outputs": ["patient_entity_outcomes", "patient_number_actions", "alias_outcomes", "demographic_outcomes", "contact_outcomes", "insurance_row_outcomes", "provider_resolution_outcomes", "insurance_consolidation_outcomes"]
+    },
+    {
+      "id": "PILOT-DRY-005",
+      "contract": "control outputs",
+      "required_outputs": ["exception_counts", "quarantine_chain_counts", "target_collision_counts", "reconciliation_results", "privacy_scan_results", "side_effect_zero_assertions", "idempotency_projection", "resume_rollback_projection", "pilot_entry_exit_verdict"]
+    },
+    {
+      "id": "PILOT-DRY-006",
+      "contract": "output privacy",
+      "rule": "Repository output contains aggregates, stable rule IDs and nonsecret hashes only; row-level outputs remain protected and no matched sensitive scan content is printed."
+    },
+    {
+      "id": "PILOT-DRY-007",
+      "contract": "patient number projection",
+      "rule": "No number is allocated or reserved. Any simulated action is nonbinding and represented only by a protected action token plus aggregate result unless a later separately reviewed reservation design exists."
+    },
+    {
+      "id": "PILOT-DRY-008",
+      "contract": "write and service boundary",
+      "required_zero": ["source_writes", "target_writes", "operational_service_calls", "queues", "notifications", "sms", "email", "operational_audit_events", "eligibility_verifications"]
+    }
+  ],
+  "privacy": {"contains_raw_phi": false, "contains_raw_source_or_target_identifiers": false, "repository_output": "aggregate-only"}
+}

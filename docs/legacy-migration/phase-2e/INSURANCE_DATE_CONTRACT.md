@@ -1,0 +1,9 @@
+# Insurance date contract
+
+**Confirmed disjoint chronology partition at 2026-07-21 UTC:** 31,307 = 15,683 both unknown + 34 issue-known/expiry-unknown + 1,408 issue-unknown/expiry-known + 66 reversed + 28 equal-known + 0 future-issue after precedence + 51 future-expiry/nonfuture-issue + 14,037 valid ordered nonfuture. The separate field marginals are 17,091 zero issue dates, 15,717 zero expiry dates, 19 future issue dates and 54 future expiry dates; those marginals overlap and must not be summed.
+
+**Confirmed disjoint current-state diagnostic:** 31,307 = 17,125 date-unknown + 66 chronology-invalid + 0 future-looking + 14,065 expired-looking + 51 active-looking. Active-looking is a date-window diagnostic, not proof of current eligibility. A narrower historical diagnostic counted 36 active-looking rows with nonblank `Company`; it must not replace the all-row current-state partition.
+
+Valid historical dates are preserved. `0000-00-00` is unknown/not evidenced only for its field and maps to nullable target representation with protected raw evidence; it does not mean open-ended coverage. A past expiry is expired-looking history. A future issue date or reversed period blocks current selection. A future expiry date is preserved and is not invalid by itself. Dates are never swapped, coerced, replaced with migration time or guessed. Equal dates are preserved but do not independently evidence eligibility.
+
+The Phase 2C registration date is a system-registration fact, not necessarily coverage inception, so no before/after ordering is inferred; comparison is diagnostic only and uses the same protected patient snapshot. Active-looking means valid `IssueDate <= evaluation date <= ExpiryDate` at the pinned UTC coordinate; unknown dates receive a separate class and are never silently treated as open-ended. Every run records date, timezone, rule version and source snapshot identity.

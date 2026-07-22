@@ -1,0 +1,161 @@
+{
+  "manifest_version": "2E.TARGET.1.0",
+  "phase": "2E",
+  "evidence_scope": "renewed non-production target insurance collision and structure evidence",
+  "captured_at_utc": "2026-07-21T22:44:37.578830Z",
+  "database_guard": {
+    "connection_role": "renewed_target_non_production",
+    "environment_allowlist": ["local", "testing"],
+    "observed_environment": "local",
+    "expected_database": "uhms_clean",
+    "observed_database": "uhms_clean",
+    "database_version": "10.4.32-MariaDB",
+    "session_transaction_read_only": true,
+    "transaction_completion": "ROLLBACK",
+    "classic_database_accessed": false,
+    "credentials_included": false
+  },
+  "target_fingerprint_contract": {
+    "algorithm": "SHA-256",
+    "expected": "12e3a4c6ca80a0c1a54ea9267d9c4935453b7a36d27c7f8ad900062c1c12bff0",
+    "observed": "12e3a4c6ca80a0c1a54ea9267d9c4935453b7a36d27c7f8ad900062c1c12bff0",
+    "match": true,
+    "kind": "structural_schema_and_migration_ledger",
+    "baseline": "docs/legacy-migration/TARGET_SCHEMA_FINGERPRINT.json",
+    "fail_closed_rule": "Refuse capture when the actual target database or full target fingerprint differs."
+  },
+  "implementation": {
+    "id": "phase2e-target-evidence-manifest-v1",
+    "version": "1.0.0",
+    "canonical_description": "phase2e-target-evidence-manifest-v1|guard=environment(local,testing)+database(uhms_clean)+fingerprint(12e3a4c6ca80a0c1a54ea9267d9c4935453b7a36d27c7f8ad900062c1c12bff0)|transaction=session-read-only+rollback|output=aggregate-only|suppression=nonzero-1-through-9-to-SUPPRESSED_LT_10|zero=publish|schema-reference-facts=publish|result-hash=public-suppressed-representation-only|canonical-json=recursive-lexicographic-object-keys+stable-arrays+utf8+unescaped-unicode-slashes+no-whitespace",
+    "sha256": "6ad57bffb356b0156bc617629940d61fdae251cbdf41f34d1499bfecaa0d0b94",
+    "persistence": "Manifest-defined read-only capture; no executable migration/import configuration."
+  },
+  "sql_normalization": {
+    "version": "sql-whitespace-v1",
+    "rule": "Trim outer whitespace and collapse every internal whitespace run to one ASCII space without changing tokens, literals or case.",
+    "hash_algorithm": "SHA-256"
+  },
+  "public_result_canonicalization": {
+    "version": "phase2e-public-result-v1",
+    "json": "UTF-8; object keys in the declared query projection/result-contract order; stable array order; unescaped Unicode and slashes; no insignificant whitespace.",
+    "result_hash_preimage": "phase2e-public-result-v1 + NUL + query/result id + NUL + canonical public result JSON",
+    "small_cell_rule": "Publish zero exactly. Replace every nonzero patient/provider/membership/verification population below 10 with SUPPRESSED_LT_10. Installed schema and enum/reference facts are not population cells.",
+    "anti_enumeration_rule": "Hashes cover only the suppression-safe public representation; exact suppressed counts, raw identifiers and row tokens are excluded from every published hash."
+  },
+  "queries": [
+    {
+      "query_id": "phase2e.target.guard",
+      "query_version": "1.0.0",
+      "normalized_sql": "SELECT DATABASE() AS database_name, VERSION() AS database_version, @@tx_read_only AS session_read_only, DATE_FORMAT(UTC_TIMESTAMP(6),'%Y-%m-%dT%H:%i:%s.%fZ') AS captured_at_utc",
+      "query_sha256": "b557915f1d5d052ede937d78749837e434879a0f1cf4bf83347693fd3df2e3fb",
+      "result_contract": "Exact non-sensitive database/version/read-only/capture facts."
+    },
+    {
+      "query_id": "phase2e.target.membership_population",
+      "query_version": "1.0.0",
+      "normalized_sql": "SELECT COUNT(*) AS total, SUM(is_active=1) AS active_count, SUM(is_primary=1) AS primary_count, SUM(insurance_tier_id IS NULL) AS tier_null_count, SUM(start_date IS NULL) AS start_date_null_count, SUM(expiry_date IS NULL) AS expiry_date_null_count, SUM(start_date IS NOT NULL AND expiry_date IS NOT NULL AND expiry_date < start_date) AS reversed_date_count FROM patient_insurances",
+      "query_sha256": "afaabba8de58245d2d99e08692ea0cca28c620993ac069df6a49831c2f1cd173",
+      "result_contract": "Existing membership and nullable/date populations; small-cell suppression applies."
+    },
+    {
+      "query_id": "phase2e.target.membership_groups",
+      "query_version": "1.0.0",
+      "normalized_sql": "SELECT (SELECT COUNT(*) FROM (SELECT patient_id, insurance_provider_id FROM patient_insurances GROUP BY patient_id, insurance_provider_id HAVING COUNT(*)>1) d) AS duplicate_patient_provider_groups, (SELECT COUNT(*) FROM (SELECT patient_id FROM patient_insurances WHERE is_primary=1 GROUP BY patient_id HAVING COUNT(*)>1) p) AS multiple_primary_patient_groups",
+      "query_sha256": "aa549ffc67c6ef55f667eb52ec9398beaa1d79a0647e73f4ca83dc436ee52be3",
+      "result_contract": "Patient/provider uniqueness and one-primary diagnostics; zero is publishable."
+    },
+    {
+      "query_id": "phase2e.target.member_collisions",
+      "query_version": "1.0.0",
+      "normalized_sql": "SELECT SUM(membership_number IS NULL OR TRIM(membership_number)='') AS blank_count, SUM(membership_number IS NOT NULL AND TRIM(membership_number)<>'') AS nonblank_count, (SELECT COUNT(*) FROM (SELECT LOWER(TRIM(membership_number)) n FROM patient_insurances WHERE membership_number IS NOT NULL AND TRIM(membership_number)<>'' GROUP BY LOWER(TRIM(membership_number)) HAVING COUNT(*)>1) g) AS normalized_duplicate_groups, (SELECT COUNT(*) FROM (SELECT LOWER(TRIM(membership_number)) n FROM patient_insurances WHERE membership_number IS NOT NULL AND TRIM(membership_number)<>'' GROUP BY LOWER(TRIM(membership_number)) HAVING COUNT(DISTINCT patient_id)>1) g) AS cross_patient_duplicate_groups, (SELECT COUNT(*) FROM (SELECT LOWER(TRIM(membership_number)) n FROM patient_insurances WHERE membership_number IS NOT NULL AND TRIM(membership_number)<>'' GROUP BY LOWER(TRIM(membership_number)) HAVING COUNT(DISTINCT insurance_provider_id)>1) g) AS cross_provider_duplicate_groups FROM patient_insurances",
+      "query_sha256": "f1ab9b2cb31d12f68162f6a5bd39a00e833176c341897736f1505d2a61fcf75e",
+      "result_contract": "Aggregate collision groups only; no membership value or low-entropy value hash."
+    },
+    {
+      "query_id": "phase2e.target.provider_state",
+      "query_version": "1.0.0",
+      "normalized_sql": "SELECT COUNT(*) AS total, SUM(is_active=1) AS active_count, SUM(is_default=1) AS default_count, SUM(insurance_type_id IS NULL) AS missing_type_fk_count, SUM(code IS NULL OR TRIM(code)='') AS missing_code_count, (SELECT COUNT(*) FROM (SELECT LOWER(TRIM(name)), LOWER(TRIM(type)) FROM insurance_providers GROUP BY LOWER(TRIM(name)), LOWER(TRIM(type)) HAVING COUNT(*)>1) d) AS duplicate_name_type_groups FROM insurance_providers",
+      "query_sha256": "a89c40396e9cafd2d8f44c23e351cadd7c07635ff9c50a66f763e40eb1ac200e",
+      "result_contract": "Provider population and structural-quality aggregates; names/codes are never emitted."
+    },
+    {
+      "query_id": "phase2e.target.type_state",
+      "query_version": "1.0.0",
+      "normalized_sql": "SELECT COUNT(*) AS total, SUM(is_active=1) AS active_count FROM insurance_types",
+      "query_sha256": "05ff2074cdffd2afbe04ced21f934dcbe2379be31445d61607684741d091003f",
+      "result_contract": "Insurance type population; safe reference codes are captured separately."
+    },
+    {
+      "query_id": "phase2e.target.tier_state",
+      "query_version": "1.0.0",
+      "normalized_sql": "SELECT COUNT(*) AS total, SUM(is_active=1) AS active_count, SUM(is_default=1) AS default_count, (SELECT COUNT(*) FROM (SELECT insurance_provider_id FROM insurance_tiers WHERE is_default=1 GROUP BY insurance_provider_id HAVING COUNT(*)>1) d) AS providers_multiple_default_tiers, (SELECT COUNT(*) FROM insurance_providers p LEFT JOIN insurance_tiers t ON t.insurance_provider_id=p.id AND t.is_default=1 WHERE t.id IS NULL) AS providers_without_default_tier, (SELECT COUNT(*) FROM patient_insurances pi JOIN insurance_tiers t ON t.id=pi.insurance_tier_id WHERE t.insurance_provider_id<>pi.insurance_provider_id) AS membership_tier_provider_mismatches FROM insurance_tiers",
+      "query_sha256": "e2b0540995499d609eb5de10a676fa87f6a5b7bdeac268af0a8f6a69605160d7",
+      "result_contract": "Tier/default/provider-consistency aggregate state; no tier/provider value."
+    },
+    {
+      "query_id": "phase2e.target.verification_state",
+      "query_version": "1.0.0",
+      "normalized_sql": "SELECT COUNT(*) AS total, SUM(verified_by IS NULL) AS missing_actor_count, SUM(verified_at IS NULL) AS missing_time_count FROM insurance_verifications",
+      "query_sha256": "ff4203b91ee3cadeddf6d7afa130e09bd2dac5a3ab2e6346a8e9a954d9a0bf8e",
+      "result_contract": "Verification population/actor/time completeness; no actors, dates, statuses or identifiers."
+    },
+    {
+      "query_id": "phase2e.target.structural_absence",
+      "query_version": "1.0.0",
+      "normalized_sql": "SELECT (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('patient_insurances','insurance_providers','insurance_tiers','insurance_verifications') AND COLUMN_NAME='deleted_at') AS soft_delete_columns, (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND (TABLE_NAME REGEXP '^insurance.*(scheme|plan)' OR TABLE_NAME REGEXP '(scheme|plan).*insurance$')) AS insurance_scheme_plan_tables, (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='patient_insurances' AND COLUMN_NAME REGEXP '(scheme|plan|eligibility|verification_status)') AS membership_scheme_plan_eligibility_columns",
+      "query_sha256": "6c2154a9bda3a271bae63bd9a0dd45dbcb7a7f91c48274339d8af3b1a443999f",
+      "result_contract": "Safe installed structural absence facts."
+    },
+    {
+      "query_id": "phase2e.target.column_fingerprint",
+      "query_version": "1.0.0",
+      "normalized_sql": "SELECT COUNT(*) AS item_count, SHA2(GROUP_CONCAT(CONCAT_WS('|',TABLE_NAME,COLUMN_NAME,ORDINAL_POSITION,COLUMN_TYPE,IS_NULLABLE,COALESCE(COLUMN_DEFAULT,'<NULL>'),COLUMN_KEY,EXTRA,COALESCE(GENERATION_EXPRESSION,'')) ORDER BY TABLE_NAME,ORDINAL_POSITION SEPARATOR '||'),256) AS sha256 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('patient_insurances','insurance_providers','insurance_types','insurance_tiers','insurance_verifications')",
+      "query_sha256": "11e3aff86569b4c9960689e25ef73c716ee0fa04bd4f7ed1cb748f8d7bcfcd8a",
+      "result_contract": "Safe relevant-column structural count and fingerprint."
+    },
+    {
+      "query_id": "phase2e.target.constraint_fingerprint",
+      "query_version": "1.0.0",
+      "normalized_sql": "SELECT COUNT(*) AS item_count, SHA2(GROUP_CONCAT(CONCAT_WS('|',tc.TABLE_NAME,tc.CONSTRAINT_NAME,tc.CONSTRAINT_TYPE,COALESCE(kcu.COLUMN_NAME,''),COALESCE(kcu.REFERENCED_TABLE_NAME,''),COALESCE(kcu.REFERENCED_COLUMN_NAME,''),COALESCE(rc.UPDATE_RULE,''),COALESCE(rc.DELETE_RULE,'')) ORDER BY tc.TABLE_NAME,tc.CONSTRAINT_NAME,kcu.ORDINAL_POSITION SEPARATOR '||'),256) AS sha256 FROM information_schema.TABLE_CONSTRAINTS tc LEFT JOIN information_schema.KEY_COLUMN_USAGE kcu ON kcu.CONSTRAINT_SCHEMA=tc.CONSTRAINT_SCHEMA AND kcu.TABLE_NAME=tc.TABLE_NAME AND kcu.CONSTRAINT_NAME=tc.CONSTRAINT_NAME LEFT JOIN information_schema.REFERENTIAL_CONSTRAINTS rc ON rc.CONSTRAINT_SCHEMA=tc.CONSTRAINT_SCHEMA AND rc.TABLE_NAME=tc.TABLE_NAME AND rc.CONSTRAINT_NAME=tc.CONSTRAINT_NAME WHERE tc.CONSTRAINT_SCHEMA=DATABASE() AND tc.TABLE_NAME IN ('patient_insurances','insurance_providers','insurance_types','insurance_tiers','insurance_verifications')",
+      "query_sha256": "32866c7ba89f55ee449dcf0329569ffa7c037a8ca4c0d06472f4dbf50fbd4424",
+      "result_contract": "Safe relevant constraint count and fingerprint."
+    },
+    {
+      "query_id": "phase2e.target.index_fingerprint",
+      "query_version": "1.0.0",
+      "normalized_sql": "SELECT COUNT(*) AS item_count, SHA2(GROUP_CONCAT(CONCAT_WS('|',TABLE_NAME,INDEX_NAME,NON_UNIQUE,SEQ_IN_INDEX,COLUMN_NAME,INDEX_TYPE,COALESCE(SUB_PART,'')) ORDER BY TABLE_NAME,INDEX_NAME,SEQ_IN_INDEX SEPARATOR '||'),256) AS sha256 FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('patient_insurances','insurance_providers','insurance_types','insurance_tiers','insurance_verifications')",
+      "query_sha256": "dbf546dbb05a8ed02c221c3d892ce959e89ca9892d966e4e59d8bd68a69d2945",
+      "result_contract": "Safe relevant index-part count and fingerprint."
+    },
+    {
+      "query_id": "phase2e.target.safe_reference_values",
+      "query_version": "1.0.0",
+      "normalized_sql": "SELECT 'insurance_type_code' AS domain, code AS value FROM insurance_types UNION ALL SELECT 'provider_type_enum_compatible' AS domain, type AS value FROM insurance_providers GROUP BY type UNION ALL SELECT 'member_type_native_enum' AS domain, 'holder' AS value UNION ALL SELECT 'member_type_native_enum' AS domain, 'beneficiary' AS value ORDER BY domain,value",
+      "query_sha256": "237723af716cfe5febf4b44e4170c67689ed33c2be3f641821bf0028f86c62eb",
+      "result_contract": "Safe installed enum/reference/schema facts; no counts or provider identities."
+    }
+  ],
+  "bundle_identity": {
+    "canonicalization": "For bundle identity only: UTF-8 JSON with recursively lexicographic object keys, stable arrays, unescaped Unicode/slashes and no insignificant whitespace. Individual result hashes use public_result_canonicalization.",
+    "content_sha256": "03f37f6f4f33071298074497dedf5bacfeb72e7b8424c14a4eeb2df92c6997ff",
+    "capture_instance_sha256": "a09eaf1c5da9192bf782358eec513677fe92f92ad72cef17a29a2176810c222e",
+    "content_preimage_contract": {
+      "shape": "JSON object with exactly the keys implementation_sha256, query_sha256, result_sha256, target_fingerprint",
+      "implementation_sha256": "implementation.sha256 string",
+      "query_sha256": "object keyed by the final segment of each queries[].query_id, with query_sha256 string values",
+      "result_sha256": "aggregate-results result_hashes object renamed to result_sha256; keys recursively sorted by the bundle canonicalization",
+      "target_fingerprint": "target_fingerprint_contract.observed string",
+      "exact_preimage_rule": "Recursively sort the containing object and both hash objects by bytewise/string ascending key; encode one-line UTF-8 JSON with unescaped Unicode/slashes, no insignificant whitespace and no trailing newline."
+    },
+    "capture_instance_rule": "SHA-256(content_sha256 UTF-8 bytes + one NUL byte + captured_at_utc UTF-8 bytes)"
+  },
+  "privacy_assertions": {
+    "target_ids_emitted": 0,
+    "patient_or_member_values_emitted": 0,
+    "provider_names_emitted": 0,
+    "row_dates_or_tokens_emitted": 0,
+    "credentials_emitted": 0,
+    "exact_nonzero_cells_below_10_emitted": 0
+  }
+}

@@ -1,0 +1,5 @@
+# Insurance privacy contract
+
+Insurance membership data is restricted identity and financial/coverage data. Never commit patient/source/target IDs, member/policy numbers, provider membership details, identifying Company/Scheme/Plan values, row dates, raw Classic keys, row-level tokens or eligibility results.
+
+Use separate HMAC domains: `patient-insurance-row-v1`, `patient-insurance-member-v1`, `patient-insurance-group-v1`, `patient-insurance-orphan-v1`, and `patient-insurance-target-comparison-v1`. The unchanged Phase 2C `PATIENT-PRIV-009` / `legacy-insurance-chain-v1` token remains the authoritative orphan root; the Phase 2E orphan token is optional secondary row correlation and never replaces or cross-compares with it. Record key/canonicalization versions and typed length-prefixed input format. Never compare tokens across domains, keys, environments or versions. Protected runtime evidence is access-controlled and retained under Phase 2C/2D records/privacy policy; repository output is aggregate-only.

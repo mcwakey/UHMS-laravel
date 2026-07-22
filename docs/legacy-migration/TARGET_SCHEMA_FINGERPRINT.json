@@ -1,0 +1,37 @@
+{
+    "manifest_version": 2,
+    "tool_version": "phase-1b-target-inspector/2.1.0",
+    "tool_code_hash_sha256": "4c1b7de100a9d26f4abcdea45da05b65680b7858f85939df2c13b7e8a2c2b8eb",
+    "captured_at_utc": "2026-07-21T01:47:08+00:00",
+    "approved_database": "uhms_clean",
+    "algorithm": "sha256",
+    "fingerprint": "12e3a4c6ca80a0c1a54ea9267d9c4935453b7a36d27c7f8ad900062c1c12bff0",
+    "fingerprint_kind": "structural_schema_and_migration_ledger",
+    "canonical_components": [
+        "database_name",
+        "tables",
+        "columns",
+        "constraints",
+        "indexes_without_cardinality",
+        "triggers",
+        "events",
+        "routines",
+        "installed_migrations"
+    ],
+    "excluded_from_fingerprint": [
+        "database_version",
+        "index_cardinality",
+        "capture_time",
+        "storage_sizes",
+        "row_counts",
+        "auto_increment_next_values"
+    ],
+    "canonicalization": "Metadata queries are explicitly ordered; UTF-8 JSON uses unescaped Unicode/slashes and no insignificant whitespace; value types are preserved.",
+    "table_count": 335,
+    "column_count": 5347,
+    "constraint_row_count": 1839,
+    "index_column_count": 2573,
+    "trigger_count": 0,
+    "event_count": 0,
+    "routine_count": 0
+}

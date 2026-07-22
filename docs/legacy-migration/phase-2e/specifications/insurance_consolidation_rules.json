@@ -1,0 +1,94 @@
+{
+  "specification_version": "2E.1.0",
+  "phase": "2E",
+  "approved_source": {
+    "connection": "legacy_uhms",
+    "database": "uuhms",
+    "read_only": true
+  },
+  "implementation_authorized": false,
+  "policy_authority": {
+    "source": "APPROVED_DECISION_SPECIFICATIONS.md",
+    "decision_register": "DECISIONS.md",
+    "decisions": ["D-205", "D-206", "D-207", "D-212"],
+    "questions": ["Q-004", "Q-005", "Q-009", "Q-301"]
+  },
+  "upstream_contracts": [
+    "phase-2a.reference_natural_keys:NK-004",
+    "phase-2a.reference_extraction_strategies:EXTRACT-SETT_PRIVATE",
+    "phase-2a.reference_reconciliation_contracts:RECON-SETT_PRIVATE",
+    "phase-2c.patient_relationship_rules:PATIENT-REL-003",
+    "phase-2c.patient_sentinel_rules:PATIENT-SENT-003",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-REL-003",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-001",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-022",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-007",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-009",
+    "phase-2c.existing_target_patient_rules:PATIENT-TARGET-009",
+    "phase-2d.patient_child_relationship_rules:PATIENT-CHILD-REL-005",
+    "phase-2d.patient_child_extraction_strategies:PATIENT-CHILD-EXT-001",
+    "phase-2d.patient_child_privacy_provenance_contract:PATIENT-CHILD-PRIV-010"
+  ],
+  "group_diagnostic": {
+    "duplicate_patient_type_company_scheme_groups": 36,
+    "rows": 88
+  },
+  "record_count": 12,
+  "records": [
+    {
+      "id": "INS-CONS-001",
+      "group_key": "protected patient crosswalk identity + Phase 2A provider crosswalk identity",
+      "rule": "Group only after both resolve uniquely."
+    },
+    {
+      "id": "INS-CONS-002",
+      "rule": "At most one current target representation per patient/provider group."
+    },
+    {
+      "id": "INS-CONS-003",
+      "rule": "Select only a unique known-date active-looking, structurally valid, mutually compatible equivalence class at the pinned evaluation coordinate, with a proven Phase 2A target-provider map and newly migrated patient."
+    },
+    {
+      "id": "INS-CONS-004",
+      "rule": "No row status/current flag exists; dates alone do not prove eligibility."
+    },
+    {
+      "id": "INS-CONS-005",
+      "rule": "Multiple incompatible current-looking classes are conflicting current candidates and are withheld.",
+      "exception_code": "LEGACY-INSURANCE-CONSOLIDATION-026"
+    },
+    {
+      "id": "INS-CONS-006",
+      "rule": "Exact duplicates retain all provenance; smallest INS_ID may be deterministic representative only, never evidence of currentness."
+    },
+    {
+      "id": "INS-CONS-007",
+      "rule": "No baseline aggregate authorizes row selection; a coordinated protected row snapshot is required."
+    },
+    {
+      "id": "INS-CONS-008",
+      "rule": "member_type is not source-evidenced; target default holder must not be applied.",
+      "exception_code": "LEGACY-INSURANCE-TARGET-031"
+    },
+    {
+      "id": "INS-CONS-009",
+      "rule": "is_active is true only for an approved selected representation; eligibility remains not evidenced."
+    },
+    {
+      "id": "INS-CONS-010",
+      "rule": "insurance_tier_id, policy_number, ccc_code, card_holder_insurance_id remain null/not evidenced."
+    },
+    {
+      "id": "INS-CONS-011",
+      "rule": "Unknown issue or expiry date is historical-only in Phase 2E; target nullability preserves absence but does not prove currentness."
+    },
+    {
+      "id": "INS-CONS-012",
+      "rule": "An explicitly linked pre-existing target patient receives no new membership or insurance child; evidence/provenance only under Phase 2C."
+    }
+  ],
+  "privacy": {
+    "contains_raw_phi": false,
+    "repository_output": "aggregate-only"
+  }
+}

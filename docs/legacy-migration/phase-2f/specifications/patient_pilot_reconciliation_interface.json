@@ -1,0 +1,67 @@
+{
+  "specification_version": "2F.1.0",
+  "phase": "2F",
+  "approved_source": {"connection": "legacy_uhms", "database": "uuhms", "read_only": true},
+  "approved_target": {"environment": "approved_non_production", "read_only": true, "production_forbidden": true},
+  "implementation_authorized": false,
+  "policy_authority": {"source": "APPROVED_DECISION_SPECIFICATIONS.md", "decision_register": "DECISIONS.md", "decisions": ["D-004", "D-106", "D-107", "D-201", "D-212"]},
+  "upstream_contracts": [
+    "phase-2a.reference_reconciliation_contracts:RECON-SETT_PRIVATE",
+    "phase-2b.staff_reconciliation_contracts:STAFF-REC-095",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-ENTITY-001",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-ALIAS-002",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-CHAIN-100",
+    "phase-2d.patient_child_reconciliation_contracts:PATIENT-CHILD-REC-001",
+    "phase-2d.patient_child_reconciliation_contracts:PATIENT-CHILD-REC-010",
+    "phase-2e.insurance_reconciliation_contracts:INS-REC-001",
+    "phase-2e.insurance_reconciliation_contracts:INS-REC-015"
+  ],
+  "interface_only": true,
+  "required_tolerance": 0,
+  "record_count": 8,
+  "records": [
+    {
+      "id": "PILOT-RECON-001",
+      "interface": "reconciliation result",
+      "required_fields": ["run_token", "cohort_token", "domain", "contract_id", "contract_version", "population_definition", "expected_equation", "measured_values", "difference", "tolerance", "acceptance_result", "evidence_hashes", "exception_refs", "approval_ref"]
+    },
+    {
+      "id": "PILOT-RECON-002",
+      "interface": "partition",
+      "rule": "Every population member is assigned exactly one ordered primary bucket; secondary diagnostics do not add to the partition.",
+      "required_difference": 0
+    },
+    {
+      "id": "PILOT-RECON-003",
+      "interface": "missing measurement",
+      "rule": "A mandatory unmeasured value is blocked_not_measured, never passed.",
+      "acceptance_values": ["passed", "failed", "blocked_not_measured", "not_applicable_with_rule"]
+    },
+    {
+      "id": "PILOT-RECON-004",
+      "interface": "evidence binding",
+      "rule": "Every result binds source, target, contract, query, canonicalization, HMAC-key-version and result identities at one run/snapshot coordinate. Drift invalidates the result."
+    },
+    {
+      "id": "PILOT-RECON-005",
+      "interface": "classified nonzero",
+      "rule": "A classified source-quality exception may be a nonzero primary bucket but never excuses a nonzero equation difference or safety assertion."
+    },
+    {
+      "id": "PILOT-RECON-006",
+      "interface": "insurance history",
+      "rule": "All pilot insurance source rows reconcile through INS-REC-001 through INS-REC-015; every source row has provenance and each patient/provider group selects at most one current representation."
+    },
+    {
+      "id": "PILOT-RECON-007",
+      "interface": "idempotency and checkpoint",
+      "rule": "Each successful atomic-stage outcome has exactly one compatible checkpoint and each checkpoint resolves to durable facts; unexplained partial state fails."
+    },
+    {
+      "id": "PILOT-RECON-008",
+      "interface": "phase boundary writes",
+      "required_zero": ["phase2f_source_writes", "phase2f_target_writes", "dry_run_source_writes", "dry_run_target_writes"]
+    }
+  ],
+  "privacy": {"contains_raw_phi": false, "contains_raw_source_or_target_identifiers": false, "repository_output": "aggregate-only"}
+}

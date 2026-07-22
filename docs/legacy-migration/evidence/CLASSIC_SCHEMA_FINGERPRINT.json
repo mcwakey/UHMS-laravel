@@ -1,0 +1,32 @@
+{
+    "manifest_version": 2,
+    "tool_version": "phase-1b-classic-evidence/2.1.0",
+    "tool_code_hash_sha256": "781dcbe7b5ad186f5bfec1847a494199d2672dd2757564e55dd5a0064f313473",
+    "captured_at_utc": "2026-07-21T01:57:29+00:00",
+    "approved_database": "uuhms",
+    "algorithm": "sha256",
+    "fingerprint": "150fcf4783fcb8bdc25f7e17fe0ece5050955f0c68e7dd03651ee8bd58498977",
+    "fingerprint_kind": "structural_schema",
+    "snapshot_fingerprint": "c151125d6f7d4df87471750da774d85ff6a9687dcb44d18693dbdfd0a40a40e5",
+    "canonical_components": [
+        "approved_database",
+        "tables_without_row_counts",
+        "columns",
+        "indexes_without_cardinality",
+        "declared_constraints",
+        "foreign_key_columns",
+        "referential_constraints"
+    ],
+    "canonicalization": "Arrays retain explicitly sorted query order; associative keys retain manifest construction order; UTF-8 JSON uses unescaped Unicode/slashes and no insignificant whitespace. Integer, decimal-string, boolean and null types are preserved.",
+    "excluded_from_structural_fingerprint": [
+        "database_version",
+        "exact_row_counts",
+        "index_cardinality",
+        "capture_times",
+        "storage_sizes",
+        "auto_increment_next_values"
+    ],
+    "table_count": 55,
+    "column_count": 479,
+    "total_rows": 1548058
+}

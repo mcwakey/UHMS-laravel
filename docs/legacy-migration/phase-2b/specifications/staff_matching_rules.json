@@ -1,0 +1,159 @@
+{
+    "specification_version": "2B.1.0",
+    "phase": "Phase 2B â€” Staff Identity and Historical Attribution Mapping Specifications",
+    "generated_at_utc": "2026-07-21T19:11:40Z",
+    "approved_source": {
+        "connection": "legacy_uhms",
+        "schema": "uuhms",
+        "access": "read-only",
+        "expected_tables": 55,
+        "expected_columns": 479
+    },
+    "policy_authority": [
+        "D-202",
+        "D-008",
+        "Q-304"
+    ],
+    "privacy": {
+        "raw_staff_identity_values": false,
+        "credentials": false,
+        "permission_values": false,
+        "personal_contacts": false,
+        "phi": false
+    },
+    "implementation_authorized": false,
+    "rule_order": "first successful unique verified rung wins; conflicts fail closed",
+    "record_count": 6,
+    "prohibited_match_keys": [
+        "username alone",
+        "name alone",
+        "telephone alone",
+        "department alone",
+        "unverified combinations"
+    ],
+    "records": [
+        {
+            "id": "STAFF-MATCH-001",
+            "level": 1,
+            "name": "Pre-approved explicit Classic-to-target crosswalk",
+            "required_fields": [
+                "protected Classic USER_ID",
+                "target users.id",
+                "approval metadata"
+            ],
+            "normalization": "Exact protected keys; no textual normalization.",
+            "uniqueness_requirement": "Exactly one active approved crosswalk row per Classic key and target key.",
+            "confidence": "deterministic",
+            "conflict_condition": "Duplicate source/target claims or revoked approval.",
+            "duplicate_condition": "Any multiplicity.",
+            "target_existing_match_behavior": "No target field changes; preserve target ID.",
+            "manual_review_condition": "manual only to resolve conflict",
+            "exception_code": "LEGACY-STAFF-MATCH-003",
+            "reconciliation_contribution": "matched existing",
+            "classic_schema_presence": "not present; external protected input"
+        },
+        {
+            "id": "STAFF-MATCH-002",
+            "level": 2,
+            "name": "Unique verified employee/staff number",
+            "required_fields": [
+                "External protected HR staff number",
+                "target users.employee_id or employees.employee_number"
+            ],
+            "normalization": "Authoritative issuer normalization defined by HR; no invented value.",
+            "uniqueness_requirement": "Unique across source crosswalk and target.",
+            "confidence": "high",
+            "conflict_condition": "Mismatch between target user and employee identifiers.",
+            "duplicate_condition": "More than one source or target.",
+            "target_existing_match_behavior": "Preserve target; record conflicts.",
+            "manual_review_condition": "required on conflict",
+            "exception_code": "LEGACY-STAFF-IDENTITY-002",
+            "reconciliation_contribution": "matched or candidate",
+            "classic_schema_presence": "not present as verified Classic schema evidence; external protected HR input required"
+        },
+        {
+            "id": "STAFF-MATCH-003",
+            "level": 3,
+            "name": "Unique verified professional registration number",
+            "required_fields": [
+                "External protected verified registration",
+                "approved target professional identifier"
+            ],
+            "normalization": "Issuer-specific canonicalization only.",
+            "uniqueness_requirement": "One source person and one target person.",
+            "confidence": "high",
+            "conflict_condition": "Identifier absent from installed target representation or disagrees with HR.",
+            "duplicate_condition": "Any duplicate.",
+            "target_existing_match_behavior": "No target mutation.",
+            "manual_review_condition": "required until an approved target field/crosswalk exists",
+            "exception_code": "LEGACY-STAFF-IDENTITY-001",
+            "reconciliation_contribution": "matched or candidate",
+            "classic_schema_presence": "not present as verified Classic schema evidence; external protected HR input required"
+        },
+        {
+            "id": "STAFF-MATCH-004",
+            "level": 4,
+            "name": "Unique verified organization email",
+            "required_fields": [
+                "External HR-verification flag",
+                "protected source contact input",
+                "target users.email"
+            ],
+            "normalization": "RFC-valid organization-domain canonicalization; raw contact never enters specs.",
+            "uniqueness_requirement": "Exactly one verified source and target.",
+            "confidence": "medium-high",
+            "conflict_condition": "Unverified/personal address or target field conflict.",
+            "duplicate_condition": "Duplicate/collision.",
+            "target_existing_match_behavior": "Preserve target email; never send verification/welcome/reset.",
+            "manual_review_condition": "required on conflict",
+            "exception_code": "LEGACY-STAFF-TARGET-014",
+            "reconciliation_contribution": "matched or candidate",
+            "classic_schema_presence": "not present as verified Classic schema evidence; external protected HR input required"
+        },
+        {
+            "id": "STAFF-MATCH-005",
+            "level": 5,
+            "name": "Verified multi-field employment identity",
+            "required_fields": [
+                "External HR assertion",
+                "at least two independently verified employment attributes"
+            ],
+            "normalization": "Field-specific protected comparison; names/usernames/phone/department alone or together without HR assertion are insufficient.",
+            "uniqueness_requirement": "Unique composite and documented issuer.",
+            "confidence": "medium",
+            "conflict_condition": "Any constituent conflict or only weak Classic fields available.",
+            "duplicate_condition": "Any duplicate composite.",
+            "target_existing_match_behavior": "Preserve target; record hashes/conflict flags.",
+            "manual_review_condition": "always required",
+            "exception_code": "LEGACY-STAFF-IDENTITY-006",
+            "reconciliation_contribution": "matched or candidate",
+            "classic_schema_presence": "not present as verified Classic schema evidence; external protected HR input required"
+        },
+        {
+            "id": "STAFF-MATCH-006",
+            "level": 6,
+            "name": "Manual HR review",
+            "required_fields": [
+                "protected Classic USER_ID",
+                "reviewed HR evidence",
+                "approval record"
+            ],
+            "normalization": "No algorithmic name/username-only acceptance.",
+            "uniqueness_requirement": "One signed/approved decision record per source key.",
+            "confidence": "reviewed",
+            "conflict_condition": "Incomplete evidence.",
+            "duplicate_condition": "Multiple candidates unresolved.",
+            "target_existing_match_behavior": "Existing target unchanged or historical candidate classified.",
+            "manual_review_condition": "mandatory",
+            "exception_code": "LEGACY-STAFF-IDENTITY-001",
+            "reconciliation_contribution": "manual outcome",
+            "classic_schema_presence": "manual external input"
+        }
+    ],
+    "cross_rung_agreement_rule": "All available authoritative verified identifiers must agree. Any disagreement between individually unique rungs quarantines the identity; a higher rung never suppresses contradictory verified evidence.",
+    "cross_rung_disagreement_exception_code": "LEGACY-STAFF-MATCH-003",
+    "phase2b_evidence_references": [
+        "../../evidence/PHASE_2B_STAFF_QUERY_MANIFEST.json",
+        "../../evidence/PHASE_2B_STAFF_AGGREGATE_RESULTS.json"
+    ]
+}

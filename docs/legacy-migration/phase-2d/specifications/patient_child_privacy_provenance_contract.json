@@ -1,0 +1,17 @@
+{
+  "specification_version":"2D.1.0","phase":"2D","approved_source":{"database":"uuhms"},"authorities":["D-106","D-209","Q-204"],"implementation_authorized":false,"record_count":12,
+  "records":[
+    {"id":"PATIENT-CHILD-PRIV-001","rule":"All seven Phase 2D values are protected patient data; NOK and address are restricted contact/location data."},
+    {"id":"PATIENT-CHILD-PRIV-002","rule":"No raw NOK name, phone, high-cardinality relationship, address, identifying occupation, PAT_ID or OPD appears in repository, prompts, logs, screenshots or aggregate evidence."},
+    {"id":"PATIENT-CHILD-PRIV-003","rule":"Repository evidence contains aggregate counts and approved nonidentifying allow-list categories only."},
+    {"id":"PATIENT-CHILD-PRIV-004","rule":"Operational diagnostics use domain-separated HMAC-SHA-256 with environment secret, key version, canonicalization version and length-prefixed typed messages."},
+    {"id":"PATIENT-CHILD-PRIV-005","domain":"patient-child-contact-v1","scope":"NOK tuple child idempotency only"},
+    {"id":"PATIENT-CHILD-PRIV-006","domain":"patient-child-address-v1","scope":"address provenance only"},
+    {"id":"PATIENT-CHILD-PRIV-007","domain":"patient-child-occupation-v1","scope":"occupation provenance only"},
+    {"id":"PATIENT-CHILD-PRIV-008","domain":"patient-child-demographic-v1","scope":"religion/marital provenance with typed field discriminator"},
+    {"id":"PATIENT-CHILD-PRIV-009","rule":"Never compare HMACs across domains, environments, keys or canonicalization versions."},
+    {"id":"PATIENT-CHILD-PRIV-010","rule":"Every child retains PATIENT-PRIV-007 patient-root token and protected source/target crosswalk provenance; PAT_ID remains absent from routine artifacts."},
+    {"id":"PATIENT-CHILD-PRIV-011","rule":"Existing-target comparisons retain only protected flags/tokens; no source or target raw value is emitted."},
+    {"id":"PATIENT-CHILD-PRIV-012","rule":"Migration audit records run, contract versions, classification, transformation, exception and reconciliation facts without false operational activity."}
+  ],"required_zero_assertions":"PATIENT-CHILD-REC-009","privacy":{"contains_raw_phi":false}
+}

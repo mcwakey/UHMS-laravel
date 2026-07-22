@@ -1,0 +1,254 @@
+{
+  "specification_version": "2E.1.0",
+  "phase": "2E",
+  "approved_source": {
+    "connection": "legacy_uhms",
+    "database": "uuhms",
+    "read_only": true
+  },
+  "implementation_authorized": false,
+  "policy_authority": {
+    "source": "APPROVED_DECISION_SPECIFICATIONS.md",
+    "decision_register": "DECISIONS.md",
+    "decisions": [
+      "D-205",
+      "D-206",
+      "D-207",
+      "D-212"
+    ],
+    "questions": [
+      "Q-004",
+      "Q-005",
+      "Q-009",
+      "Q-301"
+    ]
+  },
+  "upstream_contracts": [
+    "phase-2a.reference_natural_keys:NK-004",
+    "phase-2a.reference_extraction_strategies:EXTRACT-SETT_PRIVATE",
+    "phase-2a.reference_reconciliation_contracts:RECON-SETT_PRIVATE",
+    "phase-2c.patient_relationship_rules:PATIENT-REL-003",
+    "phase-2c.patient_sentinel_rules:PATIENT-SENT-003",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-REL-003",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-001",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-022",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-007",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-009",
+    "phase-2c.existing_target_patient_rules:PATIENT-TARGET-009",
+    "phase-2d.patient_child_relationship_rules:PATIENT-CHILD-REL-005",
+    "phase-2d.patient_child_extraction_strategies:PATIENT-CHILD-EXT-001",
+    "phase-2d.patient_child_privacy_provenance_contract:PATIENT-CHILD-PRIV-010"
+  ],
+  "allowed_primary_dispositions": [
+    "Crosswalk",
+    "Direct",
+    "Transform",
+    "Provider crosswalk",
+    "Scheme crosswalk",
+    "Protected membership identifier",
+    "Date transform",
+    "Current-state selection input",
+    "Protected provenance",
+    "Evidence-only",
+    "Deferred to claims",
+    "Deferred to billing",
+    "Quarantine",
+    "Exclude",
+    "No approved destination"
+  ],
+  "source_table_row_count": 31307,
+  "record_count": 11,
+  "records": [
+    {
+      "id": "INS-COL-001",
+      "source": "insurance.INS_ID",
+      "primary_disposition": "Protected provenance",
+      "target": "protected crosswalk/history only",
+      "transformation_rule": "Never reuse as target PK; require unique positive source key.",
+      "exception_codes": [
+        "LEGACY-INSURANCE-KEY-001",
+        "LEGACY-INSURANCE-KEY-002"
+      ],
+      "reconciliation_ids": [
+        "INS-REC-001",
+        "INS-REC-014"
+      ],
+      "extraction_id": "INS-EXT-001",
+      "provenance_contract": "INS-PRIV-001"
+    },
+    {
+      "id": "INS-COL-002",
+      "source": "insurance.PAT_ID",
+      "primary_disposition": "Crosswalk",
+      "target": "patient_insurances.patient_id",
+      "transformation_rule": "Resolve only through PATIENT-REL-003 and protected Phase 2C map; never reassign.",
+      "exception_codes": [
+        "LEGACY-INSURANCE-PATIENT-003",
+        "LEGACY-INSURANCE-PATIENT-004",
+        "LEGACY-INSURANCE-PATIENT-005"
+      ],
+      "reconciliation_ids": [
+        "INS-REC-002",
+        "INS-REC-012"
+      ],
+      "extraction_id": "INS-EXT-001",
+      "provenance_contract": "PATIENT-PRIV-009"
+    },
+    {
+      "id": "INS-COL-003",
+      "source": "insurance.InsType",
+      "primary_disposition": "Transform",
+      "target": "provider/type compatibility and payer evidence",
+      "transformation_rule": "Apply INS-TYPE exact crosswalk; does not populate member_type or select provider.",
+      "exception_codes": [
+        "LEGACY-INSURANCE-TYPE-011",
+        "LEGACY-INSURANCE-TYPE-012"
+      ],
+      "reconciliation_ids": [
+        "INS-REC-008"
+      ],
+      "extraction_id": "INS-EXT-001",
+      "provenance_contract": "INS-PRIV-001"
+    },
+    {
+      "id": "INS-COL-004",
+      "source": "insurance.Scheme",
+      "primary_disposition": "No approved destination",
+      "target": null,
+      "transformation_rule": "Blank/hyphen field-specific absence; substantive protected history; no tier/plan creation.",
+      "exception_codes": [
+        "LEGACY-INSURANCE-SCHEME-014",
+        "LEGACY-INSURANCE-SCHEME-038"
+      ],
+      "reconciliation_ids": [
+        "INS-REC-009-SCHEME"
+      ],
+      "extraction_id": "INS-EXT-001",
+      "provenance_contract": "INS-PRIV-001"
+    },
+    {
+      "id": "INS-COL-005",
+      "source": "insurance.MemberNo",
+      "primary_disposition": "Protected membership identifier",
+      "target": "patient_insurances.membership_number candidate",
+      "transformation_rule": "Strict decode/NFC/outer trim; preserve case/punctuation/leading zeros; blank null; never invent.",
+      "exception_codes": [
+        "LEGACY-INSURANCE-MEMBER-015",
+        "LEGACY-INSURANCE-MEMBER-016",
+        "LEGACY-INSURANCE-MEMBER-017",
+        "LEGACY-INSURANCE-MEMBER-018",
+        "LEGACY-INSURANCE-MEMBER-019"
+      ],
+      "reconciliation_ids": [
+        "INS-REC-004"
+      ],
+      "extraction_id": "INS-EXT-001",
+      "provenance_contract": "INS-PRIV-002"
+    },
+    {
+      "id": "INS-COL-006",
+      "source": "insurance.Company",
+      "primary_disposition": "Provider crosswalk",
+      "target": "patient_insurances.insurance_provider_id candidate",
+      "transformation_rule": "Consume approved Phase 2A target provider map; source candidate alone is unresolved.",
+      "exception_codes": [
+        "LEGACY-INSURANCE-PROVIDER-006",
+        "LEGACY-INSURANCE-PROVIDER-007",
+        "LEGACY-INSURANCE-PROVIDER-008",
+        "LEGACY-INSURANCE-PROVIDER-009"
+      ],
+      "reconciliation_ids": [
+        "INS-REC-003"
+      ],
+      "extraction_id": "INS-EXT-003",
+      "provenance_contract": "INS-PRIV-003"
+    },
+    {
+      "id": "INS-COL-007",
+      "source": "insurance.IssueDate",
+      "primary_disposition": "Date transform",
+      "target": "patient_insurances.start_date candidate",
+      "transformation_rule": "Apply INS-DATE field rules; unknown/future/invalid cannot establish currentness.",
+      "exception_codes": [
+        "LEGACY-INSURANCE-DATE-020",
+        "LEGACY-INSURANCE-DATE-021",
+        "LEGACY-INSURANCE-DATE-022"
+      ],
+      "reconciliation_ids": [
+        "INS-REC-005-ISSUE",
+        "INS-REC-006"
+      ],
+      "extraction_id": "INS-EXT-001",
+      "provenance_contract": "INS-PRIV-001"
+    },
+    {
+      "id": "INS-COL-008",
+      "source": "insurance.ExpiryDate",
+      "primary_disposition": "Date transform",
+      "target": "patient_insurances.expiry_date candidate",
+      "transformation_rule": "Apply INS-DATE field rules; zero unknown, reversed quarantine, future preserved.",
+      "exception_codes": [
+        "LEGACY-INSURANCE-DATE-023",
+        "LEGACY-INSURANCE-DATE-024",
+        "LEGACY-INSURANCE-DATE-025"
+      ],
+      "reconciliation_ids": [
+        "INS-REC-005-EXPIRY",
+        "INS-REC-006"
+      ],
+      "extraction_id": "INS-EXT-001",
+      "provenance_contract": "INS-PRIV-001"
+    },
+    {
+      "id": "INS-COL-009",
+      "source": "insurance.Plan",
+      "primary_disposition": "No approved destination",
+      "target": null,
+      "transformation_rule": "Only blank is absence; substantive or hyphen protected history; no Scheme sentinel propagation.",
+      "exception_codes": [
+        "LEGACY-INSURANCE-SCHEME-014",
+        "LEGACY-INSURANCE-SCHEME-038"
+      ],
+      "reconciliation_ids": [
+        "INS-REC-009-PLAN"
+      ],
+      "extraction_id": "INS-EXT-001",
+      "provenance_contract": "INS-PRIV-001"
+    },
+    {
+      "id": "INS-COL-010",
+      "source": "patients.Company",
+      "primary_disposition": "Evidence-only",
+      "target": "corroborating provider evidence only",
+      "transformation_rule": "Same-patient corroboration only; never creates membership/default provider.",
+      "exception_codes": [
+        "LEGACY-INSURANCE-PROVIDER-007",
+        "LEGACY-INSURANCE-PROVIDER-010"
+      ],
+      "reconciliation_ids": [
+        "INS-REC-010"
+      ],
+      "extraction_id": "INS-EXT-002",
+      "provenance_contract": "PATIENT-PRIV-007"
+    },
+    {
+      "id": "INS-COL-011",
+      "source": "patients.BillStatus",
+      "primary_disposition": "Crosswalk",
+      "target": "payer category evidence only",
+      "transformation_rule": "Explicit BillStatus crosswalk; never creates provider-specific membership.",
+      "exception_codes": [
+        "LEGACY-INSURANCE-TYPE-013"
+      ],
+      "reconciliation_ids": [
+        "INS-REC-011"
+      ],
+      "extraction_id": "INS-EXT-002",
+      "provenance_contract": "PATIENT-PRIV-007"
+    }
+  ],
+  "privacy": {
+    "contains_raw_phi": false,
+    "repository_output": "aggregate-only"
+  }
+}

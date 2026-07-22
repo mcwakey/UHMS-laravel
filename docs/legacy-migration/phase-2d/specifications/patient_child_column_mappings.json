@@ -1,0 +1,20 @@
+{
+  "specification_version": "2D.1.0",
+  "phase": "2D",
+  "approved_source": {"database": "uuhms", "table": "patients"},
+  "authorities": ["D-201", "D-211", "D-213", "D-207", "Q-001", "Q-002", "Q-006", "Q-007", "Q-008"],
+  "upstream_contracts": ["PATIENT-COL-001", "PATIENT-COL-003", "PATIENT-ALIAS-001", "PATIENT-TARGET-009", "PATIENT-CHAIN-001", "PATIENT-EXT-001"],
+  "implementation_authorized": false,
+  "record_count": 7,
+  "records": [
+    {"id":"PATIENT-CHILD-COL-001","source_column":"Work","source_contract":"PATIENT-COL-007","target":"patients.occupation","outcome_contract":"PATIENT-CHILD-CLASS-FIELD","existing_target":"comparison evidence only; no mutation","phase_owner":"2D"},
+    {"id":"PATIENT-CHILD-COL-002","source_column":"Address","source_contract":"PATIENT-COL-009","target":"patients.address only","prohibited_targets":["patients.city","patients.town","patients.region","patients.postal_code","patients.digital_address"],"outcome_contract":"PATIENT-CHILD-CLASS-FIELD","existing_target":"comparison evidence only; no mutation","phase_owner":"2D"},
+    {"id":"PATIENT-CHILD-COL-003","source_column":"NOK","source_contract":"PATIENT-COL-010","target":"emergency_contacts.name","tuple_contract":"PATIENT-CHILD-NOK-001","existing_target":"provenance evidence only; no contact creation or mutation","phase_owner":"2D"},
+    {"id":"PATIENT-CHILD-COL-004","source_column":"NOKPhoneNo","source_contract":"PATIENT-COL-011","target":"emergency_contacts.phone","tuple_contract":"PATIENT-CHILD-NOK-001","existing_target":"provenance evidence only; no contact creation or mutation","phase_owner":"2D"},
+    {"id":"PATIENT-CHILD-COL-005","source_column":"NOKRel","source_contract":"PATIENT-COL-012","target":"emergency_contacts.relationship","tuple_contract":"PATIENT-CHILD-NOK-001","existing_target":"provenance evidence only; no contact creation or mutation","phase_owner":"2D"},
+    {"id":"PATIENT-CHILD-COL-006","source_column":"Religion","source_contract":"PATIENT-COL-013","target":"patients.religion","crosswalk":"PATIENT-CHILD-RELIGION-XW-001","existing_target":"comparison evidence only; no mutation","phase_owner":"2D"},
+    {"id":"PATIENT-CHILD-COL-007","source_column":"MaritalStatus","source_contract":"PATIENT-COL-014","target":"patients.marital_status","crosswalk":"PATIENT-CHILD-MARITAL-XW-001","existing_target":"comparison evidence only; no mutation","phase_owner":"2D"}
+  ],
+  "explicit_exclusions": {"phase_2e":["Company","BillStatus"],"clinical":["Allergies","Medication","History"],"other":["LastVisit","Refill","OriginalName","OriginalOpd","PhoneNo","PatientName","DOB","Sex"]},
+  "privacy": {"contains_raw_phi": false}
+}

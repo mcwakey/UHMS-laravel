@@ -1,0 +1,793 @@
+{
+  "specification_version": "2E.1.0",
+  "phase": "2E",
+  "approved_source": {
+    "connection": "legacy_uhms",
+    "database": "uuhms",
+    "read_only": true
+  },
+  "implementation_authorized": false,
+  "policy_authority": {
+    "source": "APPROVED_DECISION_SPECIFICATIONS.md",
+    "decision_register": "DECISIONS.md",
+    "decisions": [
+      "D-205",
+      "D-206",
+      "D-207",
+      "D-212"
+    ],
+    "questions": [
+      "Q-004",
+      "Q-005",
+      "Q-009",
+      "Q-301"
+    ]
+  },
+  "upstream_contracts": [
+    "phase-2a.reference_natural_keys:NK-004",
+    "phase-2a.reference_extraction_strategies:EXTRACT-SETT_PRIVATE",
+    "phase-2a.reference_reconciliation_contracts:RECON-SETT_PRIVATE",
+    "phase-2c.patient_relationship_rules:PATIENT-REL-003",
+    "phase-2c.patient_sentinel_rules:PATIENT-SENT-003",
+    "phase-2c.patient_reconciliation_contracts:PATIENT-REC-REL-003",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-001",
+    "phase-2c.patient_extraction_strategies:PATIENT-EXT-022",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-007",
+    "phase-2c.patient_privacy_provenance_contract:PATIENT-PRIV-009",
+    "phase-2c.existing_target_patient_rules:PATIENT-TARGET-009",
+    "phase-2d.patient_child_relationship_rules:PATIENT-CHILD-REL-005",
+    "phase-2d.patient_child_extraction_strategies:PATIENT-CHILD-EXT-001",
+    "phase-2d.patient_child_privacy_provenance_contract:PATIENT-CHILD-PRIV-010"
+  ],
+  "bucket_rule": "Each partition's ordered precedence assigns exactly one primary bucket; diagnostics are never primary unless explicitly named.",
+  "required_tolerance": 0,
+  "record_count": 18,
+  "records": [
+    {
+      "id": "INS-REC-001",
+      "name": "source row terminal outcome",
+      "population": 31307,
+      "buckets": [
+        "failed",
+        "excluded",
+        "existing_target_immutable_evidence",
+        "patient_orphan",
+        "patient_quarantined",
+        "invalid_or_unrepresentable",
+        "provider_unresolved",
+        "conflicting_current_candidate",
+        "exact_duplicate_source",
+        "historical_provenance_only",
+        "current_membership_candidate"
+      ],
+      "precedence": [
+        "failed",
+        "excluded",
+        "existing_target_immutable_evidence",
+        "patient_orphan",
+        "patient_quarantined",
+        "invalid_or_unrepresentable",
+        "provider_unresolved",
+        "conflicting_current_candidate",
+        "exact_duplicate_source",
+        "historical_provenance_only",
+        "current_membership_candidate"
+      ],
+      "equation": "population = sum(exactly one primary bucket)",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-EXTRACT-035",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "expected_counts": {
+        "excluded": 0
+      },
+      "diagnostics_are_secondary": true
+    },
+    {
+      "id": "INS-REC-002",
+      "name": "patient relationship",
+      "population": 31307,
+      "buckets": [
+        "failed",
+        "null_reference",
+        "zero_reference",
+        "orphan_nonzero",
+        "matched_nonzero"
+      ],
+      "precedence": [
+        "failed",
+        "null_reference",
+        "zero_reference",
+        "orphan_nonzero",
+        "matched_nonzero"
+      ],
+      "equation": "population = sum(exactly one primary bucket)",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-EXTRACT-035",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "expected_counts": {
+        "failed": 0,
+        "null_reference": 0,
+        "zero_reference": 0,
+        "orphan_nonzero": 316,
+        "matched_nonzero": 30991
+      }
+    },
+    {
+      "id": "INS-REC-003",
+      "name": "target provider outcome",
+      "population": 31307,
+      "buckets": [
+        "failed",
+        "provider_blank",
+        "provider_target_conflict",
+        "provider_ambiguous",
+        "provider_unmatched_or_target_unresolved",
+        "provider_mapped_uniquely"
+      ],
+      "precedence": [
+        "failed",
+        "provider_blank",
+        "provider_target_conflict",
+        "provider_ambiguous",
+        "provider_unmatched_or_target_unresolved",
+        "provider_mapped_uniquely"
+      ],
+      "equation": "population = sum(exactly one primary bucket)",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-EXTRACT-035",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "expected_counts": {
+        "provider_blank": 25042
+      },
+      "diagnostics": {
+        "classic_candidate_single": 2247,
+        "classic_candidate_ambiguous": 1,
+        "classic_no_candidate": 4017
+      },
+      "mapped_count_status": "runtime-derived; must be measured in the protected Phase 3 dry-run after the approved Phase 2A source-row crosswalk is bound",
+      "execution_gate": "BLOCKED_UNTIL_PROTECTED_CROSSWALK_DRY_RUN"
+    },
+    {
+      "id": "INS-REC-004",
+      "name": "member number",
+      "population": 31307,
+      "buckets": [
+        "failed",
+        "not_applicable",
+        "target_conflict",
+        "duplicate_cross_patient",
+        "duplicate_cross_provider_same_patient",
+        "duplicate_same_patient_provider",
+        "invalid",
+        "blank",
+        "valid_unique"
+      ],
+      "precedence": [
+        "failed",
+        "not_applicable",
+        "target_conflict",
+        "duplicate_cross_patient",
+        "duplicate_cross_provider_same_patient",
+        "duplicate_same_patient_provider",
+        "invalid",
+        "blank",
+        "valid_unique"
+      ],
+      "equation": "population = sum(exactly one primary bucket)",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-EXTRACT-035",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "expected_counts": {
+        "failed": 0,
+        "not_applicable": 0,
+        "target_conflict": 0,
+        "duplicate_cross_patient": 2516,
+        "duplicate_cross_provider_same_patient": 18,
+        "duplicate_same_patient_provider": 16,
+        "invalid": 5,
+        "blank": 17029,
+        "valid_unique": 11723
+      },
+      "diagnostics": {
+        "exact_duplicate_groups": 1019,
+        "exact_duplicate_rows": 2555,
+        "cross_patient_groups": 1002,
+        "cross_patient_rows": 2521,
+        "cross_provider_groups": 255,
+        "cross_provider_rows": 621,
+        "same_patient_provider_groups": 14,
+        "same_patient_provider_rows": 28,
+        "primary_cross_provider_same_patient_rows": 18,
+        "primary_same_patient_provider_rows": 16
+      },
+      "diagnostics_are_secondary": true,
+      "comparison": "exact case-sensitive, punctuation-preserving text after outer trim"
+    },
+    {
+      "id": "INS-REC-005-ISSUE",
+      "name": "issue date",
+      "population": 31307,
+      "buckets": [
+        "failed",
+        "unrepresentable",
+        "invalid",
+        "zero_unknown",
+        "future",
+        "valid_nonfuture"
+      ],
+      "precedence": [
+        "failed",
+        "unrepresentable",
+        "invalid",
+        "zero_unknown",
+        "future",
+        "valid_nonfuture"
+      ],
+      "equation": "population = sum(exactly one primary bucket)",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-EXTRACT-035",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "expected_counts": {
+        "failed": 0,
+        "unrepresentable": 0,
+        "invalid": 0,
+        "zero_unknown": 17091,
+        "future": 19,
+        "valid_nonfuture": 14197
+      }
+    },
+    {
+      "id": "INS-REC-005-EXPIRY",
+      "name": "expiry date",
+      "population": 31307,
+      "buckets": [
+        "failed",
+        "unrepresentable",
+        "invalid",
+        "zero_unknown",
+        "future",
+        "valid_nonfuture"
+      ],
+      "precedence": [
+        "failed",
+        "unrepresentable",
+        "invalid",
+        "zero_unknown",
+        "future",
+        "valid_nonfuture"
+      ],
+      "equation": "population = sum(exactly one primary bucket)",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-EXTRACT-035",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "expected_counts": {
+        "failed": 0,
+        "unrepresentable": 0,
+        "invalid": 0,
+        "zero_unknown": 15717,
+        "future": 54,
+        "valid_nonfuture": 15536
+      }
+    },
+    {
+      "id": "INS-REC-006",
+      "name": "chronology and current-state",
+      "population": 31307,
+      "buckets": [
+        "failed",
+        "invalid_or_unrepresentable",
+        "both_unknown",
+        "issue_known_expiry_unknown",
+        "issue_unknown_expiry_known",
+        "expiry_before_issue",
+        "equal_known",
+        "future_issue",
+        "future_expiry_nonfuture_issue",
+        "valid_ordered_nonfuture"
+      ],
+      "precedence": [
+        "failed",
+        "invalid_or_unrepresentable",
+        "both_unknown",
+        "issue_known_expiry_unknown",
+        "issue_unknown_expiry_known",
+        "expiry_before_issue",
+        "equal_known",
+        "future_issue",
+        "future_expiry_nonfuture_issue",
+        "valid_ordered_nonfuture"
+      ],
+      "equation": "population = sum(exactly one primary bucket)",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-EXTRACT-035",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "expected_counts": {
+        "failed": 0,
+        "invalid_or_unrepresentable": 0,
+        "both_unknown": 15683,
+        "issue_known_expiry_unknown": 34,
+        "issue_unknown_expiry_known": 1408,
+        "expiry_before_issue": 66,
+        "equal_known": 28,
+        "future_issue": 0,
+        "future_expiry_nonfuture_issue": 51,
+        "valid_ordered_nonfuture": 14037
+      },
+      "secondary_current_state_buckets": [
+        "chronology_invalid",
+        "date_unknown",
+        "future_looking",
+        "expired_looking",
+        "active_looking",
+        "failed"
+      ],
+      "secondary_current_state_expected_counts": {
+        "failed": 0,
+        "chronology_invalid": 66,
+        "date_unknown": 17125,
+        "future_looking": 0,
+        "expired_looking": 14065,
+        "active_looking": 51
+      },
+      "active_looking_is_eligibility": false
+    },
+    {
+      "id": "INS-REC-007-GROUP",
+      "name": "patient/provider group outcome",
+      "population": "mapped patient/provider groups",
+      "buckets": [
+        "failed",
+        "existing_target_immutable",
+        "invalid_or_unresolved",
+        "conflicting_candidates",
+        "history_only",
+        "one_current_selected"
+      ],
+      "precedence": [
+        "failed",
+        "existing_target_immutable",
+        "invalid_or_unresolved",
+        "conflicting_candidates",
+        "history_only",
+        "one_current_selected"
+      ],
+      "equation": "population = sum(exactly one primary bucket)",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-EXTRACT-035",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "max_current_per_group": 1
+    },
+    {
+      "id": "INS-REC-007-ROW",
+      "name": "rows within mapped group",
+      "population": "source rows in mapped patient/provider groups",
+      "buckets": [
+        "failed",
+        "invalid",
+        "conflicting_candidate",
+        "exact_duplicate_nonrepresentative",
+        "compatible_history",
+        "selected_current_representation"
+      ],
+      "precedence": [
+        "failed",
+        "invalid",
+        "conflicting_candidate",
+        "exact_duplicate_nonrepresentative",
+        "compatible_history",
+        "selected_current_representation"
+      ],
+      "equation": "population = sum(exactly one primary bucket)",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-EXTRACT-035",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "max_selected_per_group": 1
+    },
+    {
+      "id": "INS-REC-008",
+      "name": "InsType crosswalk",
+      "population": 31307,
+      "buckets": [
+        "failed",
+        "unknown_or_invalid",
+        "NHIS",
+        "PRIVATE_INSURANCE"
+      ],
+      "precedence": [
+        "failed",
+        "unknown_or_invalid",
+        "NHIS",
+        "PRIVATE_INSURANCE"
+      ],
+      "equation": "population = sum(exactly one primary bucket)",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-EXTRACT-035",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "expected_counts": {
+        "failed": 0,
+        "unknown_or_invalid": 0,
+        "NHIS": 15653,
+        "PRIVATE_INSURANCE": 15654
+      }
+    },
+    {
+      "id": "INS-REC-009-SCHEME",
+      "name": "Scheme field",
+      "population": 31307,
+      "buckets": [
+        "failed",
+        "invalid_or_unrepresentable",
+        "protected_substantive",
+        "hyphen_absence",
+        "blank_absence"
+      ],
+      "precedence": [
+        "failed",
+        "invalid_or_unrepresentable",
+        "protected_substantive",
+        "hyphen_absence",
+        "blank_absence"
+      ],
+      "equation": "population = sum(exactly one primary bucket)",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-EXTRACT-035",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "expected_counts": {
+        "failed": 0,
+        "invalid_or_unrepresentable": 0,
+        "hyphen_absence": 1954,
+        "blank_absence": 21444,
+        "protected_substantive": 7909
+      }
+    },
+    {
+      "id": "INS-REC-009-PLAN",
+      "name": "Plan field",
+      "population": 31307,
+      "buckets": [
+        "failed",
+        "invalid_or_unrepresentable",
+        "protected_substantive",
+        "blank_absence"
+      ],
+      "precedence": [
+        "failed",
+        "invalid_or_unrepresentable",
+        "protected_substantive",
+        "blank_absence"
+      ],
+      "equation": "population = sum(exactly one primary bucket)",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-EXTRACT-035",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "expected_counts": {
+        "failed": 0,
+        "invalid_or_unrepresentable": 0,
+        "blank_absence": 31299,
+        "protected_substantive": 8
+      }
+    },
+    {
+      "id": "INS-REC-010",
+      "name": "patients.Company primary outcome",
+      "population": 16950,
+      "buckets": [
+        "failed",
+        "company_without_insurance",
+        "conflicts",
+        "corroborates",
+        "insurance_with_blank_patient_company",
+        "evidence_only_or_unrepresentable",
+        "blank_without_insurance_evidence"
+      ],
+      "precedence": [
+        "failed",
+        "company_without_insurance",
+        "conflicts",
+        "corroborates",
+        "insurance_with_blank_patient_company",
+        "evidence_only_or_unrepresentable",
+        "blank_without_insurance_evidence"
+      ],
+      "equation": "population = sum(exactly one primary bucket)",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-EXTRACT-035",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "expected_counts": {
+        "failed": 0,
+        "evidence_only_or_unrepresentable": 0,
+        "insurance_with_blank_patient_company": 10181,
+        "company_without_insurance": 1,
+        "conflicts": 4104,
+        "corroborates": 1193,
+        "blank_without_insurance_evidence": 1471
+      }
+    },
+    {
+      "id": "INS-REC-011",
+      "name": "patients.BillStatus",
+      "population": 16950,
+      "buckets": [
+        "failed",
+        "invalid",
+        "blank",
+        "cash",
+        "mixed_private_nhia",
+        "private",
+        "nhia"
+      ],
+      "precedence": [
+        "failed",
+        "invalid",
+        "blank",
+        "cash",
+        "mixed_private_nhia",
+        "private",
+        "nhia"
+      ],
+      "equation": "population = sum(exactly one primary bucket)",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-EXTRACT-035",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "expected_counts": {
+        "failed": 0,
+        "invalid": 5,
+        "blank": 40,
+        "cash": 2518,
+        "mixed_private_nhia": 384,
+        "private": 3416,
+        "nhia": 10587
+      }
+    },
+    {
+      "id": "INS-REC-012",
+      "name": "parent-chain integrity",
+      "population": "insurance rows",
+      "buckets": [
+        "failed",
+        "missing_or_wrong_root",
+        "orphan_root_held",
+        "matched_parent_held",
+        "matched_parent_released"
+      ],
+      "precedence": [
+        "failed",
+        "missing_or_wrong_root",
+        "orphan_root_held",
+        "matched_parent_held",
+        "matched_parent_released"
+      ],
+      "equation": "population = sum(exactly one primary bucket)",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-EXTRACT-035",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "required_zero": {
+        "missing_root_token": 0,
+        "wrong_domain_or_version": 0,
+        "cross_chain_union": 0,
+        "patient_reassignment": 0,
+        "released_before_parent": 0
+      }
+    },
+    {
+      "id": "INS-REC-013",
+      "name": "target collision",
+      "population": "candidate patient/provider groups",
+      "buckets": [
+        "failed",
+        "target_state_drift",
+        "idempotency_failure",
+        "conflict_review",
+        "existing_target_immutable",
+        "exact_prior_migration_result",
+        "no_collision"
+      ],
+      "precedence": [
+        "failed",
+        "target_state_drift",
+        "idempotency_failure",
+        "conflict_review",
+        "existing_target_immutable",
+        "exact_prior_migration_result",
+        "no_collision"
+      ],
+      "equation": "population = sum(exactly one primary bucket)",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-EXTRACT-035",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "required_zero": {
+        "target_mutations": 0,
+        "existing_patient_child_creates": 0
+      }
+    },
+    {
+      "id": "INS-REC-014",
+      "name": "protected provenance",
+      "population": 31307,
+      "buckets": [
+        "failed",
+        "complete_protected_provenance"
+      ],
+      "precedence": [
+        "failed",
+        "complete_protected_provenance"
+      ],
+      "equation": "population = sum(exactly one primary bucket)",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-EXTRACT-035",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "required_zero": {
+        "source_rows_without_provenance": 0,
+        "silently_discarded_rows": 0
+      }
+    },
+    {
+      "id": "INS-REC-015",
+      "name": "privacy, side effects and out-of-scope persistence",
+      "population": "run",
+      "buckets": [
+        "failed",
+        "passed"
+      ],
+      "precedence": [
+        "failed",
+        "passed"
+      ],
+      "equation": "run = exactly one terminal safety outcome",
+      "required_difference": 0,
+      "tolerance": 0,
+      "failure_bucket": "failed",
+      "exception_code": "LEGACY-INSURANCE-PRIVACY-036",
+      "snapshot_dependencies": [
+        "INS-EXT-001",
+        "INS-EXT-002",
+        "INS-EXT-003",
+        "INS-EXT-004"
+      ],
+      "required_zero": {
+        "artificial_providers_created": 0,
+        "artificial_patients_created": 0,
+        "insurance_rows_reassigned": 0,
+        "duplicate_current_memberships": 0,
+        "source_rows_silently_discarded": 0,
+        "member_numbers_invented_or_numeric_cast": 0,
+        "dates_coerced_guessed_replaced_truncated_swapped": 0,
+        "eligibility_fabricated": 0,
+        "verification_fabricated": 0,
+        "fallback_verification_actors": 0,
+        "existing_target_mutated_deleted_merged_enriched": 0,
+        "claims_created": 0,
+        "invoices_receivables_payments_allocations_journals_accounting_created": 0,
+        "raw_restricted_values_or_row_tokens_in_repository": 0,
+        "source_rows_without_provenance": 0,
+        "groups_with_more_than_one_current": 0,
+        "convenient_defaults": 0,
+        "live_services_or_operational_side_effects": 0,
+        "non_uuhms_classic_access": 0
+      }
+    }
+  ],
+  "privacy": {
+    "contains_raw_phi": false,
+    "repository_output": "aggregate-only"
+  }
+}
