@@ -129,6 +129,100 @@ final class SchemaFingerprintService
         );
     }
 
+    /**
+     * Reconstructs the approved pre-install target identity while foundation
+     * DDL is partially present. Only the reserved immutable manifest namespace
+     * is excluded; every application table, constraint, index, trigger, event,
+     * routine and non-foundation migration remains fingerprinted.
+     */
+    public function inspectTargetInstallationBase(MetadataConnection $connection, string $database): SchemaObservation
+    {
+        $this->assertSnapshot($connection);
+        $server = $this->one($connection->select(
+            'SELECT DATABASE() AS database_name, VERSION() AS database_version, @@session.tx_read_only AS transaction_read_only'
+        ));
+        $this->assertObservedDatabase($server, $database);
+        $this->assertReadOnly($server);
+
+        $tables = array_values(array_filter($connection->select(
+            'SELECT TABLE_NAME, TABLE_TYPE, ENGINE, TABLE_COLLATION, CREATE_OPTIONS, TABLE_COMMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? ORDER BY TABLE_NAME',
+            [$database],
+        ), fn (array $row): bool => ! $this->foundationTable((string) ($row['TABLE_NAME'] ?? ''))));
+        $columns = array_values(array_filter($connection->select(
+            'SELECT TABLE_NAME, COLUMN_NAME, ORDINAL_POSITION, COLUMN_DEFAULT, IS_NULLABLE, DATA_TYPE, COLUMN_TYPE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, DATETIME_PRECISION, CHARACTER_SET_NAME, COLLATION_NAME, COLUMN_KEY, EXTRA, GENERATION_EXPRESSION, COLUMN_COMMENT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? ORDER BY TABLE_NAME, ORDINAL_POSITION',
+            [$database],
+        ), fn (array $row): bool => ! $this->foundationTable((string) ($row['TABLE_NAME'] ?? ''))));
+        $constraints = array_values(array_filter($connection->select(
+            'SELECT tc.TABLE_NAME, tc.CONSTRAINT_NAME, tc.CONSTRAINT_TYPE, kcu.ORDINAL_POSITION, kcu.COLUMN_NAME, kcu.REFERENCED_TABLE_SCHEMA, kcu.REFERENCED_TABLE_NAME, kcu.REFERENCED_COLUMN_NAME, rc.UPDATE_RULE, rc.DELETE_RULE FROM information_schema.TABLE_CONSTRAINTS tc LEFT JOIN information_schema.KEY_COLUMN_USAGE kcu ON kcu.CONSTRAINT_SCHEMA = tc.CONSTRAINT_SCHEMA AND kcu.TABLE_NAME = tc.TABLE_NAME AND kcu.CONSTRAINT_NAME = tc.CONSTRAINT_NAME LEFT JOIN information_schema.REFERENTIAL_CONSTRAINTS rc ON rc.CONSTRAINT_SCHEMA = tc.CONSTRAINT_SCHEMA AND rc.TABLE_NAME = tc.TABLE_NAME AND rc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME WHERE tc.CONSTRAINT_SCHEMA = ? ORDER BY tc.TABLE_NAME, tc.CONSTRAINT_NAME, kcu.ORDINAL_POSITION',
+            [$database],
+        ), fn (array $row): bool => ! $this->foundationTable((string) ($row['TABLE_NAME'] ?? ''))));
+        $indexes = array_values(array_filter($connection->select(
+            'SELECT TABLE_NAME, INDEX_NAME, NON_UNIQUE, SEQ_IN_INDEX, COLUMN_NAME, COLLATION, CARDINALITY, SUB_PART, NULLABLE, INDEX_TYPE, INDEX_COMMENT FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = ? ORDER BY TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX',
+            [$database],
+        ), fn (array $row): bool => ! $this->foundationTable((string) ($row['TABLE_NAME'] ?? ''))));
+        $triggers = array_values(array_filter($connection->select(
+            'SELECT TRIGGER_NAME, EVENT_MANIPULATION, EVENT_OBJECT_TABLE, ACTION_ORDER, ACTION_CONDITION, ACTION_STATEMENT, ACTION_ORIENTATION, ACTION_TIMING, SQL_MODE, CREATED, CHARACTER_SET_CLIENT, COLLATION_CONNECTION, DATABASE_COLLATION FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = ? ORDER BY EVENT_OBJECT_TABLE, TRIGGER_NAME',
+            [$database],
+        ), fn (array $row): bool => ! $this->foundationTable((string) ($row['EVENT_OBJECT_TABLE'] ?? ''))
+            && ! str_starts_with((string) ($row['TRIGGER_NAME'] ?? ''), 'lm_')));
+        $events = $connection->select(
+            'SELECT EVENT_NAME, EVENT_TYPE, EXECUTE_AT, INTERVAL_VALUE, INTERVAL_FIELD, STARTS, ENDS, STATUS, ON_COMPLETION, CREATED, LAST_ALTERED, LAST_EXECUTED, EVENT_COMMENT FROM information_schema.EVENTS WHERE EVENT_SCHEMA = ? ORDER BY EVENT_NAME',
+            [$database],
+        );
+        $routines = $connection->select(
+            'SELECT ROUTINE_NAME, ROUTINE_TYPE, DATA_TYPE, IS_DETERMINISTIC, SQL_DATA_ACCESS, SECURITY_TYPE, CREATED, LAST_ALTERED, SQL_MODE, ROUTINE_COMMENT FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = ? ORDER BY ROUTINE_TYPE, ROUTINE_NAME',
+            [$database],
+        );
+        if (! in_array('migrations', array_column($tables, 'TABLE_NAME'), true)) {
+            throw new FoundationGuardException('FOUNDATION_TARGET_LEDGER_MISSING', 'The target migration ledger is missing.');
+        }
+        $installedMigrations = array_values(array_filter(
+            $connection->select('SELECT migration, batch FROM `migrations` ORDER BY id'),
+            fn (array $row): bool => ! $this->foundationMigration((string) ($row['migration'] ?? '')),
+        ));
+        $indexesWithoutCardinality = array_map(static function (array $index): array {
+            unset($index['CARDINALITY']);
+
+            return $index;
+        }, $indexes);
+
+        return new SchemaObservation(
+            connection: $connection->name(),
+            database: (string) $server['database_name'],
+            databaseVersion: (string) $server['database_version'],
+            fingerprint: $this->hash([
+                'database_name' => $database,
+                'tables' => $tables,
+                'columns' => $columns,
+                'constraints' => $constraints,
+                'indexes_without_cardinality' => $indexesWithoutCardinality,
+                'triggers' => $triggers,
+                'events' => $events,
+                'routines' => $routines,
+                'installed_migrations' => $installedMigrations,
+            ]),
+            tableCount: count($tables),
+            columnCount: count($columns),
+        );
+    }
+
+    private function foundationTable(string $table): bool
+    {
+        return str_starts_with($table, 'legacy_migration_');
+    }
+
+    private function foundationMigration(string $migration): bool
+    {
+        return in_array($migration, [
+            '2026_07_22_000110_create_legacy_migration_run_foundation_tables',
+            '2026_07_22_000111_create_legacy_migration_protected_store_tables',
+            '2026_07_22_000112_create_legacy_migration_recovery_tables',
+            '2026_07_22_000113_create_legacy_migration_installation_journal',
+            '2026_07_22_000114_create_legacy_migration_protected_lifecycle_tables',
+            '2026_07_22_000115_create_legacy_migration_recovery_journal',
+        ], true);
+    }
+
     /** @param array<string, mixed> $value */
     public function hash(array $value): string
     {

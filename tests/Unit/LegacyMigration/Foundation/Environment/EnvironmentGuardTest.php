@@ -36,9 +36,9 @@ final class EnvironmentGuardTest extends TestCase
         $configuration = $this->configuration();
         foreach ($changes as $path => $value) {
             $segments = explode('.', $path);
-            $cursor =& $configuration;
+            $cursor = &$configuration;
             foreach ($segments as $segment) {
-                $cursor =& $cursor[$segment];
+                $cursor = &$cursor[$segment];
             }
             $cursor = $value;
             unset($cursor);

@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
+
 use App\Enums\LogModule;
 use App\Enums\LogSeverity;
 use App\Models\BankReconciliation;
@@ -25,6 +28,7 @@ class BankReconciliationAdjustmentPostingService
 
     public function propose(BankReconciliation $reconciliation, array $data, User $actor): BankReconciliationAdjustment
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if ($reconciliation->isLocked()) {
             throw ValidationException::withMessages(['status' => __('accounting.reconciliation_locked')]);
         }
@@ -59,6 +63,7 @@ class BankReconciliationAdjustmentPostingService
 
     public function approve(BankReconciliationAdjustment $adjustment, User $actor): BankReconciliationAdjustment
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if ($adjustment->status !== BankReconciliationAdjustment::STATUS_PROPOSED) {
             throw ValidationException::withMessages(['status' => __('accounting.only_proposed_can_approve')]);
         }
@@ -77,6 +82,7 @@ class BankReconciliationAdjustmentPostingService
 
     public function reject(BankReconciliationAdjustment $adjustment, string $reason, User $actor): BankReconciliationAdjustment
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if (! in_array($adjustment->status, [BankReconciliationAdjustment::STATUS_PROPOSED, BankReconciliationAdjustment::STATUS_APPROVED], true)) {
             throw ValidationException::withMessages(['status' => __('accounting.cannot_reject_adjustment')]);
         }
@@ -99,6 +105,7 @@ class BankReconciliationAdjustmentPostingService
      */
     public function post(BankReconciliationAdjustment $adjustment, User $actor): BankReconciliationAdjustment
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         return DB::transaction(function () use ($adjustment, $actor) {
             $adjustment = BankReconciliationAdjustment::query()
                 ->with(['journalEntry', 'reconciliation.bankAccount'])

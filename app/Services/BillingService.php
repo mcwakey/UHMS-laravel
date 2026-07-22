@@ -12,6 +12,8 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ServiceCatalog;
 use App\Models\Visit;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Auth;
@@ -62,6 +64,8 @@ class BillingService
         ?string $description = null,
         ?float $unitPriceOverride = null,
     ): InvoiceItem {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BillingCreation);
+
         if ($quantity < 1) {
             throw new \RuntimeException('Quantity must be at least 1.');
         }
@@ -221,6 +225,7 @@ class BillingService
      */
     public function applyDiscount(InvoiceItem $item, float $discountAmount, string $reason, ?User $user = null): InvoiceItem
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BillingCreation);
         $user ??= Auth::user();
 
         if ($discountAmount < 0) {
@@ -400,6 +405,7 @@ class BillingService
         ?int $departmentId = null,
         ?string $description = null,
     ): InvoiceItem {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BillingCreation);
         if (! $product->is_billable) {
             throw new \RuntimeException(
                 "Product '{$product->name}' is not billable. Enable billing on the product first."
@@ -515,6 +521,7 @@ class BillingService
         ?int $departmentId = null,
         ?string $description = null,
     ): InvoiceItem {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BillingCreation);
         $invoice = $this->invoiceService->getOrCreateVisitInvoice($visit);
         $existing = InvoiceItem::where('invoice_id', $invoice->id)
             ->where('source_type', $sourceType)
@@ -533,6 +540,7 @@ class BillingService
 
     public function recalculateInvoiceForItem(?InvoiceItem $item): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BillingCreation);
         if (! $item) {
             return;
         }
@@ -550,6 +558,8 @@ class BillingService
      */
     public function createInvoice(array $data, array $items): Invoice
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BillingCreation);
+
         return DB::transaction(function () use ($data, $items) {
             $invoiceNumber = Invoice::generateNumber('INV', 'invoices', 'invoice_number');
             $visit = Visit::find($data['visit_id']);
@@ -683,6 +693,9 @@ class BillingService
      */
     public function recordPayment(Invoice $invoice, array $data, array $allocations = []): Payment
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BillingCreation);
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PaymentAllocation);
+
         return app(PaymentService::class)->recordPayment($invoice, $data, $allocations);
     }
 
@@ -691,6 +704,7 @@ class BillingService
      */
     public function cancelInvoice(Invoice $invoice): Invoice
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BillingCreation);
         $invoice->update(['status' => InvoiceStatus::CANCELLED->value]);
         app(InvoiceReceivableService::class)->syncFromInvoice($invoice->fresh(['items', 'payments', 'creditNotes']));
         app(BillingAccountingPostingService::class)->reverseInvoice($invoice, 'Invoice cancelled');
@@ -710,6 +724,7 @@ class BillingService
      */
     public function generateItemsFromVisit(Visit $visit): array
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BillingCreation);
         $items = [];
 
         // Resolve insurance for this visit

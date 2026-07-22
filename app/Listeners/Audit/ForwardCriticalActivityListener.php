@@ -5,6 +5,9 @@ namespace App\Listeners\Audit;
 use App\Jobs\ArchiveActivityLogJob;
 use App\Jobs\ForwardActivityToSiemJob;
 use App\Jobs\ForwardActivityToSlackJob;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
+use Illuminate\Support\Collection;
 use Spatie\Activitylog\Models\Activity;
 
 /**
@@ -17,6 +20,8 @@ class ForwardCriticalActivityListener
 {
     public function handle(...$args): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::ExternalAuditForwarding);
+
         if (! config('audit_streaming.enabled', false)) {
             return;
         }
@@ -25,7 +30,10 @@ class ForwardCriticalActivityListener
         // dispatch (Activity) from `eloquent.saved: …`.
         $activity = null;
         foreach ($args as $arg) {
-            if ($arg instanceof Activity) { $activity = $arg; break; }
+            if ($arg instanceof Activity) {
+                $activity = $arg;
+                break;
+            }
             if (is_array($arg) && isset($arg[0]) && $arg[0] instanceof Activity) {
                 $activity = $arg[0];
                 break;
@@ -35,14 +43,14 @@ class ForwardCriticalActivityListener
             return;
         }
 
-        $props = $activity->properties instanceof \Illuminate\Support\Collection
+        $props = $activity->properties instanceof Collection
             ? $activity->properties->toArray()
             : (array) $activity->properties;
 
         $severity = strtoupper((string) ($props['severity'] ?? 'INFO'));
         $min = strtoupper((string) config('audit_streaming.min_severity', 'CRITICAL'));
 
-        $rank = ['DEBUG'=>0,'INFO'=>1,'NOTICE'=>2,'WARNING'=>3,'ERROR'=>4,'CRITICAL'=>5,'SECURITY'=>5];
+        $rank = ['DEBUG' => 0, 'INFO' => 1, 'NOTICE' => 2, 'WARNING' => 3, 'ERROR' => 4, 'CRITICAL' => 5, 'SECURITY' => 5];
         if (($rank[$severity] ?? 1) < ($rank[$min] ?? 5)) {
             return;
         }

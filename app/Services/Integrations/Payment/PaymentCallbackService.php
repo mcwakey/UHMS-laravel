@@ -7,6 +7,8 @@ use App\Models\PaymentProviderCallback;
 use App\Models\PaymentProviderTransaction;
 use App\Services\ActivityLogService;
 use App\Services\Integrations\IntegrationProviderRegistry;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use App\Support\Integrations\Payment\PaymentVerificationResult;
 
 /**
@@ -29,6 +31,7 @@ class PaymentCallbackService
 
     public function store(string $providerCode, array $payload, array $headers = [], ?string $ip = null): PaymentProviderCallback
     {
+        $this->assertWebhookAllowed();
         $provider = $this->resolver->findByCode($providerCode);
 
         return PaymentProviderCallback::create([
@@ -44,6 +47,7 @@ class PaymentCallbackService
 
     public function process(PaymentProviderCallback $callback): PaymentProviderCallback
     {
+        $this->assertWebhookAllowed();
         $provider = $this->resolver->findByCode((string) $callback->provider_code);
         if (! $provider) {
             return $this->finish($callback, 'unknown_provider');
@@ -124,7 +128,14 @@ class PaymentCallbackService
 
     public function handle(string $providerCode, array $payload, array $headers = [], ?string $ip = null): PaymentProviderCallback
     {
+        $this->assertWebhookAllowed();
         return $this->process($this->store($providerCode, $payload, $headers, $ip));
+    }
+
+    private function assertWebhookAllowed(): void
+    {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Webhooks);
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::ExternalIntegrations);
     }
 
     /* ── helpers ────────────────────────────────────────────────────── */

@@ -1,6 +1,6 @@
 # UHMS UI Audit Report
 
-_Generated Sun, Jul 12, 2026 2:13 PM by `php artisan ui:audit`._
+_Generated Wed, Jul 22, 2026 8:58 PM by `php artisan ui:audit`._
 
 ## Scope
 - Blade views: 1
@@ -13,13 +13,8 @@ _Generated Sun, Jul 12, 2026 2:13 PM by `php artisan ui:audit`._
 |----------|------:|
 | CRITICAL | 0 |
 | HIGH | 0 |
-| MEDIUM | 1 |
+| MEDIUM | 0 |
 | LOW | 0 |
 | INFO | 0 |
 
-## MEDIUM (1)
-
-- **icon-only-no-label** — `tests/fixtures/ui-audit/icon.blade.php:1`
-  - Icon-only button/link without aria-label or title.
-  - → Add aria-label and title describing the action (e.g. aria-label="Delete").
-
+✅ No findings. The UI is compliant with the current ruleset.

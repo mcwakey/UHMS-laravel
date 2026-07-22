@@ -2,9 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\LogModule;
 use App\Models\Appointment;
 use App\Models\SmsNotificationEvent;
+use App\Services\ActivityLogService;
+use App\Services\Integrations\SchedulerStatusService;
 use App\Services\Integrations\Sms\SmsNotificationEventService;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use Illuminate\Console\Command;
 
 /**
@@ -25,6 +30,9 @@ class IntegrationsSmsSendAppointmentRemindersCommand extends Command
 
     public function handle(SmsNotificationEventService $events): int
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::ScheduledCommands);
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AppointmentReminders);
+
         $from = $this->option('from') ?: ($this->option('date') ?: now()->addDay()->toDateString());
         $to = $this->option('to') ?: ($this->option('date') ?: $from);
         $dryRun = (bool) $this->option('dry-run');
@@ -41,6 +49,7 @@ class IntegrationsSmsSendAppointmentRemindersCommand extends Command
             $phone = $appointment->patient?->phone;
             if ($dryRun) {
                 $this->line(sprintf('  #%d %s %s → %s', $appointment->id, $appointment->appointment_date, $appointment->start_time, $phone ?: '(no phone)'));
+
                 continue;
             }
 
@@ -60,16 +69,16 @@ class IntegrationsSmsSendAppointmentRemindersCommand extends Command
             $event->status === SmsNotificationEvent::STATUS_SENT ? $summary['sent']++ : $summary['skipped']++;
         }
 
-        $this->info('Appointment reminder run complete' . ($dryRun ? ' (dry-run)' : ''));
+        $this->info('Appointment reminder run complete'.($dryRun ? ' (dry-run)' : ''));
         foreach ($summary as $key => $value) {
             $this->line(sprintf('  %-11s %d', $key, $value));
         }
 
-        app(\App\Services\Integrations\SchedulerStatusService::class)
+        app(SchedulerStatusService::class)
             ->recordRun('integrations:sms-send-appointment-reminders', 'success', $summary);
 
-        app(\App\Services\ActivityLogService::class)->log(
-            \App\Enums\LogModule::INTEGRATIONS,
+        app(ActivityLogService::class)->log(
+            LogModule::INTEGRATIONS,
             'APPOINTMENT_REMINDER_SCHEDULER_RUN',
             ['metadata' => array_merge($summary, ['dry_run' => $dryRun])],
             null,

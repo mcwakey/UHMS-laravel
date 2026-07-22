@@ -1,6 +1,6 @@
 {
-  "specification_version": "3.0.0",
-  "phase": "3",
+  "specification_version": "3.1.0",
+  "phase": "3B",
   "approved_source": {"connection": "legacy_uhms", "database": "uuhms", "read_only": true},
   "production_writes_authorized": false,
   "importer_implementation_authorized": false,
@@ -33,5 +33,22 @@
     {"id":"PHASE3-FOUND-023","capability":"target_state_validators","phase2f_interfaces":["PILOT-DRY-002","PILOT-ACCEPT-004","PILOT-STATE-020","PILOT-INS-INIT-015"],"implemented_classes":["PatientTargetStateValidator","InsuranceInitializationValidator","ExistingTargetImmutabilityValidator"],"implemented_tables":[],"configuration_keys":[],"commands":[],"focused_tests":["TargetStateValidatorTest","ExistingTargetImmutabilityValidatorTest"],"security_controls":["phase3_commit_block","unresolved_tuple_rejection"],"privacy_controls":["rule_ids_only"],"failure_behavior":"commit_refused","status":"blocked_fail_closed_binding_incomplete","remaining_blocker":"exact authoritative Phase 2F artifact path/hash binding and owner-approved complete tuples","independent_review":"medium_blocker"},
     {"id":"PHASE3-FOUND-024","capability":"privacy_scanning","phase2f_interfaces":["PILOT-PRIV-007","PILOT-PRIV-008"],"implemented_classes":["PrivacyScanner","StructuredDetectorRegistry","SafeDiagnosticEncoder"],"implemented_tables":[],"configuration_keys":["privacy"],"commands":["legacy-migration:privacy-scan"],"focused_tests":["PrivacyScannerTest","PrivacyScanCommandTest"],"security_controls":["secret_scanning","mandatory_roots"],"privacy_controls":["coverage_manifest","redacted_findings","containment_rescan"],"failure_behavior":"finding_or_coverage_gap_blocks_release","status":"implemented_with_review_findings","remaining_blocker":"repository protected-store integration and documented detector-format/retention Medium findings","independent_review":"security_review_fail_one_high_three_medium"},
     {"id":"PHASE3-FOUND-025","capability":"dry_run_reporting","phase2f_interfaces":["PILOT-DRY-003","PILOT-DRY-005"],"implemented_classes":["AggregateDryRunReportBuilder","ReconciliationVerdictService"],"implemented_tables":[],"configuration_keys":["execution.dry_run_only","privacy.aggregate_only_reports"],"commands":["legacy-migration:foundation-reconcile"],"focused_tests":["AggregateDryRunReportBuilderTest","FoundationReconcileCommandTest"],"security_controls":["commit_false","phase3_write_block"],"privacy_controls":["record_level_field_rejection"],"failure_behavior":"nonbinding_formatter_only","status":"blocked_fail_closed_measurement_incomplete","remaining_blocker":"authoritative complete contract input/output set and observed zero-write/side-effect counters","independent_review":"high_blocker"}
-  ]
+  ],
+  "phase3b_closure": {
+    "supersedes_record_status_fields": true,
+    "implemented_capabilities": ["PHASE3-FOUND-001", "PHASE3-FOUND-002", "PHASE3-FOUND-003", "PHASE3-FOUND-004", "PHASE3-FOUND-005", "PHASE3-FOUND-006", "PHASE3-FOUND-007", "PHASE3-FOUND-008", "PHASE3-FOUND-009", "PHASE3-FOUND-010", "PHASE3-FOUND-011", "PHASE3-FOUND-012", "PHASE3-FOUND-013", "PHASE3-FOUND-018", "PHASE3-FOUND-019", "PHASE3-FOUND-020", "PHASE3-FOUND-021", "PHASE3-FOUND-022", "PHASE3-FOUND-023", "PHASE3-FOUND-024", "PHASE3-FOUND-025"],
+    "intentionally_interface_only_and_importer_blocked": ["PHASE3-FOUND-014", "PHASE3-FOUND-015", "PHASE3-FOUND-016", "PHASE3-FOUND-017"],
+    "focused_validation": {"tests": 320, "assertions": 1676, "skipped_explicit_workers": 3},
+    "mariadb_allocator_validation": {"version": "10.4.32-MariaDB", "tests": 1, "assertions": 44, "synthetic_only": true},
+    "internal_high_blockers": 0,
+    "broad_validation": {"tests": 2367, "assertions": 31756, "errors": 3, "failures": 44, "skipped": 3, "phase3b_regressions_identified": 0, "deliberate_memory_harness_failures": 1},
+    "final_independent_review": {"critical": 0, "high": 0, "medium": 0, "verdict": "pass"},
+    "review_state": "four_review_gate_passed; phase4a_synthetic_empty_cohort_only",
+    "phase4a_synthetic_empty_cohort_authorized": true,
+    "external_non_activation_prerequisites": ["D-101 credentials", "approved non-production physical identity contract", "external policy and key manifests", "secret resolver and key material", "approved access and retention classifications", "installed protected schema", "deployment recorder provider", "direct worker scheduler and null-sink barrier evidence"],
+    "importer_authorized": false,
+    "patient_pilot_authorized": false,
+    "cohort_b_selection_authorized": false,
+    "production_writes_authorized": false
+  }
 }

@@ -1,5 +1,5 @@
 {
-    "generated_at": "2026-07-12T14:13:37+00:00",
+    "generated_at": "2026-07-22T20:58:16+00:00",
     "scope": {
         "blade_views": 1,
         "vue_components": 0,
@@ -8,20 +8,10 @@
     "severity_counts": {
         "CRITICAL": 0,
         "HIGH": 0,
-        "MEDIUM": 1,
+        "MEDIUM": 0,
         "LOW": 0,
         "INFO": 0
     },
     "strict": false,
-    "findings": [
-        {
-            "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "tests/fixtures/ui-audit/icon.blade.php",
-            "line": 1,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": false
-        }
-    ]
+    "findings": []
 }

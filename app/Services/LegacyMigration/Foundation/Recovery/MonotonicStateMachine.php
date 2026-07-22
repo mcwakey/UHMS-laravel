@@ -42,9 +42,7 @@ final readonly class MonotonicStateMachine
 
     public function transition(StateSnapshot $expected, MigrationState $next): StateSnapshot
     {
-        if (! in_array($next->value, self::NEXT[$expected->state->value] ?? [], true)) {
-            throw RecoveryException::failClosed('RECOVERY-INVALID-TRANSITION');
-        }
+        self::assertTransitionAllowed($expected->state, $next);
 
         $updated = $this->store->compareAndSet(
             $expected->recordKey,
@@ -63,5 +61,12 @@ final readonly class MonotonicStateMachine
         }
 
         return $updated;
+    }
+
+    public static function assertTransitionAllowed(MigrationState $expected, MigrationState $next): void
+    {
+        if (! in_array($next->value, self::NEXT[$expected->value] ?? [], true)) {
+            throw RecoveryException::failClosed('RECOVERY-INVALID-TRANSITION');
+        }
     }
 }

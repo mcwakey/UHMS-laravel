@@ -547,24 +547,11 @@ final class TargetSchemaInspectionService
                 purpose: 'Allow-listed nonidentifying enum-compatible aggregate values from the installed target.',
             );
             $allowed = $enumValues[$enum] ?? [];
-            $unexpected = [];
-            $observed = array_map(function (object $row) use ($allowed, &$unexpected): array {
-                $value = (string) $row->category_value;
-                if ($value === '__NULL__' || in_array($value, $allowed, true)) {
-                    return ['value' => $value, 'count' => (int) $row->aggregate_count, 'classification' => 'allow_listed'];
-                }
-
-                $token = hash('sha256', "target-enum-unexpected\0".$value);
-                $unexpected[] = $token;
-
-                return ['unexpected_value_hash' => $token, 'count' => (int) $row->aggregate_count, 'classification' => 'redacted_unexpected'];
-            }, $rows);
+            $redacted = (new UnexpectedTargetEnumRedactor)->redact($rows, $allowed);
             $results[$id] = [
                 'repository_enum' => $enum,
                 'repository_values' => $allowed,
-                'observed_aggregate_values' => $observed,
-                'unexpected_values' => $unexpected,
-                'all_non_null_values_compatible' => $unexpected === [],
+                ...$redacted,
             ];
         }
 

@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
+
 use App\Enums\LogModule;
 use App\Enums\LogSeverity;
 use App\Models\JournalEntry;
@@ -25,6 +28,7 @@ class PaymentAccountingPostingService
 
     public function postPayment(Payment $payment): ?JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         $payment->loadMissing([
             'invoice.visit',
             'invoice.patient',

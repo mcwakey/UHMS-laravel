@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
+
 use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Models\InvoiceDiscount;
@@ -18,6 +21,7 @@ class AccountingPostingRetryService
 
     public function retry(string $sourceType, int $sourceId): ?JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         return match ($sourceType) {
             'invoice' => $this->billingPosting->postInvoice(Invoice::query()->findOrFail($sourceId)),
             'payment' => $this->paymentPosting->postPayment(Payment::query()->findOrFail($sourceId)),

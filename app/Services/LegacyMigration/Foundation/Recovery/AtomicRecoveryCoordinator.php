@@ -12,26 +12,37 @@ final readonly class AtomicRecoveryCoordinator
     public function recover(
         AtomicIntentDescriptor $intent,
         CrashBoundary $boundary,
-        RecoveryEvidence $evidence,
-        ?RecoveryCheckpoint $checkpointRepair = null,
     ): RecoveryDecision {
-        return $this->journal->transaction(function () use ($intent, $boundary, $evidence, $checkpointRepair): RecoveryDecision {
+        return $this->journal->transaction(function () use ($intent, $boundary): RecoveryDecision {
             $snapshot = $this->journal->resolveOrCreateIntent($intent);
+            $observation = $this->journal->observe($snapshot, $boundary);
+            $replay = $this->journal->replayDecision($snapshot, $boundary, $observation);
+            if ($replay !== null) {
+                return $replay;
+            }
+            if ($observation->boundary !== $boundary) {
+                throw RecoveryException::failClosed('RECOVERY-OBSERVATION-BOUNDARY-MISMATCH');
+            }
+            $evidence = $observation->evidence;
             $decision = $this->classifier->classify($boundary, $evidence, $intent->unit);
             if ($decision->unit !== $intent->unit) {
                 throw RecoveryException::failClosed('RECOVERY-INTENT-UNIT-MISMATCH');
             }
 
             if ($decision->disposition === RecoveryDisposition::RepairCheckpointOnly) {
-                if ($checkpointRepair === null || $evidence->checkpointPresent) {
+                if ($observation->checkpointRepair === null || $evidence->checkpointPresent) {
                     throw RecoveryException::failClosed('RECOVERY-CHECKPOINT-REPAIR-MISMATCH');
                 }
-                $this->journal->appendCheckpoint($snapshot, $checkpointRepair);
-            } elseif ($checkpointRepair !== null) {
+                $this->journal->appendCheckpoint($snapshot, $observation->checkpointRepair);
+                $recordObservation = $this->journal->observe($snapshot, $boundary);
+                if (! $recordObservation->evidence->checkpointPresent || $recordObservation->checkpointRepair !== null) {
+                    throw RecoveryException::failClosed('RECOVERY-CHECKPOINT-REPAIR-UNVERIFIED');
+                }
+            } elseif ($observation->checkpointRepair !== null) {
                 throw RecoveryException::failClosed('RECOVERY-UNAUTHORIZED-CHECKPOINT-WRITE');
             }
 
-            $this->journal->recordDecision($snapshot, $decision);
+            $this->journal->recordDecision($snapshot, $decision, $recordObservation ?? $observation);
 
             return $decision;
         });

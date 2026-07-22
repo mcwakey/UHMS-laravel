@@ -5,6 +5,8 @@ namespace Tests\Unit\LegacyMigration\Foundation\Security;
 use App\Services\LegacyMigration\Foundation\Security\CanonicalizationVersionRegistry;
 use App\Services\LegacyMigration\Foundation\Security\CanonicalTypedMessageEncoder;
 use App\Services\LegacyMigration\Foundation\Security\ConfiguredKeyProvider;
+use App\Services\LegacyMigration\Foundation\Security\DomainAwareKeyProvider;
+use App\Services\LegacyMigration\Foundation\Security\HmacKeyMaterial;
 use App\Services\LegacyMigration\Foundation\Security\HmacTokenService;
 use App\Services\LegacyMigration\Foundation\Security\ProtectedToken;
 use App\Services\LegacyMigration\Foundation\Security\TokenContextMismatchException;
@@ -95,6 +97,53 @@ final class HmacTokenServiceTest extends TestCase
             new TokenDomain('contact_source'),
             (new CanonicalTypedMessageEncoder($versions))->encode([TypedValue::null()]),
         );
+    }
+
+    #[Test]
+    public function rotation_selects_the_active_key_for_the_tokens_domain(): void
+    {
+        $old = new HmacKeyMaterial('migration-hmac', 'v1', '123456789abcdef0BCDEFA!@#$%^&*()-+=0');
+        $patient = new HmacKeyMaterial('patient-hmac', 'v2', '23456789abcdef01CDEFAB!@#$%^&*()-+=01');
+        $contact = new HmacKeyMaterial('contact-hmac', 'v7', '3456789abcdef012DEFABC!@#$%^&*()-+=012');
+        $provider = new class($old, $patient, $contact) implements DomainAwareKeyProvider
+        {
+            public function __construct(
+                private readonly HmacKeyMaterial $old,
+                private readonly HmacKeyMaterial $patient,
+                private readonly HmacKeyMaterial $contact,
+            ) {}
+
+            public function active(): HmacKeyMaterial
+            {
+                return $this->contact;
+            }
+
+            public function get(string $keyId, string $version): HmacKeyMaterial
+            {
+                return $this->old;
+            }
+
+            public function activeForDomain(string $domain): HmacKeyMaterial
+            {
+                return $domain === 'patient_source' ? $this->patient : $this->contact;
+            }
+
+            public function getForDomain(string $domain, string $keyId, string $version): HmacKeyMaterial
+            {
+                return $this->old;
+            }
+        };
+        $versions = new CanonicalizationVersionRegistry;
+        $message = (new CanonicalTypedMessageEncoder($versions))->encode([TypedValue::string('SYNTHETIC-ONLY-P3B::DOMAIN-ROTATION')]);
+        $domain = new TokenDomain('patient_source');
+        $oldService = $this->service('testing', 'v1', '123456789abcdef0BCDEFA!@#$%^&*()-+=0');
+        $oldToken = $oldService->tokenize($domain, $message);
+        $service = new HmacTokenService($provider, $versions, 'testing');
+
+        $rotation = $service->rotate($domain, $message, $oldToken);
+
+        $this->assertSame('patient-hmac', $rotation->token->keyId());
+        $this->assertSame('v2', $rotation->token->keyVersion());
     }
 
     private function service(string $environment, string $version, string $key): HmacTokenService

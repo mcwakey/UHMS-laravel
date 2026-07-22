@@ -17,7 +17,9 @@ use App\Services\LegacyMigration\Foundation\Persistence\PersistenceBoundaryGuard
 use App\Services\LegacyMigration\Foundation\Persistence\PersistenceBoundaryResult;
 use App\Services\LegacyMigration\Foundation\Persistence\PersistenceOperation;
 use App\Services\LegacyMigration\Foundation\Runtime\ApplicationSideEffectIsolationDriver;
+use App\Services\LegacyMigration\Foundation\Runtime\ApplicationIsolationBootCapability;
 use App\Services\LegacyMigration\Foundation\Runtime\ExecutionMode;
+use App\Services\LegacyMigration\Foundation\Runtime\MigrationRunActivationAuthority;
 use App\Services\LegacyMigration\Foundation\Runtime\MigrationRuntimeContext;
 use App\Services\LegacyMigration\Foundation\Runtime\MigrationRuntimeRequest;
 use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
@@ -29,6 +31,7 @@ use App\Services\LegacyMigration\Foundation\Security\ProtectedToken;
 use App\Services\LegacyMigration\Foundation\Validation\ExistingTargetEvidence;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyMigration\RecordingMigrationRuntimeAudit;
 
 final class PersistenceBoundaryGuardTest extends TestCase
 {
@@ -168,6 +171,8 @@ final class PersistenceBoundaryGuardTest extends TestCase
             )),
             SideEffectIsolationRegistry::complete(),
             new SideEffectCounter,
+            new RecordingMigrationRuntimeAudit,
+            ApplicationIsolationBootCapability::syntheticForTests(),
         );
 
         return [$runtime, new PersistenceBoundaryGuard($runtime)];
@@ -175,22 +180,9 @@ final class PersistenceBoundaryGuardTest extends TestCase
 
     private function request(ExecutionMode $mode): MigrationRuntimeRequest
     {
-        return new MigrationRuntimeRequest(
-            runToken: str_repeat('a', 64),
-            targetSnapshotId: str_repeat('b', 64),
-            environment: 'testing',
-            approvedEnvironments: ['testing'],
-            mode: $mode,
-            foundationEnabled: true,
-            initiatedFromConsole: true,
-            productionTarget: false,
-            runValid: true,
-            sourceSnapshotPinned: true,
-            targetSnapshotPinned: true,
-            targetCollisionSnapshotCurrent: true,
-            dryRunOnly: $mode === ExecutionMode::DryRun,
-            commitAuthorized: $mode === ExecutionMode::Commit,
-        );
+        return new MigrationRuntimeRequest(MigrationRunActivationAuthority::syntheticForTests(
+            str_repeat('a', 64), str_repeat('b', 64), $mode,
+        ));
     }
 
     private function command(PersistenceOperation $operation): DomainNeutralPersistenceCommand

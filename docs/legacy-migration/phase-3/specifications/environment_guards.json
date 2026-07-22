@@ -1,11 +1,12 @@
 {
-  "specification_version": "3.0.0",
-  "phase": "3",
+  "specification_version": "3.1.0",
+  "phase": "3B",
   "fail_closed": true,
   "approved_source": {"connection": "legacy_uhms", "database": "uuhms", "read_only": true, "table_count": 55, "column_count": 479, "fingerprint": "150fcf4783fcb8bdc25f7e17fe0ece5050955f0c68e7dd03651ee8bd58498977"},
   "installed_target_baseline": {"environment": "local", "database": "uhms_clean", "production": false, "table_count": 335, "column_count": 5347, "fingerprint": "12e3a4c6ca80a0c1a54ea9267d9c4935453b7a36d27c7f8ad900062c1c12bff0"},
-  "required_checks": ["foundation_enabled", "environment_allow_list", "production_rejected", "exact_connection", "exact_database", "database_version", "schema_fingerprint", "table_count", "column_count", "configuration_fingerprint", "source_select_metadata_only", "source_read_only_transaction", "configured_host", "configured_port", "tls_identity", "server_uuid_or_equivalent"],
-  "implemented_checks": ["foundation_enabled", "environment_allow_list", "production_label_rejected", "exact_connection", "exact_database", "database_version", "schema_fingerprint", "table_count", "column_count", "configuration_fingerprint", "source_select_metadata_only", "source_read_only_transaction"],
-  "blocking_gap": "physical host/port/TLS/server identity is not pinned",
+  "required_checks": ["foundation_enabled", "environment_allow_list", "production_rejected", "exact_connection", "exact_database", "database_version", "schema_fingerprint", "table_count", "column_count", "configuration_fingerprint", "source_select_metadata_only", "source_read_only_transaction", "configured_host", "configured_port", "tls_identity", "server_uuid_or_equivalent", "server_role_classification", "network_environment_identity", "owner_approval_reference", "identity_contract_hmac"],
+  "implemented_checks": ["foundation_enabled", "environment_allow_list", "production_label_rejected", "exact_connection", "exact_database", "database_version", "schema_fingerprint", "table_count", "column_count", "configuration_fingerprint", "source_select_metadata_only", "source_read_only_transaction", "configured_host", "configured_port", "tls_identity", "server_uuid_or_equivalent", "server_role_classification", "network_environment_identity", "owner_approval_reference", "identity_contract_hmac"],
+  "blocking_gap": null,
+  "external_activation_prerequisite": "approved non-production identity contract and key reference must be supplied; absence fails closed",
   "unsafe_defaults": {"foundation_enabled": false, "schema_writes_enabled": false, "dry_run_only": true, "commit_authorized": false, "cohort_b_selection": false, "importer_execution": false, "production": false}
 }

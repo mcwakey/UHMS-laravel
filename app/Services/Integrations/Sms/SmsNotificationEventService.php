@@ -3,10 +3,13 @@
 namespace App\Services\Integrations\Sms;
 
 use App\Enums\LogModule;
-use App\Models\SmsMessage;
+use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\SmsNotificationEvent;
 use App\Models\SmsTemplate;
 use App\Services\ActivityLogService;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use App\Services\ModuleService;
 use Illuminate\Support\Facades\Auth;
 
@@ -36,12 +39,17 @@ class SmsNotificationEventService
     ) {}
 
     /**
-     * @param array $args event_type, phone, source_type?, source_id?, template_id?,
-     *                     body?, data?, force_resend?(bool)
+     * @param  array  $args  event_type, phone, source_type?, source_id?, template_id?,
+     *                       body?, data?, force_resend?(bool)
      */
     public function dispatch(array $args): SmsNotificationEvent
     {
         $eventType = (string) $args['event_type'];
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Sms);
+        if ($eventType === SmsNotificationEvent::TYPE_APPOINTMENT_REMINDER) {
+            OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AppointmentReminders);
+        }
+
         $phone = trim((string) ($args['phone'] ?? ''));
 
         $event = SmsNotificationEvent::create([
@@ -104,7 +112,7 @@ class SmsNotificationEventService
 
     /* ── convenience hooks ──────────────────────────────────────────── */
 
-    public function paymentReceipt(\App\Models\Payment $payment): SmsNotificationEvent
+    public function paymentReceipt(Payment $payment): SmsNotificationEvent
     {
         return $this->dispatch([
             'event_type' => SmsNotificationEvent::TYPE_PAYMENT_RECEIPT,
@@ -121,7 +129,7 @@ class SmsNotificationEventService
         ]);
     }
 
-    public function invoicePaymentRequest(\App\Models\Invoice $invoice, ?string $phone = null, ?string $paymentLink = null): SmsNotificationEvent
+    public function invoicePaymentRequest(Invoice $invoice, ?string $phone = null, ?string $paymentLink = null): SmsNotificationEvent
     {
         return $this->dispatch([
             'event_type' => SmsNotificationEvent::TYPE_INVOICE_PAYMENT_REQUEST,
@@ -188,6 +196,7 @@ class SmsNotificationEventService
                 return 'duplicate';
             }
         }
+
         return null;
     }
 
@@ -202,7 +211,8 @@ class SmsNotificationEventService
             return $this->renderer->render((string) $args['body'], $data, strict: false);
         }
         // Safe minimal default per event type.
-        $default = (string) (config('integrations.sms_default_bodies.' . $args['event_type']) ?? '');
+        $default = (string) (config('integrations.sms_default_bodies.'.$args['event_type']) ?? '');
+
         return $default === '' ? '' : $this->renderer->render($default, $data, strict: false);
     }
 

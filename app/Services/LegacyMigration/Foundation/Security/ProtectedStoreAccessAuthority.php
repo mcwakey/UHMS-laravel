@@ -13,7 +13,11 @@ interface ProtectedStoreAccessAuthority
 
     public function keyVersion(): string;
 
+    public function permitsKeyContext(string $keyId, string $keyVersion): bool;
+
     public function canonicalizationVersion(): string;
 
     public function integrityDomain(): string;
+
+    public function assertOperationContext(ProtectedStoreOperationContext $context, string $operation, string $domain): void;
 }

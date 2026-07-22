@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\JournalEntry;
 use App\Models\AccountingPostingAttempt;
+use App\Models\JournalEntry;
 use App\Models\User;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -19,6 +21,8 @@ class AccountingPostingService
 
     public function postFromSource(string $sourceModule, Model $source, array $lines, array $meta = []): JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
+
         $postingType = (string) ($meta['posting_type'] ?? 'default');
         $postingVersion = max(1, (int) ($meta['posting_version'] ?? 1));
         $actor = auth()->user() ?? User::query()->firstOrFail();

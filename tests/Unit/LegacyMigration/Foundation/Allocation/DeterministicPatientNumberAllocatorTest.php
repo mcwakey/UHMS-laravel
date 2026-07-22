@@ -151,6 +151,11 @@ final class FakeCollisionProbe implements PatientNumberCollisionProbe
 
 final class InMemoryReservationStore implements NumberReservationStore
 {
+    public function connectionName(): string
+    {
+        return 'in_memory';
+    }
+
     /** @var array<string, ExistingAllocation> */
     public array $allocations = [];
 
@@ -164,11 +169,11 @@ final class InMemoryReservationStore implements NumberReservationStore
 
     private bool $locked = false;
 
-    public function findByPatientCoreKey(string $patientCoreKey): ?ExistingAllocation
+    public function find(AllocationRequest $request): ?ExistingAllocation
     {
         $this->findCount++;
 
-        return $this->allocations[$patientCoreKey] ?? null;
+        return $this->allocations[$request->patientCoreKey] ?? null;
     }
 
     public function withLockedCoordinate(PinnedNumberingConfiguration $configuration, Closure $operation): mixed

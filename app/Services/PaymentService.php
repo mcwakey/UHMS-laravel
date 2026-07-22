@@ -10,6 +10,8 @@ use App\Models\InvoiceItem;
 use App\Models\Payment;
 use App\Models\PaymentAllocation;
 use App\Services\Billing\InvoiceItemSettlementService;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -31,13 +33,18 @@ class PaymentService
     }
 
     /**
-     * @param array $data           ['amount', 'payment_method', 'reference_number'?, 'notes'?, 'paid_at'?]
-     * @param array $allocations    [['invoice_item_id' => int, 'amount' => float], ...]
+     * @param  array  $data  ['amount', 'payment_method', 'reference_number'?, 'notes'?, 'paid_at'?]
+     * @param  array  $allocations  [['invoice_item_id' => int, 'amount' => float], ...]
      *                              If omitted/empty, payment is auto-distributed across
      *                              unpaid items in id order.
      */
     public function recordPayment(Invoice $invoice, array $data, array $allocations = []): Payment
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BillingCreation);
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PaymentAllocation);
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::LaravelEvents);
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::ModelObservers);
+
         $amount = round((float) ($data['amount'] ?? 0), 2);
         if ($amount <= 0) {
             throw new \RuntimeException('Payment amount must be greater than zero.');
@@ -89,31 +96,31 @@ class PaymentService
 
             // Create the payment.
             $payment = Payment::create([
-                'payment_number'   => Payment::generateNumber('PAY', 'payments', 'payment_number'),
-                'invoice_id'       => $invoice->id,
+                'payment_number' => Payment::generateNumber('PAY', 'payments', 'payment_number'),
+                'invoice_id' => $invoice->id,
                 'invoice_receivable_id' => $receivable?->id,
-                'patient_id'       => $invoice->patient_id,
-                'payer_type'       => $receivable?->payer_type ?? 'patient',
-                'payer_id'         => $receivable?->payer_id ?? $invoice->patient_id,
+                'patient_id' => $invoice->patient_id,
+                'payer_type' => $receivable?->payer_type ?? 'patient',
+                'payer_id' => $receivable?->payer_id ?? $invoice->patient_id,
                 'insurance_provider_id' => $receivable?->insurance_provider_id,
-                'sponsor_id'       => $receivable?->sponsor_id,
+                'sponsor_id' => $receivable?->sponsor_id,
                 'corporate_client_id' => $receivable?->corporate_client_id,
-                'claim_id'         => $receivable?->claim_id,
-                'amount'           => $amount,
-                'payment_method'   => $data['payment_method'],
+                'claim_id' => $receivable?->claim_id,
+                'amount' => $amount,
+                'payment_method' => $data['payment_method'],
                 'reference_number' => $data['reference_number'] ?? null,
                 'payment_batch_reference' => $data['payment_batch_reference'] ?? null,
-                'received_by'      => Auth::id(),
-                'notes'            => $data['notes'] ?? null,
-                'paid_at'          => $data['paid_at'] ?? now(),
+                'received_by' => Auth::id(),
+                'notes' => $data['notes'] ?? null,
+                'paid_at' => $data['paid_at'] ?? now(),
             ]);
 
             // Persist allocations + update each item.
             foreach ($normalized as $alloc) {
                 PaymentAllocation::create([
-                    'payment_id'      => $payment->id,
+                    'payment_id' => $payment->id,
                     'invoice_item_id' => $alloc['invoice_item_id'],
-                    'amount'          => $alloc['amount'],
+                    'amount' => $alloc['amount'],
                 ]);
 
                 $item = InvoiceItem::lockForUpdate()->find($alloc['invoice_item_id']);
@@ -178,17 +185,21 @@ class PaymentService
         if (! empty($allocations)) {
             return array_values(array_map(fn ($a) => [
                 'invoice_item_id' => (int) ($a['invoice_item_id'] ?? $a['id'] ?? 0),
-                'amount'          => round((float) ($a['amount'] ?? 0), 2),
+                'amount' => round((float) ($a['amount'] ?? 0), 2),
             ], $allocations));
         }
 
         // Auto-distribute.
         $remaining = $amount;
-        $out       = [];
+        $out = [];
         foreach ($items as $item) {
-            if ($remaining <= 0) break;
+            if ($remaining <= 0) {
+                break;
+            }
             $apply = min($remaining, $this->settlement->outstandingBalance($item));
-            if ($apply <= 0) continue;
+            if ($apply <= 0) {
+                continue;
+            }
             $apply = round($apply, 2);
             $out[] = ['invoice_item_id' => $item->id, 'amount' => $apply];
             $remaining = round($remaining - $apply, 2);
@@ -196,6 +207,7 @@ class PaymentService
         if ($remaining > 0.01) {
             throw new \RuntimeException("Payment amount ₵{$amount} exceeds total outstanding balance.");
         }
+
         return $out;
     }
 }

@@ -1,11 +1,12 @@
 {
-  "specification_version": "3.0.0",
-  "phase": "3",
+  "specification_version": "3.1.0",
+  "phase": "3B",
   "table_prefix": "legacy_migration_",
-  "logical_tables": ["runs", "contract_bundles", "snapshots", "target_collision_snapshots", "crosswalks", "remediations", "provenance_records", "quarantine_roots", "quarantine_exceptions", "reconciliation_results", "audit_events", "idempotency_records", "checkpoints", "atomic_intents", "compensation_records", "number_reservations"],
-  "constraints": ["one_active_patient_mapping_per_source_coordinate", "one_compatible_outcome_per_idempotency_key", "one_authoritative_quarantine_root_per_typed_root_domain_source_snapshot", "one_primary_exception_per_sealed_root", "passed_reconciliation_requires_exact_zero_difference", "number_reservation_lineage_unique", "foundation_only_restrict_foreign_keys", "immutable_lineage_coordinates", "no_delete_protected_lineage", "exact_run_state_edges_and_lock_increment"],
+  "logical_tables": ["runs", "contract_bundles", "snapshots", "target_collision_snapshots", "crosswalks", "remediations", "provenance_records", "quarantine_roots", "quarantine_exceptions", "reconciliation_results", "audit_events", "idempotency_records", "checkpoints", "atomic_intents", "compensation_records", "number_reservations", "installation_journal", "protected_key_references", "protected_record_envelopes", "protected_token_rotations", "retention_policies", "protected_purge_requests", "protected_access_audits", "recovery_journal_entries"],
+  "constraints": ["one_active_patient_mapping_per_source_coordinate", "one_compatible_outcome_per_idempotency_key", "one_authoritative_quarantine_root_per_typed_root_domain_source_snapshot", "one_primary_exception_per_sealed_root", "passed_reconciliation_requires_exact_zero_difference", "number_reservation_lineage_unique", "foundation_only_restrict_foreign_keys", "immutable_lineage_coordinates", "no_delete_protected_lineage", "exact_run_state_edges_and_lock_increment", "full_protected_envelope_per_token", "append_only_access_rotation_installation_and_recovery_journals", "purpose_scoped_access", "retention_purge_authority_required"],
   "protected_payload_policy": {"encrypted_at_rest": true, "hidden_from_serialization": true, "searchable_plaintext_identifiers": false},
   "business_domain_tables_created": 0,
-  "runtime_write_policy": "phase3_non_test_protected_store_writes_blocked",
-  "known_blocker": "protected_store_access_and_keyed_integrity_guard_not_integrated_into_each_repository"
+  "runtime_write_policy": "only_authority_bound_foundation_repositories_may_write; business_domain_writes_remain_blocked",
+  "known_blocker": null,
+  "external_activation_prerequisites": ["installed_identity_bound_foundation_schema", "external_key_and_policy_authorities", "approved_retention_schedule_before_population_or_purge"]
 }

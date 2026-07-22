@@ -16,7 +16,7 @@ final class PrivacyScanCommandTest extends TestCase
         $output = Artisan::output();
 
         $this->assertSame(0, $exitCode, $output);
-        $this->assertStringContainsString('"scanner_version":"P3-PRIVACY-SCANNER-1"', $output);
+        $this->assertStringContainsString('"scanner_version":"P3B-PRIVACY-SCANNER-3"', $output);
         $this->assertStringContainsString('"coverage_difference":0', $output);
         $this->assertStringContainsString('"unallowlisted_finding_count":0', $output);
         $this->assertStringContainsString('"release_blocked":false', $output);

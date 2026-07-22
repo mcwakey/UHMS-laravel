@@ -18,6 +18,7 @@ use App\Services\LegacyMigration\Foundation\Recovery\RecoveryDecision;
 use App\Services\LegacyMigration\Foundation\Recovery\RecoveryDisposition;
 use App\Services\LegacyMigration\Foundation\Recovery\RecoveryEvidence;
 use App\Services\LegacyMigration\Foundation\Recovery\RecoveryException;
+use App\Services\LegacyMigration\Foundation\Recovery\RecoveryObservation;
 use App\Services\LegacyMigration\Foundation\Recovery\StateSnapshot;
 use Closure;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -77,25 +78,25 @@ final class RecoveryFoundationTest extends TestCase
     /** @return iterable<string, array{CrashBoundary, RecoveryEvidence, RecoveryDisposition}> */
     public static function crashBoundaries(): iterable
     {
-        $clean = RecoveryEvidence::cleanRetry();
-        $committed = new RecoveryEvidence(true, true, false, true, true, false, true, true, false, true);
+        $clean = self::evidence();
+        $committed = self::evidence(durableUnitCommitted: true, durableFactsComplete: true, mandatoryReconciliationPresent: true, reconciliationPassed: true);
 
         yield 'PILOT-RESUME-001 before allocation' => [CrashBoundary::BeforeNumberAllocation, $clean, RecoveryDisposition::RetryFromClassified];
         yield 'PILOT-RESUME-002 allocation lag' => [CrashBoundary::AfterNumberAllocationBeforePatientCommit, $clean, RecoveryDisposition::ReuseExactAllocation];
-        yield 'PILOT-RESUME-003 atomic rollback' => [CrashBoundary::AfterPatientCommitBeforeCrosswalkCommit, new RecoveryEvidence(true, true, false, false, false, false, false, false, true, true), RecoveryDisposition::RetryRolledBackUnit];
+        yield 'PILOT-RESUME-003 atomic rollback' => [CrashBoundary::AfterPatientCommitBeforeCrosswalkCommit, self::evidence(transactionRolledBack: true), RecoveryDisposition::RetryRolledBackUnit];
         yield 'PILOT-RESUME-004 checkpoint lag' => [CrashBoundary::AfterCoreCommitBeforeCheckpoint, $committed, RecoveryDisposition::RepairCheckpointOnly];
         yield 'PILOT-RESUME-005 alias' => [CrashBoundary::DuringAliasCreation, $clean, RecoveryDisposition::ResumeAliasUnit];
         yield 'PILOT-RESUME-006 contact' => [CrashBoundary::DuringContactCreation, $clean, RecoveryDisposition::ResumeContactUnit];
         yield 'PILOT-RESUME-007 history' => [CrashBoundary::DuringInsuranceHistory, $clean, RecoveryDisposition::ResumeMissingHistoryRows];
         yield 'PILOT-RESUME-008 current' => [CrashBoundary::DuringInsuranceCurrent, $clean, RecoveryDisposition::ResumeCurrentGroup];
-        yield 'PILOT-RESUME-009 reconciliation lag' => [CrashBoundary::AfterTargetWritesBeforeReconciliation, new RecoveryEvidence(true, true, false, true, true, false, false, false, false, true), RecoveryDisposition::RepairReconciliationOnly];
+        yield 'PILOT-RESUME-009 reconciliation lag' => [CrashBoundary::AfterTargetWritesBeforeReconciliation, self::evidence(durableUnitCommitted: true, durableFactsComplete: true), RecoveryDisposition::RepairReconciliationOnly];
         yield 'PILOT-RESUME-010 terminal lag' => [CrashBoundary::AfterReconciliationBeforeCompletion, $committed, RecoveryDisposition::RepairCompletionOnly];
     }
 
     #[Test]
     public function partial_durable_unit_is_never_treated_as_success(): void
     {
-        $evidence = new RecoveryEvidence(true, true, false, true, false, false, false, false, false, true);
+        $evidence = self::evidence(durableUnitCommitted: true);
         $decision = (new CrashBoundaryClassifier)->classify(CrashBoundary::DuringContactCreation, $evidence);
 
         self::assertSame(RecoveryDisposition::CompensationRequired, $decision->disposition);
@@ -107,7 +108,7 @@ final class RecoveryFoundationTest extends TestCase
     public function contradictory_recovery_evidence_is_rejected_before_classification(): void
     {
         $this->expectException(RecoveryException::class);
-        new RecoveryEvidence(true, true, false, true, true, false, true, true, true, true);
+        self::evidence(durableUnitCommitted: true, durableFactsComplete: true, mandatoryReconciliationPresent: true, reconciliationPassed: true, transactionRolledBack: true);
     }
 
     #[Test]
@@ -115,7 +116,7 @@ final class RecoveryFoundationTest extends TestCase
     {
         $decision = (new CrashBoundaryClassifier)->classify(
             CrashBoundary::AfterReconciliationBeforeCompletion,
-            new RecoveryEvidence(true, true, false, false, false, false, true, true, false, true),
+            self::evidence(mandatoryReconciliationPresent: true, reconciliationPassed: true),
         );
 
         self::assertSame(RecoveryDisposition::ReconciliationFailed, $decision->disposition);
@@ -125,8 +126,6 @@ final class RecoveryFoundationTest extends TestCase
     #[Test]
     public function compatible_committed_unit_repairs_only_its_checkpoint_atomically(): void
     {
-        $journal = new InMemoryRecoveryJournal;
-        $coordinator = new AtomicRecoveryCoordinator($journal);
         $intent = new AtomicIntentDescriptor(
             hash('sha256', 'intent'),
             hash('sha256', 'idempotency'),
@@ -135,10 +134,16 @@ final class RecoveryFoundationTest extends TestCase
             1,
             hash('sha256', 'input'),
         );
-        $evidence = new RecoveryEvidence(true, true, false, true, true, false, true, true, false, true);
         $checkpoint = new RecoveryCheckpoint('CORE_COMMITTED', hash('sha256', 'tx'), hash('sha256', 'writes'), hash('sha256', 'reconciliation'));
+        $observation = RecoveryObservation::syntheticForTests(
+            CrashBoundary::AfterCoreCommitBeforeCheckpoint,
+            self::evidence(durableUnitCommitted: true, durableFactsComplete: true, mandatoryReconciliationPresent: true, reconciliationPassed: true),
+            $checkpoint,
+        );
+        $journal = new InMemoryRecoveryJournal($observation);
+        $coordinator = new AtomicRecoveryCoordinator($journal);
 
-        $decision = $coordinator->recover($intent, CrashBoundary::AfterCoreCommitBeforeCheckpoint, $evidence, $checkpoint);
+        $decision = $coordinator->recover($intent, CrashBoundary::AfterCoreCommitBeforeCheckpoint);
 
         self::assertSame(RecoveryDisposition::RepairCheckpointOnly, $decision->disposition);
         self::assertSame(1, $journal->transactions);
@@ -159,6 +164,25 @@ final class RecoveryFoundationTest extends TestCase
 
         $this->expectException(RecoveryException::class);
         $registry->forUnit(AtomicUnit::ExistingTargetLink)->assertActionAllowed('mutate_existing_target');
+    }
+
+    private static function evidence(
+        bool $coordinatesMatch = true,
+        bool $lineageCompatible = true,
+        bool $unexpectedDurableFacts = false,
+        bool $durableUnitCommitted = false,
+        bool $durableFactsComplete = false,
+        bool $checkpointPresent = false,
+        bool $mandatoryReconciliationPresent = false,
+        bool $reconciliationPassed = false,
+        bool $transactionRolledBack = false,
+        bool $allocationConsumptionExplained = true,
+    ): RecoveryEvidence {
+        return RecoveryEvidence::syntheticForTests(compact(
+            'coordinatesMatch', 'lineageCompatible', 'unexpectedDurableFacts', 'durableUnitCommitted',
+            'durableFactsComplete', 'checkpointPresent', 'mandatoryReconciliationPresent',
+            'reconciliationPassed', 'transactionRolledBack', 'allocationConsumptionExplained',
+        ));
     }
 }
 
@@ -185,6 +209,8 @@ final class InMemoryRecoveryJournal implements AtomicRecoveryJournal
 
     public int $decisionCount = 0;
 
+    public function __construct(private readonly RecoveryObservation $observation) {}
+
     public function transaction(Closure $operation): mixed
     {
         $this->transactions++;
@@ -197,12 +223,32 @@ final class InMemoryRecoveryJournal implements AtomicRecoveryJournal
         return new AtomicIntentSnapshot($intent, $intent->expectedPriorState, 0);
     }
 
+    public function observe(AtomicIntentSnapshot $intent, CrashBoundary $boundary): RecoveryObservation
+    {
+        if ($this->checkpointCount > 0) {
+            $facts = $this->observation->evidence->toArray();
+            $facts['checkpointPresent'] = true;
+
+            return RecoveryObservation::syntheticForTests(
+                $boundary,
+                RecoveryEvidence::syntheticForTests($facts),
+            );
+        }
+
+        return $this->observation;
+    }
+
+    public function replayDecision(AtomicIntentSnapshot $intent, CrashBoundary $boundary, RecoveryObservation $observation): ?RecoveryDecision
+    {
+        return null;
+    }
+
     public function appendCheckpoint(AtomicIntentSnapshot $intent, RecoveryCheckpoint $checkpoint): void
     {
         $this->checkpointCount++;
     }
 
-    public function recordDecision(AtomicIntentSnapshot $intent, RecoveryDecision $decision): void
+    public function recordDecision(AtomicIntentSnapshot $intent, RecoveryDecision $decision, RecoveryObservation $observation): void
     {
         $this->decisionCount++;
     }

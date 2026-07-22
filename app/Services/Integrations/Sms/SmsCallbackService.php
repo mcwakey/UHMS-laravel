@@ -4,6 +4,8 @@ namespace App\Services\Integrations\Sms;
 
 use App\Models\IntegrationProvider;
 use App\Models\SmsProviderCallback;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 
 /**
  * Stores and processes inbound SMS provider callbacks (delivery reports).
@@ -16,6 +18,7 @@ class SmsCallbackService
 
     public function store(string $providerCode, array $payload, array $headers = [], ?string $ip = null): SmsProviderCallback
     {
+        $this->assertWebhookAllowed();
         $provider = IntegrationProvider::query()->sms()->where('code', $providerCode)->first();
 
         return SmsProviderCallback::create([
@@ -31,6 +34,7 @@ class SmsCallbackService
 
     public function process(SmsProviderCallback $callback): SmsProviderCallback
     {
+        $this->assertWebhookAllowed();
         $provider = IntegrationProvider::query()->sms()->where('code', $callback->provider_code)->first();
         if (! $provider) {
             $callback->update(['processed' => true, 'processed_at' => now(), 'processing_error' => 'unknown_provider']);
@@ -54,7 +58,14 @@ class SmsCallbackService
 
     public function handle(string $providerCode, array $payload, array $headers = [], ?string $ip = null): SmsProviderCallback
     {
+        $this->assertWebhookAllowed();
         return $this->process($this->store($providerCode, $payload, $headers, $ip));
+    }
+
+    private function assertWebhookAllowed(): void
+    {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Webhooks);
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::ExternalIntegrations);
     }
 
     private function safeHeaders(array $headers): array

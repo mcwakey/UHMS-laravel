@@ -8,6 +8,8 @@ use App\Models\PaymentProviderRefund;
 use App\Models\PaymentProviderTransaction;
 use App\Services\ActivityLogService;
 use App\Services\Integrations\IntegrationProviderRegistry;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use App\Support\Integrations\Payment\PaymentInitiationRequest;
 use App\Support\Integrations\Payment\PaymentRefundRequest;
 use Illuminate\Support\Facades\Auth;
@@ -35,6 +37,9 @@ class PaymentGatewayService
 
     public function initiate(array $data): PaymentProviderTransaction
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PaymentIntegrations);
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::ExternalIntegrations);
+
         $provider = $this->resolver->requireActiveProvider();
         $txn = $this->transactions->create($provider, $data);
 
@@ -61,6 +66,7 @@ class PaymentGatewayService
                 'error_message' => 'Could not initiate the payment with the provider.',
             ]);
             $this->transactions->recordAttempt($txn, PaymentProviderAttempt::TYPE_INITIATE, PaymentProviderAttempt::STATUS_FAILED, [], [], null, 'initiate_error');
+
             return $txn->refresh();
         }
 
@@ -106,16 +112,22 @@ class PaymentGatewayService
     /** Manual verify / recheck of a pending transaction. */
     public function verify(PaymentProviderTransaction $transaction): PaymentProviderTransaction
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PaymentIntegrations);
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::ExternalIntegrations);
+
         return $this->verification->verify($transaction);
     }
 
     /** Refund foundation — records intent and the provider's response. */
     public function requestRefund(PaymentProviderTransaction $transaction, float $amount, ?string $reason = null): PaymentProviderRefund
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PaymentIntegrations);
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::ExternalIntegrations);
+
         $refund = PaymentProviderRefund::create([
             'payment_provider_transaction_id' => $transaction->id,
             'provider_id' => $transaction->provider_id,
-            'refund_reference' => 'RF-' . now()->format('ymd') . '-' . Str::upper(Str::random(8)),
+            'refund_reference' => 'RF-'.now()->format('ymd').'-'.Str::upper(Str::random(8)),
             'amount' => round($amount, 2),
             'currency' => $transaction->currency,
             'status' => PaymentProviderRefund::STATUS_PENDING,
@@ -141,6 +153,7 @@ class PaymentGatewayService
             ));
         } catch (\Throwable $e) {
             $refund->update(['status' => PaymentProviderRefund::STATUS_FAILED, 'failed_at' => now()]);
+
             return $refund->refresh();
         }
 

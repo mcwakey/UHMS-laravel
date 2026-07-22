@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Enums\DepartmentType;
+use App\Enums\LogModule;
 use App\Enums\PrescriptionStatus;
 use App\Enums\ProductType;
+use App\Enums\StockMovementDirection;
 use App\Enums\StockMovementType;
 use App\Events\StockLow;
 use App\Models\Department;
@@ -15,9 +17,13 @@ use App\Models\PharmacyBillingSelection;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use App\Models\Product;
+use App\Models\StockBalance;
 use App\Models\StockLocation;
-use Illuminate\Pagination\LengthAwarePaginator;
+use App\Models\StockMovement;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -55,11 +61,13 @@ class PharmacyService
 
     public function storeCategory(array $data): DrugCategory
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PharmacyDispensing);
         return DrugCategory::create($data);
     }
 
     public function updateCategory(DrugCategory $category, array $data): DrugCategory
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PharmacyDispensing);
         $category->update($data);
 
         return $category;
@@ -67,6 +75,7 @@ class PharmacyService
 
     public function deleteCategory(DrugCategory $category): bool
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PharmacyDispensing);
         if ($category->drugs()->exists()) {
             return false;
         }
@@ -132,6 +141,7 @@ class PharmacyService
 
     public function storeDrug(array $data): Drug
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PharmacyDispensing);
         return DB::transaction(function () use ($data) {
             $opening = (float) ($data['opening_stock'] ?? 0);
             $drug = Drug::create($data);
@@ -157,7 +167,7 @@ class PharmacyService
             } elseif ($opening > 0) {
                 Log::warning('pharmacy.store_drug.opening_stock_skipped', [
                     'drug_id' => $drug->id,
-                    'reason'  => 'Drug is not linked to a stock product; opening stock cannot be posted to the product ledger.',
+                    'reason' => 'Drug is not linked to a stock product; opening stock cannot be posted to the product ledger.',
                 ]);
             }
 
@@ -167,6 +177,7 @@ class PharmacyService
 
     public function updateDrug(Drug $drug, array $data): Drug
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PharmacyDispensing);
         $drug->update($data);
 
         return $drug;
@@ -174,6 +185,7 @@ class PharmacyService
 
     public function toggleDrug(Drug $drug): Drug
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PharmacyDispensing);
         $drug->update(['is_active' => ! $drug->is_active]);
 
         return $drug;
@@ -191,7 +203,7 @@ class PharmacyService
         // older data typed that location as "other" instead of "pharmacy".
         $pharmacyLocIds = $this->pharmacyStockLocationIds();
 
-        $query = \App\Models\StockBalance::with(['drug.category', 'product'])
+        $query = StockBalance::with(['drug.category', 'product'])
             ->whereIn('stock_location_id', $pharmacyLocIds)
             ->where('quantity_on_hand', '>', 0);
 
@@ -213,11 +225,12 @@ class PharmacyService
      * Required keys: drug_id (or product_id), stock_location_id, quantity.
      * Optional: unit_cost, batch_no, expiry_date, notes.
      */
-    public function addStock(array $data): \App\Models\StockBalance
+    public function addStock(array $data): StockBalance
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::StockMovement);
         return DB::transaction(function () use ($data) {
-            $drug       = isset($data['drug_id']) ? Drug::find($data['drug_id']) : null;
-            $productId  = $data['product_id'] ?? $drug?->product_id;
+            $drug = isset($data['drug_id']) ? Drug::find($data['drug_id']) : null;
+            $productId = $data['product_id'] ?? $drug?->product_id;
             $locationId = $data['stock_location_id'] ?? null;
 
             if (! $productId || ! $locationId) {
@@ -225,18 +238,18 @@ class PharmacyService
             }
 
             app(ProductStockMovementService::class)->createMovement([
-                'drug_id'           => $drug?->id,
-                'product_id'        => $productId,
+                'drug_id' => $drug?->id,
+                'product_id' => $productId,
                 'stock_location_id' => $locationId,
-                'movement_type'     => StockMovementType::PURCHASE_RECEIVED,
-                'quantity'          => $data['quantity'],
-                'unit_cost'         => $data['unit_cost'] ?? null,
-                'batch_no'          => $data['batch_no'] ?? $data['batch_number'] ?? null,
-                'expiry_date'       => $data['expiry_date'] ?? null,
-                'notes'             => $data['notes'] ?? 'Stock received via pharmacy.',
+                'movement_type' => StockMovementType::PURCHASE_RECEIVED,
+                'quantity' => $data['quantity'],
+                'unit_cost' => $data['unit_cost'] ?? null,
+                'batch_no' => $data['batch_no'] ?? $data['batch_number'] ?? null,
+                'expiry_date' => $data['expiry_date'] ?? null,
+                'notes' => $data['notes'] ?? 'Stock received via pharmacy.',
             ]);
 
-            return \App\Models\StockBalance::firstOrNew(
+            return StockBalance::firstOrNew(
                 ['product_id' => $productId, 'stock_location_id' => $locationId]
             );
         });
@@ -246,26 +259,26 @@ class PharmacyService
     {
         $pharmacyLocIds = $this->pharmacyStockLocationIds();
 
-        $low_stock = \App\Models\StockBalance::with('drug')
+        $low_stock = StockBalance::with('drug')
             ->whereIn('stock_location_id', $pharmacyLocIds)
             ->where('quantity_on_hand', '>', 0)
             ->whereHas('drug', fn ($q) => $q->whereColumn('stock_balances.quantity_on_hand', '<=', 'drugs.reorder_level'))
             ->get();
 
-        $expiring_soon = \App\Models\StockMovement::with('drug')
+        $expiring_soon = StockMovement::with('drug')
             ->whereIn('stock_location_id', $pharmacyLocIds)
             ->whereNotNull('expiry_date')
             ->whereDate('expiry_date', '<=', now()->addDays(30))
             ->whereDate('expiry_date', '>', now())
-            ->where('direction', \App\Enums\StockMovementDirection::IN)
+            ->where('direction', StockMovementDirection::IN)
             ->where('quantity', '>', 0)
             ->get();
 
-        $expired = \App\Models\StockMovement::with('drug')
+        $expired = StockMovement::with('drug')
             ->whereIn('stock_location_id', $pharmacyLocIds)
             ->whereNotNull('expiry_date')
             ->whereDate('expiry_date', '<', now())
-            ->where('direction', \App\Enums\StockMovementDirection::IN)
+            ->where('direction', StockMovementDirection::IN)
             ->where('quantity', '>', 0)
             ->get();
 
@@ -383,6 +396,8 @@ class PharmacyService
 
     public function dispenseItem(PrescriptionItem $item, int $quantity, ?string $notes = null): DispensingRecord
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PharmacyDispensing);
+
         return DB::transaction(function () use ($item, $quantity, $notes) {
             $remaining = $quantity;
             $prescription = $item->prescription;
@@ -422,7 +437,7 @@ class PharmacyService
             $pharmacyLocIds = $this->pharmacyStockLocationIds();
 
             $productBalances = ($drug->product_id && $pharmacyLocIds->isNotEmpty())
-                ? \App\Models\StockBalance::where('product_id', $drug->product_id)
+                ? StockBalance::where('product_id', $drug->product_id)
                     ->whereIn('stock_location_id', $pharmacyLocIds)
                     ->where('quantity_on_hand', '>', 0)
                     ->orderByDesc('quantity_on_hand')
@@ -451,22 +466,22 @@ class PharmacyService
                 $deduct = min($leftToDeduct, (float) $balance->quantity_on_hand);
                 try {
                     $movement = app(ProductStockMovementService::class)->createMovement([
-                        'product_id'        => $drug->product_id,
+                        'product_id' => $drug->product_id,
                         'stock_location_id' => $balance->stock_location_id,
-                        'movement_type'     => StockMovementType::PHARMACY_DISPENSED,
-                        'quantity'          => $deduct,
-                        'source_type'       => PrescriptionItem::class,
-                        'source_id'         => $item->id,
-                        'allow_negative'    => false,
-                        'notes'             => 'Dispensed for prescription '.($prescription->prescription_number ?? $prescription->id),
+                        'movement_type' => StockMovementType::PHARMACY_DISPENSED,
+                        'quantity' => $deduct,
+                        'source_type' => PrescriptionItem::class,
+                        'source_id' => $item->id,
+                        'allow_negative' => false,
+                        'notes' => 'Dispensed for prescription '.($prescription->prescription_number ?? $prescription->id),
                     ]);
                     $stockMovementIds[] = $movement->id;
                     $dispenseLocationId = $balance->stock_location_id;
                 } catch (\Throwable $e) {
                     Log::warning('pharmacy.dispense.product_ledger_failed', [
-                        'drug_id'    => $drug->id,
+                        'drug_id' => $drug->id,
                         'product_id' => $drug->product_id,
-                        'error'      => $e->getMessage(),
+                        'error' => $e->getMessage(),
                     ]);
                     throw $e; // re-throw so the DB transaction rolls back
                 }
@@ -474,14 +489,14 @@ class PharmacyService
             }
 
             $lastRecord = DispensingRecord::create([
-                'prescription_id'      => $prescription->id,
+                'prescription_id' => $prescription->id,
                 'prescription_item_id' => $item->id,
-                'patient_id'           => $prescription->patient_id,
-                'visit_id'             => $prescription->visit_id,
-                'quantity_dispensed'   => $quantity,
-                'dispensed_by'         => Auth::id(),
-                'dispensed_at'         => now(),
-                'notes'                => $notes,
+                'patient_id' => $prescription->patient_id,
+                'visit_id' => $prescription->visit_id,
+                'quantity_dispensed' => $quantity,
+                'dispensed_by' => Auth::id(),
+                'dispensed_at' => now(),
+                'notes' => $notes,
             ]);
 
             $this->billingSelections->recordDispensed($item, $quantity, Auth::id());
@@ -499,7 +514,7 @@ class PharmacyService
                 app(VisitPathwayService::class)->record($prescription->visit, 'PHARMACY_DISPENSED', [
                     'source' => $lastRecord,
                     'title' => 'Medication dispensed',
-                    'description' => ($item->drug_name ?? 'Medication') . ' x ' . $quantity,
+                    'description' => ($item->drug_name ?? 'Medication').' x '.$quantity,
                 ]);
             }
 
@@ -507,8 +522,8 @@ class PharmacyService
             // carrying stock-deduction context (references the ledger movement ids).
             $isPartial = $totalDispensed < (float) ($item->quantity ?? 0);
             $drugLabel = $item->drug_name ?: $drug->display_name;
-            app(\App\Services\ActivityLogService::class)->log(
-                \App\Enums\LogModule::PHARMACY,
+            app(ActivityLogService::class)->log(
+                LogModule::PHARMACY,
                 $isPartial ? 'PARTIAL_DISPENSE_COMPLETED' : 'DRUG_DISPENSED',
                 $lastRecord->toActivityContext() + array_filter([
                     'product_id' => $drug->product_id,
@@ -523,7 +538,7 @@ class PharmacyService
                     ],
                 ], fn ($v) => $v !== null),
                 $lastRecord,
-                ($isPartial ? 'Partial dispensing: ' : 'Drug dispensed: ') . $drugLabel . ' x ' . $quantity,
+                ($isPartial ? 'Partial dispensing: ' : 'Drug dispensed: ').$drugLabel.' x '.$quantity,
             );
 
             // Track dispensed quantity in the MAR system (non-critical — do not roll back dispense on failure)
@@ -537,7 +552,7 @@ class PharmacyService
             }
 
             // Check stock levels and fire alert if low
-            $totalStock = (float) \App\Models\StockBalance::where('product_id', $drug->product_id)
+            $totalStock = (float) StockBalance::where('product_id', $drug->product_id)
                 ->whereIn('stock_location_id', $pharmacyLocIds)
                 ->sum('quantity_on_hand');
             $reorderLevel = (float) ($drug->reorder_level ?? 10);
@@ -551,6 +566,7 @@ class PharmacyService
 
     public function batchDispense(Prescription $prescription, array $items): Prescription
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PharmacyDispensing);
         return DB::transaction(function () use ($prescription, $items) {
             foreach ($items as $itemId => $data) {
                 if (empty($data['quantity']) || $data['quantity'] <= 0) {
@@ -636,18 +652,20 @@ class PharmacyService
             'dispensed_today' => DispensingRecord::whereDate('dispensed_at', today())->count(),
             'low_stock_count' => (function () {
                 $ids = $this->pharmacyStockLocationIds();
-                return \App\Models\StockBalance::whereIn('stock_location_id', $ids)
+
+                return StockBalance::whereIn('stock_location_id', $ids)
                     ->where('quantity_on_hand', '>', 0)
                     ->whereHas('drug', fn ($q) => $q->whereColumn('stock_balances.quantity_on_hand', '<=', 'drugs.reorder_level'))
                     ->count();
             })(),
             'expiring_soon_count' => (function () {
                 $ids = $this->pharmacyStockLocationIds();
-                return \App\Models\StockMovement::whereIn('stock_location_id', $ids)
+
+                return StockMovement::whereIn('stock_location_id', $ids)
                     ->whereNotNull('expiry_date')
                     ->whereDate('expiry_date', '<=', now()->addDays(30))
                     ->whereDate('expiry_date', '>', now())
-                    ->where('direction', \App\Enums\StockMovementDirection::IN)
+                    ->where('direction', StockMovementDirection::IN)
                     ->where('quantity', '>', 0)->count();
             })(),
             'total_drugs' => Drug::active()->count(),

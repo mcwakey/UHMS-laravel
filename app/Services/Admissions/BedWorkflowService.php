@@ -15,6 +15,8 @@ use App\Models\Bed;
 use App\Models\BedReservation;
 use App\Models\User;
 use App\Services\ActivityLogService;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -30,6 +32,8 @@ class BedWorkflowService
         ?string $reason = null,
         bool $allowIsolation = false
     ): AdmissionRequest {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BedOccupancy);
+
         $this->assertCanReserve($bed, $allowIsolation, $reason);
 
         $expiresAt ??= now()->addHours((int) config('admissions.reservations.default_expiry_hours', 6));
@@ -77,6 +81,8 @@ class BedWorkflowService
         BedReservationStatus $status = BedReservationStatus::CANCELLED,
         ?string $reason = null
     ): void {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BedOccupancy);
+
         $reservations = $request->bedReservations()->active()->with('bed')->get();
 
         foreach ($reservations as $reservation) {
@@ -94,6 +100,8 @@ class BedWorkflowService
         BedReservationStatus $status = BedReservationStatus::RELEASED,
         ?string $reason = null
     ): BedReservation {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BedOccupancy);
+
         return DB::transaction(function () use ($reservation, $user, $status, $reason) {
             if ($reservation->status !== BedReservationStatus::ACTIVE) {
                 return $reservation->fresh(['bed']);
@@ -121,11 +129,13 @@ class BedWorkflowService
 
     public function cancelReservation(BedReservation $reservation, ?User $user = null, ?string $reason = null): BedReservation
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BedOccupancy);
         return $this->releaseReservation($reservation, $user, BedReservationStatus::CANCELLED, $reason ?: __('admissions.reservation_cancelled'));
     }
 
     public function expireReservation(BedReservation $reservation): bool
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BedOccupancy);
         $reservation->loadMissing(['bed.currentAdmission', 'admissionRequest']);
 
         if ($reservation->status !== BedReservationStatus::ACTIVE) {
@@ -188,6 +198,8 @@ class BedWorkflowService
 
     public function fulfillReservationForAdmission(Admission $admission, ?User $user = null): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BedOccupancy);
+
         if (! $admission->admission_request_id) {
             return;
         }
@@ -216,6 +228,8 @@ class BedWorkflowService
 
     public function recordAdmissionStart(Admission $admission, ?User $user = null): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BedOccupancy);
+
         $admission->loadMissing('bed.ward');
 
         $this->recordLocation($admission, AdmissionLocationEvent::ADMITTED, null, null, $admission->bed, $user, __('admissions.location_admitted'));
@@ -223,6 +237,8 @@ class BedWorkflowService
 
     public function transferAdmission(Admission $admission, Bed $toBed, User $user, ?string $reason = null): Admission
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BedOccupancy);
+
         $admission->loadMissing('bed.ward');
         $fromBed = $admission->bed;
 
@@ -265,6 +281,8 @@ class BedWorkflowService
 
     public function releaseBedForDischarge(Admission $admission, ?User $user = null): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BedOccupancy);
+
         $admission->loadMissing('bed.ward');
         $bed = $admission->bed;
 
@@ -280,6 +298,7 @@ class BedWorkflowService
 
     public function updateBedStatus(Bed $bed, BedStatus $status, ?User $user = null, ?string $reason = null): Bed
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BedOccupancy);
         $this->assertStatusReason($status, $reason);
 
         if ($bed->currentAdmission()->exists() && $status !== BedStatus::OCCUPIED) {

@@ -4,6 +4,14 @@ namespace App\Services;
 
 use App\Enums\LogModule;
 use App\Enums\LogSeverity;
+use App\Jobs\ProcessActivityLogJob;
+use App\Models\ActivityLog;
+use App\Models\Patient;
+use App\Models\User;
+use App\Models\Visit;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -71,6 +79,10 @@ class ActivityLogService
         ?Model $subject = null,
         ?string $description = null
     ): void {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::OperationalActivityLog);
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::QueueDispatch);
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BusJobs);
+
         $module = $this->normaliseModule($module);
         $severity = $this->normaliseSeverity($data['severity'] ?? LogSeverity::INFO);
         $description = $description ?? $data['description'] ?? $action;
@@ -96,7 +108,7 @@ class ActivityLogService
             $payload['_async_dispatched'] = true;
             unset($payload['causer']); // serialise via causer_id instead
             $payload['_causer_id'] = ($data['causer'] ?? Auth::user())?->getKey();
-            \App\Jobs\ProcessActivityLogJob::dispatch(
+            ProcessActivityLogJob::dispatch(
                 $module,
                 $action,
                 $payload,
@@ -105,6 +117,7 @@ class ActivityLogService
                 $payload['_causer_id'] ?? null,
                 $description
             )->onQueue(config('audit_streaming.queue', 'default'));
+
             return;
         }
 
@@ -114,7 +127,7 @@ class ActivityLogService
             ->event($action)
             ->withProperties($properties);
 
-        $causer = $data['causer'] ?? (isset($data['_causer_id']) ? \App\Models\User::find($data['_causer_id']) : Auth::user());
+        $causer = $data['causer'] ?? (isset($data['_causer_id']) ? User::find($data['_causer_id']) : Auth::user());
         if ($causer) {
             $activity->causedBy($causer);
         }
@@ -136,6 +149,7 @@ class ActivityLogService
 
     public function logCreated(Model $model, string|LogModule $module, ?string $description = null, array $extra = []): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::OperationalActivityLog);
         $this->log($module, 'CREATED', array_merge($extra, [
             'new_values' => $this->sanitise($model->getAttributes()),
             'description' => $description,
@@ -150,6 +164,7 @@ class ActivityLogService
         ?string $reason = null,
         array $extra = []
     ): void {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::OperationalActivityLog);
         $changedOld = $this->diffOld($oldValues, $newValues);
         $changedNew = $this->diffNew($oldValues, $newValues);
         if (empty($changedNew)) {
@@ -165,6 +180,7 @@ class ActivityLogService
 
     public function logDeleted(Model $model, string|LogModule $module, ?string $reason = null, array $extra = []): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::OperationalActivityLog);
         $this->log($module, 'DELETED', array_merge($extra, [
             'old_values' => $this->sanitise($model->getAttributes()),
             'reason' => $reason,
@@ -180,6 +196,7 @@ class ActivityLogService
         string $reason,
         array $extra = []
     ): void {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::OperationalActivityLog);
         $this->log($module, 'CORRECTED', array_merge($extra, [
             'old_values' => $this->sanitise($this->diffOld($oldValues, $newValues)),
             'new_values' => $this->sanitise($this->diffNew($oldValues, $newValues)),
@@ -196,6 +213,7 @@ class ActivityLogService
         string $action = 'OVERRIDE_UPDATED',
         array $extra = []
     ): void {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::OperationalActivityLog);
         $this->log($module, $action, array_merge($extra, $data, [
             'reason' => $reason,
             'severity' => LogSeverity::WARNING,
@@ -204,6 +222,7 @@ class ActivityLogService
 
     public function logSecurity(string $action, array $data = [], ?Model $subject = null): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::OperationalActivityLog);
         $this->log(LogModule::AUTH, $action, array_merge($data, [
             'severity' => $data['severity'] ?? LogSeverity::SECURITY,
         ]), $subject);
@@ -211,13 +230,15 @@ class ActivityLogService
 
     /* ── Patient / visit convenience wrappers ───────────────────── */
 
-    public function logPatientAction(\App\Models\Patient $patient, string $action, array $data = []): void
+    public function logPatientAction(Patient $patient, string $action, array $data = []): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::OperationalActivityLog);
         $this->log(LogModule::PATIENTS, $action, $data, $patient);
     }
 
-    public function logVisitAction(\App\Models\Visit $visit, string $action, array $data = []): void
+    public function logVisitAction(Visit $visit, string $action, array $data = []): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::OperationalActivityLog);
         $this->log('VISITS', $action, array_merge([
             'patient_id' => $visit->patient_id,
             'visit_id' => $visit->id,
@@ -226,16 +247,19 @@ class ActivityLogService
 
     public function logClinicalAction(Model $record, string|LogModule $module, string $action, array $data = []): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::OperationalActivityLog);
         $this->log($module, $action, $data, $record);
     }
 
     public function logFinancialAction(Model $record, string $action, array $data = []): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::OperationalActivityLog);
         $this->log(LogModule::BILLING, $action, $data, $record);
     }
 
     public function logStockAction(Model $record, string $action, array $data = []): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::OperationalActivityLog);
         $this->log(LogModule::STOCK, $action, $data, $record);
     }
 
@@ -247,9 +271,9 @@ class ActivityLogService
      *
      * @return array<int>
      */
-    public function patientIdsFor(\App\Models\Patient $patient): array
+    public function patientIdsFor(Patient $patient): array
     {
-        return \App\Models\Patient::query()
+        return Patient::query()
             ->where('merged_to_patient_id', $patient->id)
             ->pluck('id')
             ->push($patient->id)
@@ -263,9 +287,9 @@ class ActivityLogService
      * actions whose subject is the Patient row. MariaDB-10.1-safe (queries the
      * indexed patient_id column, not the JSON properties).
      */
-    public function getPatientTimeline(\App\Models\Patient $patient, array $filters = []): \Illuminate\Database\Eloquent\Builder
+    public function getPatientTimeline(Patient $patient, array $filters = []): Builder
     {
-        $query = \App\Models\ActivityLog::query()
+        $query = ActivityLog::query()
             ->forPatient($this->patientIdsFor($patient))
             ->with(['causer'])
             ->latest();
@@ -277,7 +301,7 @@ class ActivityLogService
             $query->where('event', $filters['action']);
         }
         if (! empty($filters['user_id'])) {
-            $query->where('causer_type', \App\Models\User::class)
+            $query->where('causer_type', User::class)
                 ->where('causer_id', $filters['user_id']);
         }
         if (! empty($filters['date_from'])) {
@@ -348,6 +372,7 @@ class ActivityLogService
         if ($module instanceof LogModule) {
             return $module->value;
         }
+
         return LogModule::tryFrom($module)?->value ?? LogModule::SYSTEM->value;
     }
 
@@ -356,6 +381,7 @@ class ActivityLogService
         if ($severity instanceof LogSeverity) {
             return $severity->value;
         }
+
         return LogSeverity::tryFrom($severity)?->value ?? LogSeverity::INFO->value;
     }
 
@@ -369,6 +395,7 @@ class ActivityLogService
                 $out[$key] = null;
             }
         }
+
         return $out;
     }
 
@@ -380,6 +407,7 @@ class ActivityLogService
                 $out[$key] = $value;
             }
         }
+
         return $out;
     }
 
@@ -390,14 +418,17 @@ class ActivityLogService
         foreach ($data as $key => $value) {
             if (in_array(strtolower((string) $key), $masked, true)) {
                 $out[$key] = '***MASKED***';
+
                 continue;
             }
             if (is_array($value)) {
                 $out[$key] = $this->sanitise($value);
+
                 continue;
             }
             $out[$key] = $value;
         }
+
         return $out;
     }
 }

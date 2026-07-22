@@ -3,7 +3,9 @@
 namespace Tests\Unit\LegacyMigration\Foundation\Runtime;
 
 use App\Services\LegacyMigration\Foundation\Runtime\ApplicationSideEffectIsolationDriver;
+use App\Services\LegacyMigration\Foundation\Runtime\ApplicationIsolationBootCapability;
 use App\Services\LegacyMigration\Foundation\Runtime\ExecutionMode;
+use App\Services\LegacyMigration\Foundation\Runtime\MigrationRunActivationAuthority;
 use App\Services\LegacyMigration\Foundation\Runtime\MigrationRuntimeContext;
 use App\Services\LegacyMigration\Foundation\Runtime\MigrationRuntimeFactory;
 use App\Services\LegacyMigration\Foundation\Runtime\MigrationRuntimeRequest;
@@ -20,9 +22,18 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Tests\Support\LegacyMigration\RecordingMigrationRuntimeAudit;
 
 final class MigrationRuntimeContextTest extends TestCase
 {
+    #[Test]
+    public function runtime_request_accepts_only_the_typed_activation_authority(): void
+    {
+        $parameters = (new \ReflectionClass(MigrationRuntimeRequest::class))->getConstructor()?->getParameters() ?? [];
+        self::assertCount(1, $parameters);
+        self::assertSame(MigrationRunActivationAuthority::class, (string) $parameters[0]->getType());
+    }
+
     #[Test]
     public function it_requires_the_complete_directive_subsystem_registry(): void
     {
@@ -112,6 +123,37 @@ final class MigrationRuntimeContextTest extends TestCase
         self::assertSame(1, $driver->restoreCalls);
     }
 
+    #[Test]
+    public function protected_audit_is_required_and_records_activation_denial_failure_and_restoration(): void
+    {
+        $driver = new FakeIsolationDriver;
+        [$context, $guard, , $audit] = $this->runtime($driver);
+
+        try {
+            $context->run($this->request(), function () use ($guard): void {
+                $guard->assertAllowed(ProhibitedSubsystem::BillingCreation);
+            });
+            self::fail('A prohibited side effect should abort the scope.');
+        } catch (RuntimeIsolationException) {
+            // Expected.
+        }
+
+        self::assertSame([
+            'ACTIVATION_REQUESTED', 'ISOLATION_ACTIVATED', 'OPERATION_FAILED',
+            'SIDE_EFFECT_DENIED', 'RESTORATION_SUCCEEDED',
+        ], array_column($audit->events, 'event'));
+
+        $audit->available = false;
+        $restoreCalls = $driver->restoreCalls;
+        try {
+            $context->run($this->request(), static fn (): null => null);
+            self::fail('An unavailable protected audit must block activation.');
+        } catch (RuntimeIsolationException $exception) {
+            self::assertSame('FOUNDATION_RUNTIME_AUDIT_UNAVAILABLE', $exception->faultCode);
+        }
+        self::assertSame($restoreCalls, $driver->restoreCalls, 'Isolation began before audit readiness was proven.');
+    }
+
     #[DataProvider('prohibitedSubsystems')]
     #[Test]
     public function every_directive_subsystem_is_individually_denied(ProhibitedSubsystem $subsystem): void
@@ -186,22 +228,9 @@ final class MigrationRuntimeContextTest extends TestCase
     {
         $driver = new FakeIsolationDriver;
         [$context] = $this->runtime($driver);
-        $request = new MigrationRuntimeRequest(
-            runToken: str_repeat('a', 64),
-            targetSnapshotId: str_repeat('b', 64),
-            environment: 'testing',
-            approvedEnvironments: ['testing'],
-            mode: ExecutionMode::Commit,
-            foundationEnabled: true,
-            initiatedFromConsole: true,
-            productionTarget: false,
-            runValid: true,
-            sourceSnapshotPinned: true,
-            targetSnapshotPinned: true,
-            targetCollisionSnapshotCurrent: true,
-            dryRunOnly: false,
-            commitAuthorized: true,
-        );
+        $request = new MigrationRuntimeRequest(MigrationRunActivationAuthority::syntheticForTests(
+            str_repeat('a', 64), str_repeat('b', 64), ExecutionMode::Commit,
+        ));
 
         try {
             $context->run($request, static fn (): null => null);
@@ -232,6 +261,8 @@ final class MigrationRuntimeContextTest extends TestCase
             new ApplicationSideEffectIsolationDriver($controls),
             $registry,
             new SideEffectCounter,
+            new RecordingMigrationRuntimeAudit,
+            ApplicationIsolationBootCapability::syntheticForTests(),
         );
 
         try {
@@ -251,40 +282,30 @@ final class MigrationRuntimeContextTest extends TestCase
         $this->expectException(RuntimeIsolationException::class);
         $this->expectExceptionMessage('control set is incomplete');
 
-        (new MigrationRuntimeFactory)->create([
+        (new MigrationRuntimeFactory(ApplicationIsolationBootCapability::syntheticForTests()))->create([
             'isolation' => [
                 'required_subsystems' => array_map(static fn (ProhibitedSubsystem $item): string => $item->value, ProhibitedSubsystem::cases()),
                 'outbound_deny_list' => array_map(static fn (OutboundChannel $item): string => $item->value, OutboundChannel::cases()),
             ],
-        ], []);
+        ], [], new RecordingMigrationRuntimeAudit);
     }
 
-    /** @return array{MigrationRuntimeContext, SideEffectGuard, SideEffectCounter} */
+    /** @return array{MigrationRuntimeContext, SideEffectGuard, SideEffectCounter, RecordingMigrationRuntimeAudit} */
     private function runtime(FakeIsolationDriver $driver): array
     {
         $registry = SideEffectIsolationRegistry::complete();
         $counter = new SideEffectCounter;
-        $context = new MigrationRuntimeContext($driver, $registry, $counter);
+        $audit = new RecordingMigrationRuntimeAudit;
+        $context = new MigrationRuntimeContext($driver, $registry, $counter, $audit, ApplicationIsolationBootCapability::syntheticForTests());
 
-        return [$context, new SideEffectGuard($context, $registry, $counter), $counter];
+        return [$context, new SideEffectGuard($context, $registry, $counter), $counter, $audit];
     }
 
     private function request(string $environment = 'testing'): MigrationRuntimeRequest
     {
-        return new MigrationRuntimeRequest(
-            runToken: str_repeat('a', 64),
-            targetSnapshotId: str_repeat('b', 64),
-            environment: $environment,
-            approvedEnvironments: ['local', 'testing'],
-            mode: ExecutionMode::DryRun,
-            foundationEnabled: true,
-            initiatedFromConsole: true,
-            productionTarget: false,
-            runValid: true,
-            sourceSnapshotPinned: true,
-            targetSnapshotPinned: true,
-            targetCollisionSnapshotCurrent: true,
-        );
+        return new MigrationRuntimeRequest(MigrationRunActivationAuthority::syntheticForTests(
+            str_repeat('a', 64), str_repeat('b', 64), ExecutionMode::DryRun, $environment, ['local', 'testing'],
+        ));
     }
 
     /** @return array<string, array{ProhibitedSubsystem}> */

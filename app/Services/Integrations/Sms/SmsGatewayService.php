@@ -5,12 +5,15 @@ namespace App\Services\Integrations\Sms;
 use App\Enums\LogModule;
 use App\Enums\LogSeverity;
 use App\Exceptions\Integrations\IntegrationException;
+use App\Jobs\Integrations\SendSmsMessageJob;
 use App\Models\IntegrationProvider;
 use App\Models\SmsMessage;
 use App\Models\SmsMessageRecipient;
 use App\Services\ActivityLogService;
 use App\Services\Integrations\IntegrationProviderRegistry;
 use App\Services\Integrations\IntegrationProviderService;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use App\Support\Integrations\Sms\SmsCallbackResult;
 use App\Support\Integrations\Sms\SmsSendRequest;
 use Illuminate\Support\Facades\Auth;
@@ -40,12 +43,16 @@ class SmsGatewayService
     /**
      * Send an SMS to one or more recipients through the active provider.
      *
-     * @param array $data ['body' => string, 'recipients' => [['phone','name'?,'recipient_type'?,'recipient_id'?], ...],
-     *                      'sender_id'? , 'message_type'?, 'template_id'?, 'metadata'?]
+     * @param  array  $data  ['body' => string, 'recipients' => [['phone','name'?,'recipient_type'?,'recipient_id'?], ...],
+     *                       'sender_id'? , 'message_type'?, 'template_id'?, 'metadata'?]
+     *
      * @throws IntegrationException when no active SMS provider exists.
      */
     public function send(array $data): SmsMessage
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Sms);
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::ExternalIntegrations);
+
         $provider = $this->providers->activeProvider(IntegrationProvider::MODULE_SMS);
         if (! $provider) {
             throw IntegrationException::notConfigured('sms');
@@ -120,8 +127,10 @@ class SmsGatewayService
      */
     public function queueOrSend(SmsMessage $message): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Sms);
         if ($this->shouldQueue()) {
-            \App\Jobs\Integrations\SendSmsMessageJob::dispatch($message->id);
+            SendSmsMessageJob::dispatch($message->id);
+
             return;
         }
         $this->deliverNow($message);
@@ -134,11 +143,13 @@ class SmsGatewayService
      */
     public function deliverNow(SmsMessage $message, bool $resend = false): SmsMessage
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Sms);
         $provider = $this->providers->activeProvider(IntegrationProvider::MODULE_SMS);
         if (! $provider) {
             $this->markAllFailed($message, $message->recipients()->whereNotIn('status', [
                 SmsMessageRecipient::STATUS_SENT, SmsMessageRecipient::STATUS_DELIVERED,
             ])->get(), 'no_active_provider', 'No active SMS provider.');
+
             return $message->refresh()->load('recipients');
         }
 
@@ -153,6 +164,7 @@ class SmsGatewayService
      */
     public function retry(SmsMessage $message): SmsMessage
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Sms);
         if ((int) $message->retry_count >= (int) ($message->max_retries ?: 3)) {
             return $message;
         }
@@ -174,6 +186,7 @@ class SmsGatewayService
     /** Resend the still-unsent recipients of an existing message. */
     public function resend(SmsMessage $message): SmsMessage
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Sms);
         return $this->retry($message);
     }
 
@@ -183,6 +196,7 @@ class SmsGatewayService
      */
     public function deliverRecipient(SmsMessageRecipient $recipient): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Sms);
         if (in_array($recipient->status, [SmsMessageRecipient::STATUS_SENT, SmsMessageRecipient::STATUS_DELIVERED], true)
             || $recipient->error_code === 'invalid_number') {
             return;
@@ -192,6 +206,7 @@ class SmsGatewayService
         $message = $recipient->message;
         if (! $provider || ! $message) {
             $recipient->update(['status' => SmsMessageRecipient::STATUS_FAILED, 'failed_at' => now(), 'error_code' => 'no_active_provider']);
+
             return;
         }
 
@@ -208,6 +223,7 @@ class SmsGatewayService
         } catch (\Throwable $e) {
             $recipient->update(['status' => SmsMessageRecipient::STATUS_FAILED, 'failed_at' => now(), 'error_code' => 'send_exception']);
             $this->finaliseMessageStatus($message->refresh()->load('recipients'));
+
             return;
         }
 
@@ -237,6 +253,9 @@ class SmsGatewayService
 
     public function handleDeliveryCallback(IntegrationProvider $provider, array $payload, array $headers = []): SmsCallbackResult
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Sms);
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Webhooks);
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::ExternalIntegrations);
         $adapter = $this->registry->makeSms($provider);
         $result = $adapter->handleCallback($payload, $headers);
         $this->deliveryReports->record($provider, $result);
@@ -257,6 +276,7 @@ class SmsGatewayService
 
         if ($sendable->isEmpty()) {
             $this->finaliseMessageStatus($message);
+
             return;
         }
 
@@ -285,6 +305,7 @@ class SmsGatewayService
                 'source_id' => $message->id,
                 'severity' => LogSeverity::WARNING,
             ], $message, 'SMS message failed to send');
+
             return;
         }
 

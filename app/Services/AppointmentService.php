@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
+
 use App\Enums\AppointmentStatus;
 use App\Enums\VisitStatus;
 use App\Models\Appointment;
@@ -50,6 +53,7 @@ class AppointmentService
      */
     public function create(array $data): Appointment
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AppointmentReminders);
         $data['appointment_number'] = Appointment::generateAppointmentNumber();
         $data['created_by'] = Auth::id();
 
@@ -74,6 +78,7 @@ class AppointmentService
      */
     public function update(Appointment $appointment, array $data): Appointment
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AppointmentReminders);
         $servicesWereSubmitted = array_key_exists('_services_present', $data);
         $services = $data['services'] ?? null;
         unset($data['services'], $data['_services_present']);
@@ -132,6 +137,7 @@ class AppointmentService
      */
     public function transition(Appointment $appointment, AppointmentStatus $newStatus): Appointment
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AppointmentReminders);
         if (! $appointment->status->canTransitionTo($newStatus)) {
             throw new \InvalidArgumentException(
                 "Cannot transition from {$appointment->status->label()} to {$newStatus->label()}"
@@ -148,6 +154,7 @@ class AppointmentService
      */
     public function cancel(Appointment $appointment, ?string $reason = null): Appointment
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AppointmentReminders);
         $appointment->update([
             'status' => AppointmentStatus::CANCELLED,
             'cancelled_by' => Auth::id(),
@@ -162,6 +169,7 @@ class AppointmentService
      */
     public function checkIn(Appointment $appointment, array $data = []): Appointment
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AppointmentReminders);
         return DB::transaction(function () use ($appointment, $data) {
             $appointment->load('services');
 
@@ -221,6 +229,7 @@ class AppointmentService
      */
     public function markNoShow(Appointment $appointment): Appointment
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AppointmentReminders);
         $appointment->update(['status' => AppointmentStatus::NO_SHOW]);
         return $appointment;
     }

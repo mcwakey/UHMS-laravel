@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Patient;
 use App\Models\Visit;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -91,6 +93,7 @@ class PatientService
         $data['registered_by'] = Auth::id();
 
         if (isset($data['avatar']) && $data['avatar']) {
+            OperationalEffectGate::assertAllowed(ProhibitedSubsystem::FileAvatarWrites);
             $data['avatar'] = $data['avatar']->store('patients', 'public');
         }
 
@@ -103,6 +106,7 @@ class PatientService
             if ($patient->avatar) {
                 Storage::disk('public')->delete($patient->avatar);
             }
+            OperationalEffectGate::assertAllowed(ProhibitedSubsystem::FileAvatarWrites);
             $data['avatar'] = $data['avatar']->store('patients', 'public');
         } else {
             unset($data['avatar']);

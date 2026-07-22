@@ -31,6 +31,11 @@ final class ProtectedStoreAccessGuard
         return $token;
     }
 
+    public function authorizeOperationContext(ProtectedStoreOperationContext $context, string $operation, string $domain): void
+    {
+        $this->authority()->assertOperationContext($context, $operation, $domain);
+    }
+
     /**
      * Creates a token-bound keyed integrity seal for protected-store writes.
      *
@@ -100,8 +105,7 @@ final class ProtectedStoreAccessGuard
     ): void {
         if (! hash_equals($authority->environment(), $token->environment())
             || ! hash_equals($requiredDomain, $token->domain())
-            || ! hash_equals($authority->keyId(), $token->keyId())
-            || ! hash_equals($authority->keyVersion(), $token->keyVersion())
+            || ! $authority->permitsKeyContext($token->keyId(), $token->keyVersion())
             || ! hash_equals($authority->canonicalizationVersion(), $token->canonicalizationVersion())) {
             throw ProtectedStoreAccessDeniedException::forCode('LM-SEC-STORE-CONTEXT-001');
         }

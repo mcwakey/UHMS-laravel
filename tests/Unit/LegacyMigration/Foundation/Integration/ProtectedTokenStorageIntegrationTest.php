@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\LegacyMigration\Foundation\Integration;
 
+use App\Services\LegacyMigration\Foundation\Security\CanonicalizationVersionRegistry;
 use App\Services\LegacyMigration\Foundation\Security\CanonicalTypedMessageEncoder;
 use App\Services\LegacyMigration\Foundation\Security\ConfiguredKeyProvider;
 use App\Services\LegacyMigration\Foundation\Security\HmacTokenService;
@@ -23,7 +24,7 @@ final class ProtectedTokenStorageIntegrationTest extends TestCase
                 'key_version' => 'v1',
                 'key' => '6789abcdef012345ABCDEF!@#$%^&*()-+=012345',
             ]),
-            new \App\Services\LegacyMigration\Foundation\Security\CanonicalizationVersionRegistry,
+            new CanonicalizationVersionRegistry,
             'testing',
         );
         $message = (new CanonicalTypedMessageEncoder)->encode([

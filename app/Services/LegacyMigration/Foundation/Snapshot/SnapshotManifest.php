@@ -5,8 +5,8 @@ namespace App\Services\LegacyMigration\Foundation\Snapshot;
 final readonly class SnapshotManifest
 {
     /**
-     * @param array<string, string> $queryHashes
-     * @param array<string, string> $setHashes
+     * @param  array<string, string>  $queryHashes
+     * @param  array<string, string>  $setHashes
      */
     public function __construct(
         public string $snapshotId,
@@ -19,6 +19,15 @@ final readonly class SnapshotManifest
         public string $contractBundleHash,
         public array $queryHashes,
         public array $setHashes,
+        public string $authority = 'caller_asserted_non_authoritative',
+        public string $authorityReference = '',
+        public array $protectedSetTokens = [],
+        public string $authoritySeal = '',
+        /** @var array<string, int> */
+        public array $setCounts = [],
+        public int $schemaTableCount = 0,
+        public int $schemaColumnCount = 0,
+        public string $captureNonceReference = '',
     ) {}
 
     /** @return array<string, mixed> */
@@ -36,6 +45,14 @@ final readonly class SnapshotManifest
             'contract_bundle_hash' => $this->contractBundleHash,
             'query_hashes' => $this->queryHashes,
             'set_hashes' => $this->setHashes,
+            'capture_authority' => $this->authority,
+            'authority_reference' => $this->authorityReference,
+            'protected_set_tokens' => $this->protectedSetTokens,
+            'set_counts' => $this->setCounts,
+            'schema_table_count' => $this->schemaTableCount,
+            'schema_column_count' => $this->schemaColumnCount,
+            'capture_nonce_reference' => $this->captureNonceReference,
+            'authority_seal' => $this->authoritySeal,
             'contains_raw_identifiers' => false,
             'database_writes' => 0,
         ];

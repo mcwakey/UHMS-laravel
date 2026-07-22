@@ -8,6 +8,8 @@ No importer, migration-state table, administrative UI, synchronization implement
 
 The stakeholder-confirmed Classic source is the MySQL/MariaDB schema `uuhms`. The actual non-production renewed target `uhms_clean` has now been captured read-only and compared with repository migrations, models, enums, services and the stale schema dump. This capture does not authorize use of either database for production migration tests.
 
+Phase 3B foundation safety closure passed its four-review repository gate on 2026-07-22 with Critical 0, High 0 and Medium 0. Phase 4A is authorized only as a synthetic empty-cohort foundation exercise after its external prerequisites are independently supplied. It adds no importer and grants no populated cohort, Cohort B, patient-pilot, Classic-write, production-write or business-domain-write authority. Current evidence is under [phase-3b/](phase-3b/).
+
 ## Evidence labels
 
 - **Confirmed**: observed directly in read-only database metadata/aggregates or repository code.

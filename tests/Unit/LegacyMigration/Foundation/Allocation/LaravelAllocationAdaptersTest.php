@@ -2,6 +2,9 @@
 
 namespace Tests\Unit\LegacyMigration\Foundation\Allocation;
 
+use App\Services\LegacyMigration\Foundation\Allocation\AllocationException;
+use App\Services\LegacyMigration\Foundation\Allocation\AllocationFaultInjector;
+use App\Services\LegacyMigration\Foundation\Allocation\AllocationFaultPoint;
 use App\Services\LegacyMigration\Foundation\Allocation\AllocationLineageResolver;
 use App\Services\LegacyMigration\Foundation\Allocation\AllocationMode;
 use App\Services\LegacyMigration\Foundation\Allocation\AllocationRequest;
@@ -18,6 +21,7 @@ use App\Services\LegacyMigration\Foundation\Allocation\ReservationAttributeFacto
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -90,12 +94,49 @@ final class LaravelAllocationAdaptersTest extends TestCase
         try {
             $allocator->allocate($request);
             self::fail('Phase 3 reservation unexpectedly succeeded.');
-        } catch (\App\Services\LegacyMigration\Foundation\Allocation\AllocationException $exception) {
+        } catch (AllocationException $exception) {
             self::assertStringContainsString('PATIENT-NUM-PHASE3-RESERVATION-BLOCKED', $exception->getMessage());
         }
 
         self::assertSame(0, DB::table('patient_number_sequences')->count());
         self::assertSame(0, DB::table('legacy_migration_number_reservations')->count());
+    }
+
+    #[Test]
+    #[DataProvider('transactionFaultPoints')]
+    public function reservation_and_sequence_roll_back_together_at_every_transaction_fault_point(AllocationFaultPoint $point): void
+    {
+        $request = $this->request('fault-'.$point->value);
+        DB::table('legacy_migration_idempotency_records')->insert([
+            'id' => 1,
+            'domain' => 'patient_core',
+            'idempotency_token' => $request->patientCoreKey,
+        ]);
+        $store = new LaravelNumberReservationStore(
+            new SyntheticReservationAttributes(1),
+            null,
+            new SyntheticAllocationWriteGuard,
+            new SyntheticAllocationFaultInjector($point),
+        );
+        $allocator = new DeterministicPatientNumberAllocator(new NoPriorAllocation, $store, new LaravelTargetPatientNumberCollisionProbe(new CurrentCollisionEvidence));
+
+        try {
+            $allocator->allocate($request);
+            self::fail('The injected transaction fault did not abort allocation.');
+        } catch (\RuntimeException $exception) {
+            self::assertSame('synthetic allocation interruption', $exception->getMessage());
+        }
+
+        self::assertSame(0, DB::table('legacy_migration_number_reservations')->count());
+        self::assertSame(0, DB::table('patient_number_sequences')->count());
+    }
+
+    /** @return iterable<string, array{AllocationFaultPoint}> */
+    public static function transactionFaultPoints(): iterable
+    {
+        foreach (AllocationFaultPoint::cases() as $point) {
+            yield $point->value => [$point];
+        }
     }
 
     #[Test]
@@ -210,6 +251,18 @@ final class SyntheticAllocationWriteGuard implements FoundationAllocationWriteGu
     {
         if ($connection !== 'sqlite') {
             throw new \RuntimeException('Synthetic guard rejected a non-SQLite connection.');
+        }
+    }
+}
+
+final readonly class SyntheticAllocationFaultInjector implements AllocationFaultInjector
+{
+    public function __construct(private AllocationFaultPoint $faultPoint) {}
+
+    public function inject(AllocationFaultPoint $point): void
+    {
+        if ($point === $this->faultPoint) {
+            throw new \RuntimeException('synthetic allocation interruption');
         }
     }
 }

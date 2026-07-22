@@ -1,11 +1,17 @@
 {
-  "specification_version": "3.0.0",
-  "phase": "3",
+  "specification_version": "3.1.0",
+  "phase": "3B",
   "fixture_policy": "synthetic_only",
-  "required_group_count": 25,
-  "groups": ["environment_and_production_rejection", "exact_schema_database_guard", "source_privilege_verifier", "read_only_transaction", "fingerprint_configuration_drift", "hmac_domain_version_separation", "protected_store_constraints", "crosswalk_cardinality", "quarantine_root_integrity", "reconciliation_zero_difference", "idempotency", "checkpoints", "ten_crash_boundaries", "recovery_compensation", "patient_number_concurrency_rerun", "dry_run_zero_write", "existing_target_immutability", "side_effect_isolation", "target_state_blockers", "insurance_initialization_blockers", "privacy_scanner_coverage", "no_phi_credentials", "no_business_domain_rows", "no_classic_write_path", "no_production_write_path"],
+  "required_group_count": 35,
+  "groups": ["environment_and_production_rejection", "exact_schema_database_guard", "physical_server_identity", "identity_bound_ddl", "safe_partial_ddl_recovery", "source_privilege_verifier_all_55_tables", "read_only_transaction", "fingerprint_configuration_drift", "hmac_domain_version_separation", "external_key_reference_manifest", "purpose_scoped_protected_store", "keyed_envelope_integrity", "rotation_and_retention_gates", "crosswalk_cardinality", "quarantine_root_integrity", "authoritative_snapshot_capture", "phase2f_policy_hash_binding", "complete_recorder_measurements", "reconciliation_zero_difference", "idempotency", "persistent_checkpoints_and_cas", "ten_durable_crash_boundaries", "recovery_compensation", "mariadb_patient_number_concurrency_rerun", "mariadb_collision_and_fault_rollback", "dry_run_zero_write", "existing_target_immutability", "twenty_five_application_side_effect_bindings", "external_isolation_barrier_probe", "target_state_blockers", "insurance_initialization_blockers", "privacy_scanner_coverage", "no_phi_credentials", "no_business_domain_rows_or_importers", "no_classic_or_production_write_path"],
   "broad_suite_policy": "once_after_workstreams_and_reviews",
-  "focused_suite": {"status":"passing","tests":164,"assertions":644,"command":"php artisan test tests/Unit/LegacyMigration/Foundation tests/Feature/LegacyMigration/Foundation --compact"},
-  "known_evidence_gaps": ["persistent_recovery_crash_restart", "concurrent_mariadb_allocator", "real_side_effect_control_bindings"],
-  "status": "focused_passing_exit_blocked"
+  "focused_suite": {"status":"passing","tests":320,"assertions":1676,"skipped":3,"skip_reason":"disposable MariaDB and subprocess worker entry points require explicit invocation","command":"php artisan test tests/Unit/LegacyMigration/Foundation tests/Feature/LegacyMigration/Foundation --compact"},
+  "disposable_mariadb_suite": {"status":"passing","version":"10.4.32-MariaDB","tests":1,"assertions":44,"synthetic_only":true,"guarded_teardown":true},
+  "broad_suite": {"status":"completed_with_preexisting_application_failures","tests":2367,"assertions":31756,"errors":3,"failures":44,"skipped":3,"phase3b_regressions_identified":0,"deliberate_memory_harness_failures":1,"report":"docs/legacy-migration/phase-3b/BROAD_REGRESSION_REPORT.md"},
+  "known_evidence_gaps": [],
+  "external_activation_prerequisites": ["D-101 account", "approved target identity", "external manifests and keys", "approved retention classifications", "deployment recorder and isolation barrier providers"],
+  "specialist_reviews": {"security_privacy":{"critical":0,"high":0,"medium":0},"database_integrity":{"critical":0,"high":0,"medium":0},"runtime_isolation":{"critical":0,"high":0,"medium":0}},
+  "final_independent_review": {"critical":0,"high":0,"medium":0,"verdict":"pass"},
+  "review_state": "four_review_gate_passed; phase4a_synthetic_empty_cohort_only",
+  "status": "phase3b_repository_gate_passed"
 }

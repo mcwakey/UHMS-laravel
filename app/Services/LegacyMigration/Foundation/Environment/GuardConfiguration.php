@@ -5,15 +5,20 @@ namespace App\Services\LegacyMigration\Foundation\Environment;
 final readonly class GuardConfiguration
 {
     public const SOURCE_CONNECTION = 'legacy_uhms';
+
     public const SOURCE_DATABASE = 'uuhms';
+
     public const SOURCE_VERSION = '10.4.32-MariaDB';
+
     public const SOURCE_FINGERPRINT = '150fcf4783fcb8bdc25f7e17fe0ece5050955f0c68e7dd03651ee8bd58498977';
+
     public const SOURCE_TABLE_COUNT = 55;
+
     public const SOURCE_COLUMN_COUNT = 479;
 
     /**
-     * @param array<int, string> $approvedEnvironments
-     * @param array<int, string> $targetConnectionAllowList
+     * @param  array<int, string>  $approvedEnvironments
+     * @param  array<int, string>  $targetConnectionAllowList
      */
     public function __construct(
         public bool $enabled,

@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Services\LegacyMigration\Evidence\ClassicEvidenceCaptureService;
+use App\Services\LegacyMigration\Foundation\Environment\LaravelMetadataConnection;
+use App\Services\LegacyMigration\Foundation\Environment\SourceAccountVerifier;
 use Illuminate\Console\Command;
 use Illuminate\Database\DatabaseManager;
 use RuntimeException;
@@ -31,20 +33,19 @@ final class LegacyMigrationCaptureClassicEvidenceCommand extends Command
                 throw new RuntimeException('Classic evidence capture refused the configured connection because it does not select [uuhms].');
             }
 
-            $connection->statement('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
-            $connection->statement('SET SESSION TRANSACTION READ ONLY');
-            $connection->beginTransaction();
+            $metadata = new LaravelMetadataConnection($connectionName, $connection);
+            $metadata->beginReadOnlySnapshot();
             try {
+                $accountVerification = (new SourceAccountVerifier)->verify($metadata);
                 $result = $service->capture(
                     connectionName: $connectionName,
                     expectedDatabase: $expectedDatabase,
                     outputDirectory: (string) $this->option('output'),
+                    accountVerification: $accountVerification,
                 );
-                $connection->commit();
+                $metadata->rollbackReadOnlySnapshot();
             } catch (Throwable $exception) {
-                if ($connection->transactionLevel() > 0) {
-                    $connection->rollBack();
-                }
+                $metadata->rollbackReadOnlySnapshot();
 
                 throw $exception;
             }

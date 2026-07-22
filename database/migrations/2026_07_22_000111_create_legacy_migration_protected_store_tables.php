@@ -1,10 +1,10 @@
 <?php
 
+use App\Services\LegacyMigration\Foundation\Security\FoundationDatabaseWriteBoundary;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use App\Services\LegacyMigration\Foundation\Security\FoundationDatabaseWriteBoundary;
 
 return new class extends Migration
 {
@@ -411,9 +411,9 @@ return new class extends Migration
         $driver = DB::connection()->getDriverName();
 
         if ($driver === 'sqlite') {
-            DB::statement("ALTER TABLE legacy_migration_quarantine_exceptions ADD COLUMN primary_root_guard_key INTEGER GENERATED ALWAYS AS (CASE WHEN is_primary = 1 THEN quarantine_root_id ELSE NULL END) STORED");
+            DB::statement('ALTER TABLE legacy_migration_quarantine_exceptions ADD COLUMN primary_root_guard_key INTEGER GENERATED ALWAYS AS (CASE WHEN is_primary = 1 THEN quarantine_root_id ELSE NULL END) STORED');
         } elseif (in_array($driver, ['mysql', 'mariadb'], true)) {
-            DB::statement("ALTER TABLE legacy_migration_quarantine_exceptions ADD COLUMN primary_root_guard_key BIGINT UNSIGNED GENERATED ALWAYS AS (CASE WHEN is_primary = 1 THEN quarantine_root_id ELSE NULL END) STORED");
+            DB::statement('ALTER TABLE legacy_migration_quarantine_exceptions ADD COLUMN primary_root_guard_key BIGINT UNSIGNED GENERATED ALWAYS AS (CASE WHEN is_primary = 1 THEN quarantine_root_id ELSE NULL END) STORED');
         } else {
             throw new RuntimeException('Unsupported database driver for quarantine primary enforcement.');
         }

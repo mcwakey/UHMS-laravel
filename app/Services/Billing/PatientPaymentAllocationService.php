@@ -10,6 +10,8 @@ use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\Visit;
 use App\Services\ActivityLogService;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use App\Services\PaymentService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -38,8 +40,11 @@ class PatientPaymentAllocationService
     ) {}
 
     public const MODE_OLDEST_FIRST = 'oldest_first';
+
     public const MODE_CURRENT_VISIT = 'current_visit';
+
     public const MODE_MANUAL = 'manual';
+
     public const MODE_SYSTEM = 'system';
 
     /**
@@ -51,6 +56,8 @@ class PatientPaymentAllocationService
      */
     public function allocatePaymentOldestFirst(Patient $patient, array $data, ?Visit $currentVisit = null): Collection
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PaymentAllocation);
+
         $amount = $this->tenderAmount($data);
         $plan = $this->planOldestFirst($patient, $amount, $currentVisit);
 
@@ -65,6 +72,8 @@ class PatientPaymentAllocationService
      */
     public function allocatePaymentToCurrentVisit(Visit $visit, array $data): Collection
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PaymentAllocation);
+
         $patient = $visit->patient ?: Patient::findOrFail($visit->patient_id);
         $amount = $this->tenderAmount($data);
 
@@ -86,6 +95,8 @@ class PatientPaymentAllocationService
      */
     public function allocatePaymentManually(Patient $patient, array $invoiceAllocations, array $data, ?Visit $currentVisit = null): Collection
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PaymentAllocation);
+
         $amount = $this->tenderAmount($data);
         $receivables = $this->balances->getOutstandingReceivables($patient)->keyBy('invoice_id');
 
@@ -197,10 +208,10 @@ class PatientPaymentAllocationService
             }
             $balance = round((float) $line['receivable']->balance, 2);
             if ($lineAmount > $balance + 0.01) {
-                $number = $line['invoice']?->invoice_number ?? ('#' . $line['receivable']->invoice_id);
+                $number = $line['invoice']?->invoice_number ?? ('#'.$line['receivable']->invoice_id);
                 throw new RuntimeException(
-                    "Allocation of GH₵" . number_format($lineAmount, 2) . " exceeds the open balance of GH₵"
-                    . number_format($balance, 2) . " on invoice {$number}."
+                    'Allocation of GH₵'.number_format($lineAmount, 2).' exceeds the open balance of GH₵'
+                    .number_format($balance, 2)." on invoice {$number}."
                 );
             }
             $total = round($total + $lineAmount, 2);
@@ -208,8 +219,8 @@ class PatientPaymentAllocationService
 
         if ($total > $amount + 0.01) {
             throw new RuntimeException(
-                'Total allocation (GH₵' . number_format($total, 2) . ') exceeds the payment amount (GH₵'
-                . number_format($amount, 2) . ').'
+                'Total allocation (GH₵'.number_format($total, 2).') exceeds the payment amount (GH₵'
+                .number_format($amount, 2).').'
             );
         }
     }
@@ -232,7 +243,7 @@ class PatientPaymentAllocationService
         // Single-invoice tender: no batch grouping needed — behaves exactly like
         // a normal cashier payment.
         $batchReference = count($plan) > 1
-            ? 'ALB-' . strtoupper(Str::random(10))
+            ? 'ALB-'.strtoupper(Str::random(10))
             : null;
 
         $payments = DB::transaction(function () use ($plan, $data, $batchReference) {
@@ -324,8 +335,8 @@ class PatientPaymentAllocationService
         }
 
         throw new RuntimeException(
-            'Payment amount (GH₵' . number_format($amount, 2) . ') exceeds the total outstanding patient balance by GH₵'
-            . number_format($remaining, 2) . '. Reduce the amount or enable a deposit/overpayment workflow.'
+            'Payment amount (GH₵'.number_format($amount, 2).') exceeds the total outstanding patient balance by GH₵'
+            .number_format($remaining, 2).'. Reduce the amount or enable a deposit/overpayment workflow.'
         );
     }
 }

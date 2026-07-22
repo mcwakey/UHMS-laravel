@@ -6,7 +6,9 @@ use Closure;
 
 interface NumberReservationStore
 {
-    public function findByPatientCoreKey(string $patientCoreKey): ?ExistingAllocation;
+    public function connectionName(): string;
+
+    public function find(AllocationRequest $request): ?ExistingAllocation;
 
     /**
      * Execute under the exact sequence-coordinate row lock and transaction.

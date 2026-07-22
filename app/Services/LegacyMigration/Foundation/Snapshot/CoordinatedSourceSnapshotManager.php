@@ -14,8 +14,8 @@ final class CoordinatedSourceSnapshotManager
     public function __construct(private readonly CanonicalManifestHasher $hasher = new CanonicalManifestHasher) {}
 
     /**
-     * @param array<string, string> $queryHashes
-     * @param array<string, string> $setHashes
+     * @param  array<string, string>  $queryHashes
+     * @param  array<string, string>  $setHashes
      */
     public function create(
         string $runToken,
@@ -54,9 +54,9 @@ final class CoordinatedSourceSnapshotManager
     }
 
     /**
-     * @param array<string, string> $queryHashes
-     * @param array<string, string> $setHashes
-     * @param array<int, string> $requiredSets
+     * @param  array<string, string>  $queryHashes
+     * @param  array<string, string>  $setHashes
+     * @param  array<int, string>  $requiredSets
      */
     private function build(
         string $kind,

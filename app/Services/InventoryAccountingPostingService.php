@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
+
 use App\Enums\LogModule;
 use App\Enums\LogSeverity;
 use App\Enums\StockMovementType;
@@ -40,6 +43,7 @@ class InventoryAccountingPostingService
 
     public function postForMovement(StockMovement $movement): ?JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if ($movement->journal_entry_id
             || in_array((string) $movement->accounting_status, [self::POSTED, self::REVERSED, self::NOT_APPLICABLE], true)) {
             return $movement->journal_entry_id ? $movement->journalEntry : null;
@@ -168,6 +172,7 @@ class InventoryAccountingPostingService
     /** Reverse a posted movement's journal entry (e.g. when stock is reversed). */
     public function reverseForMovement(StockMovement $movement, string $reason, User $user): ?JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if (! $movement->journal_entry_id || $movement->reversal_journal_entry_id) {
             return null;
         }

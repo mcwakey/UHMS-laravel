@@ -46,10 +46,15 @@ final class LaravelMetadataConnection implements MetadataConnection
             throw new FoundationGuardException('FOUNDATION_TRANSACTION_STATE', 'The metadata connection transaction state is unsafe.');
         }
 
-        $this->connection->statement('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
-        $this->connection->statement('SET TRANSACTION READ ONLY');
-        $this->connection->beginTransaction();
-        $this->readOnlySnapshotActive = true;
+        try {
+            $this->connection->statement('SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+            $this->connection->statement('SET SESSION TRANSACTION READ ONLY');
+            $this->connection->beginTransaction();
+            $this->readOnlySnapshotActive = true;
+        } catch (\Throwable) {
+            $this->readOnlySnapshotActive = false;
+            throw new FoundationGuardException('FOUNDATION_READ_ONLY_UNPROVEN', 'A read-only metadata snapshot could not be established.');
+        }
     }
 
     public function rollbackReadOnlySnapshot(): void
@@ -58,6 +63,11 @@ final class LaravelMetadataConnection implements MetadataConnection
             $this->connection->rollBack();
         }
         $this->readOnlySnapshotActive = false;
+        try {
+            $this->connection->statement('SET SESSION TRANSACTION READ WRITE');
+        } catch (\Throwable) {
+            throw new FoundationGuardException('FOUNDATION_TRANSACTION_STATE', 'The metadata connection could not restore its session transaction policy.');
+        }
     }
 
     public function readOnlySnapshotActive(): bool

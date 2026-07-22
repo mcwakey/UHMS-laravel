@@ -9,6 +9,8 @@ use App\Models\NotificationDigestQueue;
 use App\Models\NotificationPreference;
 use App\Models\User;
 use App\Notifications\DatabaseNotification;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -34,6 +36,8 @@ class NotificationService
 
     public function notifyUser(?User $user, array $payload, ?int $dedupeMinutes = null): bool
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Notifications);
+
         if (! $user || ! $user->exists) {
             return false;
         }
@@ -64,6 +68,7 @@ class NotificationService
         try {
             $user->notify(new DatabaseNotification($payload));
             $this->forgetReads($user);
+
             return true;
         } catch (\Throwable $e) {
             Log::warning('NotificationService.notifyUser failed', [
@@ -71,23 +76,27 @@ class NotificationService
                 'payload' => $payload,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
 
     public function notifyUsers(iterable $users, array $payload, ?int $dedupeMinutes = null): int
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Notifications);
         $sent = 0;
         foreach ($users as $user) {
             if ($this->notifyUser($user, $payload, $dedupeMinutes)) {
                 $sent++;
             }
         }
+
         return $sent;
     }
 
     public function notifyRole(string|array $roles, array $payload, ?int $dedupeMinutes = null): int
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Notifications);
         $roles = (array) $roles;
         if (empty($roles)) {
             return 0;
@@ -103,6 +112,7 @@ class NotificationService
 
     public function notifyPermission(string $permission, array $payload, ?int $dedupeMinutes = null): int
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Notifications);
         $perm = Permission::query()->where('name', $permission)->first();
         if (! $perm) {
             return 0;
@@ -121,6 +131,7 @@ class NotificationService
 
     public function notifyDepartment(int|Department|null $department, array $payload, ?int $dedupeMinutes = null): int
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Notifications);
         $departmentId = $department instanceof Department ? $department->id : $department;
         if (! $departmentId) {
             return 0;
@@ -150,17 +161,20 @@ class NotificationService
 
     public function markAsRead(User $user, string $notificationId): bool
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Notifications);
         $notification = $user->notifications()->whereKey($notificationId)->first();
         if (! $notification) {
             return false;
         }
         $notification->markAsRead();
         $this->forgetReads($user);
+
         return true;
     }
 
     public function markAllAsRead(User $user): int
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::Notifications);
         $count = (int) $user->unreadNotifications()->update(['read_at' => now()]);
         $this->forgetReads($user);
 
@@ -209,6 +223,7 @@ class NotificationService
         if (! empty($payload['source_type']) && isset($payload['source_id'])) {
             return sprintf('%s:%s:%s', $payload['module'], $payload['source_type'], $payload['source_id']);
         }
+
         return null;
     }
 
@@ -219,11 +234,11 @@ class NotificationService
         }
 
         $since = Carbon::now()->subMinutes($minutes);
-        $needle = '"dedupe_key":' . json_encode($payload['dedupe_key']);
+        $needle = '"dedupe_key":'.json_encode($payload['dedupe_key']);
 
         return $user->notifications()
             ->where('created_at', '>=', $since)
-            ->where('data', 'like', '%' . $needle . '%')
+            ->where('data', 'like', '%'.$needle.'%')
             ->exists();
     }
 
@@ -247,6 +262,7 @@ class NotificationService
         $now = now()->format('H:i:s');
         $start = $pref->quiet_hours_start;
         $end = $pref->quiet_hours_end;
+
         return $start < $end
             ? ($now >= $start && $now < $end)
             : ($now >= $start || $now < $end);
@@ -268,12 +284,14 @@ class NotificationService
                 'payload' => $payload,
                 'scheduled_for' => $scheduled,
             ]);
+
             return true;
         } catch (\Throwable $e) {
             Log::warning('NotificationService.enqueueDigest failed', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }

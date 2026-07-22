@@ -3,6 +3,7 @@
 namespace App\Services\LegacyMigration\Foundation\Allocation;
 
 use App\Models\LegacyMigration\NumberReservation;
+use App\Services\LegacyMigration\Foundation\Storage\NumberReservationRepository;
 use Closure;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Query\Builder;
@@ -21,22 +22,70 @@ final class LaravelNumberReservationStore implements NumberReservationStore
         private readonly ReservationAttributeFactory $attributes,
         private readonly ?string $connection = null,
         private readonly FoundationAllocationWriteGuard $writeGuard = new Phase3AllocationWriteGuard,
+        private readonly AllocationFaultInjector $faults = new NoopAllocationFaultInjector,
+        private readonly ?NumberReservationRepository $protectedRepository = null,
+        private readonly ?ReservationProtectionFactory $protection = null,
     ) {}
 
-    public function findByPatientCoreKey(string $patientCoreKey): ?ExistingAllocation
+    public function find(AllocationRequest $request): ?ExistingAllocation
     {
-        $model = NumberReservation::on($this->connectionName())
+        $this->assertConnectionComposition();
+        $query = $this->db()->table('legacy_migration_number_reservations')
             ->join('legacy_migration_idempotency_records as idem', 'idem.id', '=', 'legacy_migration_number_reservations.idempotency_record_id')
             ->where('idem.domain', 'patient_core')
-            ->where('idem.idempotency_token', $patientCoreKey)
-            ->select('legacy_migration_number_reservations.*')
-            ->first();
+            ->where('idem.idempotency_token', $request->patientCoreKey);
 
-        return $model === null ? null : $this->toExisting($model, $patientCoreKey);
+        if ($this->protectedRepository !== null || $this->protection !== null) {
+            if ($this->protectedRepository === null || $this->protection === null) {
+                throw AllocationException::failClosed('PATIENT-NUM-PROTECTION-BOUNDARY-INCOMPLETE');
+            }
+            $id = $query->value('legacy_migration_number_reservations.id');
+            if ($id === null) {
+                return null;
+            }
+            $projection = $this->protectedRepository->verifyProtected(
+                $this->protection->context($request),
+                (int) $id,
+                ['protected_source_token' => $this->protection->expectedProtectedSourceToken($request)],
+            );
+            $ordinal = (int) ($projection->fields['sequence_ordinal'] ?? 0);
+
+            return new ExistingAllocation(
+                $request->protectedSourceToken,
+                $request->patientCoreKey,
+                (string) ($projection->fields['configuration_fingerprint'] ?? ''),
+                (string) ($projection->fields['period_key'] ?? ''),
+                $request->configuration->format($ordinal),
+                $ordinal,
+                true,
+            );
+        }
+
+        if ($this->db()->getDriverName() !== 'sqlite') {
+            throw AllocationException::failClosed('PATIENT-NUM-PROTECTED-REPOSITORY-REQUIRED');
+        }
+
+        $row = $query->select([
+            'legacy_migration_number_reservations.protected_source_token',
+            'legacy_migration_number_reservations.configuration_fingerprint',
+            'legacy_migration_number_reservations.period_key',
+            'legacy_migration_number_reservations.sequence_ordinal',
+        ])->first();
+
+        return $row === null ? null : new ExistingAllocation(
+            (string) $row->protected_source_token,
+            $request->patientCoreKey,
+            (string) $row->configuration_fingerprint,
+            (string) $row->period_key,
+            $request->configuration->format((int) $row->sequence_ordinal),
+            (int) $row->sequence_ordinal,
+            true,
+        );
     }
 
     public function withLockedCoordinate(PinnedNumberingConfiguration $configuration, Closure $operation): mixed
     {
+        $this->assertConnectionComposition();
         $this->writeGuard->assertReservationWriteAllowed($this->connectionName());
 
         if ($this->lockedSequence !== null) {
@@ -81,6 +130,7 @@ final class LaravelNumberReservationStore implements NumberReservationStore
 
     public function persist(AllocationRequest $request, string $number, int $ordinal): ExistingAllocation
     {
+        $this->assertConnectionComposition();
         $next = $this->nextOrdinal($request->configuration);
         if ($ordinal !== $next || $number !== $request->configuration->format($ordinal)) {
             throw AllocationException::failClosed('PATIENT-NUM-NONDETERMINISTIC-RESERVATION');
@@ -103,8 +153,23 @@ final class LaravelNumberReservationStore implements NumberReservationStore
             'updated_by_token' => null,
         ];
 
-        /** @var NumberReservation $reservation */
-        $reservation = NumberReservation::on($this->connectionName())->create(array_replace($metadata, $fixed));
+        $this->faults->inject(AllocationFaultPoint::BeforeReservationPersistence);
+
+        $attributes = array_replace($metadata, $fixed);
+        if ($this->protectedRepository !== null || $this->protection !== null) {
+            if ($this->protectedRepository === null || $this->protection === null) {
+                throw AllocationException::failClosed('PATIENT-NUM-PROTECTION-BOUNDARY-INCOMPLETE');
+            }
+            $this->protectedRepository->reserveProtected(
+                $this->protection->context($request),
+                $attributes,
+                $this->protection->tokenSet($request, $number, $ordinal),
+            );
+        } else {
+            NumberReservation::on($this->connectionName())->create($attributes);
+        }
+
+        $this->faults->inject(AllocationFaultPoint::AfterReservationInsertBeforeSequenceCas);
 
         $updated = $this->db()->table('patient_number_sequences')
             ->where('id', $this->lockedSequence->id)
@@ -116,7 +181,17 @@ final class LaravelNumberReservationStore implements NumberReservationStore
 
         $this->lockedSequence->last_sequence = $ordinal;
 
-        return $this->toExisting($reservation, $request->patientCoreKey);
+        $this->faults->inject(AllocationFaultPoint::AfterSequenceCasBeforeCommit);
+
+        return new ExistingAllocation(
+            $request->protectedSourceToken,
+            $request->patientCoreKey,
+            $request->configuration->fingerprint(),
+            $request->configuration->periodKey,
+            $number,
+            $ordinal,
+            true,
+        );
     }
 
     private function createCoordinateIfMissing(PinnedNumberingConfiguration $configuration): void
@@ -154,31 +229,40 @@ final class LaravelNumberReservationStore implements NumberReservationStore
         }
     }
 
-    private function toExisting(NumberReservation $reservation, string $patientCoreKey): ExistingAllocation
-    {
-        $payload = $reservation->encrypted_number_payload;
-        if (! is_array($payload) || ! is_string($payload['number'] ?? null) || $payload['number'] === '') {
-            throw AllocationException::failClosed('PATIENT-NUM-INVALID-RESERVATION');
-        }
-
-        return new ExistingAllocation(
-            (string) $reservation->protected_source_token,
-            $patientCoreKey,
-            (string) $reservation->configuration_fingerprint,
-            (string) $reservation->period_key,
-            $payload['number'],
-            (int) $reservation->sequence_ordinal,
-            true,
-        );
-    }
-
     private function db(): ConnectionInterface
     {
         return DB::connection($this->connectionName());
     }
 
-    private function connectionName(): string
+    public function connectionName(): string
     {
-        return $this->connection ?? (string) config('database.default');
+        $name = trim((string) ($this->connection ?? config('database.default')));
+        if ($name === '') {
+            throw AllocationException::failClosed('PATIENT-NUM-CONNECTION-BOUNDARY-MISSING');
+        }
+
+        return $name;
+    }
+
+    private function assertConnectionComposition(): void
+    {
+        if ($this->protectedRepository === null && $this->protection === null) {
+            if ($this->db()->getDriverName() !== 'sqlite') {
+                throw AllocationException::failClosed('PATIENT-NUM-PROTECTED-REPOSITORY-REQUIRED');
+            }
+
+            return;
+        }
+        if ($this->protectedRepository === null || $this->protection === null) {
+            throw AllocationException::failClosed('PATIENT-NUM-PROTECTION-BOUNDARY-INCOMPLETE');
+        }
+        try {
+            $this->protectedRepository->assertConnection($this->connectionName());
+        } catch (\Throwable) {
+            throw AllocationException::failClosed('PATIENT-NUM-CONNECTION-BOUNDARY-MISMATCH');
+        }
+        if (! hash_equals($this->connectionName(), $this->protection->connectionName())) {
+            throw AllocationException::failClosed('PATIENT-NUM-CONNECTION-BOUNDARY-MISMATCH');
+        }
     }
 }

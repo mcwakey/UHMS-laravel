@@ -1,5 +1,7 @@
 # Phase 3 readiness matrix
 
+> Historical Phase 3 baseline. Phase 3B has implemented and tested the listed closure work. Use [PHASE_3B_READINESS_MATRIX.md](../phase-3b/PHASE_3B_READINESS_MATRIX.md) for the current gate.
+
 Assessment date: 2026-07-22. “Blocked safely” means the implementation refuses activation; it does not mean the capability is complete.
 
 | Capability group | Implementation evidence | Focused validation | Independent gate | Phase 4A authority |

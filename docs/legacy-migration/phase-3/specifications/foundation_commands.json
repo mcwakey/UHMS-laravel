@@ -1,6 +1,6 @@
 {
-  "specification_version": "3.0.0",
-  "phase": "3",
+  "specification_version": "3.1.0",
+  "phase": "3B",
   "default_write_count": 0,
   "commands": [
     {"name": "legacy-migration:foundation-preflight", "mode": "inspection", "business_writes": false},

@@ -1,5 +1,7 @@
 # Phase 3 exit report
 
+> Historical Phase 3 review outcome. Phase 3B was commissioned to close these findings; its current evidence and review gate are recorded in [PHASE_3B_EXIT_REPORT.md](../phase-3b/PHASE_3B_EXIT_REPORT.md).
+
 Assessment date: 2026-07-22  
 Verdict: **FAIL — safely blocked; Phase 4A is not authorized.**
 

@@ -2,11 +2,16 @@
 
 namespace App\Models\LegacyMigration;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Services\LegacyMigration\Foundation\Security\Phase3ProtectedStoreModelGuard;
+use App\Services\LegacyMigration\Foundation\Security\ProtectedRecordModelReadGuard;
+use App\Services\LegacyMigration\Foundation\Security\ProtectedStoreAccessDeniedException;
+use App\Services\LegacyMigration\Foundation\Security\ProtectedStoreAccessSession;
+use Illuminate\Database\Eloquent\Model;
 
 abstract class ProtectedFoundationModel extends Model
 {
+    private bool $protectedEnvelopeBound = false;
+
     protected $guarded = ['id'];
 
     /**
@@ -15,7 +20,7 @@ abstract class ProtectedFoundationModel extends Model
      *
      * @var list<string>
      */
-    protected $hidden = [
+    private const PROTECTED_HIDDEN = [
         'run_token',
         'bundle_token',
         'collision_snapshot_token',
@@ -80,7 +85,28 @@ abstract class ProtectedFoundationModel extends Model
         'integrity_checksum',
         'manifest_checksum',
         'mapping_checksum',
+        'protected_token',
+        'encrypted_token_envelope',
+        'encrypted_token_set',
+        'encrypted_integrity_seal',
+        'secret_reference',
+        'rotation_authority_reference',
+        'purge_authority_reference',
+        'owner_approval_reference',
+        'requested_by_authority_reference',
+        'authorized_by_authority_reference',
+        'aggregate_tombstone_hash',
+        'event_checksum',
+        'record_integrity_reference',
     ];
+
+    protected $hidden = self::PROTECTED_HIDDEN;
+
+    /** @return list<string> */
+    public function getHidden(): array
+    {
+        return array_values(array_unique([...self::PROTECTED_HIDDEN, ...parent::getHidden()]));
+    }
 
     protected function casts(): array
     {
@@ -109,5 +135,117 @@ abstract class ProtectedFoundationModel extends Model
         static::creating(static fn (Model $model) => Phase3ProtectedStoreModelGuard::assertWriteAllowed($model));
         static::updating(static fn (Model $model) => Phase3ProtectedStoreModelGuard::assertWriteAllowed($model));
         static::deleting(static fn () => Phase3ProtectedStoreModelGuard::denyDelete());
+        static::retrieved(static fn (ProtectedFoundationModel $model) => ProtectedRecordModelReadGuard::assertReadAllowed($model));
+    }
+
+    public function markProtectedEnvelopeBound(): void
+    {
+        $this->protectedEnvelopeBound = true;
+    }
+
+    public function getAttribute($key): mixed
+    {
+        $this->assertValueAccessAllowed($key);
+
+        return parent::getAttribute($key);
+    }
+
+    public function getAttributeValue($key)
+    {
+        $this->assertValueAccessAllowed($key);
+
+        return parent::getAttributeValue($key);
+    }
+
+    public function getOriginal($key = null, $default = null)
+    {
+        $this->assertRawAccessAllowed($key);
+
+        return parent::getOriginal($key, $default);
+    }
+
+    public function getRawOriginal($key = null, $default = null)
+    {
+        $this->assertRawAccessAllowed($key);
+
+        return parent::getRawOriginal($key, $default);
+    }
+
+    public function getAttributes()
+    {
+        $this->assertRawAccessAllowed(null);
+
+        return parent::getAttributes();
+    }
+
+    public function attributesToArray()
+    {
+        $this->assertRawAccessAllowed(null);
+
+        return parent::attributesToArray();
+    }
+
+    public function fromEncryptedString($value)
+    {
+        $recordId = (int) parent::getAttribute($this->getKeyName());
+        $controlAllowed = ProtectedStoreAccessSession::envelopeLookupAllowed()
+            && in_array($this::class, [ProtectedRecordEnvelopeRecord::class, ProtectedAccessAudit::class, ProtectedKeyReference::class, ProtectedPurgeRequest::class, ProtectedRetentionPolicy::class, ProtectedTokenRotation::class], true);
+        if (! $controlAllowed && ($recordId < 1 || ! ProtectedStoreAccessSession::isVerified($this::class, $recordId))) {
+            throw ProtectedStoreAccessDeniedException::forCode('LM-SEC-STORE-DECRYPTION-001');
+        }
+
+        return parent::fromEncryptedString($value);
+    }
+
+    public function toArray(): array
+    {
+        if ($this->protectedEnvelopeBound) {
+            throw ProtectedStoreAccessDeniedException::forCode('LM-SEC-STORE-SERIALIZATION-001');
+        }
+
+        return parent::toArray();
+    }
+
+    private function assertRawAccessAllowed(mixed $key): void
+    {
+        if ($key === $this->getKeyName()) {
+            return;
+        }
+        if (! $this->protectedEnvelopeBound && $key !== null && ! $this->isProtectedField((string) $key)) {
+            return;
+        }
+        // Eloquent's own create/update pipeline requires the complete raw
+        // attribute bag before an envelope exists. A durable protected row is
+        // marked bound by seal() or by the retrieved-model guard before it can
+        // escape the repository boundary.
+        if (! $this->protectedEnvelopeBound && $key === null) {
+            return;
+        }
+        $controlAllowed = ProtectedStoreAccessSession::envelopeLookupAllowed()
+            && in_array($this::class, [ProtectedRecordEnvelopeRecord::class, ProtectedAccessAudit::class, ProtectedKeyReference::class, ProtectedPurgeRequest::class, ProtectedRetentionPolicy::class, ProtectedTokenRotation::class], true);
+        $recordId = (int) parent::getAttribute($this->getKeyName());
+        if (! $controlAllowed && ! ProtectedStoreAccessSession::isVerified($this::class, $recordId)) {
+            throw ProtectedStoreAccessDeniedException::forCode('LM-SEC-STORE-MODEL-RAW-ATTRIBUTE-001');
+        }
+    }
+
+    private function assertValueAccessAllowed(mixed $key): void
+    {
+        if ($key === $this->getKeyName()) {
+            return;
+        }
+        $recordId = (int) parent::getAttribute($this->getKeyName());
+        $controlAllowed = ProtectedStoreAccessSession::envelopeLookupAllowed()
+            && in_array($this::class, [ProtectedRecordEnvelopeRecord::class, ProtectedAccessAudit::class, ProtectedKeyReference::class, ProtectedPurgeRequest::class, ProtectedRetentionPolicy::class, ProtectedTokenRotation::class], true);
+        if ($this->protectedEnvelopeBound
+            && ! $controlAllowed
+            && ($recordId < 1 || ! ProtectedStoreAccessSession::isVerified($this::class, $recordId))) {
+            throw ProtectedStoreAccessDeniedException::forCode('LM-SEC-STORE-MODEL-ATTRIBUTE-001');
+        }
+    }
+
+    private function isProtectedField(string $key): bool
+    {
+        return in_array($key, self::PROTECTED_HIDDEN, true) || str_starts_with($key, 'encrypted_') || str_ends_with($key, '_token');
     }
 }

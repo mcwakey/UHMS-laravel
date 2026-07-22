@@ -14,6 +14,8 @@ use App\Models\LabTest;
 use App\Models\LabTestCategory;
 use App\Models\Visit;
 use App\Services\Billing\PaymentGateService;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -445,6 +447,7 @@ class LabService
                 $payload['result_text'] = $data['result_text'] ?? null;
             } elseif ($resultType->isFileBased()) {
                 if (isset($data['result_file']) && $data['result_file'] instanceof UploadedFile) {
+                    OperationalEffectGate::assertAllowed(ProhibitedSubsystem::FileAvatarWrites);
                     $path = $data['result_file']->store('investigation-results', 'public');
                     $payload['result_file'] = $path;
                     $payload['result_file_name'] = $data['result_file']->getClientOriginalName();
@@ -460,6 +463,7 @@ class LabService
                 && isset($data['result_file'])
                 && $data['result_file'] instanceof UploadedFile
             ) {
+                OperationalEffectGate::assertAllowed(ProhibitedSubsystem::FileAvatarWrites);
                 $path = $data['result_file']->store('investigation-results', 'public');
                 $payload['result_file'] = $path;
                 $payload['result_file_name'] = $data['result_file']->getClientOriginalName();

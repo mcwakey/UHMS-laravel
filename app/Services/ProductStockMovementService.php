@@ -6,6 +6,8 @@ use App\Enums\StockMovementDirection;
 use App\Enums\StockMovementType;
 use App\Models\StockBalance;
 use App\Models\StockMovement;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -29,18 +31,28 @@ class ProductStockMovementService
      */
     public function createMovement(array $data): StockMovement
     {
-        $productId  = (int) ($data['product_id'] ?? 0);
-        $locationId = (int) ($data['stock_location_id'] ?? 0);
-        $quantity   = (float) ($data['quantity'] ?? 0);
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::StockMovement);
 
-        if ($productId <= 0)  throw new InvalidArgumentException('product_id is required.');
-        if ($locationId <= 0) throw new InvalidArgumentException('stock_location_id is required.');
-        if ($quantity <= 0)   throw new InvalidArgumentException('quantity must be greater than zero.');
+        $productId = (int) ($data['product_id'] ?? 0);
+        $locationId = (int) ($data['stock_location_id'] ?? 0);
+        $quantity = (float) ($data['quantity'] ?? 0);
+
+        if ($productId <= 0) {
+            throw new InvalidArgumentException('product_id is required.');
+        }
+        if ($locationId <= 0) {
+            throw new InvalidArgumentException('stock_location_id is required.');
+        }
+        if ($quantity <= 0) {
+            throw new InvalidArgumentException('quantity must be greater than zero.');
+        }
 
         $type = $data['movement_type'] instanceof StockMovementType
             ? $data['movement_type']
             : StockMovementType::tryFrom((string) ($data['movement_type'] ?? ''));
-        if (! $type) throw new InvalidArgumentException('movement_type is invalid.');
+        if (! $type) {
+            throw new InvalidArgumentException('movement_type is invalid.');
+        }
 
         $direction = $type->direction();
 
@@ -63,23 +75,23 @@ class ProductStockMovementService
             $cost = $valuation->quoteMovementCost($productId, $locationId, $direction, $quantity, $providedUnitCost);
 
             $movement = StockMovement::create([
-                'stock_batch_id'    => $data['stock_batch_id'] ?? null,
-                'drug_id'           => $data['drug_id'] ?? null,
-                'product_id'        => $productId,
+                'stock_batch_id' => $data['stock_batch_id'] ?? null,
+                'drug_id' => $data['drug_id'] ?? null,
+                'product_id' => $productId,
                 'stock_location_id' => $locationId,
-                'movement_type'     => $type,
-                'direction'         => $direction,
-                'quantity'          => $quantity,
-                'unit_cost'         => $cost['unit_cost'],
-                'total_cost'        => $cost['total_cost'],
-                'valuation_method'  => $cost['valuation_method'],
-                'batch_no'          => $data['batch_no']    ?? null,
-                'expiry_date'       => $data['expiry_date'] ?? null,
-                'source_type'       => $data['source_type'] ?? null,
-                'source_id'         => $data['source_id']   ?? null,
-                'performed_by'      => $data['performed_by'] ?? Auth::id(),
-                'movement_date'     => $data['movement_date'] ?? now(),
-                'notes'             => $data['notes'] ?? null,
+                'movement_type' => $type,
+                'direction' => $direction,
+                'quantity' => $quantity,
+                'unit_cost' => $cost['unit_cost'],
+                'total_cost' => $cost['total_cost'],
+                'valuation_method' => $cost['valuation_method'],
+                'batch_no' => $data['batch_no'] ?? null,
+                'expiry_date' => $data['expiry_date'] ?? null,
+                'source_type' => $data['source_type'] ?? null,
+                'source_id' => $data['source_id'] ?? null,
+                'performed_by' => $data['performed_by'] ?? Auth::id(),
+                'movement_date' => $data['movement_date'] ?? now(),
+                'notes' => $data['notes'] ?? null,
             ]);
 
             $valuation->applyBalance($productId, $locationId, $direction, $quantity, $providedUnitCost);
@@ -98,6 +110,7 @@ class ProductStockMovementService
             ->where('product_id', $productId)
             ->where('stock_location_id', $locationId)
             ->first();
+
         return (float) ($balance?->quantity_on_hand ?? 0);
     }
 
@@ -112,6 +125,7 @@ class ProductStockMovementService
             $balance->quantity_on_hand = (float) $balance->quantity_on_hand + $delta;
             $balance->last_movement_at = now();
             $balance->save();
+
             return $balance;
         });
     }
@@ -122,35 +136,38 @@ class ProductStockMovementService
      */
     public function reverseMovement(StockMovement $original, ?string $notes = null): StockMovement
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::StockMovement);
+
         $reverseType = $original->direction === StockMovementDirection::IN
             ? StockMovementType::REVERSAL_OUT
             : StockMovementType::REVERSAL_IN;
 
         return $this->createMovement([
-            'product_id'        => $original->product_id,
+            'product_id' => $original->product_id,
             'stock_location_id' => $original->stock_location_id,
-            'movement_type'     => $reverseType,
-            'quantity'          => (float) $original->quantity,
-            'unit_cost'         => $original->unit_cost,
-            'batch_no'          => $original->batch_no,
-            'expiry_date'       => $original->expiry_date,
-            'source_type'       => $original->source_type,
-            'source_id'         => $original->source_id,
-            'notes'             => $notes ?? ('Reversal of movement #' . $original->id),
+            'movement_type' => $reverseType,
+            'quantity' => (float) $original->quantity,
+            'unit_cost' => $original->unit_cost,
+            'batch_no' => $original->batch_no,
+            'expiry_date' => $original->expiry_date,
+            'source_type' => $original->source_type,
+            'source_id' => $original->source_id,
+            'notes' => $notes ?? ('Reversal of movement #'.$original->id),
             // Reversals must always succeed so the ledger stays consistent even if the
             // current balance is below zero due to other concurrent activity.
-            'allow_negative'    => true,
+            'allow_negative' => true,
         ]);
     }
 
     /**
-    * Rebuild StockBalance rows from the canonical movement ledger.
+     * Rebuild StockBalance rows from the canonical movement ledger.
      * Optionally scope to a single product and/or location.
      *
      * @return int number of (product, location) pairs rebuilt
      */
     public function rebuildAllBalances(?int $productId = null, ?int $locationId = null): int
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::StockMovement);
         $pairs = StockMovement::query()
             ->select('product_id', 'stock_location_id')
             ->whereNotNull('product_id')
@@ -168,6 +185,7 @@ class ProductStockMovementService
 
     public function rebuildBalance(int $productId, int $locationId): StockBalance
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::StockMovement);
         return DB::transaction(function () use ($productId, $locationId) {
             $in = (float) StockMovement::query()
                 ->where('product_id', $productId)
@@ -190,7 +208,7 @@ class ProductStockMovementService
             return StockBalance::updateOrCreate(
                 ['product_id' => $productId, 'stock_location_id' => $locationId],
                 [
-                    'drug_id'           => null,
+                    'drug_id' => null,
                     'quantity_on_hand' => $in - $out,
                     'last_movement_at' => $lastMovementAt,
                 ]

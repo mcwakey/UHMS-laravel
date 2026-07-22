@@ -4,6 +4,7 @@ namespace Tests\Unit\LegacyMigration\Foundation\Privacy;
 
 use App\Services\LegacyMigration\Foundation\Privacy\PrivacyScanner;
 use App\Services\LegacyMigration\Foundation\Privacy\SafeDiagnosticEncoder;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalGuardScopeManifest;
 use App\Services\LegacyMigration\Foundation\Security\CanonicalizationVersionRegistry;
 use App\Services\LegacyMigration\Foundation\Security\CanonicalTypedMessageEncoder;
 use App\Services\LegacyMigration\Foundation\Security\ConfiguredKeyProvider;
@@ -143,6 +144,23 @@ final class PrivacyScannerTest extends TestCase
     }
 
     #[Test]
+    public function an_operational_guard_source_cannot_be_omitted_from_the_mandatory_manifest(): void
+    {
+        $root = $this->fixtureRoot();
+        $omitted = OperationalGuardScopeManifest::sourcePaths()[0];
+        unlink($root.'/'.$omitted);
+
+        $result = (new PrivacyScanner)->scan($root, ['docs/legacy-migration']);
+        $matches = array_filter(
+            $result->findings,
+            static fn ($finding): bool => $finding->detectorId === 'artifact_missing' && $finding->path === $omitted,
+        );
+
+        self::assertTrue($result->releaseBlocked());
+        self::assertCount(1, $matches);
+    }
+
+    #[Test]
     public function unquoted_secrets_and_scalar_record_identifiers_are_detected_and_redacted(): void
     {
         $root = $this->fixtureRoot();
@@ -185,6 +203,37 @@ final class PrivacyScannerTest extends TestCase
         $this->assertStringContainsString('LM-PRIV-SCAN-FAILED-001', $payload);
     }
 
+    #[Test]
+    public function scalar_cli_log_dsn_header_session_github_and_cloud_formats_are_detected_without_value_output(): void
+    {
+        $root = $this->fixtureRoot();
+        mkdir($root.'/exports', recursive: true);
+        $parts = [
+            'Member'.'No: 483920',
+            'Opd'.'No = 93820',
+            'Patient'.'ID | 76120',
+            'Authorization'.': Bearer SYNTHETICLONG'.'TOKENMATERIAL123456',
+            'Cookie'.': session=SYNTHETICSESSIONTOKEN123456',
+            'mysql'.'://synthetic-user:synthetic-pass@'.'db.invalid/uuhms',
+            'github'.'_pat_SYNTHETIC012345678901234567890123',
+            'ASIA'.'SYNTHETIC01234567',
+            'AIza'.'SYNTHETIC01234567890123456789012345',
+            'patient'.'_id=384920',
+        ];
+        file_put_contents($root.'/exports/adversarial.log', implode("\n", $parts));
+
+        $result = (new PrivacyScanner)->scan($root, ['exports']);
+        $ids = array_values(array_unique(array_map(static fn ($finding): string => $finding->detectorId, $result->findings)));
+        $payload = json_encode($result, JSON_THROW_ON_ERROR);
+
+        foreach (['scalar_identifier_value', 'authorization_header', 'cookie_session_dump', 'database_dsn', 'credential_token', 'cloud_provider_credential', 'sql_diagnostic_identifier', 'log_identifier_assignment'] as $id) {
+            self::assertContains($id, $ids);
+        }
+        foreach ($parts as $value) {
+            self::assertStringNotContainsString($value, $payload);
+        }
+    }
+
     private function fixtureRoot(): string
     {
         $root = sys_get_temp_dir().'/uhms-privacy-'.bin2hex(random_bytes(6));
@@ -192,6 +241,9 @@ final class PrivacyScannerTest extends TestCase
         $directories = [
             'docs/legacy-migration',
             'app/Services/LegacyMigration/Foundation',
+            'app/Services/LegacyMigration/Evidence',
+            'app/Models/LegacyMigration',
+            'app/Providers',
             'app/Console/Commands/LegacyMigration',
             'database/migrations',
             'tests/Unit/LegacyMigration/Foundation',
@@ -205,15 +257,32 @@ final class PrivacyScannerTest extends TestCase
         file_put_contents($root.'/config/legacy-migration.php', "<?php\nreturn [];\n");
         file_put_contents($root.'/docs/legacy-migration/README.md', 'Aggregate-only synthetic scanner fixture.');
         file_put_contents($root.'/app/Services/LegacyMigration/Foundation/Fixture.php', "<?php\n");
+        file_put_contents($root.'/app/Services/LegacyMigration/Evidence/Fixture.php', "<?php\n");
+        file_put_contents($root.'/app/Models/LegacyMigration/Fixture.php', "<?php\n");
+        file_put_contents($root.'/app/Providers/AppServiceProvider.php', "<?php\n");
         file_put_contents($root.'/app/Console/Commands/LegacyMigration/Fixture.php', "<?php\n");
+        file_put_contents($root.'/app/Console/Commands/LegacyMigrationCaptureClassicEvidenceCommand.php', "<?php\n");
+        file_put_contents($root.'/app/Console/Commands/LegacyMigrationInspectTargetCommand.php', "<?php\n");
         file_put_contents($root.'/tests/Unit/LegacyMigration/Foundation/FixtureTest.php', "<?php\n");
         file_put_contents($root.'/tests/Feature/LegacyMigration/Foundation/FixtureTest.php', "<?php\n");
         foreach ([
             '2026_07_22_000110_create_legacy_migration_run_foundation_tables.php',
             '2026_07_22_000111_create_legacy_migration_protected_store_tables.php',
             '2026_07_22_000112_create_legacy_migration_recovery_tables.php',
+            '2026_07_22_000113_create_legacy_migration_installation_journal.php',
+            '2026_07_22_000114_create_legacy_migration_protected_lifecycle_tables.php',
+            '2026_07_22_000115_create_legacy_migration_recovery_journal.php',
         ] as $migration) {
             file_put_contents($root.'/database/migrations/'.$migration, "<?php\n");
+        }
+        foreach (OperationalGuardScopeManifest::sourcePaths() as $path) {
+            $absolute = $root.'/'.$path;
+            if (! is_dir(dirname($absolute))) {
+                mkdir(dirname($absolute), recursive: true);
+            }
+            if (! file_exists($absolute)) {
+                file_put_contents($absolute, "<?php\n");
+            }
         }
         $this->roots[] = $root;
 

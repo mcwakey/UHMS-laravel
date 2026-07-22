@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
+
 use App\Enums\BillingType;
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
@@ -26,6 +29,7 @@ class InvoiceService
      */
     public function getOrCreateVisitInvoice(Visit $visit): Invoice
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BillingCreation);
         $existing = Invoice::where('visit_id', $visit->id)
             ->whereNotIn('status', [
                 InvoiceStatus::CANCELLED->value,
@@ -90,6 +94,7 @@ class InvoiceService
      */
     public function recalculateTotals(Invoice $invoice): Invoice
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BillingCreation);
         $invoice->loadMissing([
             'items',
             'visit.visitInsurance.insuranceProvider',
@@ -204,6 +209,7 @@ class InvoiceService
      */
     public function updateStatus(Invoice $invoice): Invoice
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::BillingCreation);
         // Don't override terminal states.
         if (in_array($invoice->status?->value ?? $invoice->status, [
             InvoiceStatus::CANCELLED->value,

@@ -29,7 +29,7 @@ final class PersistenceBoundaryGuard
 
         if (in_array($command->operation, [PersistenceOperation::PatientEntity, PersistenceOperation::Alias, PersistenceOperation::EmergencyContact], true)) {
             $this->require($context->patientStateValidated, 'FOUNDATION_PERSISTENCE_PATIENT_STATE_UNVALIDATED');
-            if ($runtime->mode === ExecutionMode::Commit) {
+            if ($runtime->mode() === ExecutionMode::Commit) {
                 $this->require($context->patientStateCommitApproved, 'FOUNDATION_PERSISTENCE_PATIENT_STATE_BLOCKED');
             }
         }
@@ -44,15 +44,15 @@ final class PersistenceBoundaryGuard
         if ($command->operation === PersistenceOperation::CurrentMembership) {
             $this->require($context->insuranceHistoryComplete, 'FOUNDATION_PERSISTENCE_INSURANCE_HISTORY_INCOMPLETE');
             $this->require($context->insuranceInitializationValidated, 'FOUNDATION_PERSISTENCE_INSURANCE_STATE_UNVALIDATED');
-            if ($runtime->mode === ExecutionMode::Commit) {
+            if ($runtime->mode() === ExecutionMode::Commit) {
                 $this->require($context->insuranceInitializationCommitApproved, 'FOUNDATION_PERSISTENCE_INSURANCE_STATE_BLOCKED');
             }
         }
 
         return new AuthorizedPersistenceCommand(
             command: $command,
-            mode: $runtime->mode,
-            businessWritesAllowed: $runtime->mode === ExecutionMode::Commit
+            mode: $runtime->mode(),
+            businessWritesAllowed: $runtime->mode() === ExecutionMode::Commit
                 && $command->operation !== PersistenceOperation::ExistingTargetLink,
             metadataOnly: $command->operation === PersistenceOperation::ExistingTargetLink,
         );

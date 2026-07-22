@@ -18,7 +18,7 @@ final readonly class DeterministicPatientNumberAllocator implements MigrationPat
             return AllocationResult::reused($existing);
         }
 
-        if (($existing = $this->reservations->findByPatientCoreKey($request->patientCoreKey)) !== null) {
+        if (($existing = $this->reservations->find($request)) !== null) {
             $existing->assertCompatible($request);
 
             return AllocationResult::reused($existing);
@@ -33,7 +33,7 @@ final readonly class DeterministicPatientNumberAllocator implements MigrationPat
             function () use ($request): AllocationResult {
                 // Recheck both authoritative lineage stores after taking the sequence lock.
                 $existing = $this->lineage->resolveSuccessful($request)
-                    ?? $this->reservations->findByPatientCoreKey($request->patientCoreKey);
+                    ?? $this->reservations->find($request);
                 if ($existing !== null) {
                     $existing->assertCompatible($request);
 

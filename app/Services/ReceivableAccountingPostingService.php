@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
+
 use App\Enums\LogModule;
 use App\Enums\LogSeverity;
 use App\Models\InvoiceReceivable;
@@ -19,6 +22,7 @@ class ReceivableAccountingPostingService
 
     public function postReallocation(InvoiceReceivable $from, InvoiceReceivable $to, float $amount, string $reason): ?JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         $amount = round($amount, 2);
         if ($amount <= 0) {
             return null;

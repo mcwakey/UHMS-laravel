@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
+
 use App\Enums\BillingType;
 use App\Enums\CreditNoteType;
 use App\Enums\InvoiceStatus;
@@ -21,6 +24,7 @@ class InvoiceReceivableService
 {
     public function syncFromInvoice(Invoice $invoice): Collection
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PaymentAllocation);
         return DB::transaction(function () use ($invoice) {
             $invoice = Invoice::with([
                 'items',
@@ -56,6 +60,7 @@ class InvoiceReceivableService
 
     public function resolvePaymentReceivable(Invoice $invoice, array $data, float $amount): ?InvoiceReceivable
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PaymentAllocation);
         $receivables = $this->syncFromInvoice($invoice);
         $paymentMethod = $data['payment_method'] instanceof PaymentMethod
             ? $data['payment_method']->value
@@ -148,6 +153,7 @@ class InvoiceReceivableService
 
     public function applyPayment(Payment $payment): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PaymentAllocation);
         $payment->loadMissing('invoice');
         if (! $payment->invoice) {
             return;
@@ -190,6 +196,7 @@ class InvoiceReceivableService
 
     public function refreshReceivableAmounts(Invoice $invoice): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PaymentAllocation);
         $invoice->loadMissing(['receivables', 'payments', 'creditNotes', 'items']);
 
         $amounts = [];
@@ -541,6 +548,7 @@ class InvoiceReceivableService
 
     public function logAllocationChange(string $action, InvoiceReceivable $receivable, array $context): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::PaymentAllocation);
         try {
             app(ActivityLogService::class)->log(
                 LogModule::BILLING,

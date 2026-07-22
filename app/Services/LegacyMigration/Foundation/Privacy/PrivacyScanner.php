@@ -2,6 +2,7 @@
 
 namespace App\Services\LegacyMigration\Foundation\Privacy;
 
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalGuardScopeManifest;
 use FilesystemIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -18,10 +19,18 @@ final class PrivacyScanner
         'config/legacy-migration.php',
         '.env.example',
         'app/Services/LegacyMigration/Foundation',
+        'app/Services/LegacyMigration/Evidence',
+        'app/Models/LegacyMigration',
+        'app/Providers/AppServiceProvider.php',
         'app/Console/Commands/LegacyMigration',
+        'app/Console/Commands/LegacyMigrationCaptureClassicEvidenceCommand.php',
+        'app/Console/Commands/LegacyMigrationInspectTargetCommand.php',
         'database/migrations/2026_07_22_000110_create_legacy_migration_run_foundation_tables.php',
         'database/migrations/2026_07_22_000111_create_legacy_migration_protected_store_tables.php',
         'database/migrations/2026_07_22_000112_create_legacy_migration_recovery_tables.php',
+        'database/migrations/2026_07_22_000113_create_legacy_migration_installation_journal.php',
+        'database/migrations/2026_07_22_000114_create_legacy_migration_protected_lifecycle_tables.php',
+        'database/migrations/2026_07_22_000115_create_legacy_migration_recovery_journal.php',
         'tests/Unit/LegacyMigration/Foundation',
         'tests/Feature/LegacyMigration/Foundation',
     ];
@@ -50,7 +59,12 @@ final class PrivacyScanner
             throw new RuntimeException('Privacy scan root is invalid [LM-PRIV-SCOPE-001].');
         }
 
-        $mandatory = array_values(array_unique([...$configuredRoots, ...self::REQUIRED_PHASE_3_SCOPE, ...$additionalPaths]));
+        $mandatory = array_values(array_unique([
+            ...$configuredRoots,
+            ...self::REQUIRED_PHASE_3_SCOPE,
+            ...OperationalGuardScopeManifest::sourcePaths(),
+            ...$additionalPaths,
+        ]));
         $requested = array_values(array_unique([...$mandatory, ...self::OPTIONAL_GENERATED_SCOPE]));
         $files = [];
         $scopeFailures = [];

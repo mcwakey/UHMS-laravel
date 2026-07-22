@@ -8,6 +8,8 @@ use App\Models\InsuranceVerification;
 use App\Models\PatientInsurance;
 use App\Models\Visit;
 use App\Services\ActivityLogService;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use App\Support\Insurance\VerificationRequest;
 use App\Support\Insurance\VerificationResult;
 use Illuminate\Support\Facades\Auth;
@@ -33,6 +35,9 @@ class InsuranceVerificationService
         ?string $referenceCode = null,
         array $context = [],
     ): InsuranceVerification {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::InsuranceEligibilityIntegrations);
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::ExternalIntegrations);
+
         $insurance->loadMissing(['insuranceProvider', 'patient']);
         $provider = $insurance->insuranceProvider;
 
@@ -69,19 +74,19 @@ class InsuranceVerificationService
     ): InsuranceVerification {
         return DB::transaction(function () use ($insurance, $visit, $driver, $result) {
             $verification = InsuranceVerification::create([
-                'patient_insurance_id'  => $insurance->id,
+                'patient_insurance_id' => $insurance->id,
                 'insurance_provider_id' => $insurance->insurance_provider_id,
-                'visit_id'              => $visit?->id,
-                'driver'                => $driver,
-                'status'                => $result->status,
-                'reference_code'        => $result->referenceCode,
-                'membership_number'     => $insurance->membership_number,
-                'member_name'           => $result->memberName ?? $insurance->patient?->full_name,
-                'expires_at'            => $result->expiresAt?->toDateString() ?? $insurance->expiry_date,
-                'verified_by'           => Auth::id(),
-                'verified_at'           => now(),
-                'payload'               => $result->payload,
-                'message'               => $result->message,
+                'visit_id' => $visit?->id,
+                'driver' => $driver,
+                'status' => $result->status,
+                'reference_code' => $result->referenceCode,
+                'membership_number' => $insurance->membership_number,
+                'member_name' => $result->memberName ?? $insurance->patient?->full_name,
+                'expires_at' => $result->expiresAt?->toDateString() ?? $insurance->expiry_date,
+                'verified_by' => Auth::id(),
+                'verified_at' => now(),
+                'payload' => $result->payload,
+                'message' => $result->message,
             ]);
 
             if ($visit && $result->status->isAcceptable()) {
@@ -121,7 +126,7 @@ class InsuranceVerificationService
                     'source_id' => $verification->id,
                 ],
                 $verification,
-                'Insurance verified: ' . ($insurance->insuranceProvider?->name ?? 'provider') . ' (' . $status . ')',
+                'Insurance verified: '.($insurance->insuranceProvider?->name ?? 'provider').' ('.$status.')',
             );
         } catch (\Throwable $e) {
             // Logging must never break insurance verification.

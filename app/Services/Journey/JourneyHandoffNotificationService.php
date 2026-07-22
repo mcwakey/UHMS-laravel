@@ -10,6 +10,8 @@ use App\Enums\NotificationModule;
 use App\Models\JourneyHandoffAssignment;
 use App\Models\User;
 use App\Services\ActivityLogService;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use App\Services\NotificationService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -33,26 +35,36 @@ class JourneyHandoffNotificationService
 
     public function notifyAssigned(JourneyHandoffAssignment $assignment, ?User $actor): int
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::JourneyNotifications);
+
         return $this->dispatch(JourneyHandoffNotificationEvent::ASSIGNED, $assignment, $this->recipients->forAssignee($assignment), $actor);
     }
 
     public function notifyAcknowledged(JourneyHandoffAssignment $assignment, ?User $actor): int
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::JourneyNotifications);
+
         return $this->dispatch(JourneyHandoffNotificationEvent::ACKNOWLEDGED, $assignment, $this->recipients->forAssigner($assignment, $actor), $actor);
     }
 
     public function notifyResolved(JourneyHandoffAssignment $assignment, ?User $actor): int
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::JourneyNotifications);
+
         return $this->dispatch(JourneyHandoffNotificationEvent::RESOLVED, $assignment, $this->recipients->forResolution($assignment, $actor), $actor);
     }
 
     public function notifyStaleDismissed(JourneyHandoffAssignment $assignment): int
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::JourneyNotifications);
+
         return $this->dispatch(JourneyHandoffNotificationEvent::STALE_DISMISSED, $assignment, $this->recipients->forAssignee($assignment), null);
     }
 
     public function notifyEscalated(JourneyHandoffAssignment $assignment, string $oldLevel, string $newLevel, ?User $actor = null): int
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::JourneyNotifications);
+
         $event = $newLevel === JourneyHandoffAssignment::ESCALATION_CRITICAL
             ? JourneyHandoffNotificationEvent::CRITICAL
             : JourneyHandoffNotificationEvent::ESCALATED;
@@ -69,6 +81,8 @@ class JourneyHandoffNotificationService
 
     public function notifyCriticalUnassigned(JourneyHandoff $handoff): int
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::JourneyNotifications);
+
         $event = $handoff->slaStatus === 'critical_breach'
             ? JourneyHandoffNotificationEvent::UNASSIGNED_BREACHED
             : JourneyHandoffNotificationEvent::UNASSIGNED_NEAR_BREACH;
@@ -90,6 +104,8 @@ class JourneyHandoffNotificationService
         array $extra = [],
         ?string $dedupeSuffix = null,
     ): int {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::JourneyNotifications);
+
         // Never notify the actor about their own action (e.g. self-claim); honour
         // per-user, per-event preferences.
         $recipients = $recipients

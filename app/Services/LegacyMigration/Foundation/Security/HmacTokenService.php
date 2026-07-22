@@ -19,7 +19,9 @@ final class HmacTokenService
     {
         $this->domains?->assertAllowed($domain);
         $this->canonicalizationVersions->assertSupported($message->version());
-        $key = $this->keys->active();
+        $key = $this->keys instanceof DomainAwareKeyProvider
+            ? $this->keys->activeForDomain($domain->value())
+            : $this->keys->active();
 
         return $this->tokenizeWithKey($domain, $message, $key);
     }
@@ -28,7 +30,9 @@ final class HmacTokenService
     {
         $this->domains?->assertAllowed($domain);
         $this->assertContext($domain, $message, $token);
-        $key = $this->keys->get($token->keyId(), $token->keyVersion());
+        $key = $this->keys instanceof DomainAwareKeyProvider
+            ? $this->keys->getForDomain($domain->value(), $token->keyId(), $token->keyVersion())
+            : $this->keys->get($token->keyId(), $token->keyVersion());
         $expected = $this->tokenizeWithKey($domain, $message, $key);
 
         return $token->matches($expected);
@@ -40,7 +44,9 @@ final class HmacTokenService
             throw TokenContextMismatchException::create();
         }
 
-        $active = $this->keys->active();
+        $active = $this->keys instanceof DomainAwareKeyProvider
+            ? $this->keys->activeForDomain($domain->value())
+            : $this->keys->active();
         $alreadyActive = hash_equals($active->keyId(), $token->keyId())
             && hash_equals($active->version(), $token->keyVersion());
 

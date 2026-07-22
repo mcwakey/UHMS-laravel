@@ -6,6 +6,7 @@ use App\Services\LegacyMigration\Foundation\Environment\GuardConfiguration;
 use App\Services\LegacyMigration\Foundation\Environment\SchemaObservation;
 use App\Services\LegacyMigration\Foundation\Snapshot\CoordinatedSourceSnapshotManager;
 use App\Services\LegacyMigration\Foundation\Snapshot\SnapshotException;
+use App\Services\LegacyMigration\Foundation\Snapshot\SnapshotManifest;
 use App\Services\LegacyMigration\Foundation\Snapshot\TargetCollisionSnapshotManager;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Test;
@@ -14,7 +15,9 @@ use PHPUnit\Framework\TestCase;
 final class SnapshotManagersTest extends TestCase
 {
     private const RUN = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+
     private const CONFIG = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+
     private const CONTRACT = 'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc';
 
     #[Test]
@@ -132,7 +135,7 @@ final class SnapshotManagersTest extends TestCase
         return new SchemaObservation('mysql', 'uhms_clean', '10.4.32-MariaDB', str_repeat('9', 64), 335, 5347);
     }
 
-    private function sourceSnapshot(CoordinatedSourceSnapshotManager $manager, string $insuranceHash): \App\Services\LegacyMigration\Foundation\Snapshot\SnapshotManifest
+    private function sourceSnapshot(CoordinatedSourceSnapshotManager $manager, string $insuranceHash): SnapshotManifest
     {
         return $manager->create(
             self::RUN,

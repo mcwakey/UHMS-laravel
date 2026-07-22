@@ -13,6 +13,7 @@ final readonly class RunManifest
         public string $contractBundleHash,
         public string $configurationFingerprint,
         public array $versions,
+        public array $authorityReferences = [],
     ) {}
 
     /** @return array<string, mixed> */
@@ -27,6 +28,7 @@ final readonly class RunManifest
             'contract_bundle_hash' => $this->contractBundleHash,
             'configuration_fingerprint' => $this->configurationFingerprint,
             'versions' => $this->versions,
+            'authority_references' => $this->authorityReferences,
             'contains_raw_identifiers' => false,
         ];
     }

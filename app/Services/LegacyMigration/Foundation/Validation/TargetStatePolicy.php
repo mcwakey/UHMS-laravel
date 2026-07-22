@@ -16,7 +16,7 @@ final readonly class TargetStatePolicy
         }
     }
 
-    public static function patientPhase2F(): self
+    public static function patientPhase2F(VerifiedPolicyBundle $bundle): self
     {
         $approvedNull = [TargetFieldClassification::ApprovedValue];
         $conditionalNull = [TargetFieldClassification::ApprovedConditionalNull];
@@ -49,10 +49,17 @@ final readonly class TargetStatePolicy
             new TargetStateRule('PILOT-STATE-020', 'complete_state_tuple', [TargetFieldClassification::CommitBlocker], null, ['LEGACY-PATIENT-STATUS-044']),
         ];
 
-        return self::trusted('patient-state/2F.1.0', 'phase-2f/patient_pilot_state_matrix.json@2F.1.0:owner-approval-blocked', $rules);
+        $policy = self::trusted('patient-state/2F.1.0', 'phase-2f/patient_pilot_state_matrix.json@2F.1.0:owner-approval-blocked', $rules);
+        self::assertArtifactBinding(
+            $bundle,
+            'docs/legacy-migration/phase-2f/specifications/patient_pilot_state_matrix.json',
+            $rules,
+        );
+
+        return $policy;
     }
 
-    public static function insurancePhase2F(): self
+    public static function insurancePhase2F(VerifiedPolicyBundle $bundle): self
     {
         $null = [TargetFieldClassification::ApprovedValue];
         $blocker = [
@@ -81,7 +88,14 @@ final readonly class TargetStatePolicy
             new TargetStateRule('PILOT-INS-INIT-015', 'current_representation', [TargetFieldClassification::CommitBlocker], null, ['LEGACY-INSURANCE-CONSOLIDATION-026']),
         ];
 
-        return self::trusted('insurance-initialization/2F.1.0', 'phase-2f/insurance_pilot_initialization_rules.json@2F.1.0:owner-approval-blocked', $rules);
+        $policy = self::trusted('insurance-initialization/2F.1.0', 'phase-2f/insurance_pilot_initialization_rules.json@2F.1.0:owner-approval-blocked', $rules);
+        self::assertArtifactBinding(
+            $bundle,
+            'docs/legacy-migration/phase-2f/specifications/insurance_pilot_initialization_rules.json',
+            $rules,
+        );
+
+        return $policy;
     }
 
     public const SOURCE_MAPPED_VALUE = '__SOURCE_MAPPED__';
@@ -106,5 +120,74 @@ final readonly class TargetStatePolicy
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
 
         return new self($version, $authority, $rules, $fingerprint);
+    }
+
+    /** @param array<int, TargetStateRule> $rules */
+    private static function assertArtifactBinding(VerifiedPolicyBundle $bundle, string $path, array $rules): void
+    {
+        $artifact = $bundle->artifact($path);
+        if ($artifact->specificationVersion !== '2F.1.0' || ! is_array($artifact->document)) {
+            throw new ValidationException('FOUNDATION_TARGET_POLICY_BINDING_INVALID', [], 'The target-state policy artifact is invalid.');
+        }
+        $actual = [];
+        $recordByCoordinate = [];
+        foreach ($artifact->document['records'] ?? [] as $record) {
+            if (! is_array($record) || ! is_string($record['id'] ?? null) || ! is_string($record['field'] ?? null)) {
+                throw new ValidationException('FOUNDATION_TARGET_POLICY_BINDING_INVALID', [], 'The target-state policy artifact is invalid.');
+            }
+            $fields = match ($record['field']) {
+                'verification_and_eligibility' => ['verification', 'eligibility'],
+                default => explode(',', $record['field']),
+            };
+            foreach ($fields as $field) {
+                $coordinate = $record['id'].'|'.trim($field);
+                $actual[] = $coordinate;
+                $recordByCoordinate[$coordinate] = $record;
+            }
+        }
+        $expected = array_map(static fn (TargetStateRule $rule): string => $rule->ruleId.'|'.$rule->field, $rules);
+        sort($actual, SORT_STRING);
+        sort($expected, SORT_STRING);
+        if ($actual !== $expected) {
+            throw new ValidationException('FOUNDATION_TARGET_POLICY_RUNTIME_DRIFT', [], 'The runtime target-state policy differs from its authoritative artifact.');
+        }
+        foreach ($rules as $rule) {
+            $record = $recordByCoordinate[$rule->ruleId.'|'.$rule->field];
+            $expectedClassifications = self::classificationsFromArtifact($record, $rule->field);
+            $runtimeClassifications = array_map(static fn (TargetFieldClassification $item): string => $item->value, $rule->classifications);
+            sort($expectedClassifications, SORT_STRING);
+            sort($runtimeClassifications, SORT_STRING);
+            if ($expectedClassifications !== $runtimeClassifications) {
+                throw new ValidationException('FOUNDATION_TARGET_POLICY_RUNTIME_DRIFT', [], 'The runtime target-state policy differs from its authoritative artifact.');
+            }
+        }
+    }
+
+    /** @param array<string,mixed> $record @return list<string> */
+    private static function classificationsFromArtifact(array $record, string $field): array
+    {
+        $id = $record['id'];
+        if ($id === 'PILOT-STATE-020' || $id === 'PILOT-INS-INIT-015') {
+            return [TargetFieldClassification::CommitBlocker->value];
+        }
+        if ($id === 'PILOT-INS-INIT-014') {
+            return [TargetFieldClassification::TargetOwnedOperationalState->value, TargetFieldClassification::ProhibitedDefault->value];
+        }
+        $state = (string) ($record['approved_target_initialization']['state'] ?? $record['approval_state'] ?? '');
+        if ($state === 'APPROVED_CONDITIONAL') {
+            return [TargetFieldClassification::ApprovedConditionalNull->value];
+        }
+        if (in_array($state, ['APPROVED', 'APPROVED_SOURCE_MAPPED', 'UPSTREAM_PARENT_REQUIRED', 'UPSTREAM_CROSSWALK_REQUIRED', 'UPSTREAM_REQUIRED_NULL_NOT_EVIDENCED', 'UPSTREAM_RULED', 'D-206_FIELD_SPECIFIC'], true)) {
+            return [TargetFieldClassification::ApprovedValue->value];
+        }
+        if (str_contains($state, 'BLOCK') || $state === 'UNRESOLVED') {
+            return [
+                TargetFieldClassification::RecommendationPendingApproval->value,
+                TargetFieldClassification::ProhibitedDefault->value,
+                TargetFieldClassification::CommitBlocker->value,
+            ];
+        }
+
+        throw new ValidationException('FOUNDATION_TARGET_POLICY_BINDING_INVALID', [], 'The target-state policy artifact contains an unknown authority state.');
     }
 }

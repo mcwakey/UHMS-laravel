@@ -3,8 +3,12 @@
 namespace App\Services\Integrations;
 
 use App\Enums\LogModule;
+use App\Enums\LogSeverity;
+use App\Exceptions\Integrations\IntegrationException;
 use App\Models\IntegrationProvider;
 use App\Services\ActivityLogService;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use App\Support\Integrations\ProviderTestResult;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +30,8 @@ class IntegrationProviderService
 
     public function create(array $data, string $moduleType): IntegrationProvider
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::ExternalIntegrations);
+
         $data['module_type'] = $moduleType;
         $data['status'] = $data['status'] ?? IntegrationProvider::STATUS_DRAFT;
         $data['is_active'] = false; // activation is an explicit, audited step
@@ -45,6 +51,8 @@ class IntegrationProviderService
 
     public function update(IntegrationProvider $provider, array $data): IntegrationProvider
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::ExternalIntegrations);
+
         $old = $this->loggable($provider);
         $data['updated_by'] = Auth::id();
         unset($data['is_active'], $data['module_type']); // not editable here
@@ -69,19 +77,21 @@ class IntegrationProviderService
      * is not live-ready is blocked unless an elevated override (with reason) is
      * supplied. Fake providers are never selectable in production (registry).
      *
-     * @throws \App\Exceptions\Integrations\IntegrationException when blocked.
+     * @throws IntegrationException when blocked.
      */
     public function activate(IntegrationProvider $provider, bool $allowOverride = false, ?string $overrideReason = null): IntegrationProvider
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::ExternalIntegrations);
+
         if ($provider->environment === IntegrationProvider::ENV_LIVE
             && ! app(ProviderGoLiveChecklistService::class)->liveActivationAllowed($provider)) {
             if (! $allowOverride || ! $overrideReason) {
                 $this->logger->log(LogModule::INTEGRATIONS, 'PROVIDER_LIVE_ACTIVATION_BLOCKED', [
                     'source_type' => 'integration_provider', 'source_id' => $provider->id,
-                    'severity' => \App\Enums\LogSeverity::WARNING,
+                    'severity' => LogSeverity::WARNING,
                 ], $provider, "Live activation blocked (not go-live ready): {$provider->name}");
 
-                throw new \App\Exceptions\Integrations\IntegrationException(
+                throw new IntegrationException(
                     'Provider is not go-live ready.',
                     'integrations.errors.not_live_ready',
                 );
@@ -89,7 +99,7 @@ class IntegrationProviderService
 
             $this->logger->log(LogModule::INTEGRATIONS, 'PROVIDER_GOLIVE_OVERRIDE_USED', [
                 'source_type' => 'integration_provider', 'source_id' => $provider->id,
-                'severity' => \App\Enums\LogSeverity::SECURITY,
+                'severity' => LogSeverity::SECURITY,
                 'reason' => $overrideReason,
             ], $provider, "Live activation override used: {$provider->name}");
         }
@@ -124,13 +134,13 @@ class IntegrationProviderService
         $this->logger->log(LogModule::INTEGRATIONS, $this->action($provider->module_type, 'PROVIDER_ACTIVATED'), [
             'source_type' => 'integration_provider',
             'source_id' => $provider->id,
-            'severity' => \App\Enums\LogSeverity::WARNING,
+            'severity' => LogSeverity::WARNING,
         ], $provider, "Integration provider activated: {$provider->name}");
 
         if ($provider->environment === IntegrationProvider::ENV_LIVE) {
             $this->logger->log(LogModule::INTEGRATIONS, 'PROVIDER_LIVE_ACTIVATION_APPROVED', [
                 'source_type' => 'integration_provider', 'source_id' => $provider->id,
-                'severity' => \App\Enums\LogSeverity::WARNING,
+                'severity' => LogSeverity::WARNING,
             ], $provider, "Live provider activation approved: {$provider->name}");
         }
 
@@ -139,6 +149,8 @@ class IntegrationProviderService
 
     public function deactivate(IntegrationProvider $provider): IntegrationProvider
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::ExternalIntegrations);
+
         $provider->update([
             'is_active' => false,
             'status' => IntegrationProvider::STATUS_INACTIVE,
@@ -155,6 +167,8 @@ class IntegrationProviderService
 
     public function updateCredentials(IntegrationProvider $provider, array $values): array
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::ExternalIntegrations);
+
         $written = $this->credentials->upsert($provider, $values, Auth::id());
 
         if ($written !== []) {
@@ -162,7 +176,7 @@ class IntegrationProviderService
             $this->logger->log(LogModule::INTEGRATIONS, $this->action($provider->module_type, 'PROVIDER_CREDENTIAL_UPDATED'), [
                 'source_type' => 'integration_provider',
                 'source_id' => $provider->id,
-                'severity' => \App\Enums\LogSeverity::WARNING,
+                'severity' => LogSeverity::WARNING,
                 'metadata' => ['credential_keys' => $written],
             ], $provider, "Integration provider credentials updated: {$provider->name}");
         }
@@ -172,6 +186,8 @@ class IntegrationProviderService
 
     public function test(IntegrationProvider $provider): ProviderTestResult
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::ExternalIntegrations);
+
         try {
             $adapter = $provider->module_type === IntegrationProvider::MODULE_SMS
                 ? $this->registry->makeSms($provider)
@@ -234,6 +250,7 @@ class IntegrationProviderService
     private function action(string $moduleType, string $suffix): string
     {
         $prefix = $moduleType === IntegrationProvider::MODULE_SMS ? 'SMS' : 'PAYMENT';
+
         return "{$prefix}_{$suffix}";
     }
 

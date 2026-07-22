@@ -6,4 +6,6 @@ Compensation is explicit, reviewed and unit-specific. Hard deletion is not a uni
 
 Recovery audit compares intent, write-set, mapping, provenance, reconciliation and checkpoint checksums. Conflicting lineage or changed snapshots blocks resume.
 
-Current code implements classification, state policy, tables and repositories, but no persistent recovery journal binds them into crash/restart orchestration. No compensation action is executable in Phase 3. Durable recovery remains a blocking implementation task.
+Phase 3B binds the coordinator to a protected persistent journal and concrete compare-and-set store. Recovery observations are derived from verified durable intent, crosswalk, provenance, reconciliation, reservation, checkpoint and compensation records; caller-authored recovery booleans are rejected. Sealed decisions replay deterministically after restart, illegal or unchanged CAS edges are rejected by both application and database controls, completed work is not replayed, and compatible missing checkpoints are repaired without target replay.
+
+All ten Phase 2F crash boundaries pass reconnect-based durable tests. Compensation remains an explicit classified record, not an executable domain undo operation in Phase 3B.

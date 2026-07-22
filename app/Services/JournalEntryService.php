@@ -8,7 +8,8 @@ use App\Enums\LogSeverity;
 use App\Models\Account;
 use App\Models\JournalEntry;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Collection;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -21,6 +22,8 @@ class JournalEntryService
 
     public function createDraft(array $data): JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
+
         return DB::transaction(function () use ($data) {
             $period = $this->periodService->ensureDateIsPostable($data['entry_date']);
             $allowControlAccounts = (bool) ($data['allow_control_accounts'] ?? (($data['source_module'] ?? 'MANUAL') !== 'MANUAL'));
@@ -52,6 +55,7 @@ class JournalEntryService
 
     public function updateDraft(JournalEntry $entry, array $data): JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if ($entry->status !== JournalEntryStatus::DRAFT) {
             throw ValidationException::withMessages(['journal' => 'Only draft journal entries can be edited.']);
         }
@@ -81,6 +85,8 @@ class JournalEntryService
 
     public function post(JournalEntry $entry, User $user): JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
+
         if ($entry->status !== JournalEntryStatus::DRAFT) {
             throw ValidationException::withMessages(['journal' => 'Only draft journal entries can be posted.']);
         }
@@ -119,6 +125,8 @@ class JournalEntryService
 
     public function reverse(JournalEntry $entry, string $reason, User $user): JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
+
         if ($entry->status !== JournalEntryStatus::POSTED) {
             throw ValidationException::withMessages(['journal' => 'Only posted journal entries can be reversed.']);
         }
@@ -140,7 +148,7 @@ class JournalEntryService
                 'reference_type' => JournalEntry::class,
                 'reference_id' => $entry->id,
                 'source_module' => 'REVERSAL',
-                'description' => 'Reversal of ' . $entry->journal_number . ': ' . $entry->description,
+                'description' => 'Reversal of '.$entry->journal_number.': '.$entry->description,
                 'status' => JournalEntryStatus::POSTED,
                 'posted_at' => now(),
                 'posted_by' => $user->id,
@@ -154,7 +162,7 @@ class JournalEntryService
             foreach ($entry->lines as $index => $line) {
                 $reversal->lines()->create([
                     'account_id' => $line->account_id,
-                    'description' => 'Reversal: ' . ($line->description ?: $entry->description),
+                    'description' => 'Reversal: '.($line->description ?: $entry->description),
                     'debit' => $line->credit,
                     'credit' => $line->debit,
                     'department_id' => $line->department_id,
@@ -187,6 +195,7 @@ class JournalEntryService
 
     public function cancelDraft(JournalEntry $entry, User $user): JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if ($entry->status !== JournalEntryStatus::DRAFT) {
             throw ValidationException::withMessages(['journal' => 'Only draft journal entries can be cancelled.']);
         }
@@ -296,14 +305,14 @@ class JournalEntryService
         $year = now()->format('Y');
         $prefix = "JE-{$year}-";
         $last = JournalEntry::query()
-            ->where('journal_number', 'like', $prefix . '%')
+            ->where('journal_number', 'like', $prefix.'%')
             ->lockForUpdate()
             ->orderByDesc('journal_number')
             ->value('journal_number');
 
         $next = $last ? ((int) substr($last, -6)) + 1 : 1;
 
-        return $prefix . str_pad((string) $next, 6, '0', STR_PAD_LEFT);
+        return $prefix.str_pad((string) $next, 6, '0', STR_PAD_LEFT);
     }
 
     protected function log(
@@ -322,6 +331,6 @@ class JournalEntryService
             'source_module' => $entry->source_module,
             'old_values' => $oldValues,
             'new_values' => $newValues,
-        ]), $entry, str_replace('_', ' ', ucfirst(strtolower($action))) . ': ' . $entry->journal_number);
+        ]), $entry, str_replace('_', ' ', ucfirst(strtolower($action))).': '.$entry->journal_number);
     }
 }

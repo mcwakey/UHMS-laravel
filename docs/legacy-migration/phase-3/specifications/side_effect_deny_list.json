@@ -1,9 +1,12 @@
 {
-  "specification_version": "3.0.0",
-  "phase": "3",
+  "specification_version": "3.1.0",
+  "phase": "3B",
   "migration_context_required": true,
   "production_context_allowed": false,
   "subsystems": ["events", "model_observers", "activity_log", "notifications", "mail", "sms", "queue", "bus", "scheduler", "audit_forwarding", "payments", "insurance_eligibility", "billing", "accounting", "payment_allocation", "stock", "pharmacy_dispensing", "bed_state", "queue_pathway", "appointment_reminders", "journey_notifications", "file_writes", "search_indexing", "webhooks", "external_integrations"],
-  "attempt_behavior": "throw_and_abort",
+  "control_count": 25,
+  "binding_state": "application_services_container_gateways_facades_eloquent_and_activity_log_bound",
+  "deployment_barrier": "direct worker_scheduler_and_null_sink observation required; missing provider fails closed",
+  "attempt_behavior": "throw_measure_and_abort",
   "scope_rules": ["explicit_command_context_only", "boot_verification", "before_after_counters", "restore_on_success", "restore_on_exception", "normal_runtime_unchanged", "model_without_events_is_insufficient"]
 }

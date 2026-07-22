@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
+
 use App\Enums\Accounting\JournalEntryStatus;
 use App\Enums\LogModule;
 use App\Enums\LogSeverity;
@@ -81,6 +84,7 @@ class PayrollAccountingService
 
     public function postPayroll(PayrollRun $run, User $actor): JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         $run->loadMissing('records');
         if (! in_array($run->status, ['approved', 'posted'], true)) {
             throw ValidationException::withMessages(['status' => 'Only approved payroll can be posted to accounting.']);
@@ -143,6 +147,7 @@ class PayrollAccountingService
 
     public function reversePayroll(PayrollRun $run, User $actor, string $reason): JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if (trim($reason) === '') {
             throw ValidationException::withMessages(['reason' => 'A reversal reason is required.']);
         }
@@ -189,6 +194,7 @@ class PayrollAccountingService
 
     public function settlePayroll(PayrollRun $run, array $data, User $actor): PayrollSettlement
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if ((string) $run->accounting_status !== self::STATUS_POSTED) {
             throw ValidationException::withMessages(['payroll' => 'Post the payroll accrual before recording salary settlement.']);
         }
@@ -274,6 +280,7 @@ class PayrollAccountingService
 
     public function reverseSettlement(PayrollSettlement $settlement, User $actor, string $reason): JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if (trim($reason) === '') {
             throw ValidationException::withMessages(['reason' => 'A reversal reason is required.']);
         }
@@ -309,6 +316,7 @@ class PayrollAccountingService
 
     public function settleStatutoryLiability(PayrollRun $run, array $data, User $actor): PayrollStatutorySettlement
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if ((string) $run->accounting_status !== self::STATUS_POSTED) {
             throw ValidationException::withMessages(['payroll' => 'Post the payroll accrual before settling statutory liabilities.']);
         }
@@ -400,6 +408,7 @@ class PayrollAccountingService
 
     public function reverseStatutorySettlement(PayrollStatutorySettlement $settlement, User $actor, string $reason): JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if (trim($reason) === '') {
             throw ValidationException::withMessages(['reason' => 'A reversal reason is required.']);
         }

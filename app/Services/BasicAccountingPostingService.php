@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
+
 use App\Enums\LogModule;
 use App\Enums\LogSeverity;
 use App\Models\AccountingPostingAttempt;
@@ -46,6 +49,7 @@ class BasicAccountingPostingService
 
     public function preview(FinancialEntry $entry, ?User $actor = null, bool $audit = true): array
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         $result = $this->eligibility($entry);
         if ($audit) {
             $this->audit($entry, 'BASIC_ENTRY_POSTING_PREVIEWED', $actor, [
@@ -58,6 +62,7 @@ class BasicAccountingPostingService
 
     public function post(FinancialEntry $entry, User $actor): array
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         $entry->refresh();
         if ($entry->journal_entry_id && $entry->accounting_status === 'posted') {
             return ['success' => true, 'entry' => $entry, 'journal' => $entry->journalEntry, 'idempotent' => true];
@@ -110,6 +115,7 @@ class BasicAccountingPostingService
 
     public function reverse(FinancialEntry $entry, string $reason, User $actor): array
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if ($entry->accounting_status !== 'posted' || ! $entry->journal_entry_id) {
             return ['success' => false, 'entry' => $entry, 'error' => 'Only a posted Basic Accounting entry can be reversed.'];
         }

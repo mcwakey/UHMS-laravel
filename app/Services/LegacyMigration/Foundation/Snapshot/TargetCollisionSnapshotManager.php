@@ -21,8 +21,8 @@ final class TargetCollisionSnapshotManager
     public function __construct(private readonly CanonicalManifestHasher $hasher = new CanonicalManifestHasher) {}
 
     /**
-     * @param array<string, string> $queryHashes
-     * @param array<string, string> $setHashes
+     * @param  array<string, string>  $queryHashes
+     * @param  array<string, string>  $setHashes
      */
     public function create(
         string $runToken,

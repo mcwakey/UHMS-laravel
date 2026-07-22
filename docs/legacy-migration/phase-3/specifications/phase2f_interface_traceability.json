@@ -1,6 +1,6 @@
 {
-  "specification_version": "3.0.0",
-  "phase": "3",
+  "specification_version": "3.1.0",
+  "phase": "3B",
   "source_manifest": "phase-2f/specifications/phase3_foundation_requirements.json",
   "capability_count": 25,
   "phase2f_requirements": ["PHASE3-FOUND-001", "PHASE3-FOUND-002", "PHASE3-FOUND-003", "PHASE3-FOUND-004", "PHASE3-FOUND-005", "PHASE3-FOUND-006", "PHASE3-FOUND-007", "PHASE3-FOUND-008", "PHASE3-FOUND-009", "PHASE3-FOUND-010", "PHASE3-FOUND-011", "PHASE3-FOUND-012", "PHASE3-FOUND-013", "PHASE3-FOUND-014", "PHASE3-FOUND-015", "PHASE3-FOUND-016", "PHASE3-FOUND-017", "PHASE3-FOUND-018", "PHASE3-FOUND-019", "PHASE3-FOUND-020", "PHASE3-FOUND-021", "PHASE3-FOUND-022", "PHASE3-FOUND-023", "PHASE3-FOUND-024", "PHASE3-FOUND-025"],
@@ -33,5 +33,22 @@
     {"capability_id":"PHASE3-FOUND-023","evidence_record":"foundation_capabilities.json#PHASE3-FOUND-023","trace_status":"blocked_policy_binding"},
     {"capability_id":"PHASE3-FOUND-024","evidence_record":"foundation_capabilities.json#PHASE3-FOUND-024","trace_status":"implemented_with_review_findings"},
     {"capability_id":"PHASE3-FOUND-025","evidence_record":"foundation_capabilities.json#PHASE3-FOUND-025","trace_status":"blocked_authoritative_measurement"}
-  ]
+  ],
+  "phase3b_traceability": {
+    "supersedes_trace_status_fields": true,
+    "status": "all_shared_foundation_capabilities_implemented_or_intentionally_interface_only",
+    "authoritative_policy_binding": "external_manifest_plus_sha256_plus_approval_reference_plus_23_artifact_hashes_and_contract_ids",
+    "recovery_boundary_count": 10,
+    "side_effect_control_count": 25,
+    "classic_table_privilege_coverage": 55,
+    "foundation_table_count": 24,
+    "focused_tests": 320,
+    "focused_assertions": 1676,
+    "broad_validation": {"tests": 2367, "assertions": 31756, "errors": 3, "failures": 44, "skipped": 3, "phase3b_regressions_identified": 0},
+    "final_independent_review": {"critical": 0, "high": 0, "medium": 0, "verdict": "pass"},
+    "review_state": "four_review_gate_passed; phase4a_synthetic_empty_cohort_only",
+    "phase4a_authorized": true,
+    "phase4a_authorization_scope": "synthetic_empty_cohort_foundation_exercise_only",
+    "importer_authorized": false
+  }
 }

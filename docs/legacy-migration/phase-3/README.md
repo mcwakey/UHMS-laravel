@@ -1,5 +1,7 @@
 # Phase 3 — migration foundation and safety infrastructure
 
+> Phase 3B safety closure on 2026-07-22 supersedes the implementation gaps below. See [the Phase 3B exit report](../phase-3b/PHASE_3B_EXIT_REPORT.md). The original Phase 3 assessment is retained as the evidence baseline; Phase 4A remains subject to the new four-review gate.
+
 Status: **implemented fail-closed, but not approved for Phase 4A**.
 
 Phase 3 contains shared foundation infrastructure only. It contains no patient, staff, reference, insurance, visit or clinical importer; selects no Cohort B source cohort; and authorizes no pilot. Classic access is restricted to exact database `uuhms` through read-only metadata and `SELECT` operations. Production and domain writes are disabled.

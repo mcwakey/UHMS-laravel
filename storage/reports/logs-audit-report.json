@@ -1,13 +1,13 @@
 {
-    "generated_at": "2026-07-19T00:38:56+00:00",
-    "controllers_flagged": 115,
-    "logging_services_detected": 177,
+    "generated_at": "2026-07-22T20:58:39+00:00",
+    "controllers_flagged": 114,
+    "logging_services_detected": 181,
     "summary": {
         "MISSING_LOG": 0,
         "NEEDS_REVIEW": 0,
         "KNOWN_BACKLOG": 19,
         "INTENTIONALLY_SKIPPED": 1,
-        "SERVICE_FUNNEL_COVERED": 95
+        "SERVICE_FUNNEL_COVERED": 94
     },
     "real_missing_logs": 0,
     "findings": [
@@ -472,33 +472,6 @@
                 "WorkspaceRouteResolver"
             ],
             "in_baseline": false
-        },
-        {
-            "controller": "app/Http/Controllers/Admin/AdmissionsWard/AdmissionController.php",
-            "unlogged_actions": [
-                "store",
-                "discharge"
-            ],
-            "actions": [
-                "store",
-                "discharge"
-            ],
-            "classification": "SERVICE_FUNNEL_COVERED",
-            "severity": "HIGH",
-            "reason": "Delegates to AdmissionDischargeReadinessService, AdmissionExtensionService, AdmissionRequestService, AdmissionService, VisitService (logs direct).",
-            "services": [
-                "AdmissionMedicationBoardService",
-                "AdmissionCareOverviewService",
-                "AdmissionDischargeReadinessService",
-                "AdmissionExtensionService",
-                "AdmissionRequestService",
-                "AdmissionService",
-                "ConsultationSummaryService",
-                "VisitService",
-                "WardService",
-                "WorkspaceRouteResolver"
-            ],
-            "in_baseline": true
         },
         {
             "controller": "app/Http/Controllers/Admin/AdmissionsWard/AdmissionRequestController.php",
@@ -1042,11 +1015,13 @@
             ],
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
-            "reason": "Delegates to BillingService, InvoiceReceivableService (logs direct).",
+            "reason": "Delegates to BillingService, InvoiceReceivableService, PaymentProviderResolver, ModuleService (logs direct).",
             "services": [
                 "BillingService",
                 "InvoiceBalanceService",
-                "InvoiceReceivableService"
+                "InvoiceReceivableService",
+                "PaymentProviderResolver",
+                "ModuleService"
             ],
             "in_baseline": true
         },

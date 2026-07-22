@@ -7,6 +7,8 @@ use App\Enums\NotificationPriority;
 use App\Models\QueueEntry;
 use App\Models\User;
 use App\Models\Visit;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -19,6 +21,7 @@ class QueueService
 
     public function addToQueue(Visit $visit): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::QueuePathwayMutation);
         // No-op: queue entries are now created explicitly per stage
         // (triage via addTriageEntry, departments via addForDepartment)
     }
@@ -28,14 +31,16 @@ class QueueService
      */
     public function addTriageEntry(Visit $visit): QueueEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::QueuePathwayMutation);
+
         $queueNumber = QueueEntry::nextQueueNumber(null);
 
         $entry = QueueEntry::create([
-            'visit_id'      => $visit->id,
+            'visit_id' => $visit->id,
             'department_id' => null,
-            'queue_number'  => $queueNumber,
-            'priority'      => $visit->priority->value,
-            'status'        => 'waiting',
+            'queue_number' => $queueNumber,
+            'priority' => $visit->priority->value,
+            'status' => 'waiting',
         ]);
 
         $this->notifyTriageWaiting($entry);
@@ -45,6 +50,8 @@ class QueueService
 
     public function ensureTriageEntry(Visit $visit): QueueEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::QueuePathwayMutation);
+
         $entry = $visit->queueEntries()
             ->whereNull('department_id')
             ->where('status', 'waiting')
@@ -60,14 +67,16 @@ class QueueService
      */
     public function addForDepartment(Visit $visit, int $departmentId): QueueEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::QueuePathwayMutation);
+
         $queueNumber = QueueEntry::nextQueueNumber($departmentId);
 
         return QueueEntry::create([
-            'visit_id'      => $visit->id,
+            'visit_id' => $visit->id,
             'department_id' => $departmentId,
-            'queue_number'  => $queueNumber,
-            'priority'      => $visit->priority->value,
-            'status'        => 'waiting',
+            'queue_number' => $queueNumber,
+            'priority' => $visit->priority->value,
+            'status' => 'waiting',
         ]);
     }
 
@@ -76,6 +85,8 @@ class QueueService
      */
     public function ensureForDepartment(Visit $visit, int $departmentId, bool $notifyConsultation = false): QueueEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::QueuePathwayMutation);
+
         $entry = $visit->queueEntries()
             ->where('department_id', $departmentId)
             ->where('status', 'waiting')
@@ -124,6 +135,8 @@ class QueueService
 
     public function callNext(int $departmentId): ?QueueEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::QueuePathwayMutation);
+
         $entry = QueueEntry::forDepartment($departmentId)
             ->today()
             ->waiting()
@@ -144,6 +157,7 @@ class QueueService
 
     public function markServing(QueueEntry $entry): QueueEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::QueuePathwayMutation);
         $entry->update([
             'status' => 'serving',
             'served_at' => now(),
@@ -155,6 +169,7 @@ class QueueService
 
     public function markCompleted(QueueEntry $entry): QueueEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::QueuePathwayMutation);
         $entry->update([
             'status' => 'completed',
             'completed_at' => now(),
@@ -165,12 +180,17 @@ class QueueService
 
     public function skip(QueueEntry $entry): QueueEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::QueuePathwayMutation);
+
         $entry->update(['status' => 'skipped']);
+
         return $entry->fresh();
     }
 
     public function requeue(QueueEntry $entry): QueueEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::QueuePathwayMutation);
+
         $newNumber = QueueEntry::nextQueueNumber($entry->department_id);
 
         $entry->update([
@@ -186,6 +206,8 @@ class QueueService
 
     public function completeCurrentEntry(Visit $visit): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::QueuePathwayMutation);
+
         $entry = $visit->queueEntries()
             ->whereIn('status', ['waiting', 'serving'])
             ->latest()

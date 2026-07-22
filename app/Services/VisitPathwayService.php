@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Visit;
 use App\Models\VisitPathwayEvent;
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,6 +13,8 @@ class VisitPathwayService
 {
     public function record(Visit $visit, string $eventType, array $data = []): VisitPathwayEvent
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::QueuePathwayMutation);
+
         $source = $data['source'] ?? null;
 
         return VisitPathwayEvent::create([

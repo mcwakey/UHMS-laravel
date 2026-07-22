@@ -7,13 +7,14 @@ use App\Services\LegacyMigration\Foundation\Validation\PatientTargetStateValidat
 use App\Services\LegacyMigration\Foundation\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\LegacyMigration\Phase2FPolicyFixture;
 
 final class TargetStateValidatorTest extends TestCase
 {
     #[Test]
     public function patient_recommendations_remain_dry_run_reachable_but_commit_blocked(): void
     {
-        $result = (new PatientTargetStateValidator)->validate($this->patientCandidate());
+        $result = (new PatientTargetStateValidator(Phase2FPolicyFixture::load()))->validate($this->patientCandidate());
 
         self::assertTrue($result->dryRunAllowed);
         self::assertFalse($result->commitAllowed);
@@ -37,7 +38,7 @@ final class TargetStateValidatorTest extends TestCase
         $patient = $this->patientCandidate();
         unset($patient['is_active'], $patient['registered_by']);
 
-        $result = (new PatientTargetStateValidator)->validate($patient);
+        $result = (new PatientTargetStateValidator(Phase2FPolicyFixture::load()))->validate($patient);
 
         self::assertContains('is_active', $result->missingExplicitFields);
         self::assertContains('registered_by', $result->missingExplicitFields);
@@ -50,7 +51,7 @@ final class TargetStateValidatorTest extends TestCase
         $patient = $this->patientCandidate();
         $patient['unexpected_target_default'] = true;
 
-        $result = (new PatientTargetStateValidator)->validate($patient);
+        $result = (new PatientTargetStateValidator(Phase2FPolicyFixture::load()))->validate($patient);
 
         self::assertSame(['unexpected_target_default'], $result->unexpectedFields);
         self::assertContains('FOUNDATION-TARGET-STATE-UNEXPECTED-FIELD', $result->violationCodes);
@@ -62,7 +63,7 @@ final class TargetStateValidatorTest extends TestCase
     #[Test]
     public function insurance_initialization_blocks_current_membership_and_operational_state(): void
     {
-        $result = (new InsuranceInitializationValidator)->validate([
+        $result = (new InsuranceInitializationValidator(Phase2FPolicyFixture::load()))->validate([
             'patient_id' => 'protected-parent-ref',
             'insurance_provider_id' => 'protected-provider-ref',
             'insurance_tier_id' => null,

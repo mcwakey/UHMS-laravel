@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
+
 use App\Enums\LogModule;
 use App\Enums\LogSeverity;
 use App\Enums\ShiftStatus;
@@ -56,6 +59,7 @@ class AccountingService
 
     public function createEntry(array $data): FinancialEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         $entry = FinancialEntry::create([
             'entry_number' => FinancialEntry::generateEntryNumber(),
             'category_id' => $data['category_id'],
@@ -83,6 +87,7 @@ class AccountingService
 
     public function approveEntry(FinancialEntry $entry): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if (in_array($entry->accounting_status, ['posted', 'reversed'], true)) {
             throw new \InvalidArgumentException('A posted or reversed entry cannot be re-approved.');
         }
@@ -102,6 +107,7 @@ class AccountingService
 
     public function deleteEntry(FinancialEntry $entry): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if ($entry->is_approved || in_array($entry->accounting_status, ['posted', 'reversed'], true)) {
             throw new \InvalidArgumentException('Cannot delete an approved entry.');
         }
@@ -124,6 +130,7 @@ class AccountingService
 
     public function openShift(array $data): CashierShift
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         $existing = $this->getOpenShift();
 
         if ($existing) {
@@ -148,6 +155,7 @@ class AccountingService
 
     public function closeShift(CashierShift $shift, array $data): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if (! $shift->is_open) {
             throw new \InvalidArgumentException('This shift is already closed.');
         }
@@ -179,6 +187,7 @@ class AccountingService
 
     public function verifyShift(CashierShift $shift): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if ($shift->status !== ShiftStatus::CLOSED) {
             throw new \InvalidArgumentException('Only closed shifts can be verified.');
         }

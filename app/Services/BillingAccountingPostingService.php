@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
+
 use App\Enums\Accounting\JournalEntryStatus;
 use App\Enums\CreditNoteType;
 use App\Enums\LogModule;
@@ -33,6 +36,7 @@ class BillingAccountingPostingService
 
     public function postInvoice(Invoice $invoice): ?JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if (in_array($invoice->status?->value ?? $invoice->status, ['cancelled', 'refunded'], true)) {
             return $invoice->journalEntry;
         }
@@ -105,6 +109,7 @@ class BillingAccountingPostingService
 
     public function postDiscount(InvoiceDiscount $discount): ?JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         $discount->loadMissing(['invoice', 'invoiceItem.invoice', 'invoiceItem.department', 'invoiceItem.serviceCatalog']);
 
         if ((string) $discount->accounting_status === self::STATUS_POSTED && $discount->journal_entry_id) {
@@ -179,6 +184,7 @@ class BillingAccountingPostingService
 
     public function postCreditNote(CreditNote $creditNote): ?JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         $creditNote->loadMissing(['invoice.visit', 'invoice.patient']);
 
         if ((string) $creditNote->accounting_status === self::STATUS_REVERSED) {
@@ -243,6 +249,7 @@ class BillingAccountingPostingService
 
     public function reverseInvoice(Invoice $invoice, string $reason): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         $invoice->loadMissing('items.journalEntry');
         $journals = $invoice->items
             ->pluck('journalEntry')
@@ -271,6 +278,7 @@ class BillingAccountingPostingService
 
     public function reverseCreditNote(CreditNote $creditNote, string $reason): void
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         $creditNote->loadMissing('journalEntry');
 
         if (! $creditNote->journalEntry || $creditNote->journalEntry->status !== JournalEntryStatus::POSTED) {

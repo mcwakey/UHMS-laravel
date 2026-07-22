@@ -4,7 +4,7 @@ namespace App\Services\LegacyMigration\Foundation\Recovery;
 
 final readonly class RecoveryEvidence
 {
-    public function __construct(
+    private function __construct(
         public bool $coordinatesMatch,
         public bool $lineageCompatible,
         public bool $unexpectedDurableFacts,
@@ -23,8 +23,46 @@ final readonly class RecoveryEvidence
         }
     }
 
-    public static function cleanRetry(): self
+    /** @param array<string,bool> $facts */
+    public static function fromProtectedStore(ProtectedRecoveryStore $issuer, array $facts): self
     {
-        return new self(true, true, false, false, false, false, false, false, false, true);
+        return self::fromFacts($facts);
+    }
+
+    /** @param array<string,bool> $facts */
+    public static function syntheticForTests(array $facts): self
+    {
+        if (! defined('PHPUNIT_COMPOSER_INSTALL') && ! defined('__PHPUNIT_PHAR__')) {
+            throw RecoveryException::failClosed('RECOVERY-SYNTHETIC-EVIDENCE-FORBIDDEN');
+        }
+
+        return self::fromFacts($facts);
+    }
+
+    /** @return array<string,bool> */
+    public function toArray(): array
+    {
+        return get_object_vars($this);
+    }
+
+    /** @param array<string,bool> $facts */
+    private static function fromFacts(array $facts): self
+    {
+        $required = [
+            'coordinatesMatch', 'lineageCompatible', 'unexpectedDurableFacts',
+            'durableUnitCommitted', 'durableFactsComplete', 'checkpointPresent',
+            'mandatoryReconciliationPresent', 'reconciliationPassed',
+            'transactionRolledBack', 'allocationConsumptionExplained',
+        ];
+        if (array_keys($facts) !== $required) {
+            throw RecoveryException::failClosed('RECOVERY-EVIDENCE-SHAPE-INVALID');
+        }
+        foreach ($facts as $value) {
+            if (! is_bool($value)) {
+                throw RecoveryException::failClosed('RECOVERY-EVIDENCE-SHAPE-INVALID');
+            }
+        }
+
+        return new self(...array_values($facts));
     }
 }

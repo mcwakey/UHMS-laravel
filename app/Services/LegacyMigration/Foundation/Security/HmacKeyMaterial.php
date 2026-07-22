@@ -46,6 +46,16 @@ final class HmacKeyMaterial
         );
     }
 
+    /** @return array{key_id:string,version:string,secret:string} */
+    public function __debugInfo(): array
+    {
+        return [
+            'key_id' => $this->keyId,
+            'version' => $this->version,
+            'secret' => '[REDACTED]',
+        ];
+    }
+
     private static function looksLikePlaceholder(string $value): bool
     {
         return preg_match('/(?:change[-_ ]?me|replace[-_ ]?me|example|placeholder|test[-_ ]?key)/i', $value) === 1;

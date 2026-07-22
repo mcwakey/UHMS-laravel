@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Services\LegacyMigration\Foundation\Runtime\OperationalEffectGate;
+use App\Services\LegacyMigration\Foundation\Runtime\ProhibitedSubsystem;
+
 use App\Enums\LogModule;
 use App\Enums\LogSeverity;
 use App\Models\GoodsReceivedNote;
@@ -38,6 +41,7 @@ class SupplierAccountingPostingService
      */
     public function postGoodsReceipt(GoodsReceivedNote $grn, SupplierPayable $payable, array $inventoryLines): ?JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if ((string) $grn->accounting_status === self::POSTED && $grn->journal_entry_id) {
             return $grn->journalEntry; // already posted — idempotent
         }
@@ -101,6 +105,7 @@ class SupplierAccountingPostingService
 
     public function postSupplierPayment(SupplierPayment $payment): ?JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if ((string) $payment->accounting_status === self::POSTED && $payment->journal_entry_id) {
             return $payment->journalEntry;
         }
@@ -158,6 +163,7 @@ class SupplierAccountingPostingService
      */
     public function postPurchaseReturn(PurchaseReturn $return, array $inventoryLines): ?JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if ((string) $return->accounting_status === self::POSTED && $return->journal_entry_id) {
             return $return->journalEntry;
         }
@@ -217,6 +223,7 @@ class SupplierAccountingPostingService
 
     public function reverseSupplierPayment(SupplierPayment $payment, string $reason, User $user): ?JournalEntry
     {
+        OperationalEffectGate::assertAllowed(ProhibitedSubsystem::AccountingPosting);
         if (! $payment->journal_entry_id || $payment->reversal_journal_entry_id) {
             return null; // nothing posted, or already reversed
         }
