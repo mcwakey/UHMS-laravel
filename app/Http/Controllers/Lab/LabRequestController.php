@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers\Lab;
 
+use App\Enums\ResultType;
 use App\Http\Controllers\Controller;
+use App\Models\Department;
 use App\Models\LabRequest;
+use App\Models\LabTest;
+use App\Models\Visit;
 use App\Services\InpatientWorkspaceScope;
 use App\Services\InvestigationRequestService;
 use App\Services\InvestigationWorkspaceScope;
@@ -50,6 +54,84 @@ class LabRequestController extends Controller
         $departments = $this->labService->getInvestigationDepartments();
 
         return view('lab.requests', compact('requests', 'stats', 'departments'));
+    }
+
+    /**
+     * Search visits (AJAX) so a new investigation request can be started
+     * for a patient/visit — used by the "New Request" modal on the
+     * investigation requests index page.
+     */
+    public function visitSearch(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+
+        $visits = Visit::query()
+            ->with('patient:id,patient_number,first_name,last_name')
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where('visit_number', 'like', "%{$q}%")
+                    ->orWhereHas('patient', function ($p) use ($q) {
+                        $p->where('first_name', 'like', "%{$q}%")
+                            ->orWhere('last_name', 'like', "%{$q}%")
+                            ->orWhere('patient_number', 'like', "%{$q}%");
+                    });
+            })
+            ->latest('visit_date')
+            ->limit(20)
+            ->get();
+
+        return response()->json($visits->map(fn ($v) => [
+            'id' => $v->id,
+            'visit_number' => $v->visit_number,
+            'patient_name' => $v->patient?->full_name,
+            'patient_number' => $v->patient?->patient_number,
+            'visit_date' => $v->visit_date?->format('d M Y'),
+        ]));
+    }
+
+    /**
+     * Tests available for a target department (AJAX) — catalogued lab
+     * tests when the department uses a structured result type, otherwise
+     * the modal falls back to free-text test names.
+     */
+    public function departmentTests(Department $department)
+    {
+        $resultType = $department->result_type ?? ResultType::NONE;
+        $usesCatalog = $resultType->usesTestCatalog();
+
+        return response()->json([
+            'result_type' => $resultType->value,
+            'uses_catalog' => $usesCatalog,
+            'lab_tests' => $usesCatalog
+                ? LabTest::where('is_active', true)->orderBy('name')->get(['id', 'name', 'code', 'unit', 'normal_range'])
+                : [],
+        ]);
+    }
+
+    /**
+     * Start a brand-new investigation request for a chosen visit, from the
+     * requests index page (no active consultation session required).
+     */
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'visit_id' => ['required', 'exists:visits,id'],
+            'target_department_id' => ['required', 'exists:departments,id'],
+            'items' => ['required', 'array', 'min:1'],
+            'urgency' => ['nullable', 'in:routine,urgent,emergency'],
+            'clinical_info' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $visit = Visit::findOrFail($data['visit_id']);
+
+        $labRequest = $this->labService->createRequest($visit, $data['items'], $data);
+        $labRequest->load('targetDepartment');
+
+        return redirect()
+            ->route('admin.lab.requests.show', $labRequest)
+            ->with('success', __('messages.consultations.lab_request_sent', [
+                'number' => $labRequest->request_number,
+                'department' => $labRequest->targetDepartment?->name,
+            ]));
     }
 
     /**

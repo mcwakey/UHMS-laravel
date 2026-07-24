@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StorePrescriptionForVisitRequest;
 use App\Http\Requests\StorePrescriptionRequest;
 use App\Models\Drug;
+use App\Models\MedicalRecord;
 use App\Models\Prescription;
+use App\Models\Visit;
 use App\Services\PharmacyBillingSelectionService;
 use App\Services\PharmacyService;
 use App\Services\PrescriptionService;
@@ -32,7 +35,14 @@ class PrescriptionController extends Controller
 
         $prescriptions = $this->prescriptionService->list($filters);
 
-        return view('prescriptions.index', compact('prescriptions'));
+        $drugs = collect();
+        if ($request->user()?->can('prescriptions.create')) {
+            $drugs = Drug::where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'generic_name', 'strength', 'dosage_form', 'unit']);
+        }
+
+        return view('prescriptions.index', compact('prescriptions', 'drugs'));
     }
 
     /**
@@ -68,6 +78,62 @@ class PrescriptionController extends Controller
         $prescription->load(['patient', 'doctor', 'visit.patient', 'items.drug']);
 
         return view('reports.print-prescription', compact('prescription'));
+    }
+
+    /**
+     * Search visits (AJAX) so a new Rx can be started for a patient/visit
+     * that isn't already open — used by the "New Rx" modal on the
+     * prescriptions index page.
+     */
+    public function visitSearch(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+
+        $visits = Visit::query()
+            ->with('patient:id,patient_number,first_name,last_name')
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where('visit_number', 'like', "%{$q}%")
+                    ->orWhereHas('patient', function ($p) use ($q) {
+                        $p->where('first_name', 'like', "%{$q}%")
+                            ->orWhere('last_name', 'like', "%{$q}%")
+                            ->orWhere('patient_number', 'like', "%{$q}%");
+                    });
+            })
+            ->latest('visit_date')
+            ->limit(20)
+            ->get();
+
+        return response()->json($visits->map(fn ($v) => [
+            'id' => $v->id,
+            'visit_number' => $v->visit_number,
+            'patient_name' => $v->patient?->full_name,
+            'patient_number' => $v->patient?->patient_number,
+            'visit_date' => $v->visit_date?->format('d M Y'),
+        ]));
+    }
+
+    /**
+     * Start a brand-new prescription for a chosen visit, from the
+     * prescriptions index page (no active consultation session required).
+     */
+    public function store(StorePrescriptionForVisitRequest $request)
+    {
+        $visit = Visit::findOrFail($request->validated('visit_id'));
+
+        $record = MedicalRecord::firstOrCreate(
+            ['visit_id' => $visit->id, 'consultation_route_id' => null],
+            [
+                'patient_id' => $visit->patient_id,
+                'doctor_id' => $request->user()->id,
+                'department_id' => $visit->department_id,
+            ]
+        );
+
+        $prescription = $this->prescriptionService->create($record, $request->validated());
+
+        return redirect()
+            ->route('admin.prescriptions.show', $prescription)
+            ->with('success', __('messages.consultations.prescription_created', ['number' => $prescription->prescription_number]));
     }
 
     public function storeAnother(StorePrescriptionRequest $request, Prescription $prescription)

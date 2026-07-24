@@ -228,4 +228,14 @@ return [
     'clear_btn'                 => 'Effacer',
     'date_col'                  => 'Date',
     'tests_title'               => 'Catalogue des tests de laboratoire',
+
+    // New request modal (requests.blade.php)
+    'new_request'               => 'Nouvelle demande',
+    'new_request_title'         => 'Nouvelle demande d\'investigation',
+    'select_visit_help'         => 'Commencez à taper un numéro de visite, un nom de patient ou un numéro de patient.',
+    'select_department_first'  => 'Sélectionnez un service pour charger les tests disponibles.',
+    'select_tests'              => 'Sélectionner les tests',
+    'other_tests_label'         => 'Tests (un par ligne)',
+    'other_tests_placeholder'   => 'ex. Radiographie thoracique, Échographie abdominale',
+    'create_request_btn'        => 'Créer la demande',
 ];

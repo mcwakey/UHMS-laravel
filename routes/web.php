@@ -2391,6 +2391,8 @@ Route::middleware('auth')->group(function () {
         // Prescriptions
         Route::middleware(['can:prescriptions.view', 'records.redirect'])->group(function () {
             Route::get('prescriptions', [PrescriptionController::class, 'index'])->name('prescriptions.index');
+            Route::get('prescriptions/visit-search', [PrescriptionController::class, 'visitSearch'])->name('prescriptions.visit-search');
+            Route::post('prescriptions', [PrescriptionController::class, 'store'])->name('prescriptions.store')->middleware('can:prescriptions.create');
             Route::get('prescriptions/{prescription}', [PrescriptionController::class, 'show'])->name('prescriptions.show');
             Route::get('prescriptions/{prescription}/print', [PrescriptionController::class, 'print'])->name('prescriptions.print');
             Route::post('prescriptions/{prescription}/another', [PrescriptionController::class, 'storeAnother'])->name('prescriptions.another')->middleware('can:prescriptions.create');
@@ -2418,6 +2420,9 @@ Route::middleware('auth')->group(function () {
             // Lab Requests
             Route::middleware('can:lab.requests.view')->group(function () {
                 Route::get('requests', [LabRequestController::class, 'index'])->name('requests.index');
+                Route::get('requests/visit-search', [LabRequestController::class, 'visitSearch'])->name('requests.visit-search');
+                Route::get('requests/departments/{department}/tests', [LabRequestController::class, 'departmentTests'])->name('requests.department-tests');
+                Route::post('requests', [LabRequestController::class, 'store'])->name('requests.store')->middleware('can:lab.requests.create');
                 Route::get('requests/{labRequest}', [LabRequestController::class, 'show'])->name('requests.show');
                 Route::patch('requests/{labRequest}/accept', [LabRequestController::class, 'accept'])->name('requests.accept')->middleware('can:lab.results.create');
                 Route::post('requests/{labRequest}/accept-selected', [LabRequestController::class, 'acceptSelected'])->name('requests.accept-selected')->middleware('can:lab.results.create');

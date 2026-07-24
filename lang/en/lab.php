@@ -226,4 +226,14 @@ return [
     'clear_btn'                 => 'Clear',
     'date_col'                  => 'Date',
     'tests_title'               => 'Lab Test Catalog',
+
+    // New request modal (requests.blade.php)
+    'new_request'               => 'New Request',
+    'new_request_title'         => 'New Investigation Request',
+    'select_visit_help'         => 'Start typing a visit number, patient name, or patient number.',
+    'select_department_first'  => 'Select a department to load available tests.',
+    'select_tests'              => 'Select Tests',
+    'other_tests_label'         => 'Tests (one per line)',
+    'other_tests_placeholder'   => 'e.g. Chest X-ray, Abdominal Ultrasound',
+    'create_request_btn'        => 'Create Request',
 ];
