@@ -12,6 +12,7 @@ use App\Models\InsuranceProvider;
 use App\Models\InsuranceTier;
 use App\Models\Patient;
 use App\Models\PatientPrivacyOverride;
+use App\Models\Setting;
 use App\Models\Visit;
 use App\Services\ActivityLogService;
 use App\Services\Billing\PatientFinancialRiskService;
@@ -265,6 +266,17 @@ class PatientController extends Controller
         }
 
         return view('patients.show', compact('patient', 'insuranceProviders', 'upcomingVisits', 'upcomingAppointments', 'activityLogs', 'activeBreakGlass', 'financialRisk', 'financialRiskHistory'));
+    }
+
+    public function card(Patient $patient)
+    {
+        if ($patient->isMerged()) {
+            $patient = $patient->getFinalPatient();
+        }
+
+        $organization = Setting::getGroup('organization');
+
+        return view('patients.card', compact('patient', 'organization'));
     }
 
     public function edit(Patient $patient)

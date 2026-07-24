@@ -299,8 +299,10 @@
     <!-- Identification & Emergency Card -->
     <div class="col-xl-7 d-flex">
         <div class="card shadow-sm flex-fill w-100">
-            <div class="card-header">
+            <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="fw-bold mb-0"><i class="ti ti-id me-1"></i>{{ __('patients.identification') }}</h5>
+
+                <a data-no-inertia target="_blank" href="{{ $workspaceRoutes->route('admin.patients.card', $patient) }}" class="btn btn-outline-secondary btn-md"><i class="ti ti-id-badge-2 me-1"></i>{{ __('patients.print_hospital_card') }}</a>
             </div>
             <div class="card-body pb-0">
                 <div class="row">

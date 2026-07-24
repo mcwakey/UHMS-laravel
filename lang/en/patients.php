@@ -85,6 +85,15 @@ return [
     'cannot_visit_deceased'     => 'Cannot start a new visit for a deceased patient',
     'profile_title'             => 'Patient Profile',
 
+    // Hospital card
+    'print_hospital_card'       => 'Print Hospital Card',
+    'hospital_card'             => 'Hospital Card',
+    'hospital_no'               => 'Hospital No.',
+    'issued_on'                 => 'Issued On',
+    'card_instructions'         => 'This card must be presented at every hospital visit. If found, please return to the hospital.',
+    'print'                     => 'Print',
+    'back_to_profile'           => 'Back to Profile',
+
     // Status / deceased
     'patient_deceased'          => 'This patient is deceased',
     'date_of_death'             => 'Date of death',

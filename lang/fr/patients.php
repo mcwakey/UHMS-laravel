@@ -85,6 +85,15 @@ return [
     'cannot_visit_deceased'     => 'Impossible de démarrer une visite pour un patient décédé',
     'profile_title'             => 'Profil du patient',
 
+    // Hospital card
+    'print_hospital_card'       => 'Imprimer la carte d\'hôpital',
+    'hospital_card'             => 'Carte d\'hôpital',
+    'hospital_no'               => 'N° hôpital',
+    'issued_on'                 => 'Délivrée le',
+    'card_instructions'         => 'Cette carte doit être présentée à chaque visite à l\'hôpital. Si trouvée, merci de la retourner à l\'hôpital.',
+    'print'                     => 'Imprimer',
+    'back_to_profile'           => 'Retour au profil',
+
     // Status / deceased
     'patient_deceased'          => 'Ce patient est décédé',
     'date_of_death'             => 'Date du décès',

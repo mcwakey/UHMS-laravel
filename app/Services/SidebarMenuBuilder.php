@@ -2857,6 +2857,17 @@ class SidebarMenuBuilder
                 ],
             ],
             [
+                'title' => __('investigations.menu.blood_bank_title'),
+                'items' => [
+                    ['label' => __('investigations.menu.blood_bank_dashboard'), 'icon' => 'ti ti-droplet', 'route' => 'admin.blood-bank.dashboard', 'active_patterns' => ['admin.blood-bank.dashboard'], 'permission' => 'blood_bank.view', 'module' => 'blood_bank'],
+                    ['label' => __('investigations.menu.blood_bank_requests'), 'icon' => 'ti ti-receipt', 'route' => 'admin.blood-bank.requests.index', 'active_patterns' => ['admin.blood-bank.requests.*'], 'permission' => 'blood_bank.requests.view', 'module' => 'blood_bank'],
+                    ['label' => __('investigations.menu.blood_bank_units'), 'icon' => 'ti ti-droplet-filled', 'route' => 'admin.blood-bank.units.index', 'active_patterns' => ['admin.blood-bank.units.*'], 'permission' => 'blood_bank.units.view', 'module' => 'blood_bank'],
+                    ['label' => __('investigations.menu.blood_bank_donors'), 'icon' => 'ti ti-user', 'route' => 'admin.blood-bank.donors.index', 'active_patterns' => ['admin.blood-bank.donors.*'], 'permission' => 'blood_bank.donors.manage', 'module' => 'blood_bank'],
+                    ['label' => __('investigations.menu.blood_bank_donations'), 'icon' => 'ti ti-medicine-syrup', 'route' => 'admin.blood-bank.donations.index', 'active_patterns' => ['admin.blood-bank.donations.*'], 'permission' => 'blood_bank.donations.record', 'module' => 'blood_bank'],
+                    ['label' => __('investigations.menu.blood_bank_reports'), 'icon' => 'ti ti-report', 'route' => 'admin.blood-bank.reports.index', 'active_patterns' => ['admin.blood-bank.reports.*'], 'permission' => 'blood_bank.reports.view', 'module' => 'blood_bank'],
+                ],
+            ],
+            [
                 'title' => __('investigations.menu.reports_title'),
                 'items' => [[
                     'label' => __('investigations.menu.reports'), 'icon' => 'ti ti-chart-bar', 'route' => 'investigations.reports.index', 'active_patterns' => ['investigations.reports.*'], 'permission' => 'reports.investigations', 'module' => 'reports',

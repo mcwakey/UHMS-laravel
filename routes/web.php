@@ -1494,6 +1494,7 @@ Route::middleware('auth')->group(function () {
             Route::get('patients/create', [PatientController::class, 'create'])->name('patients.create')->middleware('can:patients.create');
             Route::post('patients', [PatientController::class, 'store'])->name('patients.store')->middleware('can:patients.create');
             Route::get('patients/{patient}', [PatientController::class, 'show'])->name('patients.show');
+            Route::get('patients/{patient}/card', [PatientController::class, 'card'])->name('patients.card');
             Route::patch('patients/{patient}/medical-summary', [PatientController::class, 'updateMedicalSummary'])->name('patients.medical-summary.update');
             Route::post('patients/{patient}/privacy/break-glass', [PatientPrivacyController::class, 'startBreakGlass'])
                 ->name('patients.privacy.break-glass.start')
