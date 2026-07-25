@@ -59,7 +59,33 @@ class ConsultationMaternitySpecialtyWriteGuard
         'risk_assessment' => [
             'risk_level', 'risk_factors',
         ],
+        // Phase 14R.4 — completed conversions. `current_complaints`,
+        // `high_risk_notes` and `booking_status` stay consultation-owned;
+        // `planned_place` and `delivery_plan` stay consultation intent.
+        'current_pregnancy' => [
+            'pregnancy_confirmed', 'danger_signs',
+        ],
+        'birth_plan' => [
+            'danger_signs_counseling', 'next_visit_date',
+        ],
     ];
+
+    /**
+     * Phase 14R.4 — Gynaecology owns a much narrower slice: only the obstetric
+     * history fields that duplicate the pregnancy profile, and only when a
+     * profile is explicitly linked. `menstrual_history.lmp` is NEVER guarded —
+     * it stays consultation data (decision R2), and adoption is a separate,
+     * explicit, one-way action.
+     *
+     * @var array<string, list<string>>
+     */
+    private const GYNAECOLOGY_GUARDED_FIELDS = [
+        'obstetric_history' => [
+            'gravida', 'para', 'abortions', 'living_children', 'previous_c_section',
+        ],
+    ];
+
+    public const GYNAECOLOGY_PROFILE_CODE = 'gynecology';
 
     /**
      * Consultation-owned field in `obstetric_history` that maps to a different
@@ -89,16 +115,40 @@ class ConsultationMaternitySpecialtyWriteGuard
             && (bool) config('consultation.maternity_context.obstetrics_write_guard_enabled', false);
     }
 
-    /** Fields this guard owns for a section (empty when the section is unguarded). */
-    public function guardedFieldsFor(string $sectionKey): array
+    /* ── Gynaecology (Phase 14R.4), independent of the Obstetrics flags ── */
+
+    public function gynaecologyContextEnabled(): bool
     {
-        return self::GUARDED_FIELDS[$sectionKey] ?? [];
+        return (bool) config('consultation.maternity_context.gynaecology_context_enabled', false);
+    }
+
+    /** Mirrors the Obstetrics rule: the guard cannot activate without its context flag. */
+    public function gynaecologyGuardEnabled(): bool
+    {
+        return $this->gynaecologyContextEnabled()
+            && (bool) config('consultation.maternity_context.gynaecology_write_guard_enabled', false);
+    }
+
+    /** Fields this guard owns for a section, for the given profile. */
+    public function guardedFieldsFor(string $sectionKey, string $profileCode = self::PROFILE_CODE): array
+    {
+        return $this->matrixFor($profileCode)[$sectionKey] ?? [];
     }
 
     /** @return array<string, list<string>> */
     public function matrix(): array
     {
         return self::GUARDED_FIELDS;
+    }
+
+    /** @return array<string, list<string>> */
+    public function matrixFor(string $profileCode): array
+    {
+        return match ($profileCode) {
+            self::PROFILE_CODE => self::GUARDED_FIELDS,
+            self::GYNAECOLOGY_PROFILE_CODE => self::GYNAECOLOGY_GUARDED_FIELDS,
+            default => [],
+        };
     }
 
     /**
@@ -112,15 +162,26 @@ class ConsultationMaternitySpecialtyWriteGuard
         ?ConsultationSpecialtyProfile $profile,
         ?ConsultationMaternityContext $context = null,
     ): bool {
-        if (! $this->guardEnabled()) {
+        if (! $profile) {
             return false;
         }
 
-        if (! $profile || $profile->code !== self::PROFILE_CODE) {
+        // Each profile has its own independent flag pair.
+        $flagsPermit = match ($profile->code) {
+            self::PROFILE_CODE => $this->guardEnabled(),
+            self::GYNAECOLOGY_PROFILE_CODE => $this->gynaecologyGuardEnabled(),
+            default => false,
+        };
+
+        if (! $flagsPermit) {
             return false;
         }
 
-        $context ??= $this->resolver->resolve($consultation);
+        // Gynaecology never uses the inference fallback chain — only an
+        // explicit link may activate its guard.
+        $context ??= $profile->code === self::GYNAECOLOGY_PROFILE_CODE
+            ? $this->resolver->resolveExplicitOnly($consultation)
+            : $this->resolver->resolve($consultation);
 
         // Only an EXPLICIT, valid link activates the guard. Inferred context is
         // a suggestion until the clinician confirms it.
@@ -146,7 +207,7 @@ class ConsultationMaternitySpecialtyWriteGuard
         array $entry,
         ?ConsultationMaternityContext $context = null,
     ): array {
-        $guarded = $this->guardedFieldsFor($sectionKey);
+        $guarded = $this->guardedFieldsFor($sectionKey, $profile?->code ?? '');
 
         if ($guarded === [] || $entry === []) {
             return [];

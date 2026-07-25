@@ -3,6 +3,7 @@
 namespace App\Services\Consultation\Specialty;
 
 use App\Data\Consultation\Specialty\ResolvedConsultationSpecialty;
+use App\Services\Consultation\Maternity\ConsultationMaternityWriteBlockedException;
 use App\Models\ConsultationSpecialtyOrderSet;
 use App\Models\ConsultationSpecialtyOrderSetApplication;
 use App\Models\ConsultationSpecialtyOrderSetItem;
@@ -289,7 +290,21 @@ class ConsultationSpecialtyOrderSetService
             ];
         }
 
-        $entry = $this->entries->upsertEntry($route, $profile, $sectionKey, $merged, $user);
+        // Phase 14R.4 — the source-of-truth guard now lives at the entry-service
+        // boundary, so a stale or admin-authored order set can no longer patch
+        // maternity-owned fields. Surface that as a structured, non-fatal
+        // "blocked" result instead of failing the whole order-set application.
+        try {
+            $entry = $this->entries->upsertEntry($route, $profile, $sectionKey, $merged, $user);
+        } catch (ConsultationMaternityWriteBlockedException $e) {
+            return [
+                'status' => 'blocked',
+                'target_type' => null,
+                'target_id' => null,
+                'message' => __('consultation_maternity.order_sets.no_specialty_entry_created'),
+                'blocked_fields' => $e->blockedFields,
+            ];
+        }
 
         return [
             'status' => 'applied',

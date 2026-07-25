@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Doctor\Consultations;
 use App\Enums\ConsultationMaternityContextType;
 use App\Enums\ConsultationMaternityLinkRole;
 use App\Enums\LogModule;
+use App\Data\Consultation\Maternity\GynaecologyWorkspaceViewModel;
 use App\Enums\PregnancyDatingMethod;
 use App\Models\LaborEpisode;
 use App\Models\PregnancyProfile;
@@ -14,6 +15,7 @@ use App\Services\Consultation\ConsultationActionException;
 use App\Services\Consultation\Maternity\ConsultationMaternityContextResolver;
 use App\Services\Consultation\Maternity\ConsultationMaternityLinkException;
 use App\Services\Consultation\Maternity\ConsultationMaternityLinkService;
+use App\Services\Consultation\Maternity\GynaecologyConsultationContextService;
 use App\Services\Maternity\AntenatalVisitService;
 use App\Services\Maternity\LaborEpisodeService;
 use App\Services\Maternity\PregnancyProfileService;
@@ -286,6 +288,77 @@ class ConsultationMaternityContextController extends ConsultationWorkflowControl
         return $this->success($request, __('consultation_maternity.messages.anc_recorded'));
     }
 
+    /* ── Gynaecology: explicit one-way LMP adoption (Phase 14R.4) ─────── */
+
+    /**
+     * Adopt the saved Gynaecology `menstrual_history.lmp` as the pregnancy
+     * profile's dating LMP. One-way and explicit:
+     *
+     *  - the source is read SERVER-SIDE from the persisted specialty entry;
+     *    a client-submitted LMP is never trusted and an unsaved form value
+     *    cannot be adopted;
+     *  - the consultation entry is left completely unchanged;
+     *  - a conflicting or scan/ART-dated profile is never overwritten;
+     *  - the profile LMP is never synced back into the consultation.
+     */
+    public function adoptMenstrualLmp(
+        Request $request,
+        Visit $visit,
+        GynaecologyConsultationContextService $gynaecology,
+        PregnancyProfileService $profiles,
+        ActivityLogService $activityLog,
+    ) {
+        $this->authorizeBridge($request, 'consultation.maternity_context.adopt_lmp');
+        $this->authorizeMaternity($request, 'maternity.pregnancy.update');
+
+        // Clinical mutation → requires an active/editable consultation.
+        $route = $this->mutableRoute($request, $visit, gynaecology: true);
+
+        $profile = $this->explicitlyLinkedProfileOrFail($route);
+        $savedLmp = $gynaecology->savedConsultationLmp($route);
+        $state = $gynaecology->lmpAdoptionState($savedLmp, $profile);
+
+        $message = match ($state) {
+            GynaecologyWorkspaceViewModel::ADOPT_NO_SOURCE => __('consultation_maternity.lmp.no_saved_lmp'),
+            GynaecologyWorkspaceViewModel::ADOPT_CONFLICT => __('consultation_maternity.lmp.conflict'),
+            GynaecologyWorkspaceViewModel::ADOPT_DATING_LOCKED => __('consultation_maternity.lmp.dating_locked'),
+            default => null,
+        };
+
+        if ($message !== null) {
+            return $this->failure($request, $message);
+        }
+
+        // Already the same date → idempotent success, no write.
+        if ($state === GynaecologyWorkspaceViewModel::ADOPT_IDEMPOTENT) {
+            return $this->success($request, __('consultation_maternity.lmp.already_matches'));
+        }
+
+        $profiles->update($profile, [
+            'last_menstrual_period' => $savedLmp->toDateString(),
+            'dating_method' => PregnancyDatingMethod::LMP->value,
+        ], $request->user());
+
+        $activityLog->log(
+            LogModule::CONSULTATION,
+            'GYNAECOLOGY_LMP_ADOPTED_FOR_PREGNANCY_DATING',
+            [
+                'patient_id' => $visit->patient_id,
+                'visit_id' => $visit->id,
+                'causer' => $request->user(),
+                'metadata' => [
+                    'consultation_route_id' => $route->id,
+                    'pregnancy_profile_id' => $profile->id,
+                    'adopted_lmp' => $savedLmp->toDateString(),
+                ],
+            ],
+            $profile,
+            'GYNAECOLOGY_LMP_ADOPTED_FOR_PREGNANCY_DATING',
+        );
+
+        return $this->success($request, __('consultation_maternity.lmp.adopted'));
+    }
+
     /* ── Start / open labor ───────────────────────────────────────────── */
 
     public function startLabor(
@@ -362,7 +435,7 @@ class ConsultationMaternityContextController extends ConsultationWorkflowControl
      */
     private function route(Request $request, Visit $visit)
     {
-        $this->assertWorkspaceEnabled();
+        $this->assertWorkspaceEnabled(eitherWorkspace: true);
 
         $route = app(\App\Services\ConsultationSessionService::class)
             ->resolveRouteForVisit($visit, $request->integer('consultation_route_id') ?: null);
@@ -388,9 +461,9 @@ class ConsultationMaternityContextController extends ConsultationWorkflowControl
      * This intentionally reuses the existing consultation mutation guard rather
      * than inventing a parallel rule — it must never be weakened here.
      */
-    private function mutableRoute(Request $request, Visit $visit)
+    private function mutableRoute(Request $request, Visit $visit, bool $gynaecology = false)
     {
-        $this->assertWorkspaceEnabled();
+        $this->assertWorkspaceEnabled($gynaecology);
 
         try {
             return $this->consultationMutationContext(
@@ -407,9 +480,23 @@ class ConsultationMaternityContextController extends ConsultationWorkflowControl
         }
     }
 
-    private function assertWorkspaceEnabled(): void
+    /**
+     * Obstetrics and Gynaecology have independent context flags. Context-link
+     * actions are reachable from either workspace, so either flag suffices;
+     * a Gynaecology-specific mutation requires the Gynaecology flag.
+     */
+    private function assertWorkspaceEnabled(bool $gynaecology = false, bool $eitherWorkspace = false): void
     {
-        if (! config('consultation.maternity_context.obstetrics_workspace_enabled', false)) {
+        $obstetrics = (bool) config('consultation.maternity_context.obstetrics_workspace_enabled', false);
+        $gynae = (bool) config('consultation.maternity_context.gynaecology_context_enabled', false);
+
+        $permitted = match (true) {
+            $gynaecology => $gynae,
+            $eitherWorkspace => $obstetrics || $gynae,
+            default => $obstetrics,
+        };
+
+        if (! $permitted) {
             abort(403, __('consultation_maternity.messages.workspace_disabled'));
         }
     }

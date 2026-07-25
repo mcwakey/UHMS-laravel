@@ -64,6 +64,22 @@ class ConsultationMaternityContextResolver
             ?? ConsultationMaternityContext::none($consultation);
     }
 
+    /**
+     * Phase 14R.4 — explicit links ONLY, with no inference fallback.
+     *
+     * Gynaecology uses this: a gynaecology consultation must never acquire a
+     * maternity context from the same visit, the same admission, or the mere
+     * existence of one active pregnancy profile. Reuses the same explicit-link
+     * chain validation as resolve() — nothing is duplicated.
+     */
+    public function resolveExplicitOnly(VisitConsultationRoute $consultation): ConsultationMaternityContext
+    {
+        $consultation->loadMissing(['visit.admission', 'patient']);
+
+        return $this->fromExplicitLinks($consultation)
+            ?? ConsultationMaternityContext::none($consultation);
+    }
+
     /* ── A. Explicit links ─────────────────────────────────────────────── */
 
     private function fromExplicitLinks(VisitConsultationRoute $consultation): ?ConsultationMaternityContext

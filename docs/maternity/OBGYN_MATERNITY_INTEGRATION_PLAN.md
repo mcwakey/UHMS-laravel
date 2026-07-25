@@ -104,7 +104,9 @@ Values: none, pregnancy profile, ANC, labor, delivery, newborn, postnatal.
 
 ---
 
-## 4. Phase 14R.4 — Gynaecology separation
+## 4. Phase 14R.4 — Gynaecology separation ✅ IMPLEMENTED
+
+> **Delivered, dark by default.** Independent Gynaecology flags, explicit-only context resolution, one-way LMP adoption (R2), Gynaecology obstetric-history ownership (R4), completed `current_pregnancy`/`birth_plan` conversion, **order-set retargeting (R5 closed)** and runtime write-path hardening. 31 new tests. See `OBGYN_MATERNITY_GYNAECOLOGY_PHASE_14R_4_REPORT.md`.
 
 **Goal:** Keep Gynaecology pregnancy-free by default; make any transition explicit.
 
@@ -246,4 +248,4 @@ Measured in this environment: **0 rows** to reconcile — re-measure per environ
 | 14R.6 | Readiness, summary projection, reconciliation, billing policy | high | Dry-run report reviewed; billing policy approved |
 | 14R.7 | Manual test data + wider regression | medium | Full regression pass |
 
-**14R.3 is complete (dark by default). Next: 14R.4 — Gynaecology separation + order-set retargeting (R5), which unblocks converting `current_pregnancy` and `birth_plan`.**
+**14R.4 is complete (dark by default); R5 is closed and `current_pregnancy`/`birth_plan` are converted. Next: 14R.5 — admission/emergency/labor/delivery/postnatal handoffs, plus the Gynaecology UI wiring noted in the 14R.4 report.**

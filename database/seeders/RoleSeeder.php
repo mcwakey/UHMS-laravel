@@ -82,6 +82,8 @@ class RoleSeeder extends Seeder
             'consultation.maternity_context.create_profile',
             'consultation.maternity_context.record_anc',
             'consultation.maternity_context.start_labor',
+            // Phase 14R.4 — one-way LMP adoption (also needs maternity.pregnancy.update).
+            'consultation.maternity_context.adopt_lmp',
             'consultations.reopen',
             'consultations.reopen_completed',
             'consultations.reopen_same_day_discharge',

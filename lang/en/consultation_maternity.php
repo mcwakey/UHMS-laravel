@@ -162,6 +162,63 @@ return [
         'blocked_paused' => 'This action is unavailable while the consultation is paused.',
     ],
 
+    // ── Phase 14R.4 — Gynaecology separation + LMP adoption ───────────────
+    'gynaecology' => [
+        'pregnancy_workflow' => 'Pregnancy workflow',
+        'start_or_link' => 'Start or Link Pregnancy Workflow',
+        'remains_gynaecology' => 'This consultation remains Gynaecology.',
+        'explicitly_linked_profile' => 'Explicitly linked Pregnancy Profile',
+        'no_profile_linked' => 'No Pregnancy Profile linked',
+        'positive_test_recorded' => 'Positive pregnancy test recorded',
+        'no_profile_created_automatically' => 'No Pregnancy Profile was created automatically.',
+        'open_maternity_profile' => 'Open Maternity Pregnancy Profile',
+        'consultation_obstetric_history' => 'Consultation obstetric history',
+        'maternity_obstetric_history' => 'Maternity obstetric history',
+        'legacy_entry' => 'Legacy Gynaecology Consultation Entry',
+        'source_profile' => 'Source: Maternity Pregnancy Profile',
+        'pilot_mode' => 'Pregnancy context pilot mode',
+        'source_of_truth_mode' => 'Maternity is the source of truth for linked pregnancy fields',
+    ],
+
+    'lmp' => [
+        'use_saved_for_dating' => 'Use the saved Gynaecology LMP for pregnancy dating',
+        'adopt' => 'Adopt LMP',
+        'confirm_adoption' => 'Confirm LMP adoption',
+        'saved_consultation_lmp' => 'Saved Consultation LMP',
+        'profile_lmp' => 'Pregnancy Profile LMP',
+        'already_matches' => 'The Pregnancy Profile already uses this LMP.',
+        'conflict' => 'The Pregnancy Profile already has a different LMP. Review it in Maternity before changing the dating.',
+        'dating_locked' => 'This pregnancy is dated by ultrasound or assisted reproduction, so the LMP cannot replace it.',
+        'review_in_maternity' => 'Review Pregnancy Profile in Maternity',
+        'no_saved_lmp' => 'No saved Consultation LMP is available to adopt.',
+        'unavailable_completed' => 'LMP adoption is unavailable on a completed consultation.',
+        'adopted' => 'LMP adopted for pregnancy dating.',
+        'one_way_warning' => 'This is a one-way adoption.',
+        'later_changes_warning' => 'Later Maternity changes will not update this Consultation entry.',
+    ],
+
+    'order_sets' => [
+        'action_required' => 'Maternity workflow action required',
+        'create_or_link_profile' => 'Create or link Pregnancy Profile',
+        'record_anc_counselling' => 'Record ANC counselling',
+        'already_satisfied' => 'Already satisfied',
+        'legacy_patch' => 'Legacy specialty patch',
+        'retargeted_action' => 'Retargeted Maternity action',
+        'custom_needs_review' => 'Custom order set needs review',
+        'no_specialty_entry_created' => 'No specialty entry was created.',
+        'maternity_permission_required' => 'Underlying Maternity permission required.',
+    ],
+
+    'converted' => [
+        'pregnancy_confirmed_by_profile' => 'Pregnancy confirmed by linked profile',
+        'latest_anc_danger_signs' => 'Latest ANC danger signs',
+        'latest_anc_counselling' => 'Latest ANC counselling',
+        'latest_anc_next_visit' => 'Latest ANC next visit',
+        'consultation_booking_context' => 'Consultation booking context',
+        'consultation_birth_plan_intent' => 'Consultation birth-plan intent',
+        'labor_delivery_plan' => 'Labor delivery plan',
+    ],
+
     'warnings' => [
         'multiple_active_profiles' => 'This patient has more than one active pregnancy profile. Select one explicitly.',
         'multiple_candidate_profiles' => 'More than one pregnancy profile matches this context. Select one explicitly.',

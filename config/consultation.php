@@ -49,5 +49,29 @@ return [
             'CONSULTATION_OBSTETRIC_MATERNITY_WRITE_GUARD_ENABLED',
             false
         ),
+
+        /*
+        | Phase 14R.4 — Gynaecology. Fully independent of the Obstetrics pair
+        | above, and both default to false.
+        |
+        |   gynaecology_context_enabled
+        |       Allows a small pregnancy-context card when a profile is
+        |       EXPLICITLY linked. Gynaecology never infers context from the
+        |       visit, admission or a single active profile.
+        |
+        |   gynaecology_write_guard_enabled
+        |       Projects obstetric-history fields from the linked pregnancy
+        |       profile instead of allowing consultation writes. Inert unless
+        |       the context flag is also on.
+        */
+        'gynaecology_context_enabled' => env(
+            'CONSULTATION_GYNAECOLOGY_MATERNITY_CONTEXT_ENABLED',
+            false
+        ),
+
+        'gynaecology_write_guard_enabled' => env(
+            'CONSULTATION_GYNAECOLOGY_MATERNITY_WRITE_GUARD_ENABLED',
+            false
+        ),
     ],
 ];

@@ -50,7 +50,9 @@ Grouped by phase, mapping directly to the required scenarios in the phase brief.
 | T14 | Delivery / newborn / postnatal summaries render from source records | values match source rows; no consultation copies |
 | T15 | Existing consultation completion still works | route completes as before |
 
-### 1.3 Gynaecology — 14R.4
+### 1.3 Gynaecology — 14R.4 ✅ IMPLEMENTED
+
+> Automated coverage: `tests/Feature/ConsultationGynaecologyMaternityPhase14R4Test.php` (21 passing) and `tests/Feature/ConsultationObgynOrderSetRetargetingPhase14R4Test.php` (10 passing). Run `php artisan consultation:obgyn-order-set-audit` before enabling any Gynaecology flag.
 
 | # | Test | Expected |
 |---|---|---|

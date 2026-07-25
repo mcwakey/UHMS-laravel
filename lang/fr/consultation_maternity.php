@@ -162,6 +162,63 @@ return [
         'blocked_paused' => 'Cette action n\'est pas disponible pendant que la consultation est en pause.',
     ],
 
+    // ── Phase 14R.4 — séparation Gynécologie + adoption DDR ───────────────
+    'gynaecology' => [
+        'pregnancy_workflow' => 'Parcours de grossesse',
+        'start_or_link' => 'Démarrer ou lier un parcours de grossesse',
+        'remains_gynaecology' => 'Cette consultation reste une consultation de gynécologie.',
+        'explicitly_linked_profile' => 'Profil de grossesse lié explicitement',
+        'no_profile_linked' => 'Aucun profil de grossesse lié',
+        'positive_test_recorded' => 'Test de grossesse positif enregistré',
+        'no_profile_created_automatically' => 'Aucun profil de grossesse n\'a été créé automatiquement.',
+        'open_maternity_profile' => 'Ouvrir le profil de grossesse en maternité',
+        'consultation_obstetric_history' => 'Antécédents obstétricaux de la consultation',
+        'maternity_obstetric_history' => 'Antécédents obstétricaux de la maternité',
+        'legacy_entry' => 'Saisie de consultation gynécologique héritée',
+        'source_profile' => 'Source : profil de grossesse (maternité)',
+        'pilot_mode' => 'Mode pilote du contexte de grossesse',
+        'source_of_truth_mode' => 'La maternité fait foi pour les champs de grossesse liés',
+    ],
+
+    'lmp' => [
+        'use_saved_for_dating' => 'Utiliser la DDR gynécologique enregistrée pour dater la grossesse',
+        'adopt' => 'Adopter la DDR',
+        'confirm_adoption' => 'Confirmer l\'adoption de la DDR',
+        'saved_consultation_lmp' => 'DDR enregistrée en consultation',
+        'profile_lmp' => 'DDR du profil de grossesse',
+        'already_matches' => 'Le profil de grossesse utilise déjà cette DDR.',
+        'conflict' => 'Le profil de grossesse possède déjà une DDR différente. Vérifiez-le en maternité avant de modifier la datation.',
+        'dating_locked' => 'Cette grossesse est datée par échographie ou procréation assistée ; la DDR ne peut pas la remplacer.',
+        'review_in_maternity' => 'Vérifier le profil de grossesse en maternité',
+        'no_saved_lmp' => 'Aucune DDR enregistrée en consultation n\'est disponible.',
+        'unavailable_completed' => 'L\'adoption de la DDR n\'est pas disponible sur une consultation terminée.',
+        'adopted' => 'DDR adoptée pour la datation de la grossesse.',
+        'one_way_warning' => 'Il s\'agit d\'une adoption à sens unique.',
+        'later_changes_warning' => 'Les modifications ultérieures en maternité ne mettront pas à jour cette saisie de consultation.',
+    ],
+
+    'order_sets' => [
+        'action_required' => 'Action de parcours maternité requise',
+        'create_or_link_profile' => 'Créer ou lier un profil de grossesse',
+        'record_anc_counselling' => 'Enregistrer le conseil CPN',
+        'already_satisfied' => 'Déjà satisfait',
+        'legacy_patch' => 'Correctif de spécialité hérité',
+        'retargeted_action' => 'Action maternité reciblée',
+        'custom_needs_review' => 'Ensemble d\'ordres personnalisé à revoir',
+        'no_specialty_entry_created' => 'Aucune saisie de spécialité n\'a été créée.',
+        'maternity_permission_required' => 'Permission maternité sous-jacente requise.',
+    ],
+
+    'converted' => [
+        'pregnancy_confirmed_by_profile' => 'Grossesse confirmée par le profil lié',
+        'latest_anc_danger_signs' => 'Derniers signes de danger CPN',
+        'latest_anc_counselling' => 'Dernier conseil CPN',
+        'latest_anc_next_visit' => 'Prochaine visite CPN',
+        'consultation_booking_context' => 'Contexte d\'inscription de la consultation',
+        'consultation_birth_plan_intent' => 'Intention du plan de naissance (consultation)',
+        'labor_delivery_plan' => 'Plan d\'accouchement (travail)',
+    ],
+
     'warnings' => [
         'multiple_active_profiles' => 'Cette patiente a plusieurs profils de grossesse actifs. Sélectionnez-en un explicitement.',
         'multiple_candidate_profiles' => 'Plusieurs profils de grossesse correspondent à ce contexte. Sélectionnez-en un explicitement.',

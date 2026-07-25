@@ -7,10 +7,11 @@
 
 | Ref | Decision |
 |---|---|
+| **14R.4** | Gynaecology `obstetric_history` is guarded when linked; `current_pregnancy` (`pregnancy_confirmed`, `danger_signs`) and `birth_plan` (`danger_signs_counseling`, `next_visit_date`) are now maternity-owned; one-way LMP adoption implemented. |
 | **14R.3** | `dating_method` is now Pregnancy-Profile-owned (column added, enum `PregnancyDatingMethod`). The Obstetrics field-level write guard is **implemented and enforced server-side**, gated behind two default-off flags. |
 | **R2** | Gynaecology `menstrual_history.lmp` stays **Consultation-owned** and is **never auto-synced** to `pregnancy_profiles.last_menstrual_period`. An explicit **one-way** "Use this LMP for pregnancy dating" action is approved for a later phase. `dating_method` becomes **Pregnancy-Profile-owned in 14R.3**. |
 | **R4** | Gynaecology `obstetric_history` is **RW (editable encounter history) when no pregnancy profile is linked**, and a **read-only Maternity projection when a profile is linked**. Existing consultation entries are preserved. |
-| **R5** | Order-set automatic specialty-entry patches are **retargeted in 14R.4**. |
+| **R5** | ✅ **CLOSED in 14R.4** — the two seeded patch items are retargeted to `maternity_context_action`, and the guard now sits at the entry-service boundary so no runtime path (including order sets) can write maternity-owned fields. |
 | **R6** | An **immutable, versioned completion-time Maternity Context snapshot** is approved, **deferred to 14R.6**. |
 | **Bridge** | The **explicit-foreign-key** bridge design (not polymorphic) is **approved and implemented** in 14R.2. |
 

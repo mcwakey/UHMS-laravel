@@ -2342,6 +2342,8 @@ Route::middleware('auth')->group(function () {
                     Route::post('pregnancy-profile', [ConsultationMaternityContextController::class, 'createProfile'])->name('create-profile');
                     Route::post('anc-visit', [ConsultationMaternityContextController::class, 'recordAnc'])->name('record-anc');
                     Route::post('labor', [ConsultationMaternityContextController::class, 'startLabor'])->name('start-labor');
+                    // Phase 14R.4 — explicit one-way Gynaecology LMP adoption.
+                    Route::post('adopt-lmp', [ConsultationMaternityContextController::class, 'adoptMenstrualLmp'])->name('adopt-lmp');
                 });
 
                 Route::get('consultations/{visit}/specialty-order-sets', [ConsultationSpecialtyOrderSetController::class, 'index'])->name('consultations.specialty-order-sets.index');

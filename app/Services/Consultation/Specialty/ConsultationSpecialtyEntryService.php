@@ -6,6 +6,8 @@ use App\Models\ConsultationSpecialtyEntry;
 use App\Models\ConsultationSpecialtyProfile;
 use App\Models\User;
 use App\Models\VisitConsultationRoute;
+use App\Services\Consultation\Maternity\ConsultationMaternitySpecialtyWriteGuard;
+use App\Services\Consultation\Maternity\ConsultationMaternityWriteBlockedException;
 use App\Services\MedicalRecordEntryLogService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -46,8 +48,53 @@ class ConsultationSpecialtyEntryService
             ->first();
     }
 
+    /**
+     * Phase 14R.4 — single source-of-truth chokepoint.
+     *
+     * The controller already guards form posts, but order sets, quick actions
+     * and templates write through this service directly. Enforcing here means
+     * NO sanctioned runtime path can persist a maternity-owned field while the
+     * guard applies. Returns the entry with blocked keys removed, or throws
+     * when the caller asked for strict rejection.
+     *
+     * @param  array<string, mixed>  $entry
+     * @return array<string, mixed>
+     */
+    public function guardMaternityOwnedFields(
+        $consultation,
+        ConsultationSpecialtyProfile $profile,
+        string $sectionKey,
+        array $entry,
+        bool $throw = true,
+    ): array {
+        $route = $consultation instanceof VisitConsultationRoute
+            ? $consultation
+            : VisitConsultationRoute::find($this->consultationId($consultation));
+
+        if (! $route) {
+            return $entry;
+        }
+
+        $blocked = app(ConsultationMaternitySpecialtyWriteGuard::class)
+            ->blockedFields($route, $profile, $sectionKey, $entry);
+
+        if ($blocked === []) {
+            return $entry;
+        }
+
+        if ($throw) {
+            throw ConsultationMaternityWriteBlockedException::forFields($blocked);
+        }
+
+        // Non-strict callers (automation) drop the blocked keys and surface the
+        // fact through their own result payload rather than failing the batch.
+        return array_diff_key($entry, array_flip($blocked));
+    }
+
     public function createEntry($consultation, ConsultationSpecialtyProfile $profile, string $sectionKey, array $entry, User $user): ConsultationSpecialtyEntry
     {
+        $entry = $this->guardMaternityOwnedFields($consultation, $profile, $sectionKey, $entry);
+
         return DB::transaction(function () use ($consultation, $profile, $sectionKey, $entry, $user) {
             $model = ConsultationSpecialtyEntry::query()->create([
                 'consultation_id' => $this->consultationId($consultation),
@@ -82,6 +129,8 @@ class ConsultationSpecialtyEntryService
 
     public function upsertEntry($consultation, ConsultationSpecialtyProfile $profile, string $sectionKey, array $entry, User $user): ConsultationSpecialtyEntry
     {
+        $entry = $this->guardMaternityOwnedFields($consultation, $profile, $sectionKey, $entry);
+
         return DB::transaction(function () use ($consultation, $profile, $sectionKey, $entry, $user) {
             $existing = $this->getEntry($consultation, $profile, $sectionKey);
 
