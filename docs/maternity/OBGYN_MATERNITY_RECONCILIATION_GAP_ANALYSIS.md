@@ -1,6 +1,7 @@
 # O&G ↔ Maternity Reconciliation — Gap Analysis (Phase 14R.1)
 
 **Status:** Audit only. No runtime behaviour was changed by this phase.
+**Update (Phase 14R.2 approved & implemented):** the explicit-FK bridge design in §5 was **approved and built** — see `OBGYN_MATERNITY_BRIDGE_PHASE_14R_2_REPORT.md`. Open decisions R2/R4/R5/R6 have been resolved; see §6 below.
 **Scope:** Reconcile the Consultation Specialty Engine (Obstetrics, Gynaecology) with the Maternity longitudinal domain.
 **Related:** `OBGYN_MATERNITY_SOURCE_OF_TRUTH_MATRIX.md`, `OBGYN_MATERNITY_INTEGRATION_PLAN.md`, `docs/manual-testing/OBGYN_MATERNITY_RECONCILIATION_TEST_PLAN.md`
 
@@ -171,11 +172,11 @@ Constraints: partial-unique on (`consultation_route_id`, `context_type`) where `
 | # | Risk / open question | Recommendation |
 |---|---|---|
 | R1 | Live data measured in **this** environment only (0 maternity-shaped specialty entries). Production may hold real duplicates. | Ship the dry-run reconciliation command in 14R.6 and run per environment **before** any write-path change is enabled there. |
-| R2 | `menstrual_history.lmp` vs `pregnancy_profiles.last_menstrual_period` — same clinical concept, different intent. | **Do not auto-sync.** Offer a one-way, clinician-confirmed "use this LMP to date the pregnancy" action. |
-| R3 | Removing write capability from Obstetrics sections could be read as data loss by clinicians mid-consultation. | Convert to read-only projection **with** an explicit "Record ANC Visit" action in the same panel; never silently drop a field. |
-| R4 | `obstetric_history` in Gynaecology — is it history-taking or pregnancy truth? | **Decision required from clinical stakeholders.** Default proposed: projection when linked, consultation-owned note when not. |
-| R5 | Order-set `patch_specialty_entry` actions targeting maternity-shaped sections. | Audit and retarget in 14R.4; they must not write maternity-owned fields. |
-| R6 | Whether the consultation summary needs a **frozen** completion-time maternity snapshot for medico-legal purposes. | **Decision required.** Proposal: live projection by default; add an explicit immutable snapshot at consultation completion, clearly labelled as a snapshot distinct from the maternity source of truth. |
+| R2 | `menstrual_history.lmp` vs `pregnancy_profiles.last_menstrual_period` — same clinical concept, different intent. | **✅ RESOLVED (approved).** Gynaecology LMP remains Consultation-owned; **never auto-synced**. An explicit one-way "Use this LMP for pregnancy dating" action is approved for a later phase. `dating_method` becomes Pregnancy-Profile-owned in **14R.3**, not earlier. |
+| R3 | Removing write capability from Obstetrics sections could be read as data loss by clinicians mid-consultation. | Convert to read-only projection **with** an explicit "Record ANC Visit" action in the same panel; never silently drop a field. (Applies in 14R.3.) |
+| R4 | `obstetric_history` in Gynaecology — is it history-taking or pregnancy truth? | **✅ RESOLVED (approved).** Remains **editable encounter history when no pregnancy profile is linked**; when a profile **is** linked, gravida/para/abortions/living children/previous caesarean become **read-only Maternity projections**. Existing consultation entries are preserved. |
+| R5 | Order-set `patch_specialty_entry` actions targeting maternity-shaped sections. | **✅ RESOLVED (approved).** Retargeting is **deferred to 14R.4**. |
+| R6 | Whether the consultation summary needs a **frozen** completion-time maternity snapshot for medico-legal purposes. | **✅ RESOLVED (approved).** An **immutable versioned** completion-time Maternity Context snapshot is approved, **deferred to 14R.6**. 14R.2 must not implement summary snapshots. |
 | R7 | Enabling Phase 14.2 without a billing policy matrix. | Blocked by design: keep `billing.maternity_billing.enabled=false` until 14R.6 policy is approved. |
 
 ---

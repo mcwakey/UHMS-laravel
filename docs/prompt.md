@@ -1,809 +1,632 @@
 You are working inside the UHMS Laravel project.
 
-We are inserting a critical reconciliation phase before continuing with Phase 14.2 maternity billing posting.
-
-Current completed systems:
-
-1. Consultation Specialty Engine
-- Shared specialty-profile engine.
-- Specialty sections and schemas.
-- Obstetrics workspace.
-- Gynaecology workspace.
-- Quick actions.
-- Favourites.
-- Order sets.
-- Readiness rules.
-- Consultation summary builder.
-- Doctor workspace.
-- Admin specialty configuration.
-- Canonical section presentation and duplicate-section de-duplication.
-- Existing investigation, prescription, procedure, diagnosis and consultation workflows.
-
-2. Maternity Workflow
-- Pregnancy profiles.
-- Maternity cases.
-- ANC visits.
-- Labor episodes.
-- Labor observations.
-- Delivery records.
-- Newborn records.
-- Postnatal cases.
-- Mother observations.
-- Newborn observations.
-- Maternity admission-request integration.
-- Admission, nursing and discharge-readiness integration.
-- Maternity reports.
-- Billing mapping readiness.
-- Preview-only maternity billing scaffolding.
-
-Problem:
-
-Obstetrics and Gynaecology already exist as Consultation Specialty workspaces, while Maternity now owns a complete longitudinal pregnancy and birth workflow.
-
-We must reconcile them so that:
-
-- Consultation remains the current clinical encounter.
-- Maternity remains the longitudinal source of truth.
-- Obstetrics and Gynaecology workspaces can use Maternity records.
-- Clinical data is not duplicated.
-- Existing consultation workflows remain compatible.
-- Existing maternity workflows remain compatible.
-- Admission, billing, orders, reporting and summaries remain traceable.
-- Gynaecology is not forced into pregnancy workflows.
-- Obstetrics becomes properly connected to pregnancy, ANC, labor, delivery, newborn and postnatal care.
-
-This phase is audit and architecture first.
-
-Do not perform a broad implementation yet.
-Do not remove existing Obstetrics or Gynaecology specialty sections.
-Do not delete existing consultation specialty entries.
-Do not change billing posting.
-Do not continue Phase 14.2 billing posting in this phase.
-Do not run the full test suite.
-Do not touch docs/prompt.md.
-
-Primary objectives:
-
-1. Audit the Consultation Specialty Engine
-
-Review the current consultation specialty implementation, including:
-
-- Specialty profile resolver.
-- Obstetrics specialty profile.
-- Gynaecology specialty profile.
-- Specialty sections.
-- Section schemas.
-- Canonical section aliases.
-- Section presentation layer.
-- Specialty entries.
-- Quick actions.
-- Favourites.
-- Order sets.
-- Readiness rules.
-- Summary builder.
-- Doctor workspace.
-- Admin specialty configuration.
-- Consultation sessions.
-- Consultation routes.
-- Visit and admission context.
-- Investigation, prescription, procedure and task integration.
-- Billing/service mapping integration.
-- Permissions.
-- EN/FR localisation.
-- Existing tests and seeders.
-
-Identify the exact models, services, controllers, Blade components, migrations and tables that own specialty consultation data.
-
-2. Audit Obstetrics and Gynaecology sections field by field
-
-Produce a complete inventory of sections and fields currently used by the Obstetrics and Gynaecology workspaces.
-
-For every field, classify it as:
-
-- Consultation-owned.
-- Pregnancy-profile-owned.
-- ANC-owned.
-- Labor-owned.
-- Delivery-owned.
-- Newborn-owned.
-- Postnatal-owned.
-- Admission-owned.
-- Shared order/workflow-owned.
-- Ambiguous and requiring a decision.
-
-Pay special attention to possible duplicates such as:
-
-- Gravida.
-- Para.
-- Abortions.
-- Living children.
-- LMP.
-- EDD.
-- Gestational age.
-- Previous caesarean.
-- Previous postpartum haemorrhage.
-- Current pregnancy risks.
-- Fetal heart rate.
-- Fundal height.
-- Presentation.
-- Labor stage.
-- Delivery mode.
-- Delivery outcome.
-- APGAR.
-- Birth weight.
-- Breastfeeding status.
-- Postnatal condition.
-
-Do not assume duplicate fields are harmless.
-
-Identify:
-
-- Fields that currently store competing copies.
-- Fields that should become read-only projections.
-- Fields that should call Maternity services.
-- Fields that must remain in Consultation.
-- Existing records that would need reconciliation or safe migration.
-
-3. Establish the source-of-truth matrix
-
-Create a definitive source-of-truth matrix.
-
-The default ownership direction should be:
-
-Consultation owns:
+Phase 14R.1 is complete.
 
-- Complaints.
-- HOPC.
-- General and specialty examination narrative.
-- Clinical assessment.
-- Diagnoses.
-- Consultation plan.
-- Orders.
-- Prescriptions.
-- Procedures.
-- Clinician notes.
-- Encounter-level final summary.
-
-Maternity owns:
-
-- Pregnancy profile and obstetric history.
-- ANC visits.
-- Labor episodes and observations.
-- Delivery records.
-- Newborn records.
-- Postnatal cases and observations.
-
-Admission owns:
-
-- Ward/bed.
-- Nursing workflow.
-- Inpatient care flags.
-- Discharge readiness and discharge summary.
-
-Existing order systems own:
-
-- Investigations.
-- Radiology.
-- Procedures/theatre requests.
-- Prescriptions.
-- Pharmacy.
-- Clinical tasks.
-
-For each disputed field, document:
-
-- Current owner.
-- Target owner.
-- Read/write behavior in Consultation.
-- Read/write behavior in Maternity.
-- Historical data treatment.
-- Summary behavior.
-- Reporting behavior.
-- Billing implications.
-
-4. Define the three independent contexts
-
-The architecture must explicitly separate:
-
-A. Department context
-
-This determines where the clinician is working:
-
-- Consultation department.
-- Maternity department.
-- Ward.
-- Emergency.
-- Other operational area.
-
-B. Specialty workspace context
-
-This determines which consultation form is presented:
-
-- Obstetrics.
-- Gynaecology.
-- Another specialty.
-
-C. Maternity clinical context
-
-This determines the longitudinal maternity stage:
-
-- No active pregnancy context.
-- Pregnancy profile.
-- ANC.
-- Labor.
-- Delivery.
-- Newborn.
-- Postnatal.
-
-Do not assume department type, specialty profile and maternity stage are the same concept.
-
-Document how each context is resolved and displayed.
-
-5. Design a Consultation–Maternity context bridge
-
-Audit whether the project already has a generic clinical-context link that can be reused.
-
-If one exists, propose using it.
-
-If not, design a safe bridge such as:
-
-- `consultation_maternity_links`
-- or a generic `consultation_clinical_context_links`
-
-The bridge should support linking a consultation session to:
-
-- Pregnancy profile.
-- Maternity case.
-- ANC visit.
-- Labor episode.
-- Delivery record.
-- Newborn record.
-- Postnatal case.
-
-Recommended bridge information:
-
-- consultation_session_id or the project’s actual consultation encounter key.
-- pregnancy_profile_id as the longitudinal root where applicable.
-- context type.
-- context record ID or explicit nullable foreign keys.
-- link role:
-  - primary
-  - reviewed
-  - created
-  - handoff
-  - historical
-- linked_by.
-- linked_at.
-- unlinked_by.
-- unlinked_at.
-- reason.
-- metadata where necessary.
-- timestamps.
-
-The audit must decide whether explicit foreign keys or a polymorphic link is safer for this project.
-
-Do not implement a new table in this audit phase unless the existing architecture makes the choice unambiguous and the change is very small.
-
-6. Define maternity-context resolution rules
-
-Design a resolver such as:
-
-`ConsultationMaternityContextResolver`
-
-Recommended resolution order:
-
-1. Explicit consultation-to-maternity link.
-2. Maternity record linked to the same visit.
-3. Maternity record linked to the same admission.
-4. A single active pregnancy profile for the patient.
-5. No automatic context.
+The audit established:
+
+- No consultation-to-maternity bridge currently exists.
+- Obstetrics duplicates Pregnancy Profile and ANC data through writable specialty JSON entries.
+- The duplication is structural but not yet materialised in the audited environment.
+- Consultation must own the encounter.
+- Maternity must own the longitudinal pregnancy journey.
+- Admission must own ward, nursing and discharge.
+- Existing order systems must continue owning investigations, procedures, prescriptions and tasks.
+
+Approved architecture:
+
+- Use `consultation_maternity_links`.
+- Use explicit nullable foreign keys, not a polymorphic context ID.
+- Resolve maternity context in this order:
+  1. Explicit active consultation link.
+  2. Same visit.
+  3. Same admission.
+  4. Single active pregnancy profile.
+  5. None.
+- Multiple candidate pregnancy profiles must return `ambiguous`.
+- Never auto-create or auto-link a pregnancy profile.
+- Never auto-start ANC, labor, delivery, newborn or postnatal workflows.
+
+Approved clinical decisions:
+
+R2:
+- Gynaecology `menstrual_history.lmp` remains Consultation-owned.
+- Never auto-sync it to Pregnancy Profile.
+- A later explicit one-way “Use this LMP for pregnancy dating” action is allowed.
+- `dating_method` will become Pregnancy Profile-owned in Phase 14R.3, not this phase.
+
+R4:
+- Gynaecology obstetric history remains editable encounter history when no pregnancy profile is linked.
+- When a profile is linked, gravida/para/abortions/living children/previous caesarean become read-only Maternity projections.
+- Existing consultation entries remain preserved.
+
+R6:
+- Completed consultations will eventually receive an immutable versioned Maternity Context snapshot.
+- Snapshot implementation is deferred to Phase 14R.6.
+- Phase 14R.2 must not implement summary snapshots.
+
+R5:
+- Order-set retargeting is deferred to Phase 14R.4.
+
+Goal of Phase 14R.2:
+
+Create the additive Consultation–Maternity bridge table, model, context DTO, resolver and link service.
+
+This phase must not change the Obstetrics or Gynaecology workspace UI.
+It must not convert specialty sections.
+It must not change consultation completion.
+It must not change maternity billing.
+It must not run historical reconciliation or backfills.
+
+1. Audit the actual encounter model before migration
+
+Confirm that the project’s consultation encounter key is:
+
+`visit_consultation_routes.id`
+
+Confirm:
+
+- `ConsultationSpecialtyEntry.consultation_id` points to that key.
+- The related model is `VisitConsultationRoute` or the project’s actual equivalent.
+- Patient, visit and admission context can be resolved safely from this model.
+
+Use the actual project names and relationships.
+
+Do not create a second consultation-session identity.
+
+2. Add bridge enums
+
+Add enums or equivalent typed constants following project convention:
+
+`ConsultationMaternityContextType`
+
+Values:
+
+- pregnancy_profile
+- maternity_case
+- anc_visit
+- labor
+- delivery
+- newborn
+- postnatal
+
+`ConsultationMaternityLinkRole`
+
+Values:
+
+- primary
+- reviewed
+- created
+- handoff
+- historical
+
+Do not accept arbitrary context types or roles.
+
+3. Add `consultation_maternity_links`
+
+Create an additive migration such as:
+
+`database/migrations/2026_XX_XX_XXXXXX_create_consultation_maternity_links_table.php`
+
+Recommended columns:
+
+- id
+- consultation_route_id
+- pregnancy_profile_id nullable
+- maternity_case_id nullable
+- antenatal_visit_id nullable
+- labor_episode_id nullable
+- delivery_record_id nullable
+- newborn_record_id nullable
+- postnatal_case_id nullable
+- context_type
+- link_role
+- linked_by nullable
+- linked_at
+- unlinked_by nullable
+- unlinked_at nullable
+- reason nullable
+- metadata nullable JSON
+- active_slot nullable tiny integer
+- timestamps
+
+`active_slot` behavior:
+
+- Active link: `active_slot = 1`
+- Unlinked historical row: `active_slot = null`
+
+Add a unique index on:
+
+- consultation_route_id
+- context_type
+- active_slot
+
+Reason:
+MySQL does not support a normal partial unique index using
+`WHERE unlinked_at IS NULL`.
+
+MySQL unique indexes permit multiple NULL values, so this pattern allows:
+
+- one active link per consultation/context type
+- unlimited historical unlinked rows
+
+The link service must always update:
+
+- `unlinked_at`
+- `unlinked_by`
+- `active_slot = null`
+
+inside the same transaction.
+
+Do not use a simple unique index on:
+
+- consultation_route_id
+- context_type
+- is_active
+
+because that would prevent retaining multiple inactive historical rows.
+
+Add indexes for:
+
+- pregnancy_profile_id
+- maternity_case_id
+- antenatal_visit_id
+- labor_episode_id
+- delivery_record_id
+- newborn_record_id
+- postnatal_case_id
+- linked_at
+- unlinked_at
+
+Use the project’s normal foreign-key deletion conventions while preserving audit history where practical.
+
+4. Add `ConsultationMaternityLink` model
+
+Add:
+
+`app/Models/ConsultationMaternityLink.php`
+
+Relationships:
+
+- consultationRoute
+- pregnancyProfile
+- maternityCase
+- antenatalVisit
+- laborEpisode
+- deliveryRecord
+- newbornRecord
+- postnatalCase
+- linkedBy
+- unlinkedBy
+
+Scopes/helpers:
+
+- active
+- historical
+- forConsultation
+- forContextType
+- isActive
+- targetRecord
+- rootPregnancyProfile
+
+Add relationships on the existing encounter model:
+
+- maternityLinks
+- activeMaternityLinks
+
+Add reverse relationships to maternity models where useful, but do not create unnecessary eager-loading chains.
+
+5. Enforce link consistency
+
+A link row must be created through the link service, not by accepting arbitrary foreign-key combinations from a controller.
+
+For every supported target, derive IDs from the actual model:
+
+PregnancyProfile:
+- context_type = pregnancy_profile
+- pregnancy_profile_id = target ID
+
+MaternityCase:
+- context_type = maternity_case
+- maternity_case_id = target ID
+- pregnancy_profile_id derived from target where available
+
+AntenatalVisit:
+- context_type = anc_visit
+- antenatal_visit_id = target ID
+- pregnancy_profile_id derived from target
+
+LaborEpisode:
+- context_type = labor
+- labor_episode_id = target ID
+- pregnancy_profile_id derived from target
+
+DeliveryRecord:
+- context_type = delivery
+- delivery_record_id = target ID
+- pregnancy_profile_id derived from target
+
+NewbornRecord:
+- context_type = newborn
+- newborn_record_id = target ID
+- pregnancy_profile_id derived from target
+- mother patient context derived from target
+
+PostnatalCase:
+- context_type = postnatal
+- postnatal_case_id = target ID
+- pregnancy_profile_id derived from target
+
+Do not allow the caller to provide mismatched target IDs.
+
+If a row is inconsistent or the target chain is invalid, fail closed.
+
+6. Validate patient ownership
+
+The consultation patient must match the maternity mother/pregnancy patient.
 
 Rules:
 
-- Never silently select between multiple active pregnancy profiles.
-- Never create a pregnancy profile based only on patient sex.
-- Never create a pregnancy profile based only on a complaint or diagnosis.
-- Never auto-start ANC, labor, delivery or postnatal workflows.
-- Require explicit clinician action for creation or transition.
-- Log linking, relinking and unlinking.
-- Preserve historical links after consultation completion.
+- Pregnancy, ANC, labor, delivery and postnatal targets must belong to the same patient as the consultation route.
+- Newborn context in this O&G bridge must match the consultation’s mother through `mother_patient_id`.
+- A future newborn-to-paediatrics bridge is out of scope.
+- Explicit links may span different visits because the maternity record is longitudinal.
+- Visit mismatch alone must not block a valid same-patient explicit link.
+- Patient mismatch must always block the link.
 
-7. Define the Obstetrics workspace target
+Return a clear validation/domain exception.
 
-The Obstetrics consultation workspace should become stage-aware.
+7. Add context result DTO
 
-Propose a contextual header or ribbon showing:
+Create a typed result such as:
 
-- Active pregnancy profile.
-- Gestational age.
-- EDD.
-- Risk level.
-- Latest ANC visit.
-- Next ANC date.
-- Current maternity case.
-- Admission/ward/bed if admitted.
-- Active labor episode if present.
-- Delivery status.
-- Newborn records pending/complete.
-- Postnatal status.
+`ConsultationMaternityContext`
 
-Propose context-aware panels/tabs:
+It should expose:
 
-- Consultation.
-- Pregnancy.
-- ANC.
-- Labor and Delivery.
-- Newborn.
-- Postnatal.
-- Orders.
-- Summary.
+- status:
+  - resolved
+  - ambiguous
+  - none
+  - invalid
+- resolution_source:
+  - explicit
+  - visit
+  - admission
+  - active_profile
+  - none
+- consultation route
+- pregnancy profile
+- maternity case
+- latest/relevant ANC visit
+- labor episode
+- delivery record
+- newborn records collection or primary newborn where relevant
+- postnatal case
+- admission context where available
+- active link records
+- warnings
+- candidate pregnancy profiles for ambiguous results
 
-Do not show all panels as editable forms at once.
+Do not return a loosely structured array if the project supports typed DTOs.
 
-Recommended behavior:
+8. Add `ConsultationMaternityContextResolver`
 
-Pregnancy profile context:
+Create:
 
-- Show pregnancy summary.
-- Allow explicit create/link profile action.
+`app/Services/Consultation/Maternity/ConsultationMaternityContextResolver.php`
 
-ANC context:
+Resolution behavior:
 
-- Show latest ANC summary.
-- Allow “Record ANC Visit” using the existing `AntenatalVisitService`.
-- Do not save ANC measurements as generic consultation specialty entries.
+A. Explicit links
 
-Labor context:
+- Load active explicit links for the consultation.
+- Validate their target chains.
+- Aggregate them into one maternity context bundle.
+- Explicit valid links take precedence over inferred visit/admission/profile context.
+- Do not silently ignore an inconsistent explicit link; return an invalid warning/result.
 
-- Show active labor episode and latest observation.
-- Allow “Open Labor Workspace” or explicit “Start Labor Episode”.
-- Use `LaborEpisodeService` and `LaborObservationService`.
+B. Same visit fallback
 
-Delivery context:
+When no explicit active links exist:
 
-- Show delivery record.
-- Allow navigation to the existing delivery workflow.
-- Do not duplicate delivery fields in Consultation.
+- Collect maternity records associated with the consultation visit.
+- Derive unique pregnancy-profile candidates.
+- One unique profile: resolve it.
+- More than one profile: return ambiguous.
+- Zero: continue to admission fallback.
 
-Newborn context:
+C. Same admission fallback
 
-- Show newborn summary.
-- Navigate to newborn records.
-- Do not duplicate APGAR/birth-weight data.
+- Resolve the consultation/admission relationship using existing project relationships.
+- Collect maternity records associated with that admission.
+- Derive unique pregnancy-profile candidates.
+- One unique profile: resolve it.
+- More than one: ambiguous.
+- Zero: continue.
 
-Postnatal context:
+D. Single active profile fallback
 
-- Show postnatal readiness and latest observations.
-- Navigate to postnatal workspace.
-- Do not duplicate mother/newborn observations.
-
-8. Define the Gynaecology workspace target
-
-Gynaecology must remain a consultation specialty workspace for non-pregnancy reproductive health.
-
-Identify fields that should remain consultation-owned, such as where currently supported:
-
-- Menstrual history.
-- Abnormal bleeding.
-- Pelvic pain.
-- Infertility history.
-- Contraception.
-- Cervical screening.
-- Gynaecological surgery history.
-- Pelvic examination.
-- Gynaecological diagnoses.
-- Gynaecological treatment plan.
+- Load active pregnancy profiles for the patient.
+- Exactly one: resolve as inferred active-profile context.
+- More than one: return ambiguous.
+- None: return none.
 
 Rules:
 
-- Do not display the full maternity workflow by default.
-- Show a small maternity/pregnancy context card only when:
-  - an active pregnancy profile is explicitly linked,
-  - or the clinician explicitly chooses to create/link one.
-- Do not automatically switch a Gynaecology consultation to Obstetrics.
-- Provide an explicit “Start/Link Pregnancy Workflow” action when appropriate.
-- Preserve the original Gynaecology consultation session and history.
+- Never persist a link during resolution.
+- Never create a pregnancy profile.
+- Never select “latest” when several candidate profiles exist.
+- Never infer pregnancy from patient sex.
+- Never infer pregnancy from complaint, diagnosis, pregnancy test or specialty.
+- Never start ANC/labor/delivery/postnatal.
+- Use existing Maternity overview services to assemble summaries where appropriate instead of duplicating domain logic.
+- Keep queries eager-loaded and bounded.
 
-9. Define shared component strategy
+9. Add `ConsultationMaternityLinkService`
 
-Do not create separate duplicate maternity forms inside Consultation.
+Create:
 
-Design reusable components or view models:
+`app/Services/Consultation/Maternity/ConsultationMaternityLinkService.php`
 
-- Pregnancy summary card.
-- ANC summary card.
-- Labor summary card.
-- Delivery summary card.
-- Newborn summary card.
-- Postnatal summary card.
-- Maternity context selector.
-- Maternity context warning.
-- Maternity workflow quick-action panel.
+Required operations:
 
-These components should consume the existing Maternity services and models.
+- link
+- relink
+- unlink
+- getActiveLink
+- getActiveLinks
+- validateTarget
+- deriveContextPayload
 
-They may be displayed in:
+Suggested signatures should use actual project style, but behavior must include:
 
-- Obstetrics consultation workspace.
-- Gynaecology consultation workspace when explicitly linked.
-- Admission workspace.
-- Emergency workspace.
-- Maternity workspace.
+`link`:
 
-10. Define service/orchestration layer
+- Validate supported target model.
+- Validate patient ownership.
+- Derive context type and all foreign keys.
+- Start transaction.
+- Lock active link rows for the consultation/context type.
+- If the same target is already active, return it idempotently.
+- If a different target is active, require explicit relink behavior rather than silently replacing it.
+- Insert one active row with `active_slot = 1`.
+- Write ActivityLog.
 
-Design services such as:
+`relink`:
 
-- `ConsultationMaternityContextResolver`
-- `ConsultationMaternityLinkService`
-- `ObstetricConsultationContextService`
-- `GynaecologyConsultationContextService`
-- `ConsultationMaternitySummaryService`
-- `ConsultationMaternityReadinessService`
+- Require reason.
+- Transactionally soft-unlink the old active row.
+- Set old `active_slot = null`.
+- Create the new active row.
+- Preserve the old row.
+- Write ActivityLog with old/new IDs.
 
-These services should orchestrate existing domain services.
+`unlink`:
 
-They must not recreate Maternity business logic.
+- Require reason.
+- Set unlinked actor/time and `active_slot = null`.
+- Never delete the row.
+- Write ActivityLog.
 
-Example actions:
+Concurrency:
 
-- Link pregnancy profile to consultation.
-- Create pregnancy profile from consultation through `PregnancyProfileService`.
-- Record ANC visit through `AntenatalVisitService`.
-- Start labor through `LaborEpisodeService`.
-- Create maternity admission request through the existing admission-request service.
-- Open delivery/newborn/postnatal records through their existing services.
-- Build read-only consultation maternity summary.
+- Use transaction and row locking.
+- Allow the unique active-slot index to serve as the final race-condition guard.
+- Convert duplicate-key races into a clear domain error or idempotent result.
 
-11. Define consultation readiness behavior
+10. Add activity logging
 
-The current specialty engine already has readiness rules.
+Use the existing activity-log conventions.
 
-Design stage-aware readiness without breaking existing consultation completion.
+Log actions such as:
 
-Recommended approach:
+- CONSULTATION_MATERNITY_CONTEXT_LINKED
+- CONSULTATION_MATERNITY_CONTEXT_RELINKED
+- CONSULTATION_MATERNITY_CONTEXT_UNLINKED
 
-- Advisory first.
-- Enforcement disabled by default.
-- Gynaecology consultations remain governed by their existing readiness rules.
-- General Obstetrics consultations require normal consultation readiness.
-- ANC-mode Obstetrics consultations may warn when no ANC visit was recorded.
-- Labor-review consultations may warn when no labor episode is linked.
-- Postnatal-review consultations may warn when no postnatal case is linked.
+Metadata should include:
 
-Suggested config:
+- consultation route ID
+- context type
+- link role
+- target record ID
+- pregnancy profile ID
+- old link/target ID when relinking
+- actor
+- reason where required
 
-- `CONSULTATION_OBSTETRIC_MATERNITY_READINESS_ENFORCED=false`
+Do not log clinical notes or sensitive maternity content.
 
-Do not introduce hard blockers in the first implementation phase.
+11. Add permissions
 
-12. Define consultation summary integration
-
-Consultation summary should include a generated Maternity Context section when linked.
-
-The section may include:
-
-- Pregnancy profile summary.
-- Latest ANC summary.
-- Labor stage/latest observation.
-- Delivery outcome.
-- Newborn summary.
-- Postnatal readiness.
-
-Rules:
-
-- The summary projection reads from Maternity records.
-- It must not create duplicate specialty entries.
-- Identify whether a frozen completion-time snapshot is required for medico-legal history.
-- If snapshots are proposed, clearly distinguish:
-  - Maternity source of truth.
-  - Consultation completion snapshot.
-
-Do not overwrite existing consultation final summary behavior.
-
-13. Define order integration
-
-Investigations, prescriptions, procedures, theatre requests and tasks should remain in their existing shared workflows.
-
-Design how O&G consultation actions link to those workflows:
-
-- Orders should retain consultation session/visit context.
-- Maternity context IDs may be added as secondary source metadata where safe.
-- Do not create separate maternity investigation, prescription or procedure engines.
-- Do not duplicate orders between Consultation and Maternity.
-- Results should be visible from both contexts through shared relationships or projections.
-
-14. Define billing de-duplication rules
-
-Phase 14.1 maternity billing remains preview-only.
-
-Do not enable Phase 14.2 posting until reconciliation is approved.
-
-Audit possible double billing between:
-
-- General consultation service charge.
-- Obstetrics specialty consultation charge.
-- ANC registration/follow-up charge.
-- Labor observation charge.
-- Delivery charge.
-- Postnatal care charge.
-
-Propose an explicit policy matrix.
-
-Possible policy options may include:
-
-- consultation_only
-- maternity_event_only
-- both_when_configured
-- manual_selection
-
-Choose safe defaults.
-
-Requirements:
-
-- One clinical action must not silently create two charges.
-- Recording ANC from the Obstetrics workspace must still have one maternity source record.
-- Billing source identity must remain linked to the real source record.
-- Consultation billing and maternity-event billing must remain distinguishable.
-- Do not reintroduce a billing card into the doctor consultation workspace if the current workspace intentionally excludes it.
-- Billing preview/posting should remain permission-controlled outside normal clinical editing where appropriate.
-
-15. Define admission, emergency and inpatient behavior
-
-Design these scenarios:
-
-A. Obstetrics outpatient consultation
-
-- Consultation session opened.
-- Pregnancy profile linked.
-- ANC visit optionally recorded.
-- Orders placed through existing systems.
-- Consultation completed normally.
-
-B. Gynaecology consultation with no pregnancy
-
-- No maternity context required.
-- Normal specialty consultation flow continues.
-
-C. Gynaecology consultation discovers pregnancy
-
-- Clinician explicitly creates/links pregnancy profile.
-- Original Gynaecology consultation remains intact.
-- Optional transition/referral to Obstetrics/Maternity.
-
-D. Emergency obstetric case
-
-- Emergency remains operational owner of the emergency episode.
-- Maternity context is linked.
-- Labor/admission handoff uses existing services.
-- No duplicate emergency or labor record.
-
-E. Admitted obstetric patient
-
-- Admission owns bed, nursing and discharge.
-- Maternity owns pregnancy/labor/delivery/postnatal.
-- Obstetrics specialist consultation owns the specialist encounter.
-- The consultation is linked to the active admission and maternity context.
-
-F. Postnatal consultation/review
-
-- Consultation note remains encounter-level.
-- Mother/newborn observations remain postnatal records.
-- Follow-up plan is linked without duplicating the postnatal case.
-
-16. Define historical-data reconciliation
-
-Audit existing Obstetrics/Gynaecology specialty entries that contain maternity-owned fields.
-
-Propose a safe reconciliation strategy:
-
-- Inventory existing duplicate field values.
-- Detect conflicts with current Maternity records.
-- Do not overwrite either side automatically.
-- Classify records:
-  - safe to link
-  - safe to migrate
-  - conflict requiring review
-  - historical-only
-  - insufficient context
-- Preserve original specialty-entry values for audit.
-- Use dry-run reconciliation before any backfill.
-- Produce a review report before applying changes.
-
-Do not run any automatic backfill in this phase.
-
-17. Define routes and URL behavior
-
-Preserve current consultation route behavior and department-specific URLs.
-
-Do not rename current consultation routes.
-
-Design links between:
-
-- Consultation specialty workspace.
-- Maternity pregnancy profile.
-- ANC visit.
-- Labor episode.
-- Delivery record.
-- Newborn record.
-- Postnatal case.
-- Admission workspace.
-
-Return links should preserve the originating consultation session and workspace where practical.
-
-18. Define permissions
-
-Audit existing Consultation and Maternity permissions.
-
-Propose additive bridge permissions such as:
+Add permissions additively:
 
 - `consultation.maternity_context.view`
 - `consultation.maternity_context.link`
 - `consultation.maternity_context.unlink`
-- `consultation.maternity_context.create_profile`
-- `consultation.maternity_context.record_anc`
-- `consultation.maternity_context.start_labor`
-- `consultation.maternity_context.open_postnatal`
-- `consultation.maternity_context.summary.view`
 
-Do not duplicate permissions already adequately covered.
+Role behavior:
 
-Clinical users should only receive actions appropriate to their role.
+- Admin/super-admin receives all.
+- Clinical role assignment must follow existing Consultation and Maternity role conventions.
+- Do not grant bridge permissions to a role that cannot view the underlying consultation or maternity records.
+- The bridge must never escalate access to Maternity.
+- Future UI actions will require both:
+  - bridge permission
+  - underlying maternity permission
 
-19. Define localisation
+Do not add create-profile, record-ANC or start-labor permissions until the workspace phase that uses them.
 
-Plan EN/FR keys for:
+12. Add EN/FR localisation
 
-- Maternity context.
-- Link pregnancy profile.
-- Create pregnancy profile.
-- Active pregnancy.
-- No active pregnancy profile.
-- Multiple active pregnancy profiles.
-- Select maternity context.
-- ANC context.
-- Labor context.
-- Delivery context.
-- Newborn context.
-- Postnatal context.
-- Open maternity workspace.
-- Record ANC visit.
-- Start labor episode.
-- Context linked.
-- Context unlinked.
-- Historical context.
-- Source-of-truth warning.
-- Duplicate-data warning.
-- Advisory readiness warning.
+Create or update a dedicated file such as:
 
-20. Define tests
+- `lang/en/consultation_maternity.php`
+- `lang/fr/consultation_maternity.php`
 
-Propose targeted tests for the future implementation phases.
+Include strict parity for:
 
-Required scenarios:
+- maternity context
+- context types
+- link roles
+- context linked
+- context relinked
+- context unlinked
+- link reason
+- unlink reason
+- patient mismatch
+- inconsistent context
+- no maternity context
+- ambiguous maternity context
+- multiple active pregnancy profiles
+- explicit link
+- same visit context
+- same admission context
+- active pregnancy context
+- invalid target
+- unsupported target
 
-- Obstetrics workspace loads without maternity context.
-- Obstetrics workspace displays linked pregnancy profile.
-- Gynaecology workspace does not force maternity context.
-- Gynaecology workspace can explicitly link a pregnancy profile.
-- Multiple active profiles require explicit selection.
-- Consultation cannot silently create pregnancy profile.
-- ANC recorded from Consultation creates one `AntenatalVisit`.
-- ANC data is not duplicated into generic specialty entries.
-- Labor started from Consultation creates one `LaborEpisode`.
-- Delivery/newborn/postnatal summaries display from source records.
-- Consultation summary includes maternity projection.
-- Existing consultation completion still works.
-- Existing maternity pages still work.
-- Existing admission workflow still works.
-- Existing emergency workflow still works.
-- Billing remains preview-only.
-- No duplicate billing source is introduced.
-- EN/FR localisation remains in parity.
+No workspace UI is required yet, but service/domain messages should be localisable.
 
-21. Produce implementation phases
+13. Update architecture documents with approved decisions
 
-After the audit, propose a staged implementation plan.
+Update:
 
-Recommended phases:
+- `docs/maternity/OBGYN_MATERNITY_SOURCE_OF_TRUTH_MATRIX.md`
+- `docs/maternity/OBGYN_MATERNITY_INTEGRATION_PLAN.md`
+- `docs/maternity/OBGYN_MATERNITY_RECONCILIATION_GAP_ANALYSIS.md`
 
-Phase 14R.1:
-Audit, source-of-truth matrix and bridge architecture.
+Record that:
 
-Phase 14R.2:
-Consultation–Maternity bridge foundation and context resolver.
+R2:
+- Gynaecology LMP remains Consultation-owned.
+- Explicit one-way adoption is approved.
+- `dating_method` will become Pregnancy Profile-owned in 14R.3.
 
-Phase 14R.3:
-Obstetrics workspace integration.
+R4:
+- Gynaecology obstetric history is RW when unlinked and RO projection when linked.
 
-Phase 14R.4:
-Gynaecology workspace separation and explicit pregnancy transition.
+R6:
+- Immutable versioned completion-time Maternity snapshot is approved for 14R.6.
 
-Phase 14R.5:
-Admission, emergency, labor, delivery and postnatal handoffs.
+R5:
+- Order-set automatic specialty-entry patches will be retargeted in 14R.4.
 
-Phase 14R.6:
-Readiness, summary projection, historical reconciliation and billing de-duplication.
+Record that the explicit-FK bridge design is approved.
 
-Phase 14R.7:
-Manual test data and wider regression.
+14. Tests
 
-Each phase must include:
+Add:
 
-- Goal.
-- Files likely to change.
-- Models/tables/services.
-- UI behavior.
-- Permissions.
-- Localisation.
-- Targeted tests.
-- Risks.
-- Rollback/compatibility notes.
+`tests/Feature/ConsultationMaternityBridgePhase14R2Test.php`
 
-22. Documentation deliverables
+Required tests:
+
+- Bridge can link a pregnancy profile to a consultation.
+- Bridge can link an ANC visit and derives the correct pregnancy profile.
+- Bridge can link labor, delivery, newborn and postnatal targets.
+- Unsupported model target is rejected.
+- Mismatched patient target is rejected.
+- Newborn target validates against mother patient.
+- Same target link is idempotent.
+- A different target of the same context type requires relink.
+- Relink preserves old historical row.
+- Only one active row exists per consultation/context type.
+- Multiple inactive historical rows are allowed.
+- Unlink requires a reason.
+- Link/relink/unlink activity logs are written.
+- Resolver returns explicit link first.
+- Resolver falls back to same visit.
+- Resolver falls back to same admission.
+- Resolver falls back to a single active profile.
+- Resolver returns `none` when no context exists.
+- Resolver returns `ambiguous` for multiple active profiles.
+- Resolver does not create a pregnancy profile.
+- Positive pregnancy test, diagnosis and patient sex do not cause creation or linking.
+- Explicit link survives consultation completion.
+- No specialty entry is created by bridge operations.
+- No maternity record is created by resolver operations.
+
+Run targeted checks only:
+
+- `php artisan test tests/Feature/ConsultationMaternityBridgePhase14R2Test.php`
+- Relevant existing Consultation Specialty tests
+- `php artisan test tests/Feature/MaternityFoundationPhase8Test.php`
+- `php artisan test tests/Feature/AntenatalCarePhase9Test.php`
+- `php artisan test tests/Feature/LaborDeliveryFoundationPhase10Test.php`
+- `php artisan route:list --name=consultation`
+- `php artisan route:list --name=maternity`
+- `php artisan view:clear`
+- `php artisan config:clear`
+- `git diff --check -- . ':!docs/prompt.md'`
+- PHP syntax checks on all changed PHP files
+
+Do not run `composer test:wide`.
+
+15. Documentation report
 
 Create:
 
-- `docs/maternity/OBGYN_MATERNITY_RECONCILIATION_GAP_ANALYSIS.md`
-- `docs/maternity/OBGYN_MATERNITY_SOURCE_OF_TRUTH_MATRIX.md`
-- `docs/maternity/OBGYN_MATERNITY_INTEGRATION_PLAN.md`
-- `docs/manual-testing/OBGYN_MATERNITY_RECONCILIATION_TEST_PLAN.md`
+`docs/maternity/OBGYN_MATERNITY_BRIDGE_PHASE_14R_2_REPORT.md`
 
-The source-of-truth matrix must be field-level, not only module-level.
+Include:
 
-The integration plan must be specific enough for the next implementation phase.
+- What was implemented
+- Files changed
+- Migration/table design
+- MySQL active-link uniqueness strategy
+- Context types and roles
+- Link validation
+- Resolver behavior
+- Ambiguity behavior
+- Link/relink/unlink behavior
+- Activity logging
+- Permissions
+- Localisation
+- Tests/checks run
+- Existing workflows protected
+- Known risks
+- What was intentionally deferred
+- Next recommended phase
 
-23. Testing instructions for this audit phase
+16. Boundaries
 
-Do not run the full suite.
-
-If this phase is documentation-only, state that no runtime changes were made.
-
-If small code inspection helpers are added, run only:
-
-- Relevant consultation specialty tests.
-- Maternity foundation tests where necessary.
-- Route/view/config checks.
-- `git diff --check -- . ':!docs/prompt.md'`
-- PHP syntax checks on changed files.
-
-Do not run `composer test:wide` in this phase.
-
-24. Boundaries
-
-Do not merge Maternity tables into Consultation tables.
-Do not duplicate Maternity fields into specialty entries.
-Do not delete current Obstetrics/Gynaecology sections.
-Do not auto-create pregnancy profiles.
-Do not auto-link ambiguous pregnancy profiles.
-Do not auto-start ANC, labor, delivery or postnatal.
+Do not change Obstetrics workspace behavior.
+Do not change Gynaecology workspace behavior.
+Do not convert specialty sections.
+Do not add maternity ribbon or panels.
+Do not create summary projection.
+Do not create completion snapshots.
+Do not retarget order sets.
+Do not add explicit LMP adoption UI.
+Do not add `dating_method` yet.
+Do not create ANC/labor actions in Consultation.
+Do not change consultation readiness.
 Do not enable maternity billing posting.
-Do not change invoice/accounting behavior.
-Do not rewrite Consultation.
-Do not rewrite Maternity.
-Do not rewrite Admission.
-Do not rewrite Emergency.
-Do not rewrite Theatre.
-Do not create new investigation, procedure, prescription or pharmacy engines.
-Do not run historical backfills.
-Do not touch docs/prompt.md.
+Do not modify Phase 14.1 preview behavior.
+Do not run reconciliation or backfill.
+Do not auto-link inferred contexts.
+Do not create profiles or maternity records from the resolver.
+Do not rename existing routes.
+Do not touch `docs/prompt.md`.
 Do not run the full suite.
 
-25. Final response
+17. Final response
 
-At the end, provide a concise report with:
+At the end, provide a concise completion report with:
 
-- What was audited.
-- Duplicate/overlapping data discovered.
-- Proposed source-of-truth decisions.
-- Proposed bridge architecture.
-- Obstetrics target behavior.
-- Gynaecology target behavior.
-- Readiness/summary strategy.
-- Billing de-duplication strategy.
-- Historical-data reconciliation strategy.
-- Documentation created.
-- Tests/checks run.
-- Risks and unresolved decisions.
-- Next recommended phase.
+- Summary of implementation
+- Files changed
+- Migration and uniqueness design
+- Resolver result behavior
+- Link service behavior
+- Permissions/localisation
+- Tests/checks run
+- Existing workflows protected
+- Known risks
+- Intentionally deferred items
+- Next phase recommendation
 
-Do not begin the broad bridge implementation until the audit and source-of-truth matrix are reviewed.
+Recommended next phase:
+
+Phase 14R.3 — Obstetrics Stage-Aware Workspace Integration.

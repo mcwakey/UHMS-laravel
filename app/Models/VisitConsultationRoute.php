@@ -192,6 +192,21 @@ class VisitConsultationRoute extends Model
         return $this->hasMany(MedicalRecord::class, 'consultation_route_id');
     }
 
+    /**
+     * Phase 14R.2 bridge: every maternity link ever made from this encounter,
+     * including historical (unlinked) rows.
+     */
+    public function maternityLinks(): HasMany
+    {
+        return $this->hasMany(ConsultationMaternityLink::class, 'consultation_route_id');
+    }
+
+    /** Only the currently active maternity links (one per context type). */
+    public function activeMaternityLinks(): HasMany
+    {
+        return $this->maternityLinks()->whereNotNull('active_slot');
+    }
+
     public function followUpAppointments(): HasMany
     {
         return $this->hasMany(Appointment::class, 'consultation_route_id')

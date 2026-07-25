@@ -1,7 +1,7 @@
 # O&G ↔ Maternity — Integration Plan (Phases 14R.2 → 14R.7)
 
-**Status:** Proposal for review. Nothing here is implemented.
-**Prerequisite:** sign-off on `OBGYN_MATERNITY_SOURCE_OF_TRUTH_MATRIX.md` (especially open decisions R2, R4, R6).
+**Status:** Matrix **approved**. **Phase 14R.2 is implemented** (see `OBGYN_MATERNITY_BRIDGE_PHASE_14R_2_REPORT.md`); 14R.3 onward remain proposals.
+**Approved decisions:** R2 (Gynae LMP stays Consultation-owned, never auto-synced; `dating_method` → PP in 14R.3) · R4 (Gynae obstetric history RW when unlinked, RO projection when linked) · R5 (order-set retargeting in 14R.4) · R6 (immutable versioned completion snapshot in 14R.6) · explicit-FK bridge approved.
 **Companion:** `OBGYN_MATERNITY_RECONCILIATION_GAP_ANALYSIS.md`
 
 ---
@@ -29,7 +29,9 @@ Values: none, pregnancy profile, ANC, labor, delivery, newborn, postnatal.
 
 ---
 
-## 2. Phase 14R.2 — Bridge foundation and context resolver
+## 2. Phase 14R.2 — Bridge foundation and context resolver ✅ IMPLEMENTED
+
+> **Delivered.** Table, enums, model, DTO, resolver, link service, permissions, EN/FR localisation and 22 passing tests. Full detail in `OBGYN_MATERNITY_BRIDGE_PHASE_14R_2_REPORT.md`. No workspace/UI behaviour was changed.
 
 **Goal:** Create the link table and a safe resolver. **No workspace behaviour changes yet.**
 
@@ -231,12 +233,12 @@ Measured in this environment: **0 rows** to reconcile — re-measure per environ
 
 | Phase | Goal | Risk | Gate |
 |---|---|---|---|
-| 14R.1 | Audit, matrix, architecture *(this phase — docs only)* | none | Matrix sign-off (R2/R4/R6) |
-| 14R.2 | Bridge table + resolver + link service | low | Resolver tests green |
+| 14R.1 | Audit, matrix, architecture *(docs only)* ✅ | none | ✅ Matrix signed off (R2/R4/R5/R6) |
+| 14R.2 | Bridge table + resolver + link service ✅ | low | ✅ 22 bridge tests green |
 | 14R.3 | Obstetrics stage-aware workspace | medium | No new duplicate writes; existing completion works |
 | 14R.4 | Gynaecology separation + explicit transition | medium | Gynae unaffected without a link |
 | 14R.5 | Admission/emergency/labor/delivery/postnatal handoffs | medium | No duplicate records in scenarios A–F |
 | 14R.6 | Readiness, summary projection, reconciliation, billing policy | high | Dry-run report reviewed; billing policy approved |
 | 14R.7 | Manual test data + wider regression | medium | Full regression pass |
 
-**Do not begin 14R.2 until the audit and matrix are reviewed.**
+**14R.2 is complete. Next: 14R.3 (Obstetrics stage-aware workspace), which is the first phase that changes clinician-facing behaviour.**

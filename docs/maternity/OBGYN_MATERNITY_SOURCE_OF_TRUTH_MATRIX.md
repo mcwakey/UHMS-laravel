@@ -1,7 +1,17 @@
 # O&G ↔ Maternity — Source-of-Truth Matrix (field level)
 
-**Status:** Proposal for review. Nothing in this document has been implemented.
-**Companion:** `OBGYN_MATERNITY_RECONCILIATION_GAP_ANALYSIS.md`
+**Status:** **Approved.** Ownership decisions below are ratified; field-conversion work lands in 14R.3/14R.4.
+**Companion:** `OBGYN_MATERNITY_RECONCILIATION_GAP_ANALYSIS.md`, `OBGYN_MATERNITY_BRIDGE_PHASE_14R_2_REPORT.md`
+
+## Approved decisions (ratified before Phase 14R.2)
+
+| Ref | Decision |
+|---|---|
+| **R2** | Gynaecology `menstrual_history.lmp` stays **Consultation-owned** and is **never auto-synced** to `pregnancy_profiles.last_menstrual_period`. An explicit **one-way** "Use this LMP for pregnancy dating" action is approved for a later phase. `dating_method` becomes **Pregnancy-Profile-owned in 14R.3**. |
+| **R4** | Gynaecology `obstetric_history` is **RW (editable encounter history) when no pregnancy profile is linked**, and a **read-only Maternity projection when a profile is linked**. Existing consultation entries are preserved. |
+| **R5** | Order-set automatic specialty-entry patches are **retargeted in 14R.4**. |
+| **R6** | An **immutable, versioned completion-time Maternity Context snapshot** is approved, **deferred to 14R.6**. |
+| **Bridge** | The **explicit-foreign-key** bridge design (not polymorphic) is **approved and implemented** in 14R.2. |
 
 ---
 
@@ -62,7 +72,7 @@ Also seeded into **Gynaecology** (see §5).
 | `edd` | Both | **PP** (`estimated_due_date`) | `RO-proj` | RW | Preserve; explicit confirm | From PP | Maternity | none |
 | `gestational_age_weeks` | **Three-way** (C, PP, ANC) | **PP** baseline, **ANC** per-visit | `RO-proj` (derived) | RW | Preserve | Derived, labelled with source | Maternity | none |
 | `gestational_age_days` | **Three-way** | **PP** / **ANC** | `RO-proj` | RW | Preserve | Derived | Maternity | none |
-| `dating_method` | Consultation | **PP** `?` | `RO-proj` if adopted | RW | **Decision (R2)** | From PP | Maternity | none |
+| `dating_method` | Consultation | **PP** *(approved, R2)* | `RO-proj` once adopted | RW | Converts in **14R.3**, not before | From PP | Maternity | none |
 
 > GA is *computed* clinically (from LMP or scan). Consultation must never hold an independent GA. Show PP baseline + latest ANC GA, each labelled.
 
@@ -172,9 +182,9 @@ Gynaecology must remain a **non-pregnancy** reproductive-health workspace.
 
 | Field | Issue | Decision |
 |---|---|---|
-| `menstrual_history.lmp` | Same concept as `pregnancy_profiles.last_menstrual_period`, different intent (gynaecological cycle vs. pregnancy dating) | **Stays `C`. Never auto-sync (R2).** Offer explicit "use this LMP to date pregnancy" only when a profile is being created/linked. |
-| `sexual_sti_history.pregnancy_test` | A positive result must **not** auto-create a profile or switch specialty | Stays `C`. May *surface* the "Create/Link pregnancy profile" action; clinician acts explicitly. |
-| `obstetric_history.*` (seeded into Gynaecology) | Three-way duplication | **`RW-unlinked` → `RO-proj` when a profile is linked.** Requires clinical sign-off (R4). |
+| `menstrual_history.lmp` | Same concept as `pregnancy_profiles.last_menstrual_period`, different intent (gynaecological cycle vs. pregnancy dating) | **✅ Approved (R2):** stays `C`, **never auto-synced**. Explicit one-way "use this LMP to date pregnancy" offered only when a profile is being created/linked. |
+| `sexual_sti_history.pregnancy_test` | A positive result must **not** auto-create a profile or switch specialty | Stays `C`. May *surface* the "Create/Link pregnancy profile" action; clinician acts explicitly. **Enforced and tested in 14R.2.** |
+| `obstetric_history.*` (seeded into Gynaecology) | Three-way duplication | **✅ Approved (R4): `RW-unlinked` → `RO-proj` when a profile is linked.** Existing entries preserved. |
 
 ### 5.3 Gynaecology rules
 

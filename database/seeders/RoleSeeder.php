@@ -72,6 +72,11 @@ class RoleSeeder extends Seeder
             'consultations.create',
             'consultations.edit',
             'consultation.preview',
+            // Phase 14R.2 — Consultation ↔ Maternity bridge. Gates the link
+            // only; underlying maternity permissions still apply.
+            'consultation.maternity_context.view',
+            'consultation.maternity_context.link',
+            'consultation.maternity_context.unlink',
             'consultations.reopen',
             'consultations.reopen_completed',
             'consultations.reopen_same_day_discharge',
