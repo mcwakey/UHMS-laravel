@@ -204,6 +204,7 @@ use App\Http\Controllers\Billing\ReceivableController;
 use App\Http\Controllers\Billing\SponsorController;
 use App\Http\Controllers\Dev\DebugPermissionGrantController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationClinicalEntryController;
+use App\Http\Controllers\Doctor\Consultations\ConsultationMaternityContextController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationOrderController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationPlanningController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationPrescriptionController;
@@ -2329,6 +2330,19 @@ Route::middleware('auth')->group(function () {
 
                 Route::post('consultations/{visit}/specialty-entries/{sectionKey}', [ConsultationSpecialtyEntryController::class, 'store'])->name('consultations.specialty-entries.store');
                 Route::delete('consultations/{visit}/specialty-entries/{sectionKey}', [ConsultationSpecialtyEntryController::class, 'destroy'])->name('consultations.specialty-entries.destroy');
+
+                // Phase 14R.3 — explicit Consultation ↔ Maternity context actions.
+                // Every action additionally requires the underlying maternity
+                // permission; the controller enforces the dual check.
+                Route::prefix('consultations/{visit}/maternity-context')->name('consultations.maternity-context.')->group(function () {
+                    Route::post('link', [ConsultationMaternityContextController::class, 'link'])->name('link');
+                    Route::post('confirm', [ConsultationMaternityContextController::class, 'confirm'])->name('confirm');
+                    Route::post('relink', [ConsultationMaternityContextController::class, 'relink'])->name('relink');
+                    Route::post('unlink', [ConsultationMaternityContextController::class, 'unlink'])->name('unlink');
+                    Route::post('pregnancy-profile', [ConsultationMaternityContextController::class, 'createProfile'])->name('create-profile');
+                    Route::post('anc-visit', [ConsultationMaternityContextController::class, 'recordAnc'])->name('record-anc');
+                    Route::post('labor', [ConsultationMaternityContextController::class, 'startLabor'])->name('start-labor');
+                });
 
                 Route::get('consultations/{visit}/specialty-order-sets', [ConsultationSpecialtyOrderSetController::class, 'index'])->name('consultations.specialty-order-sets.index');
                 Route::get('consultations/{visit}/specialty-order-sets/{orderSet}/preview', [ConsultationSpecialtyOrderSetController::class, 'preview'])->name('consultations.specialty-order-sets.preview');

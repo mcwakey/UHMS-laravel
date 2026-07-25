@@ -77,6 +77,11 @@ class RoleSeeder extends Seeder
             'consultation.maternity_context.view',
             'consultation.maternity_context.link',
             'consultation.maternity_context.unlink',
+            // Phase 14R.3 actions — each ALSO requires the underlying maternity
+            // permission (pregnancy.create / anc.record / labor.start).
+            'consultation.maternity_context.create_profile',
+            'consultation.maternity_context.record_anc',
+            'consultation.maternity_context.start_labor',
             'consultations.reopen',
             'consultations.reopen_completed',
             'consultations.reopen_same_day_discharge',

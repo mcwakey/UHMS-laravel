@@ -36,7 +36,9 @@ Grouped by phase, mapping directly to the required scenarios in the phase brief.
 | T7 | Link / relink / unlink writes an activity log row | audit present |
 | T8 | Link survives consultation completion | link readable after completion, role `historical` |
 
-### 1.2 Obstetrics workspace — 14R.3
+### 1.2 Obstetrics workspace — 14R.3 ✅ IMPLEMENTED
+
+> Automated coverage lives in `tests/Feature/ConsultationObstetricsMaternityWorkspacePhase14R3Test.php` (22 passing). Manual scenarios S2/S3/S7 below remain required before enabling the write guard in any environment.
 
 | # | Test | Expected |
 |---|---|---|

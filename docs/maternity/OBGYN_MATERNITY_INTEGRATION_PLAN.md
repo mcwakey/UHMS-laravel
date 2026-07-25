@@ -70,7 +70,9 @@ Values: none, pregnancy profile, ANC, labor, delivery, newborn, postnatal.
 
 ---
 
-## 3. Phase 14R.3 — Obstetrics workspace integration
+## 3. Phase 14R.3 — Obstetrics workspace integration ✅ IMPLEMENTED
+
+> **Delivered, dark by default.** Two feature flags (both `false`), dating method, context service + view model, server-side field-level write guard, 7 explicit actions, ribbon + panel, 3 dual-permission actions, EN/FR parity, 22 passing tests, zero new baseline failures. See `OBGYN_MATERNITY_OBSTETRICS_WORKSPACE_PHASE_14R_3_REPORT.md`.
 
 **Goal:** Make Obstetrics stage-aware and stop new duplicate writes.
 
@@ -235,10 +237,10 @@ Measured in this environment: **0 rows** to reconcile — re-measure per environ
 |---|---|---|---|
 | 14R.1 | Audit, matrix, architecture *(docs only)* ✅ | none | ✅ Matrix signed off (R2/R4/R5/R6) |
 | 14R.2 | Bridge table + resolver + link service ✅ | low | ✅ 22 bridge tests green |
-| 14R.3 | Obstetrics stage-aware workspace | medium | No new duplicate writes; existing completion works |
+| 14R.3 | Obstetrics stage-aware workspace ✅ | medium | ✅ 22 tests green; baselines unchanged; flags default off |
 | 14R.4 | Gynaecology separation + explicit transition | medium | Gynae unaffected without a link |
 | 14R.5 | Admission/emergency/labor/delivery/postnatal handoffs | medium | No duplicate records in scenarios A–F |
 | 14R.6 | Readiness, summary projection, reconciliation, billing policy | high | Dry-run report reviewed; billing policy approved |
 | 14R.7 | Manual test data + wider regression | medium | Full regression pass |
 
-**14R.2 is complete. Next: 14R.3 (Obstetrics stage-aware workspace), which is the first phase that changes clinician-facing behaviour.**
+**14R.3 is complete (dark by default). Next: 14R.4 — Gynaecology separation + order-set retargeting (R5), which unblocks converting `current_pregnancy` and `birth_plan`.**

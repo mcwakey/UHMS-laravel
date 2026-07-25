@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Doctor\Consultations;
 
 use App\Models\Visit;
 use App\Services\Consultation\ConsultationActionException;
+use App\Services\Consultation\Maternity\ConsultationMaternitySpecialtyWriteGuard;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyEntryService;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyProfileResolver;
 use App\Services\Consultation\Specialty\ConsultationSpecialtySectionSchema;
@@ -68,6 +69,23 @@ class ConsultationSpecialtyEntryController extends ConsultationWorkflowControlle
 
         $validated = $request->validate($schemas->rulesFor($sectionKey));
         $entry = $schemas->sanitizedEntry($sectionKey, $validated);
+
+        // Phase 14R.3 — server-side source-of-truth guard. Inert unless the
+        // Obstetrics profile is active, both feature flags are on, and an
+        // explicit pregnancy-profile link exists. Blocked fields are rejected
+        // rather than silently dropped; consultation-owned siblings still save.
+        $blocked = app(ConsultationMaternitySpecialtyWriteGuard::class)->blockedFields(
+            $context->route,
+            $resolved->profile,
+            $sectionKey,
+            $entry,
+        );
+
+        if ($blocked !== []) {
+            throw ValidationException::withMessages(
+                app(ConsultationMaternitySpecialtyWriteGuard::class)->validationMessages($blocked)
+            );
+        }
 
         $entryId = $request->integer('consultation_specialty_entry_id');
         $existing = $entryId

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PregnancyDatingMethod;
 use App\Enums\PregnancyProfileStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -26,6 +27,7 @@ class PregnancyProfile extends Model
         'estimated_due_date',
         'gestational_age_weeks',
         'gestational_age_days',
+        'dating_method',
         'blood_group',
         'rhesus_status',
         'known_risks',
@@ -52,6 +54,7 @@ class PregnancyProfile extends Model
             'hypertensive_disorder_risk' => 'boolean',
             'diabetes_risk' => 'boolean',
             'multiple_pregnancy' => 'boolean',
+            'dating_method' => PregnancyDatingMethod::class,
             'profile_status' => PregnancyProfileStatus::class,
             'closed_at' => 'datetime',
         ];
