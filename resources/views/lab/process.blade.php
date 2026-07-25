@@ -317,6 +317,16 @@
                     <label class="form-label small fw-medium"><i class="ti ti-paperclip me-1"></i>{{ __('lab.attach_file_label') }} <span class="text-muted">(optional)</span></label>
                     <input type="file" name="result_file" class="form-control form-control-sm" accept="image/*,.pdf,.doc,.docx">
                     <div class="form-text">{{ __('lab.attach_file_hint') }}</div>
+                    @if($item->result?->result_file)
+                        <div class="mt-1 d-flex align-items-center gap-2 small">
+                            <span class="text-muted">{{ __('lab.current_file') }}: {{ $item->result->result_file_name ?? basename($item->result->result_file) }}</span>
+                            <x-attachment-preview
+                                :url="Storage::url($item->result->result_file)"
+                                :name="$item->result->result_file_name ?? basename($item->result->result_file)"
+                                :label="__('lab.preview_current_file')"
+                                class="btn btn-sm btn-link p-0" />
+                        </div>
+                    @endif
                 </div>
             </div>
             <div class="modal-footer">
@@ -432,6 +442,16 @@
                     <label class="form-label small fw-medium"><i class="ti ti-paperclip me-1"></i>{{ __('lab.attach_file_label') }} <span class="text-muted">(optional)</span></label>
                     <input type="file" name="result_file" class="form-control form-control-sm" accept="image/*,.pdf,.doc,.docx">
                     <div class="form-text">{{ __('lab.attach_file_hint') }}</div>
+                    @if($item->result?->result_file)
+                        <div class="mt-1 d-flex align-items-center gap-2 small">
+                            <span class="text-muted">{{ __('lab.current_file') }}: {{ $item->result->result_file_name ?? basename($item->result->result_file) }}</span>
+                            <x-attachment-preview
+                                :url="Storage::url($item->result->result_file)"
+                                :name="$item->result->result_file_name ?? basename($item->result->result_file)"
+                                :label="__('lab.preview_current_file')"
+                                class="btn btn-sm btn-link p-0" />
+                        </div>
+                    @endif
                 </div>
             </div>
             <div class="modal-footer">
@@ -469,9 +489,10 @@
                         <td><span class="badge bg-{{ $item->status_color }}">{{ ucfirst($item->status) }}</span></td>
                         <td>
                             @if($item->result?->result_file)
-                                <a href="{{ Storage::url($item->result->result_file) }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                    <i class="ti ti-download me-1"></i>{{ $item->result->result_file_name ?? 'View File' }}
-                                </a>
+                                <x-attachment-preview
+                                    :url="Storage::url($item->result->result_file)"
+                                    :name="$item->result->result_file_name ?? basename($item->result->result_file)"
+                                    :label="$item->result->result_file_name ?? __('lab.view_file')" />
                             @else <span class="text-muted">—</span> @endif
                         </td>
                         <td>
@@ -528,8 +549,15 @@
                     </label>
                     <input type="file" name="result_file" class="form-control" @required(! $item->result)
                         accept="{{ $resultType === \App\Enums\ResultType::IMAGE ? 'image/*' : '.pdf,.doc,.docx' }}">
-                    @if($item->result?->result_file_name)
-                        <div class="form-text">{{ __('lab.current_file') }}: {{ $item->result->result_file_name }}</div>
+                    @if($item->result?->result_file)
+                        <div class="form-text d-flex align-items-center gap-2">
+                            <span>{{ __('lab.current_file') }}: {{ $item->result->result_file_name ?? basename($item->result->result_file) }}</span>
+                            <x-attachment-preview
+                                :url="Storage::url($item->result->result_file)"
+                                :name="$item->result->result_file_name ?? basename($item->result->result_file)"
+                                :label="__('lab.preview_current_file')"
+                                class="btn btn-sm btn-link p-0" />
+                        </div>
                     @endif
                     <div class="form-text">
                         @if($resultType === \App\Enums\ResultType::IMAGE) {{ __('lab.image_hint') }}

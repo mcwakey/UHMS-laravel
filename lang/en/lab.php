@@ -228,6 +228,8 @@ return [
     'tests_title'               => 'Lab Test Catalog',
 
     // New request modal (requests.blade.php)
+    'view_file'                 => 'View File',
+    'preview_current_file'      => 'Preview current file',
     'new_request'               => 'New Request',
     'new_request_title'         => 'New Investigation Request',
     'select_visit_help'         => 'Start typing a visit number, patient name, or patient number.',

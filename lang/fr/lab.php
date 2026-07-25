@@ -230,6 +230,8 @@ return [
     'tests_title'               => 'Catalogue des tests de laboratoire',
 
     // New request modal (requests.blade.php)
+    'view_file'                 => 'Voir le fichier',
+    'preview_current_file'      => 'Aperçu du fichier actuel',
     'new_request'               => 'Nouvelle demande',
     'new_request_title'         => 'Nouvelle demande d\'investigation',
     'select_visit_help'         => 'Commencez à taper un numéro de visite, un nom de patient ou un numéro de patient.',
