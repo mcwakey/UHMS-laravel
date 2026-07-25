@@ -496,6 +496,10 @@ class PharmacyService
             $this->updatePrescriptionStatus($prescription);
 
             if ($prescription->visit) {
+                // Dispensing starts the pharmacy's work → remove the patient
+                // from the pharmacy department's queue.
+                app(QueueService::class)->dequeueForDepartmentType($prescription->visit, [DepartmentType::PHARMACY->value]);
+
                 app(VisitPathwayService::class)->record($prescription->visit, 'PHARMACY_DISPENSED', [
                     'source' => $lastRecord,
                     'title' => 'Medication dispensed',

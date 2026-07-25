@@ -43,6 +43,145 @@ class LaborOverviewService
         ];
     }
 
+    /**
+     * Build chart-ready partograph series for a labor episode.
+     *
+     * The x-axis is elapsed hours since the first observation (the WHO
+     * partograph plots progress against time). Each point also carries a
+     * clock-time label (`t`) for the tooltip. The cervicograph carries the
+     * WHO alert line (1 cm/hour from the first active-phase dilation ≥ 4 cm)
+     * and the action line (4 hours to its right).
+     */
+    public function partograph(LaborEpisode $episode): array
+    {
+        // observations() defaults to newest-first; the partograph needs a
+        // chronological series, so reset the ordering to ascending.
+        $observations = $episode->observations()
+            ->where('status', '!=', LaborObservationStatus::CANCELLED->value)
+            ->reorder('observed_at', 'asc')
+            ->orderBy('id')
+            ->get();
+
+        if ($observations->isEmpty()) {
+            return ['has_data' => false];
+        }
+
+        $start = $observations->first()->observed_at;
+
+        $hoursSince = fn ($when) => round(abs($start->diffInMinutes($when)) / 60, 2);
+
+        $point = function (LaborObservation $observation, $value) use ($hoursSince) {
+            if ($value === null || $value === '') {
+                return null;
+            }
+
+            return [
+                'x' => $hoursSince($observation->observed_at),
+                'y' => (float) $value,
+                't' => $observation->observed_at?->format('d M H:i'),
+            ];
+        };
+
+        $series = [
+            'dilation' => [],
+            'descent' => [],
+            'fhr' => [],
+            'contractions' => [],
+            'pulse' => [],
+            'systolic' => [],
+            'diastolic' => [],
+            'temperature' => [],
+        ];
+
+        foreach ($observations as $observation) {
+            if ($p = $point($observation, $observation->cervical_dilation_cm)) {
+                $series['dilation'][] = $p;
+            }
+            if (($descent = $this->parseDescentFifths($observation->descent)) !== null
+                && ($p = $point($observation, $descent))) {
+                $series['descent'][] = $p;
+            }
+            if ($p = $point($observation, $observation->fetal_heart_rate)) {
+                $series['fhr'][] = $p;
+            }
+            if ($p = $point($observation, $observation->contractions_per_10_min)) {
+                $series['contractions'][] = $p;
+            }
+            if ($p = $point($observation, $observation->maternal_pulse)) {
+                $series['pulse'][] = $p;
+            }
+            if ($p = $point($observation, $observation->blood_pressure_systolic)) {
+                $series['systolic'][] = $p;
+            }
+            if ($p = $point($observation, $observation->blood_pressure_diastolic)) {
+                $series['diastolic'][] = $p;
+            }
+            if ($p = $point($observation, $observation->temperature)) {
+                $series['temperature'][] = $p;
+            }
+        }
+
+        $maxHour = max(1, (int) ceil($hoursSince($observations->last()->observed_at)) + 1);
+
+        return [
+            'has_data' => true,
+            'max_hour' => $maxHour,
+            'started_at' => $start?->format('d M Y H:i'),
+            'series' => $series,
+        ] + $this->progressLines($observations, $hoursSince);
+    }
+
+    /**
+     * WHO alert & action lines, anchored on the first active-phase
+     * observation (cervical dilation ≥ 4 cm). Returns two-point lines in
+     * the same hours-since-start units, or nulls when the active phase has
+     * not been reached yet.
+     *
+     * @param  \Illuminate\Support\Collection<int, LaborObservation>  $observations
+     * @return array{alert_line: ?array, action_line: ?array}
+     */
+    private function progressLines($observations, callable $hoursSince): array
+    {
+        $anchor = $observations->first(fn (LaborObservation $o) => $o->cervical_dilation_cm !== null && (float) $o->cervical_dilation_cm >= 4);
+
+        if (! $anchor) {
+            return ['alert_line' => null, 'action_line' => null];
+        }
+
+        $anchorHour = $hoursSince($anchor->observed_at);
+        // From ≥4 cm it takes 6 hours to reach full dilation at 1 cm/hour.
+        $alertStart = ['x' => round($anchorHour, 2), 'y' => 4];
+        $alertEnd = ['x' => round($anchorHour + 6, 2), 'y' => 10];
+        // Action line is the alert line shifted 4 hours to the right.
+        $actionStart = ['x' => round($anchorHour + 4, 2), 'y' => 4];
+        $actionEnd = ['x' => round($anchorHour + 10, 2), 'y' => 10];
+
+        return [
+            'alert_line' => [$alertStart, $alertEnd],
+            'action_line' => [$actionStart, $actionEnd],
+        ];
+    }
+
+    /**
+     * Best-effort parse of the free-text descent field into fifths
+     * palpable above the brim (0–5). Accepts "3/5", "3", "-3", etc.;
+     * returns null when nothing numeric can be extracted.
+     */
+    private function parseDescentFifths(?string $descent): ?int
+    {
+        if ($descent === null || trim($descent) === '') {
+            return null;
+        }
+
+        if (! preg_match('/-?\d+/', $descent, $matches)) {
+            return null;
+        }
+
+        $value = abs((int) $matches[0]);
+
+        return $value > 5 ? null : $value;
+    }
+
     public function dashboard(): array
     {
         return [

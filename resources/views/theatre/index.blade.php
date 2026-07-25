@@ -11,6 +11,11 @@
             <div class="text-muted small">{{ __('theatre.schedule_board_description') }}</div>
         </div>
         <div class="d-flex gap-2">
+            @can('procedure.request')
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newProcedureModal">
+                    <i class="ti ti-plus"></i> {{ __('theatre.new_procedure') }}
+                </button>
+            @endcan
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.theatre.calendar') }}">
                 <i class="ti ti-calendar"></i> {{ __('theatre.calendar') }}
             </a>
@@ -169,4 +174,146 @@
         <div class="card-footer">{{ $requests->links() }}</div>
     </div>
 </div>
+
+@can('procedure.request')
+<div class="modal fade" id="newProcedureModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.theatre.requests.store') }}" id="newProcedureForm">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold mb-0"><i class="ti ti-scalpel me-1"></i>{{ __('theatre.new_procedure_title') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('common.close') }}"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small">{{ __('theatre.visit_label') }} <span class="text-danger">*</span></label>
+                        <select name="visit_id" id="procVisit" class="form-select" required style="width:100%">
+                            <option value="">-- Search visit number or patient name/number --</option>
+                        </select>
+                        <div class="form-text">{{ __('theatre.select_visit_help') }}</div>
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label small">{{ __('theatre.department') }} <span class="text-danger">*</span></label>
+                            <select name="department_id" id="procDepartment" class="form-select" required>
+                                <option value="">-- {{ __('common.select') }} --</option>
+                                @foreach($procedureDepartments as $dept)
+                                    <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">{{ __('theatre.service') }} <span class="text-danger">*</span></label>
+                            <select name="service_catalog_id" id="procService" class="form-select" required disabled>
+                                <option value="">{{ __('theatre.select_department_first') }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-4">
+                            <label class="form-label small">{{ __('theatre.priority') }} <span class="text-danger">*</span></label>
+                            <select name="priority" class="form-select" required>
+                                <option value="routine">{{ __('statuses.priority.routine') }}</option>
+                                <option value="urgent">{{ __('statuses.priority.urgent') }}</option>
+                                <option value="emergency">{{ __('statuses.priority.emergency') }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label small">{{ __('theatre.preferred_datetime') }}</label>
+                            <input type="datetime-local" name="preferred_datetime" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small">{{ __('theatre.indication') }} <span class="text-danger">*</span></label>
+                        <textarea name="indication" class="form-control" rows="2" required placeholder="{{ __('theatre.indication') }}"></textarea>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label small">{{ __('theatre.notes') }}</label>
+                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>{{ __('theatre.create_procedure_btn') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+(function () {
+    var modalEl = document.getElementById('newProcedureModal');
+    var departmentSelect = document.getElementById('procDepartment');
+    var serviceSelect = document.getElementById('procService');
+    var visitSelect = document.getElementById('procVisit');
+    if (!modalEl || !departmentSelect || !serviceSelect || !visitSelect) return;
+
+    var selectDeptFirst = @json(__('theatre.select_department_first'));
+    var loadingText = @json(__('common.loading') ?: 'Loading…');
+
+    if (window.jQuery && jQuery.fn.select2) {
+        jQuery('#procVisit').select2({
+            dropdownParent: jQuery(modalEl),
+            width: '100%',
+            placeholder: '-- Search visit number or patient name/number --',
+            minimumInputLength: 2,
+            ajax: {
+                url: '{{ route('admin.theatre.visit-search') }}',
+                dataType: 'json',
+                delay: 300,
+                data: function (params) { return { q: params.term }; },
+                processResults: function (data) {
+                    return { results: (data || []).map(function (v) {
+                        v.text = v.visit_number + ' — ' + (v.patient_name || 'Patient') + ' (' + (v.patient_number || '') + ')';
+                        v.id = String(v.id);
+                        return v;
+                    }) };
+                },
+                cache: true
+            }
+        });
+    }
+
+    function loadServices() {
+        var deptId = departmentSelect.value;
+        serviceSelect.innerHTML = '';
+        if (!deptId) {
+            serviceSelect.disabled = true;
+            serviceSelect.appendChild(new Option(selectDeptFirst, ''));
+            return;
+        }
+        serviceSelect.disabled = true;
+        serviceSelect.appendChild(new Option(loadingText, ''));
+
+        var url = '{{ route('admin.theatre.department-services', ['department' => '__DEPT__']) }}'.replace('__DEPT__', deptId);
+        var visitId = visitSelect.value;
+        if (visitId) { url += '?visit_id=' + encodeURIComponent(visitId); }
+
+        fetch(url)
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                serviceSelect.innerHTML = '';
+                serviceSelect.appendChild(new Option('-- {{ __('common.select') }} --', ''));
+                (data || []).forEach(function (s) {
+                    serviceSelect.appendChild(new Option(s.name, s.id));
+                });
+                serviceSelect.disabled = false;
+            })
+            .catch(function () {
+                serviceSelect.innerHTML = '';
+                serviceSelect.appendChild(new Option(selectDeptFirst, ''));
+            });
+    }
+
+    departmentSelect.addEventListener('change', loadServices);
+}());
+</script>
+@endpush
+@endcan
 @endsection

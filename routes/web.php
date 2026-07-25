@@ -3081,6 +3081,9 @@ Route::middleware('auth')->group(function () {
             // Doctor: request procedure from consultation page
             Route::middleware('can:procedure.request')->group(function () {
                 Route::post('visits/{visit}/request', [TheatreController::class, 'requestStore'])->name('request');
+                // Theatre board "New Procedure" modal: pick a visit, then request.
+                Route::get('visit-search', [TheatreController::class, 'visitSearch'])->name('visit-search');
+                Route::post('requests', [TheatreController::class, 'storeRequest'])->name('requests.store');
                 // Lookups for the consultation form
                 Route::get('departments', function () {
                     return response()->json(app(ProcedureRequestService::class)->procedureDepartments());

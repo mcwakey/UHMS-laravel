@@ -84,6 +84,7 @@ class LaborEpisodeController extends Controller
         return view('maternity.labor.show', [
             'episode' => $laborEpisode,
             'laborOverview' => $this->overview->forEpisode($laborEpisode),
+            'partograph' => $this->overview->partograph($laborEpisode),
             'riskAssessment' => $this->riskAssessment->assess($laborEpisode->latestObservation ?: $laborEpisode),
             'billingPreviews' => $this->billingPosting->previewManyForSource($laborEpisode),
             'observations' => $laborEpisode->observations()->with('recordedBy')->paginate(15),

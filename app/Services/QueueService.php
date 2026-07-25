@@ -196,6 +196,52 @@ class QueueService
         }
     }
 
+    /**
+     * Remove a visit from a specific department's queue when a staff member
+     * starts working on them — mirrors how activating a consultation dequeues
+     * the patient. No-op when the visit has no active entry at that department.
+     */
+    public function dequeueForDepartment(Visit $visit, ?int $departmentId): void
+    {
+        if (! $departmentId) {
+            return;
+        }
+
+        $entry = $visit->queueEntries()
+            ->whereIn('status', ['waiting', 'serving'])
+            ->where('department_id', $departmentId)
+            ->latest()
+            ->first();
+
+        if ($entry) {
+            $this->markCompleted($entry);
+        }
+    }
+
+    /**
+     * Remove a visit from the queue of whichever department (of the given
+     * type/s) they are currently waiting at. Used where the acting department
+     * is known by type rather than a specific id (e.g. pharmacy, blood bank).
+     *
+     * @param  list<string>  $types
+     */
+    public function dequeueForDepartmentType(Visit $visit, array $types): void
+    {
+        if ($types === []) {
+            return;
+        }
+
+        $entry = $visit->queueEntries()
+            ->whereIn('status', ['waiting', 'serving'])
+            ->whereHas('department', fn ($query) => $query->whereIn('type', $types))
+            ->latest()
+            ->first();
+
+        if ($entry) {
+            $this->markCompleted($entry);
+        }
+    }
+
     public function boardData(): array
     {
         $queues = QueueEntry::with(['visit.patient', 'department'])

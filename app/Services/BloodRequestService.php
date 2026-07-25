@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\BillingType;
+use App\Enums\DepartmentType;
 use App\Enums\InvoiceStatus;
 use App\Enums\LogModule;
 use App\Enums\NotificationModule;
@@ -143,6 +144,12 @@ class BloodRequestService
             'approved_by' => $user->id,
             'approved_at' => now(),
         ]);
+
+        if ($request->visit) {
+            // Approving the request starts the blood bank's work → remove the
+            // patient from the blood bank department's queue.
+            app(QueueService::class)->dequeueForDepartmentType($request->visit, [DepartmentType::BLOOD_BANK->value]);
+        }
 
         $this->log->log(LogModule::BLOOD_BANK, 'BLOOD_REQUEST_APPROVED', [
             'description' => "Blood request {$request->request_number} approved.",

@@ -347,6 +347,10 @@ class LabService
         $request->items()->where('status', 'pending')->update(['status' => 'processing']);
 
         if ($request->visit) {
+            // Starting work on the request removes the patient from the
+            // performing department's queue (like activating a consultation).
+            app(QueueService::class)->dequeueForDepartment($request->visit, $request->target_department_id ?? $request->department_id);
+
             app(VisitPathwayService::class)->record($request->visit, 'INVESTIGATION_ACCEPTED', [
                 'source' => $request,
                 'department_id' => $request->target_department_id ?? $request->department_id,

@@ -75,7 +75,27 @@
             @if($observations->hasPages())<div class="card-footer">{{ $observations->links() }}</div>@endif
         </div>
 
-        <div class="alert alert-info"><i class="ti ti-chart-dots me-1"></i>{{ __('maternity.partograph_placeholder') }}</div>
+        <div class="card mb-3" id="partographCard">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0"><i class="ti ti-chart-dots me-1"></i>{{ __('maternity.partograph') }}</h5>
+                @if($partograph['has_data'])<small class="text-muted">{{ __('maternity.partograph_since', ['time' => $partograph['started_at']]) }}</small>@endif
+            </div>
+            <div class="card-body">
+                @if($partograph['has_data'])
+                    <p class="text-muted small mb-3"><i class="ti ti-info-circle me-1"></i>{{ __('maternity.partograph_axis_note') }}</p>
+                    <div class="mb-1 fw-semibold small text-muted">{{ __('maternity.fetal_heart_rate') }}</div>
+                    <div id="partoFhr"></div>
+                    <div class="mb-1 mt-3 fw-semibold small text-muted">{{ __('maternity.partograph_cervicograph') }}</div>
+                    <div id="partoCervix"></div>
+                    <div class="mb-1 mt-3 fw-semibold small text-muted">{{ __('maternity.contractions_per_10_min') }}</div>
+                    <div id="partoContractions"></div>
+                    <div class="mb-1 mt-3 fw-semibold small text-muted">{{ __('maternity.partograph_maternal_vitals') }}</div>
+                    <div id="partoVitals"></div>
+                @else
+                    <div class="alert alert-info mb-0"><i class="ti ti-chart-dots me-1"></i>{{ __('maternity.partograph_no_data') }}</div>
+                @endif
+            </div>
+        </div>
         @include('maternity.partials.billing-preview')
     </div>
 
@@ -159,4 +179,130 @@
         </div>
     </div>
 </div>
+
+@if($partograph['has_data'])
+@push('scripts')
+<script src="{{ URL::asset('build/plugins/apexchart/apexcharts.min.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof ApexCharts === 'undefined') return;
+
+    var parto = @json($partograph);
+    var maxHour = parto.max_hour || 12;
+    var series = parto.series || {};
+
+    var sharedX = {
+        type: 'numeric',
+        min: 0,
+        max: maxHour,
+        tickAmount: Math.min(maxHour, 24),
+        title: { text: @json(__('maternity.partograph_hours_axis')) },
+        labels: { formatter: function (v) { return Math.round(v); } },
+    };
+
+    function baseChart(height) {
+        return {
+            chart: { height: height, group: 'partograph', fontFamily: 'inherit', toolbar: { show: false }, animations: { enabled: false } },
+            grid: { borderColor: '#E9EAF3', strokeDashArray: 4 },
+            stroke: { curve: 'straight', width: 2 },
+            markers: { size: 4 },
+            dataLabels: { enabled: false },
+            xaxis: sharedX,
+            tooltip: { x: { formatter: function (v) { return v + ' ' + @json(__('maternity.partograph_hour_short')); } } },
+            legend: { position: 'top', horizontalAlign: 'left' },
+        };
+    }
+
+    // Fetal heart rate ────────────────────────────────────────────────
+    if ((series.fhr || []).length) {
+        new ApexCharts(document.querySelector('#partoFhr'), Object.assign(baseChart(220), {
+            series: [{ name: @json(__('maternity.fetal_heart_rate')), data: series.fhr }],
+            colors: ['#7C3AED'],
+            yaxis: { min: 80, max: 200, tickAmount: 6, title: { text: 'bpm' } },
+            annotations: { yaxis: [
+                { y: 110, y2: 160, fillColor: '#D1FAE5', opacity: 0.4, label: { text: @json(__('maternity.partograph_fhr_normal')), style: { fontSize: '10px' } } },
+            ] },
+        })).render();
+    }
+
+    // Cervicograph: dilation + descent + WHO alert/action lines ────────
+    var cervixSeries = [];
+    if ((series.dilation || []).length) {
+        cervixSeries.push({ name: @json(__('maternity.cervical_dilation')), type: 'line', data: series.dilation });
+    }
+    if (parto.alert_line) {
+        cervixSeries.push({ name: @json(__('maternity.partograph_alert_line')), type: 'line', data: parto.alert_line });
+    }
+    if (parto.action_line) {
+        cervixSeries.push({ name: @json(__('maternity.partograph_action_line')), type: 'line', data: parto.action_line });
+    }
+    if ((series.descent || []).length) {
+        cervixSeries.push({ name: @json(__('maternity.partograph_descent')), type: 'line', data: series.descent });
+    }
+    if (cervixSeries.length) {
+        var hasDescent = (series.descent || []).length > 0;
+        var cervixColors = [];
+        if ((series.dilation || []).length) cervixColors.push('#2563EB');
+        if (parto.alert_line) cervixColors.push('#F59E0B');
+        if (parto.action_line) cervixColors.push('#DC2626');
+        if (hasDescent) cervixColors.push('#0E9384');
+
+        var dashArray = cervixSeries.map(function (s) {
+            return (s.name === @json(__('maternity.partograph_alert_line')) || s.name === @json(__('maternity.partograph_action_line'))) ? 6
+                : (s.name === @json(__('maternity.partograph_descent')) ? 4 : 0);
+        });
+
+        var yAxes = [{ seriesName: @json(__('maternity.cervical_dilation')), min: 0, max: 10, tickAmount: 5, title: { text: @json(__('maternity.partograph_dilation_axis')) } }];
+        // alert & action lines share the dilation (cm) axis
+        if (parto.alert_line) yAxes.push({ seriesName: @json(__('maternity.cervical_dilation')), show: false, min: 0, max: 10 });
+        if (parto.action_line) yAxes.push({ seriesName: @json(__('maternity.cervical_dilation')), show: false, min: 0, max: 10 });
+        if (hasDescent) yAxes.push({ seriesName: @json(__('maternity.partograph_descent')), opposite: true, reversed: true, min: 0, max: 5, tickAmount: 5, title: { text: @json(__('maternity.partograph_descent_axis')) } });
+
+        new ApexCharts(document.querySelector('#partoCervix'), Object.assign(baseChart(300), {
+            series: cervixSeries,
+            colors: cervixColors,
+            stroke: { curve: 'straight', width: 2, dashArray: dashArray },
+            markers: { size: dashArray.map(function (d) { return d === 0 ? 5 : 0; }) },
+            yaxis: yAxes,
+        })).render();
+    }
+
+    // Contractions per 10 min ─────────────────────────────────────────
+    if ((series.contractions || []).length) {
+        new ApexCharts(document.querySelector('#partoContractions'), Object.assign(baseChart(200), {
+            chart: Object.assign(baseChart(200).chart, { type: 'bar' }),
+            series: [{ name: @json(__('maternity.contractions_per_10_min')), data: series.contractions }],
+            colors: ['#3538CD'],
+            plotOptions: { bar: { columnWidth: '35%', borderRadius: 3 } },
+            markers: { size: 0 },
+            yaxis: { min: 0, max: 5, tickAmount: 5, title: { text: '/10 min' } },
+        })).render();
+    }
+
+    // Maternal vitals: BP, pulse, temperature ─────────────────────────
+    var vitalsSeries = [];
+    if ((series.systolic || []).length) vitalsSeries.push({ name: @json(__('maternity.bp_systolic')), type: 'line', data: series.systolic });
+    if ((series.diastolic || []).length) vitalsSeries.push({ name: @json(__('maternity.bp_diastolic')), type: 'line', data: series.diastolic });
+    if ((series.pulse || []).length) vitalsSeries.push({ name: @json(__('maternity.maternal_pulse')), type: 'line', data: series.pulse });
+    if ((series.temperature || []).length) vitalsSeries.push({ name: @json(__('maternity.temperature')), type: 'line', data: series.temperature });
+    if (vitalsSeries.length) {
+        var vitalsColors = [];
+        if ((series.systolic || []).length) vitalsColors.push('#DC2626');
+        if ((series.diastolic || []).length) vitalsColors.push('#2563EB');
+        if ((series.pulse || []).length) vitalsColors.push('#0E9384');
+        if ((series.temperature || []).length) vitalsColors.push('#F59E0B');
+
+        var vitalsY = [{ seriesName: [@json(__('maternity.bp_systolic')), @json(__('maternity.bp_diastolic')), @json(__('maternity.maternal_pulse'))], min: 40, max: 200, tickAmount: 8, title: { text: 'mmHg / bpm' } }];
+        if ((series.temperature || []).length) vitalsY.push({ seriesName: @json(__('maternity.temperature')), opposite: true, min: 34, max: 42, tickAmount: 8, title: { text: '°C' } });
+
+        new ApexCharts(document.querySelector('#partoVitals'), Object.assign(baseChart(240), {
+            series: vitalsSeries,
+            colors: vitalsColors,
+            yaxis: vitalsY,
+        })).render();
+    }
+});
+</script>
+@endpush
+@endif
 @endsection

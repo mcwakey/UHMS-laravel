@@ -149,6 +149,9 @@ class TheatreController extends Controller
 
         $requests = $query->latest('id')->paginate(20)->withQueryString();
         $rooms = TheatreRoom::query()->orderBy('name')->get(['id', 'name', 'code']);
+        $procedureDepartments = $request->user()?->can('procedure.request')
+            ? $this->requestService->procedureDepartments()
+            : collect();
 
         $statsScope = function ($statsQuery) use ($request) {
             if ($this->shouldScopeToLoggedInDoctor($request)) {
@@ -175,7 +178,7 @@ class TheatreController extends Controller
                 ->whereDate('completed_at', today()))->count(),
         ];
 
-        return view('theatre.index', compact('requests', 'stats', 'tab', 'rooms'));
+        return view('theatre.index', compact('requests', 'stats', 'tab', 'rooms', 'procedureDepartments'));
     }
 
     public function show(ProcedureRequest $procedure)
@@ -271,6 +274,67 @@ class TheatreController extends Controller
         }
 
         return back()->withFragment('procedures-section')->with('success', __('messages.theatre.procedure_submitted'));
+    }
+
+    /**
+     * Search visits (AJAX) so a new procedure can be requested for a
+     * patient/visit — used by the "New Procedure" modal on the theatre
+     * board (no active consultation session required).
+     */
+    public function visitSearch(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+
+        $visits = Visit::query()
+            ->with('patient:id,patient_number,first_name,last_name')
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where('visit_number', 'like', "%{$q}%")
+                    ->orWhereHas('patient', function ($p) use ($q) {
+                        $p->where('first_name', 'like', "%{$q}%")
+                            ->orWhere('last_name', 'like', "%{$q}%")
+                            ->orWhere('patient_number', 'like', "%{$q}%");
+                    });
+            })
+            ->latest('visit_date')
+            ->limit(20)
+            ->get();
+
+        return response()->json($visits->map(fn ($v) => [
+            'id' => $v->id,
+            'visit_number' => $v->visit_number,
+            'patient_name' => $v->patient?->full_name,
+            'patient_number' => $v->patient?->patient_number,
+            'visit_date' => $v->visit_date?->format('d M Y'),
+        ]));
+    }
+
+    /**
+     * Request a procedure for a chosen visit, from the theatre board
+     * modal. Mirrors requestStore() but reads the visit from the request
+     * body instead of a route parameter.
+     */
+    public function storeRequest(Request $request)
+    {
+        $data = $request->validate([
+            'visit_id' => ['required', 'exists:visits,id'],
+            'department_id' => ['required', 'exists:departments,id'],
+            'service_catalog_id' => ['required', 'exists:service_catalog,id'],
+            'procedure_id' => ['nullable', 'exists:procedures,id'],
+            'priority' => ['required', 'in:routine,urgent,emergency'],
+            'indication' => ['required', 'string', 'max:2000'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+            'preferred_datetime' => ['nullable', 'date'],
+        ]);
+
+        try {
+            $procedure = $this->requestService->requestProcedure($data, Auth::user());
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('admin.theatre.show', $procedure)
+            ->with('success', __('messages.theatre.procedure_submitted_number', ['number' => $procedure->request_number]));
     }
 
     /* ── Workflow actions ── */

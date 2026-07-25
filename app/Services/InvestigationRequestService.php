@@ -115,6 +115,10 @@ class InvestigationRequestService
             ]);
 
             if ($labRequest->visit) {
+                // Accepting items starts the lab's work → drop the patient from
+                // the performing department's queue.
+                app(QueueService::class)->dequeueForDepartment($labRequest->visit, $labRequest->target_department_id ?? $labRequest->department_id);
+
                 app(VisitPathwayService::class)->record($labRequest->visit, 'INVESTIGATION_ACCEPTED', [
                     'source' => $labRequest,
                     'department_id' => $labRequest->target_department_id ?? $labRequest->department_id,

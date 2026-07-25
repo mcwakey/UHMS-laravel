@@ -56,6 +56,10 @@ class ProcedureWorkflowService
             $this->logStatusChange($request, ProcedureStatus::REQUESTED, ProcedureStatus::ACCEPTED, $user, $notes);
 
             if ($request->visit) {
+                // Accepting the procedure starts theatre's work → remove the
+                // patient from the theatre department's queue.
+                app(QueueService::class)->dequeueForDepartment($request->visit, $request->department_id);
+
                 app(VisitPathwayService::class)->record($request->visit, 'PROCEDURE_ACCEPTED', [
                     'source' => $request,
                     'department_id' => $request->department_id,
