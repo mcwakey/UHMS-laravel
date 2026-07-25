@@ -104,6 +104,8 @@
     .section-tasks h3                             { color: #6b7280; }
     .section-notes .owner-block                   { border-left-color: #6b7280; }
     .section-notes h3                             { color: #6b7280; }
+    .section-specialty .owner-block               { border-left-color: #6366f1; }
+    .section-specialty h3                         { color: #4338ca; }
     .consult-doc .contributor-pill {
         display: inline-flex; align-items: center; gap: 4px;
         background: #f1f5f9; padding: 4px 10px; border-radius: 999px;
@@ -168,6 +170,16 @@
     $prescriptionEntries = collect($sessionSummaries)
         ->flatMap(fn ($bundle) => collect($bundle['summary']['sections']['prescriptions'] ?? []))
         ->values();
+    // Personalise the visit-level headings (Investigations / Prescriptions /
+    // Procedures) when the visit belongs to a single specialty profile and no
+    // other session recorded clinical entries.
+    $specialtyBundles = collect($sessionSummaries)->pluck('specialty')->filter()->values();
+    $nonSpecialtyHasEntries = collect($sessionSummaries)
+        ->filter(fn ($bundle) => empty($bundle['specialty']))
+        ->contains(fn ($bundle) => collect($bundle['summary']['sections'] ?? [])->contains(fn ($entries) => ! empty($entries)));
+    $visitSectionLabels = ($specialtyBundles->pluck('profile.code')->unique()->count() === 1 && ! $nonSpecialtyHasEntries)
+        ? ($specialtyBundles->first()['visitSectionLabels'] ?? [])
+        : [];
     $detailKeyMap = [
         'Catalogue' => 'catalogue', 'Category' => 'category', 'Duration' => 'duration',
         'Severity' => 'severity', 'Complaint' => 'complaint', 'Onset' => 'onset',
@@ -304,14 +316,23 @@
                 'CANCELLED' => 'danger',
                 default => 'info',
             } : 'secondary';
+            $specialty = $bundle['specialty'] ?? null;
+            // One uniform ordered section list per session: the profile layout's
+            // order and labels when the session has a specialty, otherwise the
+            // default generic order.
+            $sectionsToRender = $specialty['orderedSections']
+                ?? collect($sessionSectionLabels)->map(fn ($label, $key) => ['type' => 'generic', 'key' => $key, 'label' => $label])->values()->all();
         @endphp
         <div class="session-card">
             <div class="session-head">
                 <h3>
-                    <i class="ti {{ $isEmergencySession ? 'ti-urgent text-danger' : 'ti-stethoscope text-primary' }} me-1"></i>
+                    <i class="ti {{ $isEmergencySession ? 'ti-urgent text-danger' : ($specialty['profile']['icon'] ?? 'ti-stethoscope').' text-primary' }} me-1"></i>
                     {{ $sessionTitle }}
                     @if($session)
                         <x-status-badge :status="$session->status" domain="consultation_session" class="ms-1" />
+                    @endif
+                    @if($specialty)
+                        <span class="badge bg-light text-dark border ms-1"><i class="ti {{ $specialty['profile']['icon'] ?? 'ti-stethoscope' }} me-1"></i>{{ $specialty['profile']['name'] }}</span>
                     @endif
                 </h3>
                 <div class="doc-meta">
@@ -335,16 +356,54 @@
             @endif
 
             @php
-                $hasAnySectionEntry = collect($sessionSectionLabels)->keys()->some(fn($k) => !empty($summary['sections'][$k]));
+                $hasAnySectionEntry = collect($sectionsToRender)->some(fn ($s) => ($s['type'] ?? 'generic') === 'structured'
+                    ? ! empty($s['entries'])
+                    : ! empty($summary['sections'][$s['key']] ?? []));
             @endphp
             @if(!$hasAnySectionEntry)
                 <div class="empty-state">{{ __('consultations.history.no_clinical_entries') }}</div>
             @else
-            @foreach($sessionSectionLabels as $key => $label)
+            @foreach($sectionsToRender as $renderSection)
                 @php
-                    $entries = collect($summary['sections'][$key] ?? []);
+                    $key = $renderSection['key'];
+                    $label = $renderSection['label'] ?? ($sessionSectionLabels[$key] ?? str($key)->replace('_', ' ')->title()->toString());
+                    $isStructuredSection = ($renderSection['type'] ?? 'generic') === 'structured';
+                    $entries = $isStructuredSection ? collect() : collect($summary['sections'][$key] ?? []);
                     $groups = $entries->groupBy(fn ($e) => $e['owner_key'] ?? 'unknown');
                 @endphp
+                @if($isStructuredSection)
+                {{-- Structured specialty section (visual acuity, refraction, …)
+                     rendered with the exact same markup as the generic sections. --}}
+                <div class="doc-subsection mb-2 section-specialty">
+                    <h3>{{ $label }} <span class="text-muted small">({{ count($renderSection['entries']) }})</span></h3>
+                    @foreach($renderSection['entries'] as $spEntry)
+                        @php
+                            $spOwner = $spEntry['owner_name'] ?? __('consultations.history.unknown_user');
+                            $spIsMain = $spEntry['owner_name'] && $spEntry['owner_name'] === ($summary['main_doctor'] ?? null);
+                        @endphp
+                        <div class="owner-block {{ $spIsMain ? '' : 'owner-contrib' }}">
+                            <div class="owner-head">
+                                <div>
+                                    <strong>{{ $spEntry['owner_name'] ? 'Dr. '.$spEntry['owner_name'] : $spOwner }}</strong>
+                                    <span class="badge bg-{{ $spIsMain ? 'primary' : 'secondary' }}-subtle text-{{ $spIsMain ? 'primary' : 'secondary' }} ms-1">{{ $spIsMain ? __('consultations.main_doctor_label') : __('consultations.history.contributor') }}</span>
+                                </div>
+                                <span class="text-muted small">{{ trans_choice('consultations.history.entry_count', 1, ['count' => 1]) }}</span>
+                            </div>
+                            <div class="entry">
+                                <div class="details">
+                                    @foreach($spEntry['fields'] as $f)
+                                        <span class="b">{{ $f['label'] }}: {{ $f['value'] }}</span>
+                                    @endforeach
+                                </div>
+                                <div class="meta">
+                                    @if($spEntry['recorded_at']) {{ __('consultations.history.recorded', ['date' => $spEntry['recorded_at']->translatedFormat('d M Y, h:i A')]) }} @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+                @continue
+                @endif
                 @if($entries->isEmpty()) @continue @endif
                 <div class="doc-subsection mb-2 section-{{ $key }}">
                     <h3>{{ $label }} <span class="text-muted small">({{ $entries->count() }})</span></h3>
@@ -395,38 +454,12 @@
                 </div>
             @endforeach
             @endif
-
-            {{-- Specialty-specific findings (ophthalmology, ENT, …) --}}
-            @if(!empty($bundle['specialtySummary']))
-                @php $ss = $bundle['specialtySummary']; @endphp
-                <div class="dept-group specialty-summary-block" style="border-left-color:#6366f1;">
-                    <div class="dept-name" style="color:#4338ca;">
-                        <i class="ti {{ $ss['profile']['icon'] ?? 'ti-stethoscope' }} me-1"></i>
-                        {{ $ss['profile']['translated_name'] ?? $ss['profile']['name'] ?? $ss['title'] }}
-                    </div>
-                    @if(!empty($ss['warnings']))
-                        <div class="doc-meta mb-1" style="color:#b45309;">
-                            @foreach($ss['warnings'] as $warning)
-                                <div><i class="ti ti-alert-triangle me-1"></i>{{ $warning }}</div>
-                            @endforeach
-                        </div>
-                    @endif
-                    @foreach($ss['sections'] as $section)
-                        @if(!empty($section['content']))
-                            <div class="doc-subsection mb-2">
-                                <h3>{{ $section['label'] }}</h3>
-                                <div class="entry"><div class="entry-text">{!! nl2br(e($section['content'])) !!}</div></div>
-                            </div>
-                        @endif
-                    @endforeach
-                </div>
-            @endif
         </div>
     @endforeach
 
     {{-- Investigations (Department then Owner) --}}
     <div class="doc-section">
-        <h2>{{ __('consultations.investigations_heading') }}</h2>
+        <h2>{{ $visitSectionLabels['investigations'] ?? __('consultations.investigations_heading') }}</h2>
         @php
             $labGrouped = $labRequests->groupBy(function($r) {
             if ($r->targetDepartment?->name) return $r->targetDepartment->name;
@@ -495,7 +528,7 @@
 
     {{-- Prescriptions (Owner) --}}
     <div class="doc-section section-prescriptions">
-        <h2>{{ __('consultations.history.section.prescriptions') }}</h2>
+        <h2>{{ $visitSectionLabels['prescriptions'] ?? __('consultations.history.section.prescriptions') }}</h2>
         @if($prescriptionEntries->isEmpty())
             <div class="empty-state">{{ __('consultations.history.none_recorded') }}</div>
         @else
@@ -545,7 +578,7 @@
 
     {{-- Procedures (Department then Owner) --}}
     <div class="doc-section">
-        <h2>{{ __('consultations.procedures_heading') }}</h2>
+        <h2>{{ $visitSectionLabels['procedures'] ?? __('consultations.procedures_heading') }}</h2>
         @php
             $procGrouped = $procedureRequests->groupBy(fn($p) => $p->department?->name ?? __('consultations.history.other'));
         @endphp

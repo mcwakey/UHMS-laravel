@@ -580,8 +580,12 @@ const ajaxForms = {
         const button = form.querySelector('[type="submit"]');
         setBusy(button, true);
 
-        fetch(form.action, {
-            method: form.method || 'POST',
+        // Read the action/method from attributes, not the DOM properties:
+        // a form control named "action" or "method" (e.g. a specialty field
+        // keyed `method`) shadows form.action / form.method and would make
+        // fetch throw "Invalid request method [object HTMLInputElement]".
+        fetch(form.getAttribute('action') || currentPageUrl(), {
+            method: (form.getAttribute('method') || 'POST').toUpperCase(),
             body: new FormData(form),
             headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
         })
@@ -1092,7 +1096,7 @@ const entries = {
         } catch (error) {}
 
         const type = button.dataset.entryType;
-        form.action = button.dataset.url;
+        form.setAttribute('action', button.dataset.url);
         form.dataset.entryType = type;
         title.textContent = `Edit ${type.replace('-', ' ').replace(/\b\w/g, (char) => char.toUpperCase())}`;
         fields.innerHTML = buildEditFields(type, entry);
@@ -1115,7 +1119,7 @@ const entries = {
             errors.innerHTML = '';
         }
 
-        fetch(form.action, {
+        fetch(form.getAttribute('action') || currentPageUrl(), {
             method: 'POST',
             body: new FormData(form),
             headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },

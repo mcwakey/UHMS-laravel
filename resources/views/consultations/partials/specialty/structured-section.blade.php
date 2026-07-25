@@ -39,7 +39,7 @@
                 <i class="ti {{ $section['icon'] ?? 'ti-layout-board' }} me-1"></i>{{ $section['translated_label'] ?? $section['label'] }}
             </h6>
             <div class="d-flex align-items-center gap-1">
-                <span class="badge bg-light text-dark border">{{ $entryCount }} {{ Str::plural('entry', $entryCount) }}</span>
+                <span class="badge bg-light text-dark border" id="badge-{{ $section['key'] }}">{{ $entryCount }} {{ Str::plural('entry', $entryCount) }}</span>
                 <span class="badge bg-info-subtle text-info">{{ __('consultation_specialties.workspace.specialist_section') }}</span>
                 @if($section['is_required'] ?? false)
                     <span class="badge bg-warning text-dark">{{ __('consultation_specialties.workspace.required') }}</span>
@@ -101,6 +101,9 @@
             </div>
             @endif
 
+            {{-- Entries container: the AJAX save handler refreshes #<section>-list
+                 in place so a saved specialty entry appears without a full reload. --}}
+            <div id="{{ $section['key'] }}-list">
             @forelse($entryOwnerGroups as $group)
                 @php
                     $firstEntry = $group->first();
@@ -219,6 +222,7 @@
                     {{ __('consultation_specialties.messages.no_entry_yet') }}
                 </div>
             @endforelse
+            </div>
         </div>
     </div>
 </div>
