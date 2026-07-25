@@ -43,8 +43,22 @@ class ConsultationMaternityContextResolver
     {
         $consultation->loadMissing(['visit.admission', 'patient']);
 
-        return $this->fromExplicitLinks($consultation)
-            ?? $this->fromVisit($consultation)
+        $explicit = $this->fromExplicitLinks($consultation);
+
+        if ($explicit) {
+            return $explicit;
+        }
+
+        // Fast path (Phase 14R.3.1): the visit/admission fallbacks scan six
+        // maternity tables each. Every inferable context ultimately roots in a
+        // pregnancy profile belonging to THIS patient, so if the patient has no
+        // pregnancy profile at all there is nothing to infer. One cheap
+        // existence check replaces ~14 queries for the common case.
+        if (! PregnancyProfile::query()->where('patient_id', $consultation->patient_id)->exists()) {
+            return ConsultationMaternityContext::none($consultation);
+        }
+
+        return $this->fromVisit($consultation)
             ?? $this->fromAdmission($consultation)
             ?? $this->fromSingleActiveProfile($consultation)
             ?? ConsultationMaternityContext::none($consultation);

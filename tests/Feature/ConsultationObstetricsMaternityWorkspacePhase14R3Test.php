@@ -77,6 +77,10 @@ class ConsultationObstetricsMaternityWorkspacePhase14R3Test extends TestCase
             'department_id' => $this->department->id,
             'status' => VisitConsultationRoute::STATUS_ACTIVE,
             'routed_by' => $this->user->id,
+            // Phase 14R.3.1: clinical-mutation actions require a genuinely
+            // STARTED session, so the fixture must set started_at.
+            'started_at' => now(),
+            'activated_at' => now(),
         ]);
     }
 

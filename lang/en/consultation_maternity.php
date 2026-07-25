@@ -147,6 +147,21 @@ return [
         'guard_disabled' => 'Pilot mode: maternity fields remain editable in this consultation.',
     ],
 
+    'rollout' => [
+        'pilot_title' => 'Maternity Context pilot mode',
+        'pilot_hint' => 'Source projections are visible; legacy Obstetrics fields remain editable.',
+        'guarded_title' => 'Maternity is the source of truth for linked pregnancy fields',
+        'guarded_hint' => 'Maternity-owned fields are read-only here and maintained in the maternity record.',
+        'completed_review' => 'This consultation is completed. Maternity context can be reviewed and corrected, but new clinical records must be created elsewhere.',
+        'context_linking_available' => 'Context linking remains available on completed consultations.',
+        'open_existing_record' => 'Open existing maternity record',
+        'start_new_consultation' => 'Start a new consultation to record clinical data.',
+        'return_to_consultation' => 'Return to consultation',
+        'unsaved_changes' => 'You have unsaved consultation changes.',
+        'blocked_completed' => 'This action is unavailable on a completed consultation.',
+        'blocked_paused' => 'This action is unavailable while the consultation is paused.',
+    ],
+
     'warnings' => [
         'multiple_active_profiles' => 'This patient has more than one active pregnancy profile. Select one explicitly.',
         'multiple_candidate_profiles' => 'More than one pregnancy profile matches this context. Select one explicitly.',

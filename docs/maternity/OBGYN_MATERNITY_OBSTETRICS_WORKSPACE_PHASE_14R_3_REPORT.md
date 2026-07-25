@@ -1,6 +1,7 @@
 # Phase 14R.3 — Obstetrics Stage-Aware Workspace (Implementation Report)
 
 **Status:** ✅ Implemented, **dark by default** (both feature flags default `false`).
+**Update — Phase 14R.3.1:** K1, K2 and K3 are now **CLOSED**. The ribbon/panel are wired into the real consultation page, clinical mutations now require an editable consultation, and query counts were measured. See `OBGYN_MATERNITY_OBSTETRICS_PILOT_PHASE_14R_3_1_REPORT.md`.
 **Companions:** `OBGYN_MATERNITY_BRIDGE_PHASE_14R_2_REPORT.md`, `OBGYN_MATERNITY_SOURCE_OF_TRUTH_MATRIX.md`, `OBGYN_MATERNITY_INTEGRATION_PLAN.md`
 
 ---
@@ -165,11 +166,11 @@ Unchanged: complaints, HOPC, examination, diagnoses, plan, investigations, presc
 
 | # | Risk | Mitigation |
 |---|---|---|
-| K1 | Ribbon/panel are built but **not yet included** in the consultation view template. | Deliberate: the components are dark-by-default and verified to render empty when disabled. Wiring them into `consultations/show.blade.php` should happen with the pilot rollout so the include point can be reviewed alongside real clinician feedback. |
-| K2 | Resolver fallback queries six maternity tables. | Memoised once per request; not called at all when the flag is off. Measure under pilot load before enabling widely. |
+| K1 | ✅ **CLOSED in 14R.3.1** — wired into `HandlesConsultationWorkspace` + included in `consultations/show.blade.php`. ~~Ribbon/panel are built but not yet included.~~ | Deliberate: the components are dark-by-default and verified to render empty when disabled. Wiring them into `consultations/show.blade.php` should happen with the pilot rollout so the include point can be reviewed alongside real clinician feedback. |
+| K2 | ✅ **MEASURED in 14R.3.1** — off/non-Obstetrics = 0 queries; explicit = 2; no-context reduced 15 → 9 via a no-profile fast path. |
 | K3 | Guard relies on the resolver reporting `explicit`. | Covered by tests for inferred/ambiguous/invalid; all three leave the guard inert. |
 | K4 | `fetal_assessment.lie` stays consultation-owned. | Intentional — ANC has no `lie` column; ownership deferred rather than silently adding it. |
-| K5 | Bridge actions skip the editable-session guard (§8). | Intentional and documented; permissions still gate everything, and 14R.2 requires links on completed sessions. |
+| K5 | ✅ **CLOSED in 14R.3.1** — split into context-link actions (skip the guard, by design) vs clinical-mutation actions (now require an editable consultation). |
 
 ## 15. Intentionally deferred
 

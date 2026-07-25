@@ -147,6 +147,21 @@ return [
         'guard_disabled' => 'Mode pilote : les champs de maternité restent modifiables dans cette consultation.',
     ],
 
+    'rollout' => [
+        'pilot_title' => 'Mode pilote du contexte de maternité',
+        'pilot_hint' => 'Les projections sources sont visibles ; les anciens champs obstétriques restent modifiables.',
+        'guarded_title' => 'La maternité fait foi pour les champs de grossesse liés',
+        'guarded_hint' => 'Les champs appartenant à la maternité sont en lecture seule ici et gérés dans le dossier de maternité.',
+        'completed_review' => 'Cette consultation est terminée. Le contexte de maternité peut être consulté et corrigé, mais les nouveaux dossiers cliniques doivent être créés ailleurs.',
+        'context_linking_available' => 'La liaison du contexte reste disponible sur les consultations terminées.',
+        'open_existing_record' => 'Ouvrir le dossier de maternité existant',
+        'start_new_consultation' => 'Démarrez une nouvelle consultation pour enregistrer des données cliniques.',
+        'return_to_consultation' => 'Retour à la consultation',
+        'unsaved_changes' => 'Vous avez des modifications de consultation non enregistrées.',
+        'blocked_completed' => 'Cette action n\'est pas disponible sur une consultation terminée.',
+        'blocked_paused' => 'Cette action n\'est pas disponible pendant que la consultation est en pause.',
+    ],
+
     'warnings' => [
         'multiple_active_profiles' => 'Cette patiente a plusieurs profils de grossesse actifs. Sélectionnez-en un explicitement.',
         'multiple_candidate_profiles' => 'Plusieurs profils de grossesse correspondent à ce contexte. Sélectionnez-en un explicitement.',

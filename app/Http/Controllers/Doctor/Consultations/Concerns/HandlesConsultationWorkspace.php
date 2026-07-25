@@ -32,6 +32,7 @@ use App\Services\Consultation\Specialty\ConsultationSpecialtyProfileResolver;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyReadinessService;
 use App\Services\Consultation\Specialty\DoctorSpecialtyWorkspaceService;
 use App\Services\ConsultationNextPatientService;
+use App\Services\Consultation\Maternity\ObstetricConsultationContextService;
 use App\Services\ConsultationPreviewDataService;
 use App\Services\InpatientWorkspaceScope;
 use App\Services\MedicalRecordEntryLogService;
@@ -446,6 +447,20 @@ trait HandlesConsultationWorkspace
             'profile_code' => $specialtyContext->profile->code,
             'preview_url' => route('admin.consultations.specialty-summary.preview', $visit),
         ] : ['available' => false];
+
+        // Phase 14R.3.1 — maternity context for the Obstetrics workspace.
+        // build() short-circuits to a disabled view model (no resolver call, no
+        // maternity queries) unless the workspace flag is on AND the resolved
+        // specialty profile is Obstetrics. Resolved exactly once per request;
+        // the ribbon and panel share this instance.
+        $maternityContext = $selectedRoute
+            ? app(ObstetricConsultationContextService::class)->build(
+                $selectedRoute,
+                $specialtyContext->profile,
+                $request->user(),
+                url()->current(),
+            )
+            : \App\Data\Consultation\Maternity\ObstetricWorkspaceViewModel::disabled();
         $doctorSpecialtyWorkspace = app(DoctorSpecialtyWorkspaceService::class)->build(
             $request->user(),
             $selectedRoute,
@@ -490,6 +505,11 @@ trait HandlesConsultationWorkspace
             'consultationPreview' => $consultationPreview,
             'specialtyContext' => $specialtyContext->toArray(),
             'specialtyLayout' => $specialtyLayout,
+            // Phase 14R.3.1 — single prepared maternity view model shared by the
+            // ribbon and the context panel. Built once here; the service returns
+            // a disabled model (and never calls the resolver) unless the
+            // workspace flag is on AND the profile is Obstetrics.
+            'maternityContext' => $maternityContext,
             'specialtyEntries' => $specialtyEntries,
             'specialtyEntryGroups' => $specialtyEntryGroups,
             'specialtyFavorites' => $specialtyFavorites,

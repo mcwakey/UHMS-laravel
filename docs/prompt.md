@@ -1,878 +1,524 @@
 You are working inside the UHMS Laravel project.
 
-Phase 14R.2 is complete.
+Phase 14R.3 implemented the Obstetrics stage-aware Consultation ↔ Maternity integration, dark by default.
 
-The Consultation ↔ Maternity bridge now includes:
+Current implementation includes:
 
-- `consultation_maternity_links`.
-- Explicit nullable foreign keys for the seven supported Maternity contexts.
-- `ConsultationMaternityContextType`.
-- `ConsultationMaternityLinkRole`.
-- `ConsultationMaternityLink`.
-- `ConsultationMaternityContext`.
-- `ConsultationMaternityContextResolver`.
-- `ConsultationMaternityLinkService`.
-- Link/relink/unlink activity logging.
-- Additive permissions:
-  - `consultation.maternity_context.view`
-  - `consultation.maternity_context.link`
-  - `consultation.maternity_context.unlink`
-- EN/FR bridge localisation.
-- 22 passing bridge tests.
+- Two feature flags:
+  - CONSULTATION_OBSTETRIC_MATERNITY_WORKSPACE_ENABLED=false
+  - CONSULTATION_OBSTETRIC_MATERNITY_WRITE_GUARD_ENABLED=false
+- `pregnancy_profiles.dating_method`.
+- `PregnancyDatingMethod`.
+- `ObstetricConsultationContextService`.
+- `ObstetricWorkspaceViewModel`.
+- `ConsultationMaternitySpecialtyWriteGuard`.
+- `ConsultationMaternityContextController`.
+- Seven bridge/context actions:
+  - link
+  - confirm
+  - relink
+  - unlink
+  - create profile
+  - record ANC
+  - start labor
+- Maternity context ribbon partial.
+- Stage-aware Maternity Context panel partial.
+- Dual-permission enforcement.
+- EN/FR localisation.
+- Targeted Phase 14R.3 feature coverage.
 
-The resolver order is:
+Current verification:
 
-1. Explicit active consultation link.
-2. Same visit.
-3. Same admission.
-4. A single active pregnancy profile.
-5. None.
+- Phase 14R.3: 22 passed, 1 skipped.
+- Consultation suite: 230 passed, 22 documented pre-existing failures.
+- Maternity regression group: 47 passed, 1 documented pre-existing ANC failure.
+- Zero new failures introduced.
+- Maternity billing remains preview-only and disabled by default.
 
-Multiple candidates return `ambiguous`.
-The resolver never persists a link, creates a profile, starts a maternity workflow, or infers pregnancy from sex, complaints, diagnoses, specialty or pregnancy-test results.
+Important remaining gaps:
 
-Important existing baseline:
+K1:
+The Maternity ribbon and context panel exist, but are not included in the real `consultations/show.blade.php` workspace. Therefore, the clinician-facing feature is not yet reachable through the actual Consultation page.
 
-- Bridge tests: 22 passed, 63 assertions.
-- Bridge + Maternity Foundation + Labor/Delivery: 36 passed, zero failures.
-- `tests/Feature/Consultations`: 230 passed and 22 pre-existing failures.
-- `AntenatalCarePhase9Test`: 4 passed and 1 pre-existing failure.
-- These failures were reproduced after physically removing every Phase 14R.2 change.
-- Phase 14R.3 must introduce zero new failures beyond those documented baselines.
+K2:
+All seven bridge/context actions currently bypass `consultationMutationContext()`.
 
-Now implement Phase 14R.3: Obstetrics Stage-Aware Workspace Integration.
+That is acceptable for pure context-link operations that must remain possible after consultation completion:
+
+- link
+- confirm
+- relink
+- unlink
+
+It is not the desired default for clinical record creation:
+
+- create pregnancy profile
+- record ANC
+- start labor
+
+Those three actions create or mutate longitudinal clinical records and must require an active/editable consultation when launched from the Consultation workspace.
+
+K3:
+The real query-count delta has not yet been measured at the actual consultation include point.
+
+Now implement Phase 14R.3.1: Pilot Wiring and Clinical Mutation Boundary Hardening.
 
 Goal:
 
-Make the Obstetrics consultation workspace aware of the longitudinal Maternity context and stop new duplicate maternity-data writes when explicitly enabled, while preserving the existing Consultation workflow, Maternity workflow, historical specialty entries, consultation completion, readiness, orders and billing posture.
+Complete the real Obstetrics workspace integration, preserve dark-by-default rollout, enforce the correct completed-consultation mutation boundaries, and measure the actual workspace performance before beginning Gynaecology reconciliation.
 
-This is the first clinician-facing reconciliation phase.
+This is a narrow closure/hardening phase.
 
-The rollout must be reversible through feature flags.
-
-Do not modify the Gynaecology workspace in this phase.
-Do not retarget order sets in this phase.
-Do not implement consultation summary projections or completion snapshots.
-Do not implement historical reconciliation or backfills.
+Do not change Gynaecology.
+Do not retarget order sets.
+Do not add summary projection.
+Do not add completion snapshots.
+Do not change readiness.
 Do not enable Maternity billing posting.
+Do not run historical reconciliation.
 Do not run `composer test:wide`.
 Do not touch `docs/prompt.md`.
 
-1. Add two independent feature flags
+1. Wire the context view model into the actual Consultation workspace
 
-Add safe configuration, following the existing consultation config structure.
+Audit the real Consultation show-data assembly path.
 
-Recommended configuration:
+Confirm whether workspace data is assembled through:
 
-```php
-'maternity_context' => [
-    'obstetrics_workspace_enabled' => env(
-        'CONSULTATION_OBSTETRIC_MATERNITY_WORKSPACE_ENABLED',
-        false
-    ),
+- `HandlesConsultationWorkspace`
+- the Consultation show controller
+- `DoctorSpecialtyWorkspaceService`
+- another workspace composer/service
 
-    'obstetrics_write_guard_enabled' => env(
-        'CONSULTATION_OBSTETRIC_MATERNITY_WRITE_GUARD_ENABLED',
-        false
-    ),
-],
+Use the existing architecture.
 
+Do not resolve Maternity context inside Blade.
 
 Required behavior:
 
-A. Both flags false
+- Determine the active specialty profile through the existing resolver.
+- Only consider the Obstetrics Maternity context when:
+  - the resolved specialty profile is Obstetrics, and
+  - `CONSULTATION_OBSTETRIC_MATERNITY_WORKSPACE_ENABLED=true`
+- When the flag is false:
+  - do not call `ObstetricConsultationContextService`
+  - do not call `ConsultationMaternityContextResolver`
+  - do not add Maternity queries
+  - preserve current view data exactly
+- When enabled:
+  - call `ObstetricConsultationContextService` once
+  - pass the prepared `ObstetricWorkspaceViewModel` into the real consultation view
+  - reuse that same instance for the ribbon and panel
 
-The Obstetrics workspace behaves exactly as it does today.
-No Maternity ribbon or contextual panel is shown.
-Existing specialty sections remain unchanged.
-The context resolver should not be called unnecessarily.
-There must be no additional hot-path query cost.
+Do not instantiate or call the context service separately for each partial.
 
-B. Workspace enabled, write guard disabled
+2. Include the ribbon and panel in the real workspace
 
-Show the Maternity context ribbon and read-only source projections.
+Wire the existing partials into the actual Consultation view.
+
+Recommended placement:
+
+A. Maternity context ribbon
+
+Place:
+
+- after the patient/visit/specialty workspace header
+- before the main consultation specialty section content
+
+The ribbon should not replace:
+
+- patient banner
+- specialty profile banner
+- admission context
+- visit status
+- consultation session controls
+
+B. Maternity Context panel
+
+Place it within the established Consultation workspace panel/tab structure.
+
+Preferred placement:
+
+- after encounter/history sections
+- before or near specialty maternity-shaped sections
+- before the final summary/completion area
+
+Do not create a second full-width page above all Consultation content.
+
+Do not duplicate the patient banner.
+
+Do not move existing sections during this narrow phase unless required to prevent a broken layout.
+
+3. Preserve all three rollout modes
+
+Mode A — disabled
+
+```env
+CONSULTATION_OBSTETRIC_MATERNITY_WORKSPACE_ENABLED=false
+CONSULTATION_OBSTETRIC_MATERNITY_WRITE_GUARD_ENABLED=false
+
+Expected:
+
+No ribbon.
+No Maternity panel.
+No resolver call.
+No additional Maternity workspace queries.
+Existing specialty sections retain current behavior.
+
+Mode B — projection pilot
+
+CONSULTATION_OBSTETRIC_MATERNITY_WORKSPACE_ENABLED=true
+CONSULTATION_OBSTETRIC_MATERNITY_WRITE_GUARD_ENABLED=false
+
+Expected:
+
+Ribbon and context panel become visible.
 Existing specialty fields remain editable.
-This is the safe pilot mode for clinician review.
-Clearly label the new information as coming from Maternity.
-Do not silently replace or hide existing fields.
+Suggested/inferred context is visibly distinguished from explicit context.
+Clinicians can review the projections safely before write protection is activated.
 
-C. Workspace enabled, write guard enabled
+Mode C — guarded source-of-truth mode
 
-Show the ribbon and projections.
-When an explicit Maternity context is linked, prevent new writes to fields owned by Maternity according to the approved matrix.
-Preserve all Consultation-owned fields.
-Preserve all existing specialty entries as historical evidence.
-Do not delete or rewrite old specialty entries.
+CONSULTATION_OBSTETRIC_MATERNITY_WORKSPACE_ENABLED=true
+CONSULTATION_OBSTETRIC_MATERNITY_WRITE_GUARD_ENABLED=true
 
-The write guard must never be active unless the workspace feature is also enabled.
+Expected:
 
-Both flags must default to false.
+Ribbon and context panel are visible.
+Write guard applies only to explicitly linked, valid Pregnancy Profile context.
+Maternity-owned fields are blocked server-side.
+Consultation-owned mixed-section fields remain writable.
+Historical specialty entries remain visible and preserved.
 
-Audit the actual Obstetrics workspace integration point
+The guard must remain impossible to activate while the workspace flag is false.
 
-Before changing the workspace, confirm:
+Separate context-link actions from clinical mutation actions
 
-How the active specialty profile is supplied to the consultation view.
-Where HandlesConsultationWorkspace or the equivalent workspace composer assembles view data.
-How ConsultationSpecialtyLayoutService controls section ordering and presentation.
-How specialty section forms submit to ConsultationSpecialtyEntryService.
-How canonical section aliases are applied.
-How the doctor workspace renders specialty sections.
-How the simplified and full consultation views differ, if both exist.
-How workspace dirty-state or unsaved-data warnings currently work.
-How the current URL/department prefix is preserved.
+Introduce a clear action classification.
 
-Use the existing consultation workspace architecture.
-Do not create a second Obstetrics page or parallel consultation route.
+A. Context-link actions
 
-Add Pregnancy Profile dating method
+These may remain usable on completed consultations, subject to permissions and existing domain validation:
 
-The approved source-of-truth decision makes dating_method Pregnancy-Profile-owned.
+link
+confirm inferred profile
+relink
+unlink
 
-Add an additive nullable column to pregnancy_profiles:
+Reason:
 
-dating_method
-
-Add a typed enum following project convention:
-
-PregnancyDatingMethod
-
-Recommended values:
-
-lmp
-early_ultrasound
-late_ultrasound
-assisted_reproduction
-clinical_estimate
-unknown
+These actions maintain or correct the consultation’s relationship to an existing longitudinal record. Phase 14R.2 requires bridge links to survive and remain manageable after consultation completion.
 
 Requirements:
 
-Existing pregnancy profiles remain valid.
-Do not backfill historical records automatically.
-Update PregnancyProfile casting/fillable behavior.
-Update PregnancyProfileService so create/update actions can accept a dating method.
-Show the dating method on the Maternity pregnancy profile and Obstetrics projection where appropriate.
-Do not implement the Gynaecology “Use this LMP for pregnancy dating” action yet. That belongs to Phase 14R.4.
-Do not change current LMP/EDD calculation behavior except where required to store the selected method.
-Add ObstetricConsultationContextService
+Relink requires reason.
+Unlink requires reason.
+Completed consultation actions remain audited.
+Link-role/history behavior remains unchanged.
+No maternity clinical record is created by these actions.
 
-Create an orchestration service such as:
+B. Clinical mutation actions
 
-app/Services/Consultation/Maternity/ObstetricConsultationContextService.php
+These must require the Consultation to be actively editable when launched from the Consultation workspace:
 
-Its responsibility is to prepare a complete, bounded view model for the Obstetrics workspace.
+create pregnancy profile
+record ANC
+start labor
 
-It should consume:
+Use the existing consultationMutationContext() or the narrowest reusable equivalent.
 
-ConsultationMaternityContextResolver
-ConsultationMaternityLinkService
-PregnancyProfileService
-MaternityOverviewService
-AntenatalOverviewService
-LaborOverviewService
-NewbornOverviewService
-PostnatalOverviewService
-Existing admission/ward context services where available
+Requirements:
 
-It must not recreate Maternity business logic.
+Started/active/unpaused consultation: allowed, subject to dual permissions.
+Completed consultation: blocked from the Consultation workspace.
+Paused consultation: follow existing consultation mutation policy.
+Cancelled/invalid consultation: blocked.
+User receives a localised explanation.
+No Maternity record is created when blocked.
+No bridge link is created when blocked.
+No partial transaction remains.
 
-The service should return a typed view model containing:
+Do not weaken the existing Consultation mutation guard.
 
-Feature-flag state.
-Resolver status.
-Resolution source.
-Whether context is explicit or inferred.
-Pregnancy profile.
-Pregnancy dating source/method.
-Gestational age and its source.
-EDD.
-Risk level.
-Latest ANC visit.
-Next ANC date.
-Current maternity case.
-Current admission.
-Ward and bed.
-Active labor episode.
-Latest labor observation.
-Delivery record.
-Delivery status.
-Newborn records.
-Newborn pending/completion state.
-Postnatal case.
-Postnatal readiness.
-Context warnings.
-Available actions.
-Field/section write policy.
-Candidate pregnancy profiles for ambiguity.
-Return URLs to the originating consultation.
+Completed-consultation behavior matrix
 
-Request performance requirements:
+Implement and document this matrix:
 
-Resolve the Maternity context once per workspace request.
-Memoise the result for the request.
-Eager-load all required relationships.
-Blade components must not independently query the database.
-Capture and document the consultation workspace query count before and after enabling the feature.
-Do not add one resolver invocation per component or per section.
-Define explicit, inferred, ambiguous, none and invalid UI behavior
+Action	Active consultation	Paused consultation	Completed consultation
+View Maternity context	allowed	allowed	allowed
+Link existing profile	allowed	allowed if current bridge policy permits	allowed
+Confirm inferred profile	allowed	allowed if current bridge policy permits	allowed
+Relink profile	allowed with reason	allowed with reason	allowed with reason
+Unlink profile	allowed with reason	allowed with reason	allowed with reason
+Create Pregnancy Profile	allowed with permissions	blocked according to consultation mutation policy	blocked
+Record ANC	allowed with permissions	blocked according to consultation mutation policy	blocked
+Start Labor	allowed with permissions	blocked according to consultation mutation policy	blocked
+Open existing Maternity record	allowed	allowed	allowed
 
-A. Explicit context
+For a completed consultation, clinicians may still navigate to existing Maternity records.
 
-When active bridge links exist:
+Creating a new Pregnancy Profile, ANC Visit, or Labor Episode after completion should be done from the Maternity module or a new active consultation—not through the completed Consultation workspace.
 
-Show the full Maternity context ribbon.
-Enable relevant Maternity actions when permissions allow.
-The write guard may apply when its feature flag is enabled.
-Label the context as explicitly linked.
+Do not add a historical clinical-mutation override in this phase.
 
-B. Inferred context
+Protect against unsaved Consultation data loss
 
-When the resolver finds context through same visit, same admission or one active profile but no explicit bridge link exists:
+The link/create/ANC/Labor actions may navigate or submit outside the main specialty-entry form.
 
-Show a clearly labelled “Suggested Maternity Context”.
-Show the resolution source.
-Provide an explicit “Confirm and Link” action.
-Do not silently persist the link.
-Do not apply the specialty write guard yet.
-Do not allow ANC or labor mutations through the Consultation bridge until the clinician confirms the link.
-Existing Obstetrics sections remain editable.
-
-C. Ambiguous context
-
-When multiple candidate pregnancy profiles exist:
-
-Show a warning.
-Show an explicit profile selector.
-Display sufficient identifying context:
-profile status
-LMP
-EDD
-gestational age
-created date
-linked visit/admission where available
-Never choose the latest automatically.
-Do not display a full stage projection until the clinician selects and links a profile.
-Do not apply the write guard.
-Do not start ANC or labor.
-
-D. No context
-
-When no context exists:
-
-Do not show the full Maternity ribbon.
-Do not display an intrusive pregnancy prompt.
-Preserve the current Obstetrics workspace.
-Provide a discreet, permission-controlled “Link or Create Pregnancy Profile” action in the appropriate workspace action menu.
-Do not create a profile automatically.
-
-E. Invalid context
-
-When an explicit link is inconsistent or broken:
-
-Show a clear warning.
-Disable Maternity mutation actions.
-Do not fall through silently to another inferred context.
-Existing consultation work must remain usable.
-Provide an admin/authorised relink action where appropriate.
-Add Maternity context ribbon
-
-Add a reusable read-only component such as:
-
-resources/views/consultations/partials/maternity/context-ribbon.blade.php
-
-The ribbon should display, when available:
-
-Maternity context source:
-explicit
-same visit
-same admission
-single active profile
-Pregnancy profile status.
-Gestational age.
-Gestational-age source.
-Dating method.
-EDD.
-Risk level.
-Latest ANC date.
-Next ANC date.
-Admission status.
-Ward and bed.
-Current labor stage.
-Delivery status.
-Newborn records pending/complete.
-Postnatal status/readiness.
-
-Use compact, responsive badges/cards.
-Do not overload the primary patient banner.
-Do not conflate department, specialty and Maternity stage.
-
-Add a dedicated Maternity context panel
-
-Use existing consultation workspace panel/tab conventions.
-
-Do not replace the general Consultation tabs.
-
-Add one dedicated “Maternity Context” panel with stage-aware subsections:
-
-Pregnancy
-ANC
-Labor and Delivery
-Newborn
-Postnatal
-
-Only show subsections relevant to the resolved context.
-
-The default behavior is projection plus explicit action, not another set of duplicate forms.
-
-Shared components should include, where practical:
-
-pregnancy summary card
-ANC summary card
-labor summary card
-delivery summary card
-newborn summary card
-postnatal summary card
-context selector
-context warning
-Maternity quick actions
-
-Components must consume the prepared view model.
-They must not implement their own Maternity calculations or queries.
-
-Add explicit link, confirm and relink actions
-
-Add controller/routes using the existing Consultation route conventions.
-
-Required actions:
-
-Link an existing pregnancy profile.
-Confirm an inferred pregnancy profile.
-Relink to a different profile.
-Unlink the active pregnancy-profile context.
-View/select candidate profiles.
-
-All writes must use ConsultationMaternityLinkService.
-
-Rules:
-
-Only same-patient pregnancy profiles may be offered.
-Relink and unlink require a reason.
-Same-target linking remains idempotent.
-Multiple profiles require explicit selection.
-Preserve the existing consultation route and workspace.
-Return to the originating consultation after the action.
-Respect existing workspace dirty-state behavior; linking must not silently discard unsaved consultation data.
-Use link_role=primary for an explicitly selected existing active profile.
-Use link_role=reviewed when confirming a profile for review context.
-Do not invent new link-service behavior outside the existing service.
-Add explicit pregnancy profile creation from Obstetrics
-
-Add permission:
-
-consultation.maternity_context.create_profile
-
-The action also requires:
-
-maternity.pregnancy.create
-
-Both permissions must pass.
-
-Implementation requirements:
-
-Reuse the existing Maternity pregnancy-profile validation and service.
-Do not maintain a second pregnancy-profile form schema in Consultation.
-Prefer reusing or sharing the existing Maternity form/request/view partial.
-Preserve the consultation return URL.
-On successful profile creation:
-create the Pregnancy Profile through PregnancyProfileService
-link it through ConsultationMaternityLinkService
-use link_role=created
-Coordinate creation and linking transactionally where the existing services allow.
-Do not create a profile merely because the Obstetrics workspace was opened.
-Do not infer profile values from specialty JSON automatically.
-Do not migrate old specialty entries.
-Do not use Gynaecology LMP in this phase.
-Add explicit ANC recording from Obstetrics
-
-Add permission:
-
-consultation.maternity_context.record_anc
-
-The action also requires:
-
-maternity.anc.record
-
-Both permissions must pass.
+Audit the current workspace dirty-state behavior.
 
 Required behavior:
 
-An explicit linked Pregnancy Profile is required.
-Inferred but unconfirmed context is insufficient.
-Reuse the existing ANC form, request validation and AntenatalVisitService.
-Do not duplicate ANC validation or risk logic inside Consultation.
-Preserve the consultation route as the return context.
-Carry available visit, admission and department context safely.
-Creating ANC from Consultation must create exactly one AntenatalVisit.
-It must not create:
-antenatal_vitals specialty entries
-fetal_assessment specialty entries
-duplicated risk-assessment specialty data
-After creation:
-link the ANC visit to the consultation using link_role=created
-refresh the Maternity projection
-keep the Pregnancy Profile link active
-Do not add an automatic billing action.
-Do not introduce a billing card into the doctor consultation workspace.
-Use existing request-idempotency conventions where available.
-Do not add a database uniqueness rule that would block legitimate repeat ANC visits.
-Add explicit Labor start/open action
+Do not silently discard unsaved Consultation form changes.
+Use the project’s existing dirty-form/navigation warning if one exists.
+Preserve the originating Consultation URL in return parameters.
+After a successful action, return to the same consultation and appropriate Maternity panel anchor/tab.
+Validation failures should return to the same action form with inputs/errors.
+Do not create duplicate browser history loops.
 
-Add permission:
+Do not invent a second JavaScript navigation framework.
 
-consultation.maternity_context.start_labor
+Confirm read-only projection behavior in the live view
 
-The action also requires:
+With an explicit profile and the write guard enabled, verify the real page behavior.
 
-maternity.labor.start
-
-Both permissions must pass.
-
-Required behavior:
-
-An explicit linked Pregnancy Profile is required.
-If an active Labor Episode already exists:
-do not create another
-navigate to/open the existing Labor workspace
-Otherwise:
-start labor through LaborEpisodeService
-carry visit/admission/department/ANC context where safe
-link the created Labor Episode using link_role=created
-Never start labor automatically from:
-danger signs
-diagnosis
-gestational age
-pregnancy profile status
-emergency flag
-Do not duplicate labor fields in specialty entries.
-Add read-only Labor, Delivery, Newborn and Postnatal projections
-
-When source records exist, show:
-
-Labor:
-
-Labor stage.
-Status.
-Latest observation time.
-Cervical dilation if available.
-Fetal heart rate.
-Maternal observations.
-Escalation flags.
-Link to Labor workspace.
-
-Delivery:
-
-Delivery date/time.
-Delivery mode.
-Outcome.
-Maternal condition.
-Newborn count.
-Link to Delivery record.
-
-Newborn:
-
-Newborn count.
-Birth order.
-Sex.
-Birth weight.
-APGAR.
-Outcome/status.
-Records pending/complete.
-Links to Newborn records.
-
-Postnatal:
-
-Case status.
-Mother readiness.
-Newborn readiness.
-Ready-for-discharge state.
-Latest mother/newborn observation time.
-Referral/follow-up status.
-Link to Postnatal workspace.
-
-These are projections only.
-
-Do not create or update Delivery, Newborn or Postnatal records from this phase’s Consultation workspace.
-
-Convert Obstetrics fields according to the approved matrix
-
-The conversion must be field-level, not a blunt section disable.
-
-Only apply this behavior when:
-
-Obstetrics specialty profile is active.
-Workspace flag is enabled.
-Write-guard flag is enabled.
-An explicit valid Pregnancy Profile context is linked.
-
-When any of those conditions are false, preserve existing behavior.
-
-A. obstetric_history
-
-Read-only Maternity projections:
+The workspace should show Maternity projections for:
 
 gravida
 para
 abortions
-living_children
-previous_c_section → map explicitly to previous_caesarean
+living children
+previous caesarean
+LMP
+EDD
+gestational age
+dating method
+latest ANC vitals
+fetal assessment
+risk level/factors
+labor state
+delivery state
+newborn state
+postnatal state
 
-Remain Consultation-owned and writable:
+Consultation-owned fields must remain available:
 
-previous_complications
+previous complications
+fetal lie
+risk action plan
+complaints
+HOPC
+examination narrative
+diagnoses
+consultation plan
+orders
+notes
 
-Do not overwrite or delete historical specialty-entry values.
+Do not remove historical specialty-entry displays.
 
-B. lmp_edd_gestational_age
+Where a historical specialty entry conflicts with Maternity, label it clearly as:
 
-Read-only Pregnancy Profile projections:
+Legacy Consultation Entry
+not the current source of truth
 
-lmp
-edd
-gestational_age_weeks
-gestational_age_days
-dating_method
+Do not attempt reconciliation in this phase.
 
-No independent Consultation writes when explicitly linked and the guard is enabled.
+Add a pilot-mode visual marker
 
-C. antenatal_vitals
+When:
 
-Replace write fields with:
+CONSULTATION_OBSTETRIC_MATERNITY_WORKSPACE_ENABLED=true
+CONSULTATION_OBSTETRIC_MATERNITY_WRITE_GUARD_ENABLED=false
 
-Latest ANC read-only summary.
-“Record ANC Visit” action.
+show a discreet admin/clinician-facing marker such as:
 
-Guard all direct specialty writes for:
+“Maternity Context pilot mode”
+“Source projections are visible; legacy Obstetrics fields remain editable”
 
-blood_pressure
-weight
-temperature
-pulse
-urine_protein
-urine_glucose
+Do not show this marker to users who cannot view Maternity context.
 
-D. fetal_assessment
+When the write guard is enabled, replace it with:
 
-Read-only ANC projections:
+“Maternity is the source of truth for linked pregnancy fields”
 
-fundal_height
-fetal_heart_rate
-fetal_movement
-presentation
+Keep this copy localised.
 
-Remain Consultation-owned and writable for now:
+Performance measurement
 
-lie
+Measure the real Consultation workspace query counts.
 
-Reason:
-AntenatalVisit currently has no lie column and ownership remains unresolved. Do not silently add it to ANC in this phase.
+Use one stable fixture for each case:
 
-E. risk_assessment
+Obstetrics consultation with workspace flag off.
+Obstetrics consultation with workspace enabled and no context.
+Obstetrics consultation with one inferred active profile.
+Obstetrics consultation with an explicit profile + ANC + Labor/Delivery/Newborn/Postnatal records.
+Non-Obstetrics consultation with workspace enabled globally.
 
-Read-only Maternity projections:
+Record:
 
-risk_level
-risk_factors
+total query count
+Maternity-related query count if measurable
+resolver invocation count
+repeated/duplicate queries
+view/component queries
+response/render time if easy to measure consistently
 
-Remain Consultation-owned and writable:
+Requirements:
 
-action_plan
+Flag-off mode must add zero Maternity resolver calls.
+Non-Obstetrics profiles must add zero Maternity resolver calls.
+Enabled Obstetrics workspace must resolve once per request.
+Ribbon and panel must not trigger their own queries.
+No N+1 should be introduced by newborn collections or context candidates.
+Candidate profile display must be eager-loaded and bounded.
 
-Risk changes should be performed through the Maternity Pregnancy Profile/ANC workflows, not a duplicate Consultation field.
+Do not add persistent cross-request caching in this phase.
 
-F. Deferred sections
+If the enabled query delta is high:
 
-Do not convert these in Phase 14R.3:
+optimise eager loading
+reuse overview results
+collapse duplicate queries
+retain request-level memoisation
 
-current_pregnancy
-birth_plan
-Gynaecology obstetric_history
-Order-set patch targets
+Document the exact before/after counts.
 
-They remain for Phase 14R.4 because order-set actions currently target them.
+Routes and middleware
 
-Add a server-side specialty write guard
+Keep all seven existing Phase 14R.3 routes.
 
-UI read-only fields are not enough.
+Do not rename routes.
 
-Create a policy/service such as:
+Review middleware/action guards so that:
 
-ConsultationMaternitySpecialtyWriteGuard
+Context-link actions require:
 
-It should be called by the actual specialty-entry write path.
+authentication
+Consultation access
+bridge link/unlink permission
+ability to view the target Pregnancy Profile
 
-It must:
+Clinical mutation actions require:
 
-Apply only to the Obstetrics profile.
-Apply only when both flags permit it.
-Apply only with an explicit valid Pregnancy Profile link.
-Use the approved field-level ownership matrix.
-Reject attempts to write Maternity-owned fields through direct HTTP/API manipulation.
-Return localised validation/domain errors.
-Preserve allowed Consultation-owned fields in mixed sections.
-Never silently discard a submitted blocked field.
-Never delete historical entries.
-Never modify non-Obstetrics profiles.
+authentication
+Consultation access
+active/editable Consultation mutation context
+bridge action permission
+underlying Maternity permission
 
-Mixed-section behavior:
+Do not allow the bridge permission to bypass underlying Maternity policies.
 
-obstetric_history.previous_complications remains writable.
-fetal_assessment.lie remains writable.
-risk_assessment.action_plan remains writable.
-Maternity-owned siblings are not submitted by the UI and are rejected server-side if manually supplied.
-
-Existing historical entries:
-
-Continue to render in a clearly labelled, read-only “Legacy Consultation Entry” area where appropriate.
-Do not use them as the current Maternity source of truth.
-Do not overwrite them.
-Do not delete them.
-Keep current Consultation behavior unchanged
-
-This phase must not change:
-
-Complaints.
-HOPC.
-General or specialty examination narrative.
-Diagnoses.
-Consultation plan.
-Investigations.
-Prescriptions.
-Procedures.
-Clinical tasks.
-Clinician notes.
-Existing consultation completion.
-Existing readiness rules.
-Existing final summary behavior.
-Existing consultation billing.
-Any non-Obstetrics specialty profile.
-
-No new readiness blocker is allowed in this phase.
-
-No Maternity Context summary projection or completion snapshot is allowed yet.
-
-Do not change billing behavior
-
-Phase 14.1 remains preview-only.
-
-Confirm:
-
-MATERNITY_BILLING_ENABLED=false by default.
-MaternityBillingPostingService::postForSource() remains non-posting.
-No invoice item is created by:
-linking a profile
-creating a profile
-recording ANC
-starting labor
-viewing Maternity projections
-No billing card appears inside the normal doctor Consultation workspace.
-Do not continue Phase 14.2 manual posting.
-Add permissions additively
-
-Add:
-
-consultation.maternity_context.create_profile
-consultation.maternity_context.record_anc
-consultation.maternity_context.start_labor
-
-Retain:
-
-consultation.maternity_context.view
-consultation.maternity_context.link
-consultation.maternity_context.unlink
-
-Dual-permission requirements:
-
-Create profile:
-
-bridge create_profile
-Maternity maternity.pregnancy.create
-
-Record ANC:
-
-bridge record_anc
-Maternity maternity.anc.record
-
-Start labor:
-
-bridge start_labor
-Maternity maternity.labor.start
-
-The bridge must never grant access to a Maternity operation the user otherwise lacks.
-
-Suggested roles:
-
-Admin/Super Admin: all.
-Obstetrics doctors/appropriately configured doctors:
-view
-link
-create profile where permitted
-record ANC where permitted
-start labor where permitted
-Maternity clinicians receive actions only where their Consultation and Maternity permissions already overlap.
-Reception receives no clinical ANC/labor actions.
-
-Do not remove existing permissions.
-
-Add EN/FR localisation
-
-Extend consultation_maternity.php in strict parity.
-
-Include keys for:
-
-Maternity context ribbon.
-Suggested Maternity context.
-Explicitly linked context.
-Confirm and link.
-Select pregnancy profile.
-Create pregnancy profile.
-Multiple active pregnancy profiles.
-No active pregnancy profile.
-Invalid Maternity context.
-Source: Maternity.
-Source: same visit.
-Source: same admission.
-Source: active profile.
-Gestational-age source.
-Dating methods.
-Pregnancy summary.
-ANC summary.
-Record ANC visit.
-Labor and delivery.
-Start labor episode.
-Open labor workspace.
-Delivery summary.
-Newborn summary.
-Postnatal summary.
-Legacy Consultation entry.
-Read-only because Maternity is the source of truth.
-Direct specialty write blocked.
-Underlying Maternity permission required.
-Workspace feature disabled.
-Write guard disabled/pilot mode.
-Action success/error messages.
 Activity logging
 
-The existing link service already logs link/relink/unlink.
+Retain existing activity logs.
 
-Add orchestration-level logs where useful:
+For blocked clinical mutation attempts, follow existing project conventions.
+
+Do not create noisy activity logs for every validation failure unless the project already does so.
+
+Required successful logs remain:
 
 PREGNANCY_PROFILE_CREATED_FROM_CONSULTATION
 ANC_VISIT_RECORDED_FROM_CONSULTATION
 LABOR_EPISODE_STARTED_FROM_CONSULTATION
 
-Metadata should include only:
+Context link/relink/unlink logs remain unchanged.
 
-consultation route ID
-pregnancy profile ID
-ANC/labor record ID
-visit/admission IDs
-actor
-timestamps
+No clinical measurements or notes should be copied into log metadata.
 
-Do not place clinical measurements or notes into activity metadata.
+Localisation
+
+Extend EN/FR in strict parity for:
+
+Maternity Context pilot mode
+Legacy fields remain editable
+Maternity source-of-truth mode
+Clinical action unavailable on completed consultation
+Clinical action unavailable while consultation is paused
+Open existing Maternity record
+Start a new consultation to record clinical data
+Return to consultation
+Unsaved consultation changes
+Context linking remains available
+Completed consultation context review
+Workspace placement/section labels if required
+
+Verify full recursive key parity.
 
 Tests
 
-Add:
+Add or extend:
 
 tests/Feature/ConsultationObstetricsMaternityWorkspacePhase14R3Test.php
 
+or create:
+
+tests/Feature/ConsultationObstetricsMaternityPilotPhase14R3_1Test.php
+
 Required tests:
 
-Feature flags:
+Real workspace integration:
 
-Both flags off preserve the current Obstetrics workspace.
-Workspace flag off does not render a ribbon.
-Workspace enabled/write guard disabled renders projections but preserves editable sections.
-Write guard never activates unless workspace flag is active.
+Real consultation show page does not contain ribbon when flag is off.
+Real consultation show page does not call resolver when flag is off.
+Real non-Obstetrics consultation does not call resolver.
+Real Obstetrics consultation renders ribbon when workspace flag is enabled.
+Real Obstetrics consultation renders context panel when enabled.
+Pilot marker renders when workspace enabled and guard disabled.
+Source-of-truth marker renders when both flags are enabled.
+Ribbon and panel consume the same view-model instance.
+Components issue no independent database queries.
 
-Context states:
+Context states on real page:
 
-No context loads the Obstetrics workspace normally.
-No context does not auto-create a profile.
-Inferred context is labelled suggested and is not persisted.
-Inferred context does not activate the write guard.
-Confirming inferred context creates an explicit link.
-Ambiguous context shows candidate selection.
-Ambiguous context never auto-selects.
-Invalid explicit context disables Maternity actions.
+Explicit context renders full projection.
+Inferred context renders suggested context and confirm action.
+Ambiguous context renders candidate selector.
+None preserves the current workspace.
+Invalid context renders warning without breaking Consultation.
 
-Ribbon/projections:
+Mutation boundary:
 
-Explicit linked profile renders LMP, EDD, GA, dating method and risk.
-Latest ANC and next-visit data render.
-Admission/ward/bed render when admitted.
-Labor, delivery, newborn and postnatal summaries render from source records.
-Projection rendering creates no specialty entries.
+Completed consultation can view linked context.
+Completed consultation can link an existing same-patient profile.
+Completed consultation can relink with reason.
+Completed consultation can unlink with reason.
+Completed consultation cannot create a Pregnancy Profile from Consultation.
+Completed consultation cannot record ANC from Consultation.
+Completed consultation cannot start Labor from Consultation.
+Blocked actions create no maternity records.
+Blocked actions create no bridge links.
+Active editable consultation can still create profile/record ANC/start Labor.
+Paused consultation follows the project’s existing mutation rules.
 
-Link/profile actions:
+Data ownership:
 
-Existing same-patient profile can be linked.
-Mismatched patient profile cannot be linked.
-Relink requires a reason.
-Unlink requires a reason.
-Pregnancy profile can be created by a user with both permissions.
-Profile creation without either required permission is blocked.
-Created profile is linked with role created.
-Opening Obstetrics alone never creates a profile.
+Guarded live page does not render editable inputs for blocked Maternity-owned fields.
+Guarded direct POST still rejects blocked fields.
+previous_complications, lie, and action_plan remain writable.
+Historical entries remain visible and unchanged.
+Projection mode leaves legacy inputs editable.
 
-ANC action:
+Navigation:
 
-ANC recorded from Consultation creates exactly one AntenatalVisit.
-ANC action links the ANC visit to the consultation.
-ANC action creates no antenatal_vitals specialty entry.
-ANC action creates no fetal_assessment specialty entry.
-ANC action creates no duplicate risk entry.
-Inferred but unconfirmed context cannot record ANC.
-Missing underlying Maternity ANC permission blocks the action.
-
-Labor action:
-
-Start Labor creates exactly one LaborEpisode.
-Existing active Labor Episode is opened/reused rather than duplicated.
-Labor action links the episode to the consultation.
-No labor specialty entry is created.
-Missing underlying Maternity labor permission blocks the action.
-
-Write guard:
-
-Linked Obstetrics consultation cannot write gravida/para/abortions/living children/previous caesarean through specialty JSON when guard is enabled.
-previous_complications remains writable.
-Linked consultation cannot write LMP/EDD/GA/dating method through specialty JSON.
-Linked consultation cannot write ANC vitals through specialty JSON.
-Linked consultation cannot write fundal height/FHR/fetal movement/presentation through specialty JSON.
-lie remains writable.
-Linked consultation cannot write risk level/risk factors through specialty JSON.
-action_plan remains writable.
-Existing historical entries remain in the database.
-Non-Obstetrics specialty entry writing remains unchanged.
-Guard disabled preserves current write behavior.
+Return URL preserves the same Consultation.
+Successful ANC action returns to the Maternity context panel.
+Unsaved-data protection is not bypassed where the current UI supports it.
 
 Regression:
 
-Existing Consultation completion still works.
+Existing Consultation completion remains unchanged.
 Existing readiness remains unchanged.
 Existing summary remains unchanged.
-Existing investigation/prescription/procedure/task behavior remains unchanged.
-Maternity billing stays preview-only.
-No billing card is rendered in the doctor workspace.
-EN/FR key parity passes.
-Resolver is invoked only once per workspace request where practical to assert.
-No Blade component performs direct queries.
+Existing orders remain unchanged.
+Existing Maternity pages remain unchanged.
+Billing remains preview-only.
+No invoice item is created.
 
-Run targeted checks:
+Run:
 
+php artisan test tests/Feature/ConsultationObstetricsMaternityPilotPhase14R3_1Test.php
 php artisan test tests/Feature/ConsultationObstetricsMaternityWorkspacePhase14R3Test.php
 php artisan test tests/Feature/ConsultationMaternityBridgePhase14R2Test.php
 php artisan test tests/Feature/MaternityFoundationPhase8Test.php
@@ -886,144 +532,148 @@ php artisan view:clear
 php artisan config:clear
 git diff --check -- . ':!docs/prompt.md'
 
-Run PHP syntax checks on all changed PHP and localisation files.
+Run PHP syntax checks on all changed PHP, Blade and localisation files.
 
-Known baseline treatment:
+Baseline handling:
 
-tests/Feature/Consultations may retain the documented 22 pre-existing failures.
-AntenatalCarePhase9Test may retain its one documented pre-existing failure.
-Re-run and compare exact counts.
-Do not claim those failures were introduced by this phase if the baseline remains identical.
-Phase 14R.3 must introduce zero new failures.
+tests/Feature/Consultations may retain exactly 22 documented pre-existing failures.
+AntenatalCarePhase9Test may retain exactly one documented pre-existing failure.
+Record exact counts.
+Phase 14R.3.1 must introduce zero new failures.
 
 Do not run composer test:wide.
 
-Performance verification
+Manual pilot checks
 
-Because the resolver may query six Maternity tables during fallback:
+Perform or document these manual checks:
 
-Measure the Obstetrics workspace before and after query counts using a stable fixture.
-Confirm the context resolver is called once.
-Confirm the context service preloads all projection data.
-Confirm individual cards do not query.
-Document the query delta.
-If the resolver is measurably expensive, add request-scope memoisation or safe per-request caching.
-Do not introduce persistent cross-request caching that could show stale clinical information in this phase.
+A. Flags off
+
+Open Obstetrics consultation.
+Confirm no Maternity ribbon/panel.
+Confirm current layout is unchanged.
+
+B. Pilot mode
+
+Enable workspace, leave guard off.
+Open consultation with linked pregnancy.
+Confirm ribbon placement is clinically useful.
+Confirm context panel does not overcrowd the workspace.
+Confirm current fields remain editable.
+Confirm pilot marker is visible.
+
+C. Guarded mode
+
+Enable both flags.
+Confirm Maternity-owned fields are projections/read-only.
+Confirm allowed Consultation fields remain editable.
+Record an ANC visit and confirm Maternity page/report sees the same record.
+Start Labor and confirm no duplicate episode.
+
+D. Completed consultation
+
+Confirm Maternity context can be reviewed.
+Confirm link correction is possible with permissions.
+Confirm clinical creation actions are blocked.
+Confirm links and historical entries remain visible.
 Documentation
 
 Create:
 
-docs/maternity/OBGYN_MATERNITY_OBSTETRICS_WORKSPACE_PHASE_14R_3_REPORT.md
+docs/maternity/OBGYN_MATERNITY_OBSTETRICS_PILOT_PHASE_14R_3_1_REPORT.md
 
 The report must include:
 
-What was implemented.
+Real include point selected.
 Files changed.
-Feature flags and rollout modes.
-Pregnancy dating-method implementation.
-Context service/view model.
-Resolver-state UI behavior.
-Ribbon behavior.
-Maternity context panel behavior.
-Explicit link/create/confirm behavior.
-ANC action behavior.
-Labor action behavior.
-Read-only projection behavior.
-Field-level write-guard matrix.
-Historical-entry behavior.
-Dual-permission behavior.
+Flag-off behavior.
+Pilot-mode behavior.
+Guarded-mode behavior.
+Completed-consultation action matrix.
+Mutation-boundary implementation.
+Unsaved-data behavior.
+Actual query counts for all measured fixtures.
+Resolver invocation counts.
+Layout placement rationale.
+Permissions/middleware behavior.
 Localisation.
-Activity logging.
-Query-count/performance results.
 Tests/checks run.
-Existing baselines and whether counts changed.
+Baseline comparison.
 Existing workflows protected.
 Known risks.
-Intentionally deferred items.
+Pilot rollout instructions.
 Rollback instructions.
-Next phase recommendation.
+Next recommended phase.
 
 Update:
 
 docs/maternity/OBGYN_MATERNITY_INTEGRATION_PLAN.md
-docs/maternity/OBGYN_MATERNITY_SOURCE_OF_TRUTH_MATRIX.md
 docs/manual-testing/OBGYN_MATERNITY_RECONCILIATION_TEST_PLAN.md
+docs/maternity/OBGYN_MATERNITY_OBSTETRICS_WORKSPACE_PHASE_14R_3_REPORT.md
 
-Mark Phase 14R.3 implemented only after all targeted tests pass and no new baseline failures are introduced.
+Mark K1 closed only after the real consultation view renders the components in pilot mode.
 
-Rollout and rollback
+Rollout
 
-Initial deployment:
+Initial state remains:
 
 CONSULTATION_OBSTETRIC_MATERNITY_WORKSPACE_ENABLED=false
 CONSULTATION_OBSTETRIC_MATERNITY_WRITE_GUARD_ENABLED=false
 
-Pilot projection mode:
+Pilot:
 
 CONSULTATION_OBSTETRIC_MATERNITY_WORKSPACE_ENABLED=true
 CONSULTATION_OBSTETRIC_MATERNITY_WRITE_GUARD_ENABLED=false
 
-Guarded source-of-truth mode:
+Only enable guarded mode after clinician review:
 
 CONSULTATION_OBSTETRIC_MATERNITY_WORKSPACE_ENABLED=true
 CONSULTATION_OBSTETRIC_MATERNITY_WRITE_GUARD_ENABLED=true
 
-Do not enable the write guard in an environment until:
+Rollback order:
 
-The count of existing Maternity-owned specialty entries has been measured.
-Existing duplicate entries have been reviewed or accepted as preserved legacy data.
-Clinicians have reviewed projection mode.
-Required Maternity permissions are assigned.
-The ANC and Labor actions have been manually tested.
+Disable write guard.
+Disable workspace.
+Clear config cache.
+Confirm existing Consultation fields are editable again.
 
-Rollback:
-
-Disable the write-guard flag first.
-If needed, disable the workspace flag.
-Existing Consultation fields and entries remain intact.
-Existing Maternity records remain intact.
-Bridge links remain historical/auditable.
 No destructive migration rollback should be required.
+
 Boundaries
 
-Do not change the Gynaecology workspace.
+Do not change Gynaecology.
 Do not auto-sync Gynaecology LMP.
 Do not retarget order sets.
-Do not convert current_pregnancy or birth_plan.
-Do not implement summary projection.
-Do not implement immutable completion snapshots.
-Do not implement readiness warnings/enforcement.
-Do not implement historical reconciliation/backfill.
+Do not convert current_pregnancy.
+Do not convert birth_plan.
+Do not add summary projection.
+Do not add immutable completion snapshots.
+Do not add readiness rules.
+Do not run historical reconciliation.
 Do not enable Maternity billing posting.
-Do not change Consultation billing.
-Do not add a doctor-workspace billing card.
-Do not change order, prescription, procedure or task engines.
+Do not add a billing card to Consultation.
+Do not modify consultation billing.
 Do not rewrite Maternity services.
-Do not rename existing routes.
-Do not modify default seeders with manual test data.
+Do not rename routes.
 Do not run composer test:wide.
 Do not touch docs/prompt.md.
 
 Final response
 
-At the end, provide a concise completion report with:
+At the end, provide:
 
 Summary.
-Files changed.
-Feature flags.
-UI behavior.
-Profile/ANC/Labor actions.
-Write-guard behavior.
-Permissions/localisation.
-Query-count change.
-Tests/checks run.
-Baseline comparison.
+Include point and UI placement.
+Mutation-boundary behavior.
+Completed-consultation action matrix.
+Feature-flag modes.
+Query counts.
+Tests and baseline comparison.
 Existing workflows protected.
 Known risks.
-Deferred work.
-Rollback procedure.
+Rollout and rollback.
 Next phase recommendation.
 
-Recommended next phase:
+Next phase after Phase 14R.3.1 passes:
 
 Phase 14R.4 — Gynaecology Separation, Explicit Pregnancy Transition and Order-Set Retargeting.

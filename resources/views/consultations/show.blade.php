@@ -302,9 +302,20 @@
 
 <!-- @include('consultations.partials.specialty-workspace-band') -->
 
+{{-- Phase 14R.3.1 — Maternity context (Obstetrics only, flag-gated).
+     Placed after the session/specialty header and before the main specialty
+     content. Both partials consume the SAME prepared view model built once in
+     HandlesConsultationWorkspace; they never resolve or query on their own, and
+     render nothing unless the workspace flag is on and the profile is
+     Obstetrics. They do not replace the patient banner, specialty banner,
+     admission context, visit status or session controls. --}}
+@include('consultations.partials.maternity.context-ribbon', ['maternity' => $maternityContext ?? null])
+
 @include('consultations.partials.specialty-order-sets')
 
 @include('consultations.partials.consultation-gating')
+
+@include('consultations.partials.maternity.context-panel', ['maternity' => $maternityContext ?? null])
 {{-- ============================================================ --}}
 {{-- MAIN 3-COLUMN LAYOUT --}}
 {{-- ============================================================ --}}

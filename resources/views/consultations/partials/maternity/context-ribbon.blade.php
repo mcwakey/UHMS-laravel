@@ -27,6 +27,26 @@
 @endpush
 @endonce
 
+{{-- Phase 14R.3.1 — rollout-mode marker. Only shown to users who may view the
+     maternity context, so it never leaks the pilot to unrelated clinicians. --}}
+@can('consultation.maternity_context.view')
+    <div class="alert {{ $maternity->writeGuardEnabled ? 'alert-info' : 'alert-warning' }} py-1 px-2 mb-2 small d-flex align-items-center gap-2">
+        <i class="ti {{ $maternity->writeGuardEnabled ? 'ti-shield-check' : 'ti-flask' }}"></i>
+        <div>
+            <strong>
+                {{ $maternity->writeGuardEnabled
+                    ? __('consultation_maternity.rollout.guarded_title')
+                    : __('consultation_maternity.rollout.pilot_title') }}
+            </strong>
+            <span class="text-muted">
+                {{ $maternity->writeGuardEnabled
+                    ? __('consultation_maternity.rollout.guarded_hint')
+                    : __('consultation_maternity.rollout.pilot_hint') }}
+            </span>
+        </div>
+    </div>
+@endcan
+
 @php
     $sourceLabel = match($maternity->resolutionSource) {
         'explicit'       => __('consultation_maternity.ribbon.source_maternity'),

@@ -10,6 +10,7 @@ use App\Models\LaborEpisode;
 use App\Models\PregnancyProfile;
 use App\Models\Visit;
 use App\Services\ActivityLogService;
+use App\Services\Consultation\ConsultationActionException;
 use App\Services\Consultation\Maternity\ConsultationMaternityContextResolver;
 use App\Services\Consultation\Maternity\ConsultationMaternityLinkException;
 use App\Services\Consultation\Maternity\ConsultationMaternityLinkService;
@@ -160,7 +161,7 @@ class ConsultationMaternityContextController extends ConsultationWorkflowControl
     ) {
         $this->authorizeBridge($request, 'consultation.maternity_context.create_profile');
         $this->authorizeMaternity($request, 'maternity.pregnancy.create');
-        $route = $this->route($request, $visit);
+        $route = $this->mutableRoute($request, $visit);
 
         $data = $request->validate([
             'gravida' => ['nullable', 'integer', 'min:0', 'max:30'],
@@ -221,7 +222,7 @@ class ConsultationMaternityContextController extends ConsultationWorkflowControl
     ) {
         $this->authorizeBridge($request, 'consultation.maternity_context.record_anc');
         $this->authorizeMaternity($request, 'maternity.anc.record');
-        $route = $this->route($request, $visit);
+        $route = $this->mutableRoute($request, $visit);
 
         // An explicit, confirmed link is required — inferred context is not enough.
         $profile = $this->explicitlyLinkedProfileOrFail($route);
@@ -295,7 +296,7 @@ class ConsultationMaternityContextController extends ConsultationWorkflowControl
     ) {
         $this->authorizeBridge($request, 'consultation.maternity_context.start_labor');
         $this->authorizeMaternity($request, 'maternity.labor.start');
-        $route = $this->route($request, $visit);
+        $route = $this->mutableRoute($request, $visit);
 
         $profile = $this->explicitlyLinkedProfileOrFail($route);
 
@@ -352,20 +353,16 @@ class ConsultationMaternityContextController extends ConsultationWorkflowControl
     /* ── Helpers ──────────────────────────────────────────────────────── */
 
     /**
-     * Resolve the consultation encounter for this visit.
+     * CONTEXT-LINK boundary (link / confirm / relink / unlink).
      *
-     * Deliberately does NOT use consultationMutationContext(): that guard
-     * requires an *editable* (started, unpaused, uncompleted) session because
-     * it protects clinical entry writes. A maternity context link is a bridge
-     * record, not a clinical entry — and 14R.2 requires links to remain valid
-     * on completed consultations. Requiring an editable session here would
-     * break linking for review/historical contexts.
+     * Deliberately does NOT require an editable consultation. These actions
+     * maintain or correct the encounter's relationship to an existing
+     * longitudinal record and create no clinical data, and Phase 14R.2 requires
+     * bridge links to remain manageable after consultation completion.
      */
     private function route(Request $request, Visit $visit)
     {
-        if (! config('consultation.maternity_context.obstetrics_workspace_enabled', false)) {
-            abort(403, __('consultation_maternity.messages.workspace_disabled'));
-        }
+        $this->assertWorkspaceEnabled();
 
         $route = app(\App\Services\ConsultationSessionService::class)
             ->resolveRouteForVisit($visit, $request->integer('consultation_route_id') ?: null);
@@ -375,6 +372,46 @@ class ConsultationMaternityContextController extends ConsultationWorkflowControl
         }
 
         return $route;
+    }
+
+    /**
+     * CLINICAL-MUTATION boundary (create profile / record ANC / start labor).
+     *
+     * Phase 14R.3.1 — these create or mutate longitudinal clinical records, so
+     * when launched from the Consultation workspace they require an
+     * active/editable consultation. Completed and cancelled sessions are
+     * blocked; paused sessions follow the project's existing mutation policy.
+     * Clinicians may still reach existing maternity records from a completed
+     * consultation, and must start a new consultation (or work in the Maternity
+     * module) to record new clinical data.
+     *
+     * This intentionally reuses the existing consultation mutation guard rather
+     * than inventing a parallel rule — it must never be weakened here.
+     */
+    private function mutableRoute(Request $request, Visit $visit)
+    {
+        $this->assertWorkspaceEnabled();
+
+        try {
+            return $this->consultationMutationContext(
+                $request,
+                $visit,
+                'maternity_context.clinical_mutation',
+                'consultations.create',
+            )->route;
+        } catch (ConsultationActionException $e) {
+            // Localised explanation; no maternity record and no bridge link are
+            // created, and no partial transaction is left behind because the
+            // guard runs before any write.
+            abort(422, $e->getMessage());
+        }
+    }
+
+    private function assertWorkspaceEnabled(): void
+    {
+        if (! config('consultation.maternity_context.obstetrics_workspace_enabled', false)) {
+            abort(403, __('consultation_maternity.messages.workspace_disabled'));
+        }
     }
 
     private function authorizeBridge(Request $request, string $permission): void
