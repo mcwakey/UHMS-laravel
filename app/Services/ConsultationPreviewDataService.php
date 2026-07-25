@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Services\Consultation\Specialty\ConsultationSpecialtyProfileResolver;
+use App\Services\Consultation\Specialty\ConsultationSpecialtySummaryBuilder;
 use App\Models\Visit;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 
 class ConsultationPreviewDataService
 {
@@ -11,6 +14,8 @@ class ConsultationPreviewDataService
         private readonly ConsultationSummaryService $summaryService,
         private readonly LabService $labService,
         private readonly ProcedureRequestService $procedureRequestService,
+        private readonly ConsultationSpecialtyProfileResolver $specialtyResolver,
+        private readonly ConsultationSpecialtySummaryBuilder $specialtySummaryBuilder,
     ) {}
 
     public function build(
@@ -51,6 +56,10 @@ class ConsultationPreviewDataService
                     'record' => $record,
                     'summary' => $summariesBySessionId[$session->id]
                         ?? $this->summaryService->forRecord($record),
+                    // Specialty-specific findings for this session's consultation
+                    // department (ophthalmology, ENT, …). Null for general
+                    // medicine so the generic sections aren't duplicated.
+                    'specialtySummary' => $this->buildSpecialtySummary($visit, $session),
                 ]);
             }
         } else {
@@ -58,6 +67,7 @@ class ConsultationPreviewDataService
                 'session' => null,
                 'record' => $visit->medicalRecord,
                 'summary' => $this->summaryService->forRecord($visit->medicalRecord),
+                'specialtySummary' => null,
             ]);
         }
 
@@ -73,6 +83,61 @@ class ConsultationPreviewDataService
             'contributors' => $this->buildVisitContributors($sessionSummaries, $sessions, $labRequests, $procedureRequests),
             'generatedAt' => now(),
         ];
+    }
+
+    /**
+     * Resolve and render the specialty-specific summary for a single
+     * consultation session, so the preview adapts to the department the
+     * session was run under (e.g. ophthalmology, ENT). Returns null for
+     * general-medicine / fallback profiles or when there is nothing to show,
+     * so those sessions fall back to the generic section rendering.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function buildSpecialtySummary(Visit $visit, $session): ?array
+    {
+        $record = $session->medicalRecord;
+        if (! $record) {
+            return null;
+        }
+
+        // Resolve the specialty from the session (its route mapping / existing
+        // specialty entries), using the session's own clinician as the user
+        // signal so the preview reflects the consultation, not the viewer.
+        $user = $session->doctor ?? $session->mainDoctor ?? $record->doctor ?? Auth::user();
+        if (! $user) {
+            return null;
+        }
+
+        try {
+            $resolved = $this->specialtyResolver->resolve(
+                $user,
+                visit: $visit,
+                consultationRoute: $session,
+                department: $session->department ?? $visit->currentDepartment,
+            );
+
+            $summary = $this->specialtySummaryBuilder->build($session, $resolved);
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        // Skip general medicine and fallbacks — their content already appears
+        // in the generic session sections, so rendering it again is noise.
+        if ($summary->isFallback || ! $summary->profile || $summary->profile->code === 'general_medicine') {
+            return null;
+        }
+
+        $data = $summary->toArray();
+
+        $hasContent = collect($data['sections'] ?? [])
+            ->contains(fn ($section) => filled($section['content'] ?? null));
+
+        if (! $hasContent) {
+            return null;
+        }
+
+        return $data;
     }
 
     private function buildVisitContributors($sessionSummaries, $sessions, $labRequests, $procedureRequests): array

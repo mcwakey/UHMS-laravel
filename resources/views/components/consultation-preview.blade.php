@@ -395,6 +395,32 @@
                 </div>
             @endforeach
             @endif
+
+            {{-- Specialty-specific findings (ophthalmology, ENT, …) --}}
+            @if(!empty($bundle['specialtySummary']))
+                @php $ss = $bundle['specialtySummary']; @endphp
+                <div class="dept-group specialty-summary-block" style="border-left-color:#6366f1;">
+                    <div class="dept-name" style="color:#4338ca;">
+                        <i class="ti {{ $ss['profile']['icon'] ?? 'ti-stethoscope' }} me-1"></i>
+                        {{ $ss['profile']['translated_name'] ?? $ss['profile']['name'] ?? $ss['title'] }}
+                    </div>
+                    @if(!empty($ss['warnings']))
+                        <div class="doc-meta mb-1" style="color:#b45309;">
+                            @foreach($ss['warnings'] as $warning)
+                                <div><i class="ti ti-alert-triangle me-1"></i>{{ $warning }}</div>
+                            @endforeach
+                        </div>
+                    @endif
+                    @foreach($ss['sections'] as $section)
+                        @if(!empty($section['content']))
+                            <div class="doc-subsection mb-2">
+                                <h3>{{ $section['label'] }}</h3>
+                                <div class="entry"><div class="entry-text">{!! nl2br(e($section['content'])) !!}</div></div>
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
+            @endif
         </div>
     @endforeach
 
