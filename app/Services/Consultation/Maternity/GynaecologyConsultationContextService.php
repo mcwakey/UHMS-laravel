@@ -70,7 +70,9 @@ class GynaecologyConsultationContextService
         $guardApplies = $hasExplicitLink
             && $this->writeGuard->applies($consultation, $profile, $context);
 
-        $savedLmp = $this->savedConsultationLmp($consultation);
+        // The saved LMP is only meaningful for adoption, which requires an
+        // explicit link — skip the lookup entirely when nothing is linked.
+        $savedLmp = $hasExplicitLink ? $this->savedConsultationLmp($consultation) : null;
 
         return new GynaecologyWorkspaceViewModel(
             contextEnabled: true,

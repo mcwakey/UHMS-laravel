@@ -52,7 +52,7 @@ Grouped by phase, mapping directly to the required scenarios in the phase brief.
 
 ### 1.3 Gynaecology — 14R.4 ✅ IMPLEMENTED
 
-> Automated coverage: `tests/Feature/ConsultationGynaecologyMaternityPhase14R4Test.php` (21 passing) and `tests/Feature/ConsultationObgynOrderSetRetargetingPhase14R4Test.php` (10 passing). Run `php artisan consultation:obgyn-order-set-audit` before enabling any Gynaecology flag.
+> Automated coverage: `ConsultationGynaecologyMaternityPhase14R4Test.php` (21), `ConsultationObgynOrderSetRetargetingPhase14R4Test.php` (10), `ConsultationGynaecologyMaternityPilotPhase14R4_1Test.php` (10) and `ConsultationObgynMaternityActionRenderingPhase14R4_1Test.php` (12). Run `php artisan consultation:obgyn-order-set-audit` before enabling any Gynaecology flag.
 
 | # | Test | Expected |
 |---|---|---|

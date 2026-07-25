@@ -248,4 +248,4 @@ Measured in this environment: **0 rows** to reconcile — re-measure per environ
 | 14R.6 | Readiness, summary projection, reconciliation, billing policy | high | Dry-run report reviewed; billing policy approved |
 | 14R.7 | Manual test data + wider regression | medium | Full regression pass |
 
-**14R.4 is complete (dark by default); R5 is closed and `current_pregnancy`/`birth_plan` are converted. Next: 14R.5 — admission/emergency/labor/delivery/postnatal handoffs, plus the Gynaecology UI wiring noted in the 14R.4 report.**
+**14R.4.1 is complete (dark by default); R1, R2 and R5 are all closed. Next: 14R.5 — admission/emergency/labor/delivery/postnatal handoffs.**

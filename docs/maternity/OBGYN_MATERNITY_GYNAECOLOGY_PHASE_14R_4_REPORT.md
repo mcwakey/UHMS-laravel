@@ -1,6 +1,7 @@
 # Phase 14R.4 — Gynaecology Separation, Explicit Pregnancy Transition & Order-Set Retargeting (Report)
 
-**Status:** ✅ Implemented. **Decision R5 is now closed.** Dark by default (all four flags `false`).
+**Status:** ✅ Implemented. **Decision R5 is now closed.**
+**Update — Phase 14R.4.1:** R1 and R2 are now **CLOSED** — the Gynaecology card is wired into the real consultation page and `maternity_context_action` has a typed clinician-facing presenter. See `OBGYN_MATERNITY_GYNAECOLOGY_PILOT_PHASE_14R_4_1_REPORT.md`. Dark by default (all four flags `false`).
 **Companions:** `OBGYN_MATERNITY_OBSTETRICS_PILOT_PHASE_14R_3_1_REPORT.md`, `OBGYN_MATERNITY_SOURCE_OF_TRUTH_MATRIX.md`
 
 ---
@@ -133,8 +134,8 @@ New identifier-only events: `GYNAECOLOGY_LMP_ADOPTED_FOR_PREGNANCY_DATING`, `OBG
 
 | # | Item |
 |---|---|
-| R1 | The Gynaecology context card partial and its workspace wiring are **not yet included** in the real Gynaecology view — the service, view model, guard, actions and tests are complete and dark-by-default. Wiring should land with the pilot rollout (mirrors how 14R.3→14R.3.1 sequenced Obstetrics). |
-| R2 | `maternity_context_action` is recorded on items and handled defensively by the executor, but the **clinician-facing CTA rendering** for that action type is part of the same UI wiring as R1. |
+| R1 | ✅ **CLOSED in 14R.4.1.** ~~The Gynaecology context card partial and its workspace wiring are not yet included in the real Gynaecology view~~ — the service, view model, guard, actions and tests are complete and dark-by-default. Wiring should land with the pilot rollout (mirrors how 14R.3→14R.3.1 sequenced Obstetrics). |
+| R2 | ✅ **CLOSED in 14R.4.1** — typed presenter with a closed action set, six display states and fail-closed behaviour. |
 | R3 | LMP conflict resolution has **no override path** by design — deferred as the spec requires. |
 | R4 | `booking_status`, `planned_place`, `delivery_plan` remain consultation-owned pending a separate schema decision. |
 | Deferred | Summary projection + immutable completion snapshot (R6) → **14R.6**; historical reconciliation → **14R.6**; billing posting stays disabled. |

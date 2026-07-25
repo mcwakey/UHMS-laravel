@@ -32,6 +32,7 @@ use App\Services\Consultation\Specialty\ConsultationSpecialtyProfileResolver;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyReadinessService;
 use App\Services\Consultation\Specialty\DoctorSpecialtyWorkspaceService;
 use App\Services\ConsultationNextPatientService;
+use App\Services\Consultation\Maternity\GynaecologyConsultationContextService;
 use App\Services\Consultation\Maternity\ObstetricConsultationContextService;
 use App\Services\ConsultationPreviewDataService;
 use App\Services\InpatientWorkspaceScope;
@@ -461,6 +462,20 @@ trait HandlesConsultationWorkspace
                 url()->current(),
             )
             : \App\Data\Consultation\Maternity\ObstetricWorkspaceViewModel::disabled();
+
+        // Phase 14R.4.1 — Gynaecology pregnancy context. Explicit-only: the
+        // service short-circuits to a disabled model (no resolver call, no
+        // link/profile queries) unless the Gynaecology context flag is on AND
+        // the resolved profile is Gynaecology. Built once; the card, the
+        // obstetric-history projections and the order-set CTAs share it.
+        $gynaecologyContext = $selectedRoute
+            ? app(GynaecologyConsultationContextService::class)->build(
+                $selectedRoute,
+                $specialtyContext->profile,
+                $request->user(),
+                url()->current(),
+            )
+            : \App\Data\Consultation\Maternity\GynaecologyWorkspaceViewModel::disabled();
         $doctorSpecialtyWorkspace = app(DoctorSpecialtyWorkspaceService::class)->build(
             $request->user(),
             $selectedRoute,
@@ -510,6 +525,7 @@ trait HandlesConsultationWorkspace
             // a disabled model (and never calls the resolver) unless the
             // workspace flag is on AND the profile is Obstetrics.
             'maternityContext' => $maternityContext,
+            'gynaecologyContext' => $gynaecologyContext,
             'specialtyEntries' => $specialtyEntries,
             'specialtyEntryGroups' => $specialtyEntryGroups,
             'specialtyFavorites' => $specialtyFavorites,

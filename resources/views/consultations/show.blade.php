@@ -316,6 +316,11 @@
 @include('consultations.partials.consultation-gating')
 
 @include('consultations.partials.maternity.context-panel', ['maternity' => $maternityContext ?? null])
+
+{{-- Phase 14R.4.1 — small Gynaecology pregnancy-context card. Explicit-only,
+     flag-gated, and renders nothing for non-Gynaecology profiles. Shares the
+     single view model built in HandlesConsultationWorkspace. --}}
+@include('consultations.partials.maternity.gynaecology-context-card', ['gynaecology' => $gynaecologyContext ?? null])
 {{-- ============================================================ --}}
 {{-- MAIN 3-COLUMN LAYOUT --}}
 {{-- ============================================================ --}}
