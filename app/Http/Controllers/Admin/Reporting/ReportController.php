@@ -386,8 +386,19 @@ class ReportController extends Controller
      */
     public function printConsultation(MedicalRecord $record)
     {
-        $record->load(['patient', 'doctor', 'visit.department', 'complaints', 'diagnoses', 'investigations', 'treatments', 'prescriptions.items']);
-        $pdf = Pdf::loadView('reports.print-consultation', compact('record'));
+        $record->load(['patient', 'doctor', 'visit.department', 'complaints', 'diagnoses', 'investigations', 'treatments', 'prescriptions.items', 'consultationRoute']);
+
+        // Phase 14R.6.1 — maternity context in print. An ACTIVE consultation
+        // prints the live projection; a COMPLETED one prints its completion
+        // snapshot with its version and captured-at metadata. Current maternity
+        // values are never printed under a historical label, and a consultation
+        // with no snapshot prints an explicit no-snapshot statement.
+        // Returns an unavailable view model (zero queries) while the summary
+        // flag is off.
+        $maternitySummary = app(\App\Services\Consultation\Maternity\ConsultationMaternitySummaryPresentationService::class)
+            ->build($record->consultationRoute, request()->user(), printMode: true);
+
+        $pdf = Pdf::loadView('reports.print-consultation', compact('record', 'maternitySummary'));
 
         return $pdf->stream('consultation-'.$record->visit?->visit_number.'.pdf');
     }

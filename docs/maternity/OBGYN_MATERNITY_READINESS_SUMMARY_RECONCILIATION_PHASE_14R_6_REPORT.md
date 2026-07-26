@@ -1,6 +1,7 @@
 # Phase 14R.6 — Advisory Readiness, Summary Projection, Immutable Completion Snapshot, Reconciliation Dry Run & Billing De-duplication Policy (Report)
 
 **Status:** ✅ Implemented. **R6 is CLOSED.** Dark by default (all six new flags `false`).
+**Update — Phase 14R.6.1:** **K1 is CLOSED** — the summary, snapshot, history, current-record, readiness and print surfaces are authored and wired. See `OBGYN_MATERNITY_SUMMARY_SNAPSHOT_UI_PHASE_14R_6_1_REPORT.md`.
 **Companion:** `OBGYN_MATERNITY_HANDOFF_UI_PHASE_14R_5_1_REPORT.md`
 
 ---
@@ -206,7 +207,7 @@ Unchanged and verified: consultation completion, readiness and reopening; the wh
 
 | # | Risk |
 |---|---|
-| K1 | The summary/snapshot **UI** (a Blade section rendering the projection, snapshot history and "View current Maternity record") is not yet authored. The projection is wired into the summary source collector and the snapshot service exposes `latestFor()`/`historyFor()`, so this is a template-only slice — but until it lands, the data is reachable only programmatically. |
+| K1 | ✅ **CLOSED in 14R.6.1.** The audit found the root cause: the `maternity_context` source was collected but no summary template declared a section for it, so the builder never touched it. Rather than flatten the projection into the generated text, 14R.6.1 renders it as a structured card driven by a typed presentation service — live for active consultations, the stored snapshot for completed ones. |
 | K2 | The completion reference is `route id + completed_at`. Two completions within the same second on the same route would share a reference and be treated as one occurrence. In practice the route early-returns after the first completion, so this needs a reopen plus a recompletion inside one second to occur. |
 | K3 | Overlapping billing sections are a **declared map**, not a schema relationship, because no maternity key column exists on specialty mappings. If a site bills a maternity act through a section not in that map, the overlap will not be detected. Documented in the service. |
 | K4 | Reconciliation reports **0 rows in this environment**. Counts must be re-measured per environment before any write guard is enabled there. |

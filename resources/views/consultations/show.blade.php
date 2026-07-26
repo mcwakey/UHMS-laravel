@@ -321,6 +321,7 @@
      flag-gated, and renders nothing for non-Gynaecology profiles. Shares the
      single view model built in HandlesConsultationWorkspace. --}}
 @include('consultations.partials.maternity.gynaecology-context-card', ['gynaecology' => $gynaecologyContext ?? null])
+@include('consultations.partials.maternity.readiness-card', ['readiness' => $maternityReadiness ?? null])
 @include('consultations.partials.maternity.handoff-actions', ['handoffs' => $maternityHandoffs ?? null])
 
 {{-- Phase 14R.5.1 — modal bodies for the Obstetrics panel (14R.3.1) and
@@ -2090,6 +2091,18 @@
                                 @include('consultations.partials.summary-sections', ['consultationSummary' => $consultationSummary])
                             </div>
                         </div>
+
+                        {{-- Phase 14R.6.1 — Maternity Context.
+                             ACTIVE/reopened consultations show the live record;
+                             COMPLETED consultations show the completion-time
+                             snapshot. Both render nothing while
+                             CONSULTATION_MATERNITY_SUMMARY_ENABLED is false. --}}
+                        @include('consultations.partials.maternity.summary-live', [
+                            'maternitySummary' => $maternitySummary ?? null,
+                        ])
+                        @include('consultations.partials.maternity.summary-snapshot', [
+                            'maternitySummary' => $maternitySummary ?? null,
+                        ])
                     </div>
 
                     @if(! empty($specialtySummaryBuilder['available'] ?? false))

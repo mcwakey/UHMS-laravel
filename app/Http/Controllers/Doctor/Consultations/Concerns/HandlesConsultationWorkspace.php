@@ -34,6 +34,7 @@ use App\Services\Consultation\Specialty\DoctorSpecialtyWorkspaceService;
 use App\Services\ConsultationNextPatientService;
 use App\Services\Consultation\Maternity\ConsultationMaternityHandoffPresenter;
 use App\Services\Consultation\Maternity\ConsultationMaternityModalPresenter;
+use App\Services\Consultation\Maternity\ConsultationMaternitySummaryPresentationService;
 use App\Services\Consultation\Maternity\GynaecologyConsultationContextService;
 use App\Services\Consultation\Maternity\ObstetricConsultationContextService;
 use App\Services\ConsultationPreviewDataService;
@@ -501,6 +502,21 @@ trait HandlesConsultationWorkspace
         $gynaecologyActions = $maternityModalPresenter->gynaecology(
             $gynaecologyContext, $selectedRoute, $request->user()
         );
+
+        // Phase 14R.6.1 — maternity summary/snapshot presentation. Returns an
+        // unavailable view model with ZERO queries unless
+        // CONSULTATION_MATERNITY_SUMMARY_ENABLED is on and the clinician holds
+        // consultation.maternity_context.summary.view. Built once and reused by
+        // the summary tab, the history table and the print surface.
+        $maternitySummary = app(ConsultationMaternitySummaryPresentationService::class)->build(
+            $selectedRoute,
+            $request->user(),
+            isGynaecology: $specialtyContext->profile?->code === 'gynecology',
+        );
+
+        // Phase 14R.6.1 — advisory readiness card (Obstetrics only, flag-gated).
+        $maternityReadiness = app(\App\Services\Consultation\Maternity\ConsultationMaternityReadinessService::class)
+            ->evaluate($selectedRoute, $specialtyContext->profile, $request->user());
         $doctorSpecialtyWorkspace = app(DoctorSpecialtyWorkspaceService::class)->build(
             $request->user(),
             $selectedRoute,
@@ -554,6 +570,8 @@ trait HandlesConsultationWorkspace
             'maternityHandoffs' => $maternityHandoffs,
             'obstetricMaternityActions' => $obstetricActions,
             'gynaecologyMaternityActions' => $gynaecologyActions,
+            'maternitySummary' => $maternitySummary,
+            'maternityReadiness' => $maternityReadiness,
             'specialtyEntries' => $specialtyEntries,
             'specialtyEntryGroups' => $specialtyEntryGroups,
             'specialtyFavorites' => $specialtyFavorites,

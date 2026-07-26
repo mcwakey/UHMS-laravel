@@ -247,7 +247,10 @@ Measured in this environment: **0 rows** to reconcile — re-measure per environ
 | 14R.5 | Admission/emergency/labor/delivery/postnatal handoffs ✅ | medium | ✅ 64 tests green; scenarios A–F verified; baselines unchanged; 4 new flags default off |
 | 14R.5.1 | Handoff UI completion + pilot closure ✅ | low | ✅ 44 tests green; **K2 closed**; K1 fallback usable; baselines unchanged |
 | 14R.6 | Readiness, summary projection, snapshots, reconciliation, billing policy ✅ | high | ✅ 65 tests green; **R6 closed**; snapshots immutable; dry run 0 writes; baselines unchanged |
+| 14R.6.1 | Summary/snapshot/history/print UI ✅ | low | ✅ 42 tests green; **K1 closed**; completed summaries bound to the snapshot; baselines unchanged |
 | 14R.7 | Manual test data + wider regression | medium | Full regression pass |
+
+**14R.6.1 is complete (dark by default). Clinicians can now see the live Maternity Context on an active consultation, the immutable completion snapshot on a completed one, its version history and integrity state, and the current record only as a separate, explicitly requested, permission-controlled view. Print follows the same rule. K1 is closed.**
 
 **14R.6 is complete (dark by default). Consultation completion now captures an immutable, versioned maternity snapshot inside its own transaction; completed summaries bind to that snapshot rather than to live data; a read-only reconciliation dry run classifies historical O&G entries; and billing de-duplication policy is declared without posting anything. R6 is closed. Next: 14R.7 — manual-test data, environment reconciliation review, pilot acceptance and wider regression.**
 

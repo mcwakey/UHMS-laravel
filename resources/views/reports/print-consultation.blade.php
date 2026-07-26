@@ -135,6 +135,56 @@
     </div>
     @endif
 
+    {{-- Phase 14R.6.1 — Maternity Context.
+         Active consultation → live projection.
+         Completed consultation → the completion-time snapshot, with its
+         version and capture metadata. Never current values under a historical
+         label. Renders nothing while the summary flag is off. --}}
+    @if (isset($maternitySummary) && $maternitySummary->shouldRender())
+        <div class="section-title">
+            @if ($maternitySummary->isSnapshot())
+                {{ __('consultation_maternity_summary.summary.completion_snapshot_title') }}
+                (v{{ $maternitySummary->snapshotVersion }})
+            @elseif ($maternitySummary->isMissingSnapshot())
+                {{ __('consultation_maternity_summary.summary.completion_snapshot_title') }}
+            @else
+                {{ __('consultation_maternity_summary.summary.current_record') }}
+            @endif
+        </div>
+        <div class="content-block">
+            <p style="font-size:10px;color:#666;">
+                {{ __('consultation_maternity_summary.summary.source_of_truth') }} &middot;
+                {{ __('consultation_maternity_summary.summary.encounter_source') }}
+            </p>
+
+            @if ($maternitySummary->isMissingSnapshot())
+                <p>{{ __('consultation_maternity_summary.summary.no_snapshot_available') }}</p>
+                <p style="font-size:10px;color:#666;">{{ __('consultation_maternity_summary.snapshot.none_fabricated') }}</p>
+            @else
+                @if ($maternitySummary->isSnapshot())
+                    <p style="font-size:10px;color:#666;">
+                        {{ __('consultation_maternity_summary.print.printed_snapshot_version') }}:
+                        v{{ $maternitySummary->snapshotVersion }} &middot;
+                        {{ __('consultation_maternity_summary.summary.captured_at') }}:
+                        {{ $maternitySummary->capturedAt }} &middot;
+                        {{ $maternitySummary->integrityVerified()
+                            ? __('consultation_maternity_summary.snapshot.verified_short')
+                            : ($maternitySummary->integrityMismatch()
+                                ? __('consultation_maternity_summary.snapshot.mismatch_short')
+                                : '—') }}
+                    </p>
+                    <p style="font-size:10px;color:#666;">{{ __('consultation_maternity_summary.print.historical_summary') }}</p>
+                @endif
+
+                @include('consultations.partials.maternity.summary-payload', [
+                    'payload' => $maternitySummary->payload(),
+                    'compact' => true,
+                ])
+            @endif
+        </div>
+    @endif
+
+
     <div class="signature">
         <p><strong>{{ __('reports.print_templates.consulting_physician') }}:</strong> {{ $record->doctor?->name ?? '—' }}</p>
         <div class="signature-line"></div>

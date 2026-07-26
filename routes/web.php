@@ -208,6 +208,7 @@ use App\Http\Controllers\Billing\SponsorController;
 use App\Http\Controllers\Dev\DebugPermissionGrantController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationClinicalEntryController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationMaternityContextController;
+use App\Http\Controllers\Doctor\Consultations\ConsultationMaternitySummaryController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationOrderController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationPlanningController;
 use App\Http\Controllers\Doctor\Consultations\ConsultationPrescriptionController;
@@ -2418,6 +2419,16 @@ Route::middleware('auth')->group(function () {
             Route::get('consultations/{visit}/summary-fragment', [ConsultationWorkspaceController::class, 'summaryFragment'])->name('consultations.summary-fragment');
             Route::get('consultations/{visit}/readiness-fragment', [ConsultationWorkspaceController::class, 'readinessFragment'])->name('consultations.readiness-fragment');
             Route::get('consultations/{visit}/specialty-summary/preview', [ConsultationSpecialtySummaryController::class, 'preview'])->name('consultations.specialty-summary.preview');
+
+            // Phase 14R.6.1 — READ-ONLY maternity summary surfaces. Placed with
+            // the other read fragments so they inherit `can:consultations.view`
+            // rather than the write-level `can:consultations.create`.
+            // GET only by design: no route anywhere can update, delete or
+            // re-hash a completion snapshot.
+            Route::prefix('consultations/{visit}/maternity-summary')->name('consultations.maternity-summary.')->group(function () {
+                Route::get('history', [ConsultationMaternitySummaryController::class, 'history'])->name('history');
+                Route::get('current', [ConsultationMaternitySummaryController::class, 'currentRecord'])->name('current');
+            });
             Route::patch('consultations/{visit}/final-note', [ConsultationWorkspaceController::class, 'updateFinalNote'])->name('consultations.final-note.update')->middleware('can:consultations.create');
             Route::patch('consultations/preferences/pinned-actions', [DoctorConsultationPreferenceController::class, 'updatePinnedActions'])->name('consultations.preferences.pinned-actions.update')->middleware('can:consultations.create');
             Route::patch('consultations/preferences/layout', [DoctorConsultationPreferenceController::class, 'updateLayout'])->name('consultations.preferences.layout.update')->middleware('can:consultations.create');

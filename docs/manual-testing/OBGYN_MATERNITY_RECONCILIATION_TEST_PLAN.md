@@ -237,3 +237,26 @@ All six flags default **false**. Enable only the one under test.
 | **F** | Billing policy | Configure both an event-specific consultation mapping and an ANC mapping for the same act | Duplicate-risk warning; `maternity_event_only`; **no posting**; the base attendance charge is treated separately; no billing card appears in any clinical workspace |
 
 **Flag checks:** with all flags false, readiness and the summary projection issue **zero** queries and no snapshot is captured or read. Turning the snapshot flag on later must not retroactively invent history for an already-completed consultation.
+
+---
+
+## 8. Phase 14R.6.1 — summary & snapshot UI
+
+> Automated coverage: `ConsultationMaternitySummaryUiPhase14R6_1Test.php` (22), `ConsultationMaternitySnapshotHistoryUiPhase14R6_1Test.php` (12), `ConsultationMaternitySummaryPrintPhase14R6_1Test.php` (8) — **42 tests**.
+
+**The rule under test:** an active consultation shows current Maternity truth; a completed consultation shows what was true at completion; current data is available separately and never silently rewrites history.
+
+| # | Scenario | Steps | Expected |
+|---|---|---|---|
+| **A** | Active Obstetrics | Enable the summary flag → link a profile → add ANC and Labor context → open the summary tab and the preview | *Current Maternity Record* renders; **no snapshot is created by viewing** |
+| **B** | Complete | Enable capture → complete the consultation → open the summary | *Completion Snapshot v1* is the default; integrity shows verified |
+| **C** | Change after completion | Change the Pregnancy Profile or ANC → reopen the completed summary → click *View Current Maternity Record* | The historical snapshot is unchanged; current values appear only in the separate, badged block |
+| **D** | Reopen / recomplete | Reopen → confirm live values plus v1 history → update Maternity → recomplete | v2 becomes the default; **v1 remains readable and unchanged** |
+| **E** | Completed without snapshot | Complete with capture disabled → enable capture afterwards → open the summary | No historical snapshot is fabricated; current values only via the separate action |
+| **F** | Gynaecology | Complete unlinked → then link a profile explicitly | No Maternity section at first; afterwards the limited projection plus *"This consultation remains Gynaecology"*; completion behaviour unchanged |
+| **G** | Hash mismatch | In a **non-production** database, alter a copied snapshot payload directly → open its history view | A prominent mismatch warning; the payload stays visible; **nothing is repaired, re-hashed or deleted** |
+| **H** | Print | Print an active summary, a completed summary, then v1 after v2 exists | Each is clearly labelled; no live values appear in historical output |
+
+**Wording check:** the integrity label must say *verified against the hash stored at capture*. It must not imply an external signature or that a privileged database actor could not rewrite the row.
+
+**Flag check:** with `CONSULTATION_MATERNITY_SUMMARY_ENABLED=false` the existing consultation summary renders exactly as before, with **zero** added queries.
