@@ -234,3 +234,24 @@ Field-level clinical ownership above is unchanged. 14R.5 adds the **operational*
 **Durable current-admission linkage** is `admission_maternity_links`, **not** `pregnancy_profiles.admission_id`. A single nullable column cannot represent a patient's second admission without erasing the first, so that column is never force-updated. Maternity stage records (`labor_episodes`, `delivery_records`, `antenatal_visits`, `postnatal_cases`, `newborn_records`) adopt `admission_id` only when it is null; a conflicting value is reported for review, never overwritten.
 
 **Operational source vs clinical context.** `admission_requests.source_type/source_id` remains the truthful operational origin and is never overloaded. Clinical maternity context lives in `admission_request_maternity_links`. This matters because legacy `source_type = maternity` rows are genuinely ambiguous — `source_id` may be an `AntenatalVisit` id (from `AntenatalVisitService`) or a `LaborEpisode` id (from `LaborEpisodeService`). Those rows are **never reinterpreted**; they surface a warning and require an explicit link.
+
+---
+
+## 9. Traceability layer (Phase 14R.6)
+
+Field ownership above is unchanged. 14R.6 adds *when* a value is read, which matters as much as who owns it.
+
+| Consultation state | What the summary shows | Source |
+|---|---|---|
+| Active / editable | **Current Maternity Record** — live projection | Maternity, read at render time |
+| Completed **with** a snapshot | **Maternity Context at Consultation Completion** | the immutable snapshot, never re-read from live data |
+| Completed **without** a snapshot | an explicit "no snapshot was captured" statement | nothing is fabricated retroactively |
+| Reopened | live data while active; earlier snapshots remain as history | recompletion writes the next version |
+
+**Rule:** a completed consultation's clinical summary is bound to its completion-time snapshot. Later corrections to the Pregnancy Profile, ANC visit or any other maternity record **do not** alter that historical summary — they are visible only through the separately labelled current-record view. This is what makes the encounter record medico-legally stable while keeping Maternity the longitudinal source of truth.
+
+**Only an EXPLICIT link is summarised or snapshotted.** A suggested, ambiguous or invalid context contributes an advisory status and no clinical values, so an unconfirmed pregnancy can never appear as consultation truth.
+
+**Snapshot payload scope** is the curated projection in §5 of the 14R.6 report — typed codes and scalars only. Full ANC assessment/plan, labor notes, delivery notes, postnatal observation values, STI/sexual history and other specially protected fields are excluded by design and by test.
+
+**Billing ownership.** Clinical maternity acts (ANC, labor, delivery, newborn, postnatal) are `maternity_event_only`: the maternity record owns the charge. The base consultation attendance fee is a **separate** charge and is never treated as a duplicate of a maternity event. Both remain advisory until Phase 14.2 — nothing posts.

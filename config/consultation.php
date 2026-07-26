@@ -73,5 +73,39 @@ return [
             'CONSULTATION_GYNAECOLOGY_MATERNITY_WRITE_GUARD_ENABLED',
             false
         ),
+
+        /*
+        | Phase 14R.6 — traceability. Three independent flags, all default
+        | false, all separate from the four Obstetrics/Gynaecology flags above.
+        |
+        |   readiness_enabled
+        |       Advisory, stage-aware maternity readiness on the Obstetrics
+        |       consultation. ADVISORY ONLY — it never blocks completion, and
+        |       Gynaecology readiness is untouched.
+        |
+        |   summary_projection_enabled
+        |       Adds a generated "Maternity Context" source to the consultation
+        |       summary. Creates no specialty entry and overwrites no field.
+        |
+        |   completion_snapshot_enabled
+        |       Captures an immutable, versioned maternity snapshot inside the
+        |       consultation completion transaction. Deliberately INDEPENDENT of
+        |       the workspace flags: enabling Obstetrics must not silently start
+        |       writing medico-legal history.
+        */
+        'readiness_enabled' => env(
+            'CONSULTATION_MATERNITY_READINESS_ENABLED',
+            false
+        ),
+
+        'summary_projection_enabled' => env(
+            'CONSULTATION_MATERNITY_SUMMARY_ENABLED',
+            false
+        ),
+
+        'completion_snapshot_enabled' => env(
+            'CONSULTATION_MATERNITY_COMPLETION_SNAPSHOT_ENABLED',
+            false
+        ),
     ],
 ];

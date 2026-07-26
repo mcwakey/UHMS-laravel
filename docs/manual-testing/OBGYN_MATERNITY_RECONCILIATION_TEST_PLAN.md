@@ -218,3 +218,22 @@ The integrity suite is the standing guard: **any new handoff button without a di
 | **F** | Permissions | Try each action with the bridge permission only, the target permission only, then both | Only with **both** does a form appear; one half alone renders nothing executable |
 
 **Flag checks:** with all four flags false no trigger, no modal body and no candidate query exists. With context on and handoffs off the card renders but **no mutation form** appears. An external `return_route` is ignored and the action falls back to the target module's own page.
+
+---
+
+## 7. Phase 14R.6 — traceability
+
+> Automated coverage: `ConsultationMaternityReadinessPhase14R6Test.php` (13), `ConsultationMaternitySummarySnapshotPhase14R6Test.php` (20), `ObgynMaternityReconciliationDryRunPhase14R6Test.php` (19), `MaternityBillingDeduplicationPolicyPhase14R6Test.php` (13) — **65 tests**.
+
+All six flags default **false**. Enable only the one under test.
+
+| # | Scenario | Steps | Expected |
+|---|---|---|---|
+| **A** | Advisory ANC readiness | Open an Obstetrics consultation → link a profile with no ANC recorded → check readiness → record ANC → re-check | Advisory warning appears, **completion is still possible**, warning clears once ANC exists |
+| **B** | Completion snapshot | Link a profile → record ANC → complete → change the profile/ANC afterwards → reopen the completed summary | The summary still shows completion-time values; "Current Maternity Record" shows the new values separately |
+| **C** | Reopen and recomplete | Reopen → update the maternity record → recomplete | Snapshot v2 exists; **v1 is byte-identical and its hash still verifies** |
+| **D** | Gynaecology | Complete Gynaecology with no profile → then link one explicitly | No maternity readiness or summary section at first; a limited context summary after linking; Gynaecology completion unchanged throughout |
+| **E** | Reconciliation dry run | Seed an exact match, a parseable no-target entry, a conflicting entry, a historical-only entry and an insufficient-context entry → run the command | Classifications match; **zero database writes**; `--apply` exits non-zero |
+| **F** | Billing policy | Configure both an event-specific consultation mapping and an ANC mapping for the same act | Duplicate-risk warning; `maternity_event_only`; **no posting**; the base attendance charge is treated separately; no billing card appears in any clinical workspace |
+
+**Flag checks:** with all flags false, readiness and the summary projection issue **zero** queries and no snapshot is captured or read. Turning the snapshot flag on later must not retroactively invent history for an already-completed consultation.

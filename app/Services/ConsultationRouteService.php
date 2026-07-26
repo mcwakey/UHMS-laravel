@@ -293,6 +293,15 @@ class ConsultationRouteService
                 'notes' => $notes ?: $route->notes,
             ]);
 
+            // Phase 14R.6 — immutable maternity completion snapshot, captured
+            // INSIDE this transaction and AFTER the completion state is
+            // written, so the snapshot can only ever describe a consultation
+            // that really completed. A capture failure aborts the transaction
+            // rather than leaving a completed consultation with a half-written
+            // medico-legal record. Inert and query-free while
+            // CONSULTATION_MATERNITY_COMPLETION_SNAPSHOT_ENABLED is false.
+            $this->captureMaternitySnapshot($route, $user);
+
             $this->log($route, $from, VisitConsultationRoute::STATUS_COMPLETED, 'completed', $notes, $user);
 
             app(\App\Services\ActivityLogService::class)->log(
@@ -311,6 +320,30 @@ class ConsultationRouteService
 
             return $this->freshRoute($route);
         });
+    }
+
+    /**
+     * Phase 14R.6 — capture the maternity completion snapshot.
+     *
+     * Locks the route row first so two concurrent completions serialise; the
+     * snapshot service is then idempotent per completion occurrence, and the
+     * unique (route, completion_reference) index is the final guard.
+     *
+     * Returns silently when the feature is off or no EXPLICIT maternity context
+     * exists — readiness is advisory in this phase and must never block
+     * completion.
+     */
+    private function captureMaternitySnapshot(VisitConsultationRoute $route, User $user): void
+    {
+        $snapshots = app(\App\Services\Consultation\Maternity\ConsultationMaternitySnapshotService::class);
+
+        if (! $snapshots->enabled()) {
+            return;
+        }
+
+        VisitConsultationRoute::query()->whereKey($route->id)->lockForUpdate()->first();
+
+        $snapshots->captureForCompletion($route->refresh(), $user);
     }
 
     public function cancelRoute(VisitConsultationRoute $route, User $user, ?string $reason = null): VisitConsultationRoute

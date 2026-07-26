@@ -29,6 +29,30 @@ return [
         'enabled' => env('MATERNITY_BILLING_ENABLED', false),
         'auto_post' => env('MATERNITY_BILLING_AUTO_POST', false),
         'newborn_billing_policy' => env('MATERNITY_NEWBORN_BILLING_POLICY', 'mother'),
+
+        /*
+        | Phase 14R.6 — de-duplication POLICY only. Advisory and read-only:
+        | nothing here posts, suppresses or reverses a charge. It exists so the
+        | overlap between an event-specific Consultation Specialty charge and a
+        | Maternity event charge is visible BEFORE Phase 14.2 posting starts.
+        |
+        | The base consultation attendance fee is never treated as a duplicate
+        | of a clinical maternity event.
+        */
+        'deduplication_policy_enabled' => env(
+            'MATERNITY_BILLING_DEDUPLICATION_POLICY_ENABLED',
+            false
+        ),
+
+        'allow_both_when_configured' => env(
+            'MATERNITY_BILLING_ALLOW_BOTH_WHEN_CONFIGURED',
+            false
+        ),
+
+        'allow_manual_selection' => env(
+            'MATERNITY_BILLING_ALLOW_MANUAL_SELECTION',
+            false
+        ),
     ],
 
     /*

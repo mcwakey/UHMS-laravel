@@ -191,3 +191,27 @@ Per the phase testing boundary (no full suite, no `composer test:wide`):
 - No PHP source files were modified, so no syntax checks were applicable beyond the new Markdown deliverables.
 
 **No runtime changes were made in this phase.**
+
+---
+
+## Phase 14R.6 — historical reconciliation dry run
+
+`php artisan maternity:reconcile-obgyn-entries` is **read-only** and classifies every in-scope historical O&G specialty entry.
+
+| Classification | Meaning | Recommended future action |
+|---|---|---|
+| `safe_to_link` | A correct Maternity record already exists for the same patient and compatible pregnancy, and the values match after safe normalisation | create a bridge link only; preserve the entry |
+| `safe_to_migrate` | No target exists, but patient, pregnancy and required values are identifiable and parse safely | create the target through the Maternity service, then link; preserve the entry |
+| `conflict_requires_review` | Values disagree (gravida/para, LMP/EDD, material GA difference) or a value is unparseable | a human decides; nothing is chosen automatically |
+| `historical_only` | Completed consultation with no identifiable active profile | leave as encounter history |
+| `insufficient_context` | Patient/pregnancy/date cannot be identified, or the entry is empty | leave untouched; report |
+
+**In scope:** Obstetrics `obstetric_history`, `lmp_edd_gestational_age`, `current_pregnancy`, `antenatal_vitals`, `fetal_assessment`, `risk_assessment`, `birth_plan`, plus hidden legacy `lab_screening` / `ultrasound_findings`; Gynaecology `obstetric_history` only.
+
+**Out of scope (Consultation-owned):** `menstrual_history` (including `menstrual_history.lmp`), `previous_complications`, fetal lie, `action_plan`, `current_complaints`, `high_risk_notes`, `booking_status`, `planned_place`, `delivery_plan`, and all ordinary Gynaecology sections.
+
+**Parser rules.** `120/80` and `120 / 80` parse; free text does not. `32`, `32 cm`, `32.5 cm` parse; `32 weeks size` does not. Locale-ambiguous dates are refused rather than reinterpreted, and a missing year is never inferred. **A scan-dated profile is never overridden by an LMP-derived gestational age.**
+
+**Measured in this environment: 0 rows in every classification.** Re-run and review per environment before enabling any O&G write guard there.
+
+`--apply` is unavailable in Phase 14R.6: it exits non-zero and performs zero writes.

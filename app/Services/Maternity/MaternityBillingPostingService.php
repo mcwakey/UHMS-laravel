@@ -9,6 +9,7 @@ use App\Models\DeliveryRecord;
 use App\Models\InvoiceItem;
 use App\Models\LaborEpisode;
 use App\Models\MaternityBillingEvent;
+use App\Services\Maternity\MaternityBillingDeduplicationPolicyService;
 use App\Models\MaternityServiceMapping;
 use App\Models\NewbornRecord;
 use App\Models\PostnatalCase;
@@ -70,7 +71,36 @@ class MaternityBillingPostingService
             'already_posted' => $alreadyPosted,
             'invoice_payload' => $invoicePayload,
             'warnings' => array_values(array_filter([$context['warning']])),
+            // Phase 14R.6 — advisory de-duplication policy. Read-only: it
+            // reports which source WOULD own the charge once posting exists.
+            // Returns a disabled decision (and issues no query) while
+            // MATERNITY_BILLING_DEDUPLICATION_POLICY_ENABLED is false.
+            'deduplication_policy' => app(MaternityBillingDeduplicationPolicyService::class)
+                ->decide($sourceModel, $mappingKey, $this->consultationRouteIdFor($sourceModel))
+                ->toArray(),
         ];
+    }
+
+    /**
+     * The consultation this maternity act was recorded from, when the source
+     * record carries an explicit bridge link. Used only to detect an
+     * event-specific consultation charge for the SAME act.
+     */
+    private function consultationRouteIdFor(Model $sourceModel): ?int
+    {
+        $contextType = \App\Enums\ConsultationMaternityContextType::forModel($sourceModel);
+
+        if (! $contextType || ! $sourceModel->getKey()) {
+            return null;
+        }
+
+        $id = \App\Models\ConsultationMaternityLink::query()
+            ->active()
+            ->forContextType($contextType)
+            ->where($contextType->foreignKey(), $sourceModel->getKey())
+            ->value('consultation_route_id');
+
+        return $id ? (int) $id : null;
     }
 
     public function postForSource(Model $sourceModel, string $mappingKey, User $actor): array

@@ -246,8 +246,12 @@ Measured in this environment: **0 rows** to reconcile — re-measure per environ
 | 14R.4 | Gynaecology separation + explicit transition | medium | Gynae unaffected without a link |
 | 14R.5 | Admission/emergency/labor/delivery/postnatal handoffs ✅ | medium | ✅ 64 tests green; scenarios A–F verified; baselines unchanged; 4 new flags default off |
 | 14R.5.1 | Handoff UI completion + pilot closure ✅ | low | ✅ 44 tests green; **K2 closed**; K1 fallback usable; baselines unchanged |
-| 14R.6 | Readiness, summary projection, reconciliation, billing policy | high | Dry-run report reviewed; billing policy approved |
+| 14R.6 | Readiness, summary projection, snapshots, reconciliation, billing policy ✅ | high | ✅ 65 tests green; **R6 closed**; snapshots immutable; dry run 0 writes; baselines unchanged |
 | 14R.7 | Manual test data + wider regression | medium | Full regression pass |
+
+**14R.6 is complete (dark by default). Consultation completion now captures an immutable, versioned maternity snapshot inside its own transaction; completed summaries bind to that snapshot rather than to live data; a read-only reconciliation dry run classifies historical O&G entries; and billing de-duplication policy is declared without posting anything. R6 is closed. Next: 14R.7 — manual-test data, environment reconciliation review, pilot acceptance and wider regression.**
+
+See `OBGYN_MATERNITY_READINESS_SUMMARY_RECONCILIATION_PHASE_14R_6_REPORT.md`.
 
 **14R.5.1 is complete (dark by default). Every handoff trigger now has a real dialog, generated from a typed action contract and guarded by an automated modal-integrity check; K2 is closed and K1 has a usable fallback.**
 

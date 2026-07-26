@@ -55,7 +55,13 @@ class ConsultationSpecialtySummarySourceCollector
             $readiness = $this->readiness->evaluate($route, $specialtyContext, $workspacePayload)->toArray();
         }
 
+        // Phase 14R.6 — additional GENERATED source. Creates no specialty
+        // entry, overwrites no existing field, and returns an empty array
+        // (with zero queries) while the summary projection flag is off.
+        $maternityContext = $this->maternityProjection($route);
+
         return [
+            'maternity_context' => $maternityContext,
             'profile' => $profile ? [
                 'id' => $profile->id,
                 'code' => $profile->code,
@@ -154,6 +160,27 @@ class ConsultationSpecialtySummarySourceCollector
                     ])->values()->all(),
                 ])->values()->all(),
         ];
+    }
+
+    /**
+     * Phase 14R.6 — the curated maternity projection, as an additional summary
+     * source named `maternity_context`.
+     *
+     * Only an EXPLICIT link yields clinical values; a suggested, ambiguous or
+     * invalid context contributes its advisory status and nothing else, so an
+     * unconfirmed pregnancy can never be rendered as consultation truth.
+     *
+     * @return array<string, mixed>
+     */
+    private function maternityProjection(VisitConsultationRoute $route): array
+    {
+        $service = app(\App\Services\Consultation\Maternity\ConsultationMaternitySummaryService::class);
+
+        if (! $service->enabled()) {
+            return [];
+        }
+
+        return $service->project($route)->toCanonicalArray();
     }
 
     private function route($consultation): VisitConsultationRoute
