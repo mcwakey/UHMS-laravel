@@ -5,17 +5,12 @@ namespace App\Services\Consultation\Maternity;
 use App\Enums\ConsultationMaternityContextType;
 use App\Enums\ConsultationMaternityLinkRole;
 use App\Enums\LogModule;
-use App\Models\AntenatalVisit;
 use App\Models\ConsultationMaternityLink;
-use App\Models\DeliveryRecord;
-use App\Models\LaborEpisode;
-use App\Models\MaternityCase;
-use App\Models\NewbornRecord;
-use App\Models\PostnatalCase;
-use App\Models\PregnancyProfile;
 use App\Models\User;
 use App\Models\VisitConsultationRoute;
 use App\Services\ActivityLogService;
+use App\Services\Maternity\Context\MaternityContextTargetException;
+use App\Services\Maternity\Context\MaternityContextTargetService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
@@ -39,6 +34,7 @@ class ConsultationMaternityLinkService
 {
     public function __construct(
         private readonly ActivityLogService $activityLog,
+        private readonly MaternityContextTargetService $targets,
     ) {}
 
     /*
@@ -81,41 +77,23 @@ class ConsultationMaternityLinkService
     /**
      * Validate that the target is supported and belongs to the consultation's
      * patient. Throws a domain exception on any inconsistency (fail closed).
+     *
+     * Phase 14R.5 — derivation now lives in the shared
+     * MaternityContextTargetService. The rules, error codes and messages are
+     * byte-for-byte the ones 14R.2 shipped; only their home changed.
      */
     public function validateTarget(VisitConsultationRoute $consultation, Model $target): ConsultationMaternityContextType
     {
-        $contextType = ConsultationMaternityContextType::forModel($target);
-
-        if (! $contextType) {
-            throw ConsultationMaternityLinkException::unsupportedTarget($target::class);
-        }
-
-        if (! $target->exists || $target->getKey() === null) {
-            throw ConsultationMaternityLinkException::invalidTarget();
-        }
-
         $consultationPatientId = (int) $consultation->patient_id;
+
         if ($consultationPatientId === 0) {
             throw ConsultationMaternityLinkException::invalidTarget();
         }
 
-        // Newborn links in the O&G bridge attach to the MOTHER. A newborn ↔
-        // paediatrics bridge is deliberately out of scope for this phase.
-        $targetPatientId = $target instanceof NewbornRecord || $target instanceof PostnatalCase
-            ? (int) $target->mother_patient_id
-            : (int) ($target->patient_id ?? 0);
-
-        if ($targetPatientId === 0) {
-            throw ConsultationMaternityLinkException::inconsistentContext();
-        }
-
-        // Visit mismatch is allowed on purpose: maternity records are
-        // longitudinal and legitimately span visits. Patient mismatch never is.
-        if ($targetPatientId !== $consultationPatientId) {
-            throw ConsultationMaternityLinkException::patientMismatch();
-        }
-
-        return $contextType;
+        return $this->translate(
+            fn () => $this->targets->describe($target, $consultationPatientId)->contextType,
+            $target,
+        );
     }
 
     /**
@@ -126,47 +104,42 @@ class ConsultationMaternityLinkService
      */
     public function deriveContextPayload(Model $target): array
     {
-        $contextType = ConsultationMaternityContextType::forModel($target);
+        return $this->translate(function () use ($target) {
+            $contextType = $this->targets->contextTypeFor($target);
 
-        if (! $contextType) {
-            throw ConsultationMaternityLinkException::unsupportedTarget($target::class);
+            if (! $contextType) {
+                throw MaternityContextTargetException::unsupportedTarget($target::class);
+            }
+
+            return ['context_type' => $contextType->value]
+                + $this->targets->foreignKeyPayload($target, $contextType);
+        }, $target);
+    }
+
+    /**
+     * Run shared derivation, re-throwing its failures as the consultation
+     * bridge's own exception type so every 14R.2 error code survives intact.
+     *
+     * @template T
+     *
+     * @param  callable():T  $callback
+     * @return T
+     */
+    private function translate(callable $callback, Model $target)
+    {
+        try {
+            return $callback();
+        } catch (MaternityContextTargetException $e) {
+            throw match ($e->errorCode) {
+                MaternityContextTargetException::UNSUPPORTED_TARGET
+                    => ConsultationMaternityLinkException::unsupportedTarget($e->targetClass ?? $target::class),
+                MaternityContextTargetException::INVALID_TARGET
+                    => ConsultationMaternityLinkException::invalidTarget(),
+                MaternityContextTargetException::PATIENT_MISMATCH
+                    => ConsultationMaternityLinkException::patientMismatch(),
+                default => ConsultationMaternityLinkException::inconsistentContext(),
+            };
         }
-
-        $payload = [
-            'context_type' => $contextType->value,
-            'pregnancy_profile_id' => null,
-            'maternity_case_id' => null,
-            'antenatal_visit_id' => null,
-            'labor_episode_id' => null,
-            'delivery_record_id' => null,
-            'newborn_record_id' => null,
-            'postnatal_case_id' => null,
-        ];
-
-        $payload[$contextType->foreignKey()] = $target->getKey();
-
-        // Derive the longitudinal root (and case, where the target carries it).
-        $payload['pregnancy_profile_id'] = match (true) {
-            $target instanceof PregnancyProfile => $target->getKey(),
-            $target instanceof MaternityCase,
-            $target instanceof AntenatalVisit,
-            $target instanceof LaborEpisode,
-            $target instanceof DeliveryRecord,
-            $target instanceof NewbornRecord,
-            $target instanceof PostnatalCase => $target->pregnancy_profile_id,
-            default => null,
-        };
-
-        if (! $target instanceof MaternityCase && isset($target->maternity_case_id)) {
-            $payload['maternity_case_id'] = $target->maternity_case_id;
-        }
-
-        // A target whose longitudinal root is missing cannot be trusted.
-        if ($payload['pregnancy_profile_id'] === null) {
-            throw ConsultationMaternityLinkException::inconsistentContext();
-        }
-
-        return $payload;
     }
 
     /*

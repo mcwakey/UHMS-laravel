@@ -32,6 +32,7 @@ use App\Services\Consultation\Specialty\ConsultationSpecialtyProfileResolver;
 use App\Services\Consultation\Specialty\ConsultationSpecialtyReadinessService;
 use App\Services\Consultation\Specialty\DoctorSpecialtyWorkspaceService;
 use App\Services\ConsultationNextPatientService;
+use App\Services\Consultation\Maternity\ConsultationMaternityHandoffPresenter;
 use App\Services\Consultation\Maternity\GynaecologyConsultationContextService;
 use App\Services\Consultation\Maternity\ObstetricConsultationContextService;
 use App\Services\ConsultationPreviewDataService;
@@ -476,6 +477,17 @@ trait HandlesConsultationWorkspace
                 url()->current(),
             )
             : \App\Data\Consultation\Maternity\GynaecologyWorkspaceViewModel::disabled();
+
+        // Phase 14R.5 — operational handoff actions (Consultation → Admission
+        // Request, Gynaecology → Obstetrics referral, Postnatal review).
+        // Returns ['enabled' => false] with zero queries unless
+        // MATERNITY_CONSULTATION_HANDOFFS_ENABLED is on and the resolved
+        // profile is Obstetrics or Gynaecology.
+        $maternityHandoffs = app(ConsultationMaternityHandoffPresenter::class)->build(
+            $selectedRoute,
+            $specialtyContext->profile,
+            $request->user(),
+        );
         $doctorSpecialtyWorkspace = app(DoctorSpecialtyWorkspaceService::class)->build(
             $request->user(),
             $selectedRoute,
@@ -526,6 +538,7 @@ trait HandlesConsultationWorkspace
             // workspace flag is on AND the profile is Obstetrics.
             'maternityContext' => $maternityContext,
             'gynaecologyContext' => $gynaecologyContext,
+            'maternityHandoffs' => $maternityHandoffs,
             'specialtyEntries' => $specialtyEntries,
             'specialtyEntryGroups' => $specialtyEntryGroups,
             'specialtyFavorites' => $specialtyFavorites,

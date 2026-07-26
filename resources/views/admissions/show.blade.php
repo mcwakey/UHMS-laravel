@@ -255,6 +255,16 @@
     </div>
 </div>
 
+{{-- Phase 14R.5 — Admission Maternity context (dark by default). Prepared by
+     AdmissionMaternityWorkspaceService in the controller; renders nothing and
+     costs zero queries while MATERNITY_ADMISSION_CONTEXT_ENABLED is false.
+     Included before the role split so BOTH the full workspace and the
+     simplified nurse view show it. --}}
+@include('admissions.partials.maternity-context-card', [
+    'maternity' => $maternityContext ?? null,
+    'admission' => $admission,
+])
+
 @cannot('ward.manage')
 @include('admissions.partials.simplified-activity-view')
 @if(false)

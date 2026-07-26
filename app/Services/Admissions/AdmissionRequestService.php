@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Models\Visit;
 use App\Services\ActivityLogService;
 use App\Services\AdmissionService;
+use App\Services\Admissions\Maternity\AdmissionMaternityContextPropagationService;
 use App\Services\InpatientWorkspaceScope;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,7 @@ class AdmissionRequestService
         private ActivityLogService $logger,
         private BedWorkflowService $beds,
         private InpatientWorkspaceScope $inpatientScope,
+        private AdmissionMaternityContextPropagationService $maternityContext,
     ) {}
 
     public function list(array $filters = []): LengthAwarePaginator
@@ -243,6 +245,13 @@ class AdmissionRequestService
                 'reserved_bed_id' => $bedId,
             ]);
             $this->beds->fulfillReservationForAdmission($admission, $user);
+
+            // Phase 14R.5 — carry any explicit maternity context from the
+            // request onto the admission, INSIDE this transaction so a failure
+            // rolls the conversion back rather than leaving a converted
+            // admission with silently missing context. Inert (and query-free)
+            // while MATERNITY_ADMISSION_CONTEXT_ENABLED is false.
+            $this->maternityContext->propagate($request->fresh(), $admission, $user);
 
             $this->log($request->fresh(['admission']), 'ADMISSION_REQUEST_CONVERTED', 'Admission request converted', $user, [
                 'metadata' => ['admission_id' => $admission->id],

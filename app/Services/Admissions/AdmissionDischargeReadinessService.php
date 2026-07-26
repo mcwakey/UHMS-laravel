@@ -176,7 +176,7 @@ class AdmissionDischargeReadinessService
 
     private function postnatalArea(Admission $admission): array
     {
-        $cases = $admission->postnatalCases;
+        $cases = $this->postnatalCasesFor($admission);
 
         if ($cases->isEmpty()) {
             return [
@@ -206,5 +206,46 @@ class AdmissionDischargeReadinessService
                 'closed_count' => $cases->filter(fn ($case) => in_array($case->status, [PostnatalCaseStatus::CLOSED, PostnatalCaseStatus::CANCELLED], true))->count(),
             ],
         ];
+    }
+
+    /**
+     * Phase 14R.5 — postnatal cases for this admission.
+     *
+     * Prefers the records already attached via `postnatal_cases.admission_id`
+     * (Phase 12 behaviour, unchanged). When the Admission Maternity context is
+     * enabled, an EXPLICITLY LINKED postnatal case is also resolved directly —
+     * this closes the gap where a case belonging to the admission had not (yet)
+     * had its `admission_id` populated.
+     *
+     * Readiness itself stays MATERNITY-owned and ADVISORY: this method only
+     * decides which maternity records to read. Enforcement remains governed by
+     * `admissions.discharge.require_postnatal_ready_before_discharge`, which is
+     * false by default and is not changed here.
+     *
+     * @return Collection<int, \App\Models\PostnatalCase>
+     */
+    private function postnatalCasesFor(Admission $admission): Collection
+    {
+        $cases = $admission->postnatalCases;
+
+        if (! app(\App\Services\Maternity\Context\MaternityIntegrationFlags::class)->admissionContextEnabled()) {
+            return $cases;
+        }
+
+        $linked = \App\Models\AdmissionMaternityLink::query()
+            ->forAdmission($admission)
+            ->active()
+            ->forContextType(\App\Enums\ConsultationMaternityContextType::POSTNATAL)
+            ->with('postnatalCase.deliveryRecord.newbornRecords')
+            ->get()
+            ->map(fn ($link) => $link->postnatalCase)
+            ->filter();
+
+        if ($linked->isEmpty()) {
+            return $cases;
+        }
+
+        // Union by id — a case reachable both ways is never counted twice.
+        return $cases->concat($linked)->unique('id')->values();
     }
 }

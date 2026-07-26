@@ -177,3 +177,25 @@ git diff --check -- . ':!docs/prompt.md'
 ```
 
 `composer test:wide` is reserved for **14R.7** only.
+
+---
+
+## 5. Phase 14R.5 — operational handoffs
+
+> Automated coverage: `ConsultationMaternityHandoffsPhase14R5Test.php` (18), `EmergencyMaternityHandoffsPhase14R5Test.php` (16), `AdmissionMaternityHandoffsPhase14R5Test.php` (15), `MaternityOperationalHandoffsPhase14R5Test.php` (15) — **64 tests**. Shared fixtures live in `tests/Feature/Concerns/BuildsMaternityHandoffFixtures.php`.
+
+All four flags default **false**. Enable only the one under test.
+
+| # | Scenario | Steps | Expected |
+|---|---|---|---|
+| **A** | Obstetrics outpatient | Link Pregnancy Profile → Record ANC → Create Admission Request (twice) | Exactly one open request, `source_type = consultation`, one maternity context link, one ANC record. **No admission, no invoice.** |
+| **B** | Gynaecology, no pregnancy | Open a Gynaecology consultation, complete it | No context required, no handoff offered, completion unchanged |
+| **C** | Gynaecology discovers pregnancy | Save a positive pregnancy test → explicitly create/link a profile → Refer to Obstetrics/Maternity (twice) | Specialty stays Gynaecology; original route and every entry intact; one target Obstetrics route linked to the same profile with `link_role = handoff`; no ANC/labor/request created |
+| **D** | Emergency obstetric case | Link profile (mismatched patient first — must be blocked) → Start/reuse Labor (twice) → Create Admission Request (twice) | One Labor Episode, one open request with `source_type = emergency`, context links attached; bay and disposition history untouched |
+| **E** | Maternity escalation | Set the Labor emergency-escalation flag → confirm nothing happened → perform the explicit handoff (twice) | Flag alone creates **no** Emergency case; explicit action creates exactly one through `EmergencyCaseService`; repeat reuses it; no admission request, no Theatre case |
+| **F** | Admission conversion | Convert a maternity-aware request | Context propagates in the same transaction; one Admission link per context type; repeat is idempotent; a stage record already bound to another admission is **not** overwritten; bed/nursing/MAR/discharge unchanged |
+| **G** | Postnatal review | Link a Consultation to a PostnatalCase → record an observation in Maternity → return | Read-only projection updates; no duplicate case; no duplicate observation; discharge readiness stays advisory |
+
+**Return-context checks:** Consultation → Maternity → Consultation, Emergency → Labor → Emergency and Admission → Postnatal → Admission all return to the originating page and anchor. An external URL is rejected outright; an invalid context falls back to the target module's own show page.
+
+**Flag-off checks:** with all four flags false, the Emergency and Admission maternity cards render nothing and issue **zero** queries, the Consultation handoff panel returns `enabled => false`, and every handoff endpoint returns 403.

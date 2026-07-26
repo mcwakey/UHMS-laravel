@@ -321,6 +321,7 @@
      flag-gated, and renders nothing for non-Gynaecology profiles. Shares the
      single view model built in HandlesConsultationWorkspace. --}}
 @include('consultations.partials.maternity.gynaecology-context-card', ['gynaecology' => $gynaecologyContext ?? null])
+@include('consultations.partials.maternity.handoff-actions', ['handoffs' => $maternityHandoffs ?? null])
 {{-- ============================================================ --}}
 {{-- MAIN 3-COLUMN LAYOUT --}}
 {{-- ============================================================ --}}

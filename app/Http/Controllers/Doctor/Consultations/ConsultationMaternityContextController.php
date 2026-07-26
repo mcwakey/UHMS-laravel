@@ -12,11 +12,15 @@ use App\Models\PregnancyProfile;
 use App\Models\Visit;
 use App\Services\ActivityLogService;
 use App\Services\Consultation\ConsultationActionException;
+use App\Services\Consultation\Maternity\ConsultationMaternityAdmissionRequestService;
 use App\Services\Consultation\Maternity\ConsultationMaternityContextResolver;
 use App\Services\Consultation\Maternity\ConsultationMaternityLinkException;
 use App\Services\Consultation\Maternity\ConsultationMaternityLinkService;
+use App\Services\Consultation\Maternity\ConsultationPostnatalReviewService;
 use App\Services\Consultation\Maternity\GynaecologyConsultationContextService;
+use App\Services\Consultation\Maternity\GynaecologyObstetricsReferralService;
 use App\Services\Maternity\AntenatalVisitService;
+use App\Services\Maternity\Context\MaternityIntegrationFlags;
 use App\Services\Maternity\LaborEpisodeService;
 use App\Services\Maternity\PregnancyProfileService;
 use Illuminate\Http\Request;
@@ -421,6 +425,136 @@ class ConsultationMaternityContextController extends ConsultationWorkflowControl
         );
 
         return $this->success($request, __('consultation_maternity.messages.labor_started'));
+    }
+
+    /* ── Phase 14R.5 — operational handoffs ───────────────────────────── */
+
+    /**
+     * Raise an Admission Request from this Obstetrics consultation.
+     *
+     * Obstetrics only — Gynaecology does not expose this by default. Requires an
+     * editable consultation, an EXPLICIT pregnancy-profile link, and BOTH the
+     * bridge permission and admission.requests.create.
+     *
+     * Nothing is auto-admitted, no bed is reserved and no billing is posted.
+     */
+    public function createAdmissionRequest(
+        Request $request,
+        Visit $visit,
+        ConsultationMaternityAdmissionRequestService $handoff,
+    ) {
+        $this->assertHandoffsEnabled();
+        $this->authorizeBridge($request, 'consultation.maternity_context.create_admission_request');
+        $this->authorizeMaternity($request, 'admission.requests.create');
+
+        // Obstetrics workspace only — never reachable from Gynaecology.
+        $route = $this->mutableRoute($request, $visit);
+        $this->explicitlyLinkedProfileOrFail($route);
+
+        $data = $request->validate([
+            'priority' => ['nullable', 'string', 'max:40'],
+            'requested_ward_id' => ['nullable', 'integer', 'exists:wards,id'],
+            'provisional_diagnosis' => ['nullable', 'string', 'max:1000'],
+            'clinical_summary' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $context = $this->resolver()->resolve($route);
+
+        try {
+            $result = $handoff->createOrReuse($route, $context, $data, $request->user());
+        } catch (ConsultationMaternityLinkException $e) {
+            return $this->failure($request, $e->getMessage());
+        }
+
+        return $this->success($request, $result['reused']
+            ? __('maternity_handoffs.messages.admission_request_exists', ['id' => $result['request']->id])
+            : __('maternity_handoffs.messages.admission_request_created', ['id' => $result['request']->id]));
+    }
+
+    /**
+     * Refer a Gynaecology encounter to Obstetrics/Maternity.
+     *
+     * The current route stays Gynaecology, its entries are untouched and the
+     * specialty profile is never switched. An explicit pregnancy-profile link is
+     * required. No ANC, labor or admission request is created.
+     */
+    public function referObstetrics(
+        Request $request,
+        Visit $visit,
+        GynaecologyObstetricsReferralService $referrals,
+    ) {
+        $this->assertHandoffsEnabled();
+        $this->authorizeBridge($request, 'consultation.maternity_context.refer_obstetrics');
+        $this->authorizeMaternity($request, 'consultations.create');
+
+        $route = $this->mutableRoute($request, $visit, gynaecology: true);
+        $profile = $this->explicitlyLinkedProfileOrFail($route);
+
+        $data = $request->validate([
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $result = $referrals->refer($route, $profile, $request->user(), $data['notes'] ?? null);
+
+        return match ($result['outcome']) {
+            GynaecologyObstetricsReferralService::OUTCOME_CREATED
+                => $this->success($request, __('maternity_handoffs.messages.obstetrics_referral_created')),
+            GynaecologyObstetricsReferralService::OUTCOME_REUSED
+                => $this->success($request, __('maternity_handoffs.messages.obstetrics_referral_exists')),
+            default
+                => $this->failure($request, __('maternity_handoffs.messages.obstetrics_referral_unavailable')),
+        };
+    }
+
+    /**
+     * Link an existing same-patient PostnatalCase for review.
+     *
+     * Read-only from here: observations are recorded in Maternity. Consultation
+     * completion and readiness are unchanged, and no second PostnatalCase is
+     * created.
+     */
+    public function linkPostnatal(
+        Request $request,
+        Visit $visit,
+        ConsultationPostnatalReviewService $reviews,
+    ) {
+        $this->assertHandoffsEnabled();
+        $this->authorizeBridge($request, 'consultation.maternity_context.open_postnatal');
+        $this->authorizeMaternity($request, 'maternity.postnatal.view');
+
+        // Linking an existing record for review is a context action, not a
+        // clinical mutation, so a completed encounter may still review.
+        $route = $this->route($request, $visit);
+
+        $data = $request->validate([
+            'postnatal_case_id' => ['required', 'integer', 'exists:postnatal_cases,id'],
+            'link_role' => ['nullable', 'string', 'in:reviewed,handoff'],
+        ]);
+
+        $case = \App\Models\PostnatalCase::findOrFail((int) $data['postnatal_case_id']);
+
+        try {
+            $reviews->linkForReview(
+                $route,
+                $case,
+                $request->user(),
+                ConsultationMaternityLinkRole::from($data['link_role'] ?? 'reviewed'),
+            );
+        } catch (ConsultationMaternityLinkException $e) {
+            return $this->failure($request, $e->getMessage());
+        }
+
+        return $this->success($request, __('maternity_handoffs.messages.postnatal_review_linked'));
+    }
+
+    /** Phase 14R.5 handoff actions are dark until the integration flag is on. */
+    private function assertHandoffsEnabled(): void
+    {
+        abort_unless(
+            app(MaternityIntegrationFlags::class)->consultationHandoffsEnabled(),
+            403,
+            __('maternity_handoffs.messages.handoff_unavailable')
+        );
     }
 
     /* ── Helpers ──────────────────────────────────────────────────────── */

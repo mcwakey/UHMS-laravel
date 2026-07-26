@@ -27,6 +27,7 @@ use App\Http\Controllers\Accounting\SubledgerReconciliationController;
 use App\Http\Controllers\Accounting\TaxAccountingController;
 use App\Http\Controllers\Admin\AdmissionsWard\AdmissionBedWorkflowController;
 use App\Http\Controllers\Admin\AdmissionsWard\AdmissionController;
+use App\Http\Controllers\Admin\AdmissionsWard\AdmissionMaternityContextController;
 use App\Http\Controllers\Admin\AdmissionsWard\AdmissionDischargeWorkflowController;
 use App\Http\Controllers\Admin\AdmissionsWard\AdmissionMedicationBoardController;
 use App\Http\Controllers\Admin\AdmissionsWard\AdmissionNursingCareController;
@@ -73,6 +74,7 @@ use App\Http\Controllers\Admin\Emergency\EmergencyBayController;
 use App\Http\Controllers\Admin\Emergency\EmergencyBillingController;
 use App\Http\Controllers\Admin\Emergency\EmergencyBoardController;
 use App\Http\Controllers\Admin\Emergency\EmergencyCaseController;
+use App\Http\Controllers\Admin\Emergency\EmergencyMaternityContextController;
 use App\Http\Controllers\Admin\Emergency\EmergencyConsumableController;
 use App\Http\Controllers\Admin\Emergency\EmergencyContactController;
 use App\Http\Controllers\Admin\Emergency\EmergencyDispositionController;
@@ -368,6 +370,19 @@ Route::middleware('auth')->group(function () {
         Route::patch('cases/{emergencyCase}', [EmergencyCaseController::class, 'update'])->name('cases.update')->middleware('can:emergency.case.update');
         Route::post('cases/{emergencyCase}/confirm-identity', [EmergencyPatientIdentityController::class, 'store'])->name('cases.confirm-identity')->middleware('can:patients.merge.confirm_identity');
         Route::post('cases/{emergencyCase}/register-identity', [EmergencyPatientIdentityController::class, 'register'])->name('cases.register-identity')->middleware('can:patients.merge.confirm_identity');
+        // Phase 14R.5 — explicit Emergency ↔ Maternity context and handoffs.
+        // Each action ALSO requires the underlying Maternity/Admission
+        // permission; the controller enforces the dual check. Dark until
+        // MATERNITY_EMERGENCY_CONTEXT_ENABLED / _HANDOFFS_ENABLED are on.
+        Route::prefix('cases/{emergencyCase}/maternity-context')->name('cases.maternity-context.')->group(function () {
+            Route::post('link', [EmergencyMaternityContextController::class, 'link'])->name('link')->middleware('can:emergency.maternity_context.link');
+            Route::post('relink', [EmergencyMaternityContextController::class, 'relink'])->name('relink')->middleware('can:emergency.maternity_context.link');
+            Route::post('unlink', [EmergencyMaternityContextController::class, 'unlink'])->name('unlink')->middleware('can:emergency.maternity_context.unlink');
+            Route::post('pregnancy-profile', [EmergencyMaternityContextController::class, 'createProfile'])->name('create-profile')->middleware('can:emergency.maternity_context.create_profile');
+            Route::post('labor', [EmergencyMaternityContextController::class, 'startLabor'])->name('start-labor')->middleware('can:emergency.maternity_context.start_labor');
+            Route::post('admission-request', [EmergencyMaternityContextController::class, 'createAdmissionRequest'])->name('admission-request')->middleware('can:emergency.maternity_context.create_admission_request');
+        });
+
 
         Route::middleware(['module:triage', 'can:vitals.view'])->prefix('triage')->name('triage.')->group(function () {
             Route::get('/', [TriageController::class, 'index'])->name('index');
@@ -486,6 +501,12 @@ Route::middleware('auth')->group(function () {
             Route::get('admissions/{admission}/mar-chart', [MarChartController::class, 'admission'])->name('admissions.mar-chart')->middleware('can:admission.mar_chart.view');
             Route::get('admissions/{admission}', [AdmissionController::class, 'show'])->name('admissions.show');
             Route::get('admissions/{admission}/discharge', [AdmissionController::class, 'discharge'])->name('admissions.discharge')->middleware('can:ward.discharge');
+            // Phase 14R.5 — explicit Admission ↔ Maternity context management
+            // (link / relink / unlink only). Dark until
+            // MATERNITY_ADMISSION_CONTEXT_ENABLED is on.
+            Route::post('admissions/{admission}/maternity-context/link', [AdmissionMaternityContextController::class, 'link'])->name('admissions.maternity-context.link')->middleware('can:admission.maternity_context.link');
+            Route::post('admissions/{admission}/maternity-context/relink', [AdmissionMaternityContextController::class, 'relink'])->name('admissions.maternity-context.relink')->middleware('can:admission.maternity_context.link');
+            Route::post('admissions/{admission}/maternity-context/unlink', [AdmissionMaternityContextController::class, 'unlink'])->name('admissions.maternity-context.unlink')->middleware('can:admission.maternity_context.unlink');
             Route::post('admissions/{admission}/discharge', [AdmissionController::class, 'processDischarge'])->name('admissions.process-discharge')->middleware('can:ward.discharge');
             Route::post('admissions/{admission}/extend', [AdmissionController::class, 'extend'])->name('admissions.extend')->middleware('can:admissions.extend');
             Route::post('admissions/{admission}/rounds', [AdmissionController::class, 'storeRound'])->name('admissions.rounds.store');
@@ -1663,6 +1684,12 @@ Route::middleware('auth')->group(function () {
             Route::get('admissions/{admission}/mar-chart', [MarChartController::class, 'admission'])->name('admissions.mar-chart')->middleware('can:admission.mar_chart.view');
             Route::get('admissions/{admission}', [AdmissionController::class, 'show'])->name('admissions.show');
             Route::get('admissions/{admission}/discharge', [AdmissionController::class, 'discharge'])->name('admissions.discharge')->middleware('can:ward.discharge');
+            // Phase 14R.5 — explicit Admission ↔ Maternity context management
+            // (link / relink / unlink only). Dark until
+            // MATERNITY_ADMISSION_CONTEXT_ENABLED is on.
+            Route::post('admissions/{admission}/maternity-context/link', [AdmissionMaternityContextController::class, 'link'])->name('admissions.maternity-context.link')->middleware('can:admission.maternity_context.link');
+            Route::post('admissions/{admission}/maternity-context/relink', [AdmissionMaternityContextController::class, 'relink'])->name('admissions.maternity-context.relink')->middleware('can:admission.maternity_context.link');
+            Route::post('admissions/{admission}/maternity-context/unlink', [AdmissionMaternityContextController::class, 'unlink'])->name('admissions.maternity-context.unlink')->middleware('can:admission.maternity_context.unlink');
             Route::post('admissions/{admission}/discharge', [AdmissionController::class, 'processDischarge'])->name('admissions.process-discharge')->middleware('can:ward.discharge');
             Route::post('admissions/{admission}/extend', [AdmissionController::class, 'extend'])->name('admissions.extend')->middleware('can:admissions.extend');
             Route::post('admissions/{admission}/rounds', [AdmissionController::class, 'storeRound'])->name('admissions.rounds.store');
@@ -1713,6 +1740,19 @@ Route::middleware('auth')->group(function () {
             Route::patch('cases/{emergencyCase}', [EmergencyCaseController::class, 'update'])->name('cases.update')->middleware('can:emergency.case.update');
             Route::post('cases/{emergencyCase}/confirm-identity', [EmergencyPatientIdentityController::class, 'store'])->name('cases.confirm-identity')->middleware('can:patients.merge.confirm_identity');
             Route::post('cases/{emergencyCase}/register-identity', [EmergencyPatientIdentityController::class, 'register'])->name('cases.register-identity')->middleware('can:patients.merge.confirm_identity');
+            // Phase 14R.5 — explicit Emergency ↔ Maternity context and handoffs.
+            // Each action ALSO requires the underlying Maternity/Admission
+            // permission; the controller enforces the dual check. Dark until
+            // MATERNITY_EMERGENCY_CONTEXT_ENABLED / _HANDOFFS_ENABLED are on.
+            Route::prefix('cases/{emergencyCase}/maternity-context')->name('cases.maternity-context.')->group(function () {
+                Route::post('link', [EmergencyMaternityContextController::class, 'link'])->name('link')->middleware('can:emergency.maternity_context.link');
+                Route::post('relink', [EmergencyMaternityContextController::class, 'relink'])->name('relink')->middleware('can:emergency.maternity_context.link');
+                Route::post('unlink', [EmergencyMaternityContextController::class, 'unlink'])->name('unlink')->middleware('can:emergency.maternity_context.unlink');
+                Route::post('pregnancy-profile', [EmergencyMaternityContextController::class, 'createProfile'])->name('create-profile')->middleware('can:emergency.maternity_context.create_profile');
+                Route::post('labor', [EmergencyMaternityContextController::class, 'startLabor'])->name('start-labor')->middleware('can:emergency.maternity_context.start_labor');
+                Route::post('admission-request', [EmergencyMaternityContextController::class, 'createAdmissionRequest'])->name('admission-request')->middleware('can:emergency.maternity_context.create_admission_request');
+            });
+
 
             Route::get('cases/{emergencyCase}/triage', fn (EmergencyCase $emergencyCase) => redirect()->route(app(WorkspaceRouteResolver::class)->routeName('admin.emergency.cases.show'), $emergencyCase))->name('triage.show');
             Route::post('cases/{emergencyCase}/triage', [EmergencyTriageController::class, 'store'])->name('triage.store')->middleware('can:emergency.triage.perform');
@@ -2344,6 +2384,14 @@ Route::middleware('auth')->group(function () {
                     Route::post('labor', [ConsultationMaternityContextController::class, 'startLabor'])->name('start-labor');
                     // Phase 14R.4 — explicit one-way Gynaecology LMP adoption.
                     Route::post('adopt-lmp', [ConsultationMaternityContextController::class, 'adoptMenstrualLmp'])->name('adopt-lmp');
+
+                    // Phase 14R.5 — operational handoffs. Each additionally
+                    // requires the target module's own permission, enforced in
+                    // the controller. Dark until
+                    // MATERNITY_CONSULTATION_HANDOFFS_ENABLED is on.
+                    Route::post('admission-request', [ConsultationMaternityContextController::class, 'createAdmissionRequest'])->name('admission-request');
+                    Route::post('refer-obstetrics', [ConsultationMaternityContextController::class, 'referObstetrics'])->name('refer-obstetrics');
+                    Route::post('postnatal-review', [ConsultationMaternityContextController::class, 'linkPostnatal'])->name('postnatal-review');
                 });
 
                 Route::get('consultations/{visit}/specialty-order-sets', [ConsultationSpecialtyOrderSetController::class, 'index'])->name('consultations.specialty-order-sets.index');

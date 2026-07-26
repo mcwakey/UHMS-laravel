@@ -193,6 +193,14 @@
     @include('partials.visit-insurance-strip', ['visit' => $case->visit])
 </div>
 
+{{-- Phase 14R.5 — Emergency Maternity context (dark by default). Prepared by
+     EmergencyMaternityWorkspaceService in the controller; renders nothing and
+     costs zero queries while MATERNITY_EMERGENCY_CONTEXT_ENABLED is false. --}}
+@include('emergency.partials.maternity-context-card', [
+    'maternity' => $maternityContext ?? null,
+    'case' => $case,
+])
+
 @if(session('success'))
     <div class="alert alert-success">{{ session('success') }}</div>
 @endif

@@ -244,8 +244,10 @@ Measured in this environment: **0 rows** to reconcile — re-measure per environ
 | 14R.3 | Obstetrics stage-aware workspace ✅ | medium | ✅ 22 tests green; baselines unchanged; flags default off |
 | 14R.3.1 | Pilot wiring + mutation boundary + perf ✅ | low | ✅ 10 tests green; K1/K2/K3 closed; baselines unchanged |
 | 14R.4 | Gynaecology separation + explicit transition | medium | Gynae unaffected without a link |
-| 14R.5 | Admission/emergency/labor/delivery/postnatal handoffs | medium | No duplicate records in scenarios A–F |
+| 14R.5 | Admission/emergency/labor/delivery/postnatal handoffs ✅ | medium | ✅ 64 tests green; scenarios A–F verified; baselines unchanged; 4 new flags default off |
 | 14R.6 | Readiness, summary projection, reconciliation, billing policy | high | Dry-run report reviewed; billing policy approved |
 | 14R.7 | Manual test data + wider regression | medium | Full regression pass |
 
-**14R.4.1 is complete (dark by default); R1, R2 and R5 are all closed. Next: 14R.5 — admission/emergency/labor/delivery/postnatal handoffs.**
+**14R.5 is complete (dark by default). Three additive link tables — `emergency_maternity_links`, `admission_request_maternity_links`, `admission_maternity_links` — now carry operational maternity context, and the 14R.2 derivation logic is shared through `MaternityContextTargetService`. Next: 14R.6 — advisory readiness, summary projection, immutable completion snapshot, historical reconciliation dry run and billing de-duplication policy.**
+
+See `OBGYN_MATERNITY_HANDOFFS_PHASE_14R_5_REPORT.md` for the ownership matrix, idempotency identities, return-context security model and measured query counts.

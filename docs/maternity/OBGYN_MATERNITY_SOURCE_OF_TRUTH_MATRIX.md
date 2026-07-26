@@ -215,3 +215,22 @@ Unchanged and explicitly protected: complaints, HOPC, examination narrative (gen
 | **insufficient context** | Cannot identify patient/pregnancy/date reliably | Leave untouched; report |
 
 Rules: preserve original specialty-entry values in all cases; dry-run before any backfill; produce a review report; **no automatic backfill in this phase or in 14R.2–14R.5**.
+
+---
+
+## 8. Operational ownership (Phase 14R.5)
+
+Field-level clinical ownership above is unchanged. 14R.5 adds the **operational** layer: who owns the *episode*, as distinct from who owns the *record*.
+
+| Owner | Owns operationally |
+|---|---|
+| **Consultation** | the specialist encounter — complaints, HOPC, examination, diagnoses, assessment, plan, orders, encounter notes, completion, summary |
+| **Emergency** | the acute episode — arrival, triage, acuity, emergency vitals & notes, bay, emergency treatment, emergency tasks, disposition, emergency-to-admission decision |
+| **Admission** | the inpatient episode — request review, bed reservation, conversion, ward/bed, nursing notes & tasks, medication/MAR, transfers, discharge planning & discharge |
+| **Maternity** | the longitudinal record — Pregnancy Profile, ANC Visit, Labor Episode, Labor Observation, Delivery Record, Newborn Record, Postnatal Case, postnatal observations, maternity risk & readiness |
+
+**Rules (enforced in code):** a handoff may create a link or a record *through the target domain service*; the source module never duplicates the target's record; the source record stays intact and auditable; the target keeps its normal lifecycle; one operational event never silently creates two target records; source and target history are never rewritten.
+
+**Durable current-admission linkage** is `admission_maternity_links`, **not** `pregnancy_profiles.admission_id`. A single nullable column cannot represent a patient's second admission without erasing the first, so that column is never force-updated. Maternity stage records (`labor_episodes`, `delivery_records`, `antenatal_visits`, `postnatal_cases`, `newborn_records`) adopt `admission_id` only when it is null; a conflicting value is reported for review, never overwritten.
+
+**Operational source vs clinical context.** `admission_requests.source_type/source_id` remains the truthful operational origin and is never overloaded. Clinical maternity context lives in `admission_request_maternity_links`. This matters because legacy `source_type = maternity` rows are genuinely ambiguous — `source_id` may be an `AntenatalVisit` id (from `AntenatalVisitService`) or a `LaborEpisode` id (from `LaborEpisodeService`). Those rows are **never reinterpreted**; they surface a warning and require an explicit link.

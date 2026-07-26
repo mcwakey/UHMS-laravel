@@ -17,6 +17,7 @@ use App\Models\StockLocation;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\Ward;
+use App\Services\Emergency\Maternity\EmergencyMaternityWorkspaceService;
 use App\Services\EmergencyCaseService;
 use App\Services\EmergencySessionService;
 use App\Services\PatientComplaintService;
@@ -28,6 +29,7 @@ class EmergencyCaseController extends Controller
         private EmergencyCaseService $cases,
         private EmergencySessionService $sessions,
         private PatientComplaintService $patientComplaints,
+        private EmergencyMaternityWorkspaceService $maternityContext,
     ) {}
 
     public function create(Request $request)
@@ -169,6 +171,9 @@ class EmergencyCaseController extends Controller
 
         return view('emergency.show', [
             'case' => $emergencyCase,
+            // Phase 14R.5 — resolved ONCE here, never in Blade. Returns a
+            // disabled view model with zero queries while the flag is off.
+            'maternityContext' => $this->maternityContext->build($emergencyCase, request()->user()),
             'bays' => EmergencyBay::active()->with(['ward', 'bed'])->orderBy('name')->get(),
             'wards' => Ward::active()->with(['beds' => fn ($query) => $query->orderBy('bed_number')])->orderBy('name')->get(),
             'users' => User::where('status', 'active')->orderBy('first_name')->get(),

@@ -21,6 +21,7 @@ use App\Services\Admissions\AdmissionDischargeReadinessService;
 use App\Services\Admissions\AdmissionDischargeSummaryPrefillService;
 use App\Services\Admissions\AdmissionExtensionService;
 use App\Services\Admissions\AdmissionRequestService;
+use App\Services\Admissions\Maternity\AdmissionMaternityWorkspaceService;
 use App\Services\AdmissionService;
 use App\Services\ConsultationSummaryService;
 use App\Services\ServicePriceResolver;
@@ -45,6 +46,7 @@ class AdmissionController extends Controller
         private AdmissionDischargeSummaryPrefillService $dischargeSummaryPrefill,
         private WorkspaceRouteResolver $workspaceRoutes,
         private ServicePriceResolver $priceResolver,
+        private AdmissionMaternityWorkspaceService $maternityContext,
     ) {}
 
     public function admissionRequests(Request $request)
@@ -292,7 +294,12 @@ class AdmissionController extends Controller
         $dischargeReadiness = $this->dischargeReadiness->forAdmission($admission, $medicationBoard, true, $careOverview);
         $dischargeSummaryPrefill = $this->dischargeSummaryPrefill->forAdmission($admission);
 
-        return view('admissions.show', compact('admission', 'admissionBillingServices', 'medicalRecord', 'consultationSummary', 'medicationBoard', 'careOverview', 'dischargeReadiness', 'dischargeSummaryPrefill', 'availableTransferBeds', 'nursingAssignableUsers'));
+        // Phase 14R.5 — resolved ONCE here, never in Blade. Returns a disabled
+        // view model with zero queries while the flag is off, and takes the
+        // resolver's fast no-context path for non-maternity admissions.
+        $maternityContext = $this->maternityContext->build($admission, request()->user());
+
+        return view('admissions.show', compact('admission', 'admissionBillingServices', 'medicalRecord', 'consultationSummary', 'medicationBoard', 'careOverview', 'dischargeReadiness', 'dischargeSummaryPrefill', 'availableTransferBeds', 'nursingAssignableUsers', 'maternityContext'));
     }
 
     public function discharge(Admission $admission)

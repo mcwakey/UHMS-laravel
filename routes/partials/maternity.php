@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Maternity\LaborEpisodeController;
 use App\Http\Controllers\Admin\Maternity\MaternityBillingReadinessController;
 use App\Http\Controllers\Admin\Maternity\MaternityCaseController;
 use App\Http\Controllers\Admin\Maternity\MaternityDashboardController;
+use App\Http\Controllers\Admin\Maternity\MaternityEmergencyHandoffController;
 use App\Http\Controllers\Admin\Maternity\MaternityReportController;
 use App\Http\Controllers\Admin\Maternity\NewbornRecordController;
 use App\Http\Controllers\Admin\Maternity\PostnatalCaseController;
@@ -57,6 +58,15 @@ use Illuminate\Support\Facades\Route;
         Route::post('labor/{laborEpisode}/admission-request', [LaborEpisodeController::class, 'admissionRequest'])->name('labor.admission-request')->middleware('can:maternity.labor.admission.request');
         Route::post('labor/{laborEpisode}/theatre-escalation', [LaborEpisodeController::class, 'theatreEscalation'])->name('labor.theatre-escalation')->middleware('can:maternity.labor.escalate');
         Route::post('labor/{laborEpisode}/emergency-escalation', [LaborEpisodeController::class, 'emergencyEscalation'])->name('labor.emergency-escalation')->middleware('can:maternity.labor.escalate');
+
+        // Phase 14R.5 — EXPLICIT Maternity → Emergency handoff. The escalation
+        // flag above only records a clinical signal; these routes are the only
+        // way an Emergency case is ever created from Maternity, and they go
+        // through the existing EmergencyCaseService. Dark until
+        // MATERNITY_EMERGENCY_HANDOFFS_ENABLED is on.
+        Route::post('labor/{laborEpisode}/emergency-handoff', [MaternityEmergencyHandoffController::class, 'fromLabor'])->name('labor.emergency-handoff')->middleware('can:maternity.emergency_handoff.create');
+        Route::post('deliveries/{deliveryRecord}/emergency-handoff', [MaternityEmergencyHandoffController::class, 'fromDelivery'])->name('deliveries.emergency-handoff')->middleware('can:maternity.emergency_handoff.create');
+        Route::post('postnatal/{postnatalCase}/emergency-handoff', [MaternityEmergencyHandoffController::class, 'fromPostnatal'])->name('postnatal.emergency-handoff')->middleware('can:maternity.emergency_handoff.create');
         Route::get('deliveries/{deliveryRecord}', [DeliveryRecordController::class, 'show'])->name('deliveries.show')->middleware('can:maternity.delivery.view');
         Route::get('deliveries/{deliveryRecord}/newborns', [NewbornRecordController::class, 'index'])->name('deliveries.newborns.index')->middleware('can:maternity.newborn.view');
         Route::get('deliveries/{deliveryRecord}/newborns/create', [NewbornRecordController::class, 'create'])->name('deliveries.newborns.create')->middleware('can:maternity.newborn.record');
