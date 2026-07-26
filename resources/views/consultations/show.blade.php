@@ -2116,6 +2116,12 @@
                                 <div class="modal-body">
                                     <div class="alert alert-info py-2 small">{{ __('consultation_specialties.summary_builder.not_saved_yet') }}</div>
                                     <div id="specialtySummaryPreviewBody" class="border rounded p-3 bg-light"></div>
+                                    {{-- Phase 14R.7 — Maternity Context block.
+                                         Server-rendered and Blade-escaped by the
+                                         same presentation service the summary tab
+                                         uses; the browser only places it. Hidden
+                                         whenever the fragment is empty. --}}
+                                    <div id="specialtyMaternityPreviewBody" class="mt-3 d-none"></div>
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">{{ __('consultation_specialties.summary_builder.close') }}</button>
@@ -2130,6 +2136,7 @@
                         const generateBtn = document.getElementById('generateSpecialtySummaryBtn');
                         const modalEl = document.getElementById('specialtySummaryModal');
                         const previewBody = document.getElementById('specialtySummaryPreviewBody');
+                        const maternityBody = document.getElementById('specialtyMaternityPreviewBody');
                         const insertBtn = document.getElementById('insertSpecialtySummaryBtn');
                         const copyBtn = document.getElementById('copySpecialtySummaryBtn');
                         const finalNote = document.getElementById('finalNoteTextarea');
@@ -2147,14 +2154,39 @@
                                 url.searchParams.set('consultation_route_id', generateBtn.dataset.routeId);
                             }
                             previewBody.innerHTML = '<div class="text-muted small">{{ __('consultations.loading') }}</div>';
+                            // Clear any previous Maternity block BEFORE the
+                            // request, so a failure can never leave stale
+                            // clinical content on screen.
+                            if (maternityBody) {
+                                maternityBody.innerHTML = '';
+                                maternityBody.classList.add('d-none');
+                            }
                             modal?.show();
 
-                            const response = await fetch(url.toString(), {
-                                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                            });
-                            const json = await response.json();
-                            summaryText = json.summary?.plainText || '';
-                            previewBody.innerHTML = json.summary?.html || '<div class="text-muted small">{{ __('consultation_specialties.summary_builder.no_data_available') }}</div>';
+                            try {
+                                const response = await fetch(url.toString(), {
+                                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                                });
+                                const json = await response.json();
+                                summaryText = json.summary?.plainText || '';
+                                previewBody.innerHTML = json.summary?.html || '<div class="text-muted small">{{ __('consultation_specialties.summary_builder.no_data_available') }}</div>';
+
+                                // The live-vs-snapshot decision was already made
+                                // server-side; the browser only inserts what it
+                                // was given and never re-decides.
+                                const maternityHtml = json.maternity_context?.html || '';
+                                if (maternityBody && maternityHtml.trim() !== '') {
+                                    maternityBody.innerHTML = maternityHtml;
+                                    maternityBody.classList.remove('d-none');
+                                }
+                            } catch (error) {
+                                summaryText = '';
+                                previewBody.innerHTML = '<div class="text-danger small">{{ __('consultation_specialties.summary_builder.no_data_available') }}</div>';
+                                if (maternityBody) {
+                                    maternityBody.innerHTML = '';
+                                    maternityBody.classList.add('d-none');
+                                }
+                            }
                         });
 
                         insertBtn?.addEventListener('click', function () {

@@ -260,3 +260,45 @@ All six flags default **false**. Enable only the one under test.
 **Wording check:** the integrity label must say *verified against the hash stored at capture*. It must not imply an external signature or that a privileged database actor could not rewrite the row.
 
 **Flag check:** with `CONSULTATION_MATERNITY_SUMMARY_ENABLED=false` the existing consultation summary renders exactly as before, with **zero** added queries.
+
+---
+
+## 9. Phase 14R.7 — pilot package
+
+> Automated coverage: `ConsultationMaternityPreviewParityPhase14R7Test` (9),
+> `ObgynMaternityPilotDataPhase14R7Test` (10),
+> `ConsultationSnapshotSameSecondRiskPhase14R7Test` (5) — **24 tests**.
+
+**Clinician scenarios live in `OBGYN_MATERNITY_CLINICIAN_PILOT_GUIDE.md`.**
+**Results are recorded in `OBGYN_MATERNITY_PILOT_RESULTS_TEMPLATE.md`.**
+Every clinician row starts at `NOT_RUN` and may only be changed by a clinician.
+
+### Commands
+
+```bash
+# 1. Capture the environment reconciliation BEFORE seeding anything
+php artisan maternity:reconcile-obgyn-entries --format=json \
+  --output=storage/app/manual-testing/obgyn-maternity/environment-reconciliation.json
+
+# 2. Confirm order-set safety
+php artisan consultation:obgyn-order-set-audit
+
+# 3. Preflight (read-only, changes no flag)
+php artisan maternity:obgyn-pilot-preflight \
+  --environment-reconciliation=storage/app/manual-testing/obgyn-maternity/environment-reconciliation.json
+
+# 4. Seed isolated pilot data
+php artisan maternity:seed-obgyn-pilot-data --force
+
+# 5. Remove it again, manifest-driven
+php artisan maternity:clear-obgyn-pilot-data --batch=<batch-id> --dry-run --force
+php artisan maternity:clear-obgyn-pilot-data --batch=<batch-id> --force
+```
+
+### Safety rules
+
+- Pilot patients always carry `MT-OBGYN-14R7-`. Anything without that marker is **not** pilot data.
+- Cleanup deletes only ids listed in a batch manifest. **No manifest → no deletion.**
+- Both commands are blocked in production and require `--force` elsewhere.
+- Never enable a write guard in an environment whose reconciliation report has unresolved
+  `conflict_requires_review` or `insufficient_context` rows.

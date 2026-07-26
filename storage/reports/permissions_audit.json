@@ -1,14 +1,14 @@
 {
-    "generated_at": "2026-07-18T15:30:15+00:00",
+    "generated_at": "2026-07-26T11:39:36+00:00",
     "totals": {
-        "permissions_in_db": 891,
-        "used_in_routes": 530,
-        "admin_mutation_routes": 683
+        "permissions_in_db": 914,
+        "used_in_routes": 538,
+        "admin_mutation_routes": 710
     },
     "risk_distribution": {
-        "LOW": 255,
-        "NORMAL": 402,
-        "HIGH": 171,
+        "LOW": 260,
+        "NORMAL": 419,
+        "HIGH": 172,
         "CRITICAL": 63
     },
     "referenced_not_in_db": [],
@@ -31,7 +31,9 @@
         "admission.discharge.clearance.view",
         "admission.discharge.enforced.override",
         "admission.discharge.readiness.view",
+        "admission.maternity_context.view",
         "admission.nursing.view",
+        "admissions.billing_amounts.edit",
         "appointments.cancel",
         "appointments.delete",
         "appointments.update",
@@ -124,6 +126,18 @@
         "consultation.hopc.create",
         "consultation.hopc.edit",
         "consultation.hopc.view",
+        "consultation.maternity_context.adopt_lmp",
+        "consultation.maternity_context.create_admission_request",
+        "consultation.maternity_context.create_profile",
+        "consultation.maternity_context.link",
+        "consultation.maternity_context.open_postnatal",
+        "consultation.maternity_context.readiness.view",
+        "consultation.maternity_context.record_anc",
+        "consultation.maternity_context.refer_obstetrics",
+        "consultation.maternity_context.start_labor",
+        "consultation.maternity_context.summary.view",
+        "consultation.maternity_context.unlink",
+        "consultation.maternity_context.view",
         "consultation.prescribe",
         "consultation.queue",
         "consultation.refer",
@@ -159,6 +173,7 @@
         "emergency.billing.view",
         "emergency.case.cancel",
         "emergency.death.record",
+        "emergency.maternity_context.view",
         "emergency.notes.edit_any",
         "emergency.notes.edit_own",
         "emergency.refer",
@@ -378,8 +393,20 @@
     "unprotected_routes": [],
     "possible_duplicates": [
         [
+            "admission.maternity_context.link",
+            "admission.maternity_context.unlink"
+        ],
+        [
             "consultation.create",
             "consultations.create"
+        ],
+        [
+            "consultation.maternity_context.link",
+            "consultation.maternity_context.unlink"
+        ],
+        [
+            "emergency.maternity_context.link",
+            "emergency.maternity_context.unlink"
         ],
         [
             "hr.payroll.review",

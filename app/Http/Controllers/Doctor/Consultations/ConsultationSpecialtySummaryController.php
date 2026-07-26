@@ -39,9 +39,13 @@ class ConsultationSpecialtySummaryController extends ConsultationWorkflowControl
         // Phase 14R.6.1 — the preview follows exactly the same live/snapshot
         // rule as the main summary, from the SAME presentation service. There
         // is no preview-specific maternity logic.
+        // printMode: true renders the COMPACT fragment — history navigation and
+        // the current-record action stay on the main summary page, so the
+        // fragment carries no pushed scripts and nothing executable.
         $maternity = app(ConsultationMaternitySummaryPresentationService::class)->build(
             $route,
             $request->user(),
+            printMode: true,
             isGynaecology: $resolved->profile?->code === 'gynecology',
         );
 

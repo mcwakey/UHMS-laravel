@@ -248,7 +248,9 @@ Measured in this environment: **0 rows** to reconcile — re-measure per environ
 | 14R.5.1 | Handoff UI completion + pilot closure ✅ | low | ✅ 44 tests green; **K2 closed**; K1 fallback usable; baselines unchanged |
 | 14R.6 | Readiness, summary projection, snapshots, reconciliation, billing policy ✅ | high | ✅ 65 tests green; **R6 closed**; snapshots immutable; dry run 0 writes; baselines unchanged |
 | 14R.6.1 | Summary/snapshot/history/print UI ✅ | low | ✅ 42 tests green; **K1 closed**; completed summaries bound to the snapshot; baselines unchanged |
-| 14R.7 | Manual test data + wider regression | medium | Full regression pass |
+| 14R.7 | Pilot data, environment reconciliation review, clinical acceptance package, wider regression ✅ | medium | ✅ Gate 0 closed; 24 new tests; verdict READY_FOR_CLINICAL_PILOT; clinician sign-off NOT_RUN |
+
+**14R.7 is complete. Gate 0 (preview-modal parity) is closed, isolated pilot data and manifest-driven cleanup exist, the environment reconciliation dry run is captured, and a read-only preflight reports pilot readiness. The honest verdict is `READY_FOR_CLINICAL_PILOT` — no clinician has tested this yet, and risk P2 (same-second recompletion) is confirmed. See `OBGYN_MATERNITY_PILOT_REGRESSION_PHASE_14R_7_REPORT.md`.**
 
 **14R.6.1 is complete (dark by default). Clinicians can now see the live Maternity Context on an active consultation, the immutable completion snapshot on a completed one, its version history and integrity state, and the current record only as a separate, explicitly requested, permission-controlled view. Print follows the same rule. K1 is closed.**
 

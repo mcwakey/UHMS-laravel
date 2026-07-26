@@ -215,3 +215,39 @@ Per the phase testing boundary (no full suite, no `composer test:wide`):
 **Measured in this environment: 0 rows in every classification.** Re-run and review per environment before enabling any O&G write guard there.
 
 `--apply` is unavailable in Phase 14R.6: it exits non-zero and performs zero writes.
+
+---
+
+## Phase 14R.7 — environment review vs synthetic validation
+
+These two things are **never** reported as one number.
+
+### A. Real environment reconciliation
+
+Captured before any pilot seeding, to
+`storage/app/manual-testing/obgyn-maternity/environment-reconciliation-14R7.json`.
+
+| Classification | Count |
+|---|---|
+| safe_to_link | 0 |
+| safe_to_migrate | 0 |
+| conflict_requires_review | 0 |
+| historical_only | 0 |
+| insufficient_context | 0 |
+| **Total inspected** | **0** |
+
+Mode `dry_run`, writes performed `0`, no patient names in the artefact, `--apply` not run.
+
+**This environment holds no historical O&G specialty entries.** The result proves the command
+executes; it does not validate classification against real data at scale. Each environment must
+run and review its own report **before** any write guard is enabled there.
+
+### B. Synthetic classifier validation
+
+> **SYNTHETIC PILOT DATA — NOT ENVIRONMENT RECONCILIATION COUNTS.**
+
+Isolated `MT-OBGYN-14R7-` pilot records `R1`–`R5` produce **all five classifications**, at least one
+each, deterministically across repeated runs. The command still performs zero writes and `--apply`
+still exits non-zero.
+
+Synthetic counts must never be added to, or substituted for, the counts in section A.
