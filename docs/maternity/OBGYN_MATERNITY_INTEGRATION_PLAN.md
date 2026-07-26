@@ -245,8 +245,11 @@ Measured in this environment: **0 rows** to reconcile — re-measure per environ
 | 14R.3.1 | Pilot wiring + mutation boundary + perf ✅ | low | ✅ 10 tests green; K1/K2/K3 closed; baselines unchanged |
 | 14R.4 | Gynaecology separation + explicit transition | medium | Gynae unaffected without a link |
 | 14R.5 | Admission/emergency/labor/delivery/postnatal handoffs ✅ | medium | ✅ 64 tests green; scenarios A–F verified; baselines unchanged; 4 new flags default off |
+| 14R.5.1 | Handoff UI completion + pilot closure ✅ | low | ✅ 44 tests green; **K2 closed**; K1 fallback usable; baselines unchanged |
 | 14R.6 | Readiness, summary projection, reconciliation, billing policy | high | Dry-run report reviewed; billing policy approved |
 | 14R.7 | Manual test data + wider regression | medium | Full regression pass |
+
+**14R.5.1 is complete (dark by default). Every handoff trigger now has a real dialog, generated from a typed action contract and guarded by an automated modal-integrity check; K2 is closed and K1 has a usable fallback.**
 
 **14R.5 is complete (dark by default). Three additive link tables — `emergency_maternity_links`, `admission_request_maternity_links`, `admission_maternity_links` — now carry operational maternity context, and the 14R.2 derivation logic is shared through `MaternityContextTargetService`. Next: 14R.6 — advisory readiness, summary projection, immutable completion snapshot, historical reconciliation dry run and billing de-duplication policy.**
 

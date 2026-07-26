@@ -9,6 +9,11 @@
     same-visit / same-admission / single-active profile is never shown.
 --}}
 @props(['gynaecology'])
+@php
+    // Phase 14R.5.1 — typed handoff actions prepared by
+    // ConsultationMaternityModalPresenter; this partial makes no decisions.
+    $maternityActions = $gynaecologyMaternityActions ?? [];
+@endphp
 
 @if($gynaecology?->shouldRender())
 @once
@@ -65,12 +70,11 @@
                 <div class="small text-muted">
                     <i class="ti ti-baby-carriage me-1"></i>{{ __('consultation_maternity.gynaecology.no_profile_linked') }}
                 </div>
-                @if($gynaecology->can('link') || $gynaecology->can('create_profile'))
-                    <button type="button" class="btn btn-sm btn-outline-primary"
-                            data-bs-toggle="modal" data-bs-target="#gynaeLinkPregnancyModal">
-                        <i class="ti ti-link me-1"></i>{{ __('consultation_maternity.gynaecology.start_or_link') }}
-                    </button>
-                @endif
+                {{-- Phase 14R.5.1 — rendered from the typed action, so a
+                     trigger can never outlive its modal body. --}}
+                @include('maternity.partials.handoff-triggers', [
+                    'actions' => array_filter([$maternityActions['link_profile'] ?? null]),
+                ])
             </div>
 
         @elseif($gynaecology->showsCard())
@@ -124,10 +128,9 @@
                      states render their reason instead of a dead button. --}}
                 @if($gynaecology->can('adopt_lmp'))
                     @if($gynaecology->canAdoptLmp())
-                        <button type="button" class="btn btn-sm btn-outline-primary"
-                                data-bs-toggle="modal" data-bs-target="#gynaeAdoptLmpModal">
-                            <i class="ti ti-calendar-check me-1"></i>{{ __('consultation_maternity.lmp.adopt') }}
-                        </button>
+                        @include('maternity.partials.handoff-triggers', [
+                            'actions' => array_filter([$maternityActions['adopt_lmp'] ?? null]),
+                        ])
                     @elseif($gynaecology->lmpAdoptionState === \App\Data\Consultation\Maternity\GynaecologyWorkspaceViewModel::ADOPT_CONFLICT)
                         <span class="badge bg-warning-subtle text-warning-emphasis align-self-center">
                             {{ __('consultation_maternity.lmp.conflict') }}
@@ -143,18 +146,12 @@
                     @endif
                 @endif
 
-                @if($gynaecology->can('relink'))
-                    <button type="button" class="btn btn-sm btn-outline-secondary"
-                            data-bs-toggle="modal" data-bs-target="#gynaeRelinkModal">
-                        {{ __('consultation_maternity.actions.relink_profile') }}
-                    </button>
-                @endif
-                @if($gynaecology->can('unlink'))
-                    <button type="button" class="btn btn-sm btn-outline-danger"
-                            data-bs-toggle="modal" data-bs-target="#gynaeUnlinkModal">
-                        {{ __('consultation_maternity.actions.unlink_profile') }}
-                    </button>
-                @endif
+                @include('maternity.partials.handoff-triggers', [
+                    'actions' => array_filter([
+                        $maternityActions['relink_profile'] ?? null,
+                        $maternityActions['unlink_profile'] ?? null,
+                    ]),
+                ])
             </div>
 
             {{-- Deliberately absent: Record ANC, Start Labor, delivery/newborn/

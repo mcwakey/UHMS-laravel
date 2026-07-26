@@ -322,6 +322,21 @@
      single view model built in HandlesConsultationWorkspace. --}}
 @include('consultations.partials.maternity.gynaecology-context-card', ['gynaecology' => $gynaecologyContext ?? null])
 @include('consultations.partials.maternity.handoff-actions', ['handoffs' => $maternityHandoffs ?? null])
+
+{{-- Phase 14R.5.1 — modal bodies for the Obstetrics panel (14R.3.1) and
+     Gynaecology card (14R.4.1) triggers. Only executable actions render a
+     form, so a disabled or permission-missing action ships nothing. --}}
+@foreach (($obstetricMaternityActions ?? []) as $maternityAction)
+    @include('maternity.partials.handoff-modal', ['action' => $maternityAction])
+@endforeach
+@foreach (($gynaecologyMaternityActions ?? []) as $maternityAction)
+    @include('maternity.partials.handoff-modal', ['action' => $maternityAction])
+@endforeach
+@if (! empty($obstetricMaternityActions) || ! empty($gynaecologyMaternityActions))
+    @include('maternity.partials.handoff-scripts', [
+        'reopenModalId' => (isset($errors) && $errors->any()) ? old('_handoff_modal') : null,
+    ])
+@endif
 {{-- ============================================================ --}}
 {{-- MAIN 3-COLUMN LAYOUT --}}
 {{-- ============================================================ --}}

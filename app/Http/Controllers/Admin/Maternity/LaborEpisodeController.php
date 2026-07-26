@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Maternity;
 
 use App\Enums\DeliveryMode;
+use App\Services\Maternity\Handoffs\MaternityEmergencyHandoffPresenter;
 use App\Enums\DepartmentType;
 use App\Enums\LaborDangerSign;
 use App\Enums\LaborEpisodeStatus;
@@ -83,6 +84,10 @@ class LaborEpisodeController extends Controller
 
         return view('maternity.labor.show', [
             'episode' => $laborEpisode,
+            // Phase 14R.5.1 — explicit Emergency escalation action. Empty
+            // (and query-free) while MATERNITY_EMERGENCY_HANDOFFS_ENABLED is off.
+            'emergencyHandoffActions' => app(MaternityEmergencyHandoffPresenter::class)
+                ->build($laborEpisode, request()->user()),
             'laborOverview' => $this->overview->forEpisode($laborEpisode),
             'partograph' => $this->overview->partograph($laborEpisode),
             'riskAssessment' => $this->riskAssessment->assess($laborEpisode->latestObservation ?: $laborEpisode),

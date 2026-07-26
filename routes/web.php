@@ -75,6 +75,7 @@ use App\Http\Controllers\Admin\Emergency\EmergencyBillingController;
 use App\Http\Controllers\Admin\Emergency\EmergencyBoardController;
 use App\Http\Controllers\Admin\Emergency\EmergencyCaseController;
 use App\Http\Controllers\Admin\Emergency\EmergencyMaternityContextController;
+use App\Http\Controllers\Admin\Maternity\MaternityContextCandidateController;
 use App\Http\Controllers\Admin\Emergency\EmergencyConsumableController;
 use App\Http\Controllers\Admin\Emergency\EmergencyContactController;
 use App\Http\Controllers\Admin\Emergency\EmergencyDispositionController;
@@ -374,6 +375,11 @@ Route::middleware('auth')->group(function () {
         // Each action ALSO requires the underlying Maternity/Admission
         // permission; the controller enforces the dual check. Dark until
         // MATERNITY_EMERGENCY_CONTEXT_ENABLED / _HANDOFFS_ENABLED are on.
+
+        // Phase 14R.5.1 — lazy Pregnancy Profile candidates. Read-only and
+        // patient-scoped SERVER-SIDE from the route-bound case, so no request
+        // parameter can widen the scope. Queried only when a selector opens.
+        Route::get('cases/{emergencyCase}/maternity-context/candidates', [MaternityContextCandidateController::class, 'forEmergencyCase'])->name('cases.maternity-context.candidates')->middleware('can:emergency.maternity_context.link');
         Route::prefix('cases/{emergencyCase}/maternity-context')->name('cases.maternity-context.')->group(function () {
             Route::post('link', [EmergencyMaternityContextController::class, 'link'])->name('link')->middleware('can:emergency.maternity_context.link');
             Route::post('relink', [EmergencyMaternityContextController::class, 'relink'])->name('relink')->middleware('can:emergency.maternity_context.link');
@@ -507,6 +513,7 @@ Route::middleware('auth')->group(function () {
             Route::post('admissions/{admission}/maternity-context/link', [AdmissionMaternityContextController::class, 'link'])->name('admissions.maternity-context.link')->middleware('can:admission.maternity_context.link');
             Route::post('admissions/{admission}/maternity-context/relink', [AdmissionMaternityContextController::class, 'relink'])->name('admissions.maternity-context.relink')->middleware('can:admission.maternity_context.link');
             Route::post('admissions/{admission}/maternity-context/unlink', [AdmissionMaternityContextController::class, 'unlink'])->name('admissions.maternity-context.unlink')->middleware('can:admission.maternity_context.unlink');
+            Route::get('admissions/{admission}/maternity-context/candidates', [MaternityContextCandidateController::class, 'forAdmission'])->name('admissions.maternity-context.candidates')->middleware('can:admission.maternity_context.link');
             Route::post('admissions/{admission}/discharge', [AdmissionController::class, 'processDischarge'])->name('admissions.process-discharge')->middleware('can:ward.discharge');
             Route::post('admissions/{admission}/extend', [AdmissionController::class, 'extend'])->name('admissions.extend')->middleware('can:admissions.extend');
             Route::post('admissions/{admission}/rounds', [AdmissionController::class, 'storeRound'])->name('admissions.rounds.store');
@@ -1690,6 +1697,7 @@ Route::middleware('auth')->group(function () {
             Route::post('admissions/{admission}/maternity-context/link', [AdmissionMaternityContextController::class, 'link'])->name('admissions.maternity-context.link')->middleware('can:admission.maternity_context.link');
             Route::post('admissions/{admission}/maternity-context/relink', [AdmissionMaternityContextController::class, 'relink'])->name('admissions.maternity-context.relink')->middleware('can:admission.maternity_context.link');
             Route::post('admissions/{admission}/maternity-context/unlink', [AdmissionMaternityContextController::class, 'unlink'])->name('admissions.maternity-context.unlink')->middleware('can:admission.maternity_context.unlink');
+            Route::get('admissions/{admission}/maternity-context/candidates', [MaternityContextCandidateController::class, 'forAdmission'])->name('admissions.maternity-context.candidates')->middleware('can:admission.maternity_context.link');
             Route::post('admissions/{admission}/discharge', [AdmissionController::class, 'processDischarge'])->name('admissions.process-discharge')->middleware('can:ward.discharge');
             Route::post('admissions/{admission}/extend', [AdmissionController::class, 'extend'])->name('admissions.extend')->middleware('can:admissions.extend');
             Route::post('admissions/{admission}/rounds', [AdmissionController::class, 'storeRound'])->name('admissions.rounds.store');
@@ -1744,6 +1752,11 @@ Route::middleware('auth')->group(function () {
             // Each action ALSO requires the underlying Maternity/Admission
             // permission; the controller enforces the dual check. Dark until
             // MATERNITY_EMERGENCY_CONTEXT_ENABLED / _HANDOFFS_ENABLED are on.
+
+            // Phase 14R.5.1 — lazy Pregnancy Profile candidates. Read-only and
+            // patient-scoped SERVER-SIDE from the route-bound case, so no request
+            // parameter can widen the scope. Queried only when a selector opens.
+            Route::get('cases/{emergencyCase}/maternity-context/candidates', [MaternityContextCandidateController::class, 'forEmergencyCase'])->name('cases.maternity-context.candidates')->middleware('can:emergency.maternity_context.link');
             Route::prefix('cases/{emergencyCase}/maternity-context')->name('cases.maternity-context.')->group(function () {
                 Route::post('link', [EmergencyMaternityContextController::class, 'link'])->name('link')->middleware('can:emergency.maternity_context.link');
                 Route::post('relink', [EmergencyMaternityContextController::class, 'relink'])->name('relink')->middleware('can:emergency.maternity_context.link');
@@ -2392,6 +2405,7 @@ Route::middleware('auth')->group(function () {
                     Route::post('admission-request', [ConsultationMaternityContextController::class, 'createAdmissionRequest'])->name('admission-request');
                     Route::post('refer-obstetrics', [ConsultationMaternityContextController::class, 'referObstetrics'])->name('refer-obstetrics');
                     Route::post('postnatal-review', [ConsultationMaternityContextController::class, 'linkPostnatal'])->name('postnatal-review');
+                    Route::get('candidates', [MaternityContextCandidateController::class, 'forVisit'])->name('candidates');
                 });
 
                 Route::get('consultations/{visit}/specialty-order-sets', [ConsultationSpecialtyOrderSetController::class, 'index'])->name('consultations.specialty-order-sets.index');

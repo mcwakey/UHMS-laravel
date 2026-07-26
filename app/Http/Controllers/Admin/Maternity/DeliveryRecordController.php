@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Maternity;
 
 use App\Enums\DeliveryMode;
+use App\Services\Maternity\Handoffs\MaternityEmergencyHandoffPresenter;
 use App\Enums\DeliveryOutcome;
 use App\Enums\DeliveryRecordStatus;
 use App\Enums\MaternalCondition;
@@ -45,6 +46,8 @@ class DeliveryRecordController extends Controller
     {
         return view('maternity.labor.deliveries.show', [
             'record' => $deliveryRecord->load($this->deliveries->relations()),
+            'emergencyHandoffActions' => app(MaternityEmergencyHandoffPresenter::class)
+                ->build($deliveryRecord, request()->user()),
             'newbornOverview' => $this->newbornOverview->forDelivery($deliveryRecord),
             'postnatalOverview' => $this->postnatalOverview->forDelivery($deliveryRecord),
             'billingPreviews' => $this->billingPosting->previewManyForSource($deliveryRecord),

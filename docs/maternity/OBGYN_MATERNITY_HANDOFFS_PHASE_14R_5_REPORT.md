@@ -1,6 +1,7 @@
 # Phase 14R.5 — Admission, Emergency, Labor, Delivery & Postnatal Handoff Integration (Report)
 
 **Status:** ✅ Implemented. Dark by default (all four new flags `false`).
+**Update — Phase 14R.5.1:** **K2 is CLOSED** (all 19 missing modal bodies authored; an automated integrity check now fails the build on any dangling trigger) and **K1 has a real clinician-facing fallback**. See `OBGYN_MATERNITY_HANDOFF_UI_PHASE_14R_5_1_REPORT.md`.
 **Companions:** `OBGYN_MATERNITY_GYNAECOLOGY_PILOT_PHASE_14R_4_1_REPORT.md`, `OBGYN_MATERNITY_SOURCE_OF_TRUTH_MATRIX.md`
 
 ---
@@ -220,9 +221,9 @@ Unchanged and verified: Emergency triage/bay/vitals/notes/treatment/tasks/dispos
 
 | # | Risk |
 |---|---|
-| K1 | The Gynaecology → Obstetrics referral needs a `ConsultationSpecialtyProfileMapping` for an active Obstetrics consultation department. Without one it reports `unavailable`; the UI must link into the standard create-consultation flow. Deliberate — no referral subsystem was invented. |
-| K2 | The card modals (`emergencyLinkPregnancyModal`, `admissionLinkPregnancyModal`, `consultationMaternityAdmissionRequestModal`, …) are referenced by the buttons but their bodies are not yet authored; the buttons are inert until they are. Routes, permissions and server logic are complete and tested. |
-| K3 | Consultation handoff panel costs 8 queries with no context; most of that is the Spatie permission load, not maternity work. Worth re-measuring under pilot load. |
+| K1 | ⚠️ **Mitigated in 14R.5.1** — still a configuration dependency, but the unavailable state now shows its reason plus a real link into the existing standard create-consultation flow. No referral subsystem was invented. |
+| K2 | ✅ **CLOSED in 14R.5.1.** The audit found **19** missing dialog bodies, not 3; all are authored, every trigger is generated from a typed action model, and `MaternityHandoffModalIntegrityPhase14R5_1Test` fails the build if a trigger ever loses its target again. |
+| K3 | Consultation handoff panel with no context now costs 5 queries (was 8). Re-measured in 14R.5.1; worth watching under pilot load. |
 | K4 | Legacy `source_type = maternity` requests remain ambiguous by design; they surface a warning and require an explicit link. No backfill was run. |
 
 ## 17. Deferred (explicitly out of scope)

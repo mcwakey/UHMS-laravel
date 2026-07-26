@@ -274,12 +274,20 @@ class ConsultationGynaecologyMaternityPilotPhase14R4_1Test extends TestCase
             $this->actingAs($as);
         }
 
+        // Phase 14R.5.1 — the card now renders its triggers from typed actions
+        // prepared by ConsultationMaternityModalPresenter, exactly as the real
+        // workspace does. Built BEFORE the query window: the presenter is
+        // controller-side work, the partial itself must still issue no query.
+        $actions = app(\App\Services\Consultation\Maternity\ConsultationMaternityModalPresenter::class)
+            ->gynaecology($vm, $this->consultation, $as ?? $this->user);
+
         DB::flushQueryLog();
         DB::enableQueryLog();
 
         $html = view('consultations.partials.maternity.gynaecology-context-card', [
             'gynaecology' => $vm,
             'visit' => $this->visit,
+            'gynaecologyMaternityActions' => $actions,
         ])->render();
 
         $queries = count(DB::getQueryLog());

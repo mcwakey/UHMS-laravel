@@ -94,4 +94,10 @@
     </div>
 </div>
 @include('maternity.partials.billing-preview')
+
+{{-- Phase 14R.5.1 — explicit Emergency escalation (dark by default). --}}
+@include('maternity.partials.emergency-handoff-panel', [
+    'actions' => $emergencyHandoffActions ?? [],
+])
+
 @endsection

@@ -1,3 +1,8 @@
+@php
+    // Phase 14R.5.1 — typed handoff actions prepared by
+    // ConsultationMaternityModalPresenter; this partial makes no decisions.
+    $maternityActions = $obstetricMaternityActions ?? [];
+@endphp
 {{--
     Phase 14R.3 — Maternity Context panel (stage-aware, projection + explicit action).
 
@@ -33,12 +38,11 @@
         {{-- No context: discreet, permission-gated entry point only. --}}
         @if($maternity->isNone())
             <p class="text-muted small mb-2">{{ __('consultation_maternity.no_maternity_context') }}</p>
-            @if($maternity->can('link') || $maternity->can('create_profile'))
-                <button type="button" class="btn btn-sm btn-outline-primary"
-                        data-bs-toggle="modal" data-bs-target="#maternityLinkProfileModal">
-                    <i class="ti ti-link me-1"></i>{{ __('consultation_maternity.actions.link_or_create_profile') }}
-                </button>
-            @endif
+            {{-- Phase 14R.5.1 — rendered from the typed action, so a trigger
+                 can never outlive its modal body. --}}
+            @include('maternity.partials.handoff-triggers', [
+                'actions' => array_filter([$maternityActions['link_profile'] ?? null]),
+            ])
 
         {{-- Ambiguous: explicit selector, never an automatic choice. --}}
         @elseif($maternity->isAmbiguous())
@@ -105,16 +109,12 @@
                         <div class="col-md-3"><span class="text-muted">EDD:</span> <strong>{{ $fmt($p['edd'] ?? null) }}</strong></div>
                     </div>
                     <div class="d-flex gap-2 mt-3">
-                        @if($maternity->can('relink'))
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#maternityRelinkModal">
-                                {{ __('consultation_maternity.actions.relink_profile') }}
-                            </button>
-                        @endif
-                        @if($maternity->can('unlink'))
-                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#maternityUnlinkModal">
-                                {{ __('consultation_maternity.actions.unlink_profile') }}
-                            </button>
-                        @endif
+                        @include('maternity.partials.handoff-triggers', [
+                            'actions' => array_filter([
+                                $maternityActions['relink_profile'] ?? null,
+                                $maternityActions['unlink_profile'] ?? null,
+                            ]),
+                        ])
                     </div>
                 </div>
 
@@ -129,11 +129,9 @@
                         <div class="col-md-3"><span class="text-muted">Fundal height:</span> <strong>{{ $a['fundal_height_cm'] ?? '—' }}</strong></div>
                         <div class="col-md-3"><span class="text-muted">{{ __('consultation_maternity.ribbon.next_anc') }}:</span> <strong>{{ $fmt($a['next_visit_date'] ?? null) }}</strong></div>
                     </div>
-                    @if($maternity->can('record_anc'))
-                        <button type="button" class="btn btn-sm btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#maternityRecordAncModal">
-                            <i class="ti ti-plus me-1"></i>{{ __('consultation_maternity.actions.record_anc') }}
-                        </button>
-                    @endif
+                    @include('maternity.partials.handoff-triggers', [
+                        'actions' => array_filter([$maternityActions['record_anc'] ?? null]),
+                    ])
                 </div>
                 @endif
 

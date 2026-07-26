@@ -1,1331 +1,1018 @@
 You are working inside the UHMS Laravel project.
 
-Completed O&G ↔ Maternity reconciliation phases:
+Phase 14R.5 is complete.
 
-- Phase 14R.1:
-  - Consultation Specialty and Maternity domain audit.
-  - Field-level source-of-truth matrix.
-  - Integration architecture.
+Implemented in Phase 14R.5:
 
-- Phase 14R.2:
-  - Consultation ↔ Maternity explicit-FK bridge.
-  - Link/relink/unlink lifecycle.
-  - Context resolver.
-  - Ambiguity handling.
-  - Activity logging and permissions.
+- Durable, explicit Maternity context links for:
+  - Emergency cases
+  - Admission Requests
+  - Admissions
+- Shared `MaternityContextTargetService`.
+- Consultation → Admission Request handoff.
+- Gynaecology → Obstetrics/Maternity referral through the existing consultation
+  routing service.
+- Emergency → Pregnancy/Labor/Admission Request handoffs.
+- Maternity → Emergency explicit escalation.
+- Admission Request → Admission Maternity context propagation.
+- Admission Maternity context resolver and workspace view model.
+- Postnatal review links.
+- Safe named-route return contexts.
+- Additive permissions and EN/FR localisation.
+- Four new feature suites:
+  - 64 tests passed.
+- All Emergency suites:
+  - 88 tests passed.
+- Consultation baseline:
+  - 230 passed / 22 documented pre-existing failures.
+- Admission/Maternity baselines remained unchanged.
+- Phase 14R.5 introduced zero new failures.
+- All 10 O&G/Maternity integration flags remain false by default.
+- Maternity billing remains disabled and preview-only.
 
-- Phase 14R.3:
-  - Obstetrics stage-aware workspace.
-  - Pregnancy Profile dating method.
-  - Explicit Create Profile, Record ANC and Start Labor actions.
-  - Server-side maternity-owned field guard.
+Important Phase 14R.5 ownership model:
 
-- Phase 14R.3.1:
-  - Obstetrics ribbon and panel wired into the real Consultation workspace.
-  - Clinical mutation boundary hardened.
-  - Query counts measured and optimised.
+- Consultation owns the specialist encounter.
+- Emergency owns the acute emergency episode.
+- Admission owns the inpatient episode.
+- Maternity owns the pregnancy, ANC, labor, delivery, newborn and postnatal
+  records.
 
-- Phase 14R.4:
-  - Gynaecology explicit-only Pregnancy Profile context.
-  - One-way LMP adoption.
-  - Gynaecology obstetric-history ownership.
-  - Obstetrics current_pregnancy and birth_plan conversion.
-  - Specialty-entry guard moved to the service boundary.
-  - Order-set bypass closed.
-  - Maternity-shaped order-set actions retargeted.
+Important unresolved Phase 14R.5 items:
 
-- Phase 14R.4.1:
-  - Gynaecology context card wired into the real Consultation workspace.
-  - Retargeted maternity_context_action items receive typed clinician-facing rendering.
-  - Risks R1 and R2 closed.
-  - Decision R5 closed.
+K1:
+Gynaecology → Obstetrics referral requires an active
+`ConsultationSpecialtyProfileMapping` for an Obstetrics consultation
+department. When none exists, the handoff correctly returns unavailable and
+must direct the user into the existing standard consultation-creation flow.
 
-Current feature flags remain dark by default:
+Do not create a new referral subsystem.
 
-CONSULTATION_OBSTETRIC_MATERNITY_WORKSPACE_ENABLED=false
-CONSULTATION_OBSTETRIC_MATERNITY_WRITE_GUARD_ENABLED=false
-CONSULTATION_GYNAECOLOGY_MATERNITY_CONTEXT_ENABLED=false
-CONSULTATION_GYNAECOLOGY_MATERNITY_WRITE_GUARD_ENABLED=false
+K2:
+Several Phase 14R.5 handoff buttons reference modal IDs whose modal bodies are
+not yet implemented.
 
-Current documented baselines:
+Examples documented in the report include:
 
-- New 14R.4.1 tests: 22 passing.
-- tests/Feature/Consultations:
-  - 230 passed
-  - 22 documented pre-existing failures
-- Maternity suites:
-  - one documented pre-existing ANC failure
-- Phase 14R.2–14R.4.1 introduced zero new failures.
-- Maternity billing remains preview-only.
-- MATERNITY_BILLING_ENABLED=false by default.
-- MaternityBillingPostingService::postForSource() remains non-posting.
-- No billing card exists in the doctor Consultation workspace.
+- `emergencyLinkPregnancyModal`
+- `admissionLinkPregnancyModal`
+- `consultationMaternityAdmissionRequestModal`
 
-Now implement Phase 14R.5:
+There may be additional modal targets.
 
-Admission, Emergency, Labor, Delivery and Postnatal Handoff Integration.
+Routes, permissions, services and server-side behavior are implemented and
+tested, but buttons targeting missing modals are inert.
+
+K3:
+The no-context Consultation handoff panel costs eight queries, mostly from
+permission loading. It is not a blocker but should be observed during pilot.
+
+K4:
+Legacy `source_type=maternity` Admission Requests are ambiguous because
+`source_id` may refer to an ANC Visit or a Labor Episode. They must continue
+to show a warning and require explicit linking. Do not reinterpret them.
+
+Now implement Phase 14R.5.1:
+
+Handoff UI Completion and Pilot Closure.
 
 Goal:
 
-Create durable, explicit and idempotent operational handoffs between:
-
-- Consultation
-- Emergency
-- Admission Requests
-- Admissions
-- Pregnancy Profiles
-- ANC
-- Labor
-- Delivery
-- Newborn
-- Postnatal
-
-while preserving clear ownership:
-
-- Consultation owns the specialist encounter.
-- Emergency owns triage, emergency treatment, bay, emergency notes and disposition.
-- Admission owns bed, ward, nursing, medication/MAR and discharge.
-- Maternity owns Pregnancy Profile, ANC, Labor, Delivery, Newborn and Postnatal.
-- Existing order systems continue owning investigations, radiology, procedures,
-  prescriptions, pharmacy and tasks.
-
-The integration must link existing records and invoke existing services.
-
-It must not create parallel emergency, admission, labor, delivery or postnatal
-engines inside Consultation.
-
-It must not silently duplicate clinical records.
-
-It must not silently change operational ownership.
-
-Important boundaries:
-
-- Do not implement summary projection or immutable completion snapshots.
-- Do not implement historical O&G specialty-entry reconciliation.
-- Do not enable Maternity billing posting.
-- Do not change consultation readiness.
-- Do not change admission discharge enforcement defaults.
-- Do not rewrite Emergency.
-- Do not rewrite Admission.
-- Do not rewrite Maternity.
-- Do not implement Theatre handoff in this phase beyond preserving current
-  escalation flags and navigation.
-- Do not run composer test:wide.
-- Do not touch docs/prompt.md.
-
-1. Audit all existing handoff and creation services first
-
-Before implementation, inspect and document the existing runtime paths for:
-
-Consultation:
-
-- Consultation route/session creation.
-- Consultation referral or department handoff.
-- Route assignment and open-next behavior.
-- Consultation route completion and reopening.
-- Existing return-URL handling.
-- Existing O&G Maternity bridge actions.
-
-Emergency:
-
-- Emergency case creation.
-- Existing patient and temporary-patient emergency entry.
-- Emergency visit creation/status.
-- Emergency session creation.
-- Emergency disposition.
-- Emergency-to-admission flow.
-- Emergency bay assignment/release.
-- Emergency case logs.
-- Emergency duplicate prevention.
-- Existing emergency service/controller classes.
-
-Admission:
-
-- AdmissionRequestService.
-- Admission request source_type/source_id behavior.
-- Admission request acceptance/reservation/conversion.
-- AdmissionService.
-- Emergency-origin admission behavior.
-- Bed reservation and transfer.
-- Admission location history.
-- Nursing workspace.
-- Discharge readiness.
-
-Maternity:
-
-- PregnancyProfileService.
-- MaternityCaseService.
-- AntenatalVisitService.
-- LaborEpisodeService.
-- LaborObservationService.
-- DeliveryRecordService.
-- NewbornRecordService.
-- PostnatalCaseService.
-- Existing ANC/Labor admission-request actions.
-- Labor emergency/theatre escalation flags.
-- Existing postnatal referral behavior.
-- Existing links to visit_id and admission_id.
-
-Orders:
-
-- Investigation request creation.
-- Radiology request creation.
-- Procedure/theatre request creation.
-- Prescription creation.
-- Task creation.
-
-Identify:
-
-- Every existing durable handoff record.
-- Every source/target ID convention.
-- Every duplicate-prevention mechanism.
-- Every idempotency mechanism.
-- Every activity-log convention.
-- Every route used to return to an originating workspace.
-- Any current service that performs database writes during route/view loading.
-
-Do not add a generic handoff engine until the existing mechanisms are fully
-understood.
-
-2. Ratify the operational ownership matrix in code and documentation
-
-The following ownership rules are mandatory.
-
-Consultation:
-
-- Complaints.
-- HOPC.
-- Examination and specialist narrative.
-- Diagnoses.
-- Assessment.
-- Encounter plan.
-- Orders.
-- Encounter-level notes.
-- Consultation completion.
-- Consultation summary.
-
-Emergency:
-
-- Emergency arrival and triage.
-- Emergency acuity.
-- Emergency vitals and notes.
-- Bay assignment.
-- Emergency treatment.
-- Emergency tasks.
-- Emergency disposition.
-- Emergency-to-admission decision.
+Make every visible Phase 14R.5 handoff action operational in the real
+Consultation, Emergency, Admission and Maternity workspaces.
 
-Admission:
-
-- Admission request review.
-- Bed reservation.
-- Admission conversion.
-- Ward/bed.
-- Nursing notes and tasks.
-- Medication/MAR.
-- Admission transfers.
-- Discharge planning and discharge.
+This phase should:
 
-Maternity:
+- Author all missing modal/dialog/form bodies.
+- Ensure every visible button leads to a valid authorised action.
+- Preserve server-side ownership, permission, lifecycle and idempotency rules.
+- Preserve dark-by-default rollout.
+- Avoid introducing additional hot-path queries when features are disabled.
+- Close K2 completely.
+- Verify the K1 fallback is usable without creating a new referral system.
 
-- Pregnancy Profile.
-- ANC Visit.
-- Labor Episode.
-- Labor Observation.
-- Delivery Record.
-- Newborn Record.
-- Postnatal Case.
-- Postnatal mother/newborn observations.
-- Maternity risk and readiness.
+This is a narrow UI and pilot-hardening phase.
 
-Rules:
+Do not implement Phase 14R.6 summary, readiness, snapshots, reconciliation or
+billing policy work yet.
 
-- A handoff may create a link or a new record through the target domain service.
-- The source module must not duplicate the target module’s record.
-- The source record must remain intact and auditable.
-- The target record must retain its normal lifecycle.
-- One operational event must not silently create two target records.
-- Existing source and target history must never be rewritten to simulate a new
-  architecture.
+Do not enable Maternity billing posting.
 
-3. Add dark-by-default integration flags
+Do not create a new Emergency, Admission, Consultation or Maternity engine.
+
+Do not run `composer test:wide`.
 
-Prefer a central configuration file such as:
+Do not touch `docs/prompt.md`.
 
-`config/maternity.php`
+1. Audit every handoff trigger and target before coding
 
-or extend an existing maternity integration config if one already exists.
+Search all changed Phase 14R.5 views for:
 
-Recommended flags:
+- `data-bs-toggle="modal"`
+- `data-bs-target`
+- `href="#..."`
+- JavaScript modal-open calls
+- action keys rendered by handoff presenters
+- forms with missing action routes
+- disabled buttons with no explanatory state
 
-```php
-'integration' => [
-    'consultation_handoffs_enabled' => env(
-        'MATERNITY_CONSULTATION_HANDOFFS_ENABLED',
-        false
-    ),
+Audit at least:
 
-    'emergency_context_enabled' => env(
-        'MATERNITY_EMERGENCY_CONTEXT_ENABLED',
-        false
-    ),
+- `resources/views/consultations/show.blade.php`
+- `resources/views/consultations/partials/maternity/handoff-actions.blade.php`
+- `resources/views/emergency/show.blade.php`
+- `resources/views/emergency/partials/maternity-context-card.blade.php`
+- `resources/views/admissions/show.blade.php`
+- simplified nurse Admission view if the Maternity context card is included
+- `resources/views/admissions/partials/maternity-context-card.blade.php`
+- Maternity Labor, Delivery and Postnatal views that expose Emergency handoff
+  buttons
+- shared Maternity context-card partials
+- any Gynaecology referral CTA
+- any Postnatal review CTA
 
-    'admission_context_enabled' => env(
-        'MATERNITY_ADMISSION_CONTEXT_ENABLED',
-        false
-    ),
+Produce an exact inventory:
 
-    'emergency_handoffs_enabled' => env(
-        'MATERNITY_EMERGENCY_HANDOFFS_ENABLED',
-        false
-    ),
-],
+- trigger label
+- trigger ID
+- modal target ID
+- source workspace
+- controller route
+- HTTP method
+- required request fields
+- required bridge permission
+- required target-domain permission
+- consultation/emergency/admission lifecycle requirement
+- current state:
+  - complete
+  - missing modal
+  - missing form
+  - missing route binding
+  - missing disabled explanation
+  - intentionally unavailable
 
-All flags must default false.
+Do not assume the three documented IDs are the only missing targets.
 
-Flag behavior:
+2. Add an automated modal-target integrity check
 
-A. All flags false
+Add a targeted test or test helper that validates every Phase 14R.5 modal
+trigger.
 
-No new Emergency Maternity card.
-No new Admission Maternity card.
-No handoff actions.
-No additional link/resolver queries.
-Existing Emergency/Admission/Consultation behavior remains unchanged.
+The check should verify that each relevant `data-bs-target="#modalId"` has
+one of:
 
-B. Context flags enabled, handoff flags disabled
+- a matching rendered modal element with `id="modalId"`, or
+- an explicit registered lazy-modal endpoint mapping, if the project already
+  uses lazy modal loading
 
-Read-only Maternity context may be shown.
-Navigation to existing records may be shown.
-No new emergency/admission/maternity records are created.
+A visible trigger must never point to a missing target.
 
-C. Handoff flags enabled
+The test should fail when a new handoff button is added without a corresponding
+dialog/body.
 
-Explicit actions become available according to permissions and lifecycle.
-No action executes automatically from a warning, diagnosis, risk flag or
-context match.
+Do not scan unrelated third-party or global navigation modals unless the
+project has a safe scoped parser.
 
-The existing four Obstetrics/Gynaecology flags remain independent.
+Scope the integrity check to the O&G/Maternity handoff views.
 
-Extract shared Maternity target derivation
+3. Reuse existing modal and form conventions
 
-The ConsultationMaternityLinkService currently knows how to:
+Audit the project’s existing modal architecture:
 
-map supported Maternity models to context types
-derive Pregnancy Profile roots
-validate patient ownership
-handle mother_patient_id for Newborn/Postnatal targets
-reject unsupported and inconsistent targets
+- Bootstrap version and modal markup
+- reusable Blade modal components
+- confirmation dialogs
+- validation-error handling
+- old-input handling
+- searchable selectors
+- AJAX/lazy form loading
+- form dirty-state handling
+- button loading/disabled states
+- success/error flash behavior
 
-Extract that reusable logic into a shared domain service such as:
+Use the existing application pattern.
 
-MaternityContextTargetService
+Do not introduce:
 
-or:
+- a second modal framework
+- a new frontend framework
+- a separate SPA layer
+- inline JavaScript business logic
+- state-changing GET routes
 
-MaternityContextTargetDescriptorFactory
+All mutations must remain POST/PATCH/DELETE as already defined.
 
-It should support:
+4. Add a typed handoff-action presentation contract
 
-PregnancyProfile
-MaternityCase
-AntenatalVisit
-LaborEpisode
-DeliveryRecord
-NewbornRecord
-PostnatalCase
+Avoid scattering route, permission and modal rules through Blade.
 
-It should return a typed descriptor containing:
+Audit and reuse where possible:
 
-context type
-target model/class
-target ID
-Pregnancy Profile ID
-mother/patient ID
-visit ID where available
-admission ID where available
-target FK payload
-warnings
+- `ConsultationMaternityHandoffPresenter`
+- `EmergencyMaternityWorkspaceService`
+- `AdmissionMaternityWorkspaceService`
+- `MaternityContextCardBuilder`
+- `OperationalMaternityViewModel`
 
-Rules:
+Extend an existing presenter or add a typed DTO such as:
 
-ConsultationMaternityLinkService must delegate to the shared service.
-Existing bridge behavior and tests must remain unchanged.
-Patient ownership remains fail-closed.
-Newborn and Postnatal contexts continue validating through mother_patient_id.
-Visit mismatch remains allowed for longitudinal links.
-Do not weaken any Phase 14R.2 validation rule.
-Add Emergency ↔ Maternity explicit links
-
-Create:
-
-emergency_maternity_links
-
-Use the same approved explicit-FK and active-slot design as
-consultation_maternity_links.
+`MaternityHandoffActionViewModel`
 
 Recommended fields:
 
-id
-emergency_case_id
-pregnancy_profile_id nullable
-maternity_case_id nullable
-antenatal_visit_id nullable
-labor_episode_id nullable
-delivery_record_id nullable
-newborn_record_id nullable
-postnatal_case_id nullable
-context_type
-link_role
-linked_by nullable
-linked_at
-unlinked_by nullable
-unlinked_at nullable
-reason nullable
-metadata nullable JSON
-active_slot nullable tiny integer
-timestamps
+- action key
+- label
+- description
+- visible
+- enabled
+- disabled reason
+- route name
+- route parameters
+- HTTP method
+- modal ID
+- confirmation level
+- required fields
+- source module
+- source record ID
+- target module
+- target context type
+- existing target record ID where reused
+- return context
+- permission state
+- lifecycle state
+- duplicate/reuse state
 
-Uniqueness:
+Blade should render from this typed action model.
 
-active link:
-active_slot = 1
-historical link:
-active_slot = null
-unique:
-emergency_case_id
-context_type
-active_slot
+Blade must not:
 
-Add:
+- rediscover permissions
+- query for profiles, requests, admissions or Emergency cases
+- infer whether a record should be reused
+- build unsafe return URLs
+- interpret ambiguous legacy `source_id`
 
-EmergencyMaternityLink
-EmergencyMaternityLinkService
-EmergencyMaternityContextResolver
-typed Emergency Maternity context/view model
+5. Implement Consultation → Admission Request modal
 
-Required behavior:
+Author the real body for the existing Consultation Maternity Admission Request
+trigger.
 
-Same-target link is idempotent.
-Different target requires explicit relink with reason.
-Unlink preserves history.
-Patient ownership is validated.
-No profile is auto-created.
-No context is inferred from pregnancy-related emergency complaint/diagnosis.
-Same-visit context may be displayed as suggested only if explicitly designed
-and clearly labelled.
-Suggested context is never persisted automatically.
-Multiple Pregnancy Profiles return ambiguous.
-No Labor Episode is started during context resolution.
-No Emergency Case is created during context resolution.
-Add Admission Request ↔ Maternity context links
+Use the actual modal ID referenced by the current view.
 
-Do not overload admission_requests.source_type/source_id.
+Expected fields, based on the existing server action:
 
-Operational source must remain truthful.
+- most-specific linked Maternity context, displayed read-only
+- Pregnancy Profile, displayed read-only
+- priority
+- requested ward
+- provisional diagnosis
+- short clinical handover summary
+- return-to-consultation context
+
+Rules:
+
+- Available in Obstetrics only.
+- Explicit valid Pregnancy Profile context required.
+- Active/editable Consultation required through `mutableRoute()`.
+- Requires both:
+  - `consultation.maternity_context.create_admission_request`
+  - `admission.requests.create`
+- Do not show the action in Gynaecology.
+- Do not create an Admission.
+- Do not reserve a bed automatically.
+- Do not post billing.
+- Do not copy the entire consultation note.
+- Preserve the existing 500-character safe-summary boundary.
+- Repeated submission must reuse the existing open matching request.
+- When an open request already exists:
+  - show its ID and status
+  - replace “Create” with “Open Existing Admission Request” where appropriate
+- Completed, paused, unstarted or invalid Consultations must show the existing
+  lifecycle reason rather than an executable form.
+
+On success:
+
+- close/return safely
+- return to the same Consultation Maternity panel
+- display whether the request was created or reused
+- provide a link to the Admission Request detail page
+
+6. Implement Emergency Pregnancy Profile selector/link modal
+
+Author the real modal body for the Emergency link/profile action.
+
+The modal must support:
+
+- confirming a suggested same-visit Pregnancy Profile
+- selecting an existing same-patient Pregnancy Profile
+- linking the selected profile
+- relinking with a required reason
+- unlinking with a required reason
+- navigating to explicit profile creation when permitted
+
+Rules:
+
+- Never preselect among multiple active profiles.
+- Never show another patient’s profile.
+- Never create or link because of:
+  - emergency complaint
+  - diagnosis
+  - danger sign
+  - patient sex
+  - pregnancy test
+- Suggested context remains unpersisted until explicit confirmation.
+- Ambiguous candidates require explicit selection.
+- Link/relink/unlink must use `EmergencyMaternityLinkService`.
+- Same-target linking is idempotent.
+- Relink/unlink reasons are required.
+- Existing history remains preserved.
+- Profile creation requires both:
+  - `emergency.maternity_context.create_profile`
+  - `maternity.pregnancy.create`
+- Link actions require the relevant Emergency bridge permission and target
+  profile visibility.
+
+Candidate-loading performance:
+
+- Do not load all candidate Pregnancy Profiles on every Emergency page render.
+- Prefer the existing searchable-selector pattern or a lazy internal endpoint.
+- Candidate lookup occurs only when the user opens the selector.
+- Search is patient-scoped server-side.
+- Client input must not be able to change the patient scope.
+
+7. Implement Emergency Start/Open Labor dialog
+
+Author the action body for starting or opening Labor from Emergency.
+
+Display:
+
+- explicitly linked Pregnancy Profile
+- current gestational age/EDD where available
+- existing active Labor Episode if one exists
+- Emergency visit/context
+- warning that Emergency remains owner of acute care
+- warning that Maternity owns Labor records
+
+Behavior:
+
+- Explicit Pregnancy Profile link required.
+- Suggested context is insufficient.
+- Requires:
+  - `emergency.maternity_context.start_labor`
+  - `maternity.labor.start`
+- If an active episode exists:
+  - do not show a second-create form
+  - show “Open Existing Labor Episode”
+- Otherwise:
+  - show only the inputs already accepted by the existing
+    `LaborEpisodeService` handoff route
+  - do not duplicate the full Labor form inside Emergency
+- Repeated submission reuses the active episode.
+- Delivered, closed or cancelled Labor Episodes are not reused.
+- No Labor Episode is started automatically from the context card.
+- No billing is posted.
+- No Admission Request is created automatically.
+
+On success:
+
+- show created/reused result
+- provide Open Labor action
+- preserve Emergency return context
+
+8. Implement Emergency Admission Request modal
+
+Author the real Emergency Maternity Admission Request dialog.
+
+Display:
+
+- Emergency case
+- Pregnancy Profile
+- active Labor Episode where available
+- operational source:
+  - Emergency
+- clinical maternity context:
+  - separate and clearly labelled
+- requested ward
+- priority
+- provisional diagnosis
+- short handover summary
+
+Rules:
+
+- Use existing Emergency disposition/admission-request behavior.
+- `source_type` remains `emergency`.
+- `source_id` remains EmergencyCase ID.
+- Maternity context is written through
+  `AdmissionRequestMaternityLinkService`.
+- Do not overload source fields.
+- Repeated action reuses the open Emergency Admission Request.
+- Existing disposition/bay history remains intact.
+- Do not auto-admit.
+- Do not auto-reserve a bed.
+- Do not post billing.
+- Suggested Maternity context must be confirmed before a Maternity-aware request
+  is submitted.
+
+When an open request exists:
+
+- show current status
+- show Open Request action
+- do not render a misleading “Create another” button
+
+9. Implement Admission Pregnancy/Maternity context modal
+
+Author the real Admission context-management modal.
+
+Support:
+
+- link an existing same-patient Pregnancy Profile
+- link a more specific Maternity target where allowed by the current server
+  action
+- correct/relink context with required reason
+- unlink with required reason
+- inspect propagated request context
+- distinguish:
+  - carried from Admission Request
+  - linked directly to Admission
+  - inferred from matching `admission_id`
+  - legacy ambiguous source warning
+
+Rules:
+
+- Use `AdmissionMaternityLinkService`.
+- Never modify `PregnancyProfile.admission_id` as the durable linkage.
+- Never overwrite a stage record’s conflicting `admission_id`.
+- Never choose between multiple Pregnancy Profiles automatically.
+- Direct non-maternity Admissions remain unaffected.
+- Link/relink/unlink requires:
+  - Admission bridge permission
+  - target Maternity visibility
+- Candidate profiles load only when the modal is opened.
+- No ANC, Labor, Delivery, Newborn or Postnatal record is created by this
+  modal.
+- No billing is posted.
+
+For propagated request context:
+
+- display the source Admission Request
+- display the operational origin
+- display the clinical Maternity context separately
+
+10. Implement Maternity → Emergency handoff confirmation
+
+Author the real dialog for explicit Emergency escalation from:
+
+- Labor Episode
+- Delivery Record where supported
+- Postnatal Case
+
+Display:
+
+- source Maternity record
+- Pregnancy Profile
+- patient
+- current visit
+- escalation/referral flag state
+- warning:
+  - the flag alone created nothing
+  - this explicit action will create or open an Emergency Case
+- existing active linked/on-visit Emergency Case where present
+
+Rules:
+
+- Requires:
+  - `maternity.emergency_handoff.create`
+  - existing Emergency case-create permission
+- Use `MaternityEmergencyHandoffService`.
+- Never manually insert an EmergencyCase.
+- Reuse an active linked or same-visit Emergency Case.
+- Repeated submission is idempotent.
+- Do not create an Admission Request automatically.
+- Do not create a Theatre case.
+- Do not post billing.
+- Preserve return context to the originating Maternity record.
+
+On success:
+
+- state whether Emergency Case was created or reused
+- provide Open Emergency Case
+- preserve source Maternity record
+
+11. Implement Postnatal review/link dialog where referenced
+
+If the Consultation handoff panel exposes a Postnatal review button or modal,
+author its body.
+
+Support:
+
+- select/link an existing same-patient Postnatal Case
+- open the existing Postnatal Case
+- show current readiness read-only
+- show latest mother/newborn observation timestamps
+- preserve Consultation return context
+
+Rules:
+
+- Requires:
+  - `consultation.maternity_context.open_postnatal`
+  - `maternity.postnatal.view`
+- No Postnatal Case is created automatically.
+- No mother/newborn observation is created.
+- Consultation note remains Consultation-owned.
+- Completed Consultation may view/link existing context according to the
+  approved bridge policy.
+- Clinical Postnatal mutations remain in Maternity.
+
+12. Close K1 with a real standard-flow fallback
+
+Do not create a new referral subsystem.
+
+When Gynaecology → Obstetrics referral is unavailable because there is no
+active `ConsultationSpecialtyProfileMapping`:
+
+- show a clear unavailable reason
+- provide a real link into the existing standard create-consultation/referral
+  flow
+- preserve:
+  - patient
+  - visit
+  - linked Pregnancy Profile context where safe
+  - originating Gynaecology Consultation return context
+- do not preselect an invalid department
+- do not create a route until the user completes the existing standard flow
+- do not change the Gynaecology specialty
+- do not create ANC, Labor or Admission Request
+
+When a valid mapping exists:
+
+- show the explicit referral confirmation
+- reuse the existing `ConsultationRouteService`
+- repeated submission must reuse/detect the existing open equivalent route
+- link the target route to the same Pregnancy Profile
+- preserve the original Gynaecology route and entries
+
+K1 remains a configuration dependency, but the clinician-facing fallback must
+be fully usable.
+
+13. Render disabled/unavailable states honestly
+
+Every handoff action must render one of:
+
+- enabled
+- existing_record
+- blocked
+- unavailable
+- ambiguous
+- permission_missing
+- feature_disabled
+- invalid_context
+
+Do not render a clickable button when the server will inevitably reject it.
 
 Examples:
 
-Request created by Emergency:
-source_type = emergency
-source_id = EmergencyCase ID
-Request created from Consultation:
-source_type = consultation
-source_id = VisitConsultationRoute ID
-Request created directly from Maternity:
-source_type = maternity
-source_id remains its current source ID behavior
+- completed Consultation clinical action:
+  - blocked
+  - start a new active Consultation or use Maternity
+- no explicit Pregnancy Profile:
+  - link/confirm first
+- target permission missing:
+  - underlying Maternity/Admission/Emergency permission required
+- feature flag disabled:
+  - integration unavailable
+- existing open request:
+  - open existing request
+- active Labor exists:
+  - open existing Labor
+- ambiguous legacy source:
+  - explicit context selection required
 
-Add a separate explicit context table:
+The server remains authoritative even when the UI correctly disables an
+action.
 
-admission_request_maternity_links
+14. Preserve lifecycle boundaries
 
-Recommended fields:
+Context-management actions:
 
-id
-admission_request_id
-pregnancy_profile_id nullable
-maternity_case_id nullable
-antenatal_visit_id nullable
-labor_episode_id nullable
-delivery_record_id nullable
-newborn_record_id nullable
-postnatal_case_id nullable
-context_type
-link_role
-linked_by nullable
-linked_at
-unlinked_by nullable
-unlinked_at nullable
-reason nullable
-metadata nullable
-active_slot nullable
-timestamps
+- link
+- relink
+- unlink
+- review existing context
 
-Use the same active-slot uniqueness strategy:
+May remain available after Consultation completion where already approved.
 
-one active link per request/context type
-unlimited historical rows
+Clinical/operational creation actions launched from Consultation:
 
-Add:
+- create Pregnancy Profile
+- adopt LMP
+- record ANC
+- start Labor
+- create Admission Request
+- create Obstetrics referral
 
-AdmissionRequestMaternityLink
-AdmissionRequestMaternityLinkService
+Must use the appropriate existing mutation/lifecycle boundary.
 
-Rules:
+Emergency actions must respect Emergency case state.
 
-Operational source remains separate from clinical Maternity context.
-Existing requests without this table remain valid.
-Existing source_type=maternity requests remain valid.
-Do not automatically reinterpret ambiguous legacy source IDs.
-Legacy ambiguous requests should show a warning rather than guessing the
-source model.
-Context links are created only by explicit handoff actions or known
-idempotent service paths.
-Add Admission ↔ Maternity explicit links
+Admission actions must respect Admission status.
 
-Create:
+Maternity Emergency handoff must respect source-record and patient validity.
 
-admission_maternity_links
+No UI change may weaken the server-side checks already implemented in 14R.5.
 
-Use the same target columns, roles, audit fields and active-slot uniqueness.
+15. Preserve idempotency visibly
 
-Add:
+The UI should expose the server’s idempotent results.
 
-AdmissionMaternityLink
-AdmissionMaternityLinkService
-AdmissionMaternityContextResolver
-typed Admission Maternity view model
+For repeated actions:
 
-Resolution order:
+- show “Existing record reused”
+- show the existing record ID/status
+- link to the existing record
+- do not present success wording that implies a duplicate record was created
 
-Explicit active Admission Maternity links.
-Active links carried from the Admission Request.
-Maternity records whose admission_id matches the Admission.
-Single Pregnancy Profile candidate.
-None/ambiguous.
+Cover:
 
-Rules:
+- Consultation → Admission Request
+- Emergency → Labor
+- Emergency → Admission Request
+- Maternity → Emergency Case
+- Gynaecology → Obstetrics referral
+- request → Admission propagated context
 
-Never choose “latest” between multiple Pregnancy Profiles.
-Never create a link during resolution.
-Never create a Maternity record during resolution.
-Direct non-maternity admissions remain unaffected.
-Existing admissions remain valid without any new link.
-Newborn contexts continue validating against the mother for this O&G
-integration.
-A separate neonatal/paediatric admission bridge is out of scope.
-Add request-to-admission context propagation
+Do not add client-side duplicate identity logic.
 
-Update the existing admission conversion path safely.
+The server-side transactional identity remains authoritative.
 
-When an Admission Request with active Maternity context links is converted:
+16. Safe return contexts
 
-Preserve the Admission Request.
-Create corresponding Admission Maternity links with:
-link_role = handoff
-Keep source context IDs.
-Preserve the operational origin:
-Emergency
-Consultation
-Maternity
-direct
-Do not duplicate active links.
-Run context propagation in the same transaction as safe admission conversion,
-or in a transactionally consistent post-conversion service step.
-A failure to propagate context must not leave a partially converted admission
-without a clear error/rollback strategy.
+All modal forms must use `MaternityReturnContext`.
 
-Maternity stage records:
+Do not accept raw return URLs.
 
-Where the relevant source model contains admission_id:
+Required behavior:
 
-If admission_id is null and the stage record logically belongs to this
-admission:
-populate it through the relevant Maternity service or safe domain method
-If admission_id already equals this Admission:
-treat idempotently
-If admission_id points to another Admission:
-do not overwrite
-record a conflict warning
-require review
+- Consultation action returns to the same Consultation/panel.
+- Emergency action returns to the same Emergency case/context card.
+- Admission action returns to the same Admission/context tab.
+- Maternity Emergency action returns to the same Labor/Delivery/Postnatal
+  record.
+- Invalid return context falls back to the normal target show page.
+- External URLs remain structurally impossible.
+- Authorization is rechecked at the destination.
+- No browser-history loops.
 
-Do not force PregnancyProfile.admission_id to represent every future admission.
+17. Validation and error rendering
 
-The durable source of current admission linkage should be
-admission_maternity_links, not a single overwritable Pregnancy Profile field.
-
-Add Consultation → Admission Request handoff
-
-Add permission:
-
-consultation.maternity_context.create_admission_request
-
-Also require:
-
-admission.requests.create
-
-This action is a clinical/operational mutation and must require:
-
-active/editable Consultation via mutableRoute()
-explicit valid Pregnancy Profile context
-relevant underlying Maternity context permission
-relevant Admission Request permission
-
-Available from Obstetrics only.
-
-Do not expose it in Gynaecology by default.
-
-Recommended behavior:
-
-Allow creating an Admission Request from:
-Pregnancy Profile
-ANC Visit
-active Labor Episode
-Maternity Case
-Use the most specific explicit linked context available.
-source_type = consultation
-source_id = VisitConsultationRoute ID
-create AdmissionRequest Maternity link(s)
-copy only safe handover fields:
-priority
-requested ward
-provisional diagnosis where selected/available
-short clinical summary
-Do not copy full consultation notes into request metadata.
-Do not post billing.
-Do not auto-admit.
-Do not reserve a bed automatically unless the existing request workflow
-already explicitly supports that user action.
-
-Duplicate prevention:
-
-Reuse an existing open request for:
-same patient
-same source Consultation route
-same Pregnancy Profile
-same most-specific Maternity context
-Rejected, cancelled or converted requests are not reused as open.
-Repeated button clicks must not create duplicate open requests.
-Use locking/transactional duplicate protection.
-
-After creation:
-
-Show request ID/status.
-Link to Admission Request detail.
-Return to the same Obstetrics Consultation Maternity panel.
-Do not create a duplicate specialty entry.
-Add explicit Gynaecology → Obstetrics/Maternity referral handoff
-
-Gynaecology must remain Gynaecology.
-
-Audit the existing Consultation referral/route creation service.
-
-If a safe existing service exists:
-
-Add an explicit action:
-
-“Refer to Obstetrics/Maternity”
+Use the existing project form-error pattern.
 
 Requirements:
 
-Current Gynaecology route remains unchanged.
-Original entries remain intact.
-An explicit linked Pregnancy Profile is required.
-The new target Consultation/referral uses the existing routing service.
-Do not invent a parallel consultation route engine.
-Link the target Obstetrics consultation route to the same Pregnancy Profile
-with:
-link_role = handoff
-Do not create ANC automatically.
-Do not start Labor automatically.
-Do not create an Admission Request automatically.
-Repeated action should reuse or detect an existing open equivalent referral
-where the existing system supports idempotency.
+- validation messages appear inside the relevant modal/dialog
+- user input is preserved where safe
+- modal can reopen after redirect when validation fails, using the project’s
+  existing flash/session convention
+- patient mismatch is shown clearly
+- ambiguous profile selection is shown clearly
+- relink/unlink reason errors are shown clearly
+- conflicting `admission_id` is shown as a review conflict, not overwritten
+- duplicate/idempotent result is not displayed as an error
+- no stack traces or internal model class names are exposed
 
-If the existing referral architecture cannot safely create a target route:
+Do not duplicate validation rules already owned by controller requests/services.
 
-Add a link into the existing standard referral/create-consultation flow with
-safe preselected context.
-Do not build a new referral subsystem in this phase.
-Document the remaining limitation.
+18. Permissions
 
-Add permission only if needed:
+Do not add new permissions unless the audit finds an action lacking an
+appropriate existing bridge permission.
 
-consultation.maternity_context.refer_obstetrics
+Use Phase 14R.5 permissions:
 
-Underlying consultation/referral permission must also pass.
+Consultation:
 
-Add Emergency Maternity context UI
+- `consultation.maternity_context.create_admission_request`
+- `consultation.maternity_context.refer_obstetrics`
+- `consultation.maternity_context.open_postnatal`
 
-Behind:
+Emergency:
 
+- `emergency.maternity_context.view`
+- `emergency.maternity_context.link`
+- `emergency.maternity_context.unlink`
+- `emergency.maternity_context.create_profile`
+- `emergency.maternity_context.start_labor`
+- `emergency.maternity_context.create_admission_request`
+
+Admission:
+
+- `admission.maternity_context.view`
+- `admission.maternity_context.link`
+- `admission.maternity_context.unlink`
+
+Maternity:
+
+- `maternity.emergency_handoff.create`
+
+Every action still requires the target-domain permission.
+
+Do not expose action forms to a user who lacks either half.
+
+19. Feature-flag behavior
+
+All new modal bodies and action controls remain governed by the Phase 14R.5
+flags.
+
+```env
+MATERNITY_CONSULTATION_HANDOFFS_ENABLED=false
 MATERNITY_EMERGENCY_CONTEXT_ENABLED=false
-
-Add a compact Maternity context card/ribbon to the Emergency case workspace.
-
-Use the real Emergency workspace data composer.
-
-Do not query inside Blade.
-
-When disabled:
-
-no resolver invocation
-no new queries
-no UI change
-
-When no explicit context exists:
-
-do not create or infer pregnancy
-show a discreet Link/Create Pregnancy Profile action only when permitted
-same-visit candidate may be shown as suggested, never silently linked
-
-When explicitly linked, show:
-
-Pregnancy Profile
-gestational age
-EDD
-risk
-latest ANC
-active Labor Episode
-admission request/admission state
-Delivery/Postnatal state where relevant
-source-of-truth labels
-links to Maternity records
-
-Emergency retains ownership of:
-
-triage
-emergency notes
-emergency vitals
-bay
-emergency treatment
-emergency tasks
-disposition
-
-Do not duplicate Emergency clinical fields in Maternity.
-
-Add explicit Emergency → Maternity actions
-
-Add permissions additively as needed:
-
-emergency.maternity_context.view
-emergency.maternity_context.link
-emergency.maternity_context.unlink
-emergency.maternity_context.create_profile
-emergency.maternity_context.start_labor
-emergency.maternity_context.create_admission_request
-
-Every action also requires the corresponding underlying Maternity or Admission
-permission.
-
-Actions:
-
-A. Link/Create Pregnancy Profile
-
-Explicit only.
-Same-patient validation.
-No profile from complaint/diagnosis/test.
-Use PregnancyProfileService.
-Create Emergency Maternity link with created or primary.
-
-B. Start/Re-use Labor Episode
-
-Explicit valid Pregnancy Profile required.
-If active Labor Episode exists:
-reuse/open it
-do not create another
-Otherwise use LaborEpisodeService.
-Carry Emergency visit/admission/department context where safe.
-Link Labor Episode to Emergency case.
-Do not auto-start from danger signs or emergency diagnosis.
-
-C. Create/Re-use Admission Request
-
-Use the existing Emergency admission/disposition flow.
-source_type remains emergency.
-source_id remains EmergencyCase ID.
-Attach active Emergency Maternity contexts through
-AdmissionRequestMaternityLinkService.
-Repeated actions reuse the open request.
-Do not create a second request for the same emergency/context.
-Do not change Emergency disposition history.
-Existing emergency-to-admission behavior remains intact when no Maternity
-context exists.
-Add Maternity → Emergency explicit escalation handoff
-
-Labor and Postnatal already store Emergency escalation/referral indicators.
-
-Do not create Emergency cases automatically from those flags.
-
-Behind:
-
+MATERNITY_ADMISSION_CONTEXT_ENABLED=false
 MATERNITY_EMERGENCY_HANDOFFS_ENABLED=false
 
-Add explicit actions from:
+When a feature is false:
 
-Labor Episode
-Delivery Record where clinically appropriate
-Postnatal Case
+no active trigger
+no modal body
+no candidate query
+no presenter action calculation beyond a cheap disabled state where needed
+no server-side behavior change
 
-Action:
+Enabling read-only context without handoffs:
 
-“Create/Open Emergency Case”
+shows context
+does not render mutation forms
 
-Required behavior:
+Enabling handoffs:
 
-Use the existing Emergency case creation service/controller path.
-Do not manually insert EmergencyCase rows.
-Reuse an existing active linked Emergency case when one exists.
-Do not create duplicate Emergency cases for repeated clicks.
-Create Emergency Maternity links with link_role=handoff.
-Preserve Maternity source records.
-Keep Emergency as operational owner after handoff.
-Preserve originating Maternity return URL.
-Do not create Admission Request automatically unless the clinician explicitly
-chooses Emergency disposition/admission later.
-Do not create Theatre cases in this phase.
+renders only actions the user may execute
 
-Permissions:
+The four Obstetrics/Gynaecology feature flags remain independent.
 
-a bridge/handoff permission such as:
-maternity.emergency_handoff.create
-plus the existing Emergency case-create permission.
-Add Admission Maternity context UI
+Performance and query protection
 
-Behind:
+Candidate/profile selectors should not add hot-path cost.
 
-MATERNITY_ADMISSION_CONTEXT_ENABLED=false
+Required:
 
-Add a Maternity context tab/card to:
+Flag-disabled surfaces:
+zero new queries
+Read-only cards:
+keep existing Phase 14R.5 measured counts
+Candidate Pregnancy Profile queries:
+run only when selector/modal is explicitly opened
+Ward selector:
+use the project’s existing bounded/active ward query
+do not load beds unless the current action requires them
+Modal partials:
+perform no direct queries
+Presenters:
+reuse existing prepared view models
+No N+1 for candidate profiles
+No repeated request lookup for each button
+No persistent cross-request caching
 
-full Admission workspace
-simplified nurse Admission view where appropriate
+Measure:
 
-Use one prepared Admission Maternity view model.
+Emergency page with flags off
+Emergency page with context on and selector closed
+Emergency profile selector opened
+Admission page with flags off
+Admission context on and selector closed
+Admission profile selector opened
+Consultation page with handoffs off
+Consultation handoff modal opened
+Maternity Labor/Postnatal page with Emergency handoff off/on
 
-Do not query in Blade.
+Document exact query counts and compare to Phase 14R.5.
 
-Show:
+Localisation
 
-Pregnancy Profile
-Pregnancy status
-gestational age and EDD
-ANC summary
-active Labor Episode
-latest Labor observation
-Delivery Record
-Newborn summary
-Postnatal readiness
-Emergency origin where applicable
-Admission Request origin
-current ward/bed
-cross-links to Maternity records
+Extend EN/FR in strict recursive parity.
 
-Do not duplicate forms for:
+Include keys for:
 
-ANC
-Labor observations
-Delivery
-Newborn
-Postnatal observations
+General modal behavior:
 
-The Admission workspace may provide:
+Confirm handoff
+Select context
+Existing record reused
+Record created
+Record already exists
+Operation unavailable
+Action blocked
+Feature disabled
+Permission required
+Invalid context
+Ambiguous context
+Return to source workspace
+Validation failed
 
-Open Pregnancy Profile
-Open ANC history
-Open Labor workspace
-Open Delivery record
-Open Newborn record
-Open Postnatal case
+Consultation Admission Request:
 
-Clinical writes remain in Maternity.
+Create Maternity Admission Request
+Open Existing Admission Request
+Requested ward
+Priority
+Provisional diagnosis
+Clinical handover summary
+Operational source: Consultation
+Clinical context: Maternity
+No Admission was created
+No bed was reserved
 
-Admission continues owning:
+Emergency:
 
-bed
-ward
-nursing
-MAR
-admission care flags
-discharge planning
-discharge summary
-Add explicit Admission context management
+Link Pregnancy Profile
+Confirm Suggested Pregnancy Profile
+Select Pregnancy Profile
+Create Pregnancy Profile in Maternity
+Relink Pregnancy Profile
+Unlink Pregnancy Profile
+Start Labor
+Open Existing Labor
+Create Admission Request
+Open Existing Admission Request
+Emergency remains owner of acute care
+Labor remains owned by Maternity
 
-Add permissions:
+Admission:
 
-admission.maternity_context.view
-admission.maternity_context.link
-admission.maternity_context.unlink
-
-Underlying Maternity view/update permissions still apply.
-
-Allow:
-
-Link existing Pregnancy Profile/context.
-Relink with reason.
-Unlink with reason.
-Correct an incorrectly propagated request context.
-Open target Maternity records.
-
-Do not allow:
-
-Auto-create Pregnancy Profile merely because the patient is admitted.
-Auto-start ANC.
-Auto-start Labor.
-Auto-create Delivery/Newborn/Postnatal.
-Auto-infer between multiple active Pregnancy Profiles.
-
-For a maternity-linked Admission, an explicit Pregnancy Profile link is the
-root context.
-
-Integrate Postnatal with Admission discharge readiness
-
-Phase 12 already added an advisory Postnatal readiness area.
-
-Use the explicit Admission Maternity context when available.
-
-Required behavior:
-
-Admission discharge readiness can resolve the linked PostnatalCase directly.
-Mother readiness and Newborn readiness remain Maternity-owned.
-Admission readiness displays advisory warning/state.
-Default enforcement remains disabled:
-ADMISSION_REQUIRE_POSTNATAL_READY_BEFORE_DISCHARGE=false
-Do not change the existing final discharge flow.
-Do not copy Postnatal observations into Admission nursing notes.
-Do not create Postnatal observations from the Admission view.
-Do not block general non-maternity admissions.
-Add Postnatal review Consultation handoff
-
-Add permission:
-
-consultation.maternity_context.open_postnatal
-
-Also require:
-
-maternity.postnatal.view
-
-From an Obstetrics or appropriate follow-up Consultation:
-
-Allow linking an existing same-patient PostnatalCase using
-ConsultationMaternityLinkService.
-Use link_role=reviewed or handoff.
-Show Postnatal readiness and latest observations read-only.
-Open the Maternity Postnatal workspace for recording observations.
-Keep the Consultation note encounter-owned.
-Do not duplicate mother/newborn observations.
-Do not change Consultation completion or readiness.
-
-If a Consultation route is created from the Postnatal module using an existing
-referral/follow-up service:
-
-link it to the PostnatalCase
-preserve the originating Maternity return context
-do not create a second PostnatalCase
-Define idempotency and duplicate-prevention rules
-
-All handoff actions must be idempotent.
-
-Required duplicate identities:
-
-Consultation → Admission Request:
-
-consultation route
-Pregnancy Profile
-most-specific Maternity target
-open request status
-
-Emergency → Labor:
-
-Emergency case
-Pregnancy Profile
-active Labor Episode
-
-Emergency → Admission Request:
-
-Emergency case
-Pregnancy Profile/context
-open request status
+Link Admission Maternity Context
+Context propagated from Admission Request
+Context linked directly
+Correct context
+Context conflict
+Legacy source cannot be interpreted automatically
 
 Maternity → Emergency:
 
-Maternity source record
-active Emergency case
-same patient/visit where applicable
+Create Emergency Handoff
+Open Existing Emergency Case
+Escalation flag created no Emergency Case
+Emergency Case will be created explicitly
+No Admission Request will be created
+No Theatre Case will be created
 
-Request → Admission propagation:
+Gynaecology fallback:
 
-admission request
-admission
-context type
-target ID
+Obstetrics mapping unavailable
+Continue through standard Consultation creation
+Existing Gynaecology consultation will remain unchanged
+No maternity record will be created automatically
 
-Postnatal → Consultation review:
+Postnatal review:
 
-PostnatalCase
-target Consultation route/referral state
+Link Postnatal Review
+Open Postnatal Case
+Observations remain in Maternity
+No Postnatal observation was created
 
-Rules:
+Verify recursive EN/FR parity.
 
-Repeated clicks return existing records.
-Concurrent clicks must be protected by transaction/locking or unique indexes.
-Same-target links remain idempotent.
-Different targets require relink/correction.
-Completed/rejected/cancelled records must not be mistaken for active records.
-Do not suppress legitimate repeat events such as separate future admissions.
-Add safe return-context handling
+Activity logging
 
-Cross-module navigation must preserve where the clinician came from.
+Do not log modal opens or profile-search queries.
 
-Do not accept arbitrary external return URLs.
+Retain successful identifier-only logs already created in Phase 14R.5.
 
-Create or reuse a safe return-context mechanism such as:
+Do not add logs containing:
 
-MaternityReturnContext
-
-It may carry:
-
-source module
-source record ID
-route name
-consultation route ID
-emergency case ID
-admission ID
-panel/anchor
-signed or validated query data
-
-Rules:
-
-Only internal named routes may be used.
-Authorisation is rechecked on return.
-No open redirect.
-Invalid return context falls back to the target module’s normal show page.
-Do not create browser-history loops.
-Do not silently discard unsaved data.
-Use the existing dirty-state/navigation protection in Consultation.
-Add shared read-only components
-
-Reuse and generalise existing service-backed components where practical:
-
-Pregnancy summary card
-ANC summary card
-Labor summary card
-Delivery summary card
-Newborn summary card
-Postnatal summary card
-Maternity context warning
-Handoff status card
-Operational ownership badge
-
-Components may be used in:
-
-Obstetrics Consultation
-Gynaecology Consultation
-Emergency
-Admission
-Maternity
-
-Rules:
-
-No component may query independently.
-No component may recreate Maternity business logic.
-No duplicate editing forms.
-Every card clearly identifies:
-owner module
-source record
-open/navigation action
-Add activity logging
-
-Use identifier-only logs.
-
-Suggested events:
-
-CONSULTATION_MATERNITY_ADMISSION_REQUEST_CREATED
-GYNAECOLOGY_OBSTETRICS_HANDOFF_CREATED
-EMERGENCY_MATERNITY_CONTEXT_LINKED
-EMERGENCY_LABOR_EPISODE_STARTED
-EMERGENCY_MATERNITY_ADMISSION_REQUEST_CREATED
-MATERNITY_EMERGENCY_HANDOFF_CREATED
-ADMISSION_MATERNITY_CONTEXT_PROPAGATED
-ADMISSION_MATERNITY_CONTEXT_LINKED
-POSTNATAL_CONSULTATION_REVIEW_LINKED
-
-Metadata:
-
-source module
-source record ID
-target module
-target record ID
-Pregnancy Profile ID
-admission request/admission/emergency/consultation IDs
-actor
-timestamp
-handoff role
-
-Do not log:
-
-full clinical notes
-sexual history
+full clinical summary
+diagnosis narrative
 ANC measurements
 Labor observations
 Newborn measurements
 Postnatal observations
-Add permissions additively
+sexual or menstrual history
 
-Consultation:
+If UI completion requires a new event, keep it identifier/status-only.
 
-consultation.maternity_context.create_admission_request
-consultation.maternity_context.refer_obstetrics
-consultation.maternity_context.open_postnatal
-
-Emergency:
-
-emergency.maternity_context.view
-emergency.maternity_context.link
-emergency.maternity_context.unlink
-emergency.maternity_context.create_profile
-emergency.maternity_context.start_labor
-emergency.maternity_context.create_admission_request
-
-Admission:
-
-admission.maternity_context.view
-admission.maternity_context.link
-admission.maternity_context.unlink
-
-Maternity:
-
-maternity.emergency_handoff.create
-
-Every bridge permission also requires the target domain’s existing permission.
-
-Examples:
-
-Start Labor from Emergency:
-
-emergency.maternity_context.start_labor
-maternity.labor.start
-
-Create Admission Request from Consultation:
-
-consultation.maternity_context.create_admission_request
-admission.requests.create
-
-Create Emergency Case from Labor:
-
-maternity.emergency_handoff.create
-existing Emergency case-create permission
-
-Open Postnatal:
-
-consultation.maternity_context.open_postnatal
-maternity.postnatal.view
-
-The bridge must never escalate target-module access.
-
-Do not remove existing permissions.
-
-Add EN/FR localisation
-
-Keep strict recursive parity.
-
-Include keys for:
-
-Ownership:
-
-Operational owner
-Consultation encounter
-Emergency episode
-Admission episode
-Maternity longitudinal record
-Source of truth
-Handoff context
-
-Consultation handoff:
-
-Create Admission Request
-Existing Admission Request
-Admission Request created from Consultation
-Refer to Obstetrics/Maternity
-Current consultation remains Gynaecology
-Open Obstetrics referral
-Open Postnatal review
-
-Emergency:
-
-Emergency Maternity Context
-Link Pregnancy Profile
-Start/Open Labor
-Create/Open Admission Request
-Emergency remains owner of acute care
-Maternity owns pregnancy and labor
-Suggested context
-Confirm link
-Ambiguous Pregnancy Profile
-
-Admission:
-
-Admission Maternity Context
-Context carried from Admission Request
-Context linked directly
-Open Pregnancy Profile
-Open Labor
-Open Delivery
-Open Newborn
-Open Postnatal
-Maternity context conflict
-
-Handoffs:
-
-Handoff created
-Handoff already exists
-Handoff unavailable
-Handoff blocked
-Record reused
-Duplicate prevented
-Context propagation complete
-Context propagation conflict
-Return to Consultation
-Return to Emergency
-Return to Admission
-Return to Maternity
-
-Postnatal:
-
-Postnatal review
-Postnatal readiness is advisory
-Record observations in Maternity
-No observations were duplicated
 Tests
 
 Create:
 
-tests/Feature/ConsultationMaternityHandoffsPhase14R5Test.php
+tests/Feature/MaternityHandoffUiPhase14R5_1Test.php
 
 Create:
 
-tests/Feature/EmergencyMaternityHandoffsPhase14R5Test.php
+tests/Feature/MaternityHandoffModalIntegrityPhase14R5_1Test.php
 
-Create:
+Optional, if selectors use dedicated endpoints:
 
-tests/Feature/AdmissionMaternityHandoffsPhase14R5Test.php
+tests/Feature/MaternityHandoffSelectorsPhase14R5_1Test.php
 
-Create:
+Required modal-integrity tests:
 
-tests/Feature/MaternityOperationalHandoffsPhase14R5Test.php
+Every Phase 14R.5 modal trigger has a rendered target or registered lazy
+endpoint.
+No trigger targets a missing ID.
+Feature-disabled actions do not render active modal triggers.
+Unauthorized users do not receive executable modal forms.
+Read-only context mode renders no mutation forms.
 
-Required shared-link tests:
+Required Consultation modal tests:
 
-Shared target descriptor preserves all Phase 14R.2 derivation behavior.
-Consultation bridge tests remain unchanged.
-Emergency same-target link is idempotent.
-Emergency relink requires reason.
-Admission link validates patient ownership.
-Newborn/Postnatal links validate mother patient.
-One active link per source/context type.
-Historical rows are preserved.
+Consultation Admission Request trigger opens a real modal.
+Form posts to the correct route.
+Required fields validate.
+Active Consultation can create/reuse request.
+Completed Consultation renders blocked guidance, not an executable form.
+Open request renders Open Existing Request.
+Repeated submission reuses the request.
+No Admission, bed reservation or invoice item is created.
+Return context returns to the same Consultation panel.
 
-Required scenario A — Obstetrics outpatient:
+Required Emergency modal tests:
 
-Linked Obstetrics Consultation can create one Admission Request.
-Request source remains consultation.
-Request receives Maternity context link.
-Repeated action reuses the open request.
-No automatic admission occurs.
-No billing occurs.
-Existing ANC/Labor records are not duplicated.
-
-Required scenario B — Gynaecology, no pregnancy:
-
-No Maternity context is required.
-No handoff action runs automatically.
-Existing Gynaecology completion remains unchanged.
-
-Required scenario C — Gynaecology discovers pregnancy:
-
-Linking/creating profile leaves specialty Gynaecology.
-Explicit Obstetrics/Maternity referral preserves original route and entries.
-Target route/referral is linked to the same Pregnancy Profile if implemented.
-Repeated referral does not duplicate an open equivalent route.
-No ANC/Labor/Admission Request is created automatically.
-
-Required scenario D — Emergency obstetric case:
-
-Emergency context feature off adds zero resolver calls.
-Explicit Pregnancy Profile can be linked.
+Link Pregnancy trigger opens a real selector/modal.
+Candidate query is same-patient scoped.
+Ambiguous profiles require selection.
+Suggested profile requires confirmation.
 Patient mismatch is blocked.
-Start Labor creates exactly one LaborEpisode.
-Existing active LaborEpisode is reused.
-Emergency admission request source remains emergency.
-Admission Request receives Maternity context links.
-Repeated admit/request action does not duplicate the request.
-Emergency bay/disposition history remains intact.
-No Emergency or Labor record is created by context resolution.
+Relink/unlink require reason.
+Start Labor modal opens only with explicit profile.
+Existing active Labor shows Open Existing Labor.
+Repeated Start Labor reuses the episode.
+Admission Request modal preserves source_type=emergency.
+Request receives Maternity context links.
+Open request is reused.
+No auto-admission or billing occurs.
 
-Required Maternity → Emergency:
+Required Admission modal tests:
 
-Labor escalation flag alone creates no Emergency case.
-Explicit action creates one Emergency case through existing service.
-Repeated action reuses existing active linked case.
-Emergency Maternity link is created.
-Postnatal explicit emergency handoff works where allowed.
-No Admission Request is created automatically.
-No Theatre case is created.
+Link Pregnancy trigger opens a real modal.
+Request-propagated context is shown separately from operational origin.
+Explicit linking is same-patient scoped.
+Relink/unlink require reason.
+Legacy ambiguous source renders warning.
+Conflicting stage admission_id is never overwritten.
+Direct non-maternity Admission remains unaffected.
+No Maternity record is created.
 
-Required scenario E — admitted obstetric patient:
+Required Maternity → Emergency tests:
 
-Request context propagates to Admission.
-One Admission Maternity link per context.
-Repeated propagation is idempotent.
-Admission shows Pregnancy/Labor/Delivery/Postnatal context.
-Bed/Nursing/MAR/Discharge remain Admission-owned.
-Maternity records remain Maternity-owned.
-Conflicting existing admission_id is not overwritten.
-Direct non-maternity admission remains unaffected.
-Context feature off adds zero resolver calls.
+Labor handoff opens a real confirmation.
+Postnatal handoff opens a real confirmation where supported.
+Flag alone creates no Emergency Case.
+Explicit confirmation creates/reuses one Emergency Case.
+Repeated confirmation reuses it.
+No Admission Request, Theatre Case or invoice item is created.
+Return context returns to source Maternity page.
 
-Required scenario F — Postnatal review:
+Required Gynaecology fallback tests:
 
-Consultation links to existing PostnatalCase.
-Consultation shows read-only readiness/observation summary.
-No new mother/newborn observation is created.
-Open Postnatal action navigates to existing record.
-Consultation note remains encounter-owned.
-Admission discharge readiness remains advisory by default.
+Missing Obstetrics profile mapping shows unavailable reason.
+Standard create-consultation link is usable.
+External/raw return URL is not accepted.
+Existing Gynaecology route remains unchanged.
+Valid mapping renders real referral confirmation.
+Repeated referral reuses/detects the existing route.
+Target route links to the same Pregnancy Profile.
+No ANC/Labor/Admission Request is created.
 
-Return-context tests:
+Required Postnatal review tests:
 
-Consultation → Maternity → Consultation returns to the same route/panel.
-Emergency → Labor → Emergency returns safely.
-Admission → Postnatal → Admission returns safely.
-External return URLs are rejected.
-Unauthorized return target falls back safely.
+Review link modal/form exists.
+Existing same-patient Postnatal Case can be linked.
+No case or observation is created.
+Completed Consultation can open/view according to approved bridge policy.
+Return context is safe.
 
-Permission tests:
+Required lifecycle and permission tests:
 
-Bridge permission without target permission is blocked.
-Target permission without bridge permission is blocked.
-Clinical creation actions require active/editable Consultation where
-applicable.
-Completed Consultation can view/open existing records but cannot create a
-new Admission Request from the completed encounter.
-Gynaecology never receives ANC/Labor mutations.
+Bridge permission without target permission renders disabled reason.
+Target permission without bridge permission renders disabled reason.
+Active Consultation mutation action is executable.
+Completed Consultation action is not executable.
+Context-management action remains available where approved.
+Emergency closed/incompatible state renders blocked reason.
+Admission discharged state prevents inappropriate context mutation where
+current service policy requires it.
+
+Required performance assertions:
+
+Flags off add zero queries.
+Selector candidates are not loaded until selector is opened.
+Modal partials execute no queries.
+One presenter/view model is reused per workspace.
+No per-button request lookup N+1.
 
 Regression:
 
-Phase 14R.2 bridge tests remain green.
-Phase 14R.3/14R.3.1 Obstetrics tests remain green.
-Phase 14R.4/14R.4.1 Gynaecology/order-set tests remain green.
-Existing Emergency tests remain green.
-Existing Admission foundation/bed/nursing/discharge tests remain green.
-Maternity Phase 8–13 tests retain documented baseline.
-Existing Consultation suite retains exactly its documented baseline.
+All four Phase 14R.5 handoff suites remain green.
+Phase 14R.2–14R.4.1 suites remain green.
+Emergency suites remain green.
+Admission foundation/bed/nursing/discharge suites retain baseline.
+Maternity Phase 8–12 suites retain baseline.
+tests/Feature/Consultations retains exactly the documented baseline.
 No invoice item is created.
 Maternity Billing Posting remains disabled.
 EN/FR parity passes.
 
-Run targeted checks:
+Run:
+
+php artisan test tests/Feature/MaternityHandoffUiPhase14R5_1Test.php
+php artisan test tests/Feature/MaternityHandoffModalIntegrityPhase14R5_1Test.php
+php artisan test tests/Feature/MaternityHandoffSelectorsPhase14R5_1Test.php
 
 php artisan test tests/Feature/ConsultationMaternityHandoffsPhase14R5Test.php
 php artisan test tests/Feature/EmergencyMaternityHandoffsPhase14R5Test.php
@@ -1334,10 +1021,7 @@ php artisan test tests/Feature/MaternityOperationalHandoffsPhase14R5Test.php
 
 php artisan test tests/Feature/ConsultationGynaecologyMaternityPilotPhase14R4_1Test.php
 php artisan test tests/Feature/ConsultationObgynMaternityActionRenderingPhase14R4_1Test.php
-php artisan test tests/Feature/ConsultationGynaecologyMaternityPhase14R4Test.php
-php artisan test tests/Feature/ConsultationObgynOrderSetRetargetingPhase14R4Test.php
 php artisan test tests/Feature/ConsultationObstetricsMaternityPilotPhase14R3_1Test.php
-php artisan test tests/Feature/ConsultationObstetricsMaternityWorkspacePhase14R3Test.php
 php artisan test tests/Feature/ConsultationMaternityBridgePhase14R2Test.php
 
 php artisan test tests/Feature/AdmissionWorkflowFoundationTest.php
@@ -1353,6 +1037,7 @@ php artisan test tests/Feature/NewbornBirthOutcomePhase11Test.php
 php artisan test tests/Feature/PostnatalCarePhase12Test.php
 
 php artisan test tests/Feature/Consultations
+
 php artisan route:list --name=consultation
 php artisan route:list --name=emergency
 php artisan route:list --name=admissions
@@ -1361,218 +1046,183 @@ php artisan view:clear
 php artisan config:clear
 git diff --check -- . ':!docs/prompt.md'
 
-Run PHP syntax checks on every changed PHP, Blade and localisation file.
+Only run the optional selector test command when that test file is created.
+
+Run PHP syntax checks on all changed PHP, Blade and localisation files.
+
+Run Blade compile/lint using the existing project-safe method.
 
 Baseline handling:
 
 tests/Feature/Consultations may retain exactly 22 documented pre-existing
 failures.
-AntenatalCarePhase9Test may retain exactly one documented pre-existing
+AntenatalCarePhase9Test may retain its documented pre-existing failure.
+AdmissionNursingCarePhase6Test may retain its documented pre-existing
 failure.
-Any other known broad-suite defects remain outside this targeted phase.
-Phase 14R.5 must introduce zero new failures.
+Phase 14R.5.1 must introduce zero new failures.
 Do not run composer test:wide.
-Performance verification
+Manual pilot acceptance
 
-Measure:
+A. Consultation → Admission Request
 
-Consultation:
+Open an active Obstetrics Consultation with explicit Pregnancy Profile.
+Open the modal.
+Submit an Admission Request.
+Confirm one request.
+Repeat and confirm reuse.
+Confirm no Admission, bed reservation or invoice exists.
 
-Obstetrics handoffs disabled.
-Obstetrics enabled with explicit context and no request.
-Obstetrics with open Admission Request.
-Gynaecology handoffs disabled.
+B. Emergency Pregnancy context
 
-Emergency:
-
-context disabled.
-enabled with no context.
-suggested context.
-explicit Pregnancy Profile.
-explicit Labor Episode.
-
-Admission:
-
-context disabled.
-enabled non-maternity admission.
-linked Pregnancy Profile.
-linked Labor/Delivery/Postnatal context.
-
-Requirements:
-
-Disabled surfaces add zero Maternity resolver calls.
-Non-maternity records use fast no-context paths.
-Each surface resolves at most once per request.
-Shared cards perform no queries.
-No N+1 for Newborn collections.
-No repeated Admission Request lookup per component.
-No persistent cross-request caching.
-Record exact query counts and any optimisation.
-Manual acceptance scenarios
-
-Run or document:
-
-A. Obstetrics outpatient
-
-Link Pregnancy Profile.
-Record ANC.
-Create Admission Request explicitly.
-Confirm one request and one ANC record.
-Confirm no admission or invoice is created automatically.
-
-B. Gynaecology without pregnancy
-
-Confirm no context or handoff requirement.
-Complete normally.
-
-C. Gynaecology discovers pregnancy
-
-Save positive pregnancy test.
-Explicitly create/link Pregnancy Profile.
-Refer to Obstetrics/Maternity.
-Confirm original Gynaecology route and entries remain intact.
-Confirm specialty did not change.
-
-D. Emergency obstetric case
-
-Link Pregnancy Profile.
-Start/reuse Labor.
+Open an Emergency case with no link.
+Open selector.
+Confirm profiles load only then.
+Link a profile.
+Start Labor.
+Repeat and confirm the existing episode opens.
 Create Admission Request.
-Confirm Emergency remains owner of acute episode.
-Confirm no duplicate Labor or request.
+Repeat and confirm reuse.
 
-E. Maternity escalation to Emergency
+C. Admission context
+
+Convert a Maternity-aware request.
+Open Admission Maternity card.
+Confirm propagated context.
+Open correction modal.
+Confirm historical link preservation after relink.
+Confirm bed/nursing/MAR remain unchanged.
+
+D. Maternity → Emergency
 
 Mark Labor/Postnatal escalation.
-Confirm no Emergency case appears automatically.
-Perform explicit handoff.
-Confirm one Emergency case and context link.
-Repeat action and confirm reuse.
+Confirm no Emergency case is created.
+Open explicit handoff dialog.
+Confirm and create/reuse Emergency case.
+Return to the original Maternity page.
 
-F. Admission conversion
+E. Gynaecology referral fallback
 
-Convert maternity-aware request.
-Confirm context propagates.
-Confirm Admission shows Maternity summary.
-Confirm bed, nursing and discharge remain unchanged.
+Remove/disable Obstetrics profile mapping in the test setup.
+Confirm unavailable reason.
+Use standard create-consultation flow.
+Confirm the original Gynaecology Consultation is unchanged.
 
-G. Postnatal review
+F. Permissions
 
-Link Consultation to PostnatalCase.
-Confirm read-only projection.
-Record observation in Maternity.
-Return to Consultation and confirm projection updates.
-Confirm no duplicate observation.
+Test each action with:
+bridge permission only
+target permission only
+both permissions
+Confirm only both makes the form executable.
 Documentation
 
 Create:
 
-docs/maternity/OBGYN_MATERNITY_HANDOFFS_PHASE_14R_5_REPORT.md
+docs/maternity/OBGYN_MATERNITY_HANDOFF_UI_PHASE_14R_5_1_REPORT.md
 
-Include:
+The report must include:
 
-Existing handoff architecture audited.
+Exact trigger/modal audit inventory.
+Missing targets discovered.
 Files changed.
-New tables and models.
-Shared target derivation.
-Emergency link behavior.
-Admission Request context behavior.
-Admission context behavior.
-Consultation-to-Admission behavior.
-Gynaecology referral behavior.
-Emergency-to-Labor/Admission behavior.
-Maternity-to-Emergency behavior.
-Postnatal review behavior.
-Operational ownership matrix.
-Idempotency strategy.
+Modal architecture used.
+Typed action presentation contract.
+Consultation Admission Request UI.
+Emergency link/profile UI.
+Emergency Labor UI.
+Emergency Admission Request UI.
+Admission context-management UI.
+Maternity → Emergency UI.
+Postnatal review UI.
+Gynaecology referral fallback.
+Disabled/unavailable states.
+Lifecycle boundaries.
+Idempotent result display.
 Return-context security.
-Permissions.
-Localisation.
-Activity logging.
-Query counts.
+Validation/error behavior.
+Permission behavior.
+Feature-flag behavior.
+Query-count measurements.
 Tests/checks.
 Baseline comparison.
+Manual pilot results.
 Existing workflows protected.
 Known risks.
-Deferred items.
-Rollout.
-Rollback.
+Rollout and rollback.
+Confirmation that K2 is closed.
 Next recommended phase.
 
 Update:
 
+docs/maternity/OBGYN_MATERNITY_HANDOFFS_PHASE_14R_5_REPORT.md
 docs/maternity/OBGYN_MATERNITY_INTEGRATION_PLAN.md
-docs/maternity/OBGYN_MATERNITY_SOURCE_OF_TRUTH_MATRIX.md
 docs/manual-testing/OBGYN_MATERNITY_RECONCILIATION_TEST_PLAN.md
 
-Mark scenarios A–F complete only after their automated and manual acceptance
-criteria are satisfied.
+Mark K2 CLOSED only after:
 
+every visible Phase 14R.5 trigger has a real target
+every target form reaches its real server action
+permission/lifecycle-disabled actions are not rendered as executable
+candidate/profile queries remain lazy or bounded
+manual scenarios A–F pass
 Rollout
 
-Initial state:
+All flags remain false after deployment:
 
 MATERNITY_CONSULTATION_HANDOFFS_ENABLED=false
 MATERNITY_EMERGENCY_CONTEXT_ENABLED=false
 MATERNITY_ADMISSION_CONTEXT_ENABLED=false
 MATERNITY_EMERGENCY_HANDOFFS_ENABLED=false
 
-Pilot order:
+Pilot order remains:
 
-Enable Admission Maternity read-only context.
-Enable Emergency read-only context.
-Enable Consultation handoff actions.
-Enable explicit Emergency/Maternity handoffs last.
+Admission read-only Maternity context.
+Emergency read-only Maternity context.
+Consultation handoff actions.
+Emergency/Maternity handoff actions last.
 
-Before rollout:
+Do not expose mutation modals in read-only context mode.
 
-Confirm bridge permissions.
-Confirm target-module permissions.
-Confirm open-request duplicate rules.
-Confirm active Labor reuse.
-Confirm Emergency case reuse.
-Confirm return-context security.
-Confirm existing Maternity-shaped specialty-entry counts per environment.
-Keep all O&G write guards in their current approved rollout state.
-Keep Maternity billing disabled.
+Before enabling mutation actions:
 
-Rollback order:
-
-Disable Emergency handoff actions.
-Disable Consultation handoff actions.
+verify permissions
+verify active/open duplicate rules
+verify modal validation and return context
+confirm no billing posting
+confirm no modal target is missing
+confirm manual scenarios pass
+Rollback
+Disable Emergency handoffs.
+Disable Consultation handoffs.
 Disable Emergency context.
 Disable Admission context.
 Clear config cache.
 
-Rollback effects:
+Results:
 
-Read-only cards disappear.
-New handoff actions disappear.
-Existing linked records remain auditable.
-Existing Emergency, Admission and Maternity records remain valid.
-No destructive migration rollback is required.
-Historical links remain.
-Existing Admission Requests and Admissions remain usable.
+action controls and modal bodies disappear
+read-only cards disappear according to flags
+existing links remain
+existing Admission Requests, Admissions, Emergency Cases and Maternity
+records remain valid
+no destructive migration rollback is required
+no historical link is deleted
 Boundaries
 
-Do not implement summary projection.
-Do not implement immutable Maternity snapshots.
-Do not implement readiness enforcement.
-Do not run historical O&G reconciliation.
+Do not implement Phase 14R.6 summary projection.
+Do not implement immutable completion snapshots.
+Do not change readiness.
+Do not run historical reconciliation.
 Do not enable Maternity billing posting.
-Do not add billing cards to Consultation, Emergency or Admission.
-Do not rewrite Emergency disposition.
-Do not rewrite Admission conversion.
-Do not rewrite Nursing or MAR.
-Do not create duplicate investigation/prescription/procedure engines.
-Do not implement Theatre case creation in this phase.
-Do not create Emergency cases automatically from escalation flags.
-Do not create Labor automatically from diagnosis or danger signs.
-Do not create Admission Requests automatically.
-Do not switch Gynaecology to Obstetrics automatically.
-Do not delete or rewrite historical specialty entries.
+Do not add billing cards.
+Do not create a new referral subsystem.
+Do not create a new selector framework.
+Do not rewrite target-domain services.
+Do not manually insert Emergency, Admission, Labor or Maternity records.
+Do not alter source_type/source_id semantics.
+Do not reinterpret ambiguous legacy source rows.
 Do not rename existing routes.
-Do not modify default launch seeders with mass manual data.
+Do not modify default launch seeders.
 Do not run composer test:wide.
 Do not touch docs/prompt.md.
 
@@ -1581,24 +1231,21 @@ Final response
 At the end, provide:
 
 Summary.
-Files changed.
-New tables and links.
-Ownership behavior.
-Consultation handoff behavior.
-Emergency handoff behavior.
-Admission context behavior.
-Postnatal review behavior.
-Idempotency rules.
+Trigger/modal inventory.
+Missing targets fixed.
+UI behavior by module.
+Lifecycle and permission behavior.
+Idempotency behavior.
 Query counts.
-Permissions and localisation.
 Tests and baseline comparison.
+Manual acceptance results.
 Existing workflows protected.
 Known risks.
+Confirmation that K2 is closed.
 Rollout and rollback.
-Deferred work.
 Next phase recommendation.
 
-Recommended next phase:
+Next phase after Phase 14R.5.1 passes:
 
 Phase 14R.6 — Advisory Readiness, Consultation Summary Projection,
 Immutable Completion Snapshot, Historical Reconciliation Dry Run and

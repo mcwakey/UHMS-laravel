@@ -76,6 +76,7 @@ return [
         'open_postnatal_review' => 'Ouvrir la revue post-natale',
         'explicit_link_required' => 'Liez un profil de grossesse avant de créer une demande d\'hospitalisation.',
         'no_billing_posted' => 'Cette action ne génère aucune facturation et aucune hospitalisation.',
+        'open_existing_admission_request' => 'Ouvrir la demande d\'hospitalisation existante',
     ],
 
     'emergency' => [
@@ -91,6 +92,16 @@ return [
         'confirm_link' => 'Confirmer le lien',
         'ambiguous_profile' => 'Profil de grossesse ambigu — choisissez-en un explicitement.',
         'no_context_notice' => 'Aucun profil de grossesse n\'est lié. Rien n\'a été créé automatiquement.',
+        'confirm_suggested_profile' => 'Confirmer le profil de grossesse suggéré',
+        'relink_pregnancy_profile' => 'Relier un autre profil de grossesse',
+        'unlink_pregnancy_profile' => 'Délier le profil de grossesse',
+        'create_profile_explicit_only' => 'Un profil de grossesse n\'est créé que par cette action explicite.',
+        'start_labor' => 'Démarrer le travail',
+        'open_existing_labor' => 'Ouvrir le travail existant',
+        'create_admission_request' => 'Créer une demande d\'hospitalisation',
+        'open_existing_admission_request' => 'Ouvrir la demande d\'hospitalisation existante',
+        'confirm_context_first' => 'Confirmez le profil de grossesse suggéré avant de créer une demande liée à la maternité',
+        'maternity_owns_labor' => 'Le travail reste géré par la maternité.',
     ],
 
     'admission' => [
@@ -106,6 +117,10 @@ return [
         'ambiguous_legacy_source' => 'Cette demande possède une source maternité héritée dont le type de dossier ne peut être déterminé. Liez explicitement le bon contexte.',
         'admission_owns' => 'Le lit, le service, les soins infirmiers, les médicaments et la sortie restent gérés par l\'hospitalisation.',
         'clinical_writes_in_maternity' => 'Les dossiers cliniques sont saisis dans l\'espace maternité.',
+        'link_context' => 'Lier le contexte de maternité de l\'hospitalisation',
+        'correct_context' => 'Corriger le contexte',
+        'correct_context_description' => 'Remplacer le contexte lié. Le lien précédent est conservé dans l\'historique.',
+        'context_from_admission_id' => 'Déduit d\'un dossier d\'hospitalisation correspondant',
     ],
 
     'handoffs' => [
@@ -129,6 +144,9 @@ return [
         'record_observations_in_maternity' => 'Saisissez les observations dans la maternité.',
         'no_observations_duplicated' => 'Aucune observation n\'a été dupliquée.',
         'link_case' => 'Lier le dossier post-natal',
+        'no_case_available' => 'Aucun dossier post-natal n\'est disponible pour ce patient',
+        'observations_remain_in_maternity' => 'Les observations restent dans la maternité.',
+        'no_observation_created' => 'Aucune observation post-natale n\'a été créée.',
     ],
 
     'messages' => [
@@ -147,6 +165,92 @@ return [
         'obstetrics_referral_unavailable' => 'Aucun service de consultation d\'obstétrique n\'est configuré. Utilisez le flux standard de création de consultation.',
         'postnatal_review_linked' => 'Dossier post-natal lié pour revue. Les observations sont saisies dans la maternité.',
         'handoff_unavailable' => 'Ce transfert n\'est pas disponible dans cet environnement.',
+    ],
+
+
+    'states' => [
+        'enabled' => 'Disponible',
+        'existing_record_reused' => 'Dossier existant réutilisé',
+        'record_created' => 'Dossier créé',
+        'record_already_exists' => 'Le dossier existe déjà',
+        'blocked_lifecycle' => 'Démarrez une nouvelle consultation active ou travaillez dans la maternité.',
+        'operation_unavailable' => 'Opération indisponible',
+        'action_blocked' => 'Action bloquée',
+        'feature_disabled' => 'Intégration indisponible',
+        'permission_required' => 'Une autorisation supplémentaire est requise',
+        'invalid_context' => 'Liez ou confirmez d\'abord un profil de grossesse',
+        'ambiguous_context' => 'Sélection explicite du contexte requise',
+        'explicit_link_required' => 'Un profil de grossesse explicitement lié est requis',
+        'emergency_case_closed' => 'Ce dossier d\'urgence est clôturé',
+        'admission_discharged' => 'Cette hospitalisation est terminée',
+        'validation_failed' => 'Veuillez corriger les champs signalés',
+    ],
+
+    'modal' => [
+        'confirm_handoff' => 'Confirmer le transfert',
+        'confirm_open' => 'Ouvrir le dossier existant',
+        'select_context' => 'Sélectionner le contexte',
+        'reason' => 'Motif',
+        'select_pregnancy_profile' => 'Sélectionner un profil de grossesse',
+        'search_pregnancy_profile' => 'Rechercher les profils de grossesse de ce patient',
+        'patient_scoped_search' => 'Seuls les profils de grossesse de ce patient sont recherchés.',
+        'history_preserved' => 'Le lien précédent est conservé dans l\'historique.',
+        'priority' => 'Priorité',
+        'requested_ward' => 'Service demandé',
+        'no_ward_preference' => 'Aucune préférence de service',
+        'provisional_diagnosis' => 'Diagnostic provisoire',
+        'clinical_handover_summary' => 'Résumé clinique de transmission',
+        'summary_not_full_note' => 'Une brève note de transmission — la note de consultation complète n\'est pas copiée.',
+        'operational_source' => 'Source opérationnelle',
+        'clinical_context' => 'Contexte clinique',
+        'source_consultation' => 'Consultation',
+        'source_emergency' => 'Urgences',
+        'context_maternity' => 'Maternité',
+        'no_admission_created' => 'Cette action ne crée aucune hospitalisation.',
+        'no_bed_reserved' => 'Aucun lit n\'est réservé.',
+        'labor_onset_at' => 'Début du travail',
+        'presentation' => 'Présentation',
+        'last_menstrual_period' => 'Dernières règles',
+        'gravida' => 'Gestité',
+        'para' => 'Parité',
+        'referral_notes' => 'Notes de référence',
+        'visit_date' => 'Date de la visite',
+        'arrival_mode' => 'Mode d\'arrivée',
+        'chief_complaint' => 'Motif principal',
+        'adopt_lmp_server_side' => 'La date des dernières règles enregistrée est lue côté serveur ; elle ne peut pas être modifiée ici.',
+        'saved_lmp' => 'Dernières règles enregistrées en consultation',
+    ],
+
+    'priorities' => [
+        'routine' => 'Programmé',
+        'urgent' => 'Urgent',
+        'emergency' => 'Urgence vitale',
+    ],
+
+    'arrival_modes' => [
+        'transfer_from_ward' => 'Transfert depuis le service',
+        'transfer_from_opd' => 'Transfert depuis la consultation externe',
+        'walk_in' => 'Venu par ses propres moyens',
+        'ambulance' => 'Ambulance',
+        'unknown' => 'Inconnu',
+    ],
+
+    'escalation' => [
+        'title' => 'Escalade vers les urgences',
+        'create_handoff' => 'Créer un transfert vers les urgences',
+        'open_existing_case' => 'Ouvrir le dossier d\'urgence existant',
+        'flag_created_nothing' => 'Le marqueur d\'escalade n\'a créé aucun dossier d\'urgence.',
+        'case_will_be_created' => 'Un dossier d\'urgence sera créé explicitement par cette action.',
+        'no_admission_request_created' => 'Aucune demande d\'hospitalisation ne sera créée.',
+        'no_theatre_case_created' => 'Aucun dossier de bloc opératoire ne sera créé.',
+        'source_record_preserved' => 'Le dossier de maternité est préservé et reste géré par la maternité.',
+    ],
+
+    'fallback' => [
+        'obstetrics_mapping_unavailable' => 'Aucun service de consultation d\'obstétrique n\'est associé.',
+        'continue_standard_consultation' => 'Continuer via la création de consultation standard',
+        'gynaecology_unchanged' => 'La consultation de gynécologie existante restera inchangée.',
+        'no_maternity_record_created' => 'Aucun dossier de maternité ne sera créé automatiquement.',
     ],
 
 ];

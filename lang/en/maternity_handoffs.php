@@ -76,6 +76,7 @@ return [
         'open_postnatal_review' => 'Open Postnatal review',
         'explicit_link_required' => 'Link a Pregnancy Profile before creating an Admission Request.',
         'no_billing_posted' => 'No billing is posted and no admission is created by this action.',
+        'open_existing_admission_request' => 'Open Existing Admission Request',
     ],
 
     'emergency' => [
@@ -91,6 +92,16 @@ return [
         'confirm_link' => 'Confirm link',
         'ambiguous_profile' => 'Ambiguous Pregnancy Profile — choose one explicitly.',
         'no_context_notice' => 'No Pregnancy Profile is linked. Nothing has been created automatically.',
+        'confirm_suggested_profile' => 'Confirm Suggested Pregnancy Profile',
+        'relink_pregnancy_profile' => 'Relink Pregnancy Profile',
+        'unlink_pregnancy_profile' => 'Unlink Pregnancy Profile',
+        'create_profile_explicit_only' => 'A Pregnancy Profile is created only by this explicit action.',
+        'start_labor' => 'Start Labor',
+        'open_existing_labor' => 'Open Existing Labor',
+        'create_admission_request' => 'Create Admission Request',
+        'open_existing_admission_request' => 'Open Existing Admission Request',
+        'confirm_context_first' => 'Confirm the suggested Pregnancy Profile before raising a maternity-aware request',
+        'maternity_owns_labor' => 'Labor remains owned by Maternity.',
     ],
 
     'admission' => [
@@ -106,6 +117,10 @@ return [
         'ambiguous_legacy_source' => 'This request has a legacy maternity source whose record type cannot be determined. Link the correct context explicitly.',
         'admission_owns' => 'Bed, ward, nursing, medication and discharge remain Admission-owned.',
         'clinical_writes_in_maternity' => 'Clinical records are entered in the Maternity workspace.',
+        'link_context' => 'Link Admission Maternity Context',
+        'correct_context' => 'Correct context',
+        'correct_context_description' => 'Replace the linked context. The previous link is kept as history.',
+        'context_from_admission_id' => 'Inferred from a matching admission record',
     ],
 
     'handoffs' => [
@@ -129,6 +144,9 @@ return [
         'record_observations_in_maternity' => 'Record observations in Maternity.',
         'no_observations_duplicated' => 'No observations were duplicated.',
         'link_case' => 'Link Postnatal Case',
+        'no_case_available' => 'No Postnatal Case is available for this patient',
+        'observations_remain_in_maternity' => 'Observations remain in Maternity.',
+        'no_observation_created' => 'No Postnatal observation was created.',
     ],
 
     'messages' => [
@@ -147,6 +165,92 @@ return [
         'obstetrics_referral_unavailable' => 'No Obstetrics consultation department is configured. Use the standard create-consultation flow.',
         'postnatal_review_linked' => 'Postnatal Case linked for review. Observations are recorded in Maternity.',
         'handoff_unavailable' => 'This handoff is not available in this environment.',
+    ],
+
+
+    'states' => [
+        'enabled' => 'Available',
+        'existing_record_reused' => 'Existing record reused',
+        'record_created' => 'Record created',
+        'record_already_exists' => 'Record already exists',
+        'blocked_lifecycle' => 'Start a new active consultation, or work in Maternity.',
+        'operation_unavailable' => 'Operation unavailable',
+        'action_blocked' => 'Action blocked',
+        'feature_disabled' => 'Integration unavailable',
+        'permission_required' => 'An additional permission is required',
+        'invalid_context' => 'Link or confirm a Pregnancy Profile first',
+        'ambiguous_context' => 'Explicit context selection required',
+        'explicit_link_required' => 'An explicitly linked Pregnancy Profile is required',
+        'emergency_case_closed' => 'This emergency case is closed',
+        'admission_discharged' => 'This admission has been discharged',
+        'validation_failed' => 'Please correct the highlighted fields',
+    ],
+
+    'modal' => [
+        'confirm_handoff' => 'Confirm handoff',
+        'confirm_open' => 'Open existing record',
+        'select_context' => 'Select context',
+        'reason' => 'Reason',
+        'select_pregnancy_profile' => 'Select Pregnancy Profile',
+        'search_pregnancy_profile' => 'Search this patient\'s Pregnancy Profiles',
+        'patient_scoped_search' => 'Only this patient\'s Pregnancy Profiles are searched.',
+        'history_preserved' => 'The previous link is kept as history.',
+        'priority' => 'Priority',
+        'requested_ward' => 'Requested ward',
+        'no_ward_preference' => 'No ward preference',
+        'provisional_diagnosis' => 'Provisional diagnosis',
+        'clinical_handover_summary' => 'Clinical handover summary',
+        'summary_not_full_note' => 'A short handover line — the full consultation note is not copied.',
+        'operational_source' => 'Operational source',
+        'clinical_context' => 'Clinical context',
+        'source_consultation' => 'Consultation',
+        'source_emergency' => 'Emergency',
+        'context_maternity' => 'Maternity',
+        'no_admission_created' => 'No admission is created by this action.',
+        'no_bed_reserved' => 'No bed is reserved.',
+        'labor_onset_at' => 'Labor onset',
+        'presentation' => 'Presentation',
+        'last_menstrual_period' => 'Last menstrual period',
+        'gravida' => 'Gravida',
+        'para' => 'Para',
+        'referral_notes' => 'Referral notes',
+        'visit_date' => 'Visit date',
+        'arrival_mode' => 'Arrival mode',
+        'chief_complaint' => 'Chief complaint',
+        'adopt_lmp_server_side' => 'The saved consultation LMP is read on the server; it cannot be changed here.',
+        'saved_lmp' => 'Saved consultation LMP',
+    ],
+
+    'priorities' => [
+        'routine' => 'Routine',
+        'urgent' => 'Urgent',
+        'emergency' => 'Emergency',
+    ],
+
+    'arrival_modes' => [
+        'transfer_from_ward' => 'Transfer from ward',
+        'transfer_from_opd' => 'Transfer from OPD',
+        'walk_in' => 'Walk-in',
+        'ambulance' => 'Ambulance',
+        'unknown' => 'Unknown',
+    ],
+
+    'escalation' => [
+        'title' => 'Emergency escalation',
+        'create_handoff' => 'Create Emergency Handoff',
+        'open_existing_case' => 'Open Existing Emergency Case',
+        'flag_created_nothing' => 'The escalation flag created no Emergency Case.',
+        'case_will_be_created' => 'An Emergency Case will be created explicitly by this action.',
+        'no_admission_request_created' => 'No Admission Request will be created.',
+        'no_theatre_case_created' => 'No Theatre Case will be created.',
+        'source_record_preserved' => 'The Maternity record is preserved and remains Maternity-owned.',
+    ],
+
+    'fallback' => [
+        'obstetrics_mapping_unavailable' => 'No Obstetrics consultation department is mapped.',
+        'continue_standard_consultation' => 'Continue through standard Consultation creation',
+        'gynaecology_unchanged' => 'The existing Gynaecology consultation will remain unchanged.',
+        'no_maternity_record_created' => 'No maternity record will be created automatically.',
     ],
 
 ];

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Maternity;
 
 use App\Enums\BleedingStatus;
+use App\Services\Maternity\Handoffs\MaternityEmergencyHandoffPresenter;
 use App\Enums\BreastfeedingStatus;
 use App\Enums\JaundiceStatus;
 use App\Enums\MaternityRiskLevel;
@@ -63,6 +64,8 @@ class PostnatalCaseController extends Controller
     {
         return view('maternity.postnatal.show', [
             'case' => $postnatalCase->load($this->cases->relations()),
+            'emergencyHandoffActions' => app(MaternityEmergencyHandoffPresenter::class)
+                ->build($postnatalCase, request()->user()),
             'overview' => $this->overview->forCase($postnatalCase),
             'billingPreviews' => $this->billingPosting->previewManyForSource($postnatalCase),
             'statuses' => PostnatalCaseStatus::cases(),

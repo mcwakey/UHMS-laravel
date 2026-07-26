@@ -199,3 +199,22 @@ All four flags default **false**. Enable only the one under test.
 **Return-context checks:** Consultation → Maternity → Consultation, Emergency → Labor → Emergency and Admission → Postnatal → Admission all return to the originating page and anchor. An external URL is rejected outright; an invalid context falls back to the target module's own show page.
 
 **Flag-off checks:** with all four flags false, the Emergency and Admission maternity cards render nothing and issue **zero** queries, the Consultation handoff panel returns `enabled => false`, and every handoff endpoint returns 403.
+
+---
+
+## 6. Phase 14R.5.1 — handoff UI
+
+> Automated coverage: `MaternityHandoffUiPhase14R5_1Test.php` (26), `MaternityHandoffModalIntegrityPhase14R5_1Test.php` (9), `MaternityHandoffSelectorsPhase14R5_1Test.php` (9) — **44 tests**.
+
+The integrity suite is the standing guard: **any new handoff button without a dialog body fails the build.** Keep it that way.
+
+| # | Scenario | Steps | Expected |
+|---|---|---|---|
+| **A** | Consultation → Admission Request | Open an active Obstetrics consultation with an explicit Pregnancy Profile → open the modal → submit → repeat | One request; the second attempt shows *Open Existing Admission Request* with its id and status; no admission, no bed reservation, no invoice |
+| **B** | Emergency pregnancy context | Open an Emergency case with no link → open the selector → link → Start Labor → repeat → Create Admission Request → repeat | Profiles load **only** when the selector opens; one Labor Episode; one open request; repeats say "reused" |
+| **C** | Admission context | Convert a maternity-aware request → open the Admission Maternity card → open the correction modal → relink with a reason | Propagated context is labelled separately from the operational origin; the old link survives as history; bed/nursing/MAR unchanged |
+| **D** | Maternity → Emergency | Mark Labor/Postnatal escalation → confirm nothing was created → open the handoff dialog → confirm → repeat | The dialog states the flag created nothing; one Emergency Case; the repeat opens the same one; return lands back on the Maternity record |
+| **E** | Gynaecology fallback | Remove the Obstetrics profile mapping → open a linked Gynaecology consultation | The reason is shown with a working link into standard consultation creation; the Gynaecology route and its entries are untouched |
+| **F** | Permissions | Try each action with the bridge permission only, the target permission only, then both | Only with **both** does a form appear; one half alone renders nothing executable |
+
+**Flag checks:** with all four flags false no trigger, no modal body and no candidate query exists. With context on and handoffs off the card renders but **no mutation form** appears. An external `return_route` is ignored and the action falls back to the target module's own page.

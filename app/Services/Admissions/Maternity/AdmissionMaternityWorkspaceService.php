@@ -6,7 +6,10 @@ use App\Data\Maternity\OperationalMaternityContext;
 use App\Data\Maternity\OperationalMaternityViewModel;
 use App\Models\Admission;
 use App\Models\User;
+use App\Data\Maternity\MaternityHandoffActionViewModel as Action;
+use App\Enums\AdmissionStatus;
 use App\Services\Maternity\Context\MaternityContextCardBuilder;
+use App\Services\Maternity\Context\MaternityHandoffActionFactory;
 use App\Services\Maternity\Context\MaternityIntegrationFlags;
 use App\Support\Maternity\MaternityReturnContext;
 
@@ -27,6 +30,7 @@ class AdmissionMaternityWorkspaceService
     public function __construct(
         private readonly AdmissionMaternityContextResolver $resolver,
         private readonly MaternityContextCardBuilder $cards,
+        private readonly MaternityHandoffActionFactory $actions,
         private readonly MaternityIntegrationFlags $flags,
     ) {}
 
@@ -37,6 +41,7 @@ class AdmissionMaternityWorkspaceService
         }
 
         $context = $this->resolver->resolve($admission);
+        $returnContext = $this->returnContext($admission);
 
         return new OperationalMaternityViewModel(
             contextEnabled: true,
@@ -53,7 +58,7 @@ class AdmissionMaternityWorkspaceService
             cards: $this->cards->forContext($context),
             actions: $this->actions($user, $context),
             warnings: $context->warnings,
-            returnContext: $this->returnContext($admission)?->toArray(),
+            returnContext: $returnContext?->toArray(),
             requestState: $this->originState($admission, $context),
             candidateProfiles: $context->isAmbiguous()
                 ? $context->candidateProfiles?->map(fn ($profile) => [
@@ -63,7 +68,138 @@ class AdmissionMaternityWorkspaceService
                     ]),
                 ])->values()->all()
                 : null,
+            handoffActions: $this->buildActions($admission, $user, $context, $returnContext),
         );
+    }
+
+    /* ── Typed actions (Phase 14R.5.1) ─────────────────────────────────── */
+
+    /**
+     * Admission may link, relink and unlink context — and nothing else. No ANC,
+     * Labor, Delivery, Newborn or Postnatal record is ever created here.
+     *
+     * @return array<string, Action>
+     */
+    private function buildActions(
+        Admission $admission,
+        ?User $user,
+        OperationalMaternityContext $context,
+        ?\App\Support\Maternity\MaternityReturnContext $returnContext,
+    ): array {
+        if (! $user) {
+            return [];
+        }
+
+        $isExplicit = $context->isResolved() && $context->isExplicit();
+        $params = ['admission' => $admission->id];
+        $candidateUrl = $this->route('admin.admissions.maternity-context.candidates', $admission);
+        $summary = $this->contextSummary($context);
+
+        // A discharged admission is a closed episode: correcting its clinical
+        // context afterwards is not an operation this phase opens up.
+        $admissionOpen = $admission->status !== AdmissionStatus::DISCHARGED;
+        $lifecycleReason = $admissionOpen ? null : __('maternity_handoffs.states.admission_discharged');
+
+        $canLink = $user->can('admission.maternity_context.link')
+            && $user->can('maternity.pregnancy.view');
+
+        return [
+            'link_profile' => $this->actions->make([
+                'action' => 'link_profile',
+                'label' => __('maternity_handoffs.admission.link_context'),
+                'description' => __('maternity_handoffs.modal.patient_scoped_search'),
+                'feature_enabled' => ! $isExplicit,
+                'has_permission' => $canLink,
+                'lifecycle_ok' => $admissionOpen,
+                'lifecycle_reason' => $lifecycleReason,
+                'route' => 'admin.admissions.maternity-context.link',
+                'parameters' => $params,
+                'modal' => 'admissionLinkPregnancyModal',
+                'required_fields' => ['pregnancy_profile_id'],
+                'source_module' => 'admission',
+                'source_record_id' => $admission->id,
+                'target_context_type' => 'pregnancy_profile',
+                'context' => [
+                    'candidate_url' => $candidateUrl,
+                    'summary' => $summary,
+                    'notices' => [__('maternity_handoffs.admission.clinical_writes_in_maternity')],
+                ],
+            ], $returnContext),
+
+            'relink_profile' => $this->actions->make([
+                'action' => 'relink_profile',
+                'label' => __('maternity_handoffs.admission.correct_context'),
+                'description' => __('maternity_handoffs.admission.correct_context_description'),
+                'feature_enabled' => $isExplicit,
+                'has_permission' => $canLink,
+                'lifecycle_ok' => $admissionOpen,
+                'lifecycle_reason' => $lifecycleReason,
+                'route' => 'admin.admissions.maternity-context.relink',
+                'parameters' => $params,
+                'modal' => 'admissionRelinkPregnancyModal',
+                'confirmation' => Action::CONFIRM_REASON,
+                'required_fields' => ['pregnancy_profile_id', 'reason'],
+                'source_module' => 'admission',
+                'source_record_id' => $admission->id,
+                'target_context_type' => 'pregnancy_profile',
+                'context' => [
+                    'candidate_url' => $candidateUrl,
+                    'summary' => $summary,
+                    'notices' => [__('maternity_handoffs.modal.history_preserved')],
+                ],
+            ], $returnContext),
+
+            'unlink_profile' => $this->actions->make([
+                'action' => 'unlink_profile',
+                'label' => __('consultation_maternity.actions.unlink_profile'),
+                'feature_enabled' => $isExplicit,
+                'has_permission' => $user->can('admission.maternity_context.unlink')
+                    && $user->can('maternity.pregnancy.view'),
+                'lifecycle_ok' => $admissionOpen,
+                'lifecycle_reason' => $lifecycleReason,
+                'route' => 'admin.admissions.maternity-context.unlink',
+                'parameters' => $params,
+                'modal' => 'admissionUnlinkPregnancyModal',
+                'confirmation' => Action::CONFIRM_REASON,
+                'required_fields' => ['reason'],
+                'source_module' => 'admission',
+                'source_record_id' => $admission->id,
+                'target_context_type' => 'pregnancy_profile',
+                'context' => [
+                    'summary' => $summary,
+                    'notices' => [__('maternity_handoffs.modal.history_preserved')],
+                ],
+            ], $returnContext),
+        ];
+    }
+
+    /**
+     * Read-only display values for a modal body. Identifiers and dates only,
+     * plus how the context was resolved — carried from the request, linked
+     * directly, or inferred from a matching admission_id.
+     *
+     * @return array<string, ?string>
+     */
+    private function contextSummary(OperationalMaternityContext $context): array
+    {
+        $profile = $context->pregnancyProfile;
+
+        $origin = match ($context->resolutionSource) {
+            OperationalMaternityContext::SOURCE_EXPLICIT => __('maternity_handoffs.admission.context_linked_directly'),
+            OperationalMaternityContext::SOURCE_REQUEST => __('maternity_handoffs.admission.context_from_request'),
+            OperationalMaternityContext::SOURCE_ADMISSION_RECORDS => __('maternity_handoffs.admission.context_from_admission_id'),
+            default => null,
+        };
+
+        return array_filter([
+            __('maternity_handoffs.cards.pregnancy') => $profile
+                ? __('maternity_handoffs.cards.record_ref', [
+                    'type' => __('maternity_handoffs.cards.pregnancy'), 'id' => $profile->id,
+                ])
+                : null,
+            __('maternity_handoffs.fields.edd') => $profile?->estimated_due_date?->format('d M Y'),
+            __('maternity_handoffs.ownership.handoff_context') => $origin,
+        ], fn ($value) => $value !== null);
     }
 
     public function returnContext(Admission $admission): ?MaternityReturnContext

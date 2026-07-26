@@ -17,6 +17,9 @@ final class OperationalMaternityViewModel
      * @param  list<string>  $warnings
      * @param  array<string, mixed>|null  $returnContext
      * @param  array<string, mixed>|null  $requestState  admission-request state
+     * @param  array<string, \App\Data\Maternity\MaternityHandoffActionViewModel>  $handoffActions
+     *         Phase 14R.5.1 — typed, already-resolved actions. Blade renders
+     *         from these and makes no permission/lifecycle/reuse decision.
      */
     public function __construct(
         public readonly bool $contextEnabled,
@@ -34,6 +37,7 @@ final class OperationalMaternityViewModel
         public readonly ?array $returnContext = null,
         public readonly ?array $requestState = null,
         public readonly ?array $candidateProfiles = null,
+        public readonly array $handoffActions = [],
     ) {}
 
     /** Flag off, or a source this card does not apply to: render nothing. */
@@ -77,5 +81,36 @@ final class OperationalMaternityViewModel
     public function can(string $action): bool
     {
         return (bool) ($this->actions[$action] ?? false);
+    }
+
+    /** One typed handoff action, or null when this workspace does not offer it. */
+    public function action(string $key): ?\App\Data\Maternity\MaternityHandoffActionViewModel
+    {
+        return $this->handoffActions[$key] ?? null;
+    }
+
+    /**
+     * Actions with something to render — either an executable trigger or an
+     * honest reason. Permission-missing and feature-disabled actions are
+     * invisible and never reach Blade.
+     *
+     * @return array<string, \App\Data\Maternity\MaternityHandoffActionViewModel>
+     */
+    public function visibleActions(): array
+    {
+        return array_filter(
+            $this->handoffActions,
+            fn ($action) => $action->visible && ($action->isExecutable() || $action->showsReason())
+        );
+    }
+
+    /**
+     * Actions whose modal body must be rendered.
+     *
+     * @return array<string, \App\Data\Maternity\MaternityHandoffActionViewModel>
+     */
+    public function modalActions(): array
+    {
+        return array_filter($this->handoffActions, fn ($action) => $action->isExecutable());
     }
 }

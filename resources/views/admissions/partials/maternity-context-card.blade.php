@@ -1,13 +1,13 @@
 {{--
-    Phase 14R.5 — Admission workspace maternity context card.
+    Phase 14R.5 / 14R.5.1 — Admission workspace maternity context card.
 
     Data comes from AdmissionMaternityWorkspaceService, built once in the
     controller. NOTHING is resolved or queried here.
 
     Read-only by design: this card contains NO ANC, labor observation, delivery,
-    newborn or postnatal form. Every clinical write links out to the Maternity
-    workspace. Bed, ward, nursing, MAR and discharge remain Admission-owned and
-    are untouched.
+    newborn or postnatal form. The only mutations are link / relink / unlink of
+    the context itself. Bed, ward, nursing, MAR and discharge remain
+    Admission-owned and are untouched.
 
     Expects: $maternity (OperationalMaternityViewModel|null), $admission
 --}}
@@ -65,6 +65,7 @@
             @endif
 
             @if (! empty($maternity->requestState['id']))
+                {{-- Operational origin, shown separately from clinical context. --}}
                 <div class="mt-2 small">
                     <span class="text-muted">{{ __('maternity_handoffs.consultation.existing_admission_request') }}:</span>
                     @if (! empty($maternity->requestState['url']))
@@ -76,28 +77,17 @@
                 </div>
             @endif
 
-            <div class="d-flex flex-wrap gap-2 mt-3">
-                @if ($maternity->can('link') && ! $maternity->isLinked())
-                    <button type="button" class="btn btn-sm btn-outline-primary"
-                            data-bs-toggle="modal" data-bs-target="#admissionLinkPregnancyModal">
-                        {{ __('consultation_maternity.actions.link_profile') }}
-                    </button>
-                @endif
-
-                @if ($maternity->can('relink'))
-                    <button type="button" class="btn btn-sm btn-outline-secondary"
-                            data-bs-toggle="modal" data-bs-target="#admissionRelinkPregnancyModal">
-                        {{ __('consultation_maternity.actions.relink_profile') }}
-                    </button>
-                @endif
-
-                @if ($maternity->can('unlink'))
-                    <button type="button" class="btn btn-sm btn-outline-danger"
-                            data-bs-toggle="modal" data-bs-target="#admissionUnlinkPregnancyModal">
-                        {{ __('consultation_maternity.actions.unlink_profile') }}
-                    </button>
-                @endif
-            </div>
+            @include('maternity.partials.handoff-triggers', [
+                'actions' => $maternity->visibleActions(),
+            ])
         </div>
     </div>
+
+    @foreach ($maternity->modalActions() as $action)
+        @include('maternity.partials.handoff-modal', ['action' => $action])
+    @endforeach
+
+    @include('maternity.partials.handoff-scripts', [
+        'reopenModalId' => (isset($errors) && $errors->any()) ? old('_handoff_modal') : null,
+    ])
 @endif

@@ -33,6 +33,7 @@ use App\Services\Consultation\Specialty\ConsultationSpecialtyReadinessService;
 use App\Services\Consultation\Specialty\DoctorSpecialtyWorkspaceService;
 use App\Services\ConsultationNextPatientService;
 use App\Services\Consultation\Maternity\ConsultationMaternityHandoffPresenter;
+use App\Services\Consultation\Maternity\ConsultationMaternityModalPresenter;
 use App\Services\Consultation\Maternity\GynaecologyConsultationContextService;
 use App\Services\Consultation\Maternity\ObstetricConsultationContextService;
 use App\Services\ConsultationPreviewDataService;
@@ -488,6 +489,18 @@ trait HandlesConsultationWorkspace
             $specialtyContext->profile,
             $request->user(),
         );
+
+        // Phase 14R.5.1 — typed actions for the Obstetrics panel (14R.3.1) and
+        // Gynaecology card (14R.4.1), whose triggers shipped without modal
+        // bodies. Reuses the view models built above; performs no extra
+        // permission lookups and no queries when those flags are off.
+        $maternityModalPresenter = app(ConsultationMaternityModalPresenter::class);
+        $obstetricActions = $maternityModalPresenter->obstetrics(
+            $maternityContext, $selectedRoute, $request->user()
+        );
+        $gynaecologyActions = $maternityModalPresenter->gynaecology(
+            $gynaecologyContext, $selectedRoute, $request->user()
+        );
         $doctorSpecialtyWorkspace = app(DoctorSpecialtyWorkspaceService::class)->build(
             $request->user(),
             $selectedRoute,
@@ -539,6 +552,8 @@ trait HandlesConsultationWorkspace
             'maternityContext' => $maternityContext,
             'gynaecologyContext' => $gynaecologyContext,
             'maternityHandoffs' => $maternityHandoffs,
+            'obstetricMaternityActions' => $obstetricActions,
+            'gynaecologyMaternityActions' => $gynaecologyActions,
             'specialtyEntries' => $specialtyEntries,
             'specialtyEntryGroups' => $specialtyEntryGroups,
             'specialtyFavorites' => $specialtyFavorites,
