@@ -4,6 +4,7 @@ namespace App\Services\Consultation\Maternity;
 
 use App\Data\Consultation\Maternity\ConsultationMaternitySummaryProjection as Projection;
 use App\Enums\LogModule;
+use App\Models\ConsultationCompletionOccurrence;
 use App\Models\ConsultationMaternitySnapshot;
 use App\Models\User;
 use App\Models\VisitConsultationRoute;
@@ -57,11 +58,34 @@ class ConsultationMaternitySnapshotService
     /**
      * The completion OCCURRENCE token.
      *
-     * Derived from the route id plus its `completed_at`, which the existing
-     * completion service stamps afresh on every (re)completion — an identity
-     * the system already maintains rather than an invented one.
+     * Phase 14R.8: derived from the durable completion-occurrence ledger, NOT
+     * from a timestamp. Two genuine completions in the same second have
+     * different ULIDs and therefore different references — which is precisely
+     * what closes risk P2.
+     *
+     * When no occurrence is supplied (a legacy caller, or a route completed
+     * before this phase), the historical second-precision format is returned
+     * unchanged so existing rows stay readable and comparable.
      */
-    public function completionReference(VisitConsultationRoute $consultation): string
+    public function completionReference(
+        VisitConsultationRoute $consultation,
+        ?ConsultationCompletionOccurrence $occurrence = null,
+    ): string {
+        if ($occurrence) {
+            return $occurrence->snapshotReference();
+        }
+
+        return $this->legacyCompletionReference($consultation);
+    }
+
+    /**
+     * The pre-14R.8 reference format.
+     *
+     * Retained verbatim so snapshots captured before the occurrence ledger
+     * existed keep matching their own reference. It is never used to mint a new
+     * identity when an occurrence is available.
+     */
+    public function legacyCompletionReference(VisitConsultationRoute $consultation): string
     {
         $completedAt = $consultation->completed_at;
 
@@ -88,6 +112,7 @@ class ConsultationMaternitySnapshotService
     public function captureForCompletion(
         VisitConsultationRoute $consultation,
         ?User $actor = null,
+        ?ConsultationCompletionOccurrence $occurrence = null,
     ): ?ConsultationMaternitySnapshot {
         if (! $this->enabled()) {
             return null;
@@ -104,10 +129,11 @@ class ConsultationMaternitySnapshotService
             return null;
         }
 
-        $reference = $this->completionReference($consultation);
+        $reference = $this->completionReference($consultation, $occurrence);
 
         // The caller holds the route lock; re-reading here is what makes a
-        // repeated completion call idempotent.
+        // repeated capture for the SAME occurrence idempotent. Two genuine
+        // occurrences have different references and therefore never collide.
         $existing = ConsultationMaternitySnapshot::query()
             ->forConsultation($consultation)
             ->where('completion_reference', $reference)
@@ -130,6 +156,9 @@ class ConsultationMaternitySnapshotService
                 'context_status' => $projection->contextStatus,
                 'resolution_source' => $projection->resolutionSource,
                 'completion_reference' => $reference,
+                // Lineage only. The hash is computed over the clinical payload
+                // alone, so this column does not participate in it.
+                'completion_occurrence_id' => $occurrence?->id,
                 'source_record_ids' => $projection->sourceRecordIds,
                 'payload' => $payload,
                 'payload_hash' => ConsultationMaternitySnapshot::hashPayload($payload),
@@ -138,6 +167,7 @@ class ConsultationMaternitySnapshotService
                 'metadata' => array_filter([
                     'newborn_count' => $projection->newbornCount(),
                     'visit_id' => $consultation->visit_id,
+                    'occurrence_number' => $occurrence?->occurrence_number,
                 ], fn ($value) => $value !== null),
             ]);
         } catch (QueryException $e) {

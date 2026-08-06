@@ -1,1408 +1,587 @@
-You are working inside the UHMS Laravel project.
-
-The O&G ↔ Maternity reconciliation has been implemented through Phase 14R.6.1.
-
-Delivered architecture:
-
-- Phase 14R.1:
-  - Field-level duplication audit.
-  - Source-of-truth matrix.
-  - Integration architecture.
-
-- Phase 14R.2:
-  - Consultation ↔ Maternity explicit-FK bridge.
-  - Resolver and link lifecycle.
-
-- Phase 14R.3 / 14R.3.1:
-  - Obstetrics stage-aware workspace.
-  - Real ribbon/panel integration.
-  - Field-level write guard.
-  - Correct consultation mutation boundaries.
-
-- Phase 14R.4 / 14R.4.1:
-  - Gynaecology explicit-only Pregnancy Profile context.
-  - One-way LMP adoption.
-  - Order-set bypass closure and retargeting.
-  - Real Gynaecology card/action rendering.
-
-- Phase 14R.5 / 14R.5.1:
-  - Consultation, Emergency, Admission Request, Admission and Maternity
-    handoffs.
-  - Typed action rendering.
-  - All 19 previously missing modal bodies completed.
-  - Lazy, same-patient selectors.
-  - Idempotent record-reuse UI.
-
-- Phase 14R.6:
-  - Advisory readiness.
-  - Curated Maternity summary projection.
-  - Immutable, versioned completion snapshots.
-  - Reconciliation dry-run command.
-  - Billing de-duplication policy.
-
-- Phase 14R.6.1:
-  - Real summary tab integration.
-  - Completion-snapshot rendering.
-  - Snapshot history.
-  - Current-record separation.
-  - Integrity-state UI.
-  - Readiness card.
-  - Print integration.
-  - K1 closed.
-
-Current technical verification:
-
-- Phase 14R.6.1:
-  - 42 new tests passed.
-- All Phase 14R.2–14R.6.1 O&G suites:
-  - 322 passed.
-  - 1 skipped.
-- Emergency:
-  - 91 passed.
-- Admission and Maternity Phase 8–14.1:
-  - 72 passed.
-  - 2 documented pre-existing failures.
-- `tests/Feature/Consultations`:
-  - 230 passed.
-  - 22 documented pre-existing failures.
-- Phase 14R.2–14R.6.1 introduced zero new failures.
-- Maternity billing remains disabled and non-posting.
-- All integration and traceability flags remain false by default.
-
-Known carry-forward items:
-
-P1:
-The summary-preview endpoint returns a rendered Maternity HTML fragment in its
-JSON payload, but the current preview JavaScript displays only
-`summary.plain_text`. Therefore, the main summary tab, snapshot history and
-print surfaces work, but the Maternity block is not yet visible in the preview
-modal.
-
-P2:
-Snapshot completion identity is second-granular:
-Consultation route ID + completed_at.
-
-A reopen and recompletion inside the same second could be treated as the same
-completion occurrence. This is a documented edge risk; do not silently redesign
-the snapshot architecture in this phase.
-
-P3:
-The current environment reconciliation dry run reports zero rows. That proves
-the command executes but does not validate classification behavior against real
-historical data at scale.
-
-P4:
-Clinical usability has not yet been signed off by an Obstetrics/Gynaecology
-clinician. Automated tests prove mechanics, not clinical usability.
-
-Now implement Phase 14R.7:
-
-O&G/Maternity Pilot Data, Environment Reconciliation Review, Clinical
-Acceptance Package and Wider Regression.
+Act as the Lead Architect and Implementer for Phase 14R.8 — OBGYN/Maternity Snapshot Completion-Occurrence Identity Hardening.
 
-Goals:
+Phase 14R.7 is complete with verdict `READY_FOR_CLINICAL_PILOT`.
 
-1. Close the preview-modal parity gap.
-2. Create safe, explicit, removable O&G/Maternity pilot data.
-3. Run and preserve an environment-specific reconciliation review.
-4. Build a read-only pilot preflight command.
-5. Exercise the complete O&G/Maternity journey through automated browser smoke.
-6. Produce a clinician-facing manual acceptance package.
-7. Run the memory-safe wide project regression.
-8. Compare wide failures against the documented pre-existing baseline.
-9. Produce an honest readiness verdict.
-10. Do not enable production feature flags automatically.
-
-This phase is validation and rollout preparation.
-
-Do not:
-
-- enable Maternity billing posting
-- create invoice items
-- run reconciliation apply mode
-- migrate historical specialty entries
-- enable write guards automatically
-- modify production/default seeders
-- claim clinician acceptance without actual clinician sign-off
-- hide broad-suite failures behind an allowlist
-- run a destructive cleanup against non-pilot data
-- touch `docs/prompt.md`
+This phase exists only to close confirmed risk P2:
 
-1. Gate 0 — close Consultation preview-modal parity
+A consultation route that is reopened and recompleted within the same second currently reuses the second-precision completion reference:
 
-Audit:
+`route:{route_id}@{completed_at}`
 
-- `ConsultationSpecialtySummaryController::preview`
-- the JSON payload containing:
-  - summary
-  - maternity HTML fragment
-  - readiness fragment if included
-- the existing summary-preview JavaScript in `consultations/show.blade.php`
-  or its extracted asset
-- existing project patterns for injecting server-rendered partial HTML
-- preview-modal lifecycle
-- empty-state handling
-- loading/error handling
+The second genuine completion is therefore treated as the same completion occurrence. Snapshot v1 remains intact, but no v2 is created and the clinical state at the second completion is not captured.
 
-Implement the smallest safe change required so the existing preview modal
-renders the Maternity block.
+This is a medico-legal record-completeness problem. Fix it before starting Phase 14.2 billing work.
 
-Required behavior:
+## Read first
 
-Active Consultation:
+Read:
 
-- preview modal shows the live Current Maternity Record block
-- same presentation service as the summary tab
-- no snapshot is created by preview
+* AGENTS.md
+* All OBGYN/Maternity implementation plans and reports
+* Phase 14R.5 through Phase 14R.7 reports
+* `OBGYN_MATERNITY_PILOT_REGRESSION_PHASE_14R_7_REPORT.md`
+* All snapshot migrations, models, services, observers, listeners and commands
+* Consultation completion, reopen and recompletion services
+* Consultation route/session lifecycle code
+* Consultation completion/activity/log models
+* Maternity summary snapshot capture code
+* Snapshot presentation, preview and print services
+* Snapshot hash and versioning services
+* Existing snapshot tests
+* Existing consultation reopen/completion tests
+* Existing manual pilot/preflight commands
 
-Completed Consultation with snapshot:
+Inspect the installed schema and actual runtime flow before choosing the implementation.
 
-- preview modal shows the selected/latest completion snapshot
-- does not display live Maternity values as historical values
+Do not assume the current completion timestamp is the only available completion identity.
 
-Completed Consultation without snapshot:
+## Exact objective
 
-- shows the honest no-snapshot state
-- does not fabricate history
+Give every genuine consultation completion occurrence a stable, persisted, transactionally authoritative identity.
 
-Reopened Consultation:
+The following must hold:
 
-- shows live projection
-- historical snapshot navigation may remain on the main summary page if the
-  preview modal is intentionally compact
+1. Initial completion creates snapshot v1.
+2. Reopen followed by recompletion creates a new completion occurrence.
+3. Recompletion creates snapshot v2 even when it happens within the same second as v1.
+4. A second reopen and recompletion creates v3, including when all three completion actions occur under a frozen same-second clock.
+5. Repeating the same completion request without an intervening reopen remains idempotent and creates no duplicate snapshot.
+6. Retrying a failed request for the same completion occurrence creates or resolves the same snapshot.
+7. Existing snapshots remain readable and verifiable.
+8. Existing snapshot payloads and hashes remain unchanged.
+9. Snapshot records remain append-only.
+10. No historical snapshot is updated, replaced or deleted.
+11. No billing behavior changes.
+12. No feature flag is enabled automatically.
 
-Flag off:
+## Scope boundary
 
-- preview output remains exactly as before
-- no empty Maternity container
-- no additional presentation query
+Include only:
 
-Security:
+* Completion-occurrence identity
+* Snapshot idempotency identity
+* Snapshot version creation
+* Reopen/recompletion lifecycle integration
+* Concurrency protection
+* Crash/retry behavior
+* Legacy snapshot compatibility
+* P2 preflight/readiness reporting
+* Focused tests and documentation
 
-- use server-rendered, Blade-escaped HTML
-- follow the existing safe fragment-insertion pattern
-- do not evaluate scripts from the fragment
-- do not expose raw JSON
-- do not duplicate business logic in JavaScript
-- do not create a second summary renderer
+Do not implement:
 
-Add tests:
+* Phase 14.2 billing posting
+* Billing deduplication changes
+* Invoice posting
+* Maternity billing events
+* New clinical fields
+* Snapshot editing or deletion
+* Snapshot UI redesign
+* Browser-testing infrastructure
+* Order-set retargeting
+* Environment reconciliation writes
+* Clinician sign-off
+* Feature-flag rollout
+* Broad consultation workflow redesign
 
-- active preview contains Maternity HTML
-- completed preview contains snapshot HTML
-- no-snapshot preview is honest
-- flag-off preview is unchanged
-- changing Maternity after completion does not change previewed historical HTML
-- preview creates no snapshot
-- preview creates no specialty entry
-- preview creates no billing record
+The 14R.7 order-set warning, browser E2E absence and wide-suite memory problem remain separate issues.
 
-Do not proceed to pilot acceptance until this gate passes.
+## Architecture requirements
 
-2. Audit existing manual-data infrastructure
+### 1. Find the authoritative completion event
 
-Review:
+Inspect whether the application already creates a durable row or immutable event for each genuine completion, such as:
 
-- `MaternityManualTestDataService`
-- `maternity:seed-manual-test-data`
-- existing consultation E2E fixture services
-- existing Emergency manual seeders
-- existing Admission/Ward manual seeders
-- existing Playwright/browser fixture commands
-- manual-record marker conventions such as `MT-MAT-`
-- cleanup conventions
-- production environment guards
-- patient-number creation rules
-- role/user test accounts
-- how test URLs and credentials are surfaced
+* Consultation completion log
+* Route transition log
+* Session status-history row
+* Visit journey transition
+* Activity or domain event record
+* Route completion attempt/occurrence record
 
-Reuse existing infrastructure.
+Prefer an existing durable completion-event primary key or immutable UUID/ULID when it truthfully represents one completion occurrence.
 
-Do not add O&G pilot data to:
+Do not use a general-purpose activity-log entry if that entry is optional, asynchronous, mutable or can be suppressed.
 
-- `DatabaseSeeder`
-- default production seeders
-- installation seeders
-- normal demo seeding unless explicitly invoked
+Do not use:
 
-3. Add a dedicated O&G/Maternity pilot-data service
+* Second-precision timestamps alone
+* Millisecond timestamps alone
+* Request time alone
+* Current user
+* Snapshot row count
+* `MAX(version) + 1` without locking
+* Random identity generated separately on each retry
+* Browser-generated identity
+* JavaScript state
 
-Create a service such as:
+### 2. Completion-occurrence ledger
 
-`app/Services/Maternity/Testing/ObgynMaternityPilotDataService.php`
+If no existing durable completion event safely identifies an occurrence, introduce the smallest dedicated server-side completion-occurrence structure.
 
-Or extend the existing manual-data service only if doing so keeps the existing
-command contract clean.
+A completion occurrence should be bound to:
 
-Create a guarded command such as:
+* Consultation route
+* Consultation/session where applicable
+* Visit
+* Completion generation or occurrence ID
+* Completion transition
+* Completion timestamp
+* Reopen generation or preceding occurrence where useful
+* Created transaction/run
+* Idempotency reference
+* Optional completion actor only when already truthfully available
 
-```bash
-php artisan maternity:seed-obgyn-pilot-data \
-  --fresh-manual \
-  --force
+Use UUID/ULID or another immutable generated identifier suitable for idempotency.
 
-Recommended optional arguments:
+The occurrence must be created or resolved transactionally during the completion transition.
 
---batch=
---scenario=
---department=
---count=
---output=
---json
+It must not be generated independently inside the snapshot service on every invocation.
 
-Production safety:
+### 3. Reopen lifecycle
 
-refuse to run in production by default
-require --force in allowed non-production environments
-never operate on unmarked data
-never alter real patients
-never use existing real patient numbers
-never modify default seeders
+A reopen must make a later completion a new occurrence.
 
-Use a clear marker:
+Define an explicit lifecycle such as:
 
-MT-OBGYN-14R7-
+```text
+ACTIVE
+  -> COMPLETION_OCCURRENCE_1
+  -> COMPLETED
+  -> REOPENED
+  -> COMPLETION_OCCURRENCE_2
+  -> COMPLETED
+```
 
-Also produce a manifest:
+Repeated calls to complete while still attached to `COMPLETION_OCCURRENCE_1` must resolve occurrence 1.
 
-storage/app/manual-testing/obgyn-maternity/<batch-id>.json
+After an approved reopen, the next completion must create occurrence 2 regardless of wall-clock timestamp.
 
-The manifest should contain only:
+Do not create a new occurrence merely because the completion endpoint was retried.
 
-batch ID
-created record IDs
-route names
-scenario codes
-test-user identifiers
-generated URLs
-timestamps
+### 4. Snapshot identity
 
-Do not place clinical narrative or secrets into the manifest.
+Bind each snapshot to the authoritative completion occurrence.
 
-Add safe pilot cleanup
+The snapshot’s idempotency identity should be based on something equivalent to:
 
-Provide either:
+```text
+maternity-summary-snapshot
++ consultation-route identity
++ completion-occurrence identity
++ snapshot contract/version
+```
 
-php artisan maternity:clear-obgyn-pilot-data \
-  --batch=<batch-id> \
-  --force
+Do not use `completed_at` as the sole identity.
 
-or an equivalent --fresh-manual cleanup path.
+Preserve the human-readable completion timestamp separately.
 
-Cleanup requirements:
+The occurrence identity should prevent duplicate snapshots for one occurrence while permitting multiple genuine occurrences in the same second.
 
-require a known pilot batch manifest
-delete only records listed in that manifest and/or carrying the exact pilot
-marker
-validate relationships before deletion
-delete in safe dependency order
-never delete a record merely because its name resembles a pilot record
-refuse to clean records linked to non-pilot data
-report skipped conflicts
-remain blocked in production
-preserve ordinary migration/audit history where required by foreign-key or
-immutable-snapshot rules
+### 5. Legacy compatibility
 
-Snapshot cleanup:
+Existing snapshots using references such as:
 
-pilot snapshots may be removed only as part of deleting the entire isolated
-pilot Consultation chain in a non-production environment
-do not add a clinical snapshot-delete route
-cleanup must use a dedicated test-data cleanup path, not normal model delete
-methods exposed to application users
-document why this is test-fixture teardown rather than clinical mutation
-Seed complete pilot scenarios
+`route:{id}@{completed_at}`
 
-Create deterministic scenarios with discoverable metadata.
+must remain valid and readable.
 
-Scenario O1 — Obstetrics, no Maternity context
+Do not rewrite:
 
-Obstetrics Consultation
-no Pregnancy Profile
-workspace should load normally
-no automatic profile/link
+* Existing clinical payload
+* Existing snapshot version
+* Existing snapshot hash
+* Existing completion timestamp
+* Existing audit history
 
-Scenario O2 — Obstetrics, linked Pregnancy Profile and ANC
+Choose a compatibility strategy after inspecting the schema. Acceptable approaches include:
 
-explicit Pregnancy Profile link
-Pregnancy Profile with dating method
-one ANC Visit
-advisory readiness ready
-live summary projection
-no duplicate specialty ANC entries
+* A new nullable occurrence reference used only by future snapshots
+* A separate completion-occurrence ledger linked to future snapshots
+* A versioned idempotency reference format
+* A metadata-only compatibility link that does not alter snapshot hash semantics
 
-Scenario O3 — ambiguous profiles
+Do not mass-backfill a fabricated historical occurrence identity.
 
-same patient
-two active/high-risk Pregnancy Profiles
-no explicit link
-resolver must return ambiguous
-explicit selection required
+If old rows need metadata association, classify it as legacy-derived metadata and prove that snapshot content/hash verification is unaffected.
 
-Scenario G1 — Gynaecology without pregnancy
+### 6. Versioning
 
-normal Gynaecology Consultation
-no context card when flag off
-normal sections and completion
+Snapshot versions must remain monotonic for each consultation route or approved snapshot aggregate.
 
-Scenario G2 — positive pregnancy test, unlinked
+Create the next version under a transaction and lock the relevant aggregate/occurrence coordinate.
 
-persisted positive free-text pregnancy-test value
-no Pregnancy Profile created automatically
-explicit Start/Link affordance only
+Do not rely on an unlocked:
 
-Scenario G3 — linked Gynaecology with LMP adoption eligible
+```sql
+MAX(version) + 1
+```
 
-persisted menstrual-history LMP
-explicit linked Pregnancy Profile with null LMP
-adoption can be tested
-consultation remains Gynaecology
+Protect against:
 
-Scenario G4 — LMP conflict/scan dating
+* Concurrent completion requests
+* Concurrent snapshot listeners
+* Queue retry where applicable
+* Duplicate HTTP submission
+* Retry after timeout
+* Retry after transaction rollback
 
-linked profile with a different LMP or ultrasound/ART dating
-adoption must be unavailable
+At most one snapshot may exist for one completion occurrence.
 
-Scenario E1 — Emergency obstetric context
+### 7. Transaction and failure behavior
 
-Emergency case
-Pregnancy Profile
-optional suggested context before confirmation
-explicit context after confirmation
-no automatic Labor Episode
+Determine the correct transaction boundary between:
 
-Scenario E2 — Emergency with active Labor
+* Completion status transition
+* Completion-occurrence creation
+* Snapshot creation
+* Snapshot version assignment
+* Snapshot hash generation
+* Completion checkpoint/audit
 
-explicit Pregnancy Profile
-active Labor Episode
-Open Existing Labor state
-Admission Request creation/reuse path
+The design must not leave a completed consultation with an unexplained missing snapshot when snapshot capture is mandatory.
 
-Scenario A1 — Maternity-aware Admission Request
+Define deterministic handling for:
 
-Consultation or Emergency origin
-separate operational source and Maternity clinical context
-open request
-bed not reserved automatically
+* Failure before occurrence creation
+* Failure after occurrence creation but before snapshot creation
+* Failure after snapshot insert but before completion response
+* Duplicate request after successful commit
+* Reopen after a prior partial failure
+* Hash-generation failure
+* Unique-key conflict
+* Deadlock/retry
 
-Scenario A2 — converted Admission
+Do not report success merely because a unique-key error occurred. Resolve and verify the existing occurrence/snapshot lineage.
 
-request converted to Admission
-Maternity context propagated
-ward/bed/nursing remain Admission-owned
-postnatal readiness advisory where applicable
+### 8. Append-only guarantee
 
-Scenario M1 — Maternity → Emergency escalation
+Preserve existing snapshot immutability:
 
-Labor or Postnatal escalation flag set
-no Emergency case created by the flag
-explicit handoff may create/reuse one Emergency case
+* No snapshot update route
+* No snapshot delete route
+* No model update
+* No soft delete
+* No replacement of v1
+* No modification of the historical payload or hash
 
-Scenario P1 — Postnatal review Consultation
+If the snapshot model currently blocks mutation, retain and extend those protections as needed.
 
-existing PostnatalCase
-linked review Consultation
-no duplicated postnatal observation
+The Phase 14R.7 fixture-only raw snapshot teardown remains isolated manual-test cleanup and must not become a clinical deletion mechanism.
 
-Scenario S1 — active Consultation live summary
+### 9. Hash behavior
 
-explicit full chain:
-Pregnancy Profile
-ANC
-Labor
-Delivery
-at least three Newborn records
-Postnatal
-live Maternity summary visible
-no snapshot yet
+Verify the snapshot hash contract.
 
-Scenario S2 — completed snapshot v1 with changed current data
+The occurrence identity may be:
 
-completed Consultation
-snapshot v1
-underlying Pregnancy/ANC data subsequently changed
-historical snapshot and current data intentionally differ
+* Included in the hashed metadata for new snapshot-contract versions; or
+* Stored as immutable envelope metadata outside the historical clinical payload
 
-Scenario S3 — reopened/recompleted snapshot v2
+Choose deliberately.
 
-v1 preserved
-Consultation reopened
-Maternity changed
-Consultation recompleted
-v2 latest
-v1 unchanged
+Existing v1 snapshot hashes must remain byte-identical and continue to verify.
 
-Scenario S4 — completed Consultation without snapshot
+A newly captured v2 must have its own valid hash and immutable payload.
 
-completed while snapshot capture disabled
-no historical snapshot
-current record separately available
-no retroactive fabrication
+Changing live maternity data after v1 must never change v1.
 
-Scenario S5 — five-newborn print stress
+### 10. Presentation behavior
 
-Delivery with five Newborn records
-completed Consultation snapshot
-used to validate dompdf pagination and compact rendering
+The following must continue working without redesign:
 
-Scenario R1–R5 — reconciliation classifications
+* Summary tab
+* Completed-snapshot default view
+* Current live-record action
+* Snapshot history/version navigation
+* Preview modal
+* Print view
+* Compact `printMode` fragment
+* Permission boundaries
+* Feature flags
 
-Create isolated pilot specialty entries that produce:
+The preview modal must continue using the server-rendered maternity context and must never introduce a second renderer.
 
-safe_to_link
-safe_to_migrate
-conflict_requires_review
-historical_only
-insufficient_context
+Do not move completion/snapshot logic into JavaScript.
 
-Rules:
+## Database design checks
 
-these are pilot-only records
-preserve original specialty-entry JSON
-do not run apply mode
-do not allow them to contaminate the real environment reconciliation count
+Before adding a migration, inspect:
 
-Scenario B1 — billing overlap readiness
+* Current snapshot unique constraints
+* Current version constraints
+* Current completion-reference fields
+* Route/session completion timestamps and precision
+* Existing completion-history tables
+* Foreign keys and cascade behavior
+* Identifier lengths under MariaDB
+* Index-name length
+* Soft-delete behavior
+* Snapshot append-only triggers or model guards
+* Existing timestamp precision
 
-Consultation event-specific mapping
-ANC or another Maternity event mapping representing the same act
-de-duplication policy should show maternity_event_only
-base attendance fee remains separate
-no billing posting
-Keep environment review and synthetic validation separate
+Any migration must:
 
-This distinction is mandatory.
+* Be safe on MariaDB
+* Use explicit short constraint/index names
+* Preserve existing rows
+* Avoid destructive rewrite
+* Avoid fabricated historical data
+* Be reversible where safely possible
+* Document any intentionally irreversible append-only structure
 
-A. Real environment reconciliation review
+## Required focused tests
 
-Run before seeding pilot historical entries:
+Add a dedicated P2 closure suite.
 
-php artisan maternity:reconcile-obgyn-entries \
-  --format=json \
-  --output=<environment-report-path>
+### Same-second completion identity
 
-Record:
+1. Complete once under a frozen clock: v1 created.
+2. Reopen and recomplete under the exact same frozen second: v2 created.
+3. Reopen and recomplete again under the same second: v3 created.
+4. All versions have distinct completion-occurrence identities.
+5. v1 remains byte-identical after v2 and v3.
+6. Every hash verifies.
 
-safe_to_link count
-safe_to_migrate count
-conflict_requires_review count
-historical_only count
-insufficient_context count
-total inspected
-command version/schema version
-environment identifier that does not expose secrets
-timestamp
-entry hashes
+### Intended idempotency
 
-Do not include patient names.
+7. Repeat completion without reopen: one occurrence and one snapshot.
+8. Retry the same completion request: no duplicate snapshot.
+9. Invoke snapshot capture twice for one occurrence: one snapshot.
+10. Duplicate listener/event delivery: one snapshot.
+11. A one-second-separated reopen/recompletion still creates v2.
 
-Do not run --apply.
+### Concurrency
 
-B. Synthetic classifier validation
+12. Two concurrent completion requests for the same occurrence create one snapshot.
+13. Two concurrent capture requests for the same occurrence create one snapshot.
+14. Version numbers remain unique and monotonic.
+15. Unique-key conflicts resolve only through verified lineage.
 
-Run against the isolated pilot scenarios R1–R5.
+### Failure and retry
 
-Clearly label the output:
+16. Failure before occurrence persistence leaves no false completion success.
+17. Failure after occurrence creation can safely resume and create the missing snapshot once.
+18. Failure after snapshot commit and before response resolves the existing snapshot on retry.
+19. Hash failure cannot leave a falsely accepted snapshot.
+20. A later reopen creates a new occurrence after a recovered completion.
 
-SYNTHETIC PILOT DATA — NOT ENVIRONMENT RECONCILIATION COUNTS
+### Legacy compatibility
 
-Prove all five classifications can be produced.
+21. Existing legacy-reference snapshot remains readable.
+22. Existing legacy-reference snapshot hash remains unchanged.
+23. Existing snapshot history still orders correctly.
+24. No backfilled identity is presented as a genuine historical fact.
+25. Snapshot append-only mutation guards still reject update/delete.
 
-Never combine synthetic and real counts in the closure report.
+### Workflow protection
 
-Add O&G/Maternity pilot preflight
+26. Preview modal still shows the correct completed version.
+27. Preview modal contains no scripts/forms/raw JSON.
+28. Summary and print views select the same version.
+29. Current live record remains lazy and separate.
+30. Permission denial omits maternity snapshot context.
+31. Flag-off behavior remains unchanged.
+32. Reopen permissions remain unchanged.
+33. Consultation completion readiness remains unchanged.
+34. No invoice item is created.
+35. No maternity billing event is created.
+36. No order-set write is performed.
+37. No environment reconciliation write is performed.
+38. No feature flag is changed.
 
-Create a read-only service and command such as:
+### Performance
 
-php artisan maternity:obgyn-pilot-preflight
+39. Snapshot history does not add an N+1 query.
+40. Preview does not introduce a second maternity projection.
+41. Feature-off query counts remain at their established contracts.
 
-Recommended options:
+Use the existing targeted test conventions.
 
---format=table|json
---output=
---strict
---include-query-baselines
---environment-reconciliation=<path>
---batch=<pilot-batch-id>
+Do not create a browser-testing framework.
 
-The command must perform zero clinical writes.
+## Preflight update
 
-Checks should include:
+Update `maternity:obgyn-pilot-preflight` with a P2 check.
 
-Database/schema:
+It should verify the installed snapshot identity capability, such as:
 
-all required bridge/link/snapshot tables exist
-required migrations are applied
-indexes/active-slot uniqueness exist
-snapshot schema version is supported
+* Completion-occurrence structure present
+* Required unique constraint present
+* Legacy snapshot compatibility available
+* Append-only protection active
+* P2 focused verification/version marker present
 
-Feature flags:
+Do not perform a clinical write during preflight.
 
-report current values for all O&G/Maternity flags
-warn if a write guard is enabled without its context/workspace flag
-warn if Maternity billing is enabled
-warn if auto-post is enabled
-never change flag values
+Possible statuses:
 
-Profiles/mappings:
+* `PASS`
+* `WARNING`
+* `BLOCKED`
 
-Obstetrics specialty profile exists and is active
-Gynaecology specialty profile exists and is active
-active Obstetrics department mapping exists, or record K1 fallback
-order-set audit contains no unsafe unguarded Maternity patch
-custom-needs-review order sets are listed
+After this phase, the same-second identity problem must no longer appear as a production-readiness warning.
 
-Permissions:
+The preflight must continue reporting:
 
-bridge and underlying-domain permission combinations are valid
-pilot users have the required dual permissions
-no role receives a bridge action without target-domain access
-summary/snapshot permissions are present
+`clinician_acceptance: NOT_ASSESSED`
 
-Reconciliation:
+until actual clinician sign-off exists.
 
-environment reconciliation report is present
-report is dry-run
-report matches the current command schema
-counts are displayed
-conflicts and insufficient-context rows are highlighted
-pilot readiness must not silently approve unresolved real-environment rows
-
-Handoffs:
-
-no dangling modal triggers
-selectors are patient-scoped
-return-context named-route rules are active
-action flags are dark by default or intentionally configured for pilot
-
-Snapshots:
-
-capture flag state
-existing snapshot count
-hash verification sample
-no snapshot update/delete routes
-current-record view permission requirements
-
-Billing:
-
-MATERNITY_BILLING_ENABLED=false
-MATERNITY_BILLING_AUTO_POST=false
-postForSource() remains non-posting
-de-duplication policy configuration is reported
-no doctor-workspace billing card exists
-
-Verdict states:
-
-PASS
-WARNING
-BLOCKED
-
-The command should distinguish:
-
-ready for technical pilot
-ready for guarded rollout
-not ready
-
-It must never claim clinician acceptance.
-
-Add technical rollout gates
-
-Define explicit gates.
-
-Gate A — Technical pilot readiness
-
-Requires:
-
-all targeted tests pass
-preview-modal parity fixed
-preflight has no BLOCKED findings
-environment reconciliation dry run completed
-no Maternity billing posting
-no dangling modal targets
-pilot data command succeeds
-pilot cleanup succeeds in test environment
-
-Gate B — Projection pilot readiness
-
-Requires Gate A plus:
-
-Obstetrics and Gynaecology context cards manually reviewed
-active summary reviewed
-Emergency/Admission read-only context reviewed
-no layout blocker
-
-Gate C — Guarded source-of-truth readiness
-
-Requires Gate B plus:
-
-environment reconciliation reviewed by an authorised person
-conflict and insufficient-context rows resolved, accepted or excluded
-clinician accepts read-only projection behavior
-role permissions verified
-ANC/Labor actions manually exercised
-Gynaecology LMP policy accepted
-
-Gate D — Snapshot pilot readiness
-
-Requires Gate B plus:
-
-summary preview works
-snapshot completion works
-v1/v2 history verified
-no-snapshot behavior verified
-print verified
-hash-mismatch behavior understood
-
-Gate E — Production rollout readiness
-
-Must not be automatically granted by this phase.
-
-Requires:
-
-actual clinician sign-off
-actual environment review
-wide regression review
-production deployment/change-control approval
-backup/rollback plan
-monitoring plan
-Fix and test the preview-modal JavaScript
-
-Use the existing summary preview modal.
-
-Required implementation:
-
-add a dedicated Maternity container
-insert the pre-rendered, Blade-escaped fragment from the JSON payload
-clear the container before every preview request
-hide it when the fragment is empty
-preserve existing plain_text summary rendering
-display readiness fragment only if already part of the response contract
-handle fetch failure without leaving stale Maternity content visible
-do not execute scripts included in the fragment
-do not duplicate snapshot/live mode decisions in JavaScript
-do not create any record
-
-If the project has a standard partial-insertion helper, use it.
-
-Otherwise, keep the change minimal and documented.
-
-Add browser/E2E smoke using the existing harness
-
-Audit the existing Playwright/browser-test infrastructure.
-
-If an established consultation E2E pattern exists, add a focused O&G/Maternity
-smoke test.
-
-Do not create a new browser-testing framework.
-
-Recommended coverage:
-
-Obstetrics:
-
-flags off: no ribbon/panel
-pilot mode: ribbon/panel visible, legacy fields editable
-guarded mode: Maternity-owned fields read-only
-Record ANC creates one ANC Visit
-Start Labor reuses active episode
-
-Gynaecology:
-
-no automatic context
-positive test produces explicit affordance only
-linked card says consultation remains Gynaecology
-LMP adoption eligible/conflict states
-
-Handoffs:
-
-Consultation Admission Request modal opens and submits
-Emergency profile selector is lazy
-Emergency Start Labor reuses existing episode
-Admission context displays propagation
-Maternity → Emergency explicit handoff
-
-Summary/snapshot:
-
-active preview modal displays Current Maternity Record
-completed preview displays snapshot
-history version switching works
-current-record block loads only after click
-no-snapshot state is honest
-v1/v2 are visually distinct
-
-No billing:
-
-no Post Charge action
-no invoice item created
-
-Use the pilot-data manifest to discover records.
-
-Do not hard-code database IDs.
-
-Save screenshots/traces only under a manual-testing artifact directory.
-
-Do not commit patient-identifiable screenshots.
-
-Add technical manual-test guide
-
-Create or update:
-
-docs/manual-testing/OBGYN_MATERNITY_CLINICIAN_PILOT_GUIDE.md
-
-The guide should be written for clinicians, not developers.
-
-It should explain:
-
-how to identify each pilot patient/scenario
-expected module ownership
-where to click
-expected result
-what must not happen
-how to record feedback
-rollback contact/process
-
-Include scenarios:
-
-Obstetrics without context
-Obstetrics linked Pregnancy Profile
-ANC from Consultation
-ambiguous profiles
-Gynaecology without pregnancy
-positive pregnancy test
-explicit Pregnancy Profile transition
-LMP adoption
-Emergency obstetric handoff
-Admission propagation
-Postnatal review
-live summary
-completion snapshot
-current-vs-historical separation
-reopen/recomplete
-no-snapshot case
-five-newborn print
-billing de-duplication preview
-
-Add explicit sign-off fields:
-
-reviewer name/role
-environment
-date
-scenario result
-usability issue
-clinical-safety issue
-accepted / rejected / needs changes
-signature or approved electronic acknowledgement
-
-Do not mark these fields as passed automatically.
-
-Add a technical acceptance results template
-
-Create:
-
-docs/manual-testing/OBGYN_MATERNITY_PILOT_RESULTS_TEMPLATE.md
-
-Statuses:
-
-NOT_RUN
-PASS
-PASS_WITH_OBSERVATION
-FAIL
-BLOCKED
-
-Separate:
-
-automated evidence
-developer manual evidence
-clinician evidence
-environment reconciliation evidence
-wide regression evidence
-
-The implementation agent must not fill clinician evidence as PASS without
-actual clinician feedback supplied by the project owner.
-
-Validate reconciliation behavior on real and synthetic data
-
-Real environment:
-
-preserve the pre-seed reconciliation output
-review aggregate counts
-list only identifiers/hashes in detailed artifacts
-do not expose patient names in committed docs
-do not enable write guards if unreviewed conflicts or insufficient-context
-rows exist
-
-Synthetic pilot data:
-
-confirm all five classifications
-confirm parsers behave as designed
-confirm command makes zero writes
-confirm --apply exits non-zero
-confirm deterministic repeated output
-confirm pilot cleanup does not modify reconciliation source entries unless
-those exact entries are pilot records in the cleanup manifest
-Re-run order-set safety audit
-
-Run:
-
-php artisan consultation:obgyn-order-set-audit
-
-Required result:
-
-no Maternity-owned patch_specialty_entry remains among known system-seeded
-definitions
-the two reconciled actions remain maternity_context_action
-admin-modified custom items remain listed as needs review
-historical applications remain untouched
-Gynaecology menstrual_history.bleeding_pattern remains allowed
-service-boundary guard remains active when configured
-
-Do not modify custom items automatically.
-
-Validate feature-flag rollout profiles
-
-Document exact pilot profiles without committing enabled defaults.
-
-Dark/default:
-
-CONSULTATION_OBSTETRIC_MATERNITY_WORKSPACE_ENABLED=false
-CONSULTATION_OBSTETRIC_MATERNITY_WRITE_GUARD_ENABLED=false
-CONSULTATION_GYNAECOLOGY_MATERNITY_CONTEXT_ENABLED=false
-CONSULTATION_GYNAECOLOGY_MATERNITY_WRITE_GUARD_ENABLED=false
-
-MATERNITY_CONSULTATION_HANDOFFS_ENABLED=false
-MATERNITY_EMERGENCY_CONTEXT_ENABLED=false
-MATERNITY_ADMISSION_CONTEXT_ENABLED=false
-MATERNITY_EMERGENCY_HANDOFFS_ENABLED=false
-
-CONSULTATION_MATERNITY_READINESS_ENABLED=false
-CONSULTATION_MATERNITY_SUMMARY_ENABLED=false
-CONSULTATION_MATERNITY_COMPLETION_SNAPSHOT_ENABLED=false
-
-MATERNITY_BILLING_DEDUPLICATION_POLICY_ENABLED=false
-MATERNITY_BILLING_ALLOW_BOTH_WHEN_CONFIGURED=false
-MATERNITY_BILLING_ALLOW_MANUAL_SELECTION=false
-
-MATERNITY_BILLING_ENABLED=false
-MATERNITY_BILLING_AUTO_POST=false
-
-Projection pilot:
-
-Obstetrics workspace on
-Obstetrics guard off
-Gynaecology context on
-Gynaecology guard off
-Admission context on
-Emergency context on
-advisory readiness on
-summary on
-snapshot capture off initially
-all handoff mutations off initially
-billing posting off
-
-Controlled handoff pilot:
-
-consultation handoffs on
-Emergency/Maternity handoffs on last
-target permissions explicitly assigned
-billing posting remains off
-
-Snapshot pilot:
-
-summary on
-snapshot capture on
-controlled pilot Consultations only
-current-record permissions verified
-
-Guarded pilot:
-
-only after environment reconciliation review and clinician approval
-enable Obstetrics/Gynaecology write guards separately
-never enable both automatically
-
-Do not write these values into committed environment files as enabled defaults.
-
-Add query/performance contract verification
-
-Re-run and compare the established contracts.
-
-Required flag-off expectations:
-
-Obstetrics workspace: 0 Maternity resolver queries
-Gynaecology workspace: 0 Maternity resolver queries
-Emergency context: 0
-Admission context: 0
-Consultation handoffs: 0
-readiness: 0
-summary: 0
-billing policy: 0
-
-Required enabled expectations:
-
-explicit Obstetrics context remains bounded
-explicit Gynaecology context remains bounded
-Emergency suggested context remains near the optimised five-query path
-completed snapshot defaults to the two-query snapshot path
-three versus five Newborns do not introduce N+1
-current live record is lazy
-selector candidates remain lazy
-modal and card partials issue zero queries
-preview-modal rendering does not add another projection build
-presentation services remain memoised
-
-Create performance-contract tests if the current tests do not already assert
-these values robustly.
-
-Do not introduce persistent cross-request caching for clinical records.
-
-Add controlled same-second completion-risk check
-
-Reproduce P2 in an isolated automated test.
-
-Test:
-
-complete a Consultation
-reopen it
-force or simulate recompletion inside the same second
-observe completion-reference behavior
-
-Rules:
-
-do not silently change the snapshot identity architecture in this phase
-if the collision cannot occur through the real workflow, document why
-if it can occur and collapses two genuine completions:
-mark snapshot production readiness WARNING or BLOCKED
-document a required follow-up
-do not hide it
-do not weaken existing idempotency to make the test pass
-
-This risk does not automatically block a limited pilot, but it must be visible
-in the readiness verdict.
-
-Wide-regression baseline preparation
-
-The memory-safe command remains:
-
-composer test:wide
-
-Audit the Phase 13.1 known broad-suite defects.
-
-Create a non-suppressing baseline artifact such as:
-
-tests/Baselines/wide-suite-known-defects.json
-
-Only if the project does not already have a better baseline mechanism.
-
-The artifact should contain:
-
-exact test class and method
-expected status:
-failure
-error
-first documented phase/date
-module
-reason/source report
-whether still reproducible
-
-Rules:
-
-the baseline must not cause PHPUnit to exit zero
-the baseline must not skip tests
-the baseline must not convert failures into passes
-it is comparison metadata only
-resolved failures are reported as resolved
-new failures are reported as regressions
-changed failure signatures are reported for review
-
-Alternatively, implement a read-only JUnit comparison script/command.
-
-Preferred command:
-
-php artisan tests:compare-wide-baseline \
-  --junit=storage/logs/phpunit-14r7-wide.xml
-
-Output:
-
-known unchanged
-known resolved
-new failure
-new error
-missing test
-changed status
-
-Do not hide the raw PHPUnit result.
-
-Run targeted regression first
-
-Run all new and high-risk targeted suites.
-
-At minimum:
-
-php artisan test tests/Feature/ConsultationMaternitySummaryUiPhase14R6_1Test.php
-php artisan test tests/Feature/ConsultationMaternitySnapshotHistoryUiPhase14R6_1Test.php
-php artisan test tests/Feature/ConsultationMaternitySummaryPrintPhase14R6_1Test.php
-
-php artisan test tests/Feature/ConsultationMaternityReadinessPhase14R6Test.php
-php artisan test tests/Feature/ConsultationMaternitySummarySnapshotPhase14R6Test.php
-php artisan test tests/Feature/ObgynMaternityReconciliationDryRunPhase14R6Test.php
-php artisan test tests/Feature/MaternityBillingDeduplicationPolicyPhase14R6Test.php
-
-php artisan test tests/Feature/MaternityHandoffUiPhase14R5_1Test.php
-php artisan test tests/Feature/MaternityHandoffModalIntegrityPhase14R5_1Test.php
-php artisan test tests/Feature/MaternityHandoffSelectorsPhase14R5_1Test.php
-
-php artisan test tests/Feature/ConsultationMaternityHandoffsPhase14R5Test.php
-php artisan test tests/Feature/EmergencyMaternityHandoffsPhase14R5Test.php
-php artisan test tests/Feature/AdmissionMaternityHandoffsPhase14R5Test.php
-php artisan test tests/Feature/MaternityOperationalHandoffsPhase14R5Test.php
-
-php artisan test tests/Feature/ConsultationGynaecologyMaternityPilotPhase14R4_1Test.php
-php artisan test tests/Feature/ConsultationObgynMaternityActionRenderingPhase14R4_1Test.php
-php artisan test tests/Feature/ConsultationGynaecologyMaternityPhase14R4Test.php
-php artisan test tests/Feature/ConsultationObgynOrderSetRetargetingPhase14R4Test.php
-
-php artisan test tests/Feature/ConsultationObstetricsMaternityPilotPhase14R3_1Test.php
-php artisan test tests/Feature/ConsultationObstetricsMaternityWorkspacePhase14R3Test.php
-php artisan test tests/Feature/ConsultationMaternityBridgePhase14R2Test.php
-
-php artisan test tests/Feature/AdmissionWorkflowFoundationTest.php
-php artisan test tests/Feature/AdmissionBedWorkflowPhase4Test.php
-php artisan test tests/Feature/AdmissionBedWorkflowPhase5Test.php
-php artisan test tests/Feature/AdmissionNursingCarePhase6Test.php
-php artisan test tests/Feature/AdmissionDischargeReadinessPhase7Test.php
-
-php artisan test tests/Feature/MaternityFoundationPhase8Test.php
-php artisan test tests/Feature/AntenatalCarePhase9Test.php
-php artisan test tests/Feature/LaborDeliveryFoundationPhase10Test.php
-php artisan test tests/Feature/NewbornBirthOutcomePhase11Test.php
-php artisan test tests/Feature/PostnatalCarePhase12Test.php
-php artisan test tests/Feature/MaternityReportsBillingReadinessPhase13Test.php
-php artisan test tests/Feature/MaternityBillingPostingPhase14_1Test.php
-
-php artisan test tests/Feature/Consultations
-
-Also run new Phase 14R.7 suites.
-
-The targeted reconciliation chain must introduce zero new failures beyond its
-documented baseline.
-
-Run the memory-safe wide suite
-
-Run:
-
-composer test:wide -- \
-  --log-junit=storage/logs/phpunit-14r7-wide.xml
-
-If Composer does not forward arguments correctly, run the equivalent direct
-memory-safe PHPUnit command.
-
-Record:
-
-total tests
-assertions
-failures
-errors
-skipped
-incomplete
-time
-peak memory
-exact failing test names
-
-Compare against the Phase 13.1 known baseline.
-
-Acceptance:
-
-no new failure/error attributable to O&G/Maternity reconciliation
-no failure in Phase 14R.2–14R.7 suites
-no failure in Emergency/Admission pathways changed by this batch
-known unrelated defects may remain, but must be explicitly listed
-the whole project must not be described as green if failures remain
-
-If a new failure appears:
-
-investigate it
-fix if caused by this batch
-do not add it to the known baseline merely to pass the phase
-Route, syntax, localisation and artifact checks
-
-Run:
-
-php artisan route:list --name=consultation
-php artisan route:list --name=emergency
-php artisan route:list --name=admissions
-php artisan route:list --name=maternity
-
-php artisan view:clear
-php artisan config:clear
-
-composer validate --no-check-publish
-
-git diff --check -- . ':!docs/prompt.md'
-
-Run:
-
-PHP lint on all changed PHP/lang files
-project-safe Blade compile/lint
-recursive EN/FR parity for every O&G/Maternity localisation file
-modal-target integrity suite
-route-name existence checks for safe return contexts
-pilot manifest validation
-pilot cleanup dry-run if supported
-
-Do not run or modify docs/prompt.md.
-
-Manual clinician acceptance
-
-The implementation agent may prepare and facilitate the pilot.
-
-It must not claim clinical acceptance without actual clinician evidence.
-
-For every manual scenario:
-
-record NOT_RUN initially
-provide the pilot URL
-provide the pilot patient/scenario code
-list expected behavior
-list prohibited behavior
-capture clinician feedback
-record pass/fail only after the clinician or project owner provides it
-
-Required clinician scenarios:
-
-A. Obstetrics no context.
-
-B. Obstetrics linked Pregnancy Profile.
-
-C. Record ANC from Consultation.
-
-D. Ambiguous Pregnancy Profiles.
-
-E. Gynaecology without pregnancy.
-
-F. Positive pregnancy test with no automatic transition.
-
-G. Explicit Gynaecology Pregnancy Profile link.
-
-H. One-way LMP adoption.
-
-I. Emergency Pregnancy/Labor/Admission handoff.
-
-J. Admission context propagation.
-
-K. Maternity → Emergency handoff.
-
-L. Postnatal review Consultation.
-
-M. Active live summary.
-
-N. Completed completion snapshot.
-
-O. Current versus historical record separation.
-
-P. Reopen/recomplete snapshot versioning.
-
-Q. Completed Consultation with no snapshot.
-
-R. Five-Newborn print.
-
-S. Billing de-duplication preview.
-
-T. Feature-flag rollback.
-
-Technical automation may mark the mechanism verified.
-
-It may not substitute for clinical usability approval.
-
-Readiness verdict
-
-Produce one explicit verdict:
-
-BLOCKED
-READY_FOR_TECHNICAL_PILOT
-READY_FOR_CLINICAL_PILOT
-READY_FOR_GUARDED_PILOT
-READY_FOR_PRODUCTION_ROLLOUT
-
-Rules:
-
-READY_FOR_TECHNICAL_PILOT
-
-automated targeted tests pass
-preview-modal parity fixed
-preflight passes
-real reconciliation dry run captured
-wide regression has no new related failure
-
-READY_FOR_CLINICAL_PILOT
-
-technical pilot ready
-pilot data and cleanup verified
-browser smoke passes
-clinician guide prepared
-
-It does not require clinician sign-off yet.
-
-READY_FOR_GUARDED_PILOT
-
-actual clinician scenarios accepted
-environment reconciliation reviewed
-write-guard impact accepted
-permission mapping accepted
-
-READY_FOR_PRODUCTION_ROLLOUT
-
-must not be issued automatically
-requires explicit project-owner approval
-requires production environment review and change control
-
-If clinician testing has not occurred, the maximum honest verdict is:
-
-READY_FOR_CLINICAL_PILOT
-Documentation
-
-Create:
-
-docs/maternity/OBGYN_MATERNITY_PILOT_REGRESSION_PHASE_14R_7_REPORT.md
-
-The report must include:
-
-Gate 0 preview-modal fix.
-Existing manual-data infrastructure audited.
-Pilot-data command and cleanup behavior.
-Pilot batch ID and manifest location.
-Scenario inventory.
-Real environment reconciliation counts.
-Synthetic classification counts, clearly separated.
-Pilot preflight results.
-Order-set audit result.
-Feature-flag profiles.
-Browser/E2E results.
-Query/performance comparison.
-Same-second completion-risk result.
-Targeted regression result.
-Wide-suite result.
-Known unchanged failures.
-New failures, if any.
-Clinician pilot status.
-Technical acceptance status.
-Final readiness verdict.
-Existing workflows protected.
-Known risks.
-Rollout.
-Rollback.
-Recommended next phase.
+## Pilot documentation update
 
 Update:
 
-docs/maternity/OBGYN_MATERNITY_INTEGRATION_PLAN.md
-docs/maternity/OBGYN_MATERNITY_SOURCE_OF_TRUTH_MATRIX.md
-docs/maternity/OBGYN_MATERNITY_RECONCILIATION_GAP_ANALYSIS.md
-docs/manual-testing/OBGYN_MATERNITY_RECONCILIATION_TEST_PLAN.md
-docs/manual-testing/OBGYN_MATERNITY_CLINICIAN_PILOT_GUIDE.md
+* `OBGYN_MATERNITY_PILOT_REGRESSION_PHASE_14R_7_REPORT.md` through a follow-up reference, not by rewriting historical results
+* `OBGYN_MATERNITY_CLINICIAN_PILOT_GUIDE.md`
+* `OBGYN_MATERNITY_PILOT_RESULTS_TEMPLATE.md`
+* Implementation plan
+* Gap analysis
+* Test plan
+* Rollout checklist
+* Risk register
 
-Mark Phase 14R.7 complete only when:
+Mark P2 as:
 
-preview modal shows the Maternity block
-real environment reconciliation report is captured
-synthetic classifications are validated separately
-pilot command and cleanup are safe
-preflight completes
-targeted regression completes
-wide regression completes
-no new related failures remain
-clinician sign-off status is represented honestly
-Rollout
+`CLOSED_BY_PHASE_14R_8`
 
-Do not enable production flags automatically.
+Do not mark:
 
-Recommended controlled pilot order:
+* Browser E2E as passed
+* Clinician pilot as completed
+* Wide suite as green
+* Environment reconciliation as validated at scale
+* Guarded pilot as approved
+* Production rollout as approved
 
-Run real environment reconciliation dry run.
-Run order-set audit.
-Run pilot preflight.
-Seed isolated pilot data.
-Enable read-only/projection flags in the pilot environment.
-Run automated browser smoke.
-Run developer technical checks.
-Conduct clinician pilot.
-Enable snapshot capture for controlled pilot consultations.
-Enable handoff actions.
-Enable write guards only after reconciliation and clinician approval.
-Keep Maternity billing posting disabled.
-Rollback
+## Regression strategy
 
-Feature rollback:
+Run focused tests for:
 
-Disable Maternity write guards.
-Disable Gynaecology write guard.
-Disable handoff actions.
-Disable Emergency/Admission context.
-Disable summary/readiness.
-Disable snapshot capture.
-Disable workspace/context cards.
-Clear config cache.
+* New P2 suite
+* Phase 14R.6–14R.7 snapshot/preview suites
+* Consultation completion and reopen suites
+* Maternity summary/history/print suites
+* Gynaecology completion
+* Admission and Emergency integration
+* Snapshot append-only protections
+* Query-count contracts
+* Billing non-posting regression
 
-Data rollback:
+Do not run the full wide suite repeatedly.
 
-do not delete real bridge links or snapshots
-preserve audit history
-clear only isolated pilot data through the batch manifest
-do not drop tables
-do not reverse historical order-set applications
-do not reinterpret legacy Admission Request sources
+The wide suite currently OOMs at the project’s intentional 512 MB limit around 60%, and the identical failure was reproduced with the Phase 14R.7 changes stashed.
 
-Billing:
+Do not:
 
-remains disabled throughout
-no billing rollback should be required
-Boundaries
+* Raise the limit secretly
+* Change `RouteLoadMemoryTest`
+* Create a fake green baseline
+* Add current failures to a baseline
+* Claim the wide suite passed
 
-Do not implement reconciliation apply mode.
-Do not migrate historical entries.
-Do not enable Maternity billing posting.
-Do not create Invoice Items.
-Do not add clinical billing cards.
-Do not modify immutable snapshots.
-Do not fabricate old snapshots.
-Do not automatically approve clinician scenarios.
-Do not automatically enable feature flags.
-Do not put pilot data in default seeders.
-Do not delete unmarked data during cleanup.
-Do not hide broad-suite failures.
-Do not add new failures to the known baseline without investigation.
-Do not run a new referral/emergency/admission engine.
-Do not rename routes.
-Do not touch docs/prompt.md.
+At completion, either:
 
-Final response
+* Run one final wide suite only if the separate memory-infrastructure issue has already been resolved; or
+* Retain the existing measured R2 status and report the wide suite as incomplete/pre-existing
 
-At the end, provide:
+P2 closure must be supported by targeted regression, not by misrepresenting the incomplete wide suite.
 
-Summary.
-Preview-modal closure.
-Pilot-data command and cleanup.
-Environment reconciliation counts.
-Synthetic classification results.
-Preflight verdict.
-Browser/E2E results.
-Query-count comparison.
-Targeted regression result.
-Wide-suite result.
-Known unchanged failures.
-New failures and disposition.
-Clinician pilot status.
-Final readiness verdict.
-Existing workflows protected.
-Known risks.
-Rollout and rollback.
-Next-phase recommendation.
+## Documentation deliverables
 
-Recommended next phase after an honest READY_FOR_GUARDED_PILOT verdict:
+Create:
 
-Phase 14.2 — Controlled Manual Maternity Billing Posting Only.
+* `OBGYN_MATERNITY_SNAPSHOT_COMPLETION_IDENTITY_PHASE_14R_8_REPORT.md`
+* `OBGYN_MATERNITY_SNAPSHOT_COMPLETION_IDENTITY_DESIGN.md`
+* `OBGYN_MATERNITY_SNAPSHOT_COMPLETION_IDENTITY_TEST_MATRIX.md`
+* `OBGYN_MATERNITY_SNAPSHOT_COMPLETION_IDENTITY_ROLLBACK.md`
 
-Do not resume Phase 14.2 before:
+Document:
 
-environment reconciliation is reviewed
-O&G/Maternity clinician pilot is accepted
-billing de-duplication conflicts are reviewed
-Maternity billing remains disabled until the manual-posting phase is
-explicitly approved
+* Root cause
+* Existing completion flow
+* Chosen authoritative occurrence identity
+* Rejected alternatives
+* Schema changes
+* Transaction boundary
+* Idempotency key
+* Concurrency handling
+* Crash/retry behavior
+* Legacy compatibility
+* Hash compatibility
+* Query behavior
+* Tests
+* Remaining pilot risks
+
+## Independent review
+
+Use an independent reviewer after implementation.
+
+The reviewer must verify:
+
+* Same-second reopen/recompletion creates a new version.
+* Ordinary repeated completion remains idempotent.
+* Completion identity does not depend solely on timestamps.
+* Existing hashes remain unchanged.
+* Snapshots remain append-only.
+* No historical identity is fabricated.
+* Concurrent requests cannot create duplicate versions.
+* Retry resolves verified lineage.
+* No business logic moved into JavaScript.
+* No billing behavior changed.
+* No flag was enabled.
+* No clinician sign-off was fabricated.
+* Wide-suite status remains honestly reported.
+
+## Exit criteria
+
+Phase 14R.8 passes only when:
+
+1. A durable completion-occurrence identity exists.
+2. Reopen causes the next completion to use a new occurrence.
+3. Same-second reopen/recompletion creates v2.
+4. Multiple same-second cycles create v3 and later versions.
+5. Repeat completion without reopen remains idempotent.
+6. Concurrent capture creates at most one snapshot per occurrence.
+7. Version allocation is transactionally safe.
+8. Failure/retry behavior is deterministic.
+9. Existing snapshots and hashes remain unchanged.
+10. Legacy references remain readable.
+11. Snapshot append-only guarantees remain enforced.
+12. Summary, preview and print behavior remain consistent.
+13. Feature-off behavior remains unchanged.
+14. Query contracts remain within the established baseline.
+15. Billing rows/events created equal zero.
+16. Feature flags changed equal zero.
+17. Focused regression passes with no new failure.
+18. Independent review reports no Critical or High finding.
+19. P2 is removed from the open production-readiness risks.
+20. Browser E2E, clinician acceptance and wide-suite limitations remain truthfully classified.
+
+## Completion report
+
+Report:
+
+* Subagents used
+* Root cause confirmed
+* Authoritative completion identity chosen
+* Schema/migrations created
+* Services changed
+* Transaction/idempotency design
+* Legacy compatibility
+* Same-second test results
+* Concurrency results
+* Failure/retry results
+* Hash/append-only results
+* Preview/summary/print regression
+* Query-count regression
+* Billing non-posting proof
+* Feature-flag state
+* Focused test totals
+* Wide-suite status
+* Independent-review findings
+* Whether P2 is closed
+* Whether the clinician pilot may continue
+* Whether guarded pilot remains blocked
+* Whether Phase 14.2 remains blocked or may begin
+* The exact recommended next prompt

@@ -47,6 +47,7 @@ class ObgynMaternityPilotPreflightCommand extends Command
         $this->checkPermissions();
         $this->checkReconciliation();
         $this->checkSnapshots();
+        $this->checkCompletionIdentity();
         $this->checkBilling();
         $this->checkReturnContextRoutes();
 
@@ -306,6 +307,113 @@ class ObgynMaternityPilotPreflightCommand extends Command
         $this->add('snapshots', 'mutation routes',
             $mutating === 0 ? self::PASS : self::BLOCKED,
             $mutating === 0 ? 'none (GET only)' : $mutating.' mutating route(s) found');
+    }
+
+    /**
+     * Phase 14R.8 — risk P2: same-second completion identity.
+     *
+     * Before 14R.8, snapshot identity was `route:{id}@{completed_at}` — second
+     * granular — so a reopen-and-recompletion inside one second was treated as
+     * the same occurrence and no v2 was written. This check verifies the
+     * INSTALLED capability that closes it. It is read-only: it inspects schema,
+     * indexes and existing rows, and performs no clinical write.
+     */
+    private function checkCompletionIdentity(): void
+    {
+        $table = 'consultation_completion_occurrences';
+
+        if (! Schema::hasTable($table)) {
+            $this->add('completion identity', 'occurrence ledger', self::BLOCKED,
+                'MISSING — risk P2 (same-second recompletion) is NOT closed; run migrations');
+
+            return;
+        }
+
+        // Presence of the structure, not proof that P2 is closed. This command
+        // performs no clinical write and therefore cannot execute a completion
+        // cycle; closure is proven by the focused suite, not by this row.
+        $this->add('completion identity', 'occurrence ledger', self::PASS,
+            'present — Phase 14R.8 identity structure installed (closure is proven by the focused suite, not by this check)');
+
+        // The identity column must exist and be a generated identifier, not a
+        // timestamp derivative.
+        $hasUid = Schema::hasColumn($table, 'occurrence_uid');
+        $hasNumber = Schema::hasColumn($table, 'occurrence_number');
+
+        $this->add('completion identity', 'occurrence identity columns',
+            ($hasUid && $hasNumber) ? self::PASS : self::BLOCKED,
+            ($hasUid && $hasNumber)
+                ? 'occurrence_uid + occurrence_number present'
+                : 'occurrence identity columns missing');
+
+        // The uniqueness guarantee is what makes retries idempotent and
+        // concurrent completions safe. Without it the ledger is decorative.
+        $this->add('completion identity', 'uniqueness constraints',
+            $this->hasUniqueIndexes($table, ['cco_uid_unique', 'cco_route_number_unique'])
+                ? self::PASS
+                : self::BLOCKED,
+            $this->hasUniqueIndexes($table, ['cco_uid_unique', 'cco_route_number_unique'])
+                ? 'cco_uid_unique + cco_route_number_unique installed'
+                : 'required unique index missing — duplicate occurrences possible');
+
+        // Append-only, exactly as the snapshot table is.
+        $mutable = Schema::hasColumn($table, 'updated_at') || Schema::hasColumn($table, 'deleted_at');
+        $this->add('completion identity', 'ledger append-only',
+            $mutable ? self::BLOCKED : self::PASS,
+            $mutable ? 'ledger has mutable/soft-delete columns' : 'no updated_at, no soft deletes');
+
+        // Legacy compatibility: pre-14R.8 snapshots keep their timestamp
+        // reference and are deliberately NOT backfilled. Their presence is
+        // normal and must never be reported as a defect.
+        if (Schema::hasTable('consultation_maternity_snapshots')) {
+            $linkable = Schema::hasColumn('consultation_maternity_snapshots', 'completion_occurrence_id');
+
+            $this->add('completion identity', 'snapshot lineage column',
+                $linkable ? self::PASS : self::BLOCKED,
+                $linkable ? 'completion_occurrence_id present (nullable)' : 'MISSING — snapshots cannot bind to an occurrence');
+
+            if ($linkable) {
+                $legacy = ConsultationMaternitySnapshot::query()
+                    ->whereNull('completion_occurrence_id')->count();
+
+                $this->add('completion identity', 'legacy snapshot compatibility', self::PASS,
+                    $legacy === 0
+                        ? 'no pre-14R.8 snapshots'
+                        : $legacy.' pre-14R.8 snapshot(s) retained with legacy references — not backfilled by design');
+            }
+        }
+
+        // The focused verification marker: P2 closure is claimed only when the
+        // suite that proves it is actually installed.
+        $suite = base_path('tests/Feature/ConsultationSnapshotCompletionIdentityPhase14R8Test.php');
+        $this->add('completion identity', 'P2 verification suite',
+            is_file($suite) ? self::PASS : self::WARNING,
+            is_file($suite)
+                ? 'ConsultationSnapshotCompletionIdentityPhase14R8Test present on disk — RUN IT to confirm closure; this check does not execute it'
+                : 'focused P2 suite not found — closure is unverified in this checkout');
+    }
+
+    /** Read-only index inspection that works on both MariaDB/MySQL and SQLite. */
+    private function hasUniqueIndexes(string $table, array $names): bool
+    {
+        try {
+            $existing = collect(Schema::getIndexes($table))
+                ->filter(fn ($index) => (bool) ($index['unique'] ?? false))
+                ->pluck('name')
+                ->map(fn ($name) => strtolower((string) $name))
+                ->all();
+        } catch (\Throwable) {
+            // An unsupported driver must not fabricate a PASS.
+            return false;
+        }
+
+        foreach ($names as $name) {
+            if (! in_array(strtolower($name), $existing, true)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function checkBilling(): void

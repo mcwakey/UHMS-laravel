@@ -30,6 +30,7 @@ class ConsultationMaternitySnapshot extends Model
         'consultation_route_id',
         'pregnancy_profile_id',
         'previous_snapshot_id',
+        'completion_occurrence_id',
         'snapshot_version',
         'schema_version',
         'context_status',
@@ -74,6 +75,24 @@ class ConsultationMaternitySnapshot extends Model
     public function previousSnapshot(): BelongsTo
     {
         return $this->belongsTo(self::class, 'previous_snapshot_id');
+    }
+
+    /**
+     * Phase 14R.8 — the completion occurrence this snapshot belongs to.
+     *
+     * Nullable: snapshots captured before the occurrence ledger existed keep
+     * their legacy timestamp reference and are deliberately NOT backfilled.
+     */
+    public function completionOccurrence(): BelongsTo
+    {
+        return $this->belongsTo(ConsultationCompletionOccurrence::class, 'completion_occurrence_id');
+    }
+
+    /** True when this row predates the Phase 14R.8 occurrence ledger. */
+    public function usesLegacyCompletionReference(): bool
+    {
+        return $this->completion_occurrence_id === null
+            && ConsultationCompletionOccurrence::isLegacyReference($this->completion_reference);
     }
 
     public function capturedBy(): BelongsTo

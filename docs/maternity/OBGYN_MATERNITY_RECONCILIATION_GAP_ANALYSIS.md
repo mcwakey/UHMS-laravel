@@ -178,6 +178,7 @@ Constraints: partial-unique on (`consultation_route_id`, `context_type`) where `
 | R5 | Order-set `patch_specialty_entry` actions targeting maternity-shaped sections. | ✅ **IMPLEMENTED in 14R.4.** Audit confirmed exactly two seeded items; both retargeted idempotently; admin-modified items untouched; guard moved to the service boundary so the bypass is closed. |
 | R6 | Whether the consultation summary needs a **frozen** completion-time maternity snapshot for medico-legal purposes. | **✅ RESOLVED (approved).** An **immutable versioned** completion-time Maternity Context snapshot is approved, **deferred to 14R.6**. 14R.2 must not implement summary snapshots. |
 | R7 | Enabling Phase 14.2 without a billing policy matrix. | Blocked by design: keep `billing.maternity_billing.enabled=false` until 14R.6 policy is approved. |
+| R8 | Snapshot completion identity derived from a second-granular timestamp, so a same-second reopen + recompletion lost a version (risk **P2**, confirmed in 14R.7). | ✅ **`CLOSED_BY_PHASE_14R_8`.** Identity rebound to a durable completion-occurrence ULID allocated inside the completion transaction. Existing hashes byte-identical; historical rows deliberately **not** backfilled. See `OBGYN_MATERNITY_SNAPSHOT_COMPLETION_IDENTITY_DESIGN.md`. |
 
 ---
 

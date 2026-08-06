@@ -15,7 +15,8 @@
 |---|---|---|---|
 | Preview parity (Gate 0) | `ConsultationMaternityPreviewParityPhase14R7Test` | PASS | 9 passed |
 | Pilot data + synthetic classifier | `ObgynMaternityPilotDataPhase14R7Test` | PASS | 10 passed |
-| Same-second risk (P2) | `ConsultationSnapshotSameSecondRiskPhase14R7Test` | PASS | 5 passed — risk **confirmed**, see §6 |
+| Same-second risk (P2) | `ConsultationSnapshotSameSecondRiskPhase14R7Test` | PASS | 5 passed — assertions inverted in 14R.8; now the regression guard |
+| **Completion identity (P2 closure)** | `ConsultationSnapshotCompletionIdentityPhase14R8Test` | PASS | 28 passed, 126 assertions — covers the 41 specified checks |
 | Summary UI | `ConsultationMaternitySummaryUiPhase14R6_1Test` | PASS | 22 passed |
 | Snapshot history UI | `ConsultationMaternitySnapshotHistoryUiPhase14R6_1Test` | PASS | 12 passed |
 | Print | `ConsultationMaternitySummaryPrintPhase14R6_1Test` | PASS | 8 passed |
@@ -111,7 +112,7 @@
 
 | # | Risk | Status |
 |---|---|---|
-| P2 | Same-second reopen + recompletion collapses into one snapshot version | **CONFIRMED** — see the 14R.7 report |
+| P2 | Same-second reopen + recompletion collapses into one snapshot version | **`CLOSED_BY_PHASE_14R_8`** — completion identity is now a durable occurrence ULID, not a timestamp |
 | P3 | Environment reconciliation reports zero rows here; classification unproven at scale on real data | OPEN |
 | P4 | Clinical usability not signed off | OPEN until §3 is completed |
 

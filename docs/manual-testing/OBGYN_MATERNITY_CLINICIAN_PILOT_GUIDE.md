@@ -205,6 +205,11 @@ For each one: follow the steps, then record the result at the end of this guide.
 
 **Expect:** **v2** becomes the default; **v1** is still readable and unchanged.
 
+**Also worth trying (Phase 14R.8):** do it **fast** — reopen, change one field and recomplete within
+a second or two. You must still get a **v2**. Before 14R.8 a very fast correction could be recorded
+as the same completion and the second version was silently not created. That is fixed; this step
+confirms it in real use.
+
 ---
 
 ### Q. Completed consultation with no snapshot — `S4`

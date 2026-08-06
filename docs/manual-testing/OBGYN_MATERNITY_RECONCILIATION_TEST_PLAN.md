@@ -295,6 +295,25 @@ php artisan maternity:clear-obgyn-pilot-data --batch=<batch-id> --dry-run --forc
 php artisan maternity:clear-obgyn-pilot-data --batch=<batch-id> --force
 ```
 
+## 10. Phase 14R.8 — completion-occurrence identity (P2 closure)
+
+> Automated coverage: `ConsultationSnapshotCompletionIdentityPhase14R8Test` (28 tests, 126
+> assertions, covering the 41 specified checks) plus the inverted
+> `ConsultationSnapshotSameSecondRiskPhase14R7Test` (5) acting as the regression guard.
+
+**Manual check to add to any snapshot pilot session:** reopen a completed consultation, change one
+pregnancy field, and recomplete **quickly** (within a second or two). A **v2** must appear and v1
+must remain readable and unchanged. Before 14R.8 the fast path silently produced no v2.
+
+**Preflight now reports a `completion identity` area.** All rows must read `PASS`:
+
+```bash
+php artisan maternity:obgyn-pilot-preflight
+```
+
+A `BLOCKED` row there means the occurrence ledger migrations have not been run and **P2 is not
+closed in that environment**.
+
 ### Safety rules
 
 - Pilot patients always carry `MT-OBGYN-14R7-`. Anything without that marker is **not** pilot data.

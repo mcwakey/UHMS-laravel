@@ -285,13 +285,44 @@ class ConsultationRouteService
         }
 
         return DB::transaction(function () use ($route, $user, $notes) {
-            $from = $route->status;
+            // Re-read the route UNDER LOCK inside the transaction. The check
+            // above is only a cheap early exit; this is the one that has to be
+            // right.
+            //
+            // Without it, a double-submitted completion (two requests that both
+            // loaded the route while it was still ACTIVE) would run the
+            // completion write twice, mint a SECOND completion occurrence and
+            // write a duplicate snapshot version with byte-identical clinical
+            // content — a ledger row asserting a completion that never
+            // happened. The pre-14R.8 timestamp identity masked this by
+            // collapsing both writes; occurrence identity correctly refuses to,
+            // so the guard has to be explicit.
+            $locked = VisitConsultationRoute::query()
+                ->whereKey($route->id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($locked && in_array($locked->status, [
+                VisitConsultationRoute::STATUS_CANCELLED,
+                VisitConsultationRoute::STATUS_COMPLETED,
+            ], true)) {
+                return $this->freshRoute($route);
+            }
+
+            $from = $locked?->status ?? $route->status;
             $route->update([
                 'status' => VisitConsultationRoute::STATUS_COMPLETED,
                 'completed_by' => $user->id,
                 'completed_at' => now(),
                 'notes' => $notes ?: $route->notes,
             ]);
+
+            // Phase 14R.8 — record the authoritative completion OCCURRENCE.
+            // This is what makes a reopen-and-recompletion inside the same
+            // second a genuinely distinct completion (risk P2). It runs inside
+            // this transaction, after the status write, so an occurrence can
+            // only exist for a completion that really happened.
+            $occurrence = $this->recordCompletionOccurrence($route, $user, $from);
 
             // Phase 14R.6 — immutable maternity completion snapshot, captured
             // INSIDE this transaction and AFTER the completion state is
@@ -300,7 +331,7 @@ class ConsultationRouteService
             // rather than leaving a completed consultation with a half-written
             // medico-legal record. Inert and query-free while
             // CONSULTATION_MATERNITY_COMPLETION_SNAPSHOT_ENABLED is false.
-            $this->captureMaternitySnapshot($route, $user);
+            $this->captureMaternitySnapshot($route, $user, $occurrence);
 
             $this->log($route, $from, VisitConsultationRoute::STATUS_COMPLETED, 'completed', $notes, $user);
 
@@ -333,17 +364,38 @@ class ConsultationRouteService
      * exists — readiness is advisory in this phase and must never block
      * completion.
      */
-    private function captureMaternitySnapshot(VisitConsultationRoute $route, User $user): void
-    {
+    private function captureMaternitySnapshot(
+        VisitConsultationRoute $route,
+        User $user,
+        ?\App\Models\ConsultationCompletionOccurrence $occurrence = null,
+    ): void {
         $snapshots = app(\App\Services\Consultation\Maternity\ConsultationMaternitySnapshotService::class);
 
         if (! $snapshots->enabled()) {
             return;
         }
 
-        VisitConsultationRoute::query()->whereKey($route->id)->lockForUpdate()->first();
+        $snapshots->captureForCompletion($route->refresh(), $user, $occurrence);
+    }
 
-        $snapshots->captureForCompletion($route->refresh(), $user);
+    /**
+     * Phase 14R.8 — allocate this completion's occurrence identity.
+     *
+     * The route row is locked first so two concurrent completion requests
+     * serialise on it; the occurrence service then allocates a monotonic number
+     * and an immutable ULID, with a unique index as the final guard.
+     *
+     * A snapshot never mints an occurrence — it only consumes one.
+     */
+    private function recordCompletionOccurrence(
+        VisitConsultationRoute $route,
+        User $user,
+        ?string $fromStatus,
+    ): \App\Models\ConsultationCompletionOccurrence {
+        // The route row is already locked by completeRoute() above, which is
+        // what serialises concurrent completions of the SAME route.
+        return app(\App\Services\Consultation\ConsultationCompletionOccurrenceService::class)
+            ->record($route->refresh(), $user, $fromStatus);
     }
 
     public function cancelRoute(VisitConsultationRoute $route, User $user, ?string $reason = null): VisitConsultationRoute

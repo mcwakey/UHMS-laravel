@@ -4,6 +4,13 @@
 **Final readiness verdict:** `READY_FOR_CLINICAL_PILOT` — see §16. Clinician sign-off has **not** occurred, so this is the maximum honest verdict.
 **Companion:** `OBGYN_MATERNITY_SUMMARY_SNAPSHOT_UI_PHASE_14R_6_1_REPORT.md`
 
+> **Follow-up (Phase 14R.8):** risk **P2** — recorded as CONFIRMED in §10 below — is now
+> **`CLOSED_BY_PHASE_14R_8`**. The results in this report are the measurements taken at the time of
+> 14R.7 and are left **unchanged**. See
+> `OBGYN_MATERNITY_SNAPSHOT_COMPLETION_IDENTITY_PHASE_14R_8_REPORT.md`.
+> No other qualification in this report has changed: browser E2E (R1) is still absent, the wide
+> suite (R2) still cannot complete, and clinician acceptance is still `NOT_ASSESSED`.
+
 ---
 
 ## 1. Gate 0 — preview-modal parity (P1 closed)
@@ -126,7 +133,7 @@ All 16 flags remain `false`; **none were enabled by this phase and none were wri
 - **Snapshot pilot:** summary on + snapshot capture on, controlled consultations only, current-record permissions verified.
 - **Guarded pilot:** only after the environment reconciliation review **and** clinician approval; enable the two write guards **separately**, never both at once.
 
-## 10. Same-second completion risk (P2) — CONFIRMED
+## 10. Same-second completion risk (P2) — CONFIRMED *(closed by 14R.8 — see note at end of section)*
 
 Reproduced deliberately in `ConsultationSnapshotSameSecondRiskPhase14R7Test` (5 passed) with a frozen clock.
 
@@ -138,6 +145,15 @@ Reproduced deliberately in `ConsultationSnapshotSameSecondRiskPhase14R7Test` (5 
 3. Ordinary repeated completion without a reopen is still correctly idempotent — that is the intended behaviour, not the defect (asserted).
 
 **Not redesigned in this phase**, per the specification. The snapshot identity was left exactly as 14R.6 shipped it.
+
+> **Closed by Phase 14R.8 — `CLOSED_BY_PHASE_14R_8`.**
+> Snapshot identity was rebound from the second-granular `route:{id}@{completed_at}` string to a
+> durable server-generated completion-occurrence ULID (`occ:{ULID}`) allocated inside the completion
+> transaction. Three completions under one frozen second now produce v1, v2 and v3.
+> `ConsultationSnapshotSameSecondRiskPhase14R7Test` — the suite that proved the defect here — had its
+> assertions **inverted** in 14R.8 and now serves as the regression guard. The three bounded facts
+> above remain true and are still asserted.
+> Details: `OBGYN_MATERNITY_SNAPSHOT_COMPLETION_IDENTITY_DESIGN.md`.
 
 **Required follow-up before production rollout:** widen the completion reference to sub-second precision, or key it on the completion log row. Until then, snapshot **production** readiness is **WARNING**. It does not block a limited pilot, because a clinician reopening and recompleting within one second is not a realistic workflow — but it is visible in the verdict rather than buried.
 
@@ -249,13 +265,13 @@ Verified unchanged: consultation completion, readiness and reopening; the full C
 
 **Clinician pilot status: NOT_RUN.** No clinician has tested this. Every scenario in the results template is `NOT_RUN`, and the development team must not change that.
 
-Three qualifications carried into the pilot: browser E2E was not run (§11), P2 is confirmed (§10), and **the wide suite cannot complete** (§14) — so while no new failure is attributable to this work, the project's overall wide-suite health remains unverified beyond 60%.
+Three qualifications carried into the pilot: browser E2E was not run (§11), P2 is confirmed (§10 — **since closed by Phase 14R.8**), and **the wide suite cannot complete** (§14) — so while no new failure is attributable to this work, the project's overall wide-suite health remains unverified beyond 60%.
 
 ## 17. Known risks
 
 | # | Risk | Severity |
 |---|---|---|
-| **P2** | Same-second reopen + recompletion loses a snapshot version. Confirmed, bounded, not redesigned. | WARNING for production; acceptable for a limited pilot |
+| **P2** | Same-second reopen + recompletion loses a snapshot version. Confirmed, bounded, not redesigned. | ~~WARNING for production~~ → **`CLOSED_BY_PHASE_14R_8`** (durable completion-occurrence identity) |
 | **P3** | Environment reconciliation reports 0 rows here — classification unproven against real historical data at scale | Open; must be re-run per environment |
 | **P4** | Clinical usability unsigned | Open by definition until the pilot runs |
 | **R1** | No browser E2E harness exists; smoke coverage is feature-test-level HTML assertion instead | Medium — flagged, not worked around |
@@ -266,6 +282,12 @@ Three qualifications carried into the pilot: browser E2E was not run (§11), P2 
 ## 18. Rollout
 
 No flag was enabled by this phase. Recommended order:
+
+> **Phase 14R.8 addition — step 0.** Run `php artisan migrate` so the completion-occurrence ledger
+> exists, then confirm the preflight's `completion identity` area reports all `PASS`. If it reports
+> `BLOCKED`, risk **P2** is still open in that environment and snapshot capture (step 8) must not be
+> enabled there. This step is required **per environment** — closing P2 in code does not close it in
+> a database that has not been migrated.
 
 1. Run the environment reconciliation dry run **per environment** and review it.
 2. Run the order-set audit; run the retargeting seeder if items remain (see §8).
@@ -284,6 +306,8 @@ No flag was enabled by this phase. Recommended order:
 **Feature:** disable write guards → handoff actions → Emergency/Admission context → summary/readiness → snapshot capture → workspace/context cards → `config:clear`.
 
 **Data:** do not delete real bridge links or snapshots; preserve audit history; clear only isolated pilot data through its batch manifest; do not drop tables; do not reverse historical order-set applications; do not reinterpret legacy admission-request sources.
+
+**Completion-occurrence ledger (14R.8):** see `OBGYN_MATERNITY_SNAPSHOT_COMPLETION_IDENTITY_ROLLBACK.md`. Rolling it back **re-opens P2** and permanently destroys the occurrence audit trail; a partial rollback (keep recording occurrences, stop consuming them for identity) is preferred.
 
 **Billing:** disabled throughout — no billing rollback is required.
 

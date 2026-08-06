@@ -13,15 +13,17 @@ use Tests\Feature\Concerns\BuildsMaternityHandoffFixtures;
 use Tests\TestCase;
 
 /**
- * Phase 14R.7 — controlled reproduction of documented risk P2.
+ * Phase 14R.7 — controlled reproduction of risk P2.
+ * Phase 14R.8 — **P2 is CLOSED**; this suite is now the regression guard.
  *
- * The snapshot completion identity is `route id + completed_at`, which is
- * SECOND-granular. This suite establishes, rather than assumes, whether a
- * reopen-and-recomplete inside the same second collapses two genuine
- * completions into one snapshot.
+ * When written, this suite existed to PROVE the defect: completion identity was
+ * `route id + completed_at`, so a same-second reopen-and-recompletion collapsed
+ * two genuine completions into one snapshot.
  *
- * This phase deliberately does NOT redesign the snapshot identity. The purpose
- * here is to make the risk visible and measurable in the readiness verdict.
+ * 14R.8 replaced that identity with a durable completion-occurrence ULID. The
+ * assertions below were therefore INVERTED — from "documents the collapse" to
+ * "proves the collapse cannot happen". Nothing was weakened: the file now
+ * asserts strictly more than it did.
  */
 class ConsultationSnapshotSameSecondRiskPhase14R7Test extends TestCase
 {
@@ -44,10 +46,10 @@ class ConsultationSnapshotSameSecondRiskPhase14R7Test extends TestCase
         app(ConsultationMaternityLinkService::class)->link($this->route, $this->profile, $this->user);
     }
 
-    public function test_same_second_reopen_and_recompletion_collapses_into_one_snapshot(): void
+    public function test_same_second_reopen_and_recompletion_creates_a_second_version(): void
     {
         // Freeze the clock so both completions land on the identical second —
-        // the worst case the identity scheme can encounter.
+        // the exact case that used to collapse.
         Carbon::setTestNow(Carbon::parse('2026-07-26 10:00:00'));
 
         $this->complete();
@@ -61,18 +63,18 @@ class ConsultationSnapshotSameSecondRiskPhase14R7Test extends TestCase
 
         $snapshots = ConsultationMaternitySnapshot::query()->orderBy('snapshot_version')->get();
 
-        // DOCUMENTED OUTCOME: the two completions share a reference, so the
-        // second is treated as the same occurrence and no v2 is written.
+        // P2 CLOSED: identity now comes from the completion-occurrence ledger,
+        // not the clock, so the second completion is its own occurrence.
         $this->assertCount(
-            1,
+            2,
             $snapshots,
-            'P2 confirmed: a same-second recompletion is treated as the same completion occurrence.'
+            'P2 regression: a same-second recompletion must create a new version.'
         );
-        $this->assertSame($firstReference, $snapshots->first()->completion_reference);
+        $this->assertNotSame($firstReference, $snapshots->last()->completion_reference);
 
-        // The surviving snapshot still reflects the FIRST completion — the
-        // second completion's clinical state is not captured anywhere.
+        // Both clinical states are now preserved: v1 as captured, v2 as changed.
         $this->assertSame(2, $snapshots->first()->payload['pregnancy']['gravida']);
+        $this->assertSame(6, $snapshots->last()->payload['pregnancy']['gravida']);
 
         Carbon::setTestNow();
     }
@@ -97,7 +99,7 @@ class ConsultationSnapshotSameSecondRiskPhase14R7Test extends TestCase
         Carbon::setTestNow();
     }
 
-    public function test_the_collapse_never_corrupts_or_rewrites_the_first_snapshot(): void
+    public function test_recompletion_never_corrupts_or_rewrites_the_first_snapshot(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-07-26 10:00:00'));
 
@@ -110,10 +112,10 @@ class ConsultationSnapshotSameSecondRiskPhase14R7Test extends TestCase
         $this->profile->forceFill(['gravida' => 6])->save();
         $this->complete();
 
-        $fresh = ConsultationMaternitySnapshot::query()->firstOrFail();
+        $fresh = ConsultationMaternitySnapshot::query()->orderBy('snapshot_version')->firstOrFail();
 
-        // The failure mode is a MISSING second version, never a corrupted
-        // first one: v1 remains byte-identical and its hash still verifies.
+        // v1 remains byte-identical and its hash still verifies, whether or not
+        // a v2 exists.
         $this->assertSame($payload, $fresh->payload);
         $this->assertSame($hash, $fresh->payload_hash);
         $this->assertTrue($fresh->verifyPayloadHash());
@@ -129,24 +131,30 @@ class ConsultationSnapshotSameSecondRiskPhase14R7Test extends TestCase
         $this->complete();
         $this->complete();
 
-        // This is the INTENDED idempotency, not the P2 collapse: the route
-        // early-returns because it is already completed.
+        // INTENDED idempotency: the route early-returns because it is already
+        // completed, so no new occurrence and no new snapshot are created.
         $this->assertSame(1, ConsultationMaternitySnapshot::query()->count());
+        $this->assertSame(1, \App\Models\ConsultationCompletionOccurrence::query()->count());
 
         Carbon::setTestNow();
     }
 
-    public function test_the_completion_reference_is_second_granular_by_construction(): void
+    public function test_the_completion_reference_is_no_longer_derived_from_the_clock(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-07-26 10:00:00'));
         $this->complete();
 
-        $service = app(ConsultationMaternitySnapshotService::class);
-        $reference = $service->completionReference($this->route->fresh());
+        $snapshot = ConsultationMaternitySnapshot::query()->firstOrFail();
 
-        // Documents the exact shape the risk derives from.
-        $this->assertSame('route:'.$this->route->id.'@2026-07-26T10:00:00Z', $reference);
-        $this->assertStringNotContainsString('.', $reference, 'no sub-second component');
+        // The stored reference is occurrence-derived, not timestamp-derived.
+        $this->assertStringStartsWith('occ:', $snapshot->completion_reference);
+        $this->assertStringNotContainsString('2026-07-26', $snapshot->completion_reference);
+        $this->assertNotNull($snapshot->completion_occurrence_id);
+
+        // The legacy format is still available for reading historical rows.
+        $legacy = app(ConsultationMaternitySnapshotService::class)
+            ->legacyCompletionReference($this->route->fresh());
+        $this->assertSame('route:'.$this->route->id.'@2026-07-26T10:00:00Z', $legacy);
 
         Carbon::setTestNow();
     }
